@@ -580,7 +580,7 @@ describe("Rust Symbol Resolution Integration", () => {
               kind: "class",
               symbol_id: user_struct_id,
               name: "User" as SymbolName,
-              scope_id: user_scope,
+              defining_scope_id: user_scope,
               location: {
                 file_path: user_file,
                 start_line: 1,
@@ -802,7 +802,7 @@ describe("Rust Symbol Resolution Integration", () => {
               kind: "class",
               symbol_id: user_struct_id,
               name: "User" as SymbolName,
-              scope_id: module_scope,
+              defining_scope_id: module_scope,
               location: {
                 file_path,
                 start_line: 1,
@@ -819,7 +819,7 @@ describe("Rust Symbol Resolution Integration", () => {
                   kind: "method",
                   symbol_id: new_method_id,
                   name: "new" as SymbolName,
-                  scope_id: module_scope,
+                  defining_scope_id: module_scope,
                   location: {
                     file_path,
                     start_line: 1,
@@ -904,7 +904,7 @@ describe("Rust Symbol Resolution Integration", () => {
               kind: "class",
               symbol_id: user_struct_id,
               name: "User" as SymbolName,
-              scope_id: user_scope,
+              defining_scope_id: user_scope,
               location: {
                 file_path: user_file,
                 start_line: 1,
@@ -921,7 +921,7 @@ describe("Rust Symbol Resolution Integration", () => {
                   kind: "method",
                   symbol_id: new_method_id,
                   name: "new" as SymbolName,
-                  scope_id: user_scope,
+                  defining_scope_id: user_scope,
                   location: {
                     file_path: user_file,
                     start_line: 1,
@@ -936,7 +936,7 @@ describe("Rust Symbol Resolution Integration", () => {
                   kind: "method",
                   symbol_id: get_name_method_id,
                   name: "get_name" as SymbolName,
-                  scope_id: user_scope,
+                  defining_scope_id: user_scope,
                   location: {
                     file_path: user_file,
                     start_line: 1,
@@ -1143,8 +1143,7 @@ describe("Rust Symbol Resolution Integration", () => {
       const user_file = "user.rs" as FilePath;
       const user_scope = "scope:user.rs:module" as ScopeId;
       const user_struct_id = "class:user.rs:User:1:40" as SymbolId;
-      const display_method_id =
-        "method:user.rs:User:display:1:100" as SymbolId;
+      const display_method_id = "method:user.rs:User:display:1:100" as SymbolId;
 
       const user_index = create_test_index(user_file, {
         root_scope_id: user_scope,
@@ -1174,7 +1173,7 @@ describe("Rust Symbol Resolution Integration", () => {
               kind: "class",
               symbol_id: user_struct_id,
               name: "User" as SymbolName,
-              scope_id: user_scope,
+              defining_scope_id: user_scope,
               location: {
                 file_path: user_file,
                 start_line: 1,
@@ -1191,7 +1190,7 @@ describe("Rust Symbol Resolution Integration", () => {
                   kind: "method",
                   symbol_id: display_method_id,
                   name: "display" as SymbolName,
-                  scope_id: user_scope,
+                  defining_scope_id: user_scope,
                   location: {
                     file_path: user_file,
                     start_line: 1,
@@ -1788,7 +1787,7 @@ describe("Rust Symbol Resolution Integration", () => {
               kind: "class",
               symbol_id: data_processor_id,
               name: "DataProcessor" as SymbolName,
-              scope_id: processor_scope,
+              defining_scope_id: processor_scope,
               location: {
                 file_path: processor_file,
                 start_line: 1,
@@ -1805,7 +1804,7 @@ describe("Rust Symbol Resolution Integration", () => {
                   kind: "method",
                   symbol_id: process_method_id,
                   name: "process" as SymbolName,
-                  scope_id: processor_scope,
+                  defining_scope_id: processor_scope,
                   location: {
                     file_path: processor_file,
                     start_line: 1,
@@ -1922,8 +1921,7 @@ describe("Rust Symbol Resolution Integration", () => {
       const traits_file = "traits.rs" as FilePath;
       const traits_scope = "scope:traits.rs:module" as ScopeId;
       const logger_trait_id = "interface:traits.rs:Logger:1:0" as SymbolId;
-      const log_method_id =
-        "method:traits.rs:Logger:log:1:25" as SymbolId;
+      const log_method_id = "method:traits.rs:Logger:log:1:25" as SymbolId;
 
       const traits_index = create_test_index(traits_file, {
         root_scope_id: traits_scope,
@@ -1981,7 +1979,7 @@ describe("Rust Symbol Resolution Integration", () => {
               kind: "class",
               symbol_id: service_struct_id,
               name: "Service" as SymbolName,
-              scope_id: service_scope,
+              defining_scope_id: service_scope,
               location: {
                 file_path: service_file,
                 start_line: 1,
@@ -2083,448 +2081,441 @@ describe("Rust Symbol Resolution Integration", () => {
 
   describe("Complex Scenarios", () => {
     // TODO: Requires full cross-file resolution with repository pattern
-    it.todo(
-      "resolves full workflow: use → construct → method call",
-      () => {
-        // models/user.rs: pub struct User { pub name: String } impl User { pub fn new(name: String) -> Self { User { name } } pub fn get_name(&self) -> &str { &self.name } }
-        const user_file = "models/user.rs" as FilePath;
-        const user_scope = "scope:models/user.rs:module" as ScopeId;
-        const user_struct_id = "class:models/user.rs:User:1:0" as SymbolId;
-        const new_method_id = "method:models/user.rs:User:new:1:40" as SymbolId;
-        const get_name_method_id =
-          "method:models/user.rs:User:get_name:1:100" as SymbolId;
+    it.todo("resolves full workflow: use → construct → method call", () => {
+      // models/user.rs: pub struct User { pub name: String } impl User { pub fn new(name: String) -> Self { User { name } } pub fn get_name(&self) -> &str { &self.name } }
+      const user_file = "models/user.rs" as FilePath;
+      const user_scope = "scope:models/user.rs:module" as ScopeId;
+      const user_struct_id = "class:models/user.rs:User:1:0" as SymbolId;
+      const new_method_id = "method:models/user.rs:User:new:1:40" as SymbolId;
+      const get_name_method_id =
+        "method:models/user.rs:User:get_name:1:100" as SymbolId;
 
-        const user_index = create_test_index(user_file, {
-          root_scope_id: user_scope,
-          scopes: new Map([
-            [
-              user_scope,
-              {
-                id: user_scope,
-                type: "module",
-                parent_id: null,
-                name: null,
-                location: {
-                  file_path: user_file,
-                  start_line: 1,
-                  start_column: 0,
-                  end_line: 1,
-                  end_column: 140,
-                },
-                child_ids: [],
-              },
-            ],
-          ]),
-          classes: new Map([
-            [
-              user_struct_id,
-              {
-                kind: "class",
-                symbol_id: user_struct_id,
-                name: "User" as SymbolName,
-                scope_id: user_scope,
-                location: {
-                  file_path: user_file,
-                  start_line: 1,
-                  start_column: 0,
-                  end_line: 1,
-                  end_column: 35,
-                },
-                availability: { scope: "file-export" },
-                extends: [],
-                decorators: [],
-                constructor: undefined,
-                methods: [
-                  {
-                    kind: "method",
-                    symbol_id: new_method_id,
-                    name: "new" as SymbolName,
-                    scope_id: user_scope,
-                    location: {
-                      file_path: user_file,
-                      start_line: 1,
-                      start_column: 40,
-                      end_line: 1,
-                      end_column: 85,
-                    },
-                    availability: { scope: "file-export" },
-                    parameters: [],
-                  },
-                  {
-                    kind: "method",
-                    symbol_id: get_name_method_id,
-                    name: "get_name" as SymbolName,
-                    scope_id: user_scope,
-                    location: {
-                      file_path: user_file,
-                      start_line: 1,
-                      start_column: 100,
-                      end_line: 1,
-                      end_column: 135,
-                    },
-                    availability: { scope: "file-export" },
-                    parameters: [],
-                  },
-                ],
-                properties: [],
-              } as ClassDefinition,
-            ],
-          ]),
-          type_members: new Map([
-            [
-              user_struct_id,
-              {
-                type_id: user_struct_id,
-                methods: new Map([
-                  ["new" as SymbolName, new_method_id],
-                  ["get_name" as SymbolName, get_name_method_id],
-                ]),
-                properties: new Map(),
-                constructor: undefined,
-                extends: [],
-              },
-            ],
-          ]),
-        });
-
-        // repositories/user_repository.rs: use crate::models::user::User; pub struct UserRepository; impl UserRepository { pub fn create_user(&self, name: String) -> User { User::new(name) } }
-        const repository_file = "repositories/user_repository.rs" as FilePath;
-        const repository_scope =
-          "scope:repositories/user_repository.rs:module" as ScopeId;
-        const repo_struct_id =
-          "class:repositories/user_repository.rs:UserRepository:1:35" as SymbolId;
-        const create_user_method_id =
-          "method:repositories/user_repository.rs:UserRepository:create_user:1:70" as SymbolId;
-
-        const repository_index = create_test_index(repository_file, {
-          root_scope_id: repository_scope,
-          scopes: new Map([
-            [
-              repository_scope,
-              {
-                id: repository_scope,
-                type: "module",
-                parent_id: null,
-                name: null,
-                location: {
-                  file_path: repository_file,
-                  start_line: 1,
-                  start_column: 0,
-                  end_line: 1,
-                  end_column: 140,
-                },
-                child_ids: [],
-              },
-            ],
-          ]),
-          classes: new Map([
-            [
-              repo_struct_id,
-              {
-                kind: "class",
-                symbol_id: repo_struct_id,
-                name: "UserRepository" as SymbolName,
-                scope_id: repository_scope,
-                location: {
-                  file_path: repository_file,
-                  start_line: 1,
-                  start_column: 35,
-                  end_line: 1,
-                  end_column: 60,
-                },
-                availability: { scope: "file-export" },
-                extends: [],
-                decorators: [],
-                constructor: undefined,
-                methods: [
-                  {
-                    kind: "method",
-                    symbol_id: create_user_method_id,
-                    name: "create_user" as SymbolName,
-                    scope_id: repository_scope,
-                    location: {
-                      file_path: repository_file,
-                      start_line: 1,
-                      start_column: 70,
-                      end_line: 1,
-                      end_column: 130,
-                    },
-                    availability: { scope: "file-export" },
-                    parameters: [],
-                  },
-                ],
-                properties: [],
-              } as ClassDefinition,
-            ],
-          ]),
-          type_members: new Map([
-            [
-              repo_struct_id,
-              {
-                type_id: repo_struct_id,
-                methods: new Map([
-                  ["create_user" as SymbolName, create_user_method_id],
-                ]),
-                properties: new Map(),
-                constructor: undefined,
-                extends: [],
-              },
-            ],
-          ]),
-          references: [
+      const user_index = create_test_index(user_file, {
+        root_scope_id: user_scope,
+        scopes: new Map([
+          [
+            user_scope,
             {
-              type: "call",
-              call_type: "function",
-              name: "new" as SymbolName,
+              id: user_scope,
+              type: "module",
+              parent_id: null,
+              name: null,
+              location: {
+                file_path: user_file,
+                start_line: 1,
+                start_column: 0,
+                end_line: 1,
+                end_column: 140,
+              },
+              child_ids: [],
+            },
+          ],
+        ]),
+        classes: new Map([
+          [
+            user_struct_id,
+            {
+              kind: "class",
+              symbol_id: user_struct_id,
+              name: "User" as SymbolName,
+              defining_scope_id: user_scope,
+              location: {
+                file_path: user_file,
+                start_line: 1,
+                start_column: 0,
+                end_line: 1,
+                end_column: 35,
+              },
+              availability: { scope: "file-export" },
+              extends: [],
+              decorators: [],
+              constructor: undefined,
+              methods: [
+                {
+                  kind: "method",
+                  symbol_id: new_method_id,
+                  name: "new" as SymbolName,
+                  defining_scope_id: user_scope,
+                  location: {
+                    file_path: user_file,
+                    start_line: 1,
+                    start_column: 40,
+                    end_line: 1,
+                    end_column: 85,
+                  },
+                  availability: { scope: "file-export" },
+                  parameters: [],
+                },
+                {
+                  kind: "method",
+                  symbol_id: get_name_method_id,
+                  name: "get_name" as SymbolName,
+                  defining_scope_id: user_scope,
+                  location: {
+                    file_path: user_file,
+                    start_line: 1,
+                    start_column: 100,
+                    end_line: 1,
+                    end_column: 135,
+                  },
+                  availability: { scope: "file-export" },
+                  parameters: [],
+                },
+              ],
+              properties: [],
+            } as ClassDefinition,
+          ],
+        ]),
+        type_members: new Map([
+          [
+            user_struct_id,
+            {
+              type_id: user_struct_id,
+              methods: new Map([
+                ["new" as SymbolName, new_method_id],
+                ["get_name" as SymbolName, get_name_method_id],
+              ]),
+              properties: new Map(),
+              constructor: undefined,
+              extends: [],
+            },
+          ],
+        ]),
+      });
+
+      // repositories/user_repository.rs: use crate::models::user::User; pub struct UserRepository; impl UserRepository { pub fn create_user(&self, name: String) -> User { User::new(name) } }
+      const repository_file = "repositories/user_repository.rs" as FilePath;
+      const repository_scope =
+        "scope:repositories/user_repository.rs:module" as ScopeId;
+      const repo_struct_id =
+        "class:repositories/user_repository.rs:UserRepository:1:35" as SymbolId;
+      const create_user_method_id =
+        "method:repositories/user_repository.rs:UserRepository:create_user:1:70" as SymbolId;
+
+      const repository_index = create_test_index(repository_file, {
+        root_scope_id: repository_scope,
+        scopes: new Map([
+          [
+            repository_scope,
+            {
+              id: repository_scope,
+              type: "module",
+              parent_id: null,
+              name: null,
               location: {
                 file_path: repository_file,
                 start_line: 1,
-                start_column: 115,
+                start_column: 0,
                 end_line: 1,
-                end_column: 125,
+                end_column: 140,
               },
-              scope_id: repository_scope,
-              context: {},
+              child_ids: [],
             },
           ],
-        });
-
-        // services/user_service.rs: use crate::repositories::user_repository::UserRepository; pub struct UserService { repo: UserRepository } impl UserService { pub fn register_user(&self, name: String) -> String { let user = self.repo.create_user(name); String::from(user.get_name()) } }
-        const service_file = "services/user_service.rs" as FilePath;
-        const service_scope =
-          "scope:services/user_service.rs:module" as ScopeId;
-        const service_struct_id =
-          "class:services/user_service.rs:UserService:1:55" as SymbolId;
-        const register_user_method_id =
-          "method:services/user_service.rs:UserService:register_user:1:110" as SymbolId;
-
-        const service_index = create_test_index(service_file, {
-          root_scope_id: service_scope,
-          scopes: new Map([
-            [
-              service_scope,
-              {
-                id: service_scope,
-                type: "module",
-                parent_id: null,
-                name: null,
-                location: {
-                  file_path: service_file,
-                  start_line: 1,
-                  start_column: 0,
-                  end_line: 1,
-                  end_column: 220,
-                },
-                child_ids: [],
+        ]),
+        classes: new Map([
+          [
+            repo_struct_id,
+            {
+              kind: "class",
+              symbol_id: repo_struct_id,
+              name: "UserRepository" as SymbolName,
+              defining_scope_id: repository_scope,
+              location: {
+                file_path: repository_file,
+                start_line: 1,
+                start_column: 35,
+                end_line: 1,
+                end_column: 60,
               },
-            ],
-          ]),
-          classes: new Map([
-            [
-              service_struct_id,
-              {
-                kind: "class",
-                symbol_id: service_struct_id,
-                name: "UserService" as SymbolName,
-                scope_id: service_scope,
-                location: {
-                  file_path: service_file,
-                  start_line: 1,
-                  start_column: 55,
-                  end_line: 1,
-                  end_column: 95,
-                },
-                availability: { scope: "file-export" },
-                extends: [],
-                decorators: [],
-                constructor: undefined,
-                methods: [
-                  {
-                    kind: "method",
-                    symbol_id: register_user_method_id,
-                    name: "register_user" as SymbolName,
-                    scope_id: service_scope,
-                    location: {
-                      file_path: service_file,
-                      start_line: 1,
-                      start_column: 110,
-                      end_line: 1,
-                      end_column: 210,
-                    },
-                    availability: { scope: "file-export" },
-                    parameters: [],
+              availability: { scope: "file-export" },
+              extends: [],
+              decorators: [],
+              constructor: undefined,
+              methods: [
+                {
+                  kind: "method",
+                  symbol_id: create_user_method_id,
+                  name: "create_user" as SymbolName,
+                  defining_scope_id: repository_scope,
+                  location: {
+                    file_path: repository_file,
+                    start_line: 1,
+                    start_column: 70,
+                    end_line: 1,
+                    end_column: 130,
                   },
-                ],
-                properties: [],
-              } as ClassDefinition,
-            ],
-          ]),
-          type_members: new Map([
-            [
-              service_struct_id,
-              {
-                type_id: service_struct_id,
-                methods: new Map([
-                  ["register_user" as SymbolName, register_user_method_id],
-                ]),
-                properties: new Map(),
-                constructor: undefined,
-                extends: [],
-              },
-            ],
-          ]),
-          references: [
+                  availability: { scope: "file-export" },
+                  parameters: [],
+                },
+              ],
+              properties: [],
+            } as ClassDefinition,
+          ],
+        ]),
+        type_members: new Map([
+          [
+            repo_struct_id,
             {
-              type: "call",
-              call_type: "method",
-              name: "create_user" as SymbolName,
-              location: {
-                file_path: service_file,
-                start_line: 1,
-                start_column: 165,
-                end_line: 1,
-                end_column: 180,
-              },
-              scope_id: service_scope,
-              context: {},
-            },
-            {
-              type: "call",
-              call_type: "method",
-              name: "get_name" as SymbolName,
-              location: {
-                file_path: service_file,
-                start_line: 1,
-                start_column: 195,
-                end_line: 1,
-                end_column: 205,
-              },
-              scope_id: service_scope,
-              context: {},
+              type_id: repo_struct_id,
+              methods: new Map([
+                ["create_user" as SymbolName, create_user_method_id],
+              ]),
+              properties: new Map(),
+              constructor: undefined,
+              extends: [],
             },
           ],
-        });
+        ]),
+        references: [
+          {
+            type: "call",
+            call_type: "function",
+            name: "new" as SymbolName,
+            location: {
+              file_path: repository_file,
+              start_line: 1,
+              start_column: 115,
+              end_line: 1,
+              end_column: 125,
+            },
+            scope_id: repository_scope,
+            context: {},
+          },
+        ],
+      });
 
-        // main.rs: use crate::services::user_service::UserService; fn main() { let service = UserService::new(); let name = service.register_user(String::from("Alice")); }
-        const main_file = "main.rs" as FilePath;
-        const main_scope = "scope:main.rs:module" as ScopeId;
-        const service_import_id =
-          "import:main.rs:UserService:1:35" as SymbolId;
-        const register_user_call_location = {
-          file_path: main_file,
-          start_line: 3,
-          start_column: 17,
-          end_line: 3,
-          end_column: 57,
-        };
+      // services/user_service.rs: use crate::repositories::user_repository::UserRepository; pub struct UserService { repo: UserRepository } impl UserService { pub fn register_user(&self, name: String) -> String { let user = self.repo.create_user(name); String::from(user.get_name()) } }
+      const service_file = "services/user_service.rs" as FilePath;
+      const service_scope = "scope:services/user_service.rs:module" as ScopeId;
+      const service_struct_id =
+        "class:services/user_service.rs:UserService:1:55" as SymbolId;
+      const register_user_method_id =
+        "method:services/user_service.rs:UserService:register_user:1:110" as SymbolId;
 
-        const main_index = create_test_index(main_file, {
-          root_scope_id: main_scope,
-          scopes: new Map([
-            [
-              main_scope,
-              {
-                id: main_scope,
-                type: "module",
-                parent_id: null,
-                name: null,
-                location: {
-                  file_path: main_file,
-                  start_line: 1,
-                  start_column: 0,
-                  end_line: 3,
-                  end_column: 59,
-                },
-                child_ids: [],
-              },
-            ],
-          ]),
-          imports: new Map([
-            [
-              service_import_id,
-              {
-                kind: "import",
-                symbol_id: service_import_id,
-                name: "UserService" as SymbolName,
-                scope_id: main_scope,
-                location: {
-                  file_path: main_file,
-                  start_line: 1,
-                  start_column: 35,
-                  end_line: 1,
-                  end_column: 46,
-                },
-                import_path: "services/user_service.rs" as ModulePath,
-                import_kind: "named",
-                original_name: undefined,
-                availability: { scope: "file-private" },
-              },
-            ],
-          ]),
-          references: [
+      const service_index = create_test_index(service_file, {
+        root_scope_id: service_scope,
+        scopes: new Map([
+          [
+            service_scope,
             {
-              type: "call",
-              call_type: "method",
-              name: "register_user" as SymbolName,
-              location: register_user_call_location,
+              id: service_scope,
+              type: "module",
+              parent_id: null,
+              name: null,
+              location: {
+                file_path: service_file,
+                start_line: 1,
+                start_column: 0,
+                end_line: 1,
+                end_column: 220,
+              },
+              child_ids: [],
+            },
+          ],
+        ]),
+        classes: new Map([
+          [
+            service_struct_id,
+            {
+              kind: "class",
+              symbol_id: service_struct_id,
+              name: "UserService" as SymbolName,
+              defining_scope_id: service_scope,
+              location: {
+                file_path: service_file,
+                start_line: 1,
+                start_column: 55,
+                end_line: 1,
+                end_column: 95,
+              },
+              availability: { scope: "file-export" },
+              extends: [],
+              decorators: [],
+              constructor: undefined,
+              methods: [
+                {
+                  kind: "method",
+                  symbol_id: register_user_method_id,
+                  name: "register_user" as SymbolName,
+                  defining_scope_id: service_scope,
+                  location: {
+                    file_path: service_file,
+                    start_line: 1,
+                    start_column: 110,
+                    end_line: 1,
+                    end_column: 210,
+                  },
+                  availability: { scope: "file-export" },
+                  parameters: [],
+                },
+              ],
+              properties: [],
+            } as ClassDefinition,
+          ],
+        ]),
+        type_members: new Map([
+          [
+            service_struct_id,
+            {
+              type_id: service_struct_id,
+              methods: new Map([
+                ["register_user" as SymbolName, register_user_method_id],
+              ]),
+              properties: new Map(),
+              constructor: undefined,
+              extends: [],
+            },
+          ],
+        ]),
+        references: [
+          {
+            type: "call",
+            call_type: "method",
+            name: "create_user" as SymbolName,
+            location: {
+              file_path: service_file,
+              start_line: 1,
+              start_column: 165,
+              end_line: 1,
+              end_column: 180,
+            },
+            scope_id: service_scope,
+            context: {},
+          },
+          {
+            type: "call",
+            call_type: "method",
+            name: "get_name" as SymbolName,
+            location: {
+              file_path: service_file,
+              start_line: 1,
+              start_column: 195,
+              end_line: 1,
+              end_column: 205,
+            },
+            scope_id: service_scope,
+            context: {},
+          },
+        ],
+      });
+
+      // main.rs: use crate::services::user_service::UserService; fn main() { let service = UserService::new(); let name = service.register_user(String::from("Alice")); }
+      const main_file = "main.rs" as FilePath;
+      const main_scope = "scope:main.rs:module" as ScopeId;
+      const service_import_id = "import:main.rs:UserService:1:35" as SymbolId;
+      const register_user_call_location = {
+        file_path: main_file,
+        start_line: 3,
+        start_column: 17,
+        end_line: 3,
+        end_column: 57,
+      };
+
+      const main_index = create_test_index(main_file, {
+        root_scope_id: main_scope,
+        scopes: new Map([
+          [
+            main_scope,
+            {
+              id: main_scope,
+              type: "module",
+              parent_id: null,
+              name: null,
+              location: {
+                file_path: main_file,
+                start_line: 1,
+                start_column: 0,
+                end_line: 3,
+                end_column: 59,
+              },
+              child_ids: [],
+            },
+          ],
+        ]),
+        imports: new Map([
+          [
+            service_import_id,
+            {
+              kind: "import",
+              symbol_id: service_import_id,
+              name: "UserService" as SymbolName,
               scope_id: main_scope,
-              context: {},
+              location: {
+                file_path: main_file,
+                start_line: 1,
+                start_column: 35,
+                end_line: 1,
+                end_column: 46,
+              },
+              import_path: "services/user_service.rs" as ModulePath,
+              import_kind: "named",
+              original_name: undefined,
+              availability: { scope: "file-private" },
             },
           ],
-        });
+        ]),
+        references: [
+          {
+            type: "call",
+            call_type: "method",
+            name: "register_user" as SymbolName,
+            location: register_user_call_location,
+            scope_id: main_scope,
+            context: {},
+          },
+        ],
+      });
 
-        const indices = new Map<FilePath, SemanticIndex>([
-          [user_file, user_index],
-          [repository_file, repository_index],
-          [service_file, service_index],
-          [main_file, main_index],
-        ]);
+      const indices = new Map<FilePath, SemanticIndex>([
+        [user_file, user_index],
+        [repository_file, repository_index],
+        [service_file, service_index],
+        [main_file, main_index],
+      ]);
 
-        const result = resolve_symbols(indices);
+      const result = resolve_symbols(indices);
 
-        // Verify register_user method call in main.rs
-        const register_user_key = location_key(register_user_call_location);
-        expect(result.resolved_references.get(register_user_key)).toBe(
-          register_user_method_id
-        );
+      // Verify register_user method call in main.rs
+      const register_user_key = location_key(register_user_call_location);
+      expect(result.resolved_references.get(register_user_key)).toBe(
+        register_user_method_id
+      );
 
-        // Verify create_user method call in user_service.rs
-        const create_user_key = location_key({
-          file_path: service_file,
-          start_line: 1,
-          start_column: 165,
-          end_line: 1,
-          end_column: 180,
-        });
-        expect(result.resolved_references.get(create_user_key)).toBe(
-          create_user_method_id
-        );
+      // Verify create_user method call in user_service.rs
+      const create_user_key = location_key({
+        file_path: service_file,
+        start_line: 1,
+        start_column: 165,
+        end_line: 1,
+        end_column: 180,
+      });
+      expect(result.resolved_references.get(create_user_key)).toBe(
+        create_user_method_id
+      );
 
-        // Verify User::new call in user_repository.rs
-        const user_new_key = location_key({
-          file_path: repository_file,
-          start_line: 1,
-          start_column: 115,
-          end_line: 1,
-          end_column: 125,
-        });
-        expect(result.resolved_references.get(user_new_key)).toBe(
-          new_method_id
-        );
+      // Verify User::new call in user_repository.rs
+      const user_new_key = location_key({
+        file_path: repository_file,
+        start_line: 1,
+        start_column: 115,
+        end_line: 1,
+        end_column: 125,
+      });
+      expect(result.resolved_references.get(user_new_key)).toBe(new_method_id);
 
-        // Verify get_name method call in user_service.rs
-        const get_name_key = location_key({
-          file_path: service_file,
-          start_line: 1,
-          start_column: 195,
-          end_line: 1,
-          end_column: 205,
-        });
-        expect(result.resolved_references.get(get_name_key)).toBe(
-          get_name_method_id
-        );
-      }
-    );
+      // Verify get_name method call in user_service.rs
+      const get_name_key = location_key({
+        file_path: service_file,
+        start_line: 1,
+        start_column: 195,
+        end_line: 1,
+        end_column: 205,
+      });
+      expect(result.resolved_references.get(get_name_key)).toBe(
+        get_name_method_id
+      );
+    });
 
     // TODO: Requires cross-file import resolution and trait bounds tracking
     it.todo("resolves method call through trait bounds", () => {
@@ -2561,8 +2552,7 @@ describe("Rust Symbol Resolution Integration", () => {
       const item_file = "item.rs" as FilePath;
       const item_scope = "scope:item.rs:module" as ScopeId;
       const item_struct_id = "class:item.rs:Item:1:35" as SymbolId;
-      const process_method_id =
-        "method:item.rs:Item:process:1:75" as SymbolId;
+      const process_method_id = "method:item.rs:Item:process:1:75" as SymbolId;
 
       const item_index = create_test_index(item_file, {
         root_scope_id: item_scope,

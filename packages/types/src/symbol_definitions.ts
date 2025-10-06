@@ -39,7 +39,7 @@ export interface Definition {
   readonly kind: SymbolKind;
   readonly symbol_id: SymbolId;
   readonly name: SymbolName;
-  readonly scope_id: ScopeId; // ID of containing scope
+  readonly defining_scope_id: ScopeId; // Where this symbol NAME is visible (parent scope), NOT the scope this definition creates (e.g., class name is in parent scope, not class's own scope)
   readonly location: Location;
   readonly availability: SymbolAvailability; // Determines where symbol can be referenced
 }

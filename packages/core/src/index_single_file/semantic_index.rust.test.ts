@@ -27,13 +27,13 @@ function createParsedFile(
   tree: Parser.Tree,
   language: Language
 ): ParsedFile {
-  const lines = code.split('\n');
+  const lines = code.split("\n");
   return {
     file_path: filePath,
     file_lines: lines.length,
     file_end_column: lines[lines.length - 1]?.length || 0,
     tree,
-    lang: language
+    lang: language,
   };
 }
 
@@ -62,7 +62,7 @@ describe("Semantic Index - Rust", () => {
       const index = build_semantic_index(parsed_file, tree, "rust");
 
       // Verify structs are captured as classes
-      const class_names = Array.from(index.classes.values()).map(c => c.name);
+      const class_names = Array.from(index.classes.values()).map((c) => c.name);
       expect(class_names).toContain("Point");
       expect(class_names).toContain("Pair");
       expect(class_names).toContain("Color");
@@ -80,7 +80,7 @@ describe("Semantic Index - Rust", () => {
       const index = build_semantic_index(parsed_file, tree, "rust");
 
       // Verify enums are captured
-      const enum_names = Array.from(index.enums.values()).map(e => e.name);
+      const enum_names = Array.from(index.enums.values()).map((e) => e.name);
       expect(enum_names).toContain("Direction");
       expect(enum_names).toContain("Option");
       expect(enum_names).toContain("Message");
@@ -109,7 +109,9 @@ enum Message {
       const index = build_semantic_index(parsed_file, tree, "rust");
 
       // Verify Direction enum with simple variants
-      const direction_enum = Array.from(index.enums.values()).find(e => e.name === "Direction");
+      const direction_enum = Array.from(index.enums.values()).find(
+        (e) => e.name === "Direction"
+      );
       expect(direction_enum).toBeDefined();
 
       if (direction_enum) {
@@ -132,10 +134,10 @@ enum Message {
         expect(direction_enum.members.length).toBe(4);
 
         // Extract member names (they might be in symbol ID format)
-        const member_names = direction_enum.members.map(m => {
+        const member_names = direction_enum.members.map((m) => {
           const name = m.name;
           // Handle both plain names and symbol IDs like "enum_member:North:file:line:col"
-          return name.includes(':') ? name.split(':')[1] : name;
+          return name.includes(":") ? name.split(":")[1] : name;
         });
 
         expect(member_names).toContain("North");
@@ -145,7 +147,9 @@ enum Message {
       }
 
       // Verify Message enum with complex variants
-      const message_enum = Array.from(index.enums.values()).find(e => e.name === "Message");
+      const message_enum = Array.from(index.enums.values()).find(
+        (e) => e.name === "Message"
+      );
       expect(message_enum).toBeDefined();
 
       if (message_enum) {
@@ -163,9 +167,9 @@ enum Message {
         expect(message_enum.members).toBeDefined();
         expect(message_enum.members.length).toBe(4);
 
-        const member_names = message_enum.members.map(m => {
+        const member_names = message_enum.members.map((m) => {
           const name = m.name;
-          return name.includes(':') ? name.split(':')[1] : name;
+          return name.includes(":") ? name.split(":")[1] : name;
         });
 
         expect(member_names).toContain("Quit");
@@ -187,14 +191,17 @@ enum Message {
       const index = build_semantic_index(parsed_file, tree, "rust");
 
       // Verify enum members are captured within enum definitions
-      const direction_enum = Array.from(index.enums.values()).find(e => e.name === "Direction");
+      const direction_enum = Array.from(index.enums.values()).find(
+        (e) => e.name === "Direction"
+      );
       expect(direction_enum).toBeDefined();
       expect(direction_enum?.members).toBeDefined();
 
-      const member_names = direction_enum?.members.map(m => {
-        const name = m.name;
-        return name.includes(':') ? name.split(':').pop() || name : name;
-      }) || [];
+      const member_names =
+        direction_enum?.members.map((m) => {
+          const name = m.name;
+          return name.includes(":") ? name.split(":").pop() || name : name;
+        }) || [];
       expect(member_names).toContain("North");
       expect(member_names).toContain("South");
       expect(member_names).toContain("East");
@@ -221,14 +228,18 @@ struct Color {
       const index = build_semantic_index(parsed_file, tree, "rust");
 
       // Verify properties are captured within class definitions
-      const point_class = Array.from(index.classes.values()).find(c => c.name === "Point");
+      const point_class = Array.from(index.classes.values()).find(
+        (c) => c.name === "Point"
+      );
       expect(point_class).toBeDefined();
 
       // Note: Properties may not be fully populated yet for Rust
       // Just verify the class definition exists
       expect(point_class?.name).toBe("Point");
 
-      const color_class = Array.from(index.classes.values()).find(c => c.name === "Color");
+      const color_class = Array.from(index.classes.values()).find(
+        (c) => c.name === "Color"
+      );
       expect(color_class).toBeDefined();
       expect(color_class?.name).toBe("Color");
     });
@@ -251,7 +262,9 @@ struct Color {
       const index = build_semantic_index(parsed_file, tree, "rust");
 
       // Verify traits are captured as interfaces
-      const interface_names = Array.from(index.interfaces.values()).map(i => i.name);
+      const interface_names = Array.from(index.interfaces.values()).map(
+        (i) => i.name
+      );
       expect(interface_names).toContain("Drawable");
       // Note: traits_and_generics.rs may not contain Printable - just verify we have traits
       expect(interface_names.length).toBeGreaterThan(0);
@@ -276,7 +289,9 @@ trait Default {
       const index = build_semantic_index(parsed_file, tree, "rust");
 
       // Verify Drawable trait with complete structure
-      const drawable_trait = Array.from(index.interfaces.values()).find(i => i.name === "Drawable");
+      const drawable_trait = Array.from(index.interfaces.values()).find(
+        (i) => i.name === "Drawable"
+      );
       expect(drawable_trait).toBeDefined();
 
       if (drawable_trait) {
@@ -299,7 +314,9 @@ trait Default {
         expect(drawable_trait.methods.length).toBe(3);
 
         // Verify draw method with parameters
-        const draw_method = drawable_trait.methods.find(m => m.name === "draw");
+        const draw_method = drawable_trait.methods.find(
+          (m) => m.name === "draw"
+        );
         expect(draw_method).toBeDefined();
 
         if (draw_method) {
@@ -330,7 +347,9 @@ trait Default {
         }
 
         // Verify color method
-        const color_method = drawable_trait.methods.find(m => m.name === "color");
+        const color_method = drawable_trait.methods.find(
+          (m) => m.name === "color"
+        );
         expect(color_method).toBeDefined();
 
         if (color_method) {
@@ -340,17 +359,23 @@ trait Default {
         }
 
         // Verify resize method with multiple parameters
-        const resize_method = drawable_trait.methods.find(m => m.name === "resize");
+        const resize_method = drawable_trait.methods.find(
+          (m) => m.name === "resize"
+        );
         expect(resize_method).toBeDefined();
 
         if (resize_method) {
           expect(resize_method.parameters).toBeDefined();
           expect(resize_method.parameters.length).toBe(3); // &mut self, width, height
 
-          const self_param = resize_method.parameters.find(p => p.name === "self");
+          const self_param = resize_method.parameters.find(
+            (p) => p.name === "self"
+          );
           expect(self_param).toBeDefined();
 
-          const width_param = resize_method.parameters.find(p => p.name === "width");
+          const width_param = resize_method.parameters.find(
+            (p) => p.name === "width"
+          );
           expect(width_param).toBeDefined();
 
           if (width_param) {
@@ -361,7 +386,9 @@ trait Default {
             });
           }
 
-          const height_param = resize_method.parameters.find(p => p.name === "height");
+          const height_param = resize_method.parameters.find(
+            (p) => p.name === "height"
+          );
           expect(height_param).toBeDefined();
 
           if (height_param) {
@@ -375,11 +402,15 @@ trait Default {
       }
 
       // Verify Default trait with associated function (no self)
-      const default_trait = Array.from(index.interfaces.values()).find(i => i.name === "Default");
+      const default_trait = Array.from(index.interfaces.values()).find(
+        (i) => i.name === "Default"
+      );
       expect(default_trait).toBeDefined();
 
       if (default_trait) {
-        const default_method = default_trait.methods.find(m => m.name === "default");
+        const default_method = default_trait.methods.find(
+          (m) => m.name === "default"
+        );
         expect(default_method).toBeDefined();
 
         if (default_method) {
@@ -407,7 +438,9 @@ trait Display {
       const index = build_semantic_index(parsed_file, tree, "rust");
 
       // Verify trait is captured
-      const display_trait = Array.from(index.interfaces.values()).find(i => i.name === "Display");
+      const display_trait = Array.from(index.interfaces.values()).find(
+        (i) => i.name === "Display"
+      );
       expect(display_trait).toBeDefined();
       expect(display_trait?.name).toBe("Display");
 
@@ -455,7 +488,9 @@ impl Rectangle {
       const index = build_semantic_index(parsed_file, tree, "rust");
 
       // Verify struct is captured
-      const struct_def = Array.from(index.classes.values()).find(c => c.name === "Rectangle");
+      const struct_def = Array.from(index.classes.values()).find(
+        (c) => c.name === "Rectangle"
+      );
       expect(struct_def).toBeDefined();
 
       if (struct_def) {
@@ -478,7 +513,7 @@ impl Rectangle {
         expect(struct_def.methods.length).toBeGreaterThan(0);
 
         // Constructor (new method - should be static)
-        const new_method = struct_def.methods.find(m => m.name === "new");
+        const new_method = struct_def.methods.find((m) => m.name === "new");
         expect(new_method).toBeDefined();
 
         if (new_method) {
@@ -511,7 +546,7 @@ impl Rectangle {
         }
 
         // Instance method with &self
-        const area_method = struct_def.methods.find(m => m.name === "area");
+        const area_method = struct_def.methods.find((m) => m.name === "area");
         expect(area_method).toBeDefined();
 
         if (area_method) {
@@ -519,22 +554,28 @@ impl Rectangle {
           expect(area_method.parameters).toBeDefined();
           expect(area_method.parameters.length).toBeGreaterThanOrEqual(1);
 
-          const self_param = area_method.parameters.find(p => p.name === "self");
+          const self_param = area_method.parameters.find(
+            (p) => p.name === "self"
+          );
           expect(self_param).toBeDefined();
         }
 
         // Mutable self method
-        const scale_method = struct_def.methods.find(m => m.name === "scale");
+        const scale_method = struct_def.methods.find((m) => m.name === "scale");
         expect(scale_method).toBeDefined();
 
         if (scale_method) {
           expect(scale_method.parameters).toBeDefined();
           expect(scale_method.parameters.length).toBe(2); // &mut self, factor
 
-          const self_param = scale_method.parameters.find(p => p.name === "self");
+          const self_param = scale_method.parameters.find(
+            (p) => p.name === "self"
+          );
           expect(self_param).toBeDefined();
 
-          const factor_param = scale_method.parameters.find(p => p.name === "factor");
+          const factor_param = scale_method.parameters.find(
+            (p) => p.name === "factor"
+          );
           expect(factor_param).toBeDefined();
 
           if (factor_param) {
@@ -547,7 +588,9 @@ impl Rectangle {
         }
 
         // Associated function (static)
-        const from_square = struct_def.methods.find(m => m.name === "from_square");
+        const from_square = struct_def.methods.find(
+          (m) => m.name === "from_square"
+        );
         expect(from_square).toBeDefined();
 
         if (from_square) {
@@ -576,7 +619,9 @@ impl Rectangle {
       const index = build_semantic_index(parsed_file, tree, "rust");
 
       // Verify struct is captured
-      const point_class = Array.from(index.classes.values()).find(c => c.name === "Point");
+      const point_class = Array.from(index.classes.values()).find(
+        (c) => c.name === "Point"
+      );
       expect(point_class).toBeDefined();
 
       // Verify methods are populated
@@ -607,7 +652,9 @@ impl Calculator {
       const index = build_semantic_index(parsed_file, tree, "rust");
 
       // Verify struct is captured
-      const calc_class = Array.from(index.classes.values()).find(c => c.name === "Calculator");
+      const calc_class = Array.from(index.classes.values()).find(
+        (c) => c.name === "Calculator"
+      );
       expect(calc_class).toBeDefined();
       expect(calc_class?.name).toBe("Calculator");
 
@@ -638,11 +685,15 @@ impl Display for Point {
       const index = build_semantic_index(parsed_file, tree, "rust");
 
       // Verify trait is captured
-      const interface_names = Array.from(index.interfaces.values()).map(i => i.name);
+      const interface_names = Array.from(index.interfaces.values()).map(
+        (i) => i.name
+      );
       expect(interface_names).toContain("Display");
 
       // Verify struct is captured
-      const point_class = Array.from(index.classes.values()).find(c => c.name === "Point");
+      const point_class = Array.from(index.classes.values()).find(
+        (c) => c.name === "Point"
+      );
       expect(point_class).toBeDefined();
       expect(point_class?.name).toBe("Point");
 
@@ -667,7 +718,9 @@ impl Display for Point {
       const index = build_semantic_index(parsed_file, tree, "rust");
 
       // Verify functions are captured
-      const function_names = Array.from(index.functions.values()).map(f => f.name);
+      const function_names = Array.from(index.functions.values()).map(
+        (f) => f.name
+      );
       expect(function_names).toContain("add");
       // Note: main might not be extracted in all fixtures - just verify we have functions
       expect(function_names.length).toBeGreaterThan(0);
@@ -690,7 +743,9 @@ fn greet(name: &str, times: usize) -> String {
       const index = build_semantic_index(parsed_file, tree, "rust");
 
       // Verify add function with complete object assertion
-      const add_func = Array.from(index.functions.values()).find(f => f.name === "add");
+      const add_func = Array.from(index.functions.values()).find(
+        (f) => f.name === "add"
+      );
       expect(add_func).toBeDefined();
 
       if (add_func) {
@@ -730,7 +785,9 @@ fn greet(name: &str, times: usize) -> String {
       }
 
       // Verify greet function with reference type
-      const greet_func = Array.from(index.functions.values()).find(f => f.name === "greet");
+      const greet_func = Array.from(index.functions.values()).find(
+        (f) => f.name === "greet"
+      );
       expect(greet_func).toBeDefined();
 
       if (greet_func) {
@@ -738,11 +795,15 @@ fn greet(name: &str, times: usize) -> String {
         expect(greet_func.signature.parameters).toBeDefined();
         expect(greet_func.signature.parameters.length).toBe(2);
 
-        const name_param = greet_func.signature.parameters.find(p => p.name === "name");
+        const name_param = greet_func.signature.parameters.find(
+          (p) => p.name === "name"
+        );
         expect(name_param).toBeDefined();
         expect(name_param?.type).toBe("&str");
 
-        const times_param = greet_func.signature.parameters.find(p => p.name === "times");
+        const times_param = greet_func.signature.parameters.find(
+          (p) => p.name === "times"
+        );
         expect(times_param).toBeDefined();
         expect(times_param?.type).toBe("usize");
       }
@@ -761,11 +822,15 @@ fn greet(name: &str, age: u32) -> String {
       const index = build_semantic_index(parsed_file, tree, "rust");
 
       // Verify function is captured
-      const function_names = Array.from(index.functions.values()).map(f => f.name);
+      const function_names = Array.from(index.functions.values()).map(
+        (f) => f.name
+      );
       expect(function_names).toContain("greet");
 
       // Verify function signature exists
-      const greet_func = Array.from(index.functions.values()).find(f => f.name === "greet");
+      const greet_func = Array.from(index.functions.values()).find(
+        (f) => f.name === "greet"
+      );
       expect(greet_func).toBeDefined();
       expect(greet_func?.signature).toBeDefined();
 
@@ -787,7 +852,9 @@ fn calculate(x: i32, y: i32) -> i32 {
       const index = build_semantic_index(parsed_file, tree, "rust");
 
       // Verify function is captured
-      const function_names = Array.from(index.functions.values()).map(f => f.name);
+      const function_names = Array.from(index.functions.values()).map(
+        (f) => f.name
+      );
       expect(function_names).toContain("calculate");
     });
 
@@ -810,12 +877,14 @@ fn main() {
 
       // Verify function calls are tracked
       const function_calls = index.references.filter(
-        r => r.type === "call" && r.call_type === "function"
+        (r) => r.type === "call" && r.call_type === "function"
       );
       expect(function_calls.length).toBeGreaterThan(0);
 
       // Should have at least two calls to helper
-      const helper_calls = function_calls.filter(c => c.name.includes("helper"));
+      const helper_calls = function_calls.filter((c) =>
+        c.name.includes("helper")
+      );
       expect(helper_calls.length).toBeGreaterThanOrEqual(2);
     });
 
@@ -840,10 +909,10 @@ fn main() {
       const index = build_semantic_index(parsed_file, tree, "rust");
 
       // Verify associated function call is tracked
-      const calls = index.references.filter(r => r.type === "call");
+      const calls = index.references.filter((r) => r.type === "call");
       expect(calls.length).toBeGreaterThan(0);
 
-      const new_call = calls.find(c => c.name.includes("new"));
+      const new_call = calls.find((c) => c.name.includes("new"));
       expect(new_call).toBeDefined();
     });
   });
@@ -870,7 +939,9 @@ fn modify_string(s: &mut String) {
       const index = build_semantic_index(parsed_file, tree, "rust");
 
       // Verify functions are captured
-      const function_names = Array.from(index.functions.values()).map(f => f.name);
+      const function_names = Array.from(index.functions.values()).map(
+        (f) => f.name
+      );
       expect(function_names).toContain("read_string");
       expect(function_names).toContain("modify_string");
     });
@@ -925,7 +996,9 @@ pub(crate) mod internal {
       // Verify modules are extracted as namespaces
       expect(index.namespaces.size).toBeGreaterThan(0);
 
-      const namespace_names = Array.from(index.namespaces.values()).map(ns => ns.name);
+      const namespace_names = Array.from(index.namespaces.values()).map(
+        (ns) => ns.name
+      );
       expect(namespace_names).toContain("math");
       expect(namespace_names).toContain("utils");
       expect(namespace_names).toContain("internal");
@@ -945,7 +1018,9 @@ pub(crate) mod internal {
       // Verify modules are extracted
       expect(index.namespaces.size).toBeGreaterThan(0);
 
-      const namespace_names = Array.from(index.namespaces.values()).map(ns => ns.name);
+      const namespace_names = Array.from(index.namespaces.values()).map(
+        (ns) => ns.name
+      );
       expect(namespace_names).toContain("math");
     });
 
@@ -966,7 +1041,9 @@ pub mod outer {
       const index = build_semantic_index(parsed_file, tree, "rust");
 
       // Verify both outer and inner modules are captured
-      const namespace_names = Array.from(index.namespaces.values()).map(ns => ns.name);
+      const namespace_names = Array.from(index.namespaces.values()).map(
+        (ns) => ns.name
+      );
       expect(namespace_names).toContain("outer");
       expect(namespace_names).toContain("inner");
     });
@@ -990,8 +1067,12 @@ mod private_module {
       // Verify modules are extracted
       expect(index.namespaces.size).toBe(2);
 
-      const public_mod = Array.from(index.namespaces.values()).find(ns => ns.name === "public_module");
-      const private_mod = Array.from(index.namespaces.values()).find(ns => ns.name === "private_module");
+      const public_mod = Array.from(index.namespaces.values()).find(
+        (ns) => ns.name === "public_module"
+      );
+      const private_mod = Array.from(index.namespaces.values()).find(
+        (ns) => ns.name === "private_module"
+      );
 
       expect(public_mod).toBeDefined();
       expect(private_mod).toBeDefined();
@@ -1019,7 +1100,7 @@ use crate::models::User;
 
       // Verify HashMap import with complete structure
       const hashmap_import = Array.from(index.imported_symbols.values()).find(
-        imp => imp.name === "HashMap"
+        (imp) => imp.name === "HashMap"
       );
       expect(hashmap_import).toBeDefined();
 
@@ -1041,7 +1122,7 @@ use crate::models::User;
 
       // Verify grouped imports (Read, Write)
       const read_import = Array.from(index.imported_symbols.values()).find(
-        imp => imp.name === "Read"
+        (imp) => imp.name === "Read"
       );
       expect(read_import).toBeDefined();
 
@@ -1051,7 +1132,7 @@ use crate::models::User;
       }
 
       const write_import = Array.from(index.imported_symbols.values()).find(
-        imp => imp.name === "Write"
+        (imp) => imp.name === "Write"
       );
       expect(write_import).toBeDefined();
 
@@ -1061,13 +1142,13 @@ use crate::models::User;
 
       // Verify glob import
       const glob_imports = Array.from(index.imported_symbols.values()).filter(
-        imp => imp.import_kind === "namespace"
+        (imp) => imp.import_kind === "namespace"
       );
       expect(glob_imports.length).toBeGreaterThan(0);
 
       // Verify crate import
       const user_import = Array.from(index.imported_symbols.values()).find(
-        imp => imp.name === "User"
+        (imp) => imp.name === "User"
       );
       expect(user_import).toBeDefined();
 
@@ -1095,7 +1176,9 @@ fn main() {
       // Verify imports are tracked
       expect(index.imported_symbols.size).toBeGreaterThan(0);
 
-      const imported_names = Array.from(index.imported_symbols.values()).map(imp => imp.name);
+      const imported_names = Array.from(index.imported_symbols.values()).map(
+        (imp) => imp.name
+      );
       expect(imported_names).toContain("HashMap");
       expect(imported_names).toContain("Result");
     });
@@ -1112,7 +1195,9 @@ use std::fmt::{Display, Formatter, Result};
       const index = build_semantic_index(parsed_file, tree, "rust");
 
       // Verify all imports are captured
-      const imported_names = Array.from(index.imported_symbols.values()).map(imp => imp.name);
+      const imported_names = Array.from(index.imported_symbols.values()).map(
+        (imp) => imp.name
+      );
       expect(imported_names).toContain("Display");
       expect(imported_names).toContain("Formatter");
       expect(imported_names).toContain("Result");
@@ -1134,14 +1219,14 @@ use std::io::Result as IoResult;
       const imports = Array.from(index.imported_symbols.values());
 
       // Check for HashMap/Map
-      const map_import = imports.find(imp =>
-        imp.name === "Map" || imp.original_name === "HashMap"
+      const map_import = imports.find(
+        (imp) => imp.name === "Map" || imp.original_name === "HashMap"
       );
       expect(map_import).toBeDefined();
 
       // Check for Result/IoResult
-      const result_import = imports.find(imp =>
-        imp.name === "IoResult" || imp.original_name === "Result"
+      const result_import = imports.find(
+        (imp) => imp.name === "IoResult" || imp.original_name === "Result"
       );
       expect(result_import).toBeDefined();
     });
@@ -1173,13 +1258,15 @@ extern crate tokio;
       const index = build_semantic_index(parsed_file, tree, "rust");
 
       // Verify extern crate imports are captured
-      const imported_names = Array.from(index.imported_symbols.values()).map(imp => imp.name);
+      const imported_names = Array.from(index.imported_symbols.values()).map(
+        (imp) => imp.name
+      );
       expect(imported_names).toContain("serde");
       expect(imported_names).toContain("tokio");
 
       // Verify complete structure
       const serdeImport = Array.from(index.imported_symbols.values()).find(
-        imp => imp.name === "serde"
+        (imp) => imp.name === "serde"
       );
       expect(serdeImport).toBeDefined();
       if (serdeImport) {
@@ -1204,13 +1291,15 @@ extern crate tokio_core as tokio;
       const index = build_semantic_index(parsed_file, tree, "rust");
 
       // Verify aliased extern crate imports are captured
-      const imported_names = Array.from(index.imported_symbols.values()).map(imp => imp.name);
+      const imported_names = Array.from(index.imported_symbols.values()).map(
+        (imp) => imp.name
+      );
       expect(imported_names).toContain("json");
       expect(imported_names).toContain("tokio");
 
       // Verify original names are preserved
       const jsonImport = Array.from(index.imported_symbols.values()).find(
-        imp => imp.name === "json"
+        (imp) => imp.name === "json"
       );
       expect(jsonImport).toBeDefined();
       if (jsonImport) {
@@ -1218,7 +1307,7 @@ extern crate tokio_core as tokio;
       }
 
       const tokioImport = Array.from(index.imported_symbols.values()).find(
-        imp => imp.name === "tokio"
+        (imp) => imp.name === "tokio"
       );
       expect(tokioImport).toBeDefined();
       if (tokioImport) {
@@ -1240,7 +1329,9 @@ use std::io::Result;
       const index = build_semantic_index(parsed_file, tree, "rust");
 
       // Verify all imports are captured
-      const imported_names = Array.from(index.imported_symbols.values()).map(imp => imp.name);
+      const imported_names = Array.from(index.imported_symbols.values()).map(
+        (imp) => imp.name
+      );
       expect(imported_names).toContain("serde");
       expect(imported_names).toContain("HashMap");
       expect(imported_names).toContain("runtime");
@@ -1264,7 +1355,9 @@ use std::{
       const index = build_semantic_index(parsed_file, tree, "rust");
 
       // Verify nested imports are captured
-      const imported_names = Array.from(index.imported_symbols.values()).map(imp => imp.name);
+      const imported_names = Array.from(index.imported_symbols.values()).map(
+        (imp) => imp.name
+      );
       expect(imported_names).toContain("Ordering");
       expect(imported_names).toContain("HashMap");
       expect(imported_names).toContain("HashSet");
@@ -1295,14 +1388,16 @@ mod math {
       expect(imports.length).toBeGreaterThan(0);
 
       // Verify HashMap import exists
-      const hashmap_import = imports.find(imp => imp.name === "HashMap");
+      const hashmap_import = imports.find((imp) => imp.name === "HashMap");
       expect(hashmap_import).toBeDefined();
       if (hashmap_import) {
         expect(hashmap_import.import_path).toBe("std::collections::HashMap");
       }
 
       // Verify add_numbers import exists (aliased from self::math::add)
-      const add_numbers_import = imports.find(imp => imp.name === "add_numbers");
+      const add_numbers_import = imports.find(
+        (imp) => imp.name === "add_numbers"
+      );
       expect(add_numbers_import).toBeDefined();
       if (add_numbers_import) {
         // The original_name should be the full path from the import
@@ -1329,11 +1424,11 @@ fn greet(name: &str, age: u32) -> String {
       const index = build_semantic_index(parsed_file, tree, "rust");
 
       // Check that type references were extracted
-      const type_refs = index.references.filter(r => r.type === "type");
+      const type_refs = index.references.filter((r) => r.type === "type");
       expect(type_refs.length).toBeGreaterThan(0);
 
       // Check that type_info is populated
-      const types_with_info = type_refs.filter(r => r.type_info);
+      const types_with_info = type_refs.filter((r) => r.type_info);
       expect(types_with_info.length).toBeGreaterThan(0);
 
       // Verify type info structure
@@ -1357,14 +1452,14 @@ fn main() {
 
       const index = build_semantic_index(parsed_file, tree, "rust");
 
-      const type_refs = index.references.filter(r => r.type === "type");
-      const types_with_info = type_refs.filter(r => r.type_info);
+      const type_refs = index.references.filter((r) => r.type === "type");
+      const types_with_info = type_refs.filter((r) => r.type_info);
 
       expect(types_with_info.length).toBeGreaterThan(0);
 
       // Check that at least one type has proper metadata
-      const has_valid_type = types_with_info.some(t =>
-        t.type_info?.type_name && t.type_info.certainty === "declared"
+      const has_valid_type = types_with_info.some(
+        (t) => t.type_info?.type_name && t.type_info.certainty === "declared"
       );
       expect(has_valid_type).toBe(true);
     });
@@ -1383,14 +1478,16 @@ fn process(items: Vec<String>, mapping: HashMap<String, i32>) -> Option<String> 
 
       const index = build_semantic_index(parsed_file, tree, "rust");
 
-      const type_refs = index.references.filter(r => r.type === "type");
-      const types_with_info = type_refs.filter(r => r.type_info);
+      const type_refs = index.references.filter((r) => r.type === "type");
+      const types_with_info = type_refs.filter((r) => r.type_info);
 
       // Check that we have type references with metadata
       expect(types_with_info.length).toBeGreaterThan(0);
 
       // Check that type_name is extracted
-      const types_with_names = types_with_info.filter(t => t.type_info?.type_name);
+      const types_with_names = types_with_info.filter(
+        (t) => t.type_info?.type_name
+      );
       expect(types_with_names.length).toBeGreaterThan(0);
     });
   });
@@ -1426,13 +1523,15 @@ fn main() {
 
       // Verify method call is captured
       const method_calls = index.references.filter(
-        r => r.type === "call" && r.call_type === "method"
+        (r) => r.type === "call" && r.call_type === "method"
       );
       expect(method_calls.length).toBeGreaterThan(0);
 
       // Note: receiver_location may not always be populated
       // Just verify we captured the method call
-      const distance_call = method_calls.find(c => c.name.includes("distance"));
+      const distance_call = method_calls.find((c) =>
+        c.name.includes("distance")
+      );
       expect(distance_call).toBeDefined();
     });
 
@@ -1453,7 +1552,7 @@ fn main() {
 
       // Verify method calls are captured
       const method_calls = index.references.filter(
-        r => r.type === "call" && r.call_type === "method"
+        (r) => r.type === "call" && r.call_type === "method"
       );
       expect(method_calls.length).toBeGreaterThan(0);
 
@@ -1487,7 +1586,7 @@ fn main() {
       // Note: Field access tracking may not be fully implemented yet
       // Just verify we captured the structs
       expect(index.classes.size).toBeGreaterThan(0);
-      const class_names = Array.from(index.classes.values()).map(c => c.name);
+      const class_names = Array.from(index.classes.values()).map((c) => c.name);
       expect(class_names).toContain("Inner");
       expect(class_names).toContain("Outer");
     });
@@ -1513,14 +1612,16 @@ fn main() {
       const index = build_semantic_index(parsed_file, tree, "rust");
 
       // Verify struct is defined
-      const class_names = Array.from(index.classes.values()).map(c => c.name);
+      const class_names = Array.from(index.classes.values()).map((c) => c.name);
       expect(class_names).toContain("Config");
 
       // Verify construct call is captured
-      const construct_calls = index.references.filter(r => r.type === "construct");
+      const construct_calls = index.references.filter(
+        (r) => r.type === "construct"
+      );
       expect(construct_calls.length).toBeGreaterThan(0);
 
-      const config_construct = construct_calls.find(c => c.name === "Config");
+      const config_construct = construct_calls.find((c) => c.name === "Config");
       expect(config_construct).toBeDefined();
       expect(config_construct?.context?.construct_target).toBeDefined();
     });
@@ -1560,7 +1661,7 @@ fn main() {
       // Scenario 1: Receiver from type annotation
       // Verify the assignment is captured
       const service1_assignment = result.references.find(
-        ref => ref.type === "assignment" && ref.name === "service1"
+        (ref) => ref.type === "assignment" && ref.name === "service1"
       );
       expect(service1_assignment).toBeDefined();
 
@@ -1568,23 +1669,27 @@ fn main() {
 
       // Verify method calls have receiver_location
       const method_calls = result.references.filter(
-        ref => ref.type === "call" && ref.name === "get_data"
+        (ref) => ref.type === "call" && ref.name === "get_data"
       );
 
       // Should have at least 2 get_data method calls
       expect(method_calls.length).toBeGreaterThanOrEqual(2);
 
       // At least some method calls should have receiver_location
-      const calls_with_receiver = method_calls.filter(c => c.context?.receiver_location);
+      const calls_with_receiver = method_calls.filter(
+        (c) => c.context?.receiver_location
+      );
       expect(calls_with_receiver.length).toBeGreaterThan(0);
 
       // Scenario 2: Verify struct instantiation has construct_target
       const constructor_calls = result.references.filter(
-        ref => ref.type === "construct" && ref.name === "Service"
+        (ref) => ref.type === "construct" && ref.name === "Service"
       );
 
       // Should have at least one constructor call with construct_target
-      const construct_with_target = constructor_calls.find(c => c.context?.construct_target);
+      const construct_with_target = constructor_calls.find(
+        (c) => c.context?.construct_target
+      );
       expect(construct_with_target).toBeDefined();
     });
   });
@@ -1662,22 +1767,24 @@ fn main() {
       expect(index.file_path).toBe(file_path);
 
       // Check that various reference types are captured
-      const type_refs = index.references.filter(r => r.type === "type");
-      const call_refs = index.references.filter(r => r.type === "call");
+      const type_refs = index.references.filter((r) => r.type === "type");
+      const call_refs = index.references.filter((r) => r.type === "call");
 
       expect(type_refs.length).toBeGreaterThan(0);
       expect(call_refs.length).toBeGreaterThan(0);
 
       // Check that metadata is being extracted
-      const refs_with_metadata = index.references.filter(r => r.type_info);
+      const refs_with_metadata = index.references.filter((r) => r.type_info);
       expect(refs_with_metadata.length).toBeGreaterThan(0);
 
       // Verify Rust-specific metadata
-      const rust_types = type_refs.filter(r => r.type_info?.type_name);
+      const rust_types = type_refs.filter((r) => r.type_info?.type_name);
       expect(rust_types.length).toBeGreaterThan(0);
 
       // Verify certainty is set correctly
-      const declared_types = rust_types.filter(r => r.type_info?.certainty === "declared");
+      const declared_types = rust_types.filter(
+        (r) => r.type_info?.certainty === "declared"
+      );
       expect(declared_types.length).toBeGreaterThan(0);
     });
 
@@ -1712,7 +1819,9 @@ fn pair<T, U>(first: T, second: U) -> (T, U) {
       const index = build_semantic_index(parsed_file, tree, "rust");
 
       // Verify generic struct
-      const struct_def = Array.from(index.classes.values()).find(c => c.name === "Container");
+      const struct_def = Array.from(index.classes.values()).find(
+        (c) => c.name === "Container"
+      );
       expect(struct_def).toBeDefined();
 
       if (struct_def) {
@@ -1726,7 +1835,7 @@ fn pair<T, U>(first: T, second: U) -> (T, U) {
         expect(struct_def.methods.length).toBeGreaterThan(0);
 
         // Verify new method with generic parameter
-        const new_method = struct_def.methods.find(m => m.name === "new");
+        const new_method = struct_def.methods.find((m) => m.name === "new");
         expect(new_method).toBeDefined();
 
         if (new_method) {
@@ -1741,7 +1850,7 @@ fn pair<T, U>(first: T, second: U) -> (T, U) {
         }
 
         // Verify get method returning generic type
-        const get_method = struct_def.methods.find(m => m.name === "get");
+        const get_method = struct_def.methods.find((m) => m.name === "get");
         expect(get_method).toBeDefined();
 
         if (get_method) {
@@ -1750,7 +1859,9 @@ fn pair<T, U>(first: T, second: U) -> (T, U) {
       }
 
       // Verify generic function with single type parameter
-      const identity_func = Array.from(index.functions.values()).find(f => f.name === "identity");
+      const identity_func = Array.from(index.functions.values()).find(
+        (f) => f.name === "identity"
+      );
       expect(identity_func).toBeDefined();
 
       if (identity_func) {
@@ -1771,7 +1882,9 @@ fn pair<T, U>(first: T, second: U) -> (T, U) {
       }
 
       // Verify generic function with multiple type parameters
-      const pair_func = Array.from(index.functions.values()).find(f => f.name === "pair");
+      const pair_func = Array.from(index.functions.values()).find(
+        (f) => f.name === "pair"
+      );
       expect(pair_func).toBeDefined();
 
       if (pair_func) {
@@ -1799,6 +1912,271 @@ fn pair<T, U>(first: T, second: U) -> (T, U) {
   });
 
   // ============================================================================
+  // SCOPE BOUNDARY TESTS (Body-Based Scopes)
+  // ============================================================================
+
+  describe("Scope boundaries for body-based scopes", () => {
+    it("DEBUG: should show all scopes created", () => {
+      const code = `struct Point {
+    x: i32,
+    y: i32,
+}
+
+enum Direction {
+    North,
+    South,
+}
+
+trait Drawable {
+    fn draw(&self);
+}
+
+impl Point {
+    fn new() -> Self {
+        Point { x: 0, y: 0 }
+    }
+}`;
+      const tree = parser.parse(code);
+      const file_path = "test.rs" as FilePath;
+      const parsed_file = createParsedFile(code, file_path, tree, "rust");
+
+      const index = build_semantic_index(parsed_file, tree, "rust");
+
+      console.log("\n=== ALL SCOPES ===");
+      Array.from(index.scopes.values()).forEach((scope) => {
+        console.log(
+          `Type: ${scope.type}, ID: ${scope.id.substring(0, 40)}..., Line: ${
+            scope.location.start_line
+          }, Col: ${scope.location.start_column}-${scope.location.end_column}`
+        );
+      });
+
+      console.log("\n=== STRUCT DEFINITION ===");
+      const struct_def = Array.from(index.classes.values()).find(
+        (c) => c.name === "Point"
+      );
+      if (struct_def) {
+        console.log(
+          `Name location: Line ${struct_def.location.start_line}, Col ${struct_def.location.start_column}`
+        );
+        console.log(`Scope ID: ${struct_def.defining_scope_id}`);
+      }
+
+      console.log("\n=== ENUM DEFINITION ===");
+      const enum_def = Array.from(index.enums.values()).find(
+        (e) => e.name === "Direction"
+      );
+      if (enum_def) {
+        console.log(
+          `Name location: Line ${enum_def.location.start_line}, Col ${enum_def.location.start_column}`
+        );
+        console.log(`Scope ID: ${enum_def.defining_scope_id}`);
+      }
+
+      console.log("\n=== TRAIT DEFINITION ===");
+      const trait_def = Array.from(index.interfaces.values()).find(
+        (i) => i.name === "Drawable"
+      );
+      if (trait_def) {
+        console.log(
+          `Name location: Line ${trait_def.location.start_line}, Col ${trait_def.location.start_column}`
+        );
+        console.log(`Scope ID: ${trait_def.defining_scope_id}`);
+      }
+
+      // This test should always pass - just for debugging
+      expect(index.scopes.size).toBeGreaterThan(0);
+    });
+
+    it("should capture struct body scope (not including name)", () => {
+      const code = `struct Point {
+    x: i32,
+    y: i32,
+}`;
+      const tree = parser.parse(code);
+      const file_path = "test.rs" as FilePath;
+      const parsed_file = createParsedFile(code, file_path, tree, "rust");
+
+      const index = build_semantic_index(parsed_file, tree, "rust");
+
+      // Verify struct definition exists
+      const struct_def = Array.from(index.classes.values()).find(
+        (c) => c.name === "Point"
+      );
+      expect(struct_def).toBeDefined();
+
+      // Find struct body scope (type: class, at line 1)
+      const struct_body_scopes = Array.from(index.scopes.values()).filter(
+        (s) => s.type === "class" && s.location.start_line === 1
+      );
+      expect(struct_body_scopes.length).toBeGreaterThan(0);
+
+      const struct_scope = struct_body_scopes[0];
+      if (struct_scope && struct_def) {
+        // Struct name "Point" ends around col 13
+        // Scope should start at the opening brace (line 1, after "Point ")
+        // The scope should NOT include "Point"
+        expect(struct_scope.location.start_line).toBe(1);
+        expect(struct_scope.location.start_column).toBeGreaterThan(13); // After "Point"
+
+        // Struct definition name should be before the scope
+        expect(struct_def.location.start_line).toBe(1);
+        expect(struct_def.location.start_column).toBeLessThan(
+          struct_scope.location.start_column
+        );
+      }
+    });
+
+    it("should capture enum body scope (not including name)", () => {
+      const code = `enum Direction {
+    North,
+    South,
+    East,
+    West,
+}`;
+      const tree = parser.parse(code);
+      const file_path = "test.rs" as FilePath;
+      const parsed_file = createParsedFile(code, file_path, tree, "rust");
+
+      const index = build_semantic_index(parsed_file, tree, "rust");
+
+      // Verify enum definition exists
+      const enum_def = Array.from(index.enums.values()).find(
+        (e) => e.name === "Direction"
+      );
+      expect(enum_def).toBeDefined();
+
+      // Find enum body scope (type: class, at line 1)
+      const enum_body_scopes = Array.from(index.scopes.values()).filter(
+        (s) => s.type === "class" && s.location.start_line === 1
+      );
+      expect(enum_body_scopes.length).toBeGreaterThan(0);
+
+      const enum_scope = enum_body_scopes[0];
+      if (enum_scope && enum_def) {
+        // Enum name "Direction" ends around col 15
+        // Scope should start at the opening brace, after "Direction "
+        expect(enum_scope.location.start_line).toBe(1);
+        expect(enum_scope.location.start_column).toBeGreaterThan(15); // After "Direction"
+
+        // Enum definition name should be before the scope
+        expect(enum_def.location.start_line).toBe(1);
+        expect(enum_def.location.start_column).toBeLessThan(
+          enum_scope.location.start_column
+        );
+      }
+    });
+
+    it("should capture trait body scope (not including name)", () => {
+      const code = `trait Drawable {
+    fn draw(&self);
+}`;
+      const tree = parser.parse(code);
+      const file_path = "test.rs" as FilePath;
+      const parsed_file = createParsedFile(code, file_path, tree, "rust");
+
+      const index = build_semantic_index(parsed_file, tree, "rust");
+
+      // Verify trait definition exists
+      const trait_def = Array.from(index.interfaces.values()).find(
+        (i) => i.name === "Drawable"
+      );
+      expect(trait_def).toBeDefined();
+
+      // Find trait body scope (type: class, at line 1, after the trait name)
+      const trait_body_scopes = Array.from(index.scopes.values()).filter(
+        (s) =>
+          s.type === "class" &&
+          s.location.start_line === 1 &&
+          s.location.start_column > (trait_def?.location.start_column || 0)
+      );
+      expect(trait_body_scopes.length).toBeGreaterThan(0);
+
+      const trait_scope = trait_body_scopes[0];
+      if (trait_scope && trait_def) {
+        // Trait name "Drawable" is 8 chars, starts at col 7 (1-indexed)
+        // "trait Drawable {" - opening brace is at col 17 (1-indexed)
+        // Scope should start at the opening brace, after "Drawable "
+        expect(trait_scope.location.start_line).toBe(1);
+        expect(trait_scope.location.start_column).toBeGreaterThan(
+          trait_def.location.start_column
+        ); // After trait name
+
+        // Trait definition name should be before the scope
+        expect(trait_def.location.start_line).toBe(1);
+        expect(trait_def.location.start_column).toBeLessThan(
+          trait_scope.location.start_column
+        );
+      }
+    });
+
+    it("should capture impl body scope (not including type name)", () => {
+      const code = `struct Point { x: i32 }
+
+impl Point {
+    fn new() -> Self {
+        Point { x: 0 }
+    }
+}`;
+      const tree = parser.parse(code);
+      const file_path = "test.rs" as FilePath;
+      const parsed_file = createParsedFile(code, file_path, tree, "rust");
+
+      const index = build_semantic_index(parsed_file, tree, "rust");
+
+      // Find impl block scope (it creates a block scope)
+      // The impl body should start after "Point " on line 3 (1-indexed)
+      const impl_scopes = Array.from(index.scopes.values()).filter(
+        (s) => s.type === "block" && s.location.start_line === 3
+      );
+
+      expect(impl_scopes.length).toBeGreaterThan(0);
+
+      const impl_scope = impl_scopes[0];
+      if (impl_scope) {
+        // "impl Point" starts at line 3, col 1
+        // Type name "Point" is at col 6-11
+        // Scope should start at the opening brace, after "Point "
+        expect(impl_scope.location.start_line).toBe(3);
+        expect(impl_scope.location.start_column).toBeGreaterThan(11); // After "Point"
+      }
+    });
+
+    it("should not create scopes for tuple structs (no body)", () => {
+      const code = `struct Point(i32, i32);
+struct Color(u8, u8, u8);`;
+      const tree = parser.parse(code);
+      const file_path = "test.rs" as FilePath;
+      const parsed_file = createParsedFile(code, file_path, tree, "rust");
+
+      const index = build_semantic_index(parsed_file, tree, "rust");
+
+      // Verify struct definitions exist
+      const point_def = Array.from(index.classes.values()).find(
+        (c) => c.name === "Point"
+      );
+      const color_def = Array.from(index.classes.values()).find(
+        (c) => c.name === "Color"
+      );
+
+      expect(point_def).toBeDefined();
+      expect(color_def).toBeDefined();
+
+      // Tuple structs don't have field_declaration_list bodies, so they shouldn't create struct scopes
+      // They may have scopes from function bodies, but not from the struct itself
+      // Only the module scope should exist (no class scopes at line 1 or 2 where the structs are defined)
+      const struct_scopes = Array.from(index.scopes.values()).filter(
+        (s) =>
+          s.type === "class" &&
+          (s.location.start_line === 1 || s.location.start_line === 2)
+      );
+
+      // Should have 0 class scopes for tuple structs since they don't have bodies
+      expect(struct_scopes.length).toBe(0);
+    });
+  });
+
+  // ============================================================================
   // TYPE ALIAS TESTS
   // ============================================================================
 
@@ -1815,7 +2193,7 @@ pub type BoxedError = Box<dyn Error>;
       const result = build_semantic_index(parsed_file, tree, "rust");
 
       // Verify type aliases exist
-      const typeNames = Array.from(result.types.values()).map(t => t.name);
+      const typeNames = Array.from(result.types.values()).map((t) => t.name);
       expect(typeNames).toContain("Kilometers");
       expect(typeNames).toContain("Result");
       expect(typeNames).toContain("BoxedError");
@@ -1904,7 +2282,7 @@ impl Iterator for MyIterator {
       const result = build_semantic_index(parsed_file, tree, "rust");
 
       // Verify associated type aliases exist
-      const typeNames = Array.from(result.types.values()).map(t => t.name);
+      const typeNames = Array.from(result.types.values()).map((t) => t.name);
       expect(typeNames).toContain("Item");
 
       // Should find both the trait associated type and the impl associated type
@@ -1953,7 +2331,9 @@ type FnPtr = fn(i32, i32) -> i32;
       // Check Result (generic with type parameters)
       const result_type = type_aliases.find((t) => t.name === "Result");
       expect(result_type).toBeDefined();
-      expect(result_type?.type_expression).toBe("std::result::Result<T, Error>");
+      expect(result_type?.type_expression).toBe(
+        "std::result::Result<T, Error>"
+      );
       expect(result_type?.generics).toEqual(["T"]);
 
       // Check Callback (trait object)
@@ -2050,19 +2430,27 @@ type AsyncFn<'a, T> = Box<dyn Future<Output = Result<T, Box<dyn Error>>> + Send 
       // Check NestedResult
       const nestedResult = type_aliases.find((t) => t.name === "NestedResult");
       expect(nestedResult).toBeDefined();
-      expect(nestedResult?.type_expression).toBe("Result<Option<T>, Box<dyn std::error::Error>>");
+      expect(nestedResult?.type_expression).toBe(
+        "Result<Option<T>, Box<dyn std::error::Error>>"
+      );
       expect(nestedResult?.generics).toEqual(["T", "E"]);
 
       // Check ComplexCallback
-      const complexCallback = type_aliases.find((t) => t.name === "ComplexCallback");
+      const complexCallback = type_aliases.find(
+        (t) => t.name === "ComplexCallback"
+      );
       expect(complexCallback).toBeDefined();
-      expect(complexCallback?.type_expression).toBe("Box<dyn Fn(Result<T, String>) -> Option<T>>");
+      expect(complexCallback?.type_expression).toBe(
+        "Box<dyn Fn(Result<T, String>) -> Option<T>>"
+      );
       expect(complexCallback?.generics).toEqual(["T"]);
 
       // Check AsyncFn
       const asyncFn = type_aliases.find((t) => t.name === "AsyncFn");
       expect(asyncFn).toBeDefined();
-      expect(asyncFn?.type_expression).toBe("Box<dyn Future<Output = Result<T, Box<dyn Error>>> + Send + 'a>");
+      expect(asyncFn?.type_expression).toBe(
+        "Box<dyn Future<Output = Result<T, Box<dyn Error>>> + Send + 'a>"
+      );
       expect(asyncFn?.generics).toEqual(["'a", "T"]);
     });
 

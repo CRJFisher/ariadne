@@ -99,7 +99,7 @@ describe("Method Call Resolution", () => {
             kind: "class",
             symbol_id: user_class_id,
             name: "User" as SymbolName,
-            scope_id: root_scope_id,
+            defining_scope_id: root_scope_id,
             location: {
               file_path: file_path,
               start_line: 1,
@@ -111,7 +111,7 @@ describe("Method Call Resolution", () => {
               {
                 symbol_id: get_name_method_id,
                 name: "getName" as SymbolName,
-                scope_id: root_scope_id,
+                defining_scope_id: root_scope_id,
                 location: {
                   file_path: file_path,
                   start_line: 2,
@@ -146,7 +146,7 @@ describe("Method Call Resolution", () => {
             kind: "variable",
             symbol_id: user_var_id,
             name: "user" as SymbolName,
-            scope_id: root_scope_id,
+            defining_scope_id: root_scope_id,
             location: user_var_loc,
             is_const: true,
             availability: "local",
@@ -164,7 +164,7 @@ describe("Method Call Resolution", () => {
         [
           user_class_id,
           {
-            methods: new Map([[("getName" as SymbolName), get_name_method_id]]),
+            methods: new Map([["getName" as SymbolName, get_name_method_id]]),
             properties: new Map(),
             constructor: null,
             extends: null,
@@ -259,7 +259,7 @@ describe("Method Call Resolution", () => {
             kind: "class",
             symbol_id: user_class_id,
             name: "User" as SymbolName,
-            scope_id: root_scope_id,
+            defining_scope_id: root_scope_id,
             location: {
               file_path: file_path,
               start_line: 1,
@@ -271,7 +271,7 @@ describe("Method Call Resolution", () => {
               {
                 symbol_id: get_name_method_id,
                 name: "getName" as SymbolName,
-                scope_id: root_scope_id,
+                defining_scope_id: root_scope_id,
                 location: {
                   file_path: file_path,
                   start_line: 2,
@@ -305,7 +305,7 @@ describe("Method Call Resolution", () => {
             kind: "variable",
             symbol_id: user_var_id,
             name: "user" as SymbolName,
-            scope_id: root_scope_id,
+            defining_scope_id: root_scope_id,
             location: user_var_loc,
             is_const: true,
             availability: "local",
@@ -322,7 +322,7 @@ describe("Method Call Resolution", () => {
         [
           user_class_id,
           {
-            methods: new Map([[("getName" as SymbolName), get_name_method_id]]),
+            methods: new Map([["getName" as SymbolName, get_name_method_id]]),
             properties: new Map(),
             constructor: null,
             extends: null,
@@ -442,7 +442,7 @@ describe("Method Call Resolution", () => {
             kind: "class",
             symbol_id: user_class_id,
             name: "User" as SymbolName,
-            scope_id: root_scope_id,
+            defining_scope_id: root_scope_id,
             location: {
               file_path: file_path,
               start_line: 1,
@@ -454,7 +454,7 @@ describe("Method Call Resolution", () => {
               {
                 symbol_id: get_name_method_id,
                 name: "getName" as SymbolName,
-                scope_id: root_scope_id,
+                defining_scope_id: root_scope_id,
                 location: {
                   file_path: file_path,
                   start_line: 2,
@@ -500,7 +500,7 @@ describe("Method Call Resolution", () => {
             kind: "variable",
             symbol_id: outer_user_id,
             name: "user" as SymbolName,
-            scope_id: root_scope_id,
+            defining_scope_id: root_scope_id,
             location: outer_user_loc,
             is_const: true,
             availability: "local",
@@ -512,7 +512,7 @@ describe("Method Call Resolution", () => {
             kind: "variable",
             symbol_id: inner_user_id,
             name: "user" as SymbolName,
-            scope_id: func_scope_id,
+            defining_scope_id: func_scope_id,
             location: inner_user_loc,
             is_const: true,
             availability: "local",
@@ -529,7 +529,7 @@ describe("Method Call Resolution", () => {
         [
           user_class_id,
           {
-            methods: new Map([[("getName" as SymbolName), get_name_method_id]]),
+            methods: new Map([["getName" as SymbolName, get_name_method_id]]),
             properties: new Map(),
             constructor: null,
             extends: null,
@@ -632,7 +632,7 @@ describe("Method Call Resolution", () => {
             kind: "class",
             symbol_id: type_a_id,
             name: "TypeA" as SymbolName,
-            scope_id: root_scope_id,
+            defining_scope_id: root_scope_id,
             location: {
               file_path: file_path,
               start_line: 1,
@@ -644,7 +644,7 @@ describe("Method Call Resolution", () => {
               {
                 symbol_id: type_a_method_id,
                 name: "method" as SymbolName,
-                scope_id: root_scope_id,
+                defining_scope_id: root_scope_id,
                 location: {
                   file_path: file_path,
                   start_line: 2,
@@ -667,7 +667,7 @@ describe("Method Call Resolution", () => {
             kind: "class",
             symbol_id: type_b_id,
             name: "TypeB" as SymbolName,
-            scope_id: root_scope_id,
+            defining_scope_id: root_scope_id,
             location: {
               file_path: file_path,
               start_line: 5,
@@ -679,7 +679,7 @@ describe("Method Call Resolution", () => {
               {
                 symbol_id: type_b_method_id,
                 name: "method" as SymbolName,
-                scope_id: root_scope_id,
+                defining_scope_id: root_scope_id,
                 location: {
                   file_path: file_path,
                   start_line: 6,
@@ -722,7 +722,7 @@ describe("Method Call Resolution", () => {
             kind: "variable",
             symbol_id: var_a_id,
             name: "a" as SymbolName,
-            scope_id: root_scope_id,
+            defining_scope_id: root_scope_id,
             location: var_a_loc,
             is_const: true,
             availability: "local",
@@ -734,7 +734,7 @@ describe("Method Call Resolution", () => {
             kind: "variable",
             symbol_id: var_b_id,
             name: "b" as SymbolName,
-            scope_id: root_scope_id,
+            defining_scope_id: root_scope_id,
             location: var_b_loc,
             is_const: true,
             availability: "local",
@@ -751,7 +751,7 @@ describe("Method Call Resolution", () => {
         [
           type_a_id,
           {
-            methods: new Map([[("method" as SymbolName), type_a_method_id]]),
+            methods: new Map([["method" as SymbolName, type_a_method_id]]),
             properties: new Map(),
             constructor: null,
             extends: null,
@@ -760,7 +760,7 @@ describe("Method Call Resolution", () => {
         [
           type_b_id,
           {
-            methods: new Map([[("method" as SymbolName), type_b_method_id]]),
+            methods: new Map([["method" as SymbolName, type_b_method_id]]),
             properties: new Map(),
             constructor: null,
             extends: null,
@@ -1020,7 +1020,7 @@ describe("Method Call Resolution", () => {
             kind: "variable",
             symbol_id: untyped_var_id,
             name: "obj" as SymbolName,
-            scope_id: root_scope_id,
+            defining_scope_id: root_scope_id,
             location: {
               file_path: file_path,
               start_line: 2,
@@ -1115,7 +1115,7 @@ describe("Method Call Resolution", () => {
             kind: "class",
             symbol_id: user_class_id,
             name: "User" as SymbolName,
-            scope_id: root_scope_id,
+            defining_scope_id: root_scope_id,
             location: {
               file_path: file_path,
               start_line: 1,
@@ -1145,7 +1145,7 @@ describe("Method Call Resolution", () => {
             kind: "variable",
             symbol_id: user_var_id,
             name: "user" as SymbolName,
-            scope_id: root_scope_id,
+            defining_scope_id: root_scope_id,
             location: user_var_loc,
             is_const: true,
             availability: "local",
@@ -1260,7 +1260,7 @@ describe("Method Call Resolution", () => {
             kind: "class",
             symbol_id: container_class_id,
             name: "Container" as SymbolName,
-            scope_id: root_scope_id,
+            defining_scope_id: root_scope_id,
             location: {
               file_path: file_path,
               start_line: 1,
@@ -1272,7 +1272,7 @@ describe("Method Call Resolution", () => {
               {
                 symbol_id: get_user_method_id,
                 name: "getUser" as SymbolName,
-                scope_id: root_scope_id,
+                defining_scope_id: root_scope_id,
                 location: {
                   file_path: file_path,
                   start_line: 2,
@@ -1307,7 +1307,7 @@ describe("Method Call Resolution", () => {
             kind: "variable",
             symbol_id: container_var_id,
             name: "container" as SymbolName,
-            scope_id: root_scope_id,
+            defining_scope_id: root_scope_id,
             location: container_var_loc,
             is_const: true,
             availability: "local",
@@ -1323,9 +1323,7 @@ describe("Method Call Resolution", () => {
         [
           container_class_id,
           {
-            methods: new Map([
-              [("getUser" as SymbolName), get_user_method_id],
-            ]),
+            methods: new Map([["getUser" as SymbolName, get_user_method_id]]),
             properties: new Map(),
             constructor: null,
             extends: null,
@@ -1420,7 +1418,7 @@ describe("Method Call Resolution", () => {
             kind: "class",
             symbol_id: user_class_id,
             name: "User" as SymbolName,
-            scope_id: root_scope_id,
+            defining_scope_id: root_scope_id,
             location: {
               file_path: file_path,
               start_line: 1,
@@ -1432,7 +1430,7 @@ describe("Method Call Resolution", () => {
               {
                 symbol_id: get_name_method_id,
                 name: "getName" as SymbolName,
-                scope_id: root_scope_id,
+                defining_scope_id: root_scope_id,
                 location: {
                   file_path: file_path,
                   start_line: 2,
@@ -1467,7 +1465,7 @@ describe("Method Call Resolution", () => {
             kind: "variable",
             symbol_id: get_name_var_id,
             name: "getName" as SymbolName,
-            scope_id: root_scope_id,
+            defining_scope_id: root_scope_id,
             location: get_name_var_loc,
             is_const: true,
             availability: "local",
@@ -1483,7 +1481,7 @@ describe("Method Call Resolution", () => {
         [
           user_class_id,
           {
-            methods: new Map([[("getName" as SymbolName), get_name_method_id]]),
+            methods: new Map([["getName" as SymbolName, get_name_method_id]]),
             properties: new Map(),
             constructor: null,
             extends: null,

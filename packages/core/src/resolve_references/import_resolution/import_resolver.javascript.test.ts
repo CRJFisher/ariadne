@@ -138,7 +138,10 @@ describe("resolve_module_path_javascript", () => {
 
     const main_file = path.join(TEST_DIR, "main.js") as FilePath;
 
-    const result = resolve_module_path_javascript("./helpers/utils.js", main_file);
+    const result = resolve_module_path_javascript(
+      "./helpers/utils.js",
+      main_file
+    );
 
     expect(result).toBe(utils_file);
   });
@@ -219,8 +222,8 @@ describe("Body-based scopes - JavaScript", () => {
     expect(class_scope).toBeDefined();
 
     // Name in parent scope
-    expect(class_def!.scope_id).toBe(module_scope!.id);
-    expect(class_def!.scope_id).not.toBe(class_scope!.id);
+    expect(class_def!.defining_scope_id).toBe(module_scope!.id);
+    expect(class_def!.defining_scope_id).not.toBe(class_scope!.id);
 
     // Class scope should start after the class name (at '{')
     expect(class_scope!.location.start_column).toBeGreaterThan(10);
@@ -251,7 +254,7 @@ describe("Body-based scopes - JavaScript", () => {
     expect(method_def).toBeDefined();
 
     // Members are in class scope
-    expect(method_def!.scope_id).toBe(class_scope!.id);
+    expect(method_def!.defining_scope_id).toBe(class_scope!.id);
   });
 
   it("multiple classes - names are in module scope", () => {
@@ -282,10 +285,10 @@ export class SecondClass {
 
     // Both class names should be in module-level scopes
     const first_scope_type = Array.from(index.scopes.values()).find(
-      (s) => s.id === first_class!.scope_id
+      (s) => s.id === first_class!.defining_scope_id
     )?.type;
     const second_scope_type = Array.from(index.scopes.values()).find(
-      (s) => s.id === second_class!.scope_id
+      (s) => s.id === second_class!.defining_scope_id
     )?.type;
 
     expect(first_scope_type).toBe("module");
@@ -316,15 +319,17 @@ export class SecondClass {
     // All methods should be in class scope
     const method1_def = class_def!.methods.find((m) => m.name === "method1");
     const method2_def = class_def!.methods.find((m) => m.name === "method2");
-    const static_method_def = class_def!.methods.find((m) => m.name === "staticMethod");
+    const static_method_def = class_def!.methods.find(
+      (m) => m.name === "staticMethod"
+    );
 
     expect(method1_def).toBeDefined();
     expect(method2_def).toBeDefined();
     expect(static_method_def).toBeDefined();
 
-    expect(method1_def!.scope_id).toBe(class_scope!.id);
-    expect(method2_def!.scope_id).toBe(class_scope!.id);
-    expect(static_method_def!.scope_id).toBe(class_scope!.id);
+    expect(method1_def!.defining_scope_id).toBe(class_scope!.id);
+    expect(method2_def!.defining_scope_id).toBe(class_scope!.id);
+    expect(static_method_def!.defining_scope_id).toBe(class_scope!.id);
   });
 
   it("class scope starts at opening brace, not at class keyword", () => {

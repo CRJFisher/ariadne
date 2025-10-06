@@ -65,7 +65,13 @@ describe("Function Call Resolution", () => {
             type: "module",
             parent_id: null,
             name: null,
-            location: { file: file_path, start_line: 1, start_column: 0, end_line: 10, end_column: 0 },
+            location: {
+              file: file_path,
+              start_line: 1,
+              start_column: 0,
+              end_line: 10,
+              end_column: 0,
+            },
             child_ids: [],
           },
         ],
@@ -79,27 +85,49 @@ describe("Function Call Resolution", () => {
             kind: "function",
             symbol_id: helper_id,
             name: "helper" as SymbolName,
-            scope_id: root_scope_id,
-            location: { file: file_path, start_line: 2, start_column: 0, end_line: 4, end_column: 1 },
+            defining_scope_id: root_scope_id,
+            location: {
+              file: file_path,
+              start_line: 2,
+              start_column: 0,
+              end_line: 4,
+              end_column: 1,
+            },
             availability: "local",
           },
         ],
       ]);
 
       const call_ref: SymbolReference = {
-        location: { file: file_path, start_line: 7, start_column: 2, end_line: 7, end_column: 10 },
+        location: {
+          file: file_path,
+          start_line: 7,
+          start_column: 2,
+          end_line: 7,
+          end_column: 10,
+        },
         type: "call",
         scope_id: root_scope_id,
         name: "helper" as SymbolName,
         call_type: "function",
       };
 
-      const index = create_test_index(file_path, functions, scopes, [call_ref], root_scope_id);
+      const index = create_test_index(
+        file_path,
+        functions,
+        scopes,
+        [call_ref],
+        root_scope_id
+      );
       const indices = new Map([[file_path, index]]);
       const resolver_index = build_scope_resolver_index(indices);
       const cache = create_resolution_cache();
 
-      const resolutions = resolve_function_calls(indices, resolver_index, cache);
+      const resolutions = resolve_function_calls(
+        indices,
+        resolver_index,
+        cache
+      );
 
       const call_key = location_key(call_ref.location);
       expect(resolutions.get(call_key)).toBe(helper_id);
@@ -118,7 +146,13 @@ describe("Function Call Resolution", () => {
             type: "module",
             parent_id: null,
             name: null,
-            location: { file: file_path, start_line: 1, start_column: 0, end_line: 10, end_column: 0 },
+            location: {
+              file: file_path,
+              start_line: 1,
+              start_column: 0,
+              end_line: 10,
+              end_column: 0,
+            },
             child_ids: [child_scope_id],
           },
         ],
@@ -129,7 +163,13 @@ describe("Function Call Resolution", () => {
             type: "block",
             parent_id: root_scope_id,
             name: null,
-            location: { file: file_path, start_line: 6, start_column: 15, end_line: 8, end_column: 1 },
+            location: {
+              file: file_path,
+              start_line: 6,
+              start_column: 15,
+              end_line: 8,
+              end_column: 1,
+            },
             child_ids: [],
           },
         ],
@@ -143,27 +183,49 @@ describe("Function Call Resolution", () => {
             kind: "function",
             symbol_id: helper_id,
             name: "helper" as SymbolName,
-            scope_id: root_scope_id,
-            location: { file: file_path, start_line: 2, start_column: 0, end_line: 4, end_column: 1 },
+            defining_scope_id: root_scope_id,
+            location: {
+              file: file_path,
+              start_line: 2,
+              start_column: 0,
+              end_line: 4,
+              end_column: 1,
+            },
             availability: "local",
           },
         ],
       ]);
 
       const call_ref: SymbolReference = {
-        location: { file: file_path, start_line: 7, start_column: 2, end_line: 7, end_column: 10 },
+        location: {
+          file: file_path,
+          start_line: 7,
+          start_column: 2,
+          end_line: 7,
+          end_column: 10,
+        },
         type: "call",
         scope_id: child_scope_id,
         name: "helper" as SymbolName,
         call_type: "function",
       };
 
-      const index = create_test_index(file_path, functions, scopes, [call_ref], root_scope_id);
+      const index = create_test_index(
+        file_path,
+        functions,
+        scopes,
+        [call_ref],
+        root_scope_id
+      );
       const indices = new Map([[file_path, index]]);
       const resolver_index = build_scope_resolver_index(indices);
       const cache = create_resolution_cache();
 
-      const resolutions = resolve_function_calls(indices, resolver_index, cache);
+      const resolutions = resolve_function_calls(
+        indices,
+        resolver_index,
+        cache
+      );
 
       const call_key = location_key(call_ref.location);
       expect(resolutions.get(call_key)).toBe(helper_id);
@@ -182,7 +244,13 @@ describe("Function Call Resolution", () => {
             type: "module",
             parent_id: null,
             name: null,
-            location: { file: file_path, start_line: 1, start_column: 0, end_line: 10, end_column: 0 },
+            location: {
+              file: file_path,
+              start_line: 1,
+              start_column: 0,
+              end_line: 10,
+              end_column: 0,
+            },
             child_ids: [func_scope_id],
           },
         ],
@@ -193,7 +261,13 @@ describe("Function Call Resolution", () => {
             type: "function",
             parent_id: root_scope_id,
             name: "factorial" as SymbolName,
-            location: { file: file_path, start_line: 2, start_column: 0, end_line: 6, end_column: 1 },
+            location: {
+              file: file_path,
+              start_line: 2,
+              start_column: 0,
+              end_line: 6,
+              end_column: 1,
+            },
             child_ids: [],
           },
         ],
@@ -207,8 +281,14 @@ describe("Function Call Resolution", () => {
             kind: "function",
             symbol_id: factorial_id,
             name: "factorial" as SymbolName,
-            scope_id: root_scope_id,
-            location: { file: file_path, start_line: 2, start_column: 0, end_line: 6, end_column: 1 },
+            defining_scope_id: root_scope_id,
+            location: {
+              file: file_path,
+              start_line: 2,
+              start_column: 0,
+              end_line: 6,
+              end_column: 1,
+            },
             availability: "local",
           },
         ],
@@ -216,19 +296,35 @@ describe("Function Call Resolution", () => {
 
       // Recursive call from within the function
       const call_ref: SymbolReference = {
-        location: { file: file_path, start_line: 4, start_column: 13, end_line: 4, end_column: 32 },
+        location: {
+          file: file_path,
+          start_line: 4,
+          start_column: 13,
+          end_line: 4,
+          end_column: 32,
+        },
         type: "call",
         scope_id: func_scope_id,
         name: "factorial" as SymbolName,
         call_type: "function",
       };
 
-      const index = create_test_index(file_path, functions, scopes, [call_ref], root_scope_id);
+      const index = create_test_index(
+        file_path,
+        functions,
+        scopes,
+        [call_ref],
+        root_scope_id
+      );
       const indices = new Map([[file_path, index]]);
       const resolver_index = build_scope_resolver_index(indices);
       const cache = create_resolution_cache();
 
-      const resolutions = resolve_function_calls(indices, resolver_index, cache);
+      const resolutions = resolve_function_calls(
+        indices,
+        resolver_index,
+        cache
+      );
 
       const call_key = location_key(call_ref.location);
       expect(resolutions.get(call_key)).toBe(factorial_id);
@@ -249,7 +345,13 @@ describe("Function Call Resolution", () => {
             type: "module",
             parent_id: null,
             name: null,
-            location: { file: file_path, start_line: 1, start_column: 0, end_line: 15, end_column: 0 },
+            location: {
+              file: file_path,
+              start_line: 1,
+              start_column: 0,
+              end_line: 15,
+              end_column: 0,
+            },
             child_ids: [inner_scope_id],
           },
         ],
@@ -260,7 +362,13 @@ describe("Function Call Resolution", () => {
             type: "function",
             parent_id: root_scope_id,
             name: "test" as SymbolName,
-            location: { file: file_path, start_line: 6, start_column: 0, end_line: 11, end_column: 1 },
+            location: {
+              file: file_path,
+              start_line: 6,
+              start_column: 0,
+              end_line: 11,
+              end_column: 1,
+            },
             child_ids: [],
           },
         ],
@@ -275,8 +383,14 @@ describe("Function Call Resolution", () => {
             kind: "function",
             symbol_id: outer_foo_id,
             name: "foo" as SymbolName,
-            scope_id: root_scope_id,
-            location: { file: file_path, start_line: 2, start_column: 0, end_line: 4, end_column: 1 },
+            defining_scope_id: root_scope_id,
+            location: {
+              file: file_path,
+              start_line: 2,
+              start_column: 0,
+              end_line: 4,
+              end_column: 1,
+            },
             availability: "local",
           },
         ],
@@ -286,8 +400,14 @@ describe("Function Call Resolution", () => {
             kind: "function",
             symbol_id: inner_foo_id,
             name: "foo" as SymbolName,
-            scope_id: inner_scope_id,
-            location: { file: file_path, start_line: 7, start_column: 2, end_line: 9, end_column: 3 },
+            defining_scope_id: inner_scope_id,
+            location: {
+              file: file_path,
+              start_line: 7,
+              start_column: 2,
+              end_line: 9,
+              end_column: 3,
+            },
             availability: "local",
           },
         ],
@@ -295,19 +415,35 @@ describe("Function Call Resolution", () => {
 
       // Call from inner scope should resolve to inner foo
       const call_ref: SymbolReference = {
-        location: { file: file_path, start_line: 10, start_column: 2, end_line: 10, end_column: 7 },
+        location: {
+          file: file_path,
+          start_line: 10,
+          start_column: 2,
+          end_line: 10,
+          end_column: 7,
+        },
         type: "call",
         scope_id: inner_scope_id,
         name: "foo" as SymbolName,
         call_type: "function",
       };
 
-      const index = create_test_index(file_path, functions, scopes, [call_ref], root_scope_id);
+      const index = create_test_index(
+        file_path,
+        functions,
+        scopes,
+        [call_ref],
+        root_scope_id
+      );
       const indices = new Map([[file_path, index]]);
       const resolver_index = build_scope_resolver_index(indices);
       const cache = create_resolution_cache();
 
-      const resolutions = resolve_function_calls(indices, resolver_index, cache);
+      const resolutions = resolve_function_calls(
+        indices,
+        resolver_index,
+        cache
+      );
 
       const call_key = location_key(call_ref.location);
       expect(resolutions.get(call_key)).toBe(inner_foo_id);
@@ -327,26 +463,48 @@ describe("Function Call Resolution", () => {
             type: "module",
             parent_id: null,
             name: null,
-            location: { file: file_path, start_line: 1, start_column: 0, end_line: 5, end_column: 0 },
+            location: {
+              file: file_path,
+              start_line: 1,
+              start_column: 0,
+              end_line: 5,
+              end_column: 0,
+            },
             child_ids: [],
           },
         ],
       ]);
 
       const call_ref: SymbolReference = {
-        location: { file: file_path, start_line: 3, start_column: 2, end_line: 3, end_column: 23 },
+        location: {
+          file: file_path,
+          start_line: 3,
+          start_column: 2,
+          end_line: 3,
+          end_column: 23,
+        },
         type: "call",
         scope_id: root_scope_id,
         name: "nonExistentFunction" as SymbolName,
         call_type: "function",
       };
 
-      const index = create_test_index(file_path, new Map(), scopes, [call_ref], root_scope_id);
+      const index = create_test_index(
+        file_path,
+        new Map(),
+        scopes,
+        [call_ref],
+        root_scope_id
+      );
       const indices = new Map([[file_path, index]]);
       const resolver_index = build_scope_resolver_index(indices);
       const cache = create_resolution_cache();
 
-      const resolutions = resolve_function_calls(indices, resolver_index, cache);
+      const resolutions = resolve_function_calls(
+        indices,
+        resolver_index,
+        cache
+      );
 
       const call_key = location_key(call_ref.location);
       expect(resolutions.has(call_key)).toBe(false);
@@ -364,7 +522,13 @@ describe("Function Call Resolution", () => {
             type: "module",
             parent_id: null,
             name: null,
-            location: { file: file_path, start_line: 1, start_column: 0, end_line: 10, end_column: 0 },
+            location: {
+              file: file_path,
+              start_line: 1,
+              start_column: 0,
+              end_line: 10,
+              end_column: 0,
+            },
             child_ids: [],
           },
         ],
@@ -372,19 +536,35 @@ describe("Function Call Resolution", () => {
 
       // Method call (should be filtered out)
       const method_call_ref: SymbolReference = {
-        location: { file: file_path, start_line: 8, start_column: 0, end_line: 8, end_column: 13 },
+        location: {
+          file: file_path,
+          start_line: 8,
+          start_column: 0,
+          end_line: 8,
+          end_column: 13,
+        },
         type: "call",
         scope_id: root_scope_id,
         name: "method" as SymbolName,
         call_type: "method", // This is a method call, not a function call
       };
 
-      const index = create_test_index(file_path, new Map(), scopes, [method_call_ref], root_scope_id);
+      const index = create_test_index(
+        file_path,
+        new Map(),
+        scopes,
+        [method_call_ref],
+        root_scope_id
+      );
       const indices = new Map([[file_path, index]]);
       const resolver_index = build_scope_resolver_index(indices);
       const cache = create_resolution_cache();
 
-      const resolutions = resolve_function_calls(indices, resolver_index, cache);
+      const resolutions = resolve_function_calls(
+        indices,
+        resolver_index,
+        cache
+      );
 
       // Method calls should not be in resolutions
       expect(resolutions.size).toBe(0);
@@ -404,7 +584,13 @@ describe("Function Call Resolution", () => {
             type: "module",
             parent_id: null,
             name: null,
-            location: { file: file_path, start_line: 1, start_column: 0, end_line: 10, end_column: 0 },
+            location: {
+              file: file_path,
+              start_line: 1,
+              start_column: 0,
+              end_line: 10,
+              end_column: 0,
+            },
             child_ids: [],
           },
         ],
@@ -418,8 +604,14 @@ describe("Function Call Resolution", () => {
             kind: "function",
             symbol_id: helper_id,
             name: "helper" as SymbolName,
-            scope_id: root_scope_id,
-            location: { file: file_path, start_line: 2, start_column: 0, end_line: 4, end_column: 1 },
+            defining_scope_id: root_scope_id,
+            location: {
+              file: file_path,
+              start_line: 2,
+              start_column: 0,
+              end_line: 4,
+              end_column: 1,
+            },
             availability: "local",
           },
         ],
@@ -428,21 +620,39 @@ describe("Function Call Resolution", () => {
       // Three calls to the same function
       const call_refs: SymbolReference[] = [
         {
-          location: { file: file_path, start_line: 7, start_column: 2, end_line: 7, end_column: 10 },
+          location: {
+            file: file_path,
+            start_line: 7,
+            start_column: 2,
+            end_line: 7,
+            end_column: 10,
+          },
           type: "call",
           scope_id: root_scope_id,
           name: "helper" as SymbolName,
           call_type: "function",
         },
         {
-          location: { file: file_path, start_line: 8, start_column: 2, end_line: 8, end_column: 10 },
+          location: {
+            file: file_path,
+            start_line: 8,
+            start_column: 2,
+            end_line: 8,
+            end_column: 10,
+          },
           type: "call",
           scope_id: root_scope_id,
           name: "helper" as SymbolName,
           call_type: "function",
         },
         {
-          location: { file: file_path, start_line: 9, start_column: 2, end_line: 9, end_column: 10 },
+          location: {
+            file: file_path,
+            start_line: 9,
+            start_column: 2,
+            end_line: 9,
+            end_column: 10,
+          },
           type: "call",
           scope_id: root_scope_id,
           name: "helper" as SymbolName,
@@ -450,12 +660,22 @@ describe("Function Call Resolution", () => {
         },
       ];
 
-      const index = create_test_index(file_path, functions, scopes, call_refs, root_scope_id);
+      const index = create_test_index(
+        file_path,
+        functions,
+        scopes,
+        call_refs,
+        root_scope_id
+      );
       const indices = new Map([[file_path, index]]);
       const resolver_index = build_scope_resolver_index(indices);
       const cache = create_resolution_cache();
 
-      const resolutions = resolve_function_calls(indices, resolver_index, cache);
+      const resolutions = resolve_function_calls(
+        indices,
+        resolver_index,
+        cache
+      );
 
       // Should have 3 resolutions
       expect(resolutions.size).toBe(3);
@@ -479,7 +699,13 @@ describe("Function Call Resolution", () => {
             type: "module",
             parent_id: null,
             name: null,
-            location: { file: file_path, start_line: 1, start_column: 0, end_line: 10, end_column: 0 },
+            location: {
+              file: file_path,
+              start_line: 1,
+              start_column: 0,
+              end_line: 10,
+              end_column: 0,
+            },
             child_ids: [],
           },
         ],
@@ -494,8 +720,14 @@ describe("Function Call Resolution", () => {
             kind: "function",
             symbol_id: foo_id,
             name: "foo" as SymbolName,
-            scope_id: root_scope_id,
-            location: { file: file_path, start_line: 2, start_column: 0, end_line: 3, end_column: 1 },
+            defining_scope_id: root_scope_id,
+            location: {
+              file: file_path,
+              start_line: 2,
+              start_column: 0,
+              end_line: 3,
+              end_column: 1,
+            },
             availability: "local",
           },
         ],
@@ -505,8 +737,14 @@ describe("Function Call Resolution", () => {
             kind: "function",
             symbol_id: bar_id,
             name: "bar" as SymbolName,
-            scope_id: root_scope_id,
-            location: { file: file_path, start_line: 4, start_column: 0, end_line: 5, end_column: 1 },
+            defining_scope_id: root_scope_id,
+            location: {
+              file: file_path,
+              start_line: 4,
+              start_column: 0,
+              end_line: 5,
+              end_column: 1,
+            },
             availability: "local",
           },
         ],
@@ -514,14 +752,26 @@ describe("Function Call Resolution", () => {
 
       const call_refs: SymbolReference[] = [
         {
-          location: { file: file_path, start_line: 8, start_column: 2, end_line: 8, end_column: 7 },
+          location: {
+            file: file_path,
+            start_line: 8,
+            start_column: 2,
+            end_line: 8,
+            end_column: 7,
+          },
           type: "call",
           scope_id: root_scope_id,
           name: "foo" as SymbolName,
           call_type: "function",
         },
         {
-          location: { file: file_path, start_line: 9, start_column: 2, end_line: 9, end_column: 7 },
+          location: {
+            file: file_path,
+            start_line: 9,
+            start_column: 2,
+            end_line: 9,
+            end_column: 7,
+          },
           type: "call",
           scope_id: root_scope_id,
           name: "bar" as SymbolName,
@@ -529,7 +779,13 @@ describe("Function Call Resolution", () => {
         },
       ];
 
-      const index = create_test_index(file_path, functions, scopes, call_refs, root_scope_id);
+      const index = create_test_index(
+        file_path,
+        functions,
+        scopes,
+        call_refs,
+        root_scope_id
+      );
       const indices = new Map([[file_path, index]]);
       const resolver_index = build_scope_resolver_index(indices);
       const cache = create_resolution_cache();
@@ -538,7 +794,11 @@ describe("Function Call Resolution", () => {
       const initial_stats = cache.get_stats();
       expect(initial_stats.total_entries).toBe(0);
 
-      const resolutions = resolve_function_calls(indices, resolver_index, cache);
+      const resolutions = resolve_function_calls(
+        indices,
+        resolver_index,
+        cache
+      );
 
       // Cache should now have entries
       const final_stats = cache.get_stats();
@@ -564,7 +824,13 @@ describe("Function Call Resolution", () => {
             type: "module",
             parent_id: null,
             name: null,
-            location: { file: file1, start_line: 1, start_column: 0, end_line: 5, end_column: 0 },
+            location: {
+              file: file1,
+              start_line: 1,
+              start_column: 0,
+              end_line: 5,
+              end_column: 0,
+            },
             child_ids: [],
           },
         ],
@@ -578,7 +844,13 @@ describe("Function Call Resolution", () => {
             type: "module",
             parent_id: null,
             name: null,
-            location: { file: file2, start_line: 1, start_column: 0, end_line: 8, end_column: 0 },
+            location: {
+              file: file2,
+              start_line: 1,
+              start_column: 0,
+              end_line: 8,
+              end_column: 0,
+            },
             child_ids: [],
           },
         ],
@@ -594,8 +866,14 @@ describe("Function Call Resolution", () => {
             kind: "function",
             symbol_id: helper_id,
             name: "helper" as SymbolName,
-            scope_id: root1,
-            location: { file: file1, start_line: 2, start_column: 0, end_line: 4, end_column: 1 },
+            defining_scope_id: root1,
+            location: {
+              file: file1,
+              start_line: 2,
+              start_column: 0,
+              end_line: 4,
+              end_column: 1,
+            },
             availability: "exported",
           },
         ],
@@ -608,15 +886,27 @@ describe("Function Call Resolution", () => {
             kind: "function",
             symbol_id: local_func_id,
             name: "localFunc" as SymbolName,
-            scope_id: root2,
-            location: { file: file2, start_line: 6, start_column: 0, end_line: 8, end_column: 1 },
+            defining_scope_id: root2,
+            location: {
+              file: file2,
+              start_line: 6,
+              start_column: 0,
+              end_line: 8,
+              end_column: 1,
+            },
             availability: "local",
           },
         ],
       ]);
 
       const call_ref: SymbolReference = {
-        location: { file: file2, start_line: 3, start_column: 2, end_line: 3, end_column: 13 },
+        location: {
+          file: file2,
+          start_line: 3,
+          start_column: 2,
+          end_line: 3,
+          end_column: 13,
+        },
         type: "call",
         scope_id: root2,
         name: "localFunc" as SymbolName,
@@ -624,7 +914,13 @@ describe("Function Call Resolution", () => {
       };
 
       const index1 = create_test_index(file1, functions1, scopes1, [], root1);
-      const index2 = create_test_index(file2, functions2, scopes2, [call_ref], root2);
+      const index2 = create_test_index(
+        file2,
+        functions2,
+        scopes2,
+        [call_ref],
+        root2
+      );
 
       const indices = new Map([
         [file1, index1],
@@ -633,7 +929,11 @@ describe("Function Call Resolution", () => {
       const resolver_index = build_scope_resolver_index(indices);
       const cache = create_resolution_cache();
 
-      const resolutions = resolve_function_calls(indices, resolver_index, cache);
+      const resolutions = resolve_function_calls(
+        indices,
+        resolver_index,
+        cache
+      );
 
       const call_key = location_key(call_ref.location);
       expect(resolutions.get(call_key)).toBe(local_func_id);

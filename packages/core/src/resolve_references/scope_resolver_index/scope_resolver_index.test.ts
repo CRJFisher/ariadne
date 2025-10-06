@@ -8,7 +8,13 @@ import {
   type ResolutionCache,
 } from "./scope_resolver_index";
 import { build_semantic_index } from "../../index_single_file/semantic_index";
-import type { FilePath, Language, SymbolId, ScopeId, SymbolName } from "@ariadnejs/types";
+import type {
+  FilePath,
+  Language,
+  SymbolId,
+  ScopeId,
+  SymbolName,
+} from "@ariadnejs/types";
 import Parser from "tree-sitter";
 import JavaScript from "tree-sitter-javascript";
 import TypeScript from "tree-sitter-typescript";
@@ -84,7 +90,12 @@ describe("Scope Resolver Index", () => {
       `;
       const tree = js_parser.parse(code);
       const file_path = "test.js" as FilePath;
-      const parsed_file = create_parsed_file(code, file_path, tree, "javascript");
+      const parsed_file = create_parsed_file(
+        code,
+        file_path,
+        tree,
+        "javascript"
+      );
       const index = build_semantic_index(parsed_file, tree, "javascript");
 
       const indices = new Map([[file_path, index]]);
@@ -97,7 +108,12 @@ describe("Scope Resolver Index", () => {
       const code = `const myVar = 1;`;
       const tree = js_parser.parse(code);
       const file_path = "test.js" as FilePath;
-      const parsed_file = create_parsed_file(code, file_path, tree, "javascript");
+      const parsed_file = create_parsed_file(
+        code,
+        file_path,
+        tree,
+        "javascript"
+      );
       const index = build_semantic_index(parsed_file, tree, "javascript");
 
       const indices = new Map([[file_path, index]]);
@@ -105,11 +121,17 @@ describe("Scope Resolver Index", () => {
       const cache = new TestResolutionCache();
 
       // Find the variable definition
-      const var_def = Array.from(index.variables.values()).find(v => v.name === "myVar");
+      const var_def = Array.from(index.variables.values()).find(
+        (v) => v.name === "myVar"
+      );
       expect(var_def).toBeDefined();
 
       // Resolve in the scope where the variable is defined
-      const resolved = resolver_index.resolve(var_def!.scope_id, "myVar" as SymbolName, cache);
+      const resolved = resolver_index.resolve(
+        var_def!.defining_scope_id,
+        "myVar" as SymbolName,
+        cache
+      );
       expect(resolved).toBe(var_def!.symbol_id);
     });
 
@@ -124,7 +146,12 @@ function outer() {
       `;
       const tree = js_parser.parse(code);
       const file_path = "test.js" as FilePath;
-      const parsed_file = create_parsed_file(code, file_path, tree, "javascript");
+      const parsed_file = create_parsed_file(
+        code,
+        file_path,
+        tree,
+        "javascript"
+      );
       const index = build_semantic_index(parsed_file, tree, "javascript");
 
       const indices = new Map([[file_path, index]]);
@@ -132,15 +159,23 @@ function outer() {
       const cache = new TestResolutionCache();
 
       // Find x and y variables
-      const x_var = Array.from(index.variables.values()).find(v => v.name === "x");
-      const y_var = Array.from(index.variables.values()).find(v => v.name === "y");
+      const x_var = Array.from(index.variables.values()).find(
+        (v) => v.name === "x"
+      );
+      const y_var = Array.from(index.variables.values()).find(
+        (v) => v.name === "y"
+      );
 
       expect(x_var).toBeDefined();
       expect(y_var).toBeDefined();
 
       // Resolve 'x' in the scope where y is defined (inner function body scope)
       // This tests that inner scope can resolve symbols from outer scope
-      const resolved = resolver_index.resolve(y_var!.scope_id, "x" as SymbolName, cache);
+      const resolved = resolver_index.resolve(
+        y_var!.defining_scope_id,
+        "x" as SymbolName,
+        cache
+      );
       expect(resolved).toBe(x_var!.symbol_id);
     });
 
@@ -148,14 +183,23 @@ function outer() {
       const code = `const x = 1;`;
       const tree = js_parser.parse(code);
       const file_path = "test.js" as FilePath;
-      const parsed_file = create_parsed_file(code, file_path, tree, "javascript");
+      const parsed_file = create_parsed_file(
+        code,
+        file_path,
+        tree,
+        "javascript"
+      );
       const index = build_semantic_index(parsed_file, tree, "javascript");
 
       const indices = new Map([[file_path, index]]);
       const resolver_index = build_scope_resolver_index(indices);
       const cache = new TestResolutionCache();
 
-      const resolved = resolver_index.resolve(index.root_scope_id, "unknownSymbol" as SymbolName, cache);
+      const resolved = resolver_index.resolve(
+        index.root_scope_id,
+        "unknownSymbol" as SymbolName,
+        cache
+      );
       expect(resolved).toBeNull();
     });
   });
@@ -172,7 +216,12 @@ function test() {
       `;
       const tree = js_parser.parse(code);
       const file_path = "test.js" as FilePath;
-      const parsed_file = create_parsed_file(code, file_path, tree, "javascript");
+      const parsed_file = create_parsed_file(
+        code,
+        file_path,
+        tree,
+        "javascript"
+      );
       const index = build_semantic_index(parsed_file, tree, "javascript");
 
       const indices = new Map([[file_path, index]]);
@@ -180,20 +229,32 @@ function test() {
       const cache = new TestResolutionCache();
 
       // Find both x variables
-      const variables = Array.from(index.variables.values()).filter(v => v.name === "x");
+      const variables = Array.from(index.variables.values()).filter(
+        (v) => v.name === "x"
+      );
       expect(variables.length).toBe(2);
 
       // Sort by location to identify outer vs inner
-      const sorted_vars = variables.sort((a, b) => a.location.start_line - b.location.start_line);
+      const sorted_vars = variables.sort(
+        (a, b) => a.location.start_line - b.location.start_line
+      );
       const outer_x = sorted_vars[0];
       const inner_x = sorted_vars[1];
 
       // Resolve in outer scope - should get outer x
-      const outer_resolved = resolver_index.resolve(outer_x.scope_id, "x" as SymbolName, cache);
+      const outer_resolved = resolver_index.resolve(
+        outer_x.defining_scope_id,
+        "x" as SymbolName,
+        cache
+      );
       expect(outer_resolved).toBe(outer_x.symbol_id);
 
       // Resolve in inner scope - should get inner x (shadowing)
-      const inner_resolved = resolver_index.resolve(inner_x.scope_id, "x" as SymbolName, cache);
+      const inner_resolved = resolver_index.resolve(
+        inner_x.defining_scope_id,
+        "x" as SymbolName,
+        cache
+      );
       expect(inner_resolved).toBe(inner_x.symbol_id);
     });
 
@@ -211,7 +272,12 @@ function level1() {
       `;
       const tree = js_parser.parse(code);
       const file_path = "test.js" as FilePath;
-      const parsed_file = create_parsed_file(code, file_path, tree, "javascript");
+      const parsed_file = create_parsed_file(
+        code,
+        file_path,
+        tree,
+        "javascript"
+      );
       const index = build_semantic_index(parsed_file, tree, "javascript");
 
       const indices = new Map([[file_path, index]]);
@@ -219,23 +285,39 @@ function level1() {
       const cache = new TestResolutionCache();
 
       // Find all three x variables
-      const variables = Array.from(index.variables.values()).filter(v => v.name === "x");
+      const variables = Array.from(index.variables.values()).filter(
+        (v) => v.name === "x"
+      );
       expect(variables.length).toBe(3);
 
       // Sort by location to identify levels
-      const sorted_vars = variables.sort((a, b) => a.location.start_line - b.location.start_line);
+      const sorted_vars = variables.sort(
+        (a, b) => a.location.start_line - b.location.start_line
+      );
       const x1 = sorted_vars[0];
       const x2 = sorted_vars[1];
       const x3 = sorted_vars[2];
 
       // Test resolution at each level
-      const level1_resolved = resolver_index.resolve(x1.scope_id, "x" as SymbolName, cache);
+      const level1_resolved = resolver_index.resolve(
+        x1.defining_scope_id,
+        "x" as SymbolName,
+        cache
+      );
       expect(level1_resolved).toBe(x1.symbol_id);
 
-      const level2_resolved = resolver_index.resolve(x2.scope_id, "x" as SymbolName, cache);
+      const level2_resolved = resolver_index.resolve(
+        x2.defining_scope_id,
+        "x" as SymbolName,
+        cache
+      );
       expect(level2_resolved).toBe(x2.symbol_id);
 
-      const level3_resolved = resolver_index.resolve(x3.scope_id, "x" as SymbolName, cache);
+      const level3_resolved = resolver_index.resolve(
+        x3.defining_scope_id,
+        "x" as SymbolName,
+        cache
+      );
       expect(level3_resolved).toBe(x3.symbol_id);
     });
   });
@@ -253,24 +335,41 @@ function parent() {
       `;
       const tree = js_parser.parse(code);
       const file_path = "test.js" as FilePath;
-      const parsed_file = create_parsed_file(code, file_path, tree, "javascript");
+      const parsed_file = create_parsed_file(
+        code,
+        file_path,
+        tree,
+        "javascript"
+      );
       const index = build_semantic_index(parsed_file, tree, "javascript");
 
       const indices = new Map([[file_path, index]]);
       const resolver_index = build_scope_resolver_index(indices);
       const cache = new TestResolutionCache();
 
-      const parent_var = Array.from(index.variables.values()).find(v => v.name === "parentVar");
-      const child_var = Array.from(index.variables.values()).find(v => v.name === "childVar");
+      const parent_var = Array.from(index.variables.values()).find(
+        (v) => v.name === "parentVar"
+      );
+      const child_var = Array.from(index.variables.values()).find(
+        (v) => v.name === "childVar"
+      );
 
       expect(parent_var).toBeDefined();
       expect(child_var).toBeDefined();
 
       // Child scope can resolve both parent and child variables
-      const parent_resolved = resolver_index.resolve(child_var!.scope_id, "parentVar" as SymbolName, cache);
+      const parent_resolved = resolver_index.resolve(
+        child_var!.defining_scope_id,
+        "parentVar" as SymbolName,
+        cache
+      );
       expect(parent_resolved).toBe(parent_var!.symbol_id);
 
-      const child_resolved = resolver_index.resolve(child_var!.scope_id, "childVar" as SymbolName, cache);
+      const child_resolved = resolver_index.resolve(
+        child_var!.defining_scope_id,
+        "childVar" as SymbolName,
+        cache
+      );
       expect(child_resolved).toBe(child_var!.symbol_id);
     });
 
@@ -287,21 +386,34 @@ function grandparent() {
       `;
       const tree = js_parser.parse(code);
       const file_path = "test.js" as FilePath;
-      const parsed_file = create_parsed_file(code, file_path, tree, "javascript");
+      const parsed_file = create_parsed_file(
+        code,
+        file_path,
+        tree,
+        "javascript"
+      );
       const index = build_semantic_index(parsed_file, tree, "javascript");
 
       const indices = new Map([[file_path, index]]);
       const resolver_index = build_scope_resolver_index(indices);
       const cache = new TestResolutionCache();
 
-      const gp_var = Array.from(index.variables.values()).find(v => v.name === "gpVar");
-      const x_var = Array.from(index.variables.values()).find(v => v.name === "x");
+      const gp_var = Array.from(index.variables.values()).find(
+        (v) => v.name === "gpVar"
+      );
+      const x_var = Array.from(index.variables.values()).find(
+        (v) => v.name === "x"
+      );
 
       expect(gp_var).toBeDefined();
       expect(x_var).toBeDefined();
 
       // Child can resolve grandparent variable
-      const resolved = resolver_index.resolve(x_var!.scope_id, "gpVar" as SymbolName, cache);
+      const resolved = resolver_index.resolve(
+        x_var!.defining_scope_id,
+        "gpVar" as SymbolName,
+        cache
+      );
       expect(resolved).toBe(gp_var!.symbol_id);
     });
 
@@ -316,25 +428,42 @@ function grandparent() {
       `;
       const tree = js_parser.parse(code);
       const file_path = "test.js" as FilePath;
-      const parsed_file = create_parsed_file(code, file_path, tree, "javascript");
+      const parsed_file = create_parsed_file(
+        code,
+        file_path,
+        tree,
+        "javascript"
+      );
       const index = build_semantic_index(parsed_file, tree, "javascript");
 
       const indices = new Map([[file_path, index]]);
       const resolver_index = build_scope_resolver_index(indices);
       const cache = new TestResolutionCache();
 
-      const sibling1_scope = Array.from(index.scopes.values()).find(s => s.name === "sibling1");
-      const sibling2_scope = Array.from(index.scopes.values()).find(s => s.name === "sibling2");
+      const sibling1_scope = Array.from(index.scopes.values()).find(
+        (s) => s.name === "sibling1"
+      );
+      const sibling2_scope = Array.from(index.scopes.values()).find(
+        (s) => s.name === "sibling2"
+      );
 
       expect(sibling1_scope).toBeDefined();
       expect(sibling2_scope).toBeDefined();
 
       // sibling1 cannot resolve y
-      const y_in_sibling1 = resolver_index.resolve(sibling1_scope!.id, "y" as SymbolName, cache);
+      const y_in_sibling1 = resolver_index.resolve(
+        sibling1_scope!.id,
+        "y" as SymbolName,
+        cache
+      );
       expect(y_in_sibling1).toBeNull();
 
       // sibling2 cannot resolve x
-      const x_in_sibling2 = resolver_index.resolve(sibling2_scope!.id, "x" as SymbolName, cache);
+      const x_in_sibling2 = resolver_index.resolve(
+        sibling2_scope!.id,
+        "x" as SymbolName,
+        cache
+      );
       expect(x_in_sibling2).toBeNull();
     });
   });
@@ -344,26 +473,45 @@ function grandparent() {
       const code = `const x = 1;`;
       const tree = js_parser.parse(code);
       const file_path = "test.js" as FilePath;
-      const parsed_file = create_parsed_file(code, file_path, tree, "javascript");
+      const parsed_file = create_parsed_file(
+        code,
+        file_path,
+        tree,
+        "javascript"
+      );
       const index = build_semantic_index(parsed_file, tree, "javascript");
 
       const indices = new Map([[file_path, index]]);
       const resolver_index = build_scope_resolver_index(indices);
       const cache = new TestResolutionCache();
 
-      const var_def = Array.from(index.variables.values()).find(v => v.name === "x");
+      const var_def = Array.from(index.variables.values()).find(
+        (v) => v.name === "x"
+      );
       expect(var_def).toBeDefined();
 
       // First resolution
-      const resolved1 = resolver_index.resolve(var_def!.scope_id, "x" as SymbolName, cache);
+      const resolved1 = resolver_index.resolve(
+        var_def!.defining_scope_id,
+        "x" as SymbolName,
+        cache
+      );
       expect(resolved1).toBe(var_def!.symbol_id);
 
       // Check cache
-      expect(cache.has(var_def!.scope_id, "x" as SymbolName)).toBe(true);
-      expect(cache.get(var_def!.scope_id, "x" as SymbolName)).toBe(var_def!.symbol_id);
+      expect(cache.has(var_def!.defining_scope_id, "x" as SymbolName)).toBe(
+        true
+      );
+      expect(cache.get(var_def!.defining_scope_id, "x" as SymbolName)).toBe(
+        var_def!.symbol_id
+      );
 
       // Second resolution should use cache
-      const resolved2 = resolver_index.resolve(var_def!.scope_id, "x" as SymbolName, cache);
+      const resolved2 = resolver_index.resolve(
+        var_def!.defining_scope_id,
+        "x" as SymbolName,
+        cache
+      );
       expect(resolved2).toBe(var_def!.symbol_id);
     });
 
@@ -378,7 +526,12 @@ function outer() {
       `;
       const tree = js_parser.parse(code);
       const file_path = "test.js" as FilePath;
-      const parsed_file = create_parsed_file(code, file_path, tree, "javascript");
+      const parsed_file = create_parsed_file(
+        code,
+        file_path,
+        tree,
+        "javascript"
+      );
       const index = build_semantic_index(parsed_file, tree, "javascript");
 
       const indices = new Map([[file_path, index]]);
@@ -386,21 +539,37 @@ function outer() {
       const cache = new TestResolutionCache();
 
       // Find both x variables
-      const variables = Array.from(index.variables.values()).filter(v => v.name === "x");
+      const variables = Array.from(index.variables.values()).filter(
+        (v) => v.name === "x"
+      );
       expect(variables.length).toBe(2);
 
       // Sort by location to identify outer vs inner
-      const sorted_vars = variables.sort((a, b) => a.location.start_line - b.location.start_line);
+      const sorted_vars = variables.sort(
+        (a, b) => a.location.start_line - b.location.start_line
+      );
       const outer_x = sorted_vars[0];
       const inner_x = sorted_vars[1];
 
       // Resolve in both scopes
-      const outer_resolved = resolver_index.resolve(outer_x.scope_id, "x" as SymbolName, cache);
-      const inner_resolved = resolver_index.resolve(inner_x.scope_id, "x" as SymbolName, cache);
+      const outer_resolved = resolver_index.resolve(
+        outer_x.defining_scope_id,
+        "x" as SymbolName,
+        cache
+      );
+      const inner_resolved = resolver_index.resolve(
+        inner_x.defining_scope_id,
+        "x" as SymbolName,
+        cache
+      );
 
       // Both should be cached separately
-      expect(cache.has(outer_x.scope_id, "x" as SymbolName)).toBe(true);
-      expect(cache.has(inner_x.scope_id, "x" as SymbolName)).toBe(true);
+      expect(cache.has(outer_x.defining_scope_id, "x" as SymbolName)).toBe(
+        true
+      );
+      expect(cache.has(inner_x.defining_scope_id, "x" as SymbolName)).toBe(
+        true
+      );
 
       // And they should be different
       expect(outer_resolved).not.toBe(inner_resolved);
@@ -428,10 +597,16 @@ result = greet("World")
       const resolver_index = build_scope_resolver_index(indices);
       const cache = new TestResolutionCache();
 
-      const func_def = Array.from(index.functions.values()).find(f => f.name === "greet");
+      const func_def = Array.from(index.functions.values()).find(
+        (f) => f.name === "greet"
+      );
       expect(func_def).toBeDefined();
 
-      const resolved = resolver_index.resolve(func_def!.scope_id, "greet" as SymbolName, cache);
+      const resolved = resolver_index.resolve(
+        func_def!.defining_scope_id,
+        "greet" as SymbolName,
+        cache
+      );
       expect(resolved).toBe(func_def!.symbol_id);
     });
 
@@ -450,10 +625,16 @@ class Person:
       const resolver_index = build_scope_resolver_index(indices);
       const cache = new TestResolutionCache();
 
-      const class_def = Array.from(index.classes.values()).find(c => c.name === "Person");
+      const class_def = Array.from(index.classes.values()).find(
+        (c) => c.name === "Person"
+      );
       expect(class_def).toBeDefined();
 
-      const resolved = resolver_index.resolve(class_def!.scope_id, "Person" as SymbolName, cache);
+      const resolved = resolver_index.resolve(
+        class_def!.defining_scope_id,
+        "Person" as SymbolName,
+        cache
+      );
       expect(resolved).toBe(class_def!.symbol_id);
     });
   });
@@ -478,10 +659,16 @@ fn main() {
       const resolver_index = build_scope_resolver_index(indices);
       const cache = new TestResolutionCache();
 
-      const func_def = Array.from(index.functions.values()).find(f => f.name === "greet");
+      const func_def = Array.from(index.functions.values()).find(
+        (f) => f.name === "greet"
+      );
       expect(func_def).toBeDefined();
 
-      const resolved = resolver_index.resolve(func_def!.scope_id, "greet" as SymbolName, cache);
+      const resolved = resolver_index.resolve(
+        func_def!.defining_scope_id,
+        "greet" as SymbolName,
+        cache
+      );
       expect(resolved).toBe(func_def!.symbol_id);
     });
 
@@ -505,10 +692,16 @@ fn main() {
       const resolver_index = build_scope_resolver_index(indices);
       const cache = new TestResolutionCache();
 
-      const class_def = Array.from(index.classes.values()).find(c => c.name === "Point");
+      const class_def = Array.from(index.classes.values()).find(
+        (c) => c.name === "Point"
+      );
       expect(class_def).toBeDefined();
 
-      const resolved = resolver_index.resolve(class_def!.scope_id, "Point" as SymbolName, cache);
+      const resolved = resolver_index.resolve(
+        class_def!.defining_scope_id,
+        "Point" as SymbolName,
+        cache
+      );
       expect(resolved).toBe(class_def!.symbol_id);
     });
   });
@@ -518,7 +711,12 @@ fn main() {
       const code = `const x = 1;`;
       const tree = js_parser.parse(code);
       const file_path = "test.js" as FilePath;
-      const parsed_file = create_parsed_file(code, file_path, tree, "javascript");
+      const parsed_file = create_parsed_file(
+        code,
+        file_path,
+        tree,
+        "javascript"
+      );
       const index = build_semantic_index(parsed_file, tree, "javascript");
 
       const indices = new Map([[file_path, index]]);
@@ -529,7 +727,11 @@ fn main() {
       // The resolver should be created but not yet executed
       // We can verify this by checking resolution works
       const cache = new TestResolutionCache();
-      const resolved = resolver_index.resolve(index.root_scope_id, "x" as SymbolName, cache);
+      const resolved = resolver_index.resolve(
+        index.root_scope_id,
+        "x" as SymbolName,
+        cache
+      );
 
       expect(resolved).toBeDefined();
     });

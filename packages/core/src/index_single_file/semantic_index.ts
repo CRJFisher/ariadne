@@ -58,19 +58,14 @@ import {
  * Import/Export union types are created during cross-file resolution in symbol_resolution.ts
  */
 export interface SemanticIndex {
-  /** File being indexed */
   readonly file_path: FilePath;
-
-  /** Language for language-specific resolution */
   readonly language: Language;
-
-  /** Root scope ID (module/global scope) */
   readonly root_scope_id: ScopeId;
 
-  /** All scopes in the file */
+  /** Scope data */
   readonly scopes: ReadonlyMap<ScopeId, LexicalScope>;
 
-  /** Symbol definitions by type */
+  /** Definitions */
   readonly functions: ReadonlyMap<SymbolId, FunctionDefinition>;
   readonly classes: ReadonlyMap<SymbolId, ClassDefinition>;
   readonly variables: ReadonlyMap<SymbolId, VariableDefinition>;
@@ -78,33 +73,22 @@ export interface SemanticIndex {
   readonly enums: ReadonlyMap<SymbolId, EnumDefinition>;
   readonly namespaces: ReadonlyMap<SymbolId, NamespaceDefinition>;
   readonly types: ReadonlyMap<SymbolId, TypeAliasDefinition>;
-
-  /** ImportDefinitions */
   readonly imported_symbols: ReadonlyMap<SymbolId, ImportDefinition>;
 
-  /** All symbol references */
+  /** References */
   readonly references: readonly SymbolReference[];
 
   /** Quick lookup: name -> symbols with that name in this file */
   readonly symbols_by_name: ReadonlyMap<SymbolName, readonly SymbolId[]>;
 
   /**
-   * Type bindings: location → type name
-   * Extracted from annotations, constructors, return types
+   * Type data
    */
-  readonly type_bindings: ReadonlyMap<LocationKey, SymbolName>;
+  readonly type_bindings: ReadonlyMap<LocationKey, SymbolName>; // location → type name (Extracted from annotations, constructors, return types)
+  readonly type_members: ReadonlyMap<SymbolId, TypeMemberInfo>; // type → methods/properties (Extracted from classes, interfaces, enums)
+  // TODO: this isn't used anywhere - why not?
+  readonly type_alias_metadata: ReadonlyMap<SymbolId, string>; // alias → type_expression string (Extracted from TypeAliasDefinition)
 
-  /**
-   * Type members: type → methods/properties
-   * Extracted from classes, interfaces, enums
-   */
-  readonly type_members: ReadonlyMap<SymbolId, TypeMemberInfo>;
-
-  /**
-   * Type alias metadata: alias → type_expression string
-   * Extracted from TypeAliasDefinition (NOT resolved - that's 11.109.3's job)
-   */
-  readonly type_alias_metadata: ReadonlyMap<SymbolId, string>;
 }
 
 // ============================================================================

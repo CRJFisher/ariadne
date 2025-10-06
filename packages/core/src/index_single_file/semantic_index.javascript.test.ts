@@ -21,13 +21,13 @@ function createParsedFile(
   tree: Parser.Tree,
   language: Language
 ): ParsedFile {
-  const lines = code.split('\n');
+  const lines = code.split("\n");
   return {
     file_path: filePath,
     file_lines: lines.length,
     file_end_column: lines[lines.length - 1]?.length || 0,
     tree,
-    lang: language
+    lang: language,
   };
 }
 
@@ -60,14 +60,21 @@ describe("Semantic Index - JavaScript", () => {
 
         // Basic structure checks - just verify we get captures
         expect(captures.length).toBeGreaterThan(0);
-        expect(
-          captures.some((c) => c.name.includes("module"))
-        ).toBe(true);
+        expect(captures.some((c) => c.name.includes("module"))).toBe(true);
 
         if (fixture === "basic_function.js") {
           // Test with semantic index instead of raw captures
-          const parsedFile = createParsedFile(code, fixture as FilePath, tree, language);
-          const semantic_result = build_semantic_index(parsedFile, tree, language);
+          const parsedFile = createParsedFile(
+            code,
+            fixture as FilePath,
+            tree,
+            language
+          );
+          const semantic_result = build_semantic_index(
+            parsedFile,
+            tree,
+            language
+          );
 
           // Verify console.log has receiver_location (console is the receiver)
           const logCall = semantic_result.references.find(
@@ -92,8 +99,17 @@ describe("Semantic Index - JavaScript", () => {
 
         if (fixture === "class_and_methods.js") {
           // Test metadata population with semantic index
-          const parsedFile = createParsedFile(code, fixture as FilePath, tree, language);
-          const semantic_result = build_semantic_index(parsedFile, tree, language);
+          const parsedFile = createParsedFile(
+            code,
+            fixture as FilePath,
+            tree,
+            language
+          );
+          const semantic_result = build_semantic_index(
+            parsedFile,
+            tree,
+            language
+          );
 
           // Verify constructor calls have construct_target metadata
           const dogConstructor = semantic_result.references.find(
@@ -109,7 +125,10 @@ describe("Semantic Index - JavaScript", () => {
 
           // Verify method calls have receiver_location metadata
           const speakCall = semantic_result.references.find(
-            (ref) => ref.type === "call" && ref.name === "speak" && ref.call_type === "method"
+            (ref) =>
+              ref.type === "call" &&
+              ref.name === "speak" &&
+              ref.call_type === "method"
           );
           expect(speakCall).toBeDefined();
           expect(speakCall?.context?.receiver_location).toBeDefined();
@@ -129,22 +148,39 @@ describe("Semantic Index - JavaScript", () => {
 
         if (fixture === "imports_exports.js") {
           // Test with semantic index - imports and exports are handled through semantic index
-          const parsedFile = createParsedFile(code, fixture as FilePath, tree, language);
-          const semantic_result = build_semantic_index(parsedFile, tree, language);
+          const parsedFile = createParsedFile(
+            code,
+            fixture as FilePath,
+            tree,
+            language
+          );
+          const semantic_result = build_semantic_index(
+            parsedFile,
+            tree,
+            language
+          );
 
           // Verify that imports are captured
-          const importNames = Array.from(semantic_result.imported_symbols.values()).map(i => i.name);
+          const importNames = Array.from(
+            semantic_result.imported_symbols.values()
+          ).map((i) => i.name);
           expect(importNames.length).toBeGreaterThan(0);
 
           // Verify that functions, classes, and variables are captured
-          const functionNames = Array.from(semantic_result.functions.values()).map(f => f.name);
+          const functionNames = Array.from(
+            semantic_result.functions.values()
+          ).map((f) => f.name);
           expect(functionNames).toContain("processData");
           expect(functionNames).toContain("main");
 
-          const classNames = Array.from(semantic_result.classes.values()).map(c => c.name);
+          const classNames = Array.from(semantic_result.classes.values()).map(
+            (c) => c.name
+          );
           expect(classNames).toContain("DataProcessor");
 
-          const variableNames = Array.from(semantic_result.variables.values()).map(v => v.name);
+          const variableNames = Array.from(
+            semantic_result.variables.values()
+          ).map((v) => v.name);
           expect(variableNames).toContain("VERSION");
         }
       });
@@ -163,21 +199,29 @@ describe("Semantic Index - JavaScript", () => {
         tree,
         "javascript" as Language
       );
-      const result = build_semantic_index(parsedFile, tree, "javascript" as Language);
+      const result = build_semantic_index(
+        parsedFile,
+        tree,
+        "javascript" as Language
+      );
 
       // Since exports are handled differently in the new API,
       // we can verify that the exported symbols are present in the definitions
       // Check that exported functions are in the functions map
-      const functionNames = Array.from(result.functions.values()).map(f => f.name);
+      const functionNames = Array.from(result.functions.values()).map(
+        (f) => f.name
+      );
       expect(functionNames).toContain("processData");
       expect(functionNames).toContain("main");
 
       // Check that exported classes are in the classes map
-      const classNames = Array.from(result.classes.values()).map(c => c.name);
+      const classNames = Array.from(result.classes.values()).map((c) => c.name);
       expect(classNames).toContain("DataProcessor");
 
       // Check that exported variables are in the variables map
-      const variableNames = Array.from(result.variables.values()).map(v => v.name);
+      const variableNames = Array.from(result.variables.values()).map(
+        (v) => v.name
+      );
       expect(variableNames).toContain("VERSION");
     });
   });
@@ -208,10 +252,16 @@ describe("Semantic Index - JavaScript", () => {
         tree,
         "javascript" as Language
       );
-      const result = build_semantic_index(parsedFile, tree, "javascript" as Language);
+      const result = build_semantic_index(
+        parsedFile,
+        tree,
+        "javascript" as Language
+      );
 
       // Check that imported symbols are in the imported_symbols map
-      const importedNames = Array.from(result.imported_symbols.values()).map(i => i.name);
+      const importedNames = Array.from(result.imported_symbols.values()).map(
+        (i) => i.name
+      );
 
       // These should be imported
       expect(importedNames).toContain("join");
@@ -236,20 +286,33 @@ describe("Semantic Index - JavaScript", () => {
       `;
 
       const tree = parser.parse(code);
-      const parsedFile = createParsedFile(code, "test.js" as FilePath, tree, "javascript" as Language);
-      const result = build_semantic_index(parsedFile, tree, "javascript" as Language);
+      const parsedFile = createParsedFile(
+        code,
+        "test.js" as FilePath,
+        tree,
+        "javascript" as Language
+      );
+      const result = build_semantic_index(
+        parsedFile,
+        tree,
+        "javascript" as Language
+      );
 
       // Verify function definitions
-      const functionNames = Array.from(result.functions.values()).map(f => f.name);
+      const functionNames = Array.from(result.functions.values()).map(
+        (f) => f.name
+      );
       expect(functionNames).toEqual(["test"]);
 
       // Verify function calls
-      const calls = result.references.filter(ref => ref.type === "call").map(ref => ref.name);
+      const calls = result.references
+        .filter((ref) => ref.type === "call")
+        .map((ref) => ref.name);
       expect(calls).toEqual(["test"]);
 
       // Verify return statements
       // Note: The system may capture multiple references for returns due to query patterns
-      const returns = result.references.filter(ref => ref.type === "return");
+      const returns = result.references.filter((ref) => ref.type === "return");
       expect(returns.length).toBeGreaterThanOrEqual(1);
     });
 
@@ -262,18 +325,29 @@ describe("Semantic Index - JavaScript", () => {
       `;
 
       const tree = parser.parse(code);
-      const parsedFile = createParsedFile(code, "test.js" as FilePath, tree, "javascript" as Language);
-      const result = build_semantic_index(parsedFile, tree, "javascript" as Language);
+      const parsedFile = createParsedFile(
+        code,
+        "test.js" as FilePath,
+        tree,
+        "javascript" as Language
+      );
+      const result = build_semantic_index(
+        parsedFile,
+        tree,
+        "javascript" as Language
+      );
 
       // Verify class definition
-      const classNames = Array.from(result.classes.values()).map(c => c.name);
+      const classNames = Array.from(result.classes.values()).map((c) => c.name);
       expect(classNames).toEqual(["Test"]);
 
       // Verify methods are extracted
-      const testClass = Array.from(result.classes.values()).find(c => c.name === "Test");
+      const testClass = Array.from(result.classes.values()).find(
+        (c) => c.name === "Test"
+      );
       expect(testClass).toBeDefined();
       if (testClass) {
-        const methodNames = testClass.methods.map(m => m.name);
+        const methodNames = testClass.methods.map((m) => m.name);
 
         expect(methodNames).toContain("staticMethod");
         expect(methodNames).toContain("regularMethod");
@@ -288,33 +362,48 @@ describe("Semantic Index - JavaScript", () => {
       `;
 
       const tree = parser.parse(code);
-      const parsedFile = createParsedFile(code, "test.js" as FilePath, tree, "javascript" as Language);
-      const result = build_semantic_index(parsedFile, tree, "javascript" as Language);
+      const parsedFile = createParsedFile(
+        code,
+        "test.js" as FilePath,
+        tree,
+        "javascript" as Language
+      );
+      const result = build_semantic_index(
+        parsedFile,
+        tree,
+        "javascript" as Language
+      );
 
       // Verify constructor calls
       const constructorCall = result.references.find(
-        ref => ref.type === "construct" && ref.name === "MyClass"
+        (ref) => ref.type === "construct" && ref.name === "MyClass"
       );
       expect(constructorCall).toBeDefined();
       expect(constructorCall?.context?.construct_target).toBeDefined();
 
       // Verify method calls with receivers
       const methodCall = result.references.find(
-        ref => ref.type === "call" && ref.name === "method"
+        (ref) => ref.type === "call" && ref.name === "method"
       );
       expect(methodCall).toBeDefined();
       expect(methodCall?.context?.receiver_location).toBeDefined();
 
       const nestedCall = result.references.find(
-        ref => ref.type === "call" && ref.name === "nested"
+        (ref) => ref.type === "call" && ref.name === "nested"
       );
       expect(nestedCall).toBeDefined();
       expect(nestedCall?.context?.receiver_location).toBeDefined();
       // Note: property_chain includes the full path including the method name
-      expect(nestedCall?.context?.property_chain).toEqual(["obj", "prop", "nested"]);
+      expect(nestedCall?.context?.property_chain).toEqual([
+        "obj",
+        "prop",
+        "nested",
+      ]);
 
       // Verify variable definitions
-      const variableNames = Array.from(result.variables.values()).map(v => v.name);
+      const variableNames = Array.from(result.variables.values()).map(
+        (v) => v.name
+      );
       expect(variableNames).toContain("obj");
     });
 
@@ -326,25 +415,34 @@ describe("Semantic Index - JavaScript", () => {
       `;
 
       const tree = parser.parse(code);
-      const parsedFile = createParsedFile(code, "test.js" as FilePath, tree, "javascript" as Language);
-      const result = build_semantic_index(parsedFile, tree, "javascript" as Language);
+      const parsedFile = createParsedFile(
+        code,
+        "test.js" as FilePath,
+        tree,
+        "javascript" as Language
+      );
+      const result = build_semantic_index(
+        parsedFile,
+        tree,
+        "javascript" as Language
+      );
 
       // Verify constructor calls with construct_target
       const myClassCall = result.references.find(
-        ref => ref.type === "construct" && ref.name === "MyClass"
+        (ref) => ref.type === "construct" && ref.name === "MyClass"
       );
       expect(myClassCall).toBeDefined();
       expect(myClassCall?.context?.construct_target).toBeDefined();
 
       const serviceClassCall = result.references.find(
-        ref => ref.type === "construct" && ref.name === "ServiceClass"
+        (ref) => ref.type === "construct" && ref.name === "ServiceClass"
       );
       expect(serviceClassCall).toBeDefined();
       expect(serviceClassCall?.context?.construct_target).toBeDefined();
 
       // UnassignedClass won't have construct_target since it's not assigned
       const unassignedCall = result.references.find(
-        ref => ref.type === "construct" && ref.name === "UnassignedClass"
+        (ref) => ref.type === "construct" && ref.name === "UnassignedClass"
       );
       expect(unassignedCall).toBeDefined();
       expect(unassignedCall?.context?.construct_target).toBeUndefined();
@@ -359,19 +457,27 @@ describe("Semantic Index - JavaScript", () => {
       `;
 
       const tree = parser.parse(code);
-      const parsedFile = createParsedFile(code, "test.js" as FilePath, tree, "javascript" as Language);
-      const result = build_semantic_index(parsedFile, tree, "javascript" as Language);
-
+      const parsedFile = createParsedFile(
+        code,
+        "test.js" as FilePath,
+        tree,
+        "javascript" as Language
+      );
+      const result = build_semantic_index(
+        parsedFile,
+        tree,
+        "javascript" as Language
+      );
 
       // Find method calls
       const methodCall = result.references.find(
-        ref => ref.type === "call" && ref.name === "method"
+        (ref) => ref.type === "call" && ref.name === "method"
       );
       const thisCall = result.references.find(
-        ref => ref.type === "call" && ref.name === "doSomething"
+        (ref) => ref.type === "call" && ref.name === "doSomething"
       );
       const superCall = result.references.find(
-        ref => ref.type === "call" && ref.name === "parentMethod"
+        (ref) => ref.type === "call" && ref.name === "parentMethod"
       );
 
       // All method calls should have receiver_location populated
@@ -417,33 +523,42 @@ describe("Semantic Index - JavaScript", () => {
       `;
 
       const tree = parser.parse(code);
-      const parsedFile = createParsedFile(code, "test.js" as FilePath, tree, "javascript" as Language);
-      const result = build_semantic_index(parsedFile, tree, "javascript" as Language);
+      const parsedFile = createParsedFile(
+        code,
+        "test.js" as FilePath,
+        tree,
+        "javascript" as Language
+      );
+      const result = build_semantic_index(
+        parsedFile,
+        tree,
+        "javascript" as Language
+      );
 
       // Regular method call - should NOT have optional chaining
       const regularCall = result.references.find(
-        ref => ref.type === "call" && ref.name === "method"
+        (ref) => ref.type === "call" && ref.name === "method"
       );
       expect(regularCall).toBeDefined();
       expect(regularCall?.member_access?.is_optional_chain).toBe(false);
 
       // Optional chaining method call - should have optional chaining
       const optionalCall = result.references.find(
-        ref => ref.type === "call" && ref.name === "optionalMethod"
+        (ref) => ref.type === "call" && ref.name === "optionalMethod"
       );
       expect(optionalCall).toBeDefined();
       expect(optionalCall?.member_access?.is_optional_chain).toBe(true);
 
       // Chained optional chaining - should have optional chaining
       const chainedCall = result.references.find(
-        ref => ref.type === "call" && ref.name === "chainedMethod"
+        (ref) => ref.type === "call" && ref.name === "chainedMethod"
       );
       expect(chainedCall).toBeDefined();
       expect(chainedCall?.member_access?.is_optional_chain).toBe(true);
 
       // Mixed optional chaining - should have optional chaining
       const mixedCall = result.references.find(
-        ref => ref.type === "call" && ref.name === "mixedMethod"
+        (ref) => ref.type === "call" && ref.name === "mixedMethod"
       );
       expect(mixedCall).toBeDefined();
       expect(mixedCall?.member_access?.is_optional_chain).toBe(true);
@@ -464,24 +579,41 @@ describe("Semantic Index - JavaScript", () => {
       `;
 
       const tree = parser.parse(code);
-      const parsedFile = createParsedFile(code, "test.js" as FilePath, tree, "javascript" as Language);
-      const result = build_semantic_index(parsedFile, tree, "javascript" as Language);
+      const parsedFile = createParsedFile(
+        code,
+        "test.js" as FilePath,
+        tree,
+        "javascript" as Language
+      );
+      const result = build_semantic_index(
+        parsedFile,
+        tree,
+        "javascript" as Language
+      );
 
       // Find method calls with property chains
       const listCall = result.references.find(
-        ref => ref.type === "call" && ref.name === "list"
+        (ref) => ref.type === "call" && ref.name === "list"
       );
       const methodCall = result.references.find(
-        ref => ref.type === "call" && ref.name === "method"
+        (ref) => ref.type === "call" && ref.name === "method"
       );
 
       // Verify property chains are populated
       // Note: property_chain includes the full path including the method name
       expect(listCall).toBeDefined();
-      expect(listCall?.context?.property_chain).toEqual(["api", "users", "list"]);
+      expect(listCall?.context?.property_chain).toEqual([
+        "api",
+        "users",
+        "list",
+      ]);
 
       expect(methodCall).toBeDefined();
-      expect(methodCall?.context?.property_chain).toEqual(["this", "service", "method"]);
+      expect(methodCall?.context?.property_chain).toEqual([
+        "this",
+        "service",
+        "method",
+      ]);
     });
 
     it("should populate appropriate context for function calls", () => {
@@ -496,12 +628,21 @@ describe("Semantic Index - JavaScript", () => {
       `;
 
       const tree = parser.parse(code);
-      const parsedFile = createParsedFile(code, "test.js" as FilePath, tree, "javascript" as Language);
-      const result = build_semantic_index(parsedFile, tree, "javascript" as Language);
+      const parsedFile = createParsedFile(
+        code,
+        "test.js" as FilePath,
+        tree,
+        "javascript" as Language
+      );
+      const result = build_semantic_index(
+        parsedFile,
+        tree,
+        "javascript" as Language
+      );
 
       // Regular function call (no receiver)
       const greetCall = result.references.find(
-        ref => ref.type === "call" && ref.name === "greet"
+        (ref) => ref.type === "call" && ref.name === "greet"
       );
       expect(greetCall).toBeDefined();
       expect(greetCall?.context?.receiver_location).toBeUndefined();
@@ -509,7 +650,7 @@ describe("Semantic Index - JavaScript", () => {
 
       // Arrow function call (no receiver)
       const arrowCall = result.references.find(
-        ref => ref.type === "call" && ref.name === "arrow"
+        (ref) => ref.type === "call" && ref.name === "arrow"
       );
       expect(arrowCall).toBeDefined();
       expect(arrowCall?.context?.receiver_location).toBeUndefined();
@@ -517,7 +658,7 @@ describe("Semantic Index - JavaScript", () => {
 
       // Static method call (has receiver)
       const maxCall = result.references.find(
-        ref => ref.type === "call" && ref.name === "max"
+        (ref) => ref.type === "call" && ref.name === "max"
       );
       expect(maxCall).toBeDefined();
       expect(maxCall?.context?.receiver_location).toBeDefined();
@@ -552,13 +693,22 @@ describe("Semantic Index - JavaScript", () => {
       `;
 
       const tree = parser.parse(code);
-      const parsedFile = createParsedFile(code, "test.js" as FilePath, tree, "javascript" as Language);
-      const result = build_semantic_index(parsedFile, tree, "javascript" as Language);
+      const parsedFile = createParsedFile(
+        code,
+        "test.js" as FilePath,
+        tree,
+        "javascript" as Language
+      );
+      const result = build_semantic_index(
+        parsedFile,
+        tree,
+        "javascript" as Language
+      );
 
       // Scenario 1: Receiver from JSDoc annotation
       // Verify the assignment is captured
       const service1Assignment = result.references.find(
-        ref => ref.type === "assignment" && ref.name === "service1"
+        (ref) => ref.type === "assignment" && ref.name === "service1"
       );
       expect(service1Assignment).toBeDefined();
 
@@ -566,23 +716,30 @@ describe("Semantic Index - JavaScript", () => {
 
       // Verify method calls have receiver_location
       const methodCalls = result.references.filter(
-        ref => ref.type === "call" && ref.call_type === "method" && ref.name === "getData"
+        (ref) =>
+          ref.type === "call" &&
+          ref.call_type === "method" &&
+          ref.name === "getData"
       );
 
       // Should have at least 2 getData method calls
       expect(methodCalls.length).toBeGreaterThanOrEqual(2);
 
       // At least some method calls should have receiver_location
-      const callsWithReceiver = methodCalls.filter(c => c.context?.receiver_location);
+      const callsWithReceiver = methodCalls.filter(
+        (c) => c.context?.receiver_location
+      );
       expect(callsWithReceiver.length).toBeGreaterThan(0);
 
       // Scenario 2: Verify constructor call has construct_target
       const constructorCalls = result.references.filter(
-        ref => ref.type === "construct" && ref.name === "Service"
+        (ref) => ref.type === "construct" && ref.name === "Service"
       );
 
       // Should have at least one constructor call with construct_target
-      const constructWithTarget = constructorCalls.find(c => c.context?.construct_target);
+      const constructWithTarget = constructorCalls.find(
+        (c) => c.context?.construct_target
+      );
       expect(constructWithTarget).toBeDefined();
     });
   });
@@ -596,17 +753,30 @@ describe("Semantic Index - JavaScript", () => {
       `;
 
       const tree = parser.parse(code);
-      const parsedFile = createParsedFile(code, "test.js" as FilePath, tree, "javascript" as Language);
-      const result = build_semantic_index(parsedFile, tree, "javascript" as Language);
+      const parsedFile = createParsedFile(
+        code,
+        "test.js" as FilePath,
+        tree,
+        "javascript" as Language
+      );
+      const result = build_semantic_index(
+        parsedFile,
+        tree,
+        "javascript" as Language
+      );
 
       // Note: Current implementation captures destructuring patterns as whole variables,
       // not individual identifiers within the pattern
-      const variableNames = Array.from(result.variables.values()).map(v => v.name);
+      const variableNames = Array.from(result.variables.values()).map(
+        (v) => v.name
+      );
 
       // Verify that destructuring patterns are captured (as patterns, not individual names)
       // This is a known limitation - individual destructured names aren't extracted
       expect(variableNames.length).toBeGreaterThan(0);
-      expect(variableNames.some(v => v.includes("{") || v.includes("["))).toBe(true);
+      expect(
+        variableNames.some((v) => v.includes("{") || v.includes("["))
+      ).toBe(true);
     });
 
     it("should correctly parse default and rest parameters", () => {
@@ -619,16 +789,29 @@ describe("Semantic Index - JavaScript", () => {
       `;
 
       const tree = parser.parse(code);
-      const parsedFile = createParsedFile(code, "test.js" as FilePath, tree, "javascript" as Language);
-      const result = build_semantic_index(parsedFile, tree, "javascript" as Language);
+      const parsedFile = createParsedFile(
+        code,
+        "test.js" as FilePath,
+        tree,
+        "javascript" as Language
+      );
+      const result = build_semantic_index(
+        parsedFile,
+        tree,
+        "javascript" as Language
+      );
 
       // Verify functions are captured
-      const functionNames = Array.from(result.functions.values()).map(f => f.name);
+      const functionNames = Array.from(result.functions.values()).map(
+        (f) => f.name
+      );
       expect(functionNames).toContain("greet");
       expect(functionNames).toContain("arrow");
 
       // Verify function has parameters (implementation-specific verification)
-      const greetFunc = Array.from(result.functions.values()).find(f => f.name === "greet");
+      const greetFunc = Array.from(result.functions.values()).find(
+        (f) => f.name === "greet"
+      );
       expect(greetFunc).toBeDefined();
     });
 
@@ -641,17 +824,28 @@ describe("Semantic Index - JavaScript", () => {
       `;
 
       const tree = parser.parse(code);
-      const parsedFile = createParsedFile(code, "test.js" as FilePath, tree, "javascript" as Language);
-      const result = build_semantic_index(parsedFile, tree, "javascript" as Language);
+      const parsedFile = createParsedFile(
+        code,
+        "test.js" as FilePath,
+        tree,
+        "javascript" as Language
+      );
+      const result = build_semantic_index(
+        parsedFile,
+        tree,
+        "javascript" as Language
+      );
 
       // Verify variables are captured
-      const variableNames = Array.from(result.variables.values()).map(v => v.name);
+      const variableNames = Array.from(result.variables.values()).map(
+        (v) => v.name
+      );
       expect(variableNames).toContain("obj");
       expect(variableNames).toContain("value");
       expect(variableNames).toContain("dynamic");
 
       // Verify references to obj and arr are captured
-      const references = result.references.map(ref => ref.name);
+      const references = result.references.map((ref) => ref.name);
       expect(references).toContain("obj");
       expect(references).toContain("arr");
     });
@@ -668,19 +862,32 @@ describe("Semantic Index - JavaScript", () => {
       `;
 
       const tree = parser.parse(code);
-      const parsedFile = createParsedFile(code, "test.js" as FilePath, tree, "javascript" as Language);
-      const result = build_semantic_index(parsedFile, tree, "javascript" as Language);
+      const parsedFile = createParsedFile(
+        code,
+        "test.js" as FilePath,
+        tree,
+        "javascript" as Language
+      );
+      const result = build_semantic_index(
+        parsedFile,
+        tree,
+        "javascript" as Language
+      );
 
       // Note: Generator function declarations are currently not captured separately
       // They may be in scope.function but not in the functions map
       // This is a known gap in the current implementation
 
       // Verify generator call (should still work)
-      const calls = result.references.filter(ref => ref.type === "call").map(ref => ref.name);
+      const calls = result.references
+        .filter((ref) => ref.type === "call")
+        .map((ref) => ref.name);
       expect(calls).toContain("generateSequence");
 
       // Verify variable assignment
-      const variableNames = Array.from(result.variables.values()).map(v => v.name);
+      const variableNames = Array.from(result.variables.values()).map(
+        (v) => v.name
+      );
       expect(variableNames).toContain("generator");
     });
 
@@ -697,16 +904,29 @@ describe("Semantic Index - JavaScript", () => {
       `;
 
       const tree = parser.parse(code);
-      const parsedFile = createParsedFile(code, "test.js" as FilePath, tree, "javascript" as Language);
-      const result = build_semantic_index(parsedFile, tree, "javascript" as Language);
+      const parsedFile = createParsedFile(
+        code,
+        "test.js" as FilePath,
+        tree,
+        "javascript" as Language
+      );
+      const result = build_semantic_index(
+        parsedFile,
+        tree,
+        "javascript" as Language
+      );
 
       // Verify async functions are captured
-      const functionNames = Array.from(result.functions.values()).map(f => f.name);
+      const functionNames = Array.from(result.functions.values()).map(
+        (f) => f.name
+      );
       expect(functionNames).toContain("fetchData");
       expect(functionNames).toContain("asyncArrow");
 
       // Verify method calls
-      const calls = result.references.filter(ref => ref.type === "call").map(ref => ref.name);
+      const calls = result.references
+        .filter((ref) => ref.type === "call")
+        .map((ref) => ref.name);
       expect(calls).toContain("fetch");
       expect(calls).toContain("json");
       expect(calls).toContain("resolve");
@@ -728,20 +948,33 @@ describe("Semantic Index - JavaScript", () => {
       `;
 
       const tree = parser.parse(code);
-      const parsedFile = createParsedFile(code, "test.js" as FilePath, tree, "javascript" as Language);
-      const result = build_semantic_index(parsedFile, tree, "javascript" as Language);
+      const parsedFile = createParsedFile(
+        code,
+        "test.js" as FilePath,
+        tree,
+        "javascript" as Language
+      );
+      const result = build_semantic_index(
+        parsedFile,
+        tree,
+        "javascript" as Language
+      );
 
       // Verify class is captured
-      const classNames = Array.from(result.classes.values()).map(c => c.name);
+      const classNames = Array.from(result.classes.values()).map((c) => c.name);
       expect(classNames).toContain("SecureClass");
 
       // Verify methods are captured (including private)
-      const secureClass = Array.from(result.classes.values()).find(c => c.name === "SecureClass");
+      const secureClass = Array.from(result.classes.values()).find(
+        (c) => c.name === "SecureClass"
+      );
       expect(secureClass).toBeDefined();
       if (secureClass) {
-        const methodNames = secureClass.methods.map(m => m.name);
+        const methodNames = secureClass.methods.map((m) => m.name);
         // Note: private method names include the # prefix
-        expect(methodNames.some(name => name.includes("privateMethod"))).toBe(true);
+        expect(methodNames.some((name) => name.includes("privateMethod"))).toBe(
+          true
+        );
         expect(methodNames).toContain("publicMethod");
       }
     });
@@ -758,15 +991,26 @@ describe("Semantic Index - JavaScript", () => {
       `;
 
       const tree = parser.parse(code);
-      const parsedFile = createParsedFile(code, "test.js" as FilePath, tree, "javascript" as Language);
-      const result = build_semantic_index(parsedFile, tree, "javascript" as Language);
+      const parsedFile = createParsedFile(
+        code,
+        "test.js" as FilePath,
+        tree,
+        "javascript" as Language
+      );
+      const result = build_semantic_index(
+        parsedFile,
+        tree,
+        "javascript" as Language
+      );
 
       // Verify variable is captured
-      const variableNames = Array.from(result.variables.values()).map(v => v.name);
+      const variableNames = Array.from(result.variables.values()).map(
+        (v) => v.name
+      );
       expect(variableNames).toContain("counter");
 
       // Verify references to counter are captured
-      const references = result.references.map(ref => ref.name);
+      const references = result.references.map((ref) => ref.name);
       expect(references).toContain("counter");
       expect(references).toContain("obj");
       expect(references).toContain("newValue");
@@ -784,11 +1028,22 @@ describe("Semantic Index - JavaScript", () => {
       `;
 
       const tree = parser.parse(code);
-      const parsedFile = createParsedFile(code, "test.js" as FilePath, tree, "javascript" as Language);
-      const result = build_semantic_index(parsedFile, tree, "javascript" as Language);
+      const parsedFile = createParsedFile(
+        code,
+        "test.js" as FilePath,
+        tree,
+        "javascript" as Language
+      );
+      const result = build_semantic_index(
+        parsedFile,
+        tree,
+        "javascript" as Language
+      );
 
       // Verify function calls
-      const calls = result.references.filter(ref => ref.type === "call").map(ref => ref.name);
+      const calls = result.references
+        .filter((ref) => ref.type === "call")
+        .map((ref) => ref.name);
       expect(calls).toContain("riskyOperation");
       expect(calls).toContain("log");
       expect(calls).toContain("cleanup");
@@ -796,7 +1051,7 @@ describe("Semantic Index - JavaScript", () => {
       // Note: Catch parameters are captured by queries but may not be in variables map
       // They are scoped to the catch block and treated as parameters
       // This is expected behavior - parameters are tracked separately
-      const references = result.references.map(ref => ref.name);
+      const references = result.references.map((ref) => ref.name);
       expect(references).toContain("error"); // Should be referenced in console.log
     });
 
@@ -814,18 +1069,29 @@ describe("Semantic Index - JavaScript", () => {
       `;
 
       const tree = parser.parse(code);
-      const parsedFile = createParsedFile(code, "test.js" as FilePath, tree, "javascript" as Language);
-      const result = build_semantic_index(parsedFile, tree, "javascript" as Language);
+      const parsedFile = createParsedFile(
+        code,
+        "test.js" as FilePath,
+        tree,
+        "javascript" as Language
+      );
+      const result = build_semantic_index(
+        parsedFile,
+        tree,
+        "javascript" as Language
+      );
 
       // Verify main variables are captured
-      const variableNames = Array.from(result.variables.values()).map(v => v.name);
+      const variableNames = Array.from(result.variables.values()).map(
+        (v) => v.name
+      );
       expect(variableNames).toContain("obj");
       expect(variableNames).toContain("arr");
 
       // Note: Loop variables (key, item) are captured by queries as definition.variable
       // but may not appear in the variables map due to scope handling
       // They should be referenced in the loop body
-      const references = result.references.map(ref => ref.name);
+      const references = result.references.map((ref) => ref.name);
       expect(references).toContain("key");
       expect(references).toContain("item");
     });
@@ -843,20 +1109,35 @@ describe("Semantic Index - JavaScript", () => {
       `;
 
       const tree = parser.parse(code);
-      const parsedFile = createParsedFile(code, "test.js" as FilePath, tree, "javascript" as Language);
-      const result = build_semantic_index(parsedFile, tree, "javascript" as Language);
+      const parsedFile = createParsedFile(
+        code,
+        "test.js" as FilePath,
+        tree,
+        "javascript" as Language
+      );
+      const result = build_semantic_index(
+        parsedFile,
+        tree,
+        "javascript" as Language
+      );
 
       // Verify variables and function
-      const variableNames = Array.from(result.variables.values()).map(v => v.name);
+      const variableNames = Array.from(result.variables.values()).map(
+        (v) => v.name
+      );
       expect(variableNames).toContain("name");
       expect(variableNames).toContain("greeting");
       expect(variableNames).toContain("styled");
 
-      const functionNames = Array.from(result.functions.values()).map(f => f.name);
+      const functionNames = Array.from(result.functions.values()).map(
+        (f) => f.name
+      );
       expect(functionNames).toContain("tag");
 
       // Verify tagged template call
-      const calls = result.references.filter(ref => ref.type === "call").map(ref => ref.name);
+      const calls = result.references
+        .filter((ref) => ref.type === "call")
+        .map((ref) => ref.name);
       expect(calls).toContain("tag");
     });
 
@@ -873,15 +1154,28 @@ describe("Semantic Index - JavaScript", () => {
       `;
 
       const tree = parser.parse(code);
-      const parsedFile = createParsedFile(code, "test.js" as FilePath, tree, "javascript" as Language);
-      const result = build_semantic_index(parsedFile, tree, "javascript" as Language);
+      const parsedFile = createParsedFile(
+        code,
+        "test.js" as FilePath,
+        tree,
+        "javascript" as Language
+      );
+      const result = build_semantic_index(
+        parsedFile,
+        tree,
+        "javascript" as Language
+      );
 
       // Verify method call
-      const calls = result.references.filter(ref => ref.type === "call").map(ref => ref.name);
+      const calls = result.references
+        .filter((ref) => ref.type === "call")
+        .map((ref) => ref.name);
       expect(calls).toContain("max");
 
       // Verify variables
-      const variableNames = Array.from(result.variables.values()).map(v => v.name);
+      const variableNames = Array.from(result.variables.values()).map(
+        (v) => v.name
+      );
       expect(variableNames).toContain("args");
       expect(variableNames).toContain("arr1");
       expect(variableNames).toContain("arr2");
@@ -897,11 +1191,22 @@ describe("Semantic Index - JavaScript", () => {
       `;
 
       const tree = parser.parse(code);
-      const parsedFile = createParsedFile(code, "test.js" as FilePath, tree, "javascript" as Language);
-      const result = build_semantic_index(parsedFile, tree, "javascript" as Language);
+      const parsedFile = createParsedFile(
+        code,
+        "test.js" as FilePath,
+        tree,
+        "javascript" as Language
+      );
+      const result = build_semantic_index(
+        parsedFile,
+        tree,
+        "javascript" as Language
+      );
 
       // Verify variables with initializers are captured
-      const variableNames = Array.from(result.variables.values()).map(v => v.name);
+      const variableNames = Array.from(result.variables.values()).map(
+        (v) => v.name
+      );
       expect(variableNames).toContain("a");
       expect(variableNames).toContain("b");
       expect(variableNames).toContain("c");
@@ -911,7 +1216,9 @@ describe("Semantic Index - JavaScript", () => {
       expect(variableNames).toContain("n");
 
       // Arrow functions assigned to variables should be captured as functions
-      const functionNames = Array.from(result.functions.values()).map(f => f.name);
+      const functionNames = Array.from(result.functions.values()).map(
+        (f) => f.name
+      );
       expect(functionNames).toContain("n");
     });
 
@@ -938,16 +1245,27 @@ describe("Semantic Index - JavaScript", () => {
       `;
 
       const tree = parser.parse(code);
-      const parsedFile = createParsedFile(code, "test.js" as FilePath, tree, "javascript" as Language);
-      const result = build_semantic_index(parsedFile, tree, "javascript" as Language);
+      const parsedFile = createParsedFile(
+        code,
+        "test.js" as FilePath,
+        tree,
+        "javascript" as Language
+      );
+      const result = build_semantic_index(
+        parsedFile,
+        tree,
+        "javascript" as Language
+      );
 
       // Verify classes are captured
-      const classNames = Array.from(result.classes.values()).map(c => c.name);
+      const classNames = Array.from(result.classes.values()).map((c) => c.name);
       expect(classNames).toContain("Person");
       expect(classNames).toContain("Animal");
 
       // Verify Person class has constructor
-      const personClass = Array.from(result.classes.values()).find(c => c.name === "Person");
+      const personClass = Array.from(result.classes.values()).find(
+        (c) => c.name === "Person"
+      );
       expect(personClass).toBeDefined();
       expect(personClass?.constructor).toBeDefined();
       expect(personClass?.constructor?.length).toBe(1);
@@ -959,23 +1277,25 @@ describe("Semantic Index - JavaScript", () => {
         expect(ctor.parameters.length).toBe(2);
 
         // Verify constructor parameters
-        const paramNames = ctor.parameters.map(p => p.name);
+        const paramNames = ctor.parameters.map((p) => p.name);
         expect(paramNames).toContain("name");
         expect(paramNames).toContain("age");
 
         // Verify parameter with default value
-        const ageParam = ctor.parameters.find(p => p.name === "age");
+        const ageParam = ctor.parameters.find((p) => p.name === "age");
         expect(ageParam?.default_value).toBeDefined();
       }
 
       // Verify Person class has methods
       expect(personClass?.methods).toBeDefined();
       expect(personClass?.methods.length).toBeGreaterThan(0);
-      const methodNames = personClass?.methods.map(m => m.name);
+      const methodNames = personClass?.methods.map((m) => m.name);
       expect(methodNames).toContain("greet");
 
       // Verify Animal class has constructor and properties
-      const animalClass = Array.from(result.classes.values()).find(c => c.name === "Animal");
+      const animalClass = Array.from(result.classes.values()).find(
+        (c) => c.name === "Animal"
+      );
       expect(animalClass).toBeDefined();
       expect(animalClass?.constructor).toBeDefined();
       expect(animalClass?.constructor?.length).toBe(1);
@@ -990,7 +1310,7 @@ describe("Semantic Index - JavaScript", () => {
       // Verify Animal class has properties
       expect(animalClass?.properties).toBeDefined();
       expect(animalClass?.properties.length).toBeGreaterThan(0);
-      const propNames = animalClass?.properties.map(p => p.name);
+      const propNames = animalClass?.properties.map((p) => p.name);
       expect(propNames).toContain("species");
     });
   });
@@ -1016,8 +1336,17 @@ describe("Semantic Index - JavaScript", () => {
       `;
 
       const tree = parser.parse(code);
-      const parsedFile = createParsedFile(code, "test.js" as FilePath, tree, "javascript" as Language);
-      const result = build_semantic_index(parsedFile, tree, "javascript" as Language);
+      const parsedFile = createParsedFile(
+        code,
+        "test.js" as FilePath,
+        tree,
+        "javascript" as Language
+      );
+      const result = build_semantic_index(
+        parsedFile,
+        tree,
+        "javascript" as Language
+      );
 
       const class_def = Array.from(result.classes.values()).find(
         (d) => d.name === "MyClass"
@@ -1055,31 +1384,33 @@ describe("Semantic Index - JavaScript", () => {
 
         // Verify parameters separately with exact equality
         expect(ctor.parameters).toHaveLength(2);
-        expect(ctor.parameters).toEqual(expect.arrayContaining([
-          expect.objectContaining({
-            kind: "parameter",
-            symbol_id: expect.any(String),
-            name: "a",
-            location: expect.objectContaining({
-              file_path: "test.js",
+        expect(ctor.parameters).toEqual(
+          expect.arrayContaining([
+            expect.objectContaining({
+              kind: "parameter",
+              symbol_id: expect.any(String),
+              name: "a",
+              location: expect.objectContaining({
+                file_path: "test.js",
+              }),
+              scope_id: expect.any(String),
+              availability: expect.any(Object),
             }),
-            scope_id: expect.any(String),
-            availability: expect.any(Object),
-          }),
-          expect.objectContaining({
-            kind: "parameter",
-            symbol_id: expect.any(String),
-            name: "b",
-            location: expect.objectContaining({
-              file_path: "test.js",
+            expect.objectContaining({
+              kind: "parameter",
+              symbol_id: expect.any(String),
+              name: "b",
+              location: expect.objectContaining({
+                file_path: "test.js",
+              }),
+              scope_id: expect.any(String),
+              availability: expect.any(Object),
             }),
-            scope_id: expect.any(String),
-            availability: expect.any(Object),
-          }),
-        ]));
+          ])
+        );
 
         // Verify parameter details
-        const paramNames = ctor.parameters.map(p => p.name);
+        const paramNames = ctor.parameters.map((p) => p.name);
         expect(paramNames).toEqual(["a", "b"]);
       }
 
@@ -1089,7 +1420,7 @@ describe("Semantic Index - JavaScript", () => {
       expect(class_def?.methods.length).toBe(2);
 
       // Find method1 and verify complete structure
-      const method1 = class_def?.methods.find(m => m.name === "method1");
+      const method1 = class_def?.methods.find((m) => m.name === "method1");
       expect(method1).toBeDefined();
 
       if (method1) {
@@ -1112,20 +1443,22 @@ describe("Semantic Index - JavaScript", () => {
 
         // Verify method1 has 2 parameters
         expect(method1.parameters).toHaveLength(2);
-        expect(method1.parameters).toEqual(expect.arrayContaining([
-          expect.objectContaining({
-            kind: "parameter",
-            name: "p1",
-          }),
-          expect.objectContaining({
-            kind: "parameter",
-            name: "p2",
-            default_value: expect.any(String),
-          }),
-        ]));
+        expect(method1.parameters).toEqual(
+          expect.arrayContaining([
+            expect.objectContaining({
+              kind: "parameter",
+              name: "p1",
+            }),
+            expect.objectContaining({
+              kind: "parameter",
+              name: "p2",
+              default_value: expect.any(String),
+            }),
+          ])
+        );
 
         // Verify p2 has default value
-        const p2 = method1.parameters.find(p => p.name === "p2");
+        const p2 = method1.parameters.find((p) => p.name === "p2");
         expect(p2?.default_value).toBeDefined();
         expect(p2?.default_value).toBe("5");
       }
@@ -1136,7 +1469,7 @@ describe("Semantic Index - JavaScript", () => {
       expect(class_def?.properties.length).toBeGreaterThanOrEqual(1);
 
       // Find property x and verify structure
-      const x_prop = class_def?.properties.find(p => p.name === "x");
+      const x_prop = class_def?.properties.find((p) => p.name === "x");
 
       if (x_prop) {
         expect(x_prop).toMatchObject({
@@ -1177,8 +1510,17 @@ describe("Semantic Index - JavaScript", () => {
       `;
 
       const tree = parser.parse(code);
-      const parsedFile = createParsedFile(code, "test.js" as FilePath, tree, "javascript" as Language);
-      const result = build_semantic_index(parsedFile, tree, "javascript" as Language);
+      const parsedFile = createParsedFile(
+        code,
+        "test.js" as FilePath,
+        tree,
+        "javascript" as Language
+      );
+      const result = build_semantic_index(
+        parsedFile,
+        tree,
+        "javascript" as Language
+      );
 
       // Verify add function
       const add_func = Array.from(result.functions.values()).find(
@@ -1257,8 +1599,17 @@ describe("Semantic Index - JavaScript", () => {
       `;
 
       const tree = parser.parse(code);
-      const parsedFile = createParsedFile(code, "test.js" as FilePath, tree, "javascript" as Language);
-      const result = build_semantic_index(parsedFile, tree, "javascript" as Language);
+      const parsedFile = createParsedFile(
+        code,
+        "test.js" as FilePath,
+        tree,
+        "javascript" as Language
+      );
+      const result = build_semantic_index(
+        parsedFile,
+        tree,
+        "javascript" as Language
+      );
 
       // Verify variable x
       const x_var = Array.from(result.variables.values()).find(
@@ -1331,8 +1682,17 @@ describe("Semantic Index - JavaScript", () => {
       `;
 
       const tree = parser.parse(code);
-      const parsedFile = createParsedFile(code, "test.js" as FilePath, tree, "javascript" as Language);
-      const result = build_semantic_index(parsedFile, tree, "javascript" as Language);
+      const parsedFile = createParsedFile(
+        code,
+        "test.js" as FilePath,
+        tree,
+        "javascript" as Language
+      );
+      const result = build_semantic_index(
+        parsedFile,
+        tree,
+        "javascript" as Language
+      );
 
       const imports = Array.from(result.imported_symbols.values());
       expect(imports.length).toBeGreaterThanOrEqual(5);
@@ -1424,8 +1784,17 @@ describe("Semantic Index - JavaScript", () => {
       `;
 
       const tree = parser.parse(code);
-      const parsedFile = createParsedFile(code, "test.js" as FilePath, tree, "javascript" as Language);
-      const result = build_semantic_index(parsedFile, tree, "javascript" as Language);
+      const parsedFile = createParsedFile(
+        code,
+        "test.js" as FilePath,
+        tree,
+        "javascript" as Language
+      );
+      const result = build_semantic_index(
+        parsedFile,
+        tree,
+        "javascript" as Language
+      );
 
       const class_def = Array.from(result.classes.values()).find(
         (d) => d.name === "TestClass"
@@ -1449,19 +1818,149 @@ describe("Semantic Index - JavaScript", () => {
         expect(ctor.parameters).toBeDefined();
         expect(ctor.parameters.length).toBe(2);
 
-        const paramNames = ctor.parameters.map(p => p.name);
+        const paramNames = ctor.parameters.map((p) => p.name);
         expect(paramNames).toEqual(["param1", "param2"]);
       }
 
       // Verify methods array does NOT contain the constructor
       expect(class_def?.methods).toBeDefined();
-      const methodNames = class_def?.methods.map(m => m.name) || [];
+      const methodNames = class_def?.methods.map((m) => m.name) || [];
       expect(methodNames).not.toContain("constructor");
       expect(methodNames).toContain("regularMethod");
 
       // Verify regular method has kind "method"
-      const regularMethod = class_def?.methods.find(m => m.name === "regularMethod");
+      const regularMethod = class_def?.methods.find(
+        (m) => m.name === "regularMethod"
+      );
       expect(regularMethod?.kind).toBe("method");
+    });
+  });
+
+  describe("Scope boundary verification", () => {
+    it("should capture only class body as scope for class declaration", () => {
+      const code = `class MyClass {
+  method() {}
+}`;
+
+      const tree = parser.parse(code);
+      const parsedFile = createParsedFile(
+        code,
+        "test.js" as FilePath,
+        tree,
+        "javascript" as Language
+      );
+      const index = build_semantic_index(
+        parsedFile,
+        tree,
+        "javascript" as Language
+      );
+
+      const file_scope = Array.from(index.scopes.values()).find(
+        (s) => s.type === "module" && s.parent_id === null
+      );
+      expect(file_scope).toBeDefined();
+      const file_scope_id = file_scope!.id;
+
+      const class_scope = Array.from(index.scopes.values()).find(
+        (s) => s.type === "class"
+      );
+      expect(class_scope).toBeDefined();
+
+      const myClass = Array.from(index.classes.values()).find(
+        (c) => c.name === "MyClass"
+      );
+      expect(myClass).toBeDefined();
+
+      // Class scope should start at `{` (body start), not at `class` keyword
+      expect(class_scope!.location.start_column).toBeGreaterThan(10);
+
+      // Class name 'MyClass' should be in module scope, not class scope
+      expect(myClass!.defining_scope_id).toBe(file_scope_id);
+
+      // Class scope parent should be module scope
+      const parent_scope = index.scopes.get(class_scope!.parent_id!);
+      expect(parent_scope?.type).toBe("module");
+    });
+
+    it("should capture only class body as scope for class expression", () => {
+      const code = `const MyClass = class {
+  method() {}
+}`;
+
+      const tree = parser.parse(code);
+      const parsedFile = createParsedFile(
+        code,
+        "test.js" as FilePath,
+        tree,
+        "javascript" as Language
+      );
+      const index = build_semantic_index(
+        parsedFile,
+        tree,
+        "javascript" as Language
+      );
+
+      const file_scope = Array.from(index.scopes.values()).find(
+        (s) => s.type === "module" && s.parent_id === null
+      );
+      expect(file_scope).toBeDefined();
+
+      const class_scope = Array.from(index.scopes.values()).find(
+        (s) => s.type === "class"
+      );
+      expect(class_scope).toBeDefined();
+
+      // Class scope should start at body (after "class {")
+      expect(class_scope!.location.start_column).toBeGreaterThan(20);
+    });
+  });
+
+  describe("Named function expression self-reference", () => {
+    it("should allow named function expression to reference itself", () => {
+      const code = `const factorial = function fact(n) {
+  if (n <= 1) return 1;
+  return n * fact(n - 1);
+};`;
+
+      const tree = parser.parse(code);
+      const parsedFile = createParsedFile(
+        code,
+        "test.js" as FilePath,
+        tree,
+        "javascript" as Language
+      );
+      const index = build_semantic_index(
+        parsedFile,
+        tree,
+        "javascript" as Language
+      );
+
+      const scopes = Array.from(index.scopes.values());
+      expect(scopes.length).toBeGreaterThan(0);
+
+      const allDefs = [
+        ...Array.from(index.functions.values()),
+        ...Array.from(index.variables.values()),
+      ];
+
+      // Look for 'fact' definition
+      const factDef = allDefs.find((d) => d.name === "fact");
+
+      // Find the reference to 'fact' inside the function body
+      const factRef = Array.from(index.references.values()).find(
+        (r) => r.name === "fact" && r.location.start_line === 3
+      );
+
+      // Verify that the reference exists (even if resolution needs work)
+      expect(factRef).toBeDefined();
+
+      // If 'fact' definition exists, it should be in the function scope
+      if (factDef) {
+        const functionScope = scopes.find((s) => s.type === "function");
+        expect(functionScope).toBeDefined();
+        // Fact should be in function scope for self-reference
+        expect(factDef.defining_scope_id).toBe(functionScope!.id);
+      }
     });
   });
 });

@@ -63,7 +63,7 @@ describe("resolve_module_path_rust", () => {
 
   it("should resolve crate-relative path with Cargo.toml and src/", () => {
     const cargo_file = path.join(TEST_DIR, "Cargo.toml");
-    fs.writeFileSync(cargo_file, "[package]\nname = \"test\"");
+    fs.writeFileSync(cargo_file, '[package]\nname = "test"');
 
     const src_dir = path.join(TEST_DIR, "src");
     fs.mkdirSync(src_dir);
@@ -250,7 +250,7 @@ describe("resolve_module_path_rust", () => {
 
   it("should handle Cargo.toml without src/ directory", () => {
     const cargo_file = path.join(TEST_DIR, "Cargo.toml");
-    fs.writeFileSync(cargo_file, "[package]\nname = \"test\"");
+    fs.writeFileSync(cargo_file, '[package]\nname = "test"');
 
     const lib_file = path.join(TEST_DIR, "lib.rs");
     fs.writeFileSync(lib_file, "pub mod utils;");
@@ -299,8 +299,8 @@ describe("Body-based scopes - Rust", () => {
     expect(struct_scope).toBeDefined();
 
     // Name in parent scope
-    expect(struct_def!.scope_id).toBe(module_scope!.id);
-    expect(struct_def!.scope_id).not.toBe(struct_scope!.id);
+    expect(struct_def!.defining_scope_id).toBe(module_scope!.id);
+    expect(struct_def!.defining_scope_id).not.toBe(struct_scope!.id);
 
     // Struct scope should start after the struct name (at '{')
     expect(struct_scope!.location.start_column).toBeGreaterThan(10);
@@ -331,7 +331,7 @@ describe("Body-based scopes - Rust", () => {
     const module_scope = Array.from(index.scopes.values()).find(
       (s) => s.type === "module"
     );
-    expect(struct_def!.scope_id).toBe(module_scope!.id);
+    expect(struct_def!.defining_scope_id).toBe(module_scope!.id);
 
     // Struct body scope starts after the struct name (at '{')
     expect(struct_scope!.location.start_column).toBeGreaterThan(10);
@@ -357,7 +357,7 @@ describe("Body-based scopes - Rust", () => {
     expect(enum_def).toBeDefined();
     expect(module_scope).toBeDefined();
 
-    expect(enum_def!.scope_id).toBe(module_scope!.id);
+    expect(enum_def!.defining_scope_id).toBe(module_scope!.id);
   });
 
   it("enum body creates a scope with variants", () => {
@@ -411,7 +411,7 @@ describe("Body-based scopes - Rust", () => {
     expect(trait_def).toBeDefined();
     expect(module_scope).toBeDefined();
 
-    expect(trait_def!.scope_id).toBe(module_scope!.id);
+    expect(trait_def!.defining_scope_id).toBe(module_scope!.id);
   });
 
   it("trait body creates a scope with methods", () => {
@@ -475,14 +475,16 @@ impl MyStruct {
 
     // Find methods in struct (added from impl block)
     const new_method = struct_def!.methods.find((m) => m.name === "new");
-    const do_something_method = struct_def!.methods.find((m) => m.name === "do_something");
+    const do_something_method = struct_def!.methods.find(
+      (m) => m.name === "do_something"
+    );
 
     expect(new_method).toBeDefined();
     expect(do_something_method).toBeDefined();
 
     // Methods are in impl scope
-    expect(new_method!.scope_id).toBe(impl_scope!.id);
-    expect(do_something_method!.scope_id).toBe(impl_scope!.id);
+    expect(new_method!.defining_scope_id).toBe(impl_scope!.id);
+    expect(do_something_method!.defining_scope_id).toBe(impl_scope!.id);
   });
 
   it("struct/enum/trait/impl scope starts at opening brace", () => {
@@ -515,7 +517,7 @@ impl MyStruct {
 
     // All body scopes should start after their keyword/name
     // Struct scope starts after "pub struct MyStruct " (at '{')
-    body_scopes.forEach(scope => {
+    body_scopes.forEach((scope) => {
       // Body scopes should start at a reasonable column position
       // (after keywords and type names)
       expect(scope.location.start_column).toBeGreaterThan(0);
@@ -552,10 +554,10 @@ pub struct SecondStruct {
 
     // Both struct names should be in module-level scopes
     const first_scope_type = Array.from(index.scopes.values()).find(
-      (s) => s.id === first_struct!.scope_id
+      (s) => s.id === first_struct!.defining_scope_id
     )?.type;
     const second_scope_type = Array.from(index.scopes.values()).find(
-      (s) => s.id === second_struct!.scope_id
+      (s) => s.id === second_struct!.defining_scope_id
     )?.type;
 
     expect(first_scope_type).toBe("module");
@@ -596,7 +598,7 @@ pub struct SecondStruct {
     const module_scope = Array.from(index.scopes.values()).find(
       (s) => s.type === "module"
     );
-    expect(enum_def!.scope_id).toBe(module_scope!.id);
+    expect(enum_def!.defining_scope_id).toBe(module_scope!.id);
   });
 
   it("trait impl block creates scope for methods", () => {

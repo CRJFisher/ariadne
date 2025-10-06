@@ -163,7 +163,7 @@ function build_resolvers_recursive(
   index: SemanticIndex,
   file_path: FilePath,
   indices: ReadonlyMap<FilePath, SemanticIndex>
-): Map<ScopeId, Map<SymbolName, SymbolResolver>> {
+): ReadonlyMap<ScopeId, Map<SymbolName, SymbolResolver>> {
   const result = new Map<ScopeId, Map<SymbolName, SymbolResolver>>();
   const resolvers = new Map<SymbolName, SymbolResolver>();
 
@@ -210,30 +210,6 @@ function build_resolvers_recursive(
     resolvers.set(name, () => symbol_id);
   }
 
-  // Special case: For function expression nodes or block scopes,
-  // also collect definitions from sibling function name scopes
-  // This handles the case where semantic index creates sibling scopes for function name and body
-  if (scope.type === 'function' || scope.type === 'block') {
-    // Get parent scope
-    const parent_scope = scope.parent_id ? index.scopes.get(scope.parent_id) : null;
-    if (parent_scope) {
-      // Check if parent has any function children (sibling scopes)
-      for (const sibling_id of parent_scope.child_ids) {
-        if (sibling_id !== scope_id) {  // Don't process ourself
-          const sibling_scope = index.scopes.get(sibling_id);
-          if (sibling_scope && sibling_scope.type === 'function') {
-            const sibling_defs = find_local_definitions(sibling_id, index);
-            for (const [name, symbol_id] of sibling_defs) {
-              if (!resolvers.has(name)) {  // Don't override existing resolvers
-                resolvers.set(name, () => symbol_id);
-              }
-            }
-          }
-        }
-      }
-    }
-  }
-
   // Store this scope's resolvers in result
   result.set(scope_id, resolvers);
 
@@ -266,6 +242,8 @@ function build_resolvers_recursive(
  * These will be used to create local definition resolvers that shadow
  * imports and parent scope symbols.
  *
+ * TODO: could make this more efficient by adding a scope-id->symbols map to the index
+ *
  * @param scope_id - Scope to search for definitions
  * @param index - SemanticIndex containing all definitions
  * @returns Map of symbol name → symbol_id for all local definitions
@@ -278,28 +256,28 @@ function find_local_definitions(
 
   // Functions
   for (const [func_id, func_def] of index.functions) {
-    if (func_def.scope_id === scope_id) {
+    if (func_def.defining_scope_id === scope_id) {
       defs.set(func_def.name, func_id);
     }
   }
 
   // Variables
   for (const [var_id, var_def] of index.variables) {
-    if (var_def.scope_id === scope_id) {
+    if (var_def.defining_scope_id === scope_id) {
       defs.set(var_def.name, var_id);
     }
   }
 
   // Classes
   for (const [class_id, class_def] of index.classes) {
-    if (class_def.scope_id === scope_id) {
+    if (class_def.defining_scope_id === scope_id) {
       defs.set(class_def.name, class_id);
     }
   }
 
   // Interfaces
   for (const [iface_id, iface_def] of index.interfaces) {
-    if (iface_def.scope_id === scope_id) {
+    if (iface_def.defining_scope_id === scope_id) {
       defs.set(iface_def.name, iface_id);
     }
   }
@@ -317,7 +295,7 @@ function find_local_definitions(
  * @returns ScopeResolverIndex that performs on-demand cached resolution
  */
 function create_resolver_index(
-  scope_resolvers: Map<ScopeId, Map<SymbolName, SymbolResolver>>
+  scope_resolvers: ReadonlyMap<ScopeId, Map<SymbolName, SymbolResolver>>
 ): ScopeResolverIndex {
   return {
     resolve(
@@ -365,4 +343,3 @@ function create_resolver_index(
     },
   };
 }
-

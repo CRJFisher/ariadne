@@ -85,7 +85,7 @@ describe("Constructor Call Resolution", () => {
         kind: "constructor",
         symbol_id: constructor_id,
         name: "constructor" as SymbolName,
-        scope_id: root_scope_id,
+        defining_scope_id: root_scope_id,
         location: {
           file: file_path,
           start_line: 2,
@@ -104,7 +104,7 @@ describe("Constructor Call Resolution", () => {
             kind: "class",
             symbol_id: class_id,
             name: "User" as SymbolName,
-            scope_id: root_scope_id,
+            defining_scope_id: root_scope_id,
             location: {
               file: file_path,
               start_line: 1,
@@ -190,7 +190,7 @@ describe("Constructor Call Resolution", () => {
             kind: "class",
             symbol_id: class_id,
             name: "Helper" as SymbolName,
-            scope_id: root_scope_id,
+            defining_scope_id: root_scope_id,
             location: {
               file: file_path,
               start_line: 1,
@@ -297,7 +297,7 @@ describe("Constructor Call Resolution", () => {
             kind: "class",
             symbol_id: local_class_id,
             name: "LocalUser" as SymbolName,
-            scope_id: function_scope_id,
+            defining_scope_id: function_scope_id,
             location: {
               file: file_path,
               start_line: 6,
@@ -403,7 +403,7 @@ describe("Constructor Call Resolution", () => {
             kind: "class",
             symbol_id: outer_class_id,
             name: "User" as SymbolName,
-            scope_id: root_scope_id,
+            defining_scope_id: root_scope_id,
             location: {
               file: file_path,
               start_line: 1,
@@ -424,7 +424,7 @@ describe("Constructor Call Resolution", () => {
             kind: "class",
             symbol_id: inner_class_id,
             name: "User" as SymbolName,
-            scope_id: inner_scope_id,
+            defining_scope_id: inner_scope_id,
             location: {
               file: file_path,
               start_line: 11,
@@ -569,7 +569,7 @@ describe("Constructor Call Resolution", () => {
         kind: "constructor",
         symbol_id: constructor_id,
         name: "constructor" as SymbolName,
-        scope_id: root_scope_id,
+        defining_scope_id: root_scope_id,
         location: {
           file: file_path,
           start_line: 2,
@@ -588,7 +588,7 @@ describe("Constructor Call Resolution", () => {
             kind: "class",
             symbol_id: class_id,
             name: "User" as SymbolName,
-            scope_id: root_scope_id,
+            defining_scope_id: root_scope_id,
             location: {
               file: file_path,
               start_line: 1,
@@ -690,7 +690,7 @@ describe("Constructor Call Resolution", () => {
         kind: "constructor",
         symbol_id: constructor_id,
         name: "constructor" as SymbolName,
-        scope_id: root_scope_id,
+        defining_scope_id: root_scope_id,
         location: {
           file: file_path,
           start_line: 2,
@@ -709,7 +709,7 @@ describe("Constructor Call Resolution", () => {
             kind: "class",
             symbol_id: class_id,
             name: "Box" as SymbolName,
-            scope_id: root_scope_id,
+            defining_scope_id: root_scope_id,
             location: {
               file: file_path,
               start_line: 1,
@@ -799,7 +799,7 @@ describe("Constructor Call Resolution", () => {
             kind: "class",
             symbol_id: class_id,
             name: "User" as SymbolName,
-            scope_id: root_scope_id,
+            defining_scope_id: root_scope_id,
             location: {
               file: file_path,
               start_line: 1,
@@ -817,19 +817,22 @@ describe("Constructor Call Resolution", () => {
       ]);
 
       // Create multiple constructor calls
-      const call_refs: SymbolReference[] = Array.from({ length: 10 }, (_, i) => ({
-        location: {
-          file: file_path,
-          start_line: 5 + i,
-          start_column: 13,
-          end_line: 5 + i,
-          end_column: 26,
-        },
-        type: "call" as const,
-        scope_id: root_scope_id,
-        name: "User" as SymbolName,
-        call_type: "constructor" as const,
-      }));
+      const call_refs: SymbolReference[] = Array.from(
+        { length: 10 },
+        (_, i) => ({
+          location: {
+            file: file_path,
+            start_line: 5 + i,
+            start_column: 13,
+            end_line: 5 + i,
+            end_column: 26,
+          },
+          type: "call" as const,
+          scope_id: root_scope_id,
+          name: "User" as SymbolName,
+          call_type: "constructor" as const,
+        })
+      );
 
       const index = create_test_index(
         file_path,
@@ -889,7 +892,7 @@ describe("Constructor Call Resolution", () => {
         kind: "constructor",
         symbol_id: constructor_id,
         name: "constructor" as SymbolName,
-        scope_id: root_scope_id,
+        defining_scope_id: root_scope_id,
         location: {
           file: file_path,
           start_line: 2,
@@ -908,7 +911,7 @@ describe("Constructor Call Resolution", () => {
             kind: "class",
             symbol_id: class_id,
             name: "User" as SymbolName,
-            scope_id: root_scope_id,
+            defining_scope_id: root_scope_id,
             location: {
               file: file_path,
               start_line: 1,
@@ -1015,7 +1018,7 @@ describe("Constructor Call Resolution", () => {
             kind: "class",
             symbol_id: class_id,
             name: "User" as SymbolName,
-            scope_id: file1_root_scope,
+            defining_scope_id: file1_root_scope,
             location: {
               file: file1_path,
               start_line: 1,

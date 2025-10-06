@@ -117,6 +117,36 @@ function create_import_id(capture: CaptureNode): SymbolId {
 }
 
 /**
+ * Find the function scope that contains the given location.
+ * This is used for named function expressions where the function name
+ * should be visible only within the function's own scope.
+ */
+function find_function_scope_at_location(
+  location: Location,
+  context: ProcessingContext
+): ScopeId {
+  // Find all function scopes in the context
+  for (const scope of context.scopes.values()) {
+    if (scope.type === "function") {
+      // Check if this function scope contains our location
+      const scope_start = scope.location.start_line * 10000 + scope.location.start_column;
+      const scope_end = scope.location.end_line * 10000 + scope.location.end_column;
+      const loc_pos = location.start_line * 10000 + location.start_column;
+
+      // The function scope should start at or very near the location
+      // (within a few characters - for "function name()")
+      if (scope_start <= loc_pos && loc_pos <= scope_end &&
+          Math.abs(scope_start - loc_pos) < 100) {
+        return scope.id;
+      }
+    }
+  }
+
+  // Fallback to default behavior if no function scope found
+  return context.get_scope_id(location);
+}
+
+/**
  * Find containing class by traversing up the AST
  *
  * Note: This function attempts to recreate the class_symbol ID by finding the class node
@@ -541,11 +571,27 @@ export const JAVASCRIPT_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
       ) => {
         const func_id = create_function_id(capture);
 
+        // Special handling for named function expressions:
+        // In JavaScript, a named function expression's name is only visible
+        // within the function body itself, not in the parent scope.
+        // Example: const fact = function factorial(n) { return factorial(n-1); }
+        //   - 'fact' is visible in parent scope
+        //   - 'factorial' is only visible inside the function
+        let scope_id: ScopeId;
+        if (capture.node.parent?.type === "function_expression" ||
+            capture.node.parent?.type === "function") {
+          // This is a named function expression - assign to function's own scope
+          scope_id = find_function_scope_at_location(capture.location, context);
+        } else {
+          // This is a function declaration - assign to parent scope
+          scope_id = context.get_scope_id(capture.location);
+        }
+
         builder.add_function({
           symbol_id: func_id,
           name: capture.text,
           location: capture.location,
-          scope_id: context.get_scope_id(capture.location),
+          scope_id: scope_id,
           availability: determine_availability(capture.node),
         });
       },

@@ -3,11 +3,7 @@
  */
 
 import { describe, it, expect } from "vitest";
-import {
-  extract_import_specs,
-  resolve_export_chain,
-  create_import_resolver,
-} from "./import_resolver";
+import { extract_import_specs, resolve_export_chain } from "./import_resolver";
 import type { SemanticIndex } from "../../index_single_file/semantic_index";
 import type {
   FilePath,
@@ -19,6 +15,7 @@ import type {
   ClassDefinition,
   VariableDefinition,
   LexicalScope,
+  ModulePath,
 } from "@ariadnejs/types";
 
 // Test helper to create a minimal semantic index
@@ -40,15 +37,27 @@ function create_test_index(
     file_path,
     language,
     root_scope_id,
-    scopes: options.scopes || new Map([
-      [root_scope_id, {
-        scope_id: root_scope_id,
-        type: "module",
-        parent_id: null,
-        child_ids: [],
-        location: { file: file_path, start_line: 0, start_column: 0, end_line: 0, end_column: 0 },
-      }]
-    ]),
+    scopes:
+      options.scopes ||
+      new Map([
+        [
+          root_scope_id,
+          {
+            id: root_scope_id,
+            name: null,
+            type: "module",
+            parent_id: null,
+            child_ids: [],
+            location: {
+              file_path: file_path,
+              start_line: 0,
+              start_column: 0,
+              end_line: 0,
+              end_column: 0,
+            },
+          },
+        ],
+      ]),
     functions: options.functions || new Map(),
     classes: options.classes || new Map(),
     variables: options.variables || new Map(),
@@ -61,7 +70,7 @@ function create_test_index(
     symbols_by_name: new Map(),
     type_bindings: new Map(),
     type_members: new Map(),
-    constructors: new Map(),
+    type_alias_metadata: new Map(),
   };
 }
 
@@ -74,10 +83,19 @@ describe("extract_import_specs", () => {
       kind: "import",
       symbol_id: "import-1" as SymbolId,
       name: "foo" as SymbolName,
-      scope_id,
-      location: { file: file_path, start_line: 1, start_column: 0, end_line: 1, end_column: 20 },
-      import_path: "./utils.js",
+      defining_scope_id: scope_id,
+      location: {
+        file_path: file_path,
+        start_line: 1,
+        start_column: 0,
+        end_line: 1,
+        end_column: 20,
+      },
+      import_path: "./utils.js" as ModulePath,
       import_kind: "named",
+      availability: {
+        scope: "file-private",
+      },
     };
 
     const index = create_test_index(file_path, "javascript", {
@@ -101,11 +119,20 @@ describe("extract_import_specs", () => {
       kind: "import",
       symbol_id: "import-1" as SymbolId,
       name: "bar" as SymbolName,
-      scope_id,
-      location: { file: file_path, start_line: 1, start_column: 0, end_line: 1, end_column: 30 },
-      import_path: "./utils.js",
+      defining_scope_id: scope_id,
+      location: {
+        file_path: file_path,
+        start_line: 1,
+        start_column: 0,
+        end_line: 1,
+        end_column: 30,
+      },
+      import_path: "./utils.js" as ModulePath,
       import_kind: "named",
       original_name: "foo" as SymbolName,
+      availability: {
+        scope: "file-private",
+      },
     };
 
     const index = create_test_index(file_path, "javascript", {
@@ -129,20 +156,38 @@ describe("extract_import_specs", () => {
       kind: "import",
       symbol_id: "import-1" as SymbolId,
       name: "foo" as SymbolName,
-      scope_id: scope1,
-      location: { file: file_path, start_line: 1, start_column: 0, end_line: 1, end_column: 20 },
-      import_path: "./utils.js",
+      defining_scope_id: scope1,
+      location: {
+        file_path: file_path,
+        start_line: 1,
+        start_column: 0,
+        end_line: 1,
+        end_column: 20,
+      },
+      import_path: "./utils.js" as ModulePath,
       import_kind: "named",
+      availability: {
+        scope: "file-private",
+      },
     };
 
     const import2: ImportDefinition = {
       kind: "import",
       symbol_id: "import-2" as SymbolId,
       name: "bar" as SymbolName,
-      scope_id: scope2,
-      location: { file: file_path, start_line: 2, start_column: 0, end_line: 2, end_column: 20 },
-      import_path: "./helpers.js",
+      defining_scope_id: scope2,
+      location: {
+        file_path: file_path,
+        start_line: 2,
+        start_column: 0,
+        end_line: 2,
+        end_column: 20,
+      },
+      import_path: "./helpers.js" as ModulePath,
       import_kind: "named",
+      availability: {
+        scope: "file-private",
+      },
     };
 
     const index = create_test_index(file_path, "javascript", {
@@ -169,8 +214,18 @@ describe("resolve_export_chain", () => {
       kind: "function",
       symbol_id,
       name: "helper" as SymbolName,
-      scope_id: "scope-0" as ScopeId,
-      location: { file: file_path, start_line: 1, start_column: 0, end_line: 3, end_column: 1 },
+      defining_scope_id: "scope-0" as ScopeId,
+      location: {
+        file_path: file_path,
+        start_line: 1,
+        start_column: 0,
+        end_line: 3,
+        end_column: 1,
+      },
+      signature: {
+        parameters: [],
+        return_type: "void" as SymbolName,
+      },
       availability: {
         scope: "file-export",
       },
@@ -182,7 +237,11 @@ describe("resolve_export_chain", () => {
 
     const indices = new Map([[file_path, index]]);
 
-    const result = resolve_export_chain(file_path, "helper" as SymbolName, indices);
+    const result = resolve_export_chain(
+      file_path,
+      "helper" as SymbolName,
+      indices
+    );
 
     expect(result).toBe(symbol_id);
   });
@@ -224,8 +283,18 @@ describe("resolve_export_chain", () => {
       kind: "function",
       symbol_id,
       name: "helper" as SymbolName,
-      scope_id: "scope-0" as ScopeId,
-      location: { file: file_path, start_line: 1, start_column: 0, end_line: 1, end_column: 30 },
+      defining_scope_id: "scope-0" as ScopeId,
+      location: {
+        file_path: file_path,
+        start_line: 1,
+        start_column: 0,
+        end_line: 1,
+        end_column: 30,
+      },
+      signature: {
+        parameters: [],
+        return_type: "void" as SymbolName,
+      },
       availability: {
         scope: "file-export",
         export: {
@@ -241,7 +310,11 @@ describe("resolve_export_chain", () => {
 
     const indices = new Map([[file_path, index]]);
 
-    const result = resolve_export_chain(file_path, "helper" as SymbolName, indices);
+    const result = resolve_export_chain(
+      file_path,
+      "helper" as SymbolName,
+      indices
+    );
 
     // Returns the re-export's own symbol_id (not following the chain)
     expect(result).toBe(symbol_id);
@@ -258,8 +331,19 @@ describe("resolve_export_chain", () => {
       kind: "class",
       symbol_id,
       name: "MyClass" as SymbolName,
-      scope_id: "scope-0" as ScopeId,
-      location: { file: file_path, start_line: 1, start_column: 0, end_line: 5, end_column: 1 },
+      defining_scope_id: "scope-0" as ScopeId,
+      location: {
+        file_path: file_path,
+        start_line: 1,
+        start_column: 0,
+        end_line: 5,
+        end_column: 1,
+      },
+      extends: [],
+      methods: [],
+      properties: [],
+      decorators: [],
+      constructor: [],
       availability: {
         scope: "public",
       },
@@ -271,7 +355,11 @@ describe("resolve_export_chain", () => {
 
     const indices = new Map([[file_path, index]]);
 
-    const result = resolve_export_chain(file_path, "MyClass" as SymbolName, indices);
+    const result = resolve_export_chain(
+      file_path,
+      "MyClass" as SymbolName,
+      indices
+    );
 
     expect(result).toBe(symbol_id);
   });
@@ -284,8 +372,14 @@ describe("resolve_export_chain", () => {
       kind: "variable",
       symbol_id,
       name: "config" as SymbolName,
-      scope_id: "scope-0" as ScopeId,
-      location: { file: file_path, start_line: 1, start_column: 0, end_line: 1, end_column: 30 },
+      defining_scope_id: "scope-0" as ScopeId,
+      location: {
+        file_path: file_path,
+        start_line: 1,
+        start_column: 0,
+        end_line: 1,
+        end_column: 30,
+      },
       availability: {
         scope: "file-export",
       },
@@ -297,7 +391,11 @@ describe("resolve_export_chain", () => {
 
     const indices = new Map([[file_path, index]]);
 
-    const result = resolve_export_chain(file_path, "config" as SymbolName, indices);
+    const result = resolve_export_chain(
+      file_path,
+      "config" as SymbolName,
+      indices
+    );
 
     expect(result).toBe(symbol_id);
   });
@@ -310,10 +408,20 @@ describe("resolve_export_chain", () => {
       kind: "function",
       symbol_id,
       name: "private_helper" as SymbolName,
-      scope_id: "scope-0" as ScopeId,
-      location: { file: file_path, start_line: 1, start_column: 0, end_line: 3, end_column: 1 },
+      defining_scope_id: "scope-0" as ScopeId,
+      signature: {
+        parameters: [],
+        return_type: "void" as SymbolName,
+      },
+      location: {
+        file_path: file_path,
+        start_line: 1,
+        start_column: 0,
+        end_line: 3,
+        end_column: 1,
+      },
       availability: {
-        scope: "local", // Not exported!
+        scope: "package-internal", // Not exported!
       },
     };
 
@@ -328,64 +436,6 @@ describe("resolve_export_chain", () => {
       "private_helper" as SymbolName,
       indices
     );
-
-    expect(result).toBeNull();
-  });
-});
-
-describe("create_import_resolver", () => {
-  it("should create a lazy resolver function", () => {
-    const file_path = "/test/utils.js" as FilePath;
-    const symbol_id = "func-1" as SymbolId;
-
-    const func_def: FunctionDefinition = {
-      kind: "function",
-      symbol_id,
-      name: "helper" as SymbolName,
-      scope_id: "scope-0" as ScopeId,
-      location: { file: file_path, start_line: 1, start_column: 0, end_line: 3, end_column: 1 },
-      availability: {
-        scope: "file-export",
-      },
-    };
-
-    const index = create_test_index(file_path, "javascript", {
-      functions: new Map([[symbol_id, func_def]]),
-    });
-
-    const indices = new Map([[file_path, index]]);
-
-    const import_spec = {
-      local_name: "helper" as SymbolName,
-      source_file: file_path,
-      import_name: "helper" as SymbolName,
-      import_kind: "named" as const,
-    };
-
-    const resolver = create_import_resolver(import_spec, indices);
-
-    // Resolver should be a function
-    expect(typeof resolver).toBe("function");
-
-    // Calling the resolver should return the symbol ID
-    const result = resolver();
-    expect(result).toBe(symbol_id);
-  });
-
-  it("should return null for non-existent import", () => {
-    const file_path = "/test/utils.js" as FilePath;
-    const index = create_test_index(file_path, "javascript");
-    const indices = new Map([[file_path, index]]);
-
-    const import_spec = {
-      local_name: "nonexistent" as SymbolName,
-      source_file: file_path,
-      import_name: "nonexistent" as SymbolName,
-      import_kind: "named" as const,
-    };
-
-    const resolver = create_import_resolver(import_spec, indices);
-    const result = resolver();
 
     expect(result).toBeNull();
   });

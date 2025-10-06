@@ -40,7 +40,7 @@ describe("detect_call_graph", () => {
     id,
     name: name as SymbolName,
     kind: "function",
-    scope_id: "global" as ScopeId,
+    defining_scope_id: "global" as ScopeId,
     location,
   });
 

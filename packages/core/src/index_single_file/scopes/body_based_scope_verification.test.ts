@@ -61,7 +61,11 @@ describe("Body-Based Scope Verification", () => {
         tree,
         "typescript" as Language
       );
-      const index = build_semantic_index(parsedFile, tree, "typescript" as Language);
+      const index = build_semantic_index(
+        parsedFile,
+        tree,
+        "typescript" as Language
+      );
 
       // Get the file scope (module scope)
       const file_scope = Array.from(index.scopes.values()).find(
@@ -94,7 +98,7 @@ describe("Body-Based Scope Verification", () => {
       });
       console.log("MyClass definition:", {
         name: myClass!.name,
-        scope_id: myClass!.scope_id,
+        scope_id: myClass!.defining_scope_id,
         location: myClass!.location,
       });
 
@@ -109,8 +113,10 @@ describe("Body-Based Scope Verification", () => {
 
       // VERIFICATION 2: Class name 'MyClass' should be OUTSIDE class scope (in module scope)
       // This is the key fix: class definition should be in file scope, not class scope
-      expect(myClass!.scope_id).toBe(file_scope_id);
-      console.log("✓ Class name 'MyClass' is in module scope (not class scope)");
+      expect(myClass!.defining_scope_id).toBe(file_scope_id);
+      console.log(
+        "✓ Class name 'MyClass' is in module scope (not class scope)"
+      );
 
       // VERIFICATION 3: Class scope parent should be module scope
       const parent_scope = index.scopes.get(class_scope!.parent_id!);
@@ -132,7 +138,11 @@ describe("Body-Based Scope Verification", () => {
         tree,
         "typescript" as Language
       );
-      const index = build_semantic_index(parsedFile, tree, "typescript" as Language);
+      const index = build_semantic_index(
+        parsedFile,
+        tree,
+        "typescript" as Language
+      );
 
       // Debug: print all scopes
       console.log("\n=== ALL SCOPES ===");
@@ -172,7 +182,7 @@ describe("Body-Based Scope Verification", () => {
       });
       console.log("IFoo definition:", {
         name: iFoo!.name,
-        scope_id: iFoo!.scope_id,
+        scope_id: iFoo!.defining_scope_id,
         location: iFoo!.location,
       });
 
@@ -185,8 +195,10 @@ describe("Body-Based Scope Verification", () => {
       );
 
       // VERIFICATION 2: Interface name 'IFoo' should be in module scope
-      expect(iFoo!.scope_id).toBe(file_scope_id);
-      console.log("✓ Interface name 'IFoo' is in module scope (not interface scope)");
+      expect(iFoo!.defining_scope_id).toBe(file_scope_id);
+      console.log(
+        "✓ Interface name 'IFoo' is in module scope (not interface scope)"
+      );
     });
   });
 
@@ -204,7 +216,11 @@ describe("Body-Based Scope Verification", () => {
         tree,
         "typescript" as Language
       );
-      const index = build_semantic_index(parsedFile, tree, "typescript" as Language);
+      const index = build_semantic_index(
+        parsedFile,
+        tree,
+        "typescript" as Language
+      );
 
       // Debug: print all scopes
       console.log("\n=== ALL SCOPES ===");
@@ -244,7 +260,7 @@ describe("Body-Based Scope Verification", () => {
       });
       console.log("Status definition:", {
         name: statusEnum!.name,
-        scope_id: statusEnum!.scope_id,
+        scope_id: statusEnum!.defining_scope_id,
         location: statusEnum!.location,
       });
 
@@ -257,7 +273,7 @@ describe("Body-Based Scope Verification", () => {
       );
 
       // VERIFICATION 2: Enum name 'Status' should be in module scope
-      expect(statusEnum!.scope_id).toBe(file_scope_id);
+      expect(statusEnum!.defining_scope_id).toBe(file_scope_id);
       console.log("✓ Enum name 'Status' is in module scope (not enum scope)");
     });
   });
@@ -283,7 +299,11 @@ describe("Body-Based Scope Verification", () => {
         tree,
         "typescript" as Language
       );
-      const index = build_semantic_index(parsedFile, tree, "typescript" as Language);
+      const index = build_semantic_index(
+        parsedFile,
+        tree,
+        "typescript" as Language
+      );
 
       // Get scopes
       const file_scope = Array.from(index.scopes.values()).find(
@@ -304,19 +324,22 @@ describe("Body-Based Scope Verification", () => {
       expect(calcClass).toBeDefined();
 
       console.log("\n=== Complex Class Verification ===");
-      console.log("Calculator class scope_id:", calcClass!.scope_id);
+      console.log("Calculator class scope_id:", calcClass!.defining_scope_id);
       console.log("Class scope:", {
         id: class_scope!.id,
         location: class_scope!.location,
       });
 
       // Class name should be in module scope
-      expect(calcClass!.scope_id).toBe(file_scope_id);
+      expect(calcClass!.defining_scope_id).toBe(file_scope_id);
       console.log("\n✓ Class name 'Calculator' is in module scope");
 
       // Class scope should start at body
       expect(class_scope!.location.start_column).toBeGreaterThan(10);
-      console.log("✓ Class scope starts at body (column >10):", class_scope!.location.start_column);
+      console.log(
+        "✓ Class scope starts at body (column >10):",
+        class_scope!.location.start_column
+      );
 
       // Class scope parent should be module scope
       const parent_scope = index.scopes.get(class_scope!.parent_id!);
@@ -345,7 +368,11 @@ describe("Body-Based Scope Verification", () => {
         tree,
         "javascript" as Language
       );
-      const index = build_semantic_index(parsedFile, tree, "javascript" as Language);
+      const index = build_semantic_index(
+        parsedFile,
+        tree,
+        "javascript" as Language
+      );
 
       // Get the file scope (module scope)
       const file_scope = Array.from(index.scopes.values()).find(
@@ -378,7 +405,7 @@ describe("Body-Based Scope Verification", () => {
       });
       console.log("MyClass definition:", {
         name: myClass!.name,
-        scope_id: myClass!.scope_id,
+        scope_id: myClass!.defining_scope_id,
         location: myClass!.location,
       });
 
@@ -392,8 +419,10 @@ describe("Body-Based Scope Verification", () => {
       );
 
       // VERIFICATION 2: Class name 'MyClass' should be OUTSIDE class scope (in module scope)
-      expect(myClass!.scope_id).toBe(file_scope_id);
-      console.log("✓ Class name 'MyClass' is in module scope (not class scope)");
+      expect(myClass!.defining_scope_id).toBe(file_scope_id);
+      console.log(
+        "✓ Class name 'MyClass' is in module scope (not class scope)"
+      );
 
       // VERIFICATION 3: Class scope parent should be module scope
       const parent_scope = index.scopes.get(class_scope!.parent_id!);
@@ -413,7 +442,11 @@ describe("Body-Based Scope Verification", () => {
         tree,
         "javascript" as Language
       );
-      const index = build_semantic_index(parsedFile, tree, "javascript" as Language);
+      const index = build_semantic_index(
+        parsedFile,
+        tree,
+        "javascript" as Language
+      );
 
       // Get the file scope
       const file_scope = Array.from(index.scopes.values()).find(
@@ -464,7 +497,11 @@ describe("Body-Based Scope Verification", () => {
         tree,
         "python" as Language
       );
-      const index = build_semantic_index(parsedFile, tree, "python" as Language);
+      const index = build_semantic_index(
+        parsedFile,
+        tree,
+        "python" as Language
+      );
 
       // Get the file scope (module scope)
       const file_scope = Array.from(index.scopes.values()).find(
@@ -497,7 +534,7 @@ describe("Body-Based Scope Verification", () => {
       });
       console.log("MyClass definition:", {
         name: myClass!.name,
-        scope_id: myClass!.scope_id,
+        scope_id: myClass!.defining_scope_id,
         location: myClass!.location,
       });
 
@@ -513,8 +550,10 @@ describe("Body-Based Scope Verification", () => {
 
       // VERIFICATION 2: Class name 'MyClass' should be OUTSIDE class scope (in module scope)
       // This is the key fix: class definition should be in file scope, not class scope
-      expect(myClass!.scope_id).toBe(file_scope_id);
-      console.log("✓ Class name 'MyClass' is in module scope (not class scope)");
+      expect(myClass!.defining_scope_id).toBe(file_scope_id);
+      console.log(
+        "✓ Class name 'MyClass' is in module scope (not class scope)"
+      );
 
       // VERIFICATION 3: Class scope parent should be module scope
       const parent_scope = index.scopes.get(class_scope!.parent_id!);
@@ -537,7 +576,11 @@ describe("Body-Based Scope Verification", () => {
         tree,
         "python" as Language
       );
-      const index = build_semantic_index(parsedFile, tree, "python" as Language);
+      const index = build_semantic_index(
+        parsedFile,
+        tree,
+        "python" as Language
+      );
 
       // Get scopes
       const file_scope = Array.from(index.scopes.values()).find(
@@ -558,19 +601,22 @@ describe("Body-Based Scope Verification", () => {
       expect(calcClass).toBeDefined();
 
       console.log("\n=== Python Complex Class Verification ===");
-      console.log("Calculator class scope_id:", calcClass!.scope_id);
+      console.log("Calculator class scope_id:", calcClass!.defining_scope_id);
       console.log("Class scope:", {
         id: class_scope!.id,
         location: class_scope!.location,
       });
 
       // Class name should be in module scope
-      expect(calcClass!.scope_id).toBe(file_scope_id);
+      expect(calcClass!.defining_scope_id).toBe(file_scope_id);
       console.log("\n✓ Class name 'Calculator' is in module scope");
 
       // Class scope should start on next line (indented block)
       expect(class_scope!.location.start_line).toBeGreaterThan(0);
-      console.log("✓ Class scope starts at line:", class_scope!.location.start_line);
+      console.log(
+        "✓ Class scope starts at line:",
+        class_scope!.location.start_line
+      );
 
       // Class scope parent should be module scope
       const parent_scope = index.scopes.get(class_scope!.parent_id!);
@@ -594,7 +640,11 @@ describe("Body-Based Scope Verification", () => {
         tree,
         "python" as Language
       );
-      const index = build_semantic_index(parsedFile, tree, "python" as Language);
+      const index = build_semantic_index(
+        parsedFile,
+        tree,
+        "python" as Language
+      );
 
       const file_scope = Array.from(index.scopes.values()).find(
         (s) => s.type === "module" && s.parent_id === null
@@ -613,10 +663,10 @@ describe("Body-Based Scope Verification", () => {
       );
 
       // Outer class name should be in module scope
-      expect(outerClass!.scope_id).toBe(file_scope_id);
+      expect(outerClass!.defining_scope_id).toBe(file_scope_id);
 
       // Inner class name should be in outer class scope (NOT module scope)
-      expect(innerClass!.scope_id).toBe(outer_class_scope!.id);
+      expect(innerClass!.defining_scope_id).toBe(outer_class_scope!.id);
     });
   });
 });

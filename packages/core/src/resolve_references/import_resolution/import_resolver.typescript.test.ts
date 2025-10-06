@@ -218,7 +218,10 @@ describe("resolve_module_path_typescript", () => {
 
     const main_file = path.join(TEST_DIR, "src", "App.tsx") as FilePath;
 
-    const result = resolve_module_path_typescript("./components/ui/Button", main_file);
+    const result = resolve_module_path_typescript(
+      "./components/ui/Button",
+      main_file
+    );
 
     expect(result).toBe(button_file);
   });
@@ -256,8 +259,8 @@ describe("Body-based scopes - TypeScript", () => {
     expect(class_scope).toBeDefined();
 
     // Name in parent scope
-    expect(class_def!.scope_id).toBe(module_scope!.id);
-    expect(class_def!.scope_id).not.toBe(class_scope!.id);
+    expect(class_def!.defining_scope_id).toBe(module_scope!.id);
+    expect(class_def!.defining_scope_id).not.toBe(class_scope!.id);
 
     // Class scope should start after the class name (at '{')
     expect(class_scope!.location.start_column).toBeGreaterThan(10);
@@ -282,7 +285,7 @@ describe("Body-based scopes - TypeScript", () => {
     expect(interface_def).toBeDefined();
     expect(module_scope).toBeDefined();
 
-    expect(interface_def!.scope_id).toBe(module_scope!.id);
+    expect(interface_def!.defining_scope_id).toBe(module_scope!.id);
   });
 
   it("enum name is in module scope", () => {
@@ -305,7 +308,7 @@ describe("Body-based scopes - TypeScript", () => {
     expect(enum_def).toBeDefined();
     expect(module_scope).toBeDefined();
 
-    expect(enum_def!.scope_id).toBe(module_scope!.id);
+    expect(enum_def!.defining_scope_id).toBe(module_scope!.id);
   });
 
   it("class members are in class body scope", () => {
@@ -338,8 +341,8 @@ describe("Body-based scopes - TypeScript", () => {
     expect(property_def).toBeDefined();
 
     // Members are in class scope
-    expect(method_def!.scope_id).toBe(class_scope!.id);
-    expect(property_def!.scope_id).toBe(class_scope!.id);
+    expect(method_def!.defining_scope_id).toBe(class_scope!.id);
+    expect(property_def!.defining_scope_id).toBe(class_scope!.id);
   });
 
   it("interface methods are in interface body scope", () => {
@@ -369,7 +372,7 @@ describe("Body-based scopes - TypeScript", () => {
     expect(method_def).toBeDefined();
 
     // Method is in interface scope
-    expect(method_def!.scope_id).toBe(interface_scope!.id);
+    expect(method_def!.defining_scope_id).toBe(interface_scope!.id);
   });
 
   it("enum body creates a scope", () => {
@@ -399,7 +402,7 @@ describe("Body-based scopes - TypeScript", () => {
     expect(enum_scope).toBeDefined();
 
     // Enum name is in module scope
-    expect(enum_def!.scope_id).toBe(module_scope!.id);
+    expect(enum_def!.defining_scope_id).toBe(module_scope!.id);
 
     // Enum scope should start after the enum name (at '{')
     expect(enum_scope!.location.start_column).toBeGreaterThan(10);

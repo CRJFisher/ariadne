@@ -7,7 +7,6 @@
 export {
   extract_import_specs,
   resolve_export_chain,
-  create_import_resolver,
 } from "./import_resolver";
 
 export { resolve_module_path_javascript } from "./import_resolver.javascript";

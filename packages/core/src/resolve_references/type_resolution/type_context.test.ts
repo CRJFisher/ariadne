@@ -81,7 +81,6 @@ const instance = new MyClass();
       expect(type_context).toBeDefined();
       expect(typeof type_context.get_symbol_type).toBe("function");
       expect(typeof type_context.get_type_member).toBe("function");
-      expect(typeof type_context.get_type_members).toBe("function");
     });
   });
 
@@ -718,40 +717,6 @@ class MyClass {
       );
       expect(member).toBeNull();
     });
-
-    it("should get all members of a type", () => {
-      const code = `
-class MyClass {
-  method1() { return 1; }
-  method2() { return 2; }
-  property1 = "a";
-  property2 = "b";
-}
-      `;
-      const tree = ts_parser.parse(code);
-      const file_path = "test.ts" as FilePath;
-      const parsed_file = create_parsed_file(code, file_path, tree, "typescript");
-      const index = build_semantic_index(parsed_file, tree, "typescript");
-
-      const indices = new Map([[file_path, index]]);
-      const resolver_index = build_scope_resolver_index(indices);
-      const cache = create_resolution_cache();
-      const type_context = build_type_context(indices, resolver_index, cache);
-
-      // Find MyClass
-      const my_class = Array.from(index.classes.values()).find(
-        (c) => c.name === "MyClass"
-      );
-      expect(my_class).toBeDefined();
-
-      // Get all members
-      const members = type_context.get_type_members(my_class!.symbol_id);
-      expect(members.size).toBe(4); // 2 methods + 2 properties
-      expect(members.has("method1" as SymbolName)).toBe(true);
-      expect(members.has("method2" as SymbolName)).toBe(true);
-      expect(members.has("property1" as SymbolName)).toBe(true);
-      expect(members.has("property2" as SymbolName)).toBe(true);
-    });
   });
 
   describe("Resolver Index Integration", () => {
@@ -860,31 +825,6 @@ const value = 42;
       // Get the type - should be null (no annotation, no constructor)
       const value_type = type_context.get_symbol_type(value_var!.symbol_id);
       expect(value_type).toBeNull();
-    });
-
-    it("should return empty map for type without members", () => {
-      const code = `
-class EmptyClass {}
-      `;
-      const tree = ts_parser.parse(code);
-      const file_path = "test.ts" as FilePath;
-      const parsed_file = create_parsed_file(code, file_path, tree, "typescript");
-      const index = build_semantic_index(parsed_file, tree, "typescript");
-
-      const indices = new Map([[file_path, index]]);
-      const resolver_index = build_scope_resolver_index(indices);
-      const cache = create_resolution_cache();
-      const type_context = build_type_context(indices, resolver_index, cache);
-
-      // Find EmptyClass
-      const empty_class = Array.from(index.classes.values()).find(
-        (c) => c.name === "EmptyClass"
-      );
-      expect(empty_class).toBeDefined();
-
-      // Get members - should be empty
-      const members = type_context.get_type_members(empty_class!.symbol_id);
-      expect(members.size).toBe(0);
     });
 
     it("should handle unknown type names gracefully", () => {

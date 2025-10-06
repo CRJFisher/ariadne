@@ -66,16 +66,22 @@ describe("Semantic Index - TypeScript", () => {
         tree,
         "typescript" as Language
       );
-      const index = build_semantic_index(parsedFile, tree, "typescript" as Language);
+      const index = build_semantic_index(
+        parsedFile,
+        tree,
+        "typescript" as Language
+      );
 
       // Verify interfaces
       expect(index.interfaces.size).toBeGreaterThanOrEqual(1);
-      const interfaceNames = Array.from(index.interfaces.values()).map(i => i.name);
+      const interfaceNames = Array.from(index.interfaces.values()).map(
+        (i) => i.name
+      );
       expect(interfaceNames).toContain("User");
 
       // Verify classes
       expect(index.classes.size).toBeGreaterThanOrEqual(1);
-      const classNames = Array.from(index.classes.values()).map(c => c.name);
+      const classNames = Array.from(index.classes.values()).map((c) => c.name);
       expect(classNames).toContain("UserImpl");
     });
 
@@ -103,18 +109,24 @@ describe("Semantic Index - TypeScript", () => {
         tree,
         "typescript" as Language
       );
-      const index = build_semantic_index(parsedFile, tree, "typescript" as Language);
+      const index = build_semantic_index(
+        parsedFile,
+        tree,
+        "typescript" as Language
+      );
 
       // Verify type aliases
-      const typeNames = Array.from(index.types.values()).map(t => t.name);
+      const typeNames = Array.from(index.types.values()).map((t) => t.name);
       expect(typeNames).toContain("ApiResponse");
 
       // Verify enums
-      const enumNames = Array.from(index.enums.values()).map(e => e.name);
+      const enumNames = Array.from(index.enums.values()).map((e) => e.name);
       expect(enumNames).toContain("Status");
 
       // Verify functions
-      const functionNames = Array.from(index.functions.values()).map(f => f.name);
+      const functionNames = Array.from(index.functions.values()).map(
+        (f) => f.name
+      );
       expect(functionNames).toContain("process");
     });
 
@@ -140,14 +152,20 @@ describe("Semantic Index - TypeScript", () => {
         tree,
         "typescript" as Language
       );
-      const index = build_semantic_index(parsedFile, tree, "typescript" as Language);
+      const index = build_semantic_index(
+        parsedFile,
+        tree,
+        "typescript" as Language
+      );
 
-      const interfaceNames = Array.from(index.interfaces.values()).map(i => i.name);
+      const interfaceNames = Array.from(index.interfaces.values()).map(
+        (i) => i.name
+      );
       expect(interfaceNames.length).toBeGreaterThanOrEqual(2);
       expect(interfaceNames).toContain("Base");
       expect(interfaceNames).toContain("Extended");
 
-      const classNames = Array.from(index.classes.values()).map(c => c.name);
+      const classNames = Array.from(index.classes.values()).map((c) => c.name);
       expect(classNames).toContain("Implementation");
     });
 
@@ -175,9 +193,13 @@ describe("Semantic Index - TypeScript", () => {
         tree,
         "typescript" as Language
       );
-      const index = build_semantic_index(parsedFile, tree, "typescript" as Language);
+      const index = build_semantic_index(
+        parsedFile,
+        tree,
+        "typescript" as Language
+      );
 
-      const classNames = Array.from(index.classes.values()).map(c => c.name);
+      const classNames = Array.from(index.classes.values()).map((c) => c.name);
       expect(classNames.length).toBeGreaterThanOrEqual(2);
       expect(classNames).toContain("BaseClass");
       expect(classNames).toContain("ConcreteClass");
@@ -202,9 +224,13 @@ describe("Semantic Index - TypeScript", () => {
         tree,
         "typescript" as Language
       );
-      const index = build_semantic_index(parsedFile, tree, "typescript" as Language);
+      const index = build_semantic_index(
+        parsedFile,
+        tree,
+        "typescript" as Language
+      );
 
-      const classNames = Array.from(index.classes.values()).map(c => c.name);
+      const classNames = Array.from(index.classes.values()).map((c) => c.name);
       expect(classNames).toContain("ParameterProperties");
 
       // Parameter properties are a TypeScript feature
@@ -245,14 +271,20 @@ describe("Semantic Index - TypeScript", () => {
         tree,
         "typescript" as Language
       );
-      const index = build_semantic_index(parsedFile, tree, "typescript" as Language);
+      const index = build_semantic_index(
+        parsedFile,
+        tree,
+        "typescript" as Language
+      );
 
       // Check async function is captured
-      const functionNames = Array.from(index.functions.values()).map(f => f.name);
+      const functionNames = Array.from(index.functions.values()).map(
+        (f) => f.name
+      );
       expect(functionNames).toContain("fetchUser");
 
       // Check class with async methods
-      const classNames = Array.from(index.classes.values()).map(c => c.name);
+      const classNames = Array.from(index.classes.values()).map((c) => c.name);
       expect(classNames).toContain("ApiService");
 
       // Check method calls on async methods
@@ -298,18 +330,26 @@ describe("Semantic Index - TypeScript", () => {
         tree,
         "typescript" as Language
       );
-      const index = build_semantic_index(parsedFile, tree, "typescript" as Language);
+      const index = build_semantic_index(
+        parsedFile,
+        tree,
+        "typescript" as Language
+      );
 
       // Check imports
-      const importNames = Array.from(index.imported_symbols.values()).map(i => i.name);
+      const importNames = Array.from(index.imported_symbols.values()).map(
+        (i) => i.name
+      );
       expect(importNames.length).toBeGreaterThan(0);
 
       // Check type definitions
-      const typeNames = Array.from(index.types.values()).map(t => t.name);
+      const typeNames = Array.from(index.types.values()).map((t) => t.name);
       expect(typeNames).toContain("UserConfig");
 
       // Check interfaces
-      const interfaceNames = Array.from(index.interfaces.values()).map(i => i.name);
+      const interfaceNames = Array.from(index.interfaces.values()).map(
+        (i) => i.name
+      );
       expect(interfaceNames).toContain("ApiResponse");
     });
 
@@ -331,10 +371,16 @@ describe("Semantic Index - TypeScript", () => {
         tree,
         "typescript" as Language
       );
-      const index = build_semantic_index(parsedFile, tree, "typescript" as Language);
+      const index = build_semantic_index(
+        parsedFile,
+        tree,
+        "typescript" as Language
+      );
 
       // Check namespace definition
-      const namespaceNames = Array.from(index.namespaces.values()).map(n => n.name);
+      const namespaceNames = Array.from(index.namespaces.values()).map(
+        (n) => n.name
+      );
       expect(namespaceNames).toContain("MyNamespace");
     });
   });
@@ -359,7 +405,11 @@ describe("Semantic Index - TypeScript", () => {
         tree,
         "typescript" as Language
       );
-      const index = build_semantic_index(parsedFile, tree, "typescript" as Language);
+      const index = build_semantic_index(
+        parsedFile,
+        tree,
+        "typescript" as Language
+      );
 
       // Check method call has receiver location
       const methodCalls = index.references.filter(
@@ -401,14 +451,20 @@ describe("Semantic Index - TypeScript", () => {
         tree,
         "typescript" as Language
       );
-      const index = build_semantic_index(parsedFile, tree, "typescript" as Language);
+      const index = build_semantic_index(
+        parsedFile,
+        tree,
+        "typescript" as Language
+      );
 
       // Check interface definition
-      const interfaceNames = Array.from(index.interfaces.values()).map(i => i.name);
+      const interfaceNames = Array.from(index.interfaces.values()).map(
+        (i) => i.name
+      );
       expect(interfaceNames).toContain("Calculator");
 
       // Check class implementation
-      const classNames = Array.from(index.classes.values()).map(c => c.name);
+      const classNames = Array.from(index.classes.values()).map((c) => c.name);
       expect(classNames).toContain("BasicCalculator");
 
       // Check method calls on interface-typed object
@@ -451,7 +507,11 @@ describe("Semantic Index - TypeScript", () => {
         tree,
         "typescript" as Language
       );
-      const index = build_semantic_index(parsedFile, tree, "typescript" as Language);
+      const index = build_semantic_index(
+        parsedFile,
+        tree,
+        "typescript" as Language
+      );
 
       const methodCalls = index.references.filter(
         (r) => r.type === "call" && r.call_type === "method"
@@ -489,18 +549,30 @@ describe("Semantic Index - TypeScript", () => {
         tree,
         "typescript" as Language
       );
-      const result = build_semantic_index(parsedFile, tree, "typescript" as Language);
+      const result = build_semantic_index(
+        parsedFile,
+        tree,
+        "typescript" as Language
+      );
 
       // Regular method call - should NOT have optional chaining
       const regularCall = result.references.find(
-        ref => ref.type === "call" && ref.name === "getDisplayName" && ref.member_access && !ref.member_access.is_optional_chain
+        (ref) =>
+          ref.type === "call" &&
+          ref.name === "getDisplayName" &&
+          ref.member_access &&
+          !ref.member_access.is_optional_chain
       );
       expect(regularCall).toBeDefined();
       expect(regularCall?.member_access?.is_optional_chain).toBe(false);
 
       // Optional chaining method call - should have optional chaining
       const optionalCall = result.references.find(
-        ref => ref.type === "call" && ref.name === "getDisplayName" && ref.member_access && ref.member_access.is_optional_chain
+        (ref) =>
+          ref.type === "call" &&
+          ref.name === "getDisplayName" &&
+          ref.member_access &&
+          ref.member_access.is_optional_chain
       );
       expect(optionalCall).toBeDefined();
       expect(optionalCall?.member_access?.is_optional_chain).toBe(true);
@@ -524,7 +596,11 @@ describe("Semantic Index - TypeScript", () => {
         tree,
         "typescript" as Language
       );
-      const index = build_semantic_index(parsedFile, tree, "typescript" as Language);
+      const index = build_semantic_index(
+        parsedFile,
+        tree,
+        "typescript" as Language
+      );
 
       const typeRefs = index.references.filter((r) => r.type === "type");
       const userRefs = typeRefs.filter((r) => r.name === "User");
@@ -555,7 +631,11 @@ describe("Semantic Index - TypeScript", () => {
         tree,
         "typescript" as Language
       );
-      const index = build_semantic_index(parsedFile, tree, "typescript" as Language);
+      const index = build_semantic_index(
+        parsedFile,
+        tree,
+        "typescript" as Language
+      );
 
       const typeRefs = index.references.filter((r) => r.type === "type");
       const resultRefs = typeRefs.filter((r) => r.name === "Result");
@@ -589,9 +669,15 @@ describe("Semantic Index - TypeScript", () => {
         tree,
         "typescript" as Language
       );
-      const index = build_semantic_index(parsedFile, tree, "typescript" as Language);
+      const index = build_semantic_index(
+        parsedFile,
+        tree,
+        "typescript" as Language
+      );
 
-      const constructorRefs = index.references.filter((r) => r.type === "construct");
+      const constructorRefs = index.references.filter(
+        (r) => r.type === "construct"
+      );
 
       expect(constructorRefs.length).toBe(2);
       constructorRefs.forEach((ref) => {
@@ -618,15 +704,23 @@ describe("Semantic Index - TypeScript", () => {
         tree,
         "typescript" as Language
       );
-      const index = build_semantic_index(parsedFile, tree, "typescript" as Language);
+      const index = build_semantic_index(
+        parsedFile,
+        tree,
+        "typescript" as Language
+      );
 
-      const constructorRefs = index.references.filter((r) => r.type === "construct");
+      const constructorRefs = index.references.filter(
+        (r) => r.type === "construct"
+      );
 
       // Should have at least 3 constructor calls
       expect(constructorRefs.length).toBeGreaterThanOrEqual(3);
 
       // Check that the Container constructor calls have metadata
-      const containerRefs = constructorRefs.filter((r) => r.name === "Container");
+      const containerRefs = constructorRefs.filter(
+        (r) => r.name === "Container"
+      );
       expect(containerRefs.length).toBeGreaterThanOrEqual(3);
       containerRefs.forEach((ref) => {
         expect(ref.context?.construct_target).toBeDefined();
@@ -661,7 +755,11 @@ describe("Semantic Index - TypeScript", () => {
         tree,
         "typescript" as Language
       );
-      const index = build_semantic_index(parsedFile, tree, "typescript" as Language);
+      const index = build_semantic_index(
+        parsedFile,
+        tree,
+        "typescript" as Language
+      );
 
       // Scenario 1: Receiver type from annotation (const service1: Service = ...)
       // Verify the assignment is captured
@@ -675,14 +773,17 @@ describe("Semantic Index - TypeScript", () => {
 
       // Verify method calls have receiver_location
       const methodCalls = index.references.filter(
-        (r) => r.type === "call" && r.call_type === "method" && r.name === "getData"
+        (r) =>
+          r.type === "call" && r.call_type === "method" && r.name === "getData"
       );
 
       // Should have at least 2 getData method calls (may include more from return type methods)
       expect(methodCalls.length).toBeGreaterThanOrEqual(2);
 
       // At least some method calls should have receiver_location
-      const callsWithReceiver = methodCalls.filter(c => c.context?.receiver_location);
+      const callsWithReceiver = methodCalls.filter(
+        (c) => c.context?.receiver_location
+      );
       expect(callsWithReceiver.length).toBeGreaterThan(0);
 
       // Scenario 2: Verify constructor call has construct_target
@@ -691,7 +792,9 @@ describe("Semantic Index - TypeScript", () => {
       );
 
       // Should have at least one constructor call with construct_target
-      const constructWithTarget = constructorCalls.find(c => c.context?.construct_target);
+      const constructWithTarget = constructorCalls.find(
+        (c) => c.context?.construct_target
+      );
       expect(constructWithTarget).toBeDefined();
     });
   });
@@ -727,24 +830,34 @@ describe("Semantic Index - TypeScript", () => {
         tree,
         "typescript" as Language
       );
-      const index = build_semantic_index(parsedFile, tree, "typescript" as Language);
+      const index = build_semantic_index(
+        parsedFile,
+        tree,
+        "typescript" as Language
+      );
 
       // Check interfaces are captured
-      const interfaceNames = Array.from(index.interfaces.values()).map(i => i.name);
+      const interfaceNames = Array.from(index.interfaces.values()).map(
+        (i) => i.name
+      );
       expect(interfaceNames).toContain("User");
       expect(interfaceNames).toContain("Address");
 
       // Check function is captured
-      const functionNames = Array.from(index.functions.values()).map(f => f.name);
+      const functionNames = Array.from(index.functions.values()).map(
+        (f) => f.name
+      );
       expect(functionNames).toContain("processUser");
 
       // Check member access through optional chaining
-      const memberAccessRefs = index.references.filter((r) => r.type === "member_access");
+      const memberAccessRefs = index.references.filter(
+        (r) => r.type === "member_access"
+      );
       expect(memberAccessRefs.length).toBeGreaterThan(0);
 
       // Optional chaining creates member access references
       // Verify we capture property accesses (address, city, street)
-      const propertyNames = memberAccessRefs.map(r => r.name);
+      const propertyNames = memberAccessRefs.map((r) => r.name);
 
       // At minimum, we should capture some property accesses
       expect(propertyNames.length).toBeGreaterThan(0);
@@ -768,13 +881,19 @@ describe("Semantic Index - TypeScript", () => {
         tree,
         "typescript" as Language
       );
-      const index = build_semantic_index(parsedFile, tree, "typescript" as Language);
+      const index = build_semantic_index(
+        parsedFile,
+        tree,
+        "typescript" as Language
+      );
 
       // Check enum definition exists
       expect(index.enums.size).toBeGreaterThanOrEqual(1);
 
       // Check property access on enum
-      const memberAccessRefs = index.references.filter((r) => r.type === "member_access");
+      const memberAccessRefs = index.references.filter(
+        (r) => r.type === "member_access"
+      );
       const activeRefs = memberAccessRefs.filter((r) => r.name === "Active");
 
       expect(activeRefs.length).toBeGreaterThan(0);
@@ -803,7 +922,11 @@ describe("Semantic Index - TypeScript", () => {
         tree,
         "typescript" as Language
       );
-      const index = build_semantic_index(parsedFile, tree, "typescript" as Language);
+      const index = build_semantic_index(
+        parsedFile,
+        tree,
+        "typescript" as Language
+      );
 
       // Check namespace definition exists
       expect(index.namespaces.size).toBeGreaterThanOrEqual(1);
@@ -840,7 +963,11 @@ describe("Semantic Index - TypeScript", () => {
         tree,
         "typescript" as Language
       );
-      const index = build_semantic_index(parsedFile, tree, "typescript" as Language);
+      const index = build_semantic_index(
+        parsedFile,
+        tree,
+        "typescript" as Language
+      );
 
       // Check class definition exists
       expect(index.classes.size).toBe(1);
@@ -886,7 +1013,13 @@ describe("Semantic Index - TypeScript", () => {
   });
 
   describe("TypeScript fixtures", () => {
-    const typescript_fixtures = ["classes.ts", "interfaces.ts", "types.ts", "generics.ts", "modules.ts"];
+    const typescript_fixtures = [
+      "classes.ts",
+      "interfaces.ts",
+      "types.ts",
+      "generics.ts",
+      "modules.ts",
+    ];
 
     for (const fixture of typescript_fixtures) {
       it(`should correctly parse ${fixture}`, () => {
@@ -904,7 +1037,12 @@ describe("Semantic Index - TypeScript", () => {
         expect(captures.length).toBeGreaterThan(0);
 
         // Build semantic index
-        const parsedFile = createParsedFile(code, fixture as FilePath, tree, language);
+        const parsedFile = createParsedFile(
+          code,
+          fixture as FilePath,
+          tree,
+          language
+        );
         const index = build_semantic_index(parsedFile, tree, language);
 
         // Verify at least some symbols were extracted
@@ -941,7 +1079,11 @@ describe("Semantic Index - TypeScript", () => {
         tree,
         "typescript" as Language
       );
-      const result = build_semantic_index(parsedFile, tree, "typescript" as Language);
+      const result = build_semantic_index(
+        parsedFile,
+        tree,
+        "typescript" as Language
+      );
 
       // Verify interface exists
       const calculator = Array.from(result.interfaces.values()).find(
@@ -975,7 +1117,7 @@ describe("Semantic Index - TypeScript", () => {
         expect(calculator.methods.length).toBe(3);
 
         // Verify add method with complete structure
-        const addMethod = calculator.methods.find(m => m.name === "add");
+        const addMethod = calculator.methods.find((m) => m.name === "add");
         expect(addMethod).toBeDefined();
 
         if (addMethod) {
@@ -998,49 +1140,55 @@ describe("Semantic Index - TypeScript", () => {
 
           // Verify parameters with complete structure
           expect(addMethod.parameters).toHaveLength(2);
-          expect(addMethod.parameters).toEqual(expect.arrayContaining([
-            expect.objectContaining({
-              kind: "parameter",
-              symbol_id: expect.any(String),
-              name: "a",
-              location: expect.objectContaining({
-                file_path: "test.ts",
+          expect(addMethod.parameters).toEqual(
+            expect.arrayContaining([
+              expect.objectContaining({
+                kind: "parameter",
+                symbol_id: expect.any(String),
+                name: "a",
+                location: expect.objectContaining({
+                  file_path: "test.ts",
+                }),
+                scope_id: expect.any(String),
+                availability: expect.any(Object),
+                type: "number",
               }),
-              scope_id: expect.any(String),
-              availability: expect.any(Object),
-              type: "number",
-            }),
-            expect.objectContaining({
-              kind: "parameter",
-              symbol_id: expect.any(String),
-              name: "b",
-              location: expect.objectContaining({
-                file_path: "test.ts",
+              expect.objectContaining({
+                kind: "parameter",
+                symbol_id: expect.any(String),
+                name: "b",
+                location: expect.objectContaining({
+                  file_path: "test.ts",
+                }),
+                scope_id: expect.any(String),
+                availability: expect.any(Object),
+                type: "number",
               }),
-              scope_id: expect.any(String),
-              availability: expect.any(Object),
-              type: "number",
-            }),
-          ]));
+            ])
+          );
         }
 
         // Verify subtract method
-        const subtractMethod = calculator.methods.find(m => m.name === "subtract");
+        const subtractMethod = calculator.methods.find(
+          (m) => m.name === "subtract"
+        );
         expect(subtractMethod).toBeDefined();
 
         if (subtractMethod) {
           expect(subtractMethod.parameters).toHaveLength(2);
-          const paramNames = subtractMethod.parameters.map(p => p.name);
+          const paramNames = subtractMethod.parameters.map((p) => p.name);
           expect(paramNames).toEqual(["x", "y"]);
         }
 
         // Verify multiply method
-        const multiplyMethod = calculator.methods.find(m => m.name === "multiply");
+        const multiplyMethod = calculator.methods.find(
+          (m) => m.name === "multiply"
+        );
         expect(multiplyMethod).toBeDefined();
 
         if (multiplyMethod) {
           expect(multiplyMethod.parameters).toHaveLength(2);
-          const paramNames = multiplyMethod.parameters.map(p => p.name);
+          const paramNames = multiplyMethod.parameters.map((p) => p.name);
           expect(paramNames).toEqual(["first", "second"]);
         }
       }
@@ -1072,7 +1220,11 @@ describe("Semantic Index - TypeScript", () => {
         tree,
         "typescript" as Language
       );
-      const result = build_semantic_index(parsedFile, tree, "typescript" as Language);
+      const result = build_semantic_index(
+        parsedFile,
+        tree,
+        "typescript" as Language
+      );
 
       // Verify class exists with complete structure
       const userClass = Array.from(result.classes.values()).find(
@@ -1106,15 +1258,17 @@ describe("Semantic Index - TypeScript", () => {
         // Note: Decorator extraction may not be fully implemented
         // Verify that if decorators are present, they are properly formatted
         if (userClass.decorators.length > 0) {
-          const decoratorNames = userClass.decorators.map(d => {
+          const decoratorNames = userClass.decorators.map((d) => {
             // SymbolId format is "kind:file:line:col:line:col:name" - extract name
-            return d.split(':').pop();
+            return d.split(":").pop();
           });
           expect(decoratorNames).toContain("Entity");
           expect(decoratorNames).toContain("Sealed");
         } else {
           // Decorators not extracted - this is the current behavior
-          console.log("Note: Class decorators not extracted - may need implementation");
+          console.log(
+            "Note: Class decorators not extracted - may need implementation"
+          );
         }
       }
     });
@@ -1140,7 +1294,11 @@ describe("Semantic Index - TypeScript", () => {
         tree,
         "typescript" as Language
       );
-      const result = build_semantic_index(parsedFile, tree, "typescript" as Language);
+      const result = build_semantic_index(
+        parsedFile,
+        tree,
+        "typescript" as Language
+      );
 
       // Verify class and method exist
       const serviceClass = Array.from(result.classes.values()).find(
@@ -1153,7 +1311,9 @@ describe("Semantic Index - TypeScript", () => {
         expect(serviceClass.methods).toBeDefined();
         expect(serviceClass.methods.length).toBeGreaterThanOrEqual(1);
 
-        const getDataMethod = serviceClass.methods.find(m => m.name === "getData");
+        const getDataMethod = serviceClass.methods.find(
+          (m) => m.name === "getData"
+        );
         expect(getDataMethod).toBeDefined();
 
         if (getDataMethod) {
@@ -1178,7 +1338,9 @@ describe("Semantic Index - TypeScript", () => {
             expect(getDataMethod.decorators).toContain("Benchmark");
           } else {
             // If decorators are not extracted, skip this part
-            console.log("Note: Method decorators not extracted - this may be expected");
+            console.log(
+              "Note: Method decorators not extracted - this may be expected"
+            );
           }
         }
       }
@@ -1209,7 +1371,11 @@ describe("Semantic Index - TypeScript", () => {
         tree,
         "typescript" as Language
       );
-      const result = build_semantic_index(parsedFile, tree, "typescript" as Language);
+      const result = build_semantic_index(
+        parsedFile,
+        tree,
+        "typescript" as Language
+      );
 
       // Verify class and property exist
       const userClass = Array.from(result.classes.values()).find(
@@ -1223,7 +1389,9 @@ describe("Semantic Index - TypeScript", () => {
         expect(Array.isArray(userClass.properties)).toBe(true);
         expect(userClass.properties.length).toBeGreaterThanOrEqual(1);
 
-        const nameProperty = userClass.properties.find(p => p.name === "name");
+        const nameProperty = userClass.properties.find(
+          (p) => p.name === "name"
+        );
         expect(nameProperty).toBeDefined();
 
         if (nameProperty) {
@@ -1246,12 +1414,16 @@ describe("Semantic Index - TypeScript", () => {
           // Note: Decorator extraction may not be fully implemented
           // Verify that if decorators are present, they are properly formatted
           if (nameProperty.decorators.length > 0) {
-            const decoratorNames = nameProperty.decorators.map(d => d.split(':').pop());
+            const decoratorNames = nameProperty.decorators.map((d) =>
+              d.split(":").pop()
+            );
             expect(decoratorNames).toContain("Required");
             expect(decoratorNames).toContain("MinLength");
           } else {
             // Decorators not extracted - this is the current behavior
-            console.log("Note: Property decorators not extracted - may need implementation");
+            console.log(
+              "Note: Property decorators not extracted - may need implementation"
+            );
           }
         }
       }
@@ -1280,7 +1452,11 @@ describe("Semantic Index - TypeScript", () => {
         tree,
         "typescript" as Language
       );
-      const result = build_semantic_index(parsedFile, tree, "typescript" as Language);
+      const result = build_semantic_index(
+        parsedFile,
+        tree,
+        "typescript" as Language
+      );
 
       // Verify class exists
       const userClass = Array.from(result.classes.values()).find(
@@ -1326,20 +1502,24 @@ describe("Semantic Index - TypeScript", () => {
           // Note: Parameter properties with accessibility modifiers may not be fully extracted
           if (ctor.parameters.length > 0) {
             // Verify all parameter properties with type field
-            expect(ctor.parameters).toEqual(expect.arrayContaining([
-              expect.objectContaining({
-                kind: "parameter",
-                name: expect.any(String),
-                type: expect.any(String),
-              }),
-            ]));
+            expect(ctor.parameters).toEqual(
+              expect.arrayContaining([
+                expect.objectContaining({
+                  kind: "parameter",
+                  name: expect.any(String),
+                  type: expect.any(String),
+                }),
+              ])
+            );
 
             // Verify parameter names
-            const paramNames = ctor.parameters.map(p => p.name);
+            const paramNames = ctor.parameters.map((p) => p.name);
             expect(paramNames.length).toBeGreaterThan(0);
           } else {
             // Parameters not extracted - this may be the current behavior for parameter properties
-            console.log("Note: Constructor parameter properties not extracted - may need implementation");
+            console.log(
+              "Note: Constructor parameter properties not extracted - may need implementation"
+            );
             // Still verify the constructor structure is correct
             expect(ctor.kind).toBe("constructor");
             expect(ctor.name).toBe("constructor");
@@ -1368,10 +1548,14 @@ describe("Semantic Index - TypeScript", () => {
         tree,
         "typescript" as Language
       );
-      const result = build_semantic_index(parsedFile, tree, "typescript" as Language);
+      const result = build_semantic_index(
+        parsedFile,
+        tree,
+        "typescript" as Language
+      );
 
       // Verify type aliases exist
-      const typeNames = Array.from(result.types.values()).map(t => t.name);
+      const typeNames = Array.from(result.types.values()).map((t) => t.name);
       expect(typeNames).toContain("StringOrNumber");
       expect(typeNames).toContain("ApiResponse");
       expect(typeNames).toContain("UserCallback");
@@ -1444,6 +1628,220 @@ describe("Semantic Index - TypeScript", () => {
     });
   });
 
+  describe("Scope boundary verification", () => {
+    it("should capture only class body as scope, not entire declaration", () => {
+      const code = `class MyClass {
+  method() {}
+}`;
+
+      const tree = parser.parse(code);
+      const parsedFile = createParsedFile(
+        code,
+        "test.ts" as FilePath,
+        tree,
+        "typescript" as Language
+      );
+      const index = build_semantic_index(
+        parsedFile,
+        tree,
+        "typescript" as Language
+      );
+
+      const file_scope = Array.from(index.scopes.values()).find(
+        (s) => s.type === "module" && s.parent_id === null
+      );
+      expect(file_scope).toBeDefined();
+      const file_scope_id = file_scope!.id;
+
+      const class_scope = Array.from(index.scopes.values()).find(
+        (s) => s.type === "class"
+      );
+      expect(class_scope).toBeDefined();
+
+      const myClass = Array.from(index.classes.values()).find(
+        (c) => c.name === "MyClass"
+      );
+      expect(myClass).toBeDefined();
+
+      // Class scope should start at `{` (body start), not at `class` keyword
+      expect(class_scope!.location.start_column).toBeGreaterThan(10);
+
+      // Class name 'MyClass' should be in module scope, not class scope
+      expect(myClass!.defining_scope_id).toBe(file_scope_id);
+
+      // Class scope parent should be module scope
+      const parent_scope = index.scopes.get(class_scope!.parent_id!);
+      expect(parent_scope?.type).toBe("module");
+    });
+
+    it("should capture only interface body as scope, not entire declaration", () => {
+      const code = `interface IFoo {
+  bar(): void;
+}`;
+
+      const tree = parser.parse(code);
+      const parsedFile = createParsedFile(
+        code,
+        "test.ts" as FilePath,
+        tree,
+        "typescript" as Language
+      );
+      const index = build_semantic_index(
+        parsedFile,
+        tree,
+        "typescript" as Language
+      );
+
+      const file_scope = Array.from(index.scopes.values()).find(
+        (s) => s.type === "module" && s.parent_id === null
+      );
+      expect(file_scope).toBeDefined();
+      const file_scope_id = file_scope!.id;
+
+      const interface_scope = Array.from(index.scopes.values()).find(
+        (s) => s.type === "class" && s.location.start_column > 10
+      );
+      expect(interface_scope).toBeDefined();
+
+      const iFoo = Array.from(index.interfaces.values()).find(
+        (i) => i.name === "IFoo"
+      );
+      expect(iFoo).toBeDefined();
+
+      // Interface scope should start at `{` (body start)
+      expect(interface_scope!.location.start_column).toBeGreaterThan(10);
+
+      // Interface name 'IFoo' should be in module scope
+      expect(iFoo!.defining_scope_id).toBe(file_scope_id);
+    });
+
+    it("should capture only enum body as scope, not entire declaration", () => {
+      const code = `enum Status {
+  Active = "active",
+  Inactive = "inactive"
+}`;
+
+      const tree = parser.parse(code);
+      const parsedFile = createParsedFile(
+        code,
+        "test.ts" as FilePath,
+        tree,
+        "typescript" as Language
+      );
+      const index = build_semantic_index(
+        parsedFile,
+        tree,
+        "typescript" as Language
+      );
+
+      const file_scope = Array.from(index.scopes.values()).find(
+        (s) => s.type === "module" && s.parent_id === null
+      );
+      expect(file_scope).toBeDefined();
+      const file_scope_id = file_scope!.id;
+
+      const enum_scope = Array.from(index.scopes.values()).find(
+        (s) => s.type === "class" && s.location.start_column > 10
+      );
+      expect(enum_scope).toBeDefined();
+
+      const statusEnum = Array.from(index.enums.values()).find(
+        (e) => e.name === "Status"
+      );
+      expect(statusEnum).toBeDefined();
+
+      // Enum scope should start at `{` (body start)
+      expect(enum_scope!.location.start_column).toBeGreaterThan(10);
+
+      // Enum name 'Status' should be in module scope
+      expect(statusEnum!.defining_scope_id).toBe(file_scope_id);
+    });
+
+    it("should assign file scope to file-level class, not nested method scope", () => {
+      const code = `class MyClass {
+  method() {
+    const x = 1;
+  }
+}`;
+
+      const tree = parser.parse(code);
+      const parsedFile = createParsedFile(
+        code,
+        "test.ts" as FilePath,
+        tree,
+        "typescript" as Language
+      );
+      const index = build_semantic_index(
+        parsedFile,
+        tree,
+        "typescript" as Language
+      );
+
+      const file_scope = Array.from(index.scopes.values()).find(
+        (s) => s.type === "module" && s.parent_id === null
+      );
+      expect(file_scope).toBeDefined();
+      const file_scope_id = file_scope!.id;
+
+      const myClass = Array.from(index.classes.values()).find(
+        (c) => c.name === "MyClass"
+      );
+      expect(myClass).toBeDefined();
+
+      // Class scope_id should be file_scope, not method_scope
+      expect(myClass!.defining_scope_id).toBe(file_scope_id);
+    });
+
+    it("should assign correct scopes to nested classes", () => {
+      const code = `class Outer {
+  method() {
+    class Inner {
+      innerMethod() {}
+    }
+  }
+}`;
+
+      const tree = parser.parse(code);
+      const parsedFile = createParsedFile(
+        code,
+        "test.ts" as FilePath,
+        tree,
+        "typescript" as Language
+      );
+      const index = build_semantic_index(
+        parsedFile,
+        tree,
+        "typescript" as Language
+      );
+
+      const file_scope = Array.from(index.scopes.values()).find(
+        (s) => s.type === "module" && s.parent_id === null
+      );
+      expect(file_scope).toBeDefined();
+      const file_scope_id = file_scope!.id;
+
+      const method_scope = Array.from(index.scopes.values()).find(
+        (s) => s.type === "method"
+      );
+      expect(method_scope).toBeDefined();
+      const method_scope_id = method_scope!.id;
+
+      const outerClass = Array.from(index.classes.values()).find(
+        (c) => c.name === "Outer"
+      );
+      const innerClass = Array.from(index.classes.values()).find(
+        (c) => c.name === "Inner"
+      );
+
+      expect(outerClass).toBeDefined();
+      expect(innerClass).toBeDefined();
+
+      // Outer should be in file scope, Inner should be in method scope
+      expect(outerClass!.defining_scope_id).toBe(file_scope_id);
+      expect(innerClass!.defining_scope_id).toBe(method_scope_id);
+    });
+  });
+
   describe("New Features - Private Members, Value Extraction, Parameter Enhancements", () => {
     it("should extract private fields and methods with # syntax", () => {
       const code = `
@@ -1474,7 +1872,11 @@ describe("Semantic Index - TypeScript", () => {
         tree,
         "typescript" as Language
       );
-      const result = build_semantic_index(parsedFile, tree, "typescript" as Language);
+      const result = build_semantic_index(
+        parsedFile,
+        tree,
+        "typescript" as Language
+      );
 
       const secureClass = Array.from(result.classes.values()).find(
         (c) => c.name === "SecureClass"
@@ -1587,7 +1989,11 @@ describe("Semantic Index - TypeScript", () => {
         tree,
         "typescript" as Language
       );
-      const result = build_semantic_index(parsedFile, tree, "typescript" as Language);
+      const result = build_semantic_index(
+        parsedFile,
+        tree,
+        "typescript" as Language
+      );
 
       const valueTest = Array.from(result.classes.values()).find(
         (c) => c.name === "ValueTest"
@@ -1606,7 +2012,9 @@ describe("Semantic Index - TypeScript", () => {
         ];
 
         for (const testCase of testCases) {
-          const field = valueTest.properties.find((p: any) => p.name === testCase.name);
+          const field = valueTest.properties.find(
+            (p: any) => p.name === testCase.name
+          );
           expect(field).toBeDefined();
           if (field) {
             if (testCase.type) {
@@ -1624,7 +2032,9 @@ describe("Semantic Index - TypeScript", () => {
         ];
 
         for (const testCase of paramProps) {
-          const prop = valueTest.properties.find((p: any) => p.name === testCase.name);
+          const prop = valueTest.properties.find(
+            (p: any) => p.name === testCase.name
+          );
           expect(prop).toBeDefined();
           if (prop) {
             expect(prop.type).toBe(testCase.type);
@@ -1633,25 +2043,33 @@ describe("Semantic Index - TypeScript", () => {
         }
 
         // Test method parameter defaults
-        const greetMethod = valueTest.methods.find((m: any) => m.name === "greet");
+        const greetMethod = valueTest.methods.find(
+          (m: any) => m.name === "greet"
+        );
         expect(greetMethod).toBeDefined();
 
         if (greetMethod && greetMethod.parameters) {
-          const nameParam = greetMethod.parameters.find((p: any) => p.name === "name");
+          const nameParam = greetMethod.parameters.find(
+            (p: any) => p.name === "name"
+          );
           expect(nameParam).toBeDefined();
           if (nameParam) {
             expect(nameParam.default_value).toBe('"World"');
             expect(nameParam.type).toBe("string");
           }
 
-          const countParam = greetMethod.parameters.find((p: any) => p.name === "count");
+          const countParam = greetMethod.parameters.find(
+            (p: any) => p.name === "count"
+          );
           expect(countParam).toBeDefined();
           if (countParam) {
             expect(countParam.default_value).toBe("1");
             expect(countParam.type).toBe("number");
           }
 
-          const prefixParam = greetMethod.parameters.find((p: any) => p.name === "prefix");
+          const prefixParam = greetMethod.parameters.find(
+            (p: any) => p.name === "prefix"
+          );
           expect(prefixParam).toBeDefined();
           if (prefixParam) {
             expect(prefixParam.default_value).toBeUndefined();
@@ -1659,17 +2077,23 @@ describe("Semantic Index - TypeScript", () => {
         }
 
         // Test complex defaults
-        const processMethod = valueTest.methods.find((m: any) => m.name === "process");
+        const processMethod = valueTest.methods.find(
+          (m: any) => m.name === "process"
+        );
         expect(processMethod).toBeDefined();
 
         if (processMethod && processMethod.parameters) {
-          const optionsParam = processMethod.parameters.find((p: any) => p.name === "options");
+          const optionsParam = processMethod.parameters.find(
+            (p: any) => p.name === "options"
+          );
           expect(optionsParam).toBeDefined();
           if (optionsParam) {
             expect(optionsParam.default_value).toBe("{ verbose: true }");
           }
 
-          const argsParam = processMethod.parameters.find((p: any) => p.name === "args");
+          const argsParam = processMethod.parameters.find(
+            (p: any) => p.name === "args"
+          );
           expect(argsParam).toBeDefined();
           if (argsParam) {
             expect(argsParam.type).toBe("any[]");
@@ -1720,7 +2144,11 @@ describe("Semantic Index - TypeScript", () => {
         tree,
         "typescript" as Language
       );
-      const result = build_semantic_index(parsedFile, tree, "typescript" as Language);
+      const result = build_semantic_index(
+        parsedFile,
+        tree,
+        "typescript" as Language
+      );
 
       const api = Array.from(result.interfaces.values()).find(
         (i) => i.name === "CompleteAPI"
@@ -1776,7 +2204,9 @@ describe("Semantic Index - TypeScript", () => {
         }
 
         // Test mixed parameters
-        const processMethod = api.methods.find((m: any) => m.name === "process");
+        const processMethod = api.methods.find(
+          (m: any) => m.name === "process"
+        );
         expect(processMethod).toBeDefined();
         if (processMethod) {
           expect(processMethod.parameters).toHaveLength(3);
@@ -1830,7 +2260,9 @@ describe("Semantic Index - TypeScript", () => {
         }
 
         // Test function type parameter
-        const subscribeMethod = api.methods.find((m: any) => m.name === "subscribe");
+        const subscribeMethod = api.methods.find(
+          (m: any) => m.name === "subscribe"
+        );
         expect(subscribeMethod).toBeDefined();
         if (subscribeMethod) {
           expect(subscribeMethod.parameters).toHaveLength(1);
@@ -1931,7 +2363,11 @@ describe("Semantic Index - TypeScript", () => {
         tree,
         "typescript" as Language
       );
-      const result = build_semantic_index(parsedFile, tree, "typescript" as Language);
+      const result = build_semantic_index(
+        parsedFile,
+        tree,
+        "typescript" as Language
+      );
 
       const edgeClass = Array.from(result.classes.values()).find(
         (c) => c.name === "EdgeCases"
@@ -1952,7 +2388,9 @@ describe("Semantic Index - TypeScript", () => {
         ];
 
         for (const testCase of specialCases) {
-          const field = edgeClass.properties.find((p: any) => p.name === testCase.name);
+          const field = edgeClass.properties.find(
+            (p: any) => p.name === testCase.name
+          );
           expect(field).toBeDefined();
           if (field) {
             expect(field.initial_value).toBe(testCase.initial_value);
@@ -1960,7 +2398,9 @@ describe("Semantic Index - TypeScript", () => {
         }
 
         // Test constructor parameters with edge case defaults
-        const constructor = edgeClass.methods?.find((m: any) => m.name === "constructor");
+        const constructor = edgeClass.methods?.find(
+          (m: any) => m.name === "constructor"
+        );
         expect(constructor).toBeDefined();
 
         if (constructor && constructor.parameters) {
@@ -1974,7 +2414,9 @@ describe("Semantic Index - TypeScript", () => {
           ];
 
           for (const testCase of defaultCases) {
-            const param = constructor.parameters.find((p: any) => p.name === testCase.name);
+            const param = constructor.parameters.find(
+              (p: any) => p.name === testCase.name
+            );
             expect(param).toBeDefined();
             if (param) {
               expect(param.default_value).toBe(testCase.default_value);
@@ -1983,12 +2425,16 @@ describe("Semantic Index - TypeScript", () => {
         }
 
         // Test method with untyped parameters
-        const testMethod = edgeClass.methods.find((m: any) => m.name === "test");
+        const testMethod = edgeClass.methods.find(
+          (m: any) => m.name === "test"
+        );
         expect(testMethod).toBeDefined();
 
         if (testMethod && testMethod.parameters) {
           // Note: Optional parameter syntax (optional?) not needed for call-graph detection
-          const argsParam = testMethod.parameters.find((p: any) => p.name === "args");
+          const argsParam = testMethod.parameters.find(
+            (p: any) => p.name === "args"
+          );
           expect(argsParam).toBeDefined();
         }
       }
@@ -2002,18 +2448,24 @@ describe("Semantic Index - TypeScript", () => {
 
       if (edgeInterface && edgeInterface.methods) {
         // Test optional method
-        const optionalMethod = edgeInterface.methods.find((m: any) => m.name === "optional");
+        const optionalMethod = edgeInterface.methods.find(
+          (m: any) => m.name === "optional"
+        );
         expect(optionalMethod).toBeDefined();
 
         // Test method with no parameters
-        const noParamsMethod = edgeInterface.methods.find((m: any) => m.name === "noParams");
+        const noParamsMethod = edgeInterface.methods.find(
+          (m: any) => m.name === "noParams"
+        );
         expect(noParamsMethod).toBeDefined();
         if (noParamsMethod) {
           expect(noParamsMethod.parameters).toHaveLength(0);
         }
 
         // Test only rest parameter
-        const onlyRestMethod = edgeInterface.methods.find((m: any) => m.name === "onlyRest");
+        const onlyRestMethod = edgeInterface.methods.find(
+          (m: any) => m.name === "onlyRest"
+        );
         expect(onlyRestMethod).toBeDefined();
         if (onlyRestMethod) {
           expect(onlyRestMethod.parameters).toHaveLength(1);
@@ -2051,7 +2503,11 @@ describe("Semantic Index - TypeScript", () => {
         tree,
         "typescript" as Language
       );
-      const result = build_semantic_index(parsedFile, tree, "typescript" as Language);
+      const result = build_semantic_index(
+        parsedFile,
+        tree,
+        "typescript" as Language
+      );
 
       // Verify function parameters work
       const regularFunc = Array.from(result.functions.values()).find(
@@ -2083,7 +2539,9 @@ describe("Semantic Index - TypeScript", () => {
       );
       expect(testInterface).toBeDefined();
       if (testInterface && testInterface.methods) {
-        const method = testInterface.methods.find((m: any) => m.name === "method");
+        const method = testInterface.methods.find(
+          (m: any) => m.name === "method"
+        );
         expect(method).toBeDefined();
         if (method && method.parameters) {
           expect(method.parameters).toHaveLength(2);

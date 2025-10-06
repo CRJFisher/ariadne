@@ -29,17 +29,17 @@ import type { TypeAliasDefinition, SymbolId } from "@ariadnejs/types";
  *
  * @remarks
  * This function extracts raw type expression strings. Resolution to SymbolIds
- * happens in task 11.109.3 using ScopeResolver for scope-aware type resolution.
+ * happens using ScopeResolver for scope-aware type resolution.
  */
 export function extract_type_alias_metadata(
   types: ReadonlyMap<SymbolId, TypeAliasDefinition>
 ): ReadonlyMap<SymbolId, string> {
   const metadata = new Map<SymbolId, string>();
 
-  for (const [type_id, type_def] of types) {
+  for (const [type_symbol_id, type_def] of types) {
     // Only extract if type_expression is defined
     if (type_def.type_expression) {
-      metadata.set(type_id, type_def.type_expression);
+      metadata.set(type_symbol_id, type_def.type_expression);
     }
   }
 

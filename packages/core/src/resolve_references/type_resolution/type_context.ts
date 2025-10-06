@@ -54,17 +54,6 @@ export interface TypeContext {
    * @returns SymbolId of the member, or null if not found
    */
   get_type_member(type_id: SymbolId, member_name: SymbolName): SymbolId | null;
-
-  /**
-   * Get all members of a type (for debugging)
-   *
-   * Returns all methods and properties of a type.
-   * Currently only returns direct members.
-   *
-   * @param type_id - The type to get members for
-   * @returns ReadonlyMap of member names to SymbolIds
-   */
-  get_type_members(type_id: SymbolId): ReadonlyMap<SymbolName, SymbolId>;
 }
 
 /**
@@ -97,8 +86,8 @@ export function build_type_context(
   const type_members_map = new Map<SymbolId, Map<SymbolName, SymbolId>>();
 
   // PASS 1: Build symbol → type mappings using type_bindings
-  for (const [file_path, index] of indices) {
-    // Process type bindings from task 11.105
+  for (const index of indices.values()) {
+    // Process type bindings
     // Maps LocationKey → SymbolName (type names)
     for (const [loc_key, type_name] of index.type_bindings) {
       // Find the symbol at this location
@@ -122,8 +111,8 @@ export function build_type_context(
   }
 
   // PASS 2: Build type member maps from preprocessed type_members
-  for (const [file_path, index] of indices) {
-    // Use preprocessed type_members from task 11.105
+  for (const index of indices.values()) {
+    // Use preprocessed type_members
     // Already contains methods, properties, constructor, extends
     for (const [type_id, member_info] of index.type_members) {
       const members = new Map<SymbolName, SymbolId>();
@@ -160,12 +149,8 @@ export function build_type_context(
       if (member) return member;
 
       // TODO: Walk inheritance chain
-      // Will use type_members.extends from task 11.105
+      // Will use type_members.extends
       return null;
-    },
-
-    get_type_members(type_id: SymbolId): ReadonlyMap<SymbolName, SymbolId> {
-      return type_members_map.get(type_id) || new Map();
     },
   };
 }
@@ -200,7 +185,8 @@ function find_symbol_at_location(
    */
   function locations_near(loc: SymbolLocation): boolean {
     if (loc.file_path !== file_path) return false;
-    if (loc.start_line !== start_line || loc.end_line !== end_line) return false;
+    if (loc.start_line !== start_line || loc.end_line !== end_line)
+      return false;
 
     // Allow up to 2 columns difference on same line
     const col_diff = Math.abs(loc.start_column - start_col);
@@ -311,38 +297,38 @@ function get_symbol_scope(
 ): ScopeId | null {
   // Check variables
   const var_def = index.variables.get(symbol_id);
-  if (var_def) return var_def.scope_id;
+  if (var_def) return var_def.defining_scope_id;
 
   // Check functions
   const func_def = index.functions.get(symbol_id);
-  if (func_def) return func_def.scope_id;
+  if (func_def) return func_def.defining_scope_id;
 
   // Check classes
   const class_def = index.classes.get(symbol_id);
-  if (class_def) return class_def.scope_id;
+  if (class_def) return class_def.defining_scope_id;
 
   // Check interfaces
   const iface_def = index.interfaces.get(symbol_id);
-  if (iface_def) return iface_def.scope_id;
+  if (iface_def) return iface_def.defining_scope_id;
 
   // Check enums
   const enum_def = index.enums.get(symbol_id);
-  if (enum_def) return enum_def.scope_id;
+  if (enum_def) return enum_def.defining_scope_id;
 
   // Check namespaces
   const ns_def = index.namespaces.get(symbol_id);
-  if (ns_def) return ns_def.scope_id;
+  if (ns_def) return ns_def.defining_scope_id;
 
   // Check types
   const type_def = index.types.get(symbol_id);
-  if (type_def) return type_def.scope_id;
+  if (type_def) return type_def.defining_scope_id;
 
   // Check if it's a parameter - need to search through functions and methods
   for (const func of index.functions.values()) {
     if (func.signature?.parameters) {
       for (const param of func.signature.parameters) {
         if (param.symbol_id === symbol_id) {
-          return param.scope_id;
+          return param.defining_scope_id;
         }
       }
     }
@@ -353,7 +339,7 @@ function get_symbol_scope(
       if (method.parameters) {
         for (const param of method.parameters) {
           if (param.symbol_id === symbol_id) {
-            return param.scope_id;
+            return param.defining_scope_id;
           }
         }
       }

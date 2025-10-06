@@ -43,8 +43,9 @@ export function extract_import_specs(
   const specs: ImportSpec[] = [];
 
   // Find all imports in this scope
-  for (const [import_id, import_def] of index.imported_symbols) {
-    if (import_def.scope_id === scope_id) {
+  for (const import_def of index.imported_symbols.values()) {
+    if (import_def.defining_scope_id === scope_id) {
+      // TODO: this is wrong - this is the scope of the import definition, not the scope_id of the imported symbol
       // Resolve the module path to a file path using language-specific rules
       const source_file = resolve_module_path(
         import_def.import_path,
@@ -62,28 +63,6 @@ export function extract_import_specs(
   }
 
   return specs;
-}
-
-/**
- * Create a resolver function for an imported symbol.
- * The resolver follows the export chain lazily when called.
- *
- * @param import_spec - Import specification
- * @param indices - Map of all semantic indices
- * @returns Resolver function that executes on-demand
- */
-export function create_import_resolver(
-  import_spec: ImportSpec,
-  indices: ReadonlyMap<FilePath, SemanticIndex>
-): SymbolResolver {
-  return () => {
-    // This code runs ON-DEMAND when first referenced
-    return resolve_export_chain(
-      import_spec.source_file,
-      import_spec.import_name,
-      indices
-    );
-  };
 }
 
 /**
@@ -109,7 +88,7 @@ export function resolve_export_chain(
 ): SymbolId | null {
   const source_index = indices.get(source_file);
   if (!source_index) {
-    return null;
+    throw new Error(`Source index not found for file: ${source_file}`);
   }
 
   // Detect cycles
@@ -122,7 +101,9 @@ export function resolve_export_chain(
   // Look for export in source file
   const export_info = find_export(export_name, source_index);
   if (!export_info) {
-    return null;
+    throw new Error(
+      `Export not found for symbol: ${export_name} in file: ${source_file}`
+    );
   }
 
   // If it's a re-exported import, follow the chain
@@ -283,7 +264,14 @@ function find_exported_type_alias(
  * @returns true if the symbol is exported
  */
 function is_exported(
-  def: FunctionDefinition | ClassDefinition | VariableDefinition | InterfaceDefinition | EnumDefinition | TypeAliasDefinition | ImportDefinition
+  def:
+    | FunctionDefinition
+    | ClassDefinition
+    | VariableDefinition
+    | InterfaceDefinition
+    | EnumDefinition
+    | TypeAliasDefinition
+    | ImportDefinition
 ): boolean {
   return (
     def.availability?.scope === "file-export" ||

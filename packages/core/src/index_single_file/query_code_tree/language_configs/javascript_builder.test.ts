@@ -600,7 +600,7 @@ describe("JavaScript Builder Configuration", () => {
         expect(classDef.symbol_id).toBeDefined();
         expect(classDef.name).toBe("MyClass");
         expect(classDef.location).toBeDefined();
-        expect(classDef.scope_id).toBeDefined();
+        expect(classDef.defining_scope_id).toBeDefined();
         expect(classDef.availability).toBeDefined();
 
         // Check location has all subfields
@@ -836,7 +836,9 @@ describe("JavaScript Builder Configuration", () => {
         );
 
         const references = builder.process(captures[0]);
-        const assignments = references.build().filter((r) => r.type === "assignment");
+        const assignments = references
+          .build()
+          .filter((r) => r.type === "assignment");
 
         expect(assignments).toBeDefined();
         // Assignment parts would be extracted through metadata extractors
@@ -885,9 +887,9 @@ describe("JavaScript Builder Configuration", () => {
         );
 
         const references = builder.process(captures[0]);
-        const constructorCalls = references.build().filter(
-          (r) => r.type === "construct"
-        );
+        const constructorCalls = references
+          .build()
+          .filter((r) => r.type === "construct");
 
         expect(constructorCalls).toHaveLength(1);
         expect(constructorCalls[0]?.context?.construct_target).toBeDefined();
