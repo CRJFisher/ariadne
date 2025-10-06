@@ -20,8 +20,12 @@
 (generator_function) @scope.function
 
 ; Class scopes
-(class_declaration) @scope.class
-(class) @scope.class
+(class_declaration
+  body: (class_body) @scope.class
+)
+(class
+  body: (class_body) @scope.class
+)
 
 ; Block scopes
 (statement_block) @scope.block
