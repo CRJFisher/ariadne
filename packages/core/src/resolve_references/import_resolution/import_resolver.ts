@@ -57,6 +57,10 @@ export function extract_import_specs(
       specs.push({
         local_name: import_def.name,
         source_file,
+        // For named imports: use original_name (if aliased) or name
+        // For default imports: original_name is undefined, so falls back to name
+        //   (Note: import_name is ignored when import_kind is "default")
+        // For namespace imports: name is the namespace identifier
         import_name: import_def.original_name || import_def.name,
         import_kind: import_def.import_kind,
       });
@@ -76,8 +80,9 @@ export function extract_import_specs(
  *   main.js:   import { core } from './middle'
  *
  * @param source_file - File containing the export
- * @param export_name - Name of the exported symbol
+ * @param export_name - Name of the exported symbol (ignored for default imports)
  * @param indices - Map of all semantic indices
+ * @param import_kind - Type of import (named, default, or namespace)
  * @param visited - Set of visited exports for cycle detection
  * @returns Symbol ID of the exported symbol, or null if not found
  */
@@ -85,6 +90,7 @@ export function resolve_export_chain(
   source_file: FilePath,
   export_name: SymbolName,
   indices: ReadonlyMap<FilePath, SemanticIndex>,
+  import_kind: "named" | "default" | "namespace" = "named",
   visited: Set<string> = new Set()
 ): SymbolId | null {
   const source_index = indices.get(source_file);
@@ -93,17 +99,27 @@ export function resolve_export_chain(
   }
 
   // Detect cycles
-  const key = `${source_file}:${export_name}`;
+  // For default imports, export_name is the local import name (meaningless for cycle detection)
+  // For named imports, export_name is the actual symbol name being exported
+  const key = import_kind === "default"
+    ? `${source_file}:default`
+    : `${source_file}:${export_name}:${import_kind}`;
+
   if (visited.has(key)) {
     return null; // Circular re-export
   }
   visited.add(key);
 
   // Look for export in source file
-  const export_info = find_export(export_name, source_index);
+  const export_info = import_kind === "default"
+    ? find_default_export(source_index)
+    : find_export(export_name, source_index);
+
   if (!export_info) {
     throw new Error(
-      `Export not found for symbol: ${export_name} in file: ${source_file}`
+      import_kind === "default"
+        ? `Default export not found in file: ${source_file}`
+        : `Export not found for symbol: ${export_name} in file: ${source_file}`
     );
   }
 
@@ -116,9 +132,26 @@ export function resolve_export_chain(
       source_index.language
     );
 
-    // Recursively resolve in the imported file
+    // Recursively resolve with the correct import kind
+    // For re-exports, we must use the import_kind from the re-export statement itself
+    // Example: export { default } from './foo' → import_kind = "default"
+    //          export { bar } from './foo' → import_kind = "named"
     const original_name = import_def.original_name || import_def.name;
-    return resolve_export_chain(resolved_file, original_name, indices, visited);
+    const next_import_kind = import_def.import_kind;
+
+    if (!next_import_kind) {
+      throw new Error(
+        `import_kind missing on re-export in ${source_file}: ${import_def.symbol_id}`
+      );
+    }
+
+    return resolve_export_chain(
+      resolved_file,
+      original_name,
+      indices,
+      next_import_kind,
+      visited
+    );
   }
 
   // Direct export
@@ -163,6 +196,128 @@ function find_export(
   }
 
   return null;
+}
+
+/**
+ * Find the default export in a file's index
+ *
+ * Default exports are marked with export.is_default = true.
+ * There should only be one default export per file.
+ *
+ * @param index - Semantic index to search in
+ * @returns Export information or null if not found
+ * @throws Error if multiple default exports are found (indicates indexing bug)
+ */
+function find_default_export(index: SemanticIndex): ExportInfo | null {
+  let found: ExportInfo | null = null;
+
+  // Search functions
+  for (const func_def of index.functions.values()) {
+    if (func_def.export?.is_default) {
+      if (found) {
+        throw new Error(
+          `Multiple default exports found in ${index.file_path}: ${found.symbol_id} and ${func_def.symbol_id}`
+        );
+      }
+      found = {
+        symbol_id: func_def.symbol_id,
+        is_reexport: func_def.export.is_reexport || false,
+      };
+    }
+  }
+
+  // Search classes
+  for (const class_def of index.classes.values()) {
+    if (class_def.export?.is_default) {
+      if (found) {
+        throw new Error(
+          `Multiple default exports found in ${index.file_path}: ${found.symbol_id} and ${class_def.symbol_id}`
+        );
+      }
+      found = {
+        symbol_id: class_def.symbol_id,
+        is_reexport: class_def.export.is_reexport || false,
+      };
+    }
+  }
+
+  // Search variables
+  for (const var_def of index.variables.values()) {
+    if (var_def.export?.is_default) {
+      if (found) {
+        throw new Error(
+          `Multiple default exports found in ${index.file_path}: ${found.symbol_id} and ${var_def.symbol_id}`
+        );
+      }
+      found = {
+        symbol_id: var_def.symbol_id,
+        is_reexport: var_def.export.is_reexport || false,
+      };
+    }
+  }
+
+  // Search interfaces (TypeScript only)
+  for (const iface_def of index.interfaces.values()) {
+    if (iface_def.export?.is_default) {
+      if (found) {
+        throw new Error(
+          `Multiple default exports found in ${index.file_path}: ${found.symbol_id} and ${iface_def.symbol_id}`
+        );
+      }
+      found = {
+        symbol_id: iface_def.symbol_id,
+        is_reexport: iface_def.export.is_reexport || false,
+      };
+    }
+  }
+
+  // Search enums (TypeScript only)
+  for (const enum_def of index.enums.values()) {
+    if (enum_def.export?.is_default) {
+      if (found) {
+        throw new Error(
+          `Multiple default exports found in ${index.file_path}: ${found.symbol_id} and ${enum_def.symbol_id}`
+        );
+      }
+      found = {
+        symbol_id: enum_def.symbol_id,
+        is_reexport: enum_def.export.is_reexport || false,
+      };
+    }
+  }
+
+  // Search type aliases (TypeScript only)
+  for (const type_def of index.types.values()) {
+    if (type_def.export?.is_default) {
+      if (found) {
+        throw new Error(
+          `Multiple default exports found in ${index.file_path}: ${found.symbol_id} and ${type_def.symbol_id}`
+        );
+      }
+      found = {
+        symbol_id: type_def.symbol_id,
+        is_reexport: type_def.export.is_reexport || false,
+      };
+    }
+  }
+
+  // Search re-exported imports (e.g., export { default } from './other')
+  for (const import_def of index.imported_symbols.values()) {
+    if (import_def.export?.is_default) {
+      if (found) {
+        throw new Error(
+          `Multiple default exports found in ${index.file_path}: ${found.symbol_id} and ${import_def.symbol_id}`
+        );
+      }
+      found = {
+        symbol_id: import_def.symbol_id,
+        is_reexport: true,
+        import_def: import_def,
+      };
+    }
+  }
+
+  return found;
 }
 
 /**

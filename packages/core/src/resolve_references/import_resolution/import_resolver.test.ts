@@ -117,6 +117,42 @@ describe("extract_import_specs", () => {
     expect(specs[0].import_kind).toBe("named");
   });
 
+  it("should extract default import specs", () => {
+    const file_path = "/test/file.js" as FilePath;
+    const scope_id = "scope-0" as ScopeId;
+
+    const import_def: ImportDefinition = {
+      kind: "import",
+      symbol_id: "import-1" as SymbolId,
+      name: "MyComponent" as SymbolName,
+      defining_scope_id: scope_id,
+      location: {
+        file_path: file_path,
+        start_line: 1,
+        start_column: 0,
+        end_line: 1,
+        end_column: 30,
+      },
+      import_path: "./component.js" as ModulePath,
+      import_kind: "default",
+      availability: {
+        scope: "file-private",
+      },
+    };
+
+    const index = create_test_index(file_path, "javascript", {
+      imports: new Map([["import-1" as SymbolId, import_def]]),
+      root_scope_id: scope_id,
+    });
+
+    const specs = extract_import_specs(scope_id, index, file_path);
+
+    expect(specs).toHaveLength(1);
+    expect(specs[0].local_name).toBe("MyComponent" as SymbolName);
+    expect(specs[0].import_name).toBe("MyComponent" as SymbolName); // Falls back to name
+    expect(specs[0].import_kind).toBe("default");
+  });
+
   it("should extract aliased import specs", () => {
     const file_path = "/test/file.js" as FilePath;
     const scope_id = "scope-0" as ScopeId;
@@ -1007,5 +1043,996 @@ describe("Export Alias Resolution", () => {
     expect(() => {
       resolve_export_chain(file_path, "internal" as SymbolName, indices);
     }).toThrow("Export not found");
+  });
+});
+
+describe("Default Export Resolution", () => {
+  it("resolves default import to default function export", () => {
+    // math.ts: export default function calculate() {}
+    const file_path = "/test/math.ts" as FilePath;
+    const symbol_id = "func-1" as SymbolId;
+
+    const func_def: FunctionDefinition = {
+      kind: "function",
+      symbol_id,
+      name: "calculate" as SymbolName,
+      defining_scope_id: "scope-0" as ScopeId,
+      location: {
+        file_path: file_path,
+        start_line: 1,
+        start_column: 0,
+        end_line: 3,
+        end_column: 1,
+      },
+      signature: {
+        parameters: [],
+        return_type: "number" as SymbolName,
+      },
+      is_exported: true,
+      export: {
+        is_default: true,
+      },
+    };
+
+    const index = create_test_index(file_path, "typescript", {
+      functions: new Map([[symbol_id, func_def]]),
+    });
+
+    const indices = new Map([[file_path, index]]);
+
+    // main.ts: import calc from './math'
+    // Local name "calc" should be ignored for default imports
+    const result = resolve_export_chain(
+      file_path,
+      "calc" as SymbolName,
+      indices,
+      "default"
+    );
+
+    expect(result).toBe(symbol_id);
+  });
+
+  it("resolves default import to default class export", () => {
+    // user.ts: export default class User {}
+    const file_path = "/test/user.ts" as FilePath;
+    const symbol_id = "class-1" as SymbolId;
+
+    const class_def: ClassDefinition = {
+      kind: "class",
+      symbol_id,
+      name: "User" as SymbolName,
+      defining_scope_id: "scope-0" as ScopeId,
+      location: {
+        file_path: file_path,
+        start_line: 1,
+        start_column: 0,
+        end_line: 5,
+        end_column: 1,
+      },
+      extends: [],
+      methods: [],
+      properties: [],
+      decorators: [],
+      constructor: [],
+      is_exported: true,
+      export: {
+        is_default: true,
+      },
+    };
+
+    const index = create_test_index(file_path, "typescript", {
+      classes: new Map([[symbol_id, class_def]]),
+    });
+
+    const indices = new Map([[file_path, index]]);
+
+    // main.ts: import MyUser from './user'
+    const result = resolve_export_chain(
+      file_path,
+      "MyUser" as SymbolName,
+      indices,
+      "default"
+    );
+
+    expect(result).toBe(symbol_id);
+  });
+
+  it("resolves default import to default variable export", () => {
+    // config.ts: const cfg = {...}; export default cfg;
+    const file_path = "/test/config.ts" as FilePath;
+    const symbol_id = "var-1" as SymbolId;
+
+    const var_def: VariableDefinition = {
+      kind: "variable",
+      symbol_id,
+      name: "cfg" as SymbolName,
+      defining_scope_id: "scope-0" as ScopeId,
+      location: {
+        file_path: file_path,
+        start_line: 1,
+        start_column: 0,
+        end_line: 1,
+        end_column: 30,
+      },
+      is_exported: true,
+      export: {
+        is_default: true,
+      },
+    };
+
+    const index = create_test_index(file_path, "typescript", {
+      variables: new Map([[symbol_id, var_def]]),
+    });
+
+    const indices = new Map([[file_path, index]]);
+
+    // main.ts: import config from './config'
+    const result = resolve_export_chain(
+      file_path,
+      "config" as SymbolName,
+      indices,
+      "default"
+    );
+
+    expect(result).toBe(symbol_id);
+  });
+
+  it("resolves default import to default interface export", () => {
+    // types.ts: export default interface IConfig {}
+    const file_path = "/test/types.ts" as FilePath;
+    const symbol_id = "interface-1" as SymbolId;
+
+    const interface_def: InterfaceDefinition = {
+      kind: "interface",
+      symbol_id,
+      name: "IConfig" as SymbolName,
+      defining_scope_id: "scope-0" as ScopeId,
+      location: {
+        file_path: file_path,
+        start_line: 1,
+        start_column: 0,
+        end_line: 3,
+        end_column: 1,
+      },
+      extends: [],
+      methods: [],
+      properties: [],
+      is_exported: true,
+      export: {
+        is_default: true,
+      },
+    };
+
+    const index = create_test_index(file_path, "typescript", {
+      interfaces: new Map([[symbol_id, interface_def]]),
+    });
+
+    const indices = new Map([[file_path, index]]);
+
+    // main.ts: import Config from './types'
+    const result = resolve_export_chain(
+      file_path,
+      "Config" as SymbolName,
+      indices,
+      "default"
+    );
+
+    expect(result).toBe(symbol_id);
+  });
+
+  it("resolves default import to default enum export", () => {
+    // status.ts: export default enum Status {}
+    const file_path = "/test/status.ts" as FilePath;
+    const symbol_id = "enum-1" as SymbolId;
+
+    const enum_def: EnumDefinition = {
+      kind: "enum",
+      symbol_id,
+      name: "Status" as SymbolName,
+      defining_scope_id: "scope-0" as ScopeId,
+      location: {
+        file_path: file_path,
+        start_line: 1,
+        start_column: 0,
+        end_line: 5,
+        end_column: 1,
+      },
+      members: [],
+      is_const: false,
+      is_exported: true,
+      export: {
+        is_default: true,
+      },
+    };
+
+    const index = create_test_index(file_path, "typescript", {
+      enums: new Map([[symbol_id, enum_def]]),
+    });
+
+    const indices = new Map([[file_path, index]]);
+
+    // main.ts: import MyStatus from './status'
+    const result = resolve_export_chain(
+      file_path,
+      "MyStatus" as SymbolName,
+      indices,
+      "default"
+    );
+
+    expect(result).toBe(symbol_id);
+  });
+
+  it("resolves default import to default type alias export", () => {
+    // types.ts: type Config = {...}; export default Config;
+    const file_path = "/test/types.ts" as FilePath;
+    const symbol_id = "type-1" as SymbolId;
+
+    const type_def: TypeAliasDefinition = {
+      kind: "type_alias",
+      symbol_id,
+      name: "Config" as SymbolName,
+      defining_scope_id: "scope-0" as ScopeId,
+      location: {
+        file_path: file_path,
+        start_line: 1,
+        start_column: 0,
+        end_line: 1,
+        end_column: 40,
+      },
+      is_exported: true,
+      export: {
+        is_default: true,
+      },
+    };
+
+    const index = create_test_index(file_path, "typescript", {
+      types: new Map([[symbol_id, type_def]]),
+    });
+
+    const indices = new Map([[file_path, index]]);
+
+    // main.ts: import MyConfig from './types'
+    const result = resolve_export_chain(
+      file_path,
+      "MyConfig" as SymbolName,
+      indices,
+      "default"
+    );
+
+    expect(result).toBe(symbol_id);
+  });
+
+  it("throws when no default export exists", () => {
+    // lib.ts: export function foo() {}  (no default)
+    const file_path = "/test/lib.ts" as FilePath;
+    const symbol_id = "func-1" as SymbolId;
+
+    const func_def: FunctionDefinition = {
+      kind: "function",
+      symbol_id,
+      name: "foo" as SymbolName,
+      defining_scope_id: "scope-0" as ScopeId,
+      location: {
+        file_path: file_path,
+        start_line: 1,
+        start_column: 0,
+        end_line: 3,
+        end_column: 1,
+      },
+      signature: {
+        parameters: [],
+        return_type: "void" as SymbolName,
+      },
+      is_exported: true,
+      // No is_default flag
+    };
+
+    const index = create_test_index(file_path, "typescript", {
+      functions: new Map([[symbol_id, func_def]]),
+    });
+
+    const indices = new Map([[file_path, index]]);
+
+    // main.ts: import something from './lib'
+    expect(() => {
+      resolve_export_chain(
+        file_path,
+        "something" as SymbolName,
+        indices,
+        "default"
+      );
+    }).toThrow("Default export not found");
+  });
+
+  it("handles default re-exports", () => {
+    // base.ts: export default function core() {}
+    const base_file = "/test/base.ts" as FilePath;
+    const core_id = "func-1" as SymbolId;
+
+    const core_def: FunctionDefinition = {
+      kind: "function",
+      symbol_id: core_id,
+      name: "core" as SymbolName,
+      defining_scope_id: "scope-0" as ScopeId,
+      location: {
+        file_path: base_file,
+        start_line: 1,
+        start_column: 0,
+        end_line: 3,
+        end_column: 1,
+      },
+      signature: {
+        parameters: [],
+        return_type: "void" as SymbolName,
+      },
+      is_exported: true,
+      export: {
+        is_default: true,
+      },
+    };
+
+    const base_index = create_test_index(base_file, "typescript", {
+      functions: new Map([[core_id, core_def]]),
+    });
+
+    // barrel.ts: export { default } from './base'
+    const barrel_file = "/test/barrel.ts" as FilePath;
+    const reexport_id = "import-1" as SymbolId;
+
+    const reexport_def: ImportDefinition = {
+      kind: "import",
+      symbol_id: reexport_id,
+      name: "default" as SymbolName,
+      defining_scope_id: "scope-0" as ScopeId,
+      location: {
+        file_path: barrel_file,
+        start_line: 1,
+        start_column: 9,
+        end_line: 1,
+        end_column: 16,
+      },
+      import_path: "./base.ts" as ModulePath,
+      import_kind: "default",
+      is_exported: true,
+      export: {
+        is_default: true,
+        is_reexport: true,
+      },
+    };
+
+    const barrel_index = create_test_index(barrel_file, "typescript", {
+      imports: new Map([[reexport_id, reexport_def]]),
+    });
+
+    const indices = new Map([
+      [base_file, base_index],
+      [barrel_file, barrel_index],
+    ]);
+
+    // main.ts: import something from './barrel'
+    const result = resolve_export_chain(
+      barrel_file,
+      "something" as SymbolName,
+      indices,
+      "default"
+    );
+
+    // Should follow chain and resolve to core in base.ts
+    expect(result).toBe(core_id);
+  });
+
+  it("default and named exports can coexist", () => {
+    // lib.ts:
+    //   export default function main() {}
+    //   export function helper() {}
+    const file_path = "/test/lib.ts" as FilePath;
+    const main_id = "func-1" as SymbolId;
+    const helper_id = "func-2" as SymbolId;
+
+    const main_def: FunctionDefinition = {
+      kind: "function",
+      symbol_id: main_id,
+      name: "main" as SymbolName,
+      defining_scope_id: "scope-0" as ScopeId,
+      location: {
+        file_path: file_path,
+        start_line: 1,
+        start_column: 0,
+        end_line: 3,
+        end_column: 1,
+      },
+      signature: {
+        parameters: [],
+        return_type: "void" as SymbolName,
+      },
+      is_exported: true,
+      export: {
+        is_default: true,
+      },
+    };
+
+    const helper_def: FunctionDefinition = {
+      kind: "function",
+      symbol_id: helper_id,
+      name: "helper" as SymbolName,
+      defining_scope_id: "scope-0" as ScopeId,
+      location: {
+        file_path: file_path,
+        start_line: 5,
+        start_column: 0,
+        end_line: 7,
+        end_column: 1,
+      },
+      signature: {
+        parameters: [],
+        return_type: "void" as SymbolName,
+      },
+      is_exported: true,
+      // No is_default - this is a named export
+    };
+
+    const index = create_test_index(file_path, "typescript", {
+      functions: new Map([
+        [main_id, main_def],
+        [helper_id, helper_def],
+      ]),
+    });
+
+    const indices = new Map([[file_path, index]]);
+
+    // Default import: import lib from './lib'
+    const default_result = resolve_export_chain(
+      file_path,
+      "lib" as SymbolName,
+      indices,
+      "default"
+    );
+    expect(default_result).toBe(main_id);
+
+    // Named import: import { helper } from './lib'
+    const named_result = resolve_export_chain(
+      file_path,
+      "helper" as SymbolName,
+      indices,
+      "named"
+    );
+    expect(named_result).toBe(helper_id);
+  });
+
+  it("throws when multiple default exports exist (indexing bug)", () => {
+    // This should never happen in a correctly indexed file, but we validate it
+    const file_path = "/test/broken.ts" as FilePath;
+    const func_id = "func-1" as SymbolId;
+    const class_id = "class-1" as SymbolId;
+
+    const func_def: FunctionDefinition = {
+      kind: "function",
+      symbol_id: func_id,
+      name: "main" as SymbolName,
+      defining_scope_id: "scope-0" as ScopeId,
+      location: {
+        file_path: file_path,
+        start_line: 1,
+        start_column: 0,
+        end_line: 3,
+        end_column: 1,
+      },
+      signature: {
+        parameters: [],
+        return_type: "void" as SymbolName,
+      },
+      is_exported: true,
+      export: {
+        is_default: true,
+      },
+    };
+
+    const class_def: ClassDefinition = {
+      kind: "class",
+      symbol_id: class_id,
+      name: "MainClass" as SymbolName,
+      defining_scope_id: "scope-0" as ScopeId,
+      location: {
+        file_path: file_path,
+        start_line: 5,
+        start_column: 0,
+        end_line: 7,
+        end_column: 1,
+      },
+      extends: [],
+      methods: [],
+      properties: [],
+      decorators: [],
+      constructor: [],
+      is_exported: true,
+      export: {
+        is_default: true, // ERROR: Second default export!
+      },
+    };
+
+    const index = create_test_index(file_path, "typescript", {
+      functions: new Map([[func_id, func_def]]),
+      classes: new Map([[class_id, class_def]]),
+    });
+
+    const indices = new Map([[file_path, index]]);
+
+    // Should throw because file has two default exports
+    expect(() => {
+      resolve_export_chain(
+        file_path,
+        "anything" as SymbolName,
+        indices,
+        "default"
+      );
+    }).toThrow("Multiple default exports found");
+  });
+
+  it("detects circular default re-export chains", () => {
+    // a.ts: export { default } from './b'
+    const a_file = "/test/a.ts" as FilePath;
+    const a_import_id = "import-1" as SymbolId;
+
+    const a_reexport: ImportDefinition = {
+      kind: "import",
+      symbol_id: a_import_id,
+      name: "default" as SymbolName,
+      defining_scope_id: "scope-0" as ScopeId,
+      location: {
+        file_path: a_file,
+        start_line: 1,
+        start_column: 9,
+        end_line: 1,
+        end_column: 16,
+      },
+      import_path: "./b.ts" as ModulePath,
+      import_kind: "default",
+      is_exported: true,
+      export: {
+        is_default: true,
+        is_reexport: true,
+      },
+    };
+
+    const a_index = create_test_index(a_file, "typescript", {
+      imports: new Map([[a_import_id, a_reexport]]),
+    });
+
+    // b.ts: export { default } from './a'
+    const b_file = "/test/b.ts" as FilePath;
+    const b_import_id = "import-1" as SymbolId;
+
+    const b_reexport: ImportDefinition = {
+      kind: "import",
+      symbol_id: b_import_id,
+      name: "default" as SymbolName,
+      defining_scope_id: "scope-0" as ScopeId,
+      location: {
+        file_path: b_file,
+        start_line: 1,
+        start_column: 9,
+        end_line: 1,
+        end_column: 16,
+      },
+      import_path: "./a.ts" as ModulePath,
+      import_kind: "default",
+      is_exported: true,
+      export: {
+        is_default: true,
+        is_reexport: true,
+      },
+    };
+
+    const b_index = create_test_index(b_file, "typescript", {
+      imports: new Map([[b_import_id, b_reexport]]),
+    });
+
+    const indices = new Map([
+      [a_file, a_index],
+      [b_file, b_index],
+    ]);
+
+    // main.ts: import foo from './a'
+    // Should detect cycle and return null (not throw)
+    const result = resolve_export_chain(
+      a_file,
+      "foo" as SymbolName,
+      indices,
+      "default"
+    );
+
+    expect(result).toBeNull();
+  });
+
+  it("ignores local import name - same default export with different import names", () => {
+    // math.ts: export default function calculate() {}
+    const file_path = "/test/math.ts" as FilePath;
+    const symbol_id = "func-1" as SymbolId;
+
+    const func_def: FunctionDefinition = {
+      kind: "function",
+      symbol_id,
+      name: "calculate" as SymbolName,
+      defining_scope_id: "scope-0" as ScopeId,
+      location: {
+        file_path: file_path,
+        start_line: 1,
+        start_column: 0,
+        end_line: 3,
+        end_column: 1,
+      },
+      signature: {
+        parameters: [],
+        return_type: "number" as SymbolName,
+      },
+      is_exported: true,
+      export: {
+        is_default: true,
+      },
+    };
+
+    const index = create_test_index(file_path, "typescript", {
+      functions: new Map([[symbol_id, func_def]]),
+    });
+
+    const indices = new Map([[file_path, index]]);
+
+    // All these different local names should resolve to the same default export
+    const names = ["calc", "calculator", "doMath", "fn", "X"];
+
+    for (const local_name of names) {
+      const result = resolve_export_chain(
+        file_path,
+        local_name as SymbolName,
+        indices,
+        "default"
+      );
+      expect(result).toBe(symbol_id);
+    }
+  });
+
+  it("handles anonymous default function export", () => {
+    // math.ts: export default function() { return 42; }
+    const file_path = "/test/math.ts" as FilePath;
+    const symbol_id = "func-1" as SymbolId;
+
+    const func_def: FunctionDefinition = {
+      kind: "function",
+      symbol_id,
+      name: "<anonymous>" as SymbolName, // Generated name for anonymous function
+      defining_scope_id: "scope-0" as ScopeId,
+      location: {
+        file_path: file_path,
+        start_line: 1,
+        start_column: 0,
+        end_line: 1,
+        end_column: 40,
+      },
+      signature: {
+        parameters: [],
+        return_type: "number" as SymbolName,
+      },
+      is_exported: true,
+      export: {
+        is_default: true,
+      },
+    };
+
+    const index = create_test_index(file_path, "typescript", {
+      functions: new Map([[symbol_id, func_def]]),
+    });
+
+    const indices = new Map([[file_path, index]]);
+
+    // main.ts: import calc from './math'
+    const result = resolve_export_chain(
+      file_path,
+      "calc" as SymbolName,
+      indices,
+      "default"
+    );
+
+    expect(result).toBe(symbol_id);
+  });
+
+  it("handles anonymous default class export", () => {
+    // component.ts: export default class { }
+    const file_path = "/test/component.ts" as FilePath;
+    const symbol_id = "class-1" as SymbolId;
+
+    const class_def: ClassDefinition = {
+      kind: "class",
+      symbol_id,
+      name: "<anonymous>" as SymbolName,
+      defining_scope_id: "scope-0" as ScopeId,
+      location: {
+        file_path: file_path,
+        start_line: 1,
+        start_column: 0,
+        end_line: 3,
+        end_column: 1,
+      },
+      extends: [],
+      methods: [],
+      properties: [],
+      decorators: [],
+      constructor: [],
+      is_exported: true,
+      export: {
+        is_default: true,
+      },
+    };
+
+    const index = create_test_index(file_path, "typescript", {
+      classes: new Map([[symbol_id, class_def]]),
+    });
+
+    const indices = new Map([[file_path, index]]);
+
+    // main.ts: import Component from './component'
+    const result = resolve_export_chain(
+      file_path,
+      "Component" as SymbolName,
+      indices,
+      "default"
+    );
+
+    expect(result).toBe(symbol_id);
+  });
+
+  it("handles multi-level default re-export chains", () => {
+    // base.ts: export default function core() {}
+    const base_file = "/test/base.ts" as FilePath;
+    const core_id = "func-1" as SymbolId;
+
+    const core_def: FunctionDefinition = {
+      kind: "function",
+      symbol_id: core_id,
+      name: "core" as SymbolName,
+      defining_scope_id: "scope-0" as ScopeId,
+      location: {
+        file_path: base_file,
+        start_line: 1,
+        start_column: 0,
+        end_line: 3,
+        end_column: 1,
+      },
+      signature: {
+        parameters: [],
+        return_type: "void" as SymbolName,
+      },
+      is_exported: true,
+      export: {
+        is_default: true,
+      },
+    };
+
+    const base_index = create_test_index(base_file, "typescript", {
+      functions: new Map([[core_id, core_def]]),
+    });
+
+    // middle.ts: export { default } from './base'
+    const middle_file = "/test/middle.ts" as FilePath;
+    const middle_reexport_id = "import-1" as SymbolId;
+
+    const middle_reexport: ImportDefinition = {
+      kind: "import",
+      symbol_id: middle_reexport_id,
+      name: "default" as SymbolName,
+      defining_scope_id: "scope-0" as ScopeId,
+      location: {
+        file_path: middle_file,
+        start_line: 1,
+        start_column: 9,
+        end_line: 1,
+        end_column: 16,
+      },
+      import_path: "./base.ts" as ModulePath,
+      import_kind: "default",
+      is_exported: true,
+      export: {
+        is_default: true,
+        is_reexport: true,
+      },
+    };
+
+    const middle_index = create_test_index(middle_file, "typescript", {
+      imports: new Map([[middle_reexport_id, middle_reexport]]),
+    });
+
+    // barrel.ts: export { default } from './middle'
+    const barrel_file = "/test/barrel.ts" as FilePath;
+    const barrel_reexport_id = "import-2" as SymbolId;
+
+    const barrel_reexport: ImportDefinition = {
+      kind: "import",
+      symbol_id: barrel_reexport_id,
+      name: "default" as SymbolName,
+      defining_scope_id: "scope-0" as ScopeId,
+      location: {
+        file_path: barrel_file,
+        start_line: 1,
+        start_column: 9,
+        end_line: 1,
+        end_column: 16,
+      },
+      import_path: "./middle.ts" as ModulePath,
+      import_kind: "default",
+      is_exported: true,
+      export: {
+        is_default: true,
+        is_reexport: true,
+      },
+    };
+
+    const barrel_index = create_test_index(barrel_file, "typescript", {
+      imports: new Map([[barrel_reexport_id, barrel_reexport]]),
+    });
+
+    const indices = new Map([
+      [base_file, base_index],
+      [middle_file, middle_index],
+      [barrel_file, barrel_index],
+    ]);
+
+    // main.ts: import something from './barrel'
+    // Should follow chain: barrel → middle → base
+    const result = resolve_export_chain(
+      barrel_file,
+      "something" as SymbolName,
+      indices,
+      "default"
+    );
+
+    expect(result).toBe(core_id);
+  });
+
+  it("handles default class re-export chain", () => {
+    // base.ts: export default class Component {}
+    const base_file = "/test/base.ts" as FilePath;
+    const component_id = "class-1" as SymbolId;
+
+    const component_def: ClassDefinition = {
+      kind: "class",
+      symbol_id: component_id,
+      name: "Component" as SymbolName,
+      defining_scope_id: "scope-0" as ScopeId,
+      location: {
+        file_path: base_file,
+        start_line: 1,
+        start_column: 0,
+        end_line: 5,
+        end_column: 1,
+      },
+      extends: [],
+      methods: [],
+      properties: [],
+      decorators: [],
+      constructor: [],
+      is_exported: true,
+      export: {
+        is_default: true,
+      },
+    };
+
+    const base_index = create_test_index(base_file, "typescript", {
+      classes: new Map([[component_id, component_def]]),
+    });
+
+    // barrel.ts: export { default } from './base'
+    const barrel_file = "/test/barrel.ts" as FilePath;
+    const reexport_id = "import-1" as SymbolId;
+
+    const reexport_def: ImportDefinition = {
+      kind: "import",
+      symbol_id: reexport_id,
+      name: "default" as SymbolName,
+      defining_scope_id: "scope-0" as ScopeId,
+      location: {
+        file_path: barrel_file,
+        start_line: 1,
+        start_column: 9,
+        end_line: 1,
+        end_column: 16,
+      },
+      import_path: "./base.ts" as ModulePath,
+      import_kind: "default",
+      is_exported: true,
+      export: {
+        is_default: true,
+        is_reexport: true,
+      },
+    };
+
+    const barrel_index = create_test_index(barrel_file, "typescript", {
+      imports: new Map([[reexport_id, reexport_def]]),
+    });
+
+    const indices = new Map([
+      [base_file, base_index],
+      [barrel_file, barrel_index],
+    ]);
+
+    // main.ts: import MyComponent from './barrel'
+    const result = resolve_export_chain(
+      barrel_file,
+      "MyComponent" as SymbolName,
+      indices,
+      "default"
+    );
+
+    expect(result).toBe(component_id);
+  });
+
+  it("handles default variable re-export chain", () => {
+    // config.ts: const settings = {...}; export default settings;
+    const config_file = "/test/config.ts" as FilePath;
+    const settings_id = "var-1" as SymbolId;
+
+    const settings_def: VariableDefinition = {
+      kind: "variable",
+      symbol_id: settings_id,
+      name: "settings" as SymbolName,
+      defining_scope_id: "scope-0" as ScopeId,
+      location: {
+        file_path: config_file,
+        start_line: 1,
+        start_column: 0,
+        end_line: 1,
+        end_column: 40,
+      },
+      is_exported: true,
+      export: {
+        is_default: true,
+      },
+    };
+
+    const config_index = create_test_index(config_file, "typescript", {
+      variables: new Map([[settings_id, settings_def]]),
+    });
+
+    // index.ts: export { default } from './config'
+    const index_file = "/test/index.ts" as FilePath;
+    const reexport_id = "import-1" as SymbolId;
+
+    const reexport_def: ImportDefinition = {
+      kind: "import",
+      symbol_id: reexport_id,
+      name: "default" as SymbolName,
+      defining_scope_id: "scope-0" as ScopeId,
+      location: {
+        file_path: index_file,
+        start_line: 1,
+        start_column: 9,
+        end_line: 1,
+        end_column: 16,
+      },
+      import_path: "./config.ts" as ModulePath,
+      import_kind: "default",
+      is_exported: true,
+      export: {
+        is_default: true,
+        is_reexport: true,
+      },
+    };
+
+    const index_index = create_test_index(index_file, "typescript", {
+      imports: new Map([[reexport_id, reexport_def]]),
+    });
+
+    const indices = new Map([
+      [config_file, config_index],
+      [index_file, index_index],
+    ]);
+
+    // main.ts: import config from './index'
+    const result = resolve_export_chain(
+      index_file,
+      "config" as SymbolName,
+      indices,
+      "default"
+    );
+
+    expect(result).toBe(settings_id);
   });
 });

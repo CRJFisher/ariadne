@@ -185,12 +185,19 @@ function build_resolvers_recursive(
     // This allows cross-file resolution to happen on-demand only
     //
     // Example: import { foo } from './utils'
-    //   → resolvers.set("foo", () => resolve_export_chain("./utils.ts", "foo", indices))
+    //   → resolvers.set("foo", () => resolve_export_chain("./utils.ts", "foo", indices, "named"))
+    //
+    // Example: import bar from './utils'
+    //   → resolvers.set("bar", () => resolve_export_chain("./utils.ts", "bar", indices, "default"))
+    //   Note: For defaults, import_name="bar" is ignored; resolve_export_chain uses import_kind to find is_default=true
+    //
+    // Example: import * as utils from './utils'
+    //   → resolvers.set("utils", () => resolve_export_chain("./utils.ts", "utils", indices, "namespace"))
     //
     // Since we're using Map.set(), this will OVERRIDE any parent resolver for the same name
     // This implements shadowing: imports in inner scopes shadow parent scope symbols
     resolvers.set(spec.local_name, () =>
-      resolve_export_chain(spec.source_file, spec.import_name, indices)
+      resolve_export_chain(spec.source_file, spec.import_name, indices, spec.import_kind)
     );
   }
 
