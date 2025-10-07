@@ -10,7 +10,7 @@ import { JAVASCRIPT_BUILDER_CONFIG } from "./javascript_builder";
 import { TYPESCRIPT_BUILDER_CONFIG } from "./typescript_builder_config";
 import { DefinitionBuilder } from "../../definitions";
 import type { ProcessingContext, CaptureNode } from "../../semantic_index";
-import type { FilePath, SymbolName, ScopeId, Location } from "@ariadnejs/types";
+import type { FilePath, SymbolName, ScopeId, Location, LexicalScope } from "@ariadnejs/types";
 
 const jsParser = new Parser();
 jsParser.setLanguage(JavaScript);
@@ -21,12 +21,12 @@ tsParser.setLanguage(TypeScript.typescript);
 const TEST_FILE_PATH: FilePath = "test.js" as FilePath;
 
 function createTestContext(): ProcessingContext {
-  const scope_stack: ScopeId[] = [];
   return {
     get_scope_id: () => "test-scope" as ScopeId,
-    push_scope: (scope_id: ScopeId) => scope_stack.push(scope_id),
-    pop_scope: () => scope_stack.pop(),
-    scope_stack,
+    captures: [],
+    scopes: new Map<ScopeId, LexicalScope>(),
+    scope_depths: new Map<ScopeId, number>(),
+    root_scope_id: "test-scope" as ScopeId,
   };
 }
 
@@ -73,7 +73,7 @@ describe("Export Detection - Comprehensive Verification", () => {
       const code = "export function foo() {}";
       const capture = createCapture(code, "definition.function", "identifier");
       const context = createTestContext();
-      const builder = new DefinitionBuilder(context, TEST_FILE_PATH);
+      const builder = new DefinitionBuilder(context);
 
       const config = JAVASCRIPT_BUILDER_CONFIG.get("definition.function");
       config?.process(capture, builder, context);
@@ -89,7 +89,7 @@ describe("Export Detection - Comprehensive Verification", () => {
       const code = "export class MyClass {}";
       const capture = createCapture(code, "definition.class", "identifier");
       const context = createTestContext();
-      const builder = new DefinitionBuilder(context, TEST_FILE_PATH);
+      const builder = new DefinitionBuilder(context);
 
       const config = JAVASCRIPT_BUILDER_CONFIG.get("definition.class");
       config?.process(capture, builder, context);
@@ -105,7 +105,7 @@ describe("Export Detection - Comprehensive Verification", () => {
       const code = "export const x = 1;";
       const capture = createCapture(code, "definition.variable", "identifier");
       const context = createTestContext();
-      const builder = new DefinitionBuilder(context, TEST_FILE_PATH);
+      const builder = new DefinitionBuilder(context);
 
       const config = JAVASCRIPT_BUILDER_CONFIG.get("definition.variable");
       config?.process(capture, builder, context);
@@ -117,54 +117,11 @@ describe("Export Detection - Comprehensive Verification", () => {
       expect(variables[0].is_exported).toBe(true);
     });
 
-    it.skip("should mark class methods as not exported", () => {
-      const code = `class MyClass { myMethod() {} }`;
-      const ast = jsParser.parse(code);
-      const classNode = findNodeByType(ast.rootNode, "identifier");
-
-      const classCapture = createCapture(code, "definition.class", "identifier");
-      const context = createTestContext();
-      const builder = new DefinitionBuilder(context, TEST_FILE_PATH);
-
-      const classConfig = JAVASCRIPT_BUILDER_CONFIG.get("definition.class");
-      classConfig?.process(classCapture, builder, context);
-
-      // Find method identifier
-      const methodNode = ast.rootNode.descendantsOfType("identifier")
-        .find((n: any) => n.text === "myMethod");
-      if (!methodNode) throw new Error("Method not found");
-
-      const methodCapture: CaptureNode = {
-        name: "definition.method",
-        category: "definition" as any,
-        entity: "identifier" as any,
-        node: methodNode as any,
-        text: "myMethod" as SymbolName,
-        location: {
-          file_path: TEST_FILE_PATH,
-          start_line: methodNode.startPosition.row + 1,
-          start_column: methodNode.startPosition.column + 1,
-          end_line: methodNode.endPosition.row + 1,
-          end_column: methodNode.endPosition.column + 1,
-        },
-      };
-
-      const methodConfig = JAVASCRIPT_BUILDER_CONFIG.get("definition.method");
-      methodConfig?.process(methodCapture, builder, context);
-
-      const result = builder.build();
-      const classes = Array.from(result.classes.values());
-
-      expect(classes[0].methods).toBeDefined();
-      const methods = Array.from(classes[0].methods!.values());
-      expect(methods[0].base.is_exported).toBe(false); // Methods not directly exported
-    });
-
     it("should not mark non-exported definitions as exported", () => {
       const code = "function notExported() {}";
       const capture = createCapture(code, "definition.function", "identifier");
       const context = createTestContext();
-      const builder = new DefinitionBuilder(context, TEST_FILE_PATH);
+      const builder = new DefinitionBuilder(context);
 
       const config = JAVASCRIPT_BUILDER_CONFIG.get("definition.function");
       config?.process(capture, builder, context);
@@ -183,7 +140,7 @@ describe("Export Detection - Comprehensive Verification", () => {
       const code = "export interface MyInterface { }";
       const capture = createCapture(code, "definition.interface", "type_identifier", tsParser);
       const context = createTestContext();
-      const builder = new DefinitionBuilder(context, TEST_FILE_PATH);
+      const builder = new DefinitionBuilder(context);
 
       const config = TYPESCRIPT_BUILDER_CONFIG.get("definition.interface");
       config?.process(capture, builder, context);
@@ -199,7 +156,7 @@ describe("Export Detection - Comprehensive Verification", () => {
       const code = "export type MyType = string;";
       const capture = createCapture(code, "definition.type_alias", "type_identifier", tsParser);
       const context = createTestContext();
-      const builder = new DefinitionBuilder(context, TEST_FILE_PATH);
+      const builder = new DefinitionBuilder(context);
 
       const config = TYPESCRIPT_BUILDER_CONFIG.get("definition.type_alias");
       config?.process(capture, builder, context);
@@ -215,7 +172,7 @@ describe("Export Detection - Comprehensive Verification", () => {
       const code = "export enum Color { Red, Green }";
       const capture = createCapture(code, "definition.enum", "identifier", tsParser);
       const context = createTestContext();
-      const builder = new DefinitionBuilder(context, TEST_FILE_PATH);
+      const builder = new DefinitionBuilder(context);
 
       const config = TYPESCRIPT_BUILDER_CONFIG.get("definition.enum");
       config?.process(capture, builder, context);
@@ -231,7 +188,7 @@ describe("Export Detection - Comprehensive Verification", () => {
       const code = "export namespace MyNamespace { }";
       const capture = createCapture(code, "definition.namespace", "identifier", tsParser);
       const context = createTestContext();
-      const builder = new DefinitionBuilder(context, TEST_FILE_PATH);
+      const builder = new DefinitionBuilder(context);
 
       const config = TYPESCRIPT_BUILDER_CONFIG.get("definition.namespace");
       config?.process(capture, builder, context);
@@ -247,7 +204,7 @@ describe("Export Detection - Comprehensive Verification", () => {
       const code = "export class MyClass { }";
       const capture = createCapture(code, "definition.class", "type_identifier", tsParser);
       const context = createTestContext();
-      const builder = new DefinitionBuilder(context, TEST_FILE_PATH);
+      const builder = new DefinitionBuilder(context);
 
       const config = TYPESCRIPT_BUILDER_CONFIG.get("definition.class");
       config?.process(capture, builder, context);
@@ -271,7 +228,7 @@ describe("Export Detection - Comprehensive Verification", () => {
       for (const testCase of testCases) {
         const capture = createCapture(testCase.code, testCase.type, testCase.nodeType);
         const context = createTestContext();
-        const builder = new DefinitionBuilder(context, TEST_FILE_PATH);
+        const builder = new DefinitionBuilder(context);
 
         const config = JAVASCRIPT_BUILDER_CONFIG.get(testCase.type);
         config?.process(capture, builder, context);

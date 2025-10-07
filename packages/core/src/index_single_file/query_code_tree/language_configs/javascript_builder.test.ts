@@ -898,7 +898,7 @@ describe("JavaScript Builder Configuration", () => {
         const code = "export function foo() {}";
         const capture = createCapture(code, "definition.function", "identifier");
         const context = createTestContext();
-        const builder = new DefinitionBuilder(context, TEST_FILE_PATH);
+        const builder = new DefinitionBuilder(context);
 
         const config = JAVASCRIPT_BUILDER_CONFIG.get("definition.function");
         if (config) {
@@ -919,7 +919,7 @@ export { internal as external };
         `;
         const capture = createCapture(code, "definition.function", "identifier");
         const context = createTestContext();
-        const builder = new DefinitionBuilder(context, TEST_FILE_PATH);
+        const builder = new DefinitionBuilder(context);
 
         const config = JAVASCRIPT_BUILDER_CONFIG.get("definition.function");
         if (config) {
@@ -938,7 +938,7 @@ export { internal as external };
         const code = "export default function foo() {}";
         const capture = createCapture(code, "definition.function", "identifier");
         const context = createTestContext();
-        const builder = new DefinitionBuilder(context, TEST_FILE_PATH);
+        const builder = new DefinitionBuilder(context);
 
         const config = JAVASCRIPT_BUILDER_CONFIG.get("definition.function");
         if (config) {
@@ -971,7 +971,7 @@ export { internal as external };
         const code = "function notExported() {}";
         const capture = createCapture(code, "definition.function", "identifier");
         const context = createTestContext();
-        const builder = new DefinitionBuilder(context, TEST_FILE_PATH);
+        const builder = new DefinitionBuilder(context);
 
         const config = JAVASCRIPT_BUILDER_CONFIG.get("definition.function");
         if (config) {
@@ -992,7 +992,7 @@ export { foo };
         `;
         const capture = createCapture(code, "definition.function", "identifier");
         const context = createTestContext();
-        const builder = new DefinitionBuilder(context, TEST_FILE_PATH);
+        const builder = new DefinitionBuilder(context);
 
         const config = JAVASCRIPT_BUILDER_CONFIG.get("definition.function");
         if (config) {
@@ -1011,7 +1011,7 @@ export { foo };
         const code = "export class MyClass {}";
         const capture = createCapture(code, "definition.class", "identifier");
         const context = createTestContext();
-        const builder = new DefinitionBuilder(context, TEST_FILE_PATH);
+        const builder = new DefinitionBuilder(context);
 
         const config = JAVASCRIPT_BUILDER_CONFIG.get("definition.class");
         if (config) {
@@ -1028,7 +1028,7 @@ export { foo };
         const code = "export const myVar = 42;";
         const capture = createCapture(code, "definition.variable", "identifier");
         const context = createTestContext();
-        const builder = new DefinitionBuilder(context, TEST_FILE_PATH);
+        const builder = new DefinitionBuilder(context);
 
         const config = JAVASCRIPT_BUILDER_CONFIG.get("definition.variable");
         if (config) {

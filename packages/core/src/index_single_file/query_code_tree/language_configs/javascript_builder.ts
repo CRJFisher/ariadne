@@ -687,7 +687,6 @@ export const JAVASCRIPT_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
             name: capture.text,
             location: capture.location,
             scope_id: context.get_scope_id(capture.location),
-            is_exported: false, // Methods are not directly exported; the class is
             return_type: extract_return_type(capture.node),
           });
         }

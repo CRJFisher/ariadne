@@ -1,11 +1,10 @@
-import type { SymbolName, ModulePath } from "@ariadnejs/types";
+import type { ModulePath, SymbolName } from "@ariadnejs/types";
 import type { DefinitionBuilder } from "../../definitions";
 import type { CaptureNode, ProcessingContext } from "../../semantic_index";
 import {
   LanguageBuilderConfig,
   create_class_id,
   extract_extends,
-  determine_availability,
   extract_export_info,
   create_method_id,
   find_containing_class,
@@ -21,7 +20,6 @@ import {
   extract_parameter_type,
   extract_default_value,
   create_variable_id,
-  extract_import_path,
   find_decorator_target,
   create_enum_id,
   create_enum_member_id,
@@ -33,6 +31,7 @@ import {
   create_type_alias_id,
   extract_type_expression,
 } from "./python_builder";
+import { PYTHON_IMPORT_HANDLERS } from "./python_imports";
 
 export const PYTHON_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
   // Classes
@@ -60,7 +59,6 @@ export const PYTHON_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
           name: capture.text,
           location: capture.location,
           scope_id: defining_scope_id,
-          availability: determine_availability(capture.text),
           is_exported: export_info.is_exported,
           export: export_info.export,
           extends: base_classes,
@@ -100,7 +98,6 @@ export const PYTHON_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
             name: name,
             location: capture.location,
             scope_id: context.get_scope_id(capture.location),
-            availability: determine_availability(name),
             return_type: extract_return_type(
               capture.node.parent || capture.node
             ),
@@ -129,7 +126,6 @@ export const PYTHON_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
             name: capture.text,
             location: capture.location,
             scope_id: context.get_scope_id(capture.location),
-            availability: determine_availability(capture.text),
             return_type: extract_return_type(
               capture.node.parent || capture.node
             ),
@@ -158,7 +154,6 @@ export const PYTHON_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
             name: capture.text,
             location: capture.location,
             scope_id: context.get_scope_id(capture.location),
-            availability: determine_availability(capture.text),
             return_type: extract_return_type(
               capture.node.parent || capture.node
             ),
@@ -188,7 +183,6 @@ export const PYTHON_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
             name: "__init__" as SymbolName,
             location: capture.location,
             scope_id: context.get_scope_id(capture.location),
-            availability: { scope: "public" },
           });
         }
       },
@@ -213,7 +207,6 @@ export const PYTHON_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
             name: capture.text,
             location: capture.location,
             scope_id: context.get_scope_id(capture.location),
-            availability: determine_availability(capture.text),
             type: extract_type_annotation(capture.node),
             initial_value: extract_initial_value(capture.node),
             readonly: true, // Properties decorated with @property are readonly
@@ -240,7 +233,6 @@ export const PYTHON_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
             name: capture.text,
             location: capture.location,
             scope_id: context.get_scope_id(capture.location),
-            availability: determine_availability(capture.text),
             type: extract_type_annotation(capture.node),
             initial_value: extract_initial_value(capture.node),
           });
@@ -272,7 +264,6 @@ export const PYTHON_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
           name: capture.text,
           location: capture.location,
           scope_id: defining_scope_id,
-          availability: determine_availability(capture.text),
           is_exported: export_info.is_exported,
           export: export_info.export,
         });
@@ -303,7 +294,6 @@ export const PYTHON_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
           name: capture.text,
           location: capture.location,
           scope_id: defining_scope_id,
-          availability: determine_availability(capture.text),
           is_exported: export_info.is_exported,
           export: export_info.export,
         });
@@ -326,7 +316,6 @@ export const PYTHON_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
           name: "lambda" as SymbolName,
           location: capture.location,
           scope_id: context.get_scope_id(capture.location),
-          availability: { scope: "file-private" },
           is_exported: false, // Lambda functions are never exported
         });
       },
@@ -500,7 +489,6 @@ export const PYTHON_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
           name: name,
           location: capture.location,
           scope_id: defining_scope_id,
-          availability: determine_availability(name),
           is_exported: export_info.is_exported,
           export: export_info.export,
           type: extract_type_annotation(capture.node),
@@ -534,7 +522,6 @@ export const PYTHON_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
           name: name,
           location: capture.location,
           scope_id: defining_scope_id,
-          availability: determine_availability(name),
           is_exported: export_info.is_exported,
           export: export_info.export,
           type: extract_type_annotation(capture.node),
@@ -569,7 +556,6 @@ export const PYTHON_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
           name: name,
           location: capture.location,
           scope_id: defining_scope_id,
-          availability: determine_availability(name),
           is_exported: export_info.is_exported,
           export: export_info.export,
           type: undefined, // Type inference would be complex for unpacking
@@ -604,7 +590,6 @@ export const PYTHON_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
           name: name,
           location: capture.location,
           scope_id: defining_scope_id,
-          availability: determine_availability(name),
           is_exported: export_info.is_exported,
           export: export_info.export,
           type: undefined,
@@ -639,7 +624,6 @@ export const PYTHON_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
           name: name,
           location: capture.location,
           scope_id: defining_scope_id,
-          availability: determine_availability(name),
           is_exported: export_info.is_exported,
           export: export_info.export,
           type: undefined,
@@ -666,7 +650,6 @@ export const PYTHON_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
           name: capture.text,
           location: capture.location,
           scope_id: context.get_scope_id(capture.location),
-          availability: { scope: "file-private" },
           is_exported: false, // Loop variables are never exported
           type: undefined,
           initial_value: undefined,
@@ -691,7 +674,6 @@ export const PYTHON_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
           name: capture.text,
           location: capture.location,
           scope_id: context.get_scope_id(capture.location),
-          availability: { scope: "file-private" },
           is_exported: false, // Loop variables are never exported
           type: undefined,
           initial_value: undefined,
@@ -716,7 +698,6 @@ export const PYTHON_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
           name: capture.text,
           location: capture.location,
           scope_id: context.get_scope_id(capture.location),
-          availability: { scope: "file-private" },
           is_exported: false, // Comprehension variables are never exported
           type: undefined,
           initial_value: undefined,
@@ -741,7 +722,6 @@ export const PYTHON_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
           name: capture.text,
           location: capture.location,
           scope_id: context.get_scope_id(capture.location),
-          availability: { scope: "file-private" },
           is_exported: false, // Exception variables are never exported
           type: "Exception" as SymbolName,
           initial_value: undefined,
@@ -766,7 +746,6 @@ export const PYTHON_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
           name: capture.text,
           location: capture.location,
           scope_id: context.get_scope_id(capture.location),
-          availability: { scope: "file-private" },
           is_exported: false, // Context manager variables are never exported
           type: undefined,
           initial_value: undefined,
@@ -857,8 +836,6 @@ export const PYTHON_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
           name: imported_name,
           location: capture.location,
           scope_id: defining_scope_id,
-          availability: { scope: "file-private" },
-          is_exported: export_info.is_exported, // Imports can be re-exported
           export: export_info.export,
           import_path,
           import_kind,
@@ -868,219 +845,8 @@ export const PYTHON_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
     },
   ],
 
-  [
-    "import.named",
-    {
-      process: (
-        capture: CaptureNode,
-        builder: DefinitionBuilder,
-        context: ProcessingContext
-      ) => {
-        const import_id = create_variable_id(capture);
-        const import_statement = capture.node.parent?.parent || capture.node;
-        const import_path = extract_import_path(import_statement);
-        const defining_scope_id = context.get_scope_id(capture.location);
-        const export_info = extract_export_info(
-          capture.text,
-          defining_scope_id,
-          context.root_scope_id
-        );
-
-        builder.add_import({
-          symbol_id: import_id,
-          name: capture.text,
-          location: capture.location,
-          scope_id: defining_scope_id,
-          availability: { scope: "file-private" },
-          is_exported: export_info.is_exported,
-          export: export_info.export,
-          import_path: import_path,
-          import_kind: "named",
-          original_name: undefined,
-        });
-      },
-    },
-  ],
-
-  [
-    "import.named.source",
-    {
-      process: (
-        capture: CaptureNode,
-        builder: DefinitionBuilder,
-        context: ProcessingContext
-      ) => {
-        // This is the source name in an aliased import
-        const import_id = create_variable_id(capture);
-        const import_statement =
-          capture.node.parent?.parent?.parent || capture.node;
-        const import_path = extract_import_path(import_statement);
-
-        // Look for alias
-        const alias_import = capture.node.parent;
-        let alias_name: SymbolName | undefined;
-        if (alias_import && alias_import.type === "aliased_import") {
-          const alias_node = alias_import.childForFieldName?.("alias");
-          if (alias_node) {
-            alias_name = alias_node.text as SymbolName;
-          }
-        }
-
-        const imported_name = alias_name || capture.text;
-        const defining_scope_id = context.get_scope_id(capture.location);
-        const export_info = extract_export_info(
-          imported_name,
-          defining_scope_id,
-          context.root_scope_id
-        );
-
-        builder.add_import({
-          symbol_id: import_id,
-          name: imported_name,
-          location: capture.location,
-          scope_id: defining_scope_id,
-          availability: { scope: "file-private" },
-          is_exported: export_info.is_exported,
-          export: export_info.export,
-          import_path: import_path,
-          import_kind: "named",
-          original_name: capture.text,
-        });
-      },
-    },
-  ],
-
-  [
-    "import.named.alias",
-    {
-      process: (
-        capture: CaptureNode,
-        builder: DefinitionBuilder,
-        context: ProcessingContext
-      ) => {
-        // This is the alias in an aliased import - skip as it's handled by import.named.source
-        return;
-      },
-    },
-  ],
-
-  [
-    "import.module",
-    {
-      process: (
-        capture: CaptureNode,
-        builder: DefinitionBuilder,
-        context: ProcessingContext
-      ) => {
-        const import_id = create_variable_id(capture);
-        const defining_scope_id = context.get_scope_id(capture.location);
-        const export_info = extract_export_info(
-          capture.text,
-          defining_scope_id,
-          context.root_scope_id
-        );
-
-        builder.add_import({
-          symbol_id: import_id,
-          name: capture.text,
-          location: capture.location,
-          scope_id: defining_scope_id,
-          availability: { scope: "file-private" },
-          is_exported: export_info.is_exported,
-          export: export_info.export,
-          import_path: capture.text as unknown as ModulePath,
-          import_kind: "namespace",
-          original_name: undefined,
-        });
-      },
-    },
-  ],
-
-  [
-    "import.module.source",
-    {
-      process: (
-        capture: CaptureNode,
-        builder: DefinitionBuilder,
-        context: ProcessingContext
-      ) => {
-        // This is the source module in "import X as Y"
-        const import_id = create_variable_id(capture);
-        const import_statement = capture.node.parent || capture.node;
-
-        // Look for alias
-        let alias_name: SymbolName | undefined;
-        if (import_statement.type === "aliased_import") {
-          const alias_node = import_statement.childForFieldName?.("alias");
-          if (alias_node) {
-            alias_name = alias_node.text as SymbolName;
-          }
-        }
-
-        const imported_name = alias_name || capture.text;
-        const defining_scope_id = context.get_scope_id(capture.location);
-        const export_info = extract_export_info(
-          imported_name,
-          defining_scope_id,
-          context.root_scope_id
-        );
-
-        builder.add_import({
-          symbol_id: import_id,
-          name: imported_name,
-          location: capture.location,
-          scope_id: defining_scope_id,
-          availability: { scope: "file-private" },
-          is_exported: export_info.is_exported,
-          export: export_info.export,
-          import_path: capture.text as unknown as ModulePath,
-          import_kind: "namespace",
-          original_name: alias_name ? capture.text : undefined,
-        });
-      },
-    },
-  ],
-
-  [
-    "import.module.alias",
-    {
-      process: (
-        capture: CaptureNode,
-        builder: DefinitionBuilder,
-        context: ProcessingContext
-      ) => {
-        // This is the alias in "import X as Y" - skip as it's handled by import.module.source
-        return;
-      },
-    },
-  ],
-
-  [
-    "import.star",
-    {
-      process: (
-        capture: CaptureNode,
-        builder: DefinitionBuilder,
-        context: ProcessingContext
-      ) => {
-        const import_id = create_variable_id(capture);
-        const import_statement = capture.node.parent || capture.node;
-        const import_path = extract_import_path(import_statement);
-
-        builder.add_import({
-          symbol_id: import_id,
-          name: "*" as SymbolName,
-          location: capture.location,
-          scope_id: context.get_scope_id(capture.location),
-          availability: { scope: "file-private" },
-          is_exported: false, // Wildcard imports are not re-exportable
-          import_path: import_path,
-          import_kind: "namespace",
-          original_name: undefined,
-        });
-      },
-    },
-  ],
+  // Import handlers (extracted to separate file)
+  ...PYTHON_IMPORT_HANDLERS,
 
   // Protocols (Python's structural typing, similar to TypeScript interfaces)
   [
@@ -1104,7 +870,6 @@ export const PYTHON_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
           name: capture.text,
           location: capture.location,
           scope_id: defining_scope_id,
-          availability: determine_availability(capture.text),
           is_exported: export_info.is_exported,
           export: export_info.export,
         });
@@ -1159,7 +924,6 @@ export const PYTHON_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
           name: capture.text,
           location: capture.location,
           scope_id: defining_scope_id,
-          availability: determine_availability(capture.text),
           is_exported: export_info.is_exported,
           export: export_info.export,
         });
@@ -1207,6 +971,7 @@ export const PYTHON_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
 
         builder.add_decorator_to_target(target_id, {
           name: decorator_name,
+          defining_scope_id: context.get_scope_id(capture.location),
           location: capture.location,
         });
       },
@@ -1228,6 +993,7 @@ export const PYTHON_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
 
         builder.add_decorator_to_target(target_id, {
           name: decorator_name,
+          defining_scope_id: context.get_scope_id(capture.location),
           location: capture.location,
         });
       },
@@ -1249,6 +1015,7 @@ export const PYTHON_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
 
         builder.add_decorator_to_target(target_id, {
           name: decorator_name,
+          defining_scope_id: context.get_scope_id(capture.location),
           location: capture.location,
         });
       },
@@ -1282,7 +1049,6 @@ export const PYTHON_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
           name: capture.text,
           location: capture.location,
           scope_id: defining_scope_id,
-          availability: determine_availability(capture.text),
           is_exported: export_info.is_exported,
           export: export_info.export,
           type_expression,
