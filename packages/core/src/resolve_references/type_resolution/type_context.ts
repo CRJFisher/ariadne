@@ -17,10 +17,11 @@ import type {
   LocationKey,
   Location as SymbolLocation,
 } from "@ariadnejs/types";
-import { location_key } from "@ariadnejs/types";
+import { location_key, parse_location_key } from "@ariadnejs/types";
 import type { SemanticIndex } from "../../index_single_file/semantic_index";
 import type { ScopeResolverIndex } from "../scope_resolver_index/scope_resolver_index";
 import type { ResolutionCache } from "../resolution_cache/resolution_cache";
+import type { NamespaceSources } from "../types";
 
 /**
  * Type Context Interface
@@ -46,14 +47,69 @@ export interface TypeContext {
   /**
    * Get a member (method/property) of a type by name
    *
-   * Currently only looks at direct members.
-   * Future: Walk inheritance chain using type_members.extends
+   * Walks the inheritance chain to find inherited members.
    *
    * @param type_id - The type to look up members in
    * @param member_name - The member name to find
    * @returns SymbolId of the member, or null if not found
    */
   get_type_member(type_id: SymbolId, member_name: SymbolName): SymbolId | null;
+
+  /**
+   * Get the parent class of a class (from extends clause)
+   *
+   * @param class_id - The class to get parent for
+   * @returns SymbolId of parent class, or null if no parent
+   */
+  get_parent_class(class_id: SymbolId): SymbolId | null;
+
+  /**
+   * Get implemented interfaces for a class
+   *
+   * @param class_id - The class to get interfaces for
+   * @returns Array of interface SymbolIds
+   */
+  get_implemented_interfaces(class_id: SymbolId): readonly SymbolId[];
+
+  /**
+   * Walk the full inheritance chain from most derived to base
+   *
+   * Returns array starting with the class itself, followed by parent,
+   * grandparent, etc. Handles circular inheritance gracefully.
+   *
+   * @param class_id - The class to start from
+   * @returns Array of SymbolIds in inheritance chain
+   */
+  walk_inheritance_chain(class_id: SymbolId): readonly SymbolId[];
+
+  /**
+   * Get a member of a namespace import by name
+   *
+   * Resolves namespace member access like `utils.helper()` where `utils` is
+   * a namespace import (`import * as utils from './utils'`).
+   *
+   * Process:
+   * 1. Find the source file for the namespace
+   * 2. Look up the exported symbol with the given name
+   * 3. Resolve the exported symbol in the source file's scope
+   *
+   * @param namespace_id - The namespace symbol (from import resolution)
+   * @param member_name - The member name to find
+   * @returns SymbolId of the member, or null if not found
+   *
+   * @example
+   * ```typescript
+   * // Given: import * as utils from './utils';
+   * //        utils.helper();
+   * const namespace_id = resolver_index.resolve(scope_id, "utils", cache);
+   * const member_id = type_context.get_namespace_member(namespace_id, "helper");
+   * // → "fn:src/utils.ts:helper:10:0"
+   * ```
+   */
+  get_namespace_member(
+    namespace_id: SymbolId,
+    member_name: SymbolName
+  ): SymbolId | null;
 }
 
 /**
@@ -62,6 +118,7 @@ export interface TypeContext {
  * Creates a type tracking system that:
  * 1. Maps symbols to their types (symbol_id → type_id)
  * 2. Provides member lookup for types (type_id → members)
+ * 3. Provides namespace member lookup for namespace imports
  *
  * Uses on-demand resolution:
  * - Type names from type_bindings are resolved via resolver_index
@@ -70,12 +127,14 @@ export interface TypeContext {
  * @param indices - All semantic indices (one per file)
  * @param resolver_index - Scope-aware symbol resolver for type name resolution
  * @param cache - Shared resolution cache
+ * @param namespace_sources - Map of namespace symbol_id → source file path
  * @returns TypeContext implementation
  */
 export function build_type_context(
   indices: ReadonlyMap<FilePath, SemanticIndex>,
   resolver_index: ScopeResolverIndex,
-  cache: ResolutionCache
+  cache: ResolutionCache,
+  namespace_sources: NamespaceSources
 ): TypeContext {
   // Map: symbol_id → type_id
   // Tracks the type of each symbol (variable, parameter, etc.)
@@ -131,6 +190,75 @@ export function build_type_context(
     }
   }
 
+  // PASS 3: Build inheritance maps by resolving extends clauses
+  // Map: class_id → parent_class_id
+  const parent_classes = new Map<SymbolId, SymbolId>();
+  // Map: class_id → interface_ids[]
+  const implemented_interfaces = new Map<SymbolId, SymbolId[]>();
+
+  for (const index of indices.values()) {
+    for (const [type_id, member_info] of index.type_members) {
+      // Get the scope where this type is defined (for resolving extends names)
+      const scope_id = get_symbol_scope(type_id, index);
+      if (!scope_id) continue;
+
+      // Resolve extends names to SymbolIds
+      if (member_info.extends && member_info.extends.length > 0) {
+        const parent_ids: SymbolId[] = [];
+
+        for (const parent_name of member_info.extends) {
+          const parent_id = resolver_index.resolve(scope_id, parent_name, cache);
+          if (parent_id) {
+            parent_ids.push(parent_id);
+          }
+        }
+
+        // First extends is parent class, rest are interfaces (TypeScript convention)
+        // For other languages, we'll treat all as potential parents
+        if (parent_ids.length > 0) {
+          parent_classes.set(type_id, parent_ids[0]);
+
+          // Additional extends are interfaces (TypeScript/Java style)
+          if (parent_ids.length > 1) {
+            implemented_interfaces.set(type_id, parent_ids.slice(1));
+          }
+        }
+      }
+    }
+  }
+
+  // Helper: Walk inheritance chain from most derived to base
+  function walk_inheritance_chain_impl(class_id: SymbolId): SymbolId[] {
+    const chain: SymbolId[] = [class_id];
+    const seen = new Set<SymbolId>([class_id]);
+    let current = class_id;
+
+    // Walk up extends chain
+    while (true) {
+      const parent = parent_classes.get(current);
+      if (!parent) break;
+
+      // Detect cycles
+      if (seen.has(parent)) break;
+
+      chain.push(parent);
+      seen.add(parent);
+      current = parent;
+    }
+
+    return chain;
+  }
+
+  // Helper: Find member in a single type (no inheritance)
+  function find_direct_member(
+    type_id: SymbolId,
+    member_name: SymbolName
+  ): SymbolId | null {
+    const members = type_members_map.get(type_id);
+    if (!members) return null;
+    return members.get(member_name) || null;
+  }
+
   // Return TypeContext implementation
   return {
     get_symbol_type(symbol_id: SymbolId): SymbolId | null {
@@ -141,16 +269,66 @@ export function build_type_context(
       type_id: SymbolId,
       member_name: SymbolName
     ): SymbolId | null {
-      const members = type_members_map.get(type_id);
-      if (!members) return null;
+      // Walk inheritance chain from most derived to base
+      const chain = walk_inheritance_chain_impl(type_id);
 
-      // Direct lookup
-      const member = members.get(member_name);
-      if (member) return member;
+      for (const class_id of chain) {
+        // Check direct members first
+        const direct_member = find_direct_member(class_id, member_name);
+        if (direct_member) {
+          return direct_member;
+        }
 
-      // TODO: Walk inheritance chain
-      // Will use type_members.extends
+        // Check implemented interfaces
+        const interfaces = implemented_interfaces.get(class_id) || [];
+        for (const interface_id of interfaces) {
+          const interface_member = find_direct_member(interface_id, member_name);
+          if (interface_member) {
+            return interface_member;
+          }
+        }
+      }
+
       return null;
+    },
+
+    get_parent_class(class_id: SymbolId): SymbolId | null {
+      return parent_classes.get(class_id) || null;
+    },
+
+    get_implemented_interfaces(class_id: SymbolId): readonly SymbolId[] {
+      return implemented_interfaces.get(class_id) || [];
+    },
+
+    walk_inheritance_chain(class_id: SymbolId): readonly SymbolId[] {
+      return walk_inheritance_chain_impl(class_id);
+    },
+
+    get_namespace_member(
+      namespace_id: SymbolId,
+      member_name: SymbolName
+    ): SymbolId | null {
+      // Step 1: Find the source file for this namespace
+      const source_file = namespace_sources.get(namespace_id);
+      if (!source_file) {
+        return null; // Not a namespace or source not found
+      }
+
+      // Step 2: Get the semantic index for the source file
+      const source_index = indices.get(source_file);
+      if (!source_index) {
+        return null; // Source file not indexed
+      }
+
+      // Step 3: Look up the exported symbol with this name
+      const exported_def = source_index.exported_symbols.get(member_name);
+      if (!exported_def) {
+        return null; // Member not exported
+      }
+
+      // Step 4: Return the symbol_id directly
+      // The exported_symbols map already contains resolved symbol_ids
+      return exported_def.symbol_id;
     },
   };
 }
@@ -171,25 +349,19 @@ function find_symbol_at_location(
   index: SemanticIndex
 ): SymbolId | null {
   // Parse the location key
-  const parts = loc_key.split(":");
-  if (parts.length < 4) return null;
-  const file_path = parts[0] as FilePath;
-  const start_line = parseInt(parts[1]);
-  const start_col = parseInt(parts[2]);
-  const end_line = parseInt(parts[3]);
-  const end_col = parts.length > 4 ? parseInt(parts[4]) : start_col + 1;
+  const location = parse_location_key(loc_key);
 
   /**
    * Check if two locations are close enough to be considered the same
    * Allows for small column offsets (e.g., construct_target vs variable location)
    */
   function locations_near(loc: SymbolLocation): boolean {
-    if (loc.file_path !== file_path) return false;
-    if (loc.start_line !== start_line || loc.end_line !== end_line)
+    if (loc.file_path !== location.file_path) return false;
+    if (loc.start_line !== location.start_line || loc.end_line !== location.end_line)
       return false;
 
     // Allow up to 2 columns difference on same line
-    const col_diff = Math.abs(loc.start_column - start_col);
+    const col_diff = Math.abs(loc.start_column - location.start_column);
     return col_diff <= 2;
   }
 
@@ -274,7 +446,7 @@ function find_symbol_at_location(
     // Check interface properties
     for (const prop of iface_def.properties) {
       if (location_key(prop.location) === loc_key) {
-        return prop.name; // PropertySignature has 'name' field
+        return prop.symbol_id; // PropertySignature has 'name' field
       }
     }
   }

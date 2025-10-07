@@ -59,6 +59,7 @@ function create_test_index(config: {
     type_bindings: config.type_bindings || new Map(),
     type_members: config.type_members || new Map(),
     constructors: new Map(),
+    scope_to_definitions: new Map(),
   };
 }
 
@@ -212,7 +213,7 @@ describe("Method Call Resolution", () => {
       const indices = new Map([[file_path, index]]);
       const resolver_index = build_scope_resolver_index(indices);
       const cache = create_resolution_cache();
-      const type_context = build_type_context(indices, resolver_index, cache);
+      const type_context = build_type_context(indices, resolver_index, cache, new Map());
 
       const resolutions = resolve_method_calls(
         indices,
@@ -369,7 +370,7 @@ describe("Method Call Resolution", () => {
       const indices = new Map([[file_path, index]]);
       const resolver_index = build_scope_resolver_index(indices);
       const cache = create_resolution_cache();
-      const type_context = build_type_context(indices, resolver_index, cache);
+      const type_context = build_type_context(indices, resolver_index, cache, new Map());
 
       const resolutions = resolve_method_calls(
         indices,
@@ -577,7 +578,7 @@ describe("Method Call Resolution", () => {
       const indices = new Map([[file_path, index]]);
       const resolver_index = build_scope_resolver_index(indices);
       const cache = create_resolution_cache();
-      const type_context = build_type_context(indices, resolver_index, cache);
+      const type_context = build_type_context(indices, resolver_index, cache, new Map());
 
       const resolutions = resolve_method_calls(
         indices,
@@ -832,7 +833,7 @@ describe("Method Call Resolution", () => {
       const indices = new Map([[file_path, index]]);
       const resolver_index = build_scope_resolver_index(indices);
       const cache = create_resolution_cache();
-      const type_context = build_type_context(indices, resolver_index, cache);
+      const type_context = build_type_context(indices, resolver_index, cache, new Map());
 
       const resolutions = resolve_method_calls(
         indices,
@@ -904,7 +905,7 @@ describe("Method Call Resolution", () => {
       const indices = new Map([[file_path, index]]);
       const resolver_index = build_scope_resolver_index(indices);
       const cache = create_resolution_cache();
-      const type_context = build_type_context(indices, resolver_index, cache);
+      const type_context = build_type_context(indices, resolver_index, cache, new Map());
 
       const resolutions = resolve_method_calls(
         indices,
@@ -975,7 +976,7 @@ describe("Method Call Resolution", () => {
       const indices = new Map([[file_path, index]]);
       const resolver_index = build_scope_resolver_index(indices);
       const cache = create_resolution_cache();
-      const type_context = build_type_context(indices, resolver_index, cache);
+      const type_context = build_type_context(indices, resolver_index, cache, new Map());
 
       const resolutions = resolve_method_calls(
         indices,
@@ -1071,7 +1072,7 @@ describe("Method Call Resolution", () => {
       const indices = new Map([[file_path, index]]);
       const resolver_index = build_scope_resolver_index(indices);
       const cache = create_resolution_cache();
-      const type_context = build_type_context(indices, resolver_index, cache);
+      const type_context = build_type_context(indices, resolver_index, cache, new Map());
 
       const resolutions = resolve_method_calls(
         indices,
@@ -1209,7 +1210,7 @@ describe("Method Call Resolution", () => {
       const indices = new Map([[file_path, index]]);
       const resolver_index = build_scope_resolver_index(indices);
       const cache = create_resolution_cache();
-      const type_context = build_type_context(indices, resolver_index, cache);
+      const type_context = build_type_context(indices, resolver_index, cache, new Map());
 
       const resolutions = resolve_method_calls(
         indices,
@@ -1370,7 +1371,7 @@ describe("Method Call Resolution", () => {
       const indices = new Map([[file_path, index]]);
       const resolver_index = build_scope_resolver_index(indices);
       const cache = create_resolution_cache();
-      const type_context = build_type_context(indices, resolver_index, cache);
+      const type_context = build_type_context(indices, resolver_index, cache, new Map());
 
       const resolutions = resolve_method_calls(
         indices,
@@ -1529,7 +1530,7 @@ describe("Method Call Resolution", () => {
       const indices = new Map([[file_path, index]]);
       const resolver_index = build_scope_resolver_index(indices);
       const cache = create_resolution_cache();
-      const type_context = build_type_context(indices, resolver_index, cache);
+      const type_context = build_type_context(indices, resolver_index, cache, new Map());
 
       const resolutions = resolve_method_calls(
         indices,
@@ -1541,6 +1542,803 @@ describe("Method Call Resolution", () => {
       // Should resolve using the fallback path (call_ref.name)
       const call_key = location_key(call_ref.location);
       expect(resolutions.get(call_key)).toBe(get_name_method_id);
+    });
+  });
+
+  describe("Inheritance", () => {
+    it("should resolve method from parent class", () => {
+      // Code:
+      // class Base { baseMethod() {} }
+      // class Derived extends Base {}
+      // const obj = new Derived();
+      // obj.baseMethod();
+      const file_path = "test.ts" as FilePath;
+      const root_scope_id = "scope:test.ts:0:0" as ScopeId;
+
+      const scopes = new Map<ScopeId, LexicalScope>([
+        [
+          root_scope_id,
+          {
+            id: root_scope_id,
+            type: "module",
+            parent_id: null,
+            name: null,
+            location: {
+              file_path: file_path,
+              start_line: 1,
+              start_column: 0,
+              end_line: 10,
+              end_column: 0,
+            },
+            child_ids: [],
+          },
+        ],
+      ]);
+
+      const base_class_id = "class:test.ts:Base" as SymbolId;
+      const base_method_id = "method:test.ts:Base:baseMethod" as SymbolId;
+      const derived_class_id = "class:test.ts:Derived" as SymbolId;
+
+      const classes = new Map<SymbolId, ClassDefinition>([
+        [
+          base_class_id,
+          {
+            kind: "class",
+            symbol_id: base_class_id,
+            name: "Base" as SymbolName,
+            defining_scope_id: root_scope_id,
+            location: {
+              file_path: file_path,
+              start_line: 1,
+              start_column: 0,
+              end_line: 3,
+              end_column: 1,
+            },
+            methods: [
+              {
+                symbol_id: base_method_id,
+                name: "baseMethod" as SymbolName,
+                defining_scope_id: root_scope_id,
+                location: {
+                  file_path: file_path,
+                  start_line: 2,
+                  start_column: 2,
+                  end_line: 2,
+                  end_column: 16,
+                },
+                is_static: false,
+                is_abstract: false,
+                visibility: "public",
+              },
+            ],
+            properties: [],
+            is_exported: false,
+          },
+        ],
+        [
+          derived_class_id,
+          {
+            kind: "class",
+            symbol_id: derived_class_id,
+            name: "Derived" as SymbolName,
+            defining_scope_id: root_scope_id,
+            location: {
+              file_path: file_path,
+              start_line: 4,
+              start_column: 0,
+              end_line: 4,
+              end_column: 30,
+            },
+            methods: [],
+            properties: [],
+            is_exported: false,
+          },
+        ],
+      ]);
+
+      const obj_var_id = "var:test.ts:obj" as SymbolId;
+      const obj_var_loc = {
+        file_path: file_path,
+        start_line: 5,
+        start_column: 6,
+        end_line: 5,
+        end_column: 9,
+      };
+
+      const variables = new Map<SymbolId, VariableDefinition>([
+        [
+          obj_var_id,
+          {
+            kind: "variable",
+            symbol_id: obj_var_id,
+            name: "obj" as SymbolName,
+            defining_scope_id: root_scope_id,
+            location: obj_var_loc,
+            is_const: true,
+            is_exported: false,
+          },
+        ],
+      ]);
+
+      const type_bindings = new Map<LocationKey, SymbolName>([
+        [location_key(obj_var_loc), "Derived" as SymbolName],
+      ]);
+
+      const type_members = new Map<SymbolId, TypeMemberInfo>([
+        [
+          base_class_id,
+          {
+            methods: new Map([["baseMethod" as SymbolName, base_method_id]]),
+            properties: new Map(),
+            constructor: undefined,
+            extends: [],
+          },
+        ],
+        [
+          derived_class_id,
+          {
+            methods: new Map(),
+            properties: new Map(),
+            constructor: undefined,
+            extends: ["Base" as SymbolName],
+          },
+        ],
+      ]);
+
+      const call_ref: SymbolReference = {
+        location: {
+          file_path: file_path,
+          start_line: 6,
+          start_column: 0,
+          end_line: 6,
+          end_column: 17,
+        },
+        type: "call",
+        scope_id: root_scope_id,
+        name: "baseMethod" as SymbolName,
+        call_type: "method",
+        context: {
+          receiver_location: {
+            file_path: file_path,
+            start_line: 6,
+            start_column: 0,
+            end_line: 6,
+            end_column: 3,
+          },
+          property_chain: ["obj", "baseMethod"] as readonly SymbolName[],
+        },
+      };
+
+      const index = create_test_index({
+        file_path,
+        scopes,
+        variables,
+        classes,
+        references: [call_ref],
+        root_scope_id,
+        type_bindings,
+        type_members,
+      });
+
+      const indices = new Map([[file_path, index]]);
+      const resolver_index = build_scope_resolver_index(indices);
+      const cache = create_resolution_cache();
+      const type_context = build_type_context(indices, resolver_index, cache, new Map());
+
+      const resolutions = resolve_method_calls(
+        indices,
+        resolver_index,
+        cache,
+        type_context
+      );
+
+      // Should resolve to Base.baseMethod through inheritance
+      const call_key = location_key(call_ref.location);
+      expect(resolutions.get(call_key)).toBe(base_method_id);
+    });
+
+    it("should resolve method from grandparent class", () => {
+      // Code:
+      // class A { methodA() {} }
+      // class B extends A {}
+      // class C extends B {}
+      // const obj = new C();
+      // obj.methodA();
+      const file_path = "test.ts" as FilePath;
+      const root_scope_id = "scope:test.ts:0:0" as ScopeId;
+
+      const scopes = new Map<ScopeId, LexicalScope>([
+        [
+          root_scope_id,
+          {
+            id: root_scope_id,
+            type: "module",
+            parent_id: null,
+            name: null,
+            location: {
+              file_path: file_path,
+              start_line: 1,
+              start_column: 0,
+              end_line: 10,
+              end_column: 0,
+            },
+            child_ids: [],
+          },
+        ],
+      ]);
+
+      const class_a_id = "class:test.ts:A" as SymbolId;
+      const method_a_id = "method:test.ts:A:methodA" as SymbolId;
+      const class_b_id = "class:test.ts:B" as SymbolId;
+      const class_c_id = "class:test.ts:C" as SymbolId;
+
+      const classes = new Map<SymbolId, ClassDefinition>([
+        [
+          class_a_id,
+          {
+            kind: "class",
+            symbol_id: class_a_id,
+            name: "A" as SymbolName,
+            defining_scope_id: root_scope_id,
+            location: {
+              file_path: file_path,
+              start_line: 1,
+              start_column: 0,
+              end_line: 3,
+              end_column: 1,
+            },
+            methods: [
+              {
+                symbol_id: method_a_id,
+                name: "methodA" as SymbolName,
+                defining_scope_id: root_scope_id,
+                location: {
+                  file_path: file_path,
+                  start_line: 2,
+                  start_column: 2,
+                  end_line: 2,
+                  end_column: 13,
+                },
+                is_static: false,
+                is_abstract: false,
+                visibility: "public",
+              },
+            ],
+            properties: [],
+            is_exported: false,
+          },
+        ],
+        [
+          class_b_id,
+          {
+            kind: "class",
+            symbol_id: class_b_id,
+            name: "B" as SymbolName,
+            defining_scope_id: root_scope_id,
+            location: {
+              file_path: file_path,
+              start_line: 4,
+              start_column: 0,
+              end_line: 4,
+              end_column: 21,
+            },
+            methods: [],
+            properties: [],
+            is_exported: false,
+          },
+        ],
+        [
+          class_c_id,
+          {
+            kind: "class",
+            symbol_id: class_c_id,
+            name: "C" as SymbolName,
+            defining_scope_id: root_scope_id,
+            location: {
+              file_path: file_path,
+              start_line: 5,
+              start_column: 0,
+              end_line: 5,
+              end_column: 21,
+            },
+            methods: [],
+            properties: [],
+            is_exported: false,
+          },
+        ],
+      ]);
+
+      const obj_var_id = "var:test.ts:obj" as SymbolId;
+      const obj_var_loc = {
+        file_path: file_path,
+        start_line: 6,
+        start_column: 6,
+        end_line: 6,
+        end_column: 9,
+      };
+
+      const variables = new Map<SymbolId, VariableDefinition>([
+        [
+          obj_var_id,
+          {
+            kind: "variable",
+            symbol_id: obj_var_id,
+            name: "obj" as SymbolName,
+            defining_scope_id: root_scope_id,
+            location: obj_var_loc,
+            is_const: true,
+            is_exported: false,
+          },
+        ],
+      ]);
+
+      const type_bindings = new Map<LocationKey, SymbolName>([
+        [location_key(obj_var_loc), "C" as SymbolName],
+      ]);
+
+      const type_members = new Map<SymbolId, TypeMemberInfo>([
+        [
+          class_a_id,
+          {
+            methods: new Map([["methodA" as SymbolName, method_a_id]]),
+            properties: new Map(),
+            constructor: undefined,
+            extends: [],
+          },
+        ],
+        [
+          class_b_id,
+          {
+            methods: new Map(),
+            properties: new Map(),
+            constructor: undefined,
+            extends: ["A" as SymbolName],
+          },
+        ],
+        [
+          class_c_id,
+          {
+            methods: new Map(),
+            properties: new Map(),
+            constructor: undefined,
+            extends: ["B" as SymbolName],
+          },
+        ],
+      ]);
+
+      const call_ref: SymbolReference = {
+        location: {
+          file_path: file_path,
+          start_line: 7,
+          start_column: 0,
+          end_line: 7,
+          end_column: 14,
+        },
+        type: "call",
+        scope_id: root_scope_id,
+        name: "methodA" as SymbolName,
+        call_type: "method",
+        context: {
+          receiver_location: {
+            file_path: file_path,
+            start_line: 7,
+            start_column: 0,
+            end_line: 7,
+            end_column: 3,
+          },
+          property_chain: ["obj", "methodA"] as readonly SymbolName[],
+        },
+      };
+
+      const index = create_test_index({
+        file_path,
+        scopes,
+        variables,
+        classes,
+        references: [call_ref],
+        root_scope_id,
+        type_bindings,
+        type_members,
+      });
+
+      const indices = new Map([[file_path, index]]);
+      const resolver_index = build_scope_resolver_index(indices);
+      const cache = create_resolution_cache();
+      const type_context = build_type_context(indices, resolver_index, cache, new Map());
+
+      const resolutions = resolve_method_calls(
+        indices,
+        resolver_index,
+        cache,
+        type_context
+      );
+
+      // Should resolve to A.methodA through C -> B -> A inheritance chain
+      const call_key = location_key(call_ref.location);
+      expect(resolutions.get(call_key)).toBe(method_a_id);
+    });
+
+    it("should use most derived implementation for overridden methods", () => {
+      // Code:
+      // class Base { method() {} }
+      // class Derived extends Base { method() {} }
+      // const obj = new Derived();
+      // obj.method();
+      const file_path = "test.ts" as FilePath;
+      const root_scope_id = "scope:test.ts:0:0" as ScopeId;
+
+      const scopes = new Map<ScopeId, LexicalScope>([
+        [
+          root_scope_id,
+          {
+            id: root_scope_id,
+            type: "module",
+            parent_id: null,
+            name: null,
+            location: {
+              file_path: file_path,
+              start_line: 1,
+              start_column: 0,
+              end_line: 10,
+              end_column: 0,
+            },
+            child_ids: [],
+          },
+        ],
+      ]);
+
+      const base_class_id = "class:test.ts:Base" as SymbolId;
+      const base_method_id = "method:test.ts:Base:method" as SymbolId;
+      const derived_class_id = "class:test.ts:Derived" as SymbolId;
+      const derived_method_id = "method:test.ts:Derived:method" as SymbolId;
+
+      const classes = new Map<SymbolId, ClassDefinition>([
+        [
+          base_class_id,
+          {
+            kind: "class",
+            symbol_id: base_class_id,
+            name: "Base" as SymbolName,
+            defining_scope_id: root_scope_id,
+            location: {
+              file_path: file_path,
+              start_line: 1,
+              start_column: 0,
+              end_line: 3,
+              end_column: 1,
+            },
+            methods: [
+              {
+                symbol_id: base_method_id,
+                name: "method" as SymbolName,
+                defining_scope_id: root_scope_id,
+                location: {
+                  file_path: file_path,
+                  start_line: 2,
+                  start_column: 2,
+                  end_line: 2,
+                  end_column: 12,
+                },
+                is_static: false,
+                is_abstract: false,
+                visibility: "public",
+              },
+            ],
+            properties: [],
+            is_exported: false,
+          },
+        ],
+        [
+          derived_class_id,
+          {
+            kind: "class",
+            symbol_id: derived_class_id,
+            name: "Derived" as SymbolName,
+            defining_scope_id: root_scope_id,
+            location: {
+              file_path: file_path,
+              start_line: 4,
+              start_column: 0,
+              end_line: 6,
+              end_column: 1,
+            },
+            methods: [
+              {
+                symbol_id: derived_method_id,
+                name: "method" as SymbolName,
+                defining_scope_id: root_scope_id,
+                location: {
+                  file_path: file_path,
+                  start_line: 5,
+                  start_column: 2,
+                  end_line: 5,
+                  end_column: 12,
+                },
+                is_static: false,
+                is_abstract: false,
+                visibility: "public",
+              },
+            ],
+            properties: [],
+            is_exported: false,
+          },
+        ],
+      ]);
+
+      const obj_var_id = "var:test.ts:obj" as SymbolId;
+      const obj_var_loc = {
+        file_path: file_path,
+        start_line: 7,
+        start_column: 6,
+        end_line: 7,
+        end_column: 9,
+      };
+
+      const variables = new Map<SymbolId, VariableDefinition>([
+        [
+          obj_var_id,
+          {
+            kind: "variable",
+            symbol_id: obj_var_id,
+            name: "obj" as SymbolName,
+            defining_scope_id: root_scope_id,
+            location: obj_var_loc,
+            is_const: true,
+            is_exported: false,
+          },
+        ],
+      ]);
+
+      const type_bindings = new Map<LocationKey, SymbolName>([
+        [location_key(obj_var_loc), "Derived" as SymbolName],
+      ]);
+
+      const type_members = new Map<SymbolId, TypeMemberInfo>([
+        [
+          base_class_id,
+          {
+            methods: new Map([["method" as SymbolName, base_method_id]]),
+            properties: new Map(),
+            constructor: undefined,
+            extends: [],
+          },
+        ],
+        [
+          derived_class_id,
+          {
+            methods: new Map([["method" as SymbolName, derived_method_id]]),
+            properties: new Map(),
+            constructor: undefined,
+            extends: ["Base" as SymbolName],
+          },
+        ],
+      ]);
+
+      const call_ref: SymbolReference = {
+        location: {
+          file_path: file_path,
+          start_line: 8,
+          start_column: 0,
+          end_line: 8,
+          end_column: 13,
+        },
+        type: "call",
+        scope_id: root_scope_id,
+        name: "method" as SymbolName,
+        call_type: "method",
+        context: {
+          receiver_location: {
+            file_path: file_path,
+            start_line: 8,
+            start_column: 0,
+            end_line: 8,
+            end_column: 3,
+          },
+          property_chain: ["obj", "method"] as readonly SymbolName[],
+        },
+      };
+
+      const index = create_test_index({
+        file_path,
+        scopes,
+        variables,
+        classes,
+        references: [call_ref],
+        root_scope_id,
+        type_bindings,
+        type_members,
+      });
+
+      const indices = new Map([[file_path, index]]);
+      const resolver_index = build_scope_resolver_index(indices);
+      const cache = create_resolution_cache();
+      const type_context = build_type_context(indices, resolver_index, cache, new Map());
+
+      const resolutions = resolve_method_calls(
+        indices,
+        resolver_index,
+        cache,
+        type_context
+      );
+
+      // Should resolve to Derived.method (most derived implementation)
+      const call_key = location_key(call_ref.location);
+      expect(resolutions.get(call_key)).toBe(derived_method_id);
+    });
+
+    it("should handle circular inheritance gracefully", () => {
+      // Malformed code, but should not crash
+      // class A extends B {}
+      // class B extends A {}
+      // const obj = new A();
+      // obj.method();
+      const file_path = "test.ts" as FilePath;
+      const root_scope_id = "scope:test.ts:0:0" as ScopeId;
+
+      const scopes = new Map<ScopeId, LexicalScope>([
+        [
+          root_scope_id,
+          {
+            id: root_scope_id,
+            type: "module",
+            parent_id: null,
+            name: null,
+            location: {
+              file_path: file_path,
+              start_line: 1,
+              start_column: 0,
+              end_line: 10,
+              end_column: 0,
+            },
+            child_ids: [],
+          },
+        ],
+      ]);
+
+      const class_a_id = "class:test.ts:A" as SymbolId;
+      const class_b_id = "class:test.ts:B" as SymbolId;
+
+      const classes = new Map<SymbolId, ClassDefinition>([
+        [
+          class_a_id,
+          {
+            kind: "class",
+            symbol_id: class_a_id,
+            name: "A" as SymbolName,
+            defining_scope_id: root_scope_id,
+            location: {
+              file_path: file_path,
+              start_line: 1,
+              start_column: 0,
+              end_line: 1,
+              end_column: 21,
+            },
+            methods: [],
+            properties: [],
+            is_exported: false,
+          },
+        ],
+        [
+          class_b_id,
+          {
+            kind: "class",
+            symbol_id: class_b_id,
+            name: "B" as SymbolName,
+            defining_scope_id: root_scope_id,
+            location: {
+              file_path: file_path,
+              start_line: 2,
+              start_column: 0,
+              end_line: 2,
+              end_column: 21,
+            },
+            methods: [],
+            properties: [],
+            is_exported: false,
+          },
+        ],
+      ]);
+
+      const obj_var_id = "var:test.ts:obj" as SymbolId;
+      const obj_var_loc = {
+        file_path: file_path,
+        start_line: 3,
+        start_column: 6,
+        end_line: 3,
+        end_column: 9,
+      };
+
+      const variables = new Map<SymbolId, VariableDefinition>([
+        [
+          obj_var_id,
+          {
+            kind: "variable",
+            symbol_id: obj_var_id,
+            name: "obj" as SymbolName,
+            defining_scope_id: root_scope_id,
+            location: obj_var_loc,
+            is_const: true,
+            is_exported: false,
+          },
+        ],
+      ]);
+
+      const type_bindings = new Map<LocationKey, SymbolName>([
+        [location_key(obj_var_loc), "A" as SymbolName],
+      ]);
+
+      // Circular inheritance: A extends B, B extends A
+      const type_members = new Map<SymbolId, TypeMemberInfo>([
+        [
+          class_a_id,
+          {
+            methods: new Map(),
+            properties: new Map(),
+            constructor: undefined,
+            extends: ["B" as SymbolName],
+          },
+        ],
+        [
+          class_b_id,
+          {
+            methods: new Map(),
+            properties: new Map(),
+            constructor: undefined,
+            extends: ["A" as SymbolName],
+          },
+        ],
+      ]);
+
+      const call_ref: SymbolReference = {
+        location: {
+          file_path: file_path,
+          start_line: 4,
+          start_column: 0,
+          end_line: 4,
+          end_column: 13,
+        },
+        type: "call",
+        scope_id: root_scope_id,
+        name: "method" as SymbolName,
+        call_type: "method",
+        context: {
+          receiver_location: {
+            file_path: file_path,
+            start_line: 4,
+            start_column: 0,
+            end_line: 4,
+            end_column: 3,
+          },
+          property_chain: ["obj", "method"] as readonly SymbolName[],
+        },
+      };
+
+      const index = create_test_index({
+        file_path,
+        scopes,
+        variables,
+        classes,
+        references: [call_ref],
+        root_scope_id,
+        type_bindings,
+        type_members,
+      });
+
+      const indices = new Map([[file_path, index]]);
+      const resolver_index = build_scope_resolver_index(indices);
+      const cache = create_resolution_cache();
+      const type_context = build_type_context(indices, resolver_index, cache, new Map());
+
+      // Should not crash
+      const resolutions = resolve_method_calls(
+        indices,
+        resolver_index,
+        cache,
+        type_context
+      );
+
+      // Method doesn't exist, should return null (not crash)
+      expect(resolutions.size).toBe(0);
     });
   });
 });
