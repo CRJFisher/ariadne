@@ -1106,9 +1106,7 @@ describe("Semantic Index - TypeScript", () => {
             end_column: expect.any(Number),
           }),
           defining_scope_id: expect.any(String),
-          availability: expect.objectContaining({
-            scope: expect.any(String),
-          }),
+          is_exported: expect.any(Boolean),
         });
 
         // Verify methods exist
@@ -1133,9 +1131,6 @@ describe("Semantic Index - TypeScript", () => {
               end_column: expect.any(Number),
             }),
             defining_scope_id: expect.any(String),
-            availability: expect.objectContaining({
-              scope: expect.any(String),
-            }),
           });
 
           // Verify parameters with complete structure
@@ -1150,7 +1145,6 @@ describe("Semantic Index - TypeScript", () => {
                   file_path: "test.ts",
                 }),
                 defining_scope_id: expect.any(String),
-                availability: expect.any(Object),
                 type: "number",
               }),
               expect.objectContaining({
@@ -1161,7 +1155,6 @@ describe("Semantic Index - TypeScript", () => {
                   file_path: "test.ts",
                 }),
                 defining_scope_id: expect.any(String),
-                availability: expect.any(Object),
                 type: "number",
               }),
             ])
@@ -1246,9 +1239,7 @@ describe("Semantic Index - TypeScript", () => {
             end_column: expect.any(Number),
           }),
           defining_scope_id: expect.any(String),
-          availability: expect.objectContaining({
-            scope: expect.any(String),
-          }),
+          is_exported: expect.any(Boolean),
         });
 
         // Verify decorators structure (decorators are SymbolId strings)
@@ -1322,8 +1313,7 @@ describe("Semantic Index - TypeScript", () => {
               file_path: "test.ts",
             }),
             defining_scope_id: expect.any(String),
-            availability: expect.any(Object),
-          });
+            });
 
           // Verify method decorators (decorators are SymbolName strings)
           if (getDataMethod.decorators) {
@@ -1400,8 +1390,7 @@ describe("Semantic Index - TypeScript", () => {
               file_path: "test.ts",
             }),
             defining_scope_id: expect.any(String),
-            availability: expect.any(Object),
-            type: "string",
+              type: "string",
           });
 
           // Verify property decorators structure (decorators are SymbolId strings)
@@ -1469,7 +1458,6 @@ describe("Semantic Index - TypeScript", () => {
             file_path: "test.ts",
           }),
           defining_scope_id: expect.any(String),
-          availability: expect.any(Object),
         });
 
         // Verify constructor exists (constructor is an array)
@@ -1488,8 +1476,7 @@ describe("Semantic Index - TypeScript", () => {
               file_path: "test.ts",
             }),
             defining_scope_id: expect.any(String),
-            availability: expect.any(Object),
-          });
+            });
 
           // Verify constructor parameters (parameter properties)
           expect(ctor.parameters).toBeDefined();
@@ -1575,9 +1562,7 @@ describe("Semantic Index - TypeScript", () => {
             end_column: expect.any(Number),
           }),
           defining_scope_id: expect.any(String),
-          availability: expect.objectContaining({
-            scope: expect.any(String),
-          }),
+          is_exported: expect.any(Boolean),
         });
       }
 
@@ -1597,7 +1582,6 @@ describe("Semantic Index - TypeScript", () => {
             file_path: "test.ts",
           }),
           defining_scope_id: expect.any(String),
-          availability: expect.any(Object),
         });
       }
 
@@ -1617,7 +1601,6 @@ describe("Semantic Index - TypeScript", () => {
             file_path: "test.ts",
           }),
           defining_scope_id: expect.any(String),
-          availability: expect.any(Object),
         });
       }
     });
@@ -1897,9 +1880,6 @@ describe("Semantic Index - TypeScript", () => {
             type: "number",
             initial_value: "42",
             access_modifier: "private",
-            availability: expect.objectContaining({
-              scope: "file-private",
-            }),
           });
         }
 
@@ -1931,9 +1911,6 @@ describe("Semantic Index - TypeScript", () => {
             name: "#privateMethod",
             return_type: "number",
             access_modifier: "private",
-            availability: expect.objectContaining({
-              scope: "file-private",
-            }),
           });
         }
 

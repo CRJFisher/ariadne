@@ -1,7 +1,7 @@
 # Task epic-11.112.26: Add exported_symbols map to SemanticIndex
 
 **Parent:** task-epic-11.112
-**Status:** Not Started
+**Status:** Completed
 **Estimated Time:** 1 hour
 **Dependencies:** task-epic-11.112.23.1 (Type definitions)
 

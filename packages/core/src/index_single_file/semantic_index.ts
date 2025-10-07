@@ -84,7 +84,7 @@ export interface SemanticIndex {
   readonly references: readonly SymbolReference[];
 
   /** Quick lookup: export name -> exported definition */
-  readonly exported_symbols: ReadonlyMap<SymbolName, AnyDefinition>;
+  readonly exported_symbols: ReadonlyMap<SymbolName, ExportableDefinition>;
 
   /**
    * Type data
@@ -307,8 +307,8 @@ function build_scope_to_definitions(result: BuilderResult): Map<ScopeId, Map<Sym
  * @returns Map from export name to definition
  * @throws Error if duplicate export names are found
  */
-function build_exported_symbols_map(result: BuilderResult): Map<SymbolName, AnyDefinition> {
-  const map = new Map<SymbolName, AnyDefinition>();
+function build_exported_symbols_map(result: BuilderResult): Map<SymbolName, ExportableDefinition> {
+  const map = new Map<SymbolName, ExportableDefinition>();
 
   const add_to_map = (def: ExportableDefinition) => {
     // Only add exported symbols

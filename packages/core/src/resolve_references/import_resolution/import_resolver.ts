@@ -174,16 +174,6 @@ function find_export(
   if (!def) {
     return null;
   }
-
-  // Check if it's a re-exported import
-  if (def.kind === "import") {
-    return {
-      symbol_id: def.symbol_id,
-      is_reexport: true,
-      import_def: def as ImportDefinition,
-    };
-  }
-
   return {
     symbol_id: def.symbol_id,
     is_reexport: is_reexport(def),
@@ -211,20 +201,10 @@ function find_default_export(index: SemanticIndex): ExportInfo | null {
           `Multiple default exports found in ${index.file_path}: ${found.symbol_id} and ${def.symbol_id}`
         );
       }
-
-      // Check if it's a re-exported import
-      if (def.kind === "import") {
-        found = {
-          symbol_id: def.symbol_id,
-          is_reexport: true,
-          import_def: def as ImportDefinition,
-        };
-      } else {
-        found = {
-          symbol_id: def.symbol_id,
-          is_reexport: def.export.is_reexport || false,
-        };
-      }
+      found = {
+        symbol_id: def.symbol_id,
+        is_reexport: def.export.is_reexport || false,
+      };
     }
   }
 
