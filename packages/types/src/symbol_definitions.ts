@@ -233,6 +233,14 @@ export type AnyDefinition =
   | ImportDefinition
   | TypeAliasDefinition;
 
+export type ExportableDefinition =
+  | FunctionDefinition
+  | ClassDefinition
+  | VariableDefinition
+  | InterfaceDefinition
+  | EnumDefinition
+  | NamespaceDefinition
+  | TypeAliasDefinition;
 /**
  * Type guard to check if export is a re-export
  */
