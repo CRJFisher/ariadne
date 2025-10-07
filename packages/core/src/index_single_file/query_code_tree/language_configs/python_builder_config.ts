@@ -30,6 +30,7 @@ import {
   extract_property_type,
   create_type_alias_id,
   extract_type_expression,
+  extract_import_path,
 } from "./python_builder";
 import { PYTHON_IMPORT_HANDLERS } from "./python_imports";
 
