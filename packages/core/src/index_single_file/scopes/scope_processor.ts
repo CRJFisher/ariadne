@@ -63,6 +63,11 @@ export function process_scopes(
     // Create scope ID based on type and location
     const scope_id = create_scope_id(scope_type, location);
 
+    // Skip if scope already exists (e.g., manually created root scope)
+    if (scopes.has(scope_id)) {
+      continue;
+    }
+
     // Find parent scope using position containment
     const parent = find_containing_scope(location, root_scope_id, scopes);
 

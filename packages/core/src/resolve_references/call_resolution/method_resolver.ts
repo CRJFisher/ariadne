@@ -107,14 +107,15 @@ export function resolve_method_calls(
  *
  * Three-step resolution:
  * 1. Resolve receiver symbol (e.g., "user" in user.getName())
- * 2. Get receiver's type (e.g., User class)
- * 3. Look up method on type (e.g., User.getName)
+ * 2. Check if receiver is namespace import (utils.helper())
+ * 3. Get receiver's type (e.g., User class)
+ * 4. Look up method/member on type or namespace
  *
  * Returns null if any step fails:
  * - No receiver location in context
  * - Receiver not found in scope
- * - Receiver has no type information
- * - Type doesn't have the method
+ * - Receiver has no type information and is not a namespace
+ * - Type/namespace doesn't have the method/member
  *
  * @param call_ref - Method call reference from semantic index
  * @param index - Semantic index for the file containing the call
@@ -153,17 +154,29 @@ function resolve_single_method_call(
     return null;
   }
 
-  // Step 2: Get receiver's type from type context
+  // Step 2: Check if receiver is a namespace import
+  // For expressions like: utils.helper() where utils is import * as utils
+  const namespace_member = type_context.get_namespace_member(
+    receiver_symbol,
+    call_ref.name
+  );
+
+  if (namespace_member) {
+    // Successfully resolved as namespace member
+    return namespace_member;
+  }
+
+  // Step 3: Get receiver's type from type context
   // This uses type_bindings to determine the class/interface of the receiver
   const receiver_type = type_context.get_symbol_type(receiver_symbol);
 
   if (!receiver_type) {
-    // Receiver has no type information
+    // Receiver has no type information and is not a namespace
     // Could be untyped variable or missing type annotation
     return null;
   }
 
-  // Step 3: Look up method on that type
+  // Step 4: Look up method on that type
   // Uses type_members to find the method definition
   const method_symbol = type_context.get_type_member(
     receiver_type,

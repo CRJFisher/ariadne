@@ -15,7 +15,7 @@ import type {
 } from "@ariadnejs/types";
 import { is_reexport } from "@ariadnejs/types";
 import type { SemanticIndex } from "../../index_single_file/semantic_index";
-import type { ImportSpec, ExportInfo } from "../types";
+import type { ImportSpec, ExportInfo, NamespaceSources } from "../types";
 import { resolve_module_path_javascript } from "./import_resolver.javascript";
 import { resolve_module_path_typescript } from "./import_resolver.typescript";
 import { resolve_module_path_python } from "./import_resolver.python";
@@ -50,6 +50,7 @@ export function extract_import_specs(
       );
 
       specs.push({
+        symbol_id: import_def.symbol_id,
         local_name: import_def.name,
         source_file,
         // For named imports: use original_name (if aliased) or name
@@ -236,4 +237,50 @@ function resolve_module_path(
     default:
       throw new Error(`Unsupported language: ${language}`);
   }
+}
+
+/**
+ * Build namespace sources map from semantic indices
+ *
+ * Tracks which source file each namespace import points to.
+ * This enables resolution of namespace member access like `utils.helper()`
+ * where `utils` is a namespace import (`import * as utils from './utils'`).
+ *
+ * @param indices - All semantic indices for the codebase
+ * @returns Map of namespace symbol_id → source file path
+ *
+ * @example
+ * ```typescript
+ * // Given: import * as utils from './utils';
+ * const namespace_sources = build_namespace_sources(indices);
+ * // → Map { "import:src/app.ts:utils:5:0" => "src/utils.ts" }
+ *
+ * // Later when resolving: utils.helper()
+ * const source_file = namespace_sources.get(namespace_symbol_id);
+ * // → "src/utils.ts"
+ * ```
+ */
+export function build_namespace_sources(
+  indices: ReadonlyMap<FilePath, SemanticIndex>
+): NamespaceSources {
+  const namespace_sources = new Map<SymbolId, FilePath>();
+
+  for (const [file_path, index] of indices) {
+    // Find all namespace imports in this file
+    for (const [import_symbol_id, import_def] of index.imported_symbols) {
+      if (import_def.import_kind === "namespace") {
+        // Resolve the module path to get the source file
+        const source_file = resolve_module_path(
+          import_def.import_path,
+          file_path,
+          index.language
+        );
+
+        // Map this namespace import symbol to its source file
+        namespace_sources.set(import_symbol_id, source_file);
+      }
+    }
+  }
+
+  return namespace_sources;
 }

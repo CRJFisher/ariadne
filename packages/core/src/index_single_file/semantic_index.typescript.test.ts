@@ -25,7 +25,9 @@ function createParsedFile(
   return {
     file_path: filePath,
     file_lines: lines.length,
-    file_end_column: lines[lines.length - 1]?.length || 0,
+    // For 1-indexed positions with exclusive ends: end_column = length + 1
+    // (tree-sitter's endPosition is exclusive and we add 1 to convert to 1-indexed)
+    file_end_column: (lines[lines.length - 1]?.length || 0) + 1,
     tree,
     lang: language,
   };

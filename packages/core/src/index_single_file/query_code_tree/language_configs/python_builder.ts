@@ -3,7 +3,6 @@ import type { SyntaxNode } from "tree-sitter";
 import type {
   SymbolId,
   SymbolName,
-  SymbolAvailability,
   Location,
   ScopeId,
   ModulePath,
@@ -340,16 +339,6 @@ function extract_decorators(node: SyntaxNode): SymbolName[] {
   }
 
   return decorators;
-}
-
-export function determine_availability(name: string): SymbolAvailability {
-  // Private members (start with _)
-  if (is_private_name(name)) {
-    return { scope: "file-private" };
-  }
-
-  // Public by default in Python
-  return { scope: "public" };
 }
 
 /**

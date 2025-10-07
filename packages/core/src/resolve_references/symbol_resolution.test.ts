@@ -20,9 +20,14 @@ import type {
   ModulePath,
   LocationKey,
   InterfaceDefinition,
+  EnumDefinition,
+  NamespaceDefinition,
+  TypeAliasDefinition,
   AnyDefinition,
   Location,
   DecoratorDefinition,
+  SymbolKind,
+  ExportableDefinition,
 } from "@ariadnejs/types";
 import { location_key } from "@ariadnejs/types";
 import { SemanticIndex } from "../index_single_file/semantic_index";
@@ -113,6 +118,102 @@ export type TestScopeSpec = {
   children?: ScopeId[];
 };
 
+/**
+ * Infer language from file path extension
+ */
+function infer_language_from_path(file_path: FilePath): "typescript" | "javascript" | "python" | "rust" {
+  if (file_path.endsWith('.py')) {
+    return "python";
+  } else if (file_path.endsWith('.rs')) {
+    return "rust";
+  } else if (file_path.endsWith('.js') || file_path.endsWith('.jsx') || file_path.endsWith('.mjs') || file_path.endsWith('.cjs')) {
+    return "javascript";
+  } else {
+    // Default to TypeScript for .ts, .tsx, and unknown extensions
+    return "typescript";
+  }
+}
+
+/**
+ * Build scope_to_definitions map from all definitions
+ * Mimics the behavior of build_scope_to_definitions in semantic_index.ts
+ */
+function build_test_scope_to_definitions(definitions: {
+  functions: Map<SymbolId, FunctionDefinition>;
+  classes: Map<SymbolId, ClassDefinition>;
+  variables: Map<SymbolId, VariableDefinition>;
+  interfaces: Map<SymbolId, InterfaceDefinition>;
+  imports: Map<SymbolId, ImportDefinition>;
+  enums: Map<SymbolId, EnumDefinition>;
+  namespaces: Map<SymbolId, NamespaceDefinition>;
+  types: Map<SymbolId, TypeAliasDefinition>;
+}): Map<ScopeId, Map<SymbolKind, AnyDefinition[]>> {
+  const index = new Map<ScopeId, Map<SymbolKind, AnyDefinition[]>>();
+
+  const add_to_index = (def: AnyDefinition) => {
+    // Ensure scope map exists
+    if (!index.has(def.defining_scope_id)) {
+      index.set(def.defining_scope_id, new Map());
+    }
+
+    const scope_map = index.get(def.defining_scope_id)!;
+    const existing = scope_map.get(def.kind) || [];
+    existing.push(def);
+    scope_map.set(def.kind, existing);
+  };
+
+  // Add all definition types
+  definitions.functions.forEach(add_to_index);
+  definitions.classes.forEach(add_to_index);
+  definitions.variables.forEach(add_to_index);
+  definitions.interfaces.forEach(add_to_index);
+  definitions.enums.forEach(add_to_index);
+  definitions.namespaces.forEach(add_to_index);
+  definitions.types.forEach(add_to_index);
+  definitions.imports.forEach(add_to_index);
+
+  return index;
+}
+
+/**
+ * Build exported symbols map from definitions with is_exported: true
+ * Mimics the behavior of build_exported_symbols_map in semantic_index.ts
+ */
+function build_test_exported_symbols_map(definitions: {
+  functions: Map<SymbolId, FunctionDefinition>;
+  classes: Map<SymbolId, ClassDefinition>;
+  variables: Map<SymbolId, VariableDefinition>;
+  interfaces: Map<SymbolId, InterfaceDefinition>;
+  enums: Map<SymbolId, EnumDefinition>;
+  namespaces: Map<SymbolId, NamespaceDefinition>;
+  types: Map<SymbolId, TypeAliasDefinition>;
+}): Map<SymbolName, ExportableDefinition> {
+  const map = new Map<SymbolName, ExportableDefinition>();
+
+  const add_to_map = (def: ExportableDefinition) => {
+    // Only add exported symbols
+    if (!('is_exported' in def) || !def.is_exported) {
+      return;
+    }
+
+    // Get the effective export name (alias or original name)
+    const export_name = ('export' in def && def.export?.export_name) || def.name;
+
+    map.set(export_name, def);
+  };
+
+  // Add all exportable definition types
+  definitions.functions.forEach(add_to_map);
+  definitions.classes.forEach(add_to_map);
+  definitions.variables.forEach(add_to_map);
+  definitions.interfaces.forEach(add_to_map);
+  definitions.enums.forEach(add_to_map);
+  definitions.namespaces.forEach(add_to_map);
+  definitions.types.forEach(add_to_map);
+
+  return map;
+}
+
 export function create_test_index(
   file_path: FilePath,
   options: {
@@ -124,7 +225,7 @@ export function create_test_index(
     interfaces?: TestInterfaceSpec[];
     scopes?: TestScopeSpec[];
     references?: SymbolReference[];
-    exported_symbols?: Map<SymbolName, AnyDefinition>;
+    exported_symbols?: Map<SymbolName, ExportableDefinition>;
 
     // Low-level overrides for full control
     functions_raw?: Map<SymbolId, FunctionDefinition>;
@@ -135,13 +236,15 @@ export function create_test_index(
     imports_raw?: Map<SymbolId, ImportDefinition>;
     type_bindings_raw?: Map<LocationKey, SymbolName>;
     type_members_raw?: Map<SymbolId, TypeMemberInfo>;
+    scope_to_definitions_raw?: Map<ScopeId, ReadonlyMap<SymbolKind, AnyDefinition[]>>;
 
     // Misc options
     language?: "typescript" | "javascript" | "python" | "rust";
     root_scope_id?: ScopeId;
   } = {}
 ): SemanticIndex {
-  const language = options.language || "typescript";
+  // Infer language from file extension if not explicitly provided
+  const language = options.language || infer_language_from_path(file_path);
   const root_scope_id =
     options.root_scope_id || (`scope:${file_path}:module` as ScopeId);
 
@@ -397,6 +500,29 @@ export function create_test_index(
     }
   }
 
+  // Build exported_symbols map automatically if not provided
+  const exported_symbols = options.exported_symbols || build_test_exported_symbols_map({
+    functions,
+    classes,
+    variables,
+    interfaces,
+    enums: new Map(),
+    namespaces: new Map(),
+    types: new Map(),
+  });
+
+  // Build scope_to_definitions map automatically if not provided
+  const scope_to_definitions = options.scope_to_definitions_raw || build_test_scope_to_definitions({
+    functions,
+    classes,
+    variables,
+    interfaces,
+    imports,
+    enums: new Map(),
+    namespaces: new Map(),
+    types: new Map(),
+  });
+
   return {
     file_path,
     language,
@@ -410,9 +536,9 @@ export function create_test_index(
     namespaces: new Map(),
     types: new Map(),
     imported_symbols: imports,
-    exported_symbols: options.exported_symbols || new Map(),
+    exported_symbols,
     references: options.references || [],
-    scope_to_definitions: new Map(),
+    scope_to_definitions,
     type_bindings,
     type_members,
     type_alias_metadata: new Map(),

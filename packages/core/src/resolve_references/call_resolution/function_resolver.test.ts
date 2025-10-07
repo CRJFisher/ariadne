@@ -18,9 +18,9 @@ import type {
   SymbolReference,
   LexicalScope,
   FunctionDefinition,
-  SemanticIndex,
 } from "@ariadnejs/types";
 import { location_key } from "@ariadnejs/types";
+import { SemanticIndex } from "../../index_single_file/semantic_index";
 
 // Helper to create a minimal semantic index
 function create_test_index(
@@ -44,10 +44,11 @@ function create_test_index(
     types: new Map(),
     imported_symbols: new Map(),
     references,
-    symbols_by_name: new Map(),
+    exported_symbols: new Map(),
+    scope_to_definitions: new Map(),
     type_bindings: new Map(),
     type_members: new Map(),
-    constructors: new Map(),
+    type_alias_metadata: new Map(),
   };
 }
 
@@ -66,7 +67,7 @@ describe("Function Call Resolution", () => {
             parent_id: null,
             name: null,
             location: {
-              file: file_path,
+              file_path,
               start_line: 1,
               start_column: 0,
               end_line: 10,
@@ -87,20 +88,23 @@ describe("Function Call Resolution", () => {
             name: "helper" as SymbolName,
             defining_scope_id: root_scope_id,
             location: {
-              file: file_path,
+              file_path,
               start_line: 2,
               start_column: 0,
               end_line: 4,
               end_column: 1,
             },
             is_exported: false,
+            signature: {
+              parameters: [],
+            },
           },
         ],
       ]);
 
       const call_ref: SymbolReference = {
         location: {
-          file: file_path,
+          file_path,
           start_line: 7,
           start_column: 2,
           end_line: 7,
@@ -147,7 +151,7 @@ describe("Function Call Resolution", () => {
             parent_id: null,
             name: null,
             location: {
-              file: file_path,
+              file_path,
               start_line: 1,
               start_column: 0,
               end_line: 10,
@@ -164,7 +168,7 @@ describe("Function Call Resolution", () => {
             parent_id: root_scope_id,
             name: null,
             location: {
-              file: file_path,
+              file_path,
               start_line: 6,
               start_column: 15,
               end_line: 8,
@@ -185,20 +189,23 @@ describe("Function Call Resolution", () => {
             name: "helper" as SymbolName,
             defining_scope_id: root_scope_id,
             location: {
-              file: file_path,
+              file_path,
               start_line: 2,
               start_column: 0,
               end_line: 4,
               end_column: 1,
             },
             is_exported: false,
+            signature: {
+              parameters: [],
+            },
           },
         ],
       ]);
 
       const call_ref: SymbolReference = {
         location: {
-          file: file_path,
+          file_path,
           start_line: 7,
           start_column: 2,
           end_line: 7,
@@ -245,7 +252,7 @@ describe("Function Call Resolution", () => {
             parent_id: null,
             name: null,
             location: {
-              file: file_path,
+              file_path,
               start_line: 1,
               start_column: 0,
               end_line: 10,
@@ -262,7 +269,7 @@ describe("Function Call Resolution", () => {
             parent_id: root_scope_id,
             name: "factorial" as SymbolName,
             location: {
-              file: file_path,
+              file_path,
               start_line: 2,
               start_column: 0,
               end_line: 6,
@@ -283,13 +290,16 @@ describe("Function Call Resolution", () => {
             name: "factorial" as SymbolName,
             defining_scope_id: root_scope_id,
             location: {
-              file: file_path,
+              file_path,
               start_line: 2,
               start_column: 0,
               end_line: 6,
               end_column: 1,
             },
             is_exported: false,
+            signature: {
+              parameters: [],
+            },
           },
         ],
       ]);
@@ -297,7 +307,7 @@ describe("Function Call Resolution", () => {
       // Recursive call from within the function
       const call_ref: SymbolReference = {
         location: {
-          file: file_path,
+          file_path,
           start_line: 4,
           start_column: 13,
           end_line: 4,
@@ -346,7 +356,7 @@ describe("Function Call Resolution", () => {
             parent_id: null,
             name: null,
             location: {
-              file: file_path,
+              file_path,
               start_line: 1,
               start_column: 0,
               end_line: 15,
@@ -363,7 +373,7 @@ describe("Function Call Resolution", () => {
             parent_id: root_scope_id,
             name: "test" as SymbolName,
             location: {
-              file: file_path,
+              file_path,
               start_line: 6,
               start_column: 0,
               end_line: 11,
@@ -385,13 +395,16 @@ describe("Function Call Resolution", () => {
             name: "foo" as SymbolName,
             defining_scope_id: root_scope_id,
             location: {
-              file: file_path,
+              file_path,
               start_line: 2,
               start_column: 0,
               end_line: 4,
               end_column: 1,
             },
             is_exported: false,
+            signature: {
+              parameters: [],
+            },
           },
         ],
         [
@@ -402,13 +415,16 @@ describe("Function Call Resolution", () => {
             name: "foo" as SymbolName,
             defining_scope_id: inner_scope_id,
             location: {
-              file: file_path,
+              file_path,
               start_line: 7,
               start_column: 2,
               end_line: 9,
               end_column: 3,
             },
             is_exported: false,
+            signature: {
+              parameters: [],
+            },
           },
         ],
       ]);
@@ -416,7 +432,7 @@ describe("Function Call Resolution", () => {
       // Call from inner scope should resolve to inner foo
       const call_ref: SymbolReference = {
         location: {
-          file: file_path,
+          file_path,
           start_line: 10,
           start_column: 2,
           end_line: 10,
@@ -464,7 +480,7 @@ describe("Function Call Resolution", () => {
             parent_id: null,
             name: null,
             location: {
-              file: file_path,
+              file_path,
               start_line: 1,
               start_column: 0,
               end_line: 5,
@@ -477,7 +493,7 @@ describe("Function Call Resolution", () => {
 
       const call_ref: SymbolReference = {
         location: {
-          file: file_path,
+          file_path,
           start_line: 3,
           start_column: 2,
           end_line: 3,
@@ -523,7 +539,7 @@ describe("Function Call Resolution", () => {
             parent_id: null,
             name: null,
             location: {
-              file: file_path,
+              file_path,
               start_line: 1,
               start_column: 0,
               end_line: 10,
@@ -537,7 +553,7 @@ describe("Function Call Resolution", () => {
       // Method call (should be filtered out)
       const method_call_ref: SymbolReference = {
         location: {
-          file: file_path,
+          file_path,
           start_line: 8,
           start_column: 0,
           end_line: 8,
@@ -585,7 +601,7 @@ describe("Function Call Resolution", () => {
             parent_id: null,
             name: null,
             location: {
-              file: file_path,
+              file_path,
               start_line: 1,
               start_column: 0,
               end_line: 10,
@@ -606,13 +622,16 @@ describe("Function Call Resolution", () => {
             name: "helper" as SymbolName,
             defining_scope_id: root_scope_id,
             location: {
-              file: file_path,
+              file_path,
               start_line: 2,
               start_column: 0,
               end_line: 4,
               end_column: 1,
             },
             is_exported: false,
+            signature: {
+              parameters: [],
+            },
           },
         ],
       ]);
@@ -621,7 +640,7 @@ describe("Function Call Resolution", () => {
       const call_refs: SymbolReference[] = [
         {
           location: {
-            file: file_path,
+            file_path,
             start_line: 7,
             start_column: 2,
             end_line: 7,
@@ -634,7 +653,7 @@ describe("Function Call Resolution", () => {
         },
         {
           location: {
-            file: file_path,
+            file_path,
             start_line: 8,
             start_column: 2,
             end_line: 8,
@@ -647,7 +666,7 @@ describe("Function Call Resolution", () => {
         },
         {
           location: {
-            file: file_path,
+            file_path,
             start_line: 9,
             start_column: 2,
             end_line: 9,
@@ -700,7 +719,7 @@ describe("Function Call Resolution", () => {
             parent_id: null,
             name: null,
             location: {
-              file: file_path,
+              file_path,
               start_line: 1,
               start_column: 0,
               end_line: 10,
@@ -722,13 +741,16 @@ describe("Function Call Resolution", () => {
             name: "foo" as SymbolName,
             defining_scope_id: root_scope_id,
             location: {
-              file: file_path,
+              file_path,
               start_line: 2,
               start_column: 0,
               end_line: 3,
               end_column: 1,
             },
             is_exported: false,
+            signature: {
+              parameters: [],
+            },
           },
         ],
         [
@@ -739,13 +761,16 @@ describe("Function Call Resolution", () => {
             name: "bar" as SymbolName,
             defining_scope_id: root_scope_id,
             location: {
-              file: file_path,
+              file_path,
               start_line: 4,
               start_column: 0,
               end_line: 5,
               end_column: 1,
             },
             is_exported: false,
+            signature: {
+              parameters: [],
+            },
           },
         ],
       ]);
@@ -753,7 +778,7 @@ describe("Function Call Resolution", () => {
       const call_refs: SymbolReference[] = [
         {
           location: {
-            file: file_path,
+            file_path,
             start_line: 8,
             start_column: 2,
             end_line: 8,
@@ -766,7 +791,7 @@ describe("Function Call Resolution", () => {
         },
         {
           location: {
-            file: file_path,
+            file_path,
             start_line: 9,
             start_column: 2,
             end_line: 9,
@@ -825,7 +850,7 @@ describe("Function Call Resolution", () => {
             parent_id: null,
             name: null,
             location: {
-              file: file1,
+              file_path: file1,
               start_line: 1,
               start_column: 0,
               end_line: 5,
@@ -845,7 +870,7 @@ describe("Function Call Resolution", () => {
             parent_id: null,
             name: null,
             location: {
-              file: file2,
+              file_path: file2,
               start_line: 1,
               start_column: 0,
               end_line: 8,
@@ -868,13 +893,16 @@ describe("Function Call Resolution", () => {
             name: "helper" as SymbolName,
             defining_scope_id: root1,
             location: {
-              file: file1,
+              file_path: file1,
               start_line: 2,
               start_column: 0,
               end_line: 4,
               end_column: 1,
             },
             is_exported: true,
+            signature: {
+              parameters: [],
+            },
           },
         ],
       ]);
@@ -888,20 +916,23 @@ describe("Function Call Resolution", () => {
             name: "localFunc" as SymbolName,
             defining_scope_id: root2,
             location: {
-              file: file2,
+              file_path: file2,
               start_line: 6,
               start_column: 0,
               end_line: 8,
               end_column: 1,
             },
             is_exported: false,
+            signature: {
+              parameters: [],
+            },
           },
         ],
       ]);
 
       const call_ref: SymbolReference = {
         location: {
-          file: file2,
+          file_path: file2,
           start_line: 3,
           start_column: 2,
           end_line: 3,

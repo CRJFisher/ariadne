@@ -20,7 +20,6 @@ import {
   type NamespaceDefinition,
   type ParameterDefinition,
   type PropertyDefinition,
-  type PropertySignature,
   type ScopeId,
   type SymbolId,
   type SymbolName,
@@ -123,7 +122,7 @@ interface FunctionSignatureState {
 interface InterfaceBuilderState {
   base: Partial<Omit<InterfaceDefinition, "methods" | "properties">>;
   methods: Map<SymbolId, MethodBuilderState>;
-  properties: Map<SymbolId, PropertySignature>;
+  properties: Map<SymbolId, PropertyDefinition>;
 }
 
 /**
@@ -231,6 +230,7 @@ export class DefinitionBuilder {
     export?: ExportMetadata;
     extends?: SymbolName[];
     generics?: string[];
+    docstring?: readonly string[];
   }): DefinitionBuilder {
     this.classes.set(definition.symbol_id, {
       base: {
@@ -243,6 +243,7 @@ export class DefinitionBuilder {
         extends: definition.extends || [],
         is_exported: definition.is_exported || false,
         export: definition.export,
+        docstring: definition.docstring,
       },
       methods: new Map(),
       properties: new Map(),
@@ -268,6 +269,7 @@ export class DefinitionBuilder {
       static?: boolean;
       async?: boolean;
       generics?: string[];
+      docstring?: string;
     }
   ): DefinitionBuilder {
     const class_state = this.classes.get(class_id);
@@ -350,6 +352,7 @@ export class DefinitionBuilder {
     generics?: string[];
     is_exported?: boolean;
     export?: ExportMetadata;
+    docstring?: string;
   }): DefinitionBuilder {
     this.functions.set(definition.symbol_id, {
       base: {
@@ -361,6 +364,7 @@ export class DefinitionBuilder {
         generics: definition.generics,
         is_exported: definition.is_exported,
         export: definition.export,
+        docstring: definition.docstring,
       },
       signature: {
         parameters: new Map(),
@@ -441,6 +445,7 @@ export class DefinitionBuilder {
     export?: ExportMetadata;
     type?: SymbolName;
     initial_value?: string;
+    docstring?: string;
   }): DefinitionBuilder {
     this.variables.set(definition.symbol_id, {
       kind: definition.kind,
@@ -452,6 +457,7 @@ export class DefinitionBuilder {
       export: definition.export,
       type: definition.type,
       initial_value: definition.initial_value,
+      docstring: definition.docstring,
     });
     return this;
   }

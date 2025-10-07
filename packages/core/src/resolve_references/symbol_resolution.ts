@@ -67,6 +67,7 @@ import {
   resolve_method_calls,
   resolve_constructor_calls,
 } from "./call_resolution";
+import { build_namespace_sources } from "./import_resolution/import_resolver";
 
 /**
  * Resolve all symbol references using on-demand scope-aware lookup
@@ -155,12 +156,18 @@ export function resolve_symbols(
   // Shared across all resolvers for consistency and performance
   const cache = create_resolution_cache();
 
-  // Phase 3: Build type context
+  // Phase 3: Build namespace sources
+  // Tracks which source file each namespace import points to
+  // Enables resolution of namespace member access (utils.helper())
+  const namespace_sources = build_namespace_sources(indices);
+
+  // Phase 4: Build type context
   // Tracks variable types and type members
   // Uses resolver_index + cache to resolve type names
-  const type_context = build_type_context(indices, resolver_index, cache);
+  // Uses namespace_sources for namespace member lookup
+  const type_context = build_type_context(indices, resolver_index, cache, namespace_sources);
 
-  // Phase 4: Resolve all call types (on-demand with caching)
+  // Phase 5: Resolve all call types (on-demand with caching)
   const function_calls = resolve_function_calls(indices, resolver_index, cache);
   const method_calls = resolve_method_calls(
     indices,
@@ -175,7 +182,7 @@ export function resolve_symbols(
     type_context
   );
 
-  // Phase 5: Combine results
+  // Phase 6: Combine results
   return combine_results(
     indices,
     function_calls,

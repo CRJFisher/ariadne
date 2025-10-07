@@ -192,13 +192,22 @@ function build_resolvers_recursive(
     //   Note: For defaults, import_name="bar" is ignored; resolve_export_chain uses import_kind to find is_default=true
     //
     // Example: import * as utils from './utils'
-    //   → resolvers.set("utils", () => resolve_export_chain("./utils.ts", "utils", indices, "namespace"))
+    //   → resolvers.set("utils", () => "import:src/app.ts:utils:5:0")
+    //   For namespace imports, we return the import's own symbol_id instead of resolving
+    //   Member access like utils.helper() is handled separately by namespace member resolution
     //
     // Since we're using Map.set(), this will OVERRIDE any parent resolver for the same name
     // This implements shadowing: imports in inner scopes shadow parent scope symbols
-    resolvers.set(spec.local_name, () =>
-      resolve_export_chain(spec.source_file, spec.import_name, indices, spec.import_kind)
-    );
+    if (spec.import_kind === "namespace") {
+      // Namespace imports: return the import's own symbol_id
+      // Member resolution (utils.helper) is handled by TypeContext.get_namespace_member
+      resolvers.set(spec.local_name, () => spec.symbol_id);
+    } else {
+      // Named/default imports: follow export chain
+      resolvers.set(spec.local_name, () =>
+        resolve_export_chain(spec.source_file, spec.import_name, indices, spec.import_kind)
+      );
+    }
   }
 
   // Step 3: Add local definition resolvers (OVERRIDES everything!)

@@ -136,17 +136,51 @@ function resolve_single_constructor_call(
   cache: ResolutionCache,
   type_context?: TypeContext
 ): SymbolId | null {
-  // Step 1: Resolve class name to class symbol (scope-aware with caching)
-  // The call_ref.name contains the class name (e.g., "User" in new User())
-  const class_symbol = resolver_index.resolve(
-    call_ref.scope_id,
-    call_ref.name,
-    cache
-  );
+  let class_symbol: SymbolId | null;
 
+  // Check if this is a namespace member access (e.g., new utils.Helper())
+  const property_chain = call_ref.context?.property_chain;
+  if (property_chain && property_chain.length === 2 && type_context) {
+    // Step 1a: Resolve namespace (first element in chain)
+    const namespace_symbol = resolver_index.resolve(
+      call_ref.scope_id,
+      property_chain[0],
+      cache
+    );
+
+    if (namespace_symbol) {
+      // Step 1b: Try to resolve as namespace member
+      class_symbol = type_context.get_namespace_member(
+        namespace_symbol,
+        call_ref.name
+      );
+
+      if (class_symbol) {
+        // Successfully resolved via namespace, continue to step 2
+      } else {
+        // Not a namespace member, fall through to regular resolution
+        class_symbol = null;
+      }
+    } else {
+      class_symbol = null;
+    }
+  } else {
+    class_symbol = null;
+  }
+
+  // Step 1c: If not resolved via namespace, try regular resolution
   if (!class_symbol) {
-    // Class name not found in scope (undefined class or missing import)
-    return null;
+    // The call_ref.name contains the class name (e.g., "User" in new User())
+    class_symbol = resolver_index.resolve(
+      call_ref.scope_id,
+      call_ref.name,
+      cache
+    );
+
+    if (!class_symbol) {
+      // Class name not found in scope (undefined class or missing import)
+      return null;
+    }
   }
 
   // Step 2: Verify it's actually a class and get constructor

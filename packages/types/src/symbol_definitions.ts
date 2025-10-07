@@ -13,25 +13,6 @@ import { SymbolName } from "./symbol";
 import { ModulePath } from "./import_export";
 
 /**
- * Symbol availability determines where a symbol can be referenced
- */
-export interface SymbolAvailability {
-  // Where can it be seen?
-  readonly scope:
-    | "file-private" // Only within this file
-    | "file-export" // Available for import from this file
-    | "package-internal" // Within package/module boundary
-    | "public"; // Fully public API
-
-  // Export metadata
-  readonly export?: {
-    readonly name: SymbolName; // Export alias if different
-    readonly is_default?: boolean; // Default export
-    readonly is_reexport?: boolean; // Re-exported from another module
-  };
-}
-
-/**
  * Export metadata for symbols that can be imported
  *
  * Examples:
@@ -103,6 +84,7 @@ export interface MethodDefinition extends Definition {
   readonly parameters: readonly ParameterDefinition[];
   readonly return_type?: SymbolName;
   readonly decorators?: readonly SymbolName[];
+  readonly docstring?: DocString;
   readonly generics?: string[];
   readonly static?: boolean;
 }
@@ -141,18 +123,8 @@ export interface InterfaceDefinition extends Definition {
   readonly is_exported: boolean;
   readonly extends: readonly SymbolName[];
   readonly methods: readonly MethodDefinition[];
-  readonly properties: readonly PropertySignature[];
+  readonly properties: readonly PropertyDefinition[];
   readonly generics?: string[];
-}
-
-/**
- * Property signature in an interface
- */
-export interface PropertySignature {
-  readonly kind: "property";
-  readonly name: SymbolName;
-  readonly type?: SymbolName; // Required - use "unknown" when type cannot be inferred
-  readonly location: Location;
 }
 
 export interface DecoratorDefinition extends Definition {
@@ -188,6 +160,7 @@ export interface VariableDefinition extends Definition {
   readonly is_exported: boolean;
   readonly type?: SymbolName;
   readonly initial_value?: string;
+  readonly docstring?: DocString;
 }
 
 /**

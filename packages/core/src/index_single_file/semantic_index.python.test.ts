@@ -23,7 +23,9 @@ function createParsedFile(
   return {
     file_path: filePath,
     file_lines: lines.length,
-    file_end_column: lines[lines.length - 1]?.length || 0,
+    // For 1-indexed positions with exclusive ends: end_column = length + 1
+    // (tree-sitter's endPosition is exclusive and we add 1 to convert to 1-indexed)
+    file_end_column: (lines[lines.length - 1]?.length || 0) + 1,
     tree,
     lang: language,
   };
@@ -1086,22 +1088,16 @@ class User:
       expect(user_class).toBeDefined();
 
       if (user_class) {
-        expect(user_class).toMatchObject({
-          kind: "class",
-          symbol_id: expect.stringMatching(/^class:/),
-          name: "User",
-          location: expect.objectContaining({
-            file_path: "test.py",
-            start_line: expect.any(Number),
-            start_column: expect.any(Number),
-            end_line: expect.any(Number),
-            end_column: expect.any(Number),
-          }),
-          defining_scope_id: expect.any(String),
-          availability: expect.objectContaining({
-            scope: expect.any(String),
-          }),
-        });
+        // Verify class structure
+        expect(user_class.kind).toBe("class");
+        expect(user_class.name).toBe("User");
+        expect(user_class.symbol_id).toMatch(/^class:/);
+        expect(user_class.defining_scope_id).toBeTruthy();
+        expect(user_class.location.file_path).toBe("test.py");
+        expect(typeof user_class.location.start_line).toBe("number");
+        expect(typeof user_class.location.start_column).toBe("number");
+        expect(typeof user_class.location.end_line).toBe("number");
+        expect(typeof user_class.location.end_column).toBe("number");
 
         // Verify constructor handling
         // Python may track __init__ in constructor field or methods array
@@ -1120,11 +1116,9 @@ class User:
             // Verify parameter structure
             const name_param = ctor.parameters.find((p) => p.name === "name");
             if (name_param) {
-              expect(name_param).toMatchObject({
-                kind: "parameter",
-                name: "name",
-                type: "str",
-              });
+              expect(name_param.kind).toBe("parameter");
+              expect(name_param.name).toBe("name");
+              expect(name_param.type).toBe("str");
             }
           }
         } else {
@@ -1170,15 +1164,10 @@ class User:
           (m) => m.name === "name"
         );
         if (property_method) {
-          expect(property_method).toMatchObject({
-            kind: "method",
-            name: "name",
-            location: expect.objectContaining({
-              file_path: "test.py",
-            }),
-            scope_id: expect.any(String),
-            availability: expect.any(Object),
-          });
+          expect(property_method.kind).toBe("method");
+          expect(property_method.name).toBe("name");
+          expect(property_method.location.file_path).toBe("test.py");
+          expect(property_method.defining_scope_id).toBeTruthy();
 
           // Verify decorators are tracked
           expect(property_method.decorators).toBeDefined();
@@ -1197,11 +1186,9 @@ class User:
           (m) => m.name === "create_guest"
         );
         if (static_method) {
-          expect(static_method).toMatchObject({
-            kind: "method",
-            name: "create_guest",
-            static: true,
-          });
+          expect(static_method.kind).toBe("method");
+          expect(static_method.name).toBe("create_guest");
+          expect(static_method.static).toBe(true);
 
           expect(static_method.decorators).toBeDefined();
           if (static_method.decorators && static_method.decorators.length > 0) {
@@ -1216,10 +1203,8 @@ class User:
           (m) => m.name === "from_dict"
         );
         if (class_method) {
-          expect(class_method).toMatchObject({
-            kind: "method",
-            name: "from_dict",
-          });
+          expect(class_method.kind).toBe("method");
+          expect(class_method.name).toBe("from_dict");
 
           expect(class_method.decorators).toBeDefined();
           if (class_method.decorators && class_method.decorators.length > 0) {
@@ -1240,11 +1225,9 @@ class User:
           (m) => m.name === "regular_method"
         );
         if (regular_method) {
-          expect(regular_method).toMatchObject({
-            kind: "method",
-            name: "regular_method",
-            static: undefined, // Not static
-          });
+          expect(regular_method.kind).toBe("method");
+          expect(regular_method.name).toBe("regular_method");
+          expect(regular_method.static).toBeUndefined(); // Not static
 
           // Verify parameters
           if (regular_method.parameters) {
@@ -1360,22 +1343,15 @@ class Priority(IntEnum):
       expect(status_enum).toBeDefined();
 
       if (status_enum) {
-        expect(status_enum).toMatchObject({
-          kind: "enum",
-          symbol_id: expect.stringMatching(/^enum:/),
-          name: "Status",
-          location: expect.objectContaining({
-            file_path: "test.py",
-            start_line: expect.any(Number),
-            start_column: expect.any(Number),
-            end_line: expect.any(Number),
-            end_column: expect.any(Number),
-          }),
-          scope_id: expect.any(String),
-          availability: expect.objectContaining({
-            scope: expect.any(String),
-          }),
-        });
+        expect(status_enum.kind).toBe("enum");
+        expect(status_enum.name).toBe("Status");
+        expect(status_enum.symbol_id).toMatch(/^enum:/);
+        expect(status_enum.defining_scope_id).toBeTruthy();
+        expect(status_enum.location.file_path).toBe("test.py");
+        expect(typeof status_enum.location.start_line).toBe("number");
+        expect(typeof status_enum.location.start_column).toBe("number");
+        expect(typeof status_enum.location.end_line).toBe("number");
+        expect(typeof status_enum.location.end_column).toBe("number");
 
         // Verify enum members are present
         expect(status_enum.members).toBeDefined();
@@ -1398,12 +1374,8 @@ class Priority(IntEnum):
           return name_str.includes("PENDING");
         });
         if (pending_member) {
-          expect(pending_member).toMatchObject({
-            name: expect.stringMatching(/PENDING/),
-            location: expect.objectContaining({
-              file_path: "test.py",
-            }),
-          });
+          expect(String(pending_member.name)).toMatch(/PENDING/);
+          expect(pending_member.location.file_path).toBe("test.py");
 
           // Verify value is tracked
           if (pending_member.value !== undefined) {
@@ -1434,16 +1406,11 @@ class Priority(IntEnum):
       expect(priority_enum).toBeDefined();
 
       if (priority_enum) {
-        expect(priority_enum).toMatchObject({
-          kind: "enum",
-          symbol_id: expect.stringMatching(/^enum:/),
-          name: "Priority",
-          location: expect.objectContaining({
-            file_path: "test.py",
-          }),
-          scope_id: expect.any(String),
-          availability: expect.any(Object),
-        });
+        expect(priority_enum.kind).toBe("enum");
+        expect(priority_enum.name).toBe("Priority");
+        expect(priority_enum.symbol_id).toMatch(/^enum:/);
+        expect(priority_enum.defining_scope_id).toBeTruthy();
+        expect(priority_enum.location.file_path).toBe("test.py");
 
         // Verify IntEnum members
         expect(priority_enum.members).toBeDefined();
@@ -1510,22 +1477,15 @@ class Drawable(Protocol):
       expect(drawable_interface).toBeDefined();
 
       if (drawable_interface) {
-        expect(drawable_interface).toMatchObject({
-          kind: "interface",
-          symbol_id: expect.stringMatching(/^interface:/),
-          name: "Drawable",
-          location: expect.objectContaining({
-            file_path: "test.py",
-            start_line: expect.any(Number),
-            start_column: expect.any(Number),
-            end_line: expect.any(Number),
-            end_column: expect.any(Number),
-          }),
-          scope_id: expect.any(String),
-          availability: expect.objectContaining({
-            scope: expect.any(String),
-          }),
-        });
+        expect(drawable_interface.kind).toBe("interface");
+        expect(drawable_interface.name).toBe("Drawable");
+        expect(drawable_interface.symbol_id).toMatch(/^interface:/);
+        expect(drawable_interface.defining_scope_id).toBeTruthy();
+        expect(drawable_interface.location.file_path).toBe("test.py");
+        expect(typeof drawable_interface.location.start_line).toBe("number");
+        expect(typeof drawable_interface.location.start_column).toBe("number");
+        expect(typeof drawable_interface.location.end_line).toBe("number");
+        expect(typeof drawable_interface.location.end_column).toBe("number");
 
         // Verify properties exist
         expect(drawable_interface.properties).toBeDefined();
@@ -1540,28 +1500,20 @@ class Drawable(Protocol):
           (p) => p.name === "x"
         );
         if (x_property) {
-          expect(x_property).toMatchObject({
-            kind: "property",
-            name: "x",
-            type: "int",
-            location: expect.objectContaining({
-              file_path: "test.py",
-            }),
-          });
+          expect(x_property.kind).toBe("property");
+          expect(x_property.name).toBe("x");
+          expect(x_property.type).toBe("int");
+          expect(x_property.location.file_path).toBe("test.py");
         }
 
         const y_property = drawable_interface.properties.find(
           (p) => p.name === "y"
         );
         if (y_property) {
-          expect(y_property).toMatchObject({
-            kind: "property",
-            name: "y",
-            type: "int",
-            location: expect.objectContaining({
-              file_path: "test.py",
-            }),
-          });
+          expect(y_property.kind).toBe("property");
+          expect(y_property.name).toBe("y");
+          expect(y_property.type).toBe("int");
+          expect(y_property.location.file_path).toBe("test.py");
         }
 
         // Verify methods exist
@@ -1577,26 +1529,18 @@ class Drawable(Protocol):
           (m) => m.name === "draw"
         );
         if (draw_method) {
-          expect(draw_method).toMatchObject({
-            kind: "method",
-            name: "draw",
-            location: expect.objectContaining({
-              file_path: "test.py",
-            }),
-          });
+          expect(draw_method.kind).toBe("method");
+          expect(draw_method.name).toBe("draw");
+          expect(draw_method.location.file_path).toBe("test.py");
         }
 
         const move_method = drawable_interface.methods.find(
           (m) => m.name === "move"
         );
         if (move_method) {
-          expect(move_method).toMatchObject({
-            kind: "method",
-            name: "move",
-            location: expect.objectContaining({
-              file_path: "test.py",
-            }),
-          });
+          expect(move_method.kind).toBe("method");
+          expect(move_method.name).toBe("move");
+          expect(move_method.location.file_path).toBe("test.py");
 
           // Verify method parameters
           if (move_method.parameters) {
@@ -1639,25 +1583,17 @@ def process_items(items: list[str], *args, **kwargs) -> None:
       expect(add_func).toBeDefined();
 
       if (add_func) {
-        expect(add_func).toMatchObject({
-          kind: "function",
-          symbol_id: expect.stringMatching(/^function:/),
-          name: "add",
-          location: expect.objectContaining({
-            file_path: "test.py",
-            start_line: expect.any(Number),
-            start_column: expect.any(Number),
-            end_line: expect.any(Number),
-            end_column: expect.any(Number),
-          }),
-          defining_scope_id: expect.any(String),
-          availability: expect.objectContaining({
-            scope: expect.any(String),
-          }),
-          signature: expect.objectContaining({
-            parameters: expect.any(Array),
-          }),
-        });
+        expect(add_func.kind).toBe("function");
+        expect(add_func.name).toBe("add");
+        expect(add_func.symbol_id).toMatch(/^function:/);
+        expect(add_func.defining_scope_id).toBeTruthy();
+        expect(add_func.location.file_path).toBe("test.py");
+        expect(typeof add_func.location.start_line).toBe("number");
+        expect(typeof add_func.location.start_column).toBe("number");
+        expect(typeof add_func.location.end_line).toBe("number");
+        expect(typeof add_func.location.end_column).toBe("number");
+        expect(add_func.signature).toBeDefined();
+        expect(Array.isArray(add_func.signature.parameters)).toBe(true);
 
         // Verify parameters (if populated)
         expect(add_func.signature).toBeDefined();
@@ -1677,11 +1613,9 @@ def process_items(items: list[str], *args, **kwargs) -> None:
             (p) => p.name === "a"
           );
           if (a_param) {
-            expect(a_param).toMatchObject({
-              kind: "parameter",
-              name: "a",
-              type: "int",
-            });
+            expect(a_param.kind).toBe("parameter");
+            expect(a_param.name).toBe("a");
+            expect(a_param.type).toBe("int");
           }
 
           const b_param = add_func.signature.parameters.find(
@@ -1711,13 +1645,10 @@ def process_items(items: list[str], *args, **kwargs) -> None:
       expect(greet_func).toBeDefined();
 
       if (greet_func) {
-        expect(greet_func).toMatchObject({
-          kind: "function",
-          name: "greet",
-          signature: expect.objectContaining({
-            parameters: expect.any(Array),
-          }),
-        });
+        expect(greet_func.kind).toBe("function");
+        expect(greet_func.name).toBe("greet");
+        expect(greet_func.signature).toBeDefined();
+        expect(Array.isArray(greet_func.signature.parameters)).toBe(true);
 
         // Verify parameters with default values (if populated)
         if (
@@ -1799,22 +1730,15 @@ class Calculator:
       expect(calc_class).toBeDefined();
 
       if (calc_class) {
-        expect(calc_class).toMatchObject({
-          kind: "class",
-          symbol_id: expect.stringMatching(/^class:/),
-          name: "Calculator",
-          location: expect.objectContaining({
-            file_path: "test.py",
-            start_line: expect.any(Number),
-            start_column: expect.any(Number),
-            end_line: expect.any(Number),
-            end_column: expect.any(Number),
-          }),
-          defining_scope_id: expect.any(String),
-          availability: expect.objectContaining({
-            scope: expect.any(String),
-          }),
-        });
+        expect(calc_class.kind).toBe("class");
+        expect(calc_class.name).toBe("Calculator");
+        expect(calc_class.symbol_id).toMatch(/^class:/);
+        expect(calc_class.defining_scope_id).toBeTruthy();
+        expect(calc_class.location.file_path).toBe("test.py");
+        expect(typeof calc_class.location.start_line).toBe("number");
+        expect(typeof calc_class.location.start_column).toBe("number");
+        expect(typeof calc_class.location.end_line).toBe("number");
+        expect(typeof calc_class.location.end_column).toBe("number");
 
         // Verify constructor (if populated)
         if (calc_class.constructor && calc_class.constructor.length > 0) {
@@ -1828,11 +1752,9 @@ class Calculator:
               (p) => p.name === "initial_value"
             );
             if (initial_value_param) {
-              expect(initial_value_param).toMatchObject({
-                kind: "parameter",
-                name: "initial_value",
-                type: "float",
-              });
+              expect(initial_value_param.kind).toBe("parameter");
+              expect(initial_value_param.name).toBe("initial_value");
+              expect(initial_value_param.type).toBe("float");
             }
           }
         }
@@ -1851,16 +1773,11 @@ class Calculator:
           // Verify add method with complete structure
           const add_method = calc_class.methods.find((m) => m.name === "add");
           if (add_method) {
-            expect(add_method).toMatchObject({
-              kind: "method",
-              symbol_id: expect.stringMatching(/^method:/),
-              name: "add",
-              location: expect.objectContaining({
-                file_path: "test.py",
-              }),
-              scope_id: expect.any(String),
-              availability: expect.any(Object),
-            });
+            expect(add_method.kind).toBe("method");
+            expect(add_method.name).toBe("add");
+            expect(add_method.symbol_id).toMatch(/^method:/);
+            expect(add_method.defining_scope_id).toBeTruthy();
+            expect(add_method.location.file_path).toBe("test.py");
 
             // Verify method parameters
             if (add_method.parameters && add_method.parameters.length > 0) {
@@ -1869,11 +1786,9 @@ class Calculator:
 
               const x_param = add_method.parameters.find((p) => p.name === "x");
               if (x_param) {
-                expect(x_param).toMatchObject({
-                  kind: "parameter",
-                  name: "x",
-                  type: "float",
-                });
+                expect(x_param.kind).toBe("parameter");
+                expect(x_param.name).toBe("x");
+                expect(x_param.type).toBe("float");
               }
             }
 
@@ -1888,13 +1803,9 @@ class Calculator:
             (m) => m.name === "reset"
           );
           if (reset_method) {
-            expect(reset_method).toMatchObject({
-              kind: "method",
-              name: "reset",
-              location: expect.objectContaining({
-                file_path: "test.py",
-              }),
-            });
+            expect(reset_method.kind).toBe("method");
+            expect(reset_method.name).toBe("reset");
+            expect(reset_method.location.file_path).toBe("test.py");
 
             // Parameters should be empty or only contain 'self' (which may be excluded)
             if (reset_method.parameters) {
@@ -1949,23 +1860,16 @@ type Count = int
       expect(urlType).toBeDefined();
 
       if (urlType) {
-        expect(urlType).toMatchObject({
-          kind: "type_alias",
-          symbol_id: expect.stringMatching(/^type:/),
-          name: "Url",
-          type_expression: "str",
-          location: expect.objectContaining({
-            file_path: "test.py",
-            start_line: expect.any(Number),
-            start_column: expect.any(Number),
-            end_line: expect.any(Number),
-            end_column: expect.any(Number),
-          }),
-          scope_id: expect.any(String),
-          availability: expect.objectContaining({
-            scope: expect.any(String),
-          }),
-        });
+        expect(urlType.kind).toBe("type_alias");
+        expect(urlType.name).toBe("Url");
+        expect(urlType.symbol_id).toMatch(/^type:/);
+        expect(urlType.type_expression).toBe("str");
+        expect(urlType.defining_scope_id).toBeTruthy();
+        expect(urlType.location.file_path).toBe("test.py");
+        expect(typeof urlType.location.start_line).toBe("number");
+        expect(typeof urlType.location.start_column).toBe("number");
+        expect(typeof urlType.location.end_line).toBe("number");
+        expect(typeof urlType.location.end_column).toBe("number");
       }
 
       // Verify StringOrInt type alias
@@ -1976,11 +1880,9 @@ type Count = int
       expect(stringOrIntType).toBeDefined();
 
       if (stringOrIntType) {
-        expect(stringOrIntType).toMatchObject({
-          kind: "type_alias",
-          name: "StringOrInt",
-          type_expression: "str | int",
-        });
+        expect(stringOrIntType.kind).toBe("type_alias");
+        expect(stringOrIntType.name).toBe("StringOrInt");
+        expect(stringOrIntType.type_expression).toBe("str | int");
       }
     });
 
@@ -2009,14 +1911,10 @@ type Result[T, E] = tuple[T, E] | E
       expect(pointType).toBeDefined();
 
       if (pointType) {
-        expect(pointType).toMatchObject({
-          kind: "type_alias",
-          name: "Point",
-          type_expression: "tuple[T, T]",
-          location: expect.objectContaining({
-            file_path: "test.py",
-          }),
-        });
+        expect(pointType.kind).toBe("type_alias");
+        expect(pointType.name).toBe("Point");
+        expect(pointType.type_expression).toBe("tuple[T, T]");
+        expect(pointType.location.file_path).toBe("test.py");
       }
 
       // Verify GenericList
@@ -2027,11 +1925,9 @@ type Result[T, E] = tuple[T, E] | E
       expect(genericListType).toBeDefined();
 
       if (genericListType) {
-        expect(genericListType).toMatchObject({
-          kind: "type_alias",
-          name: "GenericList",
-          type_expression: "list[T]",
-        });
+        expect(genericListType.kind).toBe("type_alias");
+        expect(genericListType.name).toBe("GenericList");
+        expect(genericListType.type_expression).toBe("list[T]");
       }
     });
 

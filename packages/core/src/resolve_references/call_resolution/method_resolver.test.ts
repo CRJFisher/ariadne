@@ -25,10 +25,10 @@ import type {
   LexicalScope,
   VariableDefinition,
   ClassDefinition,
-  SemanticIndex,
   TypeMemberInfo,
 } from "@ariadnejs/types";
 import { location_key } from "@ariadnejs/types";
+import { SemanticIndex } from "../../index_single_file/semantic_index";
 
 // Helper to create a minimal semantic index
 function create_test_index(config: {
@@ -55,11 +55,11 @@ function create_test_index(config: {
     types: new Map(),
     imported_symbols: new Map(),
     references: config.references,
-    symbols_by_name: new Map(),
+    exported_symbols: new Map(),
     type_bindings: config.type_bindings || new Map(),
     type_members: config.type_members || new Map(),
-    constructors: new Map(),
     scope_to_definitions: new Map(),
+    type_alias_metadata: new Map(),
   };
 }
 
@@ -110,6 +110,7 @@ describe("Method Call Resolution", () => {
             },
             methods: [
               {
+                kind: "method",
                 symbol_id: get_name_method_id,
                 name: "getName" as SymbolName,
                 defining_scope_id: root_scope_id,
@@ -120,12 +121,13 @@ describe("Method Call Resolution", () => {
                   end_line: 4,
                   end_column: 3,
                 },
-                is_static: false,
-                is_abstract: false,
-                visibility: "public",
+                parameters: [],
               },
             ],
             properties: [],
+            extends: [],
+            decorators: [],
+            constructor: [],
             is_exported: false,
           },
         ],
@@ -149,7 +151,6 @@ describe("Method Call Resolution", () => {
             name: "user" as SymbolName,
             defining_scope_id: root_scope_id,
             location: user_var_loc,
-            is_const: true,
             is_exported: false,
           },
         ],
@@ -167,8 +168,8 @@ describe("Method Call Resolution", () => {
           {
             methods: new Map([["getName" as SymbolName, get_name_method_id]]),
             properties: new Map(),
-            constructor: null,
-            extends: null,
+            extends: [],
+            constructor: undefined,
           },
         ],
       ]);
@@ -195,7 +196,7 @@ describe("Method Call Resolution", () => {
         call_type: "method",
         context: {
           receiver_location: receiver_loc,
-          property_chain: ["user", "getName"] as readonly SymbolName[],
+          property_chain: ["user", "getName"] as SymbolName[],
         },
       };
 
@@ -270,6 +271,7 @@ describe("Method Call Resolution", () => {
             },
             methods: [
               {
+                kind: "method",
                 symbol_id: get_name_method_id,
                 name: "getName" as SymbolName,
                 defining_scope_id: root_scope_id,
@@ -280,12 +282,13 @@ describe("Method Call Resolution", () => {
                   end_line: 4,
                   end_column: 3,
                 },
-                is_static: false,
-                is_abstract: false,
-                visibility: "public",
+                parameters: [],
               },
             ],
             properties: [],
+            extends: [],
+            decorators: [],
+            constructor: [],
             is_exported: false,
           },
         ],
@@ -308,7 +311,6 @@ describe("Method Call Resolution", () => {
             name: "user" as SymbolName,
             defining_scope_id: root_scope_id,
             location: user_var_loc,
-            is_const: true,
             is_exported: false,
           },
         ],
@@ -325,8 +327,8 @@ describe("Method Call Resolution", () => {
           {
             methods: new Map([["getName" as SymbolName, get_name_method_id]]),
             properties: new Map(),
-            constructor: null,
-            extends: null,
+            constructor: undefined,
+            extends: [],
           },
         ],
       ]);
@@ -352,7 +354,7 @@ describe("Method Call Resolution", () => {
         call_type: "method",
         context: {
           receiver_location: receiver_loc,
-          property_chain: ["user", "getName"] as readonly SymbolName[],
+          property_chain: ["user", "getName"] as SymbolName[],
         },
       };
 
@@ -453,6 +455,7 @@ describe("Method Call Resolution", () => {
             },
             methods: [
               {
+                kind: "method",
                 symbol_id: get_name_method_id,
                 name: "getName" as SymbolName,
                 defining_scope_id: root_scope_id,
@@ -463,12 +466,13 @@ describe("Method Call Resolution", () => {
                   end_line: 4,
                   end_column: 3,
                 },
-                is_static: false,
-                is_abstract: false,
-                visibility: "public",
+                parameters: [],
               },
             ],
             properties: [],
+            extends: [],
+            decorators: [],
+            constructor: [],
             is_exported: false,
           },
         ],
@@ -503,7 +507,6 @@ describe("Method Call Resolution", () => {
             name: "user" as SymbolName,
             defining_scope_id: root_scope_id,
             location: outer_user_loc,
-            is_const: true,
             is_exported: false,
           },
         ],
@@ -515,7 +518,6 @@ describe("Method Call Resolution", () => {
             name: "user" as SymbolName,
             defining_scope_id: func_scope_id,
             location: inner_user_loc,
-            is_const: true,
             is_exported: false,
           },
         ],
@@ -532,8 +534,8 @@ describe("Method Call Resolution", () => {
           {
             methods: new Map([["getName" as SymbolName, get_name_method_id]]),
             properties: new Map(),
-            constructor: null,
-            extends: null,
+            constructor: undefined,
+            extends: [],
           },
         ],
       ]);
@@ -560,7 +562,7 @@ describe("Method Call Resolution", () => {
         call_type: "method",
         context: {
           receiver_location: receiver_loc,
-          property_chain: ["user", "getName"] as readonly SymbolName[],
+          property_chain: ["user", "getName"] as SymbolName[],
         },
       };
 
@@ -643,6 +645,7 @@ describe("Method Call Resolution", () => {
             },
             methods: [
               {
+                kind: "method",
                 symbol_id: type_a_method_id,
                 name: "method" as SymbolName,
                 defining_scope_id: root_scope_id,
@@ -653,12 +656,13 @@ describe("Method Call Resolution", () => {
                   end_line: 2,
                   end_column: 12,
                 },
-                is_static: false,
-                is_abstract: false,
-                visibility: "public",
+                parameters: [],
               },
             ],
             properties: [],
+            extends: [],
+            decorators: [],
+            constructor: [],
             is_exported: false,
           },
         ],
@@ -678,6 +682,7 @@ describe("Method Call Resolution", () => {
             },
             methods: [
               {
+                kind: "method",
                 symbol_id: type_b_method_id,
                 name: "method" as SymbolName,
                 defining_scope_id: root_scope_id,
@@ -688,12 +693,13 @@ describe("Method Call Resolution", () => {
                   end_line: 6,
                   end_column: 12,
                 },
-                is_static: false,
-                is_abstract: false,
-                visibility: "public",
+                parameters: [],
               },
             ],
             properties: [],
+            extends: [],
+            decorators: [],
+            constructor: [],
             is_exported: false,
           },
         ],
@@ -725,7 +731,6 @@ describe("Method Call Resolution", () => {
             name: "a" as SymbolName,
             defining_scope_id: root_scope_id,
             location: var_a_loc,
-            is_const: true,
             is_exported: false,
           },
         ],
@@ -737,7 +742,6 @@ describe("Method Call Resolution", () => {
             name: "b" as SymbolName,
             defining_scope_id: root_scope_id,
             location: var_b_loc,
-            is_const: true,
             is_exported: false,
           },
         ],
@@ -754,8 +758,8 @@ describe("Method Call Resolution", () => {
           {
             methods: new Map([["method" as SymbolName, type_a_method_id]]),
             properties: new Map(),
-            constructor: null,
-            extends: null,
+            constructor: undefined,
+            extends: [],
           },
         ],
         [
@@ -763,8 +767,8 @@ describe("Method Call Resolution", () => {
           {
             methods: new Map([["method" as SymbolName, type_b_method_id]]),
             properties: new Map(),
-            constructor: null,
-            extends: null,
+            constructor: undefined,
+            extends: [],
           },
         ],
       ]);
@@ -790,7 +794,7 @@ describe("Method Call Resolution", () => {
             end_line: 11,
             end_column: 1,
           },
-          property_chain: ["a", "method"] as readonly SymbolName[],
+          property_chain: ["a", "method"] as SymbolName[],
         },
       };
 
@@ -815,7 +819,7 @@ describe("Method Call Resolution", () => {
             end_line: 12,
             end_column: 1,
           },
-          property_chain: ["b", "method"] as readonly SymbolName[],
+          property_chain: ["b", "method"] as SymbolName[],
         },
       };
 
@@ -962,7 +966,7 @@ describe("Method Call Resolution", () => {
             end_line: 3,
             end_column: 9,
           },
-          property_chain: ["undefined_var", "method"] as readonly SymbolName[],
+          property_chain: ["undefined_var", "method"] as SymbolName[],
         },
       };
 
@@ -1029,7 +1033,6 @@ describe("Method Call Resolution", () => {
               end_line: 2,
               end_column: 9,
             },
-            is_const: true,
             is_exported: false,
           },
         ],
@@ -1057,7 +1060,7 @@ describe("Method Call Resolution", () => {
             end_line: 3,
             end_column: 3,
           },
-          property_chain: ["obj", "method"] as readonly SymbolName[],
+          property_chain: ["obj", "method"] as SymbolName[],
         },
       };
 
@@ -1126,6 +1129,9 @@ describe("Method Call Resolution", () => {
             },
             methods: [],
             properties: [],
+            extends: [],
+            decorators: [],
+            constructor: [],
             is_exported: false,
           },
         ],
@@ -1148,7 +1154,6 @@ describe("Method Call Resolution", () => {
             name: "user" as SymbolName,
             defining_scope_id: root_scope_id,
             location: user_var_loc,
-            is_const: true,
             is_exported: false,
           },
         ],
@@ -1165,8 +1170,8 @@ describe("Method Call Resolution", () => {
           {
             methods: new Map(),
             properties: new Map(),
-            constructor: null,
-            extends: null,
+            constructor: undefined,
+            extends: [],
           },
         ],
       ]);
@@ -1192,7 +1197,7 @@ describe("Method Call Resolution", () => {
             end_line: 6,
             end_column: 4,
           },
-          property_chain: ["user", "getName"] as readonly SymbolName[],
+          property_chain: ["user", "getName"] as SymbolName[],
         },
       };
 
@@ -1271,6 +1276,7 @@ describe("Method Call Resolution", () => {
             },
             methods: [
               {
+                kind: "method",
                 symbol_id: get_user_method_id,
                 name: "getUser" as SymbolName,
                 defining_scope_id: root_scope_id,
@@ -1281,12 +1287,13 @@ describe("Method Call Resolution", () => {
                   end_line: 4,
                   end_column: 3,
                 },
-                is_static: false,
-                is_abstract: false,
-                visibility: "public",
+                parameters: [],
               },
             ],
             properties: [],
+            extends: [],
+            decorators: [],
+            constructor: [],
             is_exported: false,
           },
         ],
@@ -1310,7 +1317,6 @@ describe("Method Call Resolution", () => {
             name: "container" as SymbolName,
             defining_scope_id: root_scope_id,
             location: container_var_loc,
-            is_const: true,
             is_exported: false,
           },
         ],
@@ -1326,8 +1332,8 @@ describe("Method Call Resolution", () => {
           {
             methods: new Map([["getUser" as SymbolName, get_user_method_id]]),
             properties: new Map(),
-            constructor: null,
-            extends: null,
+            constructor: undefined,
+            extends: [],
           },
         ],
       ]);
@@ -1353,7 +1359,7 @@ describe("Method Call Resolution", () => {
             end_line: 8,
             end_column: 9,
           },
-          property_chain: ["container", "getUser"] as readonly SymbolName[],
+          property_chain: ["container", "getUser"] as SymbolName[],
         },
       };
 
@@ -1429,6 +1435,7 @@ describe("Method Call Resolution", () => {
             },
             methods: [
               {
+                kind: "method",
                 symbol_id: get_name_method_id,
                 name: "getName" as SymbolName,
                 defining_scope_id: root_scope_id,
@@ -1439,12 +1446,13 @@ describe("Method Call Resolution", () => {
                   end_line: 4,
                   end_column: 3,
                 },
-                is_static: false,
-                is_abstract: false,
-                visibility: "public",
+                parameters: [],
               },
             ],
             properties: [],
+            extends: [],
+            decorators: [],
+            constructor: [],
             is_exported: false,
           },
         ],
@@ -1468,7 +1476,6 @@ describe("Method Call Resolution", () => {
             name: "getName" as SymbolName,
             defining_scope_id: root_scope_id,
             location: get_name_var_loc,
-            is_const: true,
             is_exported: false,
           },
         ],
@@ -1484,8 +1491,8 @@ describe("Method Call Resolution", () => {
           {
             methods: new Map([["getName" as SymbolName, get_name_method_id]]),
             properties: new Map(),
-            constructor: null,
-            extends: null,
+            constructor: undefined,
+            extends: [],
           },
         ],
       ]);
@@ -1596,6 +1603,7 @@ describe("Method Call Resolution", () => {
             },
             methods: [
               {
+                kind: "method",
                 symbol_id: base_method_id,
                 name: "baseMethod" as SymbolName,
                 defining_scope_id: root_scope_id,
@@ -1606,12 +1614,13 @@ describe("Method Call Resolution", () => {
                   end_line: 2,
                   end_column: 16,
                 },
-                is_static: false,
-                is_abstract: false,
-                visibility: "public",
+                parameters: [],
               },
             ],
             properties: [],
+            extends: [],
+            decorators: [],
+            constructor: [],
             is_exported: false,
           },
         ],
@@ -1631,6 +1640,9 @@ describe("Method Call Resolution", () => {
             },
             methods: [],
             properties: [],
+            extends: [],
+            decorators: [],
+            constructor: [],
             is_exported: false,
           },
         ],
@@ -1654,7 +1666,6 @@ describe("Method Call Resolution", () => {
             name: "obj" as SymbolName,
             defining_scope_id: root_scope_id,
             location: obj_var_loc,
-            is_const: true,
             is_exported: false,
           },
         ],
@@ -1705,7 +1716,7 @@ describe("Method Call Resolution", () => {
             end_line: 6,
             end_column: 3,
           },
-          property_chain: ["obj", "baseMethod"] as readonly SymbolName[],
+          property_chain: ["obj", "baseMethod"] as SymbolName[],
         },
       };
 
@@ -1789,6 +1800,7 @@ describe("Method Call Resolution", () => {
             },
             methods: [
               {
+                kind: "method",
                 symbol_id: method_a_id,
                 name: "methodA" as SymbolName,
                 defining_scope_id: root_scope_id,
@@ -1799,12 +1811,13 @@ describe("Method Call Resolution", () => {
                   end_line: 2,
                   end_column: 13,
                 },
-                is_static: false,
-                is_abstract: false,
-                visibility: "public",
+                parameters: [],
               },
             ],
             properties: [],
+            extends: [],
+            decorators: [],
+            constructor: [],
             is_exported: false,
           },
         ],
@@ -1824,6 +1837,9 @@ describe("Method Call Resolution", () => {
             },
             methods: [],
             properties: [],
+            extends: [],
+            decorators: [],
+            constructor: [],
             is_exported: false,
           },
         ],
@@ -1843,6 +1859,9 @@ describe("Method Call Resolution", () => {
             },
             methods: [],
             properties: [],
+            extends: [],
+            decorators: [],
+            constructor: [],
             is_exported: false,
           },
         ],
@@ -1866,7 +1885,6 @@ describe("Method Call Resolution", () => {
             name: "obj" as SymbolName,
             defining_scope_id: root_scope_id,
             location: obj_var_loc,
-            is_const: true,
             is_exported: false,
           },
         ],
@@ -1926,7 +1944,7 @@ describe("Method Call Resolution", () => {
             end_line: 7,
             end_column: 3,
           },
-          property_chain: ["obj", "methodA"] as readonly SymbolName[],
+          property_chain: ["obj", "methodA"] as SymbolName[],
         },
       };
 
@@ -2009,6 +2027,7 @@ describe("Method Call Resolution", () => {
             },
             methods: [
               {
+                kind: "method",
                 symbol_id: base_method_id,
                 name: "method" as SymbolName,
                 defining_scope_id: root_scope_id,
@@ -2019,12 +2038,13 @@ describe("Method Call Resolution", () => {
                   end_line: 2,
                   end_column: 12,
                 },
-                is_static: false,
-                is_abstract: false,
-                visibility: "public",
+                parameters: [],
               },
             ],
             properties: [],
+            extends: [],
+            decorators: [],
+            constructor: [],
             is_exported: false,
           },
         ],
@@ -2044,6 +2064,7 @@ describe("Method Call Resolution", () => {
             },
             methods: [
               {
+                kind: "method",
                 symbol_id: derived_method_id,
                 name: "method" as SymbolName,
                 defining_scope_id: root_scope_id,
@@ -2054,12 +2075,13 @@ describe("Method Call Resolution", () => {
                   end_line: 5,
                   end_column: 12,
                 },
-                is_static: false,
-                is_abstract: false,
-                visibility: "public",
+                parameters: [],
               },
             ],
             properties: [],
+            extends: [],
+            decorators: [],
+            constructor: [],
             is_exported: false,
           },
         ],
@@ -2083,7 +2105,6 @@ describe("Method Call Resolution", () => {
             name: "obj" as SymbolName,
             defining_scope_id: root_scope_id,
             location: obj_var_loc,
-            is_const: true,
             is_exported: false,
           },
         ],
@@ -2134,7 +2155,7 @@ describe("Method Call Resolution", () => {
             end_line: 8,
             end_column: 3,
           },
-          property_chain: ["obj", "method"] as readonly SymbolName[],
+          property_chain: ["obj", "method"] as SymbolName[],
         },
       };
 
@@ -2214,6 +2235,9 @@ describe("Method Call Resolution", () => {
               end_column: 21,
             },
             methods: [],
+            extends: [],
+            decorators: [],
+            constructor: [],
             properties: [],
             is_exported: false,
           },
@@ -2233,6 +2257,9 @@ describe("Method Call Resolution", () => {
               end_column: 21,
             },
             methods: [],
+            extends: [],
+            decorators: [],
+            constructor: [],
             properties: [],
             is_exported: false,
           },
@@ -2257,7 +2284,6 @@ describe("Method Call Resolution", () => {
             name: "obj" as SymbolName,
             defining_scope_id: root_scope_id,
             location: obj_var_loc,
-            is_const: true,
             is_exported: false,
           },
         ],
@@ -2309,7 +2335,7 @@ describe("Method Call Resolution", () => {
             end_line: 4,
             end_column: 3,
           },
-          property_chain: ["obj", "method"] as readonly SymbolName[],
+          property_chain: ["obj", "method"] as SymbolName[],
         },
       };
 

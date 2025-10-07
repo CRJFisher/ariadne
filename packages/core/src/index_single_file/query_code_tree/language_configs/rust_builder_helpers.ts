@@ -3,7 +3,6 @@ import type { SyntaxNode } from "tree-sitter";
 import type {
   SymbolId,
   SymbolName,
-  SymbolAvailability,
   Location,
   ModulePath,
   ExportMetadata,
@@ -199,54 +198,6 @@ export function create_type_alias_id(capture: CaptureNode): SymbolId {
 // ============================================================================
 // Rust-Specific Extractors
 // ============================================================================
-
-export function extract_visibility(node: SyntaxNode): SymbolAvailability {
-  // Find visibility modifier in node or parent
-  let testNode = node;
-
-  while (testNode) {
-    const visibilityNode = testNode.children?.find(
-      (child) => child.type === "visibility_modifier"
-    );
-
-    if (visibilityNode) {
-      const text = visibilityNode.text;
-
-      if (text === "pub") {
-        return { scope: "public" };
-      }
-      if (text === "pub(crate)") {
-        return { scope: "package-internal" };
-      }
-      if (text === "pub(super)") {
-        return { scope: "file-private" }; // Map to closest available scope
-      }
-      if (text.startsWith("pub(in")) {
-        return { scope: "file-private" }; // Map to closest available scope
-      }
-    }
-
-    // Check parent for visibility (for fields in structs, etc)
-    if (
-      testNode.parent &&
-      (testNode.parent.type === "struct_item" ||
-        testNode.parent.type === "enum_item" ||
-        testNode.parent.type === "function_item" ||
-        testNode.parent.type === "const_item" ||
-        testNode.parent.type === "static_item" ||
-        testNode.parent.type === "trait_item" ||
-        testNode.parent.type === "type_item" ||
-        testNode.parent.type === "mod_item")
-    ) {
-      testNode = testNode.parent;
-    } else {
-      break;
-    }
-  }
-
-  // Default to module-private in Rust
-  return { scope: "file-private" };
-}
 
 /**
  * Check if a Rust node has pub visibility modifier

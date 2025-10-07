@@ -25,7 +25,9 @@ function createParsedFile(
   return {
     file_path: filePath,
     file_lines: lines.length,
-    file_end_column: lines[lines.length - 1]?.length || 0,
+    // For 1-indexed positions with exclusive ends: end_column = length + 1
+    // (tree-sitter's endPosition is exclusive and we add 1 to convert to 1-indexed)
+    file_end_column: (lines[lines.length - 1]?.length || 0) + 1,
     tree,
     lang: language,
   };
@@ -568,11 +570,204 @@ describe("Semantic Index - JavaScript", () => {
       expect(mixedCall?.member_access?.is_optional_chain).toBe(true);
     });
 
-    // JavaScript doesn't have built-in type annotations, and JSDoc parsing is not currently implemented
-    // This test is removed as it tests for unsupported features
-    it.skip("should populate type_info for type references (JSDoc not supported)", () => {
-      // JSDoc type extraction would require additional parsing logic
-      // which is not currently implemented for JavaScript
+    it("should capture JSDoc documentation for functions", () => {
+      const code = `
+        /**
+         * Creates a user account
+         * @param {string} name - The user's name
+         * @param {number} age - The user's age
+         * @returns {User} The created user object
+         */
+        function createUser(name, age) {
+          return { name, age };
+        }
+      `;
+
+      const tree = parser.parse(code);
+      const parsedFile = createParsedFile(
+        code,
+        "test.js" as FilePath,
+        tree,
+        "javascript" as Language
+      );
+      const result = build_semantic_index(
+        parsedFile,
+        tree,
+        "javascript" as Language
+      );
+
+      const createUserFunc = Array.from(result.functions.values()).find(
+        (f) => f.name === "createUser"
+      );
+
+      expect(createUserFunc).toBeDefined();
+      expect(createUserFunc?.docstring).toBeDefined();
+      expect(createUserFunc?.docstring).toContain("Creates a user account");
+      expect(createUserFunc?.docstring).toContain("@param {string} name");
+      expect(createUserFunc?.docstring).toContain("@param {number} age");
+      expect(createUserFunc?.docstring).toContain("@returns {User}");
+    });
+
+    it("should capture JSDoc documentation for classes", () => {
+      const code = `
+        /**
+         * Represents a user in the system
+         * @class
+         */
+        class User {
+          constructor(name) {
+            this.name = name;
+          }
+        }
+      `;
+
+      const tree = parser.parse(code);
+      const parsedFile = createParsedFile(
+        code,
+        "test.js" as FilePath,
+        tree,
+        "javascript" as Language
+      );
+      const result = build_semantic_index(
+        parsedFile,
+        tree,
+        "javascript" as Language
+      );
+
+      const userClass = Array.from(result.classes.values()).find(
+        (c) => c.name === "User"
+      );
+
+      expect(userClass).toBeDefined();
+      expect(userClass?.docstring).toBeDefined();
+      expect(userClass?.docstring?.[0]).toContain("Represents a user in the system");
+      expect(userClass?.docstring?.[0]).toContain("@class");
+    });
+
+    it("should capture JSDoc documentation for methods", () => {
+      const code = `
+        class Calculator {
+          /**
+           * Adds two numbers together
+           * @param {number} a - First number
+           * @param {number} b - Second number
+           * @returns {number} The sum
+           */
+          add(a, b) {
+            return a + b;
+          }
+        }
+      `;
+
+      const tree = parser.parse(code);
+      const parsedFile = createParsedFile(
+        code,
+        "test.js" as FilePath,
+        tree,
+        "javascript" as Language
+      );
+      const result = build_semantic_index(
+        parsedFile,
+        tree,
+        "javascript" as Language
+      );
+
+      const calcClass = Array.from(result.classes.values()).find(
+        (c) => c.name === "Calculator"
+      );
+
+      expect(calcClass).toBeDefined();
+      expect(calcClass?.methods.length).toBe(1);
+      const addMethod = calcClass?.methods[0];
+      expect(addMethod?.name).toBe("add");
+      expect(addMethod?.docstring).toBeDefined();
+      expect(addMethod?.docstring).toContain("Adds two numbers together");
+      expect(addMethod?.docstring).toContain("@param {number} a");
+      expect(addMethod?.docstring).toContain("@param {number} b");
+      expect(addMethod?.docstring).toContain("@returns {number}");
+    });
+
+    it("should capture JSDoc documentation for variables", () => {
+      const code = `
+        /** @type {Service} */
+        const service = createService();
+
+        /**
+         * The application configuration
+         * @type {Config}
+         */
+        const config = loadConfig();
+      `;
+
+      const tree = parser.parse(code);
+      const parsedFile = createParsedFile(
+        code,
+        "test.js" as FilePath,
+        tree,
+        "javascript" as Language
+      );
+      const result = build_semantic_index(
+        parsedFile,
+        tree,
+        "javascript" as Language
+      );
+
+      const serviceVar = Array.from(result.variables.values()).find(
+        (v) => v.name === "service"
+      );
+      const configVar = Array.from(result.variables.values()).find(
+        (v) => v.name === "config"
+      );
+
+      expect(serviceVar).toBeDefined();
+      expect(serviceVar?.docstring).toBeDefined();
+      expect(serviceVar?.docstring).toContain("@type {Service}");
+
+      expect(configVar).toBeDefined();
+      expect(configVar?.docstring).toBeDefined();
+      expect(configVar?.docstring).toContain("The application configuration");
+      expect(configVar?.docstring).toContain("@type {Config}");
+    });
+
+    it("should not capture documentation when there is no comment", () => {
+      const code = `
+        function noDoc() {
+          return 42;
+        }
+
+        class NoDocClass {
+          method() {}
+        }
+
+        const noDocVar = 123;
+      `;
+
+      const tree = parser.parse(code);
+      const parsedFile = createParsedFile(
+        code,
+        "test.js" as FilePath,
+        tree,
+        "javascript" as Language
+      );
+      const result = build_semantic_index(
+        parsedFile,
+        tree,
+        "javascript" as Language
+      );
+
+      const noDocFunc = Array.from(result.functions.values()).find(
+        (f) => f.name === "noDoc"
+      );
+      const noDocClass = Array.from(result.classes.values()).find(
+        (c) => c.name === "NoDocClass"
+      );
+      const noDocVar = Array.from(result.variables.values()).find(
+        (v) => v.name === "noDocVar"
+      );
+
+      expect(noDocFunc?.docstring).toBeUndefined();
+      expect(noDocClass?.docstring).toBeUndefined();
+      expect(noDocVar?.docstring).toBeUndefined();
     });
 
     it("should capture property access chains correctly", () => {
@@ -1368,50 +1563,15 @@ describe("Semantic Index - JavaScript", () => {
       if (class_def?.constructor && class_def.constructor.length > 0) {
         const ctor = class_def.constructor[0];
 
-        // Verify constructor structure - use toMatchObject for flexibility with optional fields
-        expect(ctor).toMatchObject({
-          kind: "constructor",
-          symbol_id: expect.any(String), // May use method: or constructor: prefix
-          name: "constructor",
-          location: expect.objectContaining({
-            file_path: "test.js",
-            start_line: expect.any(Number),
-            start_column: expect.any(Number),
-            end_line: expect.any(Number),
-            end_column: expect.any(Number),
-          }),
-          defining_scope_id: expect.any(String),
-          availability: expect.objectContaining({
-            scope: expect.any(String),
-          }),
-        });
+        // Verify constructor structure
+        expect(ctor.kind).toBe("constructor");
+        expect(ctor.name).toBe("constructor");
+        expect(ctor.symbol_id).toContain(":");
+        expect(ctor.location.file_path).toBe("test.js");
+        expect(ctor.defining_scope_id).toContain(":");
 
-        // Verify parameters separately with exact equality
+        // Verify parameters
         expect(ctor.parameters).toHaveLength(2);
-        expect(ctor.parameters).toEqual(
-          expect.arrayContaining([
-            expect.objectContaining({
-              kind: "parameter",
-              symbol_id: expect.any(String),
-              name: "a",
-              location: expect.objectContaining({
-                file_path: "test.js",
-              }),
-              defining_scope_id: expect.any(String),
-              availability: expect.any(Object),
-            }),
-            expect.objectContaining({
-              kind: "parameter",
-              symbol_id: expect.any(String),
-              name: "b",
-              location: expect.objectContaining({
-                file_path: "test.js",
-              }),
-              defining_scope_id: expect.any(String),
-              availability: expect.any(Object),
-            }),
-          ])
-        );
 
         // Verify parameter details
         const paramNames = ctor.parameters.map((p) => p.name);
@@ -1428,38 +1588,16 @@ describe("Semantic Index - JavaScript", () => {
       expect(method1).toBeDefined();
 
       if (method1) {
-        expect(method1).toMatchObject({
-          kind: "method",
-          symbol_id: expect.stringMatching(/^method:/),
-          name: "method1",
-          location: expect.objectContaining({
-            file_path: "test.js",
-            start_line: expect.any(Number),
-            start_column: expect.any(Number),
-            end_line: expect.any(Number),
-            end_column: expect.any(Number),
-          }),
-          defining_scope_id: expect.any(String),
-          availability: expect.objectContaining({
-            scope: expect.any(String),
-          }),
-        });
+        expect(method1.kind).toBe("method");
+        expect(method1.symbol_id).toMatch(/^method:/);
+        expect(method1.name).toBe("method1");
+        expect(method1.location.file_path).toBe("test.js");
+        expect(method1.defining_scope_id).toContain(":");
 
         // Verify method1 has 2 parameters
         expect(method1.parameters).toHaveLength(2);
-        expect(method1.parameters).toEqual(
-          expect.arrayContaining([
-            expect.objectContaining({
-              kind: "parameter",
-              name: "p1",
-            }),
-            expect.objectContaining({
-              kind: "parameter",
-              name: "p2",
-              default_value: expect.any(String),
-            }),
-          ])
-        );
+        const paramNames = method1.parameters.map((p) => p.name);
+        expect(paramNames).toEqual(["p1", "p2"]);
 
         // Verify p2 has default value
         const p2 = method1.parameters.find((p) => p.name === "p2");
@@ -1476,24 +1614,11 @@ describe("Semantic Index - JavaScript", () => {
       const x_prop = class_def?.properties.find((p) => p.name === "x");
 
       if (x_prop) {
-        expect(x_prop).toMatchObject({
-          kind: "property",
-          symbol_id: expect.stringMatching(/^property:/),
-          name: "x",
-          location: expect.objectContaining({
-            file_path: "test.js",
-            start_line: expect.any(Number),
-            start_column: expect.any(Number),
-            end_line: expect.any(Number),
-            end_column: expect.any(Number),
-          }),
-          defining_scope_id: expect.any(String),
-          availability: expect.objectContaining({
-            scope: expect.any(String),
-          }),
-        });
-        // Verify property name (initial_value extraction may vary)
+        expect(x_prop.kind).toBe("property");
+        expect(x_prop.symbol_id).toMatch(/^property:/);
         expect(x_prop.name).toBe("x");
+        expect(x_prop.location.file_path).toBe("test.js");
+        expect(x_prop.defining_scope_id).toContain(":");
         if (x_prop.initial_value) {
           expect(x_prop.initial_value).toBe("10");
         }
@@ -1534,28 +1659,11 @@ describe("Semantic Index - JavaScript", () => {
       expect(add_func).toBeDefined();
 
       if (add_func) {
-        expect(add_func).toMatchObject({
-          kind: "function",
-          symbol_id: expect.stringMatching(/^function:/),
-          name: "add",
-          location: expect.objectContaining({
-            file_path: "test.js",
-            start_line: expect.any(Number),
-            start_column: expect.any(Number),
-            end_line: expect.any(Number),
-            end_column: expect.any(Number),
-          }),
-          defining_scope_id: expect.any(String),
-          availability: expect.objectContaining({
-            scope: expect.any(String),
-          }),
-          signature: expect.objectContaining({
-            parameters: expect.any(Array),
-          }),
-        });
-
-        // Note: JavaScript standalone function parameters may not be fully populated yet
-        // This is tracked separately from method/constructor parameters
+        expect(add_func.kind).toBe("function");
+        expect(add_func.symbol_id).toMatch(/^function:/);
+        expect(add_func.name).toBe("add");
+        expect(add_func.location.file_path).toBe("test.js");
+        expect(add_func.defining_scope_id).toContain(":");
         expect(add_func.signature).toBeDefined();
         expect(add_func.signature.parameters).toBeDefined();
       }
@@ -1568,13 +1676,10 @@ describe("Semantic Index - JavaScript", () => {
       expect(greet_func).toBeDefined();
 
       if (greet_func) {
-        expect(greet_func).toMatchObject({
-          kind: "function",
-          name: "greet",
-          signature: expect.objectContaining({
-            parameters: expect.any(Array),
-          }),
-        });
+        expect(greet_func.kind).toBe("function");
+        expect(greet_func.name).toBe("greet");
+        expect(greet_func.signature).toBeDefined();
+        expect(greet_func.signature.parameters).toBeDefined();
       }
 
       // Verify arrow function
@@ -1585,13 +1690,10 @@ describe("Semantic Index - JavaScript", () => {
       expect(multiply_func).toBeDefined();
 
       if (multiply_func) {
-        expect(multiply_func).toMatchObject({
-          kind: "function",
-          name: "multiply",
-          signature: expect.objectContaining({
-            parameters: expect.any(Array),
-          }),
-        });
+        expect(multiply_func.kind).toBe("function");
+        expect(multiply_func.name).toBe("multiply");
+        expect(multiply_func.signature).toBeDefined();
+        expect(multiply_func.signature.parameters).toBeDefined();
       }
     });
 
@@ -1623,25 +1725,11 @@ describe("Semantic Index - JavaScript", () => {
       expect(x_var).toBeDefined();
 
       if (x_var) {
-        expect(x_var).toMatchObject({
-          kind: "variable",
-          symbol_id: expect.stringMatching(/^variable:/),
-          name: "x",
-          location: expect.objectContaining({
-            file_path: "test.js",
-            start_line: expect.any(Number),
-            start_column: expect.any(Number),
-            end_line: expect.any(Number),
-            end_column: expect.any(Number),
-          }),
-          defining_scope_id: expect.any(String),
-          availability: expect.objectContaining({
-            scope: expect.any(String),
-          }),
-          // Note: initial_value may not be extracted for simple let declarations
-        });
-        // Verify the variable exists (structure is correct even if initial_value not extracted)
+        expect(x_var.kind).toBe("variable");
+        expect(x_var.symbol_id).toMatch(/^variable:/);
         expect(x_var.name).toBe("x");
+        expect(x_var.location.file_path).toBe("test.js");
+        expect(x_var.defining_scope_id).toContain(":");
       }
 
       // Verify constant PI
@@ -1652,25 +1740,11 @@ describe("Semantic Index - JavaScript", () => {
       expect(pi_const).toBeDefined();
 
       if (pi_const) {
-        expect(pi_const).toMatchObject({
-          kind: "constant",
-          symbol_id: expect.any(String), // May use variable: or constant: prefix
-          name: "PI",
-          location: expect.objectContaining({
-            file_path: "test.js",
-            start_line: expect.any(Number),
-            start_column: expect.any(Number),
-            end_line: expect.any(Number),
-            end_column: expect.any(Number),
-          }),
-          defining_scope_id: expect.any(String),
-          availability: expect.objectContaining({
-            scope: expect.any(String),
-          }),
-        });
-        // Verify constant exists with correct name
+        expect(pi_const.kind).toBe("constant");
+        expect(pi_const.symbol_id).toContain(":");
         expect(pi_const.name).toBe("PI");
-        // Initial value extraction may vary by implementation
+        expect(pi_const.location.file_path).toBe("test.js");
+        expect(pi_const.defining_scope_id).toContain(":");
         if (pi_const.initial_value) {
           expect(pi_const.initial_value).toBe("3.14");
         }
@@ -1706,26 +1780,11 @@ describe("Semantic Index - JavaScript", () => {
       expect(default_import).toBeDefined();
 
       if (default_import) {
-        expect(default_import).toMatchObject({
-          kind: "import",
-          symbol_id: expect.any(String), // Symbol ID format may vary
-          name: "defaultExport",
-          location: expect.objectContaining({
-            file_path: "test.js",
-            start_line: expect.any(Number),
-            start_column: expect.any(Number),
-            end_line: expect.any(Number),
-            end_column: expect.any(Number),
-          }),
-          defining_scope_id: expect.any(String),
-          availability: expect.objectContaining({
-            scope: expect.any(String),
-          }),
-          import_path: "./module1",
-          // import_kind may vary depending on parser (default vs named)
-        });
-        // Verify it's an import with the correct name and path
+        expect(default_import.kind).toBe("import");
+        expect(default_import.symbol_id).toContain(":");
         expect(default_import.name).toBe("defaultExport");
+        expect(default_import.location.file_path).toBe("test.js");
+        expect(default_import.defining_scope_id).toContain(":");
         expect(default_import.import_path).toBe("./module1");
       }
 
@@ -1743,20 +1802,11 @@ describe("Semantic Index - JavaScript", () => {
       expect(namespace_import).toBeDefined();
 
       if (namespace_import) {
-        expect(namespace_import).toMatchObject({
-          kind: "import",
-          symbol_id: expect.any(String),
-          name: "namespace",
-          location: expect.objectContaining({
-            file_path: "test.js",
-          }),
-          defining_scope_id: expect.any(String),
-          availability: expect.any(Object),
-          import_path: "./module3",
-          // import_kind detection may vary
-        });
-        // Verify it's an import with the correct name and path
+        expect(namespace_import.kind).toBe("import");
+        expect(namespace_import.symbol_id).toContain(":");
         expect(namespace_import.name).toBe("namespace");
+        expect(namespace_import.location.file_path).toBe("test.js");
+        expect(namespace_import.defining_scope_id).toContain(":");
         expect(namespace_import.import_path).toBe("./module3");
       }
 

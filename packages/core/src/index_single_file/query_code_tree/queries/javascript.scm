@@ -44,6 +44,34 @@
 ;; DEFINITIONS - Symbols that introduce new names
 ;; ==============================================================================
 
+;; ==============================================================================
+;; DOCUMENTATION - JSDoc comments before definitions
+;; ==============================================================================
+
+; JSDoc comment before function declaration
+(program
+  (comment) @definition.function.documentation
+  (function_declaration) @scope.function.documented
+)
+
+; JSDoc comment before class declaration
+(program
+  (comment) @definition.class.documentation
+  (class_declaration) @scope.class.documented
+)
+
+; JSDoc comment before variable/constant declaration
+(program
+  (comment) @definition.variable.documentation
+  (lexical_declaration) @scope.variable.documented
+)
+
+; JSDoc comment before method definition
+(class_body
+  (comment) @definition.method.documentation
+  (method_definition) @scope.method.documented
+)
+
 ; Function definitions
 (function_declaration
   name: (identifier) @definition.function

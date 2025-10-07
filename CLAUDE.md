@@ -94,3 +94,4 @@ module_name/
 - **Fix issues, don't hide them** - Never modify tests to pass
 - **Test real scenarios** - Use realistic code samples
 - **Document gaps** - Note any untested edge cases
+- _NEVER_ use `toMatchObject` matcher - use `toEqual` instead and create the expected, typed literal objects

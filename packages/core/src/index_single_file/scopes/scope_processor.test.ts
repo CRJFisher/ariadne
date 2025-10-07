@@ -2,7 +2,11 @@
  * Tests for Direct Scope Processing
  */
 
-import { describe, it, expect, beforeEach } from "vitest";
+import { describe, it, expect, beforeEach, beforeAll } from "vitest";
+import Parser from "tree-sitter";
+import TypeScript from "tree-sitter-typescript";
+import JavaScript from "tree-sitter-javascript";
+import Python from "tree-sitter-python";
 import { process_scopes, create_processing_context } from "./scope_processor";
 import type {
   Location,
@@ -10,11 +14,13 @@ import type {
   SymbolName,
   ScopeId,
   LexicalScope,
+  Language,
 } from "@ariadnejs/types";
 import {
   CaptureNode,
   SemanticEntity,
   SemanticCategory,
+  build_semantic_index,
 } from "../semantic_index";
 import { ParsedFile } from "../file_utils";
 
@@ -767,6 +773,411 @@ describe("scope_processor", () => {
 
       // Should prefer the smaller scope when depths are equal
       expect(scope_id).toBe(small_module_id);
+    });
+  });
+
+  // ============================================================================
+  // Integration Tests - Body-Based Scope Verification
+  // ============================================================================
+
+  describe("Integration Tests - Body-Based Scope Verification", () => {
+    // Helper to create ParsedFile for integration tests
+    function createParsedFile(
+      code: string,
+      filePath: FilePath,
+      tree: Parser.Tree,
+      language: Language
+    ): ParsedFile {
+      const lines = code.split("\n");
+      return {
+        file_path: filePath,
+        file_lines: lines.length,
+        // For 1-indexed positions with exclusive ends: end_column = length + 1
+        // (tree-sitter's endPosition is exclusive and we add 1 to convert to 1-indexed)
+        file_end_column: (lines[lines.length - 1]?.length || 0) + 1,
+        tree,
+        lang: language,
+      };
+    }
+
+    describe("TypeScript Class Body-Based Scope", () => {
+      let parser: Parser;
+
+      beforeAll(() => {
+        parser = new Parser();
+        parser.setLanguage(TypeScript.tsx);
+      });
+
+      it("should capture only class body as scope, not entire declaration", () => {
+        const code = `class MyClass {
+  method() {}
+}`;
+
+        const tree = parser.parse(code);
+        const parsedFile = createParsedFile(
+          code,
+          "test.ts" as FilePath,
+          tree,
+          "typescript" as Language
+        );
+        const index = build_semantic_index(
+          parsedFile,
+          tree,
+          "typescript" as Language
+        );
+
+        const file_scope = Array.from(index.scopes.values()).find(
+          (s) => s.type === "module" && s.parent_id === null
+        );
+        expect(file_scope).toBeDefined();
+        const file_scope_id = file_scope!.id;
+
+        const class_scope = Array.from(index.scopes.values()).find(
+          (s) => s.type === "class"
+        );
+        expect(class_scope).toBeDefined();
+
+        const myClass = Array.from(index.classes.values()).find(
+          (c) => c.name === "MyClass"
+        );
+        expect(myClass).toBeDefined();
+
+        // Class scope should start at body
+        expect(class_scope!.location.start_column).toBeGreaterThan(10);
+
+        // Class name should be in module scope
+        expect(myClass!.defining_scope_id).toBe(file_scope_id);
+
+        // Class scope parent should be module scope
+        const parent_scope = index.scopes.get(class_scope!.parent_id!);
+        expect(parent_scope?.type).toBe("module");
+      });
+
+      it("should capture only interface body as scope, not entire declaration", () => {
+        const code = `interface IFoo {
+  bar(): void;
+}`;
+
+        const tree = parser.parse(code);
+        const parsedFile = createParsedFile(
+          code,
+          "test.ts" as FilePath,
+          tree,
+          "typescript" as Language
+        );
+        const index = build_semantic_index(
+          parsedFile,
+          tree,
+          "typescript" as Language
+        );
+
+        const file_scope = Array.from(index.scopes.values()).find(
+          (s) => s.type === "module" && s.parent_id === null
+        );
+        expect(file_scope).toBeDefined();
+        const file_scope_id = file_scope!.id;
+
+        const interface_scope = Array.from(index.scopes.values()).find(
+          (s) => s.type === "class" && s.location.start_column > 10
+        );
+        expect(interface_scope).toBeDefined();
+
+        const iFoo = Array.from(index.interfaces.values()).find(
+          (i) => i.name === "IFoo"
+        );
+        expect(iFoo).toBeDefined();
+
+        // Interface scope should start at body
+        expect(interface_scope!.location.start_column).toBeGreaterThan(10);
+
+        // Interface name should be in module scope
+        expect(iFoo!.defining_scope_id).toBe(file_scope_id);
+      });
+
+      it("should capture only enum body as scope, not entire declaration", () => {
+        const code = `enum Status {
+  Active = "active",
+  Inactive = "inactive"
+}`;
+
+        const tree = parser.parse(code);
+        const parsedFile = createParsedFile(
+          code,
+          "test.ts" as FilePath,
+          tree,
+          "typescript" as Language
+        );
+        const index = build_semantic_index(
+          parsedFile,
+          tree,
+          "typescript" as Language
+        );
+
+        const file_scope = Array.from(index.scopes.values()).find(
+          (s) => s.type === "module" && s.parent_id === null
+        );
+        expect(file_scope).toBeDefined();
+        const file_scope_id = file_scope!.id;
+
+        const enum_scope = Array.from(index.scopes.values()).find(
+          (s) => s.type === "class" && s.location.start_column > 10
+        );
+        expect(enum_scope).toBeDefined();
+
+        const statusEnum = Array.from(index.enums.values()).find(
+          (e) => e.name === "Status"
+        );
+        expect(statusEnum).toBeDefined();
+
+        // Enum scope should start at body
+        expect(enum_scope!.location.start_column).toBeGreaterThan(10);
+
+        // Enum name should be in module scope
+        expect(statusEnum!.defining_scope_id).toBe(file_scope_id);
+      });
+
+      it("should correctly scope class with fields and methods", () => {
+        const code = `class Calculator {
+  private value: number = 0;
+
+  add(n: number): void {
+    this.value += n;
+  }
+
+  get result(): number {
+    return this.value;
+  }
+}`;
+
+        const tree = parser.parse(code);
+        const parsedFile = createParsedFile(
+          code,
+          "test.ts" as FilePath,
+          tree,
+          "typescript" as Language
+        );
+        const index = build_semantic_index(
+          parsedFile,
+          tree,
+          "typescript" as Language
+        );
+
+        const file_scope = Array.from(index.scopes.values()).find(
+          (s) => s.type === "module" && s.parent_id === null
+        );
+        expect(file_scope).toBeDefined();
+        const file_scope_id = file_scope!.id;
+
+        const class_scope = Array.from(index.scopes.values()).find(
+          (s) => s.type === "class"
+        );
+        expect(class_scope).toBeDefined();
+
+        const calcClass = Array.from(index.classes.values()).find(
+          (c) => c.name === "Calculator"
+        );
+        expect(calcClass).toBeDefined();
+
+        // Class name should be in module scope
+        expect(calcClass!.defining_scope_id).toBe(file_scope_id);
+
+        // Class scope should start at body
+        expect(class_scope!.location.start_column).toBeGreaterThan(10);
+
+        // Class scope parent should be module scope
+        const parent_scope = index.scopes.get(class_scope!.parent_id!);
+        expect(parent_scope?.type).toBe("module");
+      });
+    });
+
+    describe("JavaScript Class Body-Based Scope", () => {
+      let jsParser: Parser;
+
+      beforeAll(() => {
+        jsParser = new Parser();
+        jsParser.setLanguage(JavaScript);
+      });
+
+      it("should capture only class body as scope for class declaration", () => {
+        const code = `class MyClass {
+  method() {}
+}`;
+
+        const tree = jsParser.parse(code);
+        const parsedFile = createParsedFile(
+          code,
+          "test.js" as FilePath,
+          tree,
+          "javascript" as Language
+        );
+        const index = build_semantic_index(
+          parsedFile,
+          tree,
+          "javascript" as Language
+        );
+
+        const file_scope = Array.from(index.scopes.values()).find(
+          (s) => s.type === "module" && s.parent_id === null
+        );
+        expect(file_scope).toBeDefined();
+        const file_scope_id = file_scope!.id;
+
+        const class_scope = Array.from(index.scopes.values()).find(
+          (s) => s.type === "class"
+        );
+        expect(class_scope).toBeDefined();
+
+        const myClass = Array.from(index.classes.values()).find(
+          (c) => c.name === "MyClass"
+        );
+        expect(myClass).toBeDefined();
+
+        // Class scope should start at body
+        expect(class_scope!.location.start_column).toBeGreaterThan(10);
+
+        // Class name should be in module scope
+        expect(myClass!.defining_scope_id).toBe(file_scope_id);
+
+        // Class scope parent should be module scope
+        const parent_scope = index.scopes.get(class_scope!.parent_id!);
+        expect(parent_scope?.type).toBe("module");
+      });
+
+      it("should capture only class body as scope for class expression", () => {
+        const code = `const MyClass = class {
+  method() {}
+}`;
+
+        const tree = jsParser.parse(code);
+        const parsedFile = createParsedFile(
+          code,
+          "test.js" as FilePath,
+          tree,
+          "javascript" as Language
+        );
+        const index = build_semantic_index(
+          parsedFile,
+          tree,
+          "javascript" as Language
+        );
+
+        const file_scope = Array.from(index.scopes.values()).find(
+          (s) => s.type === "module" && s.parent_id === null
+        );
+        expect(file_scope).toBeDefined();
+
+        const class_scope = Array.from(index.scopes.values()).find(
+          (s) => s.type === "class"
+        );
+        expect(class_scope).toBeDefined();
+
+        // Class scope should start at body
+        expect(class_scope!.location.start_column).toBeGreaterThan(20);
+      });
+    });
+
+    describe("Python Class Body-Based Scope", () => {
+      let pyParser: Parser;
+
+      beforeAll(() => {
+        pyParser = new Parser();
+        pyParser.setLanguage(Python);
+      });
+
+      it("should capture only class body as scope, not entire declaration", () => {
+        const code = `class MyClass:
+    def method(self):
+        pass`;
+
+        const tree = pyParser.parse(code);
+        const parsedFile = createParsedFile(
+          code,
+          "test.py" as FilePath,
+          tree,
+          "python" as Language
+        );
+        const index = build_semantic_index(
+          parsedFile,
+          tree,
+          "python" as Language
+        );
+
+        const file_scope = Array.from(index.scopes.values()).find(
+          (s) => s.type === "module" && s.parent_id === null
+        );
+        expect(file_scope).toBeDefined();
+        const file_scope_id = file_scope!.id;
+
+        const class_scope = Array.from(index.scopes.values()).find(
+          (s) => s.type === "class"
+        );
+        expect(class_scope).toBeDefined();
+
+        const myClass = Array.from(index.classes.values()).find(
+          (c) => c.name === "MyClass"
+        );
+        expect(myClass).toBeDefined();
+
+        // Class scope should start after ':'
+        expect(class_scope!.location.start_line).toBeGreaterThan(0);
+
+        // Class name should be in module scope
+        expect(myClass!.defining_scope_id).toBe(file_scope_id);
+
+        // Class scope parent should be module scope
+        const parent_scope = index.scopes.get(class_scope!.parent_id!);
+        expect(parent_scope?.type).toBe("module");
+      });
+
+      it("should correctly scope class with multiple methods", () => {
+        const code = `class Calculator:
+    def add(self, x, y):
+        return x + y
+
+    def subtract(self, x, y):
+        return x - y`;
+
+        const tree = pyParser.parse(code);
+        const parsedFile = createParsedFile(
+          code,
+          "test.py" as FilePath,
+          tree,
+          "python" as Language
+        );
+        const index = build_semantic_index(
+          parsedFile,
+          tree,
+          "python" as Language
+        );
+
+        const file_scope = Array.from(index.scopes.values()).find(
+          (s) => s.type === "module" && s.parent_id === null
+        );
+        expect(file_scope).toBeDefined();
+        const file_scope_id = file_scope!.id;
+
+        const class_scope = Array.from(index.scopes.values()).find(
+          (s) => s.type === "class"
+        );
+        expect(class_scope).toBeDefined();
+
+        const calcClass = Array.from(index.classes.values()).find(
+          (c) => c.name === "Calculator"
+        );
+        expect(calcClass).toBeDefined();
+
+        // Class name should be in module scope
+        expect(calcClass!.defining_scope_id).toBe(file_scope_id);
+
+        // Class scope should start on next line
+        expect(class_scope!.location.start_line).toBeGreaterThan(0);
+
+        // Class scope parent should be module scope
+        const parent_scope = index.scopes.get(class_scope!.parent_id!);
+        expect(parent_scope?.type).toBe("module");
+      });
+
+      it.todo("should correctly scope nested classes");
     });
   });
 });

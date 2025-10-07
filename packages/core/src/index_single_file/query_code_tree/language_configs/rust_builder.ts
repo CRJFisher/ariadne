@@ -15,7 +15,6 @@ import {
   create_module_id,
   create_type_alias_id,
   create_parameter_id,
-  extract_visibility,
   extract_generic_parameters,
   extract_return_type,
   extract_parameter_type,

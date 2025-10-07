@@ -48,6 +48,7 @@ export type SymbolResolver = () => SymbolId | null;
  * ```typescript
  * // For: import { foo as bar } from './utils';
  * const spec: ImportSpec = {
+ *   symbol_id: "import:src/app.ts:bar:5:0",
  *   local_name: "bar",           // How it's used in this file
  *   source_file: "src/utils.ts", // Where it comes from
  *   import_name: "foo",          // Original name in source file
@@ -59,6 +60,7 @@ export type SymbolResolver = () => SymbolId | null;
  * ```typescript
  * // For: import utils from './utils';
  * const spec: ImportSpec = {
+ *   symbol_id: "import:src/app.ts:utils:5:0",
  *   local_name: "utils",
  *   source_file: "src/utils.ts",
  *   import_name: "default",
@@ -67,6 +69,9 @@ export type SymbolResolver = () => SymbolId | null;
  * ```
  */
 export interface ImportSpec {
+  /** Symbol ID of the import definition itself */
+  symbol_id: SymbolId;
+
   /** Name used in the importing file (after any 'as' renaming) */
   local_name: SymbolName;
 
@@ -106,3 +111,20 @@ export interface ExportInfo {
   /** Import definition for re-exports (to follow the chain) */
   import_def?: ImportDefinition;
 }
+
+/**
+ * Namespace source tracking for namespace imports
+ *
+ * Maps namespace import symbol IDs to their source file paths.
+ * Enables member resolution for expressions like `utils.helper()` where
+ * `utils` is a namespace import (`import * as utils from './utils'`).
+ *
+ * @example
+ * ```typescript
+ * // For: import * as utils from './utils';
+ * const namespace_sources: NamespaceSources = new Map([
+ *   ["import:src/app.ts:utils:5:0", "src/utils.ts"]
+ * ]);
+ * ```
+ */
+export type NamespaceSources = ReadonlyMap<SymbolId, FilePath>;

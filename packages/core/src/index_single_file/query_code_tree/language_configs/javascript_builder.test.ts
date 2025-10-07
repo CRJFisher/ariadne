@@ -1041,5 +1041,523 @@ export { foo };
         expect(variables[0].is_exported).toBe(true);
       });
     });
+
+    describe("JSDoc Documentation Extraction", () => {
+      it("should have documentation capture handlers in config", () => {
+        const documentationMappings = [
+          "definition.function.documentation",
+          "definition.class.documentation",
+          "definition.method.documentation",
+          "definition.variable.documentation",
+        ];
+
+        for (const mapping of documentationMappings) {
+          expect(JAVASCRIPT_BUILDER_CONFIG.has(mapping)).toBe(true);
+          const config = JAVASCRIPT_BUILDER_CONFIG.get(mapping);
+          expect(config).toBeDefined();
+          expect(config?.process).toBeInstanceOf(Function);
+        }
+      });
+
+      it("should capture and attach JSDoc documentation to functions", () => {
+        const code = `
+          /**
+           * Creates a user account
+           * @param {string} name
+           * @returns {User}
+           */
+          function createUser(name) {
+            return { name };
+          }
+        `;
+        const context = createTestContext();
+        const builder = new DefinitionBuilder(context);
+        const ast = parser.parse(code);
+
+        // Find and process the JSDoc comment
+        const commentNode = findNodeByType(ast.rootNode, "comment");
+        expect(commentNode).toBeDefined();
+
+        if (commentNode) {
+          const docCapture: CaptureNode = {
+            name: "definition.function.documentation",
+            category: "definition" as SemanticCategory,
+            entity: "function" as SemanticEntity,
+            node: commentNode as any,
+            text: commentNode.text as SymbolName,
+            location: {
+              file_path: TEST_FILE_PATH,
+              start_line: commentNode.startPosition.row + 1,
+              start_column: commentNode.startPosition.column + 1,
+              end_line: commentNode.endPosition.row + 1,
+              end_column: commentNode.endPosition.column + 1,
+            },
+          };
+
+          const docProcessor = JAVASCRIPT_BUILDER_CONFIG.get(
+            "definition.function.documentation"
+          );
+          docProcessor?.process(docCapture, builder, context);
+        }
+
+        // Find and process the function
+        const funcNode = findNodeByType(ast.rootNode, "function_declaration");
+        const nameNode = funcNode?.childForFieldName("name");
+
+        if (nameNode) {
+          const funcCapture: CaptureNode = {
+            name: "definition.function",
+            category: "definition" as SemanticCategory,
+            entity: "function" as SemanticEntity,
+            node: nameNode as any,
+            text: nameNode.text as SymbolName,
+            location: {
+              file_path: TEST_FILE_PATH,
+              start_line: nameNode.startPosition.row + 1,
+              start_column: nameNode.startPosition.column + 1,
+              end_line: nameNode.endPosition.row + 1,
+              end_column: nameNode.endPosition.column + 1,
+            },
+          };
+
+          const funcProcessor = JAVASCRIPT_BUILDER_CONFIG.get(
+            "definition.function"
+          );
+          funcProcessor?.process(funcCapture, builder, context);
+        }
+
+        const result = builder.build();
+        const functions = Array.from(result.functions.values());
+        expect(functions).toHaveLength(1);
+        expect(functions[0].name).toBe("createUser");
+        expect(functions[0].docstring).toBeDefined();
+        expect(functions[0].docstring).toContain("Creates a user account");
+        expect(functions[0].docstring).toContain("@param {string} name");
+        expect(functions[0].docstring).toContain("@returns {User}");
+      });
+
+      it("should capture and attach JSDoc documentation to classes", () => {
+        const code = `
+          /**
+           * Represents a user
+           * @class
+           */
+          class User {
+            constructor(name) {
+              this.name = name;
+            }
+          }
+        `;
+        const context = createTestContext();
+        const builder = new DefinitionBuilder(context);
+        const ast = parser.parse(code);
+
+        // Process the JSDoc comment
+        const commentNode = findNodeByType(ast.rootNode, "comment");
+        if (commentNode) {
+          const docCapture: CaptureNode = {
+            name: "definition.class.documentation",
+            category: "definition" as SemanticCategory,
+            entity: "class" as SemanticEntity,
+            node: commentNode as any,
+            text: commentNode.text as SymbolName,
+            location: {
+              file_path: TEST_FILE_PATH,
+              start_line: commentNode.startPosition.row + 1,
+              start_column: commentNode.startPosition.column + 1,
+              end_line: commentNode.endPosition.row + 1,
+              end_column: commentNode.endPosition.column + 1,
+            },
+          };
+
+          const docProcessor = JAVASCRIPT_BUILDER_CONFIG.get(
+            "definition.class.documentation"
+          );
+          docProcessor?.process(docCapture, builder, context);
+        }
+
+        // Process the class
+        const classNode = findNodeByType(ast.rootNode, "class_declaration");
+        const nameNode = classNode?.childForFieldName("name");
+
+        if (nameNode) {
+          const classCapture: CaptureNode = {
+            name: "definition.class",
+            category: "definition" as SemanticCategory,
+            entity: "class" as SemanticEntity,
+            node: nameNode as any,
+            text: nameNode.text as SymbolName,
+            location: {
+              file_path: TEST_FILE_PATH,
+              start_line: nameNode.startPosition.row + 1,
+              start_column: nameNode.startPosition.column + 1,
+              end_line: nameNode.endPosition.row + 1,
+              end_column: nameNode.endPosition.column + 1,
+            },
+          };
+
+          const classProcessor =
+            JAVASCRIPT_BUILDER_CONFIG.get("definition.class");
+          classProcessor?.process(classCapture, builder, context);
+        }
+
+        const result = builder.build();
+        const classes = Array.from(result.classes.values());
+        expect(classes).toHaveLength(1);
+        expect(classes[0].name).toBe("User");
+        expect(classes[0].docstring).toBeDefined();
+        expect(classes[0].docstring?.[0]).toContain("Represents a user");
+        expect(classes[0].docstring?.[0]).toContain("@class");
+      });
+
+      it("should capture and attach JSDoc documentation to methods", () => {
+        const code = `
+          class Calculator {
+            /**
+             * Adds two numbers
+             * @param {number} a
+             * @param {number} b
+             * @returns {number}
+             */
+            add(a, b) {
+              return a + b;
+            }
+          }
+        `;
+        const context = createTestContext();
+        const builder = new DefinitionBuilder(context);
+        const ast = parser.parse(code);
+
+        // First process the class
+        const classNode = findNodeByType(ast.rootNode, "class_declaration");
+        const classNameNode = classNode?.childForFieldName("name");
+
+        if (classNameNode) {
+          const classCapture: CaptureNode = {
+            name: "definition.class",
+            category: "definition" as SemanticCategory,
+            entity: "class" as SemanticEntity,
+            node: classNameNode as any,
+            text: classNameNode.text as SymbolName,
+            location: {
+              file_path: TEST_FILE_PATH,
+              start_line: classNameNode.startPosition.row + 1,
+              start_column: classNameNode.startPosition.column + 1,
+              end_line: classNameNode.endPosition.row + 1,
+              end_column: classNameNode.endPosition.column + 1,
+            },
+          };
+
+          const classProcessor =
+            JAVASCRIPT_BUILDER_CONFIG.get("definition.class");
+          classProcessor?.process(classCapture, builder, context);
+        }
+
+        // Process the JSDoc comment
+        const commentNode = findNodeByType(ast.rootNode, "comment");
+        if (commentNode) {
+          const docCapture: CaptureNode = {
+            name: "definition.method.documentation",
+            category: "definition" as SemanticCategory,
+            entity: "method" as SemanticEntity,
+            node: commentNode as any,
+            text: commentNode.text as SymbolName,
+            location: {
+              file_path: TEST_FILE_PATH,
+              start_line: commentNode.startPosition.row + 1,
+              start_column: commentNode.startPosition.column + 1,
+              end_line: commentNode.endPosition.row + 1,
+              end_column: commentNode.endPosition.column + 1,
+            },
+          };
+
+          const docProcessor = JAVASCRIPT_BUILDER_CONFIG.get(
+            "definition.method.documentation"
+          );
+          docProcessor?.process(docCapture, builder, context);
+        }
+
+        // Process the method
+        const methodNode = findNodeByType(ast.rootNode, "method_definition");
+        const methodNameNode = methodNode?.childForFieldName("name");
+
+        if (methodNameNode) {
+          const methodCapture: CaptureNode = {
+            name: "definition.method",
+            category: "definition" as SemanticCategory,
+            entity: "method" as SemanticEntity,
+            node: methodNameNode as any,
+            text: methodNameNode.text as SymbolName,
+            location: {
+              file_path: TEST_FILE_PATH,
+              start_line: methodNameNode.startPosition.row + 1,
+              start_column: methodNameNode.startPosition.column + 1,
+              end_line: methodNameNode.endPosition.row + 1,
+              end_column: methodNameNode.endPosition.column + 1,
+            },
+          };
+
+          const methodProcessor =
+            JAVASCRIPT_BUILDER_CONFIG.get("definition.method");
+          methodProcessor?.process(methodCapture, builder, context);
+        }
+
+        const result = builder.build();
+        const classes = Array.from(result.classes.values());
+        expect(classes).toHaveLength(1);
+        expect(classes[0].name).toBe("Calculator");
+
+        const classDef = classes[0] as any;
+        expect(classDef.methods).toHaveLength(1);
+        expect(classDef.methods[0].name).toBe("add");
+        expect(classDef.methods[0].docstring).toBeDefined();
+        expect(classDef.methods[0].docstring).toContain("Adds two numbers");
+        expect(classDef.methods[0].docstring).toContain("@param {number} a");
+        expect(classDef.methods[0].docstring).toContain("@returns {number}");
+      });
+
+      it("should capture and attach JSDoc documentation to variables", () => {
+        const code = `
+          /** @type {Service} */
+          const service = createService();
+        `;
+        const context = createTestContext();
+        const builder = new DefinitionBuilder(context);
+        const ast = parser.parse(code);
+
+        // Process the JSDoc comment
+        const commentNode = findNodeByType(ast.rootNode, "comment");
+        if (commentNode) {
+          const docCapture: CaptureNode = {
+            name: "definition.variable.documentation",
+            category: "definition" as SemanticCategory,
+            entity: "variable" as SemanticEntity,
+            node: commentNode as any,
+            text: commentNode.text as SymbolName,
+            location: {
+              file_path: TEST_FILE_PATH,
+              start_line: commentNode.startPosition.row + 1,
+              start_column: commentNode.startPosition.column + 1,
+              end_line: commentNode.endPosition.row + 1,
+              end_column: commentNode.endPosition.column + 1,
+            },
+          };
+
+          const docProcessor = JAVASCRIPT_BUILDER_CONFIG.get(
+            "definition.variable.documentation"
+          );
+          docProcessor?.process(docCapture, builder, context);
+        }
+
+        // Process the variable
+        const varNode = findNodeByType(ast.rootNode, "variable_declarator");
+        const nameNode = varNode?.childForFieldName("name");
+
+        if (nameNode) {
+          const varCapture: CaptureNode = {
+            name: "definition.variable",
+            category: "definition" as SemanticCategory,
+            entity: "variable" as SemanticEntity,
+            node: nameNode as any,
+            text: nameNode.text as SymbolName,
+            location: {
+              file_path: TEST_FILE_PATH,
+              start_line: nameNode.startPosition.row + 1,
+              start_column: nameNode.startPosition.column + 1,
+              end_line: nameNode.endPosition.row + 1,
+              end_column: nameNode.endPosition.column + 1,
+            },
+          };
+
+          const varProcessor = JAVASCRIPT_BUILDER_CONFIG.get(
+            "definition.variable"
+          );
+          varProcessor?.process(varCapture, builder, context);
+        }
+
+        const result = builder.build();
+        const variables = Array.from(result.variables.values());
+        expect(variables).toHaveLength(1);
+        expect(variables[0].name).toBe("service");
+        expect(variables[0].docstring).toBeDefined();
+        expect(variables[0].docstring).toContain("@type {Service}");
+      });
+
+      it("should not attach documentation when there is no comment", () => {
+        const code = `function noDoc() { return 42; }`;
+        const context = createTestContext();
+        const builder = new DefinitionBuilder(context);
+        const ast = parser.parse(code);
+
+        // Process the function without processing any documentation
+        const funcNode = findNodeByType(ast.rootNode, "function_declaration");
+        const nameNode = funcNode?.childForFieldName("name");
+
+        if (nameNode) {
+          const funcCapture: CaptureNode = {
+            name: "definition.function",
+            category: "definition" as SemanticCategory,
+            entity: "function" as SemanticEntity,
+            node: nameNode as any,
+            text: nameNode.text as SymbolName,
+            location: {
+              file_path: TEST_FILE_PATH,
+              start_line: nameNode.startPosition.row + 1,
+              start_column: nameNode.startPosition.column + 1,
+              end_line: nameNode.endPosition.row + 1,
+              end_column: nameNode.endPosition.column + 1,
+            },
+          };
+
+          const funcProcessor = JAVASCRIPT_BUILDER_CONFIG.get(
+            "definition.function"
+          );
+          funcProcessor?.process(funcCapture, builder, context);
+        }
+
+        const result = builder.build();
+        const functions = Array.from(result.functions.values());
+        expect(functions).toHaveLength(1);
+        expect(functions[0].name).toBe("noDoc");
+        expect(functions[0].docstring).toBeUndefined();
+      });
+
+      it("should handle multiple functions with separate documentation", () => {
+        const code = `
+          /** First function */
+          function first() { }
+
+          /** Second function */
+          function second() { }
+        `;
+        const context = createTestContext();
+        const builder = new DefinitionBuilder(context);
+        const ast = parser.parse(code);
+
+        // Find all comment nodes
+        const comments: any[] = [];
+        const functions: any[] = [];
+
+        function collectNodes(node: any) {
+          if (node.type === "comment") {
+            comments.push(node);
+          }
+          if (node.type === "function_declaration") {
+            functions.push(node);
+          }
+          for (let i = 0; i < node.childCount; i++) {
+            collectNodes(node.child(i));
+          }
+        }
+        collectNodes(ast.rootNode);
+
+        expect(comments).toHaveLength(2);
+        expect(functions).toHaveLength(2);
+
+        // Process first comment and function
+        if (comments[0]) {
+          const docCapture1: CaptureNode = {
+            name: "definition.function.documentation",
+            category: "definition" as SemanticCategory,
+            entity: "function" as SemanticEntity,
+            node: comments[0] as any,
+            text: comments[0].text as SymbolName,
+            location: {
+              file_path: TEST_FILE_PATH,
+              start_line: comments[0].startPosition.row + 1,
+              start_column: comments[0].startPosition.column + 1,
+              end_line: comments[0].endPosition.row + 1,
+              end_column: comments[0].endPosition.column + 1,
+            },
+          };
+
+          const docProcessor = JAVASCRIPT_BUILDER_CONFIG.get(
+            "definition.function.documentation"
+          );
+          docProcessor?.process(docCapture1, builder, context);
+        }
+
+        if (functions[0]) {
+          const nameNode1 = functions[0].childForFieldName("name");
+          const funcCapture1: CaptureNode = {
+            name: "definition.function",
+            category: "definition" as SemanticCategory,
+            entity: "function" as SemanticEntity,
+            node: nameNode1 as any,
+            text: nameNode1.text as SymbolName,
+            location: {
+              file_path: TEST_FILE_PATH,
+              start_line: nameNode1.startPosition.row + 1,
+              start_column: nameNode1.startPosition.column + 1,
+              end_line: nameNode1.endPosition.row + 1,
+              end_column: nameNode1.endPosition.column + 1,
+            },
+          };
+
+          const funcProcessor = JAVASCRIPT_BUILDER_CONFIG.get(
+            "definition.function"
+          );
+          funcProcessor?.process(funcCapture1, builder, context);
+        }
+
+        // Process second comment and function
+        if (comments[1]) {
+          const docCapture2: CaptureNode = {
+            name: "definition.function.documentation",
+            category: "definition" as SemanticCategory,
+            entity: "function" as SemanticEntity,
+            node: comments[1] as any,
+            text: comments[1].text as SymbolName,
+            location: {
+              file_path: TEST_FILE_PATH,
+              start_line: comments[1].startPosition.row + 1,
+              start_column: comments[1].startPosition.column + 1,
+              end_line: comments[1].endPosition.row + 1,
+              end_column: comments[1].endPosition.column + 1,
+            },
+          };
+
+          const docProcessor = JAVASCRIPT_BUILDER_CONFIG.get(
+            "definition.function.documentation"
+          );
+          docProcessor?.process(docCapture2, builder, context);
+        }
+
+        if (functions[1]) {
+          const nameNode2 = functions[1].childForFieldName("name");
+          const funcCapture2: CaptureNode = {
+            name: "definition.function",
+            category: "definition" as SemanticCategory,
+            entity: "function" as SemanticEntity,
+            node: nameNode2 as any,
+            text: nameNode2.text as SymbolName,
+            location: {
+              file_path: TEST_FILE_PATH,
+              start_line: nameNode2.startPosition.row + 1,
+              start_column: nameNode2.startPosition.column + 1,
+              end_line: nameNode2.endPosition.row + 1,
+              end_column: nameNode2.endPosition.column + 1,
+            },
+          };
+
+          const funcProcessor = JAVASCRIPT_BUILDER_CONFIG.get(
+            "definition.function"
+          );
+          funcProcessor?.process(funcCapture2, builder, context);
+        }
+
+        const result = builder.build();
+        const builtFunctions = Array.from(result.functions.values());
+        expect(builtFunctions).toHaveLength(2);
+
+        const firstFunc = builtFunctions.find((f) => f.name === "first");
+        const secondFunc = builtFunctions.find((f) => f.name === "second");
+
+        expect(firstFunc?.docstring).toBeDefined();
+        expect(firstFunc?.docstring).toContain("First function");
+        expect(secondFunc?.docstring).toBeDefined();
+        expect(secondFunc?.docstring).toContain("Second function");
+      });
+    });
   });
 });

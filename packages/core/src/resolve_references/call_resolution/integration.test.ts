@@ -17,9 +17,9 @@ import type {
   LexicalScope,
   FunctionDefinition,
   ImportDefinition,
-  SemanticIndex,
 } from "@ariadnejs/types";
 import { location_key } from "@ariadnejs/types";
+import { SemanticIndex } from "../../index_single_file/semantic_index";
 
 // Helper to create a minimal semantic index
 function create_test_index(
@@ -44,10 +44,11 @@ function create_test_index(
     types: new Map(),
     imported_symbols: imports || new Map(),
     references,
-    symbols_by_name: new Map(),
+    exported_symbols: new Map(),
+    scope_to_definitions: new Map(),
     type_bindings: new Map(),
     type_members: new Map(),
-    constructors: new Map(),
+    type_alias_metadata: new Map(),
   };
 }
 
@@ -69,7 +70,7 @@ describe("Function Call Resolution - Integration Tests", () => {
             parent_id: null,
             name: null,
             location: {
-              file: file_path,
+              file_path,
               start_line: 1,
               start_column: 0,
               end_line: 20,
@@ -86,7 +87,7 @@ describe("Function Call Resolution - Integration Tests", () => {
             parent_id: root_scope_id,
             name: "outer" as SymbolName,
             location: {
-              file: file_path,
+              file_path,
               start_line: 6,
               start_column: 0,
               end_line: 15,
@@ -103,7 +104,7 @@ describe("Function Call Resolution - Integration Tests", () => {
             parent_id: outer_scope_id,
             name: "inner" as SymbolName,
             location: {
-              file: file_path,
+              file_path,
               start_line: 10,
               start_column: 2,
               end_line: 14,
@@ -125,13 +126,16 @@ describe("Function Call Resolution - Integration Tests", () => {
             name: "helper" as SymbolName,
             defining_scope_id: root_scope_id,
             location: {
-              file: file_path,
+              file_path,
               start_line: 2,
               start_column: 0,
               end_line: 4,
               end_column: 1,
             },
             is_exported: false,
+            signature: {
+              parameters: [],
+            },
           },
         ],
       ]);
@@ -139,7 +143,7 @@ describe("Function Call Resolution - Integration Tests", () => {
       // Call from deeply nested inner scope
       const call_ref: SymbolReference = {
         location: {
-          file: file_path,
+          file_path,
           start_line: 12,
           start_column: 4,
           end_line: 12,
@@ -188,7 +192,7 @@ describe("Function Call Resolution - Integration Tests", () => {
             parent_id: null,
             name: null,
             location: {
-              file: file_path,
+              file_path,
               start_line: 1,
               start_column: 0,
               end_line: 25,
@@ -205,7 +209,7 @@ describe("Function Call Resolution - Integration Tests", () => {
             parent_id: root_scope_id,
             name: "middle" as SymbolName,
             location: {
-              file: file_path,
+              file_path,
               start_line: 6,
               start_column: 0,
               end_line: 20,
@@ -222,7 +226,7 @@ describe("Function Call Resolution - Integration Tests", () => {
             parent_id: middle_scope_id,
             name: "inner" as SymbolName,
             location: {
-              file: file_path,
+              file_path,
               start_line: 12,
               start_column: 2,
               end_line: 18,
@@ -247,13 +251,16 @@ describe("Function Call Resolution - Integration Tests", () => {
             name: "foo" as SymbolName,
             defining_scope_id: root_scope_id,
             location: {
-              file: file_path,
+              file_path,
               start_line: 2,
               start_column: 0,
               end_line: 4,
               end_column: 1,
             },
             is_exported: false,
+            signature: {
+              parameters: [],
+            },
           },
         ],
         [
@@ -264,13 +271,16 @@ describe("Function Call Resolution - Integration Tests", () => {
             name: "foo" as SymbolName,
             defining_scope_id: middle_scope_id,
             location: {
-              file: file_path,
+              file_path,
               start_line: 8,
               start_column: 2,
               end_line: 10,
               end_column: 3,
             },
             is_exported: false,
+            signature: {
+              parameters: [],
+            },
           },
         ],
         [
@@ -281,13 +291,16 @@ describe("Function Call Resolution - Integration Tests", () => {
             name: "foo" as SymbolName,
             defining_scope_id: inner_scope_id,
             location: {
-              file: file_path,
+              file_path,
               start_line: 14,
               start_column: 4,
               end_line: 16,
               end_column: 5,
             },
             is_exported: false,
+            signature: {
+              parameters: [],
+            },
           },
         ],
       ]);
@@ -295,7 +308,7 @@ describe("Function Call Resolution - Integration Tests", () => {
       // Call from innermost scope should resolve to innermost definition
       const call_ref: SymbolReference = {
         location: {
-          file: file_path,
+          file_path,
           start_line: 17,
           start_column: 4,
           end_line: 17,
@@ -344,7 +357,7 @@ describe("Function Call Resolution - Integration Tests", () => {
             parent_id: null,
             name: null,
             location: {
-              file: file_path,
+              file_path,
               start_line: 1,
               start_column: 0,
               end_line: 15,
@@ -365,13 +378,16 @@ describe("Function Call Resolution - Integration Tests", () => {
             name: "helper" as SymbolName,
             defining_scope_id: root_scope_id,
             location: {
-              file: file_path,
+              file_path,
               start_line: 2,
               start_column: 0,
               end_line: 4,
               end_column: 1,
             },
             is_exported: false,
+            signature: {
+              parameters: [],
+            },
           },
         ],
       ]);
@@ -381,7 +397,7 @@ describe("Function Call Resolution - Integration Tests", () => {
         { length: 5 },
         (_, i) => ({
           location: {
-            file: file_path,
+            file_path,
             start_line: 8 + i,
             start_column: 2,
             end_line: 8 + i,
@@ -442,7 +458,7 @@ describe("Function Call Resolution - Integration Tests", () => {
             parent_id: null,
             name: null,
             location: {
-              file: file_path,
+              file_path,
               start_line: 1,
               start_column: 0,
               end_line: 20,
@@ -459,7 +475,7 @@ describe("Function Call Resolution - Integration Tests", () => {
             parent_id: root_scope_id,
             name: "func1" as SymbolName,
             location: {
-              file: file_path,
+              file_path,
               start_line: 6,
               start_column: 0,
               end_line: 10,
@@ -476,7 +492,7 @@ describe("Function Call Resolution - Integration Tests", () => {
             parent_id: root_scope_id,
             name: "func2" as SymbolName,
             location: {
-              file: file_path,
+              file_path,
               start_line: 12,
               start_column: 0,
               end_line: 16,
@@ -499,13 +515,16 @@ describe("Function Call Resolution - Integration Tests", () => {
             name: "helper" as SymbolName,
             defining_scope_id: scope1_id,
             location: {
-              file: file_path,
+              file_path,
               start_line: 7,
               start_column: 2,
               end_line: 8,
               end_column: 3,
             },
             is_exported: false,
+            signature: {
+              parameters: [],
+            },
           },
         ],
         [
@@ -516,13 +535,16 @@ describe("Function Call Resolution - Integration Tests", () => {
             name: "helper" as SymbolName,
             defining_scope_id: scope2_id,
             location: {
-              file: file_path,
+              file_path,
               start_line: 13,
               start_column: 2,
               end_line: 14,
               end_column: 3,
             },
             is_exported: false,
+            signature: {
+              parameters: [],
+            },
           },
         ],
       ]);
@@ -531,7 +553,7 @@ describe("Function Call Resolution - Integration Tests", () => {
       const call_refs: SymbolReference[] = [
         {
           location: {
-            file: file_path,
+            file_path,
             start_line: 9,
             start_column: 2,
             end_line: 9,
@@ -544,7 +566,7 @@ describe("Function Call Resolution - Integration Tests", () => {
         },
         {
           location: {
-            file: file_path,
+            file_path,
             start_line: 15,
             start_column: 2,
             end_line: 15,
@@ -601,7 +623,7 @@ describe("Function Call Resolution - Integration Tests", () => {
             parent_id: null,
             name: null,
             location: {
-              file: file_path,
+              file_path,
               start_line: 1,
               start_column: 0,
               end_line: 5,
@@ -622,13 +644,16 @@ describe("Function Call Resolution - Integration Tests", () => {
             name: "helper" as SymbolName,
             defining_scope_id: root_scope_id,
             location: {
-              file: file_path,
+              file_path,
               start_line: 2,
               start_column: 0,
               end_line: 4,
               end_column: 1,
             },
             is_exported: false,
+            signature: {
+              parameters: [],
+            },
           },
         ],
       ]);
@@ -680,7 +705,7 @@ describe("Function Call Resolution - Integration Tests", () => {
             parent_id: null,
             name: null,
             location: {
-              file: file_path,
+              file_path,
               start_line: 1,
               start_column: 0,
               end_line: 10,
@@ -701,13 +726,16 @@ describe("Function Call Resolution - Integration Tests", () => {
             name: "helper" as SymbolName,
             defining_scope_id: root_scope_id,
             location: {
-              file: file_path,
+              file_path,
               start_line: 2,
               start_column: 0,
               end_line: 4,
               end_column: 1,
             },
             is_exported: false,
+            signature: {
+              parameters: [],
+            },
           },
         ],
       ]);
@@ -716,7 +744,7 @@ describe("Function Call Resolution - Integration Tests", () => {
       const references: SymbolReference[] = [
         {
           location: {
-            file: file_path,
+            file_path,
             start_line: 7,
             start_column: 2,
             end_line: 7,
@@ -729,7 +757,7 @@ describe("Function Call Resolution - Integration Tests", () => {
         },
         {
           location: {
-            file: file_path,
+            file_path,
             start_line: 8,
             start_column: 2,
             end_line: 8,
@@ -741,7 +769,7 @@ describe("Function Call Resolution - Integration Tests", () => {
         },
         {
           location: {
-            file: file_path,
+            file_path,
             start_line: 9,
             start_column: 2,
             end_line: 9,

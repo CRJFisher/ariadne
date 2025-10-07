@@ -87,7 +87,12 @@ describe("Symbol Resolution - Integration Tests", () => {
                 end_column: 23,
               },
               parameters: [],
-            } as unknown as FunctionDefinition,
+              defining_scope_id: module_scope,
+              is_exported: false,
+              signature: {
+                parameters: [],
+              },
+            } as FunctionDefinition,
           ],
         ]),
         references: [
@@ -144,6 +149,11 @@ describe("Symbol Resolution - Integration Tests", () => {
               kind: "function",
               symbol_id: helper_id,
               name: "helper" as SymbolName,
+              is_exported: true,
+              signature: {
+                parameters: [],
+              },
+              defining_scope_id: utils_scope,
               scope_id: utils_scope,
               location: {
                 file_path: utils_file,
@@ -153,10 +163,7 @@ describe("Symbol Resolution - Integration Tests", () => {
                 end_column: 29,
               },
               parameters: [],
-              availability: {
-                scope: "file-export",
-              },
-            } as unknown as FunctionDefinition,
+            } as FunctionDefinition,
           ],
         ]),
       });
@@ -212,7 +219,8 @@ describe("Symbol Resolution - Integration Tests", () => {
               import_path: "./utils" as ModulePath,
               import_kind: "named",
               original_name: undefined,
-            } as unknown as ImportDefinition,
+              defining_scope_id: main_scope,
+            } as ImportDefinition,
           ],
         ]),
         references: [
@@ -296,13 +304,20 @@ describe("Symbol Resolution - Integration Tests", () => {
                   },
                   parameters: [],
                   parent_class: user_class_id,
-                } as unknown as MethodDefinition,
+                  defining_scope_id: types_scope,
+                } as MethodDefinition,
               ],
               properties: [],
-              availability: {
-                scope: "file-export",
+              is_exported: true,
+              signature: {
+                parameters: [],
               },
-            } as unknown as ClassDefinition,
+              defining_scope_id: types_scope,
+              export: [],
+              extends: [],
+              decorators: [],
+              constructor: [],
+            } as ClassDefinition,
           ],
         ]),
         type_members_raw: new Map([
@@ -377,7 +392,8 @@ describe("Symbol Resolution - Integration Tests", () => {
               import_path: "./types" as ModulePath,
               import_kind: "named",
               original_name: undefined,
-            } as unknown as ImportDefinition,
+              defining_scope_id: main_scope,
+            } as ImportDefinition,
           ],
         ]),
         variables_raw: new Map([
@@ -395,7 +411,9 @@ describe("Symbol Resolution - Integration Tests", () => {
                 end_line: 2,
                 end_column: 10,
               },
-            } as unknown as VariableDefinition,
+              is_exported: false,
+              defining_scope_id: main_scope,
+            } as VariableDefinition,
           ],
         ]),
         type_bindings_raw: new Map([
@@ -512,10 +530,12 @@ describe("Symbol Resolution - Integration Tests", () => {
                 end_column: 29,
               },
               parameters: [],
-              availability: {
-                scope: "file-export",
+              is_exported: true,
+              signature: {
+                parameters: [],
               },
-            } as unknown as FunctionDefinition,
+              defining_scope_id: utils_scope,
+            } as FunctionDefinition,
           ],
         ]),
       });
@@ -572,7 +592,8 @@ describe("Symbol Resolution - Integration Tests", () => {
               import_path: "./utils" as ModulePath,
               import_kind: "named",
               original_name: undefined,
-            } as unknown as ImportDefinition,
+              defining_scope_id: main_scope,
+            } as ImportDefinition,
           ],
         ]),
         functions_raw: new Map([
@@ -591,7 +612,12 @@ describe("Symbol Resolution - Integration Tests", () => {
                 end_column: 24,
               },
               parameters: [],
-            } as unknown as FunctionDefinition,
+              is_exported: false,
+              signature: {
+                parameters: [],
+              },
+              defining_scope_id: main_scope,
+            } as FunctionDefinition,
           ],
         ]),
         references: [
@@ -669,6 +695,7 @@ describe("Symbol Resolution - Integration Tests", () => {
               kind: "class",
               symbol_id: user_class_id,
               name: "User" as SymbolName,
+              defining_scope_id: module_scope,
               scope_id: module_scope,
               location: {
                 file_path: file_path,
@@ -692,10 +719,19 @@ describe("Symbol Resolution - Integration Tests", () => {
                   },
                   parameters: [],
                   parent_class: user_class_id,
-                } as unknown as MethodDefinition,
+                  is_exported: false,
+                  signature: {
+                    parameters: [],
+                  },
+                  defining_scope_id: module_scope,
+                } as MethodDefinition,
               ],
               properties: [],
-            } as unknown as ClassDefinition,
+              is_exported: false,
+              extends: [],
+              decorators: [],
+              constructor: [],
+            } as ClassDefinition,
           ],
         ]),
         variables_raw: new Map([
@@ -713,7 +749,9 @@ describe("Symbol Resolution - Integration Tests", () => {
                 end_line: 4,
                 end_column: 10,
               },
-            } as unknown as VariableDefinition,
+              is_exported: false,
+              defining_scope_id: module_scope,
+            } as VariableDefinition,
           ],
         ]),
         type_bindings_raw: new Map([
@@ -851,7 +889,12 @@ describe("Symbol Resolution - Integration Tests", () => {
                 end_column: 23,
               },
               parameters: [],
-            } as unknown as FunctionDefinition,
+              defining_scope_id: module_scope,
+              is_exported: false,
+              signature: {
+                parameters: [],
+              },
+            } as FunctionDefinition,
           ],
         ]),
         references: [
@@ -883,7 +926,7 @@ describe("Symbol Resolution - Integration Tests", () => {
       expect(result.references_to_symbol).toBeInstanceOf(Map);
       const locations = result.references_to_symbol.get(helper_id);
       expect(locations).toHaveLength(1);
-      expect(locations?.[0]).toMatchObject({
+      expect(locations?.[0]).toEqual({
         file_path: call_location.file_path,
         start_line: call_location.start_line,
         start_column: call_location.start_column,
