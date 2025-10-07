@@ -25,6 +25,7 @@ import type {
   AnyDefinition,
   SymbolKind,
   Definition,
+  ExportableDefinition,
 } from "@ariadnejs/types";
 
 import { query_tree } from "./query_code_tree";
@@ -277,7 +278,7 @@ function process_definitions(
 function build_scope_to_definitions(result: BuilderResult): Map<ScopeId, Map<SymbolKind, AnyDefinition[]>> {
   const index = new Map<ScopeId, Map<SymbolKind, AnyDefinition[]>>();
 
-  const add_to_index = (def: Definition) => {
+  const add_to_index = (def: AnyDefinition) => {
     const existing = index.get(def.defining_scope_id)?.get(def.kind) || [];
     existing.push(def);
     index.get(def.defining_scope_id)?.set(def.kind, existing);
@@ -309,7 +310,7 @@ function build_scope_to_definitions(result: BuilderResult): Map<ScopeId, Map<Sym
 function build_exported_symbols_map(result: BuilderResult): Map<SymbolName, AnyDefinition> {
   const map = new Map<SymbolName, AnyDefinition>();
 
-  const add_to_map = (def: AnyDefinition) => {
+  const add_to_map = (def: ExportableDefinition) => {
     // Only add exported symbols
     if (!def.is_exported) {
       return;
@@ -332,7 +333,7 @@ function build_exported_symbols_map(result: BuilderResult): Map<SymbolName, AnyD
     map.set(export_name, def);
   };
 
-  // Add all definition types
+  // Add all exportable definition types
   result.functions.forEach(add_to_map);
   result.classes.forEach(add_to_map);
   result.variables.forEach(add_to_map);
@@ -340,7 +341,6 @@ function build_exported_symbols_map(result: BuilderResult): Map<SymbolName, AnyD
   result.enums.forEach(add_to_map);
   result.namespaces.forEach(add_to_map);
   result.types.forEach(add_to_map);
-  result.imports.forEach(add_to_map);  // For re-exports
 
   return map;
 }
