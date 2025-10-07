@@ -11,7 +11,7 @@ Dramatically simplify import resolution by adding an `exported_symbols` map to S
 
 ## Current Implementation Problems
 
-In [import_resolver.ts:134-280](packages/core/src/resolve_references/import_resolution/import_resolver.ts#L134-L280):
+In [import_resolver.ts:134-280](import_resolver.ts#L134-L280):
 
 **147 lines of repetitive code**:
 - `find_export()` - orchestrates searching across 6 definition types
@@ -45,17 +45,6 @@ export interface SemanticIndex {
   /** Quick lookup: export name -> exported definition (NEW) */
   readonly exported_symbols: ReadonlyMap<SymbolName, AnyDefinition>;
 }
-
-// Add union type for any definition
-export type AnyDefinition =
-  | FunctionDefinition
-  | ClassDefinition
-  | VariableDefinition
-  | InterfaceDefinition
-  | EnumDefinition
-  | NamespaceDefinition
-  | TypeAliasDefinition
-  | ImportDefinition;
 ```
 
 ## Implementation Steps

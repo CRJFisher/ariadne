@@ -7,7 +7,6 @@
  */
 
 import {
-  type AnyDefinition,
   type ClassDefinition,
   type DecoratorDefinition,
   type EnumDefinition,
@@ -23,13 +22,11 @@ import {
   type PropertyDefinition,
   type PropertySignature,
   type ScopeId,
-  type SymbolAvailability,
   type SymbolId,
   type SymbolName,
   type TypeAliasDefinition,
   type VariableDefinition,
   type ModulePath,
-  type_symbol,
   decorator_symbol,
   ConstructorDefinition,
 } from "@ariadnejs/types";
@@ -74,7 +71,7 @@ interface ClassBuilderState {
   methods: Map<SymbolId, MethodBuilderState>;
   properties: Map<SymbolId, PropertyBuilderState>;
   constructors: Map<SymbolId, ConstructorBuilderState>;
-  decorators: SymbolId[];
+  decorators: DecoratorDefinition[];
 }
 
 /**
@@ -83,7 +80,7 @@ interface ClassBuilderState {
 interface MethodBuilderState {
   base: Partial<Omit<MethodDefinition, "parameters" | "decorators">>;
   parameters: Map<SymbolId, ParameterDefinition>;
-  decorators: SymbolName[];
+  decorators: DecoratorDefinition[];
 }
 
 /**
@@ -92,7 +89,7 @@ interface MethodBuilderState {
 interface ConstructorBuilderState {
   base: Partial<Omit<ConstructorDefinition, "parameters" | "decorators">>;
   parameters: Map<SymbolId, ParameterDefinition>;
-  decorators: SymbolName[];
+  decorators: DecoratorDefinition[];
 }
 
 /**
@@ -100,7 +97,7 @@ interface ConstructorBuilderState {
  */
 interface PropertyBuilderState {
   base: Partial<Omit<PropertyDefinition, "decorators">>;
-  decorators: SymbolId[];
+  decorators: DecoratorDefinition[];
 }
 
 /**
@@ -109,7 +106,7 @@ interface PropertyBuilderState {
 interface FunctionBuilderState {
   base: Partial<Omit<FunctionDefinition, "signature" | "decorators">>;
   signature: FunctionSignatureState;
-  decorators: SymbolName[];
+  decorators: DecoratorDefinition[];
 }
 
 /**
@@ -230,7 +227,6 @@ export class DefinitionBuilder {
     name: SymbolName;
     location: Location;
     scope_id: ScopeId;
-    availability: SymbolAvailability;
     is_exported?: boolean;
     export?: ExportMetadata;
     extends?: SymbolName[];
@@ -243,7 +239,6 @@ export class DefinitionBuilder {
         name: definition.name,
         location: definition.location,
         defining_scope_id: definition.scope_id,
-        availability: definition.availability,
         generics: definition.generics,
         extends: definition.extends || [],
         is_exported: definition.is_exported || false,
@@ -267,7 +262,6 @@ export class DefinitionBuilder {
       name: SymbolName;
       location: Location;
       scope_id: ScopeId;
-      availability: SymbolAvailability;
       return_type?: SymbolName;
       access_modifier?: "public" | "private" | "protected";
       abstract?: boolean;
@@ -302,7 +296,6 @@ export class DefinitionBuilder {
       name: SymbolName;
       location: Location;
       scope_id: ScopeId;
-      availability: SymbolAvailability;
       access_modifier?: "public" | "private" | "protected";
     }
   ): DefinitionBuilder {
@@ -354,7 +347,6 @@ export class DefinitionBuilder {
     name: SymbolName;
     location: Location;
     scope_id: ScopeId;
-    availability: SymbolAvailability;
     generics?: string[];
     is_exported?: boolean;
     export?: ExportMetadata;
@@ -366,7 +358,6 @@ export class DefinitionBuilder {
         name: definition.name,
         location: definition.location,
         defining_scope_id: definition.scope_id,
-        availability: definition.availability,
         generics: definition.generics,
         is_exported: definition.is_exported,
         export: definition.export,
@@ -400,7 +391,6 @@ export class DefinitionBuilder {
       kind: "parameter",
       defining_scope_id: scope_id,
       ...rest,
-      availability: { scope: "file-private" },
     };
 
     // Check functions
@@ -447,7 +437,6 @@ export class DefinitionBuilder {
     name: SymbolName;
     location: Location;
     scope_id: ScopeId;
-    availability: SymbolAvailability;
     is_exported?: boolean;
     export?: ExportMetadata;
     type?: SymbolName;
@@ -459,7 +448,6 @@ export class DefinitionBuilder {
       name: definition.name,
       location: definition.location,
       defining_scope_id: definition.scope_id,
-      availability: definition.availability,
       is_exported: definition.is_exported || false,
       export: definition.export,
       type: definition.type,
@@ -476,12 +464,10 @@ export class DefinitionBuilder {
     name: SymbolName;
     location: Location;
     scope_id: ScopeId;
-    availability: SymbolAvailability;
     import_path: ModulePath;
     original_name?: SymbolName;
     import_kind: "named" | "default" | "namespace";
     is_type_only?: boolean;
-    is_exported?: boolean;
     export?: ExportMetadata;
   }): DefinitionBuilder {
     this.imports.set(definition.symbol_id, {
@@ -490,8 +476,6 @@ export class DefinitionBuilder {
       name: definition.name,
       location: definition.location,
       defining_scope_id: definition.scope_id,
-      availability: definition.availability,
-      is_exported: definition.is_exported || false,
       export: definition.export,
       import_path: definition.import_path,
       original_name: definition.original_name,
@@ -511,7 +495,6 @@ export class DefinitionBuilder {
       name: SymbolName;
       location: Location;
       scope_id: ScopeId;
-      availability: SymbolAvailability;
       type?: SymbolName;
       initial_value?: string;
       access_modifier?: "public" | "private" | "protected";
@@ -543,7 +526,6 @@ export class DefinitionBuilder {
     name: SymbolName;
     location: Location;
     scope_id: ScopeId;
-    availability: SymbolAvailability;
     is_exported?: boolean;
     export?: ExportMetadata;
     extends?: SymbolName[];
@@ -556,7 +538,6 @@ export class DefinitionBuilder {
         name: definition.name,
         location: definition.location,
         defining_scope_id: definition.scope_id,
-        availability: definition.availability,
         is_exported: definition.is_exported || false,
         export: definition.export,
         extends: definition.extends || [],
@@ -564,14 +545,6 @@ export class DefinitionBuilder {
       },
       methods: new Map(),
       properties: new Map(),
-    });
-    this.types.set(type_symbol(definition.name, definition.location), {
-      kind: "type",
-      symbol_id: type_symbol(definition.name, definition.location),
-      name: definition.name,
-      location: definition.location,
-      defining_scope_id: definition.scope_id,
-      availability: definition.availability,
     });
     return this;
   }
@@ -602,7 +575,6 @@ export class DefinitionBuilder {
         name: definition.name,
         location: definition.location,
         defining_scope_id: definition.scope_id,
-        availability: { scope: "file-private" },
         return_type: definition.return_type,
         static: definition.static,
         generics: definition.generics,
@@ -632,7 +604,7 @@ export class DefinitionBuilder {
 
     interface_state.properties.set(definition.symbol_id, {
       kind: "property",
-      name: definition.symbol_id,
+      name: definition.name,
       type: definition.type,
       location: definition.location,
     });
@@ -648,7 +620,6 @@ export class DefinitionBuilder {
     name: SymbolName;
     location: Location;
     scope_id: ScopeId;
-    availability: SymbolAvailability;
     is_exported?: boolean;
     export?: ExportMetadata;
     type_expression?: string;
@@ -670,7 +641,6 @@ export class DefinitionBuilder {
     name: SymbolName;
     location: Location;
     scope_id: ScopeId;
-    availability: SymbolAvailability;
     is_exported?: boolean;
     export?: ExportMetadata;
     is_const?: boolean;
@@ -683,7 +653,6 @@ export class DefinitionBuilder {
         name: definition.name,
         location: definition.location,
         defining_scope_id: definition.scope_id,
-        availability: definition.availability,
         is_exported: definition.is_exported || false,
         export: definition.export,
         is_const: definition.is_const || false,
@@ -711,7 +680,7 @@ export class DefinitionBuilder {
     if (!enum_state) return this;
 
     enum_state.members.set(definition.symbol_id, {
-      name: definition.name as unknown as SymbolId, // Type is wrong - should be SymbolName but defined as SymbolId
+      name: definition.name,
       value: definition.value,
       location: definition.location,
     });
@@ -726,7 +695,6 @@ export class DefinitionBuilder {
     name: SymbolName;
     location: Location;
     scope_id: ScopeId;
-    availability: SymbolAvailability;
     is_exported?: boolean;
     export?: ExportMetadata;
   }): DefinitionBuilder {
@@ -737,7 +705,6 @@ export class DefinitionBuilder {
         name: definition.name,
         location: definition.location,
         defining_scope_id: definition.scope_id,
-        availability: definition.availability,
         is_exported: definition.is_exported || false,
         export: definition.export,
       },
@@ -752,6 +719,7 @@ export class DefinitionBuilder {
   add_decorator_to_target(
     target_id: SymbolId,
     decorator: {
+      defining_scope_id: ScopeId,
       name: SymbolName;
       arguments?: string[];
       location: Location;
@@ -759,12 +727,19 @@ export class DefinitionBuilder {
   ): DefinitionBuilder {
     // Create a decorator symbol ID
     const decorator_id = decorator_symbol(decorator.name, decorator.location);
+    const decorator_definition: DecoratorDefinition = {
+      symbol_id: decorator_id,
+      defining_scope_id: decorator.defining_scope_id,
+      kind: "decorator",
+      name: decorator.name,
+      location: decorator.location,
+    };
 
     // Check if target is a class
     const class_state = this.classes.get(target_id);
     if (class_state) {
       // Classes use SymbolId for decorators
-      class_state.decorators.push(decorator_id);
+      class_state.decorators.push(decorator_definition);
       return this;
     }
 
@@ -773,7 +748,7 @@ export class DefinitionBuilder {
       const method_state = cls.methods.get(target_id);
       if (method_state) {
         // Methods use SymbolName for decorators
-        method_state.decorators.push(decorator.name);
+        method_state.decorators.push(decorator_definition);
         return this;
       }
 
@@ -781,7 +756,7 @@ export class DefinitionBuilder {
       const prop_state = cls.properties.get(target_id);
       if (prop_state) {
         // Properties use SymbolId for decorators
-        prop_state.decorators.push(decorator_id);
+        prop_state.decorators.push(decorator_definition);
         return this;
       }
     }
@@ -791,7 +766,7 @@ export class DefinitionBuilder {
       const method_state = iface.methods.get(target_id);
       if (method_state) {
         // Interface methods use SymbolName for decorators
-        method_state.decorators.push(decorator.name);
+        method_state.decorators.push(decorator_definition);
         return this;
       }
     }

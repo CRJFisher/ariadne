@@ -38,6 +38,58 @@ function create_test_index(
   } = {}
 ): SemanticIndex {
   const root_scope_id = (options.root_scope_id || "scope-0") as ScopeId;
+  const functions = options.functions || new Map();
+  const classes = options.classes || new Map();
+  const variables = options.variables || new Map();
+  const interfaces = options.interfaces || new Map();
+  const enums = options.enums || new Map();
+  const types = options.types || new Map();
+  const imports = options.imports || new Map();
+
+  // Build exported_symbols map from all definitions
+  const exported_symbols = new Map();
+  for (const def of functions.values()) {
+    if (def.is_exported) {
+      const export_name = def.export?.export_name || def.name;
+      exported_symbols.set(export_name, def);
+    }
+  }
+  for (const def of classes.values()) {
+    if (def.is_exported) {
+      const export_name = def.export?.export_name || def.name;
+      exported_symbols.set(export_name, def);
+    }
+  }
+  for (const def of variables.values()) {
+    if (def.is_exported) {
+      const export_name = def.export?.export_name || def.name;
+      exported_symbols.set(export_name, def);
+    }
+  }
+  for (const def of interfaces.values()) {
+    if (def.is_exported) {
+      const export_name = def.export?.export_name || def.name;
+      exported_symbols.set(export_name, def);
+    }
+  }
+  for (const def of enums.values()) {
+    if (def.is_exported) {
+      const export_name = def.export?.export_name || def.name;
+      exported_symbols.set(export_name, def);
+    }
+  }
+  for (const def of types.values()) {
+    if (def.is_exported) {
+      const export_name = def.export?.export_name || def.name;
+      exported_symbols.set(export_name, def);
+    }
+  }
+  for (const def of imports.values()) {
+    if (def.is_exported) {
+      const export_name = def.export?.export_name || def.name;
+      exported_symbols.set(export_name, def);
+    }
+  }
 
   return {
     file_path,
@@ -64,16 +116,17 @@ function create_test_index(
           },
         ],
       ]),
-    functions: options.functions || new Map(),
-    classes: options.classes || new Map(),
-    variables: options.variables || new Map(),
-    interfaces: options.interfaces || new Map(),
-    enums: options.enums || new Map(),
+    functions,
+    classes,
+    variables,
+    interfaces,
+    enums,
     namespaces: new Map(),
-    types: options.types || new Map(),
-    imported_symbols: options.imports || new Map(),
+    types,
+    imported_symbols: imports,
     references: [],
-    symbols_by_name: new Map(),
+    scope_to_definitions: new Map(),
+    exported_symbols,
     type_bindings: new Map(),
     type_members: new Map(),
     type_alias_metadata: new Map(),
@@ -99,9 +152,6 @@ describe("extract_import_specs", () => {
       },
       import_path: "./utils.js" as ModulePath,
       import_kind: "named",
-      availability: {
-        scope: "file-private",
-      },
     };
 
     const index = create_test_index(file_path, "javascript", {
@@ -135,9 +185,6 @@ describe("extract_import_specs", () => {
       },
       import_path: "./component.js" as ModulePath,
       import_kind: "default",
-      availability: {
-        scope: "file-private",
-      },
     };
 
     const index = create_test_index(file_path, "javascript", {
@@ -172,9 +219,6 @@ describe("extract_import_specs", () => {
       import_path: "./utils.js" as ModulePath,
       import_kind: "named",
       original_name: "foo" as SymbolName,
-      availability: {
-        scope: "file-private",
-      },
     };
 
     const index = create_test_index(file_path, "javascript", {
@@ -208,9 +252,6 @@ describe("extract_import_specs", () => {
       },
       import_path: "./utils.js" as ModulePath,
       import_kind: "named",
-      availability: {
-        scope: "file-private",
-      },
     };
 
     const import2: ImportDefinition = {
@@ -227,9 +268,6 @@ describe("extract_import_specs", () => {
       },
       import_path: "./helpers.js" as ModulePath,
       import_kind: "named",
-      availability: {
-        scope: "file-private",
-      },
     };
 
     const index = create_test_index(file_path, "javascript", {
@@ -268,9 +306,7 @@ describe("resolve_export_chain", () => {
         parameters: [],
         return_type: "void" as SymbolName,
       },
-      availability: {
-        scope: "file-export",
-      },
+      is_exported: true,
     };
 
     const index = create_test_index(file_path, "javascript", {
@@ -329,12 +365,10 @@ describe("resolve_export_chain", () => {
         parameters: [],
         return_type: "void" as SymbolName,
       },
-      availability: {
-        scope: "file-export",
-        export: {
-          name: "helper" as SymbolName,
-          is_reexport: true,
-        },
+      is_exported: true,
+      export: {
+        export_name: "helper" as SymbolName,
+        is_reexport: true,
       },
     };
 
@@ -378,9 +412,7 @@ describe("resolve_export_chain", () => {
       properties: [],
       decorators: [],
       constructor: [],
-      availability: {
-        scope: "public",
-      },
+      is_exported: true,
     };
 
     const index = create_test_index(file_path, "javascript", {
@@ -414,9 +446,7 @@ describe("resolve_export_chain", () => {
         end_line: 1,
         end_column: 30,
       },
-      availability: {
-        scope: "file-export",
-      },
+      is_exported: true,
     };
 
     const index = create_test_index(file_path, "javascript", {
@@ -454,9 +484,7 @@ describe("resolve_export_chain", () => {
         end_line: 3,
         end_column: 1,
       },
-      availability: {
-        scope: "package-internal", // Not exported!
-      },
+      is_exported: false,
     };
 
     const index = create_test_index(file_path, "javascript", {
@@ -952,7 +980,6 @@ describe("Export Alias Resolution", () => {
       },
       import_path: "./base.ts" as ModulePath,
       import_kind: "named",
-      is_exported: true,
       export: {
         export_name: "publicCore" as SymbolName,
         is_reexport: true,
@@ -1393,7 +1420,6 @@ describe("Default Export Resolution", () => {
       },
       import_path: "./base.ts" as ModulePath,
       import_kind: "default",
-      is_exported: true,
       export: {
         is_default: true,
         is_reexport: true,
@@ -1587,7 +1613,6 @@ describe("Default Export Resolution", () => {
       },
       import_path: "./b.ts" as ModulePath,
       import_kind: "default",
-      is_exported: true,
       export: {
         is_default: true,
         is_reexport: true,
@@ -1616,7 +1641,6 @@ describe("Default Export Resolution", () => {
       },
       import_path: "./a.ts" as ModulePath,
       import_kind: "default",
-      is_exported: true,
       export: {
         is_default: true,
         is_reexport: true,
@@ -1829,7 +1853,6 @@ describe("Default Export Resolution", () => {
       },
       import_path: "./base.ts" as ModulePath,
       import_kind: "default",
-      is_exported: true,
       export: {
         is_default: true,
         is_reexport: true,
@@ -1858,7 +1881,6 @@ describe("Default Export Resolution", () => {
       },
       import_path: "./middle.ts" as ModulePath,
       import_kind: "default",
-      is_exported: true,
       export: {
         is_default: true,
         is_reexport: true,
@@ -1937,7 +1959,6 @@ describe("Default Export Resolution", () => {
       },
       import_path: "./base.ts" as ModulePath,
       import_kind: "default",
-      is_exported: true,
       export: {
         is_default: true,
         is_reexport: true,
@@ -2009,7 +2030,6 @@ describe("Default Export Resolution", () => {
       },
       import_path: "./config.ts" as ModulePath,
       import_kind: "default",
-      is_exported: true,
       export: {
         is_default: true,
         is_reexport: true,

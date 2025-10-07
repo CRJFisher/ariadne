@@ -3,13 +3,12 @@ import {
   create_namespace_name,
   LocalMemberInfo,
   LocalParameterInfo,
-  is_exported_definition,
-  has_export_alias,
-  is_default_export,
   is_reexport,
-  get_export_name,
   Definition,
-  ExportMetadata,
+  FilePath,
+  SymbolName,
+  SymbolId,
+  ScopeId,
 } from "../src";
 
 describe("@ariadnejs/types", () => {
@@ -49,25 +48,25 @@ describe("@ariadnejs/types", () => {
   describe("Unified LocalMemberInfo Interface", () => {
     it("should support all member kinds including constructor", () => {
       const methodMember: LocalMemberInfo = {
-        name: "testMethod",
+        name: "testMethod" as SymbolName,
         kind: "method",
         location: {
-          file_path: "test.ts",
+          file_path: "test.ts" as FilePath,
           start_line: 1,
           start_column: 0,
           end_line: 1,
           end_column: 10,
         },
-        symbol_id: "test_symbol",
+        symbol_id: "test_symbol" as SymbolId,
         is_static: false,
         type_annotation: "string",
       };
 
       const constructorMember: LocalMemberInfo = {
-        name: "constructor",
+        name: "constructor" as SymbolName,
         kind: "constructor",
         location: {
-          file_path: "test.ts",
+          file_path: "test.ts" as FilePath,
           start_line: 2,
           start_column: 0,
           end_line: 2,
@@ -75,7 +74,7 @@ describe("@ariadnejs/types", () => {
         },
         parameters: [
           {
-            name: "param1",
+            name: "param1" as SymbolName,
             type_annotation: "string",
             is_optional: false,
           },
@@ -83,10 +82,10 @@ describe("@ariadnejs/types", () => {
       };
 
       const propertyMember: LocalMemberInfo = {
-        name: "property",
+        name: "property" as SymbolName,
         kind: "property",
         location: {
-          file_path: "test.ts",
+          file_path: "test.ts" as FilePath,
           start_line: 3,
           start_column: 0,
           end_line: 3,
@@ -96,10 +95,10 @@ describe("@ariadnejs/types", () => {
       };
 
       const fieldMember: LocalMemberInfo = {
-        name: "field",
+        name: "field" as SymbolName,
         kind: "field",
         location: {
-          file_path: "test.ts",
+          file_path: "test.ts" as FilePath,
           start_line: 4,
           start_column: 0,
           end_line: 4,
@@ -108,10 +107,10 @@ describe("@ariadnejs/types", () => {
       };
 
       const getterMember: LocalMemberInfo = {
-        name: "getter",
+        name: "getter" as SymbolName,
         kind: "getter",
         location: {
-          file_path: "test.ts",
+          file_path: "test.ts" as FilePath,
           start_line: 5,
           start_column: 0,
           end_line: 5,
@@ -120,10 +119,10 @@ describe("@ariadnejs/types", () => {
       };
 
       const setterMember: LocalMemberInfo = {
-        name: "setter",
+        name: "setter" as SymbolName,
         kind: "setter",
         location: {
-          file_path: "test.ts",
+          file_path: "test.ts" as FilePath,
           start_line: 6,
           start_column: 0,
           end_line: 6,
@@ -140,7 +139,7 @@ describe("@ariadnejs/types", () => {
       expect(setterMember.kind).toBe("setter");
 
       // Verify optional fields work
-      expect(methodMember.symbol_id).toBe("test_symbol");
+      expect(methodMember.symbol_id).toBe("test_symbol" as SymbolId);
       expect(methodMember.is_static).toBe(false);
       expect(methodMember.type_annotation).toBe("string");
       expect(constructorMember.parameters).toHaveLength(1);
@@ -151,24 +150,24 @@ describe("@ariadnejs/types", () => {
   describe("LocalParameterInfo Interface", () => {
     it("should support all parameter features", () => {
       const basicParam: LocalParameterInfo = {
-        name: "basicParam",
+      name: "basicParam" as SymbolName  ,
         type_annotation: "string",
       };
 
       const optionalParam: LocalParameterInfo = {
-        name: "optionalParam",
+        name: "optionalParam" as SymbolName,
         type_annotation: "number",
         is_optional: true,
       };
 
       const restParam: LocalParameterInfo = {
-        name: "restParam",
+        name: "restParam" as SymbolName,
         type_annotation: "string[]",
         is_rest: true,
       };
 
       const defaultParam: LocalParameterInfo = {
-        name: "defaultParam",
+        name: "defaultParam" as SymbolName,
         type_annotation: "boolean",
         is_optional: true,
         default_value: "true",
@@ -184,85 +183,23 @@ describe("@ariadnejs/types", () => {
   describe("Export Helper Functions", () => {
     const create_mock_definition = (overrides: Partial<Definition>): Definition => ({
       kind: "function",
-      symbol_id: "function:test:test.ts:1:0" as any,
-      name: "testFunc" as any,
-      defining_scope_id: "module:test.ts:1:1:10:1" as any,
+      symbol_id: "function:test:test.ts:1:0" as SymbolId,
+      name: "testFunc" as SymbolName,
+      defining_scope_id: "module:test.ts:1:1:10:1" as ScopeId,
       location: {
-        file_path: "test.ts",
+        file_path: "test.ts" as FilePath,
         start_line: 1,
         start_column: 0,
         end_line: 1,
         end_column: 10,
       },
-      availability: {
-        scope: "file-private",
-      },
-      is_exported: false,
       ...overrides,
     });
 
-    describe("is_exported_definition", () => {
-      it("should return true for exported definitions", () => {
-        const def = create_mock_definition({ is_exported: true });
-        expect(is_exported_definition(def)).toBe(true);
-      });
-
-      it("should return false for non-exported definitions", () => {
-        const def = create_mock_definition({ is_exported: false });
-        expect(is_exported_definition(def)).toBe(false);
-      });
-    });
-
-    describe("has_export_alias", () => {
-      it("should return true when export has an alias", () => {
-        const def = create_mock_definition({
-          is_exported: true,
-          export: { export_name: "aliasName" as any },
-        });
-        expect(has_export_alias(def)).toBe(true);
-      });
-
-      it("should return false when export has no alias", () => {
-        const def = create_mock_definition({
-          is_exported: true,
-          export: {},
-        });
-        expect(has_export_alias(def)).toBe(false);
-      });
-
-      it("should return false when not exported", () => {
-        const def = create_mock_definition({ is_exported: false });
-        expect(has_export_alias(def)).toBe(false);
-      });
-    });
-
-    describe("is_default_export", () => {
-      it("should return true for default exports", () => {
-        const def = create_mock_definition({
-          is_exported: true,
-          export: { is_default: true },
-        });
-        expect(is_default_export(def)).toBe(true);
-      });
-
-      it("should return false for non-default exports", () => {
-        const def = create_mock_definition({
-          is_exported: true,
-          export: { is_default: false },
-        });
-        expect(is_default_export(def)).toBe(false);
-      });
-
-      it("should return false when export metadata is missing", () => {
-        const def = create_mock_definition({ is_exported: true });
-        expect(is_default_export(def)).toBe(false);
-      });
-    });
 
     describe("is_reexport", () => {
       it("should return true for re-exports", () => {
         const def = create_mock_definition({
-          is_exported: true,
           export: { is_reexport: true },
         });
         expect(is_reexport(def)).toBe(true);
@@ -270,44 +207,16 @@ describe("@ariadnejs/types", () => {
 
       it("should return false for non-reexports", () => {
         const def = create_mock_definition({
-          is_exported: true,
           export: { is_reexport: false },
         });
         expect(is_reexport(def)).toBe(false);
       });
 
       it("should return false when export metadata is missing", () => {
-        const def = create_mock_definition({ is_exported: true });
+        const def = create_mock_definition({});
         expect(is_reexport(def)).toBe(false);
       });
     });
 
-    describe("get_export_name", () => {
-      it("should return alias when export has one", () => {
-        const def = create_mock_definition({
-          name: "originalName" as any,
-          is_exported: true,
-          export: { export_name: "aliasName" as any },
-        });
-        expect(get_export_name(def)).toBe("aliasName");
-      });
-
-      it("should return original name when no alias", () => {
-        const def = create_mock_definition({
-          name: "originalName" as any,
-          is_exported: true,
-          export: {},
-        });
-        expect(get_export_name(def)).toBe("originalName");
-      });
-
-      it("should return original name when not exported", () => {
-        const def = create_mock_definition({
-          name: "originalName" as any,
-          is_exported: false,
-        });
-        expect(get_export_name(def)).toBe("originalName");
-      });
-    });
   });
 });

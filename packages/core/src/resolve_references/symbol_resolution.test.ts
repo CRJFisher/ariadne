@@ -1,0 +1,420 @@
+/**
+ * Shared Test Utilities for Symbol Resolution Tests
+ *
+ * This file contains shared test helpers and utilities used across all
+ * symbol resolution test files (TypeScript, JavaScript, Python, Rust, etc.)
+ */
+
+import type {
+  FilePath,
+  SymbolId,
+  ScopeId,
+  SymbolName,
+  SymbolReference,
+  LexicalScope,
+  FunctionDefinition,
+  ClassDefinition,
+  VariableDefinition,
+  ImportDefinition,
+  TypeMemberInfo,
+  ModulePath,
+  LocationKey,
+  InterfaceDefinition,
+  AnyDefinition,
+  Location,
+  DecoratorDefinition,
+} from "@ariadnejs/types";
+import { location_key } from "@ariadnejs/types";
+import { SemanticIndex } from "../index_single_file/semantic_index";
+
+// ============================================================================
+// Test Helper: Create Semantic Index with Smart Defaults
+// ============================================================================
+//
+// This helper provides a declarative API for creating test indices with minimal boilerplate.
+// Instead of manually constructing full Maps of definitions with all required fields,
+// tests can specify only the essential information using simple specs:
+//
+// Example - Before refactoring:
+//   classes: new Map([[id, { kind: "class", symbol_id: id, name, defining_scope_id,
+//     location: { file_path, start_line, start_column, end_line, end_column },
+//     methods: [], properties: [], extends: [], decorators: [], constructor: [], is_exported: false }]])
+//
+// Example - After refactoring:
+//   classes: [{ id, name, scope, location: { line: 1, col: 0 } }]
+//
+// Benefits:
+// - 80-90% reduction in test setup code
+// - Sensible defaults for all optional fields
+// - Automatic creation of module scope if not specified
+// - Automatic type_members generation for classes/interfaces with methods
+// - Automatic type_bindings generation for variables with type_binding specified
+//
+
+export type TestClassSpec = {
+  id: SymbolId;
+  name: SymbolName;
+  scope: ScopeId;
+  location?: { line: number; col: number; end_line?: number; end_col?: number };
+  methods?: Array<{
+    id: SymbolId;
+    name: SymbolName;
+    location?: { line: number; col: number; end_line?: number; end_col?: number };
+  }>;
+  properties?: Array<{ symbol_id: SymbolId; name: SymbolName; kind: "property"; location: Location, decorators: DecoratorDefinition[], type: SymbolName, initial_value: string, defining_scope_id: ScopeId; is_exported: boolean }>;
+  is_exported?: boolean;
+};
+
+export type TestFunctionSpec = {
+  id: SymbolId;
+  name: SymbolName;
+  scope: ScopeId;
+  location?: { line: number; col: number; end_line?: number; end_col?: number };
+  is_exported?: boolean;
+};
+
+export type TestVariableSpec = {
+  id: SymbolId;
+  name: SymbolName;
+  scope: ScopeId;
+  location?: { line: number; col: number; end_line?: number; end_col?: number };
+  type_binding?: SymbolName;
+  is_exported?: boolean;
+};
+
+export type TestImportSpec = {
+  id: SymbolId;
+  name: SymbolName;
+  import_path: ModulePath;
+  scope: ScopeId;
+  location?: { line: number; col: number };
+  import_kind?: "named" | "default" | "namespace";
+};
+
+export type TestInterfaceSpec = {
+  id: SymbolId;
+  name: SymbolName;
+  scope: ScopeId;
+  location?: { line: number; col: number; end_line?: number; end_col?: number };
+  methods?: Array<{
+    id: SymbolId;
+    name: SymbolName;
+    location?: { line: number; col: number; end_line?: number; end_col?: number };
+  }>;
+  is_exported?: boolean;
+};
+
+export type TestScopeSpec = {
+  id: ScopeId;
+  type?: "module" | "function" | "class" | "block";
+  parent?: ScopeId | null;
+  name?: SymbolName | null;
+  location?: { line: number; col: number; end_line?: number; end_col?: number };
+  children?: ScopeId[];
+};
+
+export function create_test_index(
+  file_path: FilePath,
+  options: {
+    // High-level specs that auto-generate full definitions
+    classes?: TestClassSpec[];
+    functions?: TestFunctionSpec[];
+    variables?: TestVariableSpec[];
+    imports?: TestImportSpec[];
+    interfaces?: TestInterfaceSpec[];
+    scopes?: TestScopeSpec[];
+    references?: SymbolReference[];
+    exported_symbols?: Map<SymbolName, AnyDefinition>;
+
+    // Low-level overrides for full control
+    functions_raw?: Map<SymbolId, FunctionDefinition>;
+    classes_raw?: Map<SymbolId, ClassDefinition>;
+    variables_raw?: Map<SymbolId, VariableDefinition>;
+    interfaces_raw?: Map<SymbolId, InterfaceDefinition>;
+    scopes_raw?: Map<ScopeId, LexicalScope>;
+    imports_raw?: Map<SymbolId, ImportDefinition>;
+    type_bindings_raw?: Map<LocationKey, SymbolName>;
+    type_members_raw?: Map<SymbolId, TypeMemberInfo>;
+
+    // Misc options
+    language?: "typescript" | "javascript" | "python" | "rust";
+    root_scope_id?: ScopeId;
+  } = {}
+): SemanticIndex {
+  const language = options.language || "typescript";
+  const root_scope_id =
+    options.root_scope_id || (`scope:${file_path}:module` as ScopeId);
+
+  // Build scopes from specs
+  const scopes = options.scopes_raw || new Map<ScopeId, LexicalScope>();
+  if (options.scopes) {
+    for (const spec of options.scopes) {
+      const loc = spec.location || { line: 1, col: 0, end_line: 100, end_col: 0 };
+      scopes.set(spec.id, {
+        id: spec.id,
+        type: spec.type || "module",
+        parent_id: spec.parent !== undefined ? spec.parent : null,
+        name: spec.name !== undefined ? spec.name : null,
+        location: {
+          file_path,
+          start_line: loc.line,
+          start_column: loc.col,
+          end_line: loc.end_line || loc.line + 10,
+          end_column: loc.end_col || 100,
+        },
+        child_ids: spec.children || [],
+      });
+    }
+  }
+
+  // Ensure root scope exists
+  if (!scopes.has(root_scope_id)) {
+    scopes.set(root_scope_id, {
+      id: root_scope_id,
+      type: "module",
+      parent_id: null,
+      name: null,
+      location: {
+        file_path,
+        start_line: 1,
+        start_column: 0,
+        end_line: 100,
+        end_column: 0,
+      },
+      child_ids: [],
+    });
+  }
+
+  // Build classes from specs
+  const classes = options.classes_raw || new Map<SymbolId, ClassDefinition>();
+  const type_members =
+    options.type_members_raw || new Map<SymbolId, TypeMemberInfo>();
+
+  if (options.classes) {
+    for (const spec of options.classes) {
+      const loc = spec.location || { line: 1, col: 0, end_line: 1, end_col: 50 };
+      const methods =
+        spec.methods?.map((m) => {
+          const mloc = m.location || {
+            line: loc.line,
+            col: loc.col + 10,
+            end_line: loc.line,
+            end_col: loc.col + 40,
+          };
+          return {
+            kind: "method" as const,
+            is_exported: false,
+            symbol_id: m.id,
+            name: m.name,
+            defining_scope_id: spec.scope,
+            location: {
+              file_path,
+              start_line: mloc.line,
+              start_column: mloc.col,
+              end_line: mloc.end_line || mloc.line,
+              end_column: mloc.end_col || mloc.col + 30,
+            },
+            parameters: [],
+            parent_class: spec.id,
+          };
+        }) || [];
+
+      classes.set(spec.id, {
+        kind: "class",
+        symbol_id: spec.id,
+        name: spec.name,
+        defining_scope_id: spec.scope,
+        location: {
+          file_path,
+          start_line: loc.line,
+          start_column: loc.col,
+          end_line: loc.end_line || loc.line,
+          end_column: loc.end_col || loc.col + 50,
+        },
+        methods,
+        properties: spec.properties || [],
+        extends: [],
+        decorators: [],
+        constructor: [],
+        is_exported: spec.is_exported || false,
+      });
+
+      // Build type members
+      const method_map = new Map<SymbolName, SymbolId>();
+      for (const method of methods) {
+        method_map.set(method.name, method.symbol_id);
+      }
+      type_members.set(spec.id, {
+        methods: method_map,
+        properties: new Map(),
+        constructor: undefined,
+        extends: [],
+      });
+    }
+  }
+
+  // Build functions from specs
+  const functions =
+    options.functions_raw || new Map<SymbolId, FunctionDefinition>();
+  if (options.functions) {
+    for (const spec of options.functions) {
+      const loc = spec.location || { line: 1, col: 0, end_line: 1, end_col: 40 };
+      functions.set(spec.id, {
+        kind: "function",
+        symbol_id: spec.id,
+        name: spec.name,
+        defining_scope_id: spec.scope,
+        location: {
+          file_path,
+          start_line: loc.line,
+          start_column: loc.col,
+          end_line: loc.end_line || loc.line,
+          end_column: loc.end_col || loc.col + 40,
+        },
+        signature: { parameters: [] },
+        is_exported: spec.is_exported || false,
+      });
+    }
+  }
+
+  // Build variables from specs
+  const variables =
+    options.variables_raw || new Map<SymbolId, VariableDefinition>();
+  const type_bindings =
+    options.type_bindings_raw || new Map<LocationKey, SymbolName>();
+
+  if (options.variables) {
+    for (const spec of options.variables) {
+      const loc = spec.location || { line: 1, col: 0, end_line: 1, end_col: 10 };
+      const var_location = {
+        file_path,
+        start_line: loc.line,
+        start_column: loc.col,
+        end_line: loc.end_line || loc.line,
+        end_column: loc.end_col || loc.col + 10,
+      };
+
+      variables.set(spec.id, {
+        kind: "variable",
+        symbol_id: spec.id,
+        name: spec.name,
+        defining_scope_id: spec.scope,
+        location: var_location,
+        is_exported: spec.is_exported || false,
+      });
+
+      if (spec.type_binding) {
+        type_bindings.set(location_key(var_location), spec.type_binding);
+      }
+    }
+  }
+
+  // Build imports from specs
+  const imports = options.imports_raw || new Map<SymbolId, ImportDefinition>();
+  if (options.imports) {
+    for (const spec of options.imports) {
+      const loc = spec.location || { line: 1, col: 9 };
+      imports.set(spec.id, {
+        kind: "import",
+        symbol_id: spec.id,
+        name: spec.name,
+        defining_scope_id: spec.scope,
+        location: {
+          file_path,
+          start_line: loc.line,
+          start_column: loc.col,
+          end_line: loc.line,
+          end_column: loc.col + spec.name.length,
+        },
+        import_path: spec.import_path,
+        import_kind: spec.import_kind || "named",
+        original_name: undefined,
+      });
+    }
+  }
+
+  // Build interfaces from specs
+  const interfaces =
+    options.interfaces_raw || new Map<SymbolId, InterfaceDefinition>();
+  if (options.interfaces) {
+    for (const spec of options.interfaces) {
+      const loc = spec.location || { line: 1, col: 0, end_line: 1, end_col: 50 };
+      const methods =
+        spec.methods?.map((m) => {
+          const mloc = m.location || {
+            line: loc.line,
+            col: loc.col + 20,
+            end_line: loc.line,
+            end_col: loc.col + 40,
+          };
+          return {
+            kind: "method" as const,
+            is_exported: false,
+            symbol_id: m.id,
+            name: m.name,
+            defining_scope_id: spec.scope,
+            location: {
+              file_path,
+              start_line: mloc.line,
+              start_column: mloc.col,
+              end_line: mloc.end_line || mloc.line,
+              end_column: mloc.end_col || mloc.col + 20,
+            },
+            parameters: [],
+            parent_class: spec.id,
+          };
+        }) || [];
+
+      interfaces.set(spec.id, {
+        kind: "interface",
+        symbol_id: spec.id,
+        name: spec.name,
+        defining_scope_id: spec.scope,
+        location: {
+          file_path,
+          start_line: loc.line,
+          start_column: loc.col,
+          end_line: loc.end_line || loc.line,
+          end_column: loc.end_col || loc.col + 50,
+        },
+        methods,
+        properties: [],
+        extends: [],
+        is_exported: spec.is_exported || false,
+      });
+
+      // Build type members for interface
+      const method_map = new Map<SymbolName, SymbolId>();
+      for (const method of methods) {
+        method_map.set(method.name, method.symbol_id);
+      }
+      type_members.set(spec.id, {
+        methods: method_map,
+        properties: new Map(),
+        constructor: undefined,
+        extends: [],
+      });
+    }
+  }
+
+  return {
+    file_path,
+    language,
+    root_scope_id,
+    scopes,
+    functions,
+    classes,
+    variables,
+    interfaces,
+    enums: new Map(),
+    namespaces: new Map(),
+    types: new Map(),
+    imported_symbols: imports,
+    exported_symbols: options.exported_symbols || new Map(),
+    references: options.references || [],
+    scope_to_definitions: new Map(),
+    type_bindings,
+    type_members,
+    type_alias_metadata: new Map(),
+  };
+}

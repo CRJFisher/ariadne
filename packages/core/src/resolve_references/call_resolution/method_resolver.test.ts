@@ -125,7 +125,7 @@ describe("Method Call Resolution", () => {
               },
             ],
             properties: [],
-            availability: "local",
+            is_exported: false,
           },
         ],
       ]);
@@ -149,7 +149,7 @@ describe("Method Call Resolution", () => {
             defining_scope_id: root_scope_id,
             location: user_var_loc,
             is_const: true,
-            availability: "local",
+            is_exported: false,
           },
         ],
       ]);
@@ -285,7 +285,7 @@ describe("Method Call Resolution", () => {
               },
             ],
             properties: [],
-            availability: "local",
+            is_exported: false,
           },
         ],
       ]);
@@ -308,7 +308,7 @@ describe("Method Call Resolution", () => {
             defining_scope_id: root_scope_id,
             location: user_var_loc,
             is_const: true,
-            availability: "local",
+            is_exported: false,
           },
         ],
       ]);
@@ -468,7 +468,7 @@ describe("Method Call Resolution", () => {
               },
             ],
             properties: [],
-            availability: "local",
+            is_exported: false,
           },
         ],
       ]);
@@ -503,7 +503,7 @@ describe("Method Call Resolution", () => {
             defining_scope_id: root_scope_id,
             location: outer_user_loc,
             is_const: true,
-            availability: "local",
+            is_exported: false,
           },
         ],
         [
@@ -515,7 +515,7 @@ describe("Method Call Resolution", () => {
             defining_scope_id: func_scope_id,
             location: inner_user_loc,
             is_const: true,
-            availability: "local",
+            is_exported: false,
           },
         ],
       ]);
@@ -658,7 +658,7 @@ describe("Method Call Resolution", () => {
               },
             ],
             properties: [],
-            availability: "local",
+            is_exported: false,
           },
         ],
         [
@@ -693,7 +693,7 @@ describe("Method Call Resolution", () => {
               },
             ],
             properties: [],
-            availability: "local",
+            is_exported: false,
           },
         ],
       ]);
@@ -725,7 +725,7 @@ describe("Method Call Resolution", () => {
             defining_scope_id: root_scope_id,
             location: var_a_loc,
             is_const: true,
-            availability: "local",
+            is_exported: false,
           },
         ],
         [
@@ -737,7 +737,7 @@ describe("Method Call Resolution", () => {
             defining_scope_id: root_scope_id,
             location: var_b_loc,
             is_const: true,
-            availability: "local",
+            is_exported: false,
           },
         ],
       ]);
@@ -1029,7 +1029,7 @@ describe("Method Call Resolution", () => {
               end_column: 9,
             },
             is_const: true,
-            availability: "local",
+            is_exported: false,
           },
         ],
       ]);
@@ -1125,7 +1125,7 @@ describe("Method Call Resolution", () => {
             },
             methods: [],
             properties: [],
-            availability: "local",
+            is_exported: false,
           },
         ],
       ]);
@@ -1148,7 +1148,7 @@ describe("Method Call Resolution", () => {
             defining_scope_id: root_scope_id,
             location: user_var_loc,
             is_const: true,
-            availability: "local",
+            is_exported: false,
           },
         ],
       ]);
@@ -1286,7 +1286,7 @@ describe("Method Call Resolution", () => {
               },
             ],
             properties: [],
-            availability: "local",
+            is_exported: false,
           },
         ],
       ]);
@@ -1310,7 +1310,7 @@ describe("Method Call Resolution", () => {
             defining_scope_id: root_scope_id,
             location: container_var_loc,
             is_const: true,
-            availability: "local",
+            is_exported: false,
           },
         ],
       ]);
@@ -1444,7 +1444,7 @@ describe("Method Call Resolution", () => {
               },
             ],
             properties: [],
-            availability: "local",
+            is_exported: false,
           },
         ],
       ]);
@@ -1468,7 +1468,7 @@ describe("Method Call Resolution", () => {
             defining_scope_id: root_scope_id,
             location: get_name_var_loc,
             is_const: true,
-            availability: "local",
+            is_exported: false,
           },
         ],
       ]);

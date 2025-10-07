@@ -30,49 +30,12 @@ import type {
   TypeMemberInfo,
   ModulePath,
   LocationKey,
+  AnyDefinition,
 } from "@ariadnejs/types";
 import type { SemanticIndex } from "../index_single_file/semantic_index";
 import { location_key } from "@ariadnejs/types";
+import { create_test_index } from "./symbol_resolution.test";
 
-// ============================================================================
-// Test Helper: Create Minimal Semantic Index
-// ============================================================================
-
-function create_test_index(
-  file_path: FilePath,
-  options: {
-    functions?: Map<SymbolId, FunctionDefinition>;
-    classes?: Map<SymbolId, ClassDefinition>;
-    variables?: Map<SymbolId, VariableDefinition>;
-    scopes?: Map<ScopeId, LexicalScope>;
-    references?: SymbolReference[];
-    root_scope_id?: ScopeId;
-    imports?: Map<SymbolId, ImportDefinition>;
-    type_bindings?: Map<LocationKey, SymbolName>;
-    type_members?: Map<SymbolId, TypeMemberInfo>;
-  } = {}
-): SemanticIndex {
-  return {
-    file_path,
-    language: "javascript",
-    root_scope_id:
-      options.root_scope_id || (`scope:${file_path}:module` as ScopeId),
-    scopes: options.scopes || new Map(),
-    functions: options.functions || new Map(),
-    classes: options.classes || new Map(),
-    variables: options.variables || new Map(),
-    interfaces: new Map(),
-    enums: new Map(),
-    namespaces: new Map(),
-    types: new Map(),
-    imported_symbols: options.imports || new Map(),
-    references: options.references || [],
-    symbols_by_name: new Map(),
-    type_bindings: options.type_bindings || new Map(),
-    type_members: options.type_members || new Map(),
-    type_alias_metadata: new Map(),
-  };
-}
 
 // ============================================================================
 // JavaScript Symbol Resolution Integration Tests
@@ -95,7 +58,7 @@ describe("JavaScript Symbol Resolution Integration", () => {
 
       const index = create_test_index(file_path, {
         root_scope_id: module_scope,
-        scopes: new Map([
+        scopes_raw: new Map([
           [
             module_scope,
             {
@@ -114,7 +77,7 @@ describe("JavaScript Symbol Resolution Integration", () => {
             },
           ],
         ]),
-        functions: new Map([
+        functions_raw: new Map([
           [
             helper_id,
             {
@@ -167,7 +130,7 @@ describe("JavaScript Symbol Resolution Integration", () => {
 
       const index = create_test_index(file_path, {
         root_scope_id: module_scope,
-        scopes: new Map([
+        scopes_raw: new Map([
           [
             module_scope,
             {
@@ -203,7 +166,7 @@ describe("JavaScript Symbol Resolution Integration", () => {
             },
           ],
         ]),
-        functions: new Map([
+        functions_raw: new Map([
           [
             helper_id,
             {
@@ -258,7 +221,7 @@ describe("JavaScript Symbol Resolution Integration", () => {
 
       const index = create_test_index(file_path, {
         root_scope_id: module_scope,
-        scopes: new Map([
+        scopes_raw: new Map([
           [
             module_scope,
             {
@@ -294,7 +257,7 @@ describe("JavaScript Symbol Resolution Integration", () => {
             },
           ],
         ]),
-        functions: new Map([
+        functions_raw: new Map([
           [
             global_helper_id,
             {
@@ -359,7 +322,7 @@ describe("JavaScript Symbol Resolution Integration", () => {
 
       const utils_index = create_test_index(utils_file, {
         root_scope_id: utils_scope,
-        scopes: new Map([
+        scopes_raw: new Map([
           [
             utils_scope,
             {
@@ -378,7 +341,7 @@ describe("JavaScript Symbol Resolution Integration", () => {
             },
           ],
         ]),
-        functions: new Map([
+        functions_raw: new Map([
           [
             helper_id,
             {
@@ -416,7 +379,7 @@ describe("JavaScript Symbol Resolution Integration", () => {
 
       const main_index = create_test_index(main_file, {
         root_scope_id: main_scope,
-        scopes: new Map([
+        scopes_raw: new Map([
           [
             main_scope,
             {
@@ -435,7 +398,7 @@ describe("JavaScript Symbol Resolution Integration", () => {
             },
           ],
         ]),
-        imports: new Map([
+        imports_raw: new Map([
           [
             import_id,
             {
@@ -486,7 +449,7 @@ describe("JavaScript Symbol Resolution Integration", () => {
 
       const base_index = create_test_index(base_file, {
         root_scope_id: base_scope,
-        scopes: new Map([
+        scopes_raw: new Map([
           [
             base_scope,
             {
@@ -505,7 +468,7 @@ describe("JavaScript Symbol Resolution Integration", () => {
             },
           ],
         ]),
-        functions: new Map([
+        functions_raw: new Map([
           [
             core_id,
             {
@@ -536,7 +499,7 @@ describe("JavaScript Symbol Resolution Integration", () => {
 
       const middle_index = create_test_index(middle_file, {
         root_scope_id: middle_scope,
-        scopes: new Map([
+        scopes_raw: new Map([
           [
             middle_scope,
             {
@@ -555,7 +518,7 @@ describe("JavaScript Symbol Resolution Integration", () => {
             },
           ],
         ]),
-        imports: new Map([
+        imports_raw: new Map([
           [
             middle_import_id,
             {
@@ -595,7 +558,7 @@ describe("JavaScript Symbol Resolution Integration", () => {
 
       const main_index = create_test_index(main_file, {
         root_scope_id: main_scope,
-        scopes: new Map([
+        scopes_raw: new Map([
           [
             main_scope,
             {
@@ -614,7 +577,7 @@ describe("JavaScript Symbol Resolution Integration", () => {
             },
           ],
         ]),
-        imports: new Map([
+        imports_raw: new Map([
           [
             main_import_id,
             {
@@ -667,7 +630,7 @@ describe("JavaScript Symbol Resolution Integration", () => {
 
       const utils_index = create_test_index(utils_file, {
         root_scope_id: utils_scope,
-        scopes: new Map([
+        scopes_raw: new Map([
           [
             utils_scope,
             {
@@ -686,7 +649,7 @@ describe("JavaScript Symbol Resolution Integration", () => {
             },
           ],
         ]),
-        functions: new Map([
+        functions_raw: new Map([
           [
             helper_id,
             {
@@ -724,7 +687,7 @@ describe("JavaScript Symbol Resolution Integration", () => {
 
       const main_index = create_test_index(main_file, {
         root_scope_id: main_scope,
-        scopes: new Map([
+        scopes_raw: new Map([
           [
             main_scope,
             {
@@ -743,7 +706,7 @@ describe("JavaScript Symbol Resolution Integration", () => {
             },
           ],
         ]),
-        imports: new Map([
+        imports_raw: new Map([
           [
             import_id,
             {
@@ -797,7 +760,7 @@ describe("JavaScript Symbol Resolution Integration", () => {
 
       const user_index = create_test_index(user_file, {
         root_scope_id: user_scope,
-        scopes: new Map([
+        scopes_raw: new Map([
           [
             user_scope,
             {
@@ -816,7 +779,7 @@ describe("JavaScript Symbol Resolution Integration", () => {
             },
           ],
         ]),
-        classes: new Map([
+        classes_raw: new Map([
           [
             user_class_id,
             {
@@ -855,7 +818,7 @@ describe("JavaScript Symbol Resolution Integration", () => {
             } as unknown as ClassDefinition,
           ],
         ]),
-        type_members: new Map([
+        type_members_raw: new Map([
           [
             user_class_id,
             {
@@ -890,7 +853,7 @@ describe("JavaScript Symbol Resolution Integration", () => {
 
       const main_index = create_test_index(main_file, {
         root_scope_id: main_scope,
-        scopes: new Map([
+        scopes_raw: new Map([
           [
             main_scope,
             {
@@ -909,7 +872,7 @@ describe("JavaScript Symbol Resolution Integration", () => {
             },
           ],
         ]),
-        imports: new Map([
+        imports_raw: new Map([
           [
             import_id,
             {
@@ -930,7 +893,7 @@ describe("JavaScript Symbol Resolution Integration", () => {
             } as unknown as ImportDefinition,
           ],
         ]),
-        variables: new Map([
+        variables_raw: new Map([
           [
             user_var_id,
             {
@@ -948,7 +911,7 @@ describe("JavaScript Symbol Resolution Integration", () => {
             } as unknown as VariableDefinition,
           ],
         ]),
-        type_bindings: new Map([
+        type_bindings_raw: new Map([
           [
             location_key({
               file_path: main_file,
@@ -1025,7 +988,7 @@ describe("JavaScript Symbol Resolution Integration", () => {
 
       const index = create_test_index(file_path, {
         root_scope_id: module_scope,
-        scopes: new Map([
+        scopes_raw: new Map([
           [
             module_scope,
             {
@@ -1044,7 +1007,7 @@ describe("JavaScript Symbol Resolution Integration", () => {
             },
           ],
         ]),
-        classes: new Map([
+        classes_raw: new Map([
           [
             user_class_id,
             {
@@ -1090,7 +1053,7 @@ describe("JavaScript Symbol Resolution Integration", () => {
 
       const types_index = create_test_index(types_file, {
         root_scope_id: types_scope,
-        scopes: new Map([
+        scopes_raw: new Map([
           [
             types_scope,
             {
@@ -1109,7 +1072,7 @@ describe("JavaScript Symbol Resolution Integration", () => {
             },
           ],
         ]),
-        classes: new Map([
+        classes_raw: new Map([
           [
             user_class_id,
             {
@@ -1148,7 +1111,7 @@ describe("JavaScript Symbol Resolution Integration", () => {
 
       const main_index = create_test_index(main_file, {
         root_scope_id: main_scope,
-        scopes: new Map([
+        scopes_raw: new Map([
           [
             main_scope,
             {
@@ -1167,7 +1130,7 @@ describe("JavaScript Symbol Resolution Integration", () => {
             },
           ],
         ]),
-        imports: new Map([
+        imports_raw: new Map([
           [
             import_id,
             {
@@ -1221,7 +1184,7 @@ describe("JavaScript Symbol Resolution Integration", () => {
 
       const repository_index = create_test_index(repository_file, {
         root_scope_id: repository_scope,
-        scopes: new Map([
+        scopes_raw: new Map([
           [
             repository_scope,
             {
@@ -1240,7 +1203,7 @@ describe("JavaScript Symbol Resolution Integration", () => {
             },
           ],
         ]),
-        classes: new Map([
+        classes_raw: new Map([
           [
             repository_class_id,
             {
@@ -1279,7 +1242,7 @@ describe("JavaScript Symbol Resolution Integration", () => {
             } as unknown as ClassDefinition,
           ],
         ]),
-        type_members: new Map([
+        type_members_raw: new Map([
           [
             repository_class_id,
             {
@@ -1317,7 +1280,7 @@ describe("JavaScript Symbol Resolution Integration", () => {
 
       const service_index = create_test_index(service_file, {
         root_scope_id: service_scope,
-        scopes: new Map([
+        scopes_raw: new Map([
           [
             service_scope,
             {
@@ -1336,7 +1299,7 @@ describe("JavaScript Symbol Resolution Integration", () => {
             },
           ],
         ]),
-        imports: new Map([
+        imports_raw: new Map([
           [
             service_import_id,
             {
@@ -1357,7 +1320,7 @@ describe("JavaScript Symbol Resolution Integration", () => {
             } as unknown as ImportDefinition,
           ],
         ]),
-        classes: new Map([
+        classes_raw: new Map([
           [
             service_class_id,
             {
@@ -1396,7 +1359,7 @@ describe("JavaScript Symbol Resolution Integration", () => {
             } as unknown as ClassDefinition,
           ],
         ]),
-        variables: new Map([
+        variables_raw: new Map([
           [
             repo_var_id,
             {
@@ -1414,7 +1377,7 @@ describe("JavaScript Symbol Resolution Integration", () => {
             } as unknown as VariableDefinition,
           ],
         ]),
-        type_bindings: new Map([
+        type_bindings_raw: new Map([
           [
             location_key({
               file_path: service_file,
@@ -1426,7 +1389,7 @@ describe("JavaScript Symbol Resolution Integration", () => {
             "Repository" as SymbolName,
           ],
         ]),
-        type_members: new Map([
+        type_members_raw: new Map([
           [
             service_class_id,
             {
@@ -1489,7 +1452,7 @@ describe("JavaScript Symbol Resolution Integration", () => {
 
       const main_index = create_test_index(main_file, {
         root_scope_id: main_scope,
-        scopes: new Map([
+        scopes_raw: new Map([
           [
             main_scope,
             {
@@ -1508,7 +1471,7 @@ describe("JavaScript Symbol Resolution Integration", () => {
             },
           ],
         ]),
-        imports: new Map([
+        imports_raw: new Map([
           [
             main_import_id,
             {
@@ -1529,7 +1492,7 @@ describe("JavaScript Symbol Resolution Integration", () => {
             } as unknown as ImportDefinition,
           ],
         ]),
-        variables: new Map([
+        variables_raw: new Map([
           [
             service_var_id,
             {
@@ -1547,7 +1510,7 @@ describe("JavaScript Symbol Resolution Integration", () => {
             } as unknown as VariableDefinition,
           ],
         ]),
-        type_bindings: new Map([
+        type_bindings_raw: new Map([
           [
             location_key({
               file_path: main_file,
@@ -1630,7 +1593,7 @@ describe("JavaScript Symbol Resolution Integration", () => {
 
       const utils_index = create_test_index(utils_file, {
         root_scope_id: utils_scope,
-        scopes: new Map([
+        scopes_raw: new Map([
           [
             utils_scope,
             {
@@ -1649,7 +1612,7 @@ describe("JavaScript Symbol Resolution Integration", () => {
             },
           ],
         ]),
-        functions: new Map([
+        functions_raw: new Map([
           [
             imported_helper_id,
             {
@@ -1685,7 +1648,7 @@ describe("JavaScript Symbol Resolution Integration", () => {
 
       const main_index = create_test_index(main_file, {
         root_scope_id: main_scope,
-        scopes: new Map([
+        scopes_raw: new Map([
           [
             main_scope,
             {
@@ -1704,7 +1667,7 @@ describe("JavaScript Symbol Resolution Integration", () => {
             },
           ],
         ]),
-        imports: new Map([
+        imports_raw: new Map([
           [
             import_id,
             {
@@ -1725,7 +1688,7 @@ describe("JavaScript Symbol Resolution Integration", () => {
             } as unknown as ImportDefinition,
           ],
         ]),
-        functions: new Map([
+        functions_raw: new Map([
           [
             local_helper_id,
             {

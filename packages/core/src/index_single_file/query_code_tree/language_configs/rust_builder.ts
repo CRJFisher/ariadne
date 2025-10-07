@@ -64,7 +64,6 @@ export const RUST_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
           name: capture.text,
           location: capture.location,
           scope_id: context.get_scope_id(capture.location),
-          availability: extract_visibility(capture.node.parent || capture.node),
           is_exported: export_info.is_exported,
           export: export_info.export,
           generics: generics.length > 0 ? generics : undefined,
@@ -92,7 +91,6 @@ export const RUST_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
           name: capture.text,
           location: capture.location,
           scope_id: context.get_scope_id(capture.location),
-          availability: extract_visibility(capture.node.parent || capture.node),
           is_exported: export_info.is_exported,
           export: export_info.export,
           generics: generics,
@@ -121,7 +119,6 @@ export const RUST_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
           name: capture.text,
           location: capture.location,
           scope_id: context.get_scope_id(capture.location),
-          availability: extract_visibility(capture.node.parent || capture.node),
           is_exported: export_info.is_exported,
           export: export_info.export,
         });
@@ -160,7 +157,6 @@ export const RUST_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
           name: capture.text,
           location: capture.location,
           scope_id: context.get_scope_id(capture.location),
-          availability: extract_visibility(capture.node.parent || capture.node),
           is_exported: export_info.is_exported,
           export: export_info.export,
           generics: generics,
@@ -206,7 +202,6 @@ export const RUST_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
           name: capture.text,
           location: capture.location,
           scope_id: context.get_scope_id(capture.location),
-          availability: extract_visibility(capture.node.parent || capture.node),
           is_exported: export_info.is_exported,
           export: export_info.export,
         });
@@ -233,7 +228,6 @@ export const RUST_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
           name: capture.text,
           location: capture.location,
           scope_id: context.get_scope_id(capture.location),
-          availability: extract_visibility(capture.node.parent || capture.node),
           is_exported: export_info.is_exported,
           export: export_info.export,
           generics,
@@ -308,7 +302,6 @@ export const RUST_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
           name: capture.text,
           location: capture.location,
           scope_id: context.get_scope_id(capture.location),
-          availability: extract_visibility(capture.node.parent || capture.node),
           is_exported: export_info.is_exported,
           export: export_info.export,
         });
@@ -342,7 +335,6 @@ export const RUST_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
           name: capture.text,
           location: capture.location,
           scope_id: context.get_scope_id(capture.location),
-          availability: extract_visibility(capture.node.parent || capture.node),
           is_exported: export_info.is_exported,
           export: export_info.export,
           generics,
@@ -374,7 +366,6 @@ export const RUST_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
           name: capture.text,
           location: capture.location,
           scope_id: context.get_scope_id(capture.location),
-          availability: extract_visibility(capture.node.parent || capture.node),
           is_exported: export_info.is_exported,
           export: export_info.export,
         });
@@ -405,7 +396,6 @@ export const RUST_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
           name: capture.text,
           location: capture.location,
           scope_id: context.get_scope_id(capture.location),
-          availability: extract_visibility(capture.node.parent || capture.node),
           is_exported: export_info.is_exported,
           export: export_info.export,
         });
@@ -436,7 +426,6 @@ export const RUST_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
           name: capture.text,
           location: capture.location,
           scope_id: context.get_scope_id(capture.location),
-          availability: extract_visibility(capture.node.parent || capture.node),
           is_exported: export_info.is_exported,
           export: export_info.export,
         });
@@ -461,8 +450,6 @@ export const RUST_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
         const isStatic = is_associated_function(
           capture.node.parent || capture.node
         );
-        const export_info = extract_export_info(capture.node.parent || capture.node);
-
         if (impl_info?.struct_name) {
           // Look up struct by name
           const struct_id = builder.find_class_by_name(impl_info.struct_name);
@@ -472,11 +459,6 @@ export const RUST_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
               name: capture.text,
               location: capture.location,
               scope_id: context.get_scope_id(capture.location),
-              availability: extract_visibility(
-                capture.node.parent || capture.node
-              ),
-              is_exported: export_info.is_exported,
-              export: export_info.export,
               return_type: returnType,
               static: isStatic || undefined,
             });
@@ -501,8 +483,6 @@ export const RUST_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
         const returnType = extract_return_type(
           capture.node.parent || capture.node
         );
-        const export_info = extract_export_info(capture.node.parent || capture.node);
-
         if (impl_info?.struct_name) {
           const struct_id = builder.find_class_by_name(impl_info.struct_name);
           if (struct_id) {
@@ -511,11 +491,6 @@ export const RUST_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
               name: capture.text,
               location: capture.location,
               scope_id: context.get_scope_id(capture.location),
-              availability: extract_visibility(
-                capture.node.parent || capture.node
-              ),
-              is_exported: export_info.is_exported,
-              export: export_info.export,
               return_type: returnType,
               static: true,
             });
@@ -548,7 +523,6 @@ export const RUST_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
               name: capture.text,
               location: capture.location,
               scope_id: context.get_scope_id(capture.location),
-              availability: { scope: "public" },
               return_type: returnType,
             });
           }
@@ -570,7 +544,6 @@ export const RUST_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
         const returnType = extract_return_type(
           capture.node.parent || capture.node
         );
-        const export_info = extract_export_info(capture.node.parent || capture.node);
 
         if (impl_info?.struct_name) {
           const struct_id = builder.find_class_by_name(impl_info.struct_name);
@@ -580,11 +553,6 @@ export const RUST_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
               name: capture.text,
               location: capture.location,
               scope_id: context.get_scope_id(capture.location),
-              availability: extract_visibility(
-                capture.node.parent || capture.node
-              ),
-              is_exported: export_info.is_exported,
-              export: export_info.export,
               return_type: returnType,
               async: true,
             });
@@ -607,7 +575,6 @@ export const RUST_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
         const returnType = extract_return_type(
           capture.node.parent || capture.node
         );
-        const export_info = extract_export_info(capture.node.parent || capture.node);
 
         if (impl_info?.struct_name && capture.text === "new") {
           const struct_id = builder.find_class_by_name(impl_info.struct_name);
@@ -617,11 +584,6 @@ export const RUST_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
               name: capture.text as SymbolName,
               location: capture.location,
               scope_id: context.get_scope_id(capture.location),
-              availability: extract_visibility(
-                capture.node.parent || capture.node
-              ),
-              is_exported: export_info.is_exported,
-              export: export_info.export,
               return_type: returnType,
               static: true,
             });
@@ -645,7 +607,6 @@ export const RUST_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
         const field_type = extract_parameter_type(
           capture.node.parent || capture.node
         );
-        const export_info = extract_export_info(capture.node.parent || capture.node);
 
         if (struct_id) {
           builder.add_property_to_class(struct_id, {
@@ -653,11 +614,6 @@ export const RUST_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
             name: capture.text,
             location: capture.location,
             scope_id: context.get_scope_id(capture.location),
-            availability: extract_visibility(
-              capture.node.parent || capture.node
-            ),
-            is_exported: export_info.is_exported,
-            export: export_info.export,
             type: field_type,
           });
         }
@@ -779,7 +735,6 @@ export const RUST_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
           name: capture.text,
           location: capture.location,
           scope_id: context.get_scope_id(capture.location),
-          availability: extract_visibility(capture.node.parent || capture.node),
           is_exported: export_info.is_exported,
           export: export_info.export,
           type: var_type,
@@ -808,7 +763,6 @@ export const RUST_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
           name: capture.text,
           location: capture.location,
           scope_id: context.get_scope_id(capture.location),
-          availability: extract_visibility(capture.node.parent || capture.node),
           is_exported: export_info.is_exported,
           export: export_info.export,
           type: const_type,
@@ -837,7 +791,6 @@ export const RUST_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
           name: capture.text,
           location: capture.location,
           scope_id: context.get_scope_id(capture.location),
-          availability: extract_visibility(capture.node.parent || capture.node),
           is_exported: export_info.is_exported,
           export: export_info.export,
           type: var_type,
@@ -863,7 +816,6 @@ export const RUST_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
           name: capture.text,
           location: capture.location,
           scope_id: context.get_scope_id(capture.location),
-          availability: extract_visibility(capture.node.parent || capture.node),
           is_exported: export_info.is_exported,
           export: export_info.export,
         });
@@ -886,7 +838,6 @@ export const RUST_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
           name: capture.text,
           location: capture.location,
           scope_id: context.get_scope_id(capture.location),
-          availability: { scope: "public" },
           is_exported: true,
           export: undefined,
         });
@@ -915,7 +866,6 @@ export const RUST_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
           name: capture.text,
           location: capture.location,
           scope_id: context.get_scope_id(capture.location),
-          availability: extract_visibility(capture.node.parent || capture.node),
           is_exported: export_info.is_exported,
           export: export_info.export,
           type_expression: extract_type_expression(capture.node),
@@ -945,7 +895,6 @@ export const RUST_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
           name: capture.text,
           location: capture.location,
           scope_id: context.get_scope_id(capture.location),
-          availability: extract_visibility(capture.node.parent || capture.node),
           is_exported: export_info.is_exported,
           export: export_info.export,
           type_expression: extract_type_expression(capture.node),
@@ -971,7 +920,6 @@ export const RUST_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
           name: capture.text,
           location: capture.location,
           scope_id: context.get_scope_id(capture.location),
-          availability: { scope: "public" },
           is_exported: true,
           export: undefined,
           type_expression: extract_type_expression(capture.node),
@@ -997,7 +945,6 @@ export const RUST_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
           name: capture.text,
           location: capture.location,
           scope_id: context.get_scope_id(capture.location),
-          availability: extract_visibility(capture.node.parent || capture.node),
           is_exported: export_info.is_exported,
           export: export_info.export,
         });
@@ -1037,7 +984,6 @@ export const RUST_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
           name: imported_name as SymbolName,
           location: capture.location,
           scope_id: context.get_scope_id(capture.location),
-          availability: { scope: "file-private" },
           import_path,
           original_name,
           import_kind: is_wildcard ? "namespace" : "named",
@@ -1068,7 +1014,6 @@ export const RUST_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
           name: alias,
           location: capture.location,
           scope_id: context.get_scope_id(capture.location),
-          availability: { scope: "file-private" },
           import_path,
           original_name,
           import_kind: "named",
@@ -1093,7 +1038,6 @@ export const RUST_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
           name: capture.text,
           location: capture.location,
           scope_id: context.get_scope_id(capture.location),
-          availability: { scope: "file-private" },
           import_path,
           import_kind: is_wildcard ? "namespace" : "named",
         });

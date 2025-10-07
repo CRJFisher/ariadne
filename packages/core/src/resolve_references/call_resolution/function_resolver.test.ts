@@ -93,7 +93,7 @@ describe("Function Call Resolution", () => {
               end_line: 4,
               end_column: 1,
             },
-            availability: "local",
+            is_exported: false,
           },
         ],
       ]);
@@ -191,7 +191,7 @@ describe("Function Call Resolution", () => {
               end_line: 4,
               end_column: 1,
             },
-            availability: "local",
+            is_exported: false,
           },
         ],
       ]);
@@ -289,7 +289,7 @@ describe("Function Call Resolution", () => {
               end_line: 6,
               end_column: 1,
             },
-            availability: "local",
+            is_exported: false,
           },
         ],
       ]);
@@ -391,7 +391,7 @@ describe("Function Call Resolution", () => {
               end_line: 4,
               end_column: 1,
             },
-            availability: "local",
+            is_exported: false,
           },
         ],
         [
@@ -408,7 +408,7 @@ describe("Function Call Resolution", () => {
               end_line: 9,
               end_column: 3,
             },
-            availability: "local",
+            is_exported: false,
           },
         ],
       ]);
@@ -612,7 +612,7 @@ describe("Function Call Resolution", () => {
               end_line: 4,
               end_column: 1,
             },
-            availability: "local",
+            is_exported: false,
           },
         ],
       ]);
@@ -728,7 +728,7 @@ describe("Function Call Resolution", () => {
               end_line: 3,
               end_column: 1,
             },
-            availability: "local",
+            is_exported: false,
           },
         ],
         [
@@ -745,7 +745,7 @@ describe("Function Call Resolution", () => {
               end_line: 5,
               end_column: 1,
             },
-            availability: "local",
+            is_exported: false,
           },
         ],
       ]);
@@ -874,7 +874,7 @@ describe("Function Call Resolution", () => {
               end_line: 4,
               end_column: 1,
             },
-            availability: "exported",
+            is_exported: true,
           },
         ],
       ]);
@@ -894,7 +894,7 @@ describe("Function Call Resolution", () => {
               end_line: 8,
               end_column: 1,
             },
-            availability: "local",
+            is_exported: false,
           },
         ],
       ]);

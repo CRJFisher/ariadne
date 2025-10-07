@@ -1258,10 +1258,7 @@ describe("Semantic Index - TypeScript", () => {
         // Note: Decorator extraction may not be fully implemented
         // Verify that if decorators are present, they are properly formatted
         if (userClass.decorators.length > 0) {
-          const decoratorNames = userClass.decorators.map((d) => {
-            // SymbolId format is "kind:file:line:col:line:col:name" - extract name
-            return d.split(":").pop();
-          });
+          const decoratorNames = userClass.decorators.map((d) => d.name);
           expect(decoratorNames).toContain("Entity");
           expect(decoratorNames).toContain("Sealed");
         } else {
@@ -1414,9 +1411,7 @@ describe("Semantic Index - TypeScript", () => {
           // Note: Decorator extraction may not be fully implemented
           // Verify that if decorators are present, they are properly formatted
           if (nameProperty.decorators.length > 0) {
-            const decoratorNames = nameProperty.decorators.map((d) =>
-              d.split(":").pop()
-            );
+            const decoratorNames = nameProperty.decorators.map((d) => d.name);
             expect(decoratorNames).toContain("Required");
             expect(decoratorNames).toContain("MinLength");
           } else {

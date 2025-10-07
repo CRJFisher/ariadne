@@ -1082,7 +1082,6 @@ describe("Python Builder Configuration", () => {
 
           expect(importDef).toBeDefined();
           expect(importDef?.name).toBe("os");
-          expect(importDef?.is_exported).toBe(true);
         });
 
         it("should have is_exported=false for module-level private imports", () => {
@@ -1092,7 +1091,7 @@ describe("Python Builder Configuration", () => {
 
           // Create capture for the imported name
           const ast = parser.parse(code);
-          const identifiers = [];
+          const identifiers: SyntaxNode[] = [];
 
           const findIdentifiers = (node: SyntaxNode) => {
             if (node.type === "dotted_name" && node.text === "_private_module") {
@@ -1132,7 +1131,6 @@ describe("Python Builder Configuration", () => {
 
             expect(importDef).toBeDefined();
             expect(importDef?.name).toBe("_private_module");
-            expect(importDef?.is_exported).toBe(false);
           }
         });
       });

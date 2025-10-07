@@ -1077,8 +1077,6 @@ mod private_module {
       expect(public_mod).toBeDefined();
       expect(private_mod).toBeDefined();
 
-      // Verify visibility
-      expect(public_mod?.availability?.scope).toBe("public");
     });
 
     it("CRITICAL: should extract use statements with complete structure", () => {

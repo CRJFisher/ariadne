@@ -95,21 +95,6 @@ export interface ImportSpec {
  *   is_reexport: false
  * };
  * ```
- *
- * @remarks
- * **Known Limitation: Re-export chains not fully supported**
- *
- * Re-export chain following is partially supported but limited because the
- * semantic index doesn't currently track source_file and source_name for re-exports.
- * This means we can detect re-exports but can't always follow them to their origin.
- *
- * Example of unsupported case:
- * ```typescript
- * // barrel.ts
- * export { foo } from './utils';  // Re-export - origin not tracked
- * ```
- *
- * This is future work tracked in the task documentation.
  */
 export interface ExportInfo {
   /** Symbol ID of the exported symbol */

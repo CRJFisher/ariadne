@@ -55,49 +55,11 @@ import type {
   ModulePath,
   LocationKey,
   Export,
+  AnyDefinition,
 } from "@ariadnejs/types";
 import { location_key } from "@ariadnejs/types";
 import type { SemanticIndex } from "../index_single_file/semantic_index";
-
-// ============================================================================
-// Test Helper: Create Minimal Semantic Index
-// ============================================================================
-
-function create_test_index(
-  file_path: FilePath,
-  options: {
-    functions?: Map<SymbolId, FunctionDefinition>;
-    classes?: Map<SymbolId, ClassDefinition>;
-    variables?: Map<SymbolId, VariableDefinition>;
-    scopes?: Map<ScopeId, LexicalScope>;
-    references?: SymbolReference[];
-    root_scope_id?: ScopeId;
-    imports?: Map<SymbolId, ImportDefinition>;
-    type_bindings?: Map<LocationKey, SymbolName>;
-    type_members?: Map<SymbolId, TypeMemberInfo>;
-  } = {}
-): SemanticIndex {
-  return {
-    file_path,
-    language: "rust",
-    root_scope_id:
-      options.root_scope_id || (`scope:${file_path}:module` as ScopeId),
-    scopes: options.scopes || new Map(),
-    functions: options.functions || new Map(),
-    classes: options.classes || new Map(),
-    variables: options.variables || new Map(),
-    interfaces: new Map(),
-    enums: new Map(),
-    namespaces: new Map(),
-    types: new Map(),
-    imported_symbols: options.imports || new Map(),
-    references: options.references || [],
-    symbols_by_name: new Map(),
-    type_bindings: options.type_bindings || new Map(),
-    type_members: options.type_members || new Map(),
-    type_alias_metadata: new Map(),
-  };
-}
+import { create_test_index } from "./symbol_resolution.test";
 
 // ============================================================================
 // Rust Symbol Resolution Integration Tests
@@ -120,7 +82,7 @@ describe("Rust Symbol Resolution Integration", () => {
 
       const index = create_test_index(file_path, {
         root_scope_id: module_scope,
-        scopes: new Map([
+        scopes_raw: new Map([
           [
             module_scope,
             {
@@ -139,14 +101,14 @@ describe("Rust Symbol Resolution Integration", () => {
             },
           ],
         ]),
-        functions: new Map([
+        functions_raw: new Map([
           [
             helper_id,
             {
               kind: "function",
               symbol_id: helper_id,
               name: "helper" as SymbolName,
-              scope_id: module_scope,
+              defining_scope_id: module_scope,
               location: {
                 file_path,
                 start_line: 1,
@@ -154,7 +116,7 @@ describe("Rust Symbol Resolution Integration", () => {
                 end_line: 1,
                 end_column: 25,
               },
-              availability: { scope: "file-private" },
+              is_exported: false,
               signature: {
                 parameters: [],
               },
@@ -188,7 +150,7 @@ describe("Rust Symbol Resolution Integration", () => {
 
       const utils_index = create_test_index(utils_file, {
         root_scope_id: utils_scope,
-        scopes: new Map([
+        scopes_raw: new Map([
           [
             utils_scope,
             {
@@ -207,14 +169,14 @@ describe("Rust Symbol Resolution Integration", () => {
             },
           ],
         ]),
-        functions: new Map([
+        functions_raw: new Map([
           [
             helper_id,
             {
               kind: "function",
               symbol_id: helper_id,
               name: "helper" as SymbolName,
-              scope_id: utils_scope,
+              defining_scope_id: utils_scope,
               location: {
                 file_path: utils_file,
                 start_line: 1,
@@ -222,7 +184,7 @@ describe("Rust Symbol Resolution Integration", () => {
                 end_line: 1,
                 end_column: 30,
               },
-              availability: { scope: "file-export" },
+              is_exported: true,
               signature: {
                 parameters: [],
               },
@@ -245,7 +207,7 @@ describe("Rust Symbol Resolution Integration", () => {
 
       const main_index = create_test_index(main_file, {
         root_scope_id: main_scope,
-        scopes: new Map([
+        scopes_raw: new Map([
           [
             main_scope,
             {
@@ -264,14 +226,14 @@ describe("Rust Symbol Resolution Integration", () => {
             },
           ],
         ]),
-        imports: new Map([
+        imports_raw: new Map([
           [
             import_id,
             {
               kind: "import",
               symbol_id: import_id,
               name: "helper" as SymbolName,
-              scope_id: main_scope,
+              defining_scope_id: main_scope,
               location: {
                 file_path: main_file,
                 start_line: 1,
@@ -282,7 +244,7 @@ describe("Rust Symbol Resolution Integration", () => {
               import_path: "utils.rs" as ModulePath,
               import_kind: "named",
               original_name: undefined,
-              availability: { scope: "file-private" },
+              is_exported: false,
             },
           ],
         ]),
@@ -317,7 +279,7 @@ describe("Rust Symbol Resolution Integration", () => {
 
       const utils_index = create_test_index(utils_file, {
         root_scope_id: utils_scope,
-        scopes: new Map([
+        scopes_raw: new Map([
           [
             utils_scope,
             {
@@ -336,14 +298,14 @@ describe("Rust Symbol Resolution Integration", () => {
             },
           ],
         ]),
-        functions: new Map([
+        functions_raw: new Map([
           [
             helper_id,
             {
               kind: "function",
               symbol_id: helper_id,
               name: "helper" as SymbolName,
-              scope_id: utils_scope,
+              defining_scope_id: utils_scope,
               location: {
                 file_path: utils_file,
                 start_line: 1,
@@ -351,7 +313,7 @@ describe("Rust Symbol Resolution Integration", () => {
                 end_line: 1,
                 end_column: 30,
               },
-              availability: { scope: "file-export" },
+              is_exported: true,
               signature: {
                 parameters: [],
               },
@@ -373,7 +335,7 @@ describe("Rust Symbol Resolution Integration", () => {
 
       const main_index = create_test_index(main_file, {
         root_scope_id: main_scope,
-        scopes: new Map([
+        scopes_raw: new Map([
           [
             main_scope,
             {
@@ -425,7 +387,7 @@ describe("Rust Symbol Resolution Integration", () => {
 
       const utils_index = create_test_index(utils_file, {
         root_scope_id: utils_scope,
-        scopes: new Map([
+        scopes_raw: new Map([
           [
             utils_scope,
             {
@@ -444,14 +406,14 @@ describe("Rust Symbol Resolution Integration", () => {
             },
           ],
         ]),
-        functions: new Map([
+        functions_raw: new Map([
           [
             process_id,
             {
               kind: "function",
               symbol_id: process_id,
               name: "process" as SymbolName,
-              scope_id: utils_scope,
+              defining_scope_id: utils_scope,
               location: {
                 file_path: utils_file,
                 start_line: 1,
@@ -459,7 +421,7 @@ describe("Rust Symbol Resolution Integration", () => {
                 end_line: 1,
                 end_column: 32,
               },
-              availability: { scope: "file-export" },
+              is_exported: true,
               signature: {
                 parameters: [],
               },
@@ -482,7 +444,7 @@ describe("Rust Symbol Resolution Integration", () => {
 
       const main_index = create_test_index(main_file, {
         root_scope_id: main_scope,
-        scopes: new Map([
+        scopes_raw: new Map([
           [
             main_scope,
             {
@@ -501,14 +463,14 @@ describe("Rust Symbol Resolution Integration", () => {
             },
           ],
         ]),
-        imports: new Map([
+        imports_raw: new Map([
           [
             import_id,
             {
               kind: "import",
               symbol_id: import_id,
               name: "process" as SymbolName,
-              scope_id: main_scope,
+              defining_scope_id: main_scope,
               location: {
                 file_path: main_file,
                 start_line: 1,
@@ -519,7 +481,6 @@ describe("Rust Symbol Resolution Integration", () => {
               import_path: "utils.rs" as ModulePath,
               import_kind: "named",
               original_name: undefined,
-              availability: { scope: "file-private" },
             },
           ],
         ]),
@@ -554,7 +515,7 @@ describe("Rust Symbol Resolution Integration", () => {
 
       const user_index = create_test_index(user_file, {
         root_scope_id: user_scope,
-        scopes: new Map([
+        scopes_raw: new Map([
           [
             user_scope,
             {
@@ -573,7 +534,7 @@ describe("Rust Symbol Resolution Integration", () => {
             },
           ],
         ]),
-        classes: new Map([
+        classes_raw: new Map([
           [
             user_struct_id,
             {
@@ -588,7 +549,7 @@ describe("Rust Symbol Resolution Integration", () => {
                 end_line: 1,
                 end_column: 40,
               },
-              availability: { scope: "file-export" },
+              is_exported: true,
               extends: [],
               decorators: [],
               constructor: undefined,
@@ -613,7 +574,7 @@ describe("Rust Symbol Resolution Integration", () => {
 
       const service_index = create_test_index(service_file, {
         root_scope_id: service_scope,
-        scopes: new Map([
+        scopes_raw: new Map([
           [
             service_scope,
             {
@@ -632,14 +593,14 @@ describe("Rust Symbol Resolution Integration", () => {
             },
           ],
         ]),
-        imports: new Map([
+        imports_raw: new Map([
           [
             import_id,
             {
               kind: "import",
               symbol_id: import_id,
               name: "User" as SymbolName,
-              scope_id: service_scope,
+              defining_scope_id: service_scope,
               location: {
                 file_path: service_file,
                 start_line: 1,
@@ -650,7 +611,7 @@ describe("Rust Symbol Resolution Integration", () => {
               import_path: "models/user.rs" as ModulePath,
               import_kind: "named",
               original_name: undefined,
-              availability: { scope: "file-private" },
+              is_exported: false,
             },
           ],
         ]),
@@ -695,7 +656,7 @@ describe("Rust Symbol Resolution Integration", () => {
 
       const helper_index = create_test_index(helper_file, {
         root_scope_id: helper_scope,
-        scopes: new Map([
+        scopes_raw: new Map([
           [
             helper_scope,
             {
@@ -714,14 +675,14 @@ describe("Rust Symbol Resolution Integration", () => {
             },
           ],
         ]),
-        functions: new Map([
+        functions_raw: new Map([
           [
             inner_helper_id,
             {
               kind: "function",
               symbol_id: inner_helper_id,
               name: "inner_helper" as SymbolName,
-              scope_id: helper_scope,
+              defining_scope_id: helper_scope,
               location: {
                 file_path: helper_file,
                 start_line: 1,
@@ -729,7 +690,7 @@ describe("Rust Symbol Resolution Integration", () => {
                 end_line: 1,
                 end_column: 38,
               },
-              availability: { scope: "file-export" },
+              is_exported: true,
               signature: {
                 parameters: [],
               },
@@ -776,7 +737,7 @@ describe("Rust Symbol Resolution Integration", () => {
 
       const index = create_test_index(file_path, {
         root_scope_id: module_scope,
-        scopes: new Map([
+        scopes_raw: new Map([
           [
             module_scope,
             {
@@ -795,7 +756,7 @@ describe("Rust Symbol Resolution Integration", () => {
             },
           ],
         ]),
-        classes: new Map([
+        classes_raw: new Map([
           [
             user_struct_id,
             {
@@ -810,7 +771,7 @@ describe("Rust Symbol Resolution Integration", () => {
                 end_line: 1,
                 end_column: 30,
               },
-              availability: { scope: "file-export" },
+              is_exported: true,
               extends: [],
               decorators: [],
               constructor: undefined,
@@ -827,7 +788,6 @@ describe("Rust Symbol Resolution Integration", () => {
                     end_line: 1,
                     end_column: 80,
                   },
-                  availability: { scope: "file-export" },
                   parameters: [],
                 },
               ],
@@ -835,7 +795,7 @@ describe("Rust Symbol Resolution Integration", () => {
             } as ClassDefinition,
           ],
         ]),
-        type_members: new Map([
+        type_members_raw: new Map([
           [
             user_struct_id,
             {
@@ -878,7 +838,7 @@ describe("Rust Symbol Resolution Integration", () => {
 
       const user_index = create_test_index(user_file, {
         root_scope_id: user_scope,
-        scopes: new Map([
+        scopes_raw: new Map([
           [
             user_scope,
             {
@@ -897,7 +857,7 @@ describe("Rust Symbol Resolution Integration", () => {
             },
           ],
         ]),
-        classes: new Map([
+        classes_raw: new Map([
           [
             user_struct_id,
             {
@@ -912,7 +872,7 @@ describe("Rust Symbol Resolution Integration", () => {
                 end_line: 1,
                 end_column: 30,
               },
-              availability: { scope: "file-export" },
+              is_exported: true,
               extends: [],
               decorators: [],
               constructor: undefined,
@@ -929,7 +889,6 @@ describe("Rust Symbol Resolution Integration", () => {
                     end_line: 1,
                     end_column: 85,
                   },
-                  availability: { scope: "file-export" },
                   parameters: [],
                 },
                 {
@@ -944,7 +903,6 @@ describe("Rust Symbol Resolution Integration", () => {
                     end_line: 1,
                     end_column: 135,
                   },
-                  availability: { scope: "file-export" },
                   parameters: [],
                 },
               ],
@@ -952,7 +910,7 @@ describe("Rust Symbol Resolution Integration", () => {
             } as ClassDefinition,
           ],
         ]),
-        type_members: new Map([
+        type_members_raw: new Map([
           [
             user_struct_id,
             {
@@ -991,7 +949,7 @@ describe("Rust Symbol Resolution Integration", () => {
 
       const main_index = create_test_index(main_file, {
         root_scope_id: main_scope,
-        scopes: new Map([
+        scopes_raw: new Map([
           [
             main_scope,
             {
@@ -1010,14 +968,14 @@ describe("Rust Symbol Resolution Integration", () => {
             },
           ],
         ]),
-        imports: new Map([
+        imports_raw: new Map([
           [
             import_id,
             {
               kind: "import",
               symbol_id: import_id,
               name: "User" as SymbolName,
-              scope_id: main_scope,
+              defining_scope_id: main_scope,
               location: {
                 file_path: main_file,
                 start_line: 1,
@@ -1028,18 +986,18 @@ describe("Rust Symbol Resolution Integration", () => {
               import_path: "user.rs" as ModulePath,
               import_kind: "named",
               original_name: undefined,
-              availability: { scope: "file-private" },
+              is_exported: false,
             },
           ],
         ]),
-        variables: new Map([
+        variables_raw: new Map([
           [
             user_var_id,
             {
               kind: "variable",
               symbol_id: user_var_id,
               name: "user" as SymbolName,
-              scope_id: main_scope,
+              defining_scope_id: main_scope,
               location: {
                 file_path: main_file,
                 start_line: 2,
@@ -1047,11 +1005,11 @@ describe("Rust Symbol Resolution Integration", () => {
                 end_line: 2,
                 end_column: 12,
               },
-              availability: { scope: "file-private" },
+              is_exported: false,
             },
           ],
         ]),
-        type_bindings: new Map([
+        type_bindings_raw: new Map([
           [
             location_key({
               file_path: main_file,
@@ -1118,7 +1076,7 @@ describe("Rust Symbol Resolution Integration", () => {
 
       const traits_index = create_test_index(traits_file, {
         root_scope_id: traits_scope,
-        scopes: new Map([
+        scopes_raw: new Map([
           [
             traits_scope,
             {
@@ -1147,7 +1105,7 @@ describe("Rust Symbol Resolution Integration", () => {
 
       const user_index = create_test_index(user_file, {
         root_scope_id: user_scope,
-        scopes: new Map([
+        scopes_raw: new Map([
           [
             user_scope,
             {
@@ -1166,7 +1124,7 @@ describe("Rust Symbol Resolution Integration", () => {
             },
           ],
         ]),
-        classes: new Map([
+        classes_raw: new Map([
           [
             user_struct_id,
             {
@@ -1181,7 +1139,7 @@ describe("Rust Symbol Resolution Integration", () => {
                 end_line: 1,
                 end_column: 70,
               },
-              availability: { scope: "file-export" },
+              is_exported: true,
               extends: [],
               decorators: [],
               constructor: undefined,
@@ -1198,7 +1156,6 @@ describe("Rust Symbol Resolution Integration", () => {
                     end_line: 1,
                     end_column: 135,
                   },
-                  availability: { scope: "file-export" },
                   parameters: [],
                 },
               ],
@@ -1206,7 +1163,7 @@ describe("Rust Symbol Resolution Integration", () => {
             } as ClassDefinition,
           ],
         ]),
-        type_members: new Map([
+        type_members_raw: new Map([
           [
             user_struct_id,
             {
@@ -1234,7 +1191,7 @@ describe("Rust Symbol Resolution Integration", () => {
 
       const main_index = create_test_index(main_file, {
         root_scope_id: main_scope,
-        scopes: new Map([
+        scopes_raw: new Map([
           [
             main_scope,
             {
@@ -1253,14 +1210,14 @@ describe("Rust Symbol Resolution Integration", () => {
             },
           ],
         ]),
-        imports: new Map([
+        imports_raw: new Map([
           [
             user_import_id,
             {
               kind: "import",
               symbol_id: user_import_id,
               name: "User" as SymbolName,
-              scope_id: main_scope,
+              defining_scope_id: main_scope,
               location: {
                 file_path: main_file,
                 start_line: 1,
@@ -1271,7 +1228,7 @@ describe("Rust Symbol Resolution Integration", () => {
               import_path: "user.rs" as ModulePath,
               import_kind: "named",
               original_name: undefined,
-              availability: { scope: "file-private" },
+              is_exported: false,
             },
           ],
         ]),
@@ -1312,7 +1269,7 @@ describe("Rust Symbol Resolution Integration", () => {
 
       const utils_index = create_test_index(utils_file, {
         root_scope_id: utils_scope,
-        scopes: new Map([
+        scopes_raw: new Map([
           [
             utils_scope,
             {
@@ -1331,14 +1288,14 @@ describe("Rust Symbol Resolution Integration", () => {
             },
           ],
         ]),
-        functions: new Map([
+        functions_raw: new Map([
           [
             helper_id,
             {
               kind: "function",
               symbol_id: helper_id,
               name: "helper" as SymbolName,
-              scope_id: utils_scope,
+              defining_scope_id: utils_scope,
               location: {
                 file_path: utils_file,
                 start_line: 1,
@@ -1346,7 +1303,7 @@ describe("Rust Symbol Resolution Integration", () => {
                 end_line: 1,
                 end_column: 30,
               },
-              availability: { scope: "file-export" },
+              is_exported: true,
               signature: {
                 parameters: [],
               },
@@ -1369,7 +1326,7 @@ describe("Rust Symbol Resolution Integration", () => {
 
       const main_index = create_test_index(main_file, {
         root_scope_id: main_scope,
-        scopes: new Map([
+        scopes_raw: new Map([
           [
             main_scope,
             {
@@ -1388,14 +1345,14 @@ describe("Rust Symbol Resolution Integration", () => {
             },
           ],
         ]),
-        imports: new Map([
+        imports_raw: new Map([
           [
             import_id,
             {
               kind: "import",
               symbol_id: import_id,
               name: "helper" as SymbolName,
-              scope_id: main_scope,
+              defining_scope_id: main_scope,
               location: {
                 file_path: main_file,
                 start_line: 2,
@@ -1406,7 +1363,7 @@ describe("Rust Symbol Resolution Integration", () => {
               import_path: "utils.rs" as ModulePath,
               import_kind: "named",
               original_name: undefined,
-              availability: { scope: "file-private" },
+              is_exported: false,
             },
           ],
         ]),
@@ -1441,7 +1398,7 @@ describe("Rust Symbol Resolution Integration", () => {
 
       const utils_index = create_test_index(utils_file, {
         root_scope_id: utils_scope,
-        scopes: new Map([
+        scopes_raw: new Map([
           [
             utils_scope,
             {
@@ -1460,14 +1417,14 @@ describe("Rust Symbol Resolution Integration", () => {
             },
           ],
         ]),
-        functions: new Map([
+        functions_raw: new Map([
           [
             helper_id,
             {
               kind: "function",
               symbol_id: helper_id,
               name: "helper" as SymbolName,
-              scope_id: utils_scope,
+              defining_scope_id: utils_scope,
               location: {
                 file_path: utils_file,
                 start_line: 1,
@@ -1475,7 +1432,7 @@ describe("Rust Symbol Resolution Integration", () => {
                 end_line: 1,
                 end_column: 30,
               },
-              availability: { scope: "file-export" },
+              is_exported: true,
               signature: {
                 parameters: [],
               },
@@ -1498,7 +1455,7 @@ describe("Rust Symbol Resolution Integration", () => {
 
       const main_index = create_test_index(main_file, {
         root_scope_id: main_scope,
-        scopes: new Map([
+        scopes_raw: new Map([
           [
             main_scope,
             {
@@ -1517,14 +1474,14 @@ describe("Rust Symbol Resolution Integration", () => {
             },
           ],
         ]),
-        imports: new Map([
+        imports_raw: new Map([
           [
             import_id,
             {
               kind: "import",
               symbol_id: import_id,
               name: "helper" as SymbolName,
-              scope_id: main_scope,
+              defining_scope_id: main_scope,
               location: {
                 file_path: main_file,
                 start_line: 1,
@@ -1535,7 +1492,7 @@ describe("Rust Symbol Resolution Integration", () => {
               import_path: "utils/mod.rs" as ModulePath,
               import_kind: "named",
               original_name: undefined,
-              availability: { scope: "file-private" },
+              is_exported: false,
             },
           ],
         ]),
@@ -1570,7 +1527,7 @@ describe("Rust Symbol Resolution Integration", () => {
 
       const string_index = create_test_index(string_file, {
         root_scope_id: string_scope,
-        scopes: new Map([
+        scopes_raw: new Map([
           [
             string_scope,
             {
@@ -1589,14 +1546,14 @@ describe("Rust Symbol Resolution Integration", () => {
             },
           ],
         ]),
-        functions: new Map([
+        functions_raw: new Map([
           [
             trim_id,
             {
               kind: "function",
               symbol_id: trim_id,
               name: "trim" as SymbolName,
-              scope_id: string_scope,
+              defining_scope_id: string_scope,
               location: {
                 file_path: string_file,
                 start_line: 1,
@@ -1604,7 +1561,7 @@ describe("Rust Symbol Resolution Integration", () => {
                 end_line: 1,
                 end_column: 45,
               },
-              availability: { scope: "file-export" },
+              is_exported: true,
               signature: {
                 parameters: [],
               },
@@ -1619,7 +1576,7 @@ describe("Rust Symbol Resolution Integration", () => {
 
       const utils_index = create_test_index(utils_file, {
         root_scope_id: utils_scope,
-        scopes: new Map([
+        scopes_raw: new Map([
           [
             utils_scope,
             {
@@ -1654,7 +1611,7 @@ describe("Rust Symbol Resolution Integration", () => {
 
       const main_index = create_test_index(main_file, {
         root_scope_id: main_scope,
-        scopes: new Map([
+        scopes_raw: new Map([
           [
             main_scope,
             {
@@ -1673,14 +1630,14 @@ describe("Rust Symbol Resolution Integration", () => {
             },
           ],
         ]),
-        imports: new Map([
+        imports_raw: new Map([
           [
             import_id,
             {
               kind: "import",
               symbol_id: import_id,
               name: "trim" as SymbolName,
-              scope_id: main_scope,
+              defining_scope_id: main_scope,
               location: {
                 file_path: main_file,
                 start_line: 1,
@@ -1691,7 +1648,7 @@ describe("Rust Symbol Resolution Integration", () => {
               import_path: "utils/string/mod.rs" as ModulePath,
               import_kind: "named",
               original_name: undefined,
-              availability: { scope: "file-private" },
+              is_exported: false,
             },
           ],
         ]),
@@ -1730,7 +1687,7 @@ describe("Rust Symbol Resolution Integration", () => {
 
       const traits_index = create_test_index(traits_file, {
         root_scope_id: traits_scope,
-        scopes: new Map([
+        scopes_raw: new Map([
           [
             traits_scope,
             {
@@ -1761,7 +1718,7 @@ describe("Rust Symbol Resolution Integration", () => {
 
       const processor_index = create_test_index(processor_file, {
         root_scope_id: processor_scope,
-        scopes: new Map([
+        scopes_raw: new Map([
           [
             processor_scope,
             {
@@ -1780,7 +1737,7 @@ describe("Rust Symbol Resolution Integration", () => {
             },
           ],
         ]),
-        classes: new Map([
+        classes_raw: new Map([
           [
             data_processor_id,
             {
@@ -1795,7 +1752,7 @@ describe("Rust Symbol Resolution Integration", () => {
                 end_line: 1,
                 end_column: 65,
               },
-              availability: { scope: "file-export" },
+              is_exported: true,
               extends: [],
               decorators: [],
               constructor: undefined,
@@ -1812,7 +1769,6 @@ describe("Rust Symbol Resolution Integration", () => {
                     end_line: 1,
                     end_column: 120,
                   },
-                  availability: { scope: "file-export" },
                   parameters: [],
                 },
               ],
@@ -1820,7 +1776,7 @@ describe("Rust Symbol Resolution Integration", () => {
             } as ClassDefinition,
           ],
         ]),
-        type_members: new Map([
+        type_members_raw: new Map([
           [
             data_processor_id,
             {
@@ -1848,7 +1804,7 @@ describe("Rust Symbol Resolution Integration", () => {
 
       const main_index = create_test_index(main_file, {
         root_scope_id: main_scope,
-        scopes: new Map([
+        scopes_raw: new Map([
           [
             main_scope,
             {
@@ -1867,14 +1823,14 @@ describe("Rust Symbol Resolution Integration", () => {
             },
           ],
         ]),
-        imports: new Map([
+        imports_raw: new Map([
           [
             import_id,
             {
               kind: "import",
               symbol_id: import_id,
               name: "DataProcessor" as SymbolName,
-              scope_id: main_scope,
+              defining_scope_id: main_scope,
               location: {
                 file_path: main_file,
                 start_line: 1,
@@ -1885,7 +1841,7 @@ describe("Rust Symbol Resolution Integration", () => {
               import_path: "processor.rs" as ModulePath,
               import_kind: "named",
               original_name: undefined,
-              availability: { scope: "file-private" },
+              is_exported: false,
             },
           ],
         ]),
@@ -1925,7 +1881,7 @@ describe("Rust Symbol Resolution Integration", () => {
 
       const traits_index = create_test_index(traits_file, {
         root_scope_id: traits_scope,
-        scopes: new Map([
+        scopes_raw: new Map([
           [
             traits_scope,
             {
@@ -1953,7 +1909,7 @@ describe("Rust Symbol Resolution Integration", () => {
 
       const service_index = create_test_index(service_file, {
         root_scope_id: service_scope,
-        scopes: new Map([
+        scopes_raw: new Map([
           [
             service_scope,
             {
@@ -1972,7 +1928,7 @@ describe("Rust Symbol Resolution Integration", () => {
             },
           ],
         ]),
-        classes: new Map([
+        classes_raw: new Map([
           [
             service_struct_id,
             {
@@ -1987,7 +1943,7 @@ describe("Rust Symbol Resolution Integration", () => {
                 end_line: 1,
                 end_column: 55,
               },
-              availability: { scope: "file-export" },
+              is_exported: true,
               extends: [],
               decorators: [],
               constructor: undefined,
@@ -2012,7 +1968,7 @@ describe("Rust Symbol Resolution Integration", () => {
 
       const main_index = create_test_index(main_file, {
         root_scope_id: main_scope,
-        scopes: new Map([
+        scopes_raw: new Map([
           [
             main_scope,
             {
@@ -2031,14 +1987,14 @@ describe("Rust Symbol Resolution Integration", () => {
             },
           ],
         ]),
-        imports: new Map([
+        imports_raw: new Map([
           [
             service_import_id,
             {
               kind: "import",
               symbol_id: service_import_id,
               name: "Service" as SymbolName,
-              scope_id: main_scope,
+              defining_scope_id: main_scope,
               location: {
                 file_path: main_file,
                 start_line: 1,
@@ -2049,7 +2005,7 @@ describe("Rust Symbol Resolution Integration", () => {
               import_path: "service.rs" as ModulePath,
               import_kind: "named",
               original_name: undefined,
-              availability: { scope: "file-private" },
+              is_exported: false,
             },
           ],
         ]),
@@ -2092,7 +2048,7 @@ describe("Rust Symbol Resolution Integration", () => {
 
       const user_index = create_test_index(user_file, {
         root_scope_id: user_scope,
-        scopes: new Map([
+        scopes_raw: new Map([
           [
             user_scope,
             {
@@ -2111,7 +2067,7 @@ describe("Rust Symbol Resolution Integration", () => {
             },
           ],
         ]),
-        classes: new Map([
+        classes_raw: new Map([
           [
             user_struct_id,
             {
@@ -2126,7 +2082,7 @@ describe("Rust Symbol Resolution Integration", () => {
                 end_line: 1,
                 end_column: 35,
               },
-              availability: { scope: "file-export" },
+              is_exported: true,
               extends: [],
               decorators: [],
               constructor: undefined,
@@ -2143,7 +2099,6 @@ describe("Rust Symbol Resolution Integration", () => {
                     end_line: 1,
                     end_column: 85,
                   },
-                  availability: { scope: "file-export" },
                   parameters: [],
                 },
                 {
@@ -2158,7 +2113,7 @@ describe("Rust Symbol Resolution Integration", () => {
                     end_line: 1,
                     end_column: 135,
                   },
-                  availability: { scope: "file-export" },
+                  is_exported: true,
                   parameters: [],
                 },
               ],
@@ -2166,7 +2121,7 @@ describe("Rust Symbol Resolution Integration", () => {
             } as ClassDefinition,
           ],
         ]),
-        type_members: new Map([
+        type_members_raw: new Map([
           [
             user_struct_id,
             {
@@ -2194,7 +2149,7 @@ describe("Rust Symbol Resolution Integration", () => {
 
       const repository_index = create_test_index(repository_file, {
         root_scope_id: repository_scope,
-        scopes: new Map([
+        scopes_raw: new Map([
           [
             repository_scope,
             {
@@ -2213,7 +2168,7 @@ describe("Rust Symbol Resolution Integration", () => {
             },
           ],
         ]),
-        classes: new Map([
+        classes_raw: new Map([
           [
             repo_struct_id,
             {
@@ -2228,7 +2183,7 @@ describe("Rust Symbol Resolution Integration", () => {
                 end_line: 1,
                 end_column: 60,
               },
-              availability: { scope: "file-export" },
+              is_exported: true,
               extends: [],
               decorators: [],
               constructor: undefined,
@@ -2245,7 +2200,6 @@ describe("Rust Symbol Resolution Integration", () => {
                     end_line: 1,
                     end_column: 130,
                   },
-                  availability: { scope: "file-export" },
                   parameters: [],
                 },
               ],
@@ -2253,7 +2207,7 @@ describe("Rust Symbol Resolution Integration", () => {
             } as ClassDefinition,
           ],
         ]),
-        type_members: new Map([
+        type_members_raw: new Map([
           [
             repo_struct_id,
             {
@@ -2295,7 +2249,7 @@ describe("Rust Symbol Resolution Integration", () => {
 
       const service_index = create_test_index(service_file, {
         root_scope_id: service_scope,
-        scopes: new Map([
+        scopes_raw: new Map([
           [
             service_scope,
             {
@@ -2314,7 +2268,7 @@ describe("Rust Symbol Resolution Integration", () => {
             },
           ],
         ]),
-        classes: new Map([
+        classes_raw: new Map([
           [
             service_struct_id,
             {
@@ -2329,7 +2283,7 @@ describe("Rust Symbol Resolution Integration", () => {
                 end_line: 1,
                 end_column: 95,
               },
-              availability: { scope: "file-export" },
+              is_exported: true,
               extends: [],
               decorators: [],
               constructor: undefined,
@@ -2346,7 +2300,6 @@ describe("Rust Symbol Resolution Integration", () => {
                     end_line: 1,
                     end_column: 210,
                   },
-                  availability: { scope: "file-export" },
                   parameters: [],
                 },
               ],
@@ -2354,7 +2307,7 @@ describe("Rust Symbol Resolution Integration", () => {
             } as ClassDefinition,
           ],
         ]),
-        type_members: new Map([
+        type_members_raw: new Map([
           [
             service_struct_id,
             {
@@ -2414,7 +2367,7 @@ describe("Rust Symbol Resolution Integration", () => {
 
       const main_index = create_test_index(main_file, {
         root_scope_id: main_scope,
-        scopes: new Map([
+        scopes_raw: new Map([
           [
             main_scope,
             {
@@ -2433,14 +2386,14 @@ describe("Rust Symbol Resolution Integration", () => {
             },
           ],
         ]),
-        imports: new Map([
+        imports_raw: new Map([
           [
             service_import_id,
             {
               kind: "import",
               symbol_id: service_import_id,
               name: "UserService" as SymbolName,
-              scope_id: main_scope,
+              defining_scope_id: main_scope,
               location: {
                 file_path: main_file,
                 start_line: 1,
@@ -2451,7 +2404,6 @@ describe("Rust Symbol Resolution Integration", () => {
               import_path: "services/user_service.rs" as ModulePath,
               import_kind: "named",
               original_name: undefined,
-              availability: { scope: "file-private" },
             },
           ],
         ]),
@@ -2527,7 +2479,7 @@ describe("Rust Symbol Resolution Integration", () => {
 
       const traits_index = create_test_index(traits_file, {
         root_scope_id: traits_scope,
-        scopes: new Map([
+        scopes_raw: new Map([
           [
             traits_scope,
             {
@@ -2556,7 +2508,7 @@ describe("Rust Symbol Resolution Integration", () => {
 
       const item_index = create_test_index(item_file, {
         root_scope_id: item_scope,
-        scopes: new Map([
+        scopes_raw: new Map([
           [
             item_scope,
             {
@@ -2575,14 +2527,14 @@ describe("Rust Symbol Resolution Integration", () => {
             },
           ],
         ]),
-        classes: new Map([
+        classes_raw: new Map([
           [
             item_struct_id,
             {
               kind: "class",
               symbol_id: item_struct_id,
               name: "Item" as SymbolName,
-              scope_id: item_scope,
+              defining_scope_id: item_scope,
               location: {
                 file_path: item_file,
                 start_line: 1,
@@ -2590,7 +2542,7 @@ describe("Rust Symbol Resolution Integration", () => {
                 end_line: 1,
                 end_column: 50,
               },
-              availability: { scope: "file-export" },
+              is_exported: true,
               extends: [],
               decorators: [],
               constructor: undefined,
@@ -2599,7 +2551,7 @@ describe("Rust Symbol Resolution Integration", () => {
                   kind: "method",
                   symbol_id: process_method_id,
                   name: "process" as SymbolName,
-                  scope_id: item_scope,
+                  defining_scope_id: item_scope,
                   location: {
                     file_path: item_file,
                     start_line: 1,
@@ -2607,7 +2559,6 @@ describe("Rust Symbol Resolution Integration", () => {
                     end_line: 1,
                     end_column: 115,
                   },
-                  availability: { scope: "file-export" },
                   parameters: [],
                 },
               ],
@@ -2615,7 +2566,7 @@ describe("Rust Symbol Resolution Integration", () => {
             },
           ],
         ]),
-        type_members: new Map([
+        type_members_raw: new Map([
           [
             item_struct_id,
             {
@@ -2644,7 +2595,7 @@ describe("Rust Symbol Resolution Integration", () => {
 
       const processor_index = create_test_index(processor_file, {
         root_scope_id: processor_scope,
-        scopes: new Map([
+        scopes_raw: new Map([
           [
             processor_scope,
             {
@@ -2663,14 +2614,14 @@ describe("Rust Symbol Resolution Integration", () => {
             },
           ],
         ]),
-        functions: new Map([
+        functions_raw: new Map([
           [
             run_process_id,
             {
               kind: "function",
               symbol_id: run_process_id,
               name: "run_process" as SymbolName,
-              scope_id: processor_scope,
+              defining_scope_id: processor_scope,
               location: {
                 file_path: processor_file,
                 start_line: 1,
@@ -2678,7 +2629,7 @@ describe("Rust Symbol Resolution Integration", () => {
                 end_line: 1,
                 end_column: 110,
               },
-              availability: { scope: "file-private" },
+              is_exported: false,
               signature: {
                 parameters: [],
               },

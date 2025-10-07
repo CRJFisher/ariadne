@@ -121,7 +121,6 @@ describe("rust_builder", () => {
 
       expect(definitions.classes).toHaveLength(1);
       expect(definitions.classes[0].name).toBe("MyStruct");
-      expect(definitions.classes[0].availability.scope).toBe("public");
     });
 
     it("should process generic struct", () => {
@@ -140,7 +139,6 @@ describe("rust_builder", () => {
       expect(definitions.classes).toHaveLength(1);
       expect(definitions.classes[0].name).toBe("Container");
       expect(definitions.classes[0].generics).toEqual(["T", "U"]);
-      expect(definitions.classes[0].availability.scope).toBe("file-private");
     });
 
     it("should process tuple struct", () => {
@@ -155,7 +153,6 @@ describe("rust_builder", () => {
 
       expect(definitions.classes).toHaveLength(1);
       expect(definitions.classes[0].name).toBe("Point");
-      expect(definitions.classes[0].availability.scope).toBe("public");
     });
 
     it("should handle pub(crate) visibility", () => {
@@ -169,10 +166,7 @@ describe("rust_builder", () => {
       );
 
       expect(definitions.classes).toHaveLength(1);
-      // pub(crate) maps to "package-internal" in our visibility system
-      expect(definitions.classes[0].availability.scope).toBe(
-        "package-internal"
-      );
+
     });
   });
 
@@ -198,7 +192,6 @@ describe("rust_builder", () => {
         m.name.split(":").pop()
       );
       expect(memberNames).toEqual(["Success", "Error", "Pending"]);
-      expect(definitions.enums[0].availability.scope).toBe("public");
     });
 
     it("should process generic enum", () => {
@@ -262,7 +255,6 @@ describe("rust_builder", () => {
 
       expect(definitions.interfaces).toHaveLength(1);
       expect(definitions.interfaces[0].name).toBe("Display");
-      expect(definitions.interfaces[0].availability.scope).toBe("public");
     });
 
     it("should process generic trait", () => {
@@ -300,7 +292,6 @@ describe("rust_builder", () => {
       expect(definitions.functions).toHaveLength(1);
       expect(definitions.functions[0].name).toBe("calculate");
       // return_type is in signature.return_type, not directly on function
-      expect(definitions.functions[0].availability.scope).toBe("public");
     });
 
     it("should process async function", () => {
@@ -413,7 +404,6 @@ describe("rust_builder", () => {
         name: "MyStruct" as any,
         location: {} as any,
         scope_id: "test-scope" as any,
-        availability: { scope: "public" },
       });
 
       const processor = RUST_BUILDER_CONFIG.get("definition.method");
@@ -463,7 +453,6 @@ describe("rust_builder", () => {
         name: "MyStruct" as any,
         location: {} as any,
         scope_id: "test-scope" as any,
-        availability: { scope: "public" },
       });
 
       const processor = RUST_BUILDER_CONFIG.get("definition.method.associated");
@@ -506,8 +495,6 @@ describe("rust_builder", () => {
       expect(definitions.variables).toHaveLength(1);
       expect(definitions.variables[0].name).toBe("MAX_SIZE");
       expect(definitions.variables[0].type).toBe("usize");
-      // readonly/static are Rust-specific and would need to be in kind discriminator or extra props
-      expect(definitions.variables[0].availability.scope).toBe("public");
     });
 
     it("should process static variable", () => {
@@ -609,7 +596,6 @@ describe("rust_builder", () => {
       expect(definitions.types).toHaveLength(1);
       expect(definitions.types[0].name).toBe("Result");
       expect(definitions.types[0].generics).toEqual(["T"]);
-      expect(definitions.types[0].availability.scope).toBe("public");
     });
 
     it("should process module definition", () => {
@@ -626,57 +612,6 @@ describe("rust_builder", () => {
 
       expect(definitions.namespaces).toHaveLength(1);
       expect(definitions.namespaces[0].name).toBe("utils");
-      expect(definitions.namespaces[0].availability.scope).toBe("public");
-    });
-  });
-
-  describe("visibility extraction", () => {
-    it("should detect pub visibility", () => {
-      const code = `pub fn public_func() {}`;
-      const definitions = processCapture(
-        code,
-        "definition.function",
-        "identifier",
-        "public_func"
-      );
-      expect(definitions.functions[0].availability.scope).toBe("public");
-    });
-
-    it("should detect pub(crate) visibility", () => {
-      const code = `pub(crate) struct CrateStruct {}`;
-      const definitions = processCapture(
-        code,
-        "definition.class",
-        "type_identifier",
-        "CrateStruct"
-      );
-      // pub(crate) maps to "package-internal" in our visibility system
-      expect(definitions.classes[0].availability.scope).toBe(
-        "package-internal"
-      );
-    });
-
-    it("should detect pub(super) visibility", () => {
-      const code = `pub(super) enum SuperEnum {}`;
-      const definitions = processCapture(
-        code,
-        "definition.enum",
-        "type_identifier",
-        "SuperEnum"
-      );
-      // pub(super) maps to "file-private" in our visibility system
-      expect(definitions.enums[0].availability.scope).toBe("file-private");
-    });
-
-    it("should default to file-private for no visibility", () => {
-      const code = `struct PrivateStruct {}`;
-      const definitions = processCapture(
-        code,
-        "definition.class",
-        "type_identifier",
-        "PrivateStruct"
-      );
-      expect(definitions.classes[0].availability.scope).toBe("file-private");
     });
   });
 
@@ -740,7 +675,6 @@ describe("rust_builder", () => {
           name: "Person" as any,
           location: {} as any,
           scope_id: "test-scope" as any,
-          availability: { scope: "public" },
         });
 
         const processor = RUST_BUILDER_CONFIG.get("definition.field");

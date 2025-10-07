@@ -16,7 +16,6 @@ import type { SyntaxNode } from "tree-sitter";
 import type {
   SymbolId,
   SymbolName,
-  SymbolAvailability,
   Location,
   ScopeId,
   ModulePath,
@@ -40,26 +39,6 @@ import { type ProcessFunction } from "./javascript_builder";
 // ============================================================================
 // Helper Functions for TypeScript-specific Features
 // ============================================================================
-
-/**
- * Extract location from a tree-sitter node
- */
-function extract_location(node: SyntaxNode): Location {
-  return {
-    file_path: "" as FilePath, // Will be filled by context
-    start_line: node.startPosition.row + 1,
-    start_column: node.startPosition.column,
-    end_line: node.endPosition.row + 1,
-    end_column: node.endPosition.column,
-  };
-}
-
-/**
- * Extract symbol name from a capture
- */
-function extract_symbol_name(capture: CaptureNode): SymbolName {
-  return (capture.text || capture.node.text || "unknown") as SymbolName;
-}
 
 /**
  * Create an interface symbol ID
@@ -183,46 +162,6 @@ export function create_property_id(capture: CaptureNode): SymbolId {
   const name = capture.text;
   const location = capture.location;
   return property_symbol(name, location);
-}
-
-/**
- * Determine availability based on node context
- */
-export function determine_availability(node: SyntaxNode): SymbolAvailability {
-  // Check for export modifier
-  // TODO: improve this with the use of scope information. TODO: also, downstream clients of this ('export' processing) should calculate the visibility based on the scope
-  let current: SyntaxNode | null = node;
-  while (current) {
-    if (current.parent?.type === "export_statement") {
-      return { scope: "public" };
-    }
-    current = current.parent;
-  }
-  return { scope: "file-private" };
-}
-
-/**
- * Determine method availability (with access modifiers)
- */
-export function determine_method_availability(
-  node: SyntaxNode
-): SymbolAvailability {
-  // Check for private/protected/public modifiers
-  const parent = node.parent;
-  if (parent) {
-    const modifiers = parent.children?.filter(
-      (c: any) =>
-        c.type === "private" || c.type === "protected" || c.type === "public"
-    );
-    if (modifiers?.length > 0) {
-      const modifier = modifiers[0].type;
-      // Map TypeScript visibility to SymbolAvailability scope values
-      if (modifier === "private" || modifier === "protected") {
-        return { scope: "file-private" }; // Private/protected are not exportable
-      }
-    }
-  }
-  return { scope: "public" };
 }
 
 /**

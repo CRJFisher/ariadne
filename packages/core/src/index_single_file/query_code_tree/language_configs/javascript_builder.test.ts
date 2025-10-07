@@ -601,7 +601,6 @@ describe("JavaScript Builder Configuration", () => {
         expect(classDef.name).toBe("MyClass");
         expect(classDef.location).toBeDefined();
         expect(classDef.defining_scope_id).toBeDefined();
-        expect(classDef.availability).toBeDefined();
 
         // Check location has all subfields
         expect(classDef.location.start_line).toBeGreaterThan(0);
@@ -609,8 +608,6 @@ describe("JavaScript Builder Configuration", () => {
         expect(classDef.location.end_line).toBeGreaterThan(0);
         expect(classDef.location.end_column).toBeGreaterThanOrEqual(0);
 
-        // Check availability has scope field
-        expect(classDef.availability.scope).toBeDefined();
       });
     });
 

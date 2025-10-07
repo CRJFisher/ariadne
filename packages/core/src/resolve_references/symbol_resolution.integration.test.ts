@@ -29,46 +29,12 @@ import type {
   TypeMemberInfo,
   ModulePath,
   LocationKey,
+  AnyDefinition,
 } from "@ariadnejs/types";
 import type { SemanticIndex } from "../index_single_file/semantic_index";
 import { location_key } from "@ariadnejs/types";
+import { create_test_index } from "./symbol_resolution.test";
 
-// Helper to create a minimal semantic index
-function create_test_index(
-  file_path: FilePath,
-  options: {
-    functions?: Map<SymbolId, FunctionDefinition>;
-    classes?: Map<SymbolId, ClassDefinition>;
-    variables?: Map<SymbolId, VariableDefinition>;
-    scopes?: Map<ScopeId, LexicalScope>;
-    references?: SymbolReference[];
-    root_scope_id?: ScopeId;
-    imports?: Map<SymbolId, ImportDefinition>;
-    type_bindings?: Map<LocationKey, SymbolName>;
-    type_members?: Map<SymbolId, TypeMemberInfo>;
-  } = {}
-): SemanticIndex {
-  return {
-    file_path,
-    language: "typescript",
-    root_scope_id:
-      options.root_scope_id || (`scope:${file_path}:module` as ScopeId),
-    scopes: options.scopes || new Map(),
-    functions: options.functions || new Map(),
-    classes: options.classes || new Map(),
-    variables: options.variables || new Map(),
-    interfaces: new Map(),
-    enums: new Map(),
-    namespaces: new Map(),
-    types: new Map(),
-    imported_symbols: options.imports || new Map(),
-    references: options.references || [],
-    symbols_by_name: new Map(),
-    type_bindings: options.type_bindings || new Map(),
-    type_members: options.type_members || new Map(),
-    type_alias_metadata: new Map(),
-  };
-}
 
 describe("Symbol Resolution - Integration Tests", () => {
   describe("Basic Resolution", () => {
@@ -86,7 +52,7 @@ describe("Symbol Resolution - Integration Tests", () => {
 
       const index = create_test_index(file_path, {
         root_scope_id: module_scope,
-        scopes: new Map([
+        scopes_raw: new Map([
           [
             module_scope,
             {
@@ -105,7 +71,7 @@ describe("Symbol Resolution - Integration Tests", () => {
             },
           ],
         ]),
-        functions: new Map([
+        functions_raw: new Map([
           [
             helper_id,
             {
@@ -152,7 +118,7 @@ describe("Symbol Resolution - Integration Tests", () => {
 
       const utils_index = create_test_index(utils_file, {
         root_scope_id: utils_scope,
-        scopes: new Map([
+        scopes_raw: new Map([
           [
             utils_scope,
             {
@@ -171,7 +137,7 @@ describe("Symbol Resolution - Integration Tests", () => {
             },
           ],
         ]),
-        functions: new Map([
+        functions_raw: new Map([
           [
             helper_id,
             {
@@ -209,7 +175,7 @@ describe("Symbol Resolution - Integration Tests", () => {
 
       const main_index = create_test_index(main_file, {
         root_scope_id: main_scope,
-        scopes: new Map([
+        scopes_raw: new Map([
           [
             main_scope,
             {
@@ -228,7 +194,7 @@ describe("Symbol Resolution - Integration Tests", () => {
             },
           ],
         ]),
-        imports: new Map([
+        imports_raw: new Map([
           [
             import_id,
             {
@@ -281,7 +247,7 @@ describe("Symbol Resolution - Integration Tests", () => {
 
       const types_index = create_test_index(types_file, {
         root_scope_id: types_scope,
-        scopes: new Map([
+        scopes_raw: new Map([
           [
             types_scope,
             {
@@ -300,7 +266,7 @@ describe("Symbol Resolution - Integration Tests", () => {
             },
           ],
         ]),
-        classes: new Map([
+        classes_raw: new Map([
           [
             user_class_id,
             {
@@ -339,7 +305,7 @@ describe("Symbol Resolution - Integration Tests", () => {
             } as unknown as ClassDefinition,
           ],
         ]),
-        type_members: new Map([
+        type_members_raw: new Map([
           [
             user_class_id,
             {
@@ -374,7 +340,7 @@ describe("Symbol Resolution - Integration Tests", () => {
 
       const main_index = create_test_index(main_file, {
         root_scope_id: main_scope,
-        scopes: new Map([
+        scopes_raw: new Map([
           [
             main_scope,
             {
@@ -393,7 +359,7 @@ describe("Symbol Resolution - Integration Tests", () => {
             },
           ],
         ]),
-        imports: new Map([
+        imports_raw: new Map([
           [
             import_id,
             {
@@ -414,7 +380,7 @@ describe("Symbol Resolution - Integration Tests", () => {
             } as unknown as ImportDefinition,
           ],
         ]),
-        variables: new Map([
+        variables_raw: new Map([
           [
             user_var_id,
             {
@@ -432,7 +398,7 @@ describe("Symbol Resolution - Integration Tests", () => {
             } as unknown as VariableDefinition,
           ],
         ]),
-        type_bindings: new Map([
+        type_bindings_raw: new Map([
           [
             location_key({
               file_path: main_file,
@@ -511,7 +477,7 @@ describe("Symbol Resolution - Integration Tests", () => {
 
       const utils_index = create_test_index(utils_file, {
         root_scope_id: utils_scope,
-        scopes: new Map([
+        scopes_raw: new Map([
           [
             utils_scope,
             {
@@ -530,7 +496,7 @@ describe("Symbol Resolution - Integration Tests", () => {
             },
           ],
         ]),
-        functions: new Map([
+        functions_raw: new Map([
           [
             imported_helper_id,
             {
@@ -569,7 +535,7 @@ describe("Symbol Resolution - Integration Tests", () => {
 
       const main_index = create_test_index(main_file, {
         root_scope_id: main_scope,
-        scopes: new Map([
+        scopes_raw: new Map([
           [
             main_scope,
             {
@@ -588,7 +554,7 @@ describe("Symbol Resolution - Integration Tests", () => {
             },
           ],
         ]),
-        imports: new Map([
+        imports_raw: new Map([
           [
             import_id,
             {
@@ -609,7 +575,7 @@ describe("Symbol Resolution - Integration Tests", () => {
             } as unknown as ImportDefinition,
           ],
         ]),
-        functions: new Map([
+        functions_raw: new Map([
           [
             local_helper_id,
             {
@@ -677,7 +643,7 @@ describe("Symbol Resolution - Integration Tests", () => {
 
       const index = create_test_index(file_path, {
         root_scope_id: module_scope,
-        scopes: new Map([
+        scopes_raw: new Map([
           [
             module_scope,
             {
@@ -696,7 +662,7 @@ describe("Symbol Resolution - Integration Tests", () => {
             },
           ],
         ]),
-        classes: new Map([
+        classes_raw: new Map([
           [
             user_class_id,
             {
@@ -732,7 +698,7 @@ describe("Symbol Resolution - Integration Tests", () => {
             } as unknown as ClassDefinition,
           ],
         ]),
-        variables: new Map([
+        variables_raw: new Map([
           [
             user_var_id,
             {
@@ -750,7 +716,7 @@ describe("Symbol Resolution - Integration Tests", () => {
             } as unknown as VariableDefinition,
           ],
         ]),
-        type_bindings: new Map([
+        type_bindings_raw: new Map([
           [
             location_key({
               file_path: file_path,
@@ -762,7 +728,7 @@ describe("Symbol Resolution - Integration Tests", () => {
             "User" as SymbolName,
           ],
         ]),
-        type_members: new Map([
+        type_members_raw: new Map([
           [
             user_class_id,
             {
@@ -850,7 +816,7 @@ describe("Symbol Resolution - Integration Tests", () => {
 
       const index = create_test_index(file_path, {
         root_scope_id: module_scope,
-        scopes: new Map([
+        scopes_raw: new Map([
           [
             module_scope,
             {
@@ -869,7 +835,7 @@ describe("Symbol Resolution - Integration Tests", () => {
             },
           ],
         ]),
-        functions: new Map([
+        functions_raw: new Map([
           [
             helper_id,
             {

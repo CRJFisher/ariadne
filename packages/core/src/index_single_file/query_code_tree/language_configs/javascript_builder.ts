@@ -130,14 +130,19 @@ function find_function_scope_at_location(
   for (const scope of context.scopes.values()) {
     if (scope.type === "function") {
       // Check if this function scope contains our location
-      const scope_start = scope.location.start_line * 10000 + scope.location.start_column;
-      const scope_end = scope.location.end_line * 10000 + scope.location.end_column;
+      const scope_start =
+        scope.location.start_line * 10000 + scope.location.start_column;
+      const scope_end =
+        scope.location.end_line * 10000 + scope.location.end_column;
       const loc_pos = location.start_line * 10000 + location.start_column;
 
       // The function scope should start at or very near the location
       // (within a few characters - for "function name()")
-      if (scope_start <= loc_pos && loc_pos <= scope_end &&
-          Math.abs(scope_start - loc_pos) < 100) {
+      if (
+        scope_start <= loc_pos &&
+        loc_pos <= scope_end &&
+        Math.abs(scope_start - loc_pos) < 100
+      ) {
         return scope.id;
       }
     }
@@ -260,50 +265,6 @@ function find_containing_callable(capture: CaptureNode): SymbolId {
 }
 
 /**
- * Determine availability based on node context
- */
-function determine_availability(node: SyntaxNode): SymbolAvailability {
-  // Check for export modifier
-  let current: SyntaxNode | null = node;
-  while (current) {
-    if (current.parent?.type === "export_statement") {
-      return { scope: "public" };
-    }
-    current = current.parent;
-  }
-  return { scope: "file-private" };
-}
-
-/**
- * Determine method availability
- */
-function determine_method_availability(node: SyntaxNode): SymbolAvailability {
-  // Check for private/protected/public modifiers
-  const parent = node.parent;
-  if (parent) {
-    const modifiers = parent.children?.filter(
-      (c: any) =>
-        c.type === "private" || c.type === "protected" || c.type === "public"
-    );
-    if (modifiers?.length > 0) {
-      const modifier = modifiers[0].type;
-      // Map TypeScript visibility to SymbolAvailability scope values
-      if (modifier === "private" || modifier === "protected") {
-        return { scope: "file-private" }; // Private/protected are not exportable
-      }
-    }
-  }
-  return { scope: "public" };
-}
-
-/**
- * Determine property availability
- */
-function determine_property_availability(node: SyntaxNode): SymbolAvailability {
-  return determine_method_availability(node);
-}
-
-/**
  * Find all export_specifier nodes in an export_clause
  * Returns array of export_specifier nodes from: export { foo, bar as baz }
  */
@@ -354,7 +315,8 @@ export function extract_export_specifier_info(specifier_node: SyntaxNode): {
   }
 
   const name = identifiers[0].text as SymbolName;
-  const alias = identifiers.length > 1 ? (identifiers[1].text as SymbolName) : undefined;
+  const alias =
+    identifiers.length > 1 ? (identifiers[1].text as SymbolName) : undefined;
 
   return { name, alias };
 }
@@ -363,14 +325,14 @@ export function extract_export_specifier_info(specifier_node: SyntaxNode): {
  * Check if export statement has 'from' keyword (re-export)
  */
 function has_from_clause(export_node: SyntaxNode): boolean {
-  return export_node.children.some(child => child.type === "from");
+  return export_node.children.some((child) => child.type === "from");
 }
 
 /**
  * Check if export statement has 'default' keyword
  */
 function has_default_keyword(export_node: SyntaxNode): boolean {
-  return export_node.children.some(child => child.type === "default");
+  return export_node.children.some((child) => child.type === "default");
 }
 
 /**
@@ -448,7 +410,7 @@ export function extract_export_info(
 
   // First, check if this is a direct export: export function foo() {}
   while (current) {
-    const parent = current.parent;
+    const parent: SyntaxNode | null = current.parent;
 
     if (parent?.type === "export_statement") {
       const export_metadata = analyze_export_statement(parent, symbol_name);
@@ -700,7 +662,6 @@ export const JAVASCRIPT_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
           name: capture.text,
           location: capture.location,
           scope_id: context.get_scope_id(capture.location),
-          availability: determine_availability(capture.node),
           is_exported: export_info.is_exported,
           export: export_info.export,
           extends: extends_clause ? extract_extends(capture.node) : [],
@@ -726,9 +687,7 @@ export const JAVASCRIPT_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
             name: capture.text,
             location: capture.location,
             scope_id: context.get_scope_id(capture.location),
-            availability: determine_method_availability(capture.node),
             is_exported: false, // Methods are not directly exported; the class is
-            export: undefined,
             return_type: extract_return_type(capture.node),
           });
         }
@@ -775,9 +734,6 @@ export const JAVASCRIPT_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
             name: "constructor" as SymbolName,
             location: capture.location,
             scope_id: context.get_scope_id(capture.location),
-            availability: determine_method_availability(capture.node),
-            is_exported: false, // Constructors are not directly exported; the class is
-            export: undefined,
             access_modifier,
           });
         }
@@ -803,8 +759,10 @@ export const JAVASCRIPT_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
         //   - 'fact' is visible in parent scope
         //   - 'factorial' is only visible inside the function
         let scope_id: ScopeId;
-        if (capture.node.parent?.type === "function_expression" ||
-            capture.node.parent?.type === "function") {
+        if (
+          capture.node.parent?.type === "function_expression" ||
+          capture.node.parent?.type === "function"
+        ) {
           // This is a named function expression - assign to function's own scope
           scope_id = find_function_scope_at_location(capture.location, context);
         } else {
@@ -817,7 +775,6 @@ export const JAVASCRIPT_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
           name: capture.text,
           location: capture.location,
           scope_id: scope_id,
-          availability: determine_availability(capture.node),
           is_exported: export_info.is_exported,
           export: export_info.export,
         });
@@ -841,7 +798,6 @@ export const JAVASCRIPT_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
           name: capture.text,
           location: capture.location,
           scope_id: context.get_scope_id(capture.location),
-          availability: determine_availability(capture.node),
           is_exported: export_info.is_exported,
           export: export_info.export,
         });
@@ -865,8 +821,6 @@ export const JAVASCRIPT_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
           name: capture.text,
           location: capture.location,
           scope_id: context.get_scope_id(capture.location),
-          is_exported: false, // Parameters are never exported
-          export: undefined,
           type: extract_parameter_type(capture.node),
           default_value: extract_default_value(capture.node),
         });
@@ -890,8 +844,6 @@ export const JAVASCRIPT_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
           name: capture.text,
           location: capture.location,
           scope_id: context.get_scope_id(capture.location),
-          is_exported: false, // Parameters are never exported
-          export: undefined,
           type: extract_parameter_type(capture.node),
           default_value: extract_default_value(capture.node),
         });
@@ -930,9 +882,7 @@ export const JAVASCRIPT_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
           name: capture.text,
           location: capture.location,
           scope_id: context.get_scope_id(capture.location),
-          availability: determine_availability(capture.node),
           is_exported: export_info.is_exported,
-          export: export_info.export,
           type: extract_type_annotation(capture.node),
           initial_value: extract_initial_value(capture.node),
         });
@@ -957,9 +907,6 @@ export const JAVASCRIPT_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
             name: capture.text,
             location: capture.location,
             scope_id: context.get_scope_id(capture.location),
-            availability: determine_property_availability(capture.node),
-            is_exported: false, // Properties are not directly exported; the class is
-            export: undefined,
             type: extract_property_type(capture.node),
             initial_value: extract_initial_value(capture.node),
           });
@@ -985,9 +932,6 @@ export const JAVASCRIPT_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
             name: capture.text,
             location: capture.location,
             scope_id: context.get_scope_id(capture.location),
-            availability: determine_property_availability(capture.node),
-            is_exported: false, // Properties are not directly exported; the class is
-            export: undefined,
             type: extract_property_type(capture.node),
             initial_value: extract_initial_value(capture.node),
           });
@@ -1038,9 +982,6 @@ export const JAVASCRIPT_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
           name: capture.text,
           location: capture.location,
           scope_id: context.get_scope_id(capture.location),
-          availability: { scope: "file-private" },
-          is_exported: false, // Imports are never exported
-          export: undefined,
           import_path: extract_import_path(import_stmt),
           import_kind,
           original_name: extract_original_name(import_stmt, capture.text),
@@ -1069,9 +1010,6 @@ export const JAVASCRIPT_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
           name: capture.text,
           location: capture.location,
           scope_id: context.get_scope_id(capture.location),
-          availability: { scope: "file-private" },
-          is_exported: false, // Imports are never exported
-          export: undefined,
           import_path: extract_import_path(import_stmt),
           import_kind: "named",
           original_name: extract_original_name(import_stmt, capture.text),
@@ -1096,9 +1034,6 @@ export const JAVASCRIPT_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
           name: capture.text,
           location: capture.location,
           scope_id: context.get_scope_id(capture.location),
-          availability: { scope: "file-private" },
-          is_exported: false, // Imports are never exported
-          export: undefined,
           import_path: extract_import_path(import_stmt),
           import_kind: "default",
           original_name: undefined,
@@ -1127,9 +1062,6 @@ export const JAVASCRIPT_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
           name: capture.text,
           location: capture.location,
           scope_id: context.get_scope_id(capture.location),
-          availability: { scope: "file-private" },
-          is_exported: false, // Imports are never exported
-          export: undefined,
           import_path: extract_import_path(import_stmt),
           import_kind: "namespace",
           original_name: undefined,

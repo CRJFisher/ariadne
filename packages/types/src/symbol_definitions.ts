@@ -61,13 +61,12 @@ export interface Definition {
   readonly name: SymbolName;
   readonly defining_scope_id: ScopeId; // Where this symbol NAME is visible (parent scope), NOT the scope this definition creates (e.g., class name is in parent scope, not class's own scope)
   readonly location: Location;
-  readonly availability: SymbolAvailability; // Determines where symbol can be referenced (DEPRECATED: use is_exported instead)
-  readonly is_exported: boolean; // Can this symbol be imported from other files?
   readonly export?: ExportMetadata; // Export-specific metadata if exported
 }
 
 export interface FunctionDefinition extends Definition {
   readonly kind: "function";
+  readonly is_exported: boolean; // Can this symbol be imported from other files?
   readonly signature: FunctionSignature; // TODO: remove this, put its contents directly on the FunctionDefinition
   readonly docstring?: DocString;
   readonly decorators?: readonly SymbolName[];
@@ -86,10 +85,11 @@ export interface FunctionSignature {
  */
 export interface ClassDefinition extends Definition {
   readonly kind: "class";
+  readonly is_exported: boolean;
   readonly extends: readonly SymbolName[]; // extends or implements
   readonly methods: readonly MethodDefinition[];
   readonly properties: readonly PropertyDefinition[]; // Aka fields
-  readonly decorators: readonly SymbolId[];
+  readonly decorators: readonly DecoratorDefinition[];
   readonly constructor?: readonly ConstructorDefinition[];
   readonly docstring?: readonly DocString[];
   readonly generics?: string[];
@@ -120,7 +120,7 @@ export interface PropertyDefinition extends Definition {
   readonly kind: "property";
   readonly type?: SymbolName;
   readonly initial_value?: string;
-  readonly decorators: readonly SymbolId[];
+  readonly decorators: readonly DecoratorDefinition[];
 }
 
 /**
@@ -138,6 +138,7 @@ export interface ParameterDefinition extends Definition {
  */
 export interface InterfaceDefinition extends Definition {
   readonly kind: "interface";
+  readonly is_exported: boolean;
   readonly extends: readonly SymbolName[];
   readonly methods: readonly MethodDefinition[];
   readonly properties: readonly PropertySignature[];
@@ -149,7 +150,7 @@ export interface InterfaceDefinition extends Definition {
  */
 export interface PropertySignature {
   readonly kind: "property";
-  readonly name: SymbolId;
+  readonly name: SymbolName;
   readonly type?: SymbolName; // Required - use "unknown" when type cannot be inferred
   readonly location: Location;
 }
@@ -163,6 +164,7 @@ export interface DecoratorDefinition extends Definition {
  */
 export interface EnumDefinition extends Definition {
   readonly kind: "enum";
+  readonly is_exported: boolean;
   readonly members: readonly EnumMember[];
   readonly methods?: readonly MethodDefinition[]; // Enum methods (Rust/Java style)
   readonly is_const: boolean; // TypeScript const enum, defaults to false
@@ -173,7 +175,7 @@ export interface EnumDefinition extends Definition {
  * Enum member
  */
 export interface EnumMember {
-  readonly name: SymbolId;
+  readonly name: SymbolName;
   readonly value?: string | number;
   readonly location: Location;
 }
@@ -183,6 +185,7 @@ export interface EnumMember {
  */
 export interface VariableDefinition extends Definition {
   readonly kind: "variable" | "constant";
+  readonly is_exported: boolean;
   readonly type?: SymbolName;
   readonly initial_value?: string;
 }
@@ -203,11 +206,14 @@ export interface ImportDefinition extends Definition {
  * Namespace/module definition
  */
 export interface NamespaceDefinition extends Definition {
-  readonly exported_symbols?: readonly SymbolId[];
+  readonly kind: "namespace";
+  readonly is_exported: boolean;
+  readonly exported_symbols?: readonly SymbolName[];
 }
 
 export interface TypeAliasDefinition extends Definition {
   readonly kind: "type" | "type_alias";
+  readonly is_exported: boolean;
   readonly type_expression?: string;
   readonly generics?: string[];
 }
@@ -228,36 +234,8 @@ export type AnyDefinition =
   | TypeAliasDefinition;
 
 /**
- * Type guard to check if a definition is exported
- */
-export function is_exported_definition(def: Definition): boolean {
-  return def.is_exported;
-}
-
-/**
- * Type guard to check if export has an alias
- */
-export function has_export_alias(def: Definition): boolean {
-  return def.export?.export_name !== undefined;
-}
-
-/**
- * Type guard to check if export is a default export
- */
-export function is_default_export(def: Definition): boolean {
-  return def.export?.is_default === true;
-}
-
-/**
  * Type guard to check if export is a re-export
  */
 export function is_reexport(def: Definition): boolean {
   return def.export?.is_reexport === true;
-}
-
-/**
- * Get the effective export name (alias or original name)
- */
-export function get_export_name(def: Definition): SymbolName {
-  return def.export?.export_name || def.name;
 }

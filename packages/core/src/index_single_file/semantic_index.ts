@@ -22,6 +22,9 @@ import type {
   Location,
   LocationKey,
   TypeMemberInfo,
+  AnyDefinition,
+  SymbolKind,
+  Definition,
 } from "@ariadnejs/types";
 
 import { query_tree } from "./query_code_tree";
@@ -64,6 +67,7 @@ export interface SemanticIndex {
 
   /** Scope data */
   readonly scopes: ReadonlyMap<ScopeId, LexicalScope>;
+  readonly scope_to_definitions: ReadonlyMap<ScopeId, ReadonlyMap<SymbolKind, AnyDefinition[]>>;
 
   /** Definitions */
   readonly functions: ReadonlyMap<SymbolId, FunctionDefinition>;
@@ -78,8 +82,8 @@ export interface SemanticIndex {
   /** References */
   readonly references: readonly SymbolReference[];
 
-  /** Quick lookup: name -> symbols with that name in this file */
-  readonly symbols_by_name: ReadonlyMap<SymbolName, readonly SymbolId[]>;
+  /** Quick lookup: export name -> exported definition */
+  readonly exported_symbols: ReadonlyMap<SymbolName, AnyDefinition>;
 
   /**
    * Type data
@@ -146,7 +150,10 @@ export function build_semantic_index(
   );
 
   // PASS 5: Build name index
-  const symbols_by_name = build_name_index(builder_result);
+  const scope_to_definitions = build_scope_to_definitions(builder_result);
+
+  // PASS 5.5: Build exported symbols map
+  const exported_symbols = build_exported_symbols_map(builder_result);
 
   // PASS 6: Extract type preprocessing data
   const type_bindings_from_defs = extract_type_bindings({
@@ -187,7 +194,8 @@ export function build_semantic_index(
     types: builder_result.types,
     imported_symbols: builder_result.imports,
     references: all_references,
-    symbols_by_name,
+    scope_to_definitions,
+    exported_symbols,
     type_bindings,
     type_members,
     type_alias_metadata,
@@ -266,25 +274,77 @@ function process_definitions(
 /**
  * Build name-based lookup index from all definitions
  */
-function build_name_index(result: BuilderResult): Map<SymbolName, SymbolId[]> {
-  const index = new Map<SymbolName, SymbolId[]>();
+function build_scope_to_definitions(result: BuilderResult): Map<ScopeId, Map<SymbolKind, AnyDefinition[]>> {
+  const index = new Map<ScopeId, Map<SymbolKind, AnyDefinition[]>>();
 
-  const add_to_index = (def: { symbol_id: SymbolId; name: SymbolName }) => {
-    const existing = index.get(def.name) || [];
-    existing.push(def.symbol_id);
-    index.set(def.name, existing);
+  const add_to_index = (def: Definition) => {
+    const existing = index.get(def.defining_scope_id)?.get(def.kind) || [];
+    existing.push(def);
+    index.get(def.defining_scope_id)?.set(def.kind, existing);
   };
 
-  result.functions.forEach(add_to_index);
-  result.classes.forEach(add_to_index);
-  result.variables.forEach(add_to_index);
-  result.interfaces.forEach(add_to_index);
-  result.enums.forEach(add_to_index);
-  result.namespaces.forEach(add_to_index);
-  result.types.forEach(add_to_index);
+  result.functions.forEach((def) => add_to_index(def));
+  result.classes.forEach((def) => add_to_index(def));
+  result.variables.forEach((def) => add_to_index(def));
+  result.interfaces.forEach((def) => add_to_index(def));
+  result.enums.forEach((def) => add_to_index(def));
+  result.namespaces.forEach((def) => add_to_index(def));
+  result.types.forEach((def) => add_to_index(def));
+  result.imports.forEach((def) => add_to_index(def));
 
   return index;
 }
+
+/**
+ * Build export lookup map from all definitions
+ *
+ * IMPORTANT: Asserts that export names are unique within a file.
+ * If two different symbols are exported with the same name, this indicates
+ * a bug in the is_exported logic or a malformed source file.
+ *
+ * @param result - Builder result containing all definitions
+ * @returns Map from export name to definition
+ * @throws Error if duplicate export names are found
+ */
+function build_exported_symbols_map(result: BuilderResult): Map<SymbolName, AnyDefinition> {
+  const map = new Map<SymbolName, AnyDefinition>();
+
+  const add_to_map = (def: AnyDefinition) => {
+    // Only add exported symbols
+    if (!def.is_exported) {
+      return;
+    }
+
+    // Get the effective export name (alias or original name)
+    const export_name = def.export?.export_name || def.name;
+
+    // Check for duplicates - this should never happen
+    const existing = map.get(export_name);
+    if (existing) {
+      throw new Error(
+        `Duplicate export name "${export_name}" in file.\n` +
+        `  First:  ${existing.kind} ${existing.symbol_id}\n` +
+        `  Second: ${def.kind} ${def.symbol_id}\n` +
+        `This indicates a bug in is_exported logic or malformed source code.`
+      );
+    }
+
+    map.set(export_name, def);
+  };
+
+  // Add all definition types
+  result.functions.forEach(add_to_map);
+  result.classes.forEach(add_to_map);
+  result.variables.forEach(add_to_map);
+  result.interfaces.forEach(add_to_map);
+  result.enums.forEach(add_to_map);
+  result.namespaces.forEach(add_to_map);
+  result.types.forEach(add_to_map);
+  result.imports.forEach(add_to_map);  // For re-exports
+
+  return map;
+}
+
 /**
  * Processing context with precomputed depths for efficient scope lookups
  */

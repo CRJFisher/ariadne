@@ -16,14 +16,6 @@ import type {
   ScopeId,
   SymbolName,
   SymbolId,
-  ClassDefinition,
-  FunctionDefinition,
-  MethodDefinition,
-  PropertyDefinition,
-  InterfaceDefinition,
-  EnumDefinition,
-  NamespaceDefinition,
-  AnyDefinition,
 } from "@ariadnejs/types";
 
 // ============================================================================
@@ -92,7 +84,7 @@ describe("DefinitionBuilder - Complex Assembly", () => {
       name: "ComplexClass" as SymbolName,
       location: class_loc,
       scope_id: context.root_scope_id,
-      availability: { scope: "file-export" },
+      is_exported: true,
       extends: ["BaseClass" as SymbolName],
     });
 
@@ -104,7 +96,6 @@ describe("DefinitionBuilder - Complex Assembly", () => {
       name: "method1" as SymbolName,
       location: create_test_location(3, 2),
       scope_id: context.root_scope_id,
-      availability: { scope: "public" },
       return_type: "string" as SymbolName,
       access_modifier: "public",
       async: true,
@@ -115,7 +106,6 @@ describe("DefinitionBuilder - Complex Assembly", () => {
       name: "method2" as SymbolName,
       location: create_test_location(7, 2),
       scope_id: context.root_scope_id,
-      availability: { scope: "public" },
       return_type: "number" as SymbolName,
       access_modifier: "private",
       static: true,
@@ -127,7 +117,6 @@ describe("DefinitionBuilder - Complex Assembly", () => {
       name: "prop1" as SymbolName,
       location: create_test_location(2, 2),
       scope_id: context.root_scope_id,
-      availability: { scope: "public" },
       type: "string" as SymbolName,
       access_modifier: "public",
       readonly: true,
@@ -138,7 +127,6 @@ describe("DefinitionBuilder - Complex Assembly", () => {
       name: "prop2" as SymbolName,
       location: create_test_location(10, 2),
       scope_id: context.root_scope_id,
-      availability: { scope: "file-private" },
       type: "boolean" as SymbolName,
       access_modifier: "private",
       static: true,
@@ -169,7 +157,7 @@ describe("DefinitionBuilder - Complex Assembly", () => {
       name: "ChildClass" as SymbolName,
       location: create_test_location(1),
       scope_id: context.root_scope_id,
-      availability: { scope: "file-export" },
+      is_exported: true,
       extends: ["ParentClass" as SymbolName],
     });
 
@@ -190,7 +178,7 @@ describe("DefinitionBuilder - Complex Assembly", () => {
       name: "complexFunc" as SymbolName,
       location: create_test_location(1),
       scope_id: context.root_scope_id,
-      availability: { scope: "file-export" },
+      is_exported: true,
     });
 
     // Add multiple parameters
@@ -248,7 +236,7 @@ describe("DefinitionBuilder - Complex Assembly", () => {
       name: "DecoratedClass" as SymbolName,
       location: create_test_location(1),
       scope_id: context.root_scope_id,
-      availability: { scope: "file-export" },
+      is_exported: true,
     });
 
     builder.add_method_to_class(class_id, {
@@ -256,19 +244,20 @@ describe("DefinitionBuilder - Complex Assembly", () => {
       name: "decoratedMethod" as SymbolName,
       location: create_test_location(3, 2),
       scope_id: context.root_scope_id,
-      availability: { scope: "public" },
     });
 
     // Add decorators to method
     builder.add_decorator_to_target(method_id, {
       name: "Override" as SymbolName,
       location: create_test_location(2, 2),
+      defining_scope_id: context.root_scope_id,
       arguments: [],
     });
 
     builder.add_decorator_to_target(method_id, {
       name: "Deprecated" as SymbolName,
       location: create_test_location(2, 12),
+      defining_scope_id: context.root_scope_id,
       arguments: ["Use newMethod instead"],
     });
 
@@ -292,7 +281,7 @@ describe("DefinitionBuilder - Complex Assembly", () => {
       name: "IComplex" as SymbolName,
       location: create_test_location(1),
       scope_id: context.root_scope_id,
-      availability: { scope: "file-export" },
+      is_exported: true,
       extends: ["IBase" as SymbolName],
     });
 
@@ -335,7 +324,7 @@ describe("DefinitionBuilder - Complex Assembly", () => {
       name: "Status" as SymbolName,
       location: create_test_location(1),
       scope_id: context.root_scope_id,
-      availability: { scope: "file-export" },
+      is_exported: true,
       is_const: true,
     });
 
@@ -382,7 +371,7 @@ describe("DefinitionBuilder - Complex Assembly", () => {
       name: "MyNamespace" as SymbolName,
       location: create_test_location(1),
       scope_id: context.root_scope_id,
-      availability: { scope: "file-export" },
+      is_exported: true,
     });
 
     const result = builder.build();
@@ -404,7 +393,7 @@ describe("DefinitionBuilder - Complex Assembly", () => {
       name: "MyClass" as SymbolName,
       location: create_test_location(1),
       scope_id: context.root_scope_id,
-      availability: { scope: "file-export" },
+      is_exported: true,
     });
 
     builder.add_constructor_to_class(class_id, {
@@ -412,7 +401,6 @@ describe("DefinitionBuilder - Complex Assembly", () => {
       name: "constructor" as SymbolName,
       location: create_test_location(2, 2),
       scope_id: context.root_scope_id,
-      availability: { scope: "public" },
       access_modifier: "public",
     });
 
@@ -461,7 +449,7 @@ describe("DefinitionBuilder - Complex Assembly", () => {
       name: "IService" as SymbolName,
       location: create_test_location(1),
       scope_id: context.root_scope_id,
-      availability: { scope: "file-export" },
+      is_exported: true,
     });
 
     builder.add_method_signature_to_interface(interface_id, {
@@ -514,35 +502,35 @@ describe("DefinitionBuilder - Public API", () => {
         name: "TestClass" as SymbolName,
         location: create_test_location(1),
         scope_id: context.root_scope_id,
-        availability: { scope: "file-export" },
+        is_exported: true,
       })
       .add_function({
         symbol_id: func_id,
         name: "testFunc" as SymbolName,
         location: create_test_location(20),
         scope_id: context.root_scope_id,
-        availability: { scope: "file-export" },
+        is_exported: true,
       })
       .add_interface({
         symbol_id: interface_id,
         name: "ITest" as SymbolName,
         location: create_test_location(30),
         scope_id: context.root_scope_id,
-        availability: { scope: "file-export" },
+        is_exported: true,
       })
       .add_enum({
         symbol_id: enum_id,
         name: "TestEnum" as SymbolName,
         location: create_test_location(40),
         scope_id: context.root_scope_id,
-        availability: { scope: "file-export" },
+        is_exported: true,
       })
       .add_namespace({
         symbol_id: namespace_id,
         name: "TestNS" as SymbolName,
         location: create_test_location(50),
         scope_id: context.root_scope_id,
-        availability: { scope: "file-export" },
+        is_exported: true,
       })
       .add_variable({
         kind: "variable",
@@ -550,14 +538,13 @@ describe("DefinitionBuilder - Public API", () => {
         name: "testVar" as SymbolName,
         location: create_test_location(60),
         scope_id: context.root_scope_id,
-        availability: { scope: "file-private" },
+        is_exported: false,
       })
       .add_import({
         symbol_id: "import:test:70:0:70:20:React" as SymbolId,
         name: "React" as SymbolName,
         location: create_test_location(70),
         scope_id: context.root_scope_id,
-        availability: { scope: "file-private" },
         import_path: "react" as any,
         import_kind: "default",
       })
@@ -567,7 +554,7 @@ describe("DefinitionBuilder - Public API", () => {
         name: "TestType" as SymbolName,
         location: create_test_location(80),
         scope_id: context.root_scope_id,
-        availability: { scope: "file-export" },
+        is_exported: true,
       });
 
     const result = builder.build();
@@ -603,21 +590,19 @@ describe("DefinitionBuilder - Public API", () => {
         name: "Chain" as SymbolName,
         location: create_test_location(1),
         scope_id: context.root_scope_id,
-        availability: { scope: "file-export" },
+        is_exported: true,
       })
       .add_method_to_class(class_id, {
         symbol_id: method_id,
         name: "chainMethod" as SymbolName,
         location: create_test_location(2, 2),
         scope_id: context.root_scope_id,
-        availability: { scope: "public" },
       })
       .add_property_to_class(class_id, {
         symbol_id: "property:test:5:2:5:15:chainProp" as SymbolId,
         name: "chainProp" as SymbolName,
         location: create_test_location(5, 2),
         scope_id: context.root_scope_id,
-        availability: { scope: "public" },
       })
       .add_parameter_to_callable(method_id, {
         symbol_id: "param:test:2:15:2:20:arg1" as SymbolId,
@@ -629,6 +614,7 @@ describe("DefinitionBuilder - Public API", () => {
       .add_decorator_to_target(class_id, {
         name: "Entity" as SymbolName,
         location: create_test_location(0, 0),
+        defining_scope_id: context.root_scope_id,
       });
 
     // All methods should return the builder for chaining

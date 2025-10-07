@@ -131,7 +131,7 @@ describe("Function Call Resolution - Integration Tests", () => {
               end_line: 4,
               end_column: 1,
             },
-            availability: "local",
+            is_exported: false,
           },
         ],
       ]);
@@ -253,7 +253,7 @@ describe("Function Call Resolution - Integration Tests", () => {
               end_line: 4,
               end_column: 1,
             },
-            availability: "local",
+            is_exported: false,
           },
         ],
         [
@@ -270,7 +270,7 @@ describe("Function Call Resolution - Integration Tests", () => {
               end_line: 10,
               end_column: 3,
             },
-            availability: "local",
+            is_exported: false,
           },
         ],
         [
@@ -287,7 +287,7 @@ describe("Function Call Resolution - Integration Tests", () => {
               end_line: 16,
               end_column: 5,
             },
-            availability: "local",
+            is_exported: false,
           },
         ],
       ]);
@@ -371,7 +371,7 @@ describe("Function Call Resolution - Integration Tests", () => {
               end_line: 4,
               end_column: 1,
             },
-            availability: "local",
+            is_exported: false,
           },
         ],
       ]);
@@ -505,7 +505,7 @@ describe("Function Call Resolution - Integration Tests", () => {
               end_line: 8,
               end_column: 3,
             },
-            availability: "local",
+            is_exported: false,
           },
         ],
         [
@@ -522,7 +522,7 @@ describe("Function Call Resolution - Integration Tests", () => {
               end_line: 14,
               end_column: 3,
             },
-            availability: "local",
+            is_exported: false,
           },
         ],
       ]);
@@ -628,7 +628,7 @@ describe("Function Call Resolution - Integration Tests", () => {
               end_line: 4,
               end_column: 1,
             },
-            availability: "local",
+            is_exported: false,
           },
         ],
       ]);
@@ -707,7 +707,7 @@ describe("Function Call Resolution - Integration Tests", () => {
               end_line: 4,
               end_column: 1,
             },
-            availability: "local",
+            is_exported: false,
           },
         ],
       ]);

@@ -83,7 +83,6 @@ describe("Export Detection - Comprehensive Verification", () => {
 
       expect(functions).toHaveLength(1);
       expect(functions[0].is_exported).toBe(true);
-      expect(functions[0].availability).toBeDefined(); // Backward compatibility
     });
 
     it("should detect exported classes", () => {
@@ -100,7 +99,6 @@ describe("Export Detection - Comprehensive Verification", () => {
 
       expect(classes).toHaveLength(1);
       expect(classes[0].is_exported).toBe(true);
-      expect(classes[0].availability).toBeDefined(); // Backward compatibility
     });
 
     it("should detect exported variables", () => {
@@ -117,7 +115,6 @@ describe("Export Detection - Comprehensive Verification", () => {
 
       expect(variables).toHaveLength(1);
       expect(variables[0].is_exported).toBe(true);
-      expect(variables[0].availability).toBeDefined(); // Backward compatibility
     });
 
     it.skip("should mark class methods as not exported", () => {
@@ -178,7 +175,6 @@ describe("Export Detection - Comprehensive Verification", () => {
       expect(functions).toHaveLength(1);
       expect(functions[0].is_exported).toBe(false);
       expect(functions[0].export).toBeUndefined();
-      expect(functions[0].availability).toBeDefined(); // Backward compatibility
     });
   });
 
@@ -197,7 +193,6 @@ describe("Export Detection - Comprehensive Verification", () => {
 
       expect(interfaces).toHaveLength(1);
       expect(interfaces[0].is_exported).toBe(true);
-      expect(interfaces[0].availability).toBeDefined(); // Backward compatibility
     });
 
     it("should detect exported type aliases", () => {
@@ -214,7 +209,6 @@ describe("Export Detection - Comprehensive Verification", () => {
 
       expect(typeAliases).toHaveLength(1);
       expect(typeAliases[0].is_exported).toBe(true);
-      expect(typeAliases[0].availability).toBeDefined(); // Backward compatibility
     });
 
     it("should detect exported enums", () => {
@@ -231,7 +225,6 @@ describe("Export Detection - Comprehensive Verification", () => {
 
       expect(enums).toHaveLength(1);
       expect(enums[0].is_exported).toBe(true);
-      expect(enums[0].availability).toBeDefined(); // Backward compatibility
     });
 
     it("should detect exported namespaces", () => {
@@ -248,7 +241,6 @@ describe("Export Detection - Comprehensive Verification", () => {
 
       expect(namespaces).toHaveLength(1);
       expect(namespaces[0].is_exported).toBe(true);
-      expect(namespaces[0].availability).toBeDefined(); // Backward compatibility
     });
 
     it("should detect exported TypeScript classes", () => {
@@ -265,7 +257,6 @@ describe("Export Detection - Comprehensive Verification", () => {
 
       expect(classes).toHaveLength(1);
       expect(classes[0].is_exported).toBe(true);
-      expect(classes[0].availability).toBeDefined(); // Backward compatibility
     });
   });
 
@@ -294,7 +285,6 @@ describe("Export Detection - Comprehensive Verification", () => {
 
         expect(allDefs.length).toBeGreaterThan(0);
         for (const def of allDefs) {
-          expect(def.availability).toBeDefined();
           expect(def.is_exported).toBeDefined();
         }
       }
