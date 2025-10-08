@@ -509,8 +509,9 @@ impl MyStruct {
     const index = build_semantic_index(parsed_file, tree, "rust");
 
     // Find all body scopes (excluding module scope)
+    // struct body (class), enum body (class), trait body (class), impl body (block)
     const body_scopes = Array.from(index.scopes.values()).filter(
-      (s) => s.type === "class"
+      (s) => s.type === "class" || s.type === "block"
     );
 
     expect(body_scopes.length).toBeGreaterThanOrEqual(4);

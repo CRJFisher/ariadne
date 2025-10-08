@@ -281,12 +281,12 @@
 (trait_item
   name: (type_identifier) @definition.interface.generic
   type_parameters: (type_parameters)
-) @scope.interface
+)
 
 ; Trait definitions (general) - captured as interfaces
 (trait_item
   name: (type_identifier) @definition.interface
-) @scope.interface
+)
 
 ; Trait methods (signatures without body) - identifier is direct child
 (trait_item

@@ -1,8 +1,9 @@
 # Task: Fix Rust Trait Definition Scope Assignment
 
-**Status**: To Do
+**Status**: Completed
 **Epic**: epic-11 - Codebase Restructuring
 **Created**: 2025-10-08
+**Completed**: 2025-10-08
 **Priority**: Medium
 **Severity**: Bug - Functional
 
@@ -355,3 +356,42 @@ impl Drawable for Circle {
 - Only affects Rust language support
 - Has clear workaround (use structs/enums pattern)
 - Does not block other epic-11 work
+
+---
+
+## Implementation Summary
+
+### Root Cause Identified
+In [rust.scm](../../../../packages/core/src/index_single_file/query_code_tree/queries/rust.scm), the trait definition patterns incorrectly marked the **entire trait_item** as a scope with `@scope.interface` annotation, in addition to marking the trait body as a scope. This caused trait names to be assigned to their own trait scope instead of the parent module scope.
+
+**Comparison with working struct pattern:**
+- **Struct (correct)**: Only the body creates a scope: `body: (field_declaration_list) @scope.class`
+- **Trait (buggy)**: BOTH the trait_item AND body created scopes: `(trait_item ...) @scope.interface` + `body: (declaration_list) @scope.interface`
+
+### Solution Implemented
+Removed the `@scope.interface` annotation from the trait definition patterns (lines 284 and 289 in rust.scm), keeping only the trait body as a scope—exactly matching the pattern used by structs and enums.
+
+### Files Changed
+1. **[rust.scm:280-289](../../../../packages/core/src/index_single_file/query_code_tree/queries/rust.scm)** - Removed `@scope.interface` from trait definitions
+2. **[import_resolver.rust.test.ts:513-514](../../../../packages/core/src/resolve_references/import_resolution/import_resolver.rust.test.ts)** - Updated test to include block scopes (impl blocks)
+
+### Test Results
+**Before Fix:**
+- ❌ MyTrait.defining_scope_id = `class:test.rs:9:1:11:1` (trait's own scope)
+- ❌ Scope tree had 5 scopes (buggy extra trait scope)
+- ❌ 1 test failing in verify_scopes.test.ts
+- ❌ 1 test failing in import_resolver.rust.test.ts
+
+**After Fix:**
+- ✅ MyTrait.defining_scope_id = `module:test.rs:1:1:11:1` (module scope)
+- ✅ Scope tree has 4 scopes (correct: module + 3 body scopes)
+- ✅ All 4 tests passing in verify_scopes.test.ts
+- ✅ All 25 tests passing in import_resolver.rust.test.ts
+- ✅ All 240 Rust-specific tests passing
+- ✅ No regressions in struct/enum/function scoping
+
+### Impact
+- Trait names are now correctly accessible from module scope
+- Trait-based method resolution will work correctly
+- Trait implementations (`impl Trait for Type`) can now find trait names
+- Consistent behavior across all Rust type definitions (struct, enum, trait)
