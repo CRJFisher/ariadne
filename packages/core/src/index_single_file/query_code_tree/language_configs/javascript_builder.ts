@@ -56,7 +56,7 @@ function extract_location(node: SyntaxNode): Location {
 /**
  * Create a class symbol ID
  */
-function create_class_id(capture: CaptureNode): SymbolId {
+export function create_class_id(capture: CaptureNode): SymbolId {
   const name = capture.text;
   const location = capture.location;
   return class_symbol(name, location);
@@ -65,7 +65,7 @@ function create_class_id(capture: CaptureNode): SymbolId {
 /**
  * Create a method symbol ID
  */
-function create_method_id(capture: CaptureNode): SymbolId {
+export function create_method_id(capture: CaptureNode): SymbolId {
   const name = capture.text;
   const location = capture.location;
   return method_symbol(name, location);
@@ -74,7 +74,7 @@ function create_method_id(capture: CaptureNode): SymbolId {
 /**
  * Create a function symbol ID
  */
-function create_function_id(capture: CaptureNode): SymbolId {
+export function create_function_id(capture: CaptureNode): SymbolId {
   const name = capture.text;
   const location = capture.location;
   return function_symbol(name, location);
@@ -83,7 +83,7 @@ function create_function_id(capture: CaptureNode): SymbolId {
 /**
  * Create a variable symbol ID
  */
-function create_variable_id(capture: CaptureNode): SymbolId {
+export function create_variable_id(capture: CaptureNode): SymbolId {
   const name = capture.text;
   const location = capture.location;
   return variable_symbol(name, location);
@@ -92,7 +92,7 @@ function create_variable_id(capture: CaptureNode): SymbolId {
 /**
  * Create a parameter symbol ID
  */
-function create_parameter_id(capture: CaptureNode): SymbolId {
+export function create_parameter_id(capture: CaptureNode): SymbolId {
   const name = capture.text;
   const location = capture.location;
   return parameter_symbol(name, location);
@@ -101,7 +101,7 @@ function create_parameter_id(capture: CaptureNode): SymbolId {
 /**
  * Create a property symbol ID
  */
-function create_property_id(capture: CaptureNode): SymbolId {
+export function create_property_id(capture: CaptureNode): SymbolId {
   const name = capture.text;
   const location = capture.location;
   return property_symbol(name, location);
@@ -110,7 +110,7 @@ function create_property_id(capture: CaptureNode): SymbolId {
 /**
  * Create an import symbol ID
  */
-function create_import_id(capture: CaptureNode): SymbolId {
+export function create_import_id(capture: CaptureNode): SymbolId {
   const name = capture.text;
   const location = capture.location;
   return variable_symbol(name, location); // Imports are like variables in the local scope
@@ -121,7 +121,7 @@ function create_import_id(capture: CaptureNode): SymbolId {
  * This is used for named function expressions where the function name
  * should be visible only within the function's own scope.
  */
-function find_function_scope_at_location(
+export function find_function_scope_at_location(
   location: Location,
   context: ProcessingContext
 ): ScopeId {
@@ -160,7 +160,7 @@ function find_function_scope_at_location(
  *
  * To avoid this, we need to ensure we're using the exact same node coordinates.
  */
-function find_containing_class(capture: CaptureNode): SymbolId | undefined {
+export function find_containing_class(capture: CaptureNode): SymbolId | undefined {
   let node = capture.node;
 
   // Traverse up until we find a class
@@ -199,7 +199,7 @@ function find_containing_class(capture: CaptureNode): SymbolId | undefined {
  * Find containing callable (function/method/constructor)
  * Uses the same location reconstruction strategy as find_containing_class to ensure SymbolId consistency
  */
-function find_containing_callable(capture: CaptureNode): SymbolId {
+export function find_containing_callable(capture: CaptureNode): SymbolId {
   let node = capture.node;
 
   // Traverse up until we find a callable
@@ -483,7 +483,7 @@ function find_named_export_for_symbol(
 /**
  * Extract return type from function/method node
  */
-function extract_return_type(node: SyntaxNode): SymbolName | undefined {
+export function extract_return_type(node: SyntaxNode): SymbolName | undefined {
   const returnType = node.childForFieldName?.("return_type");
   if (returnType) {
     return returnType.text as SymbolName;
@@ -494,7 +494,7 @@ function extract_return_type(node: SyntaxNode): SymbolName | undefined {
 /**
  * Extract parameter type
  */
-function extract_parameter_type(node: SyntaxNode): SymbolName | undefined {
+export function extract_parameter_type(node: SyntaxNode): SymbolName | undefined {
   const typeNode = node.childForFieldName?.("type");
   if (typeNode) {
     return typeNode.text as SymbolName;
@@ -505,14 +505,14 @@ function extract_parameter_type(node: SyntaxNode): SymbolName | undefined {
 /**
  * Extract property type
  */
-function extract_property_type(node: SyntaxNode): SymbolName | undefined {
+export function extract_property_type(node: SyntaxNode): SymbolName | undefined {
   return extract_parameter_type(node);
 }
 
 /**
  * Extract type annotation
  */
-function extract_type_annotation(node: SyntaxNode): SymbolName | undefined {
+export function extract_type_annotation(node: SyntaxNode): SymbolName | undefined {
   const typeAnnotation = node.childForFieldName?.("type");
   if (typeAnnotation) {
     return typeAnnotation.text as SymbolName;
@@ -523,7 +523,7 @@ function extract_type_annotation(node: SyntaxNode): SymbolName | undefined {
 /**
  * Extract initial value
  */
-function extract_initial_value(node: SyntaxNode): string | undefined {
+export function extract_initial_value(node: SyntaxNode): string | undefined {
   const valueNode =
     node.childForFieldName?.("value") || node.childForFieldName?.("init");
   if (valueNode) {
@@ -536,7 +536,7 @@ function extract_initial_value(node: SyntaxNode): string | undefined {
  * Extract default value for parameter
  * If node is inside assignment_pattern (default parameter), extract the right side
  */
-function extract_default_value(node: SyntaxNode): string | undefined {
+export function extract_default_value(node: SyntaxNode): string | undefined {
   // Check if parent is assignment_pattern (e.g., param = defaultValue)
   if (node.parent?.type === "assignment_pattern") {
     const rightSide = node.parent.childForFieldName?.("right");
@@ -551,7 +551,7 @@ function extract_default_value(node: SyntaxNode): string | undefined {
 /**
  * Extract import path from import statement
  */
-function extract_import_path(node: SyntaxNode | null | undefined): ModulePath {
+export function extract_import_path(node: SyntaxNode | null | undefined): ModulePath {
   if (!node) {
     return "" as ModulePath;
   }
@@ -568,7 +568,7 @@ function extract_import_path(node: SyntaxNode | null | undefined): ModulePath {
 /**
  * Extract original name for aliased imports
  */
-function extract_original_name(
+export function extract_original_name(
   node: SyntaxNode | null,
   local_name: SymbolName
 ): SymbolName | undefined {
@@ -597,7 +597,7 @@ function extract_original_name(
 /**
  * Check if this is a default import
  */
-function is_default_import(node: SyntaxNode, name: SymbolName): boolean {
+export function is_default_import(node: SyntaxNode, name: SymbolName): boolean {
   const importClause = node.childForFieldName?.("import_clause");
   if (importClause) {
     const defaultImport = importClause.childForFieldName?.("default");
@@ -609,7 +609,7 @@ function is_default_import(node: SyntaxNode, name: SymbolName): boolean {
 /**
  * Check if this is a namespace import
  */
-function is_namespace_import(node: SyntaxNode): boolean {
+export function is_namespace_import(node: SyntaxNode): boolean {
   const importClause = node.childForFieldName?.("import_clause");
   if (importClause) {
     const namespaceImport =
@@ -622,7 +622,7 @@ function is_namespace_import(node: SyntaxNode): boolean {
 /**
  * Extract extends classes
  */
-function extract_extends(node: SyntaxNode): SymbolName[] {
+export function extract_extends(node: SyntaxNode): SymbolName[] {
   const heritage = node.childForFieldName?.("heritage");
   if (heritage) {
     const superclass =
@@ -636,435 +636,44 @@ function extract_extends(node: SyntaxNode): SymbolName[] {
 }
 
 // ============================================================================
+// Documentation State Management
+// ============================================================================
+
+/**
+ * Map to track pending documentation comments by line number
+ * Key: end line of comment, Value: comment text
+ */
+const pending_documentation = new Map<number, string>();
+
+/**
+ * Store documentation comment for association with next definition
+ */
+export function store_documentation(comment: string, end_line: number): void {
+  pending_documentation.set(end_line, comment);
+}
+
+/**
+ * Consume documentation for a definition at the given location
+ * Returns the documentation if found within 1-2 lines before the definition
+ */
+export function consume_documentation(location: Location): string | undefined {
+  const def_start_line = location.start_line;
+
+  // Check for comment ending 1 or 2 lines before definition
+  for (const end_line of [def_start_line - 1, def_start_line - 2]) {
+    const doc = pending_documentation.get(end_line);
+    if (doc) {
+      pending_documentation.delete(end_line);
+      return doc;
+    }
+  }
+
+  return undefined;
+}
+
+// ============================================================================
 // JavaScript/TypeScript Builder Configuration
 // ============================================================================
 
-export const JAVASCRIPT_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
-  // ============================================================================
-  // DEFINITIONS
-  // ============================================================================
-
-  [
-    "definition.class",
-    {
-      process: (
-        capture: CaptureNode,
-        builder: DefinitionBuilder,
-        context: ProcessingContext
-      ) => {
-        const class_id = create_class_id(capture);
-        const extends_clause = capture.node.childForFieldName?.("heritage");
-        const export_info = extract_export_info(capture.node, capture.text);
-
-        builder.add_class({
-          symbol_id: class_id,
-          name: capture.text,
-          location: capture.location,
-          scope_id: context.get_scope_id(capture.location),
-          is_exported: export_info.is_exported,
-          export: export_info.export,
-          extends: extends_clause ? extract_extends(capture.node) : [],
-        });
-      },
-    },
-  ],
-
-  [
-    "definition.method",
-    {
-      process: (
-        capture: CaptureNode,
-        builder: DefinitionBuilder,
-        context: ProcessingContext
-      ) => {
-        const method_id = create_method_id(capture);
-        const class_id = find_containing_class(capture);
-
-        if (class_id) {
-          builder.add_method_to_class(class_id, {
-            symbol_id: method_id,
-            name: capture.text,
-            location: capture.location,
-            scope_id: context.get_scope_id(capture.location),
-            return_type: extract_return_type(capture.node),
-          });
-        }
-      },
-    },
-  ],
-
-  [
-    "definition.constructor",
-    {
-      process: (
-        capture: CaptureNode,
-        builder: DefinitionBuilder,
-        context: ProcessingContext
-      ) => {
-        const class_id = find_containing_class(capture);
-        if (class_id) {
-          const constructor_id = method_symbol(
-            "constructor" as SymbolName,
-            capture.location
-          );
-
-          // Extract access modifier from method_definition node
-          let access_modifier: "public" | "private" | "protected" | undefined =
-            undefined;
-          const parent = capture.node.parent;
-          if (parent?.type === "method_definition") {
-            const modifiers = parent.children?.filter(
-              (c: any) =>
-                c.type === "private" ||
-                c.type === "protected" ||
-                c.type === "public"
-            );
-            if (modifiers?.length > 0) {
-              access_modifier = modifiers[0].type as
-                | "public"
-                | "private"
-                | "protected";
-            }
-          }
-
-          builder.add_constructor_to_class(class_id, {
-            symbol_id: constructor_id,
-            name: "constructor" as SymbolName,
-            location: capture.location,
-            scope_id: context.get_scope_id(capture.location),
-            access_modifier,
-          });
-        }
-      },
-    },
-  ],
-
-  [
-    "definition.function",
-    {
-      process: (
-        capture: CaptureNode,
-        builder: DefinitionBuilder,
-        context: ProcessingContext
-      ) => {
-        const func_id = create_function_id(capture);
-        const export_info = extract_export_info(capture.node, capture.text);
-
-        // Special handling for named function expressions:
-        // In JavaScript, a named function expression's name is only visible
-        // within the function body itself, not in the parent scope.
-        // Example: const fact = function factorial(n) { return factorial(n-1); }
-        //   - 'fact' is visible in parent scope
-        //   - 'factorial' is only visible inside the function
-        let scope_id: ScopeId;
-        if (
-          capture.node.parent?.type === "function_expression" ||
-          capture.node.parent?.type === "function"
-        ) {
-          // This is a named function expression - assign to function's own scope
-          scope_id = find_function_scope_at_location(capture.location, context);
-        } else {
-          // This is a function declaration - assign to parent scope
-          scope_id = context.get_scope_id(capture.location);
-        }
-
-        builder.add_function({
-          symbol_id: func_id,
-          name: capture.text,
-          location: capture.location,
-          scope_id: scope_id,
-          is_exported: export_info.is_exported,
-          export: export_info.export,
-        });
-      },
-    },
-  ],
-
-  [
-    "definition.arrow",
-    {
-      process: (
-        capture: CaptureNode,
-        builder: DefinitionBuilder,
-        context: ProcessingContext
-      ) => {
-        const func_id = create_function_id(capture);
-        const export_info = extract_export_info(capture.node, capture.text);
-
-        builder.add_function({
-          symbol_id: func_id,
-          name: capture.text,
-          location: capture.location,
-          scope_id: context.get_scope_id(capture.location),
-          is_exported: export_info.is_exported,
-          export: export_info.export,
-        });
-      },
-    },
-  ],
-
-  [
-    "definition.param",
-    {
-      process: (
-        capture: CaptureNode,
-        builder: DefinitionBuilder,
-        context: ProcessingContext
-      ) => {
-        const param_id = create_parameter_id(capture);
-        const parent_id = find_containing_callable(capture);
-
-        builder.add_parameter_to_callable(parent_id, {
-          symbol_id: param_id,
-          name: capture.text,
-          location: capture.location,
-          scope_id: context.get_scope_id(capture.location),
-          type: extract_parameter_type(capture.node),
-          default_value: extract_default_value(capture.node),
-        });
-      },
-    },
-  ],
-
-  [
-    "definition.parameter",
-    {
-      process: (
-        capture: CaptureNode,
-        builder: DefinitionBuilder,
-        context: ProcessingContext
-      ) => {
-        const param_id = create_parameter_id(capture);
-        const parent_id = find_containing_callable(capture);
-
-        builder.add_parameter_to_callable(parent_id, {
-          symbol_id: param_id,
-          name: capture.text,
-          location: capture.location,
-          scope_id: context.get_scope_id(capture.location),
-          type: extract_parameter_type(capture.node),
-          default_value: extract_default_value(capture.node),
-        });
-      },
-    },
-  ],
-
-  [
-    "definition.variable",
-    {
-      process: (
-        capture: CaptureNode,
-        builder: DefinitionBuilder,
-        context: ProcessingContext
-      ) => {
-        const var_id = create_variable_id(capture);
-        const export_info = extract_export_info(capture.node, capture.text);
-
-        // Check for const by looking at parent (variable_declarator) and its parent (lexical_declaration)
-        let is_const = false;
-        const parent = capture.node.parent; // variable_declarator
-        if (parent && parent.parent) {
-          const lexicalDecl = parent.parent; // lexical_declaration
-          if (lexicalDecl.type === "lexical_declaration") {
-            // Check the first token for 'const'
-            const firstChild = lexicalDecl.firstChild;
-            if (firstChild && firstChild.type === "const") {
-              is_const = true;
-            }
-          }
-        }
-
-        builder.add_variable({
-          kind: is_const ? "constant" : "variable",
-          symbol_id: var_id,
-          name: capture.text,
-          location: capture.location,
-          scope_id: context.get_scope_id(capture.location),
-          is_exported: export_info.is_exported,
-          type: extract_type_annotation(capture.node),
-          initial_value: extract_initial_value(capture.node),
-        });
-      },
-    },
-  ],
-
-  [
-    "definition.field",
-    {
-      process: (
-        capture: CaptureNode,
-        builder: DefinitionBuilder,
-        context: ProcessingContext
-      ) => {
-        const prop_id = create_property_id(capture);
-        const class_id = find_containing_class(capture);
-
-        if (class_id) {
-          builder.add_property_to_class(class_id, {
-            symbol_id: prop_id,
-            name: capture.text,
-            location: capture.location,
-            scope_id: context.get_scope_id(capture.location),
-            type: extract_property_type(capture.node),
-            initial_value: extract_initial_value(capture.node),
-          });
-        }
-      },
-    },
-  ],
-
-  [
-    "definition.property",
-    {
-      process: (
-        capture: CaptureNode,
-        builder: DefinitionBuilder,
-        context: ProcessingContext
-      ) => {
-        const prop_id = create_property_id(capture);
-        const class_id = find_containing_class(capture);
-
-        if (class_id) {
-          builder.add_property_to_class(class_id, {
-            symbol_id: prop_id,
-            name: capture.text,
-            location: capture.location,
-            scope_id: context.get_scope_id(capture.location),
-            type: extract_property_type(capture.node),
-            initial_value: extract_initial_value(capture.node),
-          });
-        }
-      },
-    },
-  ],
-
-  // ============================================================================
-  // IMPORTS
-  // ============================================================================
-
-  [
-    "definition.import",
-    {
-      process: (
-        capture: CaptureNode,
-        builder: DefinitionBuilder,
-        context: ProcessingContext
-      ) => {
-        const import_id = create_import_id(capture);
-        // Navigate up to find the import_statement node
-        let import_stmt = capture.node.parent;
-        while (import_stmt && import_stmt.type !== "import_statement") {
-          import_stmt = import_stmt.parent;
-        }
-
-        if (!import_stmt) {
-          throw new Error(
-            "Import statement not found for capture: " +
-              JSON.stringify(capture) +
-              ". Context: " +
-              JSON.stringify(context)
-          );
-        }
-
-        // Determine import kind
-        const is_default = is_default_import(import_stmt, capture.text);
-        const is_namespace = is_namespace_import(import_stmt);
-        const import_kind = is_namespace
-          ? "namespace"
-          : is_default
-          ? "default"
-          : "named";
-
-        builder.add_import({
-          symbol_id: import_id,
-          name: capture.text,
-          location: capture.location,
-          scope_id: context.get_scope_id(capture.location),
-          import_path: extract_import_path(import_stmt),
-          import_kind,
-          original_name: extract_original_name(import_stmt, capture.text),
-        });
-      },
-    },
-  ],
-
-  [
-    "import.named",
-    {
-      process: (
-        capture: CaptureNode,
-        builder: DefinitionBuilder,
-        context: ProcessingContext
-      ) => {
-        const import_id = create_import_id(capture);
-        // Navigate up to find import statement
-        let import_stmt = capture.node.parent;
-        while (import_stmt && import_stmt.type !== "import_statement") {
-          import_stmt = import_stmt.parent;
-        }
-
-        builder.add_import({
-          symbol_id: import_id,
-          name: capture.text,
-          location: capture.location,
-          scope_id: context.get_scope_id(capture.location),
-          import_path: extract_import_path(import_stmt),
-          import_kind: "named",
-          original_name: extract_original_name(import_stmt, capture.text),
-        });
-      },
-    },
-  ],
-
-  [
-    "import.default",
-    {
-      process: (
-        capture: CaptureNode,
-        builder: DefinitionBuilder,
-        context: ProcessingContext
-      ) => {
-        const import_id = create_import_id(capture);
-        const import_stmt = capture.node.parent?.parent; // import_clause -> import_statement
-
-        builder.add_import({
-          symbol_id: import_id,
-          name: capture.text,
-          location: capture.location,
-          scope_id: context.get_scope_id(capture.location),
-          import_path: extract_import_path(import_stmt),
-          import_kind: "default",
-          original_name: undefined,
-        });
-      },
-    },
-  ],
-
-  [
-    "import.namespace",
-    {
-      process: (
-        capture: CaptureNode,
-        builder: DefinitionBuilder,
-        context: ProcessingContext
-      ) => {
-        const import_id = create_import_id(capture);
-        // Navigate up to import statement
-        let import_stmt = capture.node.parent;
-        while (import_stmt && import_stmt.type !== "import_statement") {
-          import_stmt = import_stmt.parent;
-        }
-
-        builder.add_import({
-          symbol_id: import_id,
-          name: capture.text,
-          location: capture.location,
-          scope_id: context.get_scope_id(capture.location),
-          import_path: extract_import_path(import_stmt),
-          import_kind: "namespace",
-          original_name: undefined,
-        });
-      },
-    },
-  ],
-]);
+// Re-export the configuration from the separate config file
+export { JAVASCRIPT_BUILDER_CONFIG } from "./javascript_builder_config";

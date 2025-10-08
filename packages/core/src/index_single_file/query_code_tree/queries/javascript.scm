@@ -113,8 +113,10 @@
 ; Variable declarations without initialization (e.g., let x; var y;)
 ; This pattern captures uninitialized variables for completeness and consistency
 ; with TypeScript, Python, and Rust query patterns
+; The !value syntax ensures this only matches variables WITHOUT an initializer
 (variable_declarator
   name: (identifier) @definition.variable
+  !value
 )
 
 ; Class definitions with inheritance

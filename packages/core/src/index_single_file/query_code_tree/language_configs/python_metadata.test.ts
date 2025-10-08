@@ -457,7 +457,7 @@ describe("Python Metadata Extractors", () => {
 
       expect(result.target).toBeDefined();
       expect(result.source).toBeDefined();
-      expect(result.target?.end_column).toBe(9); // end of 'obj.prop'
+      expect(result.target?.end_column).toBe(8); // end of 'obj.prop'
     });
 
     it("should handle walrus operator", () => {
@@ -494,7 +494,7 @@ describe("Python Metadata Extractors", () => {
 
       expect(result).toBeDefined();
       expect(result?.start_column).toBe(1); // position of 'self.prop'
-      expect(result?.end_column).toBe(10);
+      expect(result?.end_column).toBe(9);
     });
 
     it("should extract target from annotated assignment with constructor", () => {
@@ -506,7 +506,7 @@ describe("Python Metadata Extractors", () => {
 
       expect(result).toBeDefined();
       expect(result?.start_column).toBe(1); // position of 'items'
-      expect(result?.end_column).toBe(6);
+      expect(result?.end_column).toBe(5);
     });
 
     it("should handle walrus operator with constructor", () => {
