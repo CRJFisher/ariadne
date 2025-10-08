@@ -110,6 +110,13 @@
   name: (array_pattern) @definition.variable
 )
 
+; Variable declarations without initialization (e.g., let x; var y;)
+; This pattern captures uninitialized variables for completeness and consistency
+; with TypeScript, Python, and Rust query patterns
+(variable_declarator
+  name: (identifier) @definition.variable
+)
+
 ; Class definitions with inheritance
 (class_declaration
   name: (identifier) @definition.class
