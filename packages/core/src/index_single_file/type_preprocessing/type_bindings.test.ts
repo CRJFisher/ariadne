@@ -119,7 +119,7 @@ describe("Type Bindings - TypeScript", () => {
 
   beforeAll(() => {
     parser = new Parser();
-    parser.setLanguage(TypeScript.tsx);
+    parser.setLanguage(TypeScript.typescript);
   });
 
   it("should extract parameter type annotations from functions", () => {

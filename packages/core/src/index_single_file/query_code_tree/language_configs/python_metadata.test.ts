@@ -192,7 +192,7 @@ describe("Python Metadata Extractors", () => {
 
       expect(result).toBeDefined();
       expect(result?.start_line).toBe(1);
-      expect(result?.start_column).toBe(0);
+      expect(result?.start_column).toBe(1);
       expect(result?.end_column).toBe(3);
     });
 
@@ -205,7 +205,7 @@ describe("Python Metadata Extractors", () => {
 
       expect(result).toBeDefined();
       // Should get location of "user.profile"
-      expect(result?.start_column).toBe(0);
+      expect(result?.start_column).toBe(1);
       expect(result?.end_column).toBe(12);
     });
 
@@ -217,7 +217,7 @@ describe("Python Metadata Extractors", () => {
       const result = PYTHON_METADATA_EXTRACTORS.extract_call_receiver(call, TEST_FILE);
 
       expect(result).toBeDefined();
-      expect(result?.start_column).toBe(0);
+      expect(result?.start_column).toBe(1);
       expect(result?.end_column).toBe(4);
     });
 
@@ -229,7 +229,7 @@ describe("Python Metadata Extractors", () => {
       const result = PYTHON_METADATA_EXTRACTORS.extract_call_receiver(call, TEST_FILE);
 
       expect(result).toBeDefined();
-      expect(result?.start_column).toBe(0);
+      expect(result?.start_column).toBe(1);
       expect(result?.end_column).toBe(3);
     });
 
@@ -242,7 +242,7 @@ describe("Python Metadata Extractors", () => {
 
       expect(result).toBeDefined();
       // Should get location of "super()"
-      expect(result?.start_column).toBe(0);
+      expect(result?.start_column).toBe(1);
     });
 
     it("should return undefined for standalone function call", () => {
@@ -263,7 +263,7 @@ describe("Python Metadata Extractors", () => {
       const result = PYTHON_METADATA_EXTRACTORS.extract_call_receiver(attribute, TEST_FILE);
 
       expect(result).toBeDefined();
-      expect(result?.start_column).toBe(0);
+      expect(result?.start_column).toBe(1);
       expect(result?.end_column).toBe(3); // end of "obj"
     });
 
@@ -275,7 +275,7 @@ describe("Python Metadata Extractors", () => {
       const result = PYTHON_METADATA_EXTRACTORS.extract_call_receiver(attribute, TEST_FILE);
 
       expect(result).toBeDefined();
-      expect(result?.start_column).toBe(0);
+      expect(result?.start_column).toBe(1);
       expect(result?.end_column).toBe(12); // end of "user.profile"
     });
   });
@@ -407,8 +407,8 @@ describe("Python Metadata Extractors", () => {
 
       expect(result.target).toBeDefined();
       expect(result.source).toBeDefined();
-      expect(result.target?.start_column).toBe(0);
-      expect(result.source?.start_column).toBe(4);
+      expect(result.target?.start_column).toBe(1);
+      expect(result.source?.start_column).toBe(5);
     });
 
     it("should extract parts from annotated assignment", () => {
@@ -420,8 +420,8 @@ describe("Python Metadata Extractors", () => {
 
       expect(result.target).toBeDefined();
       expect(result.source).toBeDefined();
-      expect(result.target?.start_column).toBe(0); // position of 'x'
-      expect(result.source?.start_column).toBe(9); // position of '5'
+      expect(result.target?.start_column).toBe(1); // position of 'x'
+      expect(result.source?.start_column).toBe(10); // position of '5'
     });
 
     it("should extract parts from augmented assignment", () => {
@@ -433,8 +433,8 @@ describe("Python Metadata Extractors", () => {
 
       expect(result.target).toBeDefined();
       expect(result.source).toBeDefined();
-      expect(result.target?.start_column).toBe(0);
-      expect(result.source?.start_column).toBe(5);
+      expect(result.target?.start_column).toBe(1);
+      expect(result.source?.start_column).toBe(6);
     });
 
     it("should extract parts from multiple assignment", () => {
@@ -457,7 +457,7 @@ describe("Python Metadata Extractors", () => {
 
       expect(result.target).toBeDefined();
       expect(result.source).toBeDefined();
-      expect(result.target?.end_column).toBe(8); // end of 'obj.prop'
+      expect(result.target?.end_column).toBe(9); // end of 'obj.prop'
     });
 
     it("should handle walrus operator", () => {
@@ -481,7 +481,7 @@ describe("Python Metadata Extractors", () => {
       const result = PYTHON_METADATA_EXTRACTORS.extract_construct_target(call, TEST_FILE);
 
       expect(result).toBeDefined();
-      expect(result?.start_column).toBe(0); // position of 'obj'
+      expect(result?.start_column).toBe(1); // position of 'obj'
       expect(result?.end_column).toBe(3);
     });
 
@@ -493,8 +493,8 @@ describe("Python Metadata Extractors", () => {
       const result = PYTHON_METADATA_EXTRACTORS.extract_construct_target(call, TEST_FILE);
 
       expect(result).toBeDefined();
-      expect(result?.start_column).toBe(0); // position of 'self.prop'
-      expect(result?.end_column).toBe(9);
+      expect(result?.start_column).toBe(1); // position of 'self.prop'
+      expect(result?.end_column).toBe(10);
     });
 
     it("should extract target from annotated assignment with constructor", () => {
@@ -505,8 +505,8 @@ describe("Python Metadata Extractors", () => {
       const result = PYTHON_METADATA_EXTRACTORS.extract_construct_target(call, TEST_FILE);
 
       expect(result).toBeDefined();
-      expect(result?.start_column).toBe(0); // position of 'items'
-      expect(result?.end_column).toBe(5);
+      expect(result?.start_column).toBe(1); // position of 'items'
+      expect(result?.end_column).toBe(6);
     });
 
     it("should handle walrus operator with constructor", () => {

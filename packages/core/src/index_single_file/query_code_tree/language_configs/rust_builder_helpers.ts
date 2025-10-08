@@ -91,7 +91,7 @@ export function create_struct_id(capture: CaptureNode): SymbolId {
     start_line: struct_node.startPosition.row + 1,
     start_column: struct_node.startPosition.column + 1,
     end_line: struct_node.endPosition.row + 1,
-    end_column: struct_node.endPosition.column + 1,
+    end_column: struct_node.endPosition.column,
   };
   return class_symbol(name, location);
 }
@@ -116,7 +116,7 @@ export function create_trait_id(capture: CaptureNode): SymbolId {
     start_line: trait_node.startPosition.row + 1,
     start_column: trait_node.startPosition.column + 1,
     end_line: trait_node.endPosition.row + 1,
-    end_column: trait_node.endPosition.column + 1,
+    end_column: trait_node.endPosition.column,
   };
   return interface_symbol(name, location);
 }
@@ -135,7 +135,7 @@ export function create_function_id(capture: CaptureNode): SymbolId {
     start_line: function_node.startPosition.row + 1,
     start_column: function_node.startPosition.column + 1,
     end_line: function_node.endPosition.row + 1,
-    end_column: function_node.endPosition.column + 1,
+    end_column: function_node.endPosition.column,
   };
   return function_symbol(name, location);
 }
@@ -154,7 +154,7 @@ export function create_method_id(capture: CaptureNode): SymbolId {
     start_line: function_node.startPosition.row + 1,
     start_column: function_node.startPosition.column + 1,
     end_line: function_node.endPosition.row + 1,
-    end_column: function_node.endPosition.column + 1,
+    end_column: function_node.endPosition.column,
   };
   return method_symbol(name, location);
 }
@@ -838,7 +838,7 @@ export function find_containing_callable(
               start_line: node.startPosition.row + 1,
               start_column: node.startPosition.column + 1,
               end_line: node.endPosition.row + 1,
-              end_column: node.endPosition.column + 1,
+              end_column: node.endPosition.column,
             }
           );
         }
@@ -853,7 +853,7 @@ export function find_containing_callable(
           start_line: node.startPosition.row + 1,
           start_column: node.startPosition.column + 1,
           end_line: node.endPosition.row + 1,
-          end_column: node.endPosition.column + 1,
+          end_column: node.endPosition.column,
         }
       );
     }
@@ -886,7 +886,7 @@ export function find_containing_callable(
             start_line: functionNode.startPosition.row + 1,
             start_column: functionNode.startPosition.column + 1,
             end_line: functionNode.endPosition.row + 1,
-            end_column: functionNode.endPosition.column + 1,
+            end_column: functionNode.endPosition.column,
           }
         );
       }
@@ -905,7 +905,7 @@ export function find_containing_callable(
           start_line: node.startPosition.row + 1,
           start_column: node.startPosition.column + 1,
           end_line: node.endPosition.row + 1,
-          end_column: node.endPosition.column + 1,
+          end_column: node.endPosition.column,
         }
       );
     }
@@ -920,7 +920,7 @@ export function find_containing_callable(
           start_line: node.startPosition.row + 1,
           start_column: node.startPosition.column + 1,
           end_line: node.endPosition.row + 1,
-          end_column: node.endPosition.column + 1,
+          end_column: node.endPosition.column,
         }
       );
     }

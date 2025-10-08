@@ -49,7 +49,7 @@ function extract_location(node: SyntaxNode): Location {
     start_line: node.startPosition.row + 1,
     start_column: node.startPosition.column + 1,
     end_line: node.endPosition.row + 1,
-    end_column: node.endPosition.column + 1,
+    end_column: node.endPosition.column,
   };
 }
 
@@ -180,7 +180,7 @@ function find_containing_class(capture: CaptureNode): SymbolId | undefined {
           start_line: nameNode.startPosition.row + 1,
           start_column: nameNode.startPosition.column + 1,
           end_line: nameNode.endPosition.row + 1,
-          end_column: nameNode.endPosition.column + 1,
+          end_column: nameNode.endPosition.column,
         };
 
         return class_symbol(className, location);
@@ -221,14 +221,14 @@ function find_containing_callable(capture: CaptureNode): SymbolId {
               start_line: nameNode.startPosition.row + 1,
               start_column: nameNode.startPosition.column + 1,
               end_line: nameNode.endPosition.row + 1,
-              end_column: nameNode.endPosition.column + 1,
+              end_column: nameNode.endPosition.column,
             }
           : {
               file_path: capture.location.file_path,
               start_line: node.startPosition.row + 1,
               start_column: node.startPosition.column + 1,
               end_line: node.endPosition.row + 1,
-              end_column: node.endPosition.column + 1,
+              end_column: node.endPosition.column,
             };
         return method_symbol(methodName as SymbolName, location);
       } else if (nameNode) {
@@ -238,7 +238,7 @@ function find_containing_callable(capture: CaptureNode): SymbolId {
           start_line: nameNode.startPosition.row + 1,
           start_column: nameNode.startPosition.column + 1,
           end_line: nameNode.endPosition.row + 1,
-          end_column: nameNode.endPosition.column + 1,
+          end_column: nameNode.endPosition.column,
         };
         return function_symbol(nameNode.text as SymbolName, location);
       } else {
@@ -248,7 +248,7 @@ function find_containing_callable(capture: CaptureNode): SymbolId {
           start_line: node.startPosition.row + 1,
           start_column: node.startPosition.column + 1,
           end_line: node.endPosition.row + 1,
-          end_column: node.endPosition.column + 1,
+          end_column: node.endPosition.column,
         };
         return function_symbol("anonymous" as SymbolName, location);
       }

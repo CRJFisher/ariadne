@@ -142,7 +142,7 @@ export function find_containing_enum(
           if (nameNode) {
             const file_path = capture.location.file_path;
             const enumName = nameNode.text as SymbolName;
-            return `enum:${file_path}:${nameNode.startPosition.row + 1}:${nameNode.startPosition.column + 1}:${nameNode.endPosition.row + 1}:${nameNode.endPosition.column + 1}:${enumName}` as SymbolId;
+            return `enum:${file_path}:${nameNode.startPosition.row + 1}:${nameNode.startPosition.column + 1}:${nameNode.endPosition.row + 1}:${nameNode.endPosition.column}:${enumName}` as SymbolId;
           }
         }
       }
@@ -207,7 +207,7 @@ export function find_containing_protocol(
                 start_line: nameNode.startPosition.row + 1,
                 start_column: nameNode.startPosition.column + 1,
                 end_line: nameNode.endPosition.row + 1,
-                end_column: nameNode.endPosition.column + 1,
+                end_column: nameNode.endPosition.column,
               }
             );
           }
@@ -572,7 +572,7 @@ export function find_decorator_target(capture: CaptureNode): SymbolId | undefine
                   start_line: nameNode.startPosition.row + 1,
                   start_column: nameNode.startPosition.column + 1,
                   end_line: nameNode.endPosition.row + 1,
-                  end_column: nameNode.endPosition.column + 1,
+                  end_column: nameNode.endPosition.column,
                 }
               );
             } else {
@@ -584,7 +584,7 @@ export function find_decorator_target(capture: CaptureNode): SymbolId | undefine
                   start_line: nameNode.startPosition.row + 1,
                   start_column: nameNode.startPosition.column + 1,
                   end_line: nameNode.endPosition.row + 1,
-                  end_column: nameNode.endPosition.column + 1,
+                  end_column: nameNode.endPosition.column,
                 }
               );
             }
@@ -600,7 +600,7 @@ export function find_decorator_target(capture: CaptureNode): SymbolId | undefine
                 start_line: nameNode.startPosition.row + 1,
                 start_column: nameNode.startPosition.column + 1,
                 end_line: nameNode.endPosition.row + 1,
-                end_column: nameNode.endPosition.column + 1,
+                end_column: nameNode.endPosition.column,
               }
             );
           }

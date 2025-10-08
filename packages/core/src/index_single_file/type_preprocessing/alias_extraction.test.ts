@@ -100,7 +100,7 @@ describe("Type Alias Extraction - TypeScript", () => {
 
   beforeAll(() => {
     parser = new Parser();
-    parser.setLanguage(TypeScript.tsx);
+    parser.setLanguage(TypeScript.typescript);
   });
 
   it("should extract type alias for simple type", () => {
@@ -439,7 +439,7 @@ describe("Type Alias Extraction - Edge Cases", () => {
 
   beforeAll(() => {
     parser = new Parser();
-    parser.setLanguage(TypeScript.tsx);
+    parser.setLanguage(TypeScript.typescript);
   });
 
   it("should handle empty types map", () => {

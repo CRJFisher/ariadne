@@ -807,7 +807,7 @@ describe("scope_processor", () => {
 
       beforeAll(() => {
         parser = new Parser();
-        parser.setLanguage(TypeScript.tsx);
+        parser.setLanguage(TypeScript.typescript);
       });
 
       it("should capture only class body as scope, not entire declaration", () => {

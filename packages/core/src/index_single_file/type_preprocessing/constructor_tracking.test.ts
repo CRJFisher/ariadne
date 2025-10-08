@@ -156,7 +156,7 @@ describe("Constructor Tracking - TypeScript", () => {
 
   beforeAll(() => {
     parser = new Parser();
-    parser.setLanguage(TypeScript.tsx);
+    parser.setLanguage(TypeScript.typescript);
   });
 
   it("should extract constructor binding for typed assignment", () => {
@@ -550,7 +550,7 @@ describe("Constructor Tracking - Edge Cases", () => {
 
   it("should ignore constructor calls without construct_target", () => {
     let parser = new Parser();
-    parser.setLanguage(TypeScript.tsx);
+    parser.setLanguage(TypeScript.typescript);
 
     const code = `
       class Logger {}

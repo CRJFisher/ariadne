@@ -440,7 +440,7 @@ export function find_containing_class(
           start_line: nameNode.startPosition.row + 1,
           start_column: nameNode.startPosition.column + 1,
           end_line: nameNode.endPosition.row + 1,
-          end_column: nameNode.endPosition.column + 1,
+          end_column: nameNode.endPosition.column,
         };
         return class_symbol(className, location);
       }
@@ -469,7 +469,7 @@ export function find_containing_interface(
           start_line: nameNode.startPosition.row + 1,
           start_column: nameNode.startPosition.column + 1,
           end_line: nameNode.endPosition.row + 1,
-          end_column: nameNode.endPosition.column + 1,
+          end_column: nameNode.endPosition.column,
         };
         return interface_symbol(interfaceName, location);
       }
@@ -498,7 +498,7 @@ export function find_containing_enum(
           start_line: nameNode.startPosition.row + 1,
           start_column: nameNode.startPosition.column + 1,
           end_line: nameNode.endPosition.row + 1,
-          end_column: nameNode.endPosition.column + 1,
+          end_column: nameNode.endPosition.column,
         };
         return `enum:${location.file_path}:${location.start_line}:${location.start_column}:${location.end_line}:${location.end_column}:${enumName}` as SymbolId;
       }
@@ -559,7 +559,7 @@ export function find_containing_callable(capture: CaptureNode): SymbolId {
           start_line: (nameNode || node).startPosition.row + 1,
           start_column: (nameNode || node).startPosition.column + 1,
           end_line: (nameNode || node).endPosition.row + 1,
-          end_column: (nameNode || node).endPosition.column + 1,
+          end_column: (nameNode || node).endPosition.column,
         };
         return method_symbol(methodName as SymbolName, location);
       } else if (nameNode) {
@@ -569,7 +569,7 @@ export function find_containing_callable(capture: CaptureNode): SymbolId {
           start_line: nameNode.startPosition.row + 1,
           start_column: nameNode.startPosition.column + 1,
           end_line: nameNode.endPosition.row + 1,
-          end_column: nameNode.endPosition.column + 1,
+          end_column: nameNode.endPosition.column,
         };
         return function_symbol(nameNode.text as SymbolName, location);
       } else {
@@ -579,7 +579,7 @@ export function find_containing_callable(capture: CaptureNode): SymbolId {
           start_line: node.startPosition.row + 1,
           start_column: node.startPosition.column + 1,
           end_line: node.endPosition.row + 1,
-          end_column: node.endPosition.column + 1,
+          end_column: node.endPosition.column,
         };
         return function_symbol("anonymous" as SymbolName, location);
       }
@@ -713,7 +713,7 @@ export function find_decorator_target(
           start_line: nameNode.startPosition.row + 1,
           start_column: nameNode.startPosition.column + 1,
           end_line: nameNode.endPosition.row + 1,
-          end_column: nameNode.endPosition.column + 1,
+          end_column: nameNode.endPosition.column,
         };
         return class_symbol(nameNode.text as SymbolName, location);
       }
@@ -739,7 +739,7 @@ export function find_decorator_target(
                 start_line: nameNode.startPosition.row + 1,
                 start_column: nameNode.startPosition.column + 1,
                 end_line: nameNode.endPosition.row + 1,
-                end_column: nameNode.endPosition.column + 1,
+                end_column: nameNode.endPosition.column,
               };
               return method_symbol(nameNode.text as SymbolName, location);
             }
@@ -751,7 +751,7 @@ export function find_decorator_target(
                 start_line: nameNode.startPosition.row + 1,
                 start_column: nameNode.startPosition.column + 1,
                 end_line: nameNode.endPosition.row + 1,
-                end_column: nameNode.endPosition.column + 1,
+                end_column: nameNode.endPosition.column,
               };
               return property_symbol(nameNode.text as SymbolName, location);
             }
