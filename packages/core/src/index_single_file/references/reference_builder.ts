@@ -102,6 +102,16 @@ function determine_reference_kind(capture: CaptureNode): ReferenceKind {
           return ReferenceKind.METHOD_CALL;
         }
       }
+      // Rust: field_identifier in method call (captured on method name)
+      if (capture.node.type === "field_identifier") {
+        const fieldExpr = capture.node.parent;
+        if (fieldExpr && fieldExpr.type === "field_expression") {
+          const callExpr = fieldExpr.parent;
+          if (callExpr && callExpr.type === "call_expression") {
+            return ReferenceKind.METHOD_CALL;
+          }
+        }
+      }
       return ReferenceKind.FUNCTION_CALL;
 
     case "super":

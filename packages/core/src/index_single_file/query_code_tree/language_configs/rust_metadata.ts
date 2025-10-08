@@ -179,6 +179,21 @@ export const RUST_METADATA_EXTRACTORS: MetadataExtractors = {
       return undefined;
     }
 
+    // Handle field_identifier - walk up to find call_expression
+    // This handles captures like @reference.call on the method name
+    if (node.type === "field_identifier") {
+      // Walk up: field_identifier -> field_expression -> call_expression
+      const field_expr = node.parent;
+      if (field_expr && field_expr.type === "field_expression") {
+        const call_expr = field_expr.parent;
+        if (call_expr && call_expr.type === "call_expression") {
+          // Recursively process the call_expression
+          return this.extract_call_receiver(call_expr, file_path);
+        }
+      }
+      return undefined;
+    }
+
     // Handle call_expression
     if (node.type === "call_expression") {
       const function_node = node.childForFieldName("function");

@@ -360,6 +360,19 @@
   pattern: (identifier) @definition.variable.mut
 )
 
+; Assignment references with type annotations (for type tracking)
+(let_declaration
+  pattern: (identifier) @assignment.variable
+  type: (_)
+  value: (_)?
+)
+
+; Assignment references with struct literals (for constructor type tracking)
+(let_declaration
+  pattern: (identifier) @assignment.variable
+  value: (struct_expression)
+)
+
 ; Function parameters - direct identifier child (not pattern field)
 (parameter
   (identifier) @definition.parameter
