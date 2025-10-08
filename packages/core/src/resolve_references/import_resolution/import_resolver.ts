@@ -177,9 +177,8 @@ function find_export(
   }
 
   // If this is a re-exported import, include the ImportDefinition for chain following
-  // TODO: we need to add is_exported to the ImportDefinition type and add that to the ExportableDefinition types
-  // NOTE: Currently ImportDefinition is not part of ExportableDefinition, so this will always be undefined
-  const import_def = undefined; // is_reexport(def) && def.kind === "import" ? (def as ImportDefinition) : undefined;
+  // Check if def has the properties of an ImportDefinition (re-exports are stored as imports)
+  const import_def = is_reexport(def) && 'import_path' in def ? (def as any) : undefined;
 
   return {
     symbol_id: def.symbol_id,
@@ -211,8 +210,8 @@ function find_default_export(index: SemanticIndex): ExportInfo | null {
       }
 
       // If this is a re-exported import, include the ImportDefinition for chain following
-      // NOTE: Currently ImportDefinition is not part of ExportableDefinition, so this will always be undefined
-      const import_def = undefined; // def.export.is_reexport && def.kind === "import" ? (def as ImportDefinition) : undefined;
+      // Check if def has the properties of an ImportDefinition (re-exports are stored as imports)
+      const import_def = def.export.is_reexport && 'import_path' in def ? (def as any) : undefined;
 
       found = {
         symbol_id: def.symbol_id,

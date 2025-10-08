@@ -1,4 +1,5 @@
 import type { SymbolName } from "@ariadnejs/types";
+import { function_symbol } from "@ariadnejs/types";
 import type { DefinitionBuilder } from "../../definitions";
 import type { CaptureNode, ProcessingContext } from "../../semantic_index";
 import {
@@ -306,6 +307,46 @@ export const TYPESCRIPT_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
           name: decorator_name,
           arguments: extract_decorator_arguments(capture.node),
           location: capture.location,
+        });
+      },
+    },
+  ],
+
+  // ============================================================================
+  // FUNCTIONS - Override JavaScript to add return type support
+  // ============================================================================
+  [
+    "definition.function",
+    {
+      process: (
+        capture: CaptureNode,
+        builder: DefinitionBuilder,
+        context: ProcessingContext
+      ) => {
+        const func_id = function_symbol(capture.text, capture.location);
+        const export_info = extract_export_info(capture.node, capture.text);
+
+        // Determine scope based on function type
+        let scope_id;
+        if (
+          capture.node.parent?.type === "function_expression" ||
+          capture.node.parent?.type === "function"
+        ) {
+          // Named function expression - assign to function's own scope
+          scope_id = context.get_scope_id(capture.location);
+        } else {
+          // Function declaration - assign to parent scope
+          scope_id = context.get_scope_id(capture.location);
+        }
+
+        builder.add_function({
+          symbol_id: func_id,
+          name: capture.text,
+          location: capture.location,
+          scope_id: scope_id,
+          is_exported: export_info.is_exported,
+          export: export_info.export,
+          return_type: extract_return_type(capture.node),
         });
       },
     },

@@ -206,6 +206,65 @@
 )
 
 ;; ==============================================================================
+;; RE-EXPORTS - Import definitions that forward exports
+;; ==============================================================================
+;; Re-exports create ImportDefinitions (for chain resolution) but do NOT create
+;; local bindings in scope_to_definitions.
+
+; Re-export with alias: export { foo as bar } from 'module'
+; Note: This must come BEFORE the non-aliased pattern to match correctly
+(export_statement
+  (export_clause
+    (export_specifier
+      name: (identifier) @import.reexport.named.original
+      alias: (identifier) @import.reexport.named.alias
+    )
+  )
+  source: (string) @import.reexport.source.aliased
+)
+
+; Re-export named as default: export { foo as default } from 'module'
+(export_statement
+  (export_clause
+    (export_specifier
+      name: (identifier) @import.reexport.as_default.original
+      alias: (identifier) @import.reexport.as_default.alias
+      (#eq? @import.reexport.as_default.alias "default")
+    )
+  )
+  source: (string) @import.reexport.as_default.source
+)
+
+; Re-export default as named: export { default as foo } from 'module'
+(export_statement
+  (export_clause
+    (export_specifier
+      name: (identifier) @import.reexport.default.original
+      (#eq? @import.reexport.default.original "default")
+      alias: (identifier) @import.reexport.default.alias
+    )
+  )
+  source: (string) @import.reexport.default.source
+)
+
+; Re-export named (no alias): export { foo } from 'module'
+; Must check in handler that export_specifier does NOT have an alias field
+(export_statement
+  (export_clause
+    (export_specifier
+      name: (identifier) @import.reexport.named.simple
+    )
+  )
+  source: (string) @import.reexport.named.simple.source
+)
+
+; Namespace re-export with alias: export * as utils from 'module'
+(export_statement
+  (namespace_export (identifier) @import.reexport.namespace.alias)
+  source: (string) @import.reexport.namespace.aliased.source
+)
+
+;; ==============================================================================
 ;; EXPORTS
 ;; ==============================================================================
 
@@ -278,26 +337,9 @@
   source: (string) @export.namespace
 )
 
-; Re-exports (export { foo } from 'module')
-(export_statement
-  (export_clause
-    (export_specifier
-      name: (identifier) @export.variable
-    )
-  )
-  source: (string) @export.variable
-)
-
-; Re-exports with alias (export { foo as bar } from 'module')
-(export_statement
-  (export_clause
-    (export_specifier
-      name: (identifier) @export.variable
-      alias: (identifier) @export.variable
-    )
-  )
-  source: (string) @export.variable
-)
+; NOTE: Re-exports (export { foo } from 'module') are now handled by the
+; RE-EXPORTS section above as import definitions with export metadata.
+; They are NOT handled here to avoid duplicates.
 
 ;; ==============================================================================
 ;; REFERENCES with Enhanced Context

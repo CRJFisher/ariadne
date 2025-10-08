@@ -279,6 +279,14 @@ function build_scope_to_definitions(result: BuilderResult): Map<ScopeId, Map<Sym
   const index = new Map<ScopeId, Map<SymbolKind, AnyDefinition[]>>();
 
   const add_to_index = (def: AnyDefinition) => {
+    // Re-exports don't create local bindings - exclude them from scope_to_definitions.
+    // Re-exports are ImportDefinitions with export.is_reexport === true.
+    // They still appear in imported_symbols and exported_symbols for chain resolution,
+    // but are not available for local scope resolution.
+    if (def.kind === "import" && def.export?.is_reexport) {
+      return;
+    }
+
     const existing = index.get(def.defining_scope_id)?.get(def.kind) || [];
     existing.push(def);
     index.get(def.defining_scope_id)?.set(def.kind, existing);
@@ -342,6 +350,25 @@ function build_exported_symbols_map(result: BuilderResult): Map<SymbolName, Expo
   result.namespaces.forEach(add_to_map);
   result.types.forEach(add_to_map);
 
+  // Add re-exports (imports with export metadata)
+  // Re-exports need to be in the export map for chain resolution
+  result.imports.forEach((imp) => {
+    if (imp.export) {
+      // This is a re-export - add it to the export map
+      const export_name = imp.export.export_name || imp.name;
+      const existing = map.get(export_name);
+      if (existing) {
+        throw new Error(
+          `Duplicate export name "${export_name}" in file.\n` +
+          `  First:  ${existing.kind} ${existing.symbol_id}\n` +
+          `  Second: ${imp.kind} ${imp.symbol_id}\n` +
+          `This indicates a bug in re-export logic or malformed source code.`
+        );
+      }
+      map.set(export_name, imp as any); // ImportDefinition is not ExportableDefinition but should work for chain resolution
+    }
+  });
+
   return map;
 }
 
@@ -398,6 +425,9 @@ export enum SemanticEntity {
   PROPERTY = "property",
   TYPE_PARAMETER = "type_parameter",
   ENUM_MEMBER = "enum_member",
+
+  // Imports/Exports
+  REEXPORT = "reexport",
 
   // Types
   TYPE = "type",
