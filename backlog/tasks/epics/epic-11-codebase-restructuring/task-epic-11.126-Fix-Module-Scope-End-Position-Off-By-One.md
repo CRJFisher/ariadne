@@ -281,7 +281,7 @@ npm test -- semantic_index.*.test.ts
 
 ## Related Issues
 
-- None directly related
+- **Spawned**: [task-epic-11.127](task-epic-11.127-Fix-Rust-Trait-Definition-Scope-Assignment.md) - Rust trait scoping issue discovered during this fix
 - May be connected to body-based scope work (epic-11.112) if scope boundaries were recently changed
 
 ## Implementation Notes
@@ -317,7 +317,7 @@ The Rust test shows that `MyTrait` is being assigned to `class:test.rs:9:1:11:1`
 This is a different issue from the off-by-one position bug - it's a trait definition scoping problem.
 The struct and enum ARE correctly assigned to module scope, proving the position fix is working.
 
-This issue should be tracked separately.
+**Tracked in**: [task-epic-11.127](task-epic-11.127-Fix-Rust-Trait-Definition-Scope-Assignment.md) - Fix Rust Trait Definition Scope Assignment
 
 ## Success Metrics
 
