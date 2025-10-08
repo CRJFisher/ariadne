@@ -6,7 +6,7 @@ import { describe, it, expect, beforeAll } from "vitest";
 import Parser from "tree-sitter";
 import TypeScript from "tree-sitter-typescript";
 import type { SyntaxNode } from "tree-sitter";
-import { TYPESCRIPT_BUILDER_CONFIG } from "./typescript_builder";
+import { TYPESCRIPT_BUILDER_CONFIG, extract_return_type } from "./typescript_builder";
 import { JAVASCRIPT_BUILDER_CONFIG } from "./javascript_builder";
 import { DefinitionBuilder } from "../../definitions/definition_builder";
 import type {
@@ -504,6 +504,47 @@ describe("TypeScript Builder Configuration", () => {
       expect(params).toBeTruthy();
 
       // Parameter properties would create both parameters and class properties
+    });
+  });
+
+  describe("Return type extraction", () => {
+    it("should extract return type from function declaration", () => {
+      const code = `function getValue(): string { return "test"; }`;
+      const ast = getAstNode(code);
+      const functionNode = findNodeByType(ast, "function_declaration");
+      const identifier = functionNode?.childForFieldName?.("name");
+
+      expect(identifier).toBeTruthy();
+
+      const returnType = extract_return_type(identifier!);
+
+      expect(returnType).toBe("string");
+    });
+
+    it("should extract complex return types", () => {
+      const code = `function getUser(): Promise<User> { return Promise.resolve({} as User); }`;
+      const ast = getAstNode(code);
+      const functionNode = findNodeByType(ast, "function_declaration");
+      const identifier = functionNode?.childForFieldName?.("name");
+
+      expect(identifier).toBeTruthy();
+
+      const returnType = extract_return_type(identifier!);
+
+      expect(returnType).toBe("Promise<User>");
+    });
+
+    it("should return undefined for functions without return type", () => {
+      const code = `function doSomething() { console.log("test"); }`;
+      const ast = getAstNode(code);
+      const functionNode = findNodeByType(ast, "function_declaration");
+      const identifier = functionNode?.childForFieldName?.("name");
+
+      expect(identifier).toBeTruthy();
+
+      const returnType = extract_return_type(identifier!);
+
+      expect(returnType).toBeUndefined();
     });
   });
 });

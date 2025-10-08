@@ -353,6 +353,7 @@ export class DefinitionBuilder {
     is_exported?: boolean;
     export?: ExportMetadata;
     docstring?: string;
+    return_type?: SymbolName;
   }): DefinitionBuilder {
     this.functions.set(definition.symbol_id, {
       base: {
@@ -368,7 +369,7 @@ export class DefinitionBuilder {
       },
       signature: {
         parameters: new Map(),
-        return_type: undefined,
+        return_type: definition.return_type,
       },
       decorators: [],
     });

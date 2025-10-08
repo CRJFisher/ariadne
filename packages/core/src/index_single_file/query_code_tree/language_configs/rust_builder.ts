@@ -299,6 +299,7 @@ export const RUST_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
           scope_id: context.get_scope_id(capture.location),
           is_exported: export_info.is_exported,
           export: export_info.export,
+          return_type: extract_return_type(capture.node.parent || capture.node),
         });
       },
     },
@@ -333,6 +334,7 @@ export const RUST_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
           is_exported: export_info.is_exported,
           export: export_info.export,
           generics,
+          return_type: extract_return_type(capture.node.parent || capture.node),
         });
       },
     },
@@ -363,6 +365,7 @@ export const RUST_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
           scope_id: context.get_scope_id(capture.location),
           is_exported: export_info.is_exported,
           export: export_info.export,
+          return_type: extract_return_type(capture.node.parent || capture.node),
         });
       },
     },
@@ -393,6 +396,7 @@ export const RUST_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
           scope_id: context.get_scope_id(capture.location),
           is_exported: export_info.is_exported,
           export: export_info.export,
+          return_type: extract_return_type(capture.node.parent || capture.node),
         });
       },
     },
@@ -423,6 +427,7 @@ export const RUST_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
           scope_id: context.get_scope_id(capture.location),
           is_exported: export_info.is_exported,
           export: export_info.export,
+          return_type: extract_return_type(capture.node.parent || capture.node),
         });
       },
     },
@@ -942,6 +947,7 @@ export const RUST_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
           scope_id: context.get_scope_id(capture.location),
           is_exported: export_info.is_exported,
           export: export_info.export,
+          return_type: extract_return_type(capture.node.parent || capture.node),
         });
       },
     },

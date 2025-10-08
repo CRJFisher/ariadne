@@ -267,9 +267,8 @@ export const PYTHON_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
           scope_id: defining_scope_id,
           is_exported: export_info.is_exported,
           export: export_info.export,
+          return_type: extract_return_type(capture.node.parent || capture.node),
         });
-
-        // Note: Return type will be handled separately if needed
       },
     },
   ],
@@ -297,6 +296,7 @@ export const PYTHON_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
           scope_id: defining_scope_id,
           is_exported: export_info.is_exported,
           export: export_info.export,
+          return_type: extract_return_type(capture.node.parent || capture.node),
         });
       },
     },
