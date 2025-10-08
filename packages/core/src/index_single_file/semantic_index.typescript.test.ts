@@ -38,7 +38,7 @@ describe("Semantic Index - TypeScript", () => {
 
   beforeAll(() => {
     parser = new Parser();
-    parser.setLanguage(TypeScript.tsx);
+    parser.setLanguage(TypeScript.typescript);
   });
 
   describe("Basic TypeScript features", () => {

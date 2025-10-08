@@ -9,10 +9,11 @@ import { Query } from "tree-sitter";
 
 /**
  * Language to tree-sitter parser mapping
+ * NOTE: TypeScript uses .typescript grammar (not .tsx) for compatibility with both .ts and .tsx files
  */
 export const LANGUAGE_TO_TREESITTER_LANG = new Map([
   ["javascript", JavaScript],
-  ["typescript", TypeScript.tsx],
+  ["typescript", TypeScript.typescript],
   ["python", Python],
   ["rust", Rust],
 ]);

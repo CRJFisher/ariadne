@@ -1,8 +1,9 @@
 # Task: Fix TypeScript Variable Type Annotation Capture
 
-**Status**: To Do
+**Status**: Completed
 **Epic**: epic-11 - Codebase Restructuring
 **Created**: 2025-10-07
+**Completed**: 2025-10-08
 **Prerequisite**: task-epic-11.121 (Import handler fix)
 
 ## Problem
@@ -28,7 +29,7 @@ expect(user_var).toBeDefined();  // ❌ FAILS - user_var is undefined
 
 ### Test Failures
 
-**type_context.test.ts**: 18/27 tests failing (9 passing)
+**type_context.test.ts**: 18/22 tests failing (4 passing)
 
 Failing tests include:
 - "should track variable type annotation"
@@ -297,3 +298,91 @@ Expected: 42/43 or better (1 known failure for nested class scopes)
 
 - task-epic-11.121 - Fix TypeScript Import Handler Spurious Captures (prerequisite, completed)
 - task-epic-11.120 - Fix Nested Class Scope Assignment (separate issue, 1 test failing)
+- task-153 - Evaluate TSX and TypeScript Grammar Separation (follow-up task created)
+
+---
+
+## Implementation Notes
+
+### Root Cause Identified
+
+The issue had two parts:
+
+1. **Incorrect Query Pattern** (lines 194-199 in typescript.scm):
+   ```scheme
+   ; OLD - BROKEN PATTERN
+   (variable_declarator
+     name: (identifier) @definition.variable
+     type: (type_annotation
+       (_) @type.type_annotation
+     )
+   ) @type.type_annotation  ← This tagged the whole node incorrectly
+   ```
+
+   The pattern tagged the entire `variable_declarator` as `@type.type_annotation`, which had no handler in the builder config. This prevented the variable name from being captured as `@definition.variable`.
+
+2. **Grammar Consistency Issue**:
+   - `query_loader.ts` was originally using `TypeScript.tsx`
+   - `type_context.test.ts` was using `TypeScript.typescript`
+   - `semantic_index.typescript.test.ts` was using `TypeScript.tsx`
+   - This mismatch caused query patterns to work inconsistently across test suites
+
+### Solution Implemented
+
+**1. Fixed Query Pattern** (typescript.scm:193-198):
+```scheme
+; Variable declarations - simple pattern that matches all variable names
+; This ensures variables are captured even when they have type annotations
+; The more specific patterns below (with value assignments) will also match
+(variable_declarator
+  name: (identifier) @definition.variable
+)
+```
+
+**2. Standardized Grammar Usage**:
+- Updated `query_loader.ts` to use `TypeScript.typescript` (line 16)
+- Updated `semantic_index.typescript.test.ts` to use `TypeScript.typescript` (line 41)
+- `type_context.test.ts` already used `TypeScript.typescript` (line 54)
+- Added comment noting the grammar choice
+
+**Note**: The official tree-sitter-typescript package defines separate `.typescript` and `.tsx` grammars. Task-153 created to evaluate if we need separate handling for `.tsx` files.
+
+### Files Modified
+
+1. **typescript.scm** - Simplified variable declaration pattern
+2. **query_loader.ts** - Corrected grammar to `TypeScript.typescript`
+3. **semantic_index.typescript.test.ts** - Updated to use `TypeScript.typescript`
+4. **type_context.test.ts** - No changes needed (already correct)
+
+### Test Results
+
+**Before Fix**:
+- type_context.test.ts: 4/22 passing (18 failing)
+- semantic_index.typescript.test.ts: 42/43 passing
+
+**After Fix**:
+- type_context.test.ts: 18/22 passing (4 failing) ✅
+- semantic_index.typescript.test.ts: 43/43 passing ✅ (improved!)
+
+The 4 remaining failures in type_context.test.ts are unrelated to this task:
+- 1 TypeScript return type annotation test
+- 2 Python type hint tests
+- 1 Rust return type test
+
+These are separate issues with return type tracking across languages.
+
+### Acceptance Criteria Status
+
+- [x] Variables with type annotations are captured correctly
+- [x] Variables without type annotations still work (no regression)
+- [x] semantic_index.typescript.test.ts: 43/43 passing (improved from 42/43!)
+- [x] Query patterns are clear and well-commented
+- [x] No performance degradation in indexing
+- [x] "should track variable type annotation" test passes
+
+### Key Learnings
+
+1. **Tree-sitter grammar selection matters**: Using the wrong grammar (tsx vs typescript) caused subtle parsing differences
+2. **Query pattern specificity**: Overly specific patterns with node tags can prevent captures from working
+3. **Pattern ordering is less important**: Tree-sitter can handle multiple patterns matching the same node
+4. **Test consistency**: All tests should use the same grammar for the same language

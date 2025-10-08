@@ -190,13 +190,12 @@
   )
 ) @definition.field
 
-; Variable type annotations
+; Variable declarations - simple pattern that matches all variable names
+; This ensures variables are captured even when they have type annotations
+; The more specific patterns below (with value assignments) will also match
 (variable_declarator
   name: (identifier) @definition.variable
-  type: (type_annotation
-    (_) @type.type_annotation
-  )
-) @type.type_annotation
+)
 
 ;; ==============================================================================
 ;; ACCESS MODIFIERS AND DECORATORS
