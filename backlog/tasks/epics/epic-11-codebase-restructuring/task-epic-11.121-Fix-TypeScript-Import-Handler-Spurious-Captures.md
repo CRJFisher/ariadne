@@ -1,8 +1,9 @@
 # Task: Fix TypeScript Import Handler Spurious Captures
 
-**Status**: To Do
+**Status**: Completed
 **Epic**: epic-11 - Codebase Restructuring
 **Created**: 2025-10-07
+**Completed**: 2025-10-08 (via task epic-11.122)
 
 ## Problem
 
@@ -363,4 +364,54 @@ This variable capture issue affects 18 of the type_context tests but does NOT af
 ### Recommendation
 
 The import handler spurious capture issue (the focus of this task) is **RESOLVED**. The variable capture issue should be tracked as a separate task as it requires investigation into the variable_declarator patterns in typescript.scm.
+
+---
+
+## Final Implementation (2025-10-08)
+
+### How This Task Was Actually Completed
+
+Task 11.122 (Fix TypeScript Variable Type Annotation Capture) inadvertently completed this task as a side effect. The import handler errors were eliminated by:
+
+**1. Fixing the Variable Pattern** (typescript.scm:196-198)
+- The broken pattern tagged the entire `variable_declarator` as `@type.type_annotation`
+- This prevented variable names from being captured correctly
+- The combination of broken pattern + grammar mismatch caused identifiers to be spuriously matched as imports
+
+**2. Standardizing Grammar Usage**
+- Changed `query_loader.ts` from `TypeScript.tsx` → `TypeScript.typescript`
+- Changed `semantic_index.typescript.test.ts` from `TypeScript.tsx` → `TypeScript.typescript`
+- `type_context.test.ts` already used `TypeScript.typescript`
+
+### Final Test Results
+
+**Import Handler Status**: ✅ FULLY RESOLVED
+- type_context.test.ts: 18/22 passing (4 fail on unrelated return type issues)
+- semantic_index.typescript.test.ts: 43/43 passing (improved!)
+- **Zero** "Import statement not found" errors
+- Real import handling works correctly
+
+### Acceptance Criteria Status
+
+- [x] Import handler only fires on actual import statements ✅
+- [x] No regressions in JavaScript tests ✅
+- [x] No regressions in TypeScript semantic index tests ✅
+- [x] Real import handling still works correctly ✅
+- [x] Documentation updated ✅
+- [~] All TypeScript tests in type_context.test.ts pass (18/22 - 4 fail on return types, not imports)
+
+### Related Tasks
+
+- **task-epic-11.122** - Fixed variable pattern and grammar (completed this task as side effect)
+- **task-153** - Evaluate TSX vs TypeScript grammar separation (follow-up)
+
+### Key Insight
+
+The import patterns themselves (lines 500-517 in typescript.scm) were **already correct** and properly scoped to import statement nodes. The spurious captures were caused by the interaction between:
+1. A malformed variable pattern
+2. Grammar mismatch (tsx vs typescript)
+
+Fixing those two issues eliminated all import handler errors without any changes to the import patterns themselves.
+
+See: [ANALYSIS-How-11.122-Completed-11.121.md](../ANALYSIS-How-11.122-Completed-11.121.md) for detailed analysis.
 
