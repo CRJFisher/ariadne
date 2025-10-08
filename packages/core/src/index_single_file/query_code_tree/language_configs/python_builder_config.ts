@@ -897,7 +897,7 @@ export const PYTHON_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
           name: capture.text,
           location: capture.location,
           type: prop_type,
-          readonly: false,
+          scope_id: context.get_scope_id(capture.location),
         });
       },
     },

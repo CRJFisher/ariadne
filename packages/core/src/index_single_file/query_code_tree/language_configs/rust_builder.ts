@@ -249,9 +249,6 @@ export const RUST_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
         const returnType = extract_return_type(
           capture.node.parent || capture.node
         );
-        const isStatic = is_associated_function(
-          capture.node.parent || capture.node
-        );
 
         if (trait_name) {
           // Look up trait by name
@@ -263,7 +260,6 @@ export const RUST_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
               location: capture.location,
               scope_id: context.get_scope_id(capture.location),
               return_type: returnType,
-              static: isStatic || undefined,
             });
           }
         }

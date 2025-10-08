@@ -19,6 +19,8 @@ import type {
   TypeAliasDefinition,
   LexicalScope,
   ModulePath,
+  SymbolKind,
+  AnyDefinition,
 } from "@ariadnejs/types";
 
 // Test helper to create a minimal semantic index
@@ -45,6 +47,42 @@ function create_test_index(
   const enums = options.enums || new Map();
   const types = options.types || new Map();
   const imports = options.imports || new Map();
+
+  // Build scope_to_definitions map
+  const scope_to_definitions = new Map<ScopeId, Map<SymbolKind, AnyDefinition[]>>();
+
+  const add_to_scope_map = (def: any) => {
+    if (!scope_to_definitions.has(def.defining_scope_id)) {
+      scope_to_definitions.set(def.defining_scope_id, new Map());
+    }
+    const scope_map = scope_to_definitions.get(def.defining_scope_id)!;
+    if (!scope_map.has(def.kind)) {
+      scope_map.set(def.kind, []);
+    }
+    scope_map.get(def.kind)!.push(def);
+  };
+
+  for (const def of functions.values()) {
+    add_to_scope_map(def);
+  }
+  for (const def of classes.values()) {
+    add_to_scope_map(def);
+  }
+  for (const def of variables.values()) {
+    add_to_scope_map(def);
+  }
+  for (const def of interfaces.values()) {
+    add_to_scope_map(def);
+  }
+  for (const def of enums.values()) {
+    add_to_scope_map(def);
+  }
+  for (const def of types.values()) {
+    add_to_scope_map(def);
+  }
+  for (const def of imports.values()) {
+    add_to_scope_map(def);
+  }
 
   // Build exported_symbols map from all definitions
   const exported_symbols = new Map();
@@ -85,8 +123,9 @@ function create_test_index(
     }
   }
   for (const def of imports.values()) {
-    if (def.is_exported) {
-      const export_name = def.export?.export_name || def.name;
+    // Imports are exported if they have an export field (re-exports)
+    if (def.export) {
+      const export_name = def.export.export_name || def.name;
       exported_symbols.set(export_name, def);
     }
   }
@@ -125,7 +164,7 @@ function create_test_index(
     types,
     imported_symbols: imports,
     references: [],
-    scope_to_definitions: new Map(),
+    scope_to_definitions,
     exported_symbols,
     type_bindings: new Map(),
     type_members: new Map(),

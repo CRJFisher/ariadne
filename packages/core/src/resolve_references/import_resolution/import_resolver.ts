@@ -175,9 +175,16 @@ function find_export(
   if (!def) {
     return null;
   }
+
+  // If this is a re-exported import, include the ImportDefinition for chain following
+  // TODO: we need to add is_exported to the ImportDefinition type and add that to the ExportableDefinition types
+  // NOTE: Currently ImportDefinition is not part of ExportableDefinition, so this will always be undefined
+  const import_def = undefined; // is_reexport(def) && def.kind === "import" ? (def as ImportDefinition) : undefined;
+
   return {
     symbol_id: def.symbol_id,
     is_reexport: is_reexport(def),
+    import_def,
   };
 }
 
@@ -202,9 +209,15 @@ function find_default_export(index: SemanticIndex): ExportInfo | null {
           `Multiple default exports found in ${index.file_path}: ${found.symbol_id} and ${def.symbol_id}`
         );
       }
+
+      // If this is a re-exported import, include the ImportDefinition for chain following
+      // NOTE: Currently ImportDefinition is not part of ExportableDefinition, so this will always be undefined
+      const import_def = undefined; // def.export.is_reexport && def.kind === "import" ? (def as ImportDefinition) : undefined;
+
       found = {
         symbol_id: def.symbol_id,
         is_reexport: def.export.is_reexport || false,
+        import_def,
       };
     }
   }

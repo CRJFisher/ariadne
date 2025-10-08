@@ -5,7 +5,7 @@
 import type { SymbolName, ModulePath } from "@ariadnejs/types";
 import type { DefinitionBuilder } from "../../definitions";
 import type { CaptureNode, ProcessingContext } from "../../semantic_index";
-import type { CaptureHandler } from "./python_builder";
+import type { LanguageBuilderConfig } from "./python_builder";
 import {
   create_variable_id,
   extract_import_path,
@@ -15,7 +15,7 @@ import {
 /**
  * Import handlers for Python builder configuration
  */
-export const PYTHON_IMPORT_HANDLERS: Map<string, CaptureHandler> = new Map([
+export const PYTHON_IMPORT_HANDLERS: LanguageBuilderConfig = new Map([
   [
     "import.named",
     {

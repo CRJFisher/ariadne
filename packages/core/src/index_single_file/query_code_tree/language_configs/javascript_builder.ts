@@ -6,7 +6,6 @@ import type { SyntaxNode } from "tree-sitter";
 import type {
   SymbolId,
   SymbolName,
-  SymbolAvailability,
   ExportMetadata,
   Location,
   ScopeId,

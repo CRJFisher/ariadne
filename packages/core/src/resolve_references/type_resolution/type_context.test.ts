@@ -34,7 +34,7 @@ function create_parsed_file(
   return {
     file_path,
     file_lines: lines.length,
-    file_end_column: lines[lines.length - 1]?.length || 0,
+    file_end_column: (lines[lines.length - 1]?.length || 0) + 1,
     tree,
     lang: language,
   };
@@ -76,7 +76,8 @@ const instance = new MyClass();
       const indices = new Map([[file_path, index]]);
       const resolver_index = build_scope_resolver_index(indices);
       const cache = create_resolution_cache();
-      const type_context = build_type_context(indices, resolver_index, cache);
+      const namespace_sources = new Map<SymbolId, FilePath>();
+      const type_context = build_type_context(indices, resolver_index, cache, namespace_sources);
 
       expect(type_context).toBeDefined();
       expect(typeof type_context.get_symbol_type).toBe("function");
@@ -100,7 +101,8 @@ const user: User = new User();
       const indices = new Map([[file_path, index]]);
       const resolver_index = build_scope_resolver_index(indices);
       const cache = create_resolution_cache();
-      const type_context = build_type_context(indices, resolver_index, cache);
+      const namespace_sources = new Map<SymbolId, FilePath>();
+      const type_context = build_type_context(indices, resolver_index, cache, namespace_sources);
 
       // Find the 'user' variable
       const user_var = Array.from(index.variables.values()).find(
@@ -136,7 +138,8 @@ function processData(data: Data) {
       const indices = new Map([[file_path, index]]);
       const resolver_index = build_scope_resolver_index(indices);
       const cache = create_resolution_cache();
-      const type_context = build_type_context(indices, resolver_index, cache);
+      const namespace_sources = new Map<SymbolId, FilePath>();
+      const type_context = build_type_context(indices, resolver_index, cache, namespace_sources);
 
       // Find the 'data' parameter
       const process_func = Array.from(index.functions.values()).find(
@@ -174,7 +177,8 @@ function getResult(): Result {
       const indices = new Map([[file_path, index]]);
       const resolver_index = build_scope_resolver_index(indices);
       const cache = create_resolution_cache();
-      const type_context = build_type_context(indices, resolver_index, cache);
+      const namespace_sources = new Map<SymbolId, FilePath>();
+      const type_context = build_type_context(indices, resolver_index, cache, namespace_sources);
 
       // Find the 'getResult' function
       const get_result_func = Array.from(index.functions.values()).find(
@@ -210,7 +214,8 @@ const items: Container<string> = new Container();
       const indices = new Map([[file_path, index]]);
       const resolver_index = build_scope_resolver_index(indices);
       const cache = create_resolution_cache();
-      const type_context = build_type_context(indices, resolver_index, cache);
+      const namespace_sources = new Map<SymbolId, FilePath>();
+      const type_context = build_type_context(indices, resolver_index, cache, namespace_sources);
 
       // Find the 'items' variable
       const items_var = Array.from(index.variables.values()).find(
@@ -247,7 +252,8 @@ const instance = new MyClass();
       const indices = new Map([[file_path, index]]);
       const resolver_index = build_scope_resolver_index(indices);
       const cache = create_resolution_cache();
-      const type_context = build_type_context(indices, resolver_index, cache);
+      const namespace_sources = new Map<SymbolId, FilePath>();
+      const type_context = build_type_context(indices, resolver_index, cache, namespace_sources);
 
       // Find the 'instance' variable
       const instance_var = Array.from(index.variables.values()).find(
@@ -285,7 +291,8 @@ const config = {
       const indices = new Map([[file_path, index]]);
       const resolver_index = build_scope_resolver_index(indices);
       const cache = create_resolution_cache();
-      const type_context = build_type_context(indices, resolver_index, cache);
+      const namespace_sources = new Map<SymbolId, FilePath>();
+      const type_context = build_type_context(indices, resolver_index, cache, namespace_sources);
 
       // Find the 'service' variable (if extracted as a separate symbol)
       // Note: This depends on how the semantic index handles object properties
@@ -316,7 +323,8 @@ value: MyClass = MyClass()
       const indices = new Map([[file_path, index]]);
       const resolver_index = build_scope_resolver_index(indices);
       const cache = create_resolution_cache();
-      const type_context = build_type_context(indices, resolver_index, cache);
+      const namespace_sources = new Map<SymbolId, FilePath>();
+      const type_context = build_type_context(indices, resolver_index, cache, namespace_sources);
 
       // Find the 'value' variable
       const value_var = Array.from(index.variables.values()).find(
@@ -352,7 +360,8 @@ def handle_data(data: Data):
       const indices = new Map([[file_path, index]]);
       const resolver_index = build_scope_resolver_index(indices);
       const cache = create_resolution_cache();
-      const type_context = build_type_context(indices, resolver_index, cache);
+      const namespace_sources = new Map<SymbolId, FilePath>();
+      const type_context = build_type_context(indices, resolver_index, cache, namespace_sources);
 
       // Find the 'data' parameter
       const handle_func = Array.from(index.functions.values()).find(
@@ -392,7 +401,8 @@ def get_result() -> Result:
       const indices = new Map([[file_path, index]]);
       const resolver_index = build_scope_resolver_index(indices);
       const cache = create_resolution_cache();
-      const type_context = build_type_context(indices, resolver_index, cache);
+      const namespace_sources = new Map<SymbolId, FilePath>();
+      const type_context = build_type_context(indices, resolver_index, cache, namespace_sources);
 
       // Find the 'get_result' function
       const get_result_func = Array.from(index.functions.values()).find(
@@ -429,7 +439,8 @@ instance = Service()
       const indices = new Map([[file_path, index]]);
       const resolver_index = build_scope_resolver_index(indices);
       const cache = create_resolution_cache();
-      const type_context = build_type_context(indices, resolver_index, cache);
+      const namespace_sources = new Map<SymbolId, FilePath>();
+      const type_context = build_type_context(indices, resolver_index, cache, namespace_sources);
 
       // Find the 'instance' variable
       const instance_var = Array.from(index.variables.values()).find(
@@ -476,7 +487,8 @@ fn main() {
       const indices = new Map([[file_path, index]]);
       const resolver_index = build_scope_resolver_index(indices);
       const cache = create_resolution_cache();
-      const type_context = build_type_context(indices, resolver_index, cache);
+      const namespace_sources = new Map<SymbolId, FilePath>();
+      const type_context = build_type_context(indices, resolver_index, cache, namespace_sources);
 
       // Find the 'user' variable
       const user_var = Array.from(index.variables.values()).find(
@@ -517,7 +529,8 @@ fn handle_data(data: Data) {
       const indices = new Map([[file_path, index]]);
       const resolver_index = build_scope_resolver_index(indices);
       const cache = create_resolution_cache();
-      const type_context = build_type_context(indices, resolver_index, cache);
+      const namespace_sources = new Map<SymbolId, FilePath>();
+      const type_context = build_type_context(indices, resolver_index, cache, namespace_sources);
 
       // Find the 'data' parameter
       const handle_func = Array.from(index.functions.values()).find(
@@ -564,7 +577,8 @@ fn get_result() -> Result {
       const indices = new Map([[file_path, index]]);
       const resolver_index = build_scope_resolver_index(indices);
       const cache = create_resolution_cache();
-      const type_context = build_type_context(indices, resolver_index, cache);
+      const namespace_sources = new Map<SymbolId, FilePath>();
+      const type_context = build_type_context(indices, resolver_index, cache, namespace_sources);
 
       // Find the 'get_result' function
       const get_result_func = Array.from(index.functions.values()).find(
@@ -602,7 +616,8 @@ class MyClass {
       const indices = new Map([[file_path, index]]);
       const resolver_index = build_scope_resolver_index(indices);
       const cache = create_resolution_cache();
-      const type_context = build_type_context(indices, resolver_index, cache);
+      const namespace_sources = new Map<SymbolId, FilePath>();
+      const type_context = build_type_context(indices, resolver_index, cache, namespace_sources);
 
       // Find MyClass
       const my_class = Array.from(index.classes.values()).find(
@@ -637,7 +652,8 @@ class MyClass {
       const indices = new Map([[file_path, index]]);
       const resolver_index = build_scope_resolver_index(indices);
       const cache = create_resolution_cache();
-      const type_context = build_type_context(indices, resolver_index, cache);
+      const namespace_sources = new Map<SymbolId, FilePath>();
+      const type_context = build_type_context(indices, resolver_index, cache, namespace_sources);
 
       // Find MyClass
       const my_class = Array.from(index.classes.values()).find(
@@ -672,7 +688,8 @@ interface MyInterface {
       const indices = new Map([[file_path, index]]);
       const resolver_index = build_scope_resolver_index(indices);
       const cache = create_resolution_cache();
-      const type_context = build_type_context(indices, resolver_index, cache);
+      const namespace_sources = new Map<SymbolId, FilePath>();
+      const type_context = build_type_context(indices, resolver_index, cache, namespace_sources);
 
       // Find MyInterface
       const my_interface = Array.from(index.interfaces.values()).find(
@@ -702,7 +719,8 @@ class MyClass {
       const indices = new Map([[file_path, index]]);
       const resolver_index = build_scope_resolver_index(indices);
       const cache = create_resolution_cache();
-      const type_context = build_type_context(indices, resolver_index, cache);
+      const namespace_sources = new Map<SymbolId, FilePath>();
+      const type_context = build_type_context(indices, resolver_index, cache, namespace_sources);
 
       // Find MyClass
       const my_class = Array.from(index.classes.values()).find(
@@ -735,7 +753,8 @@ const value: LocalType = new LocalType();
       const indices = new Map([[file_path, index]]);
       const resolver_index = build_scope_resolver_index(indices);
       const cache = create_resolution_cache();
-      const type_context = build_type_context(indices, resolver_index, cache);
+      const namespace_sources = new Map<SymbolId, FilePath>();
+      const type_context = build_type_context(indices, resolver_index, cache, namespace_sources);
 
       // Find the 'value' variable
       const value_var = Array.from(index.variables.values()).find(
@@ -772,7 +791,8 @@ function test() {
       const indices = new Map([[file_path, index]]);
       const resolver_index = build_scope_resolver_index(indices);
       const cache = create_resolution_cache();
-      const type_context = build_type_context(indices, resolver_index, cache);
+      const namespace_sources = new Map<SymbolId, FilePath>();
+      const type_context = build_type_context(indices, resolver_index, cache, namespace_sources);
 
       // Find the 'value' variable (should be in function scope)
       const value_var = Array.from(index.variables.values()).find(
@@ -814,7 +834,8 @@ const value = 42;
       const indices = new Map([[file_path, index]]);
       const resolver_index = build_scope_resolver_index(indices);
       const cache = create_resolution_cache();
-      const type_context = build_type_context(indices, resolver_index, cache);
+      const namespace_sources = new Map<SymbolId, FilePath>();
+      const type_context = build_type_context(indices, resolver_index, cache, namespace_sources);
 
       // Find the 'value' variable
       const value_var = Array.from(index.variables.values()).find(
@@ -839,7 +860,8 @@ const value: UnknownType = null as any;
       const indices = new Map([[file_path, index]]);
       const resolver_index = build_scope_resolver_index(indices);
       const cache = create_resolution_cache();
-      const type_context = build_type_context(indices, resolver_index, cache);
+      const namespace_sources = new Map<SymbolId, FilePath>();
+      const type_context = build_type_context(indices, resolver_index, cache, namespace_sources);
 
       // Find the 'value' variable
       const value_var = Array.from(index.variables.values()).find(

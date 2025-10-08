@@ -101,7 +101,6 @@ export const TYPESCRIPT_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
           name: capture.text,
           location: capture.location,
           scope_id: context.get_scope_id(capture.location),
-          optional: is_optional_member(capture.node),
           generics: extract_type_parameters(capture.node.parent),
           return_type: extract_return_type(capture.node),
         });
@@ -127,8 +126,7 @@ export const TYPESCRIPT_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
           name: capture.text,
           location: capture.location,
           type: extract_property_type(capture.node),
-          optional: is_optional_member(capture.node),
-          readonly: is_readonly_property(capture.node),
+          scope_id: context.get_scope_id(capture.location),
         });
       },
     },

@@ -99,10 +99,8 @@ export function extract_type_members(definitions: {
     }
 
     // Index property signatures
-    // Note: PropertySignature.name IS the SymbolId (not a separate field)
     for (const prop of iface_def.properties) {
-      const local_name = extract_name_from_symbol_id(prop.name);
-      properties.set(local_name, prop.name);
+      properties.set(prop.name, prop.symbol_id);
     }
 
     // Get extends (interfaces can extend other interfaces)

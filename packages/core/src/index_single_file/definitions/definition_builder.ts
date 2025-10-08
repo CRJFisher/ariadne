@@ -565,10 +565,8 @@ export class DefinitionBuilder {
       name: SymbolName;
       location: Location;
       scope_id: ScopeId;
-      optional?: boolean;
       generics?: SymbolName[];
       return_type?: SymbolName;
-      static?: boolean;
     }
   ): DefinitionBuilder {
     const interface_state = this.interfaces.get(interface_id);
@@ -582,7 +580,6 @@ export class DefinitionBuilder {
         location: definition.location,
         defining_scope_id: definition.scope_id,
         return_type: definition.return_type,
-        static: definition.static,
         generics: definition.generics,
       },
       parameters: new Map(),
@@ -601,8 +598,7 @@ export class DefinitionBuilder {
       name: SymbolName;
       location: Location;
       type?: SymbolName;
-      optional?: boolean;
-      readonly?: boolean;
+      scope_id: ScopeId;
     }
   ): DefinitionBuilder {
     const interface_state = this.interfaces.get(interface_id);
@@ -610,9 +606,12 @@ export class DefinitionBuilder {
 
     interface_state.properties.set(definition.symbol_id, {
       kind: "property",
+      symbol_id: definition.symbol_id,
       name: definition.name,
       type: definition.type,
+      defining_scope_id: definition.scope_id,
       location: definition.location,
+      decorators: [],
     });
     return this;
   }
