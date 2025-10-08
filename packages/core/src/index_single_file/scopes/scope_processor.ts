@@ -55,10 +55,25 @@ export function process_scopes(
   for (const capture of sorted_captures) {
     if (capture.category !== SemanticCategory.SCOPE) continue;
 
-    const location = capture.location;
+    let location = capture.location;
     const scope_type = map_capture_to_scope_type(capture);
 
     if (!scope_type) continue;
+
+    // Adjust callable scope boundaries to start at parameters
+    // Tree-sitter captures method/function nodes starting at the keyword/name
+    // but the scope should start at parameters (exclude the name which belongs to parent scope)
+    // Example: "def method(self):" - scope starts at "(", not "def"
+    if (is_callable_scope_type(scope_type)) {
+      const params_node = capture.node.childForFieldName("parameters");
+      if (params_node) {
+        location = {
+          ...location,
+          start_line: params_node.startPosition.row + 1,
+          start_column: params_node.startPosition.column + 1,
+        };
+      }
+    }
 
     // Create scope ID based on type and location
     const scope_id = create_scope_id(scope_type, location);
@@ -304,4 +319,16 @@ function compute_scope_depth(
     }
   }
   return depth;
+}
+
+/**
+ * Check if a scope type is callable (function, method, constructor)
+ * Callable scopes have their boundaries adjusted to start at parameters
+ */
+function is_callable_scope_type(scope_type: ScopeType): boolean {
+  return (
+    scope_type === "function" ||
+    scope_type === "method" ||
+    scope_type === "constructor"
+  );
 }

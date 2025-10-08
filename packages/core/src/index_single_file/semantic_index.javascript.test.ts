@@ -1967,6 +1967,55 @@ describe("Semantic Index - JavaScript", () => {
       // Class scope should start at body (after "class {")
       expect(class_scope!.location.start_column).toBeGreaterThan(20);
     });
+
+    it("should assign correct scopes to nested classes", () => {
+      const code = `class Outer {
+  method() {
+    class Inner {
+      innerMethod() {}
+    }
+  }
+}`;
+
+      const tree = parser.parse(code);
+      const parsedFile = createParsedFile(
+        code,
+        "test.js" as FilePath,
+        tree,
+        "javascript" as Language
+      );
+      const index = build_semantic_index(
+        parsedFile,
+        tree,
+        "javascript" as Language
+      );
+
+      const file_scope = Array.from(index.scopes.values()).find(
+        (s) => s.type === "module" && s.parent_id === null
+      );
+      expect(file_scope).toBeDefined();
+      const file_scope_id = file_scope!.id;
+
+      const method_scope = Array.from(index.scopes.values()).find(
+        (s) => s.type === "method"
+      );
+      expect(method_scope).toBeDefined();
+      const method_scope_id = method_scope!.id;
+
+      const outerClass = Array.from(index.classes.values()).find(
+        (c) => c.name === "Outer"
+      );
+      const innerClass = Array.from(index.classes.values()).find(
+        (c) => c.name === "Inner"
+      );
+
+      expect(outerClass).toBeDefined();
+      expect(innerClass).toBeDefined();
+
+      // Outer should be in file scope, Inner should be in method scope
+      expect(outerClass!.defining_scope_id).toBe(file_scope_id);
+      expect(innerClass!.defining_scope_id).toBe(method_scope_id);
+    });
   });
 
   describe("Named function expression self-reference", () => {

@@ -48,6 +48,8 @@ describe("scope_processor", () => {
         column: location.start_column,
       },
       endPosition: { row: location.end_line - 1, column: location.end_column },
+      // Mock childForFieldName to return null (no parameters node in mock)
+      childForFieldName: () => null,
     };
 
     return {
@@ -1177,7 +1179,51 @@ describe("scope_processor", () => {
         expect(parent_scope?.type).toBe("module");
       });
 
-      it.todo("should correctly scope nested classes");
+      it("should correctly scope nested classes", () => {
+        const code = `class Outer:
+    def method(self):
+        class Inner:
+            def inner_method(self):
+                pass`;
+        const tree = pyParser.parse(code);
+        const parsedFile = createParsedFile(
+          code,
+          "test.py" as FilePath,
+          tree,
+          "python" as Language
+        );
+        const index = build_semantic_index(
+          parsedFile,
+          tree,
+          "python" as Language
+        );
+
+        // Find scopes
+        const file_scope = Array.from(index.scopes.values()).find(
+          (s) => s.type === "module" && s.parent_id === null
+        );
+        expect(file_scope).toBeDefined();
+
+        const method_scope = Array.from(index.scopes.values()).find(
+          (s) => s.type === "method"
+        );
+        expect(method_scope).toBeDefined();
+
+        // Find classes from definitions
+        const outer_class = Array.from(index.classes.values()).find(
+          (c) => c.name === "Outer"
+        );
+        const inner_class = Array.from(index.classes.values()).find(
+          (c) => c.name === "Inner"
+        );
+
+        expect(outer_class).toBeDefined();
+        expect(inner_class).toBeDefined();
+
+        // Outer class should be in file scope, Inner should be in method scope
+        expect(outer_class!.defining_scope_id).toBe(file_scope!.id);
+        expect(inner_class!.defining_scope_id).toBe(method_scope!.id);
+      });
     });
   });
 });

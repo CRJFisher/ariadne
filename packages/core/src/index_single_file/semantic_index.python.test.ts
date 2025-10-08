@@ -2002,5 +2002,52 @@ type Handler = Callable[[str], None]
       const parent_scope = index.scopes.get(class_scope!.parent_id!);
       expect(parent_scope?.type).toBe("module");
     });
+
+    it("should assign correct scopes to nested classes", () => {
+      const code = `class Outer:
+    def method(self):
+        class Inner:
+            def inner_method(self):
+                pass`;
+
+      const tree = parser.parse(code);
+      const parsed_file = createParsedFile(
+        code,
+        "test.py" as FilePath,
+        tree,
+        "python" as Language
+      );
+      const index = build_semantic_index(
+        parsed_file,
+        tree,
+        "python" as Language
+      );
+
+      const file_scope = Array.from(index.scopes.values()).find(
+        (s) => s.type === "module" && s.parent_id === null
+      );
+      expect(file_scope).toBeDefined();
+      const file_scope_id = file_scope!.id;
+
+      const method_scope = Array.from(index.scopes.values()).find(
+        (s) => s.type === "method"
+      );
+      expect(method_scope).toBeDefined();
+      const method_scope_id = method_scope!.id;
+
+      const outer_class = Array.from(index.classes.values()).find(
+        (c) => c.name === "Outer"
+      );
+      const inner_class = Array.from(index.classes.values()).find(
+        (c) => c.name === "Inner"
+      );
+
+      expect(outer_class).toBeDefined();
+      expect(inner_class).toBeDefined();
+
+      // Outer class should be in file scope, Inner should be in method scope
+      expect(outer_class!.defining_scope_id).toBe(file_scope_id);
+      expect(inner_class!.defining_scope_id).toBe(method_scope_id);
+    });
   });
 });

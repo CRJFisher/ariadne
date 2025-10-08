@@ -1,6 +1,6 @@
 # Task: Fix Nested Class Scope Assignment
 
-**Status**: To Do
+**Status**: Completed
 **Epic**: epic-11 - Codebase Restructuring
 **Created**: 2025-10-07
 
@@ -122,18 +122,35 @@ Expected outcomes:
 
 ## Implementation Notes
 
-### Key Files
+### Solution
 
-1. [scope_processor.ts](packages/core/src/index_single_file/scopes/scope_processor.ts) - `get_scope_id()` function
-2. [typescript.scm](packages/core/src/index_single_file/query_code_tree/queries/typescript.scm) - Scope capture patterns
-3. [semantic_index.typescript.test.ts:1775](packages/core/src/index_single_file/semantic_index.typescript.test.ts#L1775) - Failing test
+**Root Cause**: Method/function bodies were being captured as separate `block` scopes, causing nested classes to be assigned to block scopes instead of the method scope.
 
-### Considerations
+**Fixes Applied**:
 
-- Should nested functions also skip block scopes?
-- What about nested interfaces/enums?
-- Does this affect lexical scope resolution?
-- Performance impact of scope filtering
+1. **Removed unnecessary block scope captures** (all 4 languages):
+   - TypeScript/JavaScript: Removed `(statement_block) @scope.block` - was capturing ALL statement blocks including method bodies
+   - Python: Removed `(block) @scope.block` - was capturing ALL blocks including method/function bodies
+   - Rust: Removed `(block) @scope.block` - was capturing ALL blocks including function bodies
+   - Now only capture control flow blocks (if/for/while/try/catch) and special blocks (unsafe/async)
+
+2. **Fixed callable scope boundaries** (language-agnostic):
+   - Tree-sitter captures method/function nodes starting at the keyword/name (e.g., `def method_name`)
+   - Callable scope should start at parameters to exclude the name (which belongs to parent scope)
+   - Added logic in `scope_processor.ts` to adjust callable scope start position to parameters node
+   - Uses `childForFieldName("parameters")` to find parameters in the AST
+   - Applies to all callable scopes: function, method, constructor
+
+### Key Files Modified
+
+1. [scope_processor.ts](packages/core/src/index_single_file/scopes/scope_processor.ts) - Added language-agnostic callable scope boundary adjustment
+2. [typescript.scm](packages/core/src/index_single_file/query_code_tree/queries/typescript.scm) - Removed `statement_block` capture
+3. [javascript.scm](packages/core/src/index_single_file/query_code_tree/queries/javascript.scm) - Removed `statement_block` capture
+4. [python.scm](packages/core/src/index_single_file/query_code_tree/queries/python.scm) - Removed `block` capture
+5. [rust.scm](packages/core/src/index_single_file/query_code_tree/queries/rust.scm) - Removed generic `block` capture
+6. [scope_processor.test.ts](packages/core/src/index_single_file/scopes/scope_processor.test.ts) - Enabled Python nested class test, fixed mocks
+7. [semantic_index.javascript.test.ts](packages/core/src/index_single_file/semantic_index.javascript.test.ts) - Added nested class scope test
+8. [semantic_index.python.test.ts](packages/core/src/index_single_file/semantic_index.python.test.ts) - Added nested class scope test
 
 ## Related
 
@@ -143,8 +160,8 @@ Expected outcomes:
 
 ## Acceptance Criteria
 
-- [ ] Nested class in TypeScript test passes
-- [ ] Inner class assigned to method scope, not block scope
-- [ ] Python nested class todo test can be implemented
-- [ ] No regressions in existing scope tests
-- [ ] Documentation updated if scope assignment rules change
+- [x] Nested class in TypeScript test passes
+- [x] Inner class assigned to method scope, not block scope
+- [x] Python nested class todo test implemented and passing
+- [x] No regressions in existing scope tests
+- [x] Documentation updated with implementation notes

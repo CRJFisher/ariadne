@@ -50,7 +50,6 @@
 (mod_item) @scope.module
 
 ; Block scopes
-(block) @scope.block
 (unsafe_block) @scope.block.unsafe
 (async_block) @scope.block.async
 

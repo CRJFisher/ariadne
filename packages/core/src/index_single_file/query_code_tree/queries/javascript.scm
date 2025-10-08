@@ -28,7 +28,7 @@
 )
 
 ; Block scopes
-(statement_block) @scope.block
+; Only capture standalone blocks (if/for/while/try/catch/etc.)
 (for_statement) @scope.block
 (for_in_statement) @scope.block
 (while_statement) @scope.block
