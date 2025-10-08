@@ -128,3 +128,43 @@ export interface ExportInfo {
  * ```
  */
 export type NamespaceSources = ReadonlyMap<SymbolId, FilePath>;
+
+/**
+ * File system folder tree structure
+ *
+ * Represents a directory in a virtual file system tree. Used by import resolution
+ * to check file existence without filesystem I/O, enabling resolution to work
+ * with in-memory test data and improving performance.
+ *
+ * @example
+ * ```typescript
+ * // Representing: /src/utils.ts, /src/app.ts, /src/nested/helper.ts
+ * const root: FileSystemFolder = {
+ *   path: "/" as FilePath,
+ *   folders: new Map([
+ *     ["src", {
+ *       path: "/src" as FilePath,
+ *       folders: new Map([
+ *         ["nested", {
+ *           path: "/src/nested" as FilePath,
+ *           folders: new Map(),
+ *           files: new Set(["helper.ts"])
+ *         }]
+ *       ]),
+ *       files: new Set(["utils.ts", "app.ts"])
+ *     }]
+ *   ]),
+ *   files: new Set()
+ * };
+ * ```
+ */
+export interface FileSystemFolder {
+  /** Absolute path to this folder */
+  readonly path: FilePath;
+
+  /** Child folders keyed by folder name (not full path) */
+  readonly folders: ReadonlyMap<string, FileSystemFolder>;
+
+  /** Files in this folder (just filenames, not full paths) */
+  readonly files: ReadonlySet<string>;
+}

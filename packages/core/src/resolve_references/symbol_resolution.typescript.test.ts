@@ -17,7 +17,7 @@
  */
 
 import { describe, it, expect } from "vitest";
-import { resolve_symbols } from "./symbol_resolution";
+import { resolve_symbols, build_file_tree } from "./symbol_resolution";
 import type {
   FilePath,
   SymbolId,
@@ -83,7 +83,8 @@ describe("TypeScript Symbol Resolution Integration", () => {
       });
 
       const indices = new Map<FilePath, SemanticIndex>([[file_path, index]]);
-      const result = resolve_symbols(indices);
+      const root_folder = build_file_tree(Array.from(indices.keys()));
+    const result = resolve_symbols(indices, root_folder);
 
       const call_key = location_key(call_location);
       expect(result.resolved_references.get(call_key)).toBe(user_class_id);
@@ -229,7 +230,8 @@ describe("TypeScript Symbol Resolution Integration", () => {
       });
 
       const indices = new Map<FilePath, SemanticIndex>([[file_path, index]]);
-      const result = resolve_symbols(indices);
+      const root_folder = build_file_tree(Array.from(indices.keys()));
+    const result = resolve_symbols(indices, root_folder);
 
       const method_key = location_key(method_call_location);
       expect(result.resolved_references.get(method_key)).toBe(
@@ -271,7 +273,8 @@ describe("TypeScript Symbol Resolution Integration", () => {
       });
 
       const indices = new Map<FilePath, SemanticIndex>([[file_path, index]]);
-      const result = resolve_symbols(indices);
+      const root_folder = build_file_tree(Array.from(indices.keys()));
+    const result = resolve_symbols(indices, root_folder);
 
       const call_key = location_key(call_location);
       expect(result.resolved_references.get(call_key)).toBe(greet_func_id);
@@ -491,7 +494,8 @@ describe("TypeScript Symbol Resolution Integration", () => {
         [main_file, main_index],
       ]);
 
-      const result = resolve_symbols(indices);
+      const root_folder = build_file_tree(Array.from(indices.keys()));
+    const result = resolve_symbols(indices, root_folder);
 
       // Verify getName() resolves to User.getName via explicit type annotation
       const method_key = location_key(method_call_location);
@@ -717,7 +721,8 @@ describe("TypeScript Symbol Resolution Integration", () => {
         [main_file, main_index],
       ]);
 
-      const result = resolve_symbols(indices);
+      const root_folder = build_file_tree(Array.from(indices.keys()));
+    const result = resolve_symbols(indices, root_folder);
 
       // Verify constructor call
       const constructor_key = location_key(constructor_call_location);
@@ -1013,7 +1018,8 @@ describe("TypeScript Symbol Resolution Integration", () => {
         [main_file, main_index],
       ]);
 
-      const result = resolve_symbols(indices);
+      const root_folder = build_file_tree(Array.from(indices.keys()));
+    const result = resolve_symbols(indices, root_folder);
 
       // Verify createUser() call resolves
       const func_call_key = location_key(createUser_call_location);
@@ -1377,7 +1383,8 @@ describe("TypeScript Symbol Resolution Integration", () => {
         [main_file, main_index],
       ]);
 
-      const result = resolve_symbols(indices);
+      const root_folder = build_file_tree(Array.from(indices.keys()));
+    const result = resolve_symbols(indices, root_folder);
 
       // Verify constructor call
       const constructor_key = location_key(constructor_call_location);
@@ -1612,7 +1619,8 @@ describe("TypeScript Symbol Resolution Integration", () => {
         [main_file, main_index],
       ]);
 
-      const result = resolve_symbols(indices);
+      const root_folder = build_file_tree(Array.from(indices.keys()));
+    const result = resolve_symbols(indices, root_folder);
 
       // Verify constructor call
       const constructor_key = location_key(constructor_call_location);
@@ -1750,7 +1758,8 @@ describe("TypeScript Symbol Resolution Integration", () => {
         [main_file, main_index],
       ]);
 
-      const result = resolve_symbols(indices);
+      const root_folder = build_file_tree(Array.from(indices.keys()));
+    const result = resolve_symbols(indices, root_folder);
 
       const call_key = location_key(call_location);
       expect(result.resolved_references.get(call_key)).toBe(helper_id);
@@ -2009,7 +2018,8 @@ describe("TypeScript Symbol Resolution Integration", () => {
         [modern_file, modern_index],
       ]);
 
-      const result = resolve_symbols(indices);
+      const root_folder = build_file_tree(Array.from(indices.keys()));
+    const result = resolve_symbols(indices, root_folder);
 
       // Verify constructor call
       const constructor_key = location_key(constructor_call_location);
@@ -2362,7 +2372,8 @@ describe("TypeScript Symbol Resolution Integration", () => {
         [main_file, main_index],
       ]);
 
-      const result = resolve_symbols(indices);
+      const root_folder = build_file_tree(Array.from(indices.keys()));
+    const result = resolve_symbols(indices, root_folder);
 
       // Verify build() call resolves
       const build_key = location_key(build_call_location);
@@ -2725,7 +2736,8 @@ describe("TypeScript Symbol Resolution Integration", () => {
           [main_file, main_index],
         ]);
 
-        const result = resolve_symbols(indices);
+        const root_folder = build_file_tree(Array.from(indices.keys()));
+    const result = resolve_symbols(indices, root_folder);
 
         // Verify constructor call
         const constructor_key = location_key(constructor_call_location);

@@ -1,40 +1,5 @@
 # Changes Notes
 
-## Recent Changes (2025-10-02)
-
-### Task 11.108.13: Complete TypeScript Interface Method Parameters - COMPLETED ✅
-
-**Summary:** Fixed three bugs blocking TypeScript interface method parameter extraction:
-
-1. **Interface Method Generics Not Stored**
-
-   - Fixed `add_method_signature_to_interface()` in `definition_builder.ts` to store generics
-   - Added `generics: definition.generics` to method base object (line 548)
-
-2. **Nested Function Type Parameters Incorrectly Captured**
-
-   - Added `is_parameter_in_function_type()` helper in `typescript_builder.ts` (lines 572-596)
-   - Updated all parameter handlers to skip parameters inside function_type nodes
-   - Prevents capturing type signature parameters as actual method parameters
-   - Example: `map<U>(fn: (item: T) => U)` now correctly captures only `fn`, not `item`
-
-3. **Test Expectation for Type Inference**
-   - Removed incorrect type expectation for `static #staticPrivate = "test"`
-   - We don't implement type inference from initial values (only explicit annotations)
-
-**Impact:**
-
-- All 38 TypeScript semantic index tests pass
-- Interface methods with generic type parameters now work correctly
-- Function type parameters in type annotations no longer create spurious parameter definitions
-
-**Files Modified:**
-
-- `packages/core/src/index_single_file/definitions/definition_builder.ts`
-- `packages/core/src/index_single_file/query_code_tree/language_configs/typescript_builder.ts`
-- `packages/core/src/index_single_file/query_code_tree/language_configs/typescript_builder_config.ts`
-- `packages/core/src/index_single_file/semantic_index.typescript.test.ts`
-
 ## What do we actually need?
 
 - CodeGraph with list of top-level nodes (Call-able entities which aren't referenced by other entities)
@@ -110,3 +75,14 @@
 
 - How does our call-graph detection handle function references being passed to 3rd party functions which call them? E.g. pd.DataFrame.pipe(our_function_def) - `our_function_def` wouldn't be marked as being called but it certainly is.
   - Maybe we could treat function references being passed to 3rd party functions which call them as a special case. We could assume they are called and treat them as such.
+
+## Large-scale refactoring
+
+- Re-add `project` level objects to control overall lifecycle of processing the code, enabling files to be updated individually, re-processing only the changed files / symbols.
+  - Re-processing should be debounded and somewhat lazy i.e. don't bother processing a file while its being edited unless a request comes in, at which point we should process the file and update the cache before returning the result.
+- Analyse how we can add persistance to the processing pipeline, caching the results and then invalidating the cache when the code changes.
+- Create a 3rd, middle layer of processing which handles preparing the raw, semantic-index data for the symbol_resolution phase.
+  - the 3 type processing steps currently in semantic_index
+  - the helper maps e.g. scope->symbol-name->symbol-id (scope_to_definitions)
+  - ...
+- Rewrite MCP server

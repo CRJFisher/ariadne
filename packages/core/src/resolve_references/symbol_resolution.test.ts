@@ -187,6 +187,7 @@ function build_test_exported_symbols_map(definitions: {
   enums: Map<SymbolId, EnumDefinition>;
   namespaces: Map<SymbolId, NamespaceDefinition>;
   types: Map<SymbolId, TypeAliasDefinition>;
+  imports?: Map<SymbolId, ImportDefinition>;
 }): Map<SymbolName, ExportableDefinition> {
   const map = new Map<SymbolName, ExportableDefinition>();
 
@@ -210,6 +211,10 @@ function build_test_exported_symbols_map(definitions: {
   definitions.enums.forEach(add_to_map);
   definitions.namespaces.forEach(add_to_map);
   definitions.types.forEach(add_to_map);
+  // Add re-exported imports
+  if (definitions.imports) {
+    definitions.imports.forEach(add_to_map);
+  }
 
   return map;
 }
@@ -509,6 +514,7 @@ export function create_test_index(
     enums: new Map(),
     namespaces: new Map(),
     types: new Map(),
+    imports,
   });
 
   // Build scope_to_definitions map automatically if not provided

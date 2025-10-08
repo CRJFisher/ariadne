@@ -58,6 +58,7 @@ import {
   SymbolReference,
 } from "@ariadnejs/types";
 import { SemanticIndex } from "../index_single_file/semantic_index";
+import type { FileSystemFolder } from "./types";
 
 import { build_scope_resolver_index } from "./scope_resolver_index/scope_resolver_index";
 import { create_resolution_cache } from "./resolution_cache/resolution_cache";
@@ -111,6 +112,8 @@ import { build_namespace_sources } from "./import_resolution/import_resolver";
  *
  * @param indices - Map of file_path → SemanticIndex for all files in the codebase.
  *                  Each index must contain complete scope trees with definitions and references.
+ * @param root_folder - Root of the file system tree used for import resolution.
+ *                      This enables resolution to work with in-memory test data without filesystem I/O.
  *
  * @returns ResolvedSymbols containing:
  *          - `resolved_references`: Map of reference location → resolved symbol_id
@@ -121,17 +124,22 @@ import { build_namespace_sources } from "./import_resolution/import_resolver";
  * @example
  * ```typescript
  * import { build_semantic_index } from './index_single_file';
- * import { resolve_symbols } from './resolve_references';
+ * import { resolve_symbols, build_file_tree } from './resolve_references';
  *
  * // Build indices for all files
  * const indices = new Map();
+ * const file_paths = [];
  * for (const file of files) {
  *   const index = build_semantic_index(file.path, file.content, file.language);
  *   indices.set(file.path, index);
+ *   file_paths.push(file.path);
  * }
  *
+ * // Build file tree from file paths
+ * const root_folder = build_file_tree(file_paths);
+ *
  * // Resolve all symbols
- * const resolved = resolve_symbols(indices);
+ * const resolved = resolve_symbols(indices, root_folder);
  *
  * // Look up where a function is called
  * const call_location = "src/app.ts:10:5";
@@ -144,12 +152,13 @@ import { build_namespace_sources } from "./import_resolution/import_resolver";
  * @see {@link build_type_context} for type tracking
  */
 export function resolve_symbols(
-  indices: ReadonlyMap<FilePath, SemanticIndex>
+  indices: ReadonlyMap<FilePath, SemanticIndex>,
+  root_folder: FileSystemFolder
 ): ResolvedSymbols {
   // Phase 1: Build scope resolver index (lightweight)
   // Creates resolver functions: scope_id -> name -> resolver()
   // Includes lazy import resolvers that follow export chains on-demand
-  const resolver_index = build_scope_resolver_index(indices);
+  const resolver_index = build_scope_resolver_index(indices, root_folder);
 
   // Phase 2: Create resolution cache
   // Stores on-demand resolutions: (scope_id, name) -> symbol_id
@@ -159,7 +168,7 @@ export function resolve_symbols(
   // Phase 3: Build namespace sources
   // Tracks which source file each namespace import points to
   // Enables resolution of namespace member access (utils.helper())
-  const namespace_sources = build_namespace_sources(indices);
+  const namespace_sources = build_namespace_sources(indices, root_folder);
 
   // Phase 4: Build type context
   // Tracks variable types and type members
@@ -189,6 +198,71 @@ export function resolve_symbols(
     method_calls,
     constructor_calls
   );
+}
+
+/**
+ * Build file system tree from a list of file paths
+ *
+ * Constructs a FileSystemFolder tree structure from an array of absolute file paths.
+ * This helper is primarily used in tests to create the root_folder parameter required
+ * by resolve_symbols().
+ *
+ * @param file_paths - Array of absolute file paths
+ * @returns Root of the file system tree
+ *
+ * @example
+ * ```typescript
+ * const file_paths = [
+ *   '/tmp/ariadne-test/utils.ts' as FilePath,
+ *   '/tmp/ariadne-test/main.ts' as FilePath,
+ *   '/tmp/ariadne-test/nested/helper.ts' as FilePath
+ * ];
+ *
+ * const root_folder = build_file_tree(file_paths);
+ * // Creates tree:
+ * // /
+ * //   tmp/
+ *  //     ariadne-test/
+ * //       - utils.ts
+ * //       - main.ts
+ * //       nested/
+ * //         - helper.ts
+ * ```
+ */
+export function build_file_tree(file_paths: FilePath[]): FileSystemFolder {
+  // Start with root folder
+  const root: FileSystemFolder = {
+    path: '/' as FilePath,
+    folders: new Map(),
+    files: new Set(),
+  };
+
+  for (const file_path of file_paths) {
+    // Split path into parts, removing empty strings
+    const parts = file_path.split('/').filter(p => p);
+    let current = root as any; // Need mutable version for building
+
+    // Navigate/create folders for all parts except the last (which is the file)
+    for (let i = 0; i < parts.length - 1; i++) {
+      const folder_name = parts[i];
+      if (!current.folders.has(folder_name)) {
+        const folder_path = '/' + parts.slice(0, i + 1).join('/');
+        const new_folder = {
+          path: folder_path as FilePath,
+          folders: new Map(),
+          files: new Set(),
+        };
+        current.folders.set(folder_name, new_folder);
+      }
+      current = current.folders.get(folder_name);
+    }
+
+    // Add the file to the final folder
+    const filename = parts[parts.length - 1];
+    current.files.add(filename);
+  }
+
+  return root;
 }
 
 /**

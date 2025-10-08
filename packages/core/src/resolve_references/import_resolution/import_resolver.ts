@@ -15,11 +15,12 @@ import type {
 } from "@ariadnejs/types";
 import { is_reexport } from "@ariadnejs/types";
 import type { SemanticIndex } from "../../index_single_file/semantic_index";
-import type { ImportSpec, ExportInfo, NamespaceSources } from "../types";
+import type { ImportSpec, ExportInfo, NamespaceSources, FileSystemFolder } from "../types";
 import { resolve_module_path_javascript } from "./import_resolver.javascript";
 import { resolve_module_path_typescript } from "./import_resolver.typescript";
 import { resolve_module_path_python } from "./import_resolver.python";
 import { resolve_module_path_rust } from "./import_resolver.rust";
+import * as path from "path";
 
 /**
  * Extract import specifications from a scope's import statements.
@@ -28,12 +29,14 @@ import { resolve_module_path_rust } from "./import_resolver.rust";
  * @param scope_id - The scope to extract imports from
  * @param index - The semantic index for the current file
  * @param file_path - Path to the file being processed
+ * @param root_folder - Root of the file system tree
  * @returns Array of import specifications
  */
 export function extract_import_specs(
   scope_id: ScopeId,
   index: SemanticIndex,
-  file_path: FilePath
+  file_path: FilePath,
+  root_folder: FileSystemFolder
 ): ImportSpec[] {
   const specs: ImportSpec[] = [];
 
@@ -46,7 +49,8 @@ export function extract_import_specs(
       const source_file = resolve_module_path(
         import_def.import_path,
         file_path,
-        index.language
+        index.language,
+        root_folder
       );
 
       specs.push({
@@ -78,6 +82,7 @@ export function extract_import_specs(
  * @param source_file - File containing the export
  * @param export_name - Name of the exported symbol (ignored for default imports)
  * @param indices - Map of all semantic indices
+ * @param root_folder - Root of the file system tree
  * @param import_kind - Type of import (named, default, or namespace)
  * @param visited - Set of visited exports for cycle detection
  * @returns Symbol ID of the exported symbol, or null if not found
@@ -86,6 +91,7 @@ export function resolve_export_chain(
   source_file: FilePath,
   export_name: SymbolName,
   indices: ReadonlyMap<FilePath, SemanticIndex>,
+  root_folder: FileSystemFolder,
   import_kind: "named" | "default" | "namespace" = "named",
   visited: Set<string> = new Set()
 ): SymbolId | null {
@@ -127,7 +133,8 @@ export function resolve_export_chain(
     const resolved_file = resolve_module_path(
       import_def.import_path,
       source_file,
-      source_index.language
+      source_index.language,
+      root_folder
     );
 
     // Recursively resolve with the correct import kind
@@ -147,6 +154,7 @@ export function resolve_export_chain(
       resolved_file,
       original_name,
       indices,
+      root_folder,
       next_import_kind,
       visited
     );
@@ -225,25 +233,81 @@ function find_default_export(index: SemanticIndex): ExportInfo | null {
 }
 
 /**
+ * Check if a file exists in the file system tree
+ *
+ * @param file_path - Absolute path to the file to check
+ * @param root_folder - Root of the file system tree
+ * @returns true if file exists, false otherwise
+ */
+export function has_file_in_tree(
+  file_path: FilePath,
+  root_folder: FileSystemFolder
+): boolean {
+  // Normalize the path and split into parts
+  const normalized = path.normalize(file_path);
+  const parts = normalized.split(path.sep).filter(p => p);
+
+  let current: FileSystemFolder | undefined = root_folder;
+
+  // Navigate to parent folder
+  for (let i = 0; i < parts.length - 1; i++) {
+    current = current?.folders.get(parts[i]);
+    if (!current) return false;
+  }
+
+  // Check if file exists in the final folder
+  const filename = parts[parts.length - 1];
+  return current?.files.has(filename) || false;
+}
+
+/**
+ * Check if a path is a directory in the file system tree
+ *
+ * @param folder_path - Absolute path to check
+ * @param root_folder - Root of the file system tree
+ * @returns true if path is a directory, false otherwise
+ */
+export function is_directory_in_tree(
+  folder_path: FilePath,
+  root_folder: FileSystemFolder
+): boolean {
+  // Normalize the path and split into parts
+  const normalized = path.normalize(folder_path);
+  const parts = normalized.split(path.sep).filter(p => p);
+
+  let current: FileSystemFolder | undefined = root_folder;
+
+  // Navigate through all parts
+  for (const part of parts) {
+    current = current?.folders.get(part);
+    if (!current) return false;
+  }
+
+  return true;
+}
+
+/**
  * Resolve import path to absolute file path (language-aware)
  *
  * @param import_path - Import path string from the import statement
  * @param importing_file - Absolute path to the file containing the import
  * @param language - Programming language
+ * @param root_folder - Root of the file system tree
  * @returns Absolute file path to the imported module
  */
 function resolve_module_path(
   import_path: string,
   importing_file: FilePath,
-  language: Language
+  language: Language,
+  root_folder: FileSystemFolder
 ): FilePath {
   switch (language) {
     case "javascript":
-      return resolve_module_path_javascript(import_path, importing_file);
+      return resolve_module_path_javascript(import_path, importing_file, root_folder);
     case "typescript":
-      return resolve_module_path_typescript(import_path, importing_file);
+      return resolve_module_path_typescript(import_path, importing_file, root_folder);
     case "python":
-      return resolve_module_path_python(import_path, importing_file);
+      return resolve_module_path_python(import_path, importing_file, root_folder);
     case "rust":
       return resolve_module_path_rust(import_path, importing_file);
     default:
@@ -259,12 +323,13 @@ function resolve_module_path(
  * where `utils` is a namespace import (`import * as utils from './utils'`).
  *
  * @param indices - All semantic indices for the codebase
+ * @param root_folder - Root of the file system tree
  * @returns Map of namespace symbol_id → source file path
  *
  * @example
  * ```typescript
  * // Given: import * as utils from './utils';
- * const namespace_sources = build_namespace_sources(indices);
+ * const namespace_sources = build_namespace_sources(indices, root_folder);
  * // → Map { "import:src/app.ts:utils:5:0" => "src/utils.ts" }
  *
  * // Later when resolving: utils.helper()
@@ -273,7 +338,8 @@ function resolve_module_path(
  * ```
  */
 export function build_namespace_sources(
-  indices: ReadonlyMap<FilePath, SemanticIndex>
+  indices: ReadonlyMap<FilePath, SemanticIndex>,
+  root_folder: FileSystemFolder
 ): NamespaceSources {
   const namespace_sources = new Map<SymbolId, FilePath>();
 
@@ -285,7 +351,8 @@ export function build_namespace_sources(
         const source_file = resolve_module_path(
           import_def.import_path,
           file_path,
-          index.language
+          index.language,
+          root_folder
         );
 
         // Map this namespace import symbol to its source file

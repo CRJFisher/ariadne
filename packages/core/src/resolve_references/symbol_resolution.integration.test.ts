@@ -13,7 +13,7 @@
  */
 
 import { describe, it, expect } from "vitest";
-import { resolve_symbols } from "./symbol_resolution";
+import { resolve_symbols, build_file_tree } from "./symbol_resolution";
 import type {
   FilePath,
   SymbolId,
@@ -107,7 +107,8 @@ describe("Symbol Resolution - Integration Tests", () => {
       });
 
       const indices = new Map<FilePath, SemanticIndex>([[file_path, index]]);
-      const result = resolve_symbols(indices);
+      const root_folder = build_file_tree(Array.from(indices.keys()));
+      const result = resolve_symbols(indices, root_folder);
 
       const call_key = location_key(call_location);
       expect(result.resolved_references.get(call_key)).toBe(helper_id);
@@ -239,7 +240,8 @@ describe("Symbol Resolution - Integration Tests", () => {
         [main_file, main_index],
       ]);
 
-      const result = resolve_symbols(indices);
+      const root_folder = build_file_tree(Array.from(indices.keys()));
+      const result = resolve_symbols(indices, root_folder);
 
       // Should resolve helper() call to helper definition
       const call_key = location_key(call_location);
@@ -470,7 +472,8 @@ describe("Symbol Resolution - Integration Tests", () => {
         [main_file, main_index],
       ]);
 
-      const result = resolve_symbols(indices);
+      const root_folder = build_file_tree(Array.from(indices.keys()));
+      const result = resolve_symbols(indices, root_folder);
 
       // Should resolve constructor call to User class
       const constructor_key = location_key(constructor_call_location);
@@ -636,7 +639,8 @@ describe("Symbol Resolution - Integration Tests", () => {
         [main_file, main_index],
       ]);
 
-      const result = resolve_symbols(indices);
+      const root_folder = build_file_tree(Array.from(indices.keys()));
+      const result = resolve_symbols(indices, root_folder);
 
       // Should resolve to LOCAL helper, not imported one (shadowing)
       const call_key = location_key(call_location);
@@ -815,7 +819,8 @@ describe("Symbol Resolution - Integration Tests", () => {
       });
 
       const indices = new Map<FilePath, SemanticIndex>([[file_path, index]]);
-      const result = resolve_symbols(indices);
+      const root_folder = build_file_tree(Array.from(indices.keys()));
+      const result = resolve_symbols(indices, root_folder);
 
       // Verify constructor resolution
       const constructor_key = location_key(constructor_call_location);
@@ -909,7 +914,8 @@ describe("Symbol Resolution - Integration Tests", () => {
       });
 
       const indices = new Map<FilePath, SemanticIndex>([[file_path, index]]);
-      const result = resolve_symbols(indices);
+      const root_folder = build_file_tree(Array.from(indices.keys()));
+      const result = resolve_symbols(indices, root_folder);
 
       // Check output structure
       expect(result).toHaveProperty("resolved_references");

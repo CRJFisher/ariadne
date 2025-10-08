@@ -14,7 +14,7 @@
  */
 
 import { describe, it, expect } from "vitest";
-import { resolve_symbols } from "./symbol_resolution";
+import { resolve_symbols, build_file_tree } from "./symbol_resolution";
 import type {
   FilePath,
   SymbolId,
@@ -113,7 +113,8 @@ describe("JavaScript Symbol Resolution Integration", () => {
       });
 
       const indices = new Map<FilePath, SemanticIndex>([[file_path, index]]);
-      const result = resolve_symbols(indices);
+      const root_folder = build_file_tree(Array.from(indices.keys()));
+    const result = resolve_symbols(indices, root_folder);
 
       const call_key = location_key(call_location);
       expect(result.resolved_references.get(call_key)).toBe(helper_id);
@@ -207,7 +208,8 @@ describe("JavaScript Symbol Resolution Integration", () => {
       });
 
       const indices = new Map<FilePath, SemanticIndex>([[file_path, index]]);
-      const result = resolve_symbols(indices);
+      const root_folder = build_file_tree(Array.from(indices.keys()));
+    const result = resolve_symbols(indices, root_folder);
 
       const call_key = location_key(call_location);
       expect(result.resolved_references.get(call_key)).toBe(helper_id);
@@ -325,7 +327,8 @@ describe("JavaScript Symbol Resolution Integration", () => {
       });
 
       const indices = new Map<FilePath, SemanticIndex>([[file_path, index]]);
-      const result = resolve_symbols(indices);
+      const root_folder = build_file_tree(Array.from(indices.keys()));
+    const result = resolve_symbols(indices, root_folder);
 
       // Call should resolve to local helper due to hoisting in JavaScript
       const call_key = location_key(early_call_location);
@@ -378,7 +381,7 @@ describe("JavaScript Symbol Resolution Integration", () => {
               },
               parameters: [],
               defining_scope_id: utils_scope,
-              is_exported: false,
+              is_exported: true,
               signature: {
                 parameters: [],
               },
@@ -458,7 +461,8 @@ describe("JavaScript Symbol Resolution Integration", () => {
         [main_file, main_index],
       ]);
 
-      const result = resolve_symbols(indices);
+      const root_folder = build_file_tree(Array.from(indices.keys()));
+    const result = resolve_symbols(indices, root_folder);
 
       const call_key = location_key(call_location);
       expect(result.resolved_references.get(call_key)).toBe(helper_id);
@@ -508,7 +512,7 @@ describe("JavaScript Symbol Resolution Integration", () => {
               },
               parameters: [],
               defining_scope_id: base_scope,
-              is_exported: false,
+              is_exported: true,
               signature: {
                 parameters: [],
               },
@@ -562,6 +566,11 @@ describe("JavaScript Symbol Resolution Integration", () => {
               import_kind: "named",
               original_name: undefined,
               defining_scope_id: middle_scope,
+              is_exported: true,
+              export: {
+                is_reexport: true,
+                is_default: false,
+              },
             } as ImportDefinition,
           ],
         ]),
@@ -639,7 +648,8 @@ describe("JavaScript Symbol Resolution Integration", () => {
         [main_file, main_index],
       ]);
 
-      const result = resolve_symbols(indices);
+      const root_folder = build_file_tree(Array.from(indices.keys()));
+    const result = resolve_symbols(indices, root_folder);
 
       // Should resolve to core in base.js (not middle.js)
       const call_key = location_key(call_location);
@@ -690,7 +700,7 @@ describe("JavaScript Symbol Resolution Integration", () => {
               },
               parameters: [],
               defining_scope_id: utils_scope,
-              is_exported: false,
+              is_exported: true,
               signature: {
                 parameters: [],
               },
@@ -770,7 +780,8 @@ describe("JavaScript Symbol Resolution Integration", () => {
         [main_file, main_index],
       ]);
 
-      const result = resolve_symbols(indices);
+      const root_folder = build_file_tree(Array.from(indices.keys()));
+    const result = resolve_symbols(indices, root_folder);
 
       const call_key = location_key(call_location);
       expect(result.resolved_references.get(call_key)).toBe(helper_id);
@@ -845,7 +856,7 @@ describe("JavaScript Symbol Resolution Integration", () => {
               ],
               properties: [],
               defining_scope_id: user_scope,
-              is_exported: false,
+              is_exported: true,
               extends: [],
               decorators: [],
               constructor: [],
@@ -993,7 +1004,8 @@ describe("JavaScript Symbol Resolution Integration", () => {
         [main_file, main_index],
       ]);
 
-      const result = resolve_symbols(indices);
+      const root_folder = build_file_tree(Array.from(indices.keys()));
+    const result = resolve_symbols(indices, root_folder);
 
       // Verify constructor call resolves to User class
       const constructor_key = location_key(constructor_call_location);
@@ -1081,7 +1093,8 @@ describe("JavaScript Symbol Resolution Integration", () => {
       });
 
       const indices = new Map<FilePath, SemanticIndex>([[file_path, index]]);
-      const result = resolve_symbols(indices);
+      const root_folder = build_file_tree(Array.from(indices.keys()));
+    const result = resolve_symbols(indices, root_folder);
 
       const call_key = location_key(call_location);
       expect(result.resolved_references.get(call_key)).toBe(user_class_id);
@@ -1134,7 +1147,7 @@ describe("JavaScript Symbol Resolution Integration", () => {
               extends: [],
               decorators: [],
               defining_scope_id: types_scope,
-              is_exported: false,
+              is_exported: true,
               constructor: [],
             } as ClassDefinition,
           ],
@@ -1212,7 +1225,8 @@ describe("JavaScript Symbol Resolution Integration", () => {
         [main_file, main_index],
       ]);
 
-      const result = resolve_symbols(indices);
+      const root_folder = build_file_tree(Array.from(indices.keys()));
+    const result = resolve_symbols(indices, root_folder);
 
       const call_key = location_key(call_location);
       expect(result.resolved_references.get(call_key)).toBe(user_class_id);
@@ -1285,7 +1299,7 @@ describe("JavaScript Symbol Resolution Integration", () => {
               extends: [],
               decorators: [],
               defining_scope_id: repository_scope,
-              is_exported: false,
+              is_exported: true,
               constructor: [],
             } as ClassDefinition,
           ],
@@ -1406,7 +1420,7 @@ describe("JavaScript Symbol Resolution Integration", () => {
               extends: [],
               decorators: [],
               defining_scope_id: service_scope,
-              is_exported: false,
+              is_exported: true,
               constructor: [],
             } as ClassDefinition,
           ],
@@ -1613,7 +1627,8 @@ describe("JavaScript Symbol Resolution Integration", () => {
         [main_file, main_index],
       ]);
 
-      const result = resolve_symbols(indices);
+      const root_folder = build_file_tree(Array.from(indices.keys()));
+    const result = resolve_symbols(indices, root_folder);
 
       // Verify UserService constructor call in main.js
       const main_constructor_key = location_key(main_constructor_location);
@@ -1791,7 +1806,8 @@ describe("JavaScript Symbol Resolution Integration", () => {
         [main_file, main_index],
       ]);
 
-      const result = resolve_symbols(indices);
+      const root_folder = build_file_tree(Array.from(indices.keys()));
+    const result = resolve_symbols(indices, root_folder);
 
       // Should resolve to LOCAL helper, not imported one (shadowing)
       const call_key = location_key(call_location);

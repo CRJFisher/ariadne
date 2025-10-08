@@ -6,8 +6,9 @@
  */
 
 import * as path from "path";
-import * as fs from "fs";
 import type { FilePath } from "@ariadnejs/types";
+import type { FileSystemFolder } from "../types";
+import { has_file_in_tree, is_directory_in_tree } from "./import_resolver";
 
 /**
  * Resolve Python module path to absolute file path
@@ -22,19 +23,21 @@ import type { FilePath } from "@ariadnejs/types";
  *
  * @param import_path - Import path from import statement
  * @param importing_file - Absolute path to file containing the import
+ * @param root_folder - Root of the file system tree
  * @returns Absolute path to the imported file
  */
 export function resolve_module_path_python(
   import_path: string,
-  importing_file: FilePath
+  importing_file: FilePath,
+  root_folder: FileSystemFolder
 ): FilePath {
   // Relative imports: ".module", "..module"
   if (import_path.startsWith(".")) {
-    return resolve_relative_python(import_path, importing_file);
+    return resolve_relative_python(import_path, importing_file, root_folder);
   }
 
   // Absolute imports: "package.module.submodule"
-  return resolve_absolute_python(import_path, importing_file);
+  return resolve_absolute_python(import_path, importing_file, root_folder);
 }
 
 /**
@@ -42,11 +45,13 @@ export function resolve_module_path_python(
  *
  * @param relative_path - Relative import path with leading dots
  * @param base_file - File containing the import
+ * @param root_folder - Root of the file system tree
  * @returns Absolute path to the imported file
  */
 function resolve_relative_python(
   relative_path: string,
-  base_file: FilePath
+  base_file: FilePath,
+  root_folder: FileSystemFolder
 ): FilePath {
   const base_dir = path.dirname(base_file);
 
@@ -70,7 +75,7 @@ function resolve_relative_python(
   ];
 
   for (const candidate of candidates) {
-    if (fs.existsSync(candidate)) {
+    if (has_file_in_tree(candidate as FilePath, root_folder)) {
       return candidate as FilePath;
     }
   }
@@ -83,16 +88,18 @@ function resolve_relative_python(
  *
  * @param absolute_path - Dotted absolute import path
  * @param base_file - File containing the import
+ * @param root_folder - Root of the file system tree
  * @returns Absolute path to the imported file
  */
 function resolve_absolute_python(
   absolute_path: string,
-  base_file: FilePath
+  base_file: FilePath,
+  root_folder: FileSystemFolder
 ): FilePath {
   // For project-local imports, search from project root
   // Find project root by looking for __init__.py
   const base_dir = path.dirname(base_file);
-  const project_root = find_python_project_root(base_dir, absolute_path);
+  const project_root = find_python_project_root(base_dir, absolute_path, root_folder);
 
   // Convert dotted path to file path
   const parts = absolute_path.split(".");
@@ -104,7 +111,7 @@ function resolve_absolute_python(
   ];
 
   for (const candidate of candidates) {
-    if (fs.existsSync(candidate)) {
+    if (has_file_in_tree(candidate as FilePath, root_folder)) {
       return candidate as FilePath;
     }
   }
@@ -126,7 +133,7 @@ function resolve_absolute_python(
     ];
 
     for (const candidate of search_candidates) {
-      if (fs.existsSync(candidate)) {
+      if (has_file_in_tree(candidate as FilePath, root_folder)) {
         return candidate as FilePath;
       }
     }
@@ -143,9 +150,14 @@ function resolve_absolute_python(
  *
  * @param start_dir - Directory to start searching from
  * @param import_path - Optional import path to detect path duplication
+ * @param root_folder - Root of the file system tree
  * @returns Project root directory (parent of topmost package)
  */
-function find_python_project_root(start_dir: string, import_path?: string): string {
+function find_python_project_root(
+  start_dir: string,
+  import_path: string | undefined,
+  root_folder: FileSystemFolder
+): string {
   // Walk up to find the topmost directory with __init__.py
   let current = start_dir;
   let topmost_package = start_dir;
@@ -153,7 +165,7 @@ function find_python_project_root(start_dir: string, import_path?: string): stri
 
   // First, check if start_dir itself is a package
   const start_init = path.join(current, "__init__.py");
-  const start_is_package = fs.existsSync(start_init);
+  const start_is_package = has_file_in_tree(start_init as FilePath, root_folder);
 
   if (start_is_package) {
     topmost_package = current;
@@ -169,7 +181,7 @@ function find_python_project_root(start_dir: string, import_path?: string): stri
     }
 
     const parent_init = path.join(parent, "__init__.py");
-    const parent_is_package = fs.existsSync(parent_init);
+    const parent_is_package = has_file_in_tree(parent_init as FilePath, root_folder);
 
     if (parent_is_package) {
       topmost_package = parent;
@@ -205,7 +217,7 @@ function find_python_project_root(start_dir: string, import_path?: string): stri
     // Check for project markers in current search directory
     for (const marker of project_markers) {
       const marker_path = path.join(search_dir, marker);
-      if (fs.existsSync(marker_path)) {
+      if (has_file_in_tree(marker_path as FilePath, root_folder)) {
         return search_dir;
       }
     }

@@ -6,8 +6,9 @@
  */
 
 import * as path from "path";
-import * as fs from "fs";
 import type { FilePath } from "@ariadnejs/types";
+import type { FileSystemFolder } from "../types";
+import { has_file_in_tree } from "./import_resolver";
 
 /**
  * Resolve TypeScript module path to absolute file path
@@ -21,15 +22,17 @@ import type { FilePath } from "@ariadnejs/types";
  *
  * @param import_path - Import path from import statement
  * @param importing_file - Absolute path to file containing the import
+ * @param root_folder - Root of the file system tree
  * @returns Absolute path to the imported file
  */
 export function resolve_module_path_typescript(
   import_path: string,
-  importing_file: FilePath
+  importing_file: FilePath,
+  root_folder: FileSystemFolder
 ): FilePath {
   // Relative imports
   if (import_path.startsWith("./") || import_path.startsWith("../")) {
-    return resolve_relative_typescript(import_path, importing_file);
+    return resolve_relative_typescript(import_path, importing_file, root_folder);
   }
 
   // Path aliases (future: read tsconfig.json)
@@ -43,11 +46,13 @@ export function resolve_module_path_typescript(
  *
  * @param relative_path - Relative import path
  * @param base_file - File containing the import
+ * @param root_folder - Root of the file system tree
  * @returns Absolute path to the imported file
  */
 function resolve_relative_typescript(
   relative_path: string,
-  base_file: FilePath
+  base_file: FilePath,
+  root_folder: FileSystemFolder
 ): FilePath {
   const base_dir = path.dirname(base_file);
   const resolved = path.resolve(base_dir, relative_path);
@@ -65,7 +70,7 @@ function resolve_relative_typescript(
   ];
 
   for (const candidate of candidates) {
-    if (fs.existsSync(candidate) && fs.statSync(candidate).isFile()) {
+    if (has_file_in_tree(candidate as FilePath, root_folder)) {
       return candidate as FilePath;
     }
   }

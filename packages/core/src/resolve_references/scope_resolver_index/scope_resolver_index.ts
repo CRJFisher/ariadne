@@ -31,7 +31,7 @@
 
 import type { FilePath, SymbolId, SymbolName, ScopeId } from "@ariadnejs/types";
 import type { SemanticIndex } from "../../index_single_file/semantic_index";
-import type { SymbolResolver } from "../types";
+import type { SymbolResolver, FileSystemFolder } from "../types";
 import {
   extract_import_specs,
   resolve_export_chain,
@@ -109,10 +109,12 @@ export interface ScopeResolverIndex {
  * 4. Final index maps scope_id → (name → resolver)
  *
  * @param indices - All semantic indices for the codebase
+ * @param root_folder - Root of the file system tree
  * @returns ScopeResolverIndex with on-demand resolution capability
  */
 export function build_scope_resolver_index(
-  indices: ReadonlyMap<FilePath, SemanticIndex>
+  indices: ReadonlyMap<FilePath, SemanticIndex>,
+  root_folder: FileSystemFolder
 ): ScopeResolverIndex {
   const scope_resolvers = new Map<ScopeId, Map<SymbolName, SymbolResolver>>();
 
@@ -123,7 +125,8 @@ export function build_scope_resolver_index(
       new Map(), // Empty parent resolvers at root
       index,
       file_path,
-      indices
+      indices,
+      root_folder
     );
 
     // Merge file's resolvers into main map
@@ -155,6 +158,7 @@ export function build_scope_resolver_index(
  * @param index - SemanticIndex for the current file
  * @param file_path - Path to current file
  * @param indices - All indices (needed for import resolution)
+ * @param root_folder - Root of the file system tree
  * @returns Map of scope_id → resolver map for this scope and all children
  */
 function build_resolvers_recursive(
@@ -162,7 +166,8 @@ function build_resolvers_recursive(
   parent_resolvers: ReadonlyMap<SymbolName, SymbolResolver>,
   index: SemanticIndex,
   file_path: FilePath,
-  indices: ReadonlyMap<FilePath, SemanticIndex>
+  indices: ReadonlyMap<FilePath, SemanticIndex>,
+  root_folder: FileSystemFolder
 ): ReadonlyMap<ScopeId, Map<SymbolName, SymbolResolver>> {
   const result = new Map<ScopeId, Map<SymbolName, SymbolResolver>>();
   const resolvers = new Map<SymbolName, SymbolResolver>();
@@ -177,7 +182,7 @@ function build_resolvers_recursive(
 
   // Step 2: Add import resolvers for this scope (can shadow parent!)
   // Import statements can appear at any scope level (file, block, etc.)
-  const import_specs = extract_import_specs(scope_id, index, file_path);
+  const import_specs = extract_import_specs(scope_id, index, file_path, root_folder);
 
   for (const spec of import_specs) {
     // Create resolver closure that captures import specification
@@ -185,10 +190,10 @@ function build_resolvers_recursive(
     // This allows cross-file resolution to happen on-demand only
     //
     // Example: import { foo } from './utils'
-    //   → resolvers.set("foo", () => resolve_export_chain("./utils.ts", "foo", indices, "named"))
+    //   → resolvers.set("foo", () => resolve_export_chain("./utils.ts", "foo", indices, root_folder, "named"))
     //
     // Example: import bar from './utils'
-    //   → resolvers.set("bar", () => resolve_export_chain("./utils.ts", "bar", indices, "default"))
+    //   → resolvers.set("bar", () => resolve_export_chain("./utils.ts", "bar", indices, root_folder, "default"))
     //   Note: For defaults, import_name="bar" is ignored; resolve_export_chain uses import_kind to find is_default=true
     //
     // Example: import * as utils from './utils'
@@ -205,7 +210,7 @@ function build_resolvers_recursive(
     } else {
       // Named/default imports: follow export chain
       resolvers.set(spec.local_name, () =>
-        resolve_export_chain(spec.source_file, spec.import_name, indices, spec.import_kind)
+        resolve_export_chain(spec.source_file, spec.import_name, indices, root_folder, spec.import_kind)
       );
     }
   }
@@ -238,7 +243,8 @@ function build_resolvers_recursive(
         resolvers, // Pass our resolvers down to children
         index,
         file_path,
-        indices
+        indices,
+        root_folder
       );
 
       // Merge child results into our result
