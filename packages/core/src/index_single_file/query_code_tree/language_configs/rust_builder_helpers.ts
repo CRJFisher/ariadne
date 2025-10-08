@@ -15,63 +15,13 @@ import {
   property_symbol,
   variable_symbol,
   interface_symbol,
-  enum_member_symbol,
+  enum_symbol,
+  constant_symbol,
+  type_alias_symbol,
+  module_symbol,
 } from "@ariadnejs/types";
 import type { CaptureNode } from "../../semantic_index";
-
-// Re-export enum_member_symbol for use in rust_builder.ts
-export { enum_member_symbol };
-
-// ============================================================================
-// Additional Symbol Creation Functions (not in @ariadnejs/types yet)
-// ============================================================================
-
-function symbol_string(
-  kind: string,
-  name: SymbolName,
-  location: Location
-): SymbolId {
-  const parts = [
-    kind,
-    location.file_path,
-    location.start_line,
-    location.start_column,
-    location.end_line,
-    location.end_column,
-    name,
-  ];
-  return parts.join(":") as SymbolId;
-}
-
-export function enum_symbol(name: string, location: Location): SymbolId {
-  return symbol_string("enum", name as SymbolName, location);
-}
-
-export function constant_symbol(name: string, location: Location): SymbolId {
-  return symbol_string("constant", name as SymbolName, location);
-}
-
-export function type_alias_symbol(name: string, location: Location): SymbolId {
-  return symbol_string("type_alias", name as SymbolName, location);
-}
-
-export function module_symbol(name: string, location: Location): SymbolId {
-  return symbol_string("module", name as SymbolName, location);
-}
-
-// ============================================================================
-// Helper Functions
-// ============================================================================
-
-export function extract_location(node: SyntaxNode): Location {
-  return {
-    file_path: "" as any, // Will be filled by context
-    start_line: node.startPosition.row + 1,
-    start_column: node.startPosition.column,
-    end_line: node.endPosition.row + 1,
-    end_column: node.endPosition.column,
-  };
-}
+import { node_to_location } from "../../node_utils";
 
 // ============================================================================
 // Symbol ID Creation
@@ -184,9 +134,8 @@ export function create_parameter_id(capture: CaptureNode): SymbolId {
 }
 
 export function create_module_id(capture: CaptureNode): SymbolId {
-  const name = capture.text;
   const location = capture.location;
-  return module_symbol(name, location);
+  return module_symbol(location);
 }
 
 export function create_type_alias_id(capture: CaptureNode): SymbolId {
@@ -480,7 +429,8 @@ export function find_containing_impl(
       const implTrait = extract_impl_trait(node);
 
       if (implType) {
-        const result: { struct_name?: SymbolName; trait_name?: SymbolName } = {};
+        const result: { struct_name?: SymbolName; trait_name?: SymbolName } =
+          {};
 
         // Return struct name for lookup (not ID with location)
         result.struct_name = implType as SymbolName;
@@ -514,7 +464,7 @@ export function find_containing_struct(
       if (nameNode) {
         return class_symbol(
           nameNode.text as SymbolName,
-          extract_location(nameNode)
+          node_to_location(nameNode, capture.location.file_path)
         );
       }
     }
@@ -539,7 +489,7 @@ export function find_containing_enum(
       if (nameNode) {
         return enum_symbol(
           nameNode.text as SymbolName,
-          extract_location(nameNode)
+          node_to_location(nameNode, capture.location.file_path)
         );
       }
     }
@@ -586,8 +536,7 @@ export function find_containing_module(
       const nameNode = node.childForFieldName?.("name");
       if (nameNode) {
         return module_symbol(
-          nameNode.text as SymbolName,
-          extract_location(nameNode)
+          node_to_location(nameNode, capture.location.file_path)
         );
       }
     }
@@ -714,7 +663,11 @@ export function extract_use_path(capture: CaptureNode): ModulePath {
   let node: SyntaxNode | null = capture.node;
 
   // Traverse up to find use_declaration or extern_crate_declaration
-  while (node && node.type !== "use_declaration" && node.type !== "extern_crate_declaration") {
+  while (
+    node &&
+    node.type !== "use_declaration" &&
+    node.type !== "extern_crate_declaration"
+  ) {
     node = node.parent;
   }
 
@@ -746,7 +699,7 @@ export function extract_use_path(capture: CaptureNode): ModulePath {
     } else if (argument.type === "use_as_clause") {
       // For aliased imports, get the source path
       const source = argument.children?.find(
-        c => c.type === "scoped_identifier" || c.type === "identifier"
+        (c) => c.type === "scoped_identifier" || c.type === "identifier"
       );
       return (source?.text || argument.text) as any as ModulePath;
     } else if (argument.type === "scoped_use_list") {
@@ -759,11 +712,17 @@ export function extract_use_path(capture: CaptureNode): ModulePath {
   return capture.text as any as ModulePath;
 }
 
-export function extract_use_alias(capture: CaptureNode): SymbolName | undefined {
+export function extract_use_alias(
+  capture: CaptureNode
+): SymbolName | undefined {
   let node: SyntaxNode | null = capture.node;
 
   // Traverse up to find use_as_clause or extern_crate_declaration
-  while (node && node.type !== "use_as_clause" && node.type !== "extern_crate_declaration") {
+  while (
+    node &&
+    node.type !== "use_as_clause" &&
+    node.type !== "extern_crate_declaration"
+  ) {
     node = node.parent;
   }
 
@@ -831,31 +790,25 @@ export function find_containing_callable(
       while (ancestor) {
         if (ancestor.type === "impl_item" || ancestor.type === "trait_item") {
           // This is a method, not a standalone function
-          return method_symbol(
-            nameNode.text as SymbolName,
-            {
-              file_path,
-              start_line: node.startPosition.row + 1,
-              start_column: node.startPosition.column + 1,
-              end_line: node.endPosition.row + 1,
-              end_column: node.endPosition.column,
-            }
-          );
+          return method_symbol(nameNode.text as SymbolName, {
+            file_path,
+            start_line: node.startPosition.row + 1,
+            start_column: node.startPosition.column + 1,
+            end_line: node.endPosition.row + 1,
+            end_column: node.endPosition.column,
+          });
         }
         ancestor = ancestor.parent;
       }
 
       // It's a standalone function
-      return function_symbol(
-        nameNode.text as SymbolName,
-        {
-          file_path,
-          start_line: node.startPosition.row + 1,
-          start_column: node.startPosition.column + 1,
-          end_line: node.endPosition.row + 1,
-          end_column: node.endPosition.column,
-        }
-      );
+      return function_symbol(nameNode.text as SymbolName, {
+        file_path,
+        start_line: node.startPosition.row + 1,
+        start_column: node.startPosition.column + 1,
+        end_line: node.endPosition.row + 1,
+        end_column: node.endPosition.column,
+      });
     }
 
     // Check if this is a method in impl block or trait
@@ -879,16 +832,13 @@ export function find_containing_callable(
         const nameNode = functionNode.childForFieldName?.("name");
         if (!nameNode) return undefined;
 
-        return method_symbol(
-          nameNode.text as SymbolName,
-          {
-            file_path,
-            start_line: functionNode.startPosition.row + 1,
-            start_column: functionNode.startPosition.column + 1,
-            end_line: functionNode.endPosition.row + 1,
-            end_column: functionNode.endPosition.column,
-          }
-        );
+        return method_symbol(nameNode.text as SymbolName, {
+          file_path,
+          start_line: functionNode.startPosition.row + 1,
+          start_column: functionNode.startPosition.column + 1,
+          end_line: functionNode.endPosition.row + 1,
+          end_column: functionNode.endPosition.column,
+        });
       }
     }
 
@@ -898,31 +848,25 @@ export function find_containing_callable(
       if (!nameNode) return undefined;
 
       // Use full function_signature_item node location to match create_method_id
-      return method_symbol(
-        nameNode.text as SymbolName,
-        {
-          file_path,
-          start_line: node.startPosition.row + 1,
-          start_column: node.startPosition.column + 1,
-          end_line: node.endPosition.row + 1,
-          end_column: node.endPosition.column,
-        }
-      );
+      return method_symbol(nameNode.text as SymbolName, {
+        file_path,
+        start_line: node.startPosition.row + 1,
+        start_column: node.startPosition.column + 1,
+        end_line: node.endPosition.row + 1,
+        end_column: node.endPosition.column,
+      });
     }
 
     // Closure expressions
     if (node.type === "closure_expression") {
       // Closures don't have names, use location as identifier
-      return function_symbol(
-        `<closure>` as SymbolName,
-        {
-          file_path,
-          start_line: node.startPosition.row + 1,
-          start_column: node.startPosition.column + 1,
-          end_line: node.endPosition.row + 1,
-          end_column: node.endPosition.column,
-        }
-      );
+      return function_symbol(`<closure>` as SymbolName, {
+        file_path,
+        start_line: node.startPosition.row + 1,
+        start_column: node.startPosition.column + 1,
+        end_line: node.endPosition.row + 1,
+        end_column: node.endPosition.column,
+      });
     }
 
     node = node.parent;

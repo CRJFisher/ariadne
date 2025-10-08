@@ -316,3 +316,91 @@ export function decorator_symbol(name: string, location: Location): SymbolId {
   });
 }
 
+export function namespace_symbol(name: string, location: Location): SymbolId {
+  return symbol_string({
+    kind: "namespace",
+    name: name as SymbolName,
+    location,
+  });
+}
+
+/**
+ * Create a constant symbol
+ *
+ * @param name - The constant name
+ * @param location - The source location where the constant is defined
+ * @returns A SymbolId for the constant
+ *
+ * @example
+ * ```typescript
+ * const constId = constant_symbol('MAX_SIZE', {
+ *   file_path: 'src/config.rs',
+ *   line: 5,
+ *   column: 0,
+ *   end_line: 5,
+ *   end_column: 19
+ * });
+ * ```
+ */
+export function constant_symbol(name: string, location: Location): SymbolId {
+  return symbol_string({
+    kind: "constant",
+    name: name as SymbolName,
+    location,
+  });
+}
+
+/**
+ * Create a type alias symbol
+ *
+ * @param name - The type alias name
+ * @param location - The source location where the type alias is defined
+ * @returns A SymbolId for the type alias
+ *
+ * @example
+ * ```typescript
+ * const typeAliasId = type_alias_symbol('UserId', {
+ *   file_path: 'src/types.ts',
+ *   line: 10,
+ *   column: 0,
+ *   end_line: 10,
+ *   end_column: 20
+ * });
+ * ```
+ */
+export function type_alias_symbol(name: string, location: Location): SymbolId {
+  return symbol_string({
+    kind: "type_alias",
+    name: name as SymbolName,
+    location,
+  });
+}
+
+/**
+ * Create a named module symbol (for languages like Rust with explicit module declarations)
+ *
+ * @param name - The module name
+ * @param location - The source location where the module is defined
+ * @returns A SymbolId for the module
+ *
+ * @example
+ * ```typescript
+ * const moduleId = named_module_symbol('utils', {
+ *   file_path: 'src/lib.rs',
+ *   line: 5,
+ *   column: 0,
+ *   end_line: 20,
+ *   end_column: 1
+ * });
+ * ```
+ */
+export function named_module_symbol(
+  name: string,
+  location: Location
+): SymbolId {
+  return symbol_string({
+    kind: "module",
+    name: name as SymbolName,
+    location,
+  });
+}

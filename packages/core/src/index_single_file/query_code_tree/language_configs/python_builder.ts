@@ -6,6 +6,7 @@ import type {
   Location,
   ScopeId,
   ModulePath,
+  FilePath,
 } from "@ariadnejs/types";
 import {
   class_symbol,
@@ -16,10 +17,12 @@ import {
   variable_symbol,
   interface_symbol,
   type_symbol,
+  enum_symbol,
 } from "@ariadnejs/types";
 import type { DefinitionBuilder } from "../../definitions/definition_builder";
 import type { CaptureNode } from "../../semantic_index";
 import type { ProcessingContext } from "../../semantic_index";
+import { node_to_location } from "../../node_utils";
 
 export type ProcessFunction = (
   capture: CaptureNode,
@@ -28,17 +31,6 @@ export type ProcessFunction = (
 ) => void;
 
 export type LanguageBuilderConfig = Map<string, { process: ProcessFunction }>;
-
-// Helper Functions
-function extract_location(node: SyntaxNode): Location {
-  return {
-    file_path: "" as any, // Will be filled by context
-    start_line: node.startPosition.row + 1,
-    start_column: node.startPosition.column,
-    end_line: node.endPosition.row + 1,
-    end_column: node.endPosition.column,
-  };
-}
 
 export function create_class_id(capture: CaptureNode): SymbolId {
   const name = capture.text;
@@ -104,7 +96,10 @@ export function find_containing_class(
       const nameNode = node.childForFieldName?.("name");
       if (nameNode) {
         const className = nameNode.text as SymbolName;
-        return class_symbol(className, extract_location(nameNode));
+        return class_symbol(
+          className,
+          node_to_location(nameNode, capture.location.file_path)
+        );
       }
     }
     if (node.parent) {
@@ -132,7 +127,9 @@ export function find_containing_enum(
             return /^(Enum|IntEnum|Flag|IntFlag|StrEnum)$/.test(child.text);
           } else if (child.type === "attribute") {
             const attr = child.childForFieldName?.("attribute");
-            return attr && /^(Enum|IntEnum|Flag|IntFlag|StrEnum)$/.test(attr.text);
+            return (
+              attr && /^(Enum|IntEnum|Flag|IntFlag|StrEnum)$/.test(attr.text)
+            );
           }
           return false;
         });
@@ -142,7 +139,7 @@ export function find_containing_enum(
           if (nameNode) {
             const file_path = capture.location.file_path;
             const enumName = nameNode.text as SymbolName;
-            return `enum:${file_path}:${nameNode.startPosition.row + 1}:${nameNode.startPosition.column + 1}:${nameNode.endPosition.row + 1}:${nameNode.endPosition.column}:${enumName}` as SymbolId;
+            return enum_symbol(enumName, node_to_location(nameNode, file_path));
           }
         }
       }
@@ -202,13 +199,7 @@ export function find_containing_protocol(
             const protocolName = nameNode.text as SymbolName;
             return interface_symbol(
               protocolName,
-              {
-                file_path,
-                start_line: nameNode.startPosition.row + 1,
-                start_column: nameNode.startPosition.column + 1,
-                end_line: nameNode.endPosition.row + 1,
-                end_column: nameNode.endPosition.column,
-              }
+              node_to_location(nameNode, file_path)
             );
           }
         }
@@ -223,7 +214,9 @@ export function find_containing_protocol(
   return undefined;
 }
 
-export function extract_property_type(node: SyntaxNode): SymbolName | undefined {
+export function extract_property_type(
+  node: SyntaxNode
+): SymbolName | undefined {
   // For annotated assignments, extract the type annotation
   const assignment = node.parent;
   if (assignment && assignment.type === "assignment") {
@@ -249,21 +242,25 @@ export function find_containing_callable(capture: CaptureNode): SymbolId {
           node: node,
           text: "",
           name: "",
+          location: capture.location,
         } as CaptureNode);
         if (inClass) {
           return method_symbol(
             nameNode.text as SymbolName,
-            extract_location(nameNode)
+            node_to_location(nameNode, capture.location.file_path)
           );
         } else {
           return function_symbol(
             nameNode.text as SymbolName,
-            extract_location(nameNode)
+            node_to_location(nameNode, capture.location.file_path)
           );
         }
       } else if (node.type === "lambda") {
         // Lambda function - use the location as ID
-        return function_symbol("lambda" as SymbolName, extract_location(node));
+        return function_symbol(
+          "lambda" as SymbolName,
+          node_to_location(node, capture.location.file_path)
+        );
       }
     }
     if (node.parent) {
@@ -443,7 +440,15 @@ export function extract_parameter_type(
   node: SyntaxNode
 ): SymbolName | undefined {
   // Look for type annotation in parameter node
-  const typeNode = node.childForFieldName?.("annotation");
+  // The query captures the identifier inside typed_parameter or typed_default_parameter
+  // Python's tree-sitter grammar uses "type" field for both
+  const paramNode =
+    node.type === "identifier" &&
+    (node.parent?.type === "typed_parameter" || node.parent?.type === "typed_default_parameter")
+      ? node.parent
+      : node;
+
+  const typeNode = paramNode.childForFieldName?.("type");
   if (typeNode) {
     return typeNode.text as SymbolName;
   }
@@ -539,7 +544,9 @@ export function determine_method_type(node: SyntaxNode): {
   return {};
 }
 
-export function find_decorator_target(capture: CaptureNode): SymbolId | undefined {
+export function find_decorator_target(
+  capture: CaptureNode
+): SymbolId | undefined {
   // Traverse up from decorator to find the decorated_definition, then get the actual definition
   let node = capture.node.parent;
 
@@ -565,44 +572,35 @@ export function find_decorator_target(capture: CaptureNode): SymbolId | undefine
             if (class_node) {
               // It's a method or constructor
               const method_name = nameNode.text as SymbolName;
-              return method_symbol(
-                method_name,
-                {
-                  file_path,
-                  start_line: nameNode.startPosition.row + 1,
-                  start_column: nameNode.startPosition.column + 1,
-                  end_line: nameNode.endPosition.row + 1,
-                  end_column: nameNode.endPosition.column,
-                }
-              );
+              return method_symbol(method_name, {
+                file_path,
+                start_line: nameNode.startPosition.row + 1,
+                start_column: nameNode.startPosition.column + 1,
+                end_line: nameNode.endPosition.row + 1,
+                end_column: nameNode.endPosition.column,
+              });
             } else {
               // It's a function
-              return function_symbol(
-                nameNode.text as SymbolName,
-                {
-                  file_path,
-                  start_line: nameNode.startPosition.row + 1,
-                  start_column: nameNode.startPosition.column + 1,
-                  end_line: nameNode.endPosition.row + 1,
-                  end_column: nameNode.endPosition.column,
-                }
-              );
+              return function_symbol(nameNode.text as SymbolName, {
+                file_path,
+                start_line: nameNode.startPosition.row + 1,
+                start_column: nameNode.startPosition.column + 1,
+                end_line: nameNode.endPosition.row + 1,
+                end_column: nameNode.endPosition.column,
+              });
             }
           }
         } else if (definition.type === "class_definition") {
           const nameNode = definition.childForFieldName?.("name");
           if (nameNode) {
             const file_path = capture.location.file_path;
-            return class_symbol(
-              nameNode.text as SymbolName,
-              {
-                file_path,
-                start_line: nameNode.startPosition.row + 1,
-                start_column: nameNode.startPosition.column + 1,
-                end_line: nameNode.endPosition.row + 1,
-                end_column: nameNode.endPosition.column,
-              }
-            );
+            return class_symbol(nameNode.text as SymbolName, {
+              file_path,
+              start_line: nameNode.startPosition.row + 1,
+              start_column: nameNode.startPosition.column + 1,
+              end_line: nameNode.endPosition.row + 1,
+              end_column: nameNode.endPosition.column,
+            });
           }
         }
       }

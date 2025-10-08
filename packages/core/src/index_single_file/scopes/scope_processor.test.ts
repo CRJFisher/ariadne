@@ -794,9 +794,9 @@ describe("scope_processor", () => {
       return {
         file_path: filePath,
         file_lines: lines.length,
-        // For 1-indexed positions with exclusive ends: end_column = length + 1
-        // (tree-sitter's endPosition is exclusive and we add 1 to convert to 1-indexed)
-        file_end_column: (lines[lines.length - 1]?.length || 0) + 1,
+        // For 1-indexed positions with inclusive ends: end_column = length
+        // (tree-sitter's exclusive 0-indexed becomes inclusive 1-indexed without +1)
+        file_end_column: lines[lines.length - 1]?.length || 0,
         tree,
         lang: language,
       };

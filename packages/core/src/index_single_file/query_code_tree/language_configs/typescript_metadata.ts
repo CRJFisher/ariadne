@@ -9,6 +9,7 @@ import type { Location, SymbolName, TypeInfo, FilePath } from "@ariadnejs/types"
 import { type_symbol } from "@ariadnejs/types";
 import type { MetadataExtractors } from "./metadata_types";
 import { JAVASCRIPT_METADATA_EXTRACTORS } from "./javascript_metadata";
+import { node_to_location } from "../../node_utils";
 
 /**
  * TypeScript metadata extractors implementation
@@ -28,13 +29,7 @@ export const TYPESCRIPT_METADATA_EXTRACTORS: MetadataExtractors = {
   ): TypeInfo | undefined {
     // If the node itself is a type reference, extract it directly
     if (node.type === "type_identifier") {
-      const location: Location = {
-        file_path,
-        start_line: node.startPosition.row + 1,
-        start_column: node.startPosition.column,
-        end_line: node.endPosition.row + 1,
-        end_column: node.endPosition.column,
-      };
+      const location: Location = node_to_location(node, file_path);
 
       return {
         type_id: type_symbol(node.text as SymbolName, location),
@@ -51,13 +46,7 @@ export const TYPESCRIPT_METADATA_EXTRACTORS: MetadataExtractors = {
       const nameNode = node.childForFieldName("name");
 
       if (nameNode) {
-        const location: Location = {
-          file_path,
-          start_line: node.startPosition.row + 1,
-          start_column: node.startPosition.column,
-          end_line: node.endPosition.row + 1,
-          end_column: node.endPosition.column,
-        };
+        const location: Location = node_to_location(node, file_path);
 
         return {
           type_id: type_symbol(nameNode.text as SymbolName, location),
@@ -70,13 +59,7 @@ export const TYPESCRIPT_METADATA_EXTRACTORS: MetadataExtractors = {
 
     // Handle interface/enum property access (e.g., Status.Active)
     if (node.type === "nested_type_identifier") {
-      const location: Location = {
-        file_path,
-        start_line: node.startPosition.row + 1,
-        start_column: node.startPosition.column,
-        end_line: node.endPosition.row + 1,
-        end_column: node.endPosition.column,
-      };
+      const location: Location = node_to_location(node, file_path);
 
       return {
         type_id: type_symbol(node.text as SymbolName, location),

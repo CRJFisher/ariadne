@@ -38,21 +38,6 @@ export type LanguageBuilderConfig = Map<string, { process: ProcessFunction }>;
 // ============================================================================
 // Helper Functions for JavaScript/TypeScript
 // ============================================================================
-
-/**
- * Extract location from a tree-sitter node
- * NOTE: This should match node_to_location() in node_utils.ts
- */
-function extract_location(node: SyntaxNode): Location {
-  return {
-    file_path: "" as any, // Will be filled by context
-    start_line: node.startPosition.row + 1,
-    start_column: node.startPosition.column + 1,
-    end_line: node.endPosition.row + 1,
-    end_column: node.endPosition.column,
-  };
-}
-
 /**
  * Create a class symbol ID
  */

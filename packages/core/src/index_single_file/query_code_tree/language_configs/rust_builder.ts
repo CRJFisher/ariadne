@@ -1,5 +1,5 @@
 // Rust language configuration using builder pattern
-import type { SymbolId, SymbolName } from "@ariadnejs/types";
+import { enum_member_symbol, type SymbolId, type SymbolName } from "@ariadnejs/types";
 import type { DefinitionBuilder } from "../../definitions/definition_builder";
 import type { CaptureNode } from "../../semantic_index";
 import type { ProcessingContext } from "../../semantic_index";
@@ -28,9 +28,7 @@ import {
   find_containing_struct,
   find_containing_trait,
   find_containing_callable,
-  enum_member_symbol,
   extract_type_expression,
-  has_pub_modifier,
   extract_export_info,
 } from "./rust_builder_helpers";
 

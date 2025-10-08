@@ -23,8 +23,10 @@ import type {
 } from "@ariadnejs/types";
 import {
   class_symbol,
+  enum_symbol,
   function_symbol,
   interface_symbol,
+  namespace_symbol,
   method_symbol,
   parameter_symbol,
   property_symbol,
@@ -32,9 +34,8 @@ import {
   variable_symbol,
 } from "@ariadnejs/types";
 import type { CaptureNode } from "../../semantic_index";
+import { node_to_location } from "../../node_utils";
 
-// Import JavaScript base configuration
-import { type ProcessFunction } from "./javascript_builder";
 
 // ============================================================================
 // Helper Functions for TypeScript-specific Features
@@ -65,7 +66,7 @@ export function create_enum_id(capture: CaptureNode): SymbolId {
   const name = capture.text;
   const location = capture.location;
   // Use a branded string pattern for enums
-  return `enum:${location.file_path}:${location.start_line}:${location.start_column}:${location.end_line}:${location.end_column}:${name}` as SymbolId;
+  return enum_symbol(name, location);
 }
 
 /**
@@ -75,7 +76,7 @@ export function create_namespace_id(capture: CaptureNode): SymbolId {
   const name = capture.text;
   const location = capture.location;
   // Use a branded string pattern for namespaces
-  return `namespace:${location.file_path}:${location.start_line}:${location.start_column}:${location.end_line}:${location.end_column}:${name}` as SymbolId;
+  return namespace_symbol(name, location);
 }
 
 /**
@@ -174,7 +175,7 @@ export function extract_type_parameters(node: SyntaxNode | null): SymbolName[] {
   const typeParams = node.childForFieldName?.("type_parameters");
   if (typeParams) {
     // Extract individual type parameter names
-    const params: SymbolName[] = [];
+    const params: SymbolName[] = [];  
     for (const child of typeParams.children || []) {
       if (child.type === "type_parameter") {
         const nameNode = child.childForFieldName?.("name");
@@ -435,13 +436,7 @@ export function find_containing_class(
       const nameNode = node.childForFieldName?.("name");
       if (nameNode) {
         const className = nameNode.text as SymbolName;
-        const location: Location = {
-          file_path,
-          start_line: nameNode.startPosition.row + 1,
-          start_column: nameNode.startPosition.column + 1,
-          end_line: nameNode.endPosition.row + 1,
-          end_column: nameNode.endPosition.column,
-        };
+        const location: Location = node_to_location(nameNode, file_path);
         return class_symbol(className, location);
       }
     }
@@ -464,13 +459,7 @@ export function find_containing_interface(
       const nameNode = node.childForFieldName?.("name");
       if (nameNode) {
         const interfaceName = nameNode.text as SymbolName;
-        const location: Location = {
-          file_path,
-          start_line: nameNode.startPosition.row + 1,
-          start_column: nameNode.startPosition.column + 1,
-          end_line: nameNode.endPosition.row + 1,
-          end_column: nameNode.endPosition.column,
-        };
+        const location: Location = node_to_location(nameNode, file_path);
         return interface_symbol(interfaceName, location);
       }
     }
@@ -493,14 +482,8 @@ export function find_containing_enum(
       const nameNode = node.childForFieldName?.("name");
       if (nameNode) {
         const enumName = nameNode.text as SymbolName;
-        const location: Location = {
-          file_path,
-          start_line: nameNode.startPosition.row + 1,
-          start_column: nameNode.startPosition.column + 1,
-          end_line: nameNode.endPosition.row + 1,
-          end_column: nameNode.endPosition.column,
-        };
-        return `enum:${location.file_path}:${location.start_line}:${location.start_column}:${location.end_line}:${location.end_column}:${enumName}` as SymbolId;
+        const location: Location = node_to_location(nameNode, file_path);
+        return enum_symbol(enumName, location);
       }
     }
     node = node.parent;
@@ -554,33 +537,15 @@ export function find_containing_callable(capture: CaptureNode): SymbolId {
       if (node.type === "method_definition" || node.type === "method_signature") {
         const methodName = nameNode ? nameNode.text : "anonymous";
         // Reconstruct location with proper file_path
-        const location: Location = {
-          file_path,
-          start_line: (nameNode || node).startPosition.row + 1,
-          start_column: (nameNode || node).startPosition.column + 1,
-          end_line: (nameNode || node).endPosition.row + 1,
-          end_column: (nameNode || node).endPosition.column,
-        };
+        const location: Location = node_to_location(nameNode || node, file_path);
         return method_symbol(methodName as SymbolName, location);
       } else if (nameNode) {
         // Named function
-        const location: Location = {
-          file_path,
-          start_line: nameNode.startPosition.row + 1,
-          start_column: nameNode.startPosition.column + 1,
-          end_line: nameNode.endPosition.row + 1,
-          end_column: nameNode.endPosition.column,
-        };
+        const location: Location = node_to_location(nameNode, file_path);
         return function_symbol(nameNode.text as SymbolName, location);
       } else {
         // Anonymous function/arrow function - use the location as ID
-        const location: Location = {
-          file_path,
-          start_line: node.startPosition.row + 1,
-          start_column: node.startPosition.column + 1,
-          end_line: node.endPosition.row + 1,
-          end_column: node.endPosition.column,
-        };
+        const location: Location = node_to_location(node, file_path);
         return function_symbol("anonymous" as SymbolName, location);
       }
     }
@@ -708,13 +673,7 @@ export function find_decorator_target(
     ) {
       const nameNode = parent.childForFieldName?.("name");
       if (nameNode) {
-        const location: Location = {
-          file_path,
-          start_line: nameNode.startPosition.row + 1,
-          start_column: nameNode.startPosition.column + 1,
-          end_line: nameNode.endPosition.row + 1,
-          end_column: nameNode.endPosition.column,
-        };
+        const location: Location = node_to_location(nameNode, file_path);
         return class_symbol(nameNode.text as SymbolName, location);
       }
     }
@@ -734,25 +693,13 @@ export function find_decorator_target(
           if (sibling.type === "method_definition") {
             const nameNode = sibling.childForFieldName?.("name");
             if (nameNode) {
-              const location: Location = {
-                file_path,
-                start_line: nameNode.startPosition.row + 1,
-                start_column: nameNode.startPosition.column + 1,
-                end_line: nameNode.endPosition.row + 1,
-                end_column: nameNode.endPosition.column,
-              };
+              const location: Location = node_to_location(nameNode, file_path);
               return method_symbol(nameNode.text as SymbolName, location);
             }
           } else if (sibling.type === "public_field_definition") {
             const nameNode = sibling.childForFieldName?.("name");
             if (nameNode) {
-              const location: Location = {
-                file_path,
-                start_line: nameNode.startPosition.row + 1,
-                start_column: nameNode.startPosition.column + 1,
-                end_line: nameNode.endPosition.row + 1,
-                end_column: nameNode.endPosition.column,
-              };
+              const location: Location = node_to_location(nameNode, file_path);
               return property_symbol(nameNode.text as SymbolName, location);
             }
           }

@@ -20,19 +20,7 @@ import type { SyntaxNode } from "tree-sitter";
 import type { Location, SymbolName, TypeInfo, FilePath } from "@ariadnejs/types";
 import { type_symbol } from "@ariadnejs/types";
 import type { MetadataExtractors } from "./metadata_types";
-
-/**
- * Extract location from a tree-sitter node
- */
-function node_to_location(node: SyntaxNode, file_path: FilePath): Location {
-  return {
-    file_path,
-    start_line: node.startPosition.row + 1,
-    start_column: node.startPosition.column,
-    end_line: node.endPosition.row + 1,
-    end_column: node.endPosition.column,
-  };
-}
+import { node_to_location } from "../../node_utils";
 
 /**
  * Extract Rust type from type annotations
