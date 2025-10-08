@@ -149,6 +149,11 @@ export const PYTHON_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
         const method_id = create_method_id(capture);
         const class_id = find_containing_class(capture);
 
+        console.log('[DEBUG definition.method.class]', {
+          method_name: capture.text,
+          method_id,
+        });
+
         if (class_id) {
           builder.add_method_to_class(class_id, {
             symbol_id: method_id,
@@ -966,6 +971,10 @@ export const PYTHON_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
         context: ProcessingContext
       ) => {
         const target_id = find_decorator_target(capture);
+        console.log('[DEBUG decorator.variable]', {
+          decorator: capture.text,
+          target_id,
+        });
         if (!target_id) return;
 
         const decorator_name = capture.text;

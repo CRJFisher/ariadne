@@ -281,7 +281,7 @@ describe("Rust Metadata Extractors", () => {
 
       expect(result).toBeDefined();
       expect(result?.start_line).toBe(1);
-      expect(result?.start_column).toBe(0);
+      expect(result?.start_column).toBe(1);
       expect(result?.end_column).toBe(3); // "obj"
     });
 
@@ -297,7 +297,7 @@ describe("Rust Metadata Extractors", () => {
       const result = RUST_METADATA_EXTRACTORS.extract_call_receiver(iterCall, TEST_FILE);
 
       expect(result).toBeDefined();
-      expect(result?.start_column).toBe(0);
+      expect(result?.start_column).toBe(1);
       expect(result?.end_column).toBe(3); // "vec"
     });
 
@@ -309,7 +309,7 @@ describe("Rust Metadata Extractors", () => {
       const result = RUST_METADATA_EXTRACTORS.extract_call_receiver(callExpr, TEST_FILE);
 
       expect(result).toBeDefined();
-      expect(result?.start_column).toBe(0);
+      expect(result?.start_column).toBe(1);
       expect(result?.end_column).toBe(4); // "self"
     });
 
@@ -321,7 +321,7 @@ describe("Rust Metadata Extractors", () => {
       const result = RUST_METADATA_EXTRACTORS.extract_call_receiver(callExpr, TEST_FILE);
 
       expect(result).toBeDefined();
-      expect(result?.start_column).toBe(0);
+      expect(result?.start_column).toBe(1);
       expect(result?.end_column).toBe(9); // "self.data"
     });
 
@@ -333,7 +333,7 @@ describe("Rust Metadata Extractors", () => {
       const result = RUST_METADATA_EXTRACTORS.extract_call_receiver(callExpr, TEST_FILE);
 
       expect(result).toBeDefined();
-      expect(result?.start_column).toBe(0);
+      expect(result?.start_column).toBe(1);
       expect(result?.end_column).toBe(6); // "String"
     });
 
@@ -356,7 +356,7 @@ describe("Rust Metadata Extractors", () => {
         const result = RUST_METADATA_EXTRACTORS.extract_call_receiver(turbofishCall, TEST_FILE);
 
         expect(result).toBeDefined();
-        expect(result?.start_column).toBe(0);
+        expect(result?.start_column).toBe(1);
         expect(result?.end_column).toBe(3); // "vec"
       }
     });
@@ -389,7 +389,7 @@ describe("Rust Metadata Extractors", () => {
       const result = RUST_METADATA_EXTRACTORS.extract_call_receiver(fieldExpr, TEST_FILE);
 
       expect(result).toBeDefined();
-      expect(result?.start_column).toBe(0);
+      expect(result?.start_column).toBe(1);
       expect(result?.end_column).toBe(3); // obj
     });
   });
@@ -529,8 +529,8 @@ describe("Rust Metadata Extractors", () => {
 
       expect(result.target).toBeDefined();
       expect(result.source).toBeDefined();
-      expect(result.target?.start_column).toBe(4); // "x"
-      expect(result.source?.start_column).toBe(8); // "42"
+      expect(result.target?.start_column).toBe(5); // "x"
+      expect(result.source?.start_column).toBe(9); // "42"
     });
 
     it("should extract mutable binding parts", () => {
@@ -553,8 +553,8 @@ describe("Rust Metadata Extractors", () => {
 
       expect(result.target).toBeDefined();
       expect(result.source).toBeDefined();
-      expect(result.target?.start_column).toBe(0); // "x"
-      expect(result.source?.start_column).toBe(4); // "100"
+      expect(result.target?.start_column).toBe(1); // "x"
+      expect(result.source?.start_column).toBe(5); // "100"
     });
 
     it("should extract field assignment parts", () => {
@@ -578,8 +578,8 @@ describe("Rust Metadata Extractors", () => {
 
       expect(result.target).toBeDefined();
       expect(result.source).toBeDefined();
-      expect(result.target?.start_column).toBe(0); // "x"
-      expect(result.source?.start_column).toBe(5); // "5"
+      expect(result.target?.start_column).toBe(1); // "x"
+      expect(result.source?.start_column).toBe(6); // "5"
     });
 
     it("should extract pattern destructuring", () => {
@@ -647,8 +647,8 @@ describe("Rust Metadata Extractors", () => {
 
       expect(result.target).toBeDefined();
       expect(result.source).toBeDefined();
-      expect(result.target?.start_column).toBe(0); // array[0]
-      expect(result.source?.start_column).toBe(11); // value
+      expect(result.target?.start_column).toBe(1); // array[0]
+      expect(result.source?.start_column).toBe(12); // value
     });
   });
 
@@ -661,7 +661,7 @@ describe("Rust Metadata Extractors", () => {
       const result = RUST_METADATA_EXTRACTORS.extract_construct_target(structExpr, TEST_FILE);
 
       expect(result).toBeDefined();
-      expect(result?.start_column).toBe(4); // "point"
+      expect(result?.start_column).toBe(5); // "point"
       expect(result?.end_column).toBe(9);
     });
 
@@ -673,7 +673,7 @@ describe("Rust Metadata Extractors", () => {
       const result = RUST_METADATA_EXTRACTORS.extract_construct_target(callExpr, TEST_FILE);
 
       expect(result).toBeDefined();
-      expect(result?.start_column).toBe(4); // "vec"
+      expect(result?.start_column).toBe(5); // "vec"
     });
 
     it("should extract target for Box::new()", () => {
@@ -684,7 +684,7 @@ describe("Rust Metadata Extractors", () => {
       const result = RUST_METADATA_EXTRACTORS.extract_construct_target(callExpr, TEST_FILE);
 
       expect(result).toBeDefined();
-      expect(result?.start_column).toBe(4); // "boxed"
+      expect(result?.start_column).toBe(5); // "boxed"
     });
 
     it("should extract target for tuple struct", () => {
@@ -695,7 +695,7 @@ describe("Rust Metadata Extractors", () => {
       const result = RUST_METADATA_EXTRACTORS.extract_construct_target(callExpr, TEST_FILE);
 
       expect(result).toBeDefined();
-      expect(result?.start_column).toBe(4); // "color"
+      expect(result?.start_column).toBe(5); // "color"
     });
 
     it("should extract target for enum variant", () => {
@@ -706,7 +706,7 @@ describe("Rust Metadata Extractors", () => {
       const result = RUST_METADATA_EXTRACTORS.extract_construct_target(callExpr, TEST_FILE);
 
       expect(result).toBeDefined();
-      expect(result?.start_column).toBe(4); // "opt"
+      expect(result?.start_column).toBe(5); // "opt"
     });
 
     it("should extract target from assignment", () => {
@@ -717,7 +717,7 @@ describe("Rust Metadata Extractors", () => {
       const result = RUST_METADATA_EXTRACTORS.extract_construct_target(callExpr, TEST_FILE);
 
       expect(result).toBeDefined();
-      expect(result?.start_column).toBe(0); // "obj"
+      expect(result?.start_column).toBe(1); // "obj"
     });
 
     it("should extract field assignment target", () => {
@@ -728,7 +728,7 @@ describe("Rust Metadata Extractors", () => {
       const result = RUST_METADATA_EXTRACTORS.extract_construct_target(callExpr, TEST_FILE);
 
       expect(result).toBeDefined();
-      expect(result?.start_column).toBe(0);
+      expect(result?.start_column).toBe(1);
       expect(result?.end_column).toBe(9); // "self.data"
     });
 
@@ -761,7 +761,7 @@ describe("Rust Metadata Extractors", () => {
       const result = RUST_METADATA_EXTRACTORS.extract_construct_target(buildCall, TEST_FILE);
 
       expect(result).toBeDefined();
-      expect(result?.start_column).toBe(4); // obj
+      expect(result?.start_column).toBe(5); // obj
     });
 
     it("should handle pattern with identifier name field", () => {
@@ -1086,7 +1086,7 @@ impl MyStruct {
       const result = RUST_METADATA_EXTRACTORS.extract_construct_target(callExpr, TEST_FILE);
 
       expect(result).toBeDefined();
-      expect(result?.start_column).toBe(4); // arc
+      expect(result?.start_column).toBe(5); // arc
     });
   });
 });

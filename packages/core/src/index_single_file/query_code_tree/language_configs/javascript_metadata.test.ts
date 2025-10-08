@@ -77,7 +77,7 @@ describe("JavaScript Metadata Extractors", () => {
 
       expect(result).toBeDefined();
       expect(result?.start_line).toBe(1);
-      expect(result?.start_column).toBe(0);
+      expect(result?.start_column).toBe(1);
       expect(result?.end_column).toBe(3);
     });
 
@@ -90,7 +90,7 @@ describe("JavaScript Metadata Extractors", () => {
 
       expect(result).toBeDefined();
       // Should get location of "user.profile"
-      expect(result?.start_column).toBe(0);
+      expect(result?.start_column).toBe(1);
       expect(result?.end_column).toBe(12);
     });
 
@@ -102,7 +102,7 @@ describe("JavaScript Metadata Extractors", () => {
       const result = JAVASCRIPT_METADATA_EXTRACTORS.extract_call_receiver(callExpr, TEST_FILE);
 
       expect(result).toBeDefined();
-      expect(result?.start_column).toBe(0);
+      expect(result?.start_column).toBe(1);
       expect(result?.end_column).toBe(4);
     });
   });
@@ -171,8 +171,8 @@ describe("JavaScript Metadata Extractors", () => {
 
       expect(result.target).toBeDefined();
       expect(result.source).toBeDefined();
-      expect(result.target?.start_column).toBe(0);
-      expect(result.source?.start_column).toBe(4);
+      expect(result.target?.start_column).toBe(1);
+      expect(result.source?.start_column).toBe(5);
     });
 
     it("should extract parts from variable declaration", () => {
@@ -184,8 +184,8 @@ describe("JavaScript Metadata Extractors", () => {
 
       expect(result.target).toBeDefined();
       expect(result.source).toBeDefined();
-      expect(result.target?.start_column).toBe(6); // position of 'x'
-      expect(result.source?.start_column).toBe(10); // position of 'getValue()'
+      expect(result.target?.start_column).toBe(7); // position of 'x'
+      expect(result.source?.start_column).toBe(11); // position of 'getValue()'
     });
 
     it("should extract parts from property assignment", () => {
@@ -209,7 +209,7 @@ describe("JavaScript Metadata Extractors", () => {
 
       expect(result.target).toBeDefined();
       expect(result.source).toBeDefined();
-      expect(result.target?.start_column).toBe(6); // position of {a, b}
+      expect(result.target?.start_column).toBe(7); // position of {a, b}
     });
 
     it("should handle augmented assignment", () => {
@@ -221,8 +221,8 @@ describe("JavaScript Metadata Extractors", () => {
 
       expect(result.target).toBeDefined();
       expect(result.source).toBeDefined();
-      expect(result.target?.start_column).toBe(0); // position of 'x'
-      expect(result.source?.start_column).toBe(5); // position of '5'
+      expect(result.target?.start_column).toBe(1); // position of 'x'
+      expect(result.source?.start_column).toBe(6); // position of '5'
     });
   });
 
@@ -235,7 +235,7 @@ describe("JavaScript Metadata Extractors", () => {
       const result = JAVASCRIPT_METADATA_EXTRACTORS.extract_construct_target(newExpr, TEST_FILE);
 
       expect(result).toBeDefined();
-      expect(result?.start_column).toBe(6); // position of 'obj'
+      expect(result?.start_column).toBe(7); // position of 'obj'
       expect(result?.end_column).toBe(9);
     });
 
@@ -247,7 +247,7 @@ describe("JavaScript Metadata Extractors", () => {
       const result = JAVASCRIPT_METADATA_EXTRACTORS.extract_construct_target(newExpr, TEST_FILE);
 
       expect(result).toBeDefined();
-      expect(result?.start_column).toBe(0); // position of 'this.prop'
+      expect(result?.start_column).toBe(1); // position of 'this.prop'
       expect(result?.end_column).toBe(9);
     });
 
@@ -259,7 +259,7 @@ describe("JavaScript Metadata Extractors", () => {
       const result = JAVASCRIPT_METADATA_EXTRACTORS.extract_construct_target(newExpr, TEST_FILE);
 
       expect(result).toBeDefined();
-      expect(result?.start_column).toBe(4); // position of 'x'
+      expect(result?.start_column).toBe(5); // position of 'x'
     });
   });
 
@@ -346,7 +346,7 @@ describe("JavaScript Metadata Extractors", () => {
       const result = JAVASCRIPT_METADATA_EXTRACTORS.extract_call_receiver(memberExpr, TEST_FILE);
 
       expect(result).toBeDefined();
-      expect(result?.start_column).toBe(0);
+      expect(result?.start_column).toBe(1);
       expect(result?.end_column).toBe(3);
     });
 
@@ -535,7 +535,7 @@ describe("JavaScript Metadata Extractors", () => {
       const result = JAVASCRIPT_METADATA_EXTRACTORS.extract_construct_target(newExpr, TEST_FILE);
 
       expect(result).toBeDefined();
-      expect(result?.start_column).toBe(6); // position of 'result'
+      expect(result?.start_column).toBe(7); // position of 'result'
     });
 
     it("should verify multi-line location accuracy", () => {
@@ -549,7 +549,7 @@ describe("JavaScript Metadata Extractors", () => {
 
       expect(result).toBeDefined();
       expect(result?.start_line).toBe(1);
-      expect(result?.start_column).toBe(6); // position of 'obj'
+      expect(result?.start_column).toBe(7); // position of 'obj'
     });
   });
 });

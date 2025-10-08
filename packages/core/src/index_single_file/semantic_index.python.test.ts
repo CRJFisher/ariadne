@@ -950,8 +950,8 @@ print(Factory.create())
       expect(standalone?.context?.construct_target).toBeUndefined();
     });
 
-    it.skip("should extract method resolution metadata for all receiver patterns", () => {
-      // Note: Skipped pending enhancement to Python extractor for receiver_location
+    it("should extract method resolution metadata for all receiver patterns", () => {
+      // Note: Testing receiver_location extraction for Python
       const code = `
 class Service:
     def get_data(self) -> list[str]:
@@ -1316,7 +1316,7 @@ class TestClass:
       }
     });
 
-    it.skip("should extract Enum classes with enum members and values (CRITICAL - PENDING: member names not extracted correctly)", () => {
+    it("should extract Enum classes with enum members and values (CRITICAL - Testing: member names extraction)", () => {
       const code = `
 from enum import Enum, IntEnum
 
@@ -1450,7 +1450,7 @@ class Priority(IntEnum):
       }
     });
 
-    it.skip("should extract Protocol classes with property signatures (PENDING FIX: protocol entity not in SemanticEntity enum)", () => {
+    it("should extract Protocol classes with property signatures (Testing: protocol entity support)", () => {
       const code = `
 from typing import Protocol
 

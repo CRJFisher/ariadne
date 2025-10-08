@@ -440,19 +440,26 @@ function grandparent() {
       const resolver_index = build_scope_resolver_index(indices);
       const cache = new TestResolutionCache();
 
-      const sibling1_scope = Array.from(index.scopes.values()).find(
-        (s) => s.name === "sibling1"
+      // Find function scopes by checking for variables x and y
+      const x_var = Array.from(index.variables.values()).find(
+        (v) => v.name === "x"
       );
-      const sibling2_scope = Array.from(index.scopes.values()).find(
-        (s) => s.name === "sibling2"
+      const y_var = Array.from(index.variables.values()).find(
+        (v) => v.name === "y"
       );
 
-      expect(sibling1_scope).toBeDefined();
-      expect(sibling2_scope).toBeDefined();
+      expect(x_var).toBeDefined();
+      expect(y_var).toBeDefined();
+
+      const sibling1_scope_id = x_var!.defining_scope_id;
+      const sibling2_scope_id = y_var!.defining_scope_id;
+
+      // Verify these are different scopes
+      expect(sibling1_scope_id).not.toBe(sibling2_scope_id);
 
       // sibling1 cannot resolve y
       const y_in_sibling1 = resolver_index.resolve(
-        sibling1_scope!.id,
+        sibling1_scope_id,
         "y" as SymbolName,
         cache
       );
@@ -460,7 +467,7 @@ function grandparent() {
 
       // sibling2 cannot resolve x
       const x_in_sibling2 = resolver_index.resolve(
-        sibling2_scope!.id,
+        sibling2_scope_id,
         "x" as SymbolName,
         cache
       );

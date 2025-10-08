@@ -781,6 +781,23 @@ describe("Namespace Import Resolution", () => {
         end_column: 13,
       };
 
+      const utils_import_def = {
+        kind: "import",
+        symbol_id: utils_import_id,
+        name: "utils" as SymbolName,
+        scope_id: main_scope,
+        defining_scope_id: main_scope,
+        location: {
+          file_path: main_file,
+          start_line: 1,
+          start_column: 0,
+          end_line: 1,
+          end_column: 35,
+        },
+        import_path: "./utils" as ModulePath,
+        import_kind: "namespace",
+      } as ImportDefinition;
+
       const main_index = create_test_index(main_file, {
         root_scope_id: main_scope,
         scopes_raw: new Map([
@@ -803,24 +820,14 @@ describe("Namespace Import Resolution", () => {
           ],
         ]),
         imports_raw: new Map([
+          [utils_import_id, utils_import_def],
+        ]),
+        scope_to_definitions_raw: new Map<ScopeId, ReadonlyMap<SymbolKind, AnyDefinition[]>>([
           [
-            utils_import_id,
-            {
-              kind: "import",
-              symbol_id: utils_import_id,
-              name: "utils" as SymbolName,
-              scope_id: main_scope,
-              defining_scope_id: main_scope,
-              location: {
-                file_path: main_file,
-                start_line: 1,
-                start_column: 0,
-                end_line: 1,
-                end_column: 35,
-              },
-              import_path: "./utils" as ModulePath,
-              import_kind: "namespace",
-            } as ImportDefinition,
+            main_scope,
+            new Map<SymbolKind, AnyDefinition[]>([
+              ["import", [utils_import_def as AnyDefinition]],
+            ]),
           ],
         ]),
         references: [
@@ -872,6 +879,25 @@ describe("Namespace Import Resolution", () => {
         end_column: 12,
       };
 
+      const utils_var_def = {
+        kind: "variable",
+        symbol_id: utils_var_id,
+        name: "utils" as SymbolName,
+        scope_id: main_scope,
+        defining_scope_id: main_scope,
+        location: {
+          file_path: main_file,
+          start_line: 1,
+          start_column: 6,
+          end_line: 1,
+          end_column: 11,
+        },
+        is_exported: false,
+        signature: {
+          parameters: [],
+        },
+      } as VariableDefinition;
+
       const main_index = create_test_index(main_file, {
         root_scope_id: main_scope,
         scopes_raw: new Map([
@@ -894,26 +920,14 @@ describe("Namespace Import Resolution", () => {
           ],
         ]),
         variables_raw: new Map([
+          [utils_var_id, utils_var_def],
+        ]),
+        scope_to_definitions_raw: new Map<ScopeId, ReadonlyMap<SymbolKind, AnyDefinition[]>>([
           [
-            utils_var_id,
-            {
-              kind: "variable",
-              symbol_id: utils_var_id,
-              name: "utils" as SymbolName,
-              scope_id: main_scope,
-              defining_scope_id: main_scope,
-              location: {
-                file_path: main_file,
-                start_line: 1,
-                start_column: 6,
-                end_line: 1,
-                end_column: 11,
-              },
-              is_exported: false,
-              signature: {
-                parameters: [],
-              },
-            } as VariableDefinition,
+            main_scope,
+            new Map<SymbolKind, AnyDefinition[]>([
+              ["variable", [utils_var_def as AnyDefinition]],
+            ]),
           ],
         ]),
         references: [

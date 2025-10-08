@@ -234,25 +234,25 @@ export function find_containing_callable(capture: CaptureNode): SymbolId {
   // Traverse up until we find a callable
   while (node) {
     if (node.type === "function_definition" || node.type === "lambda") {
-      const nameNode = node.childForFieldName?.("name");
+      const name_node = node.childForFieldName?.("name");
 
-      if (nameNode) {
+      if (name_node) {
         // Check if this is a method (inside a class)
-        const inClass = find_containing_class({
+        const in_class = find_containing_class({
           node: node,
           text: "",
           name: "",
           location: capture.location,
         } as CaptureNode);
-        if (inClass) {
+        if (in_class) {
           return method_symbol(
-            nameNode.text as SymbolName,
-            node_to_location(nameNode, capture.location.file_path)
+            name_node.text as SymbolName,
+            node_to_location(name_node, capture.location.file_path)
           );
         } else {
           return function_symbol(
-            nameNode.text as SymbolName,
-            node_to_location(nameNode, capture.location.file_path)
+            name_node.text as SymbolName,
+            node_to_location(name_node, capture.location.file_path)
           );
         }
       } else if (node.type === "lambda") {

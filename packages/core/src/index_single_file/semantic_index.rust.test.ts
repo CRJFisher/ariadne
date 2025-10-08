@@ -1570,8 +1570,8 @@ fn main() {
       expect(config_construct?.context?.construct_target).toBeDefined();
     });
 
-    it.skip("should extract method resolution metadata for all receiver patterns", () => {
-      // SKIPPED: Assignment tracking and receiver_location not yet implemented for Rust
+    it("should extract method resolution metadata for all receiver patterns", () => {
+      // Testing: Assignment tracking and receiver_location for Rust
       const code = `
 struct Service {
     data: Vec<String>,

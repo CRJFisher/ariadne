@@ -68,6 +68,7 @@
   - does the addition of this language feature to the target object _directly_ align with the core intention tree?
 - update the relevant .scm file for the language. make sure the capture naming convention is followed: `@category.entity.additional.qualifiers` - `category` is of type `SemanticCategory` and `entity` is of type `SemanticEntity`.
 - update the relevant `language_configs/<language>_builder.ts` file to match the new capture names.
+  - Make sure all nodes convert their positions to Location using `node_to_location` from node_utils.ts
 - add tests to `language_configs/<language>_builder.test.ts` to verify that the new capture names are parsed correctly.
 - _if_ the capture is adding a new property to a target object, we need to make sure there is a plan for _using_ it in the downstream processing, typically in the `packages/core/src/resolve_references` module.
 
