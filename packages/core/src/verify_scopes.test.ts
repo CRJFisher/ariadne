@@ -42,7 +42,7 @@ enum MyEnum {
 }`;
 
     const parser = new Parser();
-    parser.setLanguage(TypeScriptParser.tsx);
+    parser.setLanguage(TypeScriptParser.typescript);
     const tree = parser.parse(code);
     const parsedFile = createParsedFile(
       code,
@@ -64,6 +64,14 @@ enum MyEnum {
 
     console.log("\n📋 TypeScript Scope Assignment:");
     console.log(`Module scope: ${moduleScope!.id}`);
+
+    // Debug: show all captures and scopes
+    console.log("\nAll scopes:", Array.from(index.scopes.values()).map(s => ({ type: s.type, id: s.id, parent: s.parent_id })));
+    console.log("\nAll definitions count:", {
+      classes: index.classes.size,
+      interfaces: index.interfaces.size,
+      enums: index.enums.size,
+    });
 
     // Debug: show all definitions
     console.log(

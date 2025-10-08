@@ -1,8 +1,9 @@
 # Task: Fix Module Scope End Position Off-By-One
 
-**Status**: To Do
+**Status**: Completed
 **Epic**: epic-11 - Codebase Restructuring
 **Created**: 2025-10-08
+**Completed**: 2025-10-08
 **Priority**: Low
 **Severity**: Cosmetic
 
@@ -283,13 +284,40 @@ npm test -- semantic_index.*.test.ts
 - None directly related
 - May be connected to body-based scope work (epic-11.112) if scope boundaries were recently changed
 
-## Notes
+## Implementation Notes
 
-- This is likely a simple one-line fix once root cause is identified
-- The consistency across languages suggests a common utility function has the bug
-- Tree-sitter position conventions can be tricky - document findings for future reference
-- Consider if we want 0-indexed or 1-indexed positions, inclusive or exclusive ends
-- Ensure our convention is documented in type definitions
+### Root Cause
+Tree-sitter's `endPosition.column` is **exclusive** and **0-indexed** (points one past the last character).
+When converting to our 1-indexed format, we were incorrectly adding +1 to the end column, making it off by two positions total.
+
+The correct conversion is:
+- `start_line = node.startPosition.row + 1` (convert 0-indexed to 1-indexed)
+- `start_column = node.startPosition.column + 1` (convert 0-indexed to 1-indexed)
+- `end_line = node.endPosition.row + 1` (convert 0-indexed to 1-indexed)
+- `end_column = node.endPosition.column` (exclusive 0-indexed = inclusive 1-indexed, NO +1!)
+
+### Files Fixed
+1. `node_utils.ts` - Fixed `node_to_location()` function
+2. `javascript_builder.ts` - Removed +1 from all `endPosition.column` references
+3. `typescript_builder.ts` - Removed +1 from all `endPosition.column` references
+4. `python_builder.ts` - Removed +1 from all `endPosition.column` references
+5. `rust_builder_helpers.ts` - Removed +1 from all `endPosition.column` references
+6. `semantic_index.typescript.test.ts` - Fixed `file_end_column` calculation
+7. `semantic_index.javascript.test.ts` - Fixed `file_end_column` calculation
+8. `semantic_index.python.test.ts` - Fixed `file_end_column` calculation
+
+### Test Results
+- ✅ TypeScript: `module:test.ts:1:1:11:1` - PASSING
+- ✅ JavaScript: `module:test.js:1:1:3:1` - PASSING
+- ✅ Python: `module:test.py:1:1:3:12` - PASSING
+- ⚠️ Rust: MyTrait assignment issue - **SEPARATE BUG** (not related to off-by-one)
+
+### Rust Trait Issue (Separate Bug)
+The Rust test shows that `MyTrait` is being assigned to `class:test.rs:9:1:11:1` instead of the module scope.
+This is a different issue from the off-by-one position bug - it's a trait definition scoping problem.
+The struct and enum ARE correctly assigned to module scope, proving the position fix is working.
+
+This issue should be tracked separately.
 
 ## Success Metrics
 
