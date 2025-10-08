@@ -1,10 +1,62 @@
 # Task Epic 11.110 - Add JSDoc Comment Extraction for JavaScript
 
-**Status**: ✅ Completed
-**Priority**: Medium
+**Status**: To Do (REGRESSION)
+**Priority**: High
 **Estimated Effort**: 2-3 hours
 **Created**: 2025-10-02
 **Completed**: 2025-10-07
+**Reopened**: 2025-10-08 (Regression detected)
+
+---
+
+## 🔴 REGRESSION DETECTED (2025-10-08)
+
+Full test suite run shows **9 JSDoc/docstring tests failing**:
+
+### JavaScript Failures (4 tests)
+File: [semantic_index.javascript.test.ts](packages/core/src/index_single_file/semantic_index.javascript.test.ts)
+
+- Line 604: "should capture JSDoc documentation for functions" - `docstring` is `undefined`
+- Line 642: "should capture JSDoc documentation for classes" - `docstring` is `undefined`
+- Line 683: "should capture JSDoc documentation for methods" - `docstring` is `undefined`
+- Line 723: "should capture JSDoc documentation for variables" - `docstring` is `undefined`
+
+### TypeScript Failures (5 tests)
+File: [semantic_index.typescript.test.ts](packages/core/src/index_single_file/semantic_index.typescript.test.ts)
+
+- Similar failures for TypeScript JSDoc/docstring extraction
+- Functions, classes, methods not capturing documentation
+
+### Analysis
+
+The implementation was completed on 2025-10-07 with all tests passing, but subsequent changes have caused a regression. Possible causes:
+
+1. **Query pattern changes**: Tree-sitter query files may have been modified
+2. **Handler removal**: Documentation handlers may have been removed during refactoring
+3. **Builder restructuring**: JavaScript/TypeScript builder configs may have changed
+4. **Definition builder changes**: The `add_*` methods may no longer accept `docstring` parameters
+
+### Investigation Needed
+
+1. Compare current query files with 2025-10-07 versions:
+   - `packages/core/src/index_single_file/query_code_tree/queries/javascript.scm`
+   - `packages/core/src/index_single_file/query_code_tree/queries/typescript.scm`
+
+2. Check builder configurations for documentation handlers:
+   - `packages/core/src/index_single_file/query_code_tree/language_configs/javascript_builder.ts`
+   - `packages/core/src/index_single_file/query_code_tree/language_configs/typescript_builder_config.ts`
+
+3. Verify definition builder accepts docstring parameters:
+   - `packages/core/src/index_single_file/definitions/definition_builder.ts`
+
+### Recovery Strategy
+
+1. Review git history since 2025-10-07 for changes to above files
+2. Restore documentation capture patterns and handlers
+3. Re-run tests to verify fix
+4. Add regression tests to prevent future breakage
+
+---
 
 ## Objective
 
