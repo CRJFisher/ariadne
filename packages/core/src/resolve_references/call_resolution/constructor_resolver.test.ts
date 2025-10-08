@@ -10,6 +10,7 @@ import { describe, it, expect } from "vitest";
 import { resolve_constructor_calls } from "./constructor_resolver";
 import { build_scope_resolver_index } from "../scope_resolver_index/scope_resolver_index";
 import { create_resolution_cache } from "../resolution_cache/resolution_cache";
+import { build_file_tree } from "../symbol_resolution.test_helpers";
 import type {
   FilePath,
   SymbolId,
@@ -144,7 +145,8 @@ describe("Constructor Call Resolution", () => {
         root_scope_id
       );
       const indices = new Map([[file_path, index]]);
-      const resolver_index = build_scope_resolver_index(indices);
+      const root_folder = build_file_tree([file_path]);
+      const resolver_index = build_scope_resolver_index(indices, root_folder);
       const cache = create_resolution_cache();
 
       const resolutions = resolve_constructor_calls(
@@ -231,7 +233,8 @@ describe("Constructor Call Resolution", () => {
         root_scope_id
       );
       const indices = new Map([[file_path, index]]);
-      const resolver_index = build_scope_resolver_index(indices);
+      const root_folder = build_file_tree([file_path]);
+      const resolver_index = build_scope_resolver_index(indices, root_folder);
       const cache = create_resolution_cache();
 
       const resolutions = resolve_constructor_calls(
@@ -338,7 +341,8 @@ describe("Constructor Call Resolution", () => {
         root_scope_id
       );
       const indices = new Map([[file_path, index]]);
-      const resolver_index = build_scope_resolver_index(indices);
+      const root_folder = build_file_tree([file_path]);
+      const resolver_index = build_scope_resolver_index(indices, root_folder);
       const cache = create_resolution_cache();
 
       const resolutions = resolve_constructor_calls(
@@ -467,7 +471,8 @@ describe("Constructor Call Resolution", () => {
         root_scope_id
       );
       const indices = new Map([[file_path, index]]);
-      const resolver_index = build_scope_resolver_index(indices);
+      const root_folder = build_file_tree([file_path]);
+      const resolver_index = build_scope_resolver_index(indices, root_folder);
       const cache = create_resolution_cache();
 
       const resolutions = resolve_constructor_calls(
@@ -529,7 +534,8 @@ describe("Constructor Call Resolution", () => {
         root_scope_id
       );
       const indices = new Map([[file_path, index]]);
-      const resolver_index = build_scope_resolver_index(indices);
+      const root_folder = build_file_tree([file_path]);
+      const resolver_index = build_scope_resolver_index(indices, root_folder);
       const cache = create_resolution_cache();
 
       const resolutions = resolve_constructor_calls(
@@ -645,7 +651,8 @@ describe("Constructor Call Resolution", () => {
         root_scope_id
       );
       const indices = new Map([[file_path, index]]);
-      const resolver_index = build_scope_resolver_index(indices);
+      const root_folder = build_file_tree([file_path]);
+      const resolver_index = build_scope_resolver_index(indices, root_folder);
       const cache = create_resolution_cache();
 
       const resolutions = resolve_constructor_calls(
@@ -752,7 +759,8 @@ describe("Constructor Call Resolution", () => {
         root_scope_id
       );
       const indices = new Map([[file_path, index]]);
-      const resolver_index = build_scope_resolver_index(indices);
+      const root_folder = build_file_tree([file_path]);
+      const resolver_index = build_scope_resolver_index(indices, root_folder);
       const cache = create_resolution_cache();
 
       const resolutions = resolve_constructor_calls(
@@ -845,7 +853,8 @@ describe("Constructor Call Resolution", () => {
         root_scope_id
       );
       const indices = new Map([[file_path, index]]);
-      const resolver_index = build_scope_resolver_index(indices);
+      const root_folder = build_file_tree([file_path]);
+      const resolver_index = build_scope_resolver_index(indices, root_folder);
       const cache = create_resolution_cache();
 
       const resolutions = resolve_constructor_calls(
@@ -963,7 +972,8 @@ describe("Constructor Call Resolution", () => {
         root_scope_id
       );
       const indices = new Map([[file_path, index]]);
-      const resolver_index = build_scope_resolver_index(indices);
+      const root_folder = build_file_tree([file_path]);
+      const resolver_index = build_scope_resolver_index(indices, root_folder);
       const cache = create_resolution_cache();
 
       const resolutions = resolve_constructor_calls(
@@ -1082,7 +1092,8 @@ describe("Constructor Call Resolution", () => {
 
       // Directly test that we can resolve class across files
       // (In real usage, the resolver_index would handle the import resolution)
-      const resolver_index = build_scope_resolver_index(indices);
+      const root_folder = build_file_tree([file1_path, file2_path]);
+      const resolver_index = build_scope_resolver_index(indices, root_folder);
       const cache = create_resolution_cache();
 
       // Verify class is found in file1 even when searching from file2 context

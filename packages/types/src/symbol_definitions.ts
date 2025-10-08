@@ -50,7 +50,7 @@ export interface FunctionDefinition extends Definition {
   readonly is_exported: boolean; // Can this symbol be imported from other files?
   readonly signature: FunctionSignature; // TODO: remove this, put its contents directly on the FunctionDefinition
   readonly docstring?: DocString;
-  readonly decorators?: readonly SymbolName[];
+  readonly decorators?: readonly DecoratorDefinition[];
   readonly return_type?: SymbolName;
   readonly generics?: string[];
 }
@@ -83,7 +83,7 @@ export interface MethodDefinition extends Definition {
   readonly kind: "method";
   readonly parameters: readonly ParameterDefinition[];
   readonly return_type?: SymbolName;
-  readonly decorators?: readonly SymbolName[];
+  readonly decorators?: readonly DecoratorDefinition[];
   readonly docstring?: DocString;
   readonly generics?: string[];
   readonly static?: boolean;
@@ -92,7 +92,7 @@ export interface MethodDefinition extends Definition {
 export interface ConstructorDefinition extends Definition {
   readonly kind: "constructor";
   readonly parameters: readonly ParameterDefinition[];
-  readonly decorators?: readonly SymbolName[];
+  readonly decorators?: readonly DecoratorDefinition[];
 }
 
 /**
@@ -213,7 +213,8 @@ export type ExportableDefinition =
   | InterfaceDefinition
   | EnumDefinition
   | NamespaceDefinition
-  | TypeAliasDefinition;
+  | TypeAliasDefinition
+  | ImportDefinition; // Re-exports
 /**
  * Type guard to check if export is a re-export
  */

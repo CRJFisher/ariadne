@@ -266,8 +266,9 @@ describe("DefinitionBuilder - Complex Assembly", () => {
     const method = class_def.methods[0];
 
     expect(method.decorators).toHaveLength(2);
-    expect(method.decorators).toContain("Override");
-    expect(method.decorators).toContain("Deprecated");
+    const decorator_names = method.decorators!.map(d => d.name);
+    expect(decorator_names).toContain("Override");
+    expect(decorator_names).toContain("Deprecated");
   });
 
   it("should assemble interface with method signatures and properties", () => {
@@ -292,7 +293,6 @@ describe("DefinitionBuilder - Complex Assembly", () => {
       location: create_test_location(2, 2),
       scope_id: context.root_scope_id,
       return_type: "void" as SymbolName,
-      optional: false,
     });
 
     // Add property signatures
@@ -301,8 +301,7 @@ describe("DefinitionBuilder - Complex Assembly", () => {
       name: "prop1" as SymbolName,
       location: create_test_location(3, 2),
       type: "string" as SymbolName,
-      optional: true,
-      readonly: true,
+      scope_id: context.root_scope_id,
     });
 
     const result = builder.build();
@@ -418,7 +417,6 @@ describe("DefinitionBuilder - Complex Assembly", () => {
       location: create_test_location(2, 22),
       scope_id: context.root_scope_id,
       type: "number" as SymbolName,
-      optional: true,
     });
 
     const result = builder.build();

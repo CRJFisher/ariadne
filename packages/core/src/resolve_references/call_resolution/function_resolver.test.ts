@@ -10,6 +10,7 @@ import { describe, it, expect } from "vitest";
 import { resolve_function_calls } from "./function_resolver";
 import { build_scope_resolver_index } from "../scope_resolver_index/scope_resolver_index";
 import { create_resolution_cache } from "../resolution_cache/resolution_cache";
+import { build_file_tree } from "../symbol_resolution.test_helpers";
 import type {
   FilePath,
   SymbolId,
@@ -124,7 +125,8 @@ describe("Function Call Resolution", () => {
         root_scope_id
       );
       const indices = new Map([[file_path, index]]);
-      const resolver_index = build_scope_resolver_index(indices);
+      const root_folder = build_file_tree([file_path]);
+      const resolver_index = build_scope_resolver_index(indices, root_folder);
       const cache = create_resolution_cache();
 
       const resolutions = resolve_function_calls(
@@ -225,7 +227,8 @@ describe("Function Call Resolution", () => {
         root_scope_id
       );
       const indices = new Map([[file_path, index]]);
-      const resolver_index = build_scope_resolver_index(indices);
+      const root_folder = build_file_tree([file_path]);
+      const resolver_index = build_scope_resolver_index(indices, root_folder);
       const cache = create_resolution_cache();
 
       const resolutions = resolve_function_calls(
@@ -327,7 +330,8 @@ describe("Function Call Resolution", () => {
         root_scope_id
       );
       const indices = new Map([[file_path, index]]);
-      const resolver_index = build_scope_resolver_index(indices);
+      const root_folder = build_file_tree([file_path]);
+      const resolver_index = build_scope_resolver_index(indices, root_folder);
       const cache = create_resolution_cache();
 
       const resolutions = resolve_function_calls(
@@ -452,7 +456,8 @@ describe("Function Call Resolution", () => {
         root_scope_id
       );
       const indices = new Map([[file_path, index]]);
-      const resolver_index = build_scope_resolver_index(indices);
+      const root_folder = build_file_tree([file_path]);
+      const resolver_index = build_scope_resolver_index(indices, root_folder);
       const cache = create_resolution_cache();
 
       const resolutions = resolve_function_calls(
@@ -513,7 +518,8 @@ describe("Function Call Resolution", () => {
         root_scope_id
       );
       const indices = new Map([[file_path, index]]);
-      const resolver_index = build_scope_resolver_index(indices);
+      const root_folder = build_file_tree([file_path]);
+      const resolver_index = build_scope_resolver_index(indices, root_folder);
       const cache = create_resolution_cache();
 
       const resolutions = resolve_function_calls(
@@ -573,7 +579,8 @@ describe("Function Call Resolution", () => {
         root_scope_id
       );
       const indices = new Map([[file_path, index]]);
-      const resolver_index = build_scope_resolver_index(indices);
+      const root_folder = build_file_tree([file_path]);
+      const resolver_index = build_scope_resolver_index(indices, root_folder);
       const cache = create_resolution_cache();
 
       const resolutions = resolve_function_calls(
@@ -687,7 +694,8 @@ describe("Function Call Resolution", () => {
         root_scope_id
       );
       const indices = new Map([[file_path, index]]);
-      const resolver_index = build_scope_resolver_index(indices);
+      const root_folder = build_file_tree([file_path]);
+      const resolver_index = build_scope_resolver_index(indices, root_folder);
       const cache = create_resolution_cache();
 
       const resolutions = resolve_function_calls(
@@ -812,7 +820,8 @@ describe("Function Call Resolution", () => {
         root_scope_id
       );
       const indices = new Map([[file_path, index]]);
-      const resolver_index = build_scope_resolver_index(indices);
+      const root_folder = build_file_tree([file_path]);
+      const resolver_index = build_scope_resolver_index(indices, root_folder);
       const cache = create_resolution_cache();
 
       // Initially cache is empty
@@ -957,7 +966,8 @@ describe("Function Call Resolution", () => {
         [file1, index1],
         [file2, index2],
       ]);
-      const resolver_index = build_scope_resolver_index(indices);
+      const root_folder = build_file_tree([file1, file2]);
+      const resolver_index = build_scope_resolver_index(indices, root_folder);
       const cache = create_resolution_cache();
 
       const resolutions = resolve_function_calls(

@@ -309,7 +309,7 @@ function resolve_module_path(
     case "python":
       return resolve_module_path_python(import_path, importing_file, root_folder);
     case "rust":
-      return resolve_module_path_rust(import_path, importing_file);
+      return resolve_module_path_rust(import_path, importing_file, root_folder);
     default:
       throw new Error(`Unsupported language: ${language}`);
   }

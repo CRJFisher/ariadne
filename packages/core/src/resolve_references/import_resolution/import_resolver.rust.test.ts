@@ -2,8 +2,7 @@
  * Tests for Rust module resolution
  */
 
-import { describe, it, expect, beforeEach, beforeAll, afterEach } from "vitest";
-import * as fs from "fs";
+import { describe, it, expect, beforeAll } from "vitest";
 import * as path from "path";
 import Parser from "tree-sitter";
 import Rust from "tree-sitter-rust";
@@ -11,6 +10,7 @@ import { resolve_module_path_rust } from "./import_resolver.rust";
 import type { FilePath, Language } from "@ariadnejs/types";
 import { build_semantic_index } from "../../index_single_file/semantic_index";
 import type { ParsedFile } from "../../index_single_file/file_utils";
+import { build_file_tree } from "../symbol_resolution.test_helpers";
 
 // Helper to create ParsedFile for Rust
 function create_parsed_file(
@@ -29,238 +29,246 @@ function create_parsed_file(
   };
 }
 
-// Temporary test directory
-const TEST_DIR = path.join(process.cwd(), ".test-rust-modules");
-
-beforeEach(() => {
-  // Create test directory structure
-  if (!fs.existsSync(TEST_DIR)) {
-    fs.mkdirSync(TEST_DIR, { recursive: true });
-  }
-});
-
-afterEach(() => {
-  // Clean up test directory
-  if (fs.existsSync(TEST_DIR)) {
-    fs.rmSync(TEST_DIR, { recursive: true, force: true });
-  }
-});
-
 describe("resolve_module_path_rust", () => {
   it("should resolve crate-relative path with lib.rs", () => {
+    const TEST_DIR = "/test-rust-modules";
     const lib_file = path.join(TEST_DIR, "lib.rs");
-    fs.writeFileSync(lib_file, "pub mod utils;");
-
     const utils_file = path.join(TEST_DIR, "utils.rs");
-    fs.writeFileSync(utils_file, "pub fn helper() {}");
-
     const main_file = path.join(TEST_DIR, "main.rs") as FilePath;
 
-    const result = resolve_module_path_rust("crate::utils", main_file);
+    const root_folder = build_file_tree([
+      lib_file as FilePath,
+      utils_file as FilePath,
+      main_file,
+    ]);
+
+    const result = resolve_module_path_rust("crate::utils", main_file, root_folder);
 
     expect(result).toBe(utils_file);
   });
 
   it("should resolve crate-relative path with Cargo.toml and src/", () => {
-    const cargo_file = path.join(TEST_DIR, "Cargo.toml");
-    fs.writeFileSync(cargo_file, '[package]\nname = "test"');
-
+    const TEST_DIR = "/test-rust-modules";
     const src_dir = path.join(TEST_DIR, "src");
-    fs.mkdirSync(src_dir);
-
+    const cargo_file = path.join(TEST_DIR, "Cargo.toml");
     const lib_file = path.join(src_dir, "lib.rs");
-    fs.writeFileSync(lib_file, "pub mod utils;");
-
     const utils_file = path.join(src_dir, "utils.rs");
-    fs.writeFileSync(utils_file, "pub fn helper() {}");
-
     const main_file = path.join(src_dir, "main.rs") as FilePath;
 
-    const result = resolve_module_path_rust("crate::utils", main_file);
+    const root_folder = build_file_tree([
+      cargo_file as FilePath,
+      lib_file as FilePath,
+      utils_file as FilePath,
+      main_file,
+    ]);
+
+    const result = resolve_module_path_rust("crate::utils", main_file, root_folder);
 
     expect(result).toBe(utils_file);
   });
 
   it("should resolve super-relative path", () => {
+    const TEST_DIR = "/test-rust-modules";
     const utils_file = path.join(TEST_DIR, "utils.rs");
-    fs.writeFileSync(utils_file, "pub fn helper() {}");
-
     const sub_dir = path.join(TEST_DIR, "sub");
-    fs.mkdirSync(sub_dir);
     const main_file = path.join(sub_dir, "mod.rs") as FilePath;
 
-    const result = resolve_module_path_rust("super::utils", main_file);
+    const root_folder = build_file_tree([
+      utils_file as FilePath,
+      main_file,
+    ]);
+
+    const result = resolve_module_path_rust("super::utils", main_file, root_folder);
 
     expect(result).toBe(utils_file);
   });
 
   it("should resolve self-relative path", () => {
+    const TEST_DIR = "/test-rust-modules";
     const module_dir = path.join(TEST_DIR, "mymod");
-    fs.mkdirSync(module_dir);
-
     const utils_file = path.join(module_dir, "utils.rs");
-    fs.writeFileSync(utils_file, "pub fn helper() {}");
-
     const main_file = path.join(module_dir, "mod.rs") as FilePath;
 
-    const result = resolve_module_path_rust("self::utils", main_file);
+    const root_folder = build_file_tree([
+      utils_file as FilePath,
+      main_file,
+    ]);
+
+    const result = resolve_module_path_rust("self::utils", main_file, root_folder);
 
     expect(result).toBe(utils_file);
   });
 
   it("should resolve module file (utils.rs)", () => {
+    const TEST_DIR = "/test-rust-modules";
     const lib_file = path.join(TEST_DIR, "lib.rs");
-    fs.writeFileSync(lib_file, "pub mod utils;");
-
     const utils_file = path.join(TEST_DIR, "utils.rs");
-    fs.writeFileSync(utils_file, "pub fn helper() {}");
-
     const main_file = path.join(TEST_DIR, "main.rs") as FilePath;
 
-    const result = resolve_module_path_rust("crate::utils", main_file);
+    const root_folder = build_file_tree([
+      lib_file as FilePath,
+      utils_file as FilePath,
+      main_file,
+    ]);
+
+    const result = resolve_module_path_rust("crate::utils", main_file, root_folder);
 
     expect(result).toBe(utils_file);
   });
 
   it("should resolve module directory (utils/mod.rs)", () => {
+    const TEST_DIR = "/test-rust-modules";
     const lib_file = path.join(TEST_DIR, "lib.rs");
-    fs.writeFileSync(lib_file, "pub mod utils;");
-
     const utils_dir = path.join(TEST_DIR, "utils");
-    fs.mkdirSync(utils_dir);
     const mod_file = path.join(utils_dir, "mod.rs");
-    fs.writeFileSync(mod_file, "pub fn helper() {}");
-
     const main_file = path.join(TEST_DIR, "main.rs") as FilePath;
 
-    const result = resolve_module_path_rust("crate::utils", main_file);
+    const root_folder = build_file_tree([
+      lib_file as FilePath,
+      mod_file as FilePath,
+      main_file,
+    ]);
+
+    const result = resolve_module_path_rust("crate::utils", main_file, root_folder);
 
     expect(result).toBe(mod_file);
   });
 
   it("should prioritize module file over module directory", () => {
+    const TEST_DIR = "/test-rust-modules";
     const lib_file = path.join(TEST_DIR, "lib.rs");
-    fs.writeFileSync(lib_file, "pub mod utils;");
-
     const utils_file = path.join(TEST_DIR, "utils.rs");
-    fs.writeFileSync(utils_file, "pub fn helper() {}");
-
     const utils_dir = path.join(TEST_DIR, "utils");
-    fs.mkdirSync(utils_dir);
     const mod_file = path.join(utils_dir, "mod.rs");
-    fs.writeFileSync(mod_file, "pub fn other() {}");
-
     const main_file = path.join(TEST_DIR, "main.rs") as FilePath;
 
-    const result = resolve_module_path_rust("crate::utils", main_file);
+    const root_folder = build_file_tree([
+      lib_file as FilePath,
+      utils_file as FilePath,
+      mod_file as FilePath,
+      main_file,
+    ]);
+
+    const result = resolve_module_path_rust("crate::utils", main_file, root_folder);
 
     expect(result).toBe(utils_file);
   });
 
   it("should resolve nested modules", () => {
+    const TEST_DIR = "/test-rust-modules";
     const lib_file = path.join(TEST_DIR, "lib.rs");
-    fs.writeFileSync(lib_file, "pub mod utils;");
-
     const utils_dir = path.join(TEST_DIR, "utils");
-    fs.mkdirSync(utils_dir);
-    fs.writeFileSync(path.join(utils_dir, "mod.rs"), "pub mod helpers;");
-
+    const utils_mod_file = path.join(utils_dir, "mod.rs");
     const helpers_file = path.join(utils_dir, "helpers.rs");
-    fs.writeFileSync(helpers_file, "pub fn helper() {}");
-
     const main_file = path.join(TEST_DIR, "main.rs") as FilePath;
 
-    const result = resolve_module_path_rust("crate::utils::helpers", main_file);
+    const root_folder = build_file_tree([
+      lib_file as FilePath,
+      utils_mod_file as FilePath,
+      helpers_file as FilePath,
+      main_file,
+    ]);
+
+    const result = resolve_module_path_rust("crate::utils::helpers", main_file, root_folder);
 
     expect(result).toBe(helpers_file);
   });
 
   it("should resolve deeply nested modules", () => {
+    const TEST_DIR = "/test-rust-modules";
     const lib_file = path.join(TEST_DIR, "lib.rs");
-    fs.writeFileSync(lib_file, "pub mod a;");
-
     const a_dir = path.join(TEST_DIR, "a");
-    fs.mkdirSync(a_dir);
-    fs.writeFileSync(path.join(a_dir, "mod.rs"), "pub mod b;");
-
+    const a_mod_file = path.join(a_dir, "mod.rs");
     const b_dir = path.join(a_dir, "b");
-    fs.mkdirSync(b_dir);
-    fs.writeFileSync(path.join(b_dir, "mod.rs"), "pub mod c;");
-
+    const b_mod_file = path.join(b_dir, "mod.rs");
     const c_file = path.join(b_dir, "c.rs");
-    fs.writeFileSync(c_file, "pub fn helper() {}");
-
     const main_file = path.join(TEST_DIR, "main.rs") as FilePath;
 
-    const result = resolve_module_path_rust("crate::a::b::c", main_file);
+    const root_folder = build_file_tree([
+      lib_file as FilePath,
+      a_mod_file as FilePath,
+      b_mod_file as FilePath,
+      c_file as FilePath,
+      main_file,
+    ]);
+
+    const result = resolve_module_path_rust("crate::a::b::c", main_file, root_folder);
 
     expect(result).toBe(c_file);
   });
 
   it("should return external crate paths as-is", () => {
+    const TEST_DIR = "/test-rust-modules";
     const main_file = path.join(TEST_DIR, "main.rs") as FilePath;
 
-    const result = resolve_module_path_rust("std::collections", main_file);
+    const root_folder = build_file_tree([main_file]);
+
+    const result = resolve_module_path_rust("std::collections", main_file, root_folder);
 
     expect(result).toBe("std::collections");
   });
 
   it("should find crate root with main.rs", () => {
+    const TEST_DIR = "/test-rust-modules";
     const main_file_path = path.join(TEST_DIR, "main.rs");
-    fs.writeFileSync(main_file_path, "pub mod utils;");
-
     const utils_file = path.join(TEST_DIR, "utils.rs");
-    fs.writeFileSync(utils_file, "pub fn helper() {}");
-
     const main_file = main_file_path as FilePath;
 
-    const result = resolve_module_path_rust("crate::utils", main_file);
+    const root_folder = build_file_tree([
+      main_file,
+      utils_file as FilePath,
+    ]);
+
+    const result = resolve_module_path_rust("crate::utils", main_file, root_folder);
 
     expect(result).toBe(utils_file);
   });
 
   it("should handle super paths in nested modules", () => {
+    const TEST_DIR = "/test-rust-modules";
     const lib_file = path.join(TEST_DIR, "lib.rs");
-    fs.writeFileSync(lib_file, "pub mod utils; pub mod helpers;");
-
     const utils_file = path.join(TEST_DIR, "utils.rs");
-    fs.writeFileSync(utils_file, "pub fn util() {}");
-
     const helpers_file = path.join(TEST_DIR, "helpers.rs");
-    fs.writeFileSync(helpers_file, "use super::utils;");
-
     const main_file = helpers_file as FilePath;
 
-    const result = resolve_module_path_rust("super::utils", main_file);
+    const root_folder = build_file_tree([
+      lib_file as FilePath,
+      utils_file as FilePath,
+      helpers_file as FilePath,
+    ]);
+
+    const result = resolve_module_path_rust("super::utils", main_file, root_folder);
 
     expect(result).toBe(utils_file);
   });
 
   it("should return fallback path for non-existent modules", () => {
+    const TEST_DIR = "/test-rust-modules";
     const lib_file = path.join(TEST_DIR, "lib.rs");
-    fs.writeFileSync(lib_file, "");
-
     const main_file = lib_file as FilePath;
     const expected = path.join(TEST_DIR, "nonexistent.rs");
 
-    const result = resolve_module_path_rust("crate::nonexistent", main_file);
+    const root_folder = build_file_tree([lib_file as FilePath]);
+
+    const result = resolve_module_path_rust("crate::nonexistent", main_file, root_folder);
 
     expect(result).toBe(expected);
   });
 
   it("should handle Cargo.toml without src/ directory", () => {
+    const TEST_DIR = "/test-rust-modules";
     const cargo_file = path.join(TEST_DIR, "Cargo.toml");
-    fs.writeFileSync(cargo_file, '[package]\nname = "test"');
-
     const lib_file = path.join(TEST_DIR, "lib.rs");
-    fs.writeFileSync(lib_file, "pub mod utils;");
-
     const utils_file = path.join(TEST_DIR, "utils.rs");
-    fs.writeFileSync(utils_file, "pub fn helper() {}");
-
     const main_file = lib_file as FilePath;
 
-    const result = resolve_module_path_rust("crate::utils", main_file);
+    const root_folder = build_file_tree([
+      cargo_file as FilePath,
+      lib_file as FilePath,
+      utils_file as FilePath,
+    ]);
+
+    const result = resolve_module_path_rust("crate::utils", main_file, root_folder);
 
     expect(result).toBe(utils_file);
   });

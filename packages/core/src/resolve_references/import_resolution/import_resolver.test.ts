@@ -4,6 +4,7 @@
 
 import { describe, it, expect } from "vitest";
 import { extract_import_specs, resolve_export_chain } from "./import_resolver";
+import { build_file_tree } from "../symbol_resolution.test_helpers";
 import type { SemanticIndex } from "../../index_single_file/semantic_index";
 import type {
   FilePath,
@@ -353,11 +354,13 @@ describe("resolve_export_chain", () => {
     });
 
     const indices = new Map([[file_path, index]]);
+    const root_folder = build_file_tree([file_path as FilePath]);
 
     const result = resolve_export_chain(
       file_path,
       "helper" as SymbolName,
-      indices
+      indices,
+      root_folder
     );
 
     expect(result).toBe(symbol_id);
@@ -367,18 +370,20 @@ describe("resolve_export_chain", () => {
     const file_path = "/test/utils.js" as FilePath;
     const index = create_test_index(file_path, "javascript");
     const indices = new Map([[file_path, index]]);
+    const root_folder = build_file_tree([file_path as FilePath]);
 
     expect(() => {
-      resolve_export_chain(file_path, "nonexistent" as SymbolName, indices);
+      resolve_export_chain(file_path, "nonexistent" as SymbolName, indices, root_folder);
     }).toThrow("Export not found");
   });
 
   it("should throw error for non-existent file", () => {
     const file_path = "/test/utils.js" as FilePath;
     const indices = new Map();
+    const root_folder = build_file_tree([file_path as FilePath]);
 
     expect(() => {
-      resolve_export_chain(file_path, "helper" as SymbolName, indices);
+      resolve_export_chain(file_path, "helper" as SymbolName, indices, root_folder);
     }).toThrow("Source index not found");
   });
 
@@ -416,11 +421,13 @@ describe("resolve_export_chain", () => {
     });
 
     const indices = new Map([[file_path, index]]);
+    const root_folder = build_file_tree([file_path as FilePath]);
 
     const result = resolve_export_chain(
       file_path,
       "helper" as SymbolName,
-      indices
+      indices,
+      root_folder
     );
 
     // Returns the re-export's own symbol_id (not following the chain)
@@ -459,11 +466,13 @@ describe("resolve_export_chain", () => {
     });
 
     const indices = new Map([[file_path, index]]);
+    const root_folder = build_file_tree([file_path as FilePath]);
 
     const result = resolve_export_chain(
       file_path,
       "MyClass" as SymbolName,
-      indices
+      indices,
+      root_folder
     );
 
     expect(result).toBe(symbol_id);
@@ -493,11 +502,13 @@ describe("resolve_export_chain", () => {
     });
 
     const indices = new Map([[file_path, index]]);
+    const root_folder = build_file_tree([file_path as FilePath]);
 
     const result = resolve_export_chain(
       file_path,
       "config" as SymbolName,
-      indices
+      indices,
+      root_folder
     );
 
     expect(result).toBe(symbol_id);
@@ -531,9 +542,10 @@ describe("resolve_export_chain", () => {
     });
 
     const indices = new Map([[file_path, index]]);
+    const root_folder = build_file_tree([file_path as FilePath]);
 
     expect(() => {
-      resolve_export_chain(file_path, "private_helper" as SymbolName, indices);
+      resolve_export_chain(file_path, "private_helper" as SymbolName, indices, root_folder);
     }).toThrow("Export not found");
   });
 });
@@ -571,12 +583,14 @@ describe("Export Alias Resolution", () => {
     });
 
     const indices = new Map([[file_path, index]]);
+    const root_folder = build_file_tree([file_path as FilePath]);
 
     // main.ts: import { publicFoo } from './lib'
     const result = resolve_export_chain(
       file_path,
       "publicFoo" as SymbolName,
-      indices
+      indices,
+      root_folder
     );
 
     expect(result).toBe(symbol_id);
@@ -612,12 +626,14 @@ describe("Export Alias Resolution", () => {
     });
 
     const indices = new Map([[file_path, index]]);
+    const root_folder = build_file_tree([file_path as FilePath]);
 
     // main.ts: import { foo } from './lib'
     const result = resolve_export_chain(
       file_path,
       "foo" as SymbolName,
-      indices
+      indices,
+      root_folder
     );
 
     expect(result).toBe(symbol_id);
@@ -655,10 +671,11 @@ describe("Export Alias Resolution", () => {
     });
 
     const indices = new Map([[file_path, index]]);
+    const root_folder = build_file_tree([file_path as FilePath]);
 
     // main.ts: import { wrongName } from './lib'
     expect(() => {
-      resolve_export_chain(file_path, "wrongName" as SymbolName, indices);
+      resolve_export_chain(file_path, "wrongName" as SymbolName, indices, root_folder);
     }).toThrow("Export not found");
   });
 
@@ -694,11 +711,12 @@ describe("Export Alias Resolution", () => {
     });
 
     const indices = new Map([[file_path, index]]);
+    const root_folder = build_file_tree([file_path as FilePath]);
 
     // main.ts: import { internalFoo } from './lib'
     // This should FAIL because the export alias means only 'publicFoo' is accessible
     expect(() => {
-      resolve_export_chain(file_path, "internalFoo" as SymbolName, indices);
+      resolve_export_chain(file_path, "internalFoo" as SymbolName, indices, root_folder);
     }).toThrow("Export not found");
   });
 
@@ -735,12 +753,14 @@ describe("Export Alias Resolution", () => {
     });
 
     const indices = new Map([[file_path, index]]);
+    const root_folder = build_file_tree([file_path as FilePath]);
 
     // main.ts: import { PublicClass } from './lib'
     const result = resolve_export_chain(
       file_path,
       "PublicClass" as SymbolName,
-      indices
+      indices,
+      root_folder
     );
 
     expect(result).toBe(symbol_id);
@@ -774,12 +794,14 @@ describe("Export Alias Resolution", () => {
     });
 
     const indices = new Map([[file_path, index]]);
+    const root_folder = build_file_tree([file_path as FilePath]);
 
     // main.ts: import { config } from './lib'
     const result = resolve_export_chain(
       file_path,
       "config" as SymbolName,
-      indices
+      indices,
+      root_folder
     );
 
     expect(result).toBe(symbol_id);
@@ -816,12 +838,14 @@ describe("Export Alias Resolution", () => {
     });
 
     const indices = new Map([[file_path, index]]);
+    const root_folder = build_file_tree([file_path as FilePath]);
 
     // main.ts: import { PublicInterface } from './lib'
     const result = resolve_export_chain(
       file_path,
       "PublicInterface" as SymbolName,
-      indices
+      indices,
+      root_folder
     );
 
     expect(result).toBe(symbol_id);
@@ -857,12 +881,14 @@ describe("Export Alias Resolution", () => {
     });
 
     const indices = new Map([[file_path, index]]);
+    const root_folder = build_file_tree([file_path as FilePath]);
 
     // main.ts: import { Status } from './lib'
     const result = resolve_export_chain(
       file_path,
       "Status" as SymbolName,
-      indices
+      indices,
+      root_folder
     );
 
     expect(result).toBe(symbol_id);
@@ -896,12 +922,14 @@ describe("Export Alias Resolution", () => {
     });
 
     const indices = new Map([[file_path, index]]);
+    const root_folder = build_file_tree([file_path as FilePath]);
 
     // main.ts: import { PublicType } from './lib'
     const result = resolve_export_chain(
       file_path,
       "PublicType" as SymbolName,
-      indices
+      indices,
+      root_folder
     );
 
     expect(result).toBe(symbol_id);
@@ -962,17 +990,18 @@ describe("Export Alias Resolution", () => {
     });
 
     const indices = new Map([[file_path, index]]);
+    const root_folder = build_file_tree([file_path as FilePath]);
 
     // Verify each alias resolves to correct symbol
-    expect(resolve_export_chain(file_path, "publicFoo" as SymbolName, indices)).toBe(foo_id);
-    expect(resolve_export_chain(file_path, "publicBar" as SymbolName, indices)).toBe(bar_id);
+    expect(resolve_export_chain(file_path, "publicFoo" as SymbolName, indices, root_folder)).toBe(foo_id);
+    expect(resolve_export_chain(file_path, "publicBar" as SymbolName, indices, root_folder)).toBe(bar_id);
 
     // Verify internal names are not accessible
     expect(() => {
-      resolve_export_chain(file_path, "foo" as SymbolName, indices);
+      resolve_export_chain(file_path, "foo" as SymbolName, indices, root_folder);
     }).toThrow("Export not found");
     expect(() => {
-      resolve_export_chain(file_path, "bar" as SymbolName, indices);
+      resolve_export_chain(file_path, "bar" as SymbolName, indices, root_folder);
     }).toThrow("Export not found");
   });
 
@@ -1033,12 +1062,14 @@ describe("Export Alias Resolution", () => {
       [base_file, base_index],
       [middle_file, middle_index],
     ]);
+    const root_folder = build_file_tree([base_file as FilePath, middle_file as FilePath]);
 
     // main.ts: import { publicCore } from './middle'
     const result = resolve_export_chain(
       middle_file,
       "publicCore" as SymbolName,
-      indices
+      indices,
+      root_folder
     );
 
     // Should follow chain and resolve to core in base.ts
@@ -1098,16 +1129,17 @@ describe("Export Alias Resolution", () => {
     });
 
     const indices = new Map([[file_path, index]]);
+    const root_folder = build_file_tree([file_path as FilePath]);
 
     // Direct export works with its name
-    expect(resolve_export_chain(file_path, "direct" as SymbolName, indices)).toBe(direct_id);
+    expect(resolve_export_chain(file_path, "direct" as SymbolName, indices, root_folder)).toBe(direct_id);
 
     // Aliased export works with alias
-    expect(resolve_export_chain(file_path, "aliased" as SymbolName, indices)).toBe(internal_id);
+    expect(resolve_export_chain(file_path, "aliased" as SymbolName, indices, root_folder)).toBe(internal_id);
 
     // Internal name not accessible when aliased
     expect(() => {
-      resolve_export_chain(file_path, "internal" as SymbolName, indices);
+      resolve_export_chain(file_path, "internal" as SymbolName, indices, root_folder);
     }).toThrow("Export not found");
   });
 });
@@ -1145,6 +1177,7 @@ describe("Default Export Resolution", () => {
     });
 
     const indices = new Map([[file_path, index]]);
+    const root_folder = build_file_tree([file_path as FilePath]);
 
     // main.ts: import calc from './math'
     // Local name "calc" should be ignored for default imports
@@ -1152,6 +1185,7 @@ describe("Default Export Resolution", () => {
       file_path,
       "calc" as SymbolName,
       indices,
+      root_folder,
       "default"
     );
 
@@ -1191,12 +1225,14 @@ describe("Default Export Resolution", () => {
     });
 
     const indices = new Map([[file_path, index]]);
+    const root_folder = build_file_tree([file_path as FilePath]);
 
     // main.ts: import MyUser from './user'
     const result = resolve_export_chain(
       file_path,
       "MyUser" as SymbolName,
       indices,
+      root_folder,
       "default"
     );
 
@@ -1231,12 +1267,14 @@ describe("Default Export Resolution", () => {
     });
 
     const indices = new Map([[file_path, index]]);
+    const root_folder = build_file_tree([file_path as FilePath]);
 
     // main.ts: import config from './config'
     const result = resolve_export_chain(
       file_path,
       "config" as SymbolName,
       indices,
+      root_folder,
       "default"
     );
 
@@ -1274,12 +1312,14 @@ describe("Default Export Resolution", () => {
     });
 
     const indices = new Map([[file_path, index]]);
+    const root_folder = build_file_tree([file_path as FilePath]);
 
     // main.ts: import Config from './types'
     const result = resolve_export_chain(
       file_path,
       "Config" as SymbolName,
       indices,
+      root_folder,
       "default"
     );
 
@@ -1316,12 +1356,14 @@ describe("Default Export Resolution", () => {
     });
 
     const indices = new Map([[file_path, index]]);
+    const root_folder = build_file_tree([file_path as FilePath]);
 
     // main.ts: import MyStatus from './status'
     const result = resolve_export_chain(
       file_path,
       "MyStatus" as SymbolName,
       indices,
+      root_folder,
       "default"
     );
 
@@ -1356,12 +1398,14 @@ describe("Default Export Resolution", () => {
     });
 
     const indices = new Map([[file_path, index]]);
+    const root_folder = build_file_tree([file_path as FilePath]);
 
     // main.ts: import MyConfig from './types'
     const result = resolve_export_chain(
       file_path,
       "MyConfig" as SymbolName,
       indices,
+      root_folder,
       "default"
     );
 
@@ -1398,6 +1442,7 @@ describe("Default Export Resolution", () => {
     });
 
     const indices = new Map([[file_path, index]]);
+    const root_folder = build_file_tree([file_path as FilePath]);
 
     // main.ts: import something from './lib'
     expect(() => {
@@ -1405,6 +1450,7 @@ describe("Default Export Resolution", () => {
         file_path,
         "something" as SymbolName,
         indices,
+        root_folder,
         "default"
       );
     }).toThrow("Default export not found");
@@ -1473,12 +1519,14 @@ describe("Default Export Resolution", () => {
       [base_file, base_index],
       [barrel_file, barrel_index],
     ]);
+    const root_folder = build_file_tree([base_file as FilePath, barrel_file as FilePath]);
 
     // main.ts: import something from './barrel'
     const result = resolve_export_chain(
       barrel_file,
       "something" as SymbolName,
       indices,
+      root_folder,
       "default"
     );
 
@@ -1544,12 +1592,14 @@ describe("Default Export Resolution", () => {
     });
 
     const indices = new Map([[file_path, index]]);
+    const root_folder = build_file_tree([file_path as FilePath]);
 
     // Default import: import lib from './lib'
     const default_result = resolve_export_chain(
       file_path,
       "lib" as SymbolName,
       indices,
+      root_folder,
       "default"
     );
     expect(default_result).toBe(main_id);
@@ -1559,6 +1609,7 @@ describe("Default Export Resolution", () => {
       file_path,
       "helper" as SymbolName,
       indices,
+      root_folder,
       "named"
     );
     expect(named_result).toBe(helper_id);
@@ -1621,6 +1672,7 @@ describe("Default Export Resolution", () => {
     });
 
     const indices = new Map([[file_path, index]]);
+    const root_folder = build_file_tree([file_path as FilePath]);
 
     // Should throw because file has two default exports
     expect(() => {
@@ -1628,6 +1680,7 @@ describe("Default Export Resolution", () => {
         file_path,
         "anything" as SymbolName,
         indices,
+        root_folder,
         "default"
       );
     }).toThrow("Multiple default exports found");
@@ -1694,6 +1747,7 @@ describe("Default Export Resolution", () => {
       [a_file, a_index],
       [b_file, b_index],
     ]);
+    const root_folder = build_file_tree([a_file as FilePath, b_file as FilePath]);
 
     // main.ts: import foo from './a'
     // Should detect cycle and return null (not throw)
@@ -1701,6 +1755,7 @@ describe("Default Export Resolution", () => {
       a_file,
       "foo" as SymbolName,
       indices,
+      root_folder,
       "default"
     );
 
@@ -1739,6 +1794,7 @@ describe("Default Export Resolution", () => {
     });
 
     const indices = new Map([[file_path, index]]);
+    const root_folder = build_file_tree([file_path as FilePath]);
 
     // All these different local names should resolve to the same default export
     const names = ["calc", "calculator", "doMath", "fn", "X"];
@@ -1748,6 +1804,7 @@ describe("Default Export Resolution", () => {
         file_path,
         local_name as SymbolName,
         indices,
+        root_folder,
         "default"
       );
       expect(result).toBe(symbol_id);
@@ -1786,12 +1843,14 @@ describe("Default Export Resolution", () => {
     });
 
     const indices = new Map([[file_path, index]]);
+    const root_folder = build_file_tree([file_path as FilePath]);
 
     // main.ts: import calc from './math'
     const result = resolve_export_chain(
       file_path,
       "calc" as SymbolName,
       indices,
+      root_folder,
       "default"
     );
 
@@ -1831,12 +1890,14 @@ describe("Default Export Resolution", () => {
     });
 
     const indices = new Map([[file_path, index]]);
+    const root_folder = build_file_tree([file_path as FilePath]);
 
     // main.ts: import Component from './component'
     const result = resolve_export_chain(
       file_path,
       "Component" as SymbolName,
       indices,
+      root_folder,
       "default"
     );
 
@@ -1935,6 +1996,7 @@ describe("Default Export Resolution", () => {
       [middle_file, middle_index],
       [barrel_file, barrel_index],
     ]);
+    const root_folder = build_file_tree([base_file as FilePath, middle_file as FilePath, barrel_file as FilePath]);
 
     // main.ts: import something from './barrel'
     // Should follow chain: barrel → middle → base
@@ -1942,6 +2004,7 @@ describe("Default Export Resolution", () => {
       barrel_file,
       "something" as SymbolName,
       indices,
+      root_folder,
       "default"
     );
 
@@ -2012,12 +2075,14 @@ describe("Default Export Resolution", () => {
       [base_file, base_index],
       [barrel_file, barrel_index],
     ]);
+    const root_folder = build_file_tree([base_file as FilePath, barrel_file as FilePath]);
 
     // main.ts: import MyComponent from './barrel'
     const result = resolve_export_chain(
       barrel_file,
       "MyComponent" as SymbolName,
       indices,
+      root_folder,
       "default"
     );
 
@@ -2083,12 +2148,14 @@ describe("Default Export Resolution", () => {
       [config_file, config_index],
       [index_file, index_index],
     ]);
+    const root_folder = build_file_tree([config_file as FilePath, index_file as FilePath]);
 
     // main.ts: import config from './index'
     const result = resolve_export_chain(
       index_file,
       "config" as SymbolName,
       indices,
+      root_folder,
       "default"
     );
 

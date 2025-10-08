@@ -1175,9 +1175,8 @@ class User:
             property_method.decorators &&
             property_method.decorators.length > 0
           ) {
-            expect(property_method.decorators).toContain(
-              expect.stringMatching(/property/)
-            );
+            const decorator_names = property_method.decorators.map(d => d.name);
+            expect(decorator_names).toContain("property");
           }
         }
 
@@ -1192,9 +1191,8 @@ class User:
 
           expect(static_method.decorators).toBeDefined();
           if (static_method.decorators && static_method.decorators.length > 0) {
-            expect(static_method.decorators).toContain(
-              expect.stringMatching(/staticmethod/)
-            );
+            const decorator_names = static_method.decorators.map(d => d.name);
+            expect(decorator_names).toContain("staticmethod");
           }
         }
 
@@ -1208,9 +1206,8 @@ class User:
 
           expect(class_method.decorators).toBeDefined();
           if (class_method.decorators && class_method.decorators.length > 0) {
-            expect(class_method.decorators).toContain(
-              expect.stringMatching(/classmethod/)
-            );
+            const decorator_names = class_method.decorators.map(d => d.name);
+            expect(decorator_names).toContain("classmethod");
           }
 
           // Verify parameters (should have 'data' parameter, 'cls' may be excluded)

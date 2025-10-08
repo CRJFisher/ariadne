@@ -17,6 +17,7 @@ import type {
 import type { Location, ScopeId, FilePath, SymbolName } from "@ariadnejs/types";
 import { ReferenceBuilder } from "../../references/reference_builder";
 import { JAVASCRIPT_METADATA_EXTRACTORS } from "./javascript_metadata";
+import { node_to_location } from "../../node_utils";
 
 describe("JavaScript Builder Configuration", () => {
   let parser: Parser;
@@ -59,13 +60,7 @@ describe("JavaScript Builder Configuration", () => {
       entity: nodeType as any,
       node: node as any,
       text: node.text as SymbolName,
-      location: {
-        file_path: TEST_FILE_PATH,
-        start_line: node.startPosition.row + 1,
-        start_column: node.startPosition.column + 1,
-        end_line: node.endPosition.row + 1,
-        end_column: node.endPosition.column + 1,
-      },
+      location: node_to_location(node, TEST_FILE_PATH),
     };
   }
 
@@ -146,13 +141,7 @@ describe("JavaScript Builder Configuration", () => {
           entity: "class" as SemanticEntity,
           node: nameNode as any,
           text: nameNode.text as SymbolName,
-          location: {
-            file_path: TEST_FILE_PATH,
-            start_line: nameNode.startPosition.row + 1,
-            start_column: nameNode.startPosition.column + 1,
-            end_line: nameNode.endPosition.row + 1,
-            end_column: nameNode.endPosition.column + 1,
-          },
+          location: node_to_location(nameNode, TEST_FILE_PATH),
         };
 
         const processor = JAVASCRIPT_BUILDER_CONFIG.get("definition.class");
@@ -185,13 +174,7 @@ describe("JavaScript Builder Configuration", () => {
           entity: "function" as SemanticEntity,
           node: nameNode as any,
           text: nameNode.text as SymbolName,
-          location: {
-            file_path: TEST_FILE_PATH,
-            start_line: nameNode.startPosition.row + 1,
-            start_column: nameNode.startPosition.column + 1,
-            end_line: nameNode.endPosition.row + 1,
-            end_column: nameNode.endPosition.column + 1,
-          },
+          location: node_to_location(nameNode, TEST_FILE_PATH),
         };
 
         const processor = JAVASCRIPT_BUILDER_CONFIG.get("definition.function");
@@ -224,13 +207,7 @@ describe("JavaScript Builder Configuration", () => {
           entity: "variable" as SemanticEntity,
           node: nameNode as any,
           text: nameNode.text as SymbolName,
-          location: {
-            file_path: TEST_FILE_PATH,
-            start_line: nameNode.startPosition.row + 1,
-            start_column: nameNode.startPosition.column + 1,
-            end_line: nameNode.endPosition.row + 1,
-            end_column: nameNode.endPosition.column + 1,
-          },
+          location: node_to_location(nameNode, TEST_FILE_PATH),
         };
 
         const processor = JAVASCRIPT_BUILDER_CONFIG.get("definition.variable");
@@ -269,13 +246,7 @@ describe("JavaScript Builder Configuration", () => {
           entity: "class" as SemanticEntity,
           node: classNameNode as any,
           text: classNameNode.text as SymbolName,
-          location: {
-            file_path: TEST_FILE_PATH,
-            start_line: classNameNode.startPosition.row + 1,
-            start_column: classNameNode.startPosition.column + 1,
-            end_line: classNameNode.endPosition.row + 1,
-            end_column: classNameNode.endPosition.column + 1,
-          },
+          location: node_to_location(classNameNode, TEST_FILE_PATH),
         };
 
         const classProcessor =
@@ -296,13 +267,7 @@ describe("JavaScript Builder Configuration", () => {
           entity: "method" as SemanticEntity,
           node: methodNameNode as any,
           text: methodNameNode.text as SymbolName,
-          location: {
-            file_path: TEST_FILE_PATH,
-            start_line: methodNameNode.startPosition.row + 1,
-            start_column: methodNameNode.startPosition.column + 1,
-            end_line: methodNameNode.endPosition.row + 1,
-            end_column: methodNameNode.endPosition.column + 1,
-          },
+          location: node_to_location(methodNameNode, TEST_FILE_PATH),
         };
 
         const methodProcessor =
@@ -338,13 +303,7 @@ describe("JavaScript Builder Configuration", () => {
           entity: "import" as SemanticEntity,
           node: nameNode as any,
           text: nameNode.text as SymbolName,
-          location: {
-            file_path: TEST_FILE_PATH,
-            start_line: nameNode.startPosition.row + 1,
-            start_column: nameNode.startPosition.column + 1,
-            end_line: nameNode.endPosition.row + 1,
-            end_column: nameNode.endPosition.column + 1,
-          },
+          location: node_to_location(nameNode, TEST_FILE_PATH),
         };
 
         const processor = JAVASCRIPT_BUILDER_CONFIG.get("import.default");
@@ -381,13 +340,7 @@ describe("JavaScript Builder Configuration", () => {
           entity: "function" as SemanticEntity,
           node: nameNode as any,
           text: nameNode.text as SymbolName,
-          location: {
-            file_path: TEST_FILE_PATH,
-            start_line: nameNode.startPosition.row + 1,
-            start_column: nameNode.startPosition.column + 1,
-            end_line: nameNode.endPosition.row + 1,
-            end_column: nameNode.endPosition.column + 1,
-          },
+          location: node_to_location(nameNode, TEST_FILE_PATH),
         };
 
         const processor = JAVASCRIPT_BUILDER_CONFIG.get("definition.arrow");
@@ -426,13 +379,7 @@ describe("JavaScript Builder Configuration", () => {
           entity: "class" as SemanticEntity,
           node: classNameNode as any,
           text: classNameNode.text as SymbolName,
-          location: {
-            file_path: TEST_FILE_PATH,
-            start_line: classNameNode.startPosition.row + 1,
-            start_column: classNameNode.startPosition.column + 1,
-            end_line: classNameNode.endPosition.row + 1,
-            end_column: classNameNode.endPosition.column + 1,
-          },
+          location: node_to_location(classNameNode, TEST_FILE_PATH),
         };
 
         const classProcessor =
@@ -453,13 +400,7 @@ describe("JavaScript Builder Configuration", () => {
           entity: "property" as SemanticEntity,
           node: propNode as any,
           text: propNode.text as SymbolName,
-          location: {
-            file_path: TEST_FILE_PATH,
-            start_line: propNode.startPosition.row + 1,
-            start_column: propNode.startPosition.column + 1,
-            end_line: propNode.endPosition.row + 1,
-            end_column: propNode.endPosition.column + 1,
-          },
+          location: node_to_location(propNode, TEST_FILE_PATH),
         };
 
         const propProcessor = JAVASCRIPT_BUILDER_CONFIG.get("definition.field");
@@ -496,13 +437,7 @@ describe("JavaScript Builder Configuration", () => {
           entity: "function" as SemanticEntity,
           node: funcNameNode as any,
           text: funcNameNode.text as SymbolName,
-          location: {
-            file_path: TEST_FILE_PATH,
-            start_line: funcNameNode.startPosition.row + 1,
-            start_column: funcNameNode.startPosition.column + 1,
-            end_line: funcNameNode.endPosition.row + 1,
-            end_column: funcNameNode.endPosition.column + 1,
-          },
+          location: node_to_location(funcNameNode, TEST_FILE_PATH),
         };
 
         const funcProcessor = JAVASCRIPT_BUILDER_CONFIG.get(
@@ -524,13 +459,7 @@ describe("JavaScript Builder Configuration", () => {
               entity: "parameter" as SemanticEntity,
               node: child as any,
               text: child.text as SymbolName,
-              location: {
-                file_path: TEST_FILE_PATH,
-                start_line: child.startPosition.row + 1,
-                start_column: child.startPosition.column + 1,
-                end_line: child.endPosition.row + 1,
-                end_column: child.endPosition.column + 1,
-              },
+              location: node_to_location(child, TEST_FILE_PATH),
             };
 
             const paramProcessor =
@@ -639,13 +568,7 @@ describe("JavaScript Builder Configuration", () => {
                 entity: "call" as SemanticEntity,
                 node: propNode as any,
                 text: propNode.text as SymbolName,
-                location: {
-                  file_path: TEST_FILE_PATH,
-                  start_line: propNode.startPosition.row + 1,
-                  start_column: propNode.startPosition.column + 1,
-                  end_line: propNode.endPosition.row + 1,
-                  end_column: propNode.endPosition.column + 1,
-                },
+                location: node_to_location(propNode, TEST_FILE_PATH),
               });
             }
           }
@@ -700,13 +623,7 @@ describe("JavaScript Builder Configuration", () => {
                 entity: "call" as SemanticEntity,
                 node: propNode as any,
                 text: propNode.text as SymbolName,
-                location: {
-                  file_path: TEST_FILE_PATH,
-                  start_line: propNode.startPosition.row + 1,
-                  start_column: propNode.startPosition.column + 1,
-                  end_line: propNode.endPosition.row + 1,
-                  end_column: propNode.endPosition.column + 1,
-                },
+                location: node_to_location(propNode, TEST_FILE_PATH),
               });
             }
           }
@@ -758,13 +675,7 @@ describe("JavaScript Builder Configuration", () => {
               entity: "identifier" as SemanticEntity,
               node: nameNode as any,
               text: nameNode.text as SymbolName,
-              location: {
-                file_path: TEST_FILE_PATH,
-                start_line: nameNode.startPosition.row + 1,
-                start_column: nameNode.startPosition.column + 1,
-                end_line: nameNode.endPosition.row + 1,
-                end_column: nameNode.endPosition.column + 1,
-              },
+              location: node_to_location(nameNode, TEST_FILE_PATH),
             });
           }
         }
@@ -861,13 +772,7 @@ describe("JavaScript Builder Configuration", () => {
               entity: "constructor" as SemanticEntity,
               node: constructorNode as any,
               text: constructorNode.text as SymbolName,
-              location: {
-                file_path: TEST_FILE_PATH,
-                start_line: constructorNode.startPosition.row + 1,
-                start_column: constructorNode.startPosition.column + 1,
-                end_line: constructorNode.endPosition.row + 1,
-                end_column: constructorNode.endPosition.column + 1,
-              },
+              location: node_to_location(constructorNode, TEST_FILE_PATH),
             });
           }
         }
@@ -1085,13 +990,7 @@ export { foo };
             entity: "function" as SemanticEntity,
             node: commentNode as any,
             text: commentNode.text as SymbolName,
-            location: {
-              file_path: TEST_FILE_PATH,
-              start_line: commentNode.startPosition.row + 1,
-              start_column: commentNode.startPosition.column + 1,
-              end_line: commentNode.endPosition.row + 1,
-              end_column: commentNode.endPosition.column + 1,
-            },
+            location: node_to_location(commentNode, TEST_FILE_PATH),
           };
 
           const docProcessor = JAVASCRIPT_BUILDER_CONFIG.get(
@@ -1111,13 +1010,7 @@ export { foo };
             entity: "function" as SemanticEntity,
             node: nameNode as any,
             text: nameNode.text as SymbolName,
-            location: {
-              file_path: TEST_FILE_PATH,
-              start_line: nameNode.startPosition.row + 1,
-              start_column: nameNode.startPosition.column + 1,
-              end_line: nameNode.endPosition.row + 1,
-              end_column: nameNode.endPosition.column + 1,
-            },
+            location: node_to_location(nameNode, TEST_FILE_PATH),
           };
 
           const funcProcessor = JAVASCRIPT_BUILDER_CONFIG.get(
@@ -1161,13 +1054,7 @@ export { foo };
             entity: "class" as SemanticEntity,
             node: commentNode as any,
             text: commentNode.text as SymbolName,
-            location: {
-              file_path: TEST_FILE_PATH,
-              start_line: commentNode.startPosition.row + 1,
-              start_column: commentNode.startPosition.column + 1,
-              end_line: commentNode.endPosition.row + 1,
-              end_column: commentNode.endPosition.column + 1,
-            },
+            location: node_to_location(commentNode, TEST_FILE_PATH),
           };
 
           const docProcessor = JAVASCRIPT_BUILDER_CONFIG.get(
@@ -1187,13 +1074,7 @@ export { foo };
             entity: "class" as SemanticEntity,
             node: nameNode as any,
             text: nameNode.text as SymbolName,
-            location: {
-              file_path: TEST_FILE_PATH,
-              start_line: nameNode.startPosition.row + 1,
-              start_column: nameNode.startPosition.column + 1,
-              end_line: nameNode.endPosition.row + 1,
-              end_column: nameNode.endPosition.column + 1,
-            },
+            location: node_to_location(nameNode, TEST_FILE_PATH),
           };
 
           const classProcessor =
@@ -1239,13 +1120,7 @@ export { foo };
             entity: "class" as SemanticEntity,
             node: classNameNode as any,
             text: classNameNode.text as SymbolName,
-            location: {
-              file_path: TEST_FILE_PATH,
-              start_line: classNameNode.startPosition.row + 1,
-              start_column: classNameNode.startPosition.column + 1,
-              end_line: classNameNode.endPosition.row + 1,
-              end_column: classNameNode.endPosition.column + 1,
-            },
+            location: node_to_location(classNameNode, TEST_FILE_PATH),
           };
 
           const classProcessor =
@@ -1262,13 +1137,7 @@ export { foo };
             entity: "method" as SemanticEntity,
             node: commentNode as any,
             text: commentNode.text as SymbolName,
-            location: {
-              file_path: TEST_FILE_PATH,
-              start_line: commentNode.startPosition.row + 1,
-              start_column: commentNode.startPosition.column + 1,
-              end_line: commentNode.endPosition.row + 1,
-              end_column: commentNode.endPosition.column + 1,
-            },
+            location: node_to_location(commentNode, TEST_FILE_PATH),
           };
 
           const docProcessor = JAVASCRIPT_BUILDER_CONFIG.get(
@@ -1288,13 +1157,7 @@ export { foo };
             entity: "method" as SemanticEntity,
             node: methodNameNode as any,
             text: methodNameNode.text as SymbolName,
-            location: {
-              file_path: TEST_FILE_PATH,
-              start_line: methodNameNode.startPosition.row + 1,
-              start_column: methodNameNode.startPosition.column + 1,
-              end_line: methodNameNode.endPosition.row + 1,
-              end_column: methodNameNode.endPosition.column + 1,
-            },
+            location: node_to_location(methodNameNode, TEST_FILE_PATH),
           };
 
           const methodProcessor =
@@ -1334,13 +1197,7 @@ export { foo };
             entity: "variable" as SemanticEntity,
             node: commentNode as any,
             text: commentNode.text as SymbolName,
-            location: {
-              file_path: TEST_FILE_PATH,
-              start_line: commentNode.startPosition.row + 1,
-              start_column: commentNode.startPosition.column + 1,
-              end_line: commentNode.endPosition.row + 1,
-              end_column: commentNode.endPosition.column + 1,
-            },
+            location: node_to_location(commentNode, TEST_FILE_PATH),
           };
 
           const docProcessor = JAVASCRIPT_BUILDER_CONFIG.get(
@@ -1360,13 +1217,7 @@ export { foo };
             entity: "variable" as SemanticEntity,
             node: nameNode as any,
             text: nameNode.text as SymbolName,
-            location: {
-              file_path: TEST_FILE_PATH,
-              start_line: nameNode.startPosition.row + 1,
-              start_column: nameNode.startPosition.column + 1,
-              end_line: nameNode.endPosition.row + 1,
-              end_column: nameNode.endPosition.column + 1,
-            },
+            location: node_to_location(nameNode, TEST_FILE_PATH),
           };
 
           const varProcessor = JAVASCRIPT_BUILDER_CONFIG.get(
@@ -1400,13 +1251,7 @@ export { foo };
             entity: "function" as SemanticEntity,
             node: nameNode as any,
             text: nameNode.text as SymbolName,
-            location: {
-              file_path: TEST_FILE_PATH,
-              start_line: nameNode.startPosition.row + 1,
-              start_column: nameNode.startPosition.column + 1,
-              end_line: nameNode.endPosition.row + 1,
-              end_column: nameNode.endPosition.column + 1,
-            },
+            location: node_to_location(nameNode, TEST_FILE_PATH),
           };
 
           const funcProcessor = JAVASCRIPT_BUILDER_CONFIG.get(

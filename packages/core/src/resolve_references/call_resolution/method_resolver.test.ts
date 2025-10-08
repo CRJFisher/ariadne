@@ -15,6 +15,7 @@ import { resolve_method_calls } from "./method_resolver";
 import { build_scope_resolver_index } from "../scope_resolver_index/scope_resolver_index";
 import { create_resolution_cache } from "../resolution_cache/resolution_cache";
 import { build_type_context } from "../type_resolution/type_context";
+import { build_file_tree } from "../symbol_resolution.test_helpers";
 import type {
   FilePath,
   SymbolId,
@@ -212,7 +213,8 @@ describe("Method Call Resolution", () => {
       });
 
       const indices = new Map([[file_path, index]]);
-      const resolver_index = build_scope_resolver_index(indices);
+      const root_folder = build_file_tree([file_path]);
+      const resolver_index = build_scope_resolver_index(indices, root_folder);
       const cache = create_resolution_cache();
       const type_context = build_type_context(indices, resolver_index, cache, new Map());
 
@@ -370,7 +372,8 @@ describe("Method Call Resolution", () => {
       });
 
       const indices = new Map([[file_path, index]]);
-      const resolver_index = build_scope_resolver_index(indices);
+      const root_folder = build_file_tree([file_path]);
+      const resolver_index = build_scope_resolver_index(indices, root_folder);
       const cache = create_resolution_cache();
       const type_context = build_type_context(indices, resolver_index, cache, new Map());
 
@@ -578,7 +581,8 @@ describe("Method Call Resolution", () => {
       });
 
       const indices = new Map([[file_path, index]]);
-      const resolver_index = build_scope_resolver_index(indices);
+      const root_folder = build_file_tree([file_path]);
+      const resolver_index = build_scope_resolver_index(indices, root_folder);
       const cache = create_resolution_cache();
       const type_context = build_type_context(indices, resolver_index, cache, new Map());
 
@@ -835,7 +839,8 @@ describe("Method Call Resolution", () => {
       });
 
       const indices = new Map([[file_path, index]]);
-      const resolver_index = build_scope_resolver_index(indices);
+      const root_folder = build_file_tree([file_path]);
+      const resolver_index = build_scope_resolver_index(indices, root_folder);
       const cache = create_resolution_cache();
       const type_context = build_type_context(indices, resolver_index, cache, new Map());
 
@@ -907,7 +912,8 @@ describe("Method Call Resolution", () => {
       });
 
       const indices = new Map([[file_path, index]]);
-      const resolver_index = build_scope_resolver_index(indices);
+      const root_folder = build_file_tree([file_path]);
+      const resolver_index = build_scope_resolver_index(indices, root_folder);
       const cache = create_resolution_cache();
       const type_context = build_type_context(indices, resolver_index, cache, new Map());
 
@@ -978,7 +984,8 @@ describe("Method Call Resolution", () => {
       });
 
       const indices = new Map([[file_path, index]]);
-      const resolver_index = build_scope_resolver_index(indices);
+      const root_folder = build_file_tree([file_path]);
+      const resolver_index = build_scope_resolver_index(indices, root_folder);
       const cache = create_resolution_cache();
       const type_context = build_type_context(indices, resolver_index, cache, new Map());
 
@@ -1073,7 +1080,8 @@ describe("Method Call Resolution", () => {
       });
 
       const indices = new Map([[file_path, index]]);
-      const resolver_index = build_scope_resolver_index(indices);
+      const root_folder = build_file_tree([file_path]);
+      const resolver_index = build_scope_resolver_index(indices, root_folder);
       const cache = create_resolution_cache();
       const type_context = build_type_context(indices, resolver_index, cache, new Map());
 
@@ -1213,7 +1221,8 @@ describe("Method Call Resolution", () => {
       });
 
       const indices = new Map([[file_path, index]]);
-      const resolver_index = build_scope_resolver_index(indices);
+      const root_folder = build_file_tree([file_path]);
+      const resolver_index = build_scope_resolver_index(indices, root_folder);
       const cache = create_resolution_cache();
       const type_context = build_type_context(indices, resolver_index, cache, new Map());
 
@@ -1375,7 +1384,8 @@ describe("Method Call Resolution", () => {
       });
 
       const indices = new Map([[file_path, index]]);
-      const resolver_index = build_scope_resolver_index(indices);
+      const root_folder = build_file_tree([file_path]);
+      const resolver_index = build_scope_resolver_index(indices, root_folder);
       const cache = create_resolution_cache();
       const type_context = build_type_context(indices, resolver_index, cache, new Map());
 
@@ -1535,7 +1545,8 @@ describe("Method Call Resolution", () => {
       });
 
       const indices = new Map([[file_path, index]]);
-      const resolver_index = build_scope_resolver_index(indices);
+      const root_folder = build_file_tree([file_path]);
+      const resolver_index = build_scope_resolver_index(indices, root_folder);
       const cache = create_resolution_cache();
       const type_context = build_type_context(indices, resolver_index, cache, new Map());
 
@@ -1732,7 +1743,8 @@ describe("Method Call Resolution", () => {
       });
 
       const indices = new Map([[file_path, index]]);
-      const resolver_index = build_scope_resolver_index(indices);
+      const root_folder = build_file_tree([file_path]);
+      const resolver_index = build_scope_resolver_index(indices, root_folder);
       const cache = create_resolution_cache();
       const type_context = build_type_context(indices, resolver_index, cache, new Map());
 
@@ -1960,7 +1972,8 @@ describe("Method Call Resolution", () => {
       });
 
       const indices = new Map([[file_path, index]]);
-      const resolver_index = build_scope_resolver_index(indices);
+      const root_folder = build_file_tree([file_path]);
+      const resolver_index = build_scope_resolver_index(indices, root_folder);
       const cache = create_resolution_cache();
       const type_context = build_type_context(indices, resolver_index, cache, new Map());
 
@@ -2171,7 +2184,8 @@ describe("Method Call Resolution", () => {
       });
 
       const indices = new Map([[file_path, index]]);
-      const resolver_index = build_scope_resolver_index(indices);
+      const root_folder = build_file_tree([file_path]);
+      const resolver_index = build_scope_resolver_index(indices, root_folder);
       const cache = create_resolution_cache();
       const type_context = build_type_context(indices, resolver_index, cache, new Map());
 
@@ -2351,7 +2365,8 @@ describe("Method Call Resolution", () => {
       });
 
       const indices = new Map([[file_path, index]]);
-      const resolver_index = build_scope_resolver_index(indices);
+      const root_folder = build_file_tree([file_path]);
+      const resolver_index = build_scope_resolver_index(indices, root_folder);
       const cache = create_resolution_cache();
       const type_context = build_type_context(indices, resolver_index, cache, new Map());
 

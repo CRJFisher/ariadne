@@ -262,7 +262,27 @@ function process_definitions(
 ): BuilderResult {
   const builder = new DefinitionBuilder(context);
 
+  // PASS 1: Process all definitions (classes, methods, functions, etc.)
+  // Exclude decorators which need to be processed after their targets exist
   for (const capture of context.captures) {
+    // Skip decorator captures in first pass
+    if (capture.name.startsWith("decorator.")) {
+      continue;
+    }
+
+    const handler = config.get(capture.name);
+    if (handler) {
+      handler.process(capture, builder, context);
+    }
+  }
+
+  // PASS 2: Process decorators after all definitions exist
+  for (const capture of context.captures) {
+    // Only process decorator captures in second pass
+    if (!capture.name.startsWith("decorator.")) {
+      continue;
+    }
+
     const handler = config.get(capture.name);
     if (handler) {
       handler.process(capture, builder, context);
@@ -319,9 +339,16 @@ function build_exported_symbols_map(result: BuilderResult): Map<SymbolName, Expo
   const map = new Map<SymbolName, ExportableDefinition>();
 
   const add_to_map = (def: ExportableDefinition) => {
-    // Only add exported symbols
-    if (!def.is_exported) {
-      return;
+    // ImportDefinitions don't have is_exported - check export field directly
+    if (def.kind === "import") {
+      if (!def.export) {
+        return;
+      }
+    } else {
+      // Only add exported symbols
+      if (!def.is_exported) {
+        return;
+      }
     }
 
     // Get the effective export name (alias or original name)

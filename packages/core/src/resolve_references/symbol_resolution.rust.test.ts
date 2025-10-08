@@ -38,7 +38,8 @@
  */
 
 import { describe, it, expect } from "vitest";
-import { resolve_symbols, build_file_tree } from "./symbol_resolution";
+import { resolve_symbols } from "./symbol_resolution";
+import { build_file_tree } from "./symbol_resolution.test_helpers";
 import type {
   FilePath,
   SymbolId,

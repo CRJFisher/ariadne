@@ -22,6 +22,7 @@ import {
 import type { DefinitionBuilder } from "../../definitions/definition_builder";
 import type { CaptureNode } from "../../semantic_index";
 import type { ProcessingContext } from "../../semantic_index";
+import { node_to_location } from "../../node_utils";
 
 // ============================================================================
 // Types
@@ -155,19 +156,7 @@ export function find_containing_class(capture: CaptureNode): SymbolId | undefine
       const nameNode = node.childForFieldName("name");
       if (nameNode) {
         const className = nameNode.text as SymbolName;
-
-        // Create location from the name node
-        // The query captures the identifier directly: (class_declaration name: (identifier) @definition.class)
-        // So we need to use the exact coordinates of the identifier node
-        // NOTE: Must add 1 to columns to match node_to_location() behavior
-        const location: Location = {
-          file_path: capture.location.file_path,
-          start_line: nameNode.startPosition.row + 1,
-          start_column: nameNode.startPosition.column + 1,
-          end_line: nameNode.endPosition.row + 1,
-          end_column: nameNode.endPosition.column,
-        };
-
+        const location = node_to_location(nameNode, capture.location.file_path);
         return class_symbol(className, location);
       }
     }
@@ -199,42 +188,17 @@ export function find_containing_callable(capture: CaptureNode): SymbolId {
 
       if (node.type === "method_definition") {
         const methodName = nameNode ? nameNode.text : "anonymous";
-        // Reconstruct location using same coordinates as capture
-        const location: Location = nameNode
-          ? {
-              file_path: capture.location.file_path,
-              start_line: nameNode.startPosition.row + 1,
-              start_column: nameNode.startPosition.column + 1,
-              end_line: nameNode.endPosition.row + 1,
-              end_column: nameNode.endPosition.column,
-            }
-          : {
-              file_path: capture.location.file_path,
-              start_line: node.startPosition.row + 1,
-              start_column: node.startPosition.column + 1,
-              end_line: node.endPosition.row + 1,
-              end_column: node.endPosition.column,
-            };
+        const location = nameNode
+          ? node_to_location(nameNode, capture.location.file_path)
+          : node_to_location(node, capture.location.file_path);
         return method_symbol(methodName as SymbolName, location);
       } else if (nameNode) {
         // Named function
-        const location: Location = {
-          file_path: capture.location.file_path,
-          start_line: nameNode.startPosition.row + 1,
-          start_column: nameNode.startPosition.column + 1,
-          end_line: nameNode.endPosition.row + 1,
-          end_column: nameNode.endPosition.column,
-        };
+        const location = node_to_location(nameNode, capture.location.file_path);
         return function_symbol(nameNode.text as SymbolName, location);
       } else {
         // Anonymous function/arrow function - use the location as ID
-        const location: Location = {
-          file_path: capture.location.file_path,
-          start_line: node.startPosition.row + 1,
-          start_column: node.startPosition.column + 1,
-          end_line: node.endPosition.row + 1,
-          end_column: node.endPosition.column,
-        };
+        const location = node_to_location(node, capture.location.file_path);
         return function_symbol("anonymous" as SymbolName, location);
       }
     }

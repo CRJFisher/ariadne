@@ -6,16 +6,17 @@
 
 ## Problem
 
-The [semantic_index.rust.test.ts:1573](packages/core/src/index_single_file/semantic_index.rust.test.ts#L1573) test is currently skipped because Rust lacks the metadata infrastructure needed for accurate method call resolution.
+The [semantic_index.rust.test.ts:1573](packages/core/src/index_single_file/semantic_index.rust.test.ts#L1573) test is currently **failing** (not skipped) because Rust lacks the final wiring needed for method call resolution metadata.
 
 ### Current Gap
 
 When analyzing Rust code with method calls, we cannot determine:
+
 1. **Receiver types from assignments**: When a variable is assigned with a type annotation, we don't track the type
 2. **Receiver types from constructors**: When a variable is assigned from a constructor, we don't track what was constructed
 3. **Method call receiver locations**: Method calls don't record where the receiver expression is located
 
-### Test Scenario (Currently Skipped)
+### Test Scenario (Currently Failing)
 
 ```rust
 struct Service {
@@ -41,126 +42,219 @@ fn main() {
 
 **Problem**: Without tracking the receiver type, we cannot resolve `get_data()` calls to the correct implementation in `impl Service`.
 
-## Root Cause
+## Root Cause Analysis (Updated 2025-10-08)
+
+### Current Implementation Status
+
+**Good News**: Most infrastructure is already implemented! ✅
+
+#### ✅ Already Implemented:
+
+1. **Type System** ([packages/types/src/symbol_references.ts](packages/types/src/symbol_references.ts)):
+
+   - `assignment_type?: TypeInfo` (line 133) - Field exists on SymbolReference
+   - `receiver_location?: Location` (line 236) - Field exists in ReferenceContext
+   - `construct_target?: Location` (line 302) - Field exists in ReferenceContext
+   - All fields are fully documented with usage examples
+
+2. **Metadata Extractors** ([packages/core/src/index_single_file/query_code_tree/language_configs/rust_metadata.ts](packages/core/src/index_single_file/query_code_tree/language_configs/rust_metadata.ts)):
+
+   - `extract_call_receiver()` ✅ (lines 174-223) - Gets receiver location from method calls
+   - `extract_property_chain()` ✅ (lines 254-328) - Builds method/field access chains
+   - `extract_construct_target()` ✅ (lines 420-466) - Finds constructor target variables
+   - `extract_assignment_parts()` ✅ (lines 343-385) - Extracts assignment source/target
+   - `extract_type_from_annotation()` ✅ (lines 116-139) - Extracts type from let bindings
+
+3. **Pipeline Integration** ([packages/core/src/index_single_file/semantic_index.ts:245](packages/core/src/index_single_file/semantic_index.ts#L245)):
+   - RUST_METADATA_EXTRACTORS is wired into the semantic indexing pipeline
+   - Reference builder has access to all extractors via get_metadata_extractors()
+
+#### ❌ What's Actually Missing:
+
+The test fails at line 1610 with `expected undefined to be defined` because:
+
+1. **No Assignment Reference Capture**:
+
+   - Tree-sitter queries capture `let` bindings as `@definition.variable` (rust.scm:353-361)
+   - But no queries create assignment _references_ to track type flow
+   - Test looks for `ref.type === "assignment"` but none exist
+
+2. **Type Annotations Not Extracted**:
+
+   - When `let service1: Service = create_service()` is parsed:
+     - Variable `service1` is captured as a definition ✅
+     - Type annotation `Service` is NOT being extracted and attached to a reference ❌
+     - The `assignment_type` field is never populated despite extractor existing
+
+3. **Missing Reference Builder Handler**:
+   - No handler in `rust_builder.ts` to create assignment references
+   - Extractors exist but aren't being called for let declarations
+
+### The Actual Gap
 
 The Rust semantic indexing currently captures:
+
 - ✅ Method definitions in `impl` blocks
 - ✅ Function calls
 - ✅ Method calls (as generic function calls)
-- ❌ **Variable assignment types** (from annotations or constructors)
-- ❌ **Receiver location metadata** (what expression is the method being called on)
+- ✅ **Metadata extractors exist** for all needed operations
+- ❌ **Tree-sitter queries missing** to capture assignment references
+- ❌ **Reference builder handlers missing** to wire extractors to query captures
+- ❌ **Variable assignment types not populated** (extractors not called)
+- ⚠️ **Receiver location metadata** - extractors exist, need verification of wiring
 
 This metadata is essential for:
+
 - **Type-based method resolution**: Matching method calls to the correct `impl` block
 - **Call graph construction**: Understanding which methods can be called from a given context
 - **Entry point detection**: Finding methods that are never called (requires accurate resolution)
 
-## Solution
+## Solution (Updated Based on Investigation)
 
-Implement assignment tracking and receiver metadata for Rust method resolution:
+Since most infrastructure exists, the work simplifies to **wiring up existing extractors** through tree-sitter queries and reference builder handlers.
 
-### 1. Assignment Type Tracking
+### 1. Add Tree-Sitter Query for Assignment References ⚠️ PRIMARY GAP
 
-**Goal**: Capture the type of variables when assigned
+**Goal**: Capture `let` declarations as assignment references to track type flow
+
+**Status**: This is the main missing piece
 
 **Implementation**:
-- Add `assignment_type` field to variable references
-- Extract type from:
-  - Type annotations: `let x: MyType = ...` → track `MyType`
-  - Struct literals: `let x = MyStruct { ... }` → track `MyStruct`
-  - Function/method returns: Track return types when available
 
-**Files to modify**:
-- `packages/core/src/index_single_file/query_code_tree/language_configs/rust_builder.ts`
-- Tree-sitter queries for Rust variable assignments
-- Reference builder to capture assignment types
+- Add queries to `packages/core/src/index_single_file/query_code_tree/queries/rust.scm`
+- Capture pattern for typed assignments: `let x: Type = value`
+- Capture pattern for constructor assignments: `let x = Constructor { }`
 
-**Example**:
-```rust
-let service: Service = create_service();
-//           ^^^^^^^ - capture this type annotation
+**Specific Changes Needed**:
+
+```scm
+; Add to rust.scm after existing let_declaration queries:
+
+; Assignment with type annotation (for tracking type flow)
+(let_declaration
+  pattern: (identifier) @reference.assignment.target
+  type: (_) @reference.assignment.type
+  value: (_)?) @reference.assignment
+
+; Assignment with struct literal (for tracking constructor type)
+(let_declaration
+  pattern: (identifier) @reference.assignment.target
+  value: (struct_expression
+    name: (type_identifier) @reference.assignment.constructor)) @reference.assignment
 ```
 
-### 2. Receiver Location Metadata
+**Test Impact**: This will make the test find assignment references at line 1608
 
-**Goal**: Track the receiver expression for method calls
+### 2. Add Reference Builder Handler for Assignments
 
-**Implementation**:
-- Add `receiver_location` field to method call references
-- Capture the location of the expression before the `.`
-- Store as a `Location` object for later type resolution
+**Goal**: Wire up the existing extractors when assignment captures are processed
 
-**Files to modify**:
-- `packages/core/src/index_single_file/query_code_tree/language_configs/rust_builder.ts`
-- Tree-sitter queries for Rust method calls (field expressions)
-- Reference builder to capture receiver nodes
-
-**Example**:
-```rust
-service1.get_data();
-^^^^^^^^ - capture location of receiver expression
-```
-
-### 3. Method Resolution Algorithm
-
-**Goal**: Use receiver metadata to resolve method calls to correct impl blocks
+**Status**: Missing handler in `rust_builder.ts`
 
 **Implementation**:
-- Look up receiver variable's assignment type
-- Find `impl` blocks for that type
-- Resolve method name within that impl block
-- Return the correct method definition
 
-**Files to modify**:
-- `packages/core/src/resolve_references/method_resolution/` (new module)
-- Integration with existing symbol resolution
+- Add handler in `packages/core/src/index_single_file/query_code_tree/language_configs/rust_builder.ts`
+- Map capture name `reference.assignment` to a processing function
+- Call existing extractors:
+  - `extract_type_from_annotation()` to populate `assignment_type`
+  - `extract_assignment_parts()` to get source/target locations
 
-### 4. Update Reference Schema
-
-**Type definitions to add**:
+**Specific Changes Needed**:
 
 ```typescript
-// In @ariadnejs/types
-interface Reference {
-  // ... existing fields ...
+// Add to RUST_BUILDER_CONFIG in rust_builder.ts:
 
-  // For variable assignments
-  assignment_type?: SymbolName;  // Type from annotation or constructor
+[
+  "reference.assignment",
+  {
+    process: (capture: CaptureNode, builder: DefinitionBuilder, context: ProcessingContext) => {
+      const assignment_parts = context.metadata_extractors?.extract_assignment_parts(
+        capture.node,
+        context.file_path
+      );
 
-  // For method calls
-  receiver_location?: Location;  // Where the receiver expression is
-}
+      const assignment_type = context.metadata_extractors?.extract_type_from_annotation(
+        capture.node,
+        context.file_path
+      );
+
+      builder.add_reference({
+        type: "assignment",
+        name: capture.text,
+        location: capture.location,
+        scope_id: context.get_scope_id(capture.location),
+        assignment_type,
+        // ... other fields
+      });
+    }
+  }
+]
 ```
+
+### 3. Verify Receiver Location Metadata
+
+**Goal**: Confirm method calls already populate receiver_location (likely already working)
+
+**Status**: ✅ Extractors exist, just need to verify wiring
+
+**Implementation**:
+
+- Check if method call references use `extract_call_receiver()`
+- Likely already working via reference_builder.ts generic context extraction
+- Run test to verify: `npm test -- semantic_index.rust.test.ts -t "receiver location"`
+
+**Files to check**:
+
+- `packages/core/src/index_single_file/references/reference_builder.ts` (lines 250-316)
+- Verify ReferenceKind.METHOD_CALL triggers receiver extraction
+
+### 4. NO NEW TYPE DEFINITIONS NEEDED ✅
+
+**Status**: Already Complete
+
+All required type definitions already exist:
+
+- `SymbolReference.assignment_type?: TypeInfo` ✅
+- `ReferenceContext.receiver_location?: Location` ✅
+- `ReferenceContext.construct_target?: Location` ✅
+
+See: [packages/types/src/symbol_references.ts](packages/types/src/symbol_references.ts)
 
 ## Testing Strategy
 
 ### Phase 1: Assignment Type Tracking
+
 ```bash
 cd packages/core
 npm test -- semantic_index.rust.test.ts -t "assignment type"
 ```
 
 Test cases:
+
 - ✅ Type annotations: `let x: MyType = expr`
 - ✅ Struct literals: `let x = MyStruct { fields }`
 - ✅ Function returns: Track when return type is known
 
 ### Phase 2: Receiver Location Capture
+
 ```bash
 npm test -- semantic_index.rust.test.ts -t "receiver location"
 ```
 
 Test cases:
+
 - ✅ Method calls on variables: `variable.method()`
 - ✅ Method calls on expressions: `create_obj().method()`
 - ✅ Chained method calls: `obj.method1().method2()`
 
 ### Phase 3: Full Method Resolution
+
 ```bash
 npm test -- semantic_index.rust.test.ts -t "method resolution metadata"
 ```
 
 Un-skip the test at line 1573 and verify:
+
 - ✅ Resolves method calls with type-annotated receivers
 - ✅ Resolves method calls with constructor-assigned receivers
 - ✅ Handles multiple impl blocks for different types
@@ -168,16 +262,19 @@ Un-skip the test at line 1573 and verify:
 ## Acceptance Criteria
 
 1. **Assignment type tracking works**:
+
    - Variable assignments capture type from annotations
    - Variable assignments capture type from struct literals
    - Types are stored in reference metadata
 
 2. **Receiver location tracking works**:
+
    - Method calls capture receiver expression location
    - Location points to the correct AST node
    - Works for variables, expressions, and chains
 
 3. **Test passes**:
+
    - Un-skip test at `semantic_index.rust.test.ts:1573`
    - All assertions pass
    - No regressions in existing Rust tests
@@ -194,39 +291,79 @@ Un-skip the test at line 1573 and verify:
 - Method resolution (general): Future work for other languages
 - Call graph construction: Depends on accurate method resolution
 
-## Implementation Notes
+## Implementation Notes (Updated Based on Investigation)
 
-### Tree-sitter Query Hints
+### Existing Implementation Details
 
-For assignment type tracking:
+**Metadata Extractors Location**: [packages/core/src/index_single_file/query_code_tree/language_configs/rust_metadata.ts](packages/core/src/index_single_file/query_code_tree/language_configs/rust_metadata.ts)
+
+All required extractors are **already implemented and tested**:
+
+- `extract_call_receiver()` - Lines 174-223, handles method calls, associated functions, turbofish syntax
+- `extract_property_chain()` - Lines 254-328, recursive traversal of field expressions
+- `extract_construct_target()` - Lines 420-466, finds let declaration patterns
+- `extract_assignment_parts()` - Lines 343-385, handles let bindings and assignments
+- `extract_type_from_annotation()` - Lines 116-139, extracts Rust types including generics
+
+**Test Coverage**: [packages/core/src/index_single_file/query_code_tree/language_configs/rust_metadata.test.ts](packages/core/src/index_single_file/query_code_tree/language_configs/rust_metadata.test.ts)
+
+Each extractor has comprehensive unit tests validating:
+
+- Type annotations (i32, String, Vec<T>, Option<T>)
+- Method call receiver extraction
+- Property chain traversal
+- Constructor target identification
+
+### Current Query File State
+
+**Location**: [packages/core/src/index_single_file/query_code_tree/queries/rust.scm](packages/core/src/index_single_file/query_code_tree/queries/rust.scm)
+
+**Existing patterns** (lines 353-361):
+
 ```scm
-; Type annotation
+; Variable bindings (currently only for definitions)
 (let_declaration
-  pattern: (identifier) @var.name
-  type: (_) @var.type)
+  pattern: (identifier) @definition.variable
+)
 
-; Struct literal
+; Mutable variables (currently only for definitions)
 (let_declaration
-  value: (struct_expression
-    name: (type_identifier) @struct.type))
+  (mutable_specifier)
+  pattern: (identifier) @definition.variable.mut
+)
 ```
 
-For receiver location:
-```scm
-; Method call
-(call_expression
-  function: (field_expression
-    value: (_) @receiver
-    field: (field_identifier) @method.name))
-```
+**What's missing**: No `@reference.assignment` capture to create assignment references
 
-### Suggested Implementation Order
+### Revised Implementation Order (4-5 days)
 
-1. **Week 1**: Add `assignment_type` field and capture from type annotations
-2. **Week 2**: Capture assignment type from struct literals and function returns
-3. **Week 3**: Add `receiver_location` field and capture for method calls
-4. **Week 4**: Implement method resolution algorithm using the metadata
-5. **Week 5**: Testing, documentation, and integration
+1. **Day 1**: Add tree-sitter queries for assignment references
+
+   - Modify rust.scm to capture `@reference.assignment`
+   - Run failing test to verify captures are found
+
+2. **Day 2**: Add reference builder handler
+
+   - Add handler to RUST_BUILDER_CONFIG for `reference.assignment`
+   - Wire up existing extractors
+   - Run test to verify assignment_type is populated
+
+3. **Day 3**: Verify receiver_location is working
+
+   - Check reference_builder.ts integration
+   - Run test to verify method calls have receiver_location
+   - Fix any gaps in wiring
+
+4. **Day 4**: Make test pass
+
+   - Run full test at line 1573
+   - Debug any remaining issues
+   - Verify all assertions pass
+
+5. **Day 5**: Verification & cleanup
+   - Run all Rust tests to ensure no regressions
+   - Clean up any debug code
+   - Update documentation if needed
 
 ### Performance Considerations
 
@@ -237,6 +374,7 @@ For receiver location:
 ### Future Enhancements
 
 This work enables future improvements:
+
 - Type inference for Rust (using assignment flow)
 - Trait method resolution (using type information)
 - Generic type instantiation tracking
@@ -249,8 +387,36 @@ This work enables future improvements:
 - ✅ Method resolution accuracy >95% for common cases
 - ✅ All existing Rust tests still pass
 
-## Estimated Effort
+## Estimated Effort (Updated 2025-10-08)
 
-**Size**: Medium (2-3 weeks)
-**Complexity**: Medium-High
+**Original Estimate**: Medium (2-3 weeks)
+**Revised Estimate**: Small-Medium (4-5 days) ⬇️ **SIGNIFICANTLY REDUCED**
+
+**Complexity**: Low-Medium (down from Medium-High)
+
+- Most infrastructure already exists
+- Clear implementation path identified
+- Well-tested extractors available
+- Single test validates all work
+
 **Priority**: Medium (enables better call graph analysis for Rust)
+
+### Why the Reduction?
+
+1. **Type definitions**: ✅ Already complete (0 days instead of 3-5 days)
+2. **Metadata extractors**: ✅ Already implemented and tested (0 days instead of 5-7 days)
+3. **Pipeline integration**: ✅ Already wired up (0 days instead of 2-3 days)
+4. **Remaining work**: Only tree-sitter queries + reference builder handler (4-5 days)
+
+### Risk Assessment
+
+**Low Risk**:
+
+- Changes are additive (new queries, new handlers)
+- Existing infrastructure proven to work
+- Clear test-driven approach
+- No breaking changes to existing code
+
+### Recommendation
+
+**Proceed as single task**. Well-scoped, low-risk, with clear acceptance criteria.
