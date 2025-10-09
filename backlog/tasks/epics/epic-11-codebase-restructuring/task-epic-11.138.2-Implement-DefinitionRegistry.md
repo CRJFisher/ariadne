@@ -1,7 +1,7 @@
 # Task: Implement DefinitionRegistry
 
 **Parent Task**: task-epic-11.138 - Implement Project Coordination Layer
-**Status**: Not Started
+**Status**: Completed
 **Priority**: High
 **Complexity**: Medium
 
@@ -528,4 +528,51 @@ export { DefinitionRegistry } from './definition_registry'
 
 ## Implementation Notes
 
-(To be filled in during implementation)
+### Completed: 2025-10-10
+
+#### Files Created
+1. **`packages/core/src/project/definition_registry.ts`** (144 lines)
+   - Implemented DefinitionRegistry class with full bidirectional mapping
+   - All methods implemented: `update_file()`, `get()`, `get_file_definitions()`, `remove_file()`, `has()`, `get_all_files()`, `get_all_definitions()`, `size()`, `clear()`
+   - Used `FilePath` type instead of `FileId` (aligned with existing codebase types)
+
+2. **`packages/core/src/project/definition_registry.test.ts`** (332 lines)
+   - 13 comprehensive unit tests covering all methods
+   - Tests verify bidirectional mapping consistency
+   - Edge cases: empty files, unknown files, file isolation, graceful error handling
+   - All tests passing ✓
+
+3. **`packages/core/src/project/index.ts`** (3 lines)
+   - Module exports for DefinitionRegistry
+   - Ready for additional registries in future sub-tasks
+
+#### Key Implementation Details
+- **Type Alignment**: Used `FilePath` instead of `FileId` to match `@ariadnejs/types` exports
+- **Atomic Updates**: `update_file()` calls `remove_file()` first, ensuring no stale data
+- **Memory Safety**: Both indexes (`by_symbol` and `by_file`) properly cleaned in `remove_file()`
+- **Empty File Handling**: Correctly avoids adding empty file entries (line 42-44 in implementation)
+
+#### Test Results
+- **13/13 tests passing** ✓
+- **Test Coverage**: Comprehensive
+  - update_file: add, replace, multiple files
+  - get: existing and missing symbols
+  - get_file_definitions: with data and empty
+  - remove_file: complete removal, file isolation, graceful errors
+  - Utility methods: has, get_all_files, clear
+
+#### Build Verification
+- **TypeScript compilation**: Zero errors ✓
+- **Full test suite**: 1094 passed | 5 failed (pre-existing failures unrelated to this task)
+  - Pre-existing failures in namespace resolution and method call resolution
+  - No regressions introduced by DefinitionRegistry
+
+#### Deviations from Plan
+- Used `FilePath` instead of `FileId` (FileId doesn't exist in @ariadnejs/types)
+- Used actual `FunctionDefinition` and `VariableDefinition` types in tests instead of generic Definition structure shown in plan
+
+#### Next Steps
+This implementation is complete and ready for integration with:
+- Sub-task 138.3: ReferenceRegistry
+- Sub-task 138.4: ScopeRegistry
+- Sub-task 138.5: Project class that uses all registries
