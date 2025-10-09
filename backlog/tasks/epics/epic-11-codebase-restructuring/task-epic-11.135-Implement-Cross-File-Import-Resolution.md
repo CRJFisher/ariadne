@@ -12,6 +12,7 @@
 **Investigation revealed** that the task description was outdated. Cross-file import resolution has been working since the initial implementation of `scope_resolver_index.ts`. The code at [scope_resolver_index.ts:210-215](../../packages/core/src/resolve_references/scope_resolver_index/scope_resolver_index.ts#L210-L215) already calls `resolve_export_chain()` for all named/default imports.
 
 **Evidence**:
+
 - ✅ Unit tests pass: 14/14 tests in `method_resolver.test.ts` prove cross-file resolution works
 - ✅ Import resolution works: `resolve_export_chain()` is invoked on-demand via resolver closures
 - ✅ Caching works: Resolution results are cached via `ResolutionCache`
@@ -38,6 +39,7 @@ The 38 `.todo()` integration tests across TypeScript, Python, and Rust files rem
 ### Root Cause: Test Infrastructure Problem
 
 All failing tests share the same issue: **incomplete test data setup**
+
 - Every cross-file test has `exported_symbols: new Map()` (empty!)
 - Tests use low-level `_raw` overrides instead of helper specs
 - Each test would need ~50-100 lines of duplicated definition data
@@ -45,32 +47,42 @@ All failing tests share the same issue: **incomplete test data setup**
 - Symbol IDs don't match file path conventions
 
 **Example of required fix** (per test):
+
 ```typescript
 exported_symbols: new Map([
-  ["User", {
-    kind: "class",
-    symbol_id: user_class_id,
-    name: "User",
-    defining_scope_id: user_scope,
-    location: { /* ... */ },
-    methods: [ /* duplicate all 30 lines */ ],
-    properties: [],
-    extends: [],
-    decorators: [],
-    constructor: [],
-    is_exported: true  // Critical!
-  }]
-])
+  [
+    "User",
+    {
+      kind: "class",
+      symbol_id: user_class_id,
+      name: "User",
+      defining_scope_id: user_scope,
+      location: {
+        /* ... */
+      },
+      methods: [
+        /* duplicate all 30 lines */
+      ],
+      properties: [],
+      extends: [],
+      decorators: [],
+      constructor: [],
+      is_exported: true, // Critical!
+    },
+  ],
+]);
 ```
 
 ### Why We're Not Fixing These Now
 
 **Effort vs. Value**:
+
 - Fixing manually: 4-6 hours of tedious, error-prone work
 - Will be replaced by: Task 11.116 JSON fixture approach
 - Automation difficulty: 60-70% reliable at best (exported_symbols duplication too complex)
 
 **Task 11.116 Solves This Properly**:
+
 - JSON fixtures as single source of truth
 - No inline test data construction
 - Automatic fixture regeneration
@@ -100,12 +112,14 @@ exported_symbols: new Map([
 ## Testing Status
 
 **Unit Tests**: ✅ Passing
+
 - `method_resolver.test.ts`: 14/14 passing (includes cross-file scenarios)
 - `function_resolver.test.ts`: All passing
 - `constructor_resolver.test.ts`: All passing
 - `import_resolver.test.ts`: All passing
 
 **Integration Tests**: ⏸️ Deferred to Task 11.116
+
 - 38 `.todo()` tests across TypeScript, Python, Rust files
 - Tests fail due to incomplete test data, not implementation issues
 - Will be fixed by JSON fixture approach in task 11.116
@@ -116,7 +130,12 @@ The implementation already exists in [scope_resolver_index.ts:185-216](../../pac
 
 ```typescript
 // Step 2: Add import resolvers for this scope (can shadow parent!)
-const import_specs = extract_import_specs(scope_id, index, file_path, root_folder);
+const import_specs = extract_import_specs(
+  scope_id,
+  index,
+  file_path,
+  root_folder
+);
 
 for (const spec of import_specs) {
   if (spec.import_kind === "namespace") {
@@ -125,13 +144,20 @@ for (const spec of import_specs) {
   } else {
     // Named/default imports: follow export chain ← THIS IS THE KEY LINE
     resolvers.set(spec.local_name, () =>
-      resolve_export_chain(spec.source_file, spec.import_name, indices, root_folder, spec.import_kind)
+      resolve_export_chain(
+        spec.source_file,
+        spec.import_name,
+        indices,
+        root_folder,
+        spec.import_kind
+      )
     );
   }
 }
 ```
 
 **Key Features**:
+
 1. ✅ On-demand resolution via closures
 2. ✅ Calls `resolve_export_chain()` for cross-file lookups
 3. ✅ Results cached by `ResolutionCache` for O(1) repeated access
