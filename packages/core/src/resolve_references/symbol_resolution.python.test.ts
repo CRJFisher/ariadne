@@ -66,7 +66,7 @@ import type {
 } from "@ariadnejs/types";
 import { location_key } from "@ariadnejs/types";
 import type { SemanticIndex } from "../index_single_file/semantic_index";
-import { create_test_index } from "./symbol_resolution.test";
+import { create_test_index } from "./symbol_resolution.test_helpers";
 
 // ============================================================================
 // Python Symbol Resolution Integration Tests
@@ -141,7 +141,7 @@ describe("Python Symbol Resolution Integration", () => {
 
       const indices = new Map<FilePath, SemanticIndex>([[file_path, index]]);
       const root_folder = build_file_tree(Array.from(indices.keys()));
-    const result = resolve_symbols(indices, root_folder);
+      const result = resolve_symbols(indices, root_folder);
 
       const call_key = location_key(call_location);
       expect(result.resolved_references.get(call_key)).toBe(helper_id);
@@ -272,7 +272,7 @@ describe("Python Symbol Resolution Integration", () => {
       ]);
 
       const root_folder = build_file_tree(Array.from(indices.keys()));
-    const result = resolve_symbols(indices, root_folder);
+      const result = resolve_symbols(indices, root_folder);
 
       const call_key = location_key(call_location);
       expect(result.resolved_references.get(call_key)).toBe(process_id);
@@ -405,7 +405,7 @@ describe("Python Symbol Resolution Integration", () => {
       ]);
 
       const root_folder = build_file_tree(Array.from(indices.keys()));
-    const result = resolve_symbols(indices, root_folder);
+      const result = resolve_symbols(indices, root_folder);
 
       const call_key = location_key(call_location);
       expect(result.resolved_references.get(call_key)).toBe(process_id);
@@ -625,7 +625,7 @@ describe("Python Symbol Resolution Integration", () => {
       ]);
 
       const root_folder = build_file_tree(Array.from(indices.keys()));
-    const result = resolve_symbols(indices, root_folder);
+      const result = resolve_symbols(indices, root_folder);
 
       // Verify constructor call
       const constructor_key = location_key(constructor_call_location);
@@ -836,7 +836,7 @@ describe("Python Symbol Resolution Integration", () => {
       ]);
 
       const root_folder = build_file_tree(Array.from(indices.keys()));
-    const result = resolve_symbols(indices, root_folder);
+      const result = resolve_symbols(indices, root_folder);
 
       const method_key = location_key(method_call_location);
       expect(result.resolved_references.get(method_key)).toBe(
@@ -1007,7 +1007,7 @@ describe("Python Symbol Resolution Integration", () => {
       ]);
 
       const root_folder = build_file_tree(Array.from(indices.keys()));
-    const result = resolve_symbols(indices, root_folder);
+      const result = resolve_symbols(indices, root_folder);
 
       const method_key = location_key(method_call_location);
       expect(result.resolved_references.get(method_key)).toBe(load_method_id);
@@ -1179,7 +1179,7 @@ describe("Python Symbol Resolution Integration", () => {
       ]);
 
       const root_folder = build_file_tree(Array.from(indices.keys()));
-    const result = resolve_symbols(indices, root_folder);
+      const result = resolve_symbols(indices, root_folder);
 
       const method_key = location_key(method_call_location);
       expect(result.resolved_references.get(method_key)).toBe(
@@ -1317,7 +1317,7 @@ describe("Python Symbol Resolution Integration", () => {
       ]);
 
       const root_folder = build_file_tree(Array.from(indices.keys()));
-    const result = resolve_symbols(indices, root_folder);
+      const result = resolve_symbols(indices, root_folder);
 
       const call_key = location_key(call_location);
       expect(result.resolved_references.get(call_key)).toBe(process_id);
@@ -1455,7 +1455,7 @@ describe("Python Symbol Resolution Integration", () => {
       ]);
 
       const root_folder = build_file_tree(Array.from(indices.keys()));
-    const result = resolve_symbols(indices, root_folder);
+      const result = resolve_symbols(indices, root_folder);
 
       const call_key = location_key(user_call_location);
       expect(result.resolved_references.get(call_key)).toBe(user_class_id);
@@ -1592,7 +1592,7 @@ describe("Python Symbol Resolution Integration", () => {
       ]);
 
       const root_folder = build_file_tree(Array.from(indices.keys()));
-    const result = resolve_symbols(indices, root_folder);
+      const result = resolve_symbols(indices, root_folder);
 
       const call_key = location_key(base_call_location);
       expect(result.resolved_references.get(call_key)).toBe(base_model_id);
@@ -1775,7 +1775,7 @@ describe("Python Symbol Resolution Integration", () => {
       ]);
 
       const root_folder = build_file_tree(Array.from(indices.keys()));
-    const result = resolve_symbols(indices, root_folder);
+      const result = resolve_symbols(indices, root_folder);
 
       const call_key = location_key(call_location);
       expect(result.resolved_references.get(call_key)).toBe(helper_func_id);
@@ -1913,7 +1913,7 @@ describe("Python Symbol Resolution Integration", () => {
       ]);
 
       const root_folder = build_file_tree(Array.from(indices.keys()));
-    const result = resolve_symbols(indices, root_folder);
+      const result = resolve_symbols(indices, root_folder);
 
       const call_key = location_key(call_location);
       expect(result.resolved_references.get(call_key)).toBe(auth_handler_id);
@@ -2463,7 +2463,7 @@ describe("Python Symbol Resolution Integration", () => {
         ]);
 
         const root_folder = build_file_tree(Array.from(indices.keys()));
-    const result = resolve_symbols(indices, root_folder);
+        const result = resolve_symbols(indices, root_folder);
 
         // Verify UserService constructor in main.py
         const service_constructor_key = location_key(
@@ -2865,7 +2865,7 @@ describe("Python Symbol Resolution Integration", () => {
       ]);
 
       const root_folder = build_file_tree(Array.from(indices.keys()));
-    const result = resolve_symbols(indices, root_folder);
+      const result = resolve_symbols(indices, root_folder);
 
       // Verify base_method call in main.py resolves to Base.base_method
       const base_method_key = location_key(base_method_call_location);

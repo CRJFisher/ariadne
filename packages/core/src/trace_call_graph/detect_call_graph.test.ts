@@ -6,7 +6,7 @@ import { describe, it, expect, beforeEach } from "vitest";
 import {
   location_key,
   type CallReference,
-  type Definition,
+  type FunctionDefinition,
   type FilePath,
   type Location,
   type ResolvedSymbols,
@@ -36,22 +36,27 @@ describe("detect_call_graph", () => {
     id: SymbolId,
     name: string,
     location: Location
-  ): Definition => ({
-    id,
+  ): FunctionDefinition => ({
+    symbol_id: id,
     name: name as SymbolName,
     kind: "function",
     defining_scope_id: "global" as ScopeId,
     location,
+    is_exported: false,
+    signature: {
+      parameters: [],
+    },
   });
 
   const create_call_reference = (
     name: string,
     location: Location,
-    enclosing_scope?: ScopeId
+    scope_id?: ScopeId
   ): CallReference => ({
     name: name as SymbolName,
     location,
-    enclosing_scope: enclosing_scope || ("global" as ScopeId),
+    scope_id: scope_id || ("global" as ScopeId),
+    call_type: "function",
   });
 
   describe("basic functionality", () => {
@@ -86,7 +91,7 @@ describe("detect_call_graph", () => {
       const func2Location = create_location("test.ts", 5);
 
       const call1Location = create_location("test.ts", 2);
-      const call1 = create_call_reference("func2", call1Location, func1Id);
+      const call1 = create_call_reference("func2", call1Location, func1Id as unknown as ScopeId);
       const call1Key = location_key(call1Location);
 
       const resolved: ResolvedSymbols = {
@@ -96,7 +101,7 @@ describe("detect_call_graph", () => {
         ]),
         references: [call1],
         resolved_references: new Map([[call1Key, func1Id]]),
-        references_to_symbol: new Map([[func2Id, [call1]]]),
+        references_to_symbol: new Map([[func2Id, [call1Location]]]),
       };
 
       const graph = detect_call_graph(resolved);
@@ -138,18 +143,18 @@ describe("detect_call_graph", () => {
       // main calls process and utility
       const call1Location = create_location("app.ts", 2);
       const call2Location = create_location("app.ts", 3);
-      const call1 = create_call_reference("process", call1Location, mainId);
-      const call2 = create_call_reference("utility", call2Location, mainId);
+      const call1 = create_call_reference("process", call1Location, mainId as unknown as ScopeId);
+      const call2 = create_call_reference("utility", call2Location, mainId as unknown as ScopeId);
 
       // process calls utility and helper
       const call3Location = create_location("app.ts", 11);
       const call4Location = create_location("app.ts", 12);
-      const call3 = create_call_reference("utility", call3Location, processId);
-      const call4 = create_call_reference("helper", call4Location, processId);
+      const call3 = create_call_reference("utility", call3Location, processId as unknown as ScopeId);
+      const call4 = create_call_reference("helper", call4Location, processId as unknown as ScopeId);
 
       // utility calls helper
       const call5Location = create_location("utils.ts", 2);
-      const call5 = create_call_reference("helper", call5Location, utilityId);
+      const call5 = create_call_reference("helper", call5Location, utilityId as unknown as ScopeId);
 
       const resolved: ResolvedSymbols = {
         definitions: new Map([
@@ -167,9 +172,9 @@ describe("detect_call_graph", () => {
           [location_key(call5Location), utilityId],
         ]),
         references_to_symbol: new Map([
-          [processId, [call1]],
-          [utilityId, [call2, call3]],
-          [helperId, [call4, call5]],
+          [processId, [call1Location]],
+          [utilityId, [call2Location, call3Location]],
+          [helperId, [call4Location, call5Location]],
         ]),
       };
 
@@ -240,7 +245,7 @@ describe("detect_call_graph", () => {
       const funcId = create_symbol_id("testFunc");
       const funcLocation = create_location("test.ts", 1);
       const callLocation = create_location("test.ts", 2);
-      const call = create_call_reference("unknownFunc", callLocation, funcId);
+      const call = create_call_reference("unknownFunc", callLocation, funcId as unknown as ScopeId);
 
       const resolved: ResolvedSymbols = {
         definitions: new Map([
@@ -267,11 +272,11 @@ describe("detect_call_graph", () => {
 
       // main calls utility
       const call1Location = create_location("app.ts", 2);
-      const call1 = create_call_reference("utility", call1Location, mainId);
+      const call1 = create_call_reference("utility", call1Location, mainId as unknown as ScopeId);
 
       // testRunner calls utility
       const call2Location = create_location("test.ts", 2);
-      const call2 = create_call_reference("utility", call2Location, testId);
+      const call2 = create_call_reference("utility", call2Location, testId as unknown as ScopeId);
 
       const resolved: ResolvedSymbols = {
         definitions: new Map([
@@ -284,14 +289,14 @@ describe("detect_call_graph", () => {
           [location_key(call1Location), mainId],
           [location_key(call2Location), testId],
         ]),
-        references_to_symbol: new Map([[utilId, [call1, call2]]]),
+        references_to_symbol: new Map([[utilId, [call1Location, call2Location]]]),
       };
 
       const graph = detect_call_graph(resolved);
 
       // main and testRunner are entry points (never called)
       // utility is called by both, so it's not an entry point
-      expect(graph.entry_points.sort()).toEqual([mainId, testId].sort());
+      expect([...graph.entry_points].sort()).toEqual([mainId, testId].sort());
     });
 
     it("should handle recursive function calls", () => {
@@ -303,7 +308,7 @@ describe("detect_call_graph", () => {
       const call = create_call_reference(
         "recursiveFunc",
         callLocation,
-        recursiveId
+        recursiveId as unknown as ScopeId
       );
 
       const resolved: ResolvedSymbols = {
@@ -317,7 +322,7 @@ describe("detect_call_graph", () => {
         resolved_references: new Map([
           [location_key(callLocation), recursiveId],
         ]),
-        references_to_symbol: new Map([[recursiveId, [call]]]),
+        references_to_symbol: new Map([[recursiveId, [callLocation]]]),
       };
 
       const graph = detect_call_graph(resolved);
@@ -343,7 +348,7 @@ describe("detect_call_graph", () => {
       const recursiveCall = create_call_reference(
         "recursiveFunc",
         callLocation,
-        recursiveId
+        recursiveId as unknown as ScopeId
       );
 
       const resolved: ResolvedSymbols = {
@@ -358,7 +363,7 @@ describe("detect_call_graph", () => {
         resolved_references: new Map([
           [location_key(callLocation), recursiveId],
         ]),
-        references_to_symbol: new Map([[recursiveId, [recursiveCall]]]),
+        references_to_symbol: new Map([[recursiveId, [callLocation]]]),
       };
 
       const graph = detect_call_graph(resolved);
@@ -389,7 +394,7 @@ describe("detect_call_graph", () => {
       const call1 = create_call_reference(
         "mutualFunc2",
         call1Location,
-        func1Id
+        func1Id as unknown as ScopeId
       );
 
       // func2 calls func1
@@ -397,7 +402,7 @@ describe("detect_call_graph", () => {
       const call2 = create_call_reference(
         "mutualFunc1",
         call2Location,
-        func2Id
+        func2Id as unknown as ScopeId
       );
 
       const resolved: ResolvedSymbols = {
@@ -411,8 +416,8 @@ describe("detect_call_graph", () => {
           [location_key(call2Location), func2Id],
         ]),
         references_to_symbol: new Map([
-          [func2Id, [call1]],
-          [func1Id, [call2]],
+          [func2Id, [call1Location]],
+          [func1Id, [call2Location]],
         ]),
       };
 
@@ -443,12 +448,12 @@ describe("detect_call_graph", () => {
       const call1 = create_call_reference(
         "exportedFunc",
         call1Location,
-        importerId
+        importerId as unknown as ScopeId
       );
       const call2 = create_call_reference(
         "utilFunc",
         call2Location,
-        importerId
+        importerId as unknown as ScopeId
       );
 
       // exportedFunc calls utilFunc
@@ -456,7 +461,7 @@ describe("detect_call_graph", () => {
       const call3 = create_call_reference(
         "utilFunc",
         call3Location,
-        exportedId
+        exportedId as unknown as ScopeId
       );
 
       const resolved: ResolvedSymbols = {
@@ -478,8 +483,8 @@ describe("detect_call_graph", () => {
           [location_key(call3Location), exportedId],
         ]),
         references_to_symbol: new Map([
-          [exportedId, [call1]],
-          [utilId, [call2, call3]],
+          [exportedId, [call1Location]],
+          [utilId, [call2Location, call3Location]],
         ]),
       };
 
@@ -509,9 +514,9 @@ describe("detect_call_graph", () => {
       const call1Location = create_location("main.ts", 5);
       const call2Location = create_location("main.ts", 10);
       const call3Location = create_location("main.ts", 15);
-      const call1 = create_call_reference("targetFunc", call1Location, funcId);
-      const call2 = create_call_reference("targetFunc", call2Location, funcId);
-      const call3 = create_call_reference("targetFunc", call3Location, funcId);
+      const call1 = create_call_reference("targetFunc", call1Location, funcId as unknown as ScopeId);
+      const call2 = create_call_reference("targetFunc", call2Location, funcId as unknown as ScopeId);
+      const call3 = create_call_reference("targetFunc", call3Location, funcId as unknown as ScopeId);
 
       const resolved: ResolvedSymbols = {
         definitions: new Map([
@@ -524,7 +529,7 @@ describe("detect_call_graph", () => {
           [location_key(call2Location), funcId],
           [location_key(call3Location), funcId],
         ]),
-        references_to_symbol: new Map([[targetId, [call1, call2, call3]]]),
+        references_to_symbol: new Map([[targetId, [call1Location, call2Location, call3Location]]]),
       };
 
       const graph = detect_call_graph(resolved);
@@ -548,8 +553,8 @@ describe("detect_call_graph", () => {
       // regularFunc calls the class method and namespace function
       const call1Location = create_location("app.ts", 2);
       const call2Location = create_location("app.ts", 3);
-      const call1 = create_call_reference("method", call1Location, regularFunc);
-      const call2 = create_call_reference("func", call2Location, regularFunc);
+      const call1 = create_call_reference("method", call1Location, regularFunc as unknown as ScopeId);
+      const call2 = create_call_reference("func", call2Location, regularFunc as unknown as ScopeId);
 
       const resolved: ResolvedSymbols = {
         definitions: new Map([
@@ -572,8 +577,8 @@ describe("detect_call_graph", () => {
           [location_key(call2Location), regularFunc],
         ]),
         references_to_symbol: new Map([
-          [classMethodId, [call1]],
-          [namespaceFunc, [call2]],
+          [classMethodId, [call1Location]],
+          [namespaceFunc, [call2Location]],
         ]),
       };
 

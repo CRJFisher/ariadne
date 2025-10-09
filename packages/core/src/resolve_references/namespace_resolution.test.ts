@@ -14,7 +14,6 @@
  */
 
 import { describe, it, expect } from "vitest";
-import { resolve_symbols } from "./symbol_resolution";
 import type {
   FilePath,
   SymbolId,
@@ -27,11 +26,10 @@ import type {
   ImportDefinition,
   ModulePath,
   VariableDefinition,
-  SymbolKind,
-  AnyDefinition,
 } from "@ariadnejs/types";
 import type { SemanticIndex } from "../index_single_file/semantic_index";
 import { location_key } from "@ariadnejs/types";
+import { resolve_symbols } from "./symbol_resolution";
 import { create_test_index, build_file_tree } from "./symbol_resolution.test_helpers";
 
 // ============================================================================
@@ -44,10 +42,9 @@ describe("Namespace Import Resolution", () => {
       // utils.ts: export function helper() {}
       // main.ts: import * as utils from './utils'; utils.helper();
 
-      // Use absolute paths without extensions to match module resolver behavior
-      const utils_file = "/tmp/utils" as FilePath;
-      const utils_scope = "scope:/tmp/utils:module" as ScopeId;
-      const helper_id = "function:/tmp/utils:helper:1:0" as SymbolId;
+      const utils_file = "utils.ts" as FilePath;
+      const utils_scope = "scope:utils.ts:module" as ScopeId;
+      const helper_id = "function:utils.ts:helper:1:0" as SymbolId;
 
       const utils_index = create_test_index(utils_file, {
         root_scope_id: utils_scope,
@@ -131,9 +128,9 @@ describe("Namespace Import Resolution", () => {
         references: [],
       });
 
-      const main_file = "/tmp/main" as FilePath;
-      const main_scope = "scope:/tmp/main:module" as ScopeId;
-      const utils_import_id = "import:/tmp/main:utils:1:0" as SymbolId;
+      const main_file = "main.ts" as FilePath;
+      const main_scope = "scope:main.ts:module" as ScopeId;
+      const utils_import_id = "import:main.ts:utils:1:0" as SymbolId;
       const call_location = {
         file_path: main_file,
         start_line: 2,
@@ -141,23 +138,6 @@ describe("Namespace Import Resolution", () => {
         end_line: 2,
         end_column: 12,
       };
-
-      const utils_import_def = {
-        kind: "import",
-        symbol_id: utils_import_id,
-        name: "utils" as SymbolName,
-        scope_id: main_scope,
-        defining_scope_id: main_scope,
-        location: {
-          file_path: main_file,
-          start_line: 1,
-          start_column: 0,
-          end_line: 1,
-          end_column: 35,
-        },
-        import_path: "./utils" as ModulePath,
-        import_kind: "namespace",
-      } as ImportDefinition;
 
       const main_index = create_test_index(main_file, {
         root_scope_id: main_scope,
@@ -180,16 +160,25 @@ describe("Namespace Import Resolution", () => {
             } as LexicalScope,
           ],
         ]),
-        imports_raw: new Map([[utils_import_id, utils_import_def]]),
-        scope_to_definitions_raw: new Map<
-          ScopeId,
-          ReadonlyMap<SymbolKind, AnyDefinition[]>
-        >([
+        imports_raw: new Map([
           [
-            main_scope,
-            new Map<SymbolKind, AnyDefinition[]>([
-              ["import", [utils_import_def as AnyDefinition]],
-            ]),
+            utils_import_id,
+            {
+              kind: "import",
+              symbol_id: utils_import_id,
+              name: "utils" as SymbolName,
+              scope_id: main_scope,
+              defining_scope_id: main_scope,
+              location: {
+                file_path: main_file,
+                start_line: 1,
+                start_column: 0,
+                end_line: 1,
+                end_column: 35,
+              },
+              import_path: "./utils" as ModulePath,
+              import_kind: "namespace",
+            } as ImportDefinition,
           ],
         ]),
         references: [
@@ -218,7 +207,7 @@ describe("Namespace Import Resolution", () => {
         [main_file, main_index],
       ]);
 
-      const root_folder = build_file_tree(Array.from(indices.keys()));
+      const root_folder = build_file_tree([utils_file, main_file]);
       const resolved = resolve_symbols(indices, root_folder);
       const call_key = location_key(call_location);
       const resolved_symbol = resolved.resolved_references.get(call_key);
@@ -230,9 +219,9 @@ describe("Namespace Import Resolution", () => {
       // utils.ts: export class Helper {}
       // main.ts: import * as utils from './utils'; new utils.Helper();
 
-      const utils_file = "/tmp/utils" as FilePath;
-      const utils_scope = "scope:/tmp/utils:module" as ScopeId;
-      const helper_class_id = "class:/tmp/utils:Helper:1:0" as SymbolId;
+      const utils_file = "utils.ts" as FilePath;
+      const utils_scope = "scope:utils.ts:module" as ScopeId;
+      const helper_class_id = "class:utils.ts:Helper:1:0" as SymbolId;
 
       const utils_index = create_test_index(utils_file, {
         root_scope_id: utils_scope,
@@ -318,9 +307,9 @@ describe("Namespace Import Resolution", () => {
         references: [],
       });
 
-      const main_file = "/tmp/main" as FilePath;
-      const main_scope = "scope:/tmp/main:module" as ScopeId;
-      const utils_import_id = "import:/tmp/main:utils:1:0" as SymbolId;
+      const main_file = "main.ts" as FilePath;
+      const main_scope = "scope:main.ts:module" as ScopeId;
+      const utils_import_id = "import:main.ts:utils:1:0" as SymbolId;
       const call_location = {
         file_path: main_file,
         start_line: 2,
@@ -328,23 +317,6 @@ describe("Namespace Import Resolution", () => {
         end_line: 2,
         end_column: 16,
       };
-
-      const utils_import_def = {
-        kind: "import",
-        symbol_id: utils_import_id,
-        name: "utils" as SymbolName,
-        scope_id: main_scope,
-        defining_scope_id: main_scope,
-        location: {
-          file_path: main_file,
-          start_line: 1,
-          start_column: 0,
-          end_line: 1,
-          end_column: 35,
-        },
-        import_path: "./utils" as ModulePath,
-        import_kind: "namespace",
-      } as ImportDefinition;
 
       const main_index = create_test_index(main_file, {
         root_scope_id: main_scope,
@@ -367,16 +339,25 @@ describe("Namespace Import Resolution", () => {
             } as LexicalScope,
           ],
         ]),
-        imports_raw: new Map([[utils_import_id, utils_import_def]]),
-        scope_to_definitions_raw: new Map<
-          ScopeId,
-          ReadonlyMap<SymbolKind, AnyDefinition[]>
-        >([
+        imports_raw: new Map([
           [
-            main_scope,
-            new Map<SymbolKind, AnyDefinition[]>([
-              ["import", [utils_import_def as AnyDefinition]],
-            ]),
+            utils_import_id,
+            {
+              kind: "import",
+              symbol_id: utils_import_id,
+              name: "utils" as SymbolName,
+              scope_id: main_scope,
+              defining_scope_id: main_scope,
+              location: {
+                file_path: main_file,
+                start_line: 1,
+                start_column: 0,
+                end_line: 1,
+                end_column: 35,
+              },
+              import_path: "./utils" as ModulePath,
+              import_kind: "namespace",
+            } as ImportDefinition,
           ],
         ]),
         references: [
@@ -405,7 +386,7 @@ describe("Namespace Import Resolution", () => {
         [main_file, main_index],
       ]);
 
-      const root_folder = build_file_tree(Array.from(indices.keys()));
+      const root_folder = build_file_tree([utils_file, main_file]);
       const resolved = resolve_symbols(indices, root_folder);
       const call_key = location_key(call_location);
       const resolved_symbol = resolved.resolved_references.get(call_key);
@@ -419,10 +400,10 @@ describe("Namespace Import Resolution", () => {
       // utils.ts: export function a() {} export function b() {}
       // main.ts: import * as utils from './utils'; utils.a(); utils.b();
 
-      const utils_file = "/tmp/utils" as FilePath;
-      const utils_scope = "scope:/tmp/utils:module" as ScopeId;
-      const func_a_id = "function:/tmp/utils:a:1:0" as SymbolId;
-      const func_b_id = "function:/tmp/utils:b:2:0" as SymbolId;
+      const utils_file = "utils.ts" as FilePath;
+      const utils_scope = "scope:utils.ts:module" as ScopeId;
+      const func_a_id = "function:utils.ts:a:1:0" as SymbolId;
+      const func_b_id = "function:utils.ts:b:2:0" as SymbolId;
 
       const utils_index = create_test_index(utils_file, {
         root_scope_id: utils_scope,
@@ -560,9 +541,9 @@ describe("Namespace Import Resolution", () => {
         references: [],
       });
 
-      const main_file = "/tmp/main" as FilePath;
-      const main_scope = "scope:/tmp/main:module" as ScopeId;
-      const utils_import_id = "import:/tmp/main:utils:1:0" as SymbolId;
+      const main_file = "main.ts" as FilePath;
+      const main_scope = "scope:main.ts:module" as ScopeId;
+      const utils_import_id = "import:main.ts:utils:1:0" as SymbolId;
       const call_a_location = {
         file_path: main_file,
         start_line: 2,
@@ -577,23 +558,6 @@ describe("Namespace Import Resolution", () => {
         end_line: 3,
         end_column: 7,
       };
-
-      const utils_import_def = {
-        kind: "import",
-        symbol_id: utils_import_id,
-        name: "utils" as SymbolName,
-        scope_id: main_scope,
-        defining_scope_id: main_scope,
-        location: {
-          file_path: main_file,
-          start_line: 1,
-          start_column: 0,
-          end_line: 1,
-          end_column: 35,
-        },
-        import_path: "./utils" as ModulePath,
-        import_kind: "namespace",
-      } as ImportDefinition;
 
       const main_index = create_test_index(main_file, {
         root_scope_id: main_scope,
@@ -616,16 +580,25 @@ describe("Namespace Import Resolution", () => {
             } as LexicalScope,
           ],
         ]),
-        imports_raw: new Map([[utils_import_id, utils_import_def]]),
-        scope_to_definitions_raw: new Map<
-          ScopeId,
-          ReadonlyMap<SymbolKind, AnyDefinition[]>
-        >([
+        imports_raw: new Map([
           [
-            main_scope,
-            new Map<SymbolKind, AnyDefinition[]>([
-              ["import", [utils_import_def as AnyDefinition]],
-            ]),
+            utils_import_id,
+            {
+              kind: "import",
+              symbol_id: utils_import_id,
+              name: "utils" as SymbolName,
+              scope_id: main_scope,
+              defining_scope_id: main_scope,
+              location: {
+                file_path: main_file,
+                start_line: 1,
+                start_column: 0,
+                end_line: 1,
+                end_column: 35,
+              },
+              import_path: "./utils" as ModulePath,
+              import_kind: "namespace",
+            } as ImportDefinition,
           ],
         ]),
         references: [
@@ -671,7 +644,7 @@ describe("Namespace Import Resolution", () => {
         [main_file, main_index],
       ]);
 
-      const root_folder = build_file_tree(Array.from(indices.keys()));
+      const root_folder = build_file_tree([utils_file, main_file]);
       const resolved = resolve_symbols(indices, root_folder);
 
       const call_a_key = location_key(call_a_location);
@@ -687,9 +660,9 @@ describe("Namespace Import Resolution", () => {
       // utils.ts: export function helper() {}
       // main.ts: import * as utils from './utils'; utils.missing();
 
-      const utils_file = "/tmp/utils" as FilePath;
-      const utils_scope = "scope:/tmp/utils:module" as ScopeId;
-      const helper_id = "function:/tmp/utils:helper:1:0" as SymbolId;
+      const utils_file = "utils.ts" as FilePath;
+      const utils_scope = "scope:utils.ts:module" as ScopeId;
+      const helper_id = "function:utils.ts:helper:1:0" as SymbolId;
 
       const utils_index = create_test_index(utils_file, {
         root_scope_id: utils_scope,
@@ -773,9 +746,9 @@ describe("Namespace Import Resolution", () => {
         references: [],
       });
 
-      const main_file = "/tmp/main" as FilePath;
-      const main_scope = "scope:/tmp/main:module" as ScopeId;
-      const utils_import_id = "import:/tmp/main:utils:1:0" as SymbolId;
+      const main_file = "main.ts" as FilePath;
+      const main_scope = "scope:main.ts:module" as ScopeId;
+      const utils_import_id = "import:main.ts:utils:1:0" as SymbolId;
       const call_location = {
         file_path: main_file,
         start_line: 2,
@@ -783,23 +756,6 @@ describe("Namespace Import Resolution", () => {
         end_line: 2,
         end_column: 13,
       };
-
-      const utils_import_def = {
-        kind: "import",
-        symbol_id: utils_import_id,
-        name: "utils" as SymbolName,
-        scope_id: main_scope,
-        defining_scope_id: main_scope,
-        location: {
-          file_path: main_file,
-          start_line: 1,
-          start_column: 0,
-          end_line: 1,
-          end_column: 35,
-        },
-        import_path: "./utils" as ModulePath,
-        import_kind: "namespace",
-      } as ImportDefinition;
 
       const main_index = create_test_index(main_file, {
         root_scope_id: main_scope,
@@ -822,16 +778,25 @@ describe("Namespace Import Resolution", () => {
             } as LexicalScope,
           ],
         ]),
-        imports_raw: new Map([[utils_import_id, utils_import_def]]),
-        scope_to_definitions_raw: new Map<
-          ScopeId,
-          ReadonlyMap<SymbolKind, AnyDefinition[]>
-        >([
+        imports_raw: new Map([
           [
-            main_scope,
-            new Map<SymbolKind, AnyDefinition[]>([
-              ["import", [utils_import_def as AnyDefinition]],
-            ]),
+            utils_import_id,
+            {
+              kind: "import",
+              symbol_id: utils_import_id,
+              name: "utils" as SymbolName,
+              scope_id: main_scope,
+              defining_scope_id: main_scope,
+              location: {
+                file_path: main_file,
+                start_line: 1,
+                start_column: 0,
+                end_line: 1,
+                end_column: 35,
+              },
+              import_path: "./utils" as ModulePath,
+              import_kind: "namespace",
+            } as ImportDefinition,
           ],
         ]),
         references: [
@@ -860,7 +825,7 @@ describe("Namespace Import Resolution", () => {
         [main_file, main_index],
       ]);
 
-      const root_folder = build_file_tree(Array.from(indices.keys()));
+      const root_folder = build_file_tree([utils_file, main_file]);
       const resolved = resolve_symbols(indices, root_folder);
       const call_key = location_key(call_location);
       const resolved_symbol = resolved.resolved_references.get(call_key);
@@ -874,7 +839,7 @@ describe("Namespace Import Resolution", () => {
 
       const main_file = "main.ts" as FilePath;
       const main_scope = "scope:main.ts:module" as ScopeId;
-      const utils_var_id = "variable:/tmp/main:utils:1:0" as SymbolId;
+      const utils_var_id = "variable:main.ts:utils:1:0" as SymbolId;
       const call_location = {
         file_path: main_file,
         start_line: 2,
@@ -882,25 +847,6 @@ describe("Namespace Import Resolution", () => {
         end_line: 2,
         end_column: 12,
       };
-
-      const utils_var_def = {
-        kind: "variable",
-        symbol_id: utils_var_id,
-        name: "utils" as SymbolName,
-        scope_id: main_scope,
-        defining_scope_id: main_scope,
-        location: {
-          file_path: main_file,
-          start_line: 1,
-          start_column: 6,
-          end_line: 1,
-          end_column: 11,
-        },
-        is_exported: false,
-        signature: {
-          parameters: [],
-        },
-      } as VariableDefinition;
 
       const main_index = create_test_index(main_file, {
         root_scope_id: main_scope,
@@ -923,16 +869,27 @@ describe("Namespace Import Resolution", () => {
             } as LexicalScope,
           ],
         ]),
-        variables_raw: new Map([[utils_var_id, utils_var_def]]),
-        scope_to_definitions_raw: new Map<
-          ScopeId,
-          ReadonlyMap<SymbolKind, AnyDefinition[]>
-        >([
+        variables_raw: new Map([
           [
-            main_scope,
-            new Map<SymbolKind, AnyDefinition[]>([
-              ["variable", [utils_var_def as AnyDefinition]],
-            ]),
+            utils_var_id,
+            {
+              kind: "variable",
+              symbol_id: utils_var_id,
+              name: "utils" as SymbolName,
+              scope_id: main_scope,
+              defining_scope_id: main_scope,
+              location: {
+                file_path: main_file,
+                start_line: 1,
+                start_column: 6,
+                end_line: 1,
+                end_column: 11,
+              },
+              is_exported: false,
+              signature: {
+                parameters: [],
+              },
+            } as VariableDefinition,
           ],
         ]),
         references: [
@@ -960,7 +917,7 @@ describe("Namespace Import Resolution", () => {
         [main_file, main_index],
       ]);
 
-      const root_folder = build_file_tree(Array.from(indices.keys()));
+      const root_folder = build_file_tree([main_file]);
       const resolved = resolve_symbols(indices, root_folder);
       const call_key = location_key(call_location);
       const resolved_symbol = resolved.resolved_references.get(call_key);

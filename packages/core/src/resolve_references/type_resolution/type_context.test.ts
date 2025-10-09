@@ -9,7 +9,6 @@ import { build_type_context } from "./type_context";
 import { build_scope_resolver_index } from "../scope_resolver_index/scope_resolver_index";
 import { create_resolution_cache } from "../resolution_cache/resolution_cache";
 import { build_semantic_index } from "../../index_single_file/semantic_index";
-import { build_file_tree } from "../symbol_resolution.test_helpers";
 import type {
   FilePath,
   Language,
@@ -23,6 +22,7 @@ import TypeScript from "tree-sitter-typescript";
 import Python from "tree-sitter-python";
 import Rust from "tree-sitter-rust";
 import type { ParsedFile } from "../../index_single_file/file_utils";
+import { build_file_tree } from "../symbol_resolution.test_helpers";
 
 // Helper to create ParsedFile
 function create_parsed_file(

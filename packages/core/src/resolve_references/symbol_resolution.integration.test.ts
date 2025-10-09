@@ -14,7 +14,6 @@
 
 import { describe, it, expect } from "vitest";
 import { resolve_symbols } from "./symbol_resolution";
-import { build_file_tree } from "./symbol_resolution.test_helpers";
 import type {
   FilePath,
   SymbolId,
@@ -34,8 +33,7 @@ import type {
 } from "@ariadnejs/types";
 import type { SemanticIndex } from "../index_single_file/semantic_index";
 import { location_key } from "@ariadnejs/types";
-import { create_test_index } from "./symbol_resolution.test";
-
+import { create_test_index, build_file_tree } from "./symbol_resolution.test_helpers";
 
 describe("Symbol Resolution - Integration Tests", () => {
   describe("Basic Resolution", () => {
@@ -121,7 +119,8 @@ describe("Symbol Resolution - Integration Tests", () => {
       // utils.ts: export function helper() {}
       const utils_file = "/tmp/ariadne-test/utils.ts" as FilePath;
       const utils_scope = "scope:/tmp/ariadne-test/utils.ts:module" as ScopeId;
-      const helper_id = "function:/tmp/ariadne-test/utils.ts:helper:1:0" as SymbolId;
+      const helper_id =
+        "function:/tmp/ariadne-test/utils.ts:helper:1:0" as SymbolId;
 
       const utils_index = create_test_index(utils_file, {
         root_scope_id: utils_scope,
@@ -173,7 +172,8 @@ describe("Symbol Resolution - Integration Tests", () => {
       // main.ts: import { helper } from './utils'; helper();
       const main_file = "/tmp/ariadne-test/main.ts" as FilePath;
       const main_scope = "scope:/tmp/ariadne-test/main.ts:module" as ScopeId;
-      const import_id = "import:/tmp/ariadne-test/main.ts:helper:1:9" as SymbolId;
+      const import_id =
+        "import:/tmp/ariadne-test/main.ts:helper:1:9" as SymbolId;
       const call_location = {
         file_path: main_file,
         start_line: 2,
@@ -253,8 +253,10 @@ describe("Symbol Resolution - Integration Tests", () => {
       // types.ts: export class User { getName() {} }
       const types_file = "/tmp/ariadne-test/types.ts" as FilePath;
       const types_scope = "scope:/tmp/ariadne-test/types.ts:module" as ScopeId;
-      const user_class_id = "class:/tmp/ariadne-test/types.ts:User:1:0" as SymbolId;
-      const getName_method_id = "method:/tmp/ariadne-test/types.ts:User:getName:2:2" as SymbolId;
+      const user_class_id =
+        "class:/tmp/ariadne-test/types.ts:User:1:0" as SymbolId;
+      const getName_method_id =
+        "method:/tmp/ariadne-test/types.ts:User:getName:2:2" as SymbolId;
 
       const types_index = create_test_index(types_file, {
         root_scope_id: types_scope,
@@ -340,7 +342,8 @@ describe("Symbol Resolution - Integration Tests", () => {
       const main_file = "/tmp/ariadne-test/main.ts" as FilePath;
       const main_scope = "scope:/tmp/ariadne-test/main.ts:module" as ScopeId;
       const import_id = "import:/tmp/ariadne-test/main.ts:User:1:9" as SymbolId;
-      const user_var_id = "variable:/tmp/ariadne-test/main.ts:user:2:6" as SymbolId;
+      const user_var_id =
+        "variable:/tmp/ariadne-test/main.ts:user:2:6" as SymbolId;
       const constructor_call_location = {
         file_path: main_file,
         start_line: 2,
@@ -495,7 +498,8 @@ describe("Symbol Resolution - Integration Tests", () => {
       // utils.ts: export function helper() {}
       const utils_file = "/tmp/ariadne-test/utils.ts" as FilePath;
       const utils_scope = "scope:/tmp/ariadne-test/utils.ts:module" as ScopeId;
-      const imported_helper_id = "function:/tmp/ariadne-test/utils.ts:helper:1:0" as SymbolId;
+      const imported_helper_id =
+        "function:/tmp/ariadne-test/utils.ts:helper:1:0" as SymbolId;
 
       const utils_index = create_test_index(utils_file, {
         root_scope_id: utils_scope,
@@ -547,8 +551,10 @@ describe("Symbol Resolution - Integration Tests", () => {
       // main.ts: import { helper } from './utils'; function helper() {} helper();
       const main_file = "/tmp/ariadne-test/main.ts" as FilePath;
       const main_scope = "scope:/tmp/ariadne-test/main.ts:module" as ScopeId;
-      const import_id = "import:/tmp/ariadne-test/main.ts:helper:1:9" as SymbolId;
-      const local_helper_id = "function:/tmp/ariadne-test/main.ts:helper:2:9" as SymbolId;
+      const import_id =
+        "import:/tmp/ariadne-test/main.ts:helper:1:9" as SymbolId;
+      const local_helper_id =
+        "function:/tmp/ariadne-test/main.ts:helper:2:9" as SymbolId;
       const call_location = {
         file_path: main_file,
         start_line: 3,
