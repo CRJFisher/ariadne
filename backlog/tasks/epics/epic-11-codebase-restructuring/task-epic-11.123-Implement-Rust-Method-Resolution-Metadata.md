@@ -168,16 +168,22 @@ Since most infrastructure exists, the work simplifies to **wiring up existing ex
 [
   "reference.assignment",
   {
-    process: (capture: CaptureNode, builder: DefinitionBuilder, context: ProcessingContext) => {
-      const assignment_parts = context.metadata_extractors?.extract_assignment_parts(
-        capture.node,
-        context.file_path
-      );
+    process: (
+      capture: CaptureNode,
+      builder: DefinitionBuilder,
+      context: ProcessingContext
+    ) => {
+      const assignment_parts =
+        context.metadata_extractors?.extract_assignment_parts(
+          capture.node,
+          context.file_path
+        );
 
-      const assignment_type = context.metadata_extractors?.extract_type_from_annotation(
-        capture.node,
-        context.file_path
-      );
+      const assignment_type =
+        context.metadata_extractors?.extract_type_from_annotation(
+          capture.node,
+          context.file_path
+        );
 
       builder.add_reference({
         type: "assignment",
@@ -187,9 +193,9 @@ Since most infrastructure exists, the work simplifies to **wiring up existing ex
         assignment_type,
         // ... other fields
       });
-    }
-  }
-]
+    },
+  },
+];
 ```
 
 ### 3. Verify Receiver Location Metadata
@@ -433,9 +439,11 @@ Successfully implemented Rust method resolution metadata extraction. All accepta
 ### Files Modified
 
 #### 1. Tree-Sitter Queries
+
 **File**: `packages/core/src/index_single_file/query_code_tree/queries/rust.scm`
 **Lines**: 363-374 (12 new lines)
 **Changes**:
+
 - Added assignment reference capture for type-annotated let bindings
 - Added assignment reference capture for struct literal assignments
 - Captures use `@assignment.variable` (category: assignment, entity: variable)
@@ -456,9 +464,11 @@ Successfully implemented Rust method resolution metadata extraction. All accepta
 ```
 
 #### 2. Metadata Extractor Enhancement
+
 **File**: `packages/core/src/index_single_file/query_code_tree/language_configs/rust_metadata.ts`
 **Lines**: 182-195 (13 new lines)
 **Changes**:
+
 - Extended `extract_call_receiver()` to handle `field_identifier` nodes
 - Added AST traversal to walk from field_identifier → field_expression → call_expression
 - Enables receiver location extraction when tree-sitter captures method name instead of call
@@ -478,9 +488,11 @@ if (node.type === "field_identifier") {
 ```
 
 #### 3. Reference Kind Detection
+
 **File**: `packages/core/src/index_single_file/references/reference_builder.ts`
 **Lines**: 105-114 (9 new lines)
 **Changes**:
+
 - Extended `determine_reference_kind()` to recognize Rust method calls from field_identifier captures
 - Checks parent structure to distinguish method calls from field access
 
@@ -500,18 +512,22 @@ if (capture.node.type === "field_identifier") {
 ### Tests That Now Pass
 
 #### Primary Test (Previously Failing)
+
 **Location**: `packages/core/src/index_single_file/semantic_index.rust.test.ts:1573`
 **Name**: "should extract method resolution metadata for all receiver patterns"
 **Status**: ✅ PASSING (128ms)
 **Assertions Validated**:
+
 1. ✅ Assignment references for `service1` exist
 2. ✅ At least 2 `get_data` method calls found
 3. ✅ Method calls have `receiver_location` in context
 4. ✅ Constructor calls have `construct_target` in context
 
 #### Regression Tests
+
 **All Existing Tests**: 58/58 passing
 **Categories**:
+
 - Structs and enums (5 tests)
 - Traits (3 tests)
 - Impl blocks (4 tests)
@@ -525,6 +541,7 @@ if (capture.node.type === "field_identifier") {
 - Type aliases (7 tests)
 
 #### Companion Test Files
+
 **rust_builder.test.ts**: 48/48 tests passing
 **rust_metadata.test.ts**: 93/93 tests passing
 **Total Test Coverage**: 141 tests passing across Rust semantic indexing
@@ -532,11 +549,14 @@ if (capture.node.type === "field_identifier") {
 ### Architecture Notes
 
 #### Why No rust_builder.ts Handler?
+
 The implementation follows the existing architecture where:
+
 - **Definitions** are processed by language-specific builders (rust_builder.ts)
 - **References** are processed by the generic reference builder (reference_builder.ts)
 
 Assignment references and method call metadata are handled automatically by:
+
 1. `reference_builder.ts` detects reference kind from capture category
 2. `extract_context()` calls appropriate metadata extractors
 3. Extractors from `rust_metadata.ts` populate context fields
@@ -546,16 +566,19 @@ This is the same pattern used by JavaScript, TypeScript, and Python.
 ### Issues Encountered
 
 #### Issue 1: Invalid SemanticEntity
+
 **Problem**: Initial queries used `@reference.assignment` which failed because "assignment" is a category, not an entity.
 **Solution**: Changed to `@assignment.variable` (category: assignment, entity: variable)
 **Impact**: Minor - caught immediately by TypeScript validation
 
 #### Issue 2: Method Call Receiver Not Extracted
+
 **Problem**: Queries capture `@reference.call` on field_identifier nodes, but extractor only handled call_expression
 **Solution**: Added field_identifier handling to walk up AST tree to find call_expression parent
 **Impact**: Required metadata extractor enhancement (13 lines)
 
 #### Issue 3: Reference Kind Detection
+
 **Problem**: `determine_reference_kind()` didn't recognize field_identifier as method call
 **Solution**: Added parent structure checking to detect method call context
 **Impact**: Required reference_builder.ts enhancement (9 lines)
@@ -563,11 +586,13 @@ This is the same pattern used by JavaScript, TypeScript, and Python.
 ### Performance Impact
 
 **Test Suite Performance**:
+
 - Before: ~3.6 seconds for 58 tests
 - After: ~3.6 seconds for 58 tests
 - Change: No measurable performance impact
 
 **Build Performance**:
+
 - TypeScript compilation: No change
 - Test execution: No change
 - Memory usage: Negligible (only stores locations, not full AST)
@@ -575,7 +600,9 @@ This is the same pattern used by JavaScript, TypeScript, and Python.
 ### Follow-Up Work
 
 #### Nice to Have (Not Required)
+
 1. **Unit Test for field_identifier Path**:
+
    - Add explicit test in `rust_metadata.test.ts` for field_identifier → receiver extraction
    - Current coverage: Implicit via integration test
    - Priority: Low (functionality proven to work)
@@ -587,6 +614,7 @@ This is the same pattern used by JavaScript, TypeScript, and Python.
    - Priority: Medium (enables more advanced type tracking)
 
 #### No Breaking Changes Required
+
 - All changes are additive
 - Zero modifications to existing queries
 - Zero modifications to existing tests
@@ -604,6 +632,7 @@ This is the same pattern used by JavaScript, TypeScript, and Python.
 **Estimated**: 4-5 days
 **Actual**: ~2 hours
 **Reduction Factors**:
+
 - Infrastructure already existed (extractors, types, pipeline)
 - Clear architectural pattern to follow
 - Excellent test-driven development path

@@ -96,6 +96,18 @@ function extract_rust_type(node: SyntaxNode | null | undefined): string | undefi
     }
   }
 
+  // For identifier nodes within let declarations (assignment references)
+  // Walk up to parent let_declaration to extract type
+  if (node.type === "identifier" && node.parent) {
+    // Check if parent is let_declaration
+    if (node.parent.type === "let_declaration") {
+      const typeNode = node.parent.childForFieldName("type");
+      if (typeNode) {
+        return typeNode.text;
+      }
+    }
+  }
+
   return undefined;
 }
 

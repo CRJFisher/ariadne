@@ -118,6 +118,9 @@ export interface SymbolReference {
   /**
    * For assignments: explicit type annotation on the assignment target
    *
+   * **Status**: ⚠️ PARTIALLY IMPLEMENTED - Extracted but not yet used in resolution
+   * **Future Work**: See backlog/tasks/task-154-type-resolution-and-heuristics.md
+   *
    * **Inference-based** - Extracted from type annotation AST nodes
    *
    * Tree-sitter pattern (TypeScript):
@@ -128,23 +131,60 @@ export interface SymbolReference {
    *   value: (_) @assignment.value)
    * ```
    *
-   * Enables tracking type flow through assignments: `const obj: MyClass = factory()`
+   * **Purpose**: Enable type flow analysis for dynamic languages (JavaScript, Python)
+   *
+   * Example use case:
+   * ```typescript
+   * const service = createService();  // No type annotation!
+   * service.getData();  // Would resolve if assignment_type tracked createService() return type
+   * ```
+   *
+   * **Current State**:
+   * - ✅ Extracted for Rust (task-epic-11.123)
+   * - ⚠️ Partially extracted for TypeScript/JavaScript/Python
+   * - ❌ Not yet used in type resolution (uses VariableDefinition.type instead)
+   *
+   * **Integration Point**: Would be consumed by extract_type_bindings() as fallback
+   * when VariableDefinition.type is undefined (i.e., no explicit type annotation).
    */
   readonly assignment_type?: TypeInfo;
 
   /**
-   * For returns: return type of the function
+   * For calls: return type of the called function/method
    *
-   * **Inference-based** - Extracted from function return type annotation
+   * **Status**: ❌ NOT YET IMPLEMENTED - Field exists but never populated
+   * **Future Work**: See backlog/tasks/task-154-type-resolution-and-heuristics.md
    *
-   * Tree-sitter pattern (TypeScript):
+   * **Inference-based** - Would be extracted from function definition's return type
+   *
+   * **Purpose**: Enable type tracking through function calls
+   *
+   * Example use case:
+   * ```typescript
+   * function createService(): Service { ... }
+   *
+   * const service = createService();  // Call reference would have return_type: Service
+   * // Then assignment reference could use this return_type for assignment_type
    * ```
-   * (function_declaration
-   *   name: (identifier)
-   *   return_type: (type_annotation) @function.return_type)
-   * ```
    *
-   * Tracks what type flows out of function calls for downstream resolution.
+   * **Current State**:
+   * - ❌ Never populated (no extractor exists)
+   * - ❌ Never read (no consumer exists)
+   * - ❌ Completely unused (dead code)
+   *
+   * **Integration Plan**:
+   * 1. During call resolution, after resolving to FunctionDefinition
+   * 2. Extract FunctionDefinition.return_type (already exists in definitions)
+   * 3. Store in SymbolReference.return_type
+   * 4. Link to assignment references via assignment_type
+   * 5. Enables type flow: function return → variable assignment → method call
+   *
+   * Tree-sitter pattern (for reference - not yet implemented):
+   * ```
+   * // This happens during resolution, not parsing
+   * const func_def = resolve_call(call_ref);
+   * call_ref.return_type = func_def.return_type;
+   * ```
    */
   readonly return_type?: TypeInfo;
 

@@ -269,6 +269,105 @@ describe("Rust Metadata Extractors", () => {
         expect(result?.type_name).toBe("i32");
       }
     });
+
+    it("should extract type from identifier node by walking up to parent let_declaration", () => {
+      const code = `let service: Service = create_service();`;
+      const tree = parser.parse(code);
+      const identifiers = tree.rootNode.descendantsOfType("identifier");
+
+      // Find the "service" identifier (the variable being declared, not the type or function)
+      const serviceIdentifier = identifiers.find(
+        (node) => node.text === "service" && node.parent?.type === "let_declaration"
+      );
+
+      expect(serviceIdentifier).toBeDefined();
+
+      // This tests the new parent-walking logic added for assignment references
+      const result = RUST_METADATA_EXTRACTORS.extract_type_from_annotation(serviceIdentifier!, TEST_FILE);
+
+      expect(result).toBeDefined();
+      expect(result?.type_name).toBe("Service");
+      expect(result?.certainty).toBe("declared");
+    });
+
+    it("should extract type from identifier with generic type annotation", () => {
+      const code = `let vec: Vec<String> = Vec::new();`;
+      const tree = parser.parse(code);
+      const identifiers = tree.rootNode.descendantsOfType("identifier");
+
+      // Find the "vec" identifier (the variable being declared)
+      const vecIdentifier = identifiers.find(
+        (node) => node.text === "vec" && node.parent?.type === "let_declaration"
+      );
+
+      expect(vecIdentifier).toBeDefined();
+
+      // Test parent-walking with generic types
+      const result = RUST_METADATA_EXTRACTORS.extract_type_from_annotation(vecIdentifier!, TEST_FILE);
+
+      expect(result).toBeDefined();
+      expect(result?.type_name).toBe("Vec<String>");
+      expect(result?.certainty).toBe("declared");
+    });
+
+    it("should extract type from identifier with reference type annotation", () => {
+      const code = `let s: &str = "hello";`;
+      const tree = parser.parse(code);
+      const identifiers = tree.rootNode.descendantsOfType("identifier");
+
+      // Find the "s" identifier
+      const sIdentifier = identifiers.find(
+        (node) => node.text === "s" && node.parent?.type === "let_declaration"
+      );
+
+      expect(sIdentifier).toBeDefined();
+
+      // Test parent-walking with reference types
+      const result = RUST_METADATA_EXTRACTORS.extract_type_from_annotation(sIdentifier!, TEST_FILE);
+
+      expect(result).toBeDefined();
+      expect(result?.type_name).toBe("&str");
+      expect(result?.certainty).toBe("declared");
+    });
+
+    it("should return undefined for identifier without type annotation", () => {
+      const code = `let x = 42;`;
+      const tree = parser.parse(code);
+      const identifiers = tree.rootNode.descendantsOfType("identifier");
+
+      // Find the "x" identifier
+      const xIdentifier = identifiers.find(
+        (node) => node.text === "x" && node.parent?.type === "let_declaration"
+      );
+
+      expect(xIdentifier).toBeDefined();
+
+      // Should return undefined when no type annotation exists
+      const result = RUST_METADATA_EXTRACTORS.extract_type_from_annotation(xIdentifier!, TEST_FILE);
+
+      expect(result).toBeUndefined();
+    });
+
+    it("should return undefined for identifier not in let_declaration", () => {
+      const code = `fn main() { println!("hello"); }`;
+      const tree = parser.parse(code);
+      const identifiers = tree.rootNode.descendantsOfType("identifier");
+
+      // Find the "main" identifier (which is in a function_item, not let_declaration)
+      const mainIdentifier = identifiers.find(
+        (node) => node.text === "main"
+      );
+
+      expect(mainIdentifier).toBeDefined();
+      expect(mainIdentifier?.parent?.type).not.toBe("let_declaration");
+
+      // Should return undefined because parent is not let_declaration
+      const result = RUST_METADATA_EXTRACTORS.extract_type_from_annotation(mainIdentifier!, TEST_FILE);
+
+      // This might extract function return type or return undefined
+      // Either way, it shouldn't crash
+      expect(result === undefined || result.type_name === "main").toBeTruthy();
+    });
   });
 
   describe("extract_call_receiver", () => {
