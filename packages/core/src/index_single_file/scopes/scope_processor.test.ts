@@ -1225,5 +1225,142 @@ describe("scope_processor", () => {
         expect(inner_class!.defining_scope_id).toBe(method_scope!.id);
       });
     });
+
+    describe("Named function expression scope boundaries", () => {
+      it("should start scope after 'function' keyword for named function expressions in JavaScript", () => {
+        const js_parser = new Parser();
+        js_parser.setLanguage(JavaScript);
+
+        const code = `const factorial = function fact(n) {
+  return n * fact(n - 1);
+};`;
+
+        const tree = js_parser.parse(code);
+        const parsedFile: ParsedFile = {
+          file_path: "test.js" as FilePath,
+          file_lines: code.split("\n").length,
+          file_end_column: code.split("\n")[2]?.length || 0,
+          tree,
+          lang: "javascript" as Language,
+        };
+
+        const index = build_semantic_index(parsedFile, tree, "javascript");
+
+        const scopes = Array.from(index.scopes.values());
+        const function_scope = scopes.find((s) => s.type === "function");
+        expect(function_scope).toBeDefined();
+
+        // The function scope should start after "function" keyword
+        // Code: "const factorial = function fact(n) {"
+        // Position:                      ^22     ^27 ^31
+        // Scope should start around column 31-32 (after "function ", before "fact")
+        expect(function_scope!.location.start_column).toBeLessThan(28); // Before "fact"
+        expect(function_scope!.location.start_column).toBeGreaterThan(22); // After "function"
+
+        // Verify the function name 'fact' is defined in the function scope
+        const fact_def = Array.from(index.functions.values()).find(
+          (f) => f.name === "fact"
+        );
+        expect(fact_def).toBeDefined();
+        expect(fact_def!.defining_scope_id).toBe(function_scope!.id);
+      });
+
+      it("should start scope after 'function' keyword for named function expressions in TypeScript", () => {
+        const ts_parser = new Parser();
+        ts_parser.setLanguage(TypeScript.typescript);
+
+        const code = `const factorial = function fact(n: number): number {
+  return n * fact(n - 1);
+};`;
+
+        const tree = ts_parser.parse(code);
+        const parsedFile: ParsedFile = {
+          file_path: "test.ts" as FilePath,
+          file_lines: code.split("\n").length,
+          file_end_column: code.split("\n")[2]?.length || 0,
+          tree,
+          lang: "typescript" as Language,
+        };
+
+        const index = build_semantic_index(parsedFile, tree, "typescript");
+
+        const scopes = Array.from(index.scopes.values());
+        const function_scope = scopes.find((s) => s.type === "function");
+        expect(function_scope).toBeDefined();
+
+        // Verify the function name 'fact' is defined in the function scope
+        const fact_def = Array.from(index.functions.values()).find(
+          (f) => f.name === "fact"
+        );
+        expect(fact_def).toBeDefined();
+        expect(fact_def!.defining_scope_id).toBe(function_scope!.id);
+      });
+
+      it("should start scope at parameters for anonymous function expressions", () => {
+        const js_parser = new Parser();
+        js_parser.setLanguage(JavaScript);
+
+        const code = `const factorial = function(n) {
+  return n * 2;
+};`;
+
+        const tree = js_parser.parse(code);
+        const parsedFile: ParsedFile = {
+          file_path: "test.js" as FilePath,
+          file_lines: code.split("\n").length,
+          file_end_column: code.split("\n")[2]?.length || 0,
+          tree,
+          lang: "javascript" as Language,
+        };
+
+        const index = build_semantic_index(parsedFile, tree, "javascript");
+
+        const scopes = Array.from(index.scopes.values());
+        const function_scope = scopes.find((s) => s.type === "function");
+        expect(function_scope).toBeDefined();
+
+        // Anonymous function expressions should start at parameters
+        // Code: "const factorial = function(n) {"
+        // Position:                         ^27
+        expect(function_scope!.location.start_column).toBe(27); // At "("
+      });
+
+      it("should start scope at parameters for regular function declarations", () => {
+        const js_parser = new Parser();
+        js_parser.setLanguage(JavaScript);
+
+        const code = `function factorial(n) {
+  return n * 2;
+}`;
+
+        const tree = js_parser.parse(code);
+        const parsedFile: ParsedFile = {
+          file_path: "test.js" as FilePath,
+          file_lines: code.split("\n").length,
+          file_end_column: code.split("\n")[2]?.length || 0,
+          tree,
+          lang: "javascript" as Language,
+        };
+
+        const index = build_semantic_index(parsedFile, tree, "javascript");
+
+        const scopes = Array.from(index.scopes.values());
+        const function_scope = scopes.find((s) => s.type === "function");
+        expect(function_scope).toBeDefined();
+
+        // Regular function declarations should start at parameters
+        // Code: "function factorial(n) {"
+        // Position:                 ^19
+        expect(function_scope!.location.start_column).toBe(19); // At "("
+
+        // The function name 'factorial' should be in module scope, not function scope
+        const factorial_def = Array.from(index.functions.values()).find(
+          (f) => f.name === "factorial"
+        );
+        expect(factorial_def).toBeDefined();
+        const module_scope = scopes.find((s) => s.type === "module");
+        expect(factorial_def!.defining_scope_id).toBe(module_scope!.id);
+      });
+    });
   });
 });

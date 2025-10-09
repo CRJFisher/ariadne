@@ -60,18 +60,38 @@ export function process_scopes(
 
     if (!scope_type) continue;
 
-    // Adjust callable scope boundaries to start at parameters
-    // Tree-sitter captures method/function nodes starting at the keyword/name
-    // but the scope should start at parameters (exclude the name which belongs to parent scope)
-    // Example: "def method(self):" - scope starts at "(", not "def"
+    // Adjust callable scope boundaries
+    // Special case: Named function expressions (e.g., `function fact(n) { ... }`)
+    // The function name must be in the function's own scope for self-reference
+    // So scope starts after "function" keyword, before the name
     if (is_callable_scope_type(scope_type)) {
-      const params_node = capture.node.childForFieldName("parameters");
-      if (params_node) {
-        location = {
-          ...location,
-          start_line: params_node.startPosition.row + 1,
-          start_column: params_node.startPosition.column + 1,
-        };
+      const is_named_function_expr =
+        capture.node.type === "function_expression" &&
+        capture.node.childForFieldName("name") !== null;
+
+      if (is_named_function_expr) {
+        // For named function expressions: scope starts after "function" keyword
+        // The first child is the "function" keyword token
+        const function_keyword = capture.node.child(0);
+        if (function_keyword) {
+          location = {
+            ...location,
+            start_line: function_keyword.endPosition.row + 1,
+            start_column: function_keyword.endPosition.column + 1,
+          };
+        }
+      } else {
+        // For other callables: scope starts at parameters
+        // This excludes the name from the scope (name belongs to parent scope)
+        // Example: "def method(self):" - scope starts at "(", not "def"
+        const params_node = capture.node.childForFieldName("parameters");
+        if (params_node) {
+          location = {
+            ...location,
+            start_line: params_node.startPosition.row + 1,
+            start_column: params_node.startPosition.column + 1,
+          };
+        }
       }
     }
 
