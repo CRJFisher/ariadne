@@ -15,6 +15,7 @@ import type {
   SemanticEntity,
 } from "../../semantic_index";
 import type { Location, ScopeId, SymbolName } from "@ariadnejs/types";
+import { node_to_location } from "../../node_utils";
 
 describe("Python Builder Configuration", () => {
   let parser: Parser;
@@ -1171,13 +1172,7 @@ class Drawable(Protocol):
           entity: "interface" as SemanticEntity,
           node: className as any,
           text: className.text as SymbolName,
-          location: {
-            file_path: "test.py" as any,
-            start_line: className.startPosition.row + 1,
-            start_column: className.startPosition.column + 1,
-            end_line: className.endPosition.row + 1,
-            end_column: className.endPosition.column + 1,
-          },
+          location: node_to_location(className, "test.py" as any),
         };
 
         const builder = new DefinitionBuilder(createTestContext());
@@ -1219,13 +1214,7 @@ class PublicProtocol(Protocol):
           entity: "interface" as SemanticEntity,
           node: className as any,
           text: className.text as SymbolName,
-          location: {
-            file_path: "test.py" as any,
-            start_line: className.startPosition.row + 1,
-            start_column: className.startPosition.column + 1,
-            end_line: className.endPosition.row + 1,
-            end_column: className.endPosition.column + 1,
-          },
+          location: node_to_location(className, "test.py" as any),
         };
 
         PYTHON_BUILDER_CONFIG.get("definition.interface")?.process(
@@ -1265,13 +1254,7 @@ class _PrivateProtocol(Protocol):
           entity: "interface" as SemanticEntity,
           node: className as any,
           text: className.text as SymbolName,
-          location: {
-            file_path: "test.py" as any,
-            start_line: className.startPosition.row + 1,
-            start_column: className.startPosition.column + 1,
-            end_line: className.endPosition.row + 1,
-            end_column: className.endPosition.column + 1,
-          },
+          location: node_to_location(className, "test.py" as any),
         };
 
         PYTHON_BUILDER_CONFIG.get("definition.interface")?.process(
@@ -1310,13 +1293,7 @@ class Drawable(Protocol):
             text: className.text as SymbolName,
             category: "definition" as SemanticCategory,
             entity: "interface" as SemanticEntity,
-            location: {
-              file_path: "test.py" as any,
-              start_line: className.startPosition.row + 1,
-              start_column: className.startPosition.column + 1,
-              end_line: className.endPosition.row + 1,
-              end_column: className.endPosition.column + 1,
-            },
+            location: node_to_location(className, "test.py" as any),
           };
           PYTHON_BUILDER_CONFIG.get("definition.interface")?.process(
             classCapture,
@@ -1350,13 +1327,7 @@ class Drawable(Protocol):
               text: propNode.text as SymbolName,
               category: "definition" as SemanticCategory,
               entity: "property" as SemanticEntity,
-              location: {
-                file_path: "test.py" as any,
-                start_line: propNode.startPosition.row + 1,
-                start_column: propNode.startPosition.column + 1,
-                end_line: propNode.endPosition.row + 1,
-                end_column: propNode.endPosition.column + 1,
-              },
+              location: node_to_location(propNode, "test.py" as any),
             };
             PYTHON_BUILDER_CONFIG.get("definition.property.interface")?.process(
               propCapture,
