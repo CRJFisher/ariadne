@@ -9,6 +9,7 @@ import { build_type_context } from "./type_context";
 import { build_scope_resolver_index } from "../scope_resolver_index/scope_resolver_index";
 import { create_resolution_cache } from "../resolution_cache/resolution_cache";
 import { build_semantic_index } from "../../index_single_file/semantic_index";
+import { build_file_tree } from "../symbol_resolution.test_helpers";
 import type {
   FilePath,
   Language,
@@ -74,7 +75,8 @@ const instance = new MyClass();
       const index = build_semantic_index(parsed_file, tree, "javascript");
 
       const indices = new Map([[file_path, index]]);
-      const resolver_index = build_scope_resolver_index(indices);
+      const root_folder = build_file_tree([file_path]);
+      const resolver_index = build_scope_resolver_index(indices, root_folder);
       const cache = create_resolution_cache();
       const namespace_sources = new Map<SymbolId, FilePath>();
       const type_context = build_type_context(indices, resolver_index, cache, namespace_sources);
@@ -99,7 +101,8 @@ const user: User = new User();
       const index = build_semantic_index(parsed_file, tree, "typescript");
 
       const indices = new Map([[file_path, index]]);
-      const resolver_index = build_scope_resolver_index(indices);
+      const root_folder = build_file_tree([file_path]);
+      const resolver_index = build_scope_resolver_index(indices, root_folder);
       const cache = create_resolution_cache();
       const namespace_sources = new Map<SymbolId, FilePath>();
       const type_context = build_type_context(indices, resolver_index, cache, namespace_sources);
@@ -136,7 +139,8 @@ function processData(data: Data) {
       const index = build_semantic_index(parsed_file, tree, "typescript");
 
       const indices = new Map([[file_path, index]]);
-      const resolver_index = build_scope_resolver_index(indices);
+      const root_folder = build_file_tree([file_path]);
+      const resolver_index = build_scope_resolver_index(indices, root_folder);
       const cache = create_resolution_cache();
       const namespace_sources = new Map<SymbolId, FilePath>();
       const type_context = build_type_context(indices, resolver_index, cache, namespace_sources);
@@ -175,7 +179,8 @@ function getResult(): Result {
       const index = build_semantic_index(parsed_file, tree, "typescript");
 
       const indices = new Map([[file_path, index]]);
-      const resolver_index = build_scope_resolver_index(indices);
+      const root_folder = build_file_tree([file_path]);
+      const resolver_index = build_scope_resolver_index(indices, root_folder);
       const cache = create_resolution_cache();
       const namespace_sources = new Map<SymbolId, FilePath>();
       const type_context = build_type_context(indices, resolver_index, cache, namespace_sources);
@@ -212,7 +217,8 @@ const items: Container<string> = new Container();
       const index = build_semantic_index(parsed_file, tree, "typescript");
 
       const indices = new Map([[file_path, index]]);
-      const resolver_index = build_scope_resolver_index(indices);
+      const root_folder = build_file_tree([file_path]);
+      const resolver_index = build_scope_resolver_index(indices, root_folder);
       const cache = create_resolution_cache();
       const namespace_sources = new Map<SymbolId, FilePath>();
       const type_context = build_type_context(indices, resolver_index, cache, namespace_sources);
@@ -250,7 +256,8 @@ const instance = new MyClass();
       const index = build_semantic_index(parsed_file, tree, "javascript");
 
       const indices = new Map([[file_path, index]]);
-      const resolver_index = build_scope_resolver_index(indices);
+      const root_folder = build_file_tree([file_path]);
+      const resolver_index = build_scope_resolver_index(indices, root_folder);
       const cache = create_resolution_cache();
       const namespace_sources = new Map<SymbolId, FilePath>();
       const type_context = build_type_context(indices, resolver_index, cache, namespace_sources);
@@ -289,7 +296,8 @@ const config = {
       const index = build_semantic_index(parsed_file, tree, "javascript");
 
       const indices = new Map([[file_path, index]]);
-      const resolver_index = build_scope_resolver_index(indices);
+      const root_folder = build_file_tree([file_path]);
+      const resolver_index = build_scope_resolver_index(indices, root_folder);
       const cache = create_resolution_cache();
       const namespace_sources = new Map<SymbolId, FilePath>();
       const type_context = build_type_context(indices, resolver_index, cache, namespace_sources);
@@ -321,7 +329,8 @@ value: MyClass = MyClass()
       const index = build_semantic_index(parsed_file, tree, "python");
 
       const indices = new Map([[file_path, index]]);
-      const resolver_index = build_scope_resolver_index(indices);
+      const root_folder = build_file_tree([file_path]);
+      const resolver_index = build_scope_resolver_index(indices, root_folder);
       const cache = create_resolution_cache();
       const namespace_sources = new Map<SymbolId, FilePath>();
       const type_context = build_type_context(indices, resolver_index, cache, namespace_sources);
@@ -358,7 +367,8 @@ def handle_data(data: Data):
       const index = build_semantic_index(parsed_file, tree, "python");
 
       const indices = new Map([[file_path, index]]);
-      const resolver_index = build_scope_resolver_index(indices);
+      const root_folder = build_file_tree([file_path]);
+      const resolver_index = build_scope_resolver_index(indices, root_folder);
       const cache = create_resolution_cache();
       const namespace_sources = new Map<SymbolId, FilePath>();
       const type_context = build_type_context(indices, resolver_index, cache, namespace_sources);
@@ -399,7 +409,8 @@ def get_result() -> Result:
       const index = build_semantic_index(parsed_file, tree, "python");
 
       const indices = new Map([[file_path, index]]);
-      const resolver_index = build_scope_resolver_index(indices);
+      const root_folder = build_file_tree([file_path]);
+      const resolver_index = build_scope_resolver_index(indices, root_folder);
       const cache = create_resolution_cache();
       const namespace_sources = new Map<SymbolId, FilePath>();
       const type_context = build_type_context(indices, resolver_index, cache, namespace_sources);
@@ -437,7 +448,8 @@ instance = Service()
       const index = build_semantic_index(parsed_file, tree, "python");
 
       const indices = new Map([[file_path, index]]);
-      const resolver_index = build_scope_resolver_index(indices);
+      const root_folder = build_file_tree([file_path]);
+      const resolver_index = build_scope_resolver_index(indices, root_folder);
       const cache = create_resolution_cache();
       const namespace_sources = new Map<SymbolId, FilePath>();
       const type_context = build_type_context(indices, resolver_index, cache, namespace_sources);
@@ -485,7 +497,8 @@ fn main() {
       const index = build_semantic_index(parsed_file, tree, "rust");
 
       const indices = new Map([[file_path, index]]);
-      const resolver_index = build_scope_resolver_index(indices);
+      const root_folder = build_file_tree([file_path]);
+      const resolver_index = build_scope_resolver_index(indices, root_folder);
       const cache = create_resolution_cache();
       const namespace_sources = new Map<SymbolId, FilePath>();
       const type_context = build_type_context(indices, resolver_index, cache, namespace_sources);
@@ -527,7 +540,8 @@ fn handle_data(data: Data) {
       const index = build_semantic_index(parsed_file, tree, "rust");
 
       const indices = new Map([[file_path, index]]);
-      const resolver_index = build_scope_resolver_index(indices);
+      const root_folder = build_file_tree([file_path]);
+      const resolver_index = build_scope_resolver_index(indices, root_folder);
       const cache = create_resolution_cache();
       const namespace_sources = new Map<SymbolId, FilePath>();
       const type_context = build_type_context(indices, resolver_index, cache, namespace_sources);
@@ -575,7 +589,8 @@ fn get_result() -> Result {
       const index = build_semantic_index(parsed_file, tree, "rust");
 
       const indices = new Map([[file_path, index]]);
-      const resolver_index = build_scope_resolver_index(indices);
+      const root_folder = build_file_tree([file_path]);
+      const resolver_index = build_scope_resolver_index(indices, root_folder);
       const cache = create_resolution_cache();
       const namespace_sources = new Map<SymbolId, FilePath>();
       const type_context = build_type_context(indices, resolver_index, cache, namespace_sources);
@@ -614,7 +629,8 @@ class MyClass {
       const index = build_semantic_index(parsed_file, tree, "typescript");
 
       const indices = new Map([[file_path, index]]);
-      const resolver_index = build_scope_resolver_index(indices);
+      const root_folder = build_file_tree([file_path]);
+      const resolver_index = build_scope_resolver_index(indices, root_folder);
       const cache = create_resolution_cache();
       const namespace_sources = new Map<SymbolId, FilePath>();
       const type_context = build_type_context(indices, resolver_index, cache, namespace_sources);
@@ -650,7 +666,8 @@ class MyClass {
       const index = build_semantic_index(parsed_file, tree, "typescript");
 
       const indices = new Map([[file_path, index]]);
-      const resolver_index = build_scope_resolver_index(indices);
+      const root_folder = build_file_tree([file_path]);
+      const resolver_index = build_scope_resolver_index(indices, root_folder);
       const cache = create_resolution_cache();
       const namespace_sources = new Map<SymbolId, FilePath>();
       const type_context = build_type_context(indices, resolver_index, cache, namespace_sources);
@@ -686,7 +703,8 @@ interface MyInterface {
       const index = build_semantic_index(parsed_file, tree, "typescript");
 
       const indices = new Map([[file_path, index]]);
-      const resolver_index = build_scope_resolver_index(indices);
+      const root_folder = build_file_tree([file_path]);
+      const resolver_index = build_scope_resolver_index(indices, root_folder);
       const cache = create_resolution_cache();
       const namespace_sources = new Map<SymbolId, FilePath>();
       const type_context = build_type_context(indices, resolver_index, cache, namespace_sources);
@@ -717,7 +735,8 @@ class MyClass {
       const index = build_semantic_index(parsed_file, tree, "typescript");
 
       const indices = new Map([[file_path, index]]);
-      const resolver_index = build_scope_resolver_index(indices);
+      const root_folder = build_file_tree([file_path]);
+      const resolver_index = build_scope_resolver_index(indices, root_folder);
       const cache = create_resolution_cache();
       const namespace_sources = new Map<SymbolId, FilePath>();
       const type_context = build_type_context(indices, resolver_index, cache, namespace_sources);
@@ -751,7 +770,8 @@ const value: LocalType = new LocalType();
       const index = build_semantic_index(parsed_file, tree, "typescript");
 
       const indices = new Map([[file_path, index]]);
-      const resolver_index = build_scope_resolver_index(indices);
+      const root_folder = build_file_tree([file_path]);
+      const resolver_index = build_scope_resolver_index(indices, root_folder);
       const cache = create_resolution_cache();
       const namespace_sources = new Map<SymbolId, FilePath>();
       const type_context = build_type_context(indices, resolver_index, cache, namespace_sources);
@@ -789,7 +809,8 @@ function test() {
       const index = build_semantic_index(parsed_file, tree, "typescript");
 
       const indices = new Map([[file_path, index]]);
-      const resolver_index = build_scope_resolver_index(indices);
+      const root_folder = build_file_tree([file_path]);
+      const resolver_index = build_scope_resolver_index(indices, root_folder);
       const cache = create_resolution_cache();
       const namespace_sources = new Map<SymbolId, FilePath>();
       const type_context = build_type_context(indices, resolver_index, cache, namespace_sources);
@@ -832,7 +853,8 @@ const value = 42;
       const index = build_semantic_index(parsed_file, tree, "javascript");
 
       const indices = new Map([[file_path, index]]);
-      const resolver_index = build_scope_resolver_index(indices);
+      const root_folder = build_file_tree([file_path]);
+      const resolver_index = build_scope_resolver_index(indices, root_folder);
       const cache = create_resolution_cache();
       const namespace_sources = new Map<SymbolId, FilePath>();
       const type_context = build_type_context(indices, resolver_index, cache, namespace_sources);
@@ -858,7 +880,8 @@ const value: UnknownType = null as any;
       const index = build_semantic_index(parsed_file, tree, "typescript");
 
       const indices = new Map([[file_path, index]]);
-      const resolver_index = build_scope_resolver_index(indices);
+      const root_folder = build_file_tree([file_path]);
+      const resolver_index = build_scope_resolver_index(indices, root_folder);
       const cache = create_resolution_cache();
       const namespace_sources = new Map<SymbolId, FilePath>();
       const type_context = build_type_context(indices, resolver_index, cache, namespace_sources);

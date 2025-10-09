@@ -16,10 +16,7 @@ describe("resolve_module_path_python", () => {
     const utils_file = path.join(TEST_DIR, "utils.py");
     const main_file = path.join(TEST_DIR, "main.py") as FilePath;
 
-    const root_folder = build_file_tree([
-      utils_file as FilePath,
-      main_file,
-    ]);
+    const root_folder = build_file_tree([utils_file as FilePath, main_file]);
 
     const result = resolve_module_path_python(".utils", main_file, root_folder);
 
@@ -31,12 +28,13 @@ describe("resolve_module_path_python", () => {
     const sub_dir = path.join(TEST_DIR, "sub");
     const main_file = path.join(sub_dir, "main.py") as FilePath;
 
-    const root_folder = build_file_tree([
-      utils_file as FilePath,
-      main_file,
-    ]);
+    const root_folder = build_file_tree([utils_file as FilePath, main_file]);
 
-    const result = resolve_module_path_python("..utils", main_file, root_folder);
+    const result = resolve_module_path_python(
+      "..utils",
+      main_file,
+      root_folder
+    );
 
     expect(result).toBe(utils_file);
   });
@@ -46,12 +44,13 @@ describe("resolve_module_path_python", () => {
     const deep_dir = path.join(TEST_DIR, "sub1", "sub2");
     const main_file = path.join(deep_dir, "main.py") as FilePath;
 
-    const root_folder = build_file_tree([
-      utils_file as FilePath,
-      main_file,
-    ]);
+    const root_folder = build_file_tree([utils_file as FilePath, main_file]);
 
-    const result = resolve_module_path_python("...utils", main_file, root_folder);
+    const result = resolve_module_path_python(
+      "...utils",
+      main_file,
+      root_folder
+    );
 
     expect(result).toBe(utils_file);
   });
@@ -61,12 +60,13 @@ describe("resolve_module_path_python", () => {
     const utils_file = path.join(helpers_dir, "utils.py");
     const main_file = path.join(TEST_DIR, "main.py") as FilePath;
 
-    const root_folder = build_file_tree([
-      utils_file as FilePath,
-      main_file,
-    ]);
+    const root_folder = build_file_tree([utils_file as FilePath, main_file]);
 
-    const result = resolve_module_path_python(".helpers.utils", main_file, root_folder);
+    const result = resolve_module_path_python(
+      ".helpers.utils",
+      main_file,
+      root_folder
+    );
 
     expect(result).toBe(utils_file);
   });
@@ -76,12 +76,13 @@ describe("resolve_module_path_python", () => {
     const init_file = path.join(package_dir, "__init__.py");
     const main_file = path.join(TEST_DIR, "main.py") as FilePath;
 
-    const root_folder = build_file_tree([
-      init_file as FilePath,
-      main_file,
-    ]);
+    const root_folder = build_file_tree([init_file as FilePath, main_file]);
 
-    const result = resolve_module_path_python(".mypackage", main_file, root_folder);
+    const result = resolve_module_path_python(
+      ".mypackage",
+      main_file,
+      root_folder
+    );
 
     expect(result).toBe(init_file);
   });
@@ -100,7 +101,11 @@ describe("resolve_module_path_python", () => {
       main_file,
     ]);
 
-    const result = resolve_module_path_python("src.utils", main_file, root_folder);
+    const result = resolve_module_path_python(
+      "src.utils",
+      main_file,
+      root_folder
+    );
 
     expect(result).toBe(utils_file);
   });
@@ -121,7 +126,11 @@ describe("resolve_module_path_python", () => {
       main_file,
     ]);
 
-    const result = resolve_module_path_python("src.helpers.utils", main_file, root_folder);
+    const result = resolve_module_path_python(
+      "src.helpers.utils",
+      main_file,
+      root_folder
+    );
 
     expect(result).toBe(utils_file);
   });
@@ -139,7 +148,11 @@ describe("resolve_module_path_python", () => {
       main_file,
     ]);
 
-    const result = resolve_module_path_python("src.helpers", main_file, root_folder);
+    const result = resolve_module_path_python(
+      "src.helpers",
+      main_file,
+      root_folder
+    );
 
     expect(result).toBe(init_file);
   });
@@ -167,7 +180,11 @@ describe("resolve_module_path_python", () => {
 
     const root_folder = build_file_tree([main_file]);
 
-    const result = resolve_module_path_python(".nonexistent", main_file, root_folder);
+    const result = resolve_module_path_python(
+      ".nonexistent",
+      main_file,
+      root_folder
+    );
 
     expect(result).toBe(expected);
   });
@@ -187,7 +204,11 @@ describe("resolve_module_path_python", () => {
       main_file,
     ]);
 
-    const result = resolve_module_path_python("..utils", main_file, root_folder);
+    const result = resolve_module_path_python(
+      "..utils",
+      main_file,
+      root_folder
+    );
 
     expect(result).toBe(utils_file);
   });
@@ -208,7 +229,11 @@ describe("resolve_module_path_python", () => {
       main_file,
     ]);
 
-    const result = resolve_module_path_python("project.utils", main_file, root_folder);
+    const result = resolve_module_path_python(
+      "project.utils",
+      main_file,
+      root_folder
+    );
 
     expect(result).toBe(utils_file);
   });
@@ -217,12 +242,13 @@ describe("resolve_module_path_python", () => {
     const sibling_file = path.join(TEST_DIR, "sibling.py");
     const main_file = path.join(TEST_DIR, "main.py") as FilePath;
 
-    const root_folder = build_file_tree([
-      sibling_file as FilePath,
-      main_file,
-    ]);
+    const root_folder = build_file_tree([sibling_file as FilePath, main_file]);
 
-    const result = resolve_module_path_python(".sibling", main_file, root_folder);
+    const result = resolve_module_path_python(
+      ".sibling",
+      main_file,
+      root_folder
+    );
 
     expect(result).toBe(sibling_file);
   });
@@ -237,10 +263,7 @@ describe("resolve_module_path_python - bare module imports", () => {
     const helper_file = path.join(BARE_TEST_DIR, "helper.py");
     const main_file = path.join(BARE_TEST_DIR, "main.py") as FilePath;
 
-    const root_folder = build_file_tree([
-      helper_file as FilePath,
-      main_file,
-    ]);
+    const root_folder = build_file_tree([helper_file as FilePath, main_file]);
 
     const result = resolve_module_path_python("helper", main_file, root_folder);
 
@@ -253,12 +276,13 @@ describe("resolve_module_path_python - bare module imports", () => {
     const helper_file = path.join(utils_dir, "helper.py");
     const main_file = path.join(BARE_TEST_DIR, "main.py") as FilePath;
 
-    const root_folder = build_file_tree([
-      helper_file as FilePath,
-      main_file,
-    ]);
+    const root_folder = build_file_tree([helper_file as FilePath, main_file]);
 
-    const result = resolve_module_path_python("utils.helper", main_file, root_folder);
+    const result = resolve_module_path_python(
+      "utils.helper",
+      main_file,
+      root_folder
+    );
 
     expect(result).toBe(helper_file);
   });
@@ -269,10 +293,7 @@ describe("resolve_module_path_python - bare module imports", () => {
     const sub_dir = path.join(BARE_TEST_DIR, "subdir");
     const main_file = path.join(sub_dir, "main.py") as FilePath;
 
-    const root_folder = build_file_tree([
-      helper_file as FilePath,
-      main_file,
-    ]);
+    const root_folder = build_file_tree([helper_file as FilePath, main_file]);
 
     const result = resolve_module_path_python("helper", main_file, root_folder);
 
@@ -285,10 +306,7 @@ describe("resolve_module_path_python - bare module imports", () => {
     const deep_dir = path.join(BARE_TEST_DIR, "deep", "nested", "dir");
     const main_file = path.join(deep_dir, "main.py") as FilePath;
 
-    const root_folder = build_file_tree([
-      helper_file as FilePath,
-      main_file,
-    ]);
+    const root_folder = build_file_tree([helper_file as FilePath, main_file]);
 
     const result = resolve_module_path_python("helper", main_file, root_folder);
 
@@ -301,13 +319,14 @@ describe("resolve_module_path_python - bare module imports", () => {
     const helper_file = path.join(utils_dir, "helper.py");
     const main_file = path.join(BARE_TEST_DIR, "main.py") as FilePath;
 
-    const root_folder = build_file_tree([
-      helper_file as FilePath,
-      main_file,
-    ]);
+    const root_folder = build_file_tree([helper_file as FilePath, main_file]);
 
     // Note: NO __init__.py files created anywhere
-    const result = resolve_module_path_python("utils.helper", main_file, root_folder);
+    const result = resolve_module_path_python(
+      "utils.helper",
+      main_file,
+      root_folder
+    );
 
     expect(result).toBe(helper_file);
   });
@@ -318,10 +337,7 @@ describe("resolve_module_path_python - bare module imports", () => {
     const init_file = path.join(utils_dir, "__init__.py");
     const main_file = path.join(BARE_TEST_DIR, "main.py") as FilePath;
 
-    const root_folder = build_file_tree([
-      init_file as FilePath,
-      main_file,
-    ]);
+    const root_folder = build_file_tree([init_file as FilePath, main_file]);
 
     const result = resolve_module_path_python("utils", main_file, root_folder);
 
@@ -335,10 +351,7 @@ describe("resolve_module_path_python - bare module imports", () => {
     const c_file = path.join(b_dir, "c.py");
     const main_file = path.join(BARE_TEST_DIR, "main.py") as FilePath;
 
-    const root_folder = build_file_tree([
-      c_file as FilePath,
-      main_file,
-    ]);
+    const root_folder = build_file_tree([c_file as FilePath, main_file]);
 
     const result = resolve_module_path_python("a.b.c", main_file, root_folder);
 
@@ -370,12 +383,13 @@ describe("resolve_module_path_python - bare module imports", () => {
     const helper_file = path.join(nested_dir, "helper.py");
     const worker_file = path.join(nested_dir, "worker.py") as FilePath;
 
-    const root_folder = build_file_tree([
-      helper_file as FilePath,
-      worker_file,
-    ]);
+    const root_folder = build_file_tree([helper_file as FilePath, worker_file]);
 
-    const result = resolve_module_path_python("nested.helper", worker_file, root_folder);
+    const result = resolve_module_path_python(
+      "nested.helper",
+      worker_file,
+      root_folder
+    );
 
     expect(result).toBe(helper_file);
   });
@@ -392,7 +406,11 @@ describe("resolve_module_path_python - bare module imports", () => {
       main_file,
     ]);
 
-    const result = resolve_module_path_python("utils.helpers.processor", main_file, root_folder);
+    const result = resolve_module_path_python(
+      "utils.helpers.processor",
+      main_file,
+      root_folder
+    );
 
     expect(result).toBe(processor_file);
   });
@@ -423,7 +441,11 @@ describe("resolve_module_path_python - bare module imports", () => {
 
     const root_folder = build_file_tree([main_file]);
 
-    const result = resolve_module_path_python("nonexistent", main_file, root_folder);
+    const result = resolve_module_path_python(
+      "nonexistent",
+      main_file,
+      root_folder
+    );
 
     expect(result).toBe(expected);
   });
@@ -434,13 +456,14 @@ describe("resolve_module_path_python - bare module imports", () => {
     const helper_file = path.join(src_dir, "helper.py");
     const main_file = path.join(src_dir, "main.py") as FilePath;
 
-    const root_folder = build_file_tree([
-      helper_file as FilePath,
-      main_file,
-    ]);
+    const root_folder = build_file_tree([helper_file as FilePath, main_file]);
 
     // Note: NO __init__.py in src/
-    const result = resolve_module_path_python("src.helper", main_file, root_folder);
+    const result = resolve_module_path_python(
+      "src.helper",
+      main_file,
+      root_folder
+    );
 
     expect(result).toBe(helper_file);
   });
@@ -457,12 +480,13 @@ describe("resolve_module_path_python - comprehensive relative imports", () => {
     const helper_file = path.join(REL_TEST_DIR, "helper.py");
     const main_file = path.join(REL_TEST_DIR, "main.py") as FilePath;
 
-    const root_folder = build_file_tree([
-      helper_file as FilePath,
-      main_file,
-    ]);
+    const root_folder = build_file_tree([helper_file as FilePath, main_file]);
 
-    const result = resolve_module_path_python(".helper", main_file, root_folder);
+    const result = resolve_module_path_python(
+      ".helper",
+      main_file,
+      root_folder
+    );
 
     expect(result).toBe(helper_file);
   });
@@ -473,12 +497,13 @@ describe("resolve_module_path_python - comprehensive relative imports", () => {
     const helpers_file = path.join(utils_dir, "helpers.py");
     const main_file = path.join(REL_TEST_DIR, "main.py") as FilePath;
 
-    const root_folder = build_file_tree([
-      helpers_file as FilePath,
-      main_file,
-    ]);
+    const root_folder = build_file_tree([helpers_file as FilePath, main_file]);
 
-    const result = resolve_module_path_python(".utils.helpers", main_file, root_folder);
+    const result = resolve_module_path_python(
+      ".utils.helpers",
+      main_file,
+      root_folder
+    );
 
     expect(result).toBe(helpers_file);
   });
@@ -489,12 +514,13 @@ describe("resolve_module_path_python - comprehensive relative imports", () => {
     const helper_file = path.join(pkg_dir, "helper.py");
     const worker_file = path.join(pkg_dir, "worker.py") as FilePath;
 
-    const root_folder = build_file_tree([
-      helper_file as FilePath,
-      worker_file,
-    ]);
+    const root_folder = build_file_tree([helper_file as FilePath, worker_file]);
 
-    const result = resolve_module_path_python(".helper", worker_file, root_folder);
+    const result = resolve_module_path_python(
+      ".helper",
+      worker_file,
+      root_folder
+    );
 
     expect(result).toBe(helper_file);
   });
@@ -505,10 +531,7 @@ describe("resolve_module_path_python - comprehensive relative imports", () => {
     const init_file = path.join(utils_dir, "__init__.py");
     const main_file = path.join(REL_TEST_DIR, "main.py") as FilePath;
 
-    const root_folder = build_file_tree([
-      init_file as FilePath,
-      main_file,
-    ]);
+    const root_folder = build_file_tree([init_file as FilePath, main_file]);
 
     const result = resolve_module_path_python(".utils", main_file, root_folder);
 
@@ -520,53 +543,53 @@ describe("resolve_module_path_python - comprehensive relative imports", () => {
   it("should resolve double-dot import to parent directory module", () => {
     // Test: pkg/main.py importing from ..helper (helper.py in parent)
     const helper_file = path.join(REL_TEST_DIR, "helper.py") as FilePath;
-    const pkg_dir = path.join(REL_TEST_DIR, "pkg");    const main_file = path.join(pkg_dir, "main.py") as FilePath;
+    const pkg_dir = path.join(REL_TEST_DIR, "pkg");
+    const main_file = path.join(pkg_dir, "main.py") as FilePath;
 
-    const root_folder = build_file_tree([
-      helper_file,
+    const root_folder = build_file_tree([helper_file, main_file]);
+
+    const result = resolve_module_path_python(
+      "..helper",
       main_file,
-    ]);
-
-    const result = resolve_module_path_python("..helper", main_file, root_folder);
+      root_folder
+    );
 
     expect(result).toBe(helper_file);
   });
 
   it("should resolve double-dot import to parent's submodule", () => {
     // Test: pkg/main.py importing from ..utils.helper
-    const utils_dir = path.join(REL_TEST_DIR, "utils");    
+    const utils_dir = path.join(REL_TEST_DIR, "utils");
     const helper_file = path.join(utils_dir, "helper.py");
-    const pkg_dir = path.join(REL_TEST_DIR, "pkg");    const main_file = path.join(pkg_dir, "main.py") as FilePath;
+    const pkg_dir = path.join(REL_TEST_DIR, "pkg");
+    const main_file = path.join(pkg_dir, "main.py") as FilePath;
 
-    
+    const root_folder = build_file_tree([helper_file as FilePath, main_file]);
 
-
-    const root_folder = build_file_tree([
-      helper_file,
+    const result = resolve_module_path_python(
+      "..utils.helper",
       main_file,
-    ]);
-
-
-    const result = resolve_module_path_python("..utils.helper", main_file, root_folder);
+      root_folder
+    );
 
     expect(result).toBe(helper_file);
   });
 
   it("should resolve double-dot import from deeply nested file", () => {
     // Test: a/b/c/main.py importing from ..helper (a/b/helper.py)
-    const a_dir = path.join(REL_TEST_DIR, "a");    const b_dir = path.join(a_dir, "b");    const helper_file = path.join(b_dir, "helper.py");
-    const c_dir = path.join(b_dir, "c");    const main_file = path.join(c_dir, "main.py") as FilePath;
+    const a_dir = path.join(REL_TEST_DIR, "a");
+    const b_dir = path.join(a_dir, "b");
+    const helper_file = path.join(b_dir, "helper.py") as FilePath;
+    const c_dir = path.join(b_dir, "c");
+    const main_file = path.join(c_dir, "main.py") as FilePath;
 
-    
+    const root_folder = build_file_tree([helper_file, main_file]);
 
-
-    const root_folder = build_file_tree([
-      helper_file,
+    const result = resolve_module_path_python(
+      "..helper",
       main_file,
-    ]);
-
-
-    const result = resolve_module_path_python("..helper", main_file, root_folder);
+      root_folder
+    );
 
     expect(result).toBe(helper_file);
   });
@@ -575,57 +598,57 @@ describe("resolve_module_path_python - comprehensive relative imports", () => {
 
   it("should resolve triple-dot import to grandparent directory", () => {
     // Test: a/b/c/main.py importing from ...helper (a/helper.py)
-    const a_dir = path.join(REL_TEST_DIR, "a");    const helper_file = path.join(a_dir, "helper.py");
-    const b_dir = path.join(a_dir, "b");    const c_dir = path.join(b_dir, "c");    const main_file = path.join(c_dir, "main.py") as FilePath;
+    const a_dir = path.join(REL_TEST_DIR, "a");
+    const helper_file = path.join(a_dir, "helper.py");
+    const b_dir = path.join(a_dir, "b");
+    const c_dir = path.join(b_dir, "c");
+    const main_file = path.join(c_dir, "main.py") as FilePath;
 
-    
+    const root_folder = build_file_tree([helper_file as FilePath, main_file]);
 
-
-    const root_folder = build_file_tree([
-      helper_file,
+    const result = resolve_module_path_python(
+      "...helper",
       main_file,
-    ]);
-
-
-    const result = resolve_module_path_python("...helper", main_file, root_folder);
+      root_folder
+    );
 
     expect(result).toBe(helper_file);
   });
 
   it("should resolve quadruple-dot import to great-grandparent", () => {
     // Test: a/b/c/d/main.py importing from ....helper (a/helper.py)
-    const a_dir = path.join(REL_TEST_DIR, "a");    const helper_file = path.join(a_dir, "helper.py");
-    const deep_dir = path.join(a_dir, "b", "c", "d");    const main_file = path.join(deep_dir, "main.py") as FilePath;
+    const a_dir = path.join(REL_TEST_DIR, "a");
+    const helper_file = path.join(a_dir, "helper.py");
+    const deep_dir = path.join(a_dir, "b", "c", "d");
+    const main_file = path.join(deep_dir, "main.py") as FilePath;
 
-    
+    const root_folder = build_file_tree([helper_file as FilePath, main_file]);
 
-
-    const root_folder = build_file_tree([
-      helper_file,
+    const result = resolve_module_path_python(
+      "....helper",
       main_file,
-    ]);
-
-
-    const result = resolve_module_path_python("....helper", main_file, root_folder);
+      root_folder
+    );
 
     expect(result).toBe(helper_file);
   });
 
   it("should resolve multi-level relative import with submodules", () => {
     // Test: a/b/c/main.py importing from ...utils.helpers.processor
-    const a_dir = path.join(REL_TEST_DIR, "a");    const utils_dir = path.join(a_dir, "utils");    const helpers_dir = path.join(utils_dir, "helpers");    const processor_file = path.join(helpers_dir, "processor.py");
-    const deep_dir = path.join(a_dir, "b", "c");    const main_file = path.join(deep_dir, "main.py") as FilePath;
+    const a_dir = path.join(REL_TEST_DIR, "a");
+    const utils_dir = path.join(a_dir, "utils");
+    const helpers_dir = path.join(utils_dir, "helpers");
+    const processor_file = path.join(helpers_dir, "processor.py");
+    const deep_dir = path.join(a_dir, "b", "c");
+    const main_file = path.join(deep_dir, "main.py") as FilePath;
 
-    
+    const root_folder = build_file_tree([processor_file as FilePath, main_file]);
 
-
-    const root_folder = build_file_tree([
-      processor_file,
+    const result = resolve_module_path_python(
+      "...utils.helpers.processor",
       main_file,
-    ]);
-
-
-    const result = resolve_module_path_python("...utils.helpers.processor", main_file, root_folder);
+      root_folder
+    );
 
     expect(result).toBe(processor_file);
   });
@@ -634,34 +657,39 @@ describe("resolve_module_path_python - comprehensive relative imports", () => {
 
   it("should resolve import to sibling directory module", () => {
     // Test: pkg1/main.py importing from ..pkg2.helper
-    const pkg1_dir = path.join(REL_TEST_DIR, "pkg1");    const main_file = path.join(pkg1_dir, "main.py") as FilePath;
+    const pkg1_dir = path.join(REL_TEST_DIR, "pkg1");
+    const main_file = path.join(pkg1_dir, "main.py") as FilePath;
 
-    const pkg2_dir = path.join(REL_TEST_DIR, "pkg2");    const helper_file = path.join(pkg2_dir, "helper.py");
-    
+    const pkg2_dir = path.join(REL_TEST_DIR, "pkg2");
+    const helper_file = path.join(pkg2_dir, "helper.py");
 
-    const root_folder = build_file_tree([
-      helper_file,
+    const root_folder = build_file_tree([helper_file as FilePath, main_file]);
+
+    const result = resolve_module_path_python(
+      "..pkg2.helper",
       main_file,
-    ]);
-
-    const result = resolve_module_path_python("..pkg2.helper", main_file, root_folder);
+      root_folder
+    );
 
     expect(result).toBe(helper_file);
   });
 
   it("should resolve import to sibling's submodule", () => {
     // Test: pkg1/main.py importing from ..pkg2.utils.helper
-    const pkg1_dir = path.join(REL_TEST_DIR, "pkg1");    const main_file = path.join(pkg1_dir, "main.py") as FilePath;
+    const pkg1_dir = path.join(REL_TEST_DIR, "pkg1");
+    const main_file = path.join(pkg1_dir, "main.py") as FilePath;
 
-    const pkg2_dir = path.join(REL_TEST_DIR, "pkg2");    const utils_dir = path.join(pkg2_dir, "utils");    const helper_file = path.join(utils_dir, "helper.py");
-    
+    const pkg2_dir = path.join(REL_TEST_DIR, "pkg2");
+    const utils_dir = path.join(pkg2_dir, "utils");
+    const helper_file = path.join(utils_dir, "helper.py");
 
-    const root_folder = build_file_tree([
-      helper_file,
+    const root_folder = build_file_tree([helper_file as FilePath, main_file]);
+
+    const result = resolve_module_path_python(
+      "..pkg2.utils.helper",
       main_file,
-    ]);
-
-    const result = resolve_module_path_python("..pkg2.utils.helper", main_file, root_folder);
+      root_folder
+    );
 
     expect(result).toBe(helper_file);
   });
@@ -671,34 +699,40 @@ describe("resolve_module_path_python - comprehensive relative imports", () => {
   it("should resolve import to cousin directory (uncle's child)", () => {
     // Test: a/b/main.py importing from ..c.helper (a/c/helper.py)
     const a_dir = path.join(REL_TEST_DIR, "a");
-    const b_dir = path.join(a_dir, "b");    const main_file = path.join(b_dir, "main.py") as FilePath;
+    const b_dir = path.join(a_dir, "b");
+    const main_file = path.join(b_dir, "main.py") as FilePath;
 
-    const c_dir = path.join(a_dir, "c");    const helper_file = path.join(c_dir, "helper.py");
-    
+    const c_dir = path.join(a_dir, "c");
+    const helper_file = path.join(c_dir, "helper.py");
 
-    const root_folder = build_file_tree([
-      helper_file,
+    const root_folder = build_file_tree([helper_file as FilePath, main_file]);
+
+    const result = resolve_module_path_python(
+      "..c.helper",
       main_file,
-    ]);
-
-    const result = resolve_module_path_python("..c.helper", main_file, root_folder);
+      root_folder
+    );
 
     expect(result).toBe(helper_file);
   });
 
   it("should resolve import from deep cousin directory", () => {
     // Test: root/pkg1/sub1/main.py importing from ...pkg2.sub2.helper
-    const pkg1_dir = path.join(REL_TEST_DIR, "pkg1");    const sub1_dir = path.join(pkg1_dir, "sub1");    const main_file = path.join(sub1_dir, "main.py") as FilePath;
+    const pkg1_dir = path.join(REL_TEST_DIR, "pkg1");
+    const sub1_dir = path.join(pkg1_dir, "sub1");
+    const main_file = path.join(sub1_dir, "main.py") as FilePath;
 
-    const pkg2_dir = path.join(REL_TEST_DIR, "pkg2");    const sub2_dir = path.join(pkg2_dir, "sub2");    const helper_file = path.join(sub2_dir, "helper.py");
-    
+    const pkg2_dir = path.join(REL_TEST_DIR, "pkg2");
+    const sub2_dir = path.join(pkg2_dir, "sub2");
+    const helper_file = path.join(sub2_dir, "helper.py");
 
-    const root_folder = build_file_tree([
-      helper_file,
+    const root_folder = build_file_tree([helper_file as FilePath, main_file]);
+
+    const result = resolve_module_path_python(
+      "...pkg2.sub2.helper",
       main_file,
-    ]);
-
-    const result = resolve_module_path_python("...pkg2.sub2.helper", main_file, root_folder);
+      root_folder
+    );
 
     expect(result).toBe(helper_file);
   });
@@ -710,16 +744,13 @@ describe("resolve_module_path_python - comprehensive relative imports", () => {
     const helper_file = path.join(REL_TEST_DIR, "helper.py");
     const main_file = path.join(REL_TEST_DIR, "main.py") as FilePath;
 
-    
+    const root_folder = build_file_tree([helper_file as FilePath, main_file]);
 
-
-    const root_folder = build_file_tree([
-      helper_file,
+    const result = resolve_module_path_python(
+      ".helper",
       main_file,
-    ]);
-
-
-    const result = resolve_module_path_python(".helper", main_file, root_folder);
+      root_folder
+    );
 
     expect(result).toBe(helper_file);
     expect(result).not.toMatch(/\/\//);
@@ -727,19 +758,18 @@ describe("resolve_module_path_python - comprehensive relative imports", () => {
 
   it("should use correct path separators for platform", () => {
     // Ensure path uses native separators
-    const utils_dir = path.join(REL_TEST_DIR, "utils");    const helper_file = path.join(utils_dir, "helper.py");
-    const pkg_dir = path.join(REL_TEST_DIR, "pkg");    const main_file = path.join(pkg_dir, "main.py") as FilePath;
+    const utils_dir = path.join(REL_TEST_DIR, "utils");
+    const helper_file = path.join(utils_dir, "helper.py");
+    const pkg_dir = path.join(REL_TEST_DIR, "pkg");
+    const main_file = path.join(pkg_dir, "main.py") as FilePath;
 
-    
+    const root_folder = build_file_tree([helper_file as FilePath, main_file]);
 
-
-    const root_folder = build_file_tree([
-      helper_file,
+    const result = resolve_module_path_python(
+      "..utils.helper",
       main_file,
-    ]);
-
-
-    const result = resolve_module_path_python("..utils.helper", main_file, root_folder);
+      root_folder
+    );
 
     expect(result).toBe(helper_file);
     // Result should match path.join format (native separators)
@@ -748,19 +778,18 @@ describe("resolve_module_path_python - comprehensive relative imports", () => {
 
   it("should resolve relative import with trailing dots correctly", () => {
     // Test: ..utils (not ...utils)
-    const utils_dir = path.join(REL_TEST_DIR, "utils");    const init_file = path.join(utils_dir, "__init__.py");
-    const pkg_dir = path.join(REL_TEST_DIR, "pkg");    const main_file = path.join(pkg_dir, "main.py") as FilePath;
+    const utils_dir = path.join(REL_TEST_DIR, "utils");
+    const init_file = path.join(utils_dir, "__init__.py");
+    const pkg_dir = path.join(REL_TEST_DIR, "pkg");
+    const main_file = path.join(pkg_dir, "main.py") as FilePath;
 
-    
+    const root_folder = build_file_tree([init_file as FilePath, main_file]);
 
-
-    const root_folder = build_file_tree([
-      init_file,
+    const result = resolve_module_path_python(
+      "..utils",
       main_file,
-    ]);
-
-
-    const result = resolve_module_path_python("..utils", main_file, root_folder);
+      root_folder
+    );
 
     expect(result).toBe(init_file);
   });
@@ -769,37 +798,41 @@ describe("resolve_module_path_python - comprehensive relative imports", () => {
 
   it("should resolve complex relative path with multiple segments", () => {
     // Test: pkg/sub/main.py importing from ...lib.utils.helpers.processor
-    const lib_dir = path.join(REL_TEST_DIR, "lib");    const utils_dir = path.join(lib_dir, "utils");    const helpers_dir = path.join(utils_dir, "helpers");    const processor_file = path.join(helpers_dir, "processor.py");
-    const pkg_dir = path.join(REL_TEST_DIR, "pkg");    const sub_dir = path.join(pkg_dir, "sub");    const main_file = path.join(sub_dir, "main.py") as FilePath;
+    const lib_dir = path.join(REL_TEST_DIR, "lib");
+    const utils_dir = path.join(lib_dir, "utils");
+    const helpers_dir = path.join(utils_dir, "helpers");
+    const processor_file = path.join(helpers_dir, "processor.py");
+    const pkg_dir = path.join(REL_TEST_DIR, "pkg");
+    const sub_dir = path.join(pkg_dir, "sub");
+    const main_file = path.join(sub_dir, "main.py") as FilePath;
 
-    
+    const root_folder = build_file_tree([processor_file as FilePath, main_file]);
 
-
-    const root_folder = build_file_tree([
-      processor_file,
+    const result = resolve_module_path_python(
+      "...lib.utils.helpers.processor",
       main_file,
-    ]);
-
-
-    const result = resolve_module_path_python("...lib.utils.helpers.processor", main_file, root_folder);
+      root_folder
+    );
 
     expect(result).toBe(processor_file);
   });
 
   it("should resolve relative import without __init__.py files", () => {
     // Test: relative imports work even without __init__.py
-    const utils_dir = path.join(REL_TEST_DIR, "utils");    const helper_file = path.join(utils_dir, "helper.py");
-    const pkg_dir = path.join(REL_TEST_DIR, "pkg");    const main_file = path.join(pkg_dir, "main.py") as FilePath;
+    const utils_dir = path.join(REL_TEST_DIR, "utils");
+    const helper_file = path.join(utils_dir, "helper.py");
+    const pkg_dir = path.join(REL_TEST_DIR, "pkg");
+    const main_file = path.join(pkg_dir, "main.py") as FilePath;
 
     // No __init__.py files anywhere
-    
 
-    const root_folder = build_file_tree([
-      helper_file,
+    const root_folder = build_file_tree([helper_file as FilePath, main_file]);
+
+    const result = resolve_module_path_python(
+      "..utils.helper",
       main_file,
-    ]);
-
-    const result = resolve_module_path_python("..utils.helper", main_file, root_folder);
+      root_folder
+    );
 
     expect(result).toBe(helper_file);
   });
@@ -807,16 +840,10 @@ describe("resolve_module_path_python - comprehensive relative imports", () => {
   it("should prioritize .py file over package in relative imports", () => {
     // Test: .utils when both utils.py and utils/__init__.py exist
     const utils_file = path.join(REL_TEST_DIR, "utils.py");
-    const utils_dir = path.join(REL_TEST_DIR, "utils");    const main_file = path.join(REL_TEST_DIR, "main.py") as FilePath;
+    const utils_dir = path.join(REL_TEST_DIR, "utils");
+    const main_file = path.join(REL_TEST_DIR, "main.py") as FilePath;
 
-    
-
-
-    const root_folder = build_file_tree([
-      utils_file,
-      main_file,
-    ]);
-
+    const root_folder = build_file_tree([utils_file as FilePath, main_file]);
 
     const result = resolve_module_path_python(".utils", main_file, root_folder);
 
@@ -828,15 +855,13 @@ describe("resolve_module_path_python - comprehensive relative imports", () => {
     const main_file = path.join(REL_TEST_DIR, "main.py") as FilePath;
     const expected = path.join(REL_TEST_DIR, "nonexistent.py");
 
-    
+    const root_folder = build_file_tree([main_file]);
 
-
-    const root_folder = build_file_tree([
+    const result = resolve_module_path_python(
+      ".nonexistent",
       main_file,
-    ]);
-
-
-    const result = resolve_module_path_python(".nonexistent", main_file, root_folder);
+      root_folder
+    );
 
     expect(result).toBe(expected);
   });
@@ -844,18 +869,16 @@ describe("resolve_module_path_python - comprehensive relative imports", () => {
   it("should handle relative import from file in subdirectory to root level module", () => {
     // Test: deep/nested/main.py importing from ...helper (root level)
     const helper_file = path.join(REL_TEST_DIR, "helper.py");
-    const deep_dir = path.join(REL_TEST_DIR, "deep", "nested");    const main_file = path.join(deep_dir, "main.py") as FilePath;
+    const deep_dir = path.join(REL_TEST_DIR, "deep", "nested");
+    const main_file = path.join(deep_dir, "main.py") as FilePath;
 
-    
+    const root_folder = build_file_tree([helper_file as FilePath, main_file]);
 
-
-    const root_folder = build_file_tree([
-      helper_file,
+    const result = resolve_module_path_python(
+      "...helper",
       main_file,
-    ]);
-
-
-    const result = resolve_module_path_python("...helper", main_file, root_folder);
+      root_folder
+    );
 
     expect(result).toBe(helper_file);
   });
@@ -880,18 +903,19 @@ describe("resolve_module_path_python - project root detection", () => {
      * Test: pkg/main.py importing "pkg.helper" should resolve to pkg/helper.py
      */
     const project_dir = path.join(ROOT_TEST_DIR, "project");
-    const pkg_dir = path.join(project_dir, "pkg");    const helper_file = path.join(pkg_dir, "helper.py");
+    const pkg_dir = path.join(project_dir, "pkg");
+    const helper_file = path.join(pkg_dir, "helper.py");
     const main_file = path.join(pkg_dir, "main.py") as FilePath;
 
     // Bare import "pkg.helper" should resolve from project root
-    
 
-    const root_folder = build_file_tree([
-      helper_file,
+    const root_folder = build_file_tree([helper_file as FilePath, main_file]);
+
+    const result = resolve_module_path_python(
+      "pkg.helper",
       main_file,
-    ]);
-
-    const result = resolve_module_path_python("pkg.helper", main_file, root_folder);
+      root_folder
+    );
 
     expect(result).toBe(helper_file);
   });
@@ -911,18 +935,20 @@ describe("resolve_module_path_python - project root detection", () => {
      * Test: utils/main.py importing "myapp.utils.helper" resolves correctly
      */
     const project_dir = path.join(ROOT_TEST_DIR, "project");
-    const myapp_dir = path.join(project_dir, "myapp");    const utils_dir = path.join(myapp_dir, "utils");    const helper_file = path.join(utils_dir, "helper.py");
+    const myapp_dir = path.join(project_dir, "myapp");
+    const utils_dir = path.join(myapp_dir, "utils");
+    const helper_file = path.join(utils_dir, "helper.py");
     const main_file = path.join(utils_dir, "main.py") as FilePath;
 
     // Should resolve from project root (/project/)
-    
 
-    const root_folder = build_file_tree([
-      helper_file,
+    const root_folder = build_file_tree([helper_file as FilePath, main_file]);
+
+    const result = resolve_module_path_python(
+      "myapp.utils.helper",
       main_file,
-    ]);
-
-    const result = resolve_module_path_python("myapp.utils.helper", main_file, root_folder);
+      root_folder
+    );
 
     expect(result).toBe(helper_file);
   });
@@ -976,18 +1002,20 @@ describe("resolve_module_path_python - project root detection", () => {
      * Test: pkg1/main.py can import "pkg2.helper"
      */
     const project_dir = path.join(ROOT_TEST_DIR, "project");
-    const pkg1_dir = path.join(project_dir, "pkg1");    const pkg2_dir = path.join(project_dir, "pkg2");    const helper_file = path.join(pkg2_dir, "helper.py");
+    const pkg1_dir = path.join(project_dir, "pkg1");
+    const pkg2_dir = path.join(project_dir, "pkg2");
+    const helper_file = path.join(pkg2_dir, "helper.py");
     const main_file = path.join(pkg1_dir, "main.py") as FilePath;
 
     // Cross-package import
-    
 
-    const root_folder = build_file_tree([
-      helper_file,
+    const root_folder = build_file_tree([helper_file as FilePath, main_file]);
+
+    const result = resolve_module_path_python(
+      "pkg2.helper",
       main_file,
-    ]);
-
-    const result = resolve_module_path_python("pkg2.helper", main_file, root_folder);
+      root_folder
+    );
 
     expect(result).toBe(helper_file);
   });
@@ -1009,12 +1037,8 @@ describe("resolve_module_path_python - project root detection", () => {
     const main_file = path.join(scripts_dir, "main.py") as FilePath;
 
     // No __init__.py, so project root = scripts_dir
-    
 
-    const root_folder = build_file_tree([
-      helper_file,
-      main_file,
-    ]);
+    const root_folder = build_file_tree([helper_file as FilePath, main_file]);
 
     const result = resolve_module_path_python("helper", main_file, root_folder);
 
@@ -1040,12 +1064,8 @@ describe("resolve_module_path_python - project root detection", () => {
     const main_file = path.join(scripts_dir, "main.py") as FilePath;
 
     // No __init__.py anywhere, so root = scripts_dir
-    
 
-    const root_folder = build_file_tree([
-      helper_file,
-      main_file,
-    ]);
+    const root_folder = build_file_tree([helper_file as FilePath, main_file]);
 
     const result = resolve_module_path_python("helper", main_file, root_folder);
 
@@ -1083,10 +1103,18 @@ describe("resolve_module_path_python - project root detection", () => {
       standalone_file,
     ]);
 
-    const result1 = resolve_module_path_python("helper", core_file, root_folder);
+    const result1 = resolve_module_path_python(
+      "helper",
+      core_file,
+      root_folder
+    );
     expect(result1).toBe(helper_file);
 
-    const result2 = resolve_module_path_python("helper", standalone_file, root_folder);
+    const result2 = resolve_module_path_python(
+      "helper",
+      standalone_file,
+      root_folder
+    );
     expect(result2).toBe(helper_file);
   });
 
@@ -1132,7 +1160,11 @@ describe("resolve_module_path_python - project root detection", () => {
       main_file,
     ]);
 
-    const result = resolve_module_path_python("app.core.services.db.models", main_file, root_folder);
+    const result = resolve_module_path_python(
+      "app.core.services.db.models",
+      main_file,
+      root_folder
+    );
 
     expect(result).toBe(models_file);
   });
@@ -1150,17 +1182,19 @@ describe("resolve_module_path_python - project root detection", () => {
      * Expected: Project root = /project/scripts/automation/daily/ (no __init__.py)
      * Test: Imports resolve from deepest directory
      */
-    const deep_dir = path.join(ROOT_TEST_DIR, "project", "scripts", "automation", "daily");
+    const deep_dir = path.join(
+      ROOT_TEST_DIR,
+      "project",
+      "scripts",
+      "automation",
+      "daily"
+    );
     const helper_file = path.join(deep_dir, "helper.py");
     const main_file = path.join(deep_dir, "main.py") as FilePath;
 
     // No packages, so root = deep_dir
-    
 
-    const root_folder = build_file_tree([
-      helper_file,
-      main_file,
-    ]);
+    const root_folder = build_file_tree([helper_file as FilePath, main_file]);
 
     const result = resolve_module_path_python("helper", main_file, root_folder);
 
@@ -1217,12 +1251,8 @@ describe("resolve_module_path_python - project root detection", () => {
      */
     const temp_file = path.join(ROOT_TEST_DIR, "test.py") as FilePath;
     const helper_file = path.join(ROOT_TEST_DIR, "helper.py");
-    
 
-    const root_folder = build_file_tree([
-      helper_file,
-      temp_file,
-    ]);
+    const root_folder = build_file_tree([helper_file as FilePath, temp_file]);
 
     const result = resolve_module_path_python("helper", temp_file, root_folder);
 
@@ -1241,16 +1271,18 @@ describe("resolve_module_path_python - project root detection", () => {
      * Test: Import "pkg.nonexistent" returns /project/pkg/nonexistent.py
      */
     const project_dir = path.join(ROOT_TEST_DIR, "project");
-    const pkg_dir = path.join(project_dir, "pkg");    const main_file = path.join(pkg_dir, "main.py") as FilePath;
+    const pkg_dir = path.join(project_dir, "pkg");
+    const main_file = path.join(pkg_dir, "main.py") as FilePath;
 
     const expected = path.join(pkg_dir, "nonexistent.py");
-    
 
-    const root_folder = build_file_tree([
+    const root_folder = build_file_tree([main_file]);
+
+    const result = resolve_module_path_python(
+      "pkg.nonexistent",
       main_file,
-    ]);
-
-    const result = resolve_module_path_python("pkg.nonexistent", main_file, root_folder);
+      root_folder
+    );
 
     expect(result).toBe(expected);
   });
@@ -1270,18 +1302,19 @@ describe("resolve_module_path_python - project root detection", () => {
      */
     const project_dir = path.join(ROOT_TEST_DIR, "project");
     const src_dir = path.join(project_dir, "src");
-    const pkg_dir = path.join(src_dir, "mypackage");    const module_file = path.join(pkg_dir, "module.py");
+    const pkg_dir = path.join(src_dir, "mypackage");
+    const module_file = path.join(pkg_dir, "module.py");
     const main_file = path.join(pkg_dir, "main.py") as FilePath;
 
     // Should resolve from src/ directory
-    
 
-    const root_folder = build_file_tree([
-      module_file,
+    const root_folder = build_file_tree([module_file as FilePath, main_file]);
+
+    const result = resolve_module_path_python(
+      "mypackage.module",
       main_file,
-    ]);
-
-    const result = resolve_module_path_python("mypackage.module", main_file, root_folder);
+      root_folder
+    );
 
     expect(result).toBe(module_file);
   });
@@ -1320,16 +1353,21 @@ describe("resolve_module_path_python - project root detection", () => {
       main_file,
     ]);
 
-    const result1 = resolve_module_path_python("myapp.core", main_file, root_folder1);
+    const result1 = resolve_module_path_python(
+      "myapp.core",
+      main_file,
+      root_folder1
+    );
     expect(result1).toBe(core_file);
 
     // From tests/: no packages, different root
-    const root_folder2 = build_file_tree([
-      helper_file as FilePath,
-      test_file,
-    ]);
+    const root_folder2 = build_file_tree([helper_file as FilePath, test_file]);
 
-    const result2 = resolve_module_path_python("helper", test_file, root_folder2);
+    const result2 = resolve_module_path_python(
+      "helper",
+      test_file,
+      root_folder2
+    );
     expect(result2).toBe(helper_file);
   });
 
@@ -1355,13 +1393,14 @@ describe("resolve_module_path_python - project root detection", () => {
     const init_file = path.join(with_init_dir, "__init__.py");
     const main1_file = path.join(with_init_dir, "main.py") as FilePath;
 
-    const root_folder1 = build_file_tree([
-      init_file as FilePath,
-      main1_file,
-    ]);
+    const root_folder1 = build_file_tree([init_file as FilePath, main1_file]);
 
     // Import the package itself - should resolve from project_dir
-    const result1 = resolve_module_path_python("with_init", main1_file, root_folder1);
+    const result1 = resolve_module_path_python(
+      "with_init",
+      main1_file,
+      root_folder1
+    );
     expect(result1).toBe(init_file);
 
     // Without __init__.py
@@ -1369,13 +1408,14 @@ describe("resolve_module_path_python - project root detection", () => {
     const helper_file = path.join(without_init_dir, "helper.py");
     const main2_file = path.join(without_init_dir, "main.py") as FilePath;
 
-    const root_folder2 = build_file_tree([
-      helper_file as FilePath,
-      main2_file,
-    ]);
+    const root_folder2 = build_file_tree([helper_file as FilePath, main2_file]);
 
     // No package, so root = without_init_dir
-    const result2 = resolve_module_path_python("helper", main2_file, root_folder2);
+    const result2 = resolve_module_path_python(
+      "helper",
+      main2_file,
+      root_folder2
+    );
     expect(result2).toBe(helper_file);
   });
 });
@@ -1393,14 +1433,14 @@ describe("resolve_module_path_python - body-based scope verification", () => {
     const main_file = path.join(SCOPE_TEST_DIR, "main.py") as FilePath;
 
     // Import resolution should work regardless of scope structure
-    
 
-    const root_folder = build_file_tree([
-      module_file,
+    const root_folder = build_file_tree([module_file as FilePath, main_file]);
+
+    const result = resolve_module_path_python(
+      "mymodule",
       main_file,
-    ]);
-
-    const result = resolve_module_path_python("mymodule", main_file, root_folder);
+      root_folder
+    );
     expect(result).toBe(module_file);
   });
 
@@ -1416,12 +1456,8 @@ describe("resolve_module_path_python - body-based scope verification", () => {
     const main_file = path.join(SCOPE_TEST_DIR, "main.py") as FilePath;
 
     // Import the module containing nested classes
-    
 
-    const root_folder = build_file_tree([
-      module_file,
-      main_file,
-    ]);
+    const root_folder = build_file_tree([module_file as FilePath, main_file]);
 
     const result = resolve_module_path_python("nested", main_file, root_folder);
     expect(result).toBe(module_file);
@@ -1435,14 +1471,7 @@ describe("resolve_module_path_python - body-based scope verification", () => {
     const utils_file = path.join(SCOPE_TEST_DIR, "utils.py");
     const main_file = path.join(SCOPE_TEST_DIR, "main.py") as FilePath;
 
-    
-
-
-    const root_folder = build_file_tree([
-      utils_file,
-      main_file,
-    ]);
-
+    const root_folder = build_file_tree([utils_file as FilePath, main_file]);
 
     const result = resolve_module_path_python(".utils", main_file, root_folder);
     expect(result).toBe(utils_file);
@@ -1456,14 +1485,7 @@ describe("resolve_module_path_python - body-based scope verification", () => {
     const init_file = path.join(pkg_dir, "__init__.py");
     const main_file = path.join(SCOPE_TEST_DIR, "main.py") as FilePath;
 
-    
-
-
-    const root_folder = build_file_tree([
-      init_file,
-      main_file,
-    ]);
-
+    const root_folder = build_file_tree([init_file as FilePath, main_file]);
 
     const result = resolve_module_path_python("mypkg", main_file, root_folder);
     expect(result).toBe(init_file);
@@ -1480,14 +1502,14 @@ describe("resolve_module_path_python - body-based scope verification", () => {
     const worker_file = path.join(services_dir, "worker.py") as FilePath;
 
     // Import from sibling directory
-    
 
-    const root_folder = build_file_tree([
-      user_file,
+    const root_folder = build_file_tree([user_file as FilePath, worker_file]);
+
+    const result = resolve_module_path_python(
+      "..models.user",
       worker_file,
-    ]);
-
-    const result = resolve_module_path_python("..models.user", worker_file, root_folder);
+      root_folder
+    );
     expect(result).toBe(user_file);
   });
 
@@ -1498,16 +1520,13 @@ describe("resolve_module_path_python - body-based scope verification", () => {
     const module_file = path.join(SCOPE_TEST_DIR, "hierarchy.py");
     const main_file = path.join(SCOPE_TEST_DIR, "main.py") as FilePath;
 
-    
+    const root_folder = build_file_tree([module_file as FilePath, main_file]);
 
-
-    const root_folder = build_file_tree([
-      module_file,
+    const result = resolve_module_path_python(
+      "hierarchy",
       main_file,
-    ]);
-
-
-    const result = resolve_module_path_python("hierarchy", main_file, root_folder);
+      root_folder
+    );
     expect(result).toBe(module_file);
   });
 });

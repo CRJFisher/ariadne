@@ -199,7 +199,8 @@ describe("extract_import_specs", () => {
       root_scope_id: scope_id,
     });
 
-    const specs = extract_import_specs(scope_id, index, file_path);
+    const root_folder = build_file_tree([file_path]);
+    const specs = extract_import_specs(scope_id, index, file_path, root_folder);
 
     expect(specs).toHaveLength(1);
     expect(specs[0].local_name).toBe("foo" as SymbolName);
@@ -232,7 +233,8 @@ describe("extract_import_specs", () => {
       root_scope_id: scope_id,
     });
 
-    const specs = extract_import_specs(scope_id, index, file_path);
+    const root_folder = build_file_tree([file_path]);
+    const specs = extract_import_specs(scope_id, index, file_path, root_folder);
 
     expect(specs).toHaveLength(1);
     expect(specs[0].local_name).toBe("MyComponent" as SymbolName);
@@ -266,7 +268,8 @@ describe("extract_import_specs", () => {
       root_scope_id: scope_id,
     });
 
-    const specs = extract_import_specs(scope_id, index, file_path);
+    const root_folder = build_file_tree([file_path]);
+    const specs = extract_import_specs(scope_id, index, file_path, root_folder);
 
     expect(specs).toHaveLength(1);
     expect(specs[0].local_name).toBe("bar" as SymbolName);
@@ -318,7 +321,8 @@ describe("extract_import_specs", () => {
       root_scope_id: scope1,
     });
 
-    const specs = extract_import_specs(scope1, index, file_path);
+    const root_folder = build_file_tree([file_path]);
+    const specs = extract_import_specs(scope1, index, file_path, root_folder);
 
     expect(specs).toHaveLength(1);
     expect(specs[0].local_name).toBe("foo" as SymbolName);
