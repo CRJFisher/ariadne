@@ -519,17 +519,13 @@ describe("resolve_module_path_python - comprehensive relative imports", () => {
 
   it("should resolve double-dot import to parent directory module", () => {
     // Test: pkg/main.py importing from ..helper (helper.py in parent)
-    const helper_file = path.join(REL_TEST_DIR, "helper.py");
+    const helper_file = path.join(REL_TEST_DIR, "helper.py") as FilePath;
     const pkg_dir = path.join(REL_TEST_DIR, "pkg");    const main_file = path.join(pkg_dir, "main.py") as FilePath;
-
-    
-
 
     const root_folder = build_file_tree([
       helper_file,
       main_file,
     ]);
-
 
     const result = resolve_module_path_python("..helper", main_file, root_folder);
 
@@ -538,7 +534,8 @@ describe("resolve_module_path_python - comprehensive relative imports", () => {
 
   it("should resolve double-dot import to parent's submodule", () => {
     // Test: pkg/main.py importing from ..utils.helper
-    const utils_dir = path.join(REL_TEST_DIR, "utils");    const helper_file = path.join(utils_dir, "helper.py");
+    const utils_dir = path.join(REL_TEST_DIR, "utils");    
+    const helper_file = path.join(utils_dir, "helper.py");
     const pkg_dir = path.join(REL_TEST_DIR, "pkg");    const main_file = path.join(pkg_dir, "main.py") as FilePath;
 
     

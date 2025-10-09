@@ -1,6 +1,6 @@
 # Task: Fix Named Function Expression Scope Assignment
 
-**Status**: Open
+**Status**: Completed
 **Epic**: epic-11 - Codebase Restructuring
 **Created**: 2025-10-08
 

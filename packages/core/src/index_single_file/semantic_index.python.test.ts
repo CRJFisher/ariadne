@@ -987,6 +987,7 @@ service2.get_data()
         (ref) => ref.type === "call" && ref.name === "get_data"
       );
 
+
       // Should have at least 2 get_data method calls
       expect(method_calls.length).toBeGreaterThanOrEqual(2);
 

@@ -529,4 +529,53 @@ export const JAVASCRIPT_METADATA_EXTRACTORS: MetadataExtractors = {
     if (debug) console.log(`  -> No optional chaining found`);
     return false;
   },
+
+  /**
+   * Check if a call node represents a method call
+   *
+   * JavaScript/TypeScript: call_expression with member_expression function
+   *
+   * @param node - The SyntaxNode representing a call
+   * @returns true if it's a method call, false if it's a function call
+   */
+  is_method_call(node: SyntaxNode): boolean {
+    if (node.type === "call_expression") {
+      const functionNode = node.childForFieldName("function");
+      if (functionNode && functionNode.type === "member_expression") {
+        return true;
+      }
+    }
+    return false;
+  },
+
+  /**
+   * Extract the method or function name from a call node
+   *
+   * For method calls, extracts the property name.
+   * For function calls, extracts the function identifier.
+   *
+   * @param node - The SyntaxNode representing a call
+   * @returns The name of the method or function, or undefined
+   */
+  extract_call_name(node: SyntaxNode): SymbolName | undefined {
+    if (node.type === "call_expression") {
+      const functionNode = node.childForFieldName("function");
+
+      if (functionNode) {
+        // Method call: extract property name from member_expression
+        if (functionNode.type === "member_expression") {
+          const propertyNode = functionNode.childForFieldName("property");
+          if (propertyNode) {
+            return propertyNode.text as SymbolName;
+          }
+        }
+        // Function call: extract identifier
+        else if (functionNode.type === "identifier") {
+          return functionNode.text as SymbolName;
+        }
+      }
+    }
+
+    return undefined;
+  },
 };

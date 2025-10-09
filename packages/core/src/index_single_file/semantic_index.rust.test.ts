@@ -1609,7 +1609,9 @@ fn main() {
       );
       expect(service1_assignment).toBeDefined();
 
-      // Note: assignment_type from type annotations is a future enhancement
+      // Verify assignment_type is populated from type annotation
+      expect(service1_assignment?.assignment_type).toBeDefined();
+      expect(service1_assignment?.assignment_type?.type_name).toBe("Service");
 
       // Verify method calls have receiver_location
       const method_calls = result.references.filter(

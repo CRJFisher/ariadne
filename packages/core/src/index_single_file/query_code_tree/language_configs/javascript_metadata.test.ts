@@ -717,4 +717,119 @@ describe("TypeScript Metadata Extractors", () => {
       }
     });
   });
+
+  describe("is_method_call", () => {
+    it("should return true for method calls", () => {
+      const code = `obj.method()`;
+      const tree = parser.parse(code);
+      const callExpr = tree.rootNode.descendantsOfType("call_expression")[0];
+
+      const result = JAVASCRIPT_METADATA_EXTRACTORS.is_method_call(callExpr);
+
+      expect(result).toBe(true);
+    });
+
+    it("should return false for function calls", () => {
+      const code = `func()`;
+      const tree = parser.parse(code);
+      const callExpr = tree.rootNode.descendantsOfType("call_expression")[0];
+
+      const result = JAVASCRIPT_METADATA_EXTRACTORS.is_method_call(callExpr);
+
+      expect(result).toBe(false);
+    });
+
+    it("should return true for chained method calls", () => {
+      const code = `obj.nested.method()`;
+      const tree = parser.parse(code);
+      const callExpr = tree.rootNode.descendantsOfType("call_expression")[0];
+
+      const result = JAVASCRIPT_METADATA_EXTRACTORS.is_method_call(callExpr);
+
+      expect(result).toBe(true);
+    });
+
+    it("should return true for method calls on 'this'", () => {
+      const code = `this.method()`;
+      const tree = parser.parse(code);
+      const callExpr = tree.rootNode.descendantsOfType("call_expression")[0];
+
+      const result = JAVASCRIPT_METADATA_EXTRACTORS.is_method_call(callExpr);
+
+      expect(result).toBe(true);
+    });
+
+    it("should return false for non-call nodes", () => {
+      const code = `const x = 42`;
+      const tree = parser.parse(code);
+      const identifier = tree.rootNode.descendantsOfType("identifier")[0];
+
+      const result = JAVASCRIPT_METADATA_EXTRACTORS.is_method_call(identifier);
+
+      expect(result).toBe(false);
+    });
+  });
+
+  describe("extract_call_name", () => {
+    it("should extract method name from method call", () => {
+      const code = `obj.method()`;
+      const tree = parser.parse(code);
+      const callExpr = tree.rootNode.descendantsOfType("call_expression")[0];
+
+      const result = JAVASCRIPT_METADATA_EXTRACTORS.extract_call_name(callExpr);
+
+      expect(result).toBe("method");
+    });
+
+    it("should extract function name from function call", () => {
+      const code = `func()`;
+      const tree = parser.parse(code);
+      const callExpr = tree.rootNode.descendantsOfType("call_expression")[0];
+
+      const result = JAVASCRIPT_METADATA_EXTRACTORS.extract_call_name(callExpr);
+
+      expect(result).toBe("func");
+    });
+
+    it("should extract method name from chained call", () => {
+      const code = `obj.nested.method()`;
+      const tree = parser.parse(code);
+      const callExpr = tree.rootNode.descendantsOfType("call_expression")[0];
+
+      const result = JAVASCRIPT_METADATA_EXTRACTORS.extract_call_name(callExpr);
+
+      expect(result).toBe("method");
+    });
+
+    it("should extract method name from 'this' call", () => {
+      const code = `this.method()`;
+      const tree = parser.parse(code);
+      const callExpr = tree.rootNode.descendantsOfType("call_expression")[0];
+
+      const result = JAVASCRIPT_METADATA_EXTRACTORS.extract_call_name(callExpr);
+
+      expect(result).toBe("method");
+    });
+
+    it("should return undefined for non-call nodes", () => {
+      const code = `const x = 42`;
+      const tree = parser.parse(code);
+      const identifier = tree.rootNode.descendantsOfType("identifier")[0];
+
+      const result = JAVASCRIPT_METADATA_EXTRACTORS.extract_call_name(identifier);
+
+      expect(result).toBeUndefined();
+    });
+
+    it("should extract name from constructor call", () => {
+      const code = `new Array()`;
+      const tree = parser.parse(code);
+      const newExpr = tree.rootNode.descendantsOfType("new_expression")[0];
+
+      const result = JAVASCRIPT_METADATA_EXTRACTORS.extract_call_name(newExpr);
+
+      // new_expression is not a call_expression, so should return undefined
+      expect(result).toBeUndefined();
+    });
+  });
 });

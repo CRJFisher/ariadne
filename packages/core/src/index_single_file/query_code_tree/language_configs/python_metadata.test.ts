@@ -776,4 +776,118 @@ def value(self):
       expect(funcDef).toBeDefined();
     });
   });
+
+  describe("is_method_call", () => {
+    it("should return true for method calls", () => {
+      const code = `obj.method()`;
+      const tree = parser.parse(code);
+      const call = tree.rootNode.descendantsOfType("call")[0];
+
+      const result = PYTHON_METADATA_EXTRACTORS.is_method_call(call);
+
+      expect(result).toBe(true);
+    });
+
+    it("should return false for function calls", () => {
+      const code = `func()`;
+      const tree = parser.parse(code);
+      const call = tree.rootNode.descendantsOfType("call")[0];
+
+      const result = PYTHON_METADATA_EXTRACTORS.is_method_call(call);
+
+      expect(result).toBe(false);
+    });
+
+    it("should return true for chained method calls", () => {
+      const code = `obj.nested.method()`;
+      const tree = parser.parse(code);
+      const call = tree.rootNode.descendantsOfType("call")[0];
+
+      const result = PYTHON_METADATA_EXTRACTORS.is_method_call(call);
+
+      expect(result).toBe(true);
+    });
+
+    it("should return true for method calls on 'self'", () => {
+      const code = `self.method()`;
+      const tree = parser.parse(code);
+      const call = tree.rootNode.descendantsOfType("call")[0];
+
+      const result = PYTHON_METADATA_EXTRACTORS.is_method_call(call);
+
+      expect(result).toBe(true);
+    });
+
+    it("should return false for non-call nodes", () => {
+      const code = `x = 42`;
+      const tree = parser.parse(code);
+      const identifier = tree.rootNode.descendantsOfType("identifier")[0];
+
+      const result = PYTHON_METADATA_EXTRACTORS.is_method_call(identifier);
+
+      expect(result).toBe(false);
+    });
+  });
+
+  describe("extract_call_name", () => {
+    it("should extract method name from method call", () => {
+      const code = `obj.method()`;
+      const tree = parser.parse(code);
+      const call = tree.rootNode.descendantsOfType("call")[0];
+
+      const result = PYTHON_METADATA_EXTRACTORS.extract_call_name(call);
+
+      expect(result).toBe("method");
+    });
+
+    it("should extract function name from function call", () => {
+      const code = `func()`;
+      const tree = parser.parse(code);
+      const call = tree.rootNode.descendantsOfType("call")[0];
+
+      const result = PYTHON_METADATA_EXTRACTORS.extract_call_name(call);
+
+      expect(result).toBe("func");
+    });
+
+    it("should extract method name from chained call", () => {
+      const code = `obj.nested.method()`;
+      const tree = parser.parse(code);
+      const call = tree.rootNode.descendantsOfType("call")[0];
+
+      const result = PYTHON_METADATA_EXTRACTORS.extract_call_name(call);
+
+      expect(result).toBe("method");
+    });
+
+    it("should extract method name from 'self' call", () => {
+      const code = `self.method()`;
+      const tree = parser.parse(code);
+      const call = tree.rootNode.descendantsOfType("call")[0];
+
+      const result = PYTHON_METADATA_EXTRACTORS.extract_call_name(call);
+
+      expect(result).toBe("method");
+    });
+
+    it("should return undefined for non-call nodes", () => {
+      const code = `x = 42`;
+      const tree = parser.parse(code);
+      const identifier = tree.rootNode.descendantsOfType("identifier")[0];
+
+      const result = PYTHON_METADATA_EXTRACTORS.extract_call_name(identifier);
+
+      expect(result).toBeUndefined();
+    });
+
+    it("should extract constructor name", () => {
+      const code = `MyClass()`;
+      const tree = parser.parse(code);
+      const call = tree.rootNode.descendantsOfType("call")[0];
+
+      const result = PYTHON_METADATA_EXTRACTORS.extract_call_name(call);
+
+      expect(result).toBe("MyClass");
+    });
+  });
 });

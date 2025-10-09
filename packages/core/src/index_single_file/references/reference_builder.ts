@@ -55,8 +55,14 @@ export enum ReferenceKind {
 
 /**
  * Determine reference kind from capture
+ *
+ * Uses language-specific extractors when available to determine if a call is
+ * a method call vs a function call. Falls back to capture name parsing.
  */
-function determine_reference_kind(capture: CaptureNode): ReferenceKind {
+function determine_reference_kind(
+  capture: CaptureNode,
+  extractors: MetadataExtractors | undefined
+): ReferenceKind {
   const parts = capture.name.split(".");
   const category = parts[0];
   const entity = parts[1];
@@ -80,37 +86,9 @@ function determine_reference_kind(capture: CaptureNode): ReferenceKind {
       if (parts.includes("method")) {
         return ReferenceKind.METHOD_CALL;
       }
-      // Check if this is a method call by looking at the node structure
-      // JavaScript/TypeScript: call_expression with member_expression function
-      if (capture.node.type === "call_expression") {
-        const functionNode = capture.node.childForFieldName("function");
-        if (functionNode && functionNode.type === "member_expression") {
-          return ReferenceKind.METHOD_CALL;
-        }
-      }
-      // Python: call with attribute function
-      if (capture.node.type === "call") {
-        const functionNode = capture.node.childForFieldName("function");
-        if (functionNode && functionNode.type === "attribute") {
-          return ReferenceKind.METHOD_CALL;
-        }
-      }
-      // Rust: call_expression with field_expression function
-      if (capture.node.type === "call_expression") {
-        const functionNode = capture.node.childForFieldName("function");
-        if (functionNode && functionNode.type === "field_expression") {
-          return ReferenceKind.METHOD_CALL;
-        }
-      }
-      // Rust: field_identifier in method call (captured on method name)
-      if (capture.node.type === "field_identifier") {
-        const fieldExpr = capture.node.parent;
-        if (fieldExpr && fieldExpr.type === "field_expression") {
-          const callExpr = fieldExpr.parent;
-          if (callExpr && callExpr.type === "call_expression") {
-            return ReferenceKind.METHOD_CALL;
-          }
-        }
+      // Use language-specific extractor to determine if it's a method call
+      if (extractors && extractors.is_method_call(capture.node)) {
+        return ReferenceKind.METHOD_CALL;
       }
       return ReferenceKind.FUNCTION_CALL;
 
@@ -270,7 +248,7 @@ function extract_context(
   let construct_target: Location | undefined;
   let property_chain: readonly SymbolName[] | undefined;
 
-  const kind = determine_reference_kind(capture);
+  const kind = determine_reference_kind(capture, extractors);
 
   // Extract receiver location for method calls
   // Example: obj.method() → receiver_location points to 'obj'
@@ -364,15 +342,12 @@ function process_method_reference(
   // Extract just the method name from method calls
   // If the capture is for a full call expression like "obj.method()",
   // we need to extract just the property/method name
+  // Use language-specific extractor when available
   let methodName = capture.text;
-  if (capture.node.type === "call_expression") {
-    // For method calls, find the property identifier in the member_expression
-    const functionNode = capture.node.childForFieldName("function");
-    if (functionNode && functionNode.type === "member_expression") {
-      const propertyNode = functionNode.childForFieldName("property");
-      if (propertyNode) {
-        methodName = propertyNode.text as SymbolName;
-      }
+  if (extractors) {
+    const extractedName = extractors.extract_call_name(capture.node);
+    if (extractedName) {
+      methodName = extractedName;
     }
   }
 
@@ -453,7 +428,7 @@ export class ReferenceBuilder {
       return this;
     }
 
-    const kind = determine_reference_kind(capture);
+    const kind = determine_reference_kind(capture, this.extractors);
 
     // Route to special handlers for complex references
     if (kind === ReferenceKind.METHOD_CALL) {

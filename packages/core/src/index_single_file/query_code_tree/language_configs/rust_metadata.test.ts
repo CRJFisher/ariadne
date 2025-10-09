@@ -1188,4 +1188,140 @@ impl MyStruct {
       expect(result?.start_column).toBe(5); // arc
     });
   });
+
+  describe("is_method_call", () => {
+    it("should return true for method calls", () => {
+      const code = `obj.method()`;
+      const tree = parser.parse(code);
+      const callExpr = tree.rootNode.descendantsOfType("call_expression")[0];
+
+      const result = RUST_METADATA_EXTRACTORS.is_method_call(callExpr);
+
+      expect(result).toBe(true);
+    });
+
+    it("should return false for function calls", () => {
+      const code = `func()`;
+      const tree = parser.parse(code);
+      const callExpr = tree.rootNode.descendantsOfType("call_expression")[0];
+
+      const result = RUST_METADATA_EXTRACTORS.is_method_call(callExpr);
+
+      expect(result).toBe(false);
+    });
+
+    it("should return true for chained method calls", () => {
+      const code = `obj.nested.method()`;
+      const tree = parser.parse(code);
+      const callExpr = tree.rootNode.descendantsOfType("call_expression")[0];
+
+      const result = RUST_METADATA_EXTRACTORS.is_method_call(callExpr);
+
+      expect(result).toBe(true);
+    });
+
+    it("should return true for method calls on self", () => {
+      const code = `self.method()`;
+      const tree = parser.parse(code);
+      const callExpr = tree.rootNode.descendantsOfType("call_expression")[0];
+
+      const result = RUST_METADATA_EXTRACTORS.is_method_call(callExpr);
+
+      expect(result).toBe(true);
+    });
+
+    it("should return false for non-call nodes", () => {
+      const code = `let x = 42;`;
+      const tree = parser.parse(code);
+      const identifier = tree.rootNode.descendantsOfType("identifier")[0];
+
+      const result = RUST_METADATA_EXTRACTORS.is_method_call(identifier);
+
+      expect(result).toBe(false);
+    });
+
+    it("should handle field_identifier nodes in method calls", () => {
+      const code = `vec.push(5)`;
+      const tree = parser.parse(code);
+      const fieldIdentifier = tree.rootNode.descendantsOfType("field_identifier")[0];
+
+      const result = RUST_METADATA_EXTRACTORS.is_method_call(fieldIdentifier);
+
+      expect(result).toBe(true);
+    });
+  });
+
+  describe("extract_call_name", () => {
+    it("should extract method name from method call", () => {
+      const code = `obj.method()`;
+      const tree = parser.parse(code);
+      const callExpr = tree.rootNode.descendantsOfType("call_expression")[0];
+
+      const result = RUST_METADATA_EXTRACTORS.extract_call_name(callExpr);
+
+      expect(result).toBe("method");
+    });
+
+    it("should extract function name from function call", () => {
+      const code = `func()`;
+      const tree = parser.parse(code);
+      const callExpr = tree.rootNode.descendantsOfType("call_expression")[0];
+
+      const result = RUST_METADATA_EXTRACTORS.extract_call_name(callExpr);
+
+      expect(result).toBe("func");
+    });
+
+    it("should extract method name from chained call", () => {
+      const code = `obj.nested.method()`;
+      const tree = parser.parse(code);
+      const callExpr = tree.rootNode.descendantsOfType("call_expression")[0];
+
+      const result = RUST_METADATA_EXTRACTORS.extract_call_name(callExpr);
+
+      expect(result).toBe("method");
+    });
+
+    it("should extract method name from self call", () => {
+      const code = `self.method()`;
+      const tree = parser.parse(code);
+      const callExpr = tree.rootNode.descendantsOfType("call_expression")[0];
+
+      const result = RUST_METADATA_EXTRACTORS.extract_call_name(callExpr);
+
+      expect(result).toBe("method");
+    });
+
+    it("should return undefined for non-call nodes", () => {
+      const code = `let x = 42;`;
+      const tree = parser.parse(code);
+      const identifier = tree.rootNode.descendantsOfType("identifier")[0];
+
+      const result = RUST_METADATA_EXTRACTORS.extract_call_name(identifier);
+
+      expect(result).toBeUndefined();
+    });
+
+    it("should extract name from scoped identifier calls", () => {
+      const code = `std::println!("test")`;
+      const tree = parser.parse(code);
+      const macroInvocation = tree.rootNode.descendantsOfType("macro_invocation")[0];
+
+      // Macro invocations are different from regular calls, so this might return undefined
+      const result = RUST_METADATA_EXTRACTORS.extract_call_name(macroInvocation);
+
+      // This is expected to be undefined as macros are not call_expressions
+      expect(result).toBeUndefined();
+    });
+
+    it("should extract name from Vec::new pattern", () => {
+      const code = `Vec::new()`;
+      const tree = parser.parse(code);
+      const callExpr = tree.rootNode.descendantsOfType("call_expression")[0];
+
+      const result = RUST_METADATA_EXTRACTORS.extract_call_name(callExpr);
+
+      expect(result).toBe("new");
+    });
+  });
 });

@@ -625,4 +625,74 @@ export const RUST_METADATA_EXTRACTORS: MetadataExtractors = {
   extract_is_optional_chain(_node: SyntaxNode): boolean {
     return false;
   },
+
+  /**
+   * Check if a call node represents a method call
+   *
+   * Rust: call_expression with field_expression function
+   * Also handles field_identifier nodes where the parent is a method call
+   *
+   * @param node - The SyntaxNode representing a call
+   * @returns true if it's a method call, false if it's a function call
+   */
+  is_method_call(node: SyntaxNode): boolean {
+    // Direct call_expression check
+    if (node.type === "call_expression") {
+      const functionNode = node.childForFieldName("function");
+      if (functionNode && functionNode.type === "field_expression") {
+        return true;
+      }
+    }
+
+    // field_identifier in method call (captured on method name)
+    if (node.type === "field_identifier") {
+      const fieldExpr = node.parent;
+      if (fieldExpr && fieldExpr.type === "field_expression") {
+        const callExpr = fieldExpr.parent;
+        if (callExpr && callExpr.type === "call_expression") {
+          return true;
+        }
+      }
+    }
+
+    return false;
+  },
+
+  /**
+   * Extract the method or function name from a call node
+   *
+   * For method calls, extracts the field name.
+   * For function calls, extracts the function identifier.
+   *
+   * @param node - The SyntaxNode representing a call
+   * @returns The name of the method or function, or undefined
+   */
+  extract_call_name(node: SyntaxNode): SymbolName | undefined {
+    if (node.type === "call_expression") {
+      const functionNode = node.childForFieldName("function");
+
+      if (functionNode) {
+        // Method call: extract field name from field_expression
+        if (functionNode.type === "field_expression") {
+          const fieldNode = functionNode.childForFieldName("field");
+          if (fieldNode) {
+            return fieldNode.text as SymbolName;
+          }
+        }
+        // Function call: extract identifier or scoped identifier
+        else if (functionNode.type === "identifier") {
+          return functionNode.text as SymbolName;
+        }
+        // Handle scoped identifiers like std::println
+        else if (functionNode.type === "scoped_identifier") {
+          const nameNode = functionNode.childForFieldName("name");
+          if (nameNode) {
+            return nameNode.text as SymbolName;
+          }
+        }
+      }
+    }
+
+    return undefined;
+  },
 };

@@ -41,6 +41,8 @@ function create_mock_extractors(
     extract_construct_target: vi.fn((node, file_path) => undefined),
     extract_type_arguments: vi.fn((node) => undefined),
     extract_is_optional_chain: vi.fn((node) => false),
+    is_method_call: vi.fn((node) => false),
+    extract_call_name: vi.fn((node) => undefined),
     ...overrides,
   };
 }

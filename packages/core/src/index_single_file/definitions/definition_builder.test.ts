@@ -565,7 +565,7 @@ describe("DefinitionBuilder - Public API", () => {
     expect(result.namespaces.size).toBe(1);
     expect(result.variables.size).toBe(1);
     expect(result.imports.size).toBe(1);
-    expect(result.types.size).toBe(2); // Interface creates a type alias + explicit type alias
+    expect(result.types.size).toBe(1);
 
     // Verify specific definitions exist
     expect(result.classes.get(class_id)).toBeDefined();

@@ -148,6 +148,91 @@ export interface MetadataExtractors {
   extract_is_optional_chain(
     node: SyntaxNode
   ): boolean;
+
+  /**
+   * Check if a call node represents a method call (vs a regular function call)
+   *
+   * Distinguishes `obj.method()` (method call) from `func()` (function call).
+   * Language-specific patterns:
+   *
+   * JavaScript/TypeScript:
+   * ```
+   * (call_expression
+   *   function: (member_expression) @is_method)  → true
+   * (call_expression
+   *   function: (identifier) @not_method)        → false
+   * ```
+   *
+   * Python:
+   * ```
+   * (call
+   *   function: (attribute) @is_method)          → true
+   * (call
+   *   function: (identifier) @not_method)        → false
+   * ```
+   *
+   * Rust:
+   * ```
+   * (call_expression
+   *   function: (field_expression) @is_method)   → true
+   * (call_expression
+   *   function: (identifier) @not_method)        → false
+   * ```
+   *
+   * Examples:
+   * - JavaScript: `obj.method()` → true, `func()` → false
+   * - Python: `self.process()` → true, `print()` → false
+   * - Rust: `vec.push(5)` → true, `main()` → false
+   *
+   * @param node - The SyntaxNode representing a call
+   * @returns true if the call is a method call, false if it's a function call
+   */
+  is_method_call(node: SyntaxNode): boolean;
+
+  /**
+   * Extract the method or function name from a call node
+   *
+   * For method calls like `obj.method()`, extracts just the method name ("method").
+   * For function calls like `func()`, extracts the function name ("func").
+   *
+   * Language-specific extraction:
+   *
+   * JavaScript/TypeScript (method call):
+   * ```
+   * (call_expression
+   *   function: (member_expression
+   *     property: (property_identifier) @extract_this))
+   * ```
+   *
+   * Python (method call):
+   * ```
+   * (call
+   *   function: (attribute
+   *     attribute: (identifier) @extract_this))
+   * ```
+   *
+   * Rust (method call):
+   * ```
+   * (call_expression
+   *   function: (field_expression
+   *     field: (field_identifier) @extract_this))
+   * ```
+   *
+   * All languages (function call):
+   * ```
+   * (call/call_expression
+   *   function: (identifier) @extract_this)
+   * ```
+   *
+   * Examples:
+   * - JavaScript: `obj.method()` → "method", `func()` → "func"
+   * - Python: `self.process()` → "process", `print("x")` → "print"
+   * - Rust: `vec.push(5)` → "push", `println!()` → "println"
+   *
+   * @param node - The SyntaxNode representing a call
+   * @returns The name of the method or function being called, or undefined if it cannot be extracted
+   */
+  extract_call_name(node: SyntaxNode): SymbolName | undefined;
 }
 
 /**

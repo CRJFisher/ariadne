@@ -526,4 +526,53 @@ export const PYTHON_METADATA_EXTRACTORS: MetadataExtractors = {
   extract_is_optional_chain(_node: SyntaxNode): boolean {
     return false;
   },
+
+  /**
+   * Check if a call node represents a method call
+   *
+   * Python: call with attribute function
+   *
+   * @param node - The SyntaxNode representing a call
+   * @returns true if it's a method call, false if it's a function call
+   */
+  is_method_call(node: SyntaxNode): boolean {
+    if (node.type === "call") {
+      const functionNode = node.childForFieldName("function");
+      if (functionNode && functionNode.type === "attribute") {
+        return true;
+      }
+    }
+    return false;
+  },
+
+  /**
+   * Extract the method or function name from a call node
+   *
+   * For method calls, extracts the attribute name.
+   * For function calls, extracts the function identifier.
+   *
+   * @param node - The SyntaxNode representing a call
+   * @returns The name of the method or function, or undefined
+   */
+  extract_call_name(node: SyntaxNode): SymbolName | undefined {
+    if (node.type === "call") {
+      const functionNode = node.childForFieldName("function");
+
+      if (functionNode) {
+        // Method call: extract attribute name
+        if (functionNode.type === "attribute") {
+          const attributeNode = functionNode.childForFieldName("attribute");
+          if (attributeNode) {
+            return attributeNode.text as SymbolName;
+          }
+        }
+        // Function call: extract identifier
+        else if (functionNode.type === "identifier") {
+          return functionNode.text as SymbolName;
+        }
+      }
+    }
+
+    return undefined;
+  },
 };
