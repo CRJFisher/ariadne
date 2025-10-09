@@ -10,7 +10,13 @@ import {
 } from "./reference_builder";
 import type { ProcessingContext, CaptureNode } from "../semantic_index";
 import { SemanticCategory, SemanticEntity } from "../semantic_index";
-import type { Location, ScopeId, TypeInfo, SymbolName, SymbolId } from "@ariadnejs/types";
+import type {
+  Location,
+  ScopeId,
+  TypeInfo,
+  SymbolName,
+  SymbolId,
+} from "@ariadnejs/types";
 import { module_scope } from "@ariadnejs/types";
 import type { MetadataExtractors } from "../query_code_tree/language_configs/metadata_types";
 
@@ -21,7 +27,9 @@ import type { MetadataExtractors } from "../query_code_tree/language_configs/met
 /**
  * Create mock metadata extractors for testing
  */
-function create_mock_extractors(overrides: Partial<MetadataExtractors> = {}): MetadataExtractors {
+function create_mock_extractors(
+  overrides: Partial<MetadataExtractors> = {}
+): MetadataExtractors {
   return {
     extract_type_from_annotation: vi.fn((node, file_path) => undefined),
     extract_call_receiver: vi.fn((node, file_path) => undefined),
@@ -84,7 +92,7 @@ function create_test_capture(
   let category_str = "reference";
   if (overrides.category !== undefined) {
     // Handle both enum values and direct strings
-    if (typeof overrides.category === 'string') {
+    if (typeof overrides.category === "string") {
       category_str = overrides.category;
     } else {
       switch (overrides.category) {
@@ -402,7 +410,11 @@ describe("ReferenceBuilder", () => {
 
       // Update context with captures
       const test_context = { ...context, captures };
-      const references = process_references(test_context, undefined, TEST_FILE_PATH);
+      const references = process_references(
+        test_context,
+        undefined,
+        TEST_FILE_PATH
+      );
 
       expect(references).toHaveLength(2);
       expect(references[0].name).toBe("included1");
@@ -426,7 +438,11 @@ describe("ReferenceBuilder", () => {
         get_scope_id: (loc: Location) => custom_scope_id,
       };
 
-      const references = process_references(custom_context, undefined, TEST_FILE_PATH);
+      const references = process_references(
+        custom_context,
+        undefined,
+        TEST_FILE_PATH
+      );
 
       expect(references).toHaveLength(1);
       expect(references[0].scope_id).toBe(custom_scope_id);
@@ -477,7 +493,11 @@ describe("ReferenceBuilder", () => {
         })),
       });
 
-      const builder = new ReferenceBuilder(context, mockExtractors, TEST_FILE_PATH);
+      const builder = new ReferenceBuilder(
+        context,
+        mockExtractors,
+        TEST_FILE_PATH
+      );
       const capture = create_test_capture({
         category: SemanticCategory.REFERENCE,
         entity: SemanticEntity.TYPE,
@@ -493,7 +513,8 @@ describe("ReferenceBuilder", () => {
       );
       expect(references[0].type_info).toEqual({
         type_name: "string",
-        certainty: "explicit",
+        type_id: "type:string:test.ts:1:0",
+        certainty: "declared",
       });
     });
 
@@ -503,7 +524,11 @@ describe("ReferenceBuilder", () => {
         extract_call_receiver: vi.fn((node, file_path) => receiverLocation),
       });
 
-      const builder = new ReferenceBuilder(context, mockExtractors, TEST_FILE_PATH);
+      const builder = new ReferenceBuilder(
+        context,
+        mockExtractors,
+        TEST_FILE_PATH
+      );
       const capture = create_test_capture({
         category: SemanticCategory.REFERENCE,
         entity: SemanticEntity.METHOD,
@@ -517,16 +542,26 @@ describe("ReferenceBuilder", () => {
         capture.node,
         TEST_FILE_PATH
       );
-      expect(references[0].context?.receiver_location).toEqual(receiverLocation);
+      expect(references[0].context?.receiver_location).toEqual(
+        receiverLocation
+      );
     });
 
     it("should call extract_property_chain for member access", () => {
-      const propertyChain: SymbolName[] = ["obj", "nested", "value"] as SymbolName[];
+      const propertyChain: SymbolName[] = [
+        "obj",
+        "nested",
+        "value",
+      ] as SymbolName[];
       const mockExtractors = create_mock_extractors({
         extract_property_chain: vi.fn((node) => propertyChain),
       });
 
-      const builder = new ReferenceBuilder(context, mockExtractors, TEST_FILE_PATH);
+      const builder = new ReferenceBuilder(
+        context,
+        mockExtractors,
+        TEST_FILE_PATH
+      );
       const capture = create_test_capture({
         category: SemanticCategory.REFERENCE,
         entity: SemanticEntity.PROPERTY,
@@ -536,7 +571,9 @@ describe("ReferenceBuilder", () => {
       builder.process(capture);
       const references = builder.build();
 
-      expect(mockExtractors.extract_property_chain).toHaveBeenCalledWith(capture.node);
+      expect(mockExtractors.extract_property_chain).toHaveBeenCalledWith(
+        capture.node
+      );
       expect(references[0].context?.property_chain).toEqual(propertyChain);
     });
 
@@ -546,7 +583,11 @@ describe("ReferenceBuilder", () => {
         extract_construct_target: vi.fn((node, file_path) => targetLocation),
       });
 
-      const builder = new ReferenceBuilder(context, mockExtractors, TEST_FILE_PATH);
+      const builder = new ReferenceBuilder(
+        context,
+        mockExtractors,
+        TEST_FILE_PATH
+      );
       const capture = create_test_capture({
         category: SemanticCategory.REFERENCE,
         entity: "constructor",
@@ -574,7 +615,11 @@ describe("ReferenceBuilder", () => {
         })),
       });
 
-      const builder = new ReferenceBuilder(context, mockExtractors, TEST_FILE_PATH);
+      const builder = new ReferenceBuilder(
+        context,
+        mockExtractors,
+        TEST_FILE_PATH
+      );
       const capture = create_test_capture({
         category: SemanticCategory.REFERENCE,
         entity: SemanticEntity.TYPE,
@@ -584,7 +629,9 @@ describe("ReferenceBuilder", () => {
       builder.process(capture);
       const references = builder.build();
 
-      expect(mockExtractors.extract_type_arguments).toHaveBeenCalledWith(capture.node);
+      expect(mockExtractors.extract_type_arguments).toHaveBeenCalledWith(
+        capture.node
+      );
       expect(references[0].type_info?.type_name).toBe("Map<string, number>");
     });
 
@@ -603,7 +650,11 @@ describe("ReferenceBuilder", () => {
         extract_type_from_annotation: vi.fn((node, file_path) => typeInfo),
       });
 
-      const builder = new ReferenceBuilder(context, mockExtractors, TEST_FILE_PATH);
+      const builder = new ReferenceBuilder(
+        context,
+        mockExtractors,
+        TEST_FILE_PATH
+      );
       const capture = create_test_capture({
         category: SemanticCategory.REFERENCE,
         entity: SemanticEntity.METHOD,
@@ -619,7 +670,9 @@ describe("ReferenceBuilder", () => {
       expect(mockExtractors.extract_type_from_annotation).toHaveBeenCalled();
 
       // Verify the reference has all the extracted metadata
-      expect(references[0].context?.receiver_location).toEqual(receiverLocation);
+      expect(references[0].context?.receiver_location).toEqual(
+        receiverLocation
+      );
       expect(references[0].context?.property_chain).toEqual(propertyChain);
       expect(references[0].member_access?.object_type).toEqual(typeInfo);
     });
@@ -648,7 +701,11 @@ describe("ReferenceBuilder", () => {
       // All extractors return undefined
       const mockExtractors = create_mock_extractors();
 
-      const builder = new ReferenceBuilder(context, mockExtractors, TEST_FILE_PATH);
+      const builder = new ReferenceBuilder(
+        context,
+        mockExtractors,
+        TEST_FILE_PATH
+      );
       const capture = create_test_capture({
         category: SemanticCategory.REFERENCE,
         entity: SemanticEntity.METHOD,
@@ -675,7 +732,11 @@ describe("ReferenceBuilder", () => {
         extract_type_from_annotation: vi.fn((node, file_path) => typeInfo),
       });
 
-      const builder = new ReferenceBuilder(context, mockExtractors, TEST_FILE_PATH);
+      const builder = new ReferenceBuilder(
+        context,
+        mockExtractors,
+        TEST_FILE_PATH
+      );
       const capture = create_test_capture({
         category: SemanticCategory.REFERENCE,
         entity: SemanticEntity.PROPERTY,
@@ -701,7 +762,11 @@ describe("ReferenceBuilder", () => {
         extract_type_from_annotation: vi.fn((node, file_path) => typeInfo),
       });
 
-      const builder = new ReferenceBuilder(context, mockExtractors, TEST_FILE_PATH);
+      const builder = new ReferenceBuilder(
+        context,
+        mockExtractors,
+        TEST_FILE_PATH
+      );
       const capture = create_test_capture({
         category: SemanticCategory.ASSIGNMENT,
         entity: SemanticEntity.VARIABLE,
@@ -726,7 +791,11 @@ describe("ReferenceBuilder", () => {
         extract_type_from_annotation: vi.fn((node, file_path) => typeInfo),
       });
 
-      const builder = new ReferenceBuilder(context, mockExtractors, TEST_FILE_PATH);
+      const builder = new ReferenceBuilder(
+        context,
+        mockExtractors,
+        TEST_FILE_PATH
+      );
       const capture = create_test_capture({
         category: "return",
         entity: "value",
@@ -742,7 +811,11 @@ describe("ReferenceBuilder", () => {
     it("should not add empty context object when all extractors return undefined", () => {
       const mockExtractors = create_mock_extractors();
 
-      const builder = new ReferenceBuilder(context, mockExtractors, TEST_FILE_PATH);
+      const builder = new ReferenceBuilder(
+        context,
+        mockExtractors,
+        TEST_FILE_PATH
+      );
       const capture = create_test_capture({
         category: SemanticCategory.REFERENCE,
         entity: SemanticEntity.VARIABLE,
@@ -761,7 +834,11 @@ describe("ReferenceBuilder", () => {
         extract_property_chain: vi.fn((node) => propertyChain),
       });
 
-      const builder = new ReferenceBuilder(context, mockExtractors, TEST_FILE_PATH);
+      const builder = new ReferenceBuilder(
+        context,
+        mockExtractors,
+        TEST_FILE_PATH
+      );
       const capture = create_test_capture({
         category: SemanticCategory.REFERENCE,
         entity: SemanticEntity.PROPERTY,

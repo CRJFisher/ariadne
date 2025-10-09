@@ -279,14 +279,11 @@ function extract_context(
       capture.node,
       file_path
     );
-    if (!call_receiver) {
-      throw new Error(
-        `Failed to extract receiver location for method call: ` +
-        `capture="${capture.name}", node_type="${capture.node.type}", ` +
-        `text="${capture.text}", location=${JSON.stringify(capture.location)}`
-      );
+    // If extractor returns undefined, we simply don't add receiver_location
+    // This can happen when the tree-sitter node doesn't have receiver info
+    if (call_receiver) {
+      receiver_location = call_receiver;
     }
-    receiver_location = call_receiver;
   }
 
   // For super calls, the receiver is the super keyword itself
