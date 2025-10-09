@@ -114,7 +114,7 @@
 
 ; Protocol class detection (classes inheriting from Protocol)
 (class_definition
-  name: (identifier) @definition.protocol
+  name: (identifier) @definition.interface
   superclasses: (argument_list
     (identifier) @type.type_reference
     (#eq? @type.type_reference "Protocol")
@@ -123,7 +123,7 @@
 
 ; Protocol class detection (from typing.Protocol)
 (class_definition
-  name: (identifier) @definition.protocol
+  name: (identifier) @definition.interface
   superclasses: (argument_list
     (attribute
       attribute: (identifier) @type.type_reference
@@ -141,9 +141,7 @@
   body: (block
     (expression_statement
       (assignment
-        left: (identifier) @definition.property.protocol
-        type: (_) @type.type_reference
-        !right
+        left: (identifier) @definition.property.interface
       )
     )
   )
@@ -160,9 +158,7 @@
   body: (block
     (expression_statement
       (assignment
-        left: (identifier) @definition.property.protocol
-        type: (_) @type.type_reference
-        !right
+        left: (identifier) @definition.property.interface
       )
     )
   )

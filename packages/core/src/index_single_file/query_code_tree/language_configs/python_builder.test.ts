@@ -1135,5 +1135,261 @@ describe("Python Builder Configuration", () => {
         });
       });
     });
+
+    describe("Protocol Support", () => {
+      it("should contain protocol definition capture mappings", () => {
+        const protocolMappings = [
+          "definition.interface",
+          "definition.property.interface",
+        ];
+
+        for (const mapping of protocolMappings) {
+          expect(PYTHON_BUILDER_CONFIG.has(mapping)).toBe(true);
+          const config = PYTHON_BUILDER_CONFIG.get(mapping);
+          expect(config).toBeDefined();
+          expect(config?.process).toBeInstanceOf(Function);
+        }
+      });
+
+      it("should handle Protocol class definition", () => {
+        const code = `from typing import Protocol
+
+class Drawable(Protocol):
+    pass`;
+        // Find the class_definition node first, then get its name
+        const ast = parser.parse(code);
+        const classNode = findNodeByType(ast.rootNode, "class_definition");
+        const className = classNode?.childForFieldName("name");
+
+        if (!className) {
+          throw new Error("Could not find class name node");
+        }
+
+        const capture: CaptureNode = {
+          name: "definition.interface",
+          category: "definition" as SemanticCategory,
+          entity: "interface" as SemanticEntity,
+          node: className as any,
+          text: className.text as SymbolName,
+          location: {
+            file_path: "test.py" as any,
+            start_line: className.startPosition.row + 1,
+            start_column: className.startPosition.column + 1,
+            end_line: className.endPosition.row + 1,
+            end_column: className.endPosition.column + 1,
+          },
+        };
+
+        const builder = new DefinitionBuilder(createTestContext());
+        const config = PYTHON_BUILDER_CONFIG.get("definition.interface");
+
+        expect(() => {
+          config?.process(capture, builder, createTestContext());
+        }).not.toThrow();
+
+        const definitions = builder.build();
+        expect(definitions.interfaces.size).toBeGreaterThan(0);
+
+        const protocolDef = definitions.interfaces.values().next().value;
+        expect(protocolDef).toBeDefined();
+        expect(protocolDef?.name).toBe("Drawable");
+        expect(protocolDef?.kind).toBe("interface");
+      });
+
+      it("should have is_exported=true for module-level public Protocol classes", () => {
+        const code = `from typing import Protocol
+
+class PublicProtocol(Protocol):
+    pass`;
+        const context = createTestContext();
+        const builder = new DefinitionBuilder(context);
+
+        // Find the class_definition node first, then get its name
+        const ast = parser.parse(code);
+        const classNode = findNodeByType(ast.rootNode, "class_definition");
+        const className = classNode?.childForFieldName("name");
+
+        if (!className) {
+          throw new Error("Could not find class name node");
+        }
+
+        const capture: CaptureNode = {
+          name: "definition.interface",
+          category: "definition" as SemanticCategory,
+          entity: "interface" as SemanticEntity,
+          node: className as any,
+          text: className.text as SymbolName,
+          location: {
+            file_path: "test.py" as any,
+            start_line: className.startPosition.row + 1,
+            start_column: className.startPosition.column + 1,
+            end_line: className.endPosition.row + 1,
+            end_column: className.endPosition.column + 1,
+          },
+        };
+
+        PYTHON_BUILDER_CONFIG.get("definition.interface")?.process(
+          capture,
+          builder,
+          context
+        );
+
+        const definitions = builder.build();
+        const protocolDef = definitions.interfaces.values().next().value;
+
+        expect(protocolDef).toBeDefined();
+        expect(protocolDef?.name).toBe("PublicProtocol");
+        expect(protocolDef?.is_exported).toBe(true);
+      });
+
+      it("should have is_exported=false for module-level private Protocol classes", () => {
+        const code = `from typing import Protocol
+
+class _PrivateProtocol(Protocol):
+    pass`;
+        const context = createTestContext();
+        const builder = new DefinitionBuilder(context);
+
+        // Find the class_definition node first, then get its name
+        const ast = parser.parse(code);
+        const classNode = findNodeByType(ast.rootNode, "class_definition");
+        const className = classNode?.childForFieldName("name");
+
+        if (!className) {
+          throw new Error("Could not find class name node");
+        }
+
+        const capture: CaptureNode = {
+          name: "definition.interface",
+          category: "definition" as SemanticCategory,
+          entity: "interface" as SemanticEntity,
+          node: className as any,
+          text: className.text as SymbolName,
+          location: {
+            file_path: "test.py" as any,
+            start_line: className.startPosition.row + 1,
+            start_column: className.startPosition.column + 1,
+            end_line: className.endPosition.row + 1,
+            end_column: className.endPosition.column + 1,
+          },
+        };
+
+        PYTHON_BUILDER_CONFIG.get("definition.interface")?.process(
+          capture,
+          builder,
+          context
+        );
+
+        const definitions = builder.build();
+        const protocolDef = definitions.interfaces.values().next().value;
+
+        expect(protocolDef).toBeDefined();
+        expect(protocolDef?.name).toBe("_PrivateProtocol");
+        expect(protocolDef?.is_exported).toBe(false);
+      });
+
+      it("should handle Protocol property signatures", () => {
+        const code = `from typing import Protocol
+
+class Drawable(Protocol):
+    x: int
+    y: int`;
+
+        const context = createTestContext();
+        const builder = new DefinitionBuilder(context);
+
+        // First process the Protocol class
+        const ast = parser.parse(code);
+        const classNode = findNodeByType(ast.rootNode, "class_definition");
+        const className = classNode?.childForFieldName("name");
+
+        if (className) {
+          const classCapture: CaptureNode = {
+            name: "definition.interface",
+            node: className as any,
+            text: className.text as SymbolName,
+            category: "definition" as SemanticCategory,
+            entity: "interface" as SemanticEntity,
+            location: {
+              file_path: "test.py" as any,
+              start_line: className.startPosition.row + 1,
+              start_column: className.startPosition.column + 1,
+              end_line: className.endPosition.row + 1,
+              end_column: className.endPosition.column + 1,
+            },
+          };
+          PYTHON_BUILDER_CONFIG.get("definition.interface")?.process(
+            classCapture,
+            builder,
+            context
+          );
+        }
+
+        // Find and process property signatures
+        const findAllIdentifiers = (node: SyntaxNode): SyntaxNode[] => {
+          const identifiers: SyntaxNode[] = [];
+          if (node.type === "identifier" && node.parent?.type === "assignment") {
+            const assignment = node.parent;
+            // Check if it's an annotated assignment without value (property signature)
+            if (assignment.childForFieldName("type") && !assignment.childForFieldName("right")) {
+              identifiers.push(node);
+            }
+          }
+          for (let i = 0; i < node.childCount; i++) {
+            identifiers.push(...findAllIdentifiers(node.child(i)!));
+          }
+          return identifiers;
+        };
+
+        const propertyNodes = findAllIdentifiers(ast.rootNode);
+        for (const propNode of propertyNodes) {
+          if (propNode.text === "x" || propNode.text === "y") {
+            const propCapture: CaptureNode = {
+              name: "definition.property.interface",
+              node: propNode as any,
+              text: propNode.text as SymbolName,
+              category: "definition" as SemanticCategory,
+              entity: "property" as SemanticEntity,
+              location: {
+                file_path: "test.py" as any,
+                start_line: propNode.startPosition.row + 1,
+                start_column: propNode.startPosition.column + 1,
+                end_line: propNode.endPosition.row + 1,
+                end_column: propNode.endPosition.column + 1,
+              },
+            };
+            PYTHON_BUILDER_CONFIG.get("definition.property.interface")?.process(
+              propCapture,
+              builder,
+              context
+            );
+          }
+        }
+
+        const definitions = builder.build();
+        const protocolDef = definitions.interfaces.values().next().value;
+
+        expect(protocolDef).toBeDefined();
+        expect(protocolDef?.name).toBe("Drawable");
+        expect(protocolDef?.properties).toBeDefined();
+        expect(Array.isArray(protocolDef?.properties)).toBe(true);
+
+        // Verify property names
+        const propertyNames = protocolDef?.properties.map((p) => p.name) || [];
+        expect(propertyNames).toContain("x");
+        expect(propertyNames).toContain("y");
+
+        // Verify property types
+        const xProp = protocolDef?.properties.find((p) => p.name === "x");
+        if (xProp) {
+          expect(xProp.type).toBe("int");
+        }
+
+        const yProp = protocolDef?.properties.find((p) => p.name === "y");
+        if (yProp) {
+          expect(yProp.type).toBe("int");
+        }
+      });
+    });
   });
 });

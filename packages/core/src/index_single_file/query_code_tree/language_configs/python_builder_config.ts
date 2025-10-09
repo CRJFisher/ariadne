@@ -78,15 +78,31 @@ export const PYTHON_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
         context: ProcessingContext
       ) => {
         const method_id = create_method_id(capture);
-        const class_id = find_containing_class(capture);
         const name = capture.text;
 
-        if (class_id) {
-          // Skip __init__ - handled by definition.constructor
-          if (name === "__init__") {
-            return;
-          }
+        // Skip __init__ - handled by definition.constructor
+        if (name === "__init__") {
+          return;
+        }
 
+        // Check if this is a Protocol method (should be added to interface)
+        const protocol_id = find_containing_protocol(capture);
+        if (protocol_id) {
+          builder.add_method_signature_to_interface(protocol_id, {
+            symbol_id: method_id,
+            name: name,
+            location: capture.location,
+            scope_id: context.get_scope_id(capture.location),
+            return_type: extract_return_type(
+              capture.node.parent || capture.node
+            ),
+          });
+          return;
+        }
+
+        // Regular class method
+        const class_id = find_containing_class(capture);
+        if (class_id) {
           const methodType = determine_method_type(
             capture.node.parent || capture.node
           );
@@ -851,7 +867,7 @@ export const PYTHON_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
 
   // Protocols (Python's structural typing, similar to TypeScript interfaces)
   [
-    "definition.protocol",
+    "definition.interface",
     {
       process: (
         capture: CaptureNode,
@@ -879,7 +895,7 @@ export const PYTHON_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
   ],
 
   [
-    "definition.property.protocol",
+    "definition.property.interface",
     {
       process: (
         capture: CaptureNode,
@@ -889,8 +905,11 @@ export const PYTHON_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
         const protocol_id = find_containing_protocol(capture);
         if (!protocol_id) return;
 
-        const prop_id = create_property_id(capture);
+        // Only process if there's a type annotation (Protocol property signatures)
         const prop_type = extract_property_type(capture.node);
+        if (!prop_type) return;
+
+        const prop_id = create_property_id(capture);
 
         builder.add_property_signature_to_interface(protocol_id, {
           symbol_id: prop_id,

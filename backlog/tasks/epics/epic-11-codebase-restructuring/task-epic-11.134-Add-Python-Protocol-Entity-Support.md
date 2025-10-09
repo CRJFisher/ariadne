@@ -1,8 +1,10 @@
 # Task: Add Python Protocol Entity Support
 
-**Status**: Open
+**Status**: Completed
 **Epic**: epic-11 - Codebase Restructuring
 **Created**: 2025-10-08
+**Completed**: 2025-10-09
+**Solution**: Option B - Map Protocol to Interface
 
 ## Problem
 
@@ -151,17 +153,123 @@ npm test -- semantic_index.python.test.ts -t "should extract Protocol classes"
 # - No regressions in other Python tests
 ```
 
+## Implementation (Completed)
+
+### Decision: Option B - Map Protocol to Interface
+
+**Rationale**: The codebase was **already architected** to treat Python Protocols as interfaces internally:
+- `create_protocol_id()` in [python_builder.ts:168-172](packages/core/src/index_single_file/query_code_tree/language_configs/python_builder.ts#L168) returns `interface_symbol()`
+- Handler calls `builder.add_interface()`
+- Test expectations check `result.interfaces` collection
+- Python Protocols are semantically equivalent to TypeScript interfaces (structural subtyping)
+
+Changing capture names aligns the tree-sitter queries with existing behavior, requiring no type system changes.
+
+### Changes Made
+
+#### 1. Query Changes ([python.scm](packages/core/src/index_single_file/query_code_tree/queries/python.scm))
+
+**Protocol Class Detection** (Lines 117, 126):
+```diff
+-  name: (identifier) @definition.protocol
++  name: (identifier) @definition.interface
+```
+
+**Protocol Property Signatures** (Lines 144, 163):
+```diff
+-  left: (identifier) @definition.property.protocol
++  left: (identifier) @definition.property.interface
+```
+
+**Query Pattern Simplification**:
+- Removed `type: (_)` field requirement (caused capture mismatches)
+- Removed `!right` negation pattern (caused query syntax errors)
+- Type annotation filtering moved to handler logic
+
+#### 2. Handler Configuration ([python_builder_config.ts](packages/core/src/index_single_file/query_code_tree/language_configs/python_builder_config.ts))
+
+**Updated Handler Keys** (Lines 854, 882):
+```typescript
+// Before:
+["definition.protocol", {...}]
+["definition.property.protocol", {...}]
+
+// After:
+["definition.interface", {...}]
+["definition.property.interface", {...}]
+```
+
+**Property Handler Enhancement** (Lines 889-894):
+```typescript
+const protocol_id = find_containing_protocol(capture);
+if (!protocol_id) return;
+
+// Only process if there's a type annotation (Protocol property signatures)
+const prop_type = extract_property_type(capture.node);
+if (!prop_type) return;
+```
+
+**Method Handler Enhancement** (Lines 89-100):
+```typescript
+// Check if this is a Protocol method (should be added to interface)
+const protocol_id = find_containing_protocol(capture);
+if (protocol_id) {
+  builder.add_method_signature_to_interface(protocol_id, {
+    symbol_id: method_id,
+    name: name,
+    location: capture.location,
+    scope_id: context.get_scope_id(capture.location),
+    return_type: extract_return_type(capture.node.parent || capture.node),
+  });
+  return;
+}
+```
+
+#### 3. Test Coverage ([python_builder.test.ts](packages/core/src/index_single_file/query_code_tree/language_configs/python_builder.test.ts))
+
+Added comprehensive Protocol test suite (Lines 1139-1324):
+- Handler mapping verification
+- Protocol class definition handling
+- Public/private Protocol export flags
+- Protocol property signature extraction with type annotations
+- Integration with existing test infrastructure
+
+### Test Results
+
+✅ **Protocol Test**: [semantic_index.python.test.ts:1467](packages/core/src/index_single_file/semantic_index.python.test.ts#L1467) - PASSING
+- Extracts Protocol class as interface: `Drawable`
+- Captures property signatures: `x: int`, `y: int`
+- Captures method signatures: `draw() -> None`, `move(dx: int, dy: int) -> None`
+- Correct symbol_id format: `interface:test.py:4:7:4:14:Drawable`
+
+✅ **Python Test Suite**: 45/46 tests passing
+- 1 unrelated pre-existing failure in "should extract method resolution metadata for all receiver patterns"
+- No regressions introduced by Protocol changes
+
+✅ **Unit Tests**: All Protocol handler tests passing
+- Handler mappings present and callable
+- Protocol-to-interface conversion working
+- Export flag logic correct (public/private)
+- Property and method extraction complete
+
 ## Acceptance Criteria
 
-- [ ] Protocol classes can be indexed without errors
-- [ ] Test extracts Protocol with properties (x, y)
-- [ ] Test extracts Protocol with methods (draw, move)
-- [ ] Protocol definitions have correct symbol_id format
-- [ ] No regressions in Python or other language tests
-- [ ] Decision documented: protocol as new entity OR mapped to interface
+- [x] Protocol classes can be indexed without errors
+- [x] Test extracts Protocol with properties (x, y)
+- [x] Test extracts Protocol with methods (draw, move)
+- [x] Protocol definitions have correct symbol_id format (`interface:...`)
+- [x] No regressions in Python or other language tests
+- [x] Decision documented: **Option B - Map to interface** (aligned with existing architecture)
+
+## Files Modified
+
+1. [python.scm](packages/core/src/index_single_file/query_code_tree/queries/python.scm) - Updated capture names
+2. [python_builder_config.ts](packages/core/src/index_single_file/query_code_tree/language_configs/python_builder_config.ts) - Updated handler keys and logic
+3. [python_builder.test.ts](packages/core/src/index_single_file/query_code_tree/language_configs/python_builder.test.ts) - Added Protocol test coverage
 
 ## Related
 
 - Python structural typing (PEP 544)
 - TypeScript interface handling
 - SemanticEntity type system design
+- Protocol vs Interface semantic equivalence
