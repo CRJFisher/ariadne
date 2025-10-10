@@ -1023,13 +1023,13 @@ describe("JavaScript Symbol Resolution Integration", () => {
       // Verify constructor call resolves to User class
       const constructor_key = location_key(constructor_call_location);
       expect(result.resolved_references.get(constructor_key)).toBe(
-        user_class_id
+        user_class_id,
       );
 
       // Verify method call resolves to getName method
       const method_key = location_key(method_call_location);
       expect(result.resolved_references.get(method_key)).toBe(
-        getName_method_id
+        getName_method_id,
       );
     });
   });
@@ -1660,27 +1660,27 @@ describe("JavaScript Symbol Resolution Integration", () => {
       // Verify UserService constructor call in main.js
       const main_constructor_key = location_key(main_constructor_location);
       expect(result.resolved_references.get(main_constructor_key)).toBe(
-        service_class_id
+        service_class_id,
       );
 
       // Verify saveUser method call in main.js
       const main_saveUser_key = location_key(main_saveUser_call_location);
       expect(result.resolved_references.get(main_saveUser_key)).toBe(
-        saveUser_method_id
+        saveUser_method_id,
       );
 
       // Verify Repository constructor call in service.js
       const service_constructor_key = location_key(
-        service_repo_constructor_location
+        service_repo_constructor_location,
       );
       expect(result.resolved_references.get(service_constructor_key)).toBe(
-        repository_class_id
+        repository_class_id,
       );
 
       // Verify save method call in service.js
       const service_save_key = location_key(service_save_call_location);
       expect(result.resolved_references.get(service_save_key)).toBe(
-        save_method_id
+        save_method_id,
       );
     });
 

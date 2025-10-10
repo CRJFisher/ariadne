@@ -485,13 +485,13 @@ describe("Symbol Resolution - Integration Tests", () => {
       // Should resolve constructor call to User class
       const constructor_key = location_key(constructor_call_location);
       expect(result.resolved_references.get(constructor_key)).toBe(
-        user_class_id
+        user_class_id,
       );
 
       // Should resolve method call to getName method
       const method_key = location_key(method_call_location);
       expect(result.resolved_references.get(method_key)).toBe(
-        getName_method_id
+        getName_method_id,
       );
     });
   });
@@ -835,21 +835,21 @@ describe("Symbol Resolution - Integration Tests", () => {
       // Verify constructor resolution
       const constructor_key = location_key(constructor_call_location);
       expect(result.resolved_references.get(constructor_key)).toBe(
-        user_class_id
+        user_class_id,
       );
 
       // Verify method resolution
       const method_key = location_key(method_call_location);
       expect(result.resolved_references.get(method_key)).toBe(
-        getName_method_id
+        getName_method_id,
       );
 
       // Verify reverse map
       expect(result.references_to_symbol.get(user_class_id)).toContainEqual(
-        constructor_call_location
+        constructor_call_location,
       );
       expect(result.references_to_symbol.get(getName_method_id)).toContainEqual(
-        method_call_location
+        method_call_location,
       );
     });
   });
@@ -957,8 +957,231 @@ describe("Symbol Resolution - Integration Tests", () => {
       // Check definitions
       expect(result.definitions).toBeInstanceOf(Map);
       expect(result.definitions.get(helper_id)).toEqual(
-        index.functions.get(helper_id)
+        index.functions.get(helper_id),
       );
+    });
+  });
+
+  describe("CallReference enclosing_function_scope_id", () => {
+    it("should set enclosing_function_scope_id for calls in nested functions", () => {
+      const file_path = "test.ts" as FilePath;
+      const module_scope = "scope:test.ts:module" as ScopeId;
+      const outer_scope = "scope:test.ts:outer_function" as ScopeId;
+      const inner_scope = "scope:test.ts:inner_function" as ScopeId;
+      const block_scope = "scope:test.ts:block" as ScopeId;
+
+      const helper1_call = {
+        file_path: file_path,
+        start_line: 2,
+        start_column: 5,
+        end_line: 2,
+        end_column: 12,
+      };
+      const helper2_call = {
+        file_path: file_path,
+        start_line: 4,
+        start_column: 7,
+        end_line: 4,
+        end_column: 14,
+      };
+      const helper3_call = {
+        file_path: file_path,
+        start_line: 7,
+        start_column: 7,
+        end_line: 7,
+        end_column: 14,
+      };
+
+      const index = create_test_index(file_path, {
+        root_scope_id: module_scope,
+        scopes_raw: new Map([
+          [module_scope, { id: module_scope, parent_id: null, type: "module", name: null, location: { file_path, start_line: 1, start_column: 1, end_line: 10, end_column: 1 }, child_ids: [] }],
+          [outer_scope, { id: outer_scope, parent_id: module_scope, type: "function", name: "outer", location: { file_path, start_line: 1, start_column: 21, end_line: 9, end_column: 1 }, child_ids: [] }],
+          [block_scope, { id: block_scope, parent_id: outer_scope, type: "block", name: null, location: { file_path, start_line: 3, start_column: 15, end_line: 5, end_column: 3 }, child_ids: [] }],
+          [inner_scope, { id: inner_scope, parent_id: outer_scope, type: "function", name: "inner", location: { file_path, start_line: 6, start_column: 21, end_line: 8, end_column: 3 }, child_ids: [] }],
+        ]),
+        functions_raw: new Map(),
+        references: [
+          {
+            type: "call" as const,
+            location: helper1_call,
+            name: "helper1" as SymbolName,
+            scope_id: outer_scope,
+            call_type: "function" as const,
+          },
+          {
+            type: "call" as const,
+            location: helper2_call,
+            name: "helper2" as SymbolName,
+            scope_id: block_scope,
+            call_type: "function" as const,
+          },
+          {
+            type: "call" as const,
+            location: helper3_call,
+            name: "helper3" as SymbolName,
+            scope_id: inner_scope,
+            call_type: "function" as const,
+          },
+        ],
+      });
+
+      const result = resolve_symbols_with_registries(
+        new Map([[file_path, index]]),
+        build_file_tree([file_path]),
+      );
+
+      // Check that all call references have enclosing_function_scope_id
+      expect(result.references).toHaveLength(3);
+
+      const helper1_ref = result.references.find(r => r.name === "helper1");
+      const helper2_ref = result.references.find(r => r.name === "helper2");
+      const helper3_ref = result.references.find(r => r.name === "helper3");
+
+      expect(helper1_ref).toBeDefined();
+      expect(helper2_ref).toBeDefined();
+      expect(helper3_ref).toBeDefined();
+
+      // helper1 is directly in outer function scope
+      expect(helper1_ref?.enclosing_function_scope_id).toBe(outer_scope);
+
+      // helper2 is in block scope, but outer function is the enclosing function
+      expect(helper2_ref?.enclosing_function_scope_id).toBe(outer_scope);
+
+      // helper3 is in inner function scope
+      expect(helper3_ref?.enclosing_function_scope_id).toBe(inner_scope);
+    });
+
+    it("should set enclosing_function_scope_id to module scope for top-level calls", () => {
+      const file_path = "test.ts" as FilePath;
+      const module_scope = "scope:test.ts:module" as ScopeId;
+      const func_scope = "scope:test.ts:foo_function" as ScopeId;
+
+      const helper_call = {
+        file_path: file_path,
+        start_line: 1,
+        start_column: 1,
+        end_line: 1,
+        end_column: 6,
+      };
+      const bar_call = {
+        file_path: file_path,
+        start_line: 3,
+        start_column: 3,
+        end_line: 3,
+        end_column: 6,
+      };
+
+      const index = create_test_index(file_path, {
+        root_scope_id: module_scope,
+        scopes_raw: new Map([
+          [module_scope, { id: module_scope, parent_id: null, type: "module", name: null, location: { file_path, start_line: 1, start_column: 1, end_line: 5, end_column: 1 }, child_ids: [] }],
+          [func_scope, { id: func_scope, parent_id: module_scope, type: "function", name: "foo", location: { file_path, start_line: 2, start_column: 14, end_line: 4, end_column: 1 }, child_ids: [] }],
+        ]),
+        functions_raw: new Map(),
+        references: [
+          {
+            type: "call" as const,
+            location: helper_call,
+            name: "helper" as SymbolName,
+            scope_id: module_scope,
+            call_type: "function" as const,
+          },
+          {
+            type: "call" as const,
+            location: bar_call,
+            name: "bar" as SymbolName,
+            scope_id: func_scope,
+            call_type: "function" as const,
+          },
+        ],
+      });
+
+      const result = resolve_symbols_with_registries(
+        new Map([[file_path, index]]),
+        build_file_tree([file_path]),
+      );
+
+      expect(result.references).toHaveLength(2);
+
+      const helper_ref = result.references.find(r => r.name === "helper");
+      const bar_ref = result.references.find(r => r.name === "bar");
+
+      expect(helper_ref).toBeDefined();
+      expect(bar_ref).toBeDefined();
+
+      // helper is at module scope (top-level)
+      expect(helper_ref?.enclosing_function_scope_id).toBe(module_scope);
+
+      // bar is in function scope
+      expect(bar_ref?.enclosing_function_scope_id).toBe(func_scope);
+    });
+
+    it("should set enclosing_function_scope_id for method and constructor calls", () => {
+      const file_path = "test.ts" as FilePath;
+      const module_scope = "scope:test.ts:module" as ScopeId;
+      const class_scope = "scope:test.ts:MyClass" as ScopeId;
+      const method_scope = "scope:test.ts:method" as ScopeId;
+      const constructor_scope = "scope:test.ts:constructor" as ScopeId;
+
+      const method_call = {
+        file_path: file_path,
+        start_line: 3,
+        start_column: 5,
+        end_line: 3,
+        end_column: 11,
+      };
+      const constructor_call = {
+        file_path: file_path,
+        start_line: 7,
+        start_column: 5,
+        end_line: 7,
+        end_column: 11,
+      };
+
+      const index = create_test_index(file_path, {
+        root_scope_id: module_scope,
+        scopes_raw: new Map([
+          [module_scope, { id: module_scope, parent_id: null, type: "module", name: null, location: { file_path, start_line: 1, start_column: 1, end_line: 10, end_column: 1 }, child_ids: [] }],
+          [class_scope, { id: class_scope, parent_id: module_scope, type: "class", name: "MyClass", location: { file_path, start_line: 1, start_column: 7, end_line: 9, end_column: 1 }, child_ids: [] }],
+          [method_scope, { id: method_scope, parent_id: class_scope, type: "method", name: "myMethod", location: { file_path, start_line: 2, start_column: 14, end_line: 4, end_column: 3 }, child_ids: [] }],
+          [constructor_scope, { id: constructor_scope, parent_id: class_scope, type: "constructor", name: "constructor", location: { file_path, start_line: 6, start_column: 16, end_line: 8, end_column: 3 }, child_ids: [] }],
+        ]),
+        functions_raw: new Map(),
+        references: [
+          {
+            type: "call" as const,
+            location: method_call,
+            name: "helper" as SymbolName,
+            scope_id: method_scope,
+            call_type: "function" as const,
+          },
+          {
+            type: "call" as const,
+            location: constructor_call,
+            name: "helper" as SymbolName,
+            scope_id: constructor_scope,
+            call_type: "function" as const,
+          },
+        ],
+      });
+
+      const result = resolve_symbols_with_registries(
+        new Map([[file_path, index]]),
+        build_file_tree([file_path]),
+      );
+
+      expect(result.references).toHaveLength(2);
+
+      const method_ref = result.references.find(r => r.location.start_line === 3);
+      const constructor_ref = result.references.find(r => r.location.start_line === 7);
+
+      expect(method_ref).toBeDefined();
+      expect(constructor_ref).toBeDefined();
+
+      // Both calls should be enclosed by their respective function scopes
+      expect(method_ref?.enclosing_function_scope_id).toBe(method_scope);
+      expect(constructor_ref?.enclosing_function_scope_id).toBe(constructor_scope);
     });
   });
 });

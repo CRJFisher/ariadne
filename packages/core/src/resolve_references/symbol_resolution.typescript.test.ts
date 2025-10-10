@@ -239,7 +239,7 @@ describe("TypeScript Symbol Resolution Integration", () => {
 
       const method_key = location_key(method_call_location);
       expect(result.resolved_references.get(method_key)).toBe(
-        getName_method_id
+        getName_method_id,
       );
     });
 
@@ -504,7 +504,7 @@ describe("TypeScript Symbol Resolution Integration", () => {
       // Verify getName() resolves to User.getName via explicit type annotation
       const method_key = location_key(method_call_location);
       expect(result.resolved_references.get(method_key)).toBe(
-        getName_method_id
+        getName_method_id,
       );
     });
 
@@ -731,13 +731,13 @@ describe("TypeScript Symbol Resolution Integration", () => {
       // Verify constructor call
       const constructor_key = location_key(constructor_call_location);
       expect(result.resolved_references.get(constructor_key)).toBe(
-        user_class_id
+        user_class_id,
       );
 
       // Verify method call resolves via inferred constructor type
       const method_key = location_key(method_call_location);
       expect(result.resolved_references.get(method_key)).toBe(
-        getName_method_id
+        getName_method_id,
       );
     });
 
@@ -1028,13 +1028,13 @@ describe("TypeScript Symbol Resolution Integration", () => {
       // Verify createUser() call resolves
       const func_call_key = location_key(createUser_call_location);
       expect(result.resolved_references.get(func_call_key)).toBe(
-        createUser_func_id
+        createUser_func_id,
       );
 
       // Verify method call resolves via return type annotation
       const method_key = location_key(method_call_location);
       expect(result.resolved_references.get(method_key)).toBe(
-        getName_method_id
+        getName_method_id,
       );
     });
   });
@@ -1393,7 +1393,7 @@ describe("TypeScript Symbol Resolution Integration", () => {
       // Verify constructor call
       const constructor_key = location_key(constructor_call_location);
       expect(result.resolved_references.get(constructor_key)).toBe(
-        user_repo_class_id
+        user_repo_class_id,
       );
 
       // Verify method call resolves to UserRepository.save (actual implementation, not interface)
@@ -1629,13 +1629,13 @@ describe("TypeScript Symbol Resolution Integration", () => {
       // Verify constructor call
       const constructor_key = location_key(constructor_call_location);
       expect(result.resolved_references.get(constructor_key)).toBe(
-        container_class_id
+        container_class_id,
       );
 
       // Verify method call resolves to getValue
       const method_key = location_key(method_call_location);
       expect(result.resolved_references.get(method_key)).toBe(
-        getValue_method_id
+        getValue_method_id,
       );
     });
   });
@@ -2028,13 +2028,13 @@ describe("TypeScript Symbol Resolution Integration", () => {
       // Verify constructor call
       const constructor_key = location_key(constructor_call_location);
       expect(result.resolved_references.get(constructor_key)).toBe(
-        legacy_class_id
+        legacy_class_id,
       );
 
       // Verify method call resolves to JS class method
       const method_key = location_key(method_call_location);
       expect(result.resolved_references.get(method_key)).toBe(
-        doSomething_method_id
+        doSomething_method_id,
       );
     });
   });
@@ -2746,13 +2746,13 @@ describe("TypeScript Symbol Resolution Integration", () => {
         // Verify constructor call
         const constructor_key = location_key(constructor_call_location);
         expect(result.resolved_references.get(constructor_key)).toBe(
-          console_logger_class_id
+          console_logger_class_id,
         );
 
         // Verify method call resolves to ConsoleLogger.log (implementation, not interface)
         const method_key = location_key(method_call_location);
         expect(result.resolved_references.get(method_key)).toBe(log_method_id);
-      }
+      },
     );
   });
 });

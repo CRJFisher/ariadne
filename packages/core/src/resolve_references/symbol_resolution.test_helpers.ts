@@ -38,7 +38,6 @@ import { TypeRegistry } from "../project/type_registry";
 import { ScopeRegistry } from "../project/scope_registry";
 import { ExportRegistry } from "../project/export_registry";
 import { ImportGraph } from "../project/import_graph";
-import { build_derived_data } from "../index_single_file/derived_data";
 import { resolve_symbols } from "./symbol_resolution";
 
 // ============================================================================
@@ -151,7 +150,7 @@ export type TestScopeSpec = {
  * Infer language from file path extension
  */
 function infer_language_from_path(
-  file_path: FilePath
+  file_path: FilePath,
 ): "typescript" | "javascript" | "python" | "rust" {
   if (file_path.endsWith(".py")) {
     return "python";
@@ -286,7 +285,7 @@ export function create_test_index(
     // Misc options
     language?: "typescript" | "javascript" | "python" | "rust";
     root_scope_id?: ScopeId;
-  } = {}
+  } = {},
 ): SemanticIndex {
   // Infer language from file extension if not explicitly provided
   const language = options.language || infer_language_from_path(file_path);
@@ -374,6 +373,7 @@ export function create_test_index(
             },
             parameters: [],
             parent_class: spec.id,
+            body_scope_id: `test:method:scope:${m.name}` as any,
           };
         }) || [];
 
@@ -436,6 +436,7 @@ export function create_test_index(
         },
         signature: { parameters: [] },
         is_exported: spec.is_exported || false,
+        body_scope_id: `test:function:scope:${spec.name}` as any,
       });
     }
   }
@@ -535,6 +536,7 @@ export function create_test_index(
             },
             parameters: [],
             parent_class: spec.id,
+            body_scope_id: `test:method:scope:${m.name}` as any,
           };
         }) || [];
 
@@ -699,7 +701,7 @@ export function build_file_tree(file_paths: FilePath[]): FileSystemFolder {
  */
 export function resolve_symbols_with_registries(
   indices: ReadonlyMap<FilePath, SemanticIndex>,
-  root_folder: FileSystemFolder
+  root_folder: FileSystemFolder,
 ): ResolvedSymbols {
   // Create registry instances
   const definitions = new DefinitionRegistry();
@@ -725,23 +727,22 @@ export function resolve_symbols_with_registries(
     // Update definition registry
     definitions.update_file(file_path, all_definitions);
 
-    // Build derived data and update type registry
-    const derived = build_derived_data(index);
-    types.update_file(file_path, derived);
+    // Update type registry
+    types.update_file(file_path, index);
 
     // Update scope registry
     scopes.update_file(file_path, index.scopes);
 
     // Update export registry
     const exported_symbol_ids = new Set(
-      Array.from(derived.exported_symbols.values()).map((def) => def.symbol_id)
+      Array.from(index.exported_symbols.values()).map((def) => def.symbol_id),
     );
     exports.update_file(file_path, exported_symbol_ids);
 
     // Update import graph (simplified - extract from imported_symbols)
     const import_statements = extract_imports_from_imported_symbols(
       index.imported_symbols,
-      file_path
+      file_path,
     );
     imports.update_file(file_path, import_statements);
   }
@@ -754,7 +755,7 @@ export function resolve_symbols_with_registries(
     scopes,
     exports,
     imports,
-    root_folder
+    root_folder,
   );
 }
 
@@ -764,7 +765,7 @@ export function resolve_symbols_with_registries(
  */
 function extract_imports_from_imported_symbols(
   imported_symbols: ReadonlyMap<SymbolId, ImportDefinition>,
-  current_file: FilePath
+  current_file: FilePath,
 ): any[] {
   const imports_by_source = new Map<FilePath, any>();
 

@@ -620,13 +620,13 @@ describe("Python Symbol Resolution Integration", () => {
       // Verify constructor call
       const constructor_key = location_key(constructor_call_location);
       expect(result.resolved_references.get(constructor_key)).toBe(
-        user_class_id
+        user_class_id,
       );
 
       // Verify method call
       const method_key = location_key(method_call_location);
       expect(result.resolved_references.get(method_key)).toBe(
-        get_name_method_id
+        get_name_method_id,
       );
     });
 
@@ -830,7 +830,7 @@ describe("Python Symbol Resolution Integration", () => {
 
       const method_key = location_key(method_call_location);
       expect(result.resolved_references.get(method_key)).toBe(
-        process_method_id
+        process_method_id,
       );
     });
 
@@ -1173,7 +1173,7 @@ describe("Python Symbol Resolution Integration", () => {
 
       const method_key = location_key(method_call_location);
       expect(result.resolved_references.get(method_key)).toBe(
-        validate_method_id
+        validate_method_id,
       );
     });
   });
@@ -2457,16 +2457,16 @@ describe("Python Symbol Resolution Integration", () => {
 
         // Verify UserService constructor in main.py
         const service_constructor_key = location_key(
-          service_constructor_location
+          service_constructor_location,
         );
         expect(result.resolved_references.get(service_constructor_key)).toBe(
-          service_class_id
+          service_class_id,
         );
 
         // Verify register_user method call in main.py
         const register_user_key = location_key(register_user_call_location);
         expect(result.resolved_references.get(register_user_key)).toBe(
-          register_user_method_id
+          register_user_method_id,
         );
 
         // Verify UserRepository constructor in user_service.py
@@ -2478,7 +2478,7 @@ describe("Python Symbol Resolution Integration", () => {
           end_column: 33,
         });
         expect(result.resolved_references.get(repo_constructor_key)).toBe(
-          repo_class_id
+          repo_class_id,
         );
 
         // Verify create_user method call in user_service.py
@@ -2490,7 +2490,7 @@ describe("Python Symbol Resolution Integration", () => {
           end_column: 33,
         });
         expect(result.resolved_references.get(create_user_key)).toBe(
-          create_user_method_id
+          create_user_method_id,
         );
 
         // Verify User constructor call in user_repository.py
@@ -2502,9 +2502,9 @@ describe("Python Symbol Resolution Integration", () => {
           end_column: 25,
         });
         expect(result.resolved_references.get(user_constructor_key)).toBe(
-          user_class_id
+          user_class_id,
         );
-      }
+      },
     );
 
     // TODO: Requires cross-file import resolution and inheritance tracking
@@ -2860,13 +2860,13 @@ describe("Python Symbol Resolution Integration", () => {
       // Verify base_method call in main.py resolves to Base.base_method
       const base_method_key = location_key(base_method_call_location);
       expect(result.resolved_references.get(base_method_key)).toBe(
-        base_method_id
+        base_method_id,
       );
 
       // Verify derived_method call in main.py resolves to Derived.derived_method
       const derived_method_key = location_key(derived_method_call_location);
       expect(result.resolved_references.get(derived_method_key)).toBe(
-        derived_method_id
+        derived_method_id,
       );
 
       // Verify base_method call inside Derived class resolves to Base.base_method
@@ -2878,7 +2878,7 @@ describe("Python Symbol Resolution Integration", () => {
         end_column: 49,
       });
       expect(result.resolved_references.get(base_method_in_derived_key)).toBe(
-        base_method_id
+        base_method_id,
       );
     });
   });

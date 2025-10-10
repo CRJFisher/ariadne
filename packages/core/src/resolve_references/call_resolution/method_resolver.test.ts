@@ -30,6 +30,8 @@ import type {
 } from "@ariadnejs/types";
 import { location_key } from "@ariadnejs/types";
 import { SemanticIndex } from "../../index_single_file/semantic_index";
+import { DefinitionRegistry } from "../../project/definition_registry";
+import { TypeRegistry } from "../../project/type_registry";
 
 // Helper to create a minimal semantic index
 function create_test_index(config: {
@@ -62,6 +64,29 @@ function create_test_index(config: {
     scope_to_definitions: new Map(),
     type_alias_metadata: new Map(),
   };
+}
+
+// Helper to create and populate registries from indices
+function create_registries(indices: Map<FilePath, any>) {
+  const definitions = new DefinitionRegistry();
+  const types = new TypeRegistry();
+
+  for (const [file_path, index] of indices) {
+    const all_defs = [
+      ...Array.from(index.functions.values()),
+      ...Array.from(index.classes.values()),
+      ...Array.from(index.variables.values()),
+      ...Array.from(index.interfaces.values()),
+      ...Array.from(index.enums.values()),
+      ...Array.from(index.namespaces.values()),
+      ...Array.from(index.types.values()),
+      ...Array.from(index.imported_symbols.values()),
+    ];
+    definitions.update_file(file_path, all_defs);
+    types.update_file(file_path, index);
+  }
+
+  return { definitions, types };
 }
 
 describe("Method Call Resolution", () => {
@@ -216,7 +241,8 @@ describe("Method Call Resolution", () => {
       const root_folder = build_file_tree([file_path]);
       const resolver_index = build_scope_resolver_index(indices, root_folder);
       const cache = create_resolution_cache();
-      const type_context = build_type_context(indices, resolver_index, cache, new Map());
+      const { definitions, types } = create_registries(indices);
+      const type_context = build_type_context(indices, definitions, types, resolver_index, cache, new Map());
 
       const resolutions = resolve_method_calls(
         indices,
@@ -375,7 +401,8 @@ describe("Method Call Resolution", () => {
       const root_folder = build_file_tree([file_path]);
       const resolver_index = build_scope_resolver_index(indices, root_folder);
       const cache = create_resolution_cache();
-      const type_context = build_type_context(indices, resolver_index, cache, new Map());
+      const { definitions, types } = create_registries(indices);
+      const type_context = build_type_context(indices, definitions, types, resolver_index, cache, new Map());
 
       const resolutions = resolve_method_calls(
         indices,
@@ -584,7 +611,8 @@ describe("Method Call Resolution", () => {
       const root_folder = build_file_tree([file_path]);
       const resolver_index = build_scope_resolver_index(indices, root_folder);
       const cache = create_resolution_cache();
-      const type_context = build_type_context(indices, resolver_index, cache, new Map());
+      const { definitions, types } = create_registries(indices);
+      const type_context = build_type_context(indices, definitions, types, resolver_index, cache, new Map());
 
       const resolutions = resolve_method_calls(
         indices,
@@ -842,7 +870,8 @@ describe("Method Call Resolution", () => {
       const root_folder = build_file_tree([file_path]);
       const resolver_index = build_scope_resolver_index(indices, root_folder);
       const cache = create_resolution_cache();
-      const type_context = build_type_context(indices, resolver_index, cache, new Map());
+      const { definitions, types } = create_registries(indices);
+      const type_context = build_type_context(indices, definitions, types, resolver_index, cache, new Map());
 
       const resolutions = resolve_method_calls(
         indices,
@@ -915,7 +944,8 @@ describe("Method Call Resolution", () => {
       const root_folder = build_file_tree([file_path]);
       const resolver_index = build_scope_resolver_index(indices, root_folder);
       const cache = create_resolution_cache();
-      const type_context = build_type_context(indices, resolver_index, cache, new Map());
+      const { definitions, types } = create_registries(indices);
+      const type_context = build_type_context(indices, definitions, types, resolver_index, cache, new Map());
 
       const resolutions = resolve_method_calls(
         indices,
@@ -987,7 +1017,8 @@ describe("Method Call Resolution", () => {
       const root_folder = build_file_tree([file_path]);
       const resolver_index = build_scope_resolver_index(indices, root_folder);
       const cache = create_resolution_cache();
-      const type_context = build_type_context(indices, resolver_index, cache, new Map());
+      const { definitions, types } = create_registries(indices);
+      const type_context = build_type_context(indices, definitions, types, resolver_index, cache, new Map());
 
       const resolutions = resolve_method_calls(
         indices,
@@ -1083,7 +1114,8 @@ describe("Method Call Resolution", () => {
       const root_folder = build_file_tree([file_path]);
       const resolver_index = build_scope_resolver_index(indices, root_folder);
       const cache = create_resolution_cache();
-      const type_context = build_type_context(indices, resolver_index, cache, new Map());
+      const { definitions, types } = create_registries(indices);
+      const type_context = build_type_context(indices, definitions, types, resolver_index, cache, new Map());
 
       const resolutions = resolve_method_calls(
         indices,
@@ -1224,7 +1256,8 @@ describe("Method Call Resolution", () => {
       const root_folder = build_file_tree([file_path]);
       const resolver_index = build_scope_resolver_index(indices, root_folder);
       const cache = create_resolution_cache();
-      const type_context = build_type_context(indices, resolver_index, cache, new Map());
+      const { definitions, types } = create_registries(indices);
+      const type_context = build_type_context(indices, definitions, types, resolver_index, cache, new Map());
 
       const resolutions = resolve_method_calls(
         indices,
@@ -1387,7 +1420,8 @@ describe("Method Call Resolution", () => {
       const root_folder = build_file_tree([file_path]);
       const resolver_index = build_scope_resolver_index(indices, root_folder);
       const cache = create_resolution_cache();
-      const type_context = build_type_context(indices, resolver_index, cache, new Map());
+      const { definitions, types } = create_registries(indices);
+      const type_context = build_type_context(indices, definitions, types, resolver_index, cache, new Map());
 
       const resolutions = resolve_method_calls(
         indices,
@@ -1548,7 +1582,8 @@ describe("Method Call Resolution", () => {
       const root_folder = build_file_tree([file_path]);
       const resolver_index = build_scope_resolver_index(indices, root_folder);
       const cache = create_resolution_cache();
-      const type_context = build_type_context(indices, resolver_index, cache, new Map());
+      const { definitions, types } = create_registries(indices);
+      const type_context = build_type_context(indices, definitions, types, resolver_index, cache, new Map());
 
       const resolutions = resolve_method_calls(
         indices,
@@ -1746,7 +1781,8 @@ describe("Method Call Resolution", () => {
       const root_folder = build_file_tree([file_path]);
       const resolver_index = build_scope_resolver_index(indices, root_folder);
       const cache = create_resolution_cache();
-      const type_context = build_type_context(indices, resolver_index, cache, new Map());
+      const { definitions, types } = create_registries(indices);
+      const type_context = build_type_context(indices, definitions, types, resolver_index, cache, new Map());
 
       const resolutions = resolve_method_calls(
         indices,
@@ -1975,7 +2011,8 @@ describe("Method Call Resolution", () => {
       const root_folder = build_file_tree([file_path]);
       const resolver_index = build_scope_resolver_index(indices, root_folder);
       const cache = create_resolution_cache();
-      const type_context = build_type_context(indices, resolver_index, cache, new Map());
+      const { definitions, types } = create_registries(indices);
+      const type_context = build_type_context(indices, definitions, types, resolver_index, cache, new Map());
 
       const resolutions = resolve_method_calls(
         indices,
@@ -2187,7 +2224,8 @@ describe("Method Call Resolution", () => {
       const root_folder = build_file_tree([file_path]);
       const resolver_index = build_scope_resolver_index(indices, root_folder);
       const cache = create_resolution_cache();
-      const type_context = build_type_context(indices, resolver_index, cache, new Map());
+      const { definitions, types } = create_registries(indices);
+      const type_context = build_type_context(indices, definitions, types, resolver_index, cache, new Map());
 
       const resolutions = resolve_method_calls(
         indices,
@@ -2368,7 +2406,8 @@ describe("Method Call Resolution", () => {
       const root_folder = build_file_tree([file_path]);
       const resolver_index = build_scope_resolver_index(indices, root_folder);
       const cache = create_resolution_cache();
-      const type_context = build_type_context(indices, resolver_index, cache, new Map());
+      const { definitions, types } = create_registries(indices);
+      const type_context = build_type_context(indices, definitions, types, resolver_index, cache, new Map());
 
       // Should not crash
       const resolutions = resolve_method_calls(

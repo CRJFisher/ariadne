@@ -1075,7 +1075,7 @@ describe("Rust Symbol Resolution Integration", () => {
       // Verify user.get_name() call
       const get_name_key = location_key(get_name_call_location);
       expect(result.resolved_references.get(get_name_key)).toBe(
-        get_name_method_id
+        get_name_method_id,
       );
     });
 
@@ -1267,7 +1267,7 @@ describe("Rust Symbol Resolution Integration", () => {
 
       const display_key = location_key(display_call_location);
       expect(result.resolved_references.get(display_key)).toBe(
-        display_method_id
+        display_method_id,
       );
     });
   });
@@ -1884,7 +1884,7 @@ describe("Rust Symbol Resolution Integration", () => {
 
       const process_key = location_key(process_call_location);
       expect(result.resolved_references.get(process_key)).toBe(
-        process_method_id
+        process_method_id,
       );
     });
 
@@ -2450,7 +2450,7 @@ describe("Rust Symbol Resolution Integration", () => {
       // Verify register_user method call in main.rs
       const register_user_key = location_key(register_user_call_location);
       expect(result.resolved_references.get(register_user_key)).toBe(
-        register_user_method_id
+        register_user_method_id,
       );
 
       // Verify create_user method call in user_service.rs
@@ -2462,7 +2462,7 @@ describe("Rust Symbol Resolution Integration", () => {
         end_column: 180,
       });
       expect(result.resolved_references.get(create_user_key)).toBe(
-        create_user_method_id
+        create_user_method_id,
       );
 
       // Verify User::new call in user_repository.rs
@@ -2484,7 +2484,7 @@ describe("Rust Symbol Resolution Integration", () => {
         end_column: 205,
       });
       expect(result.resolved_references.get(get_name_key)).toBe(
-        get_name_method_id
+        get_name_method_id,
       );
     });
 
@@ -2678,7 +2678,7 @@ describe("Rust Symbol Resolution Integration", () => {
       // Verify process call resolves to Item's implementation
       const process_key = location_key(process_call_location);
       expect(result.resolved_references.get(process_key)).toBe(
-        process_method_id
+        process_method_id,
       );
     });
   });
