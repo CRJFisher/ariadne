@@ -14,14 +14,13 @@ import type {
   SymbolName,
   ScopeId,
   FilePath,
-  LocationKey,
-  Location as SymbolLocation,
 } from "@ariadnejs/types";
-import { location_key, parse_location_key } from "@ariadnejs/types";
 import type { SemanticIndex } from "../../index_single_file/semantic_index";
 import type { ScopeResolverIndex } from "../scope_resolver_index/scope_resolver_index";
 import type { ResolutionCache } from "../resolution_cache/resolution_cache";
 import type { NamespaceSources } from "../types";
+import type { DefinitionRegistry } from "../../project/definition_registry";
+import type { TypeRegistry } from "../../project/type_registry";
 
 /**
  * Type Context Interface
@@ -113,7 +112,7 @@ export interface TypeContext {
 }
 
 /**
- * Build type context from semantic indices
+ * Build type context from registries
  *
  * Creates a type tracking system that:
  * 1. Maps symbols to their types (symbol_id → type_id)
@@ -121,10 +120,15 @@ export interface TypeContext {
  * 3. Provides namespace member lookup for namespace imports
  *
  * Uses on-demand resolution:
- * - Type names from type_bindings are resolved via resolver_index
+ * - Type names from TypeRegistry are resolved via resolver_index
  * - Resolution results are cached in the shared cache
  *
- * @param indices - All semantic indices (one per file)
+ * Performance: Uses O(1) lookups from DefinitionRegistry and TypeRegistry
+ * instead of O(n) linear searches through SemanticIndex maps.
+ *
+ * @param indices - All semantic indices (for namespace member lookup)
+ * @param definitions - Definition registry (for O(1) location/scope lookups)
+ * @param types - Type registry (for aggregated type data)
  * @param resolver_index - Scope-aware symbol resolver for type name resolution
  * @param cache - Shared resolution cache
  * @param namespace_sources - Map of namespace symbol_id → source file path
@@ -132,62 +136,57 @@ export interface TypeContext {
  */
 export function build_type_context(
   indices: ReadonlyMap<FilePath, SemanticIndex>,
+  definitions: DefinitionRegistry,
+  types: TypeRegistry,
   resolver_index: ScopeResolverIndex,
   cache: ResolutionCache,
-  namespace_sources: NamespaceSources
+  namespace_sources: NamespaceSources,
 ): TypeContext {
   // Map: symbol_id → type_id
   // Tracks the type of each symbol (variable, parameter, etc.)
   const symbol_types = new Map<SymbolId, SymbolId>();
 
   // Map: type_id → (member_name → member_symbol_id)
-  // Extracted from preprocessed type_members in SemanticIndex
+  // Built from TypeRegistry data
   const type_members_map = new Map<SymbolId, Map<SymbolName, SymbolId>>();
 
-  // PASS 1: Build symbol → type mappings using type_bindings
-  for (const index of indices.values()) {
-    // Process type bindings
-    // Maps LocationKey → SymbolName (type names)
-    for (const [loc_key, type_name] of index.type_bindings) {
-      // Find the symbol at this location
-      const symbol_id = find_symbol_at_location(loc_key, index);
-      if (!symbol_id) continue;
+  // PASS 1: Build symbol → type mappings using TypeRegistry
+  // Use O(1) lookups from DefinitionRegistry instead of O(n) searches
+  for (const [loc_key, type_name] of types.get_all_type_bindings()) {
+    // O(1): Find the symbol at this location
+    const symbol_id = definitions.get_symbol_at_location(loc_key);
+    if (!symbol_id) continue;
 
-      // Find the scope where this symbol is defined
-      const scope_id = get_symbol_scope(symbol_id, index);
-      if (!scope_id) continue;
+    // O(1): Find the scope where this symbol is defined
+    const scope_id = definitions.get_symbol_scope(symbol_id);
+    if (!scope_id) continue;
 
-      // Resolve type name ON-DEMAND using resolver index
-      // This handles:
-      // - Local type definitions
-      // - Imported types
-      // - Shadowing
-      const type_symbol = resolver_index.resolve(scope_id, type_name, cache);
-      if (type_symbol) {
-        symbol_types.set(symbol_id, type_symbol);
-      }
+    // Resolve type name ON-DEMAND using resolver index
+    // This handles:
+    // - Local type definitions
+    // - Imported types
+    // - Shadowing
+    const type_symbol = resolver_index.resolve(scope_id, type_name, cache);
+    if (type_symbol) {
+      symbol_types.set(symbol_id, type_symbol);
     }
   }
 
-  // PASS 2: Build type member maps from preprocessed type_members
-  for (const index of indices.values()) {
-    // Use preprocessed type_members
-    // Already contains methods, properties, constructor, extends
-    for (const [type_id, member_info] of index.type_members) {
-      const members = new Map<SymbolName, SymbolId>();
+  // PASS 2: Build type member maps from TypeRegistry
+  for (const [type_id, member_info] of types.get_all_type_members()) {
+    const members = new Map<SymbolName, SymbolId>();
 
-      // Add methods
-      for (const [method_name, method_id] of member_info.methods) {
-        members.set(method_name, method_id);
-      }
-
-      // Add properties
-      for (const [prop_name, prop_id] of member_info.properties) {
-        members.set(prop_name, prop_id);
-      }
-
-      type_members_map.set(type_id, members);
+    // Add methods
+    for (const [method_name, method_id] of member_info.methods) {
+      members.set(method_name, method_id);
     }
+
+    // Add properties
+    for (const [prop_name, prop_id] of member_info.properties) {
+      members.set(prop_name, prop_id);
+    }
+
+    type_members_map.set(type_id, members);
   }
 
   // PASS 3: Build inheritance maps by resolving extends clauses
@@ -196,63 +195,43 @@ export function build_type_context(
   // Map: class_id → interface_ids[]
   const implemented_interfaces = new Map<SymbolId, SymbolId[]>();
 
-  for (const index of indices.values()) {
-    for (const [type_id, member_info] of index.type_members) {
-      // Get the scope where this type is defined (for resolving extends names)
-      const scope_id = get_symbol_scope(type_id, index);
-      if (!scope_id) continue;
+  for (const [type_id, member_info] of types.get_all_type_members()) {
+    // O(1): Get the scope where this type is defined (for resolving extends names)
+    const scope_id = definitions.get_symbol_scope(type_id);
+    if (!scope_id) continue;
 
-      // Resolve extends names to SymbolIds
-      if (member_info.extends && member_info.extends.length > 0) {
-        const parent_ids: SymbolId[] = [];
+    // Resolve extends names to SymbolIds
+    if (member_info.extends && member_info.extends.length > 0) {
+      const parent_ids: SymbolId[] = [];
 
-        for (const parent_name of member_info.extends) {
-          const parent_id = resolver_index.resolve(scope_id, parent_name, cache);
-          if (parent_id) {
-            parent_ids.push(parent_id);
-          }
+      for (const parent_name of member_info.extends) {
+        const parent_id = resolver_index.resolve(
+          scope_id,
+          parent_name,
+          cache,
+        );
+        if (parent_id) {
+          parent_ids.push(parent_id);
         }
+      }
 
-        // First extends is parent class, rest are interfaces (TypeScript convention)
-        // For other languages, we'll treat all as potential parents
-        if (parent_ids.length > 0) {
-          parent_classes.set(type_id, parent_ids[0]);
+      // First extends is parent class, rest are interfaces (TypeScript convention)
+      // For other languages, we'll treat all as potential parents
+      if (parent_ids.length > 0) {
+        parent_classes.set(type_id, parent_ids[0]);
 
-          // Additional extends are interfaces (TypeScript/Java style)
-          if (parent_ids.length > 1) {
-            implemented_interfaces.set(type_id, parent_ids.slice(1));
-          }
+        // Additional extends are interfaces (TypeScript/Java style)
+        if (parent_ids.length > 1) {
+          implemented_interfaces.set(type_id, parent_ids.slice(1));
         }
       }
     }
   }
 
-  // Helper: Walk inheritance chain from most derived to base
-  function walk_inheritance_chain_impl(class_id: SymbolId): SymbolId[] {
-    const chain: SymbolId[] = [class_id];
-    const seen = new Set<SymbolId>([class_id]);
-    let current = class_id;
-
-    // Walk up extends chain
-    while (true) {
-      const parent = parent_classes.get(current);
-      if (!parent) break;
-
-      // Detect cycles
-      if (seen.has(parent)) break;
-
-      chain.push(parent);
-      seen.add(parent);
-      current = parent;
-    }
-
-    return chain;
-  }
-
   // Helper: Find member in a single type (no inheritance)
   function find_direct_member(
     type_id: SymbolId,
-    member_name: SymbolName
+    member_name: SymbolName,
   ): SymbolId | null {
     const members = type_members_map.get(type_id);
     if (!members) return null;
@@ -267,10 +246,10 @@ export function build_type_context(
 
     get_type_member(
       type_id: SymbolId,
-      member_name: SymbolName
+      member_name: SymbolName,
     ): SymbolId | null {
       // Walk inheritance chain from most derived to base
-      const chain = walk_inheritance_chain_impl(type_id);
+      const chain = this.walk_inheritance_chain(type_id);
 
       for (const class_id of chain) {
         // Check direct members first
@@ -282,7 +261,10 @@ export function build_type_context(
         // Check implemented interfaces
         const interfaces = implemented_interfaces.get(class_id) || [];
         for (const interface_id of interfaces) {
-          const interface_member = find_direct_member(interface_id, member_name);
+          const interface_member = find_direct_member(
+            interface_id,
+            member_name,
+          );
           if (interface_member) {
             return interface_member;
           }
@@ -301,12 +283,29 @@ export function build_type_context(
     },
 
     walk_inheritance_chain(class_id: SymbolId): readonly SymbolId[] {
-      return walk_inheritance_chain_impl(class_id);
+      const chain: SymbolId[] = [class_id];
+      const seen = new Set<SymbolId>([class_id]);
+      let current = class_id;
+
+      // Walk up extends chain
+      while (true) {
+        const parent = parent_classes.get(current);
+        if (!parent) break;
+
+        // Detect cycles
+        if (seen.has(parent)) break;
+
+        chain.push(parent);
+        seen.add(parent);
+        current = parent;
+      }
+
+      return chain;
     },
 
     get_namespace_member(
       namespace_id: SymbolId,
-      member_name: SymbolName
+      member_name: SymbolName,
     ): SymbolId | null {
       // Step 1: Find the source file for this namespace
       const source_file = namespace_sources.get(namespace_id);
@@ -331,192 +330,4 @@ export function build_type_context(
       return exported_def.symbol_id;
     },
   };
-}
-
-/**
- * Find symbol at a specific location
- *
- * Searches through all definition types to find a symbol at the given location.
- * Also handles near matches (within 2 columns) to account for slight differences
- * in how tree-sitter captures locations for constructor targets vs variable definitions.
- *
- * @param loc_key - Location key to search for
- * @param index - Semantic index to search in
- * @returns SymbolId if found, null otherwise
- */
-function find_symbol_at_location(
-  loc_key: LocationKey,
-  index: SemanticIndex
-): SymbolId | null {
-  // Parse the location key
-  const location = parse_location_key(loc_key);
-
-  /**
-   * Check if two locations are close enough to be considered the same
-   * Allows for small column offsets (e.g., construct_target vs variable location)
-   */
-  function locations_near(loc: SymbolLocation): boolean {
-    if (loc.file_path !== location.file_path) return false;
-    if (loc.start_line !== location.start_line || loc.end_line !== location.end_line)
-      return false;
-
-    // Allow up to 2 columns difference on same line
-    const col_diff = Math.abs(loc.start_column - location.start_column);
-    return col_diff <= 2;
-  }
-
-  // Check variables
-  for (const [var_id, var_def] of index.variables) {
-    const exact_match = location_key(var_def.location) === loc_key;
-    const near_match = locations_near(var_def.location);
-
-    if (exact_match || near_match) {
-      return var_id;
-    }
-  }
-
-  // Check functions
-  for (const [func_id, func_def] of index.functions) {
-    if (location_key(func_def.location) === loc_key) {
-      return func_id;
-    }
-
-    // Check function parameters
-    if (func_def.signature?.parameters) {
-      for (const param of func_def.signature.parameters) {
-        if (location_key(param.location) === loc_key) {
-          return param.symbol_id;
-        }
-      }
-    }
-  }
-
-  // Check classes
-  for (const [class_id, class_def] of index.classes) {
-    if (location_key(class_def.location) === loc_key) {
-      return class_id;
-    }
-
-    // Check class methods
-    for (const method of class_def.methods) {
-      if (location_key(method.location) === loc_key) {
-        return method.symbol_id;
-      }
-
-      // Check method parameters
-      if (method.parameters) {
-        for (const param of method.parameters) {
-          if (location_key(param.location) === loc_key) {
-            return param.symbol_id;
-          }
-        }
-      }
-    }
-
-    // Check class properties
-    for (const prop of class_def.properties) {
-      if (location_key(prop.location) === loc_key) {
-        return prop.symbol_id;
-      }
-    }
-  }
-
-  // Check interfaces
-  for (const [iface_id, iface_def] of index.interfaces) {
-    if (location_key(iface_def.location) === loc_key) {
-      return iface_id;
-    }
-
-    // Check interface methods
-    for (const method of iface_def.methods) {
-      if (location_key(method.location) === loc_key) {
-        return method.symbol_id;
-      }
-
-      // Check method parameters
-      if (method.parameters) {
-        for (const param of method.parameters) {
-          if (location_key(param.location) === loc_key) {
-            return param.symbol_id;
-          }
-        }
-      }
-    }
-
-    // Check interface properties
-    for (const prop of iface_def.properties) {
-      if (location_key(prop.location) === loc_key) {
-        return prop.symbol_id; // PropertySignature has 'name' field
-      }
-    }
-  }
-
-  return null;
-}
-
-/**
- * Get the scope where a symbol is defined
- *
- * Looks up the symbol in all definition maps and returns its scope_id.
- *
- * @param symbol_id - Symbol to find scope for
- * @param index - Semantic index to search in
- * @returns ScopeId if found, null otherwise
- */
-function get_symbol_scope(
-  symbol_id: SymbolId,
-  index: SemanticIndex
-): ScopeId | null {
-  // Check variables
-  const var_def = index.variables.get(symbol_id);
-  if (var_def) return var_def.defining_scope_id;
-
-  // Check functions
-  const func_def = index.functions.get(symbol_id);
-  if (func_def) return func_def.defining_scope_id;
-
-  // Check classes
-  const class_def = index.classes.get(symbol_id);
-  if (class_def) return class_def.defining_scope_id;
-
-  // Check interfaces
-  const iface_def = index.interfaces.get(symbol_id);
-  if (iface_def) return iface_def.defining_scope_id;
-
-  // Check enums
-  const enum_def = index.enums.get(symbol_id);
-  if (enum_def) return enum_def.defining_scope_id;
-
-  // Check namespaces
-  const ns_def = index.namespaces.get(symbol_id);
-  if (ns_def) return ns_def.defining_scope_id;
-
-  // Check types
-  const type_def = index.types.get(symbol_id);
-  if (type_def) return type_def.defining_scope_id;
-
-  // Check if it's a parameter - need to search through functions and methods
-  for (const func of index.functions.values()) {
-    if (func.signature?.parameters) {
-      for (const param of func.signature.parameters) {
-        if (param.symbol_id === symbol_id) {
-          return param.defining_scope_id;
-        }
-      }
-    }
-  }
-
-  for (const class_def of index.classes.values()) {
-    for (const method of class_def.methods) {
-      if (method.parameters) {
-        for (const param of method.parameters) {
-          if (param.symbol_id === symbol_id) {
-            return param.defining_scope_id;
-          }
-        }
-      }
-    }
-  }
-
-  return null;
 }

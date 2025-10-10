@@ -74,6 +74,7 @@ import {
   resolve_constructor_calls,
 } from "./call_resolution";
 import { build_namespace_sources } from "./import_resolution/import_resolver";
+import { find_enclosing_function_scope } from "../index_single_file/scopes/scope_utils";
 
 /**
  * Resolve all symbol references using on-demand scope-aware lookup
@@ -168,7 +169,7 @@ export function resolve_symbols(
   scopes: ScopeRegistry,
   exports: ExportRegistry,
   imports: ImportGraph,
-  root_folder: FileSystemFolder
+  root_folder: FileSystemFolder,
 ): ResolvedSymbols {
   // NOTE: Registry parameters are currently unused but required for future refactoring.
   // Sub-functions (build_scope_resolver_index, build_type_context, etc.) will be
@@ -194,11 +195,14 @@ export function resolve_symbols(
   // Tracks variable types and type members
   // Uses resolver_index + cache to resolve type names
   // Uses namespace_sources for namespace member lookup
+  // Uses O(1) lookups from registries for performance
   const type_context = build_type_context(
     indices,
+    definitions,
+    types,
     resolver_index,
     cache,
-    namespace_sources
+    namespace_sources,
   );
 
   // Phase 5: Resolve all call types (on-demand with caching)
@@ -207,13 +211,13 @@ export function resolve_symbols(
     indices,
     resolver_index,
     cache,
-    type_context
+    type_context,
   );
   const constructor_calls = resolve_constructor_calls(
     indices,
     resolver_index,
     cache,
-    type_context
+    type_context,
   );
 
   // Phase 6: Combine results
@@ -221,7 +225,7 @@ export function resolve_symbols(
     indices,
     function_calls,
     method_calls,
-    constructor_calls
+    constructor_calls,
   );
 }
 
@@ -244,7 +248,7 @@ function combine_results(
   indices: ReadonlyMap<FilePath, SemanticIndex>,
   function_calls: Map<LocationKey, SymbolId>,
   method_calls: Map<LocationKey, SymbolId>,
-  constructor_calls: Map<LocationKey, SymbolId>
+  constructor_calls: Map<LocationKey, SymbolId>,
 ): ResolvedSymbols {
   // Master map: any reference location -> resolved SymbolId
   const resolved_references = new Map<LocationKey, SymbolId>();
@@ -279,10 +283,10 @@ function combine_results(
     const call_refs = index.references
       .filter(
         (
-          ref
+          ref,
         ): ref is SymbolReference & {
           call_type: NonNullable<SymbolReference["call_type"]>;
-        } => ref.call_type !== undefined
+        } => ref.call_type !== undefined,
       )
       .map(
         (ref): CallReference => ({
@@ -297,12 +301,16 @@ function combine_results(
             | "macro",
           receiver: ref.context?.receiver_location
             ? {
-                location: ref.context.receiver_location,
-                name: undefined,
-              }
+              location: ref.context.receiver_location,
+              name: undefined,
+            }
             : undefined,
           construct_target: ref.context?.construct_target,
-        })
+          enclosing_function_scope_id: find_enclosing_function_scope(
+            ref.scope_id,
+            index.scopes,
+          ),
+        }),
       );
     all_call_references.push(...call_refs);
   }
