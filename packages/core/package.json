@@ -17,6 +17,7 @@
     "test:with-types": "npm run typecheck && npm test",
     "test:ui": "vitest --ui",
     "test:coverage": "vitest --coverage",
+    "benchmark": "npm test -- project.bench.ts --reporter=verbose",
     "clean": "rm -rf dist",
     "prepublishOnly": "npm run build && npm test",
     "discover-features": "tsx scripts/discover_features.ts"
