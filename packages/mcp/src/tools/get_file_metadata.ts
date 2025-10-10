@@ -2,10 +2,12 @@ import { z } from "zod";
 import * as path from "path";
 import * as fs from "fs/promises";
 import type { Project } from "../types";
+import { get_definitions } from "../types";
+import type { FilePath } from "@ariadnejs/types";
 
 // Request schema for the MCP tool
 export const get_file_metadataSchema = z.object({
-  filePath: z.string().describe("Path to the file to analyze (relative or absolute)")
+  filePath: z.string().describe("Path to the file to analyze (relative or absolute)"),
 });
 
 export type GetFileMetadataRequest = z.infer<typeof get_file_metadataSchema>;
@@ -42,26 +44,26 @@ export type GetFileMetadataResponse = FileMetadata | FileNotFoundError;
  * Extract a 1-line signature from the source code
  */
 function extract_signature(source: string, startLine: number): string {
-  const lines = source.split('\n');
+  const lines = source.split("\n");
   if (startLine > 0 && startLine <= lines.length) {
     let line = lines[startLine - 1].trim();
     
     // For constructors and methods with inline braces, remove the body
     // Match patterns like: constructor(...) { } or method() {}
-    line = line.replace(/\s*\{.*\}\s*$/, '');
+    line = line.replace(/\s*\{.*\}\s*$/, "");
     
     // Remove trailing opening brace for multi-line functions
-    line = line.replace(/\s*\{\s*$/, '');
+    line = line.replace(/\s*\{\s*$/, "");
     
     // Remove trailing semicolon
-    line = line.replace(/;\s*$/, '');
+    line = line.replace(/;\s*$/, "");
     
     // Remove arrow function body markers
-    line = line.replace(/\s*=>\s*\{?\s*$/, '');
+    line = line.replace(/\s*=>\s*\{?\s*$/, "");
     
     return line.trim();
   }
-  return '';
+  return "";
 }
 
 /**
@@ -70,7 +72,7 @@ function extract_signature(source: string, startLine: number): string {
  */
 export async function get_file_metadata(
   project: Project,
-  request: GetFileMetadataRequest
+  request: GetFileMetadataRequest,
 ): Promise<GetFileMetadataResponse> {
   const { filePath } = request;
   
@@ -86,32 +88,32 @@ export async function get_file_metadata(
     return {
       error: "file_not_found",
       message: `File not found: ${filePath}`,
-      filePath: resolvedPath
+      filePath: resolvedPath,
     };
   }
   
   // Read the file content
-  const source = await fs.readFile(resolvedPath, 'utf-8');
-  const lines = source.split('\n');
+  const source = await fs.readFile(resolvedPath, "utf-8");
+  const lines = source.split("\n");
   
   // Get definitions from the project
-  const definitions = project.get_definitions(resolvedPath as any);
+  const definitions = get_definitions(project, resolvedPath as FilePath);
   
   // Detect language from file extension
   const ext = path.extname(resolvedPath);
   const languageMap: Record<string, string> = {
-    '.ts': 'typescript',
-    '.tsx': 'typescript',
-    '.js': 'javascript',
-    '.jsx': 'javascript',
-    '.py': 'python',
-    '.rs': 'rust',
-    '.go': 'go',
-    '.java': 'java',
-    '.cpp': 'cpp',
-    '.c': 'c'
+    ".ts": "typescript",
+    ".tsx": "typescript",
+    ".js": "javascript",
+    ".jsx": "javascript",
+    ".py": "python",
+    ".rs": "rust",
+    ".go": "go",
+    ".java": "java",
+    ".cpp": "cpp",
+    ".c": "c",
   };
-  const language = languageMap[ext] || 'unknown';
+  const language = languageMap[ext] || "unknown";
   
   // Process definitions into metadata
   const symbols: SymbolMetadata[] = [];
@@ -120,22 +122,22 @@ export async function get_file_metadata(
   
   for (const def of definitions) {
     // Determine symbol type
-    let type: SymbolMetadata['type'] = 'variable';
-    const symbolKind = def.symbol_kind?.toLowerCase() || '';
+    let type: SymbolMetadata["type"] = "variable";
+    const symbolKind = def.symbol_kind?.toLowerCase() || "";
     
-    if (symbolKind.includes('function') || symbolKind.includes('method')) {
-      type = symbolKind.includes('method') ? 'method' : 'function';
-    } else if (symbolKind.includes('class')) {
-      type = 'class';
-    } else if (symbolKind.includes('interface')) {
-      type = 'interface';
-    } else if (symbolKind.includes('type') || symbolKind.includes('alias')) {
+    if (symbolKind.includes("function") || symbolKind.includes("method")) {
+      type = symbolKind.includes("method") ? "method" : "function";
+    } else if (symbolKind.includes("class")) {
+      type = "class";
+    } else if (symbolKind.includes("interface")) {
+      type = "interface";
+    } else if (symbolKind.includes("type") || symbolKind.includes("alias")) {
       // 'alias' is used for TypeScript type aliases
-      type = 'type';
-    } else if (symbolKind.includes('enum')) {
-      type = 'enum';
-    } else if (symbolKind.includes('property')) {
-      type = 'property';
+      type = "type";
+    } else if (symbolKind.includes("enum")) {
+      type = "enum";
+    } else if (symbolKind.includes("property")) {
+      type = "property";
     }
     
     // Get line number (1-based)
@@ -143,7 +145,7 @@ export async function get_file_metadata(
     const line = def.range?.start?.row !== undefined ? def.range.start.row + 1 : 1;
     
     // Extract signature
-    let signature = '';
+    let signature = "";
     if (line > 0) {
       // Try to get a clean signature from the source
       signature = extract_signature(source, line);
@@ -157,7 +159,7 @@ export async function get_file_metadata(
     }
     
     // Check if exported - use the is_exported flag from Def or fallback to heuristic
-    const isExported = def.is_exported ?? (line > 0 && lines[line - 1].includes('export'));
+    const isExported = def.is_exported ?? (line > 0 && lines[line - 1].includes("export"));
     if (isExported) {
       exports.add(def.name);
     }
@@ -167,7 +169,7 @@ export async function get_file_metadata(
       type,
       line,
       signature,
-      exported: isExported
+      exported: isExported,
     });
   }
   
@@ -189,14 +191,14 @@ export async function get_file_metadata(
     }
     // Handle: import X
     const pyDirectImportMatch = line.match(/^import\s+(\S+)/);
-    if (pyDirectImportMatch && !line.includes(' from ')) {
+    if (pyDirectImportMatch && !line.includes(" from ")) {
       // Split comma-separated imports
-      const modules = pyDirectImportMatch[1].split(',').map(m => m.trim());
+      const modules = pyDirectImportMatch[1].split(",").map(m => m.trim());
       modules.forEach(m => {
-        if (m && !m.includes(' as ')) {
+        if (m && !m.includes(" as ")) {
           imports.add(m);
-        } else if (m.includes(' as ')) {
-          const [module] = m.split(' as ');
+        } else if (m.includes(" as ")) {
+          const [module] = m.split(" as ");
           imports.add(module.trim());
         }
       });
@@ -216,6 +218,6 @@ export async function get_file_metadata(
     imports: Array.from(imports),
     exports: Array.from(exports),
     lineCount: lines.length,
-    symbolCount: symbols.length
+    symbolCount: symbols.length,
   };
 }

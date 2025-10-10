@@ -2,11 +2,26 @@ import { z } from "zod";
 import * as path from "path";
 import * as fs from "fs/promises";
 import type { Project } from "../types";
+import { get_all_functions, get_definitions } from "../types";
+
+// Basic definition interface for MCP tools
+interface Definition {
+  name: string;
+  file_path?: string;
+  range?: {
+    start: { row: number; column: number };
+    end: { row: number; column: number };
+  };
+  enclosing_range?: {
+    start: { row: number; column: number };
+    end: { row: number; column: number };
+  };
+}
 
 // Request schema for the MCP tool
 export const get_source_codeSchema = z.object({
   symbol: z.string().describe("Name of the symbol to get source code for"),
-  includeDocstring: z.boolean().optional().default(true).describe("Include documentation/comments if available")
+  includeDocstring: z.boolean().optional().default(true).describe("Include documentation/comments if available"),
 });
 
 export type GetSourceCodeRequest = z.infer<typeof get_source_codeSchema>;
@@ -39,32 +54,32 @@ export type GetSourceCodeResponse = SourceCodeResult | SymbolNotFoundError;
 function detect_language(filePath: string): string {
   const ext = path.extname(filePath).toLowerCase();
   const languageMap: Record<string, string> = {
-    '.ts': 'typescript',
-    '.tsx': 'typescript',
-    '.js': 'javascript',
-    '.jsx': 'javascript',
-    '.py': 'python',
-    '.rs': 'rust',
-    '.go': 'go',
-    '.java': 'java',
-    '.cpp': 'cpp',
-    '.c': 'c',
-    '.h': 'c',
-    '.hpp': 'cpp'
+    ".ts": "typescript",
+    ".tsx": "typescript",
+    ".js": "javascript",
+    ".jsx": "javascript",
+    ".py": "python",
+    ".rs": "rust",
+    ".go": "go",
+    ".java": "java",
+    ".cpp": "cpp",
+    ".c": "c",
+    ".h": "c",
+    ".hpp": "cpp",
   };
-  return languageMap[ext] || 'unknown';
+  return languageMap[ext] || "unknown";
 }
 
 /**
  * Find similar symbol names for suggestions
  */
 function find_similar_symbols(project: Project, symbolName: string, limit: number = 5): string[] {
-  const allDefsMap = project.get_all_functions();
+  const allDefsMap = get_all_functions(project);
   const symbolLower = symbolName.toLowerCase();
   const allDefs: Array<{name: string}> = [];
   
   // Flatten the map to get all definitions
-  for (const [_, defs] of allDefsMap) {
+  for (const [, defs] of allDefsMap) {
     for (const def of defs) {
       if (def.name) {
         allDefs.push({name: def.name});
@@ -112,11 +127,11 @@ function find_similar_symbols(project: Project, symbolName: string, limit: numbe
 /**
  * Find a symbol definition by name
  */
-function find_symbol_definition(project: Project, symbolName: string): {def: any, file: string} | null {
+function find_symbol_definition(project: Project, symbolName: string): {def: Definition, file: string} | null {
   // First check get_all_functions (includes methods, functions)
-  const allFunctionsMap = project.get_all_functions();
+  const allFunctionsMap = get_all_functions(project);
   
-  for (const [filePath, defs] of allFunctionsMap) {
+  for (const [, defs] of allFunctionsMap) {
     for (const def of defs) {
       if (def.name === symbolName && def.file_path) {
         return { def, file: def.file_path };
@@ -127,8 +142,8 @@ function find_symbol_definition(project: Project, symbolName: string): {def: any
   // Then check all loaded files for other types (classes, interfaces, types)
   const allGraphs = project.get_all_scope_graphs();
   
-  for (const [filePath, graph] of allGraphs) {
-    const definitions = project.get_definitions(filePath);
+  for (const [filePath] of allGraphs) {
+    const definitions = get_definitions(project, filePath);
     for (const def of definitions) {
       if (def.name === symbolName) {
         return { def, file: filePath };
@@ -143,18 +158,19 @@ function find_symbol_definition(project: Project, symbolName: string): {def: any
  * Extract source code with improved range handling
  */
 async function extract_source_code(
-  filePath: string, 
-  def: any,
-  includeDocstring: boolean
+  filePath: string,
+  def: Definition,
+  includeDocstring: boolean,
 ): Promise<{sourceCode: string, startLine: number, endLine: number, docstring?: string}> {
-  const content = await fs.readFile(filePath, 'utf-8');
-  const lines = content.split('\n');
+  const content = await fs.readFile(filePath, "utf-8");
+  const lines = content.split("\n");
   
   // Use enclosing_range if available (for full function/class body)
   let range = def.enclosing_range || def.range;
   
   // Special handling for type aliases which need the full declaration
-  if (def.symbol_kind === 'alias' && def.range && !def.enclosing_range) {
+  // Note: kind property not available in simplified Definition interface
+  if (def.range && !def.enclosing_range) {
     // For type aliases, we need to extend the range to include the entire type definition
     // The def.range only points to the identifier, we need to find the closing semicolon/brace
     const startLine = def.range.start.row;
@@ -172,22 +188,22 @@ async function extract_source_code(
       
       for (let j = startIdx; j < line.length; j++) {
         const char = line[j];
-        if (char === '{') {
+        if (char === "{") {
           braceCount++;
           foundStart = true;
-        } else if (char === '}') {
+        } else if (char === "}") {
           braceCount--;
           if (foundStart && braceCount === 0) {
             // Found the closing brace
             endLine = i;
             endCol = j + 1;
             // Look for optional semicolon
-            if (j + 1 < line.length && line[j + 1] === ';') {
+            if (j + 1 < line.length && line[j + 1] === ";") {
               endCol = j + 2;
             }
             break;
           }
-        } else if (char === ';' && braceCount === 0) {
+        } else if (char === ";" && braceCount === 0) {
           // Found semicolon at top level
           endLine = i;
           endCol = j + 1;
@@ -200,7 +216,7 @@ async function extract_source_code(
     
     range = {
       start: { row: startLine, column: startCol },
-      end: { row: endLine, column: endCol }
+      end: { row: endLine, column: endCol },
     };
   }
   
@@ -208,13 +224,13 @@ async function extract_source_code(
     // Fallback: just return the line with the definition
     const line = def.range?.start?.row || 0;
     return {
-      sourceCode: lines[line] || '',
+      sourceCode: lines[line] || "",
       startLine: line + 1,
-      endLine: line + 1
+      endLine: line + 1,
     };
   }
   
-  let startLine = range.start.row;
+  const startLine = range.start.row;
   let startColumn = range.start.column;
   const endLine = range.end.row;
   
@@ -231,17 +247,15 @@ async function extract_source_code(
   }
   
   // Extract the source code
-  let sourceLines = lines.slice(startLine, endLine + 1);
+  const sourceLines = lines.slice(startLine, endLine + 1);
   
   // Handle partial lines (using column information)
   if (sourceLines.length > 0) {
     // First line: start from the adjusted column
     if (startColumn > 0) {
       sourceLines[0] = sourceLines[0].substring(startColumn);
-    } else {
-      // If we've gone back to column 0, take the whole line
-      sourceLines[0] = sourceLines[0];
     }
+    // If we've gone back to column 0, take the whole line (no change needed)
     
     // Last line: end at the specified column
     if (sourceLines.length > 1 && range.end.column > 0) {
@@ -250,32 +264,32 @@ async function extract_source_code(
     }
   }
   
-  let sourceCode = sourceLines.join('\n');
+  const sourceCode = sourceLines.join("\n");
   
   // Try to extract docstring if requested
   let docstring: string | undefined;
-  if (includeDocstring && def.docstring) {
-    docstring = def.docstring;
+  if (includeDocstring && "docstring" in def && (def as any).docstring) {
+    docstring = (def as any).docstring;
   } else if (includeDocstring && startLine > 0) {
     // Look for comments/docstrings above the definition
     const lang = detect_language(filePath);
     
-    if (lang === 'python') {
+    if (lang === "python") {
       // Check for Python docstring (first string after def)
       const defLine = lines[startLine];
-      if (defLine && (defLine.includes('def ') || defLine.includes('class '))) {
+      if (defLine && (defLine.includes("def ") || defLine.includes("class "))) {
         // Look for triple quotes in the next few lines
         for (let i = startLine + 1; i < Math.min(startLine + 10, lines.length); i++) {
-          if (lines[i].includes('"""') || lines[i].includes("'''")) {
-            const quoteType = lines[i].includes('"""') ? '"""' : "'''";
+          if (lines[i].includes("\"\"\"") || lines[i].includes("'''")) {
+            const quoteType = lines[i].includes("\"\"\"") ? "\"\"\"" : "'''";
             const startIdx = lines[i].indexOf(quoteType);
-            let docLines = [lines[i].substring(startIdx + 3)];
+            const docLines = [lines[i].substring(startIdx + 3)];
             
             // Find end of docstring
             for (let j = i + 1; j < lines.length; j++) {
               if (lines[j].includes(quoteType)) {
                 docLines.push(lines[j].substring(0, lines[j].indexOf(quoteType)));
-                docstring = docLines.join('\n').trim();
+                docstring = docLines.join("\n").trim();
                 break;
               } else {
                 docLines.push(lines[j]);
@@ -285,18 +299,18 @@ async function extract_source_code(
           }
         }
       }
-    } else if (lang === 'typescript' || lang === 'javascript') {
+    } else if (lang === "typescript" || lang === "javascript") {
       // Look for JSDoc comments above
-      let commentLines: string[] = [];
+      const commentLines: string[] = [];
       for (let i = startLine - 1; i >= 0 && i > startLine - 20; i--) {
         const line = lines[i].trim();
-        if (line.startsWith('*') || line.startsWith('/*') || line.endsWith('*/')) {
+        if (line.startsWith("*") || line.startsWith("/*") || line.endsWith("*/")) {
           commentLines.unshift(line);
-          if (line.startsWith('/**')) {
-            docstring = commentLines.join('\n')
-              .replace(/^\/\*\*/, '')
-              .replace(/\*\/$/, '')
-              .replace(/^\s*\* ?/gm, '')
+          if (line.startsWith("/**")) {
+            docstring = commentLines.join("\n")
+              .replace(/^\/\*\*/, "")
+              .replace(/\*\/$/, "")
+              .replace(/^\s*\* ?/gm, "")
               .trim();
             break;
           }
@@ -311,7 +325,7 @@ async function extract_source_code(
     sourceCode,
     startLine: startLine + 1, // Convert to 1-based
     endLine: endLine + 1,
-    docstring
+    docstring,
   };
 }
 
@@ -321,7 +335,7 @@ async function extract_source_code(
  */
 export async function get_source_code(
   project: Project,
-  request: GetSourceCodeRequest
+  request: GetSourceCodeRequest,
 ): Promise<GetSourceCodeResponse> {
   const { symbol, includeDocstring } = request;
   
@@ -333,7 +347,7 @@ export async function get_source_code(
       error: "symbol_not_found",
       message: `No symbol named '${symbol}' found in the project`,
       symbol,
-      suggestions: find_similar_symbols(project, symbol)
+      suggestions: find_similar_symbols(project, symbol),
     };
   }
   
@@ -342,17 +356,13 @@ export async function get_source_code(
   try {
     // The core get_source_code API only returns the symbol name,
     // so we need to extract the full source using the range information
-    let sourceCode: string;
-    let startLine: number;
-    let endLine: number;
-    let docstring: string | undefined;
-    
+
     // Always use manual extraction since get_source_code doesn't return full source
     const extracted = await extract_source_code(file, def, includeDocstring);
-    sourceCode = extracted.sourceCode;
-    startLine = extracted.startLine;
-    endLine = extracted.endLine;
-    docstring = extracted.docstring;
+    const sourceCode = extracted.sourceCode;
+    const startLine = extracted.startLine;
+    const endLine = extracted.endLine;
+    const docstring = extracted.docstring;
     
     return {
       symbol,
@@ -362,13 +372,13 @@ export async function get_source_code(
       sourceCode,
       language: detect_language(file),
       docstring,
-      signature: def.signature
+      signature: "signature" in def ? (def as any).signature : undefined,
     };
   } catch (error) {
     return {
       error: "symbol_not_found",
       message: `Failed to extract source code for '${symbol}': ${error}`,
-      symbol
+      symbol,
     };
   }
 }

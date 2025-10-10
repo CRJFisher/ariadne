@@ -1,11 +1,11 @@
 import { z } from "zod";
-import type { Project } from "../types";
+import { Project } from "../types";
 
 // Request schema for the MCP tool
 export const get_symbol_contextSchema = z.object({
   symbol: z.string().describe("Name of the symbol to look up (function, class, variable, etc.)"),
   searchScope: z.enum(["file", "project", "dependencies"]).optional().default("project").describe("Scope to search within"),
-  includeTests: z.boolean().optional().default(false).describe("Whether to include test file references")
+  includeTests: z.boolean().optional().default(false).describe("Whether to include test file references"),
 });
 
 export type GetSymbolContextRequest = z.infer<typeof get_symbol_contextSchema>;
@@ -83,7 +83,7 @@ export type GetSymbolContextResponse = SymbolContext | SymbolNotFoundError;
  */
 export async function get_symbol_context(
   project: Project,
-  request: GetSymbolContextRequest
+  request: GetSymbolContextRequest,
 ): Promise<GetSymbolContextResponse> {
   const { symbol, searchScope, includeTests } = request;
   
@@ -94,7 +94,7 @@ export async function get_symbol_context(
     return {
       error: "symbol_not_found",
       message: `No symbol named '${symbol}' found in ${searchScope}`,
-      suggestions: find_similar_symbols(project, symbol, searchScope)
+      suggestions: find_similar_symbols(project, symbol, searchScope),
     };
   }
   
@@ -114,7 +114,7 @@ export async function get_symbol_context(
     definition: definitionInfo,
     usage: usageInfo,
     relationships,
-    metrics
+    metrics,
   };
 }
 
@@ -123,49 +123,63 @@ export async function get_symbol_context(
 function find_symbol_definitions(
   project: Project,
   symbolName: string,
-  _searchScope: string
+  _searchScope: string,
 ): any[] {
   const definitions: any[] = [];
-  
-  // Get all file graphs from the project
-  const fileGraphs = project.get_all_scope_graphs();
-  
-  for (const [filePath, graph] of fileGraphs) {
-    // Include all files - we'll filter test functions later if needed
-    
-    // Get all definition nodes from the graph
-    const defs = graph.getNodes('definition');
-    
-    for (const def of defs) {
-      // Type guard to ensure we have a definition node with required properties
-      if ('name' in def && def.name === symbolName) {
-        definitions.push({
-          ...def,
-          file_path: filePath,
-          graph
-        });
+
+  // Get all semantic indexes from the project
+  const semanticIndexes = project.get_all_scope_graphs();
+
+  for (const [filePath, semanticIndex] of semanticIndexes) {
+    // Search through all definition types in the semantic index
+    const definitionMaps = [
+      semanticIndex.functions,
+      semanticIndex.classes,
+      semanticIndex.variables,
+      semanticIndex.interfaces,
+      semanticIndex.enums,
+      semanticIndex.namespaces,
+      semanticIndex.types,
+    ];
+
+    for (const defMap of definitionMaps) {
+      for (const def of defMap.values()) {
+        if (def.name === symbolName) {
+          definitions.push({
+            ...def,
+            file_path: filePath,
+            semantic_index: semanticIndex,
+          });
+        }
       }
     }
   }
-  
+
   return definitions;
 }
 
 function find_similar_symbols(
   project: Project,
   symbolName: string,
-  _searchScope: string
+  _searchScope: string,
 ): string[] {
   const allSymbols = new Set<string>();
-  const fileGraphs = project.get_all_scope_graphs();
-  
-  for (const [_filePath, graph] of fileGraphs) {
-    // Include all files - test filtering happens at the function level
-    
-    const defs = graph.getNodes('definition');
-    for (const def of defs) {
-      // Type guard to ensure we have a definition node with name property
-      if ('name' in def && typeof def.name === 'string') {
+  const semanticIndexes = project.get_all_scope_graphs();
+
+  for (const [, semanticIndex] of semanticIndexes) {
+    // Search through all definition types in the semantic index
+    const definitionMaps = [
+      semanticIndex.functions,
+      semanticIndex.classes,
+      semanticIndex.variables,
+      semanticIndex.interfaces,
+      semanticIndex.enums,
+      semanticIndex.namespaces,
+      semanticIndex.types,
+    ];
+
+    for (const defMap of definitionMaps) {
+      for (const def of defMap.values()) {
         allSymbols.add(def.name);
       }
     }
@@ -207,12 +221,15 @@ function extract_symbol_info(def: any): SymbolInfo {
     "type": "type",
     "enum": "enum",
     "variable": "variable",
-    "property": "property"
+    "property": "property",
   };
-  
+
+  // The symbol_kind might be stored as "kind" in some definitions
+  const symbolKind = def.symbol_kind || def.kind;
+
   return {
     name: def.name,
-    kind: symbolKindMap[def.symbol_kind] || "unknown",
+    kind: symbolKindMap[symbolKind] || "unknown",
     // TODO: Extract signature from the implementation
     // TODO: Determine visibility from modifiers
   };
@@ -220,7 +237,7 @@ function extract_symbol_info(def: any): SymbolInfo {
 
 function extract_definition_info(def: any, project: Project): DefinitionInfo {
   let implementation = "// Source code not available";
-  let startLine = def.range.start.row;
+  const startLine = def.location?.start_line || 1;
   
   try {
     // Use the public API to get source code
@@ -229,39 +246,32 @@ function extract_definition_info(def: any, project: Project): DefinitionInfo {
     // Check if this definition is exported and prepend export keyword if needed
     // Since export detection via graph nodes isn't working reliably,
     // let's check if the source code around the definition contains 'export'
-    if (!implementation.startsWith('export ')) {
+    if (!implementation.startsWith("export ")) {
       // Try to get the full line including export keyword
       try {
         const fullLineDef: any = {
-          kind: 'variable' as const,
-          name: '_dummy',
-          symbol_kind: 'variable' as const,
-          symbol_id: '_dummy',
-          id: -1,
-          file_path: def.file_path,
           range: {
-            start: { row: def.range.start.row, column: 0 },
-            end: { row: def.range.end.row, column: 999 }
-          }
+            start: { row: (def.location?.start_line || 1) - 1, column: 0 },
+            end: { row: (def.location?.end_line || 1) - 1, column: 999 },
+          },
         };
         const fullLine = project.get_source_code(fullLineDef, def.file_path);
         
         // Check if the line starts with 'export'
-        if (fullLine.trimStart().startsWith('export ')) {
-          implementation = 'export ' + implementation;
+        if (fullLine.trimStart().startsWith("export ")) {
+          implementation = "export " + implementation;
         }
-      } catch (e) {
-        // Fallback to checking graph nodes
-        if (def.graph) {
-          const exports = def.graph.getNodes('export');
-          const isExported = exports.length > 0;  // Simplified check
+      } catch {
+        // Fallback to checking semantic index exports
+        if (def.semantic_index) {
+          const isExported = def.semantic_index.exported_symbols.has(def.name);
           if (isExported) {
-            implementation = 'export ' + implementation;
+            implementation = "export " + implementation;
           }
         }
       }
     }
-  } catch (error) {
+  } catch {
     // If source code extraction fails, use fallback
   }
   
@@ -283,18 +293,13 @@ function extract_definition_info(def: any, project: Project): DefinitionInfo {
     } else {
       // Try to get the line before the definition to check for JSDoc
       try {
-        if (def.range.start.row > 0) {
+        const startLine = (def.location?.start_line || 1) - 1; // Convert to 0-indexed
+        if (startLine > 0) {
           const prevLineDef: any = {
-            kind: 'variable' as const,
-            name: '_dummy',
-            symbol_kind: 'variable' as const,
-            symbol_id: '_dummy',
-            id: -1,
-            file_path: def.file_path,
             range: {
-              start: { row: Math.max(0, def.range.start.row - 10), column: 0 },
-              end: { row: def.range.start.row - 1, column: 999 }
-            }
+              start: { row: Math.max(0, startLine - 10), column: 0 },
+              end: { row: startLine - 1, column: 999 },
+            },
           };
           const prevLines = project.get_source_code(prevLineDef, def.file_path);
           const jsdocInPrev = prevLines.match(/\/\*\*([\s\S]*?)\*\//);
@@ -302,7 +307,7 @@ function extract_definition_info(def: any, project: Project): DefinitionInfo {
             documentation = jsdocInPrev[0];
           }
         }
-      } catch (e) {
+      } catch {
         // Ignore errors in documentation extraction
       }
     }
@@ -310,18 +315,13 @@ function extract_definition_info(def: any, project: Project): DefinitionInfo {
   
   // Extract annotations/decorators
   try {
-    if (def.range.start.row > 0) {
+    const startLine = (def.location?.start_line || 1) - 1; // Convert to 0-indexed
+    if (startLine > 0) {
       const prevLineDef: any = {
-        kind: 'variable' as const,
-        name: '_dummy',
-        symbol_kind: 'variable' as const,
-        symbol_id: '_dummy',
-        id: -1,
-        file_path: def.file_path,
         range: {
-          start: { row: Math.max(0, def.range.start.row - 10), column: 0 },
-          end: { row: def.range.start.row, column: 999 }
-        }
+          start: { row: Math.max(0, startLine - 10), column: 0 },
+          end: { row: startLine, column: 999 },
+        },
       };
       const prevLines = project.get_source_code(prevLineDef, def.file_path);
       
@@ -331,114 +331,87 @@ function extract_definition_info(def: any, project: Project): DefinitionInfo {
         annotations = decoratorMatches;
       }
     }
-  } catch (e) {
+  } catch {
     // Ignore errors in annotation extraction
   }
   
   return {
     file: def.file_path,
-    line: startLine + 1, // Convert to 1-indexed
+    line: startLine,
     implementation,
     documentation,
-    annotations
+    annotations,
   };
 }
 
 function find_symbol_usages(
   project: Project,
   def: any,
-  includeTests: boolean
+  includeTests: boolean,
 ): UsageInfo {
   const directReferences: UsageReference[] = [];
   const imports: UsageReference[] = [];
   const tests: TestReference[] = [];
-  
-  const fileGraphs = project.get_all_scope_graphs();
-  
+
+  const semanticIndexes = project.get_all_scope_graphs();
+
   // First, find local references in the same file
-  const localRefs = def.graph.getRefsForDef(def.id);
-  for (const ref of localRefs) {
-    const context = extract_reference_context(def.file_path, ref, project);
-    
-    // Check if this is a test file and we should track it as a test
-    const isInTestFunction = is_reference_in_test_function(def.file_path, ref, fileGraphs);
-    
-    if (isInTestFunction && includeTests) {
-      const testName = extract_test_name(def.file_path, ref, project);
-      tests.push({
-        file: def.file_path,
-        testName: testName || "test function",
-        line: ref.range.start.row + 1
-      });
-    } else if (!isInTestFunction) {
-      directReferences.push({
-        file: def.file_path,
-        line: ref.range.start.row + 1,
-        context
-      });
+  const semantic_index = def.semantic_index;
+  if (semantic_index && semantic_index.references) {
+    // Look for references that match this definition's symbol_id
+    for (const ref of semantic_index.references) {
+      if (ref.name === def.name) {
+        const context = extract_reference_context(def.file_path, ref, project);
+
+        // Check if this is a test file and we should track it as a test
+        const isInTestFunction = is_reference_in_test_function(def.file_path, ref, semanticIndexes);
+
+        if (isInTestFunction && includeTests) {
+          const testName = extract_test_name(def.file_path, ref, project);
+          tests.push({
+            file: def.file_path,
+            testName: testName || "test function",
+            line: ref.location.start_line,
+          });
+        } else if (!isInTestFunction) {
+          directReferences.push({
+            file: def.file_path,
+            line: ref.location.start_line,
+            context,
+          });
+        }
+      }
     }
   }
-  
-  // Check if this is an exported definition by looking for is_exported property
-  // The core library sets this property during parsing
-  const isExported = def.is_exported === true;
-  
-  if (isExported) {
-    // Search for imports and references in other files
-    for (const [filePath, graph] of fileGraphs) {
-      if (filePath === def.file_path) continue;
-      
-      // Find imports using getNodes method
-      const importNodes = graph.getNodes('import');
-      for (const imp of importNodes) {
-        // Check if this import matches our definition
-        // Import nodes have 'name' (local name) and optionally 'source_name' (imported name)
-        const matchesName = 'name' in imp && (
-          imp.name === def.name || 
-          ('source_name' in imp && imp.source_name === def.name)
-        );
-        
-        if (matchesName) {
-          // Verify the import is actually from the file containing the definition
-          // For now, we'll include all matching imports (TODO: improve module resolution)
-          imports.push({
+
+  // For now, simplified cross-file reference detection
+  // TODO: Implement proper import/export resolution
+
+  // Check other files for references to this symbol by name
+  for (const [filePath, otherSemanticIndex] of semanticIndexes) {
+    if (filePath === def.file_path) continue;
+
+    // Look for references in other files that match by name
+    for (const ref of otherSemanticIndex.references) {
+      if (ref.name === def.name) {
+        const context = extract_reference_context(filePath, ref, project);
+
+        // Check if this is a test file
+        const isInTestFunction = is_reference_in_test_function(filePath, ref, semanticIndexes);
+
+        if (isInTestFunction && includeTests) {
+          const testName = extract_test_name(filePath, ref, project);
+          tests.push({
             file: filePath,
-            line: 'range' in imp ? imp.range.start.row + 1 : 0,
-            context: `import { ${imp.name} } from '${imp.source_module || '...'}'`
+            testName: testName || "test function",
+            line: ref.location.start_line,
           });
-          
-          // Find references to this import using the helper function
-          const importRefs = find_referencesToImport(graph, imp);
-          
-          // Also find direct references by name in this file
-          const allRefs = graph.getNodes('reference');
-          const nameMatchingRefs = allRefs.filter((ref: any) => ref.name === imp.name);
-          
-          for (const ref of nameMatchingRefs) {
-            const context = extract_reference_context(filePath, ref, project);
-            
-            // Check if the reference is inside a test function
-            const isInTestFunction = is_reference_in_test_function(filePath, ref, fileGraphs);
-            
-            if (isInTestFunction) {
-              if (includeTests) {
-                // Try to extract test name
-                const testName = extract_test_name(filePath, ref, project);
-                tests.push({
-                  file: filePath,
-                  testName: testName || "test function",
-                  line: ref.range.start.row + 1
-                });
-              }
-              // If includeTests is false, we skip test references entirely
-            } else {
-              directReferences.push({
-                file: filePath,
-                line: ref.range.start.row + 1,
-                context
-              });
-            }
-          }
+        } else if (!isInTestFunction) {
+          directReferences.push({
+            file: filePath,
+            line: ref.location.start_line,
+            context,
+          });
         }
       }
     }
@@ -448,41 +421,26 @@ function find_symbol_usages(
     directReferences,
     imports,
     tests,
-    totalCount: directReferences.length + tests.length
+    totalCount: directReferences.length + tests.length,
   };
 }
 
-function find_referencesToImport(graph: any, imp: any): any[] {
-  const refs: any[] = [];
-  const allRefs = graph.getNodes('reference');
-  
-  for (const ref of allRefs) {
-    const connectedImports = graph.getImportsForRef(ref.id);
-    if (connectedImports.some((i: any) => i.id === imp.id)) {
-      refs.push(ref);
-    }
-  }
-  
-  return refs;
-}
 
 function extract_reference_context(filePath: string, ref: any, project: Project): string {
   try {
     // Create a dummy def with just the range we need (one line)
     const dummyDef = {
-      ...ref,
-      file_path: filePath,
       range: {
-        start: { row: ref.range.start.row, column: 0 },
-        end: { row: ref.range.start.row, column: 999 }
-      }
+        start: { row: ref.location.start_line - 1, column: 0 },
+        end: { row: ref.location.start_line - 1, column: 999 },
+      },
     };
 
     const line = project.get_source_code(dummyDef, filePath as any);
 
     // Trim whitespace and limit length
     return line.trim().substring(0, 100);
-  } catch (error) {
+  } catch {
     return "";
   }
 }
@@ -490,18 +448,12 @@ function extract_reference_context(filePath: string, ref: any, project: Project)
 function extract_test_name(filePath: string, ref: any, project: Project): string | null {
   try {
     // Search backwards for test/it/describe
-    for (let i = ref.range.start.row; i >= 0; i--) {
+    for (let i = ref.location.start_line - 1; i >= 0; i--) {
       const dummyDef: any = {
-        kind: 'variable' as const,
-        name: '_dummy',
-        symbol_kind: 'variable' as const,
-        symbol_id: '_dummy',
-        id: -1,
-        file_path: filePath,
         range: {
           start: { row: i, column: 0 },
-          end: { row: i, column: 999 }
-        }
+          end: { row: i, column: 999 },
+        },
       };
 
       const line = project.get_source_code(dummyDef, filePath as any);
@@ -509,14 +461,14 @@ function extract_test_name(filePath: string, ref: any, project: Project): string
       if (testMatch) {
         return testMatch[1];
       }
-      
+
       // Don't search too far
-      if (ref.range.start.row - i > 20) break;
+      if (ref.location.start_line - 1 - i > 20) break;
     }
-  } catch (error) {
+  } catch {
     // Failed to extract test name
   }
-  
+
   return null;
 }
 
@@ -532,7 +484,7 @@ function is_reference_in_test_function(filePath: string, _ref: any, _fileGraphs:
   // 3. Ariadne's test detection is primarily for named functions
   
   // TODO: Improve this by traversing the AST to find enclosing test blocks
-  const isTestFile = filePath.includes('test') || filePath.includes('spec');
+  const isTestFile = filePath.includes("test") || filePath.includes("spec");
   return isTestFile;
 }
 
@@ -541,89 +493,37 @@ function analyze_relationships(project: Project, def: any): RelationshipInfo {
     calls: [],
     calledBy: [],
     dependencies: [],
-    dependents: []
+    dependents: [],
   };
-  
-  // Analyze function call relationships
-  if (def.symbol_kind === 'function') {
+
+  // Simplified relationship analysis for now
+  // TODO: Implement full call graph and inheritance analysis
+
+  // For functions, try to get basic call information from call graph
+  if (def.symbol_kind === "function") {
     try {
-      // Get the call graph for the entire project
       const callGraph = project.get_call_graph();
-      
-      // Find the node for this function
       const functionNode = callGraph.nodes.get(def.symbol_id);
       if (functionNode) {
-        // Extract calls and called_by relationships
-        relationships.calls = functionNode.calls.map((call: any) => call.symbol);
-        relationships.calledBy = functionNode.called_by; // already strings
+        // TODO: FunctionNode type doesn't have calls/called_by properties yet
+        // This functionality is not yet implemented in the core
+        relationships.calls = [];
+        relationships.calledBy = [];
       }
-    } catch (error) {
+    } catch {
       // Call graph generation might fail for some codebases
-      console.warn(`Failed to generate call graph: ${error}`);
     }
   }
   
-  // Analyze class inheritance relationships
-  if (def.symbol_kind === 'class' || def.symbol_kind === 'struct' || def.symbol_kind === 'interface') {
-    try {
-      const classRelationships = project.get_class_relationships(def);
-      if (classRelationships) {
-        // Set parent class
-        if (classRelationships.parent_class) {
-          relationships.extends = classRelationships.parent_class;
-        }
-        
-        // Set implemented interfaces
-        if (classRelationships.implemented_interfaces && classRelationships.implemented_interfaces.length > 0) {
-          relationships.implements = classRelationships.implemented_interfaces;
-        }
-      } else {
-        // Fallback: try to extract inheritance from source code
-        const fallbackRelationships = extract_inheritance_from_source(project, def);
-        if (fallbackRelationships.extends) {
-          relationships.extends = fallbackRelationships.extends;
-        }
-        if (fallbackRelationships.implements && fallbackRelationships.implements.length > 0) {
-          relationships.implements = fallbackRelationships.implements;
-        }
-      }
-    } catch (error) {
-      // Inheritance analysis might fail for some classes
-      console.warn(`Failed to analyze inheritance for ${def.name}: ${error}`);
-      
-      // Try fallback method
-      const fallbackRelationships = extract_inheritance_from_source(project, def);
-      if (fallbackRelationships.extends) {
-        relationships.extends = fallbackRelationships.extends;
-      }
-      if (fallbackRelationships.implements && fallbackRelationships.implements.length > 0) {
-        relationships.implements = fallbackRelationships.implements;
-      }
+  // Simplified class inheritance analysis
+  if (def.symbol_kind === "class" || def.symbol_kind === "struct" || def.symbol_kind === "interface") {
+    // For now, try to extract inheritance from source code
+    const fallbackRelationships = extract_inheritance_from_source(project, def);
+    if (fallbackRelationships.extends) {
+      relationships.extends = fallbackRelationships.extends;
     }
-    
-    // Find subclasses/implementations using fallback if needed
-    try {
-      if (def.symbol_kind === 'class' || def.symbol_kind === 'struct') {
-        const subclasses = project.find_subclasses(def);
-        if (subclasses.length > 0) {
-          relationships.dependents = subclasses.map((sub: any) => sub.name);
-        } else {
-          // Fallback: search for classes that extend this one
-          relationships.dependents = find_dependent_classes_from_source(project, def);
-        }
-      } else if (def.symbol_kind === 'interface') {
-        const implementations = project.find_implementations(def);
-        if (implementations.length > 0) {
-          relationships.dependents = implementations.map((impl: any) => impl.name);
-        } else {
-          // Fallback: search for classes that implement this interface
-          relationships.dependents = find_dependent_classes_from_source(project, def);
-        }
-      }
-    } catch (error) {
-      console.warn(`Failed to find dependents for ${def.name}: ${error}`);
-      // Use fallback method
-      relationships.dependents = find_dependent_classes_from_source(project, def);
+    if (fallbackRelationships.implements && fallbackRelationships.implements.length > 0) {
+      relationships.implements = fallbackRelationships.implements;
     }
   }
   
@@ -637,12 +537,8 @@ function analyze_relationships(project: Project, def: any): RelationshipInfo {
 // Fallback inheritance extraction functions
 function extract_inheritance_from_source(project: Project, def: any): { extends?: string; implements?: string[] } {
   try {
-    // Get the source code around the class definition using enclosing_range
-    const defWithEnclosingRange = {
-      ...def,
-      range: def.enclosing_range || def.range
-    };
-    const implementation = project.get_source_code(defWithEnclosingRange, def.file_path);
+    // Get the source code around the class definition
+    const implementation = project.get_source_code(def, def.file_path);
     
     const result: { extends?: string; implements?: string[] } = {};
     
@@ -656,17 +552,17 @@ function extract_inheritance_from_source(project: Project, def: any): { extends?
     const implementsMatch = implementation.match(/(?:class|interface)\s+\w+(?:\s+extends\s+\w+)?\s+implements\s+([\w\s,]+)/);
     if (implementsMatch) {
       result.implements = implementsMatch[1]
-        .split(',')
+        .split(",")
         .map((name: string) => name.trim())
         .filter((name: string) => name.length > 0);
     }
     
     // Handle interface extension
-    if (def.symbol_kind === 'interface') {
+    if (def.symbol_kind === "interface") {
       const interfaceExtendsMatch = implementation.match(/interface\s+\w+\s+extends\s+([\w\s,]+)/);
       if (interfaceExtendsMatch) {
         const extendedInterfaces = interfaceExtendsMatch[1]
-          .split(',')
+          .split(",")
           .map((name: string) => name.trim())
           .filter((name: string) => name.length > 0);
         
@@ -681,29 +577,27 @@ function extract_inheritance_from_source(project: Project, def: any): { extends?
     }
     
     // Handle Rust trait implementations by looking at references
-    if (def.symbol_kind === 'struct' && def.file_path.endsWith('.rs')) {
+    if (def.symbol_kind === "struct" && def.file_path.endsWith(".rs")) {
       // Look for references to this struct in impl blocks
       try {
-        const fileGraphs = project.get_all_scope_graphs();
-        const graph = fileGraphs.get(def.file_path);
-        
-        if (graph) {
-          const refs = graph.getNodes('reference');
-          const structRefs = refs.filter((ref: any) => ref.name === def.name);
-          
+        const semanticIndexes = project.get_all_scope_graphs();
+        const semanticIndex = semanticIndexes.get(def.file_path);
+
+        if (semanticIndex) {
+          const structRefs = semanticIndex.references.filter((ref: any) => ref.name === def.name);
+
           const implementedTraits: string[] = [];
-          
+
           for (const ref of structRefs) {
             try {
               const refDef = {
-                ...ref,
                 range: {
-                  start: { row: ref.range.start.row, column: 0 },
-                  end: { row: ref.range.start.row, column: 999 }
-                }
+                  start: { row: ref.location.start_line - 1, column: 0 },
+                  end: { row: ref.location.start_line - 1, column: 999 },
+                },
               };
               const line = project.get_source_code(refDef, def.file_path);
-              
+
               // Look for impl patterns: "impl TraitName for StructName"
               const implMatch = line.match(/impl\s+(\w+)\s+for\s+\w+/);
               if (implMatch) {
@@ -712,99 +606,45 @@ function extract_inheritance_from_source(project: Project, def: any): { extends?
                   implementedTraits.push(traitName);
                 }
               }
-            } catch (error) {
+            } catch {
               // Skip this reference
             }
           }
-          
+
           if (implementedTraits.length > 0) {
             result.implements = implementedTraits;
           }
         }
-      } catch (error) {
+      } catch {
         // Fallback failed, ignore
       }
     }
-    
+
     return result;
-  } catch (error) {
+  } catch {
     return {};
   }
 }
 
-function find_dependent_classes_from_source(project: Project, def: any): string[] {
-  const dependents: string[] = [];
-  
-  try {
-    // Search all files for classes that extend or implement this definition
-    const fileGraphs = project.get_all_scope_graphs();
-    
-    for (const [filePath, graph] of fileGraphs) {
-      const definitions = graph.getNodes('definition');
-      const classDefinitions = definitions.filter((d: any) =>
-        d.symbol_kind === 'class' || d.symbol_kind === 'struct' || d.symbol_kind === 'interface'
-      );
-      
-      for (const classDef of classDefinitions) {
-        if (classDef.name === def.name) continue; // Skip self
-        
-        try {
-          const defWithEnclosingRange = {
-            ...classDef,
-            range: (classDef ).enclosing_range || (classDef ).range
-          };
-          const implementation = project.get_source_code(defWithEnclosingRange , filePath);
-          
-          // Check for extends relationship
-          const extendsPattern = new RegExp(`(?:class|interface)\\s+\\w+\\s+extends\\s+${def.name}\\b`);
-          if (extendsPattern.test(implementation)) {
-            dependents.push(classDef.name);
-            continue;
-          }
-          
-          // Check for implements relationship
-          const implementsPattern = new RegExp(`class\\s+\\w+(?:\\s+extends\\s+\\w+)?\\s+implements\\s+[\\w\\s,]*\\b${def.name}\\b`);
-          if (implementsPattern.test(implementation)) {
-            dependents.push(classDef.name);
-            continue;
-          }
-          
-          // Handle Rust trait implementations
-          if (filePath.endsWith('.rs')) {
-            const rustImplPattern = new RegExp(`impl\\s+${def.name}\\s+for\\s+(\\w+)`);
-            const rustMatch = implementation.match(rustImplPattern);
-            if (rustMatch) {
-              dependents.push(rustMatch[1]);
-            }
-          }
-        } catch (error) {
-          // Skip this definition if we can't get its source
-        }
-      }
-    }
-  } catch (error) {
-    // Return empty array on error
-  }
-  
-  return dependents;
-}
 
 function calculate_metrics(def: any, _usage: UsageInfo): MetricsInfo {
   // Use metadata.line_count if available (most accurate), otherwise fall back to range calculation
   let linesOfCode: number;
-  
+
   if (def.metadata?.line_count) {
     linesOfCode = def.metadata.line_count;
+  } else if (def.location) {
+    // Fall back to range calculation using location
+    linesOfCode = def.location.end_line - def.location.start_line + 1;
   } else {
-    // Fall back to range calculation (only covers the definition line)
-    const range = def.enclosing_range || def.range;
-    linesOfCode = range.end.row - range.start.row + 1;
+    // Default fallback
+    linesOfCode = 1;
   }
   
   // TODO: Calculate cyclomatic complexity
   // TODO: Calculate test coverage percentage
   
   return {
-    linesOfCode
+    linesOfCode,
   };
 }

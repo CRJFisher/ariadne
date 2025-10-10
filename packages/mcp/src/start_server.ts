@@ -227,7 +227,7 @@ export async function start_server(options: AriadneMCPServerOptions = {}): Promi
   async function load_file_if_needed(project: Project, filePath: string): Promise<void> {
     try {
       const sourceCode = await fs.readFile(filePath, "utf-8");
-      project.add_or_update_file(filePath, sourceCode);
+      project.update_file(filePath as any, sourceCode);
     } catch (error) {
       throw new Error(`Failed to read file ${filePath}: ${error instanceof Error ? error.message : String(error)}`);
     }

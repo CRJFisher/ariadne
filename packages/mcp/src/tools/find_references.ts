@@ -1,17 +1,15 @@
 import { z } from "zod";
-import * as path from "path";
 import * as fs from "fs/promises";
 import type { Project } from "../types";
+import { get_all_functions, get_definitions } from "../types";
 
-// Stub type for references
-// TODO: Use actual Ref type from Ariadne core
-type Ref = any;
+// Stub type for references removed - not needed
 
 // Request schema for the MCP tool
 export const find_referencesSchema = z.object({
   symbol: z.string().describe("Name of the symbol to find references for"),
   includeDeclaration: z.boolean().optional().default(false).describe("Include the declaration itself in results"),
-  searchScope: z.enum(["file", "project"]).optional().default("project").describe("Scope to search within")
+  searchScope: z.enum(["file", "project"]).optional().default("project").describe("Scope to search within"),
 });
 
 export type FindReferencesRequest = z.infer<typeof find_referencesSchema>;
@@ -46,15 +44,15 @@ export type FindReferencesResponse = FindReferencesResult | SymbolNotFoundError;
  */
 async function get_line_context(filePath: string, line: number): Promise<string> {
   try {
-    const content = await fs.readFile(filePath, 'utf-8');
-    const lines = content.split('\n');
+    const content = await fs.readFile(filePath, "utf-8");
+    const lines = content.split("\n");
     if (line > 0 && line <= lines.length) {
       return lines[line - 1].trim();
     }
   } catch {
     // File might not exist or be readable
   }
-  return '';
+  return "";
 }
 
 /**
@@ -64,18 +62,18 @@ function find_symbol_definitions(project: Project, symbolName: string): Array<{f
   const definitions: Array<{file: string, position: {row: number, column: number}}> = [];
   
   // Get all function definitions - returns Map<string, Def[]>
-  const allDefsMap = project.get_all_functions();
+  const allDefsMap = get_all_functions(project);
   
   // Iterate through the map entries
-  for (const [filePath, defs] of allDefsMap) {
+  for (const [, defs] of allDefsMap) {
     for (const def of defs) {
       if (def.name === symbolName && def.file_path && def.range?.start) {
         definitions.push({
           file: def.file_path,
           position: {
             row: def.range.start.row,
-            column: def.range.start.column
-          }
+            column: def.range.start.column,
+          },
         });
       }
     }
@@ -84,15 +82,15 @@ function find_symbol_definitions(project: Project, symbolName: string): Array<{f
   // Also search in all files by getting scope graphs
   // Since there's no get_file_paths, we use get_all_scope_graphs
   const allGraphs = project.get_all_scope_graphs();
-  for (const [filePath, graph] of allGraphs) {
-    const fileDefs = project.get_definitions(filePath);
+  for (const [filePath ] of allGraphs) {
+    const fileDefs = get_definitions(project, filePath);
     for (const def of fileDefs) {
       if (def.name === symbolName && def.range?.start) {
         // Check if we already have this definition
         const exists = definitions.some(d =>
           d.file === filePath &&
           d.position.row === def.range.start.row &&
-          d.position.column === def.range.start.column
+          d.position.column === def.range.start.column,
         );
         
         if (!exists) {
@@ -100,8 +98,8 @@ function find_symbol_definitions(project: Project, symbolName: string): Array<{f
             file: filePath,
             position: {
               row: def.range.start.row,
-              column: def.range.start.column
-            }
+              column: def.range.start.column,
+            },
           });
         }
       }
@@ -117,7 +115,7 @@ function find_symbol_definitions(project: Project, symbolName: string): Array<{f
  */
 export async function find_references(
   project: Project,
-  request: FindReferencesRequest
+  request: FindReferencesRequest,
 ): Promise<FindReferencesResponse> {
   const { symbol, includeDeclaration = false, searchScope = "project" } = request;
   
@@ -128,7 +126,7 @@ export async function find_references(
     return {
       error: "symbol_not_found",
       message: `No symbol named '${symbol}' found in the project`,
-      symbol
+      symbol,
     };
   }
   
@@ -141,21 +139,21 @@ export async function find_references(
   
   for (const [filePath, graph] of allGraphs) {
     // For file scope, only search in files that contain a definition
-    if (searchScope === 'file' && !definitions.some(d => d.file === filePath)) {
+    if (searchScope === "file" && !definitions.some(d => d.file === filePath)) {
       continue;
     }
     
     // Get all references in this file
-    const fileRefs = graph.getNodes('reference');
+    const fileRefs = graph.references || [];
     for (const fileRef of fileRefs) {
-      if (fileRef.name === symbol && fileRef.range?.start) {
-        const context = await get_line_context(filePath, fileRef.range.start.row + 1);
-        
+      if (fileRef.name === symbol && fileRef.location?.start_line) {
+        const context = await get_line_context(filePath, fileRef.location.start_line);
+
         // Check if this is actually a definition
         const isDefinition = definitions.some(d =>
           d.file === filePath &&
-          d.position.row === fileRef.range.start.row &&
-          d.position.column === fileRef.range.start.column
+          d.position.row === fileRef.location.start_line - 1 &&
+          d.position.column === fileRef.location.start_column,
         );
         
         // Skip definitions if not including them
@@ -165,10 +163,10 @@ export async function find_references(
         
         allReferences.push({
           file: filePath,
-          line: fileRef.range.start.row + 1,
-          column: fileRef.range.start.column + 1,
+          line: fileRef.location.start_line,
+          column: fileRef.location.start_column + 1,
           context,
-          isDefinition
+          isDefinition,
         });
         filesWithReferences.add(filePath);
       }
@@ -185,7 +183,7 @@ export async function find_references(
       const exists = allReferences.some(r => 
         r.file === def.file && 
         r.line === def.position.row + 1 && 
-        r.column === def.position.column + 1
+        r.column === def.position.column + 1,
       );
       
       if (!exists) {
@@ -194,7 +192,7 @@ export async function find_references(
           line: def.position.row + 1, // Convert to 1-based
           column: def.position.column + 1,
           context,
-          isDefinition: true
+          isDefinition: true,
         });
         filesWithReferences.add(def.file);
       }
@@ -217,6 +215,6 @@ export async function find_references(
     symbol,
     references: allReferences,
     totalCount: allReferences.length,
-    fileCount: filesWithReferences.size
+    fileCount: filesWithReferences.size,
   };
 }
