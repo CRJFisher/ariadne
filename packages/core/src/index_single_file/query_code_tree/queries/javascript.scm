@@ -81,7 +81,7 @@
   name: (identifier) @definition.function
 )
 
-; Arrow functions assigned to variables (captures assignment)
+; Arrow functions assigned to variables (captures both assignment and function definition)
 (variable_declarator
   name: (identifier) @definition.function @assignment.variable
   value: (arrow_function) @reference.variable

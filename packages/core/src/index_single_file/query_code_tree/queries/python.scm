@@ -80,17 +80,9 @@
 
 ; Lambda functions assigned to variables
 (assignment
-  left: (identifier) @definition.function @assignment.variable
+  left: (identifier) @assignment.variable
   right: (lambda) @assignment.variable.lambda
 ) @assignment.variable
-
-; Class definitions with inheritance
-(class_definition
-  name: (identifier) @definition.class
-  superclasses: (argument_list
-    (identifier) @reference.type_reference
-  )?
-)
 
 ; Enum class detection (classes inheriting from Enum)
 (class_definition
@@ -129,6 +121,21 @@
       attribute: (identifier) @type.type_reference
       (#eq? @type.type_reference "Protocol")
     )
+  )
+)
+
+; Class definitions without inheritance
+(class_definition
+  name: (identifier) @definition.class
+  !superclasses
+)
+
+; Class definitions with inheritance (but not Enum or Protocol)
+(class_definition
+  name: (identifier) @definition.class
+  superclasses: (argument_list
+    (identifier) @reference.type_reference
+    (#not-match? @reference.type_reference "^(Enum|IntEnum|Flag|IntFlag|StrEnum|Protocol)$")
   )
 )
 

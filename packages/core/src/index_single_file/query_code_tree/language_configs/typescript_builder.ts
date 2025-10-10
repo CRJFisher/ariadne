@@ -175,7 +175,7 @@ export function extract_type_parameters(node: SyntaxNode | null): SymbolName[] {
   const typeParams = node.childForFieldName?.("type_parameters");
   if (typeParams) {
     // Extract individual type parameter names
-    const params: SymbolName[] = [];  
+    const params: SymbolName[] = [];
     for (const child of typeParams.children || []) {
       if (child.type === "type_parameter") {
         const nameNode = child.childForFieldName?.("name");

@@ -19,6 +19,7 @@ import {
   ProcessingContext,
   SemanticCategory,
 } from "../semantic_index";
+import { get_scope_boundary_extractor } from "./scope_boundary_extractor";
 
 /**
  * Process captures directly into LexicalScope objects (single pass)
@@ -50,57 +51,55 @@ export function process_scopes(
   };
   scopes.set(root_scope_id, root_scope);
 
-  // Sort captures by location for proper nesting
-  const sorted_captures = [...captures].sort((a, b) =>
-    compare_locations(a.location, b.location)
-  );
+  // Sort captures to ensure parent scopes are created before child scopes
+  // Apply different sorting strategies based on language
+  const sorted_captures = [...captures].sort((a, b) => {
+    // For Python, use containment-based sorting to fix class/method scope issues
+    if (file.lang === "python") {
+      // First, check if one scope contains the other
+      const a_contains_b = location_contains(a.location, b.location);
+      const b_contains_a = location_contains(b.location, a.location);
+
+      if (a_contains_b && !b_contains_a) {
+        // A contains B, so A should be processed first (parent before child)
+        return -1;
+      }
+      if (b_contains_a && !a_contains_b) {
+        // B contains A, so B should be processed first (parent before child)
+        return 1;
+      }
+
+      // If neither contains the other, sort by area (larger first for efficiency)
+      const area_a = calculate_area(a.location);
+      const area_b = calculate_area(b.location);
+
+      if (area_a !== area_b) {
+        return area_b - area_a; // Descending order by area
+      }
+    }
+
+    // For other languages, use original location-based sorting
+    return compare_locations(a.location, b.location);
+  });
 
   // Process each capture that creates a scope
   for (const capture of sorted_captures) {
     if (capture.category !== SemanticCategory.SCOPE) continue;
 
-    let location = capture.location;
     const scope_type = map_capture_to_scope_type(capture);
-
     if (!scope_type) continue;
 
     // Skip module/namespace scopes - we already created the root module scope manually
     if (scope_type === "module") continue;
 
-    // Adjust callable scope boundaries
-    // Special case: Named function expressions (e.g., `function fact(n) { ... }`)
-    // The function name must be in the function's own scope for self-reference
-    // So scope starts after "function" keyword, before the name
-    if (is_callable_scope_type(scope_type)) {
-      const is_named_function_expr =
-        capture.node.type === "function_expression" &&
-        capture.node.childForFieldName("name") !== null;
-
-      if (is_named_function_expr) {
-        // For named function expressions: scope starts after "function" keyword
-        // The first child is the "function" keyword token
-        const function_keyword = capture.node.child(0);
-        if (function_keyword) {
-          location = {
-            ...location,
-            start_line: function_keyword.endPosition.row + 1,
-            start_column: function_keyword.endPosition.column + 1,
-          };
-        }
-      } else {
-        // For other callables: scope starts at parameters
-        // This excludes the name from the scope (name belongs to parent scope)
-        // Example: "def method(self):" - scope starts at "(", not "def"
-        const params_node = capture.node.childForFieldName("parameters");
-        if (params_node) {
-          location = {
-            ...location,
-            start_line: params_node.startPosition.row + 1,
-            start_column: params_node.startPosition.column + 1,
-          };
-        }
-      }
-    }
+    // Extract boundaries using language-specific extractors
+    const extractor = get_scope_boundary_extractor(file.lang);
+    const boundaries = extractor.extract_boundaries(
+      capture.node,
+      scope_type,
+      file.file_path
+    );
+    const location = boundaries.scope_location;
 
     // Create scope ID based on type and location
     const scope_id = create_scope_id(scope_type, location);
@@ -112,6 +111,7 @@ export function process_scopes(
 
     // Find parent scope using position containment
     const parent = find_containing_scope(location, root_scope_id, scopes);
+
 
     // Block scopes don't have a meaningful name
     const symbol_name =
@@ -370,14 +370,3 @@ function compute_scope_depth(
   return depth;
 }
 
-/**
- * Check if a scope type is callable (function, method, constructor)
- * Callable scopes have their boundaries adjusted to start at parameters
- */
-function is_callable_scope_type(scope_type: ScopeType): boolean {
-  return (
-    scope_type === "function" ||
-    scope_type === "method" ||
-    scope_type === "constructor"
-  );
-}

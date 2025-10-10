@@ -87,7 +87,7 @@ describe("scope_processor", () => {
             end_line: 5,
             end_column: 1,
           },
-          "processData"
+          "processData",
         ),
       ];
 
@@ -97,7 +97,7 @@ describe("scope_processor", () => {
 
       // Find function scope
       const function_scope = Array.from(scopes.values()).find(
-        (s) => s.type === "function"
+        (s) => s.type === "function",
       );
       expect(function_scope).toBeDefined();
       expect(function_scope!.name).toBe("processData");
@@ -105,7 +105,7 @@ describe("scope_processor", () => {
 
       // Check parent-child relationship
       const root = Array.from(scopes.values()).find(
-        (s) => s.parent_id === null
+        (s) => s.parent_id === null,
       );
       expect(root!.child_ids).toContain(function_scope!.id);
     });
@@ -123,7 +123,7 @@ describe("scope_processor", () => {
             end_line: 20,
             end_column: 1,
           },
-          "MyClass"
+          "MyClass",
         ),
         // Method inside class
         create_raw_capture(
@@ -136,7 +136,7 @@ describe("scope_processor", () => {
             end_line: 8,
             end_column: 3,
           },
-          "getData"
+          "getData",
         ),
         // Block inside method
         create_raw_capture(
@@ -149,7 +149,7 @@ describe("scope_processor", () => {
             end_line: 7,
             end_column: 5,
           },
-          ""
+          "",
         ),
       ];
 
@@ -159,13 +159,13 @@ describe("scope_processor", () => {
 
       // Verify hierarchy
       const class_scope = Array.from(scopes.values()).find(
-        (s) => s.name === "MyClass"
+        (s) => s.name === "MyClass",
       );
       const method_scope = Array.from(scopes.values()).find(
-        (s) => s.name === "getData"
+        (s) => s.name === "getData",
       );
       const block_scope = Array.from(scopes.values()).find(
-        (s) => s.type === "block"
+        (s) => s.type === "block",
       );
 
       expect(class_scope).toBeDefined();
@@ -1131,11 +1131,10 @@ describe("scope_processor", () => {
         expect(parent_scope?.type).toBe("module");
       });
 
-      it("should detect malformed Python class/method scopes at same depth", () => {
-        // This test documents a known issue: Python class body scopes and method scopes
-        // can end up at the same depth (as siblings) due to tree-sitter reporting the
-        // class body block starting at the first child statement. This causes overlapping
-        // scope boundaries at the same depth, which our error detection should catch.
+      it("should correctly handle Python class/method scope hierarchy", () => {
+        // This test verifies that the Python scope boundary extractor correctly
+        // handles class body scopes and method scopes with proper hierarchy.
+        // Methods should be children of the class, not siblings at the same depth.
         const code = `class Calculator:
     def add(self, x, y):
         return x + y
@@ -1151,14 +1150,45 @@ describe("scope_processor", () => {
           "python" as Language
         );
 
-        // Should throw error when building semantic index due to malformed scope tree
-        expect(() => {
-          build_semantic_index(
-            parsedFile,
-            tree,
-            "python" as Language
-          );
-        }).toThrow(/Malformed scope tree: multiple scopes at depth \d+ contain location/);
+        // Should successfully build semantic index with correct hierarchy
+        const index = build_semantic_index(
+          parsedFile,
+          tree,
+          "python" as Language
+        );
+
+
+        // Find the class and method scopes
+        const class_scope = Array.from(index.scopes.values()).find(s => s.type === "class");
+        const add_method_scope = Array.from(index.scopes.values()).find(s => s.type === "method" && s.name.includes("add"));
+        const subtract_method_scope = Array.from(index.scopes.values()).find(s => s.type === "method" && s.name.includes("subtract"));
+
+        expect(class_scope).toBeDefined();
+        expect(add_method_scope).toBeDefined();
+        expect(subtract_method_scope).toBeDefined();
+
+        // Method scopes should be children of class scope
+        expect(add_method_scope!.parent_id).toBe(class_scope!.id);
+        expect(subtract_method_scope!.parent_id).toBe(class_scope!.id);
+        expect(class_scope!.child_ids).toContain(add_method_scope!.id);
+        expect(class_scope!.child_ids).toContain(subtract_method_scope!.id);
+
+        // Verify depths: class should be depth 1 (child of module), methods should be depth 2 (children of class)
+        const compute_depth = (scope: LexicalScope): number => {
+          let depth = 0;
+          let current_id = scope.parent_id;
+          while (current_id) {
+            depth++;
+            const parent = index.scopes.get(current_id);
+            if (!parent) break;
+            current_id = parent.parent_id;
+          }
+          return depth;
+        };
+
+        expect(compute_depth(class_scope!)).toBe(1);  // Child of module
+        expect(compute_depth(add_method_scope!)).toBe(2); // Child of class
+        expect(compute_depth(subtract_method_scope!)).toBe(2); // Child of class
       });
 
       it("should correctly scope nested classes", () => {

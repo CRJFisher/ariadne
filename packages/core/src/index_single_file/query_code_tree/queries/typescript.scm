@@ -168,11 +168,13 @@
   )
 ) @scope.method
 
+; Arrow functions with return types
+; Note: Removed @definition.function to avoid duplicates with variable assignments
 (arrow_function
   return_type: (type_annotation
     (_) @type.type_annotation
   )
-) @definition.function
+) @type.function
 
 ; Property type annotations (interface)
 (property_signature
@@ -337,6 +339,7 @@
 )
 
 ; Arrow functions assigned to variables
+; Arrow functions assigned to variables (captures both assignment and function definition)
 (variable_declarator
   name: (identifier) @definition.function @assignment.variable
   value: (arrow_function) @assignment.variable.arrow

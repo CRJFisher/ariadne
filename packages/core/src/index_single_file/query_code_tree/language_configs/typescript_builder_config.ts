@@ -347,6 +347,7 @@ export const TYPESCRIPT_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
           is_exported: export_info.is_exported,
           export: export_info.export,
           return_type: extract_return_type(capture.node),
+          capture: capture,
         });
       },
     },
@@ -419,6 +420,7 @@ export const TYPESCRIPT_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
           async: is_async_method(capture.node),
           return_type: extract_return_type(capture.node),
           generics: parent ? extract_type_parameters(parent) : [],
+          capture: capture,
         });
       },
     },
@@ -451,6 +453,7 @@ export const TYPESCRIPT_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
           async: is_async_method(capture.node),
           return_type: extract_return_type(capture.node),
           generics: parent ? extract_type_parameters(parent) : [],
+          capture: capture,
         });
       },
     },
