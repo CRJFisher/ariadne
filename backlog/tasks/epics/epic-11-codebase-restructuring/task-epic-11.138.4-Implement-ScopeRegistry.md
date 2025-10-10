@@ -1,7 +1,7 @@
 # Task: Implement ScopeRegistry
 
 **Parent Task**: task-epic-11.138 - Implement Project Coordination Layer
-**Status**: Not Started
+**Status**: Completed
 **Priority**: High
 **Complexity**: Medium
 
@@ -557,4 +557,55 @@ export { ScopeRegistry } from './scope_registry'
 
 ## Implementation Notes
 
-(To be filled in during implementation)
+### Completed Implementation (2025-10-10)
+
+**Key Decisions:**
+1. Used existing `LexicalScope` type from `@ariadnejs/types` instead of creating a new Scope interface
+   - `LexicalScope` has: `id`, `parent_id`, `name`, `type`, `location`, `child_ids`
+   - This aligns with the existing codebase architecture
+
+2. Modified `update_file()` signature to accept `ReadonlyMap<ScopeId, LexicalScope>` instead of array
+   - This matches how scopes are stored in `SemanticIndex` (as a Map)
+   - More efficient for lookups and avoids unnecessary tree building
+
+3. Scope containment logic uses `start_line`/`start_column`/`end_line`/`end_column` from Location
+   - Inclusive boundaries on both start and end
+   - Simple line/column-based comparison
+
+**Files Created:**
+- `/packages/core/src/project/scope_registry.ts` - Main implementation (246 lines)
+- `/packages/core/src/project/scope_registry.test.ts` - Comprehensive tests (17 test cases)
+
+**Test Coverage:**
+- All 17 tests passing
+- Coverage includes:
+  - Basic CRUD operations (update, get, remove)
+  - Nested scope hierarchies (3 levels deep)
+  - Scope chain resolution (innermost to outermost)
+  - Edge cases (boundaries, non-existent files, empty scopes)
+  - Multi-file scenarios
+
+**Integration:**
+- Exported from `/packages/core/src/project/index.ts`
+- Ready to be integrated with Project Coordination Layer
+
+### Type Safety Fixes (2025-10-10)
+
+**Issues Found During TypeScript Compilation:**
+1. **Missing Type Import** - `FileId` doesn't exist in `@ariadnejs/types`
+   - **Fix:** Changed all `FileId` → `FilePath` throughout implementation
+   - Updated: import statement, class fields, all method signatures (6 methods)
+
+2. **Type Safety Issue** - `root_scope` could be `undefined` after fallback
+   - **Fix:** Added explicit type guard with error throwing
+   - Added validation: `if (!root_scope) throw new Error(...)`
+
+**Verification Results:**
+- ✅ TypeScript compilation: **ZERO ERRORS** (`tsc --noEmit`)
+- ✅ ScopeRegistry tests: **17/17 PASSED**
+- ✅ Full test suite: **1,139/1,144 PASSED** (5 pre-existing failures unrelated to ScopeRegistry)
+
+**Pre-existing Test Failures (NOT caused by ScopeRegistry):**
+- 3 failures in `namespace_resolution.test.ts` - namespace member resolution issues
+- 2 failures in `symbol_resolution.javascript.test.ts` - method call resolution issues
+- All failures are in higher-level symbol resolution logic, not scope management
