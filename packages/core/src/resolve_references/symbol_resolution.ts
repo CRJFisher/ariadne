@@ -59,6 +59,11 @@ import {
 } from "@ariadnejs/types";
 import { SemanticIndex } from "../index_single_file/semantic_index";
 import type { FileSystemFolder } from "./types";
+import { DefinitionRegistry } from "../project/definition_registry";
+import { TypeRegistry } from "../project/type_registry";
+import { ScopeRegistry } from "../project/scope_registry";
+import { ExportRegistry } from "../project/export_registry";
+import { ImportGraph } from "../project/import_graph";
 
 import { build_scope_resolver_index } from "./scope_resolver_index/scope_resolver_index";
 import { create_resolution_cache } from "./resolution_cache/resolution_cache";
@@ -112,6 +117,11 @@ import { build_namespace_sources } from "./import_resolution/import_resolver";
  *
  * @param indices - Map of file_path → SemanticIndex for all files in the codebase.
  *                  Each index must contain complete scope trees with definitions and references.
+ * @param definitions - Project-level registry of all definitions (from Project coordination layer).
+ * @param types - Project-level registry of type information (from Project coordination layer).
+ * @param scopes - Project-level registry of scope trees (from Project coordination layer).
+ * @param exports - Project-level registry of exported symbols (from Project coordination layer).
+ * @param imports - Project-level import dependency graph (from Project coordination layer).
  * @param root_folder - Root of the file system tree used for import resolution.
  *                      This enables resolution to work with in-memory test data without filesystem I/O.
  *
@@ -153,8 +163,18 @@ import { build_namespace_sources } from "./import_resolution/import_resolver";
  */
 export function resolve_symbols(
   indices: ReadonlyMap<FilePath, SemanticIndex>,
+  definitions: DefinitionRegistry,
+  types: TypeRegistry,
+  scopes: ScopeRegistry,
+  exports: ExportRegistry,
+  imports: ImportGraph,
   root_folder: FileSystemFolder
 ): ResolvedSymbols {
+  // NOTE: Registry parameters are currently unused but required for future refactoring.
+  // Sub-functions (build_scope_resolver_index, build_type_context, etc.) will be
+  // updated to use these registries directly instead of SemanticIndex maps.
+  // This transitional state maintains backwards compatibility while enabling
+  // Project coordination layer integration.
   // Phase 1: Build scope resolver index (lightweight)
   // Creates resolver functions: scope_id -> name -> resolver()
   // Includes lazy import resolvers that follow export chains on-demand

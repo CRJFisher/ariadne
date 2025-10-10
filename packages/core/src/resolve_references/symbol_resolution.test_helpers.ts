@@ -28,10 +28,18 @@ import type {
   DecoratorDefinition,
   SymbolKind,
   ExportableDefinition,
+  ResolvedSymbols,
 } from "@ariadnejs/types";
 import { location_key } from "@ariadnejs/types";
 import { SemanticIndex } from "../index_single_file/semantic_index";
 import type { FileSystemFolder } from "./types";
+import { DefinitionRegistry } from "../project/definition_registry";
+import { TypeRegistry } from "../project/type_registry";
+import { ScopeRegistry } from "../project/scope_registry";
+import { ExportRegistry } from "../project/export_registry";
+import { ImportGraph } from "../project/import_graph";
+import { build_derived_data } from "../index_single_file/derived_data";
+import { resolve_symbols } from "./symbol_resolution";
 
 // ============================================================================
 // Test Helper: Create Semantic Index with Smart Defaults
@@ -675,4 +683,122 @@ export function build_file_tree(file_paths: FilePath[]): FileSystemFolder {
   }
 
   return root;
+}
+
+/**
+ * Test helper to call resolve_symbols with registries
+ *
+ * This helper creates all necessary registries from semantic indices and calls
+ * resolve_symbols with the new signature that accepts registry parameters.
+ * It provides backwards compatibility for existing tests during the migration
+ * to the Project coordination layer.
+ *
+ * @param indices - Map of file_path → SemanticIndex
+ * @param root_folder - Root of the file system tree
+ * @returns ResolvedSymbols from resolve_symbols
+ */
+export function resolve_symbols_with_registries(
+  indices: ReadonlyMap<FilePath, SemanticIndex>,
+  root_folder: FileSystemFolder
+): ResolvedSymbols {
+  // Create registry instances
+  const definitions = new DefinitionRegistry();
+  const types = new TypeRegistry();
+  const scopes = new ScopeRegistry();
+  const exports = new ExportRegistry();
+  const imports = new ImportGraph();
+
+  // Populate registries from indices
+  for (const [file_path, index] of indices) {
+    // Collect all definitions
+    const all_definitions: AnyDefinition[] = [
+      ...Array.from(index.functions.values()),
+      ...Array.from(index.classes.values()),
+      ...Array.from(index.variables.values()),
+      ...Array.from(index.interfaces.values()),
+      ...Array.from(index.enums.values()),
+      ...Array.from(index.namespaces.values()),
+      ...Array.from(index.types.values()),
+      ...Array.from(index.imported_symbols.values()),
+    ];
+
+    // Update definition registry
+    definitions.update_file(file_path, all_definitions);
+
+    // Build derived data and update type registry
+    const derived = build_derived_data(index);
+    types.update_file(file_path, derived);
+
+    // Update scope registry
+    scopes.update_file(file_path, index.scopes);
+
+    // Update export registry
+    const exported_symbol_ids = new Set(
+      Array.from(derived.exported_symbols.values()).map((def) => def.symbol_id)
+    );
+    exports.update_file(file_path, exported_symbol_ids);
+
+    // Update import graph (simplified - extract from imported_symbols)
+    const import_statements = extract_imports_from_imported_symbols(
+      index.imported_symbols,
+      file_path
+    );
+    imports.update_file(file_path, import_statements);
+  }
+
+  // Call resolve_symbols with registries
+  return resolve_symbols(
+    indices,
+    definitions,
+    types,
+    scopes,
+    exports,
+    imports,
+    root_folder
+  );
+}
+
+/**
+ * Extract Import[] from ImportDefinition map
+ * Helper for resolve_symbols_with_registries
+ */
+function extract_imports_from_imported_symbols(
+  imported_symbols: ReadonlyMap<SymbolId, ImportDefinition>,
+  current_file: FilePath
+): any[] {
+  const imports_by_source = new Map<FilePath, any>();
+
+  for (const imp_def of imported_symbols.values()) {
+    let source_path = imp_def.import_path as string;
+
+    // Basic path resolution
+    if (source_path.startsWith("./")) {
+      source_path = source_path.slice(2);
+    }
+
+    if (
+      !source_path.includes(".") &&
+      !source_path.startsWith("@") &&
+      !source_path.includes("/node_modules/")
+    ) {
+      const ext = current_file.split(".").pop() || "ts";
+      source_path = `${source_path}.${ext}`;
+    }
+
+    const source = source_path as FilePath;
+
+    if (!imports_by_source.has(source)) {
+      imports_by_source.set(source, {
+        kind: "named",
+        source,
+        imports: [],
+        location: imp_def.location,
+        language: "typescript",
+        node_type: "import_statement",
+        modifiers: [],
+      });
+    }
+  }
+
+  return Array.from(imports_by_source.values());
 }

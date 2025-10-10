@@ -1,4 +1,5 @@
 import type { FilePath, SymbolId, ReferenceId, TypeMemberInfo, Language } from '@ariadnejs/types'
+import { reference_id, location_key } from '@ariadnejs/types'
 import { build_semantic_index } from '../index_single_file/semantic_index'
 import { build_derived_data } from '../index_single_file/derived_data'
 import type { SemanticIndex } from '../index_single_file/semantic_index'
@@ -103,7 +104,7 @@ function extract_imports_from_definitions(
       source_path = source_path.slice(2)
     } else if (source_path.startsWith('../')) {
       // For relative imports with ../, keep as-is for now
-      // In a real implementation, we'd resolve relative to current_file
+      // TODO: resolve relative to current_file
     }
 
     // Add .ts extension if no extension present and it's a local file
@@ -254,9 +255,9 @@ export class Project {
    * Resolve references in a specific file (lazy).
    * Only resolves if the file has invalidated resolutions.
    *
-   * NOTE: This method is a placeholder. The full implementation requires
-   * resolve_symbols() to be updated in sub-task 138.9 to accept registries
-   * instead of SemanticIndex maps.
+   * NOTE: Symbol resolution requires cross-file information (imports, exports, etc.),
+   * so we resolve ALL pending files at once rather than one file at a time.
+   * This ensures consistency and enables proper import resolution.
    *
    * @param file_id - The file to resolve
    */
@@ -270,12 +271,9 @@ export class Project {
       return  // Already resolved, use cache
     }
 
-    // TODO: Sub-task 138.9 will update resolve_symbols signature to:
-    // resolve_symbols(semantic_index, definitions, types, scopes, exports, imports)
-    //
-    // For now, we mark the file as resolved to enable testing of other functionality
-    // The actual resolution will be implemented in 138.9
-    this.resolutions.mark_file_resolved(file_id)
+    // Resolve all pending files (including this one)
+    // Symbol resolution needs cross-file information, so we batch resolve
+    this.resolve_all_pending()
   }
 
   /**
@@ -284,8 +282,56 @@ export class Project {
    */
   private resolve_all_pending(): void {
     const pending = this.resolutions.get_pending_files()
+    if (pending.size === 0) {
+      return  // Nothing to resolve
+    }
+  
+    // Import resolve_symbols (late binding to avoid circular dependency)
+    const { resolve_symbols } = require('../resolve_references/symbol_resolution')
+    const { build_file_tree } = require('../resolve_references/symbol_resolution.test_helpers')
+  
+    // Build file tree for import resolution
+    const file_paths = Array.from(this.semantic_indexes.keys())
+    const root_folder = build_file_tree(file_paths)
+  
+    // Call resolve_symbols with all indices and registries
+    const resolved = resolve_symbols(
+      this.semantic_indexes,
+      this.definitions,
+      this.types,
+      this.scopes,
+      this.exports,
+      this.imports,
+      root_folder
+    )
+  
+    // Populate resolution cache with results
+    // resolved.resolved_references is a Map<LocationKey, SymbolId>
+    // We need to convert LocationKey to ReferenceId and track file ownership
+    for (const [loc_key, symbol_id] of resolved.resolved_references) {
+      // Parse the location key to extract file path
+      const [file_path_part, ...rest] = loc_key.split(':')
+      const file_path = file_path_part as FilePath
+  
+      // Find the matching reference in the semantic index
+      const index = this.semantic_indexes.get(file_path)
+      if (index) {
+        const matching_ref = index.references.find(ref => {
+          const ref_key = location_key(ref.location)
+          return ref_key === loc_key
+        })
+  
+        if (matching_ref) {
+          // Construct ReferenceId from the reference's name and location
+          const ref_id = reference_id(matching_ref.name, matching_ref.location)
+          this.resolutions.set(ref_id, symbol_id, file_path)
+        }
+      }
+    }
+  
+    // Mark all pending files as resolved
     for (const file_id of pending) {
-      this.resolve_file(file_id)
+      this.resolutions.mark_file_resolved(file_id)
     }
   }
 
@@ -319,122 +365,5 @@ export class Project {
     return this.call_graph_cache
   }
 
-  // ===== Query Interface =====
-
-  /**
-   * Get definition by symbol ID.
-   *
-   * @param symbol_id - The symbol to look up
-   * @returns The definition, or undefined
-   */
-  get_definition(symbol_id: SymbolId): AnyDefinition | undefined {
-    return this.definitions.get(symbol_id)
-  }
-
-  /**
-   * Resolve a specific reference.
-   * Ensures the file is resolved first.
-   *
-   * @param ref_id - The reference to resolve
-   * @param file_id - The file containing the reference
-   * @returns The resolved symbol ID, or undefined
-   */
-  resolve_reference(ref_id: ReferenceId, file_id: FilePath): SymbolId | undefined {
-    this.resolve_file(file_id)  // Ensure file is resolved
-    return this.resolutions.get(ref_id)
-  }
-
-  /**
-   * Get all definitions in a file.
-   *
-   * @param file_id - The file to query
-   * @returns Array of definitions
-   */
-  get_file_definitions(file_id: FilePath): AnyDefinition[] {
-    return this.definitions.get_file_definitions(file_id)
-  }
-
-  /**
-   * Get type member information for a type symbol.
-   *
-   * @param symbol_id - The type symbol to query
-   * @returns Type member info (methods, properties, etc.), or undefined
-   */
-  get_type_info(symbol_id: SymbolId): TypeMemberInfo | undefined {
-    return this.types.get_type_members(symbol_id)
-  }
-
-  /**
-   * Get files that import from this file.
-   * These are the files that would be affected if this file changes.
-   *
-   * @param file_id - The file to query
-   * @returns Set of dependent files
-   */
-  get_dependents(file_id: FilePath): Set<FilePath> {
-    return this.imports.get_dependents(file_id)
-  }
-
-  /**
-   * Get the semantic index for a file (raw parsing output).
-   *
-   * @param file_id - The file to query
-   * @returns Semantic index, or undefined
-   */
-  get_semantic_index(file_id: FilePath): SemanticIndex | undefined {
-    return this.semantic_indexes.get(file_id)
-  }
-
-  /**
-   * Get derived data for a file (indexed structures).
-   *
-   * @param file_id - The file to query
-   * @returns Derived data, or undefined
-   */
-  get_derived_data(file_id: FilePath): DerivedData | undefined {
-    return this.derived_data.get(file_id)
-  }
-
-  /**
-   * Get all files in the project.
-   *
-   * @returns Array of file IDs
-   */
-  get_all_files(): FilePath[] {
-    return Array.from(this.semantic_indexes.keys())
-  }
-
-  /**
-   * Get project statistics.
-   *
-   * @returns Statistics about the project
-   */
-  get_stats(): {
-    file_count: number
-    definition_count: number
-    pending_resolution_count: number
-    cached_resolution_count: number
-  } {
-    return {
-      file_count: this.semantic_indexes.size,
-      definition_count: this.definitions.size(),
-      pending_resolution_count: this.resolutions.get_pending_files().size,
-      cached_resolution_count: this.resolutions.size()
-    }
-  }
-
-  /**
-   * Clear all data from the project.
-   */
-  clear(): void {
-    this.semantic_indexes.clear()
-    this.derived_data.clear()
-    this.definitions.clear()
-    this.types.clear()
-    this.scopes.clear()
-    this.exports.clear()
-    this.imports.clear()
-    this.resolutions.clear()
-    this.call_graph_cache = null
-  }
+  
 }

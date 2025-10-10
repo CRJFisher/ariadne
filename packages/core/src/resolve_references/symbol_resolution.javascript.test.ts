@@ -14,7 +14,6 @@
  */
 
 import { describe, it, expect } from "vitest";
-import { resolve_symbols } from "./symbol_resolution";
 
 import type {
   FilePath,
@@ -35,7 +34,11 @@ import type {
 } from "@ariadnejs/types";
 import type { SemanticIndex } from "../index_single_file/semantic_index";
 import { location_key } from "@ariadnejs/types";
-import { create_test_index, build_file_tree } from "./symbol_resolution.test_helpers";
+import {
+  create_test_index,
+  build_file_tree,
+  resolve_symbols_with_registries,
+} from "./symbol_resolution.test_helpers";
 
 // ============================================================================
 // JavaScript Symbol Resolution Integration Tests
@@ -114,7 +117,7 @@ describe("JavaScript Symbol Resolution Integration", () => {
 
       const indices = new Map<FilePath, SemanticIndex>([[file_path, index]]);
       const root_folder = build_file_tree(Array.from(indices.keys()));
-      const result = resolve_symbols(indices, root_folder);
+      const result = resolve_symbols_with_registries(indices, root_folder);
 
       const call_key = location_key(call_location);
       expect(result.resolved_references.get(call_key)).toBe(helper_id);
@@ -209,7 +212,7 @@ describe("JavaScript Symbol Resolution Integration", () => {
 
       const indices = new Map<FilePath, SemanticIndex>([[file_path, index]]);
       const root_folder = build_file_tree(Array.from(indices.keys()));
-      const result = resolve_symbols(indices, root_folder);
+      const result = resolve_symbols_with_registries(indices, root_folder);
 
       const call_key = location_key(call_location);
       expect(result.resolved_references.get(call_key)).toBe(helper_id);
@@ -328,7 +331,7 @@ describe("JavaScript Symbol Resolution Integration", () => {
 
       const indices = new Map<FilePath, SemanticIndex>([[file_path, index]]);
       const root_folder = build_file_tree(Array.from(indices.keys()));
-      const result = resolve_symbols(indices, root_folder);
+      const result = resolve_symbols_with_registries(indices, root_folder);
 
       // Call should resolve to local helper due to hoisting in JavaScript
       const call_key = location_key(early_call_location);
@@ -464,7 +467,7 @@ describe("JavaScript Symbol Resolution Integration", () => {
       ]);
 
       const root_folder = build_file_tree(Array.from(indices.keys()));
-      const result = resolve_symbols(indices, root_folder);
+      const result = resolve_symbols_with_registries(indices, root_folder);
 
       const call_key = location_key(call_location);
       expect(result.resolved_references.get(call_key)).toBe(helper_id);
@@ -654,7 +657,7 @@ describe("JavaScript Symbol Resolution Integration", () => {
       ]);
 
       const root_folder = build_file_tree(Array.from(indices.keys()));
-      const result = resolve_symbols(indices, root_folder);
+      const result = resolve_symbols_with_registries(indices, root_folder);
 
       // Should resolve to core in base.js (not middle.js)
       const call_key = location_key(call_location);
@@ -788,7 +791,7 @@ describe("JavaScript Symbol Resolution Integration", () => {
       ]);
 
       const root_folder = build_file_tree(Array.from(indices.keys()));
-      const result = resolve_symbols(indices, root_folder);
+      const result = resolve_symbols_with_registries(indices, root_folder);
 
       const call_key = location_key(call_location);
       expect(result.resolved_references.get(call_key)).toBe(helper_id);
@@ -1015,7 +1018,7 @@ describe("JavaScript Symbol Resolution Integration", () => {
       ]);
 
       const root_folder = build_file_tree(Array.from(indices.keys()));
-      const result = resolve_symbols(indices, root_folder);
+      const result = resolve_symbols_with_registries(indices, root_folder);
 
       // Verify constructor call resolves to User class
       const constructor_key = location_key(constructor_call_location);
@@ -1104,7 +1107,7 @@ describe("JavaScript Symbol Resolution Integration", () => {
 
       const indices = new Map<FilePath, SemanticIndex>([[file_path, index]]);
       const root_folder = build_file_tree(Array.from(indices.keys()));
-      const result = resolve_symbols(indices, root_folder);
+      const result = resolve_symbols_with_registries(indices, root_folder);
 
       const call_key = location_key(call_location);
       expect(result.resolved_references.get(call_key)).toBe(user_class_id);
@@ -1237,7 +1240,7 @@ describe("JavaScript Symbol Resolution Integration", () => {
       ]);
 
       const root_folder = build_file_tree(Array.from(indices.keys()));
-      const result = resolve_symbols(indices, root_folder);
+      const result = resolve_symbols_with_registries(indices, root_folder);
 
       const call_key = location_key(call_location);
       expect(result.resolved_references.get(call_key)).toBe(user_class_id);
@@ -1652,7 +1655,7 @@ describe("JavaScript Symbol Resolution Integration", () => {
       ]);
 
       const root_folder = build_file_tree(Array.from(indices.keys()));
-      const result = resolve_symbols(indices, root_folder);
+      const result = resolve_symbols_with_registries(indices, root_folder);
 
       // Verify UserService constructor call in main.js
       const main_constructor_key = location_key(main_constructor_location);
@@ -1831,7 +1834,7 @@ describe("JavaScript Symbol Resolution Integration", () => {
       ]);
 
       const root_folder = build_file_tree(Array.from(indices.keys()));
-      const result = resolve_symbols(indices, root_folder);
+      const result = resolve_symbols_with_registries(indices, root_folder);
 
       // Should resolve to LOCAL helper, not imported one (shadowing)
       const call_key = location_key(call_location);

@@ -34,11 +34,10 @@
  *    - Tests: Associated functions, method calls, trait method resolution
  *
  * All `.todo()` tests are correctly structured and will automatically pass
- * once the corresponding features are integrated into resolve_symbols.
+ * once the corresponding features are integrated into resolve_symbols_with_registries.
  */
 
 import { describe, it, expect } from "vitest";
-import { resolve_symbols } from "./symbol_resolution";
 
 import type {
   FilePath,
@@ -60,7 +59,11 @@ import type {
 } from "@ariadnejs/types";
 import { location_key } from "@ariadnejs/types";
 import type { SemanticIndex } from "../index_single_file/semantic_index";
-import { create_test_index, build_file_tree } from "./symbol_resolution.test_helpers";
+import {
+  create_test_index,
+  build_file_tree,
+  resolve_symbols_with_registries,
+} from "./symbol_resolution.test_helpers";
 
 // ============================================================================
 // Rust Symbol Resolution Integration Tests
@@ -137,7 +140,7 @@ describe("Rust Symbol Resolution Integration", () => {
 
       const indices = new Map<FilePath, SemanticIndex>([[file_path, index]]);
       const root_folder = build_file_tree(Array.from(indices.keys()));
-      const result = resolve_symbols(indices, root_folder);
+      const result = resolve_symbols_with_registries(indices, root_folder);
 
       const call_key = location_key(call_location);
       expect(result.resolved_references.get(call_key)).toBe(helper_id);
@@ -267,7 +270,7 @@ describe("Rust Symbol Resolution Integration", () => {
       ]);
 
       const root_folder = build_file_tree(Array.from(indices.keys()));
-      const result = resolve_symbols(indices, root_folder);
+      const result = resolve_symbols_with_registries(indices, root_folder);
 
       const call_key = location_key(call_location);
       expect(result.resolved_references.get(call_key)).toBe(helper_id);
@@ -374,7 +377,7 @@ describe("Rust Symbol Resolution Integration", () => {
       ]);
 
       const root_folder = build_file_tree(Array.from(indices.keys()));
-      const result = resolve_symbols(indices, root_folder);
+      const result = resolve_symbols_with_registries(indices, root_folder);
 
       const call_key = location_key(call_location);
       expect(result.resolved_references.get(call_key)).toBe(helper_id);
@@ -505,7 +508,7 @@ describe("Rust Symbol Resolution Integration", () => {
       ]);
 
       const root_folder = build_file_tree(Array.from(indices.keys()));
-      const result = resolve_symbols(indices, root_folder);
+      const result = resolve_symbols_with_registries(indices, root_folder);
 
       const call_key = location_key(call_location);
       expect(result.resolved_references.get(call_key)).toBe(process_id);
@@ -640,7 +643,7 @@ describe("Rust Symbol Resolution Integration", () => {
       ]);
 
       const root_folder = build_file_tree(Array.from(indices.keys()));
-      const result = resolve_symbols(indices, root_folder);
+      const result = resolve_symbols_with_registries(indices, root_folder);
 
       const call_key = location_key(user_call_location);
       expect(result.resolved_references.get(call_key)).toBe(user_struct_id);
@@ -719,7 +722,7 @@ describe("Rust Symbol Resolution Integration", () => {
       ]);
 
       const root_folder = build_file_tree(Array.from(indices.keys()));
-      const result = resolve_symbols(indices, root_folder);
+      const result = resolve_symbols_with_registries(indices, root_folder);
 
       const call_key = location_key(call_location);
       expect(result.resolved_references.get(call_key)).toBe(inner_helper_id);
@@ -828,7 +831,7 @@ describe("Rust Symbol Resolution Integration", () => {
 
       const indices = new Map<FilePath, SemanticIndex>([[file_path, index]]);
       const root_folder = build_file_tree(Array.from(indices.keys()));
-      const result = resolve_symbols(indices, root_folder);
+      const result = resolve_symbols_with_registries(indices, root_folder);
 
       const call_key = location_key(call_location);
       expect(result.resolved_references.get(call_key)).toBe(new_method_id);
@@ -1063,7 +1066,7 @@ describe("Rust Symbol Resolution Integration", () => {
       ]);
 
       const root_folder = build_file_tree(Array.from(indices.keys()));
-      const result = resolve_symbols(indices, root_folder);
+      const result = resolve_symbols_with_registries(indices, root_folder);
 
       // Verify User::new call
       const new_key = location_key(new_call_location);
@@ -1260,7 +1263,7 @@ describe("Rust Symbol Resolution Integration", () => {
       ]);
 
       const root_folder = build_file_tree(Array.from(indices.keys()));
-      const result = resolve_symbols(indices, root_folder);
+      const result = resolve_symbols_with_registries(indices, root_folder);
 
       const display_key = location_key(display_call_location);
       expect(result.resolved_references.get(display_key)).toBe(
@@ -1394,7 +1397,7 @@ describe("Rust Symbol Resolution Integration", () => {
       ]);
 
       const root_folder = build_file_tree(Array.from(indices.keys()));
-      const result = resolve_symbols(indices, root_folder);
+      const result = resolve_symbols_with_registries(indices, root_folder);
 
       const call_key = location_key(call_location);
       expect(result.resolved_references.get(call_key)).toBe(helper_id);
@@ -1524,7 +1527,7 @@ describe("Rust Symbol Resolution Integration", () => {
       ]);
 
       const root_folder = build_file_tree(Array.from(indices.keys()));
-      const result = resolve_symbols(indices, root_folder);
+      const result = resolve_symbols_with_registries(indices, root_folder);
 
       const call_key = location_key(call_location);
       expect(result.resolved_references.get(call_key)).toBe(helper_id);
@@ -1682,7 +1685,7 @@ describe("Rust Symbol Resolution Integration", () => {
       ]);
 
       const root_folder = build_file_tree(Array.from(indices.keys()));
-      const result = resolve_symbols(indices, root_folder);
+      const result = resolve_symbols_with_registries(indices, root_folder);
 
       const call_key = location_key(call_location);
       expect(result.resolved_references.get(call_key)).toBe(trim_id);
@@ -1877,7 +1880,7 @@ describe("Rust Symbol Resolution Integration", () => {
       ]);
 
       const root_folder = build_file_tree(Array.from(indices.keys()));
-      const result = resolve_symbols(indices, root_folder);
+      const result = resolve_symbols_with_registries(indices, root_folder);
 
       const process_key = location_key(process_call_location);
       expect(result.resolved_references.get(process_key)).toBe(
@@ -2042,7 +2045,7 @@ describe("Rust Symbol Resolution Integration", () => {
       ]);
 
       const root_folder = build_file_tree(Array.from(indices.keys()));
-      const result = resolve_symbols(indices, root_folder);
+      const result = resolve_symbols_with_registries(indices, root_folder);
 
       // Should resolve to the default implementation in the trait
       const log_key = location_key(log_call_location);
@@ -2442,7 +2445,7 @@ describe("Rust Symbol Resolution Integration", () => {
       ]);
 
       const root_folder = build_file_tree(Array.from(indices.keys()));
-      const result = resolve_symbols(indices, root_folder);
+      const result = resolve_symbols_with_registries(indices, root_folder);
 
       // Verify register_user method call in main.rs
       const register_user_key = location_key(register_user_call_location);
@@ -2670,7 +2673,7 @@ describe("Rust Symbol Resolution Integration", () => {
       ]);
 
       const root_folder = build_file_tree(Array.from(indices.keys()));
-      const result = resolve_symbols(indices, root_folder);
+      const result = resolve_symbols_with_registries(indices, root_folder);
 
       // Verify process call resolves to Item's implementation
       const process_key = location_key(process_call_location);

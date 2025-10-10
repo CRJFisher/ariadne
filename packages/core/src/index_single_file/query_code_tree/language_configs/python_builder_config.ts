@@ -268,7 +268,6 @@ export const PYTHON_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
         context: ProcessingContext
       ) => {
         const func_id = create_function_id(capture);
-        const isAsync = is_async_function(capture.node.parent || capture.node);
         const defining_scope_id = context.get_scope_id(capture.location);
         const export_info = extract_export_info(
           capture.text,

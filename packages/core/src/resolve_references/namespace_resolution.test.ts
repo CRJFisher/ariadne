@@ -29,8 +29,11 @@ import type {
 } from "@ariadnejs/types";
 import type { SemanticIndex } from "../index_single_file/semantic_index";
 import { location_key } from "@ariadnejs/types";
-import { resolve_symbols } from "./symbol_resolution";
-import { create_test_index, build_file_tree } from "./symbol_resolution.test_helpers";
+import {
+  create_test_index,
+  build_file_tree,
+  resolve_symbols_with_registries,
+} from "./symbol_resolution.test_helpers";
 
 // ============================================================================
 // Namespace Import Resolution Tests
@@ -208,7 +211,7 @@ describe("Namespace Import Resolution", () => {
       ]);
 
       const root_folder = build_file_tree([utils_file, main_file]);
-      const resolved = resolve_symbols(indices, root_folder);
+      const resolved = resolve_symbols_with_registries(indices, root_folder);
       const call_key = location_key(call_location);
       const resolved_symbol = resolved.resolved_references.get(call_key);
 
@@ -387,7 +390,7 @@ describe("Namespace Import Resolution", () => {
       ]);
 
       const root_folder = build_file_tree([utils_file, main_file]);
-      const resolved = resolve_symbols(indices, root_folder);
+      const resolved = resolve_symbols_with_registries(indices, root_folder);
       const call_key = location_key(call_location);
       const resolved_symbol = resolved.resolved_references.get(call_key);
 
@@ -645,7 +648,7 @@ describe("Namespace Import Resolution", () => {
       ]);
 
       const root_folder = build_file_tree([utils_file, main_file]);
-      const resolved = resolve_symbols(indices, root_folder);
+      const resolved = resolve_symbols_with_registries(indices, root_folder);
 
       const call_a_key = location_key(call_a_location);
       const call_b_key = location_key(call_b_location);
@@ -826,7 +829,7 @@ describe("Namespace Import Resolution", () => {
       ]);
 
       const root_folder = build_file_tree([utils_file, main_file]);
-      const resolved = resolve_symbols(indices, root_folder);
+      const resolved = resolve_symbols_with_registries(indices, root_folder);
       const call_key = location_key(call_location);
       const resolved_symbol = resolved.resolved_references.get(call_key);
 
@@ -918,7 +921,7 @@ describe("Namespace Import Resolution", () => {
       ]);
 
       const root_folder = build_file_tree([main_file]);
-      const resolved = resolve_symbols(indices, root_folder);
+      const resolved = resolve_symbols_with_registries(indices, root_folder);
       const call_key = location_key(call_location);
       const resolved_symbol = resolved.resolved_references.get(call_key);
 

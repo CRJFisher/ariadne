@@ -68,7 +68,10 @@ export interface SemanticIndex {
 
   /** Scope data */
   readonly scopes: ReadonlyMap<ScopeId, LexicalScope>;
-  readonly scope_to_definitions: ReadonlyMap<ScopeId, ReadonlyMap<SymbolKind, AnyDefinition[]>>;
+  readonly scope_to_definitions: ReadonlyMap<
+    ScopeId,
+    ReadonlyMap<SymbolKind, AnyDefinition[]>
+  >;
 
   /** Definitions */
   readonly functions: ReadonlyMap<SymbolId, FunctionDefinition>;
@@ -93,7 +96,6 @@ export interface SemanticIndex {
   readonly type_members: ReadonlyMap<SymbolId, TypeMemberInfo>; // type → methods/properties (Extracted from classes, interfaces, enums)
   // TODO: this isn't used anywhere - why not?
   readonly type_alias_metadata: ReadonlyMap<SymbolId, string>; // alias → type_expression string (Extracted from TypeAliasDefinition)
-
 }
 
 // ============================================================================
@@ -295,7 +297,9 @@ function process_definitions(
 /**
  * Build name-based lookup index from all definitions
  */
-function build_scope_to_definitions(result: BuilderResult): Map<ScopeId, Map<SymbolKind, AnyDefinition[]>> {
+function build_scope_to_definitions(
+  result: BuilderResult
+): Map<ScopeId, Map<SymbolKind, AnyDefinition[]>> {
   const index = new Map<ScopeId, Map<SymbolKind, AnyDefinition[]>>();
 
   const add_to_index = (def: AnyDefinition) => {
@@ -335,7 +339,9 @@ function build_scope_to_definitions(result: BuilderResult): Map<ScopeId, Map<Sym
  * @returns Map from export name to definition
  * @throws Error if duplicate export names are found
  */
-function build_exported_symbols_map(result: BuilderResult): Map<SymbolName, ExportableDefinition> {
+function build_exported_symbols_map(
+  result: BuilderResult
+): Map<SymbolName, ExportableDefinition> {
   const map = new Map<SymbolName, ExportableDefinition>();
 
   const add_to_map = (def: ExportableDefinition) => {
@@ -359,9 +365,9 @@ function build_exported_symbols_map(result: BuilderResult): Map<SymbolName, Expo
     if (existing) {
       throw new Error(
         `Duplicate export name "${export_name}" in file.\n` +
-        `  First:  ${existing.kind} ${existing.symbol_id}\n` +
-        `  Second: ${def.kind} ${def.symbol_id}\n` +
-        `This indicates a bug in is_exported logic or malformed source code.`
+          `  First:  ${existing.kind} ${existing.symbol_id}\n` +
+          `  Second: ${def.kind} ${def.symbol_id}\n` +
+          `This indicates a bug in is_exported logic or malformed source code.`
       );
     }
 
@@ -387,9 +393,9 @@ function build_exported_symbols_map(result: BuilderResult): Map<SymbolName, Expo
       if (existing) {
         throw new Error(
           `Duplicate export name "${export_name}" in file.\n` +
-          `  First:  ${existing.kind} ${existing.symbol_id}\n` +
-          `  Second: ${imp.kind} ${imp.symbol_id}\n` +
-          `This indicates a bug in re-export logic or malformed source code.`
+            `  First:  ${existing.kind} ${existing.symbol_id}\n` +
+            `  Second: ${imp.kind} ${imp.symbol_id}\n` +
+            `This indicates a bug in re-export logic or malformed source code.`
         );
       }
       map.set(export_name, imp as any); // ImportDefinition is not ExportableDefinition but should work for chain resolution
@@ -414,6 +420,10 @@ export interface ProcessingContext {
   root_scope_id: ScopeId;
   /** Find the deepest scope containing a location */
   get_scope_id(location: Location): ScopeId;
+  get_child_scope_with_symbol_name(
+    scope_id: ScopeId,
+    name: SymbolName
+  ): ScopeId;
 }
 /**
  * Capture node from tree-sitter query
@@ -470,7 +480,7 @@ export enum SemanticEntity {
   MEMBER_ACCESS = "member_access",
   TYPE_REFERENCE = "type_reference",
   TYPEOF = "typeof",
-  WRITE = "write",  // Variable write/assignment
+  WRITE = "write", // Variable write/assignment
 
   // Special
   THIS = "this",

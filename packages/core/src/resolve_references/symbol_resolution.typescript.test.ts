@@ -13,11 +13,10 @@
  * - Complex scenarios (method chains, namespaces, type narrowing)
  *
  * All `.todo()` tests are correctly structured and will automatically pass
- * once the corresponding features are integrated into resolve_symbols.
+ * once the corresponding features are integrated into resolve_symbols_with_registries.
  */
 
 import { describe, it, expect } from "vitest";
-import { resolve_symbols } from "./symbol_resolution";
 
 import type {
   FilePath,
@@ -33,7 +32,11 @@ import type {
 } from "@ariadnejs/types";
 import { location_key } from "@ariadnejs/types";
 import { SemanticIndex } from "../index_single_file/semantic_index";
-import { create_test_index, build_file_tree } from "./symbol_resolution.test_helpers";
+import {
+  create_test_index,
+  build_file_tree,
+  resolve_symbols_with_registries,
+} from "./symbol_resolution.test_helpers";
 
 // ============================================================================
 // TypeScript Symbol Resolution Integration Tests
@@ -85,7 +88,7 @@ describe("TypeScript Symbol Resolution Integration", () => {
 
       const indices = new Map<FilePath, SemanticIndex>([[file_path, index]]);
       const root_folder = build_file_tree(Array.from(indices.keys()));
-      const result = resolve_symbols(indices, root_folder);
+      const result = resolve_symbols_with_registries(indices, root_folder);
 
       const call_key = location_key(call_location);
       expect(result.resolved_references.get(call_key)).toBe(user_class_id);
@@ -232,7 +235,7 @@ describe("TypeScript Symbol Resolution Integration", () => {
 
       const indices = new Map<FilePath, SemanticIndex>([[file_path, index]]);
       const root_folder = build_file_tree(Array.from(indices.keys()));
-      const result = resolve_symbols(indices, root_folder);
+      const result = resolve_symbols_with_registries(indices, root_folder);
 
       const method_key = location_key(method_call_location);
       expect(result.resolved_references.get(method_key)).toBe(
@@ -275,7 +278,7 @@ describe("TypeScript Symbol Resolution Integration", () => {
 
       const indices = new Map<FilePath, SemanticIndex>([[file_path, index]]);
       const root_folder = build_file_tree(Array.from(indices.keys()));
-      const result = resolve_symbols(indices, root_folder);
+      const result = resolve_symbols_with_registries(indices, root_folder);
 
       const call_key = location_key(call_location);
       expect(result.resolved_references.get(call_key)).toBe(greet_func_id);
@@ -496,7 +499,7 @@ describe("TypeScript Symbol Resolution Integration", () => {
       ]);
 
       const root_folder = build_file_tree(Array.from(indices.keys()));
-      const result = resolve_symbols(indices, root_folder);
+      const result = resolve_symbols_with_registries(indices, root_folder);
 
       // Verify getName() resolves to User.getName via explicit type annotation
       const method_key = location_key(method_call_location);
@@ -723,7 +726,7 @@ describe("TypeScript Symbol Resolution Integration", () => {
       ]);
 
       const root_folder = build_file_tree(Array.from(indices.keys()));
-      const result = resolve_symbols(indices, root_folder);
+      const result = resolve_symbols_with_registries(indices, root_folder);
 
       // Verify constructor call
       const constructor_key = location_key(constructor_call_location);
@@ -1020,7 +1023,7 @@ describe("TypeScript Symbol Resolution Integration", () => {
       ]);
 
       const root_folder = build_file_tree(Array.from(indices.keys()));
-      const result = resolve_symbols(indices, root_folder);
+      const result = resolve_symbols_with_registries(indices, root_folder);
 
       // Verify createUser() call resolves
       const func_call_key = location_key(createUser_call_location);
@@ -1385,7 +1388,7 @@ describe("TypeScript Symbol Resolution Integration", () => {
       ]);
 
       const root_folder = build_file_tree(Array.from(indices.keys()));
-      const result = resolve_symbols(indices, root_folder);
+      const result = resolve_symbols_with_registries(indices, root_folder);
 
       // Verify constructor call
       const constructor_key = location_key(constructor_call_location);
@@ -1621,7 +1624,7 @@ describe("TypeScript Symbol Resolution Integration", () => {
       ]);
 
       const root_folder = build_file_tree(Array.from(indices.keys()));
-      const result = resolve_symbols(indices, root_folder);
+      const result = resolve_symbols_with_registries(indices, root_folder);
 
       // Verify constructor call
       const constructor_key = location_key(constructor_call_location);
@@ -1760,7 +1763,7 @@ describe("TypeScript Symbol Resolution Integration", () => {
       ]);
 
       const root_folder = build_file_tree(Array.from(indices.keys()));
-      const result = resolve_symbols(indices, root_folder);
+      const result = resolve_symbols_with_registries(indices, root_folder);
 
       const call_key = location_key(call_location);
       expect(result.resolved_references.get(call_key)).toBe(helper_id);
@@ -2020,7 +2023,7 @@ describe("TypeScript Symbol Resolution Integration", () => {
       ]);
 
       const root_folder = build_file_tree(Array.from(indices.keys()));
-      const result = resolve_symbols(indices, root_folder);
+      const result = resolve_symbols_with_registries(indices, root_folder);
 
       // Verify constructor call
       const constructor_key = location_key(constructor_call_location);
@@ -2374,7 +2377,7 @@ describe("TypeScript Symbol Resolution Integration", () => {
       ]);
 
       const root_folder = build_file_tree(Array.from(indices.keys()));
-      const result = resolve_symbols(indices, root_folder);
+      const result = resolve_symbols_with_registries(indices, root_folder);
 
       // Verify build() call resolves
       const build_key = location_key(build_call_location);
@@ -2738,7 +2741,7 @@ describe("TypeScript Symbol Resolution Integration", () => {
         ]);
 
         const root_folder = build_file_tree(Array.from(indices.keys()));
-        const result = resolve_symbols(indices, root_folder);
+        const result = resolve_symbols_with_registries(indices, root_folder);
 
         // Verify constructor call
         const constructor_key = location_key(constructor_call_location);

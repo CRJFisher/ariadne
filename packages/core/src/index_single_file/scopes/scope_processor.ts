@@ -14,7 +14,11 @@ import type {
 } from "@ariadnejs/types";
 import { module_scope, scope_string, ScopeType } from "@ariadnejs/types";
 import { ParsedFile } from "../file_utils";
-import { CaptureNode, ProcessingContext, SemanticCategory } from "../semantic_index";
+import {
+  CaptureNode,
+  ProcessingContext,
+  SemanticCategory,
+} from "../semantic_index";
 
 /**
  * Process captures directly into LexicalScope objects (single pass)
@@ -59,6 +63,9 @@ export function process_scopes(
     const scope_type = map_capture_to_scope_type(capture);
 
     if (!scope_type) continue;
+
+    // Skip module/namespace scopes - we already created the root module scope manually
+    if (scope_type === "module") continue;
 
     // Adjust callable scope boundaries
     // Special case: Named function expressions (e.g., `function fact(n) { ... }`)
@@ -107,9 +114,12 @@ export function process_scopes(
     const parent = find_containing_scope(location, root_scope_id, scopes);
 
     // Block scopes don't have a meaningful name
-    const symbol_name = capture.text || (scope_type === "block" ? "" : undefined);
+    const symbol_name =
+      capture.text || (scope_type === "block" ? "" : undefined);
     if (!symbol_name && scope_type !== "block") {
-      throw new Error(`Symbol name not found at location: ${location.start_line}:${location.start_column}`);
+      throw new Error(
+        `Symbol name not found at location: ${location.start_line}:${location.start_column}`
+      );
     }
     // Create the scope with parent reference
     const scope: LexicalScope = {
@@ -156,10 +166,8 @@ export function create_processing_context(
     root_scope_id,
     get_scope_id(location: Location): ScopeId {
       // Find the deepest scope that contains this location
-      // If multiple scopes have the same depth, prefer the smallest one
       let best_scope_id = root_scope_id;
       let best_depth = -1;
-      let best_area = Infinity;
 
       for (const scope of scopes.values()) {
         if (!location_contains(scope.location, location)) {
@@ -167,16 +175,37 @@ export function create_processing_context(
         }
 
         const depth = scope_depths.get(scope.id)!;
-        const area = calculate_area(scope.location);
 
-        if (depth > best_depth || (depth === best_depth && area < best_area)) {
+        if (depth > best_depth) {
           best_scope_id = scope.id;
           best_depth = depth;
-          best_area = area;
+        } else if (depth === best_depth && scope.id !== best_scope_id) {
+          throw new Error(
+            `Malformed scope tree: multiple scopes at depth ${depth} contain location ${JSON.stringify(location)}. ` +
+            `Found scopes: ${best_scope_id} and ${scope.id}`
+          );
         }
       }
 
       return best_scope_id;
+    },
+    get_child_scope_with_symbol_name(
+      scope_id: ScopeId,
+      name: SymbolName
+    ): ScopeId {
+      const scope = scopes.get(scope_id);
+      if (!scope) {
+        throw new Error(`Scope with id ${scope_id} not found`);
+      }
+      const matched_scope = scope.child_ids.find(
+        (id) => scopes.get(id)?.name === name
+      );
+      if (!matched_scope) {
+        throw new Error(
+          `Child scope with name ${name} not found in scope ${scope_id}`
+        );
+      }
+      return matched_scope;
     },
   };
 }
