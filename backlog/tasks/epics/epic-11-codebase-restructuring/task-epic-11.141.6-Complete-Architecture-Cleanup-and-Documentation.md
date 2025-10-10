@@ -8,6 +8,7 @@
 ## Objective
 
 Complete the scope boundary extractor architecture by:
+
 1. Implementing Rust extractor (if needed)
 2. Removing all ad-hoc boundary adjustment logic from `scope_processor.ts`
 3. Comprehensive testing across all languages
@@ -18,6 +19,7 @@ Complete the scope boundary extractor architecture by:
 ### Assess Need
 
 Check if Rust has scope boundary issues:
+
 ```bash
 npm test -- semantic_index.rust.test.ts
 ```
@@ -75,6 +77,7 @@ export class RustScopeBoundaryExtractor extends BaseScopeBoundaryExtractor {
 Once all languages use extractors, remove the old logic:
 
 ### Remove (lines ~71-100):
+
 ```typescript
 // Adjust callable scope boundaries
 if (is_callable_scope_type(scope_type)) {
@@ -84,6 +87,7 @@ if (is_callable_scope_type(scope_type)) {
 ```
 
 ### Replace with:
+
 ```typescript
 // All languages now use scope boundary extractors
 const boundaries = extractor.extract_boundaries(
@@ -96,6 +100,7 @@ const location = boundaries.scope_location;
 ```
 
 ### Simplify the loop:
+
 ```typescript
 for (const capture of sorted_captures) {
   if (capture.category !== SemanticCategory.SCOPE) continue;
@@ -171,10 +176,12 @@ Add section on scope boundary semantics:
 Every scope-creating construct has three positions:
 
 1. **Symbol Location**: Where the name is declared (belongs to parent scope)
+
    - Class name, function name, etc.
    - Used by definition processing to determine where symbols are defined
 
 2. **Scope Start**: Where the new scope begins
+
    - After class declaration syntax (`:` in Python, `{` in TS/JS)
    - Excludes the declaration itself
 
@@ -187,10 +194,12 @@ Each language has a `ScopeBoundaryExtractor` that converts tree-sitter node posi
 to our semantic scope model:
 
 - **Python**: `PythonScopeBoundaryExtractor`
+
   - Finds `:` token for class bodies (tree-sitter reports wrong position)
   - Function scopes start at parameters
 
 - **TypeScript/JavaScript**: `TypeScriptScopeBoundaryExtractor` / `JavaScriptScopeBoundaryExtractor`
+
   - Class bodies start at `{`
   - Named function expressions have special handling
   - Scope starts after `function` keyword
@@ -201,6 +210,7 @@ to our semantic scope model:
 ### Why This Architecture?
 
 Tree-sitter grammars report node positions inconsistently:
+
 - Python's `(block)` starts at first child, not at `:`
 - TypeScript's `class_body` starts at `{` (correct)
 
@@ -290,6 +300,7 @@ npm test
 ## Notes
 
 This task completes the scope boundary extractor architecture. After this:
+
 - All languages use consistent boundary extraction
 - `scope_processor.ts` is language-agnostic
 - Easy to add new languages

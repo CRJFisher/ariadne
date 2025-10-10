@@ -95,3 +95,84 @@ module_name/
 - **Test real scenarios** - Use realistic code samples
 - **Document gaps** - Note any untested edge cases
 - _NEVER_ use `toMatchObject` matcher - use `toEqual` instead and create the expected, typed literal objects
+
+## Scope Boundary Semantics
+
+### Three Critical Positions
+
+Every scope-creating construct has three positions:
+
+1. **Symbol Location**: Where the name is declared (belongs to parent scope)
+
+   - Class name, function name, etc.
+   - Used by definition processing to determine where symbols are defined
+
+2. **Scope Start**: Where the new scope begins
+
+   - After class declaration syntax (`:` in Python, `{` in TS/JS)
+   - Excludes the declaration itself
+
+3. **Scope End**: Where the scope ends
+   - Typically the end of the body block
+
+### Language-Specific Extractors
+
+Each language has a `ScopeBoundaryExtractor` that converts tree-sitter node positions
+to our semantic scope model:
+
+- **Python**: `PythonScopeBoundaryExtractor`
+
+  - Finds `:` token for class bodies (tree-sitter reports wrong position)
+  - Function scopes start at parameters
+
+- **TypeScript/JavaScript**: `TypeScriptScopeBoundaryExtractor` / `JavaScriptScopeBoundaryExtractor`
+
+  - Class bodies start at `{`
+  - Named function expressions have special handling
+  - Scope starts after `function` keyword
+
+- **Rust**: `RustScopeBoundaryExtractor`
+  - Similar to TypeScript for most constructs
+  - Handles struct, enum, trait, impl blocks
+  - Uses tree-sitter field names for precise boundaries
+
+### Why This Architecture?
+
+Tree-sitter grammars report node positions inconsistently:
+
+- Python's `(block)` starts at first child, not at `:`
+- TypeScript's `class_body` starts at `{` (correct)
+
+Instead of scattering language-specific logic throughout `scope_processor.ts`,
+we centralize it in extractor classes that transform raw positions to semantic boundaries.
+
+### Architecture Flow
+
+```
+┌─────────────────────┐
+│  Tree-Sitter Query  │  What: Captures scope-creating nodes
+│   (*.scm files)     │
+└──────────┬──────────┘
+           │ CaptureNode with raw position
+           ▼
+┌─────────────────────┐
+│ Scope Boundary      │  Where: Transforms raw positions to semantic boundaries
+│    Extractor        │  (language-specific)
+└──────────┬──────────┘
+           │ { symbol_location, scope_location }
+           ▼
+┌─────────────────────┐
+│  Scope Processor    │  How: Builds scope tree from semantic boundaries
+│                     │  (language-agnostic)
+└─────────────────────┘
+```
+
+### Adding New Languages
+
+To add a new language:
+
+1. Create `extractors/{language}_scope_boundary_extractor.ts`
+2. Implement `extract_boundaries()` for each scope type
+3. Add to factory in `scope_boundary_extractor.ts`
+4. Write tests for boundary extraction
+5. Verify scope depths are correct
