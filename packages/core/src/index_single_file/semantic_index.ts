@@ -24,7 +24,6 @@ import type {
   TypeMemberInfo,
   AnyDefinition,
   SymbolKind,
-  Definition,
   ExportableDefinition,
 } from "@ariadnejs/types";
 
@@ -108,7 +107,7 @@ export interface SemanticIndex {
 export function build_semantic_index(
   file: ParsedFile,
   tree: Tree,
-  language: Language
+  language: Language,
 ): SemanticIndex {
   // PASS 1: Query tree-sitter for captures
   const captures: QueryCapture[] = query_tree(language, tree);
@@ -149,7 +148,7 @@ export function build_semantic_index(
   const all_references = process_references(
     context,
     metadata_extractors,
-    file.file_path
+    file.file_path,
   );
 
   // PASS 5: Build name index
@@ -214,16 +213,16 @@ export function build_semantic_index(
  */
 function get_language_config(language: Language): LanguageBuilderConfig {
   switch (language) {
-    case "javascript":
-      return JAVASCRIPT_BUILDER_CONFIG;
-    case "typescript":
-      return TYPESCRIPT_BUILDER_CONFIG;
-    case "python":
-      return PYTHON_BUILDER_CONFIG;
-    case "rust":
-      return RUST_BUILDER_CONFIG;
-    default:
-      throw new Error(`Unsupported language: ${language}`);
+  case "javascript":
+    return JAVASCRIPT_BUILDER_CONFIG;
+  case "typescript":
+    return TYPESCRIPT_BUILDER_CONFIG;
+  case "python":
+    return PYTHON_BUILDER_CONFIG;
+  case "rust":
+    return RUST_BUILDER_CONFIG;
+  default:
+    throw new Error(`Unsupported language: ${language}`);
   }
 }
 
@@ -234,19 +233,19 @@ function get_language_config(language: Language): LanguageBuilderConfig {
  * tree-sitter-typescript is a superset of tree-sitter-javascript
  */
 function get_metadata_extractors(
-  language: Language
+  language: Language,
 ): MetadataExtractors | undefined {
   switch (language) {
-    case "javascript":
-      return JAVASCRIPT_METADATA_EXTRACTORS;
-    case "typescript":
-      return TYPESCRIPT_METADATA_EXTRACTORS;
-    case "python":
-      return PYTHON_METADATA_EXTRACTORS;
-    case "rust":
-      return RUST_METADATA_EXTRACTORS;
-    default:
-      return undefined;
+  case "javascript":
+    return JAVASCRIPT_METADATA_EXTRACTORS;
+  case "typescript":
+    return TYPESCRIPT_METADATA_EXTRACTORS;
+  case "python":
+    return PYTHON_METADATA_EXTRACTORS;
+  case "rust":
+    return RUST_METADATA_EXTRACTORS;
+  default:
+    return undefined;
   }
 }
 
@@ -260,7 +259,7 @@ function get_metadata_extractors(
  */
 function process_definitions(
   context: ProcessingContext,
-  config: LanguageBuilderConfig
+  config: LanguageBuilderConfig,
 ): BuilderResult {
   const builder = new DefinitionBuilder(context);
 
@@ -298,7 +297,7 @@ function process_definitions(
  * Build name-based lookup index from all definitions
  */
 function build_scope_to_definitions(
-  result: BuilderResult
+  result: BuilderResult,
 ): Map<ScopeId, Map<SymbolKind, AnyDefinition[]>> {
   const index = new Map<ScopeId, Map<SymbolKind, AnyDefinition[]>>();
 
@@ -340,7 +339,7 @@ function build_scope_to_definitions(
  * @throws Error if duplicate export names are found
  */
 function build_exported_symbols_map(
-  result: BuilderResult
+  result: BuilderResult,
 ): Map<SymbolName, ExportableDefinition> {
   const map = new Map<SymbolName, ExportableDefinition>();
 
@@ -360,14 +359,38 @@ function build_exported_symbols_map(
     // Get the effective export name (alias or original name)
     const export_name = def.export?.export_name || def.name;
 
-    // Check for duplicates - this should never happen
+    // Check for duplicates - temporarily allow function/variable duplicates for arrow functions
     const existing = map.get(export_name);
     if (existing) {
+      console.log(`DEBUG: Found duplicate export "${export_name}"`);
+      console.log(`  Existing: ${existing.kind} ${existing.symbol_id}`);
+      console.log(`  New: ${def.kind} ${def.symbol_id}`);
+
+      // Special case: if we have both a function and a variable/constant with the same name,
+      // prefer the variable (this handles arrow functions assigned to const variables)
+      if (
+        (existing.kind === "function" && (def.kind === "variable" || def.kind === "constant")) ||
+        (def.kind === "function" && (existing.kind === "variable" || existing.kind === "constant"))
+      ) {
+        console.log(`DEBUG: Handling function/variable duplicate for "${export_name}"`);
+        // Prefer variable/constant over function for arrow function assignments
+        if (def.kind === "variable" || def.kind === "constant") {
+          console.log("DEBUG: Replacing function with variable");
+          // Replace the function with the variable
+          map.set(export_name, def);
+          return;
+        }
+        console.log("DEBUG: Keeping existing variable, ignoring function");
+        // If current def is function and existing is variable/constant, keep the existing (do nothing)
+        return;
+      }
+
+      // For all other duplicates, this is an error
       throw new Error(
         `Duplicate export name "${export_name}" in file.\n` +
           `  First:  ${existing.kind} ${existing.symbol_id}\n` +
           `  Second: ${def.kind} ${def.symbol_id}\n` +
-          `This indicates a bug in is_exported logic or malformed source code.`
+          "This indicates a bug in is_exported logic or malformed source code.",
       );
     }
 
@@ -395,7 +418,7 @@ function build_exported_symbols_map(
           `Duplicate export name "${export_name}" in file.\n` +
             `  First:  ${existing.kind} ${existing.symbol_id}\n` +
             `  Second: ${imp.kind} ${imp.symbol_id}\n` +
-            `This indicates a bug in re-export logic or malformed source code.`
+            "This indicates a bug in re-export logic or malformed source code.",
         );
       }
       map.set(export_name, imp as any); // ImportDefinition is not ExportableDefinition but should work for chain resolution

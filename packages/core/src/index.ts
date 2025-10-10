@@ -10,7 +10,6 @@ export { Project } from './project'
 
 // Core processing functions
 export { build_semantic_index } from './index_single_file/semantic_index'
-export { build_derived_data } from './index_single_file/derived_data'
 export { resolve_symbols } from './resolve_references/symbol_resolution'
 export { detect_call_graph } from './trace_call_graph/detect_call_graph'
 
