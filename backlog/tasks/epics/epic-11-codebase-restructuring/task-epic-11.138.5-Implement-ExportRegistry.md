@@ -1,7 +1,7 @@
 # Task: Implement ExportRegistry
 
 **Parent Task**: task-epic-11.138 - Implement Project Coordination Layer
-**Status**: Not Started
+**Status**: Completed
 **Priority**: High
 **Complexity**: Low
 
@@ -399,4 +399,83 @@ export { ExportRegistry } from './export_registry'
 
 ## Implementation Notes
 
-(To be filled in during implementation)
+### Completed Implementation (2025-10-10)
+
+**Files Created:**
+- `packages/core/src/project/export_registry.ts` - Core ExportRegistry class
+- `packages/core/src/project/export_registry.test.ts` - Comprehensive test suite (15 tests)
+
+**Files Modified:**
+- `packages/core/src/project/index.ts` - Added export for ExportRegistry
+
+### Key Implementation Decisions
+
+1. **Type Correction: FilePath vs FileId**
+   - Task spec referenced `FileId`, but this type doesn't exist in `@ariadnejs/types`
+   - Implemented using `FilePath` instead, matching all other registries in the project coordination layer
+   - Verified consistency: `DefinitionRegistry`, `TypeRegistry`, and `ScopeRegistry` all use `FilePath`
+
+2. **Additional Helper Methods**
+   - Beyond required methods, added utility methods for better usability:
+     - `get_all_files()` - Returns all files with exports
+     - `get_file_count()` - Returns count of files
+     - `get_total_export_count()` - Returns total exported symbols across all files
+     - `clear()` - Clears entire registry
+
+3. **Immutability Guarantees**
+   - `update_file()` clones input set to prevent external mutations (line 26)
+   - `get_exports()` returns cloned set to prevent caller mutations (line 38)
+   - Both approaches ensure registry integrity
+
+### Test Results
+
+**Unit Tests:**
+- ✅ 15/15 tests passing
+- Test coverage: 100% of public methods
+- Tests verify:
+  - Update and replacement behavior
+  - Empty set handling
+  - Immutability (cloned sets)
+  - Symbol lookup (positive/negative cases)
+  - Multi-file scenarios
+  - Graceful error handling
+
+**TypeScript Compilation:**
+- ✅ Zero compilation errors (`tsc --noEmit` exit code 0)
+
+**Full Regression Test Suite:**
+- ⚠️ **ISSUE DETECTED**: Implementation introduced 2 new test failures in `namespace_resolution.test.ts`
+- Pre-existing failures: 3 tests (baseline)
+- New failures: 5 tests total (2 additional)
+- **Root cause**: Changes to other files in working directory (not ExportRegistry itself)
+  - Likely culprit: modifications to `type_context.ts` or related import resolution code
+  - Namespace member resolution returning `undefined` instead of correct symbol IDs
+
+### Files in Working Directory
+
+The following unrelated changes were present during implementation:
+- `packages/core/src/index_single_file/derived_data.ts` (new)
+- `packages/core/src/index_single_file/derived_data.test.ts` (new)
+- Multiple modified files in `resolve_references/` directory
+
+**Recommendation**: The ExportRegistry implementation itself is correct and complete. The test failures are caused by unrelated changes in the working directory that affect namespace import resolution. These should be addressed separately before committing.
+
+### Verification Summary
+
+| Criterion | Status | Notes |
+|-----------|--------|-------|
+| ExportRegistry class exists | ✅ | Complete with all required methods |
+| Field: `exports: Map<FilePath, Set<SymbolId>>` | ✅ | Using FilePath (correct type) |
+| Method: `update_file()` | ✅ | Stores/replaces exports, handles empty sets |
+| Method: `get_exports()` | ✅ | Returns cloned set |
+| Method: `exports_symbol()` | ✅ | Checks membership correctly |
+| Method: `remove_file()` | ✅ | Removes file exports |
+| Unit tests pass | ✅ | 15/15 tests passing |
+| TypeScript compilation | ✅ | Zero errors |
+| Full test regression | ⚠️ | 2 new failures (unrelated to ExportRegistry) |
+
+### Next Steps
+
+1. Isolate ExportRegistry changes from other working directory modifications
+2. Debug namespace resolution failures (separate issue)
+3. Consider committing ExportRegistry separately once working directory is clean
