@@ -25,7 +25,7 @@ function createParsedFile(
   code: string,
   filePath: FilePath,
   tree: Parser.Tree,
-  language: Language
+  language: Language,
 ): ParsedFile {
   const lines = code.split("\n");
   return {
@@ -55,7 +55,7 @@ describe("Semantic Index - Rust", () => {
     it("should extract struct definitions", () => {
       const code = readFileSync(
         join(FIXTURES_DIR, "basic_structs_and_enums.rs"),
-        "utf8"
+        "utf8",
       );
       const tree = parser.parse(code);
       const file_path = "basic_structs_and_enums.rs" as FilePath;
@@ -73,7 +73,7 @@ describe("Semantic Index - Rust", () => {
     it("should extract enum definitions", () => {
       const code = readFileSync(
         join(FIXTURES_DIR, "basic_structs_and_enums.rs"),
-        "utf8"
+        "utf8",
       );
       const tree = parser.parse(code);
       const file_path = "basic_structs_and_enums.rs" as FilePath;
@@ -112,7 +112,7 @@ enum Message {
 
       // Verify Direction enum with simple variants
       const direction_enum = Array.from(index.enums.values()).find(
-        (e) => e.name === "Direction"
+        (e) => e.name === "Direction",
       );
       expect(direction_enum).toBeDefined();
 
@@ -146,7 +146,7 @@ enum Message {
 
       // Verify Message enum with complex variants
       const message_enum = Array.from(index.enums.values()).find(
-        (e) => e.name === "Message"
+        (e) => e.name === "Message",
       );
       expect(message_enum).toBeDefined();
 
@@ -176,7 +176,7 @@ enum Message {
     it("should extract enum variants", () => {
       const code = readFileSync(
         join(FIXTURES_DIR, "basic_structs_and_enums.rs"),
-        "utf8"
+        "utf8",
       );
       const tree = parser.parse(code);
       const file_path = "basic_structs_and_enums.rs" as FilePath;
@@ -186,7 +186,7 @@ enum Message {
 
       // Verify enum members are captured within enum definitions
       const direction_enum = Array.from(index.enums.values()).find(
-        (e) => e.name === "Direction"
+        (e) => e.name === "Direction",
       );
       expect(direction_enum).toBeDefined();
       expect(direction_enum?.members).toBeDefined();
@@ -223,7 +223,7 @@ struct Color {
 
       // Verify properties are captured within class definitions
       const point_class = Array.from(index.classes.values()).find(
-        (c) => c.name === "Point"
+        (c) => c.name === "Point",
       );
       expect(point_class).toBeDefined();
 
@@ -232,7 +232,7 @@ struct Color {
       expect(point_class?.name).toBe("Point");
 
       const color_class = Array.from(index.classes.values()).find(
-        (c) => c.name === "Color"
+        (c) => c.name === "Color",
       );
       expect(color_class).toBeDefined();
       expect(color_class?.name).toBe("Color");
@@ -247,7 +247,7 @@ struct Color {
     it("should extract trait definitions", () => {
       const code = readFileSync(
         join(FIXTURES_DIR, "traits_and_generics.rs"),
-        "utf8"
+        "utf8",
       );
       const tree = parser.parse(code);
       const file_path = "traits_and_generics.rs" as FilePath;
@@ -257,7 +257,7 @@ struct Color {
 
       // Verify traits are captured as interfaces
       const interface_names = Array.from(index.interfaces.values()).map(
-        (i) => i.name
+        (i) => i.name,
       );
       expect(interface_names).toContain("Drawable");
       // Note: traits_and_generics.rs may not contain Printable - just verify we have traits
@@ -284,7 +284,7 @@ trait Default {
 
       // Verify Drawable trait with complete structure
       const drawable_trait = Array.from(index.interfaces.values()).find(
-        (i) => i.name === "Drawable"
+        (i) => i.name === "Drawable",
       );
       expect(drawable_trait).toBeDefined();
 
@@ -305,7 +305,7 @@ trait Default {
 
         // Verify draw method with parameters
         const draw_method = drawable_trait.methods.find(
-          (m) => m.name === "draw"
+          (m) => m.name === "draw",
         );
         expect(draw_method).toBeDefined();
 
@@ -330,7 +330,7 @@ trait Default {
 
         // Verify color method
         const color_method = drawable_trait.methods.find(
-          (m) => m.name === "color"
+          (m) => m.name === "color",
         );
         expect(color_method).toBeDefined();
 
@@ -342,7 +342,7 @@ trait Default {
 
         // Verify resize method with multiple parameters
         const resize_method = drawable_trait.methods.find(
-          (m) => m.name === "resize"
+          (m) => m.name === "resize",
         );
         expect(resize_method).toBeDefined();
 
@@ -351,12 +351,12 @@ trait Default {
           expect(resize_method.parameters.length).toBe(3); // &mut self, width, height
 
           const self_param = resize_method.parameters.find(
-            (p) => p.name === "self"
+            (p) => p.name === "self",
           );
           expect(self_param).toBeDefined();
 
           const width_param = resize_method.parameters.find(
-            (p) => p.name === "width"
+            (p) => p.name === "width",
           );
           expect(width_param).toBeDefined();
 
@@ -367,7 +367,7 @@ trait Default {
           }
 
           const height_param = resize_method.parameters.find(
-            (p) => p.name === "height"
+            (p) => p.name === "height",
           );
           expect(height_param).toBeDefined();
 
@@ -381,13 +381,13 @@ trait Default {
 
       // Verify Default trait with associated function (no self)
       const default_trait = Array.from(index.interfaces.values()).find(
-        (i) => i.name === "Default"
+        (i) => i.name === "Default",
       );
       expect(default_trait).toBeDefined();
 
       if (default_trait) {
         const default_method = default_trait.methods.find(
-          (m) => m.name === "default"
+          (m) => m.name === "default",
         );
         expect(default_method).toBeDefined();
 
@@ -417,7 +417,7 @@ trait Display {
 
       // Verify trait is captured
       const display_trait = Array.from(index.interfaces.values()).find(
-        (i) => i.name === "Display"
+        (i) => i.name === "Display",
       );
       expect(display_trait).toBeDefined();
       expect(display_trait?.name).toBe("Display");
@@ -467,7 +467,7 @@ impl Rectangle {
 
       // Verify struct is captured
       const struct_def = Array.from(index.classes.values()).find(
-        (c) => c.name === "Rectangle"
+        (c) => c.name === "Rectangle",
       );
       expect(struct_def).toBeDefined();
 
@@ -521,7 +521,7 @@ impl Rectangle {
           expect(area_method.parameters.length).toBeGreaterThanOrEqual(1);
 
           const self_param = area_method.parameters.find(
-            (p) => p.name === "self"
+            (p) => p.name === "self",
           );
           expect(self_param).toBeDefined();
         }
@@ -535,12 +535,12 @@ impl Rectangle {
           expect(scale_method.parameters.length).toBe(2); // &mut self, factor
 
           const self_param = scale_method.parameters.find(
-            (p) => p.name === "self"
+            (p) => p.name === "self",
           );
           expect(self_param).toBeDefined();
 
           const factor_param = scale_method.parameters.find(
-            (p) => p.name === "factor"
+            (p) => p.name === "factor",
           );
           expect(factor_param).toBeDefined();
 
@@ -553,7 +553,7 @@ impl Rectangle {
 
         // Associated function (static)
         const from_square = struct_def.methods.find(
-          (m) => m.name === "from_square"
+          (m) => m.name === "from_square",
         );
         expect(from_square).toBeDefined();
 
@@ -572,7 +572,7 @@ impl Rectangle {
     it("should extract methods from impl blocks", () => {
       const code = readFileSync(
         join(FIXTURES_DIR, "basic_structs_and_enums.rs"),
-        "utf8"
+        "utf8",
       );
       const tree = parser.parse(code);
       const file_path = "basic_structs_and_enums.rs" as FilePath;
@@ -582,7 +582,7 @@ impl Rectangle {
 
       // Verify struct is captured
       const point_class = Array.from(index.classes.values()).find(
-        (c) => c.name === "Point"
+        (c) => c.name === "Point",
       );
       expect(point_class).toBeDefined();
 
@@ -615,7 +615,7 @@ impl Calculator {
 
       // Verify struct is captured
       const calc_class = Array.from(index.classes.values()).find(
-        (c) => c.name === "Calculator"
+        (c) => c.name === "Calculator",
       );
       expect(calc_class).toBeDefined();
       expect(calc_class?.name).toBe("Calculator");
@@ -648,13 +648,13 @@ impl Display for Point {
 
       // Verify trait is captured
       const interface_names = Array.from(index.interfaces.values()).map(
-        (i) => i.name
+        (i) => i.name,
       );
       expect(interface_names).toContain("Display");
 
       // Verify struct is captured
       const point_class = Array.from(index.classes.values()).find(
-        (c) => c.name === "Point"
+        (c) => c.name === "Point",
       );
       expect(point_class).toBeDefined();
       expect(point_class?.name).toBe("Point");
@@ -671,7 +671,7 @@ impl Display for Point {
     it("should extract function definitions", () => {
       const code = readFileSync(
         join(FIXTURES_DIR, "functions_and_closures.rs"),
-        "utf8"
+        "utf8",
       );
       const tree = parser.parse(code);
       const file_path = "functions_and_closures.rs" as FilePath;
@@ -681,7 +681,7 @@ impl Display for Point {
 
       // Verify functions are captured
       const function_names = Array.from(index.functions.values()).map(
-        (f) => f.name
+        (f) => f.name,
       );
       expect(function_names).toContain("add");
       // Note: main might not be extracted in all fixtures - just verify we have functions
@@ -706,7 +706,7 @@ fn greet(name: &str, times: usize) -> String {
 
       // Verify add function with complete object assertion
       const add_func = Array.from(index.functions.values()).find(
-        (f) => f.name === "add"
+        (f) => f.name === "add",
       );
       expect(add_func).toBeDefined();
 
@@ -740,7 +740,7 @@ fn greet(name: &str, times: usize) -> String {
 
       // Verify greet function with reference type
       const greet_func = Array.from(index.functions.values()).find(
-        (f) => f.name === "greet"
+        (f) => f.name === "greet",
       );
       expect(greet_func).toBeDefined();
 
@@ -750,13 +750,13 @@ fn greet(name: &str, times: usize) -> String {
         expect(greet_func.signature.parameters.length).toBe(2);
 
         const name_param = greet_func.signature.parameters.find(
-          (p) => p.name === "name"
+          (p) => p.name === "name",
         );
         expect(name_param).toBeDefined();
         expect(name_param?.type).toBe("&str");
 
         const times_param = greet_func.signature.parameters.find(
-          (p) => p.name === "times"
+          (p) => p.name === "times",
         );
         expect(times_param).toBeDefined();
         expect(times_param?.type).toBe("usize");
@@ -777,13 +777,13 @@ fn greet(name: &str, age: u32) -> String {
 
       // Verify function is captured
       const function_names = Array.from(index.functions.values()).map(
-        (f) => f.name
+        (f) => f.name,
       );
       expect(function_names).toContain("greet");
 
       // Verify function signature exists
       const greet_func = Array.from(index.functions.values()).find(
-        (f) => f.name === "greet"
+        (f) => f.name === "greet",
       );
       expect(greet_func).toBeDefined();
       expect(greet_func?.signature).toBeDefined();
@@ -807,7 +807,7 @@ fn calculate(x: i32, y: i32) -> i32 {
 
       // Verify function is captured
       const function_names = Array.from(index.functions.values()).map(
-        (f) => f.name
+        (f) => f.name,
       );
       expect(function_names).toContain("calculate");
     });
@@ -831,13 +831,13 @@ fn main() {
 
       // Verify function calls are tracked
       const function_calls = index.references.filter(
-        (r) => r.type === "call" && r.call_type === "function"
+        (r) => r.type === "call" && r.call_type === "function",
       );
       expect(function_calls.length).toBeGreaterThan(0);
 
       // Should have at least two calls to helper
       const helper_calls = function_calls.filter((c) =>
-        c.name.includes("helper")
+        c.name.includes("helper"),
       );
       expect(helper_calls.length).toBeGreaterThanOrEqual(2);
     });
@@ -894,7 +894,7 @@ fn modify_string(s: &mut String) {
 
       // Verify functions are captured
       const function_names = Array.from(index.functions.values()).map(
-        (f) => f.name
+        (f) => f.name,
       );
       expect(function_names).toContain("read_string");
       expect(function_names).toContain("modify_string");
@@ -903,7 +903,7 @@ fn modify_string(s: &mut String) {
     it("should handle basic borrowing patterns", () => {
       const code = readFileSync(
         join(FIXTURES_DIR, "ownership_and_patterns.rs"),
-        "utf8"
+        "utf8",
       );
       const tree = parser.parse(code);
       const file_path = "ownership_and_patterns.rs" as FilePath;
@@ -951,7 +951,7 @@ pub(crate) mod internal {
       expect(index.namespaces.size).toBeGreaterThan(0);
 
       const namespace_names = Array.from(index.namespaces.values()).map(
-        (ns) => ns.name
+        (ns) => ns.name,
       );
       expect(namespace_names).toContain("math");
       expect(namespace_names).toContain("utils");
@@ -961,7 +961,7 @@ pub(crate) mod internal {
     it("should extract inline module declarations", () => {
       const code = readFileSync(
         join(FIXTURES_DIR, "modules_and_visibility.rs"),
-        "utf8"
+        "utf8",
       );
       const tree = parser.parse(code);
       const file_path = "modules_and_visibility.rs" as FilePath;
@@ -973,7 +973,7 @@ pub(crate) mod internal {
       expect(index.namespaces.size).toBeGreaterThan(0);
 
       const namespace_names = Array.from(index.namespaces.values()).map(
-        (ns) => ns.name
+        (ns) => ns.name,
       );
       expect(namespace_names).toContain("math");
     });
@@ -996,7 +996,7 @@ pub mod outer {
 
       // Verify both outer and inner modules are captured
       const namespace_names = Array.from(index.namespaces.values()).map(
-        (ns) => ns.name
+        (ns) => ns.name,
       );
       expect(namespace_names).toContain("outer");
       expect(namespace_names).toContain("inner");
@@ -1022,10 +1022,10 @@ mod private_module {
       expect(index.namespaces.size).toBe(2);
 
       const public_mod = Array.from(index.namespaces.values()).find(
-        (ns) => ns.name === "public_module"
+        (ns) => ns.name === "public_module",
       );
       const private_mod = Array.from(index.namespaces.values()).find(
-        (ns) => ns.name === "private_module"
+        (ns) => ns.name === "private_module",
       );
 
       expect(public_mod).toBeDefined();
@@ -1052,7 +1052,7 @@ use crate::models::User;
 
       // Verify HashMap import with complete structure
       const hashmap_import = Array.from(index.imported_symbols.values()).find(
-        (imp) => imp.name === "HashMap"
+        (imp) => imp.name === "HashMap",
       );
       expect(hashmap_import).toBeDefined();
 
@@ -1070,7 +1070,7 @@ use crate::models::User;
 
       // Verify grouped imports (Read, Write)
       const read_import = Array.from(index.imported_symbols.values()).find(
-        (imp) => imp.name === "Read"
+        (imp) => imp.name === "Read",
       );
       expect(read_import).toBeDefined();
 
@@ -1080,7 +1080,7 @@ use crate::models::User;
       }
 
       const write_import = Array.from(index.imported_symbols.values()).find(
-        (imp) => imp.name === "Write"
+        (imp) => imp.name === "Write",
       );
       expect(write_import).toBeDefined();
 
@@ -1090,13 +1090,13 @@ use crate::models::User;
 
       // Verify glob import
       const glob_imports = Array.from(index.imported_symbols.values()).filter(
-        (imp) => imp.import_kind === "namespace"
+        (imp) => imp.import_kind === "namespace",
       );
       expect(glob_imports.length).toBeGreaterThan(0);
 
       // Verify crate import
       const user_import = Array.from(index.imported_symbols.values()).find(
-        (imp) => imp.name === "User"
+        (imp) => imp.name === "User",
       );
       expect(user_import).toBeDefined();
 
@@ -1125,7 +1125,7 @@ fn main() {
       expect(index.imported_symbols.size).toBeGreaterThan(0);
 
       const imported_names = Array.from(index.imported_symbols.values()).map(
-        (imp) => imp.name
+        (imp) => imp.name,
       );
       expect(imported_names).toContain("HashMap");
       expect(imported_names).toContain("Result");
@@ -1144,7 +1144,7 @@ use std::fmt::{Display, Formatter, Result};
 
       // Verify all imports are captured
       const imported_names = Array.from(index.imported_symbols.values()).map(
-        (imp) => imp.name
+        (imp) => imp.name,
       );
       expect(imported_names).toContain("Display");
       expect(imported_names).toContain("Formatter");
@@ -1168,13 +1168,13 @@ use std::io::Result as IoResult;
 
       // Check for HashMap/Map
       const map_import = imports.find(
-        (imp) => imp.name === "Map" || imp.original_name === "HashMap"
+        (imp) => imp.name === "Map" || imp.original_name === "HashMap",
       );
       expect(map_import).toBeDefined();
 
       // Check for Result/IoResult
       const result_import = imports.find(
-        (imp) => imp.name === "IoResult" || imp.original_name === "Result"
+        (imp) => imp.name === "IoResult" || imp.original_name === "Result",
       );
       expect(result_import).toBeDefined();
     });
@@ -1207,14 +1207,14 @@ extern crate tokio;
 
       // Verify extern crate imports are captured
       const imported_names = Array.from(index.imported_symbols.values()).map(
-        (imp) => imp.name
+        (imp) => imp.name,
       );
       expect(imported_names).toContain("serde");
       expect(imported_names).toContain("tokio");
 
       // Verify complete structure
       const serdeImport = Array.from(index.imported_symbols.values()).find(
-        (imp) => imp.name === "serde"
+        (imp) => imp.name === "serde",
       );
       expect(serdeImport).toBeDefined();
       if (serdeImport) {
@@ -1236,14 +1236,14 @@ extern crate tokio_core as tokio;
 
       // Verify aliased extern crate imports are captured
       const imported_names = Array.from(index.imported_symbols.values()).map(
-        (imp) => imp.name
+        (imp) => imp.name,
       );
       expect(imported_names).toContain("json");
       expect(imported_names).toContain("tokio");
 
       // Verify original names are preserved
       const jsonImport = Array.from(index.imported_symbols.values()).find(
-        (imp) => imp.name === "json"
+        (imp) => imp.name === "json",
       );
       expect(jsonImport).toBeDefined();
       if (jsonImport) {
@@ -1251,7 +1251,7 @@ extern crate tokio_core as tokio;
       }
 
       const tokioImport = Array.from(index.imported_symbols.values()).find(
-        (imp) => imp.name === "tokio"
+        (imp) => imp.name === "tokio",
       );
       expect(tokioImport).toBeDefined();
       if (tokioImport) {
@@ -1274,7 +1274,7 @@ use std::io::Result;
 
       // Verify all imports are captured
       const imported_names = Array.from(index.imported_symbols.values()).map(
-        (imp) => imp.name
+        (imp) => imp.name,
       );
       expect(imported_names).toContain("serde");
       expect(imported_names).toContain("HashMap");
@@ -1300,7 +1300,7 @@ use std::{
 
       // Verify nested imports are captured
       const imported_names = Array.from(index.imported_symbols.values()).map(
-        (imp) => imp.name
+        (imp) => imp.name,
       );
       expect(imported_names).toContain("Ordering");
       expect(imported_names).toContain("HashMap");
@@ -1340,7 +1340,7 @@ mod math {
 
       // Verify add_numbers import exists (aliased from self::math::add)
       const add_numbers_import = imports.find(
-        (imp) => imp.name === "add_numbers"
+        (imp) => imp.name === "add_numbers",
       );
       expect(add_numbers_import).toBeDefined();
       if (add_numbers_import) {
@@ -1403,7 +1403,7 @@ fn main() {
 
       // Check that at least one type has proper metadata
       const has_valid_type = types_with_info.some(
-        (t) => t.type_info?.type_name && t.type_info.certainty === "declared"
+        (t) => t.type_info?.type_name && t.type_info.certainty === "declared",
       );
       expect(has_valid_type).toBe(true);
     });
@@ -1430,7 +1430,7 @@ fn process(items: Vec<String>, mapping: HashMap<String, i32>) -> Option<String> 
 
       // Check that type_name is extracted
       const types_with_names = types_with_info.filter(
-        (t) => t.type_info?.type_name
+        (t) => t.type_info?.type_name,
       );
       expect(types_with_names.length).toBeGreaterThan(0);
     });
@@ -1467,14 +1467,14 @@ fn main() {
 
       // Verify method call is captured
       const method_calls = index.references.filter(
-        (r) => r.type === "call" && r.call_type === "method"
+        (r) => r.type === "call" && r.call_type === "method",
       );
       expect(method_calls.length).toBeGreaterThan(0);
 
       // Note: receiver_location may not always be populated
       // Just verify we captured the method call
       const distance_call = method_calls.find((c) =>
-        c.name.includes("distance")
+        c.name.includes("distance"),
       );
       expect(distance_call).toBeDefined();
     });
@@ -1496,7 +1496,7 @@ fn main() {
 
       // Verify method calls are captured
       const method_calls = index.references.filter(
-        (r) => r.type === "call" && r.call_type === "method"
+        (r) => r.type === "call" && r.call_type === "method",
       );
       expect(method_calls.length).toBeGreaterThan(0);
 
@@ -1561,7 +1561,7 @@ fn main() {
 
       // Verify construct call is captured
       const construct_calls = index.references.filter(
-        (r) => r.type === "construct"
+        (r) => r.type === "construct",
       );
       expect(construct_calls.length).toBeGreaterThan(0);
 
@@ -1605,7 +1605,7 @@ fn main() {
       // Scenario 1: Receiver from type annotation
       // Verify the assignment is captured
       const service1_assignment = result.references.find(
-        (ref) => ref.type === "assignment" && ref.name === "service1"
+        (ref) => ref.type === "assignment" && ref.name === "service1",
       );
       expect(service1_assignment).toBeDefined();
 
@@ -1615,7 +1615,7 @@ fn main() {
 
       // Verify method calls have receiver_location
       const method_calls = result.references.filter(
-        (ref) => ref.type === "call" && ref.name === "get_data"
+        (ref) => ref.type === "call" && ref.name === "get_data",
       );
 
       // Should have at least 2 get_data method calls
@@ -1623,18 +1623,18 @@ fn main() {
 
       // At least some method calls should have receiver_location
       const calls_with_receiver = method_calls.filter(
-        (c) => c.context?.receiver_location
+        (c) => c.context?.receiver_location,
       );
       expect(calls_with_receiver.length).toBeGreaterThan(0);
 
       // Scenario 2: Verify struct instantiation has construct_target
       const constructor_calls = result.references.filter(
-        (ref) => ref.type === "construct" && ref.name === "Service"
+        (ref) => ref.type === "construct" && ref.name === "Service",
       );
 
       // Should have at least one constructor call with construct_target
       const construct_with_target = constructor_calls.find(
-        (c) => c.context?.construct_target
+        (c) => c.context?.construct_target,
       );
       expect(construct_with_target).toBeDefined();
     });
@@ -1648,7 +1648,7 @@ fn main() {
     it("should handle comprehensive definition file", () => {
       const code = readFileSync(
         join(FIXTURES_DIR, "comprehensive_definitions.rs"),
-        "utf8"
+        "utf8",
       );
       const tree = parser.parse(code);
       const file_path = "comprehensive_definitions.rs" as FilePath;
@@ -1729,7 +1729,7 @@ fn main() {
 
       // Verify certainty is set correctly
       const declared_types = rust_types.filter(
-        (r) => r.type_info?.certainty === "declared"
+        (r) => r.type_info?.certainty === "declared",
       );
       expect(declared_types.length).toBeGreaterThan(0);
     });
@@ -1766,7 +1766,7 @@ fn pair<T, U>(first: T, second: U) -> (T, U) {
 
       // Verify generic struct
       const struct_def = Array.from(index.classes.values()).find(
-        (c) => c.name === "Container"
+        (c) => c.name === "Container",
       );
       expect(struct_def).toBeDefined();
 
@@ -1804,7 +1804,7 @@ fn pair<T, U>(first: T, second: U) -> (T, U) {
 
       // Verify generic function with single type parameter
       const identity_func = Array.from(index.functions.values()).find(
-        (f) => f.name === "identity"
+        (f) => f.name === "identity",
       );
       expect(identity_func).toBeDefined();
 
@@ -1825,7 +1825,7 @@ fn pair<T, U>(first: T, second: U) -> (T, U) {
 
       // Verify generic function with multiple type parameters
       const pair_func = Array.from(index.functions.values()).find(
-        (f) => f.name === "pair"
+        (f) => f.name === "pair",
       );
       expect(pair_func).toBeDefined();
 
@@ -1885,39 +1885,39 @@ impl Point {
         console.log(
           `Type: ${scope.type}, ID: ${scope.id.substring(0, 40)}..., Line: ${
             scope.location.start_line
-          }, Col: ${scope.location.start_column}-${scope.location.end_column}`
+          }, Col: ${scope.location.start_column}-${scope.location.end_column}`,
         );
       });
 
       console.log("\n=== STRUCT DEFINITION ===");
       const struct_def = Array.from(index.classes.values()).find(
-        (c) => c.name === "Point"
+        (c) => c.name === "Point",
       );
       if (struct_def) {
         console.log(
-          `Name location: Line ${struct_def.location.start_line}, Col ${struct_def.location.start_column}`
+          `Name location: Line ${struct_def.location.start_line}, Col ${struct_def.location.start_column}`,
         );
         console.log(`Scope ID: ${struct_def.defining_scope_id}`);
       }
 
       console.log("\n=== ENUM DEFINITION ===");
       const enum_def = Array.from(index.enums.values()).find(
-        (e) => e.name === "Direction"
+        (e) => e.name === "Direction",
       );
       if (enum_def) {
         console.log(
-          `Name location: Line ${enum_def.location.start_line}, Col ${enum_def.location.start_column}`
+          `Name location: Line ${enum_def.location.start_line}, Col ${enum_def.location.start_column}`,
         );
         console.log(`Scope ID: ${enum_def.defining_scope_id}`);
       }
 
       console.log("\n=== TRAIT DEFINITION ===");
       const trait_def = Array.from(index.interfaces.values()).find(
-        (i) => i.name === "Drawable"
+        (i) => i.name === "Drawable",
       );
       if (trait_def) {
         console.log(
-          `Name location: Line ${trait_def.location.start_line}, Col ${trait_def.location.start_column}`
+          `Name location: Line ${trait_def.location.start_line}, Col ${trait_def.location.start_column}`,
         );
         console.log(`Scope ID: ${trait_def.defining_scope_id}`);
       }
@@ -1939,13 +1939,13 @@ impl Point {
 
       // Verify struct definition exists
       const struct_def = Array.from(index.classes.values()).find(
-        (c) => c.name === "Point"
+        (c) => c.name === "Point",
       );
       expect(struct_def).toBeDefined();
 
       // Find struct body scope (type: class, at line 1)
       const struct_body_scopes = Array.from(index.scopes.values()).filter(
-        (s) => s.type === "class" && s.location.start_line === 1
+        (s) => s.type === "class" && s.location.start_line === 1,
       );
       expect(struct_body_scopes.length).toBeGreaterThan(0);
 
@@ -1960,7 +1960,7 @@ impl Point {
         // Struct definition name should be before the scope
         expect(struct_def.location.start_line).toBe(1);
         expect(struct_def.location.start_column).toBeLessThan(
-          struct_scope.location.start_column
+          struct_scope.location.start_column,
         );
       }
     });
@@ -1980,13 +1980,13 @@ impl Point {
 
       // Verify enum definition exists
       const enum_def = Array.from(index.enums.values()).find(
-        (e) => e.name === "Direction"
+        (e) => e.name === "Direction",
       );
       expect(enum_def).toBeDefined();
 
       // Find enum body scope (type: class, at line 1)
       const enum_body_scopes = Array.from(index.scopes.values()).filter(
-        (s) => s.type === "class" && s.location.start_line === 1
+        (s) => s.type === "class" && s.location.start_line === 1,
       );
       expect(enum_body_scopes.length).toBeGreaterThan(0);
 
@@ -2000,7 +2000,7 @@ impl Point {
         // Enum definition name should be before the scope
         expect(enum_def.location.start_line).toBe(1);
         expect(enum_def.location.start_column).toBeLessThan(
-          enum_scope.location.start_column
+          enum_scope.location.start_column,
         );
       }
     });
@@ -2017,7 +2017,7 @@ impl Point {
 
       // Verify trait definition exists
       const trait_def = Array.from(index.interfaces.values()).find(
-        (i) => i.name === "Drawable"
+        (i) => i.name === "Drawable",
       );
       expect(trait_def).toBeDefined();
 
@@ -2026,7 +2026,7 @@ impl Point {
         (s) =>
           s.type === "class" &&
           s.location.start_line === 1 &&
-          s.location.start_column > (trait_def?.location.start_column || 0)
+          s.location.start_column > (trait_def?.location.start_column || 0),
       );
       expect(trait_body_scopes.length).toBeGreaterThan(0);
 
@@ -2037,13 +2037,13 @@ impl Point {
         // Scope should start at the opening brace, after "Drawable "
         expect(trait_scope.location.start_line).toBe(1);
         expect(trait_scope.location.start_column).toBeGreaterThan(
-          trait_def.location.start_column
+          trait_def.location.start_column,
         ); // After trait name
 
         // Trait definition name should be before the scope
         expect(trait_def.location.start_line).toBe(1);
         expect(trait_def.location.start_column).toBeLessThan(
-          trait_scope.location.start_column
+          trait_scope.location.start_column,
         );
       }
     });
@@ -2065,7 +2065,7 @@ impl Point {
       // Find impl block scope (it creates a block scope)
       // The impl body should start after "Point " on line 3 (1-indexed)
       const impl_scopes = Array.from(index.scopes.values()).filter(
-        (s) => s.type === "block" && s.location.start_line === 3
+        (s) => s.type === "block" && s.location.start_line === 3,
       );
 
       expect(impl_scopes.length).toBeGreaterThan(0);
@@ -2091,10 +2091,10 @@ struct Color(u8, u8, u8);`;
 
       // Verify struct definitions exist
       const point_def = Array.from(index.classes.values()).find(
-        (c) => c.name === "Point"
+        (c) => c.name === "Point",
       );
       const color_def = Array.from(index.classes.values()).find(
-        (c) => c.name === "Color"
+        (c) => c.name === "Color",
       );
 
       expect(point_def).toBeDefined();
@@ -2106,7 +2106,7 @@ struct Color(u8, u8, u8);`;
       const struct_scopes = Array.from(index.scopes.values()).filter(
         (s) =>
           s.type === "class" &&
-          (s.location.start_line === 1 || s.location.start_line === 2)
+          (s.location.start_line === 1 || s.location.start_line === 2),
       );
 
       // Should have 0 class scopes for tuple structs since they don't have bodies
@@ -2138,7 +2138,7 @@ pub type BoxedError = Box<dyn Error>;
 
       // Verify Kilometers type alias with complete structure
       const kilometersType = Array.from(result.types.values()).find(
-        (t) => t.name === "Kilometers"
+        (t) => t.name === "Kilometers",
       );
 
       expect(kilometersType).toBeDefined();
@@ -2158,7 +2158,7 @@ pub type BoxedError = Box<dyn Error>;
 
       // Verify generic Result type alias
       const resultType = Array.from(result.types.values()).find(
-        (t) => t.name === "Result"
+        (t) => t.name === "Result",
       );
 
       expect(resultType).toBeDefined();
@@ -2172,7 +2172,7 @@ pub type BoxedError = Box<dyn Error>;
 
       // Verify public BoxedError type alias
       const boxedErrorType = Array.from(result.types.values()).find(
-        (t) => t.name === "BoxedError"
+        (t) => t.name === "BoxedError",
       );
 
       expect(boxedErrorType).toBeDefined();
@@ -2212,7 +2212,7 @@ impl Iterator for MyIterator {
 
       // Should find both the trait associated type and the impl associated type
       const itemTypes = Array.from(result.types.values()).filter(
-        (t) => t.name === "Item"
+        (t) => t.name === "Item",
       );
 
       expect(itemTypes.length).toBeGreaterThanOrEqual(1);
@@ -2238,7 +2238,7 @@ type FnPtr = fn(i32, i32) -> i32;
       const result = build_semantic_index(parsed_file, tree, "rust");
 
       const type_aliases = Array.from(result.types.values()).filter(
-        (d) => d.kind === "type_alias"
+        (d) => d.kind === "type_alias",
       );
 
       expect(type_aliases.length).toBeGreaterThanOrEqual(5);
@@ -2257,7 +2257,7 @@ type FnPtr = fn(i32, i32) -> i32;
       const result_type = type_aliases.find((t) => t.name === "Result");
       expect(result_type).toBeDefined();
       expect(result_type?.type_expression).toBe(
-        "std::result::Result<T, Error>"
+        "std::result::Result<T, Error>",
       );
       expect(result_type?.generics).toEqual(["T"]);
 
@@ -2284,7 +2284,7 @@ type GenericRef<'a, T> = &'a T;
       const result = build_semantic_index(parsed_file, tree, "rust");
 
       const type_aliases = Array.from(result.types.values()).filter(
-        (d) => d.kind === "type_alias"
+        (d) => d.kind === "type_alias",
       );
 
       expect(type_aliases.length).toBeGreaterThanOrEqual(3);
@@ -2319,7 +2319,7 @@ type Matrix<const ROWS: usize, const COLS: usize> = [[f64; COLS]; ROWS];
       const result = build_semantic_index(parsed_file, tree, "rust");
 
       const type_aliases = Array.from(result.types.values()).filter(
-        (d) => d.kind === "type_alias"
+        (d) => d.kind === "type_alias",
       );
 
       expect(type_aliases.length).toBeGreaterThanOrEqual(2);
@@ -2347,7 +2347,7 @@ type AsyncFn<'a, T> = Box<dyn Future<Output = Result<T, Box<dyn Error>>> + Send 
       const result = build_semantic_index(parsed_file, tree, "rust");
 
       const type_aliases = Array.from(result.types.values()).filter(
-        (d) => d.kind === "type_alias"
+        (d) => d.kind === "type_alias",
       );
 
       expect(type_aliases.length).toBeGreaterThanOrEqual(3);
@@ -2356,17 +2356,17 @@ type AsyncFn<'a, T> = Box<dyn Future<Output = Result<T, Box<dyn Error>>> + Send 
       const nestedResult = type_aliases.find((t) => t.name === "NestedResult");
       expect(nestedResult).toBeDefined();
       expect(nestedResult?.type_expression).toBe(
-        "Result<Option<T>, Box<dyn std::error::Error>>"
+        "Result<Option<T>, Box<dyn std::error::Error>>",
       );
       expect(nestedResult?.generics).toEqual(["T", "E"]);
 
       // Check ComplexCallback
       const complexCallback = type_aliases.find(
-        (t) => t.name === "ComplexCallback"
+        (t) => t.name === "ComplexCallback",
       );
       expect(complexCallback).toBeDefined();
       expect(complexCallback?.type_expression).toBe(
-        "Box<dyn Fn(Result<T, String>) -> Option<T>>"
+        "Box<dyn Fn(Result<T, String>) -> Option<T>>",
       );
       expect(complexCallback?.generics).toEqual(["T"]);
 
@@ -2374,7 +2374,7 @@ type AsyncFn<'a, T> = Box<dyn Future<Output = Result<T, Box<dyn Error>>> + Send 
       const asyncFn = type_aliases.find((t) => t.name === "AsyncFn");
       expect(asyncFn).toBeDefined();
       expect(asyncFn?.type_expression).toBe(
-        "Box<dyn Future<Output = Result<T, Box<dyn Error>>> + Send + 'a>"
+        "Box<dyn Future<Output = Result<T, Box<dyn Error>>> + Send + 'a>",
       );
       expect(asyncFn?.generics).toEqual(["'a", "T"]);
     });
@@ -2391,7 +2391,7 @@ type SerializeFn<T: Serialize + Send + 'static> = Box<dyn Fn(T) -> String>;
       const result = build_semantic_index(parsed_file, tree, "rust");
 
       const type_aliases = Array.from(result.types.values()).filter(
-        (d) => d.kind === "type_alias"
+        (d) => d.kind === "type_alias",
       );
 
       expect(type_aliases.length).toBeGreaterThanOrEqual(3);

@@ -17,7 +17,7 @@ function createParsedFile(
   code: string,
   filePath: FilePath,
   tree: Parser.Tree,
-  language: Language
+  language: Language,
 ): ParsedFile {
   const lines = code.split("\n");
   return {
@@ -89,7 +89,7 @@ items: list[str] = []
 
       // Check that at least one type has proper metadata
       const has_valid_type = types_with_info.some(
-        (t) => t.type_info?.type_name && t.type_info.certainty === "declared"
+        (t) => t.type_info?.type_name && t.type_info.certainty === "declared",
       );
       expect(has_valid_type).toBe(true);
     });
@@ -240,7 +240,7 @@ self.instance_method()
 
       // Find method call references
       const method_calls = result.references.filter(
-        (ref) => ref.type === "call" && ref.name === "method"
+        (ref) => ref.type === "call" && ref.name === "method",
       );
 
       expect(method_calls).toBeDefined();
@@ -251,16 +251,16 @@ self.instance_method()
       expect(method_call).toBeDefined();
       if (method_call?.context?.receiver_location) {
         expect(method_call.context.receiver_location).toHaveProperty(
-          "start_line"
+          "start_line",
         );
         expect(method_call.context.receiver_location).toHaveProperty(
-          "start_column"
+          "start_column",
         );
       }
 
       // Check self.instance_method() has receiver
       const self_method = result.references.find(
-        (ref) => ref.type === "call" && ref.name === "instance_method"
+        (ref) => ref.type === "call" && ref.name === "instance_method",
       );
       expect(self_method).toBeDefined();
     });
@@ -276,7 +276,7 @@ data.transform().validate().save()
       const result = build_semantic_index(parsed_file, tree, "python");
 
       const method_calls = result.references.filter(
-        (ref) => ref.type === "call"
+        (ref) => ref.type === "call",
       );
 
       // Check list() has api.users as receiver
@@ -307,7 +307,7 @@ result = data['key'].attribute
 
       // Find member access references
       const member_accesses = result.references.filter(
-        (ref) => ref.type === "member_access"
+        (ref) => ref.type === "member_access",
       );
       expect(member_accesses.length).toBeGreaterThan(0);
 
@@ -325,7 +325,7 @@ result = data['key'].attribute
       if (deep_access?.context?.property_chain) {
         // Should have multiple levels in the chain
         expect(
-          deep_access.context.property_chain.length
+          deep_access.context.property_chain.length,
         ).toBeGreaterThanOrEqual(2);
       }
     });
@@ -347,13 +347,14 @@ class MyClass:
       const parsed_file = createParsedFile(code, file_path, tree, "python");
       const result = build_semantic_index(parsed_file, tree, "python");
 
+
       const member_accesses = result.references.filter(
-        (ref) => ref.type === "member_access"
+        (ref) => ref.type === "member_access",
       );
 
       // Check self.instance_var
       const self_access = member_accesses.find(
-        (ref) => ref.name === "instance_var"
+        (ref) => ref.name === "instance_var",
       );
       expect(self_access).toBeDefined();
       if (self_access?.context?.property_chain) {
@@ -363,7 +364,7 @@ class MyClass:
 
       // Check cls.class_var
       const cls_access = member_accesses.find(
-        (ref) => ref.name === "class_var"
+        (ref) => ref.name === "class_var",
       );
       expect(cls_access).toBeDefined();
       if (cls_access?.context?.property_chain) {
@@ -439,22 +440,22 @@ typed_obj: MyClass = MyClass()
 
       // Find constructor calls
       const constructor_calls = result.references.filter(
-        (ref) => ref.type === "construct"
+        (ref) => ref.type === "construct",
       );
       expect(constructor_calls.length).toBeGreaterThan(0);
 
       // Check MyClass() constructor
       const my_class_construct = constructor_calls.find(
-        (ref) => ref.name === "MyClass"
+        (ref) => ref.name === "MyClass",
       );
       expect(my_class_construct).toBeDefined();
       if (my_class_construct?.context?.construct_target) {
         // Should point to the variable being assigned
         expect(my_class_construct.context.construct_target).toHaveProperty(
-          "start_line"
+          "start_line",
         );
         expect(my_class_construct.context.construct_target).toHaveProperty(
-          "start_column"
+          "start_column",
         );
       }
     });
@@ -470,18 +471,18 @@ result = process(Factory.create())
       const result = build_semantic_index(parsed_file, tree, "python");
 
       const constructor_calls = result.references.filter(
-        (ref) => ref.type === "construct"
+        (ref) => ref.type === "construct",
       );
 
       // Check Wrapper constructor
       const wrapper_construct = constructor_calls.find(
-        (ref) => ref.name === "Wrapper"
+        (ref) => ref.name === "Wrapper",
       );
       expect(wrapper_construct).toBeDefined();
 
       // Check Inner constructor (nested)
       const inner_construct = constructor_calls.find(
-        (ref) => ref.name === "Inner"
+        (ref) => ref.name === "Inner",
       );
       expect(inner_construct).toBeDefined();
     });
@@ -506,7 +507,7 @@ result = calculate(y)
 
       // Check that assignments were captured
       const assignments = index.references.filter(
-        (r) => r.type === "assignment"
+        (r) => r.type === "assignment",
       );
       expect(assignments.length).toBeGreaterThan(0);
     });
@@ -524,7 +525,7 @@ name: str = "test"
 
       // Check assignments and type annotations
       const assignments = index.references.filter(
-        (r) => r.type === "assignment"
+        (r) => r.type === "assignment",
       );
       const type_refs = index.references.filter((r) => r.type === "type");
 
@@ -652,7 +653,7 @@ import numpy as np
 
       // Check imports were captured
       const import_names = Array.from(index.imported_symbols.values()).map(
-        (i) => i.name
+        (i) => i.name,
       );
       expect(import_names.length).toBeGreaterThan(0);
 
@@ -681,10 +682,10 @@ from collections import defaultdict as dd
 
       // Look for aliased imports (either by original name or alias)
       const has_pandas = imports.some(
-        (i) => i.name === "pandas" || i.name === "pd"
+        (i) => i.name === "pandas" || i.name === "pd",
       );
       const has_numpy = imports.some(
-        (i) => i.name === "numpy" || i.name === "np"
+        (i) => i.name === "numpy" || i.name === "np",
       );
       expect(has_pandas || has_numpy).toBe(true);
     });
@@ -703,7 +704,7 @@ from ..models import User
 
       // Check relative imports were captured
       const import_names = Array.from(index.imported_symbols.values()).map(
-        (i) => i.name
+        (i) => i.name,
       );
       expect(import_names.length).toBeGreaterThan(0);
     });
@@ -748,7 +749,7 @@ class DecoratedClass:
       // Check decorator function calls in references
       const function_calls = index.references.filter((r) => r.type === "call");
       const decorator_call = function_calls.find(
-        (r) => r.name === "my_decorator"
+        (r) => r.name === "my_decorator",
       );
       expect(decorator_call).toBeDefined();
     });
@@ -772,14 +773,14 @@ def decorated_function():
       // Check function was captured
       const functions = Array.from(index.functions.values());
       const decorated_func = functions.find(
-        (f) => f.name === "decorated_function"
+        (f) => f.name === "decorated_function",
       );
       expect(decorated_func).toBeDefined();
 
       // Check decorator call
       const function_calls = index.references.filter((r) => r.type === "call");
       const decorator_call = function_calls.find(
-        (r) => r.name === "decorator_with_args"
+        (r) => r.name === "decorator_with_args",
       );
       expect(decorator_call).toBeDefined();
     });
@@ -897,7 +898,7 @@ z = [1, 2, 3]
 
       // Simple variables shouldn't have property chains
       const member_accesses = result.references.filter(
-        (ref) => ref.type === "member_access"
+        (ref) => ref.type === "member_access",
       );
       // There should be no member accesses in this code
       expect(member_accesses.length).toBe(0);
@@ -938,12 +939,12 @@ print(Factory.create())
       const result = build_semantic_index(parsed_file, tree, "python");
 
       const constructor_calls = result.references.filter(
-        (ref) => ref.type === "construct"
+        (ref) => ref.type === "construct",
       );
 
       // Standalone MyClass() won't have construct_target
       const standalone = constructor_calls.find(
-        (ref) => ref.name === "MyClass"
+        (ref) => ref.name === "MyClass",
       );
       expect(standalone).toBeDefined();
       // construct_target should be undefined for standalone calls
@@ -976,7 +977,7 @@ service2.get_data()
       // Scenario 1: Receiver from type annotation
       // Verify the assignment is captured
       const service1_assignment = result.references.find(
-        (ref) => ref.type === "assignment" && ref.name === "service1"
+        (ref) => ref.type === "assignment" && ref.name === "service1",
       );
       expect(service1_assignment).toBeDefined();
 
@@ -984,7 +985,7 @@ service2.get_data()
 
       // Verify method calls have receiver_location
       const method_calls = result.references.filter(
-        (ref) => ref.type === "call" && ref.name === "get_data"
+        (ref) => ref.type === "call" && ref.name === "get_data",
       );
 
 
@@ -994,18 +995,18 @@ service2.get_data()
       // At least some method calls should have receiver_location
       // (calls within class definitions may not have it)
       const calls_with_receiver = method_calls.filter(
-        (c) => c.context?.receiver_location
+        (c) => c.context?.receiver_location,
       );
       expect(calls_with_receiver.length).toBeGreaterThan(0);
 
       // Scenario 2: Verify constructor call has construct_target
       const constructor_calls = result.references.filter(
-        (ref) => ref.type === "construct" && ref.name === "Service"
+        (ref) => ref.type === "construct" && ref.name === "Service",
       );
 
       // Should have at least one constructor call with construct_target
       const construct_with_target = constructor_calls.find(
-        (c) => c.context?.construct_target
+        (c) => c.context?.construct_target,
       );
       expect(construct_with_target).toBeDefined();
     });
@@ -1083,7 +1084,7 @@ class User:
 
       // Verify class exists
       const user_class = Array.from(result.classes.values()).find(
-        (c) => c.name === "User"
+        (c) => c.name === "User",
       );
 
       expect(user_class).toBeDefined();
@@ -1148,21 +1149,21 @@ class User:
             // Verify at least some methods are present
             const has_methods = method_names.some((name) =>
               ["name", "create_guest", "from_dict", "regular_method"].includes(
-                name
-              )
+                name,
+              ),
             );
             expect(has_methods).toBe(true);
           }
         } else {
           // Methods not yet populated - document this
           console.log(
-            "Note: Class methods not extracted for decorated methods test"
+            "Note: Class methods not extracted for decorated methods test",
           );
         }
 
         // Verify @property decorated method
         const property_method = user_class.methods.find(
-          (m) => m.name === "name"
+          (m) => m.name === "name",
         );
         if (property_method) {
           expect(property_method.kind).toBe("method");
@@ -1183,7 +1184,7 @@ class User:
 
         // Verify @staticmethod decorated method
         const static_method = user_class.methods.find(
-          (m) => m.name === "create_guest"
+          (m) => m.name === "create_guest",
         );
         if (static_method) {
           expect(static_method.kind).toBe("method");
@@ -1199,7 +1200,7 @@ class User:
 
         // Verify @classmethod decorated method
         const class_method = user_class.methods.find(
-          (m) => m.name === "from_dict"
+          (m) => m.name === "from_dict",
         );
         if (class_method) {
           expect(class_method.kind).toBe("method");
@@ -1220,7 +1221,7 @@ class User:
 
         // Verify regular method
         const regular_method = user_class.methods.find(
-          (m) => m.name === "regular_method"
+          (m) => m.name === "regular_method",
         );
         if (regular_method) {
           expect(regular_method.kind).toBe("method");
@@ -1233,7 +1234,7 @@ class User:
             expect(param_names).toContain("value");
 
             const value_param = regular_method.parameters.find(
-              (p) => p.name === "value"
+              (p) => p.name === "value",
             );
             if (value_param) {
               expect(value_param.type).toBe("int");
@@ -1258,7 +1259,7 @@ class TestClass:
       const result = build_semantic_index(parsed_file, tree, "python");
 
       const class_def = Array.from(result.classes.values()).find(
-        (d) => d.name === "TestClass"
+        (d) => d.name === "TestClass",
       );
 
       expect(class_def).toBeDefined();
@@ -1306,7 +1307,7 @@ class TestClass:
       // Verify regular method has kind "method" (if methods are populated)
       if (class_def?.methods && class_def.methods.length > 0) {
         const regularMethod = class_def.methods.find(
-          (m) => m.name === "regular_method"
+          (m) => m.name === "regular_method",
         );
         if (regularMethod) {
           expect(regularMethod.kind).toBe("method");
@@ -1335,7 +1336,7 @@ class Priority(IntEnum):
 
       // Verify Status enum exists
       const status_enum = Array.from(result.enums.values()).find(
-        (e) => e.name === "Status"
+        (e) => e.name === "Status",
       );
 
       expect(status_enum).toBeDefined();
@@ -1377,28 +1378,28 @@ class Priority(IntEnum):
 
           // Verify value is tracked
           if (pending_member.value !== undefined) {
-            expect(pending_member.value).toBe('"pending"');
+            expect(pending_member.value).toBe("\"pending\"");
           }
         }
 
         const active_member = status_enum.members.find((m) =>
-          String(m.name).includes("ACTIVE")
+          String(m.name).includes("ACTIVE"),
         );
         if (active_member && active_member.value !== undefined) {
-          expect(active_member.value).toBe('"active"');
+          expect(active_member.value).toBe("\"active\"");
         }
 
         const completed_member = status_enum.members.find((m) =>
-          String(m.name).includes("COMPLETED")
+          String(m.name).includes("COMPLETED"),
         );
         if (completed_member && completed_member.value !== undefined) {
-          expect(completed_member.value).toBe('"completed"');
+          expect(completed_member.value).toBe("\"completed\"");
         }
       }
 
       // Verify Priority IntEnum exists
       const priority_enum = Array.from(result.enums.values()).find(
-        (e) => e.name === "Priority"
+        (e) => e.name === "Priority",
       );
 
       expect(priority_enum).toBeDefined();
@@ -1426,21 +1427,21 @@ class Priority(IntEnum):
 
         // Verify numeric values
         const low_member = priority_enum.members.find((m) =>
-          String(m.name).includes("LOW")
+          String(m.name).includes("LOW"),
         );
         if (low_member && low_member.value !== undefined) {
           expect(low_member.value).toBe("1");
         }
 
         const medium_member = priority_enum.members.find((m) =>
-          String(m.name).includes("MEDIUM")
+          String(m.name).includes("MEDIUM"),
         );
         if (medium_member && medium_member.value !== undefined) {
           expect(medium_member.value).toBe("2");
         }
 
         const high_member = priority_enum.members.find((m) =>
-          String(m.name).includes("HIGH")
+          String(m.name).includes("HIGH"),
         );
         if (high_member && high_member.value !== undefined) {
           expect(high_member.value).toBe("3");
@@ -1469,7 +1470,7 @@ class Drawable(Protocol):
 
       // Verify Protocol class exists as interface
       const drawable_interface = Array.from(result.interfaces.values()).find(
-        (i) => i.name === "Drawable"
+        (i) => i.name === "Drawable",
       );
 
       expect(drawable_interface).toBeDefined();
@@ -1495,7 +1496,7 @@ class Drawable(Protocol):
 
         // Verify property structure
         const x_property = drawable_interface.properties.find(
-          (p) => p.name === "x"
+          (p) => p.name === "x",
         );
         if (x_property) {
           expect(x_property.kind).toBe("property");
@@ -1505,7 +1506,7 @@ class Drawable(Protocol):
         }
 
         const y_property = drawable_interface.properties.find(
-          (p) => p.name === "y"
+          (p) => p.name === "y",
         );
         if (y_property) {
           expect(y_property.kind).toBe("property");
@@ -1524,7 +1525,7 @@ class Drawable(Protocol):
 
         // Verify method structure
         const draw_method = drawable_interface.methods.find(
-          (m) => m.name === "draw"
+          (m) => m.name === "draw",
         );
         if (draw_method) {
           expect(draw_method.kind).toBe("method");
@@ -1533,7 +1534,7 @@ class Drawable(Protocol):
         }
 
         const move_method = drawable_interface.methods.find(
-          (m) => m.name === "move"
+          (m) => m.name === "move",
         );
         if (move_method) {
           expect(move_method.kind).toBe("method");
@@ -1547,7 +1548,7 @@ class Drawable(Protocol):
             expect(param_names).toContain("dy");
 
             const dx_param = move_method.parameters.find(
-              (p) => p.name === "dx"
+              (p) => p.name === "dx",
             );
             if (dx_param) {
               expect(dx_param.type).toBe("int");
@@ -1575,7 +1576,7 @@ def process_items(items: list[str], *args, **kwargs) -> None:
 
       // Verify add function
       const add_func = Array.from(result.functions.values()).find(
-        (d) => d.name === "add"
+        (d) => d.name === "add",
       );
 
       expect(add_func).toBeDefined();
@@ -1599,7 +1600,7 @@ def process_items(items: list[str], *args, **kwargs) -> None:
 
         if (add_func.signature.parameters.length > 0) {
           expect(add_func.signature.parameters.length).toBeGreaterThanOrEqual(
-            2
+            2,
           );
 
           const param_names = add_func.signature.parameters.map((p) => p.name);
@@ -1608,7 +1609,7 @@ def process_items(items: list[str], *args, **kwargs) -> None:
 
           // Verify parameter types
           const a_param = add_func.signature.parameters.find(
-            (p) => p.name === "a"
+            (p) => p.name === "a",
           );
           if (a_param) {
             expect(a_param.kind).toBe("parameter");
@@ -1617,7 +1618,7 @@ def process_items(items: list[str], *args, **kwargs) -> None:
           }
 
           const b_param = add_func.signature.parameters.find(
-            (p) => p.name === "b"
+            (p) => p.name === "b",
           );
           if (b_param) {
             expect(b_param.type).toBe("int");
@@ -1625,7 +1626,7 @@ def process_items(items: list[str], *args, **kwargs) -> None:
         } else {
           // Parameters not yet populated for standalone functions - this is expected
           console.log(
-            "Note: Function parameters not extracted - may need implementation"
+            "Note: Function parameters not extracted - may need implementation",
           );
         }
 
@@ -1637,7 +1638,7 @@ def process_items(items: list[str], *args, **kwargs) -> None:
 
       // Verify greet function with default parameter
       const greet_func = Array.from(result.functions.values()).find(
-        (d) => d.name === "greet"
+        (d) => d.name === "greet",
       );
 
       expect(greet_func).toBeDefined();
@@ -1654,19 +1655,19 @@ def process_items(items: list[str], *args, **kwargs) -> None:
           greet_func.signature.parameters.length > 0
         ) {
           const param_names = greet_func.signature.parameters.map(
-            (p) => p.name
+            (p) => p.name,
           );
           expect(param_names).toContain("name");
           expect(param_names).toContain("greeting");
 
           const greeting_param = greet_func.signature.parameters.find(
-            (p) => p.name === "greeting"
+            (p) => p.name === "greeting",
           );
           if (greeting_param) {
             expect(greeting_param.type).toBe("str");
             // Default value tracking may vary by implementation
             if (greeting_param.default_value !== undefined) {
-              expect(greeting_param.default_value).toBe('"Hello"');
+              expect(greeting_param.default_value).toBe("\"Hello\"");
             }
           }
         }
@@ -1674,7 +1675,7 @@ def process_items(items: list[str], *args, **kwargs) -> None:
 
       // Verify process_items function with *args and **kwargs
       const process_func = Array.from(result.functions.values()).find(
-        (d) => d.name === "process_items"
+        (d) => d.name === "process_items",
       );
 
       expect(process_func).toBeDefined();
@@ -1685,12 +1686,12 @@ def process_items(items: list[str], *args, **kwargs) -> None:
         process_func.signature.parameters.length > 0
       ) {
         const param_names = process_func.signature.parameters.map(
-          (p) => p.name
+          (p) => p.name,
         );
         expect(param_names).toContain("items");
 
         const items_param = process_func.signature.parameters.find(
-          (p) => p.name === "items"
+          (p) => p.name === "items",
         );
         if (items_param) {
           expect(items_param.type).toMatch(/list/);
@@ -1722,7 +1723,7 @@ class Calculator:
 
       // Verify class exists
       const calc_class = Array.from(result.classes.values()).find(
-        (c) => c.name === "Calculator"
+        (c) => c.name === "Calculator",
       );
 
       expect(calc_class).toBeDefined();
@@ -1747,7 +1748,7 @@ class Calculator:
           // Verify constructor parameter with default value
           if (ctor.parameters && ctor.parameters.length > 0) {
             const initial_value_param = ctor.parameters.find(
-              (p) => p.name === "initial_value"
+              (p) => p.name === "initial_value",
             );
             if (initial_value_param) {
               expect(initial_value_param.kind).toBe("parameter");
@@ -1798,7 +1799,7 @@ class Calculator:
 
           // Verify reset method (no parameters, None return type)
           const reset_method = calc_class.methods.find(
-            (m) => m.name === "reset"
+            (m) => m.name === "reset",
           );
           if (reset_method) {
             expect(reset_method.kind).toBe("method");
@@ -1808,7 +1809,7 @@ class Calculator:
             // Parameters should be empty or only contain 'self' (which may be excluded)
             if (reset_method.parameters) {
               const non_self_params = reset_method.parameters.filter(
-                (p) => p.name !== "self"
+                (p) => p.name !== "self",
               );
               expect(non_self_params.length).toBe(0);
             }
@@ -1821,7 +1822,7 @@ class Calculator:
         } else {
           // Methods not yet populated - note this for implementation
           console.log(
-            "Note: Class methods not extracted - may need implementation"
+            "Note: Class methods not extracted - may need implementation",
           );
         }
       }
@@ -1852,7 +1853,7 @@ type Count = int
 
       // Verify Url type alias with complete structure
       const urlType = Array.from(result.types.values()).find(
-        (t) => t.name === "Url"
+        (t) => t.name === "Url",
       );
 
       expect(urlType).toBeDefined();
@@ -1872,7 +1873,7 @@ type Count = int
 
       // Verify StringOrInt type alias
       const stringOrIntType = Array.from(result.types.values()).find(
-        (t) => t.name === "StringOrInt"
+        (t) => t.name === "StringOrInt",
       );
 
       expect(stringOrIntType).toBeDefined();
@@ -1903,7 +1904,7 @@ type Result[T, E] = tuple[T, E] | E
 
       // Verify Point generic type alias
       const pointType = Array.from(result.types.values()).find(
-        (t) => t.name === "Point"
+        (t) => t.name === "Point",
       );
 
       expect(pointType).toBeDefined();
@@ -1917,7 +1918,7 @@ type Result[T, E] = tuple[T, E] | E
 
       // Verify GenericList
       const genericListType = Array.from(result.types.values()).find(
-        (t) => t.name === "GenericList"
+        (t) => t.name === "GenericList",
       );
 
       expect(genericListType).toBeDefined();
@@ -1966,27 +1967,27 @@ type Handler = Callable[[str], None]
         code,
         "test.py" as FilePath,
         tree,
-        "python" as Language
+        "python" as Language,
       );
       const index = build_semantic_index(
         parsed_file,
         tree,
-        "python" as Language
+        "python" as Language,
       );
 
       const file_scope = Array.from(index.scopes.values()).find(
-        (s) => s.type === "module" && s.parent_id === null
+        (s) => s.type === "module" && s.parent_id === null,
       );
       expect(file_scope).toBeDefined();
       const file_scope_id = file_scope!.id;
 
       const class_scope = Array.from(index.scopes.values()).find(
-        (s) => s.type === "class"
+        (s) => s.type === "class",
       );
       expect(class_scope).toBeDefined();
 
       const myClass = Array.from(index.classes.values()).find(
-        (c) => c.name === "MyClass"
+        (c) => c.name === "MyClass",
       );
       expect(myClass).toBeDefined();
 
@@ -2013,31 +2014,31 @@ type Handler = Callable[[str], None]
         code,
         "test.py" as FilePath,
         tree,
-        "python" as Language
+        "python" as Language,
       );
       const index = build_semantic_index(
         parsed_file,
         tree,
-        "python" as Language
+        "python" as Language,
       );
 
       const file_scope = Array.from(index.scopes.values()).find(
-        (s) => s.type === "module" && s.parent_id === null
+        (s) => s.type === "module" && s.parent_id === null,
       );
       expect(file_scope).toBeDefined();
       const file_scope_id = file_scope!.id;
 
       const method_scope = Array.from(index.scopes.values()).find(
-        (s) => s.type === "method"
+        (s) => s.type === "method",
       );
       expect(method_scope).toBeDefined();
       const method_scope_id = method_scope!.id;
 
       const outer_class = Array.from(index.classes.values()).find(
-        (c) => c.name === "Outer"
+        (c) => c.name === "Outer",
       );
       const inner_class = Array.from(index.classes.values()).find(
-        (c) => c.name === "Inner"
+        (c) => c.name === "Inner",
       );
 
       expect(outer_class).toBeDefined();
