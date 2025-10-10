@@ -1,17 +1,17 @@
-import type { SymbolId, FilePath, Definition } from '@ariadnejs/types'
+import type { SymbolId, FilePath, AnyDefinition } from '@ariadnejs/types'
 
 /**
  * Central registry for all definitions across the project.
  *
  * Maintains bidirectional mapping:
- * - SymbolId → Definition (for fast symbol lookup)
+ * - SymbolId → AnyDefinition (for fast symbol lookup)
  * - FilePath → Set<SymbolId> (for file-based operations)
  *
  * Supports incremental updates when files change.
  */
 export class DefinitionRegistry {
-  /** SymbolId → Definition */
-  private by_symbol: Map<SymbolId, Definition> = new Map()
+  /** SymbolId → AnyDefinition */
+  private by_symbol: Map<SymbolId, AnyDefinition> = new Map()
 
   /** FilePath → Set of SymbolIds defined in that file */
   private by_file: Map<FilePath, Set<SymbolId>> = new Map()
@@ -23,7 +23,7 @@ export class DefinitionRegistry {
    * @param file_id - The file being updated
    * @param definitions - New definitions from the file
    */
-  update_file(file_id: FilePath, definitions: Definition[]): void {
+  update_file(file_id: FilePath, definitions: AnyDefinition[]): void {
     // Step 1: Remove old definitions from this file
     this.remove_file(file_id)
 
@@ -50,7 +50,7 @@ export class DefinitionRegistry {
    * @param symbol_id - The symbol to look up
    * @returns The definition, or undefined if not found
    */
-  get(symbol_id: SymbolId): Definition | undefined {
+  get(symbol_id: SymbolId): AnyDefinition | undefined {
     return this.by_symbol.get(symbol_id)
   }
 
@@ -60,13 +60,13 @@ export class DefinitionRegistry {
    * @param file_id - The file to query
    * @returns Array of definitions from that file
    */
-  get_file_definitions(file_id: FilePath): Definition[] {
+  get_file_definitions(file_id: FilePath): AnyDefinition[] {
     const symbol_ids = this.by_file.get(file_id)
     if (!symbol_ids) {
       return []
     }
 
-    const definitions: Definition[] = []
+    const definitions: AnyDefinition[] = []
     for (const symbol_id of symbol_ids) {
       const def = this.by_symbol.get(symbol_id)
       if (def) {
@@ -101,7 +101,7 @@ export class DefinitionRegistry {
    *
    * @returns Array of all definitions
    */
-  get_all_definitions(): Definition[] {
+  get_all_definitions(): AnyDefinition[] {
     return Array.from(this.by_symbol.values())
   }
 

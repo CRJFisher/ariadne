@@ -1,4 +1,4 @@
-import type { FilePath, SymbolId, ReferenceId, TypeInfo, Language } from '@ariadnejs/types'
+import type { FilePath, SymbolId, ReferenceId, TypeMemberInfo, Language } from '@ariadnejs/types'
 import { build_semantic_index } from '../index_single_file/semantic_index'
 import { build_derived_data } from '../index_single_file/derived_data'
 import type { SemanticIndex } from '../index_single_file/semantic_index'
@@ -203,7 +203,12 @@ export class Project {
     this.definitions.update_file(file_id, all_definitions)
     this.types.update_file(file_id, derived)
     this.scopes.update_file(file_id, semantic_index.scopes)
-    this.exports.update_file(file_id, derived.exported_symbols)
+
+    // Convert exported_symbols Map to Set of SymbolIds for ExportRegistry
+    const exported_symbol_ids = new Set(
+      Array.from(derived.exported_symbols.values()).map(def => def.symbol_id)
+    )
+    this.exports.update_file(file_id, exported_symbol_ids)
 
     // Extract imports from imported_symbols
     const imports = extract_imports_from_definitions(semantic_index.imported_symbols, file_id)
@@ -350,13 +355,13 @@ export class Project {
   }
 
   /**
-   * Get type information for a symbol.
+   * Get type member information for a type symbol.
    *
-   * @param symbol_id - The symbol to query
-   * @returns Type info, or undefined
+   * @param symbol_id - The type symbol to query
+   * @returns Type member info (methods, properties, etc.), or undefined
    */
-  get_type_info(symbol_id: SymbolId): TypeInfo | undefined {
-    return this.types.get_type_binding(symbol_id)
+  get_type_info(symbol_id: SymbolId): TypeMemberInfo | undefined {
+    return this.types.get_type_members(symbol_id)
   }
 
   /**
