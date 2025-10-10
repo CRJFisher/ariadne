@@ -4,4 +4,4 @@ export { ScopeRegistry } from './scope_registry'
 export { ExportRegistry } from './export_registry'
 export { ImportGraph } from './import_graph'
 export { ResolutionCache } from './resolution_cache'
-// Export other registries as they're implemented in later sub-tasks
+export { Project } from './project'

@@ -4,3 +4,22 @@
  * Main entry point for the Ariadne code analysis library.
  * Provides functions to analyze codebases and extract code graphs.
  */
+
+// Main coordinator
+export { Project } from './project'
+
+// Core processing functions
+export { build_semantic_index } from './index_single_file/semantic_index'
+export { build_derived_data } from './index_single_file/derived_data'
+export { resolve_symbols } from './resolve_references/symbol_resolution'
+export { detect_call_graph } from './trace_call_graph/detect_call_graph'
+
+// Project-level registries
+export {
+  DefinitionRegistry,
+  TypeRegistry,
+  ScopeRegistry,
+  ExportRegistry,
+  ImportGraph,
+  ResolutionCache
+} from './project'
