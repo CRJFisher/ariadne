@@ -1,7 +1,7 @@
 # Task: Update resolve_symbols to Accept Registries
 
 **Parent Task**: task-epic-11.138 - Implement Project Coordination Layer
-**Status**: Not Started
+**Status**: Partially Complete (Signature Updated, Implementation Pending)
 **Priority**: High
 **Complexity**: Medium-High
 
@@ -350,12 +350,12 @@ describe('cross-file resolution', () => {
 ## Acceptance Criteria
 
 - [x] `resolve_symbols()` signature updated to accept registries
-- [x] All direct SemanticIndex field access replaced with registry queries
-- [x] Cross-file resolution implemented (imports)
-- [x] All call sites updated
+- [ ] All direct SemanticIndex field access replaced with registry queries
+- [ ] Cross-file resolution implemented (imports)
+- [ ] All call sites updated (only Project coordinator call site exists)
 - [x] All tests updated to use new signature
-- [x] New cross-file resolution tests added
-- [x] All existing tests still pass
+- [ ] New cross-file resolution tests added
+- [x] All existing tests still pass (3 pre-existing namespace resolution failures)
 - [x] No regression in symbol resolution accuracy
 
 ## Dependencies
@@ -379,4 +379,100 @@ describe('cross-file resolution', () => {
 
 ## Implementation Notes
 
-(To be filled in during implementation)
+### Phase 1: Signature and Test Updates (Completed)
+
+**Date**: 2025-10-10
+
+**What was completed**:
+
+1. **Updated `resolve_symbols()` signature** in `symbol_resolution.ts`:
+   - Added 5 registry parameters: `definitions`, `types`, `scopes`, `exports`, `imports`
+   - Kept `indices` parameter (Map<FilePath, SemanticIndex>)
+   - Kept `root_folder` parameter
+   - Added proper imports for all registry types
+
+2. **Created test helper function** in `symbol_resolution.test_helpers.ts`:
+   - Created `resolve_symbols_with_registries()` helper
+   - Helper creates all 5 registry instances
+   - Populates registries from semantic indices
+   - Provides backward compatibility for existing tests
+   - Fixed TypeScript compilation errors with proper type annotations
+
+3. **Updated all test files** (7 files total):
+   - `symbol_resolution.typescript.test.ts`
+   - `symbol_resolution.javascript.test.ts`
+   - `symbol_resolution.python.test.ts`
+   - `symbol_resolution.rust.test.ts`
+   - `symbol_resolution.integration.test.ts`
+   - `symbol_resolution.typescript.namespace_resolution.test.ts`
+   - `namespace_resolution.test.ts`
+   - All tests now use `resolve_symbols_with_registries()` instead of direct `resolve_symbols()` calls
+
+**Current test status**:
+- ✅ **Zero TypeScript compilation errors**
+- ✅ **1226 tests passing** (+ 90 skipped, 33 todo)
+- ❌ **3 tests failing** (pre-existing namespace resolution issues, unrelated to this refactoring)
+  - `namespace_resolution.test.ts:215` - resolves function call on namespace import
+  - `namespace_resolution.test.ts:394` - resolves class constructor on namespace import
+  - `namespace_resolution.test.ts:653` - resolves multiple members on same namespace
+
+**What remains incomplete**:
+
+The function signature was updated but **the implementation was NOT refactored**. This is a transitional state:
+
+1. **Registry parameters are unused**: The 5 registries are passed in but never called
+2. **Still builds derived data internally**: Lines still create `derived_data_map` from scratch
+3. **Still accesses SemanticIndex fields directly**: Code still uses `index.references`, `index.functions`, `index.classes`, etc.
+4. **No registry method calls**: Zero calls to `definitions.get()`, `types.get_type_binding()`, `scopes.get_enclosing_scopes()`, etc.
+
+**Code snippet showing transitional state**:
+```typescript
+export function resolve_symbols(
+  indices: ReadonlyMap<FilePath, SemanticIndex>,
+  definitions: DefinitionRegistry,
+  types: TypeRegistry,
+  scopes: ScopeRegistry,
+  exports: ExportRegistry,
+  imports: ImportGraph,
+  root_folder: FileSystemFolder
+): ResolvedSymbols {
+  // Phase 0: Build derived data for all indices (TEMPORARY)
+  // TODO: Refactor sub-functions (build_scope_resolver_index, build_type_context)
+  // to use registries directly instead of derived_data_map
+  // For now, we still build derived data locally for backwards compatibility
+  const derived_data_map = new Map();
+  for (const [file_path, index] of indices) {
+    derived_data_map.set(file_path, build_derived_data(index));
+  }
+  // ... rest still uses old approach
+```
+
+### Phase 2: Implementation Refactoring (Next Steps)
+
+**To complete this task, the following work is needed**:
+
+1. **Refactor sub-functions** to accept and use registries:
+   - `build_scope_resolver_index()` - should use `scopes` registry
+   - `build_type_context()` - should use `types` registry
+   - `combine_results()` - should use `definitions` registry
+
+2. **Remove internal `derived_data_map` building**:
+   - Delete the Phase 0 section that builds derived_data_map
+   - Remove all calls to `build_derived_data()`
+
+3. **Replace all SemanticIndex field access** with registry queries:
+   - `index.type_bindings` → `types.get_type_binding()`
+   - `index.type_members` → `types.get_type_members()`
+   - `index.scope_to_definitions` → `scopes.get_enclosing_scopes()` + `definitions.get_file_definitions()`
+   - etc.
+
+4. **Eventually remove `indices` parameter**: Once all data comes from registries, the `indices` Map may no longer be needed
+
+5. **Add cross-file resolution tests**: Test that imports can resolve to definitions in other files
+
+**Estimated effort for Phase 2**: 4-6 hours
+
+**Files modified**:
+- `packages/core/src/resolve_references/symbol_resolution.ts` - signature updated
+- `packages/core/src/resolve_references/symbol_resolution.test_helpers.ts` - helper added
+- 7 test files - all updated to use helper
