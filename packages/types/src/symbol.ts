@@ -2,6 +2,7 @@ import { Location } from "./common";
 
 export type SymbolId = string & { __brand: "SymbolId" }; // This is the encoded version of the Symbol object
 export type SymbolName = string & { __brand: "SymbolName" }; // This is the local identifier of the symbol
+export type ReferenceId = string & { __brand: "ReferenceId" }; // Unique identifier for a reference (reference to a symbol)
 
 /**
  * Symbol kind - essential for resolution rules
@@ -403,4 +404,27 @@ export function named_module_symbol(
     name: name as SymbolName,
     location,
   });
+}
+
+/**
+ * Create a reference identifier
+ *
+ * @param name - The name being referenced
+ * @param file_path - The file containing the reference
+ * @param location - The source location of the reference
+ * @returns A ReferenceId for the reference
+ *
+ * @example
+ * ```typescript
+ * const refId = reference_id('foo', 'src/app.ts' as FilePath, {
+ *   file_path: 'src/app.ts',
+ *   start_line: 5,
+ *   start_column: 10,
+ *   end_line: 5,
+ *   end_column: 13
+ * });
+ * ```
+ */
+export function reference_id(name: string, location: Location): ReferenceId {
+  return `ref:${location.file_path}:${location.start_line}:${location.start_column}:${name}` as ReferenceId;
 }
