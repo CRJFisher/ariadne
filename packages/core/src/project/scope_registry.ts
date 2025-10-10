@@ -1,4 +1,4 @@
-import type { FilePath, ScopeId, Location, LexicalScope } from '@ariadnejs/types'
+import type { FilePath, ScopeId, Location, LexicalScope } from "@ariadnejs/types";
 
 /**
  * Registry for scope trees and scope-based queries.
@@ -11,10 +11,10 @@ import type { FilePath, ScopeId, Location, LexicalScope } from '@ariadnejs/types
  */
 export class ScopeRegistry {
   /** File → root scope of that file */
-  private scope_trees: Map<FilePath, LexicalScope> = new Map()
+  private scope_trees: Map<FilePath, LexicalScope> = new Map();
 
   /** Flattened scope lookup by ScopeId (across all files) */
-  private by_scope_id: Map<ScopeId, LexicalScope> = new Map()
+  private by_scope_id: Map<ScopeId, LexicalScope> = new Map();
 
   /**
    * Update scope tree for a file.
@@ -25,36 +25,36 @@ export class ScopeRegistry {
    */
   update_file(file_path: FilePath, scopes: ReadonlyMap<ScopeId, LexicalScope>): void {
     // Remove old scopes from this file
-    this.remove_file(file_path)
+    this.remove_file(file_path);
 
     if (scopes.size === 0) {
-      return  // No scopes to add
+      return;  // No scopes to add
     }
 
     // Find root scope (scope with parent_id === null)
-    let root_scope: LexicalScope | undefined
+    let root_scope: LexicalScope | undefined;
     for (const scope of scopes.values()) {
       if (scope.parent_id === null) {
-        root_scope = scope
-        break
+        root_scope = scope;
+        break;
       }
     }
 
     if (!root_scope) {
       // Fallback: use first scope as root
-      root_scope = scopes.values().next().value
+      root_scope = scopes.values().next().value;
     }
 
     if (!root_scope) {
-      throw new Error(`No root scope found for file: ${file_path}`)
+      throw new Error(`No root scope found for file: ${file_path}`);
     }
 
     // Store root scope for the file
-    this.scope_trees.set(file_path, root_scope)
+    this.scope_trees.set(file_path, root_scope);
 
     // Index all scopes by ScopeId
     for (const scope of scopes.values()) {
-      this.by_scope_id.set(scope.id, scope)
+      this.by_scope_id.set(scope.id, scope);
     }
   }
 
@@ -67,33 +67,33 @@ export class ScopeRegistry {
    * @returns Array of scopes from innermost to outermost
    */
   get_enclosing_scopes(file_path: FilePath, location: Location): LexicalScope[] {
-    const root = this.scope_trees.get(file_path)
+    const root = this.scope_trees.get(file_path);
     if (!root) {
-      return []
+      return [];
     }
 
     // Find the innermost scope containing the location
-    const innermost = this.find_innermost_scope(root, location)
+    const innermost = this.find_innermost_scope(root, location);
     if (!innermost) {
-      return []
+      return [];
     }
 
     // Build scope chain from innermost to outermost
-    const chain: LexicalScope[] = []
-    let current: LexicalScope | undefined = innermost
+    const chain: LexicalScope[] = [];
+    let current: LexicalScope | undefined = innermost;
 
     while (current) {
-      chain.push(current)
+      chain.push(current);
 
       // Move to parent
       if (current.parent_id) {
-        current = this.by_scope_id.get(current.parent_id)
+        current = this.by_scope_id.get(current.parent_id);
       } else {
-        current = undefined
+        current = undefined;
       }
     }
 
-    return chain
+    return chain;
   }
 
   /**
@@ -107,24 +107,24 @@ export class ScopeRegistry {
   private find_innermost_scope(scope: LexicalScope, location: Location): LexicalScope | undefined {
     // Check if location is within this scope
     if (!this.scope_contains_location(scope, location)) {
-      return undefined
+      return undefined;
     }
 
     // Check children (depth-first)
     if (scope.child_ids && scope.child_ids.length > 0) {
       for (const child_id of scope.child_ids) {
-        const child = this.by_scope_id.get(child_id)
+        const child = this.by_scope_id.get(child_id);
         if (child) {
-          const result = this.find_innermost_scope(child, location)
+          const result = this.find_innermost_scope(child, location);
           if (result) {
-            return result  // Found in child
+            return result;  // Found in child
           }
         }
       }
     }
 
     // No child contains it, so this scope is the innermost
-    return scope
+    return scope;
   }
 
   /**
@@ -135,27 +135,27 @@ export class ScopeRegistry {
    * @returns True if scope contains the location
    */
   private scope_contains_location(scope: LexicalScope, location: Location): boolean {
-    const start_line = scope.location.start_line
-    const start_column = scope.location.start_column
-    const end_line = scope.location.end_line
-    const end_column = scope.location.end_column
+    const start_line = scope.location.start_line;
+    const start_column = scope.location.start_column;
+    const end_line = scope.location.end_line;
+    const end_column = scope.location.end_column;
 
     // Simple line-based containment check
     if (location.start_line < start_line || location.start_line > end_line) {
-      return false
+      return false;
     }
 
     // If on start line, check column
     if (location.start_line === start_line && location.start_column < start_column) {
-      return false
+      return false;
     }
 
     // If on end line, check column
     if (location.start_line === end_line && location.start_column > end_column) {
-      return false
+      return false;
     }
 
-    return true
+    return true;
   }
 
   /**
@@ -165,7 +165,7 @@ export class ScopeRegistry {
    * @returns The scope, or undefined if not found
    */
   get_scope(scope_id: ScopeId): LexicalScope | undefined {
-    return this.by_scope_id.get(scope_id)
+    return this.by_scope_id.get(scope_id);
   }
 
   /**
@@ -175,7 +175,7 @@ export class ScopeRegistry {
    * @returns Root scope, or undefined if file not indexed
    */
   get_file_root_scope(file_path: FilePath): LexicalScope | undefined {
-    return this.scope_trees.get(file_path)
+    return this.scope_trees.get(file_path);
   }
 
   /**
@@ -184,7 +184,7 @@ export class ScopeRegistry {
    * @returns Array of file paths
    */
   get_all_files(): FilePath[] {
-    return Array.from(this.scope_trees.keys())
+    return Array.from(this.scope_trees.keys());
   }
 
   /**
@@ -193,16 +193,16 @@ export class ScopeRegistry {
    * @param file_path - The file to remove
    */
   remove_file(file_path: FilePath): void {
-    const root = this.scope_trees.get(file_path)
+    const root = this.scope_trees.get(file_path);
     if (!root) {
-      return
+      return;
     }
 
     // Remove all scopes from flattened index
-    this.remove_scopes_recursively(root)
+    this.remove_scopes_recursively(root);
 
     // Remove file from trees
-    this.scope_trees.delete(file_path)
+    this.scope_trees.delete(file_path);
   }
 
   /**
@@ -211,13 +211,13 @@ export class ScopeRegistry {
    * @param scope - Root of scope tree to remove
    */
   private remove_scopes_recursively(scope: LexicalScope): void {
-    this.by_scope_id.delete(scope.id)
+    this.by_scope_id.delete(scope.id);
 
     if (scope.child_ids && scope.child_ids.length > 0) {
       for (const child_id of scope.child_ids) {
-        const child = this.by_scope_id.get(child_id)
+        const child = this.by_scope_id.get(child_id);
         if (child) {
-          this.remove_scopes_recursively(child)
+          this.remove_scopes_recursively(child);
         }
       }
     }
@@ -229,14 +229,14 @@ export class ScopeRegistry {
    * @returns Count of scopes
    */
   size(): number {
-    return this.by_scope_id.size
+    return this.by_scope_id.size;
   }
 
   /**
    * Clear all scopes from the registry.
    */
   clear(): void {
-    this.scope_trees.clear()
-    this.by_scope_id.clear()
+    this.scope_trees.clear();
+    this.by_scope_id.clear();
   }
 }

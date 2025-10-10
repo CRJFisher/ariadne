@@ -1,4 +1,4 @@
-import type { FilePath, SymbolId } from '@ariadnejs/types'
+import type { FilePath, SymbolId } from "@ariadnejs/types";
 
 /**
  * Registry tracking what symbols each file exports.
@@ -8,7 +8,7 @@ import type { FilePath, SymbolId } from '@ariadnejs/types'
  */
 export class ExportRegistry {
   /** File → Set of SymbolIds that file exports */
-  private exports: Map<FilePath, Set<SymbolId>> = new Map()
+  private exports: Map<FilePath, Set<SymbolId>> = new Map();
 
   /**
    * Update exports for a file.
@@ -20,10 +20,10 @@ export class ExportRegistry {
   update_file(file_id: FilePath, exported: Set<SymbolId>): void {
     if (exported.size === 0) {
       // No exports, remove entry
-      this.exports.delete(file_id)
+      this.exports.delete(file_id);
     } else {
       // Clone the set to avoid external mutations
-      this.exports.set(file_id, new Set(exported))
+      this.exports.set(file_id, new Set(exported));
     }
   }
 
@@ -34,8 +34,8 @@ export class ExportRegistry {
    * @returns Set of exported SymbolIds (empty set if file has no exports)
    */
   get_exports(file_id: FilePath): Set<SymbolId> {
-    const exports = this.exports.get(file_id)
-    return exports ? new Set(exports) : new Set()
+    const exports = this.exports.get(file_id);
+    return exports ? new Set(exports) : new Set();
   }
 
   /**
@@ -46,8 +46,8 @@ export class ExportRegistry {
    * @returns True if the file exports the symbol
    */
   exports_symbol(file_id: FilePath, symbol_id: SymbolId): boolean {
-    const file_exports = this.exports.get(file_id)
-    return file_exports ? file_exports.has(symbol_id) : false
+    const file_exports = this.exports.get(file_id);
+    return file_exports ? file_exports.has(symbol_id) : false;
   }
 
   /**
@@ -56,7 +56,7 @@ export class ExportRegistry {
    * @returns Array of file IDs
    */
   get_all_files(): FilePath[] {
-    return Array.from(this.exports.keys())
+    return Array.from(this.exports.keys());
   }
 
   /**
@@ -65,7 +65,7 @@ export class ExportRegistry {
    * @returns Count of files
    */
   get_file_count(): number {
-    return this.exports.size
+    return this.exports.size;
   }
 
   /**
@@ -74,11 +74,11 @@ export class ExportRegistry {
    * @returns Count of symbols
    */
   get_total_export_count(): number {
-    let count = 0
+    let count = 0;
     for (const exported_set of this.exports.values()) {
-      count += exported_set.size
+      count += exported_set.size;
     }
-    return count
+    return count;
   }
 
   /**
@@ -89,15 +89,15 @@ export class ExportRegistry {
    * @returns Array of file IDs that export this symbol
    */
   find_exporters(symbol_id: SymbolId): FilePath[] {
-    const exporters: FilePath[] = []
+    const exporters: FilePath[] = [];
 
     for (const [file_id, exported_symbols] of this.exports) {
       if (exported_symbols.has(symbol_id)) {
-        exporters.push(file_id)
+        exporters.push(file_id);
       }
     }
 
-    return exporters
+    return exporters;
   }
 
   /**
@@ -106,13 +106,13 @@ export class ExportRegistry {
    * @param file_id - The file to remove
    */
   remove_file(file_id: FilePath): void {
-    this.exports.delete(file_id)
+    this.exports.delete(file_id);
   }
 
   /**
    * Clear all export information from the registry.
    */
   clear(): void {
-    this.exports.clear()
+    this.exports.clear();
   }
 }
