@@ -53,6 +53,7 @@ export interface FunctionDefinition extends Definition {
   readonly decorators?: readonly DecoratorDefinition[];
   readonly return_type?: SymbolName;
   readonly generics?: string[];
+  readonly body_scope_id: ScopeId; // The scope ID of this function's body
 }
 
 export interface FunctionSignature {
@@ -87,12 +88,14 @@ export interface MethodDefinition extends Definition {
   readonly docstring?: DocString;
   readonly generics?: string[];
   readonly static?: boolean;
+  readonly body_scope_id: ScopeId; // The scope ID of this method's body
 }
 
 export interface ConstructorDefinition extends Definition {
   readonly kind: "constructor";
   readonly parameters: readonly ParameterDefinition[];
   readonly decorators?: readonly DecoratorDefinition[];
+  readonly body_scope_id: ScopeId; // The scope ID of this constructor's body
 }
 
 /**

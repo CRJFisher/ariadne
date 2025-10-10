@@ -55,6 +55,10 @@ export interface CallReference {
   /** Containing function for call chain tracking */
   readonly containing_function?: SymbolId;
 
+  /** The function/method/constructor scope that encloses this call
+   * Used for call graph detection - groups calls by containing function */
+  readonly enclosing_function_scope_id: ScopeId;
+
   /** For super calls: parent class */
   readonly super_class?: SymbolName;
 

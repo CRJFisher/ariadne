@@ -150,7 +150,7 @@ describe("@ariadnejs/types", () => {
   describe("LocalParameterInfo Interface", () => {
     it("should support all parameter features", () => {
       const basicParam: LocalParameterInfo = {
-      name: "basicParam" as SymbolName  ,
+        name: "basicParam" as SymbolName  ,
         type_annotation: "string",
       };
 

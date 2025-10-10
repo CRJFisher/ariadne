@@ -27,7 +27,7 @@ globalThis.Reflect = {
     key: string,
     value: any,
     target: any,
-    propertyName?: string | symbol
+    propertyName?: string | symbol,
   ) => {},
 };
 
@@ -47,7 +47,7 @@ export function Sealed(constructor: Function) {
 }
 
 export function Timestamped<T extends { new (...args: any[]): {} }>(
-  constructor: T
+  constructor: T,
 ) {
   return class extends constructor {
     createdAt = new Date();
@@ -63,19 +63,19 @@ export function Timestamped<T extends { new (...args: any[]): {} }>(
 export function Log(
   target: any,
   propertyName: string,
-  descriptor: PropertyDescriptor
+  descriptor: PropertyDescriptor,
 ) {
   const originalMethod = descriptor.value;
 
   descriptor.value = function (...args: any[]) {
     console.log(
       `[${new Date().toISOString()}] Calling ${propertyName} with args:`,
-      args
+      args,
     );
     const result = originalMethod.apply(this, args);
     console.log(
       `[${new Date().toISOString()}] ${propertyName} returned:`,
-      result
+      result,
     );
     return result;
   };
@@ -86,7 +86,7 @@ export function Log(
 export function Benchmark(
   target: any,
   propertyName: string,
-  descriptor: PropertyDescriptor
+  descriptor: PropertyDescriptor,
 ) {
   const originalMethod = descriptor.value;
 
@@ -105,7 +105,7 @@ export function Retry(times: number = 3) {
   return function (
     target: any,
     propertyName: string,
-    descriptor: PropertyDescriptor
+    descriptor: PropertyDescriptor,
   ) {
     const originalMethod = descriptor.value;
 
@@ -135,7 +135,7 @@ export function Cache(ttl: number = 60000) {
   return function (
     target: any,
     propertyName: string,
-    descriptor: PropertyDescriptor
+    descriptor: PropertyDescriptor,
   ) {
     const originalMethod = descriptor.value;
 
@@ -165,7 +165,7 @@ export function Required(target: any, propertyName: string) {
   const setter = (newValue: any) => {
     if (newValue === null || newValue === undefined) {
       throw new Error(
-        `Property ${propertyName} is required and cannot be null or undefined`
+        `Property ${propertyName} is required and cannot be null or undefined`,
       );
     }
     value = newValue;
@@ -187,7 +187,7 @@ export function MinLength(min: number) {
     const setter = (newValue: any) => {
       if (typeof newValue === "string" && newValue.length < min) {
         throw new Error(
-          `Property ${propertyName} must be at least ${min} characters long`
+          `Property ${propertyName} must be at least ${min} characters long`,
         );
       }
       value = newValue;
@@ -210,7 +210,7 @@ export function ReadOnly(target: any, propertyName: string) {
   const setter = (newValue: any) => {
     if (hasBeenSet) {
       throw new Error(
-        `Property ${propertyName} is read-only and cannot be modified`
+        `Property ${propertyName} is read-only and cannot be modified`,
       );
     }
     hasBeenSet = true;
@@ -229,7 +229,7 @@ export function Inject(token: string) {
   return function (
     target: any,
     propertyName: string | symbol | undefined,
-    parameterIndex: number
+    parameterIndex: number,
   ) {
     // Store metadata about the injection
     const existingTokens = Reflect.getMetadata("inject:tokens", target) || [];
@@ -242,7 +242,7 @@ export function Validate(validator: (value: any) => boolean, message?: string) {
   return function (
     target: any,
     propertyName: string | symbol | undefined,
-    parameterIndex: number
+    parameterIndex: number,
   ) {
     const existingValidators =
       Reflect.getMetadata("validate:params", target, propertyName!) || [];
@@ -251,7 +251,7 @@ export function Validate(validator: (value: any) => boolean, message?: string) {
       "validate:params",
       existingValidators,
       target,
-      propertyName!
+      propertyName!,
     );
   };
 }
@@ -260,7 +260,7 @@ export function Validate(validator: (value: any) => boolean, message?: string) {
 export function Memoize(
   target: any,
   propertyName: string,
-  descriptor: PropertyDescriptor
+  descriptor: PropertyDescriptor,
 ) {
   const originalGetter = descriptor.get;
   const cache = new WeakMap();
@@ -282,7 +282,7 @@ export function Memoize(
 
 // Factory decorators
 export function Column(
-  options: { name?: string; type?: string; nullable?: boolean } = {}
+  options: { name?: string; type?: string; nullable?: boolean } = {},
 ) {
   return function (target: any, propertyName: string) {
     const columns = Reflect.getMetadata("columns", target) || [];
@@ -298,12 +298,12 @@ export function Column(
 
 export function Route(
   path: string,
-  method: "GET" | "POST" | "PUT" | "DELETE" = "GET"
+  method: "GET" | "POST" | "PUT" | "DELETE" = "GET",
 ) {
   return function (
     target: any,
     propertyName: string,
-    descriptor: PropertyDescriptor
+    descriptor: PropertyDescriptor,
   ) {
     const routes = Reflect.getMetadata("routes", target) || [];
     routes.push({
@@ -323,19 +323,19 @@ export function Route(
 export class User {
   @Column({ name: "user_id", type: "uuid" })
   @Required
-  id: string;
+    id: string;
 
   @Column({ name: "user_name", type: "varchar" })
   @Required
   @MinLength(2)
-  name: string;
+    name: string;
 
   @Column({ name: "email_address", type: "varchar" })
   @Required
-  email: string;
+    email: string;
 
   @Column({ name: "age", type: "integer", nullable: true })
-  age?: number;
+    age?: number;
 
   @ReadOnly
   readonly created: Date = new Date();
@@ -344,10 +344,10 @@ export class User {
     @Inject("id_generator") id: string,
     @Validate(
       (value) => typeof value === "string" && value.length > 0,
-      "Name is required"
+      "Name is required",
     )
-    name: string,
-    email: string
+      name: string,
+      email: string,
   ) {
     this.id = id;
     this.name = name;
@@ -396,7 +396,7 @@ export class UserController {
   @Log
   @Benchmark
   async getUserById(
-    @Validate((id) => typeof id === "string" && id.length > 0) id: string
+    @Validate((id) => typeof id === "string" && id.length > 0) id: string,
   ): Promise<User | null> {
     // Simulate fetching user by ID
     return null;
@@ -406,7 +406,7 @@ export class UserController {
   @Log
   @Retry(2)
   async createUser(
-    @Validate((data) => data && data.name && data.email) userData: any
+    @Validate((data) => data && data.name && data.email) userData: any,
   ): Promise<User> {
     // Simulate user creation
     return new User("generated-id", userData.name, userData.email);
@@ -417,7 +417,7 @@ export class UserController {
   @Benchmark
   async updateUser(
     @Validate((id) => typeof id === "string" && id.length > 0) id: string,
-    @Validate((data) => data && typeof data === "object") updateData: any
+    @Validate((data) => data && typeof data === "object") updateData: any,
   ): Promise<User | null> {
     // Simulate user update
     return null;
@@ -427,7 +427,7 @@ export class UserController {
   @Log
   @Retry(3)
   async deleteUser(
-    @Validate((id) => typeof id === "string" && id.length > 0) id: string
+    @Validate((id) => typeof id === "string" && id.length > 0) id: string,
   ): Promise<boolean> {
     // Simulate user deletion
     return true;
@@ -447,7 +447,7 @@ export class UserService {
   @Benchmark
   @Retry(2)
   async validateUserEmail(
-    @Validate((email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) email: string
+    @Validate((email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) email: string,
   ): Promise<boolean> {
     // Simulate email validation
     await new Promise((resolve) => setTimeout(resolve, 100));
@@ -475,7 +475,7 @@ export function Middleware(middleware: Function) {
   return function (
     target: any,
     propertyName: string,
-    descriptor: PropertyDescriptor
+    descriptor: PropertyDescriptor,
   ) {
     const middlewares =
       Reflect.getMetadata("middlewares", target, propertyName) || [];
@@ -504,7 +504,7 @@ export class ProductController {
 
 // Decorator composition
 export function Auditable<T extends { new (...args: any[]): {} }>(
-  constructor: T
+  constructor: T,
 ) {
   return class extends constructor {
     auditLog: string[] = [];
@@ -521,11 +521,11 @@ export function Auditable<T extends { new (...args: any[]): {} }>(
 export class Order {
   @Column({ name: "order_id" })
   @Required
-  id: string;
+    id: string;
 
   @Column({ name: "total_amount" })
   @Required
-  total: number;
+    total: number;
 
   constructor(id: string, total: number) {
     this.id = id;

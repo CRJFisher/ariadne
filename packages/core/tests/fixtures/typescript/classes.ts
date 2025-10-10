@@ -34,7 +34,7 @@ class SimpleEmployee {
     public name: string,
     private salary: number,
     protected department: string,
-    readonly employeeId: number
+    readonly employeeId: number,
   ) {}
 
   getSalary(): number {

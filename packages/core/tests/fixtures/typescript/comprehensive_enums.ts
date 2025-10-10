@@ -76,18 +76,18 @@ export enum LogLevel {
 // Functions using enums
 export function getColorHex(color: Color): string {
   switch (color) {
-    case Color.Red:
-      return "#FF0000";
-    case Color.Green:
-      return "#00FF00";
-    case Color.Blue:
-      return "#0000FF";
-    case Color.Yellow:
-      return "#FFFF00";
-    case Color.Purple:
-      return "#800080";
-    default:
-      return "#000000";
+  case Color.Red:
+    return "#FF0000";
+  case Color.Green:
+    return "#00FF00";
+  case Color.Blue:
+    return "#0000FF";
+  case Color.Yellow:
+    return "#FFFF00";
+  case Color.Purple:
+    return "#800080";
+  default:
+    return "#000000";
   }
 }
 
@@ -112,7 +112,7 @@ export const colorConfig: ColorSettings = {
   [Color.Green]: { hex: "#00FF00", rgb: [0, 255, 0] },
   [Color.Blue]: { hex: "#0000FF", rgb: [0, 0, 255] },
   [Color.Yellow]: { hex: "#FFFF00", rgb: [255, 255, 0] },
-  [Color.Purple]: { hex: "#800080", rgb: [128, 0, 128] }
+  [Color.Purple]: { hex: "#800080", rgb: [128, 0, 128] },
 };
 
 // Enum with methods (via namespace merging)
@@ -145,7 +145,7 @@ export namespace Planet {
       [Planet.Jupiter]: 5.20,
       [Planet.Saturn]: 9.54,
       [Planet.Uranus]: 19.2,
-      [Planet.Neptune]: 30.1
+      [Planet.Neptune]: 30.1,
     };
     return distances[planet];
   }
@@ -157,7 +157,7 @@ export function getAllColors(): Color[] {
 }
 
 export function getAllDirections(): Direction[] {
-  return Object.values(Direction).filter(value => typeof value === 'number') as Direction[];
+  return Object.values(Direction).filter(value => typeof value === "number") as Direction[];
 }
 
 // Enum guards
@@ -195,22 +195,22 @@ export type ApiCall = {
 export const userOperations: Record<string, ApiCall> = {
   listUsers: {
     endpoint: ApiEndpoint.Users,
-    method: HttpMethod.GET
+    method: HttpMethod.GET,
   },
   createUser: {
     endpoint: ApiEndpoint.Users,
     method: HttpMethod.POST,
-    headers: { "Content-Type": "application/json" }
+    headers: { "Content-Type": "application/json" },
   },
   updateUser: {
     endpoint: ApiEndpoint.Users,
     method: HttpMethod.PUT,
-    headers: { "Content-Type": "application/json" }
+    headers: { "Content-Type": "application/json" },
   },
   deleteUser: {
     endpoint: ApiEndpoint.Users,
-    method: HttpMethod.DELETE
-  }
+    method: HttpMethod.DELETE,
+  },
 };
 
 // Enum with branded types
@@ -243,7 +243,7 @@ export const orderTransitions: Record<OrderState, OrderState[]> = {
   [OrderState.Confirmed]: [OrderState.Shipped, OrderState.Cancelled],
   [OrderState.Shipped]: [OrderState.Delivered],
   [OrderState.Delivered]: [],
-  [OrderState.Cancelled]: []
+  [OrderState.Cancelled]: [],
 };
 
 export function canTransition(from: OrderState, to: OrderState): boolean {
@@ -255,7 +255,7 @@ export type EnumValues<T extends Record<string, string | number>> = T[keyof T];
 export type EnumKeys<T extends Record<string, string | number>> = keyof T;
 
 export function enumToArray<T extends Record<string, string | number>>(
-  enumObject: T
+  enumObject: T,
 ): Array<{ key: EnumKeys<T>; value: EnumValues<T> }> {
   return Object.entries(enumObject).map(([key, value]) => ({ key: key as EnumKeys<T>, value: value as EnumValues<T> }));
 }

@@ -23,7 +23,7 @@ export function create_mock_node(
   startColumn: number = 0,
   endRow?: number,
   endColumn?: number,
-  additionalProps: Partial<SyntaxNode> = {}
+  additionalProps: Partial<SyntaxNode> = {},
 ): SyntaxNode {
   const finalEndRow = endRow ?? startRow;
   const finalEndColumn = endColumn ?? startColumn + text.length;
@@ -45,7 +45,7 @@ export function create_mock_node(
 export function create_simple_mock_node(
   nodeType: string = "mock_node",
   text: string = "mock_text",
-  additionalProps: Partial<SyntaxNode> = {}
+  additionalProps: Partial<SyntaxNode> = {},
 ): SyntaxNode {
   return create_mock_node(
     nodeType,
@@ -54,6 +54,6 @@ export function create_simple_mock_node(
     0,
     undefined,
     undefined,
-    additionalProps
+    additionalProps,
   );
 }

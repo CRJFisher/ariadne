@@ -32,8 +32,8 @@ function constrainedGeneric<T extends string>(param: T): T {
 
 // Variables and constants
 const stringConstant = "hello";
-let numberVariable = 42;
-var hoistedVariable = "hoisted";
+const numberVariable = 42;
+const hoistedVariable = "hoisted";
 
 // Basic class
 class SimpleClass {
@@ -205,7 +205,7 @@ class ParameterProperties {
     public name: string,
     private age: number,
     protected email: string,
-    readonly id: string
+    readonly id: string,
   ) {}
 }
 
@@ -238,7 +238,7 @@ function ParameterDecorator(target: any, propertyKey: string, parameterIndex: nu
 @ClassDecorator
 class DecoratedClass {
   @PropertyDecorator
-  decoratedProperty: string = "";
+    decoratedProperty: string = "";
 
   @MethodDecorator
   decoratedMethod(@ParameterDecorator param: string): string {

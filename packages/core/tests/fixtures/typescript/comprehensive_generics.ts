@@ -133,7 +133,7 @@ export class ArrayUtils {
 
   static groupBy<T, K extends string | number | symbol>(
     array: T[],
-    keySelector: (item: T) => K
+    keySelector: (item: T) => K,
   ): Record<K, T[]> {
     return array.reduce((groups, item) => {
       const key = keySelector(item);

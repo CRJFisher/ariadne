@@ -14,7 +14,7 @@ import { MathUtils, type Temperature } from "./comprehensive_classes";
 import {
   identity as genericIdentity,
   Container,
-  type KeyValuePair as KVPair
+  type KeyValuePair as KVPair,
 } from "./comprehensive_generics";
 
 // Default import (simulated)
@@ -40,7 +40,7 @@ export { MathUtils } from "./comprehensive_classes";
 // Re-exports with aliases
 export {
   identity as genericIdentity,
-  Container as GenericContainer
+  Container as GenericContainer,
 } from "./comprehensive_generics";
 
 // Namespace re-export
@@ -133,7 +133,7 @@ export async function loadModuleAsync(name: string): Promise<ModuleInterface> {
 
 export const moduleFactory = {
   create: createModule,
-  loadAsync: loadModuleAsync
+  loadAsync: loadModuleAsync,
 };
 
 // Variable exports
@@ -141,13 +141,13 @@ export const DEFAULT_CONFIG: ModuleConfig = {
   name: "default",
   version: "1.0.0",
   dependencies: [],
-  devDependencies: []
+  devDependencies: [],
 };
 
 export const MODULE_CONSTANTS = {
   MAX_MODULES: 100,
   DEFAULT_TIMEOUT: 5000,
-  VERSION: "2.1.0"
+  VERSION: "2.1.0",
 } as const;
 
 // Enum exports
@@ -180,7 +180,7 @@ export namespace ModuleUtils {
       name: "unknown",
       version: "0.0.0",
       status: ModuleStatus.Uninitialized,
-      priority: Priority.Medium
+      priority: Priority.Medium,
     };
   }
 
@@ -190,7 +190,7 @@ export namespace ModuleUtils {
 
   export const UTILITIES = {
     merge: (a: ModuleConfig, b: Partial<ModuleConfig>): ModuleConfig => ({ ...a, ...b }),
-    clone: (config: ModuleConfig): ModuleConfig => JSON.parse(JSON.stringify(config))
+    clone: (config: ModuleConfig): ModuleConfig => JSON.parse(JSON.stringify(config)),
   };
 
   // Nested namespace
@@ -205,7 +205,7 @@ export namespace ModuleUtils {
 
     export const PATTERNS = {
       NAME: /^[a-zA-Z][a-zA-Z0-9-_]*$/,
-      VERSION: /^\d+\.\d+\.\d+$/
+      VERSION: /^\d+\.\d+\.\d+$/,
     };
   }
 }
@@ -318,16 +318,16 @@ export interface ModuleWithMiddleware<T extends ModuleInterface> extends ModuleI
 export function createExportBundle<T extends Record<string, any>>(exports: T) {
   return {
     ...exports,
-    __moduleType: 'bundle' as const,
-    __exportedKeys: Object.keys(exports) as Array<keyof T>
+    __moduleType: "bundle" as const,
+    __exportedKeys: Object.keys(exports) as Array<keyof T>,
   };
 }
 
 // Export with computed property names
-const dynamicKey = 'computedExport';
+const dynamicKey = "computedExport";
 export const dynamicExports = {
   [dynamicKey]: "This is a computed export",
-  [`${dynamicKey}Function`]: () => "This is a computed function export"
+  [`${dynamicKey}Function`]: () => "This is a computed function export",
 };
 
 // Final export demonstrating all patterns
@@ -341,5 +341,5 @@ export {
   HttpStatus as ReExportedHttpStatus,
 
   // Re-exported with different names
-  MathUtils as ExportedMathUtils
+  MathUtils as ExportedMathUtils,
 };

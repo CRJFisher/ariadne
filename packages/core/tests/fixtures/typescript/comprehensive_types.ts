@@ -52,7 +52,7 @@ export type ApiResponse<T> = {
 export type Repository<T> = {
   findById(id: string): Promise<T | null>;
   findAll(): Promise<T[]>;
-  create(entity: Omit<T, 'id'>): Promise<T>;
+  create(entity: Omit<T, "id">): Promise<T>;
   update(id: string, updates: Partial<T>): Promise<T>;
   delete(id: string): Promise<boolean>;
 };
@@ -84,7 +84,7 @@ export type OmitByType<T, U> = {
 export type EventName<T extends string> = `on${Capitalize<T>}`;
 export type HttpsUrl = `https://${string}`;
 export type EmailAddress = `${string}@${string}.${string}`;
-export type CssLength = `${number}${'px' | 'em' | 'rem' | '%'}`;
+export type CssLength = `${number}${"px" | "em" | "rem" | "%"}`;
 
 // Key remapping
 export type Getters<T> = {
@@ -125,9 +125,9 @@ export type UserData = {
   };
 };
 
-export type CreateUserRequest = Omit<UserData, 'id'>;
-export type UpdateUserRequest = Partial<Pick<UserData, 'name' | 'email' | 'profile'>>;
-export type UserSummary = Pick<UserData, 'id' | 'name' | 'email'>;
+export type CreateUserRequest = Omit<UserData, "id">;
+export type UpdateUserRequest = Partial<Pick<UserData, "name" | "email" | "profile">>;
+export type UserSummary = Pick<UserData, "id" | "name" | "email">;
 export type ActiveUser = Required<UserData>;
 
 // Index types
@@ -172,31 +172,31 @@ export type Timestamp = number & { readonly __brand: unique symbol };
 
 // Type guards
 export function isString(value: unknown): value is string {
-  return typeof value === 'string';
+  return typeof value === "string";
 }
 
 export function isNumber(value: unknown): value is number {
-  return typeof value === 'number';
+  return typeof value === "number";
 }
 
 export function isUserData(value: unknown): value is UserData {
-  return typeof value === 'object' &&
+  return typeof value === "object" &&
     value !== null &&
-    'id' in value &&
-    'name' in value &&
-    'email' in value;
+    "id" in value &&
+    "name" in value &&
+    "email" in value;
 }
 
 // Assertion functions
 export function assertIsString(value: unknown): asserts value is string {
-  if (typeof value !== 'string') {
-    throw new Error('Expected string');
+  if (typeof value !== "string") {
+    throw new Error("Expected string");
   }
 }
 
 export function assertIsUserData(value: unknown): asserts value is UserData {
   if (!isUserData(value)) {
-    throw new Error('Expected UserData');
+    throw new Error("Expected UserData");
   }
 }
 

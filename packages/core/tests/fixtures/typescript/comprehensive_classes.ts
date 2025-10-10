@@ -46,7 +46,7 @@ export class Employee {
     public readonly employeeId: string,
     public name: string,
     private salary: number,
-    protected department: string
+    protected department: string,
   ) {}
 
   public getSalary(): number {
@@ -249,7 +249,7 @@ export function validate(target: any, propertyName: string) {
     get: getter,
     set: setter,
     enumerable: true,
-    configurable: true
+    configurable: true,
   });
 }
 
