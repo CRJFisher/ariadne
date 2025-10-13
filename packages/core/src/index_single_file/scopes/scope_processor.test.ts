@@ -1160,8 +1160,8 @@ describe("scope_processor", () => {
 
         // Find the class and method scopes
         const class_scope = Array.from(index.scopes.values()).find(s => s.type === "class");
-        const add_method_scope = Array.from(index.scopes.values()).find(s => s.type === "method" && s.name.includes("add"));
-        const subtract_method_scope = Array.from(index.scopes.values()).find(s => s.type === "method" && s.name.includes("subtract"));
+        const add_method_scope = Array.from(index.scopes.values()).find(s => s.type === "method" && s.name?.includes("add"));
+        const subtract_method_scope = Array.from(index.scopes.values()).find(s => s.type === "method" && s.name?.includes("subtract"));
 
         expect(class_scope).toBeDefined();
         expect(add_method_scope).toBeDefined();

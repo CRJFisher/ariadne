@@ -15,6 +15,10 @@ import TypeScriptParser from "tree-sitter-typescript";
 import JavaScriptParser from "tree-sitter-javascript";
 import PythonParser from "tree-sitter-python";
 import RustParser from "tree-sitter-rust";
+import { resolve_symbols } from "../resolve_references/symbol_resolution";
+import { FileSystemFolder } from "../resolve_references/types";
+import { readdir, realpath } from "fs/promises";
+import { join } from "path";
 
 /**
  * Detect language from file path extension
@@ -22,18 +26,18 @@ import RustParser from "tree-sitter-rust";
 function detect_language(file_path: FilePath): Language {
   const ext = file_path.split(".").pop()?.toLowerCase();
   switch (ext) {
-  case "ts":
-  case "tsx":
-    return "typescript" as Language;
-  case "js":
-  case "jsx":
-    return "javascript" as Language;
-  case "py":
-    return "python" as Language;
-  case "rs":
-    return "rust" as Language;
-  default:
-    throw new Error(`Unsupported file extension: ${ext}`);
+    case "ts":
+    case "tsx":
+      return "typescript" as Language;
+    case "js":
+    case "jsx":
+      return "javascript" as Language;
+    case "py":
+      return "python" as Language;
+    case "rs":
+      return "rust" as Language;
+    default:
+      throw new Error(`Unsupported file extension: ${ext}`);
   }
 }
 
@@ -43,20 +47,20 @@ function detect_language(file_path: FilePath): Language {
 function get_parser(language: Language): Parser {
   const parser = new Parser();
   switch (language) {
-  case "typescript":
-    parser.setLanguage(TypeScriptParser.typescript);
-    break;
-  case "javascript":
-    parser.setLanguage(JavaScriptParser);
-    break;
-  case "python":
-    parser.setLanguage(PythonParser);
-    break;
-  case "rust":
-    parser.setLanguage(RustParser);
-    break;
-  default:
-    throw new Error(`Unsupported language: ${language}`);
+    case "typescript":
+      parser.setLanguage(TypeScriptParser.typescript);
+      break;
+    case "javascript":
+      parser.setLanguage(JavaScriptParser);
+      break;
+    case "python":
+      parser.setLanguage(PythonParser);
+      break;
+    case "rust":
+      parser.setLanguage(RustParser);
+      break;
+    default:
+      throw new Error(`Unsupported language: ${language}`);
   }
   return parser;
 }
@@ -68,7 +72,7 @@ function create_parsed_file(
   file_path: FilePath,
   content: string,
   tree: Parser.Tree,
-  language: Language,
+  language: Language
 ) {
   const lines = content.split("\n");
   return {
@@ -86,7 +90,7 @@ function create_parsed_file(
  */
 function extract_imports_from_definitions(
   imported_symbols: ReadonlyMap<SymbolId, any>,
-  current_file: FilePath,
+  current_file: FilePath
 ): any[] {
   // For now, extract unique import paths from ImportDefinitions
   // Group imports by source file
@@ -106,7 +110,11 @@ function extract_imports_from_definitions(
     }
 
     // Add .ts extension if no extension present and it's a local file
-    if (!source_path.includes(".") && !source_path.startsWith("@") && !source_path.includes("/node_modules/")) {
+    if (
+      !source_path.includes(".") &&
+      !source_path.startsWith("@") &&
+      !source_path.includes("/node_modules/")
+    ) {
       // Detect extension from current file
       const ext = current_file.split(".").pop() || "ts";
       source_path = `${source_path}.${ext}`;
@@ -157,6 +165,13 @@ export class Project {
   // ===== Resolution layer (cached with invalidation) =====
   private resolutions: ResolutionCache = new ResolutionCache();
   private call_graph_cache: CallGraph | null = null;
+  private root_folder?: FileSystemFolder = undefined;
+
+  async initialize(root_folder_abs_path?: FilePath): Promise<void> {
+    const resolved_path =
+      root_folder_abs_path ?? ((await realpath(process.cwd())) as FilePath);
+    this.root_folder = await this.get_file_tree(resolved_path);
+  }
 
   /**
    * Add or update a file in the project.
@@ -204,12 +219,17 @@ export class Project {
 
     // Convert exported_symbols Map to Set of SymbolIds for ExportRegistry
     const exported_symbol_ids = new Set(
-      Array.from(semantic_index.exported_symbols.values()).map(def => def.symbol_id),
+      Array.from(semantic_index.exported_symbols.values()).map(
+        (def) => def.symbol_id
+      )
     );
     this.exports.update_file(file_id, exported_symbol_ids);
 
     // Extract imports from imported_symbols
-    const imports = extract_imports_from_definitions(semantic_index.imported_symbols, file_id);
+    const imports = extract_imports_from_definitions(
+      semantic_index.imported_symbols,
+      file_id
+    );
     this.imports.update_file(file_id, imports);
 
     // Phase 3: Invalidate affected resolutions
@@ -217,7 +237,7 @@ export class Project {
     for (const dependent_file of dependents) {
       this.resolutions.invalidate_file(dependent_file);
     }
-    this.call_graph_cache = null;  // Invalidate call graph
+    this.call_graph_cache = null; // Invalidate call graph
   }
 
   /**
@@ -265,7 +285,7 @@ export class Project {
     }
 
     if (this.resolutions.is_file_resolved(file_id)) {
-      return;  // Already resolved, use cache
+      return; // Already resolved, use cache
     }
 
     // Resolve all pending files (including this one)
@@ -278,9 +298,13 @@ export class Project {
    * Private helper used by get_call_graph().
    */
   private resolve_all_pending(): void {
+    if (this.root_folder === undefined) {
+      throw new Error("Root folder not initialized");
+    }
+
     const pending = this.resolutions.get_pending_files();
     if (pending.size === 0) {
-      return;  // Nothing to resolve
+      return; // Nothing to resolve
     }
 
     // Import resolve_symbols (late binding to avoid circular dependency)
@@ -292,12 +316,6 @@ export class Project {
     for (const file_id of pending) {
       this.resolutions.mark_file_resolved(file_id);
     }
-    return;
-
-    /* Commented out until module resolution issues are fixed
-    // Build file tree for import resolution
-    const file_paths = Array.from(this.semantic_indexes.keys())
-    const root_folder = build_file_tree(file_paths)
 
     // Call resolve_symbols with all indices and registries
     const resolved = resolve_symbols(
@@ -307,38 +325,37 @@ export class Project {
       this.scopes,
       this.exports,
       this.imports,
-      root_folder
-    )
+      this.root_folder
+    );
 
     // Populate resolution cache with results
     // resolved.resolved_references is a Map<LocationKey, SymbolId>
     // We need to convert LocationKey to ReferenceId and track file ownership
     for (const [loc_key, symbol_id] of resolved.resolved_references) {
       // Parse the location key to extract file path
-      const [file_path_part, ...rest] = loc_key.split(':')
-      const file_path = file_path_part as FilePath
+      const [file_path_part, ...rest] = loc_key.split(":");
+      const file_path = file_path_part as FilePath;
 
       // Find the matching reference in the semantic index
-      const index = this.semantic_indexes.get(file_path)
+      const index = this.semantic_indexes.get(file_path);
       if (index) {
-        const matching_ref = index.references.find(ref => {
-          const ref_key = location_key(ref.location)
-          return ref_key === loc_key
-        })
+        const matching_ref = index.references.find((ref) => {
+          const ref_key = location_key(ref.location);
+          return ref_key === loc_key;
+        });
 
         if (matching_ref) {
           // Construct ReferenceId from the reference's name and location
-          const ref_id = reference_id(matching_ref.name, matching_ref.location)
-          this.resolutions.set(ref_id, symbol_id, file_path)
+          const ref_id = reference_id(matching_ref.name, matching_ref.location);
+          this.resolutions.set(ref_id, symbol_id, file_path);
         }
       }
     }
 
     // Mark all pending files as resolved
     for (const file_id of pending) {
-      this.resolutions.mark_file_resolved(file_id)
+      this.resolutions.mark_file_resolved(file_id);
     }
-    */
   }
 
   /**
@@ -373,17 +390,53 @@ export class Project {
     this.call_graph_cache = detect_call_graph(
       this.semantic_indexes,
       this.definitions,
-      this.resolutions,
+      this.resolutions
     );
 
     return this.call_graph_cache;
   }
 
   /**
+   * Recursively build a file system tree from a root folder.
+   *
+   * @param root_folder - Absolute path to the root folder
+   * @returns FileSystemFolder tree structure
+   */
+  private async get_file_tree(
+    root_folder: FilePath
+  ): Promise<FileSystemFolder> {
+    const folders_map = new Map<string, FileSystemFolder>();
+    const files_set = new Set<string>();
+
+    // Read directory contents
+    const entries = await readdir(root_folder, { withFileTypes: true });
+
+    // Process each entry
+    for (const entry of entries) {
+      if (entry.isDirectory()) {
+        // Recursively process subdirectory
+        const sub_folder_path = join(root_folder, entry.name) as FilePath;
+        const sub_tree = await this.get_file_tree(sub_folder_path);
+        folders_map.set(entry.name, sub_tree);
+      } else if (entry.isFile()) {
+        // Add file to the set
+        files_set.add(entry.name);
+      }
+      // Skip symlinks, block devices, etc.
+    }
+
+    return {
+      path: root_folder,
+      folders: folders_map,
+      files: files_set,
+    };
+  }
+
+  /**
    * Get all semantic indexes (for MCP compatibility).
    * Returns a Map from file path to semantic index.
    */
-  get_all_scope_graphs(): Map<FilePath, SemanticIndex> {
+  get_all_scope_graphs(): ReadonlyMap<FilePath, SemanticIndex> {
     return this.semantic_indexes;
   }
 
@@ -422,7 +475,6 @@ export class Project {
     return this.semantic_indexes.get(file_id);
   }
 
-
   /**
    * Get type information for a symbol.
    * @param symbol_id - The symbol to get type info for
@@ -437,7 +489,9 @@ export class Project {
    * @param file_id - The file to get derived data for
    * @returns Derived data object or undefined if file not found
    */
-  get_derived_data(file_id: FilePath): { file_path: FilePath; exported_symbols: Set<SymbolId> } | undefined {
+  get_derived_data(
+    file_id: FilePath
+  ): { file_path: FilePath; exported_symbols: Set<SymbolId> } | undefined {
     if (!this.semantic_indexes.has(file_id)) {
       return undefined;
     }
@@ -500,8 +554,8 @@ export class Project {
    * Removes all semantic indexes, registries, and caches.
    */
   clear(): void {
-    this.semantic_indexes.clear();
     this.file_contents.clear();
+    this.semantic_indexes.clear();
     this.definitions.clear();
     this.types.clear();
     this.scopes.clear();

@@ -12,7 +12,6 @@
 import type {
   SymbolId,
   SymbolName,
-  ScopeId,
   FilePath,
 } from "@ariadnejs/types";
 import type { SemanticIndex } from "../../index_single_file/semantic_index";
@@ -146,10 +145,6 @@ export function build_type_context(
   // Tracks the type of each symbol (variable, parameter, etc.)
   const symbol_types = new Map<SymbolId, SymbolId>();
 
-  // Map: type_id → (member_name → member_symbol_id)
-  // Built from TypeRegistry data
-  const type_members_map = new Map<SymbolId, Map<SymbolName, SymbolId>>();
-
   // PASS 1: Build symbol → type mappings using TypeRegistry
   // Use O(1) lookups from DefinitionRegistry instead of O(n) searches
   for (const [loc_key, type_name] of types.get_all_type_bindings()) {
@@ -172,22 +167,11 @@ export function build_type_context(
     }
   }
 
-  // PASS 2: Build type member maps from TypeRegistry
-  for (const [type_id, member_info] of types.get_all_type_members()) {
-    const members = new Map<SymbolName, SymbolId>();
-
-    // Add methods
-    for (const [method_name, method_id] of member_info.methods) {
-      members.set(method_name, method_id);
-    }
-
-    // Add properties
-    for (const [prop_name, prop_id] of member_info.properties) {
-      members.set(prop_name, prop_id);
-    }
-
-    type_members_map.set(type_id, members);
-  }
+  // PASS 2: Get type members from DefinitionRegistry
+  // ✅ OPTIMIZED: O(1) - DefinitionRegistry pre-computes this during indexing
+  // Previously: O(m * (k + p)) - iterated all types, flattening methods/properties
+  // Map: type_id → (member_name → member_symbol_id)
+  const type_members_map = definitions.get_member_index();
 
   // PASS 3: Build inheritance maps by resolving extends clauses
   // Map: class_id → parent_class_id

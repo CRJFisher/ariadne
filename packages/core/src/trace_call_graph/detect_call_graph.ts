@@ -1,4 +1,4 @@
-import type { FilePath, CallGraph, SymbolId, FunctionNode, SymbolReference, FunctionDefinition, MethodDefinition, AnyDefinition } from "@ariadnejs/types";
+import type { FilePath, CallGraph, SymbolId, FunctionNode, SymbolReference, FunctionDefinition, MethodDefinition, AnyDefinition, CallReference } from "@ariadnejs/types";
 import type { SemanticIndex } from "../index_single_file/semantic_index";
 import type { DefinitionRegistry } from "../project/definition_registry";
 import type { ResolutionCache } from "../project/resolution_cache";
@@ -28,7 +28,7 @@ function is_call_reference(ref: SymbolReference): boolean {
 function build_function_nodes(
   semantic_indexes: ReadonlyMap<FilePath, SemanticIndex>,
   definitions: DefinitionRegistry,
-): Map<SymbolId, FunctionNode> {
+): ReadonlyMap<SymbolId, FunctionNode> {
   const nodes = new Map<SymbolId, FunctionNode>();
 
   // For each file
@@ -61,14 +61,14 @@ function build_function_nodes(
         location: ref.location,
         name: ref.name,
         scope_id: ref.scope_id,
-        call_type: ref.call_type!,
+        call_type: ref.call_type,
         receiver: ref.context?.receiver_location ? {
           location: ref.context.receiver_location,
-          name: undefined,
+          name: undefined, // TODO: add name
         } : undefined,
         construct_target: ref.context?.construct_target,
         enclosing_function_scope_id: func_def.body_scope_id,
-      }));
+      })) as readonly CallReference[];
 
       // Create function node
       nodes.set(func_def.symbol_id, {
@@ -97,7 +97,7 @@ function build_function_nodes(
  * @returns Array of SymbolIds that are entry points
  */
 function detect_entry_points(
-  nodes: Map<SymbolId, FunctionNode>,
+  nodes: ReadonlyMap<SymbolId, FunctionNode>,
   resolutions: ResolutionCache,
 ): SymbolId[] {
   // Get all SymbolIds that are referenced (called)

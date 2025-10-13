@@ -1,4 +1,4 @@
-import type { SymbolId, FilePath, AnyDefinition, LocationKey, ScopeId } from "@ariadnejs/types";
+import type { SymbolId, FilePath, AnyDefinition, LocationKey, ScopeId, SymbolName } from "@ariadnejs/types";
 import { location_key } from "@ariadnejs/types";
 
 /**
@@ -22,8 +22,16 @@ export class DefinitionRegistry {
   private location_to_symbol: Map<LocationKey, SymbolId> = new Map();
 
   /**
+   * Member index: SymbolId → (member_name → member_symbol_id)
+   * Computed once during update_file for O(1) access during resolution.
+   * Combines methods and properties into a single flat map for each type/class.
+   */
+  private member_index: Map<SymbolId, Map<SymbolName, SymbolId>> = new Map();
+
+  /**
    * Update definitions for a file.
    * Removes old definitions from the file first, then adds new ones.
+   * Also computes and stores the member index for types in this file.
    *
    * @param file_id - The file being updated
    * @param definitions - New definitions from the file
@@ -32,7 +40,7 @@ export class DefinitionRegistry {
     // Step 1: Remove old definitions from this file
     this.remove_file(file_id);
 
-    // Step 2: Add new definitions
+    // Step 2: Add new definitions and build member index
     const symbol_ids = new Set<SymbolId>();
 
     for (const def of definitions) {
@@ -45,6 +53,24 @@ export class DefinitionRegistry {
 
       // Track that this file defines this symbol
       symbol_ids.add(def.symbol_id);
+
+      // Step 3: Build member index for classes and interfaces
+      // Extract members directly from ClassDefinition/InterfaceDefinition
+      if (def.kind === "class" || def.kind === "interface") {
+        const flat_members = new Map<SymbolName, SymbolId>();
+
+        // Combine methods into flat map
+        for (const method of def.methods) {
+          flat_members.set(method.name, method.symbol_id);
+        }
+
+        // Combine properties into flat map
+        for (const prop of def.properties) {
+          flat_members.set(prop.name, prop.symbol_id);
+        }
+
+        this.member_index.set(def.symbol_id, flat_members);
+      }
     }
 
     // Update file index
@@ -138,6 +164,21 @@ export class DefinitionRegistry {
   }
 
   /**
+   * Get the member index for fast member lookup.
+   *
+   * Returns a map where each type's methods and properties are combined
+   * into a single flat map: type_id → (member_name → member_symbol_id)
+   *
+   * This eliminates the need to iterate and flatten TypeMemberInfo
+   * every time during type context building.
+   *
+   * @returns Map of type members for O(1) access
+   */
+  get_member_index(): ReadonlyMap<SymbolId, ReadonlyMap<SymbolName, SymbolId>> {
+    return this.member_index;
+  }
+
+  /**
    * Remove all definitions from a file.
    *
    * @param file_id - The file to remove
@@ -159,6 +200,9 @@ export class DefinitionRegistry {
 
       // Remove from symbol index
       this.by_symbol.delete(symbol_id);
+
+      // Remove from member index if this symbol has members
+      this.member_index.delete(symbol_id);
     }
 
     // Remove file from file index
@@ -181,5 +225,6 @@ export class DefinitionRegistry {
     this.by_symbol.clear();
     this.by_file.clear();
     this.location_to_symbol.clear();
+    this.member_index.clear();
   }
 }

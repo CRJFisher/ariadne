@@ -52,7 +52,7 @@ export interface FunctionDefinition extends Definition {
   readonly docstring?: DocString;
   readonly decorators?: readonly DecoratorDefinition[];
   readonly return_type?: SymbolName;
-  readonly generics?: string[];
+  readonly generics?: SymbolName[];
   readonly body_scope_id: ScopeId; // The scope ID of this function's body
 }
 
@@ -74,7 +74,7 @@ export interface ClassDefinition extends Definition {
   readonly decorators: readonly DecoratorDefinition[];
   readonly constructor?: readonly ConstructorDefinition[];
   readonly docstring?: readonly DocString[];
-  readonly generics?: string[];
+  readonly generics?: SymbolName[];
 }
 
 /**
@@ -86,9 +86,9 @@ export interface MethodDefinition extends Definition {
   readonly return_type?: SymbolName;
   readonly decorators?: readonly DecoratorDefinition[];
   readonly docstring?: DocString;
-  readonly generics?: string[];
+  readonly generics?: SymbolName[];
   readonly static?: boolean;
-  readonly body_scope_id: ScopeId; // The scope ID of this method's body
+  readonly body_scope_id?: ScopeId; // The scope ID of this method's body - undefined in interfaces
 }
 
 export interface ConstructorDefinition extends Definition {
@@ -127,7 +127,7 @@ export interface InterfaceDefinition extends Definition {
   readonly extends: readonly SymbolName[];
   readonly methods: readonly MethodDefinition[];
   readonly properties: readonly PropertyDefinition[];
-  readonly generics?: string[];
+  readonly generics?: SymbolName[];
 }
 
 export interface DecoratorDefinition extends Definition {
@@ -143,7 +143,7 @@ export interface EnumDefinition extends Definition {
   readonly members: readonly EnumMember[];
   readonly methods?: readonly MethodDefinition[]; // Enum methods (Rust/Java style)
   readonly is_const: boolean; // TypeScript const enum, defaults to false
-  readonly generics?: string[];
+  readonly generics?: SymbolName[];
 }
 
 /**
@@ -190,8 +190,8 @@ export interface NamespaceDefinition extends Definition {
 export interface TypeAliasDefinition extends Definition {
   readonly kind: "type" | "type_alias";
   readonly is_exported: boolean;
-  readonly type_expression?: string;
-  readonly generics?: string[];
+  readonly type_expression?: SymbolName;
+  readonly generics?: SymbolName[];
 }
 /**
  * Union of all definition types

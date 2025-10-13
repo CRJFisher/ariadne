@@ -34,6 +34,9 @@ export interface CallReference {
   /** Reference location */
   readonly location: Location;
 
+  /** Resolved Symbol ID being called */
+  readonly symbol_id?: SymbolId;
+
   /** Name being called */
   readonly name: SymbolName;
 
@@ -41,32 +44,8 @@ export interface CallReference {
   readonly scope_id: ScopeId;
 
   /** Type of call */
-  readonly call_type: "function" | "method" | "constructor" | "super" | "macro";
+  readonly call_type: "function" | "method" | "constructor";
 
-  /** For method calls: receiver location */
-  readonly receiver?: {
-    readonly location?: Location;
-    readonly name?: SymbolName; // Receiver identifier name if available
-  };
-
-  /** For constructor calls: the instance being created */
-  readonly construct_target?: Location;
-
-  /** Containing function for call chain tracking */
-  readonly containing_function?: SymbolId;
-
-  /** The function/method/constructor scope that encloses this call
-   * Used for call graph detection - groups calls by containing function */
-  readonly enclosing_function_scope_id: ScopeId;
-
-  /** For super calls: parent class */
-  readonly super_class?: SymbolName;
-
-  /** For method calls: whether the receiver is static */
-  readonly is_static_call?: boolean;
-
-  /** Whether this is a higher-order function call (e.g., map, filter, fold) */
-  readonly is_higher_order?: boolean;
 } // ============================================================================
 // Complete Resolution Result
 // ============================================================================

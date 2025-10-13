@@ -7,7 +7,7 @@
  * Resolution of type expressions to SymbolIds happens in task 11.109.3 using ScopeResolver.
  */
 
-import type { TypeAliasDefinition, SymbolId } from "@ariadnejs/types";
+import type { TypeAliasDefinition, SymbolId, SymbolName } from "@ariadnejs/types";
 
 /**
  * Extract type alias metadata from type definitions
@@ -33,8 +33,8 @@ import type { TypeAliasDefinition, SymbolId } from "@ariadnejs/types";
  */
 export function extract_type_alias_metadata(
   types: ReadonlyMap<SymbolId, TypeAliasDefinition>
-): ReadonlyMap<SymbolId, string> {
-  const metadata = new Map<SymbolId, string>();
+): ReadonlyMap<SymbolId, SymbolName> {
+  const metadata = new Map<SymbolId, SymbolName>();
 
   for (const [type_symbol_id, type_def] of types) {
     // Only extract if type_expression is defined

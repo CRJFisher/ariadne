@@ -20,8 +20,6 @@ import type {
   TypeAliasDefinition,
   SymbolReference,
   Location,
-  LocationKey,
-  TypeMemberInfo,
   AnyDefinition,
   SymbolKind,
   ExportableDefinition,
@@ -49,12 +47,6 @@ import { TYPESCRIPT_METADATA_EXTRACTORS } from "./query_code_tree/language_confi
 import { PYTHON_METADATA_EXTRACTORS } from "./query_code_tree/language_configs/python_metadata";
 import { RUST_METADATA_EXTRACTORS } from "./query_code_tree/language_configs/rust_metadata";
 import { ParsedFile } from "./file_utils";
-import {
-  extract_type_bindings,
-  extract_constructor_bindings,
-  extract_type_members,
-  extract_type_alias_metadata,
-} from "./type_preprocessing";
 
 /**
  * Semantic Index - Single-file analysis results
@@ -87,14 +79,6 @@ export interface SemanticIndex {
 
   /** Quick lookup: export name -> exported definition */
   readonly exported_symbols: ReadonlyMap<SymbolName, ExportableDefinition>;
-
-  /**
-   * Type data
-   */
-  readonly type_bindings: ReadonlyMap<LocationKey, SymbolName>; // location → type name (Extracted from annotations, constructors, return types)
-  readonly type_members: ReadonlyMap<SymbolId, TypeMemberInfo>; // type → methods/properties (Extracted from classes, interfaces, enums)
-  // TODO: this isn't used anywhere - why not?
-  readonly type_alias_metadata: ReadonlyMap<SymbolId, string>; // alias → type_expression string (Extracted from TypeAliasDefinition)
 }
 
 // ============================================================================
@@ -107,7 +91,7 @@ export interface SemanticIndex {
 export function build_semantic_index(
   file: ParsedFile,
   tree: Tree,
-  language: Language,
+  language: Language
 ): SemanticIndex {
   // PASS 1: Query tree-sitter for captures
   const captures: QueryCapture[] = query_tree(language, tree);
@@ -148,7 +132,7 @@ export function build_semantic_index(
   const all_references = process_references(
     context,
     metadata_extractors,
-    file.file_path,
+    file.file_path
   );
 
   // PASS 5: Build name index
@@ -156,30 +140,6 @@ export function build_semantic_index(
 
   // PASS 5.5: Build exported symbols map
   const exported_symbols = build_exported_symbols_map(builder_result);
-
-  // PASS 6: Extract type preprocessing data
-  const type_bindings_from_defs = extract_type_bindings({
-    variables: builder_result.variables,
-    functions: builder_result.functions,
-    classes: builder_result.classes,
-    interfaces: builder_result.interfaces,
-  });
-
-  const type_bindings_from_ctors = extract_constructor_bindings(all_references);
-
-  // Merge type bindings from definitions and constructors
-  const type_bindings = new Map([
-    ...type_bindings_from_defs,
-    ...type_bindings_from_ctors,
-  ]);
-
-  const type_members = extract_type_members({
-    classes: builder_result.classes,
-    interfaces: builder_result.interfaces,
-    enums: builder_result.enums,
-  });
-
-  const type_alias_metadata = extract_type_alias_metadata(builder_result.types);
 
   // Return complete semantic index (single-file)
   return {
@@ -198,9 +158,6 @@ export function build_semantic_index(
     references: all_references,
     scope_to_definitions,
     exported_symbols,
-    type_bindings,
-    type_members,
-    type_alias_metadata,
   };
 }
 
@@ -213,16 +170,16 @@ export function build_semantic_index(
  */
 function get_language_config(language: Language): LanguageBuilderConfig {
   switch (language) {
-  case "javascript":
-    return JAVASCRIPT_BUILDER_CONFIG;
-  case "typescript":
-    return TYPESCRIPT_BUILDER_CONFIG;
-  case "python":
-    return PYTHON_BUILDER_CONFIG;
-  case "rust":
-    return RUST_BUILDER_CONFIG;
-  default:
-    throw new Error(`Unsupported language: ${language}`);
+    case "javascript":
+      return JAVASCRIPT_BUILDER_CONFIG;
+    case "typescript":
+      return TYPESCRIPT_BUILDER_CONFIG;
+    case "python":
+      return PYTHON_BUILDER_CONFIG;
+    case "rust":
+      return RUST_BUILDER_CONFIG;
+    default:
+      throw new Error(`Unsupported language: ${language}`);
   }
 }
 
@@ -233,19 +190,19 @@ function get_language_config(language: Language): LanguageBuilderConfig {
  * tree-sitter-typescript is a superset of tree-sitter-javascript
  */
 function get_metadata_extractors(
-  language: Language,
+  language: Language
 ): MetadataExtractors | undefined {
   switch (language) {
-  case "javascript":
-    return JAVASCRIPT_METADATA_EXTRACTORS;
-  case "typescript":
-    return TYPESCRIPT_METADATA_EXTRACTORS;
-  case "python":
-    return PYTHON_METADATA_EXTRACTORS;
-  case "rust":
-    return RUST_METADATA_EXTRACTORS;
-  default:
-    return undefined;
+    case "javascript":
+      return JAVASCRIPT_METADATA_EXTRACTORS;
+    case "typescript":
+      return TYPESCRIPT_METADATA_EXTRACTORS;
+    case "python":
+      return PYTHON_METADATA_EXTRACTORS;
+    case "rust":
+      return RUST_METADATA_EXTRACTORS;
+    default:
+      return undefined;
   }
 }
 
@@ -259,7 +216,7 @@ function get_metadata_extractors(
  */
 function process_definitions(
   context: ProcessingContext,
-  config: LanguageBuilderConfig,
+  config: LanguageBuilderConfig
 ): BuilderResult {
   const builder = new DefinitionBuilder(context);
 
@@ -297,7 +254,7 @@ function process_definitions(
  * Build name-based lookup index from all definitions
  */
 function build_scope_to_definitions(
-  result: BuilderResult,
+  result: BuilderResult
 ): Map<ScopeId, Map<SymbolKind, AnyDefinition[]>> {
   const index = new Map<ScopeId, Map<SymbolKind, AnyDefinition[]>>();
 
@@ -339,7 +296,7 @@ function build_scope_to_definitions(
  * @throws Error if duplicate export names are found
  */
 function build_exported_symbols_map(
-  result: BuilderResult,
+  result: BuilderResult
 ): Map<SymbolName, ExportableDefinition> {
   const map = new Map<SymbolName, ExportableDefinition>();
 
@@ -369,10 +326,14 @@ function build_exported_symbols_map(
       // Special case: if we have both a function and a variable/constant with the same name,
       // prefer the variable (this handles arrow functions assigned to const variables)
       if (
-        (existing.kind === "function" && (def.kind === "variable" || def.kind === "constant")) ||
-        (def.kind === "function" && (existing.kind === "variable" || existing.kind === "constant"))
+        (existing.kind === "function" &&
+          (def.kind === "variable" || def.kind === "constant")) ||
+        (def.kind === "function" &&
+          (existing.kind === "variable" || existing.kind === "constant"))
       ) {
-        console.log(`DEBUG: Handling function/variable duplicate for "${export_name}"`);
+        console.log(
+          `DEBUG: Handling function/variable duplicate for "${export_name}"`
+        );
         // Prefer variable/constant over function for arrow function assignments
         if (def.kind === "variable" || def.kind === "constant") {
           console.log("DEBUG: Replacing function with variable");
@@ -390,7 +351,7 @@ function build_exported_symbols_map(
         `Duplicate export name "${export_name}" in file.\n` +
           `  First:  ${existing.kind} ${existing.symbol_id}\n` +
           `  Second: ${def.kind} ${def.symbol_id}\n` +
-          "This indicates a bug in is_exported logic or malformed source code.",
+          "This indicates a bug in is_exported logic or malformed source code."
       );
     }
 
@@ -418,7 +379,7 @@ function build_exported_symbols_map(
           `Duplicate export name "${export_name}" in file.\n` +
             `  First:  ${existing.kind} ${existing.symbol_id}\n` +
             `  Second: ${imp.kind} ${imp.symbol_id}\n` +
-            "This indicates a bug in re-export logic or malformed source code.",
+            "This indicates a bug in re-export logic or malformed source code."
         );
       }
       map.set(export_name, imp as any); // ImportDefinition is not ExportableDefinition but should work for chain resolution
@@ -434,11 +395,11 @@ function build_exported_symbols_map(
 
 export interface ProcessingContext {
   /** All captures in the file */
-  captures: CaptureNode[];
+  captures: readonly CaptureNode[];
   /** All scopes in the file */
-  scopes: Map<ScopeId, LexicalScope>;
+  scopes: ReadonlyMap<ScopeId, LexicalScope>;
   /** Precomputed depth for each scope */
-  scope_depths: Map<ScopeId, number>;
+  scope_depths: ReadonlyMap<ScopeId, number>;
   /** Root scope ID (module/global scope) */
   root_scope_id: ScopeId;
   /** Find the deepest scope containing a location */

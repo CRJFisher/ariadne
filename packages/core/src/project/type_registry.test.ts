@@ -24,9 +24,6 @@ function make_location_key(file_path: FilePath, line: number, column: number = 0
 // Helper to create minimal SemanticIndex for testing
 function make_test_index(
   file_path: FilePath,
-  type_bindings: Map<LocationKey, SymbolName> = new Map(),
-  type_members: Map<SymbolId, TypeMemberInfo> = new Map(),
-  type_alias_metadata: Map<SymbolId, string> = new Map(),
 ): SemanticIndex {
   return {
     file_path,
@@ -44,9 +41,6 @@ function make_test_index(
     imported_symbols: new Map(),
     references: [],
     exported_symbols: new Map(),
-    type_bindings,
-    type_members,
-    type_alias_metadata,
   };
 }
 
@@ -79,7 +73,7 @@ describe("TypeRegistry", () => {
       const method_id = method_symbol("foo", "MyClass", file1, { line: 2, column: 2 });
 
       const members: TypeMemberInfo = {
-        methods: new Map([["foo", method_id]]),
+        methods: new Map([["foo" as SymbolName, method_id]]),
         properties: new Map(),
         extends: [],
       };

@@ -28,7 +28,7 @@ import { get_scope_boundary_extractor } from "./scope_boundary_extractor";
 export function process_scopes(
   captures: CaptureNode[],
   file: ParsedFile
-): Map<ScopeId, LexicalScope> {
+): ReadonlyMap<ScopeId, LexicalScope> {
   const scopes = new Map<ScopeId, LexicalScope>();
 
   // Create root module scope for the file
@@ -148,7 +148,7 @@ export function process_scopes(
  * Create processing context with precomputed depths
  */
 export function create_processing_context(
-  scopes: Map<ScopeId, LexicalScope>,
+  scopes: ReadonlyMap<ScopeId, LexicalScope>,
   captures: CaptureNode[]
 ): ProcessingContext {
   const scope_depths = new Map<ScopeId, number>();
@@ -253,7 +253,7 @@ function create_scope_id(type: ScopeType, location: Location): ScopeId {
 function find_containing_scope(
   location: Location,
   root_scope_id: ScopeId,
-  scopes: Map<ScopeId, LexicalScope>
+  scopes: ReadonlyMap<ScopeId, LexicalScope>
 ): LexicalScope {
   let best_scope = scopes.get(root_scope_id)!;
   let smallest_area = Infinity;
@@ -337,7 +337,7 @@ function calculate_area(location: Location): number {
 /**
  * Find the root scope in a collection
  */
-function find_root_scope(scopes: Map<ScopeId, LexicalScope>): ScopeId {
+function find_root_scope(scopes: ReadonlyMap<ScopeId, LexicalScope>): ScopeId {
   for (const scope of scopes.values()) {
     if (scope.parent_id === null) {
       return scope.id;
@@ -351,7 +351,7 @@ function find_root_scope(scopes: Map<ScopeId, LexicalScope>): ScopeId {
  */
 function compute_scope_depth(
   scope: LexicalScope,
-  scopes: Map<ScopeId, LexicalScope>
+  scopes: ReadonlyMap<ScopeId, LexicalScope>
 ): number {
   let depth = 0;
   let current_id = scope.parent_id;

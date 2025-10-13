@@ -59,6 +59,7 @@ function create_registries(indices: Map<FilePath, any>) {
       ...Array.from(index.types.values()),
       ...Array.from(index.imported_symbols.values()),
     ];
+    // DefinitionRegistry builds member_index from ClassDefinition/InterfaceDefinition
     definitions.update_file(file_path, all_defs);
     types.update_file(file_path, index);
   }

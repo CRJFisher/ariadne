@@ -137,7 +137,7 @@ describe("scope_boundary_extractor infrastructure", () => {
         const mock_node = {
           childForFieldName: () => null,
           type: "class_declaration",
-        } as Parser.SyntaxNode;
+        } as unknown as Parser.SyntaxNode;
 
         expect(() => {
           extractor.extract_boundaries(mock_node, "class", "test.ts" as FilePath);

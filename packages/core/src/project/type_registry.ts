@@ -1,18 +1,30 @@
-import type { SymbolId, FilePath, LocationKey, SymbolName, TypeMemberInfo } from "@ariadnejs/types";
+import type {
+  SymbolId,
+  FilePath,
+  LocationKey,
+  SymbolName,
+  TypeMemberInfo,
+} from "@ariadnejs/types";
 import type { SemanticIndex } from "../index_single_file/semantic_index";
+import {
+  extract_type_bindings,
+  extract_constructor_bindings,
+  extract_type_members,
+  extract_type_alias_metadata,
+} from "../index_single_file/type_preprocessing";
 
 /**
  * Track which types a file contributed (for removal).
  */
 interface FileTypeContributions {
   /** Location keys that have type bindings */
-  bindings: Set<LocationKey>
+  bindings: Set<LocationKey>;
 
   /** Type SymbolIds that have members */
-  member_types: Set<SymbolId>
+  member_types: Set<SymbolId>;
 
   /** Type alias SymbolIds */
-  aliases: Set<SymbolId>
+  aliases: Set<SymbolId>;
 }
 
 /**
@@ -33,7 +45,7 @@ export class TypeRegistry {
   private type_members: Map<SymbolId, TypeMemberInfo> = new Map();
 
   /** Type alias SymbolId → type expression string */
-  private type_aliases: Map<SymbolId, string> = new Map();
+  private type_aliases: Map<SymbolId, SymbolName> = new Map();
 
   /** Track which file contributed which types (for cleanup) */
   private by_file: Map<FilePath, FileTypeContributions> = new Map();
@@ -56,28 +68,56 @@ export class TypeRegistry {
       aliases: new Set(),
     };
 
-    // Step 3: Add type bindings
-    for (const [location_key, type_name] of index.type_bindings) {
+    // PASS 6: Extract type preprocessing data
+    const type_bindings_from_defs = extract_type_bindings({
+      variables: index.variables,
+      functions: index.functions,
+      classes: index.classes,
+      interfaces: index.interfaces,
+    });
+
+    const type_bindings_from_ctors = extract_constructor_bindings(
+      index.references
+    );
+
+    // Merge type bindings from definitions and constructors
+    const type_bindings = new Map([
+      ...type_bindings_from_defs,
+      ...type_bindings_from_ctors,
+    ]);
+
+    const type_members = extract_type_members({
+      classes: index.classes,
+      interfaces: index.interfaces,
+      enums: index.enums,
+    });
+
+    const type_alias_metadata = extract_type_alias_metadata(index.types);
+
+    // Step 3: Add type bindings (pre-computed in SemanticIndex)
+    for (const [location_key, type_name] of type_bindings) {
       this.type_bindings.set(location_key, type_name);
       contributions.bindings.add(location_key);
     }
 
-    // Step 4: Add type members
-    for (const [type_id, members] of index.type_members) {
+    // Step 4: Add type members (pre-computed in SemanticIndex)
+    for (const [type_id, members] of type_members) {
       this.type_members.set(type_id, members);
       contributions.member_types.add(type_id);
     }
 
-    // Step 5: Add type aliases
-    for (const [alias_id, type_expression] of index.type_alias_metadata) {
+    // Step 5: Add type aliases (pre-computed in SemanticIndex)
+    for (const [alias_id, type_expression] of type_alias_metadata) {
       this.type_aliases.set(alias_id, type_expression);
       contributions.aliases.add(alias_id);
     }
 
     // Step 6: Record contributions
-    if (contributions.bindings.size > 0 ||
-        contributions.member_types.size > 0 ||
-        contributions.aliases.size > 0) {
+    if (
+      contributions.bindings.size > 0 ||
+      contributions.member_types.size > 0 ||
+      contributions.aliases.size > 0
+    ) {
       this.by_file.set(file_path, contributions);
     }
   }
@@ -158,7 +198,7 @@ export class TypeRegistry {
   remove_file(file_path: FilePath): void {
     const contributions = this.by_file.get(file_path);
     if (!contributions) {
-      return;  // File not in registry
+      return; // File not in registry
     }
 
     // Remove type bindings

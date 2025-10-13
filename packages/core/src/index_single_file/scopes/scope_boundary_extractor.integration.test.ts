@@ -12,7 +12,12 @@ import TypeScript from "tree-sitter-typescript";
 import JavaScript from "tree-sitter-javascript";
 import Rust from "tree-sitter-rust";
 import { build_semantic_index } from "../semantic_index";
-import type { Language, FilePath, LexicalScope, ScopeId } from "@ariadnejs/types";
+import type {
+  Language,
+  FilePath,
+  LexicalScope,
+  ScopeId,
+} from "@ariadnejs/types";
 import type { ParsedFile } from "../file_utils";
 
 describe("Scope Boundary Extractor - All Languages", () => {
@@ -40,7 +45,7 @@ describe("Scope Boundary Extractor - All Languages", () => {
     code: string,
     filePath: FilePath,
     tree: Parser.Tree,
-    language: Language,
+    language: Language
   ): ParsedFile {
     const lines = code.split("\n");
     return {
@@ -54,11 +59,16 @@ describe("Scope Boundary Extractor - All Languages", () => {
 
   function getParser(language: Language): Parser {
     switch (language) {
-      case "python": return pythonParser;
-      case "typescript": return typescriptParser;
-      case "javascript": return javascriptParser;
-      case "rust": return rustParser;
-      default: throw new Error(`Unsupported language: ${language}`);
+    case "python":
+      return pythonParser;
+    case "typescript":
+      return typescriptParser;
+    case "javascript":
+      return javascriptParser;
+    case "rust":
+      return rustParser;
+    default:
+      throw new Error(`Unsupported language: ${language}`);
     }
   }
 
@@ -117,8 +127,9 @@ impl Foo {
       const depths = compute_scope_depths(index.scopes);
 
       const class_scope = find_scope_by_type(index.scopes, "class");
-      const method_scope = find_scope_by_type(index.scopes, "method") ||
-                          find_scope_by_type(index.scopes, "function");
+      const method_scope =
+        find_scope_by_type(index.scopes, "method") ||
+        find_scope_by_type(index.scopes, "function");
 
       expect(class_scope).toBeDefined();
       expect(method_scope).toBeDefined();
@@ -171,14 +182,18 @@ impl Foo {
       const depths = compute_scope_depths(index.scopes);
 
       const function_scopes = Array.from(index.scopes.values()).filter(
-        scope => scope.type === "function"
+        (scope) => scope.type === "function"
       );
 
       expect(function_scopes).toHaveLength(2);
 
       // Find outer and inner by depth
-      const outer_scope = function_scopes.find(scope => depths.get(scope.id) === expected_depths.outer);
-      const inner_scope = function_scopes.find(scope => depths.get(scope.id) === expected_depths.inner);
+      const outer_scope = function_scopes.find(
+        (scope) => depths.get(scope.id) === expected_depths.outer
+      );
+      const inner_scope = function_scopes.find(
+        (scope) => depths.get(scope.id) === expected_depths.inner
+      );
 
       expect(outer_scope).toBeDefined();
       expect(inner_scope).toBeDefined();
@@ -191,7 +206,7 @@ impl Foo {
   it("should have extractors for all supported languages", () => {
     const languages = ["python", "typescript", "javascript", "rust"] as const;
 
-    languages.forEach(language => {
+    languages.forEach((language) => {
       const simple_code = get_simple_class_code(language);
 
       // This should not throw
@@ -223,7 +238,9 @@ impl Foo {
  * Helper functions
  */
 
-function compute_scope_depths(scopes: Map<ScopeId, LexicalScope>): Map<ScopeId, number> {
+function compute_scope_depths(
+  scopes: ReadonlyMap<ScopeId, LexicalScope>
+): Map<ScopeId, number> {
   const depths = new Map<ScopeId, number>();
 
   for (const scope of scopes.values()) {
@@ -235,7 +252,7 @@ function compute_scope_depths(scopes: Map<ScopeId, LexicalScope>): Map<ScopeId, 
 
 function compute_scope_depth(
   scope: LexicalScope,
-  scopes: Map<ScopeId, LexicalScope>
+  scopes: ReadonlyMap<ScopeId, LexicalScope>
 ): number {
   let depth = 0;
   let current_id = scope.parent_id;
@@ -255,7 +272,7 @@ function compute_scope_depth(
 }
 
 function find_scope_by_type(
-  scopes: Map<ScopeId, LexicalScope>,
+  scopes: ReadonlyMap<ScopeId, LexicalScope>,
   type: string
 ): LexicalScope | undefined {
   for (const scope of scopes.values()) {
@@ -266,23 +283,31 @@ function find_scope_by_type(
   return undefined;
 }
 
-function get_extension(language: "python" | "typescript" | "javascript" | "rust"): string {
+function get_extension(
+  language: "python" | "typescript" | "javascript" | "rust"
+): string {
   switch (language) {
-    case "python": return "py";
-    case "typescript": return "ts";
-    case "javascript": return "js";
-    case "rust": return "rs";
+  case "python":
+    return "py";
+  case "typescript":
+    return "ts";
+  case "javascript":
+    return "js";
+  case "rust":
+    return "rs";
   }
 }
 
-function get_simple_class_code(language: "python" | "typescript" | "javascript" | "rust"): string {
+function get_simple_class_code(
+  language: "python" | "typescript" | "javascript" | "rust"
+): string {
   switch (language) {
-    case "python":
-      return "class Test:\n    pass";
-    case "typescript":
-    case "javascript":
-      return "class Test {}";
-    case "rust":
-      return "struct Test {}";
+  case "python":
+    return "class Test:\n    pass";
+  case "typescript":
+  case "javascript":
+    return "class Test {}";
+  case "rust":
+    return "struct Test {}";
   }
 }

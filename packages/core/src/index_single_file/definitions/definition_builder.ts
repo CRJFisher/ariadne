@@ -78,7 +78,9 @@ interface ClassBuilderState {
  * Builder state for accumulating method data
  */
 interface MethodBuilderState {
-  base: Partial<Omit<MethodDefinition, "parameters" | "decorators" | "body_scope_id">>;
+  base: Partial<
+    Omit<MethodDefinition, "parameters" | "decorators" | "body_scope_id">
+  >;
   parameters: Map<SymbolId, ParameterDefinition>;
   decorators: DecoratorDefinition[];
   body_scope_id?: ScopeId;
@@ -88,7 +90,9 @@ interface MethodBuilderState {
  * Builder state for accumulating constructor data
  */
 interface ConstructorBuilderState {
-  base: Partial<Omit<ConstructorDefinition, "parameters" | "decorators" | "body_scope_id">>;
+  base: Partial<
+    Omit<ConstructorDefinition, "parameters" | "decorators" | "body_scope_id">
+  >;
   parameters: Map<SymbolId, ParameterDefinition>;
   decorators: DecoratorDefinition[];
   body_scope_id?: ScopeId;
@@ -106,7 +110,9 @@ interface PropertyBuilderState {
  * Builder state for accumulating function data
  */
 interface FunctionBuilderState {
-  base: Partial<Omit<FunctionDefinition, "signature" | "decorators" | "body_scope_id">>;
+  base: Partial<
+    Omit<FunctionDefinition, "signature" | "decorators" | "body_scope_id">
+  >;
   signature: FunctionSignatureState;
   decorators: DecoratorDefinition[];
   body_scope_id?: ScopeId;
@@ -233,7 +239,7 @@ export class DefinitionBuilder {
     is_exported?: boolean;
     export?: ExportMetadata;
     extends?: SymbolName[];
-    generics?: string[];
+    generics?: SymbolName[];
     docstring?: readonly string[];
   }): DefinitionBuilder {
     this.classes.set(definition.symbol_id, {
@@ -272,31 +278,23 @@ export class DefinitionBuilder {
       abstract?: boolean;
       static?: boolean;
       async?: boolean;
-      generics?: string[];
+      generics?: SymbolName[];
       docstring?: string;
-      capture?: CaptureNode;
+      capture: CaptureNode;
     }
   ): DefinitionBuilder {
     const class_state = this.classes.get(class_id);
     if (!class_state) return this;
 
     // Compute body_scope_id if capture is provided
-    let body_scope_id: ScopeId | undefined;
-    if (definition.capture) {
-      try {
-        body_scope_id = find_body_scope_for_definition(
-          definition.capture,
-          this.context.scopes,
-          definition.name,
-          definition.location
-        );
-      } catch (error) {
-        // If we can't find the body scope, log a warning but continue
-        console.warn(`Could not find body scope for method ${definition.name}: ${error}`);
-      }
-    }
+    const body_scope_id: ScopeId = find_body_scope_for_definition(
+      definition.capture,
+      this.context.scopes,
+      definition.name,
+      definition.location
+    );
 
-    const { scope_id, capture, ...rest } = definition;
+    const { scope_id, ...rest } = definition;
     class_state.methods.set(definition.symbol_id, {
       base: {
         kind: "method",
@@ -339,11 +337,13 @@ export class DefinitionBuilder {
         );
       } catch (error) {
         // If we can't find the body scope, log a warning but continue
-        console.warn(`Could not find body scope for constructor ${definition.name}: ${error}`);
+        console.warn(
+          `Could not find body scope for constructor ${definition.name}: ${error}`
+        );
       }
     }
 
-    const { scope_id, capture, ...rest } = definition;
+    const { scope_id, ...rest } = definition;
     class_state.constructors.set(definition.symbol_id, {
       base: {
         kind: "constructor",
@@ -389,7 +389,7 @@ export class DefinitionBuilder {
     name: SymbolName;
     location: Location;
     scope_id: ScopeId;
-    generics?: string[];
+    generics?: SymbolName[];
     is_exported?: boolean;
     export?: ExportMetadata;
     docstring?: string;
@@ -408,7 +408,9 @@ export class DefinitionBuilder {
         );
       } catch (error) {
         // If we can't find the body scope, log a warning but continue
-        console.warn(`Could not find body scope for function ${definition.name}: ${error}`);
+        console.warn(
+          `Could not find body scope for function ${definition.name}: ${error}`
+        );
       }
     }
 
@@ -686,7 +688,7 @@ export class DefinitionBuilder {
     scope_id: ScopeId;
     is_exported?: boolean;
     export?: ExportMetadata;
-    type_expression?: string;
+    type_expression?: SymbolName;
     generics?: SymbolName[];
   }): DefinitionBuilder {
     this.types.set(definition.symbol_id, {
@@ -783,7 +785,7 @@ export class DefinitionBuilder {
   add_decorator_to_target(
     target_id: SymbolId,
     decorator: {
-      defining_scope_id: ScopeId,
+      defining_scope_id: ScopeId;
       name: SymbolName;
       arguments?: string[];
       location: Location;
@@ -878,7 +880,7 @@ export class DefinitionBuilder {
       ...state.base,
       parameters: parameters,
       decorators: state.decorators.length > 0 ? state.decorators : undefined,
-      body_scope_id: body_scope_id,
+      body_scope_id,
     } as MethodDefinition;
   }
 
@@ -888,7 +890,8 @@ export class DefinitionBuilder {
     const parameters = Array.from(state.parameters.values());
 
     // For testing purposes, we allow undefined body_scope_id, but in production it should be set
-    const body_scope_id = state.body_scope_id || ("mock:constructor:scope" as any);
+    const body_scope_id =
+      state.body_scope_id || ("mock:constructor:scope" as any);
 
     return {
       kind: "constructor" as const,
