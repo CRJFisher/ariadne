@@ -193,6 +193,10 @@ export class Project {
    * @param content - The file's source code
    */
   update_file(file_id: FilePath, content: string): void {
+    if (!this.root_folder) {
+      throw new Error("Project not initialized");
+    }
+
     // Phase 0: Track who depends on this file (before updating imports)
     const dependents = this.imports.get_dependents(file_id);
 
@@ -239,19 +243,17 @@ export class Project {
     this.imports.update_file(file_id, imports);
 
     // Phase 3: Re-resolve affected files (eager!)
-    if (this.root_folder) {
-      const affected_files = new Set([file_id, ...dependents]);
-      this.resolutions.resolve_files(
-        affected_files,
-        this.semantic_indexes,
-        this.definitions,
-        this.types,
-        this.scopes,
-        this.exports,
-        this.imports,
-        this.root_folder
-      );
-    }
+    const affected_files = new Set([file_id, ...dependents]);
+    this.resolutions.resolve_files(
+      affected_files,
+      this.semantic_indexes,
+      this.definitions,
+      this.types,
+      this.scopes,
+      this.exports,
+      this.imports,
+      this.root_folder
+    );
   }
 
   /**
@@ -262,6 +264,10 @@ export class Project {
    * @param file_id - The file to remove
    */
   remove_file(file_id: FilePath): void {
+    if (!this.root_folder) {
+      throw new Error("Project not initialized");
+    }
+    
     const dependents = this.imports.get_dependents(file_id);
 
     // Remove from file-level stores
@@ -277,9 +283,8 @@ export class Project {
 
     // Remove resolutions for deleted file
     this.resolutions.remove_file(file_id);
-
     // Re-resolve dependent files (imports may be broken now)
-    if (this.root_folder && dependents.size > 0) {
+    if (dependents.size > 0) {
       this.resolutions.resolve_files(
         dependents,
         this.semantic_indexes,

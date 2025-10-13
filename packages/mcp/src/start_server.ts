@@ -1,35 +1,56 @@
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
-import { CallToolRequestSchema, ListToolsRequestSchema } from "@modelcontextprotocol/sdk/types.js";
-import { z } from "zod";
+import {
+  CallToolRequestSchema,
+  ListToolsRequestSchema,
+} from "@modelcontextprotocol/sdk/types.js";
 import * as path from "path";
 import * as fs from "fs/promises";
-import { get_symbol_context, get_symbol_contextSchema } from "./tools/get_symbol_context";
-import { get_file_metadata, get_file_metadataSchema } from "./tools/get_file_metadata";
-import { find_references, find_referencesSchema } from "./tools/find_references";
-import { get_source_code, get_source_codeSchema } from "./tools/get_source_code";
+import {
+  get_symbol_context,
+  get_symbol_contextSchema,
+} from "./tools/get_symbol_context";
+import {
+  get_file_metadata,
+  get_file_metadataSchema,
+} from "./tools/get_file_metadata";
+import {
+  find_references,
+  find_referencesSchema,
+} from "./tools/find_references";
+import {
+  get_source_code,
+  get_source_codeSchema,
+} from "./tools/get_source_code";
 import { VERSION } from "./version";
-import { create_project, load_project_files, load_file_if_needed, type Project } from "./types";
+import {
+  create_project,
+  type Project,
+} from "./types";
+import { FilePath } from "@ariadnejs/types";
 
 export interface AriadneMCPServerOptions {
   projectPath?: string;
   transport?: "stdio";
 }
 
-export async function start_server(options: AriadneMCPServerOptions = {}): Promise<Server> {
+export async function start_server(
+  options: AriadneMCPServerOptions = {}
+): Promise<Server> {
   // Support PROJECT_PATH environment variable as per task 53
-  const projectPath = options.projectPath || process.env.PROJECT_PATH || process.cwd();
-  
+  const projectPath =
+    options.projectPath || process.env.PROJECT_PATH || process.cwd();
+
   // Create the MCP server
   const server = new Server(
     {
       name: "ariadne-mcp",
-      version: VERSION
+      version: VERSION,
     },
     {
       capabilities: {
-        tools: {}
-      }
+        tools: {},
+      },
     }
   );
 
@@ -43,83 +64,91 @@ export async function start_server(options: AriadneMCPServerOptions = {}): Promi
       tools: [
         {
           name: "get_symbol_context",
-          description: "REFACTORING HELPER: Before changing any function/class, use this to see ALL its usages, dependencies, and relationships. Shows where it's called from, what it calls, imports, exports, and type information. Essential for safe refactoring, understanding impact of changes, or debugging unexpected behavior.",
+          description:
+            "REFACTORING HELPER: Before changing any function/class, use this to see ALL its usages, dependencies, and relationships. Shows where it's called from, what it calls, imports, exports, and type information. Essential for safe refactoring, understanding impact of changes, or debugging unexpected behavior.",
           inputSchema: {
             type: "object",
             properties: {
               symbol: {
                 type: "string",
-                description: "Name of the symbol to look up"
+                description: "Name of the symbol to look up",
               },
               searchScope: {
                 type: "string",
                 enum: ["file", "project", "dependencies"],
-                description: "Scope to search within (default: project)"
+                description: "Scope to search within (default: project)",
               },
               includeTests: {
                 type: "boolean",
-                description: "Whether to include test file references (default: false)"
-              }
+                description:
+                  "Whether to include test file references (default: false)",
+              },
             },
-            required: ["symbol"]
-          }
+            required: ["symbol"],
+          },
         },
         {
           name: "get_file_metadata",
-          description: "FILE OVERVIEW: When exploring unfamiliar code or planning changes to a file, use this to instantly see ALL functions, classes, and methods defined in it with their signatures and locations. Perfect for understanding file structure, finding specific functions, or documenting what a module exports.",
+          description:
+            "FILE OVERVIEW: When exploring unfamiliar code or planning changes to a file, use this to instantly see ALL functions, classes, and methods defined in it with their signatures and locations. Perfect for understanding file structure, finding specific functions, or documenting what a module exports.",
           inputSchema: {
             type: "object",
             properties: {
               filePath: {
                 type: "string",
-                description: "Path to the file to analyze (relative or absolute)"
-              }
+                description:
+                  "Path to the file to analyze (relative or absolute)",
+              },
             },
-            required: ["filePath"]
-          }
+            required: ["filePath"],
+          },
         },
         {
           name: "find_references",
-          description: "IMPACT ANALYSIS: Before renaming, removing, or changing a function/variable signature, use this to find EVERY place it's used across the entire codebase. Critical for safe deletion, renaming operations, changing parameters, or understanding usage patterns. Prevents breaking changes by showing all dependencies.",
+          description:
+            "IMPACT ANALYSIS: Before renaming, removing, or changing a function/variable signature, use this to find EVERY place it's used across the entire codebase. Critical for safe deletion, renaming operations, changing parameters, or understanding usage patterns. Prevents breaking changes by showing all dependencies.",
           inputSchema: {
             type: "object",
             properties: {
               symbol: {
                 type: "string",
-                description: "Name of the symbol to find references for"
+                description: "Name of the symbol to find references for",
               },
               includeDeclaration: {
                 type: "boolean",
-                description: "Include the declaration itself in results (default: false)"
+                description:
+                  "Include the declaration itself in results (default: false)",
               },
               searchScope: {
                 type: "string",
                 enum: ["file", "project"],
-                description: "Scope to search within (default: project)"
-              }
+                description: "Scope to search within (default: project)",
+              },
             },
-            required: ["symbol"]
-          }
+            required: ["symbol"],
+          },
         },
         {
           name: "get_source_code",
-          description: "CODE EXTRACTION: When you need to see the EXACT implementation of a function/class including its body, comments, and docstrings. Use when copying code, understanding complex logic, debugging issues, or when Read tool shows too much surrounding code. Returns just the symbol's implementation cleanly extracted.",
+          description:
+            "CODE EXTRACTION: When you need to see the EXACT implementation of a function/class including its body, comments, and docstrings. Use when copying code, understanding complex logic, debugging issues, or when Read tool shows too much surrounding code. Returns just the symbol's implementation cleanly extracted.",
           inputSchema: {
             type: "object",
             properties: {
               symbol: {
                 type: "string",
-                description: "Name of the symbol to get source code for"
+                description: "Name of the symbol to get source code for",
               },
               includeDocstring: {
                 type: "boolean",
-                description: "Include documentation/comments if available (default: true)"
-              }
+                description:
+                  "Include documentation/comments if available (default: true)",
+              },
             },
-            required: ["symbol"]
-          }
-        }
-      ]
+            required: ["symbol"],
+          },
+        },
+      ],
     };
   });
 
@@ -131,79 +160,79 @@ export async function start_server(options: AriadneMCPServerOptions = {}): Promi
       switch (name) {
         case "get_symbol_context": {
           const validatedArgs = get_symbol_contextSchema.parse(args);
-          
+
           // Load all files in the project if needed
           // TODO: Implement smart file loading based on search scope
           // For now, load all files in the project
           await load_project_files(project, projectPath);
-          
+
           const result = await get_symbol_context(project, validatedArgs);
-          
+
           return {
             content: [
               {
                 type: "text",
-                text: JSON.stringify(result, null, 2)
-              }
-            ]
+                text: JSON.stringify(result, null, 2),
+              },
+            ],
           };
         }
 
         case "get_file_metadata": {
           const validatedArgs = get_file_metadataSchema.parse(args);
-          
+
           // Load the specific file
           const resolvedPath = path.isAbsolute(validatedArgs.filePath)
             ? validatedArgs.filePath
             : path.join(projectPath, validatedArgs.filePath);
-          
+
           await load_file_if_needed(project, resolvedPath);
-          
+
           const result = await get_file_metadata(project, validatedArgs);
-          
+
           return {
             content: [
               {
                 type: "text",
-                text: JSON.stringify(result, null, 2)
-              }
-            ]
+                text: JSON.stringify(result, null, 2),
+              },
+            ],
           };
         }
 
         case "find_references": {
           const validatedArgs = find_referencesSchema.parse(args);
-          
+
           // Load all project files for reference finding
           await load_project_files(project, projectPath);
-          
+
           const result = await find_references(project, validatedArgs);
-          
+
           return {
             content: [
               {
                 type: "text",
-                text: JSON.stringify(result, null, 2)
-              }
-            ]
+                text: JSON.stringify(result, null, 2),
+              },
+            ],
           };
         }
 
         case "get_source_code": {
           const validatedArgs = get_source_codeSchema.parse(args);
-          
+
           // Load all project files to find the symbol
           await load_project_files(project, projectPath);
-          
+
           const result = await get_source_code(project, validatedArgs);
-          
+
           return {
             content: [
               {
                 type: "text",
-                text: JSON.stringify(result, null, 2)
-              }
-            ]
+                text: JSON.stringify(result, null, 2),
+              },
+            ],
           };
         }
 
@@ -215,70 +244,94 @@ export async function start_server(options: AriadneMCPServerOptions = {}): Promi
         content: [
           {
             type: "text",
-            text: `Error: ${error instanceof Error ? error.message : String(error)}`
-          }
+            text: `Error: ${
+              error instanceof Error ? error.message : String(error)
+            }`,
+          },
         ],
-        isError: true
+        isError: true,
       };
     }
   });
 
   // Helper function to load a file if not already in the project
-  async function load_file_if_needed(project: Project, filePath: string): Promise<void> {
+  async function load_file_if_needed(
+    project: Project,
+    filePath: string
+  ): Promise<void> {
     try {
       const sourceCode = await fs.readFile(filePath, "utf-8");
-      project.update_file(filePath as any, sourceCode);
+      project.update_file(filePath as FilePath, sourceCode);
     } catch (error) {
-      throw new Error(`Failed to read file ${filePath}: ${error instanceof Error ? error.message : String(error)}`);
+      throw new Error(
+        `Failed to read file ${filePath}: ${
+          error instanceof Error ? error.message : String(error)
+        }`
+      );
     }
   }
-  
+
   // Helper function to load all project files (Task 53)
-  async function load_project_files(project: Project, projectPath: string): Promise<void> {
+  async function load_project_files(
+    project: Project,
+    projectPath: string
+  ): Promise<void> {
     const loadedFiles = new Set<string>();
     let gitignorePatterns: string[] = [];
-    
+
     // Try to read .gitignore
     try {
-      const gitignorePath = path.join(projectPath, '.gitignore');
-      const gitignoreContent = await fs.readFile(gitignorePath, 'utf-8');
+      const gitignorePath = path.join(projectPath, ".gitignore");
+      const gitignoreContent = await fs.readFile(gitignorePath, "utf-8");
       gitignorePatterns = gitignoreContent
-        .split('\n')
-        .map(line => line.trim())
-        .filter(line => line && !line.startsWith('#'));
+        .split("\n")
+        .map((line) => line.trim())
+        .filter((line) => line && !line.startsWith("#"));
     } catch {
       // .gitignore not found or unreadable, continue without it
     }
-    
+
     function should_ignore(filePath: string): boolean {
       const relativePath = path.relative(projectPath, filePath);
-      
+
       // Always ignore common directories
       const commonIgnores = [
-        'node_modules', '.git', 'dist', 'build', '.next', 'coverage',
-        '.nyc_output', '.cache', 'tmp', 'temp', '.DS_Store'
+        "node_modules",
+        ".git",
+        "dist",
+        "build",
+        ".next",
+        "coverage",
+        ".nyc_output",
+        ".cache",
+        "tmp",
+        "temp",
+        ".DS_Store",
       ];
-      
+
       for (const ignore of commonIgnores) {
         if (relativePath.includes(ignore)) return true;
       }
-      
+
       // Check gitignore patterns (simple implementation)
       for (const pattern of gitignorePatterns) {
-        if (pattern.endsWith('*')) {
+        if (pattern.endsWith("*")) {
           const prefix = pattern.slice(0, -1);
           if (relativePath.startsWith(prefix)) return true;
-        } else if (relativePath === pattern || relativePath.includes('/' + pattern)) {
+        } else if (
+          relativePath === pattern ||
+          relativePath.includes("/" + pattern)
+        ) {
           return true;
         }
       }
-      
+
       return false;
     }
-    
+
     async function load_directory(dirPath: string): Promise<void> {
       if (should_ignore(dirPath)) return;
-      
+
       let entries;
       try {
         entries = await fs.readdir(dirPath, { withFileTypes: true });
@@ -286,17 +339,20 @@ export async function start_server(options: AriadneMCPServerOptions = {}): Promi
         console.warn(`Cannot read directory ${dirPath}: ${error}`);
         return;
       }
-      
+
       for (const entry of entries) {
         const fullPath = path.join(dirPath, entry.name);
-        
+
         if (should_ignore(fullPath)) continue;
-        
+
         if (entry.isDirectory()) {
           await load_directory(fullPath);
         } else if (entry.isFile()) {
           // Load supported source files
-          if (/\.(ts|tsx|js|jsx|py|rs|go|java|cpp|c|hpp|h)$/.test(entry.name) && !entry.name.endsWith('.d.ts')) {
+          if (
+            /\.(ts|tsx|js|jsx|py|rs|go|java|cpp|c|hpp|h)$/.test(entry.name) &&
+            !entry.name.endsWith(".d.ts")
+          ) {
             if (!loadedFiles.has(fullPath)) {
               try {
                 await load_file_if_needed(project, fullPath);
@@ -309,7 +365,7 @@ export async function start_server(options: AriadneMCPServerOptions = {}): Promi
         }
       }
     }
-    
+
     console.log(`Loading project files from: ${projectPath}`);
     const startTime = Date.now();
     await load_directory(projectPath);

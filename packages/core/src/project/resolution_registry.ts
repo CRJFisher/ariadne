@@ -3,7 +3,6 @@ import type {
   SymbolId,
   FilePath,
   LocationKey,
-  SemanticIndex,
 } from "@ariadnejs/types";
 import { parse_location_key, location_key, reference_id } from "@ariadnejs/types";
 import { resolve_symbols } from "../resolve_references/symbol_resolution";
@@ -13,6 +12,7 @@ import type { TypeRegistry } from "./type_registry";
 import type { ScopeRegistry } from "./scope_registry";
 import type { ExportRegistry } from "./export_registry";
 import type { ImportGraph } from "./import_graph";
+import { SemanticIndex } from "../index_single_file/semantic_index";
 
 /**
  * Registry for reference → symbol resolutions.

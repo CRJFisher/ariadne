@@ -179,16 +179,19 @@ export function resolve_symbols(
   // Phase 1: Build scope resolver index (lightweight)
   // Creates resolver functions: scope_id -> name -> resolver()
   // Includes lazy import resolvers that follow export chains on-demand
+  // TODO: move this logic/call to the scope registry
   const resolver_index = build_scope_resolver_index(indices, root_folder);
 
   // Phase 2: Create resolution cache
   // Stores on-demand resolutions: (scope_id, name) -> symbol_id
   // Shared across all resolvers for consistency and performance
+  // TODO: remove resolution cache - should be replaced by the resolution registry
   const cache = create_resolution_cache();
 
   // Phase 3: Build namespace sources
   // Tracks which source file each namespace import points to
   // Enables resolution of namespace member access (utils.helper())
+  // TODO: move this logic/call to the import/export registry
   const namespace_sources = build_namespace_sources(indices, root_folder);
 
   // Phase 4: Build type context
@@ -196,6 +199,7 @@ export function resolve_symbols(
   // Uses resolver_index + cache to resolve type names
   // Uses namespace_sources for namespace member lookup
   // Uses O(1) lookups from registries for performance
+  // TODO: move this logic/call to the type registry
   const type_context = build_type_context(
     indices,
     definitions,

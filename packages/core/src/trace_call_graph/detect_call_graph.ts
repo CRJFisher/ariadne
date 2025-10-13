@@ -1,7 +1,7 @@
 import type { FilePath, CallGraph, SymbolId, FunctionNode, SymbolReference, FunctionDefinition, MethodDefinition, AnyDefinition, CallReference } from "@ariadnejs/types";
 import type { SemanticIndex } from "../index_single_file/semantic_index";
 import type { DefinitionRegistry } from "../project/definition_registry";
-import type { ResolutionCache } from "../project/resolution_cache";
+import type { ResolutionRegistry } from "../project/resolution_registry";
 import { find_enclosing_function_scope } from "../index_single_file/scopes/scope_utils";
 
 /**
@@ -28,6 +28,7 @@ function is_call_reference(ref: SymbolReference): boolean {
 function build_function_nodes(
   semantic_indexes: ReadonlyMap<FilePath, SemanticIndex>,
   definitions: DefinitionRegistry,
+  resolutions: ResolutionRegistry,
 ): ReadonlyMap<SymbolId, FunctionNode> {
   const nodes = new Map<SymbolId, FunctionNode>();
 
@@ -59,6 +60,7 @@ function build_function_nodes(
       // Convert SymbolReferences to CallReferences for the interface
       const call_references = enclosed_calls.map(ref => ({
         location: ref.location,
+        symbol_id: resolutions.get_resolved_symbol_id(ref.location),
         name: ref.name,
         scope_id: ref.scope_id,
         call_type: ref.call_type,
@@ -98,7 +100,7 @@ function build_function_nodes(
  */
 function detect_entry_points(
   nodes: ReadonlyMap<SymbolId, FunctionNode>,
-  resolutions: ResolutionCache,
+  resolutions: ResolutionRegistry,
 ): SymbolId[] {
   // Get all SymbolIds that are referenced (called)
   const called_symbols = resolutions.get_all_referenced_symbols();
@@ -121,7 +123,7 @@ function detect_entry_points(
 export function detect_call_graph(
   semantic_indexes: ReadonlyMap<FilePath, SemanticIndex>,
   definitions: DefinitionRegistry,
-  resolutions: ResolutionCache,
+  resolutions: ResolutionRegistry,
 ): CallGraph {
   // Build function nodes with their enclosed calls
   const nodes = build_function_nodes(semantic_indexes, definitions);

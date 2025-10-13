@@ -42,7 +42,7 @@ export function resolve_function_calls(
 ): FunctionCallMap {
   const resolutions = new Map<LocationKey, SymbolId>();
 
-  for (const [file_path, index] of indices) {
+  for (const index of indices.values()) {
     // Filter for function call references
     const function_calls = index.references.filter(
       (ref) => ref.type === "call" && ref.call_type === "function"
