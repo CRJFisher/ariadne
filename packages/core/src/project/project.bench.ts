@@ -41,9 +41,10 @@ describe("Project - Performance Benchmarks", () => {
     });
   });
 
-  describe("resolution cache effectiveness", () => {
-    it("should demonstrate cache hit performance", () => {
+  describe("eager resolution performance", () => {
+    it("should demonstrate eager resolution in update_file", async () => {
       const project = new Project();
+      await project.initialize();
       const file1 = "file1.ts" as FilePath;
 
       const code = `
@@ -53,40 +54,38 @@ describe("Project - Performance Benchmarks", () => {
         const x = baz()
       `;
 
+      // First update (includes resolution)
+      const start_first = performance.now();
       project.update_file(file1, code);
+      const first_time = performance.now() - start_first;
 
-      // First resolution (cold)
-      const start_cold = performance.now();
-      project.resolve_file(file1);
-      const cold_time = performance.now() - start_cold;
-
-      // Repeated resolutions (should use cache)
-      const iterations = 100;
-      const start_warm = performance.now();
+      // Subsequent updates (also include resolution)
+      const iterations = 50;
+      const start_updates = performance.now();
 
       for (let i = 0; i < iterations; i++) {
-        project.resolve_file(file1);
+        project.update_file(file1, code + `\n// v${i}`);
       }
 
-      const warm_time = (performance.now() - start_warm) / iterations;
+      const avg_update_time = (performance.now() - start_updates) / iterations;
 
-      console.log(`Resolution - cold: ${cold_time.toFixed(2)}ms, warm: ${warm_time.toFixed(4)}ms`);
-      console.log(`Cache speedup: ${(cold_time / warm_time).toFixed(0)}x`);
+      console.log(`Eager resolution - first: ${first_time.toFixed(2)}ms, avg: ${avg_update_time.toFixed(2)}ms`);
 
-      // Warm should be faster (cache hit)
-      expect(warm_time).toBeLessThan(cold_time);
+      // Just document, don't enforce strict limits
+      expect(avg_update_time).toBeGreaterThan(0);
     });
   });
 
   describe("incremental vs full rebuild", () => {
-    it("should compare incremental update vs full rebuild", { timeout: 15000 }, () => {
+    it("should compare incremental update vs full rebuild", { timeout: 15000 }, async () => {
       const file_count = 20;
 
       // === INCREMENTAL APPROACH ===
       const project_incremental = new Project();
+      await project_incremental.initialize();
       const files = Array.from({ length: file_count }, (_, i) => `file${i}.ts` as FilePath);
 
-      // Initial build
+      // Initial build (resolution happens automatically in update_file)
       for (let i = 0; i < files.length; i++) {
         const imports = i > 0 ? `import { func${i - 1} } from './file${i - 1}'` : "";
         project_incremental.update_file(files[i], `
@@ -95,23 +94,11 @@ describe("Project - Performance Benchmarks", () => {
         `);
       }
 
-      // Resolve all
-      for (const file of files) {
-        project_incremental.resolve_file(file);
-      }
-
-      // Update one file and resolve affected
+      // Update one file (resolution happens automatically for file and dependents)
       const start_incremental = performance.now();
       project_incremental.update_file(files[0], `
         export function func0() { return 999 }
       `);
-      project_incremental.resolve_file(files[0]);
-      // For benchmarking, we'll simulate dependent resolution
-      // In a real scenario, dependents would be resolved through imports
-      const dependents: FilePath[] = [];
-      for (const dep of dependents) {
-        project_incremental.resolve_file(dep);
-      }
       const incremental_time = performance.now() - start_incremental;
 
       // === FULL REBUILD ===

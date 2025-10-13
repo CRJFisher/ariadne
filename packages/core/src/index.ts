@@ -20,5 +20,5 @@ export {
   ScopeRegistry,
   ExportRegistry,
   ImportGraph,
-  ResolutionCache
+  ResolutionRegistry
 } from './project'

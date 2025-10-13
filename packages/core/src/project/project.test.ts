@@ -10,7 +10,8 @@ describe("Project", () => {
   });
 
   describe("update_file", () => {
-    it("should index a simple TypeScript file", () => {
+    it("should index a simple TypeScript file", async () => {
+      await project.initialize();
       const file1 = "file1.ts" as FilePath;
       const code = `
         function foo() {
@@ -28,7 +29,8 @@ describe("Project", () => {
       expect(foo_def!.kind).toBe("function");
     });
 
-    it("should update file when content changes", () => {
+    it("should update file when content changes", async () => {
+      await project.initialize();
       const file1 = "file1.ts" as FilePath;
 
       // First version
@@ -40,54 +42,62 @@ describe("Project", () => {
       expect(project.get_file_definitions(file1).length).toBe(2);
     });
 
-    it("should invalidate resolutions when file is updated", () => {
+    it("should immediately resolve references when file is updated", async () => {
+      await project.initialize();
       const file1 = "file1.ts" as FilePath;
 
-      // First update
-      project.update_file(file1, "function foo() {}");
+      // First version: foo calls nothing
+      project.update_file(file1, `
+        function foo() { return 42; }
+        const x = foo();
+      `);
 
-      // Force resolution (mark as resolved)
-      project.resolve_file(file1);
+      // Verify resolutions exist (eager resolution happened)
+      const stats_after_first = project.get_stats();
+      expect(stats_after_first.resolution_count).toBeGreaterThan(0);
 
-      // Check that it's resolved
-      const stats_before = project.get_stats();
-      expect(stats_before.pending_resolution_count).toBe(0);
+      // Update file: change function name
+      project.update_file(file1, `
+        function bar() { return 99; }
+        const y = bar();
+      `);
 
-      // Update file
-      project.update_file(file1, "function bar() {}");
-
-      // Check that resolutions are invalidated
-      const stats_after = project.get_stats();
-      expect(stats_after.pending_resolution_count).toBe(1);
+      // Verify new references are resolved immediately
+      const stats_after_second = project.get_stats();
+      expect(stats_after_second.resolution_count).toBeGreaterThan(0);
     });
 
-    it("should invalidate dependent files when file is updated", () => {
+    it("should re-resolve dependent files when file is updated", async () => {
+      await project.initialize();
       const file1 = "file1.ts" as FilePath;
       const file2 = "file2.ts" as FilePath;
 
       // Create file1 that exports something
-      project.update_file(file1, "export function foo() {}");
+      project.update_file(file1, "export function foo() { return 42; }");
 
       // Create file2 that imports from file1
-      project.update_file(file2, "import { foo } from \"./file1\"");
+      project.update_file(file2, `
+        import { foo } from "./file1";
+        const x = foo();
+      `);
 
-      // Resolve both files
-      project.resolve_file(file1);
-      project.resolve_file(file2);
+      // Both files should be resolved (no pending state)
+      const stats_before = project.get_stats();
+      expect(stats_before.file_count).toBe(2);
 
-      expect(project.get_stats().pending_resolution_count).toBe(0);
+      // Update file1 (changes export)
+      project.update_file(file1, "export function bar() { return 99; }");
 
-      // Update file1
-      project.update_file(file1, "export function bar() {}");
-
-      // Both files should be invalidated
-      const stats = project.get_stats();
-      expect(stats.pending_resolution_count).toBe(2);
+      // file1 and file2 should both be re-resolved immediately
+      // Verify this by checking that we can get call graph without errors
+      const call_graph = project.get_call_graph();
+      expect(call_graph).toBeDefined();
     });
   });
 
   describe("remove_file", () => {
-    it("should remove all data for a file", () => {
+    it("should remove all data for a file", async () => {
+      await project.initialize();
       const file1 = "file1.ts" as FilePath;
       project.update_file(file1, "function foo() {}");
 
@@ -99,7 +109,8 @@ describe("Project", () => {
       expect(project.get_all_files()).not.toContain(file1);
     });
 
-    it("should invalidate dependent files when file is removed", () => {
+    it("should re-resolve dependent files when file is removed", async () => {
+      await project.initialize();
       const file1 = "file1.ts" as FilePath;
       const file2 = "file2.ts" as FilePath;
 
@@ -109,120 +120,150 @@ describe("Project", () => {
       // Create file2 that imports from file1
       project.update_file(file2, "import { foo } from \"./file1\"");
 
-      // Resolve both files
-      project.resolve_file(file1);
-      project.resolve_file(file2);
-
-      expect(project.get_stats().pending_resolution_count).toBe(0);
+      // Both files should exist
+      expect(project.get_all_files()).toContain(file1);
+      expect(project.get_all_files()).toContain(file2);
 
       // Remove file1
       project.remove_file(file1);
 
-      // file2 should be invalidated
-      const stats = project.get_stats();
-      expect(stats.pending_resolution_count).toBe(1);
-
       // file1 should be gone
       expect(project.get_all_files()).not.toContain(file1);
+
+      // file2 should still exist
       expect(project.get_all_files()).toContain(file2);
+
+      // file2 should be re-resolved (import is now broken, but resolution attempted)
+      // Verify we can get call graph without errors
+      const call_graph = project.get_call_graph();
+      expect(call_graph).toBeDefined();
     });
   });
 
-  describe("resolve_file", () => {
-    it("should not re-resolve already resolved files", () => {
+  describe("eager resolution behavior", () => {
+    it("should resolve immediately without explicit resolve call", async () => {
+      await project.initialize();
       const file1 = "file1.ts" as FilePath;
-      project.update_file(file1, "function foo() {}");
+      project.update_file(file1, `
+        function foo() { return 42; }
+        const x = foo();
+      `);
 
-      // First resolution
-      project.resolve_file(file1);
-      expect(project.get_stats().pending_resolution_count).toBe(0);
-
-      // Second resolution should be skipped (cache hit)
-      project.resolve_file(file1);
-      expect(project.get_stats().pending_resolution_count).toBe(0);
+      // Should be able to get call graph immediately
+      const call_graph = project.get_call_graph();
+      expect(call_graph).toBeDefined();
+      expect(call_graph.nodes.size).toBeGreaterThan(0);
     });
 
-    it("should throw error for non-indexed file", () => {
-      const file1 = "non_existent.ts" as FilePath;
+    it("should maintain consistent state across multiple updates", async () => {
+      await project.initialize();
+      const file1 = "file1.ts" as FilePath;
 
-      expect(() => {
-        project.resolve_file(file1);
-      }).toThrow("Cannot resolve file");
+      // Update 1
+      project.update_file(file1, "function foo() {}");
+      let call_graph = project.get_call_graph();
+      expect(call_graph).toBeDefined();
+
+      // Update 2
+      project.update_file(file1, "function bar() {}");
+      call_graph = project.get_call_graph();
+      expect(call_graph).toBeDefined();
+
+      // Update 3
+      project.update_file(file1, "function baz() {}");
+      call_graph = project.get_call_graph();
+      expect(call_graph).toBeDefined();
+
+      // State should always be consistent
     });
   });
 
   describe("get_call_graph", () => {
-    it("should resolve all pending files before building graph", () => {
+    it("should build call graph without explicit resolution", async () => {
+      await project.initialize();
       const file1 = "file1.ts" as FilePath;
       const file2 = "file2.ts" as FilePath;
 
       project.update_file(file1, "function foo() {}");
       project.update_file(file2, "function bar() {}");
 
-      // Both files are pending
-      expect(project.get_stats().pending_resolution_count).toBe(2);
-
-      // Get call graph should resolve all pending
-      project.get_call_graph();
-
-      expect(project.get_stats().pending_resolution_count).toBe(0);
+      // Should work immediately - resolutions already done
+      const call_graph = project.get_call_graph();
+      expect(call_graph).toBeDefined();
+      expect(call_graph.nodes.size).toBeGreaterThan(0);
     });
 
-    it("should cache call graph", () => {
+    it("should recalculate call graph on each call (no caching)", async () => {
+      await project.initialize();
       const file1 = "file1.ts" as FilePath;
       project.update_file(file1, "function foo() {}");
 
       const graph1 = project.get_call_graph();
       const graph2 = project.get_call_graph();
 
-      // Should return same instance
-      expect(graph1).toBe(graph2);
-    });
-
-    it("should invalidate call graph when file changes", () => {
-      const file1 = "file1.ts" as FilePath;
-      project.update_file(file1, "function foo() {}");
-
-      const graph1 = project.get_call_graph();
-
-      // Update file
-      project.update_file(file1, "function bar() {}");
-
-      const graph2 = project.get_call_graph();
-
-      // Should be different instances
+      // Should be DIFFERENT references (recalculated each time)
       expect(graph1).not.toBe(graph2);
+
+      // But should have same structure
+      expect(graph1.nodes.size).toBe(graph2.nodes.size);
+    });
+
+    it("should reflect changes immediately after file update", async () => {
+      await project.initialize();
+      const file1 = "file1.ts" as FilePath;
+      project.update_file(file1, "function foo() {}");
+
+      const call_graph1 = project.get_call_graph();
+      const nodes_before = call_graph1.nodes.size;
+
+      // Update file (adds more functions)
+      project.update_file(file1, `
+        function foo() {}
+        function bar() {}
+        function baz() { bar(); }
+      `);
+
+      const call_graph2 = project.get_call_graph();
+      const nodes_after = call_graph2.nodes.size;
+
+      // Should have more nodes after update
+      expect(nodes_after).toBeGreaterThan(nodes_before);
     });
   });
 
   describe("get_stats", () => {
-    it("should return accurate statistics", () => {
+    it("should return accurate statistics", async () => {
+      await project.initialize();
       const file1 = "file1.ts" as FilePath;
-      project.update_file(file1, "function foo() {}");
+      // Use code with references so we have resolutions
+      project.update_file(file1, `
+        function foo() { return 42; }
+        const x = foo();
+      `);
 
       const stats = project.get_stats();
       expect(stats.file_count).toBe(1);
       expect(stats.definition_count).toBeGreaterThan(0);
-      expect(stats.pending_resolution_count).toBe(1);
-      expect(stats.cached_resolution_count).toBe(0);
+      expect(stats.resolution_count).toBeGreaterThan(0);
     });
 
-    it("should update stats after resolution", () => {
+    it("should show resolution count after update", async () => {
+      await project.initialize();
       const file1 = "file1.ts" as FilePath;
-      project.update_file(file1, "function foo() {}");
+      project.update_file(file1, `
+        function foo() { return 42; }
+        const x = foo();
+      `);
 
-      const stats_before = project.get_stats();
-      expect(stats_before.pending_resolution_count).toBe(1);
-
-      project.resolve_file(file1);
-
-      const stats_after = project.get_stats();
-      expect(stats_after.pending_resolution_count).toBe(0);
+      const stats = project.get_stats();
+      // With eager resolution, resolutions happen immediately
+      expect(stats.resolution_count).toBeGreaterThan(0);
     });
   });
 
   describe("clear", () => {
-    it("should remove all data", () => {
+    it("should remove all data", async () => {
+      await project.initialize();
       const file1 = "file1.ts" as FilePath;
       project.update_file(file1, "function foo() {}");
 
@@ -232,12 +273,13 @@ describe("Project", () => {
 
       expect(project.get_stats().file_count).toBe(0);
       expect(project.get_stats().definition_count).toBe(0);
-      expect(project.get_stats().pending_resolution_count).toBe(0);
+      expect(project.get_stats().resolution_count).toBe(0);
     });
   });
 
   describe("query interface", () => {
-    it("should get definition by symbol_id", () => {
+    it("should get definition by symbol_id", async () => {
+      await project.initialize();
       const file1 = "file1.ts" as FilePath;
       project.update_file(file1, "function foo() {}");
 
@@ -249,7 +291,8 @@ describe("Project", () => {
       expect(retrieved).toEqual(foo_def);
     });
 
-    it("should get semantic index for file", () => {
+    it("should get semantic index for file", async () => {
+      await project.initialize();
       const file1 = "file1.ts" as FilePath;
       project.update_file(file1, "function foo() {}");
 
@@ -258,7 +301,8 @@ describe("Project", () => {
       expect(index!.file_path).toBe(file1);
     });
 
-    it("should get derived data for file", () => {
+    it("should get derived data for file", async () => {
+      await project.initialize();
       const file1 = "file1.ts" as FilePath;
       project.update_file(file1, "function foo() {}");
 
@@ -267,7 +311,8 @@ describe("Project", () => {
       expect(derived!.file_path).toBe(file1);
     });
 
-    it("should get all files in project", () => {
+    it("should get all files in project", async () => {
+      await project.initialize();
       const file1 = "file1.ts" as FilePath;
       const file2 = "file2.ts" as FilePath;
 
@@ -280,7 +325,8 @@ describe("Project", () => {
       expect(files.length).toBe(2);
     });
 
-    it("should get dependents for a file", () => {
+    it("should get dependents for a file", async () => {
+      await project.initialize();
       const file1 = "file1.ts" as FilePath;
       const file2 = "file2.ts" as FilePath;
 

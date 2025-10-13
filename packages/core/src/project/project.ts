@@ -7,7 +7,7 @@ import { TypeRegistry } from "./type_registry";
 import { ScopeRegistry } from "./scope_registry";
 import { ExportRegistry } from "./export_registry";
 import { ImportGraph } from "./import_graph";
-import { ResolutionCache } from "./resolution_cache";
+import { ResolutionRegistry } from "./resolution_registry";
 import { type CallGraph } from "@ariadnejs/types";
 import { detect_call_graph } from "../trace_call_graph/detect_call_graph";
 import Parser from "tree-sitter";
@@ -15,7 +15,6 @@ import TypeScriptParser from "tree-sitter-typescript";
 import JavaScriptParser from "tree-sitter-javascript";
 import PythonParser from "tree-sitter-python";
 import RustParser from "tree-sitter-rust";
-import { resolve_symbols } from "../resolve_references/symbol_resolution";
 import { FileSystemFolder } from "../resolve_references/types";
 import { readdir, realpath } from "fs/promises";
 import { join } from "path";
@@ -142,13 +141,19 @@ function extract_imports_from_definitions(
  * Main coordinator for the entire processing pipeline.
  *
  * Manages:
- * - File-level data (SemanticIndex, DerivedData)
+ * - File-level data (SemanticIndex per file)
  * - Project-level registries (definitions, types, scopes, exports, imports)
- * - Resolution caching with lazy re-resolution
+ * - Symbol resolution (eager, always up-to-date)
  * - Call graph computation
  *
- * Provides incremental updates: when a file changes, only recompute
- * file-local data and invalidate affected resolutions.
+ * Architecture:
+ * - When a file changes, recompute file-local data
+ * - Update all registries incrementally
+ * - Immediately re-resolve affected files (updated file + dependents)
+ * - State is always consistent - no "pending" or "stale" data
+ *
+ * Provides efficient incremental updates: only affected files are re-parsed
+ * and re-resolved, while unchanged files reuse cached results.
  */
 export class Project {
   // ===== File-level data (immutable once computed) =====
@@ -162,9 +167,8 @@ export class Project {
   private exports: ExportRegistry = new ExportRegistry();
   private imports: ImportGraph = new ImportGraph();
 
-  // ===== Resolution layer (cached with invalidation) =====
-  private resolutions: ResolutionCache = new ResolutionCache();
-  private call_graph_cache: CallGraph | null = null;
+  // ===== Resolution layer (always up-to-date) =====
+  private resolutions: ResolutionRegistry = new ResolutionRegistry();
   private root_folder?: FileSystemFolder = undefined;
 
   async initialize(root_folder_abs_path?: FilePath): Promise<void> {
@@ -177,11 +181,13 @@ export class Project {
    * Add or update a file in the project.
    * This is the main entry point for incremental updates.
    *
-   * Process (4 phases):
+   * Process (3 phases):
    * 0. Track dependents before updating import graph
-   * 1. Compute file-local data (SemanticIndex + DerivedData)
+   * 1. Compute file-local data (SemanticIndex)
    * 2. Update all project registries
-   * 3. Invalidate affected resolutions (this file + dependents)
+   * 3. Re-resolve affected files (this file + dependents)
+   *
+   * After this method completes, all project state is consistent and up-to-date.
    *
    * @param file_id - The file to update
    * @param content - The file's source code
@@ -232,17 +238,26 @@ export class Project {
     );
     this.imports.update_file(file_id, imports);
 
-    // Phase 3: Invalidate affected resolutions
-    this.resolutions.invalidate_file(file_id);
-    for (const dependent_file of dependents) {
-      this.resolutions.invalidate_file(dependent_file);
+    // Phase 3: Re-resolve affected files (eager!)
+    if (this.root_folder) {
+      const affected_files = new Set([file_id, ...dependents]);
+      this.resolutions.resolve_files(
+        affected_files,
+        this.semantic_indexes,
+        this.definitions,
+        this.types,
+        this.scopes,
+        this.exports,
+        this.imports,
+        this.root_folder
+      );
     }
-    this.call_graph_cache = null; // Invalidate call graph
   }
 
   /**
    * Remove a file from the project completely.
    * Removes all file-local data, registry entries, and resolutions.
+   * Re-resolves dependent files to update their import resolutions.
    *
    * @param file_id - The file to remove
    */
@@ -260,140 +275,57 @@ export class Project {
     this.exports.remove_file(file_id);
     this.imports.remove_file(file_id);
 
-    // Invalidate resolutions
+    // Remove resolutions for deleted file
     this.resolutions.remove_file(file_id);
-    for (const dependent_file of dependents) {
-      this.resolutions.invalidate_file(dependent_file);
-    }
-    this.call_graph_cache = null;
-  }
 
-  /**
-   * Resolve references in a specific file (lazy).
-   * Only resolves if the file has invalidated resolutions.
-   *
-   * NOTE: Symbol resolution requires cross-file information (imports, exports, etc.),
-   * so we resolve ALL pending files at once rather than one file at a time.
-   * This ensures consistency and enables proper import resolution.
-   *
-   * @param file_id - The file to resolve
-   */
-  resolve_file(file_id: FilePath): void {
-    const semantic_index = this.semantic_indexes.get(file_id);
-    if (!semantic_index) {
-      throw new Error(`Cannot resolve file ${file_id}: not indexed`);
-    }
-
-    if (this.resolutions.is_file_resolved(file_id)) {
-      return; // Already resolved, use cache
-    }
-
-    // Resolve all pending files (including this one)
-    // Symbol resolution needs cross-file information, so we batch resolve
-    this.resolve_all_pending();
-  }
-
-  /**
-   * Ensure all files with pending resolutions are resolved.
-   * Private helper used by get_call_graph().
-   */
-  private resolve_all_pending(): void {
-    if (this.root_folder === undefined) {
-      throw new Error("Root folder not initialized");
-    }
-
-    const pending = this.resolutions.get_pending_files();
-    if (pending.size === 0) {
-      return; // Nothing to resolve
-    }
-
-    // Import resolve_symbols (late binding to avoid circular dependency)
-    // For now, disable resolution to avoid module resolution issues
-    console.warn("Symbol resolution disabled in project benchmarks");
-
-    // Mark all pending files as resolved (even though we skipped actual resolution)
-    // This ensures tests that expect 0 pending files will pass
-    for (const file_id of pending) {
-      this.resolutions.mark_file_resolved(file_id);
-    }
-
-    // Call resolve_symbols with all indices and registries
-    const resolved = resolve_symbols(
-      this.semantic_indexes,
-      this.definitions,
-      this.types,
-      this.scopes,
-      this.exports,
-      this.imports,
-      this.root_folder
-    );
-
-    // Populate resolution cache with results
-    // resolved.resolved_references is a Map<LocationKey, SymbolId>
-    // We need to convert LocationKey to ReferenceId and track file ownership
-    for (const [loc_key, symbol_id] of resolved.resolved_references) {
-      // Parse the location key to extract file path
-      const [file_path_part, ...rest] = loc_key.split(":");
-      const file_path = file_path_part as FilePath;
-
-      // Find the matching reference in the semantic index
-      const index = this.semantic_indexes.get(file_path);
-      if (index) {
-        const matching_ref = index.references.find((ref) => {
-          const ref_key = location_key(ref.location);
-          return ref_key === loc_key;
-        });
-
-        if (matching_ref) {
-          // Construct ReferenceId from the reference's name and location
-          const ref_id = reference_id(matching_ref.name, matching_ref.location);
-          this.resolutions.set(ref_id, symbol_id, file_path);
-        }
-      }
-    }
-
-    // Mark all pending files as resolved
-    for (const file_id of pending) {
-      this.resolutions.mark_file_resolved(file_id);
+    // Re-resolve dependent files (imports may be broken now)
+    if (this.root_folder && dependents.size > 0) {
+      this.resolutions.resolve_files(
+        dependents,
+        this.semantic_indexes,
+        this.definitions,
+        this.types,
+        this.scopes,
+        this.exports,
+        this.imports,
+        this.root_folder
+      );
     }
   }
 
   /**
-   * Get statistics about resolution cache state.
+   * Get statistics about the project state.
    * Used for testing and benchmarking.
    */
   get_stats() {
-    const cache_stats = this.resolutions.get_stats();
+    const resolution_stats = this.resolutions.get_stats();
     return {
       file_count: this.semantic_indexes.size,
       definition_count: this.definitions.size(),
-      pending_resolution_count: cache_stats.pending_files,
-      cached_resolution_count: cache_stats.total_resolutions,
+      resolution_count: resolution_stats.total_resolutions,
     };
   }
 
   /**
-   * Get the call graph (builds if needed).
-   * Triggers resolution of all pending files first.
+   * Get the call graph for the project.
+   *
+   * Builds the call graph from current state. All resolutions are maintained
+   * up-to-date by update_file() and remove_file(), so this method always returns
+   * accurate results.
+   *
+   * Note: This method does not cache. If you need to call it multiple times,
+   * consider caching the result yourself.
    *
    * @returns The call graph
    */
   get_call_graph(): CallGraph {
-    if (this.call_graph_cache) {
-      return this.call_graph_cache;
-    }
-
-    // Resolve all pending files
-    this.resolve_all_pending();
-
-    // Build call graph using detect_call_graph
-    this.call_graph_cache = detect_call_graph(
+    // Build call graph from current state
+    // All resolutions are always up-to-date (eager resolution)
+    return detect_call_graph(
       this.semantic_indexes,
       this.definitions,
       this.resolutions
     );
-
-    return this.call_graph_cache;
   }
 
   /**
@@ -551,7 +483,7 @@ export class Project {
 
   /**
    * Clear all project data.
-   * Removes all semantic indexes, registries, and caches.
+   * Removes all semantic indexes, registries, and resolutions.
    */
   clear(): void {
     this.file_contents.clear();
@@ -562,6 +494,5 @@ export class Project {
     this.exports.clear();
     this.imports.clear();
     this.resolutions.clear();
-    this.call_graph_cache = null;
   }
 }
