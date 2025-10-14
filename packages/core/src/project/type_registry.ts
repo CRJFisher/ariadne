@@ -17,53 +17,48 @@ import {
 } from "../index_single_file/type_preprocessing";
 
 /**
- * Track which types a file contributed (for removal).
+ * Extracted type metadata (transient - not persisted).
+ * Used during update_file() to pass data from extraction to resolution.
+ */
+interface ExtractedTypeData {
+  /** Location → type name bindings */
+  type_bindings: Map<LocationKey, SymbolName>;
+  /** Type → member metadata (with extends/implements as names) */
+  type_members: Map<SymbolId, TypeMemberInfo>;
+  /** Type alias → expression */
+  type_aliases: Map<SymbolId, SymbolName>;
+}
+
+/**
+ * Track which symbols a file contributed (for removal).
+ * Only tracks resolved SymbolIds - no name-based data.
  */
 interface FileTypeContributions {
-  /** Location keys that have type bindings */
-  bindings: Set<LocationKey>;
-
-  /** Type SymbolIds that have members */
-  member_types: Set<SymbolId>;
-
-  /** Type alias SymbolIds */
-  aliases: Set<SymbolId>;
-
-  /** NEW: SymbolIds with resolved type information */
+  /** SymbolIds with resolved type information */
   resolved_symbols: Set<SymbolId>;
 }
 
 /**
  * Central registry for type information across the project.
  *
- * Aggregates:
- * - Type bindings (location → type name)
- * - Type members (type → methods/properties/constructor/extends)
- * - Type aliases (alias → type expression)
+ * Stores resolved type relationships using SymbolIds:
+ * - Symbol types (variable → type class/interface)
+ * - Type members (type → methods/properties)
+ * - Inheritance (class → parent class)
+ * - Interfaces (class → implemented interfaces)
  *
- * Supports incremental updates and cross-file type queries.
+ * Follows the registry pattern: update_file() extracts and resolves in one operation.
+ * All data is resolved using DefinitionRegistry and ResolutionRegistry.
  */
 export class TypeRegistry {
-  // ===== Existing name-based storage (keep for now) =====
-  /** Location → type name (from annotations, constructors, return types) */
-  private type_bindings: Map<LocationKey, SymbolName> = new Map();
-
-  /** Type SymbolId → its members (for classes, interfaces, enums, etc.) */
-  private type_members: Map<SymbolId, TypeMemberInfo> = new Map();
-
-  /** Type alias SymbolId → type expression string */
-  private type_aliases: Map<SymbolId, SymbolName> = new Map();
-
-  /** Track which file contributed which types (for cleanup) */
-  private by_file: Map<FilePath, FileTypeContributions> = new Map();
-
-  // ===== NEW: SymbolId-based resolved storage =====
+  // ===== SymbolId-based resolved storage =====
 
   /** Maps symbol → type (resolved). e.g., variable → class it's typed as */
   private symbol_types: Map<SymbolId, SymbolId> = new Map();
 
   /** Maps type → member name → member symbol (resolved) */
-  private resolved_type_members: Map<SymbolId, Map<SymbolName, SymbolId>> = new Map();
+  private resolved_type_members: Map<SymbolId, Map<SymbolName, SymbolId>> =
+    new Map();
 
   /** Maps class → parent class (resolved from extends clause) */
   private parent_classes: Map<SymbolId, SymbolId> = new Map();
@@ -72,14 +67,20 @@ export class TypeRegistry {
   private implemented_interfaces: Map<SymbolId, SymbolId[]> = new Map();
 
   /** Track which file contributed resolved data (for cleanup) */
-  private resolved_by_file: Map<FilePath, Set<SymbolId>> = new Map();
+  private resolved_by_file: Map<FilePath, FileTypeContributions> = new Map();
+
+  /**
+   * Store reference to DefinitionRegistry for get_type_members() lookups.
+   * Set during update_file() calls.
+   */
+  private definitions?: DefinitionRegistry;
 
   /**
    * Update type information for a file.
    *
    * Two-phase process:
-   * 1. Extract type metadata from semantic index (names)
-   * 2. Resolve type metadata to SymbolIds (using ResolutionRegistry)
+   * 1. Extract type metadata from semantic index (names) - TRANSIENT
+   * 2. Resolve type metadata to SymbolIds (using ResolutionRegistry) - PERSISTED
    *
    * NOTE: Must be called AFTER ResolutionRegistry.resolve_files() for the file.
    *
@@ -94,45 +95,30 @@ export class TypeRegistry {
     definitions: DefinitionRegistry,
     resolutions: ResolutionRegistry
   ): void {
+    // Store definitions reference for get_type_members()
+    this.definitions = definitions;
+
     // Phase 1: Remove old type data from this file
     this.remove_file(file_path);
 
-    // Phase 2: Track what this file contributes
-    const contributions: FileTypeContributions = {
-      bindings: new Set(),
-      member_types: new Set(),
-      aliases: new Set(),
-      resolved_symbols: new Set(),
-    };
+    // Phase 2: Extract raw type data (names) - TRANSIENT, not persisted
+    const extracted = this.extract_type_data(index);
 
-    // Phase 3: Extract raw type data (names)
-    this.extract_type_data(index, contributions);
-
-    // Phase 4: Resolve type metadata (names → SymbolIds)
-    this.resolve_type_metadata(file_path, definitions, resolutions);
-
-    // Phase 5: Store contributions tracking
-    if (
-      contributions.bindings.size > 0 ||
-      contributions.member_types.size > 0 ||
-      contributions.aliases.size > 0
-    ) {
-      this.by_file.set(file_path, contributions);
-    }
+    // Phase 3: Resolve type metadata (names → SymbolIds) - PERSISTED
+    this.resolve_type_metadata(file_path, extracted, definitions, resolutions);
   }
 
   /**
    * Extract type metadata from semantic index.
-   * Stores names - resolution happens separately.
+   *
+   * Returns extracted data WITHOUT persisting it.
+   * The data is immediately passed to resolve_type_metadata().
    *
    * @param index - Semantic index with type information
-   * @param contributions - Tracks what this file contributes
+   * @returns Extracted type metadata (transient)
    */
-  private extract_type_data(
-    index: SemanticIndex,
-    contributions: FileTypeContributions
-  ): void {
-    // PASS 6: Extract type preprocessing data
+  private extract_type_data(index: SemanticIndex): ExtractedTypeData {
+    // Extract type bindings from definitions
     const type_bindings_from_defs = extract_type_bindings({
       variables: index.variables,
       functions: index.functions,
@@ -140,41 +126,32 @@ export class TypeRegistry {
       interfaces: index.interfaces,
     });
 
+    // Extract type bindings from constructor calls
     const type_bindings_from_ctors = extract_constructor_bindings(
       index.references
     );
 
-    // Merge type bindings from definitions and constructors
+    // Merge type bindings
     const type_bindings = new Map([
       ...type_bindings_from_defs,
       ...type_bindings_from_ctors,
     ]);
 
+    // Extract type members
     const type_members = extract_type_members({
       classes: index.classes,
       interfaces: index.interfaces,
       enums: index.enums,
     });
 
-    const type_alias_metadata = extract_type_alias_metadata(index.types);
+    // Extract type aliases
+    const type_aliases = extract_type_alias_metadata(index.types);
 
-    // Store type bindings
-    for (const [location_key, type_name] of type_bindings) {
-      this.type_bindings.set(location_key, type_name);
-      contributions.bindings.add(location_key);
-    }
-
-    // Store type members
-    for (const [type_id, members] of type_members) {
-      this.type_members.set(type_id, members);
-      contributions.member_types.add(type_id);
-    }
-
-    // Store type aliases
-    for (const [alias_id, type_expression] of type_alias_metadata) {
-      this.type_aliases.set(alias_id, type_expression);
-      contributions.aliases.add(alias_id);
-    }
+    return {
+      type_bindings,
+      type_members: new Map(type_members),
+      type_aliases: new Map(type_aliases),
+    };
   }
 
   /**
@@ -189,28 +166,23 @@ export class TypeRegistry {
    * This is called internally by update_file() after extraction.
    *
    * @param file_id - The file being processed
+   * @param extracted - Extracted type data (transient)
    * @param definitions - Definition registry for location/scope lookups
    * @param resolutions - Resolution registry for name → SymbolId lookups
    */
   private resolve_type_metadata(
     file_id: FilePath,
+    extracted: ExtractedTypeData,
     definitions: DefinitionRegistry,
     resolutions: ResolutionRegistry
   ): void {
-    const contributions = this.by_file.get(file_id);
-    if (!contributions) return;
-
     const resolved_symbols = new Set<SymbolId>();
 
     // STEP 1: Resolve type bindings (location → type_name → type_id)
-    for (const loc_key of contributions.bindings) {
+    for (const [loc_key, type_name] of extracted.type_bindings) {
       // Get the symbol at this location (the variable/parameter being typed)
       const symbol_id = definitions.get_symbol_at_location(loc_key);
       if (!symbol_id) continue;
-
-      // Get the type name from bindings
-      const type_name = this.type_bindings.get(loc_key);
-      if (!type_name) continue;
 
       // Get the scope where this symbol is defined
       const scope_id = definitions.get_symbol_scope(symbol_id);
@@ -225,10 +197,7 @@ export class TypeRegistry {
     }
 
     // STEP 2: Build resolved member maps
-    for (const type_id of contributions.member_types) {
-      const member_info = this.type_members.get(type_id);
-      if (!member_info) continue;
-
+    for (const [type_id] of extracted.type_members) {
       // Get members directly from DefinitionRegistry (already SymbolIds)
       const member_map = definitions.get_member_index().get(type_id);
       if (member_map && member_map.size > 0) {
@@ -238,9 +207,8 @@ export class TypeRegistry {
     }
 
     // STEP 3: Resolve inheritance (extends clause)
-    for (const type_id of contributions.member_types) {
-      const member_info = this.type_members.get(type_id);
-      if (!member_info || !member_info.extends || member_info.extends.length === 0) {
+    for (const [type_id, member_info] of extracted.type_members) {
+      if (!member_info.extends || member_info.extends.length === 0) {
         continue;
       }
 
@@ -270,77 +238,63 @@ export class TypeRegistry {
 
     // Track what this file contributed
     if (resolved_symbols.size > 0) {
-      this.resolved_by_file.set(file_id, resolved_symbols);
-      contributions.resolved_symbols = resolved_symbols;
+      this.resolved_by_file.set(file_id, { resolved_symbols });
     }
-  }
-
-  /**
-   * Get the type name bound to a location.
-   *
-   * @param location_key - The location to query
-   * @returns The type name, or undefined if not found
-   */
-  get_type_binding(location_key: LocationKey): SymbolName | undefined {
-    return this.type_bindings.get(location_key);
   }
 
   /**
    * Get members of a type by its SymbolId.
    *
+   * Delegates to DefinitionRegistry for type member metadata.
+   *
    * @param type_id - The type SymbolId (class, interface, enum, etc.)
    * @returns TypeMemberInfo with methods, properties, constructor, extends
    */
   get_type_members(type_id: SymbolId): TypeMemberInfo | undefined {
-    return this.type_members.get(type_id);
-  }
+    if (!this.definitions) {
+      return undefined;
+    }
 
-  /**
-   * Resolve a type alias to its type expression.
-   *
-   * @param alias_id - The type alias SymbolId
-   * @returns Type expression string, or undefined if not a type alias
-   */
-  resolve_type_alias(alias_id: SymbolId): string | undefined {
-    return this.type_aliases.get(alias_id);
-  }
+    // Get the definition for this type
+    const def = this.definitions.get(type_id);
+    if (!def) return undefined;
 
-  /**
-   * Check if a location has a type binding.
-   *
-   * @param location_key - The location to check
-   * @returns True if the location has a type binding
-   */
-  has_type_binding(location_key: LocationKey): boolean {
-    return this.type_bindings.has(location_key);
-  }
+    // Build TypeMemberInfo from definition
+    if (def.kind === "class") {
+      return {
+        methods: new Map(
+          def.methods.map((m) => [m.name as SymbolName, m.symbol_id])
+        ),
+        properties: new Map(
+          def.properties.map((p) => [p.name as SymbolName, p.symbol_id])
+        ),
+        constructor: def.methods.find((m) => m.name === "constructor")
+          ?.symbol_id,
+        extends: def.extends ? [def.extends as SymbolName] : [],
+      };
+    } else if (def.kind === "interface") {
+      return {
+        methods: new Map(
+          def.methods.map((m) => [m.name as SymbolName, m.symbol_id])
+        ),
+        properties: new Map(
+          def.properties.map((p) => [p.name as SymbolName, p.symbol_id])
+        ),
+        constructor: undefined,
+        extends: def.extends ? (Array.isArray(def.extends) ? def.extends : [def.extends]) as SymbolName[] : [],
+      };
+    } else if (def.kind === "enum") {
+      // For enums, get members from the member index
+      const member_map = this.definitions.get_member_index().get(type_id);
+      return {
+        methods: new Map(),
+        properties: member_map || new Map(),
+        constructor: undefined,
+        extends: [],
+      };
+    }
 
-  /**
-   * Check if a type has members.
-   *
-   * @param type_id - The type to check
-   * @returns True if the type has members
-   */
-  has_type_members(type_id: SymbolId): boolean {
-    return this.type_members.has(type_id);
-  }
-
-  /**
-   * Get all type bindings in the registry.
-   *
-   * @returns Map of all type bindings
-   */
-  get_all_type_bindings(): Map<LocationKey, SymbolName> {
-    return new Map(this.type_bindings);
-  }
-
-  /**
-   * Get all type members in the registry.
-   *
-   * @returns Map of all type members
-   */
-  get_all_type_members(): Map<SymbolId, TypeMemberInfo> {
-    return new Map(this.type_members);
+    return undefined;
   }
 
   // ===== TypeContext Interface Implementation =====
@@ -528,65 +482,36 @@ export class TypeRegistry {
    * @param file_path - The file to remove
    */
   remove_file(file_path: FilePath): void {
-    const contributions = this.by_file.get(file_path);
+    const contributions = this.resolved_by_file.get(file_path);
     if (!contributions) {
       return; // File not in registry
     }
 
-    // Remove type bindings
-    for (const location_key of contributions.bindings) {
-      this.type_bindings.delete(location_key);
-    }
-
-    // Remove type members
-    for (const type_id of contributions.member_types) {
-      this.type_members.delete(type_id);
-    }
-
-    // Remove type aliases
-    for (const alias_id of contributions.aliases) {
-      this.type_aliases.delete(alias_id);
-    }
-
-    // NEW: Clean up resolved data
-    const resolved_symbols = this.resolved_by_file.get(file_path);
-    if (resolved_symbols) {
-      for (const symbol_id of resolved_symbols) {
-        this.symbol_types.delete(symbol_id);
-        this.resolved_type_members.delete(symbol_id);
-        this.parent_classes.delete(symbol_id);
-        this.implemented_interfaces.delete(symbol_id);
-      }
-      this.resolved_by_file.delete(file_path);
+    // Clean up resolved data
+    for (const symbol_id of contributions.resolved_symbols) {
+      this.symbol_types.delete(symbol_id);
+      this.resolved_type_members.delete(symbol_id);
+      this.parent_classes.delete(symbol_id);
+      this.implemented_interfaces.delete(symbol_id);
     }
 
     // Remove file tracking
-    this.by_file.delete(file_path);
+    this.resolved_by_file.delete(file_path);
   }
 
   /**
-   * Get the total number of type bindings, members, and aliases.
+   * Get the total number of resolved symbols.
    *
-   * @returns Counts of each type category
+   * @returns Count of symbols with resolved type information
    */
-  size(): { bindings: number; members: number; aliases: number } {
-    return {
-      bindings: this.type_bindings.size,
-      members: this.type_members.size,
-      aliases: this.type_aliases.size,
-    };
+  size(): number {
+    return this.symbol_types.size;
   }
 
   /**
    * Clear all type information from the registry.
    */
   clear(): void {
-    this.type_bindings.clear();
-    this.type_members.clear();
-    this.type_aliases.clear();
-    this.by_file.clear();
-
-    // NEW: Clear resolved data
     this.symbol_types.clear();
     this.resolved_type_members.clear();
     this.parent_classes.clear();
