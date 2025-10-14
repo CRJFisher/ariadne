@@ -225,3 +225,18 @@ export type ExportableDefinition =
 export function is_reexport(def: Definition): boolean {
   return def.export?.is_reexport === true;
 }
+
+export function is_exportable(def: AnyDefinition): def is ExportableDefinition {
+  return (
+    def.kind === "function" ||
+    def.kind === "class" ||
+    def.kind === "variable" ||
+    def.kind === "constant" ||
+    def.kind === "interface" ||
+    def.kind === "enum" ||
+    def.kind === "namespace" ||
+    def.kind === "type" ||
+    def.kind === "type_alias" ||
+    def.kind === "import"
+  );
+}

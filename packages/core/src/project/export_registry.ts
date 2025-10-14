@@ -1,4 +1,4 @@
-import type { FilePath, SymbolId, SymbolName, ImportDefinition, ExportableDefinition, Language } from "@ariadnejs/types";
+import { type FilePath, type SymbolId, type SymbolName, type ImportDefinition, type ExportableDefinition, type Language, is_exportable } from "@ariadnejs/types";
 import type { FileSystemFolder } from "../resolve_references/types";
 import type { DefinitionRegistry } from "./definition_registry";
 import { resolve_module_path } from "../resolve_references/import_resolution/import_resolver";
@@ -157,7 +157,9 @@ export class ExportRegistry {
 
     // Process all exportable definitions
     for (const def of file_definitions) {
-      add_to_registry(def as ExportableDefinition);
+      if (is_exportable(def)) {
+        add_to_registry(def);
+      }
     }
 
     // Store in all indexes
