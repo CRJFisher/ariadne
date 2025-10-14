@@ -12,7 +12,6 @@ import type {
   SymbolName,
   ScopeId,
   ImportDefinition,
-  ModulePath,
 } from "@ariadnejs/types";
 import type { SemanticIndex } from "../../index_single_file/semantic_index";
 import type { ImportSpec, NamespaceSources, FileSystemFolder } from "../types";
@@ -113,19 +112,14 @@ export function resolve_export_chain(
     );
   }
 
-  // Create a resolve_module function that captures root_folder
-  const resolve_module = (import_path: ModulePath, from_file: FilePath, language: Language): FilePath => {
-    return resolve_module_path(import_path, from_file, language, root_folder);
-  };
-
   // Delegate to ExportRegistry's resolve_export_chain method
   // If this returns null, it must be a cycle (since we already checked export exists)
   const result = export_registry.resolve_export_chain(
     source_file,
     export_name,
     import_kind,
-    resolve_module,
     semantic_indexes,
+    root_folder,
     visited
   );
 

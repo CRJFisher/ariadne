@@ -5,8 +5,6 @@ import type {
   SymbolReference,
   ScopeId,
   SymbolName,
-  Language,
-  ModulePath,
 } from "@ariadnejs/types";
 import type { FileSystemFolder } from "../resolve_references/types";
 import type { SemanticIndex } from "../index_single_file/semantic_index";
@@ -19,9 +17,6 @@ import type { ImportGraph } from "./import_graph";
 import { resolve_single_method_call } from "../resolve_references/call_resolution";
 import { resolve_single_constructor_call } from "../resolve_references/call_resolution/constructor_resolver";
 import { find_enclosing_function_scope } from "../index_single_file/scopes/scope_utils";
-
-// Import module path resolution function
-import { resolve_module_path } from "../resolve_references/import_resolution/import_resolver";
 
 /**
  * Registry for symbol resolution.
@@ -428,27 +423,13 @@ export class ResolutionRegistry {
         const import_name = (imp_def.original_name ||
           imp_def.name) as SymbolName;
 
-        // Get source file's language from semantic_indexes
-        const source_index = semantic_indexes.get(source_file);
-        if (!source_index) {
-          // Source file not indexed yet - skip this import
-          continue;
-        }
-
-        // Create a bound resolver function for ExportRegistry
-        const resolve_module_bound = (
-          import_path: ModulePath,
-          from_file: FilePath,
-          lang: Language
-        ) =>
-          resolve_module_path(import_path, from_file, lang, root_folder);
-
+        // Resolve export chain with semantic_indexes and root_folder
         resolved = exports.resolve_export_chain(
           source_file,
           import_name,
           imp_def.import_kind,
-          resolve_module_bound,
-          semantic_indexes
+          semantic_indexes,
+          root_folder
         );
       }
 

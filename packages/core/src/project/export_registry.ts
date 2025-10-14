@@ -1,5 +1,7 @@
 import type { FilePath, SymbolId, SymbolName, ImportDefinition, Language, ModulePath, ExportableDefinition } from "@ariadnejs/types";
 import type { SemanticIndex } from "../index_single_file/semantic_index";
+import type { FileSystemFolder } from "../resolve_references/types";
+import { resolve_module_path } from "../resolve_references/import_resolution/import_resolver";
 
 /**
  * Extended export metadata for resolution.
@@ -305,8 +307,8 @@ export class ExportRegistry {
    * @param source_file - File containing the export
    * @param export_name - Name of the exported symbol (ignored for default imports)
    * @param import_kind - Type of import (named, default, or namespace)
-   * @param resolve_module - Function to resolve module paths (from import_resolver)
    * @param semantic_indexes - Semantic indexes for language lookup
+   * @param root_folder - Root folder for module path resolution
    * @param visited - Set of visited exports for cycle detection (internal)
    * @returns Resolved symbol_id or null if not found
    */
@@ -314,8 +316,8 @@ export class ExportRegistry {
     source_file: FilePath,
     export_name: SymbolName,
     import_kind: "named" | "default" | "namespace",
-    resolve_module: (import_path: ModulePath, from_file: FilePath, language: Language) => FilePath,
     semantic_indexes: ReadonlyMap<FilePath, SemanticIndex>,
+    root_folder: FileSystemFolder,
     visited: Set<string> = new Set()
   ): SymbolId | null {
     // Detect cycles
@@ -351,10 +353,11 @@ export class ExportRegistry {
       const language = source_index.language;
 
       // Resolve the module path to get the target file
-      const resolved_file = resolve_module(
+      const resolved_file = resolve_module_path(
         imp_def.import_path,
         source_file,
-        language
+        language,
+        root_folder
       );
 
       // Get the original name and import kind for the next hop
@@ -366,8 +369,8 @@ export class ExportRegistry {
         resolved_file,
         original_name,
         next_import_kind,
-        resolve_module,
         semantic_indexes,
+        root_folder,
         visited
       );
     }
