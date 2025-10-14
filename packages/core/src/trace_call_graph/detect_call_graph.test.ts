@@ -18,8 +18,8 @@ import {
 } from "@ariadnejs/types";
 import { detect_call_graph } from "./detect_call_graph";
 import type { SemanticIndex } from "../index_single_file/semantic_index";
-import { DefinitionRegistry } from "../project/definition_registry";
-import { ResolutionRegistry } from "../project/resolution_registry";
+import { DefinitionRegistry } from "../resolve_references/registries/definition_registry";
+import { ResolutionRegistry } from "../resolve_references/resolution_registry";
 
 // Helper to create minimal SemanticIndex for testing
 function make_test_index(

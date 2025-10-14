@@ -7,15 +7,15 @@ import type {
   SymbolName,
   Language,
 } from "@ariadnejs/types";
-import type { FileSystemFolder } from "../resolve_references/types";
-import type { DefinitionRegistry } from "./definition_registry";
-import type { TypeRegistry } from "./type_registry";
-import type { ScopeRegistry } from "./scope_registry";
-import type { ExportRegistry } from "./export_registry";
-import type { ReferenceRegistry } from "./reference_registry";
-import type { ImportGraph } from "./import_graph";
-import { resolve_single_method_call } from "../resolve_references/call_resolution";
-import { resolve_single_constructor_call } from "../resolve_references/call_resolution/constructor_resolver";
+import type { FileSystemFolder } from "./types";
+import type { DefinitionRegistry } from "./registries/definition_registry";
+import type { TypeRegistry } from "./registries/type_registry";
+import type { ScopeRegistry } from "./registries/scope_registry";
+import type { ExportRegistry } from "./registries/export_registry";
+import type { ReferenceRegistry } from "./registries/reference_registry";
+import type { ImportGraph } from "../project/import_graph";
+import { resolve_single_method_call } from "./call_resolution";
+import { resolve_single_constructor_call } from "./call_resolution/constructor_resolver";
 import { find_enclosing_function_scope } from "../index_single_file/scopes/scope_utils";
 
 /**

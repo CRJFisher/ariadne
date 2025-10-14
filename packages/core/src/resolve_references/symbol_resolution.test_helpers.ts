@@ -33,10 +33,10 @@ import type {
 import { location_key } from "@ariadnejs/types";
 import { SemanticIndex } from "../index_single_file/semantic_index";
 import type { FileSystemFolder } from "./types";
-import { DefinitionRegistry } from "../project/definition_registry";
-import { TypeRegistry } from "../project/type_registry";
-import { ScopeRegistry } from "../project/scope_registry";
-import { ExportRegistry } from "../project/export_registry";
+import { DefinitionRegistry } from "./registries/definition_registry";
+import { TypeRegistry } from "./registries/type_registry";
+import { ScopeRegistry } from "./registries/scope_registry";
+import { ExportRegistry } from "./registries/export_registry";
 import { ImportGraph } from "../project/import_graph";
 import { resolve_symbols } from "./symbol_resolution";
 

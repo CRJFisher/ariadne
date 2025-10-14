@@ -18,9 +18,9 @@ import type {
   SymbolReference,
   ClassDefinition,
 } from "@ariadnejs/types";
-import type { TypeRegistry } from "../../project/type_registry";
-import type { DefinitionRegistry } from "../../project/definition_registry";
-import type { ResolutionRegistry } from "../../project/resolution_registry";
+import type { TypeRegistry } from "../registries/type_registry";
+import type { DefinitionRegistry } from "../registries/definition_registry";
+import type { ResolutionRegistry } from "../resolution_registry";
 
 /**
  * Resolve a single constructor call reference.

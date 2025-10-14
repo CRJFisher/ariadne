@@ -5,7 +5,7 @@
 import { describe, it, expect } from "vitest";
 import { extract_import_specs, resolve_export_chain } from "./import_resolver";
 import { build_file_tree } from "../symbol_resolution.test_helpers";
-import { ExportRegistry } from "../../project/export_registry";
+import { ExportRegistry } from "../registries/export_registry";
 import type { SemanticIndex } from "../../index_single_file/semantic_index";
 import type {
   FilePath,

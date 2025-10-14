@@ -1,7 +1,7 @@
 import type { FilePath, CallGraph, SymbolId, FunctionNode, FunctionDefinition, MethodDefinition, AnyDefinition, ConstructorDefinition } from "@ariadnejs/types";
 import type { SemanticIndex } from "../index_single_file/semantic_index";
-import type { DefinitionRegistry } from "../project/definition_registry";
-import type { ResolutionRegistry } from "../project/resolution_registry";
+import type { DefinitionRegistry } from "../resolve_references/registries/definition_registry";
+import type { ResolutionRegistry } from "../resolve_references/resolution_registry";
 
 /**
  * Type guard: check if definition is function-like

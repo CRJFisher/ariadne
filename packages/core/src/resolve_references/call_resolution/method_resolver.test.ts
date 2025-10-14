@@ -30,8 +30,8 @@ import type {
 } from "@ariadnejs/types";
 import { location_key } from "@ariadnejs/types";
 import { SemanticIndex } from "../../index_single_file/semantic_index";
-import { DefinitionRegistry } from "../../project/definition_registry";
-import { TypeRegistry } from "../../project/type_registry";
+import { DefinitionRegistry } from "../registries/definition_registry";
+import { TypeRegistry } from "../registries/type_registry";
 
 // Helper to create a minimal semantic index
 function create_test_index(config: {

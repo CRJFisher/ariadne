@@ -15,7 +15,7 @@ import type {
 } from "@ariadnejs/types";
 import type { SemanticIndex } from "../../index_single_file/semantic_index";
 import type { ImportSpec, NamespaceSources, FileSystemFolder } from "../types";
-import type { ExportRegistry } from "../../project/export_registry";
+import type { ExportRegistry } from "../registries/export_registry";
 import { resolve_module_path_javascript } from "./import_resolver.javascript";
 import { resolve_module_path_typescript } from "./import_resolver.typescript";
 import { resolve_module_path_python } from "./import_resolver.python";
