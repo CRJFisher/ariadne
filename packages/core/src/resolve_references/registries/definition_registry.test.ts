@@ -1,7 +1,13 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { DefinitionRegistry } from "./definition_registry";
 import { function_symbol, variable_symbol } from "@ariadnejs/types";
-import type { FunctionDefinition, VariableDefinition, FilePath, ScopeId, SymbolName } from "@ariadnejs/types";
+import type {
+  FunctionDefinition,
+  VariableDefinition,
+  FilePath,
+  ScopeId,
+  SymbolName,
+} from "@ariadnejs/types";
 
 describe("DefinitionRegistry", () => {
   let registry: DefinitionRegistry;
@@ -22,7 +28,13 @@ describe("DefinitionRegistry", () => {
         symbol_id: func_id,
         name: "foo" as SymbolName,
         defining_scope_id: root_scope,
-        location: { file_path: file1, start_line: 1, start_column: 0, end_line: 3, end_column: 1 },
+        location: {
+          file_path: file1,
+          start_line: 1,
+          start_column: 0,
+          end_line: 3,
+          end_column: 1,
+        },
         is_exported: true,
         signature: { parameters: [] },
       };
@@ -32,7 +44,13 @@ describe("DefinitionRegistry", () => {
         symbol_id: var_id,
         name: "x" as SymbolName,
         defining_scope_id: root_scope,
-        location: { file_path: file1, start_line: 2, start_column: 0, end_line: 2, end_column: 1 },
+        location: {
+          file_path: file1,
+          start_line: 2,
+          start_column: 0,
+          end_line: 2,
+          end_column: 1,
+        },
         is_exported: false,
       };
 
@@ -54,7 +72,13 @@ describe("DefinitionRegistry", () => {
         symbol_id: func_id_v1,
         name: "foo" as SymbolName,
         defining_scope_id: root_scope,
-        location: { file_path: file1, start_line: 1, start_column: 0, end_line: 3, end_column: 1 },
+        location: {
+          file_path: file1,
+          start_line: 1,
+          start_column: 0,
+          end_line: 3,
+          end_column: 1,
+        },
         is_exported: true,
         signature: { parameters: [] },
       };
@@ -70,7 +94,13 @@ describe("DefinitionRegistry", () => {
         symbol_id: func_id_v2,
         name: "bar" as SymbolName,
         defining_scope_id: root_scope,
-        location: { file_path: file1, start_line: 1, start_column: 0, end_line: 3, end_column: 1 },
+        location: {
+          file_path: file1,
+          start_line: 1,
+          start_column: 0,
+          end_line: 3,
+          end_column: 1,
+        },
         is_exported: true,
         signature: { parameters: [] },
       };
@@ -79,8 +109,8 @@ describe("DefinitionRegistry", () => {
       registry.update_file(file1, [func_v2]);
 
       expect(registry.size()).toBe(1);
-      expect(registry.get(func_id_v1)).toBeUndefined();  // Old removed
-      expect(registry.get(func_id_v2)).toBeDefined();    // New added
+      expect(registry.get(func_id_v1)).toBeUndefined(); // Old removed
+      expect(registry.get(func_id_v2)).toBeDefined(); // New added
     });
 
     it("should handle multiple files independently", () => {
@@ -97,7 +127,13 @@ describe("DefinitionRegistry", () => {
         symbol_id: func1,
         name: "foo" as SymbolName,
         defining_scope_id: scope1,
-        location: { file_path: file1, start_line: 1, start_column: 0, end_line: 3, end_column: 1 },
+        location: {
+          file_path: file1,
+          start_line: 1,
+          start_column: 0,
+          end_line: 3,
+          end_column: 1,
+        },
         is_exported: true,
         signature: { parameters: [] },
       };
@@ -107,7 +143,13 @@ describe("DefinitionRegistry", () => {
         symbol_id: func2,
         name: "bar" as SymbolName,
         defining_scope_id: scope2,
-        location: { file_path: file2, start_line: 1, start_column: 0, end_line: 3, end_column: 1 },
+        location: {
+          file_path: file2,
+          start_line: 1,
+          start_column: 0,
+          end_line: 3,
+          end_column: 1,
+        },
         is_exported: true,
         signature: { parameters: [] },
       };
@@ -123,7 +165,10 @@ describe("DefinitionRegistry", () => {
 
   describe("get", () => {
     it("should return undefined for unknown symbols", () => {
-      const unknown = function_symbol("unknown", "test.ts", { line: 1, column: 0 });
+      const unknown = function_symbol("unknown", "test.ts", {
+        line: 1,
+        column: 0,
+      });
       expect(registry.get(unknown)).toBeUndefined();
     });
   });
@@ -140,7 +185,13 @@ describe("DefinitionRegistry", () => {
         symbol_id: func_id,
         name: "foo" as SymbolName,
         defining_scope_id: root_scope,
-        location: { file_path: file1, start_line: 1, start_column: 0, end_line: 3, end_column: 1 },
+        location: {
+          file_path: file1,
+          start_line: 1,
+          start_column: 0,
+          end_line: 3,
+          end_column: 1,
+        },
         is_exported: true,
         signature: { parameters: [] },
       };
@@ -150,13 +201,19 @@ describe("DefinitionRegistry", () => {
         symbol_id: var_id,
         name: "x" as SymbolName,
         defining_scope_id: root_scope,
-        location: { file_path: file1, start_line: 2, start_column: 0, end_line: 2, end_column: 1 },
+        location: {
+          file_path: file1,
+          start_line: 2,
+          start_column: 0,
+          end_line: 2,
+          end_column: 1,
+        },
         is_exported: false,
       };
 
       registry.update_file(file1, [func, variable]);
 
-      const file_defs = registry.get_file_definitions(file1);
+      const file_defs = registry.get_callable_definitions(file1);
       expect(file_defs).toHaveLength(2);
       expect(file_defs).toContainEqual(func);
       expect(file_defs).toContainEqual(variable);
@@ -164,7 +221,7 @@ describe("DefinitionRegistry", () => {
 
     it("should return empty array for unknown file", () => {
       const unknown_file = "unknown.ts" as FilePath;
-      expect(registry.get_file_definitions(unknown_file)).toEqual([]);
+      expect(registry.get_callable_definitions(unknown_file)).toEqual([]);
     });
   });
 
@@ -179,7 +236,13 @@ describe("DefinitionRegistry", () => {
         symbol_id: func_id,
         name: "foo" as SymbolName,
         defining_scope_id: root_scope,
-        location: { file_path: file1, start_line: 1, start_column: 0, end_line: 3, end_column: 1 },
+        location: {
+          file_path: file1,
+          start_line: 1,
+          start_column: 0,
+          end_line: 3,
+          end_column: 1,
+        },
         is_exported: true,
         signature: { parameters: [] },
       };
@@ -192,7 +255,7 @@ describe("DefinitionRegistry", () => {
 
       expect(registry.size()).toBe(0);
       expect(registry.get(func_id)).toBeUndefined();
-      expect(registry.get_file_definitions(file1)).toEqual([]);
+      expect(registry.get_callable_definitions(file1)).toEqual([]);
     });
 
     it("should not affect other files", () => {
@@ -208,7 +271,13 @@ describe("DefinitionRegistry", () => {
         symbol_id: func1,
         name: "foo" as SymbolName,
         defining_scope_id: scope1,
-        location: { file_path: file1, start_line: 1, start_column: 0, end_line: 3, end_column: 1 },
+        location: {
+          file_path: file1,
+          start_line: 1,
+          start_column: 0,
+          end_line: 3,
+          end_column: 1,
+        },
         is_exported: true,
         signature: { parameters: [] },
       };
@@ -218,7 +287,13 @@ describe("DefinitionRegistry", () => {
         symbol_id: func2,
         name: "bar" as SymbolName,
         defining_scope_id: scope2,
-        location: { file_path: file2, start_line: 1, start_column: 0, end_line: 3, end_column: 1 },
+        location: {
+          file_path: file2,
+          start_line: 1,
+          start_column: 0,
+          end_line: 3,
+          end_column: 1,
+        },
         is_exported: true,
         signature: { parameters: [] },
       };
@@ -250,7 +325,13 @@ describe("DefinitionRegistry", () => {
         symbol_id: func_id,
         name: "foo" as SymbolName,
         defining_scope_id: root_scope,
-        location: { file_path: file1, start_line: 1, start_column: 0, end_line: 3, end_column: 1 },
+        location: {
+          file_path: file1,
+          start_line: 1,
+          start_column: 0,
+          end_line: 3,
+          end_column: 1,
+        },
         is_exported: true,
         signature: { parameters: [] },
       };
@@ -261,7 +342,10 @@ describe("DefinitionRegistry", () => {
     });
 
     it("should return false for undefined symbols", () => {
-      const unknown = function_symbol("unknown", "test.ts", { line: 1, column: 0 });
+      const unknown = function_symbol("unknown", "test.ts", {
+        line: 1,
+        column: 0,
+      });
       expect(registry.has(unknown)).toBe(false);
     });
   });
@@ -278,7 +362,13 @@ describe("DefinitionRegistry", () => {
         symbol_id: function_symbol("foo", file1, { line: 1, column: 0 }),
         name: "foo" as SymbolName,
         defining_scope_id: scope1,
-        location: { file_path: file1, start_line: 1, start_column: 0, end_line: 3, end_column: 1 },
+        location: {
+          file_path: file1,
+          start_line: 1,
+          start_column: 0,
+          end_line: 3,
+          end_column: 1,
+        },
         is_exported: true,
         signature: { parameters: [] },
       };
@@ -288,7 +378,13 @@ describe("DefinitionRegistry", () => {
         symbol_id: function_symbol("bar", file2, { line: 1, column: 0 }),
         name: "bar" as SymbolName,
         defining_scope_id: scope2,
-        location: { file_path: file2, start_line: 1, start_column: 0, end_line: 3, end_column: 1 },
+        location: {
+          file_path: file2,
+          start_line: 1,
+          start_column: 0,
+          end_line: 3,
+          end_column: 1,
+        },
         is_exported: true,
         signature: { parameters: [] },
       };
@@ -313,7 +409,13 @@ describe("DefinitionRegistry", () => {
         symbol_id: function_symbol("foo", file1, { line: 1, column: 0 }),
         name: "foo" as SymbolName,
         defining_scope_id: root_scope,
-        location: { file_path: file1, start_line: 1, start_column: 0, end_line: 3, end_column: 1 },
+        location: {
+          file_path: file1,
+          start_line: 1,
+          start_column: 0,
+          end_line: 3,
+          end_column: 1,
+        },
         is_exported: true,
         signature: { parameters: [] },
       };

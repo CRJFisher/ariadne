@@ -1,5 +1,14 @@
-import type { SymbolId, FilePath, AnyDefinition, LocationKey, ScopeId, SymbolName } from "@ariadnejs/types";
-import { location_key } from "@ariadnejs/types";
+import type {
+  SymbolId,
+  FilePath,
+  AnyDefinition,
+  LocationKey,
+  ScopeId,
+  SymbolName,
+  CallableDefinition,
+  ExportableDefinition,
+} from "@ariadnejs/types";
+import { is_exportable, location_key } from "@ariadnejs/types";
 
 /**
  * Central registry for all definitions across the project.
@@ -128,26 +137,35 @@ export class DefinitionRegistry {
   }
 
   /**
-   * Get all definitions from a specific file.
+   * Get all callable definitions (functions, methods, constructors) across all files.
    *
-   * @param file_id - The file to query
-   * @returns Array of definitions from that file
+   * @returns Array of callable definitions
    */
-  get_file_definitions(file_id: FilePath): AnyDefinition[] {
-    const symbol_ids = this.by_file.get(file_id);
-    if (!symbol_ids) {
-      return [];
-    }
-
-    const definitions: AnyDefinition[] = [];
-    for (const symbol_id of symbol_ids) {
-      const def = this.by_symbol.get(symbol_id);
-      if (def) {
-        definitions.push(def);
+  get_callable_definitions(): CallableDefinition[] {
+    const callables: CallableDefinition[] = [];
+    for (const def of this.by_symbol.values()) {
+      if (
+        def.kind === "function" ||
+        def.kind === "method" ||
+        def.kind === "constructor"
+      ) {
+        callables.push(def);
       }
     }
+    return callables;
+  }
 
-    return definitions;
+  get_exportable_definitions_in_file(
+    file_id: FilePath
+  ): ExportableDefinition[] {
+    const exportables: ExportableDefinition[] = [];
+    for (const symbol_id of this.by_file.get(file_id) ?? []) {
+      const def = this.by_symbol.get(symbol_id);
+      if (def && is_exportable(def)) {
+        exportables.push(def);
+      }
+    }
+    return exportables;
   }
 
   /**
@@ -215,7 +233,7 @@ export class DefinitionRegistry {
   remove_file(file_id: FilePath): void {
     const symbol_ids = this.by_file.get(file_id);
     if (!symbol_ids) {
-      return;  // File not in registry
+      return; // File not in registry
     }
 
     // Remove each symbol from indexes

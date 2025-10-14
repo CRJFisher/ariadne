@@ -1,7 +1,14 @@
-import { type FilePath, type SymbolId, type SymbolName, type ImportDefinition, type ExportableDefinition, type Language, is_exportable } from "@ariadnejs/types";
-import type { FileSystemFolder } from "../resolve_references/types";
+import {
+  type FilePath,
+  type SymbolId,
+  type SymbolName,
+  type ImportDefinition,
+  type ExportableDefinition,
+  type Language,
+} from "@ariadnejs/types";
 import type { DefinitionRegistry } from "./definition_registry";
-import { resolve_module_path } from "../resolve_references/import_resolution/import_resolver";
+import { resolve_module_path } from "../import_resolution/import_resolver";
+import { FileSystemFolder } from "../types";
 
 /**
  * Extended export metadata for resolution.
@@ -38,7 +45,10 @@ export class ExportRegistry {
   private exports: Map<FilePath, Set<SymbolId>> = new Map();
 
   /** File → (export name → export metadata) */
-  private export_metadata: Map<FilePath, Map<SymbolName, EnhancedExportMetadata>> = new Map();
+  private export_metadata: Map<
+    FilePath,
+    Map<SymbolName, EnhancedExportMetadata>
+  > = new Map();
 
   /** File → default export metadata */
   private default_exports: Map<FilePath, EnhancedExportMetadata> = new Map();
@@ -83,7 +93,10 @@ export class ExportRegistry {
       const is_reexport = def.export?.is_reexport === true;
 
       // For re-exports, the definition itself is an ImportDefinition
-      const import_def = is_reexport && def.kind === "import" ? (def as ImportDefinition) : undefined;
+      const import_def =
+        is_reexport && def.kind === "import"
+          ? (def as ImportDefinition)
+          : undefined;
 
       // Check for duplicates - temporarily allow function/variable duplicates for arrow functions
       const existing = metadata_map.get(export_name);
@@ -94,7 +107,8 @@ export class ExportRegistry {
           (existing.symbol_id.includes("function:") &&
             (def.kind === "variable" || def.kind === "constant")) ||
           (def.kind === "function" &&
-            (existing.symbol_id.includes("variable:") || existing.symbol_id.includes("constant:")))
+            (existing.symbol_id.includes("variable:") ||
+              existing.symbol_id.includes("constant:")))
         ) {
           // Prefer variable/constant over function for arrow function assignments
           if (def.kind === "variable" || def.kind === "constant") {
@@ -153,13 +167,11 @@ export class ExportRegistry {
     };
 
     // Get all definitions for this file from DefinitionRegistry
-    const file_definitions = definitions.get_file_definitions(file_id);
+    const file_definitions = definitions.get_exportable_definitions_in_file(file_id);
 
     // Process all exportable definitions
     for (const def of file_definitions) {
-      if (is_exportable(def)) {
-        add_to_registry(def);
-      }
+      add_to_registry(def);
     }
 
     // Store in all indexes
@@ -254,7 +266,10 @@ export class ExportRegistry {
    * @param export_name - The export name to look up
    * @returns Export metadata or undefined if not found
    */
-  get_export(file_path: FilePath, export_name: SymbolName): EnhancedExportMetadata | undefined {
+  get_export(
+    file_path: FilePath,
+    export_name: SymbolName
+  ): EnhancedExportMetadata | undefined {
     return this.export_metadata.get(file_path)?.get(export_name);
   }
 
@@ -314,19 +329,21 @@ export class ExportRegistry {
     visited: Set<string> = new Set()
   ): SymbolId | null {
     // Detect cycles
-    const key = import_kind === "default"
-      ? `${source_file}:default`
-      : `${source_file}:${export_name}:${import_kind}`;
+    const key =
+      import_kind === "default"
+        ? `${source_file}:default`
+        : `${source_file}:${export_name}:${import_kind}`;
 
     if (visited.has(key)) {
-      return null;  // Circular re-export
+      return null; // Circular re-export
     }
     visited.add(key);
 
     // Get export metadata from THIS registry
-    const export_meta = import_kind === "default"
-      ? this.get_default_export(source_file)
-      : this.get_export(source_file, export_name);
+    const export_meta =
+      import_kind === "default"
+        ? this.get_default_export(source_file)
+        : this.get_export(source_file, export_name);
 
     if (!export_meta) {
       // Export not found
@@ -353,7 +370,8 @@ export class ExportRegistry {
       );
 
       // Get the original name and import kind for the next hop
-      const original_name = (imp_def.original_name || imp_def.name) as SymbolName;
+      const original_name = (imp_def.original_name ||
+        imp_def.name) as SymbolName;
       const next_import_kind = imp_def.import_kind;
 
       // RECURSIVE: Follow the chain

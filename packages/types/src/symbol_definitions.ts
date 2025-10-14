@@ -219,6 +219,12 @@ export type ExportableDefinition =
   | NamespaceDefinition
   | TypeAliasDefinition
   | ImportDefinition; // Re-exports
+
+export type CallableDefinition =
+  | FunctionDefinition
+  | MethodDefinition
+  | ConstructorDefinition;
+
 /**
  * Type guard to check if export is a re-export
  */

@@ -185,7 +185,12 @@ export class Project {
     const import_definitions = Array.from(
       semantic_index.imported_symbols.values()
     );
-    this.imports.update_file(file_id, import_definitions, language, this.root_folder);
+    this.imports.update_file(
+      file_id,
+      import_definitions,
+      language,
+      this.root_folder
+    );
 
     // Phase 3: Re-resolve affected files (eager!)
     const affected_files = new Set([file_id, ...dependents]);
@@ -315,7 +320,6 @@ export class Project {
     // Build call graph from current state
     // All resolutions are always up-to-date (eager resolution)
     return detect_call_graph(
-      this.semantic_indexes,
       this.definitions,
       this.resolutions
     );
@@ -363,15 +367,6 @@ export class Project {
    */
   get_all_scope_graphs(): ReadonlyMap<FilePath, SemanticIndex> {
     return this.semantic_indexes;
-  }
-
-  /**
-   * Get all definitions for a specific file.
-   * @param file_id - The file to get definitions for
-   * @returns Array of definitions in this file
-   */
-  get_file_definitions(file_id: FilePath): AnyDefinition[] {
-    return this.definitions.get_file_definitions(file_id);
   }
 
   /**

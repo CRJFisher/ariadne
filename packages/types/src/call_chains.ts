@@ -11,7 +11,7 @@ import type { AnyDefinition } from "./symbol_definitions";
 /**
  * Node in a call graph representing a function/method
  */
-export interface FunctionNode {
+export interface CallableNode {
   readonly symbol_id: SymbolId;
   readonly name: SymbolName;
   readonly enclosed_calls: readonly CallReference[];
@@ -23,7 +23,7 @@ export interface FunctionNode {
  * Complete call graph structure
  */
 export interface CallGraph {
-  readonly nodes: ReadonlyMap<SymbolId, FunctionNode>;
+  readonly nodes: ReadonlyMap<SymbolId, CallableNode>;
   readonly entry_points: readonly SymbolId[];
 }
 /**
@@ -35,7 +35,7 @@ export interface CallReference {
   readonly location: Location;
 
   /** Resolved Symbol ID being called */
-  readonly symbol_id?: SymbolId | null;  // Null for unresolved calls
+  readonly symbol_id?: SymbolId | null; // Null for unresolved calls
 
   /** Name being called */
   readonly name: SymbolName;
@@ -45,7 +45,6 @@ export interface CallReference {
 
   /** Type of call */
   readonly call_type: "function" | "method" | "constructor";
-
 } // ============================================================================
 // Complete Resolution Result
 // ============================================================================
