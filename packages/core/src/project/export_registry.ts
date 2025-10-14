@@ -1,4 +1,4 @@
-import type { FilePath, SymbolId, SymbolName, ImportDefinition, Language, ModulePath, ExportableDefinition } from "@ariadnejs/types";
+import type { FilePath, SymbolId, SymbolName, ImportDefinition, ExportableDefinition } from "@ariadnejs/types";
 import type { SemanticIndex } from "../index_single_file/semantic_index";
 import type { FileSystemFolder } from "../resolve_references/types";
 import { resolve_module_path } from "../resolve_references/import_resolution/import_resolver";

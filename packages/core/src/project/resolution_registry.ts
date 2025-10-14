@@ -5,6 +5,7 @@ import type {
   SymbolReference,
   ScopeId,
   SymbolName,
+  Language,
 } from "@ariadnejs/types";
 import type { FileSystemFolder } from "../resolve_references/types";
 import type { SemanticIndex } from "../index_single_file/semantic_index";
@@ -119,11 +120,19 @@ export class ResolutionRegistry {
         continue; // File has no scope tree
       }
 
+      // Get language for this file
+      const semantic_index = semantic_indexes.get(file_id);
+      if (!semantic_index) {
+        continue; // File not indexed
+      }
+      const language = semantic_index.language;
+
       // Resolve recursively from root
       const file_resolutions = this.resolve_scope_recursive(
         root_scope.id,
         new Map(), // Empty parent resolutions at root
         file_id,
+        language,
         semantic_indexes,
         exports,
         imports,
@@ -378,7 +387,8 @@ export class ResolutionRegistry {
    * @param scope_id - Current scope to resolve
    * @param parent_resolutions - Resolutions inherited from parent scope
    * @param file_path - File containing this scope
-   * @param semantic_indexes - Semantic indexes (for language lookup)
+   * @param language - Programming language of the file
+   * @param semantic_indexes - Semantic indexes (for re-export chain resolution)
    * @param exports - Export registry (for resolve_export_chain)
    * @param imports - Import graph (for get_scope_imports and resolved paths)
    * @param definitions - Definition registry (for get_scope_definitions)
@@ -390,6 +400,7 @@ export class ResolutionRegistry {
     scope_id: ScopeId,
     parent_resolutions: ReadonlyMap<SymbolName, SymbolId>,
     file_path: FilePath,
+    language: Language,
     semantic_indexes: ReadonlyMap<FilePath, SemanticIndex>,
     exports: ExportRegistry,
     imports: ImportGraph,
@@ -457,6 +468,7 @@ export class ResolutionRegistry {
           child_id,
           scope_resolutions, // Pass down as parent
           file_path,
+          language,
           semantic_indexes,
           exports,
           imports,
