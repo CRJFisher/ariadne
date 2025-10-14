@@ -5,6 +5,7 @@
 import { describe, it, expect } from "vitest";
 import { extract_import_specs, resolve_export_chain } from "./import_resolver";
 import { build_file_tree } from "../symbol_resolution.test_helpers";
+import { ExportRegistry } from "../../project/export_registry";
 import type { SemanticIndex } from "../../index_single_file/semantic_index";
 import type {
   FilePath,
@@ -85,52 +86,6 @@ function create_test_index(
     add_to_scope_map(def);
   }
 
-  // Build exported_symbols map from all definitions
-  const exported_symbols = new Map();
-  for (const def of functions.values()) {
-    if (def.is_exported) {
-      const export_name = def.export?.export_name || def.name;
-      exported_symbols.set(export_name, def);
-    }
-  }
-  for (const def of classes.values()) {
-    if (def.is_exported) {
-      const export_name = def.export?.export_name || def.name;
-      exported_symbols.set(export_name, def);
-    }
-  }
-  for (const def of variables.values()) {
-    if (def.is_exported) {
-      const export_name = def.export?.export_name || def.name;
-      exported_symbols.set(export_name, def);
-    }
-  }
-  for (const def of interfaces.values()) {
-    if (def.is_exported) {
-      const export_name = def.export?.export_name || def.name;
-      exported_symbols.set(export_name, def);
-    }
-  }
-  for (const def of enums.values()) {
-    if (def.is_exported) {
-      const export_name = def.export?.export_name || def.name;
-      exported_symbols.set(export_name, def);
-    }
-  }
-  for (const def of types.values()) {
-    if (def.is_exported) {
-      const export_name = def.export?.export_name || def.name;
-      exported_symbols.set(export_name, def);
-    }
-  }
-  for (const def of imports.values()) {
-    // Imports are exported if they have an export field (re-exports)
-    if (def.export) {
-      const export_name = def.export.export_name || def.name;
-      exported_symbols.set(export_name, def);
-    }
-  }
-
   return {
     file_path,
     language,
@@ -166,11 +121,19 @@ function create_test_index(
     imported_symbols: imports,
     references: [],
     scope_to_definitions,
-    exported_symbols,
     type_bindings: new Map(),
     type_members: new Map(),
     type_alias_metadata: new Map(),
   };
+}
+
+// Test helper to build an ExportRegistry from semantic indices
+function build_export_registry(indices: Map<FilePath, SemanticIndex>): ExportRegistry {
+  const registry = new ExportRegistry();
+  for (const [file_path, index] of indices) {
+    registry.update_file(file_path, index);
+  }
+  return registry;
 }
 
 describe("extract_import_specs", () => {
@@ -363,7 +326,7 @@ describe("resolve_export_chain", () => {
     const result = resolve_export_chain(
       file_path,
       "helper" as SymbolName,
-      indices,
+      build_export_registry(indices),
       root_folder
     );
 
@@ -377,7 +340,7 @@ describe("resolve_export_chain", () => {
     const root_folder = build_file_tree([file_path as FilePath]);
 
     expect(() => {
-      resolve_export_chain(file_path, "nonexistent" as SymbolName, indices, root_folder);
+      resolve_export_chain(file_path, "nonexistent" as SymbolName, build_export_registry(indices), root_folder);
     }).toThrow("Export not found");
   });
 
@@ -387,8 +350,8 @@ describe("resolve_export_chain", () => {
     const root_folder = build_file_tree([file_path as FilePath]);
 
     expect(() => {
-      resolve_export_chain(file_path, "helper" as SymbolName, indices, root_folder);
-    }).toThrow("Source index not found");
+      resolve_export_chain(file_path, "helper" as SymbolName, build_export_registry(indices), root_folder);
+    }).toThrow("Export not found");
   });
 
   it("should resolve re-exported symbol (without chain following)", () => {
@@ -430,7 +393,7 @@ describe("resolve_export_chain", () => {
     const result = resolve_export_chain(
       file_path,
       "helper" as SymbolName,
-      indices,
+      build_export_registry(indices),
       root_folder
     );
 
@@ -475,7 +438,7 @@ describe("resolve_export_chain", () => {
     const result = resolve_export_chain(
       file_path,
       "MyClass" as SymbolName,
-      indices,
+      build_export_registry(indices),
       root_folder
     );
 
@@ -511,7 +474,7 @@ describe("resolve_export_chain", () => {
     const result = resolve_export_chain(
       file_path,
       "config" as SymbolName,
-      indices,
+      build_export_registry(indices),
       root_folder
     );
 
@@ -549,7 +512,7 @@ describe("resolve_export_chain", () => {
     const root_folder = build_file_tree([file_path as FilePath]);
 
     expect(() => {
-      resolve_export_chain(file_path, "private_helper" as SymbolName, indices, root_folder);
+      resolve_export_chain(file_path, "private_helper" as SymbolName, build_export_registry(indices), root_folder);
     }).toThrow("Export not found");
   });
 });
@@ -593,7 +556,7 @@ describe("Export Alias Resolution", () => {
     const result = resolve_export_chain(
       file_path,
       "publicFoo" as SymbolName,
-      indices,
+      build_export_registry(indices),
       root_folder
     );
 
@@ -636,7 +599,7 @@ describe("Export Alias Resolution", () => {
     const result = resolve_export_chain(
       file_path,
       "foo" as SymbolName,
-      indices,
+      build_export_registry(indices),
       root_folder
     );
 
@@ -679,7 +642,7 @@ describe("Export Alias Resolution", () => {
 
     // main.ts: import { wrongName } from './lib'
     expect(() => {
-      resolve_export_chain(file_path, "wrongName" as SymbolName, indices, root_folder);
+      resolve_export_chain(file_path, "wrongName" as SymbolName, build_export_registry(indices), root_folder);
     }).toThrow("Export not found");
   });
 
@@ -720,7 +683,7 @@ describe("Export Alias Resolution", () => {
     // main.ts: import { internalFoo } from './lib'
     // This should FAIL because the export alias means only 'publicFoo' is accessible
     expect(() => {
-      resolve_export_chain(file_path, "internalFoo" as SymbolName, indices, root_folder);
+      resolve_export_chain(file_path, "internalFoo" as SymbolName, build_export_registry(indices), root_folder);
     }).toThrow("Export not found");
   });
 
@@ -763,7 +726,7 @@ describe("Export Alias Resolution", () => {
     const result = resolve_export_chain(
       file_path,
       "PublicClass" as SymbolName,
-      indices,
+      build_export_registry(indices),
       root_folder
     );
 
@@ -804,7 +767,7 @@ describe("Export Alias Resolution", () => {
     const result = resolve_export_chain(
       file_path,
       "config" as SymbolName,
-      indices,
+      build_export_registry(indices),
       root_folder
     );
 
@@ -848,7 +811,7 @@ describe("Export Alias Resolution", () => {
     const result = resolve_export_chain(
       file_path,
       "PublicInterface" as SymbolName,
-      indices,
+      build_export_registry(indices),
       root_folder
     );
 
@@ -891,7 +854,7 @@ describe("Export Alias Resolution", () => {
     const result = resolve_export_chain(
       file_path,
       "Status" as SymbolName,
-      indices,
+      build_export_registry(indices),
       root_folder
     );
 
@@ -932,7 +895,7 @@ describe("Export Alias Resolution", () => {
     const result = resolve_export_chain(
       file_path,
       "PublicType" as SymbolName,
-      indices,
+      build_export_registry(indices),
       root_folder
     );
 
@@ -997,15 +960,15 @@ describe("Export Alias Resolution", () => {
     const root_folder = build_file_tree([file_path as FilePath]);
 
     // Verify each alias resolves to correct symbol
-    expect(resolve_export_chain(file_path, "publicFoo" as SymbolName, indices, root_folder)).toBe(foo_id);
-    expect(resolve_export_chain(file_path, "publicBar" as SymbolName, indices, root_folder)).toBe(bar_id);
+    expect(resolve_export_chain(file_path, "publicFoo" as SymbolName, build_export_registry(indices), root_folder)).toBe(foo_id);
+    expect(resolve_export_chain(file_path, "publicBar" as SymbolName, build_export_registry(indices), root_folder)).toBe(bar_id);
 
     // Verify internal names are not accessible
     expect(() => {
-      resolve_export_chain(file_path, "foo" as SymbolName, indices, root_folder);
+      resolve_export_chain(file_path, "foo" as SymbolName, build_export_registry(indices), root_folder);
     }).toThrow("Export not found");
     expect(() => {
-      resolve_export_chain(file_path, "bar" as SymbolName, indices, root_folder);
+      resolve_export_chain(file_path, "bar" as SymbolName, build_export_registry(indices), root_folder);
     }).toThrow("Export not found");
   });
 
@@ -1072,7 +1035,7 @@ describe("Export Alias Resolution", () => {
     const result = resolve_export_chain(
       middle_file,
       "publicCore" as SymbolName,
-      indices,
+      build_export_registry(indices),
       root_folder
     );
 
@@ -1136,14 +1099,14 @@ describe("Export Alias Resolution", () => {
     const root_folder = build_file_tree([file_path as FilePath]);
 
     // Direct export works with its name
-    expect(resolve_export_chain(file_path, "direct" as SymbolName, indices, root_folder)).toBe(direct_id);
+    expect(resolve_export_chain(file_path, "direct" as SymbolName, build_export_registry(indices), root_folder)).toBe(direct_id);
 
     // Aliased export works with alias
-    expect(resolve_export_chain(file_path, "aliased" as SymbolName, indices, root_folder)).toBe(internal_id);
+    expect(resolve_export_chain(file_path, "aliased" as SymbolName, build_export_registry(indices), root_folder)).toBe(internal_id);
 
     // Internal name not accessible when aliased
     expect(() => {
-      resolve_export_chain(file_path, "internal" as SymbolName, indices, root_folder);
+      resolve_export_chain(file_path, "internal" as SymbolName, build_export_registry(indices), root_folder);
     }).toThrow("Export not found");
   });
 });
@@ -1188,7 +1151,7 @@ describe("Default Export Resolution", () => {
     const result = resolve_export_chain(
       file_path,
       "calc" as SymbolName,
-      indices,
+      build_export_registry(indices),
       root_folder,
       "default"
     );
@@ -1235,7 +1198,7 @@ describe("Default Export Resolution", () => {
     const result = resolve_export_chain(
       file_path,
       "MyUser" as SymbolName,
-      indices,
+      build_export_registry(indices),
       root_folder,
       "default"
     );
@@ -1277,7 +1240,7 @@ describe("Default Export Resolution", () => {
     const result = resolve_export_chain(
       file_path,
       "config" as SymbolName,
-      indices,
+      build_export_registry(indices),
       root_folder,
       "default"
     );
@@ -1322,7 +1285,7 @@ describe("Default Export Resolution", () => {
     const result = resolve_export_chain(
       file_path,
       "Config" as SymbolName,
-      indices,
+      build_export_registry(indices),
       root_folder,
       "default"
     );
@@ -1366,7 +1329,7 @@ describe("Default Export Resolution", () => {
     const result = resolve_export_chain(
       file_path,
       "MyStatus" as SymbolName,
-      indices,
+      build_export_registry(indices),
       root_folder,
       "default"
     );
@@ -1408,7 +1371,7 @@ describe("Default Export Resolution", () => {
     const result = resolve_export_chain(
       file_path,
       "MyConfig" as SymbolName,
-      indices,
+      build_export_registry(indices),
       root_folder,
       "default"
     );
@@ -1453,7 +1416,7 @@ describe("Default Export Resolution", () => {
       resolve_export_chain(
         file_path,
         "something" as SymbolName,
-        indices,
+        build_export_registry(indices),
         root_folder,
         "default"
       );
@@ -1529,7 +1492,7 @@ describe("Default Export Resolution", () => {
     const result = resolve_export_chain(
       barrel_file,
       "something" as SymbolName,
-      indices,
+      build_export_registry(indices),
       root_folder,
       "default"
     );
@@ -1602,7 +1565,7 @@ describe("Default Export Resolution", () => {
     const default_result = resolve_export_chain(
       file_path,
       "lib" as SymbolName,
-      indices,
+      build_export_registry(indices),
       root_folder,
       "default"
     );
@@ -1612,7 +1575,7 @@ describe("Default Export Resolution", () => {
     const named_result = resolve_export_chain(
       file_path,
       "helper" as SymbolName,
-      indices,
+      build_export_registry(indices),
       root_folder,
       "named"
     );
@@ -1683,7 +1646,7 @@ describe("Default Export Resolution", () => {
       resolve_export_chain(
         file_path,
         "anything" as SymbolName,
-        indices,
+        build_export_registry(indices),
         root_folder,
         "default"
       );
@@ -1758,7 +1721,7 @@ describe("Default Export Resolution", () => {
     const result = resolve_export_chain(
       a_file,
       "foo" as SymbolName,
-      indices,
+      build_export_registry(indices),
       root_folder,
       "default"
     );
@@ -1807,7 +1770,7 @@ describe("Default Export Resolution", () => {
       const result = resolve_export_chain(
         file_path,
         local_name as SymbolName,
-        indices,
+        build_export_registry(indices),
         root_folder,
         "default"
       );
@@ -1853,7 +1816,7 @@ describe("Default Export Resolution", () => {
     const result = resolve_export_chain(
       file_path,
       "calc" as SymbolName,
-      indices,
+      build_export_registry(indices),
       root_folder,
       "default"
     );
@@ -1900,7 +1863,7 @@ describe("Default Export Resolution", () => {
     const result = resolve_export_chain(
       file_path,
       "Component" as SymbolName,
-      indices,
+      build_export_registry(indices),
       root_folder,
       "default"
     );
@@ -2007,7 +1970,7 @@ describe("Default Export Resolution", () => {
     const result = resolve_export_chain(
       barrel_file,
       "something" as SymbolName,
-      indices,
+      build_export_registry(indices),
       root_folder,
       "default"
     );
@@ -2085,7 +2048,7 @@ describe("Default Export Resolution", () => {
     const result = resolve_export_chain(
       barrel_file,
       "MyComponent" as SymbolName,
-      indices,
+      build_export_registry(indices),
       root_folder,
       "default"
     );
@@ -2158,7 +2121,7 @@ describe("Default Export Resolution", () => {
     const result = resolve_export_chain(
       index_file,
       "config" as SymbolName,
-      indices,
+      build_export_registry(indices),
       root_folder,
       "default"
     );

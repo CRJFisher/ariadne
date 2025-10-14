@@ -1,5 +1,4 @@
 import type {
-  ReferenceId,
   SymbolId,
   FilePath,
   CallReference,
@@ -10,14 +9,15 @@ import type {
   ModulePath,
 } from "@ariadnejs/types";
 import type { FileSystemFolder } from "../resolve_references/types";
+import type { SemanticIndex } from "../index_single_file/semantic_index";
 import type { DefinitionRegistry } from "./definition_registry";
 import type { TypeRegistry } from "./type_registry";
 import type { ScopeRegistry } from "./scope_registry";
 import type { ExportRegistry } from "./export_registry";
 import type { ImportGraph } from "./import_graph";
-import { SemanticIndex } from "../index_single_file/semantic_index";
 import { resolve_single_method_call } from "../resolve_references/call_resolution";
 import { resolve_single_constructor_call } from "../resolve_references/call_resolution/constructor_resolver";
+import { find_enclosing_function_scope } from "../index_single_file/scopes/scope_utils";
 
 // Import module path resolution functions
 import {
@@ -28,89 +28,96 @@ import {
 } from "../resolve_references/import_resolution";
 
 /**
- * Registry for  symbol resolution.
+ * Registry for symbol resolution.
  *
  * Architecture:
  * - Resolves ALL symbols immediately when a file is updated
- * - Stores direct mappings: Scope → (Name → SymbolId)
- * - No lazy closures, no caches - just O(1) Map lookups
+ * - Two-phase resolution: name resolution + call resolution
+ * - Stores both scope-based mappings and resolved call references
  *
  * Resolution Process:
  * 1. When a file changes, resolve_files() is called from Project
- * 2. For each file: get root scope → resolve_scope_recursive()
- * 3. resolve_scope_recursive() implements lexical scoping:
- *    - Inherit parent scope resolutions
- *    - Add import resolutions (shadows parent)
- *    - Add local definitions (shadows everything)
- *    - Recurse to children
- * 4. Store all resolutions: Map<ScopeId, Map<SymbolName, SymbolId>>
- * 5. Query via resolve(scope_id, name) → O(1) lookup
+ * 2. PHASE 1 - Name resolution (scope-based):
+ *    - For each file: get root scope → resolve_scope_recursive()
+ *    - resolve_scope_recursive() implements lexical scoping:
+ *      • Inherit parent scope resolutions
+ *      • Add import resolutions (shadows parent)
+ *      • Add local definitions (shadows everything)
+ *      • Recurse to children
+ *    - Store: Map<ScopeId, Map<SymbolName, SymbolId>>
+ * 3. PHASE 2 - Call resolution (type-aware):
+ *    - Extract call references from semantic indexes
+ *    - Resolve function calls using scope resolution
+ *    - Resolve method calls using type information
+ *    - Resolve constructor calls using type information
+ *    - Store: Map<FilePath, CallReference[]>
+ * 4. Query:
+ *    - Names: resolve(scope_id, name) → O(1) lookup
+ *    - Calls: get_file_calls(file_path) → resolved calls
  *
- * Benefits over lazy resolution:
- * - Simpler: No closures, no cache layer
- * - Always consistent: ly updated on file change
+ * Benefits:
+ * - Simple: No closures, no cache layer
+ * - Always consistent: Updated on file change
+ * - Complete: Handles function/method/constructor calls correctly
  * - Standard pattern: Matches other registries
  */
 export class ResolutionRegistry {
-  /** LEGACY: Reference ID → resolved Symbol ID (for backward compatibility) */
-  private resolutions: Map<ReferenceId, SymbolId> = new Map();
+  /** Scope → (Name → resolved SymbolId) - primary storage for name resolution */
+  private resolutions_by_scope: Map<ScopeId, Map<SymbolName, SymbolId>> =
+    new Map();
 
-  /** LEGACY: File → reference IDs (for backward compatibility) */
-  private by_file: Map<FilePath, Set<ReferenceId>> = new Map();
-
-  /** : Scope → (Name → resolved SymbolId) - primary storage */
-  private resolutions_by_scope: Map<ScopeId, Map<SymbolName, SymbolId>> = new Map();
-
-  /** : Track which file owns which scopes (for cleanup) */
+  /** Track which file owns which scopes (for cleanup) */
   private scope_to_file: Map<ScopeId, FilePath> = new Map();
 
-  /**
-   * Get resolution for a reference.
-   *
-   * @param ref_id - The reference to look up
-   * @returns The resolved SymbolId, or undefined if not resolved
-   */
-  get(ref_id: ReferenceId): SymbolId | undefined {
-    return this.resolutions.get(ref_id);
-  }
+  /** File → resolved call references (for call graph detection) */
+  private resolved_calls_by_file: Map<FilePath, CallReference[]> = new Map();
+
+  /** Caller Scope → calls made from that scope */
+  private calls_by_caller_scope: Map<ScopeId, CallReference[]> = new Map();
 
   /**
-   * : Resolve symbols for a set of files and update resolutions.
-   * Uses  resolution - resolves all symbols immediately on file update.
+   * Resolve symbols for a set of files and update resolutions.
+   * Two-phase resolution: name resolution + call resolution.
    *
    * Process:
-   * 1. For each file, remove old scope-based resolutions
-   * 2. Get root scope from ScopeRegistry
-   * 3. Call resolve_scope_recursive to ly resolve all symbols
-   * 4. Store all scope resolutions
+   * PHASE 1 - Name Resolution (scope-based):
+   *   1. For each file, remove old resolutions
+   *   2. Get root scope from ScopeRegistry
+   *   3. Call resolve_scope_recursive to resolve all names
+   *   4. Store scope-based resolutions
+   *
+   * PHASE 2 - Call Resolution (type-aware):
+   *   1. Extract call references from semantic indexes
+   *   2. Resolve function/method/constructor calls
+   *   3. Store resolved call references
    *
    * @param file_ids - Files that need resolution updates
-   * @param semantic_indexes - All semantic indexes (used for legacy call resolution)
+   * @param semantic_indexes - All semantic indexes (for call resolution)
    * @param definitions - Definition registry
-   * @param types - Type registry
    * @param scopes - Scope registry
    * @param exports - Export registry
    * @param imports - Import graph
+   * @param types - Type registry (for method/constructor resolution)
    * @param root_folder - Root folder for import resolution
    */
   resolve_files(
     file_ids: Set<FilePath>,
     semantic_indexes: ReadonlyMap<FilePath, SemanticIndex>,
     definitions: DefinitionRegistry,
-    types: TypeRegistry,
     scopes: ScopeRegistry,
     exports: ExportRegistry,
     imports: ImportGraph,
+    types: TypeRegistry,
     root_folder: FileSystemFolder
   ): void {
     if (file_ids.size === 0) {
       return;
     }
 
-    //  RESOLUTION: For each file, resolve all symbols in all scopes
+    // PHASE 1: Resolve all symbols in all scopes (name → symbol_id)
     for (const file_id of file_ids) {
       // Remove old scope-based resolutions for this file
-      this.remove_file_eager(file_id);
+      this.remove_file(file_id);
 
       // Get root scope for file
       const root_scope = scopes.get_file_root_scope(file_id);
@@ -118,10 +125,10 @@ export class ResolutionRegistry {
         continue; // File has no scope tree
       }
 
-      // : Resolve recursively from root
+      // Resolve recursively from root
       const file_resolutions = this.resolve_scope_recursive(
         root_scope.id,
-        new Map(),  // Empty parent resolutions at root
+        new Map(), // Empty parent resolutions at root
         file_id,
         exports,
         imports,
@@ -135,27 +142,66 @@ export class ResolutionRegistry {
         this.resolutions_by_scope.set(scope_id, scope_resolutions);
       }
     }
-  }
 
-  /**
-   * : Remove all scope-based resolutions for a file.
-   * Uses scope_to_file map to find and remove all scopes owned by the file.
-   *
-   * @param file_id - File to remove resolutions for
-   */
-  private remove_file_eager(file_id: FilePath): void {
-    // Find all scopes owned by this file
-    const scopes_to_remove: ScopeId[] = [];
-    for (const [scope_id, owner_file] of this.scope_to_file) {
-      if (owner_file === file_id) {
-        scopes_to_remove.push(scope_id);
+    // PHASE 2: Resolve all call references (function/method/constructor calls)
+    // Extract references from semantic indexes for affected files
+    const file_references = new Map<FilePath, readonly SymbolReference[]>();
+    for (const file_id of file_ids) {
+      const index = semantic_indexes.get(file_id);
+      if (index) {
+        file_references.set(file_id, index.references);
       }
     }
 
-    // Remove resolutions for each scope
-    for (const scope_id of scopes_to_remove) {
-      this.resolutions_by_scope.delete(scope_id);
-      this.scope_to_file.delete(scope_id);
+    // Resolve all calls and add caller_scope_id to each
+    const resolved_calls = this.resolve_calls(file_references, scopes, types, definitions);
+
+    // Group resolved calls by file AND by caller scope
+    const calls_by_file = new Map<FilePath, CallReference[]>();
+    const calls_by_caller = new Map<ScopeId, CallReference[]>();
+
+    for (const call of resolved_calls) {
+      // Calculate caller scope (the function/method/constructor that contains this call)
+      const caller_scope_id = find_enclosing_function_scope(
+        call.scope_id,
+        // Need to get scopes from the file's semantic index
+        semantic_indexes.get(call.location.file_path)?.scopes || new Map()
+      );
+
+      // Add caller_scope_id to the call
+      const enriched_call: CallReference = {
+        ...call,
+        caller_scope_id,
+      } as CallReference;
+
+      // Group by file
+      const file_path = enriched_call.location.file_path;
+      const existing_file = calls_by_file.get(file_path);
+      if (existing_file) {
+        existing_file.push(enriched_call);
+      } else {
+        calls_by_file.set(file_path, [enriched_call]);
+      }
+
+      // Group by caller scope (for O(1) lookup in call graph)
+      if (caller_scope_id) {
+        const existing_caller = calls_by_caller.get(caller_scope_id);
+        if (existing_caller) {
+          existing_caller.push(enriched_call);
+        } else {
+          calls_by_caller.set(caller_scope_id, [enriched_call]);
+        }
+      }
+    }
+
+    // Store resolved calls by file
+    for (const file_id of file_ids) {
+      this.resolved_calls_by_file.set(file_id, calls_by_file.get(file_id) || []);
+    }
+
+    // Store resolved calls by caller scope
+    for (const [caller_scope_id, calls] of calls_by_caller) {
+      this.calls_by_caller_scope.set(caller_scope_id, calls);
     }
   }
 
@@ -164,7 +210,6 @@ export class ResolutionRegistry {
    * Uses pre-computed resolutions from this registry.
    *
    * @param file_references - Map of file_path → references
-   * @param semantic_indexes - All semantic indexes (unused currently)
    * @param scopes - Scope registry (for method resolution)
    * @param types - Type registry (provides type information directly)
    * @param definitions - Definition registry (for constructor resolution)
@@ -172,13 +217,10 @@ export class ResolutionRegistry {
    */
   resolve_calls(
     file_references: Map<FilePath, readonly SymbolReference[]>,
-    semantic_indexes: ReadonlyMap<FilePath, SemanticIndex>,
     scopes: ScopeRegistry,
     types: TypeRegistry,
     definitions: DefinitionRegistry
   ): CallReference[] {
-    // NO build_type_context_eager() call needed!
-    // TypeRegistry IS the type context - pass it directly to resolvers
 
     const resolved_calls: CallReference[] = [];
 
@@ -197,8 +239,7 @@ export class ResolutionRegistry {
 
         switch (ref.call_type) {
           case "function":
-            // EAGER: O(1) lookup in pre-computed resolution map
-            resolved = this.resolve(ref.scope_id, ref.name as SymbolName);
+            resolved = this.resolve(ref.scope_id, ref.name);
             break;
 
           case "method":
@@ -207,8 +248,8 @@ export class ResolutionRegistry {
               ref,
               scopes,
               definitions,
-              types,  // Pass TypeRegistry directly (was type_context)
-              this    // ResolutionRegistry for eager receiver resolution
+              types,
+              this
             );
             break;
 
@@ -218,7 +259,7 @@ export class ResolutionRegistry {
               ref,
               definitions,
               this,
-              types   // Pass TypeRegistry directly (was type_context)
+              types
             );
             break;
         }
@@ -236,57 +277,44 @@ export class ResolutionRegistry {
     return resolved_calls;
   }
 
-  // Legacy group_resolutions_by_file and get_file_resolutions removed - not needed with  resolution
 
   /**
-   * Remove all resolutions from a file.
-   * Used when a file is deleted from the project.
+   * Remove all resolutions for a file.
+   * Removes both scope-based resolutions and resolved calls.
    *
-   * @param file_id - The file to remove
+   * @param file_id - File to remove resolutions for
    */
   remove_file(file_id: FilePath): void {
-    // Remove all resolutions for this file
-    const ref_ids = this.by_file.get(file_id);
-    if (ref_ids) {
-      for (const ref_id of ref_ids) {
-        this.resolutions.delete(ref_id);
+    // Remove scope-based resolutions
+    const scopes_to_remove: ScopeId[] = [];
+    for (const [scope_id, owner_file] of this.scope_to_file) {
+      if (owner_file === file_id) {
+        scopes_to_remove.push(scope_id);
       }
-      this.by_file.delete(file_id);
     }
+
+    for (const scope_id of scopes_to_remove) {
+      this.resolutions_by_scope.delete(scope_id);
+      this.scope_to_file.delete(scope_id);
+      // Also remove calls indexed by this scope
+      this.calls_by_caller_scope.delete(scope_id);
+    }
+
+    // Remove resolved calls by file
+    this.resolved_calls_by_file.delete(file_id);
   }
 
   /**
-   * Get the total number of resolutions.
+   * Get the total number of resolutions across all scopes.
    *
    * @returns Count of resolutions
    */
   size(): number {
-    return this.resolutions.size;
-  }
-
-  /**
-   * Get registry statistics.
-   *
-   * @returns Statistics about the registry
-   */
-  get_stats(): {
-    total_resolutions: number;
-    files_with_resolutions: number;
-  } {
-    return {
-      total_resolutions: this.resolutions.size,
-      files_with_resolutions: this.by_file.size,
-    };
-  }
-
-  /**
-   * Check if a reference has been resolved.
-   *
-   * @param ref_id - The reference to check
-   * @returns True if the reference has a resolution
-   */
-  has_resolution(ref_id: ReferenceId): boolean {
-    return this.resolutions.has(ref_id);
+    let count = 0;
+    for (const scope_resolutions of this.resolutions_by_scope.values()) {
+      count += scope_resolutions.size;
+    }
+    return count;
   }
 
   /**
@@ -298,17 +326,40 @@ export class ResolutionRegistry {
   get_all_referenced_symbols(): Set<SymbolId> {
     const referenced = new Set<SymbolId>();
 
-    // Iterate all resolutions and collect target symbol IDs
-    for (const symbol_id of this.resolutions.values()) {
-      referenced.add(symbol_id);
+    // Iterate all resolved calls and collect target symbol IDs
+    for (const calls of this.resolved_calls_by_file.values()) {
+      for (const call of calls) {
+        if (call.symbol_id) {
+          referenced.add(call.symbol_id);
+        }
+      }
     }
 
     return referenced;
   }
 
   /**
-   * : Resolve a symbol name in a scope.
-   * O(1) lookup in pre-computed resolution map.
+   * Get all resolved call references for a file.
+   *
+   * @param file_path - File to get calls for
+   * @returns Array of resolved call references
+   */
+  get_file_calls(file_path: FilePath): readonly CallReference[] {
+    return this.resolved_calls_by_file.get(file_path) || [];
+  }
+
+  /**
+   * Get all calls made from a specific caller scope (function/method/constructor).
+   *
+   * @param caller_scope_id - The function/method/constructor body scope
+   * @returns Array of calls made from that scope
+   */
+  get_calls_by_caller_scope(caller_scope_id: ScopeId): readonly CallReference[] {
+    return this.calls_by_caller_scope.get(caller_scope_id) || [];
+  }
+
+  /**
+   * Resolve a symbol name in a scope.
    *
    * @param scope_id - Scope where the symbol is referenced
    * @param name - Symbol name to resolve
@@ -316,16 +367,6 @@ export class ResolutionRegistry {
    */
   resolve(scope_id: ScopeId, name: SymbolName): SymbolId | null {
     return this.resolutions_by_scope.get(scope_id)?.get(name) ?? null;
-  }
-
-  /**
-   * : Get all resolutions for a scope.
-   *
-   * @param scope_id - Scope to query
-   * @returns Map of name → resolved SymbolId
-   */
-  get_scope_resolutions(scope_id: ScopeId): ReadonlyMap<SymbolName, SymbolId> {
-    return this.resolutions_by_scope.get(scope_id) ?? new Map();
   }
 
   /**
@@ -361,9 +402,17 @@ export class ResolutionRegistry {
   ): FilePath {
     switch (language) {
       case "javascript":
-        return resolve_module_path_javascript(import_path, from_file, root_folder);
+        return resolve_module_path_javascript(
+          import_path,
+          from_file,
+          root_folder
+        );
       case "typescript":
-        return resolve_module_path_typescript(import_path, from_file, root_folder);
+        return resolve_module_path_typescript(
+          import_path,
+          from_file,
+          root_folder
+        );
       case "python":
         return resolve_module_path_python(import_path, from_file, root_folder);
       case "rust":
@@ -374,7 +423,7 @@ export class ResolutionRegistry {
   }
 
   /**
-   * : Recursively resolve all symbols in a scope and its children.
+   * Recursively resolve all symbols in a scope and its children.
    * Implements same shadowing algorithm as build_resolvers_recursive,
    * but resolves IMMEDIATELY instead of creating closures.
    *
@@ -417,7 +466,7 @@ export class ResolutionRegistry {
         // Namespace: return import's own symbol_id
         resolved = imp_def.symbol_id;
       } else {
-        // Named/default:  resolution via export chain
+        // Named/default: resolve via export chain
         // Detect language from file path
         const language = this.detect_language(file_path);
 
@@ -430,14 +479,16 @@ export class ResolutionRegistry {
         );
 
         // Get the imported symbol name (original_name for aliased imports, else name)
-        const import_name = (imp_def.original_name || imp_def.name) as SymbolName;
+        const import_name = (imp_def.original_name ||
+          imp_def.name) as SymbolName;
 
         // Create a bound resolver function for ExportRegistry
         const resolve_module_bound = (
           import_path: ModulePath,
           from_file: FilePath,
           lang: Language
-        ) => this.resolve_module_path(import_path, from_file, lang, root_folder);
+        ) =>
+          this.resolve_module_path(import_path, from_file, lang, root_folder);
 
         resolved = exports.resolve_export_chain(
           source_file,
@@ -448,7 +499,7 @@ export class ResolutionRegistry {
       }
 
       if (resolved) {
-        scope_resolutions.set(imp_def.name as SymbolName, resolved);
+        scope_resolutions.set(imp_def.name, resolved);
       }
     }
 
@@ -469,7 +520,7 @@ export class ResolutionRegistry {
       for (const child_id of scope.child_ids) {
         const child_results = this.resolve_scope_recursive(
           child_id,
-          scope_resolutions,  // Pass down as parent
+          scope_resolutions, // Pass down as parent
           file_path,
           exports,
           imports,
@@ -493,9 +544,9 @@ export class ResolutionRegistry {
    * Clear all resolutions.
    */
   clear(): void {
-    this.resolutions.clear();
-    this.by_file.clear();
     this.resolutions_by_scope.clear();
     this.scope_to_file.clear();
+    this.resolved_calls_by_file.clear();
+    this.calls_by_caller_scope.clear();
   }
 }

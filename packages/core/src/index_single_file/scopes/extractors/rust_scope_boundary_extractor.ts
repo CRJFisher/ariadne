@@ -71,7 +71,7 @@ export class RustScopeBoundaryExtractor extends CommonScopeBoundaryExtractor {
   ): ScopeBoundaries {
     const name_node = node.childForFieldName("name");
     if (!name_node) {
-      throw new Error(`Struct declaration has no name field`);
+      throw new Error("Struct declaration has no name field");
     }
 
     const body_node = node.childForFieldName("body");
@@ -99,12 +99,12 @@ export class RustScopeBoundaryExtractor extends CommonScopeBoundaryExtractor {
   ): ScopeBoundaries {
     const name_node = node.childForFieldName("name");
     if (!name_node) {
-      throw new Error(`Enum declaration has no name field`);
+      throw new Error("Enum declaration has no name field");
     }
 
     const body_node = node.childForFieldName("body");
     if (!body_node) {
-      throw new Error(`Enum declaration has no body field`);
+      throw new Error("Enum declaration has no body field");
     }
 
     return {
@@ -122,12 +122,12 @@ export class RustScopeBoundaryExtractor extends CommonScopeBoundaryExtractor {
   ): ScopeBoundaries {
     const name_node = node.childForFieldName("name");
     if (!name_node) {
-      throw new Error(`Trait declaration has no name field`);
+      throw new Error("Trait declaration has no name field");
     }
 
     const body_node = node.childForFieldName("body");
     if (!body_node) {
-      throw new Error(`Trait declaration has no body field`);
+      throw new Error("Trait declaration has no body field");
     }
 
     return {
@@ -148,7 +148,7 @@ export class RustScopeBoundaryExtractor extends CommonScopeBoundaryExtractor {
     const body_node = node.childForFieldName("body");
 
     if (!body_node) {
-      throw new Error(`Impl block has no body field`);
+      throw new Error("Impl block has no body field");
     }
 
     const symbol_location = type_node
@@ -170,7 +170,7 @@ export class RustScopeBoundaryExtractor extends CommonScopeBoundaryExtractor {
   ): ScopeBoundaries {
     const name_node = node.childForFieldName("name");
     if (!name_node) {
-      throw new Error(`Module declaration has no name field`);
+      throw new Error("Module declaration has no name field");
     }
 
     const body_node = node.childForFieldName("body");

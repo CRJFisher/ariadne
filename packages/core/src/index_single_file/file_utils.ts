@@ -1,4 +1,4 @@
-import { FilePath, Language } from "@ariadnejs/types";
+import type { FilePath, Language } from "@ariadnejs/types";
 import { Tree } from "tree-sitter";
 
 export interface ParsedFile {

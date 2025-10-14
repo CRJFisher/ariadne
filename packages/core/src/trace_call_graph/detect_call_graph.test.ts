@@ -19,7 +19,7 @@ import {
 import { detect_call_graph } from "./detect_call_graph";
 import type { SemanticIndex } from "../index_single_file/semantic_index";
 import { DefinitionRegistry } from "../project/definition_registry";
-import { ResolutionCache } from "../project/resolution_cache";
+import { ResolutionRegistry } from "../project/resolution_registry";
 
 // Helper to create minimal SemanticIndex for testing
 function make_test_index(
@@ -96,27 +96,90 @@ function setup_call_graph_test(
   const definition_registry = new DefinitionRegistry();
   definition_registry.update_file(file_path, definitions);
 
-  // Create resolution cache
-  const resolution_cache = new ResolutionCache();
+  // Create resolution registry
+  const resolution_registry = new ResolutionRegistry();
 
-  // Add resolved calls if provided
-  if (resolved_calls) {
-    for (const [location_key, symbol_id] of resolved_calls) {
-      resolution_cache.set(location_key as any, symbol_id, file_path);
-    }
-  }
+  // Always populate registry (even with empty resolutions map)
+  // This ensures unresolved calls are still tracked
+  populate_resolution_registry(
+    resolution_registry,
+    references,
+    resolved_calls || new Map()
+  );
 
   return {
     semantic_indexes,
     definitions: definition_registry,
-    resolutions: resolution_cache,
-    detect_call_graph: () => detect_call_graph(semantic_indexes, definition_registry, resolution_cache)
+    resolutions: resolution_registry,
+    detect_call_graph: () => detect_call_graph(semantic_indexes, definition_registry, resolution_registry)
   };
 }
 
-// Helper to create location key for resolution cache
+// Helper to create location key for resolution lookups
 function create_location_key(location: Location): string {
   return `${location.file_path}:${location.start_line}:${location.start_column}`;
+}
+
+// Helper to populate resolution registry with resolved calls for testing
+function populate_resolution_registry(
+  registry: ResolutionRegistry,
+  references: SymbolReference[],
+  resolved_calls: Map<string, SymbolId>
+): void {
+  const calls_by_caller: Map<ScopeId, CallReference[]> = new Map();
+  const calls_by_file: Map<string, CallReference[]> = new Map();
+
+  for (const ref of references) {
+    if (ref.type === "call" && ref.call_type) {
+      const loc_key = create_location_key(ref.location);
+      const resolved_symbol = resolved_calls.get(loc_key);
+
+      // Create CallReference even if unresolved (symbol_id will be null/undefined)
+      const call: CallReference = {
+        name: ref.name,
+        location: ref.location,
+        scope_id: ref.scope_id,
+        call_type: ref.call_type,
+        symbol_id: resolved_symbol || null,  // null for unresolved calls
+        caller_scope_id: ref.enclosing_function_scope_id,
+        receiver: ref.context?.receiver_location ? {
+          location: ref.context.receiver_location,
+          name: undefined,
+        } : undefined,
+        construct_target: ref.construct_target,
+      } as CallReference;
+
+      // Always group by caller scope (even for unresolved calls)
+      if (ref.enclosing_function_scope_id) {
+        const existing = calls_by_caller.get(ref.enclosing_function_scope_id);
+        if (existing) {
+          existing.push(call);
+        } else {
+          calls_by_caller.set(ref.enclosing_function_scope_id, [call]);
+        }
+      }
+
+      // Only group by file if resolved (for get_all_referenced_symbols)
+      if (resolved_symbol) {
+        const file_path = ref.location.file_path;
+        const existing_file = calls_by_file.get(file_path);
+        if (existing_file) {
+          existing_file.push(call);
+        } else {
+          calls_by_file.set(file_path, [call]);
+        }
+      }
+    }
+  }
+
+  // Store in registry's internal storage (accessing private fields for testing)
+  for (const [caller_scope_id, calls] of calls_by_caller) {
+    (registry as any).calls_by_caller_scope.set(caller_scope_id, calls);
+  }
+
+  for (const [file_path, calls] of calls_by_file) {
+    (registry as any).resolved_calls_by_file.set(file_path as FilePath, calls);
+  }
 }
 
 const create_location = (
@@ -185,8 +248,8 @@ describe("detect_call_graph", () => {
       const definitions = new DefinitionRegistry();
       definitions.update_file(file_path, [funcDef]);
 
-      // Create empty resolution cache
-      const resolutions = new ResolutionCache();
+      // Create empty resolution registry
+      const resolutions = new ResolutionRegistry();
 
       const graph = detect_call_graph(semantic_indexes, definitions, resolutions);
 
@@ -255,10 +318,13 @@ describe("detect_call_graph", () => {
       const definitions = new DefinitionRegistry();
       definitions.update_file(file_path, [func1Def, func2Def]);
 
-      // Create resolution cache with the call resolution
-      const resolutions = new ResolutionCache();
+      // Create resolution registry with the call resolution
+      const resolutions = new ResolutionRegistry();
       // Simulate the resolution of call1 to func2
-      resolutions.set(`${call1Location.file_path}:${call1Location.start_line}:${call1Location.start_column}` as any, func2Id, file_path);
+      const resolved_calls = new Map([
+        [create_location_key(call1Location), func2Id],
+      ]);
+      populate_resolution_registry(resolutions, [call1], resolved_calls);
 
       const graph = detect_call_graph(semantic_indexes, definitions, resolutions);
 
@@ -328,9 +394,12 @@ describe("detect_call_graph", () => {
       const definitions = new DefinitionRegistry();
       definitions.update_file(file_path, [entryFunc1Def, entryFunc2Def, calledFuncDef]);
 
-      const resolutions = new ResolutionCache();
+      const resolutions = new ResolutionRegistry();
       // Simulate the resolution of call to calledFunc
-      resolutions.set(`${callLocation.file_path}:${callLocation.start_line}:${callLocation.start_column}` as any, calledFuncId, file_path);
+      const resolved_calls = new Map([
+        [create_location_key(callLocation), calledFuncId],
+      ]);
+      populate_resolution_registry(resolutions, [call], resolved_calls);
 
       const graph = detect_call_graph(semantic_indexes, definitions, resolutions);
 
@@ -395,9 +464,12 @@ describe("detect_call_graph", () => {
       const definitions = new DefinitionRegistry();
       definitions.update_file(file_path, [recursiveFuncDef, entryFuncDef]);
 
-      const resolutions = new ResolutionCache();
+      const resolutions = new ResolutionRegistry();
       // Simulate the resolution of self call
-      resolutions.set(`${selfCallLocation.file_path}:${selfCallLocation.start_line}:${selfCallLocation.start_column}` as any, recursiveFuncId, file_path);
+      const resolved_calls = new Map([
+        [create_location_key(selfCallLocation), recursiveFuncId],
+      ]);
+      populate_resolution_registry(resolutions, [selfCall], resolved_calls);
 
       const graph = detect_call_graph(semantic_indexes, definitions, resolutions);
 
@@ -411,7 +483,7 @@ describe("detect_call_graph", () => {
     it("should handle empty codebase correctly", () => {
       const semantic_indexes = new Map();
       const definitions = new DefinitionRegistry();
-      const resolutions = new ResolutionCache();
+      const resolutions = new ResolutionRegistry();
 
       const graph = detect_call_graph(semantic_indexes, definitions, resolutions);
 
@@ -532,13 +604,16 @@ describe("detect_call_graph", () => {
       definitions.update_file("app.ts" as FilePath, app_definitions);
       definitions.update_file("utils.ts" as FilePath, utils_definitions);
 
-      // Create resolution cache with all call resolutions
-      const resolutions = new ResolutionCache();
-      resolutions.set(create_location_key(call1Location) as any, processId, "app.ts" as FilePath);
-      resolutions.set(create_location_key(call2Location) as any, utilityId, "app.ts" as FilePath);
-      resolutions.set(create_location_key(call3Location) as any, utilityId, "app.ts" as FilePath);
-      resolutions.set(create_location_key(call4Location) as any, helperId, "app.ts" as FilePath);
-      resolutions.set(create_location_key(call5Location) as any, helperId, "utils.ts" as FilePath);
+      // Create resolution registry with all call resolutions
+      const resolutions = new ResolutionRegistry();
+      const resolved_calls = new Map([
+        [create_location_key(call1Location), processId],
+        [create_location_key(call2Location), utilityId],
+        [create_location_key(call3Location), utilityId],
+        [create_location_key(call4Location), helperId],
+        [create_location_key(call5Location), helperId],
+      ]);
+      populate_resolution_registry(resolutions, [...app_references, ...utils_references], resolved_calls);
 
       const graph = detect_call_graph(semantic_indexes, definitions, resolutions);
 
@@ -587,7 +662,7 @@ describe("detect_call_graph", () => {
     it("should handle empty resolved symbols", () => {
       const semantic_indexes = new Map();
       const definitions = new DefinitionRegistry();
-      const resolutions = new ResolutionCache();
+      const resolutions = new ResolutionRegistry();
 
       const graph = detect_call_graph(semantic_indexes, definitions, resolutions);
 
@@ -757,10 +832,13 @@ describe("detect_call_graph", () => {
       definitions.update_file("test.ts" as FilePath, test_definitions);
       definitions.update_file("utils.ts" as FilePath, utils_definitions);
 
-      // Create resolution cache
-      const resolutions = new ResolutionCache();
-      resolutions.set(create_location_key(call1Location) as any, utilId, "app.ts" as FilePath);
-      resolutions.set(create_location_key(call2Location) as any, utilId, "test.ts" as FilePath);
+      // Create resolution registry
+      const resolutions = new ResolutionRegistry();
+      const resolved_calls = new Map([
+        [create_location_key(call1Location), utilId],
+        [create_location_key(call2Location), utilId],
+      ]);
+      populate_resolution_registry(resolutions, [call1, call2], resolved_calls);
 
       const graph = detect_call_graph(semantic_indexes, definitions, resolutions);
 
@@ -895,9 +973,12 @@ describe("detect_call_graph", () => {
       definitions.update_file("main.ts" as FilePath, main_definitions);
       definitions.update_file("recursive.ts" as FilePath, recursive_definitions);
 
-      // Create resolution cache
-      const resolutions = new ResolutionCache();
-      resolutions.set(create_location_key(callLocation) as any, recursiveId, "recursive.ts" as FilePath);
+      // Create resolution registry
+      const resolutions = new ResolutionRegistry();
+      const resolved_calls = new Map([
+        [create_location_key(callLocation), recursiveId],
+      ]);
+      populate_resolution_registry(resolutions, [recursiveCall], resolved_calls);
 
       const graph = detect_call_graph(semantic_indexes, definitions, resolutions);
 
@@ -1105,11 +1186,14 @@ describe("detect_call_graph", () => {
       definitions.update_file("app.ts" as FilePath, app_definitions);
       definitions.update_file("utils.ts" as FilePath, utils_definitions);
 
-      // Create resolution cache
-      const resolutions = new ResolutionCache();
-      resolutions.set(create_location_key(call1Location) as any, exportedId, "app.ts" as FilePath);
-      resolutions.set(create_location_key(call2Location) as any, utilId, "app.ts" as FilePath);
-      resolutions.set(create_location_key(call3Location) as any, utilId, "lib.ts" as FilePath);
+      // Create resolution registry
+      const resolutions = new ResolutionRegistry();
+      const resolved_calls = new Map([
+        [create_location_key(call1Location), exportedId],
+        [create_location_key(call2Location), utilId],
+        [create_location_key(call3Location), utilId],
+      ]);
+      populate_resolution_registry(resolutions, [call1, call2, call3], resolved_calls);
 
       const graph = detect_call_graph(semantic_indexes, definitions, resolutions);
 
@@ -1218,11 +1302,14 @@ describe("detect_call_graph", () => {
       definitions.update_file("main.ts" as FilePath, main_definitions);
       definitions.update_file("target.ts" as FilePath, target_definitions);
 
-      // Create resolution cache
-      const resolutions = new ResolutionCache();
-      resolutions.set(create_location_key(call1Location) as any, targetId, "main.ts" as FilePath);
-      resolutions.set(create_location_key(call2Location) as any, targetId, "main.ts" as FilePath);
-      resolutions.set(create_location_key(call3Location) as any, targetId, "main.ts" as FilePath);
+      // Create resolution registry
+      const resolutions = new ResolutionRegistry();
+      const resolved_calls = new Map([
+        [create_location_key(call1Location), targetId],
+        [create_location_key(call2Location), targetId],
+        [create_location_key(call3Location), targetId],
+      ]);
+      populate_resolution_registry(resolutions, [call1, call2, call3], resolved_calls);
 
       const graph = detect_call_graph(semantic_indexes, definitions, resolutions);
 
@@ -1351,10 +1438,13 @@ describe("detect_call_graph", () => {
       definitions.update_file("namespace.ts" as FilePath, namespace_definitions);
       definitions.update_file("app.ts" as FilePath, app_definitions);
 
-      // Create resolution cache
-      const resolutions = new ResolutionCache();
-      resolutions.set(create_location_key(call1Location) as any, classMethodId, "app.ts" as FilePath);
-      resolutions.set(create_location_key(call2Location) as any, namespaceFunc, "app.ts" as FilePath);
+      // Create resolution registry
+      const resolutions = new ResolutionRegistry();
+      const resolved_calls = new Map([
+        [create_location_key(call1Location), classMethodId],
+        [create_location_key(call2Location), namespaceFunc],
+      ]);
+      populate_resolution_registry(resolutions, [call1, call2], resolved_calls);
 
       const graph = detect_call_graph(semantic_indexes, definitions, resolutions);
 
@@ -1476,7 +1566,7 @@ describe("detect_call_graph", () => {
       ]);
       const definitions = new DefinitionRegistry();
       // No function definitions
-      const resolutions = new ResolutionCache();
+      const resolutions = new ResolutionRegistry();
 
       const graph = detect_call_graph(semantic_indexes, definitions, resolutions);
 
@@ -1532,7 +1622,7 @@ describe("detect_call_graph", () => {
     it("should handle empty semantic indexes map", () => {
       const semantic_indexes = new Map();
       const definitions = new DefinitionRegistry();
-      const resolutions = new ResolutionCache();
+      const resolutions = new ResolutionRegistry();
 
       const graph = detect_call_graph(semantic_indexes, definitions, resolutions);
 
@@ -1632,7 +1722,7 @@ describe("detect_call_graph", () => {
       const definitions = new DefinitionRegistry();
       definitions.update_file(file_path, [function_def, method_def, variable_def as any]);
 
-      const resolutions = new ResolutionCache();
+      const resolutions = new ResolutionRegistry();
 
       const graph = detect_call_graph(semantic_indexes, definitions, resolutions);
 
@@ -1793,7 +1883,7 @@ describe("detect_call_graph", () => {
       // Test empty semantic indexes
       const empty_indexes = new Map();
       const empty_definitions = new DefinitionRegistry();
-      const empty_resolutions = new ResolutionCache();
+      const empty_resolutions = new ResolutionRegistry();
 
       const graph1 = detect_call_graph(empty_indexes, empty_definitions, empty_resolutions);
       expect(graph1.nodes.size).toBe(0);

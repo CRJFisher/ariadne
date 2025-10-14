@@ -29,9 +29,16 @@ export class DefinitionRegistry {
   private member_index: Map<SymbolId, Map<SymbolName, SymbolId>> = new Map();
 
   /**
+   * Scope index: ScopeId → (symbol_name → symbol_id)
+   * Enables O(1) lookup of definitions declared in a specific scope.
+   * Used by ResolutionRegistry for eager symbol resolution.
+   */
+  private by_scope: Map<ScopeId, Map<SymbolName, SymbolId>> = new Map();
+
+  /**
    * Update definitions for a file.
    * Removes old definitions from the file first, then adds new ones.
-   * Also computes and stores the member index for types in this file.
+   * Also computes and stores the member index and scope index for this file.
    *
    * @param file_id - The file being updated
    * @param definitions - New definitions from the file
@@ -40,7 +47,7 @@ export class DefinitionRegistry {
     // Step 1: Remove old definitions from this file
     this.remove_file(file_id);
 
-    // Step 2: Add new definitions and build member index
+    // Step 2: Add new definitions and build indexes
     const symbol_ids = new Set<SymbolId>();
 
     for (const def of definitions) {
@@ -54,7 +61,15 @@ export class DefinitionRegistry {
       // Track that this file defines this symbol
       symbol_ids.add(def.symbol_id);
 
-      // Step 3: Build member index for classes and interfaces
+      // Build scope index: ScopeId → (name → symbol_id)
+      // This enables O(1) lookup of definitions in a scope
+      const scope_id = def.defining_scope_id;
+      if (!this.by_scope.has(scope_id)) {
+        this.by_scope.set(scope_id, new Map());
+      }
+      this.by_scope.get(scope_id)!.set(def.name as SymbolName, def.symbol_id);
+
+      // Build member index for classes and interfaces
       // Extract members directly from ClassDefinition/InterfaceDefinition
       if (def.kind === "class" || def.kind === "interface") {
         const flat_members = new Map<SymbolName, SymbolId>();
@@ -179,6 +194,20 @@ export class DefinitionRegistry {
   }
 
   /**
+   * Get all definitions declared directly in a scope.
+   * O(1) lookup via scope index.
+   *
+   * Used by ResolutionRegistry to resolve local definitions during
+   * eager symbol resolution.
+   *
+   * @param scope_id - Scope to query
+   * @returns Map of symbol name → symbol_id for all local definitions
+   */
+  get_scope_definitions(scope_id: ScopeId): ReadonlyMap<SymbolName, SymbolId> {
+    return this.by_scope.get(scope_id) ?? new Map();
+  }
+
+  /**
    * Remove all definitions from a file.
    *
    * @param file_id - The file to remove
@@ -196,6 +225,17 @@ export class DefinitionRegistry {
         // Remove from location index
         const loc_key = location_key(def.location);
         this.location_to_symbol.delete(loc_key);
+
+        // Remove from scope index
+        const scope_id = def.defining_scope_id;
+        const scope_map = this.by_scope.get(scope_id);
+        if (scope_map) {
+          scope_map.delete(def.name as SymbolName);
+          // Clean up empty scope maps
+          if (scope_map.size === 0) {
+            this.by_scope.delete(scope_id);
+          }
+        }
       }
 
       // Remove from symbol index
@@ -226,5 +266,6 @@ export class DefinitionRegistry {
     this.by_file.clear();
     this.location_to_symbol.clear();
     this.member_index.clear();
+    this.by_scope.clear();
   }
 }

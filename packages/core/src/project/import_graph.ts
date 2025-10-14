@@ -1,4 +1,4 @@
-import type { FilePath, Import } from "@ariadnejs/types";
+import type { FilePath, ImportDefinition, ScopeId } from "@ariadnejs/types";
 
 /**
  * Bidirectional import dependency graph.
@@ -7,10 +7,15 @@ import type { FilePath, Import } from "@ariadnejs/types";
  * 1. Dependencies: File A imports from File B
  * 2. Dependents: File B is imported by File A
  *
+ * Also stores full ImportDefinition metadata to support resolution:
+ * - Import specifications per file and per scope
+ * - Used by ResolutionRegistry to resolve imported symbols
+ *
  * This enables:
  * - Knowing what files to invalidate when a file changes (dependents)
  * - Knowing what files are needed to resolve a file (dependencies)
  * - Transitive dependency queries (for bundling, etc.)
+ * - Scope-based import queries for symbol resolution
  */
 export class ImportGraph {
   /** File → Files that this file imports from */
@@ -19,14 +24,21 @@ export class ImportGraph {
   /** File → Files that import from this file */
   private dependents: Map<FilePath, Set<FilePath>> = new Map();
 
+  /** File → All ImportDefinitions in that file */
+  private imports_by_file: Map<FilePath, ImportDefinition[]> = new Map();
+
+  /** Scope → ImportDefinitions defined in that scope */
+  private imports_by_scope: Map<ScopeId, ImportDefinition[]> = new Map();
+
   /**
    * Update import relationships for a file.
    * Removes old relationships, establishes new ones.
+   * Now accepts ImportDefinition[] to store full metadata.
    *
    * @param file_path - The file being updated
-   * @param imports - Import statements from the file
+   * @param imports - ImportDefinitions from the file
    */
-  update_file(file_path: FilePath, imports: Import[]): void {
+  update_file(file_path: FilePath, imports: ImportDefinition[]): void {
     // Step 1: Get old dependencies to clean up reverse edges
     const old_deps = this.dependencies.get(file_path);
     if (old_deps) {
@@ -44,27 +56,64 @@ export class ImportGraph {
       }
     }
 
-    // Step 2: Extract target files from imports
-    const target_files = new Set<FilePath>();
-    for (const imp of imports) {
-      // All import types have a `source` field pointing to the imported file
-      target_files.add(imp.source);
+    // Step 2: Clean up old scope index
+    const old_import_defs = this.imports_by_file.get(file_path);
+    if (old_import_defs) {
+      for (const imp_def of old_import_defs) {
+        const scope_id = imp_def.defining_scope_id;
+        const scope_imports = this.imports_by_scope.get(scope_id);
+        if (scope_imports) {
+          const filtered = scope_imports.filter(d => d.symbol_id !== imp_def.symbol_id);
+          if (filtered.length === 0) {
+            this.imports_by_scope.delete(scope_id);
+          } else {
+            this.imports_by_scope.set(scope_id, filtered);
+          }
+        }
+      }
     }
 
-    // Step 3: Update dependencies (file_path → targets)
+    // Step 3: Extract target files from imports
+    const target_files = new Set<FilePath>();
+    
+    // Store ImportDefinitions for metadata queries
+    this.imports_by_file.set(file_path, imports);
+
+    // Build scope index
+    for (const imp_def of imports) {
+      const scope_id = imp_def.defining_scope_id;
+      if (!this.imports_by_scope.has(scope_id)) {
+        this.imports_by_scope.set(scope_id, []);
+      }
+      const scope_imports = this.imports_by_scope.get(scope_id);
+      if (scope_imports) {
+        scope_imports.push(imp_def);
+      }
+
+      // For dependency graph: import_path is a ModulePath (e.g., "./utils")
+      // For now, treat it as FilePath - proper resolution will be done by ResolutionRegistry
+      // This is sufficient for dependency tracking
+      target_files.add(imp_def.import_path as unknown as FilePath);
+    }
+
+    // Step 4: Update dependencies (file_path → targets)
     if (target_files.size === 0) {
       // File has no imports, remove from dependencies map
       this.dependencies.delete(file_path);
+      this.imports_by_file.delete(file_path);
     } else {
       this.dependencies.set(file_path, target_files);
     }
 
-    // Step 4: Add reverse relationships (targets → file_path as dependent)
+    // Step 5: Add reverse relationships (targets → file_path as dependent)
     for (const target of target_files) {
       if (!this.dependents.has(target)) {
         this.dependents.set(target, new Set());
       }
-      this.dependents.get(target)!.add(file_path);
+      const target_deps = this.dependents.get(target);
+      if (target_deps) {
+        target_deps.add(file_path);
+      }
     }
   }
 
@@ -103,7 +152,10 @@ export class ImportGraph {
     const stack = [file_path];
 
     while (stack.length > 0) {
-      const current = stack.pop()!;
+      const current = stack.pop();
+      if (!current) {
+        continue;
+      }
 
       if (visited.has(current)) {
         continue;  // Already visited (cycle or duplicate)
@@ -140,7 +192,10 @@ export class ImportGraph {
     const stack = [file_path];
 
     while (stack.length > 0) {
-      const current = stack.pop()!;
+      const current = stack.pop();
+      if (!current) {
+        continue;
+      }
 
       if (visited.has(current)) {
         continue;
@@ -244,6 +299,7 @@ export class ImportGraph {
   /**
    * Remove all import relationships for a file.
    * Removes both outgoing (dependencies) and incoming (dependents) edges.
+   * Also cleans up ImportDefinition storage and scope index.
    *
    * @param file_path - The file to remove
    */
@@ -282,6 +338,24 @@ export class ImportGraph {
 
       this.dependents.delete(file_path);
     }
+
+    // Clean up ImportDefinition storage and scope index
+    const old_import_defs = this.imports_by_file.get(file_path);
+    if (old_import_defs) {
+      for (const imp_def of old_import_defs) {
+        const scope_id = imp_def.defining_scope_id;
+        const scope_imports = this.imports_by_scope.get(scope_id);
+        if (scope_imports) {
+          const filtered = scope_imports.filter(d => d.symbol_id !== imp_def.symbol_id);
+          if (filtered.length === 0) {
+            this.imports_by_scope.delete(scope_id);
+          } else {
+            this.imports_by_scope.set(scope_id, filtered);
+          }
+        }
+      }
+      this.imports_by_file.delete(file_path);
+    }
   }
 
   /**
@@ -312,10 +386,33 @@ export class ImportGraph {
   }
 
   /**
+   * Get all ImportDefinitions for a scope.
+   * Used by ResolutionRegistry to resolve imported symbols in a scope.
+   *
+   * @param scope_id - The scope to query
+   * @returns Array of ImportDefinitions in that scope (empty if none)
+   */
+  get_scope_imports(scope_id: ScopeId): readonly ImportDefinition[] {
+    return this.imports_by_scope.get(scope_id) ?? [];
+  }
+
+  /**
+   * Get all ImportDefinitions for a file.
+   *
+   * @param file_path - The file to query
+   * @returns Array of ImportDefinitions in that file (empty if none)
+   */
+  get_file_imports(file_path: FilePath): readonly ImportDefinition[] {
+    return this.imports_by_file.get(file_path) ?? [];
+  }
+
+  /**
    * Clear all import relationships from the graph.
    */
   clear(): void {
     this.dependencies.clear();
     this.dependents.clear();
+    this.imports_by_file.clear();
+    this.imports_by_scope.clear();
   }
 }

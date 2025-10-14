@@ -12,10 +12,11 @@ import type {
   SymbolName,
   ScopeId,
   ImportDefinition,
+  ModulePath,
 } from "@ariadnejs/types";
-import { is_reexport } from "@ariadnejs/types";
 import type { SemanticIndex } from "../../index_single_file/semantic_index";
-import type { ImportSpec, ExportInfo, NamespaceSources, FileSystemFolder } from "../types";
+import type { ImportSpec, NamespaceSources, FileSystemFolder } from "../types";
+import type { ExportRegistry } from "../../project/export_registry";
 import { resolve_module_path_javascript } from "./import_resolver.javascript";
 import { resolve_module_path_typescript } from "./import_resolver.typescript";
 import { resolve_module_path_python } from "./import_resolver.python";
@@ -81,7 +82,7 @@ export function extract_import_specs(
  *
  * @param source_file - File containing the export
  * @param export_name - Name of the exported symbol (ignored for default imports)
- * @param indices - Map of all semantic indices
+ * @param export_registry - Registry containing all export metadata
  * @param root_folder - Root of the file system tree
  * @param import_kind - Type of import (named, default, or namespace)
  * @param visited - Set of visited exports for cycle detection
@@ -90,36 +91,19 @@ export function extract_import_specs(
 export function resolve_export_chain(
   source_file: FilePath,
   export_name: SymbolName,
-  indices: ReadonlyMap<FilePath, SemanticIndex>,
+  export_registry: ExportRegistry,
   root_folder: FileSystemFolder,
   import_kind: "named" | "default" | "namespace" = "named",
   visited: Set<string> = new Set()
 ): SymbolId | null {
-  const source_index = indices.get(source_file);
-  if (!source_index) {
-    throw new Error(`Source index not found for file: ${source_file}`);
-  }
+  // Check if export exists BEFORE attempting to resolve the chain
+  // This allows us to distinguish between missing exports (throw) and cycles (return null)
+  const export_exists = import_kind === "default"
+    ? export_registry.get_default_export(source_file) !== undefined
+    : export_registry.get_export(source_file, export_name) !== undefined;
 
-  // Detect cycles
-  // For default imports, export_name is the local import name (meaningless for cycle detection)
-  // For named imports, export_name is the actual symbol name being exported
-  const key =
-    import_kind === "default"
-      ? `${source_file}:default`
-      : `${source_file}:${export_name}:${import_kind}`;
-
-  if (visited.has(key)) {
-    return null; // Circular re-export
-  }
-  visited.add(key);
-
-  // Look for export in source file
-  const export_info =
-    import_kind === "default"
-      ? find_default_export(source_index)
-      : find_export(export_name, source_index);
-
-  if (!export_info) {
+  if (!export_exists) {
+    // Export doesn't exist at all - throw immediately
     throw new Error(
       import_kind === "default"
         ? `Default export not found in file: ${source_file}`
@@ -127,109 +111,22 @@ export function resolve_export_chain(
     );
   }
 
-  // If it's a re-exported import, follow the chain
-  if (export_info.is_reexport && export_info.import_def) {
-    const import_def = export_info.import_def;
-    const resolved_file = resolve_module_path(
-      import_def.import_path,
-      source_file,
-      source_index.language,
-      root_folder
-    );
-
-    // Recursively resolve with the correct import kind
-    // For re-exports, we must use the import_kind from the re-export statement itself
-    // Example: export { default } from './foo' → import_kind = "default"
-    //          export { bar } from './foo' → import_kind = "named"
-    const original_name = import_def.original_name || import_def.name;
-    const next_import_kind = import_def.import_kind;
-
-    if (!next_import_kind) {
-      throw new Error(
-        `import_kind missing on re-export in ${source_file}: ${import_def.symbol_id}`
-      );
-    }
-
-    return resolve_export_chain(
-      resolved_file,
-      original_name,
-      indices,
-      root_folder,
-      next_import_kind,
-      visited
-    );
-  }
-
-  // Direct export
-  return export_info.symbol_id;
-}
-
-/**
- * Find an exported symbol in a file's index
- *
- * Uses the exported_symbols map for O(1) lookup instead of iterating
- * through all definition collections.
- *
- * @param name - Symbol name as it appears in the import statement
- * @param index - Semantic index to search in
- * @returns Export information or null if not found
- */
-function find_export(
-  name: SymbolName,
-  index: SemanticIndex
-): ExportInfo | null {
-  const def = index.exported_symbols.get(name);
-
-  if (!def) {
-    return null;
-  }
-
-  // If this is a re-exported import, include the ImportDefinition for chain following
-  // Check if def has the properties of an ImportDefinition (re-exports are stored as imports)
-  const import_def = is_reexport(def) && 'import_path' in def ? (def as any) : undefined;
-
-  return {
-    symbol_id: def.symbol_id,
-    is_reexport: is_reexport(def),
-    import_def,
+  // Create a resolve_module function that captures root_folder
+  const resolve_module = (import_path: ModulePath, from_file: FilePath, language: Language): FilePath => {
+    return resolve_module_path(import_path, from_file, language, root_folder);
   };
-}
 
-/**
- * Find the default export in a file's index
- *
- * Default exports are marked with export.is_default = true.
- * There should only be one default export per file.
- *
- * @param index - Semantic index to search in
- * @returns Export information or null if not found
- * @throws Error if multiple default exports are found (indicates indexing bug)
- */
-function find_default_export(index: SemanticIndex): ExportInfo | null {
-  let found: ExportInfo | null = null;
+  // Delegate to ExportRegistry's resolve_export_chain method
+  // If this returns null, it must be a cycle (since we already checked export exists)
+  const result = export_registry.resolve_export_chain(
+    source_file,
+    export_name,
+    import_kind,
+    resolve_module,
+    visited
+  );
 
-  // Search all exported symbols for default export
-  for (const def of index.exported_symbols.values()) {
-    if (def.export?.is_default) {
-      if (found) {
-        throw new Error(
-          `Multiple default exports found in ${index.file_path}: ${found.symbol_id} and ${def.symbol_id}`
-        );
-      }
-
-      // If this is a re-exported import, include the ImportDefinition for chain following
-      // Check if def has the properties of an ImportDefinition (re-exports are stored as imports)
-      const import_def = def.export.is_reexport && 'import_path' in def ? (def as any) : undefined;
-
-      found = {
-        symbol_id: def.symbol_id,
-        is_reexport: def.export.is_reexport || false,
-        import_def,
-      };
-    }
-  }
-
-  return found;
+  return result; // Returns null for cycles, SymbolId for successful resolution
 }
 
 /**

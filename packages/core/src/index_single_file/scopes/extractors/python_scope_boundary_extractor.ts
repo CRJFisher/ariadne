@@ -41,7 +41,7 @@ export class PythonScopeBoundaryExtractor implements ScopeBoundaryExtractor {
         class_node = class_node.parent;
       }
       if (!class_node) {
-        throw new Error(`Block node is not inside a class_definition`);
+        throw new Error("Block node is not inside a class_definition");
       }
       return this.extract_class_boundaries_from_definition(class_node, file_path);
     } else if (node.type === "class_definition") {

@@ -23,26 +23,6 @@ import type { DefinitionRegistry } from "../../project/definition_registry";
 import type { ResolutionRegistry } from "../../project/resolution_registry";
 
 /**
- * Helper: Find class definition from DefinitionRegistry.
- *
- * @param class_symbol - Class symbol ID
- * @param definitions - Definition registry
- * @returns ClassDefinition or null if not found or not a class
- */
-function find_class_definition(
-  class_symbol: SymbolId,
-  definitions: DefinitionRegistry
-): ClassDefinition | null {
-  const def = definitions.get(class_symbol);
-
-  if (!def || def.kind !== "class") {
-    return null;
-  }
-
-  return def as ClassDefinition;
-}
-
-/**
  * Resolve a single constructor call reference.
  *
  * EAGER approach: Uses pre-computed resolutions from ResolutionRegistry.
@@ -95,4 +75,25 @@ export function resolve_single_constructor_call(
   )?.symbol_id;
 
   return constructor_symbol || class_symbol;
+}
+
+
+/**
+ * Helper: Find class definition from DefinitionRegistry.
+ *
+ * @param class_symbol - Class symbol ID
+ * @param definitions - Definition registry
+ * @returns ClassDefinition or null if not found or not a class
+ */
+function find_class_definition(
+  class_symbol: SymbolId,
+  definitions: DefinitionRegistry
+): ClassDefinition | null {
+  const def = definitions.get(class_symbol);
+
+  if (!def || def.kind !== "class") {
+    return null;
+  }
+
+  return def as ClassDefinition;
 }

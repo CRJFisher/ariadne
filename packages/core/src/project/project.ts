@@ -1,4 +1,5 @@
-import type { FilePath, SymbolId, Language, SymbolName, ImportDefinition } from "@ariadnejs/types";
+import type { FilePath, SymbolId, Language } from "@ariadnejs/types";
+import type { ParsedFile } from "../index_single_file/file_utils";
 import { build_semantic_index } from "../index_single_file/semantic_index";
 import type { SemanticIndex } from "../index_single_file/semantic_index";
 import type { AnyDefinition } from "@ariadnejs/types";
@@ -15,53 +16,9 @@ import TypeScriptParser from "tree-sitter-typescript";
 import JavaScriptParser from "tree-sitter-javascript";
 import PythonParser from "tree-sitter-python";
 import RustParser from "tree-sitter-rust";
-import { FileSystemFolder } from "../resolve_references/types";
+import type { FileSystemFolder } from "../resolve_references/types";
 import { readdir, realpath } from "fs/promises";
 import { join } from "path";
-
-/**
- * Enhanced export metadata for ExportRegistry.
- * Must match the interface in export_registry.ts
- */
-interface EnhancedExportMetadata {
-  symbol_id: SymbolId;
-  export_name: SymbolName;
-  is_default: boolean;
-  is_reexport: boolean;
-  import_def?: ImportDefinition;
-}
-
-/**
- * Extract enhanced export metadata from semantic index.
- * Converts exported_symbols map to array of EnhancedExportMetadata.
- *
- * @param semantic_index - Semantic index containing exported symbols
- * @returns Array of export metadata for ExportRegistry
- */
-function extract_export_metadata(
-  semantic_index: SemanticIndex
-): EnhancedExportMetadata[] {
-  const metadata: EnhancedExportMetadata[] = [];
-
-  for (const [export_name, def] of semantic_index.exported_symbols) {
-    // Check if this is a re-export (ImportDefinition with export metadata)
-    const is_reexport = def.export?.is_reexport === true;
-    const is_default = def.export?.is_default === true;
-
-    // For re-exports, the definition itself is an ImportDefinition
-    const import_def = is_reexport && def.kind === "import" ? (def as ImportDefinition) : undefined;
-
-    metadata.push({
-      symbol_id: def.symbol_id,
-      export_name: (def.export?.export_name || export_name) as SymbolName,
-      is_default,
-      is_reexport,
-      import_def,
-    });
-  }
-
-  return metadata;
-}
 
 /**
  * Detect language from file path extension
@@ -116,7 +73,7 @@ function create_parsed_file(
   content: string,
   tree: Parser.Tree,
   language: Language
-) {
+): ParsedFile {
   const lines = content.split("\n");
   return {
     file_path,
@@ -216,12 +173,13 @@ export class Project {
     this.definitions.update_file(file_id, all_definitions);
     this.scopes.update_file(file_id, semantic_index.scopes);
 
-    // Extract enhanced export metadata for ExportRegistry
-    const export_metadata = extract_export_metadata(semantic_index);
-    this.exports.update_file(file_id, export_metadata);
+    // ExportRegistry now processes exports directly from SemanticIndex
+    this.exports.update_file(file_id, semantic_index);
 
     // Pass ImportDefinitions directly to ImportGraph
-    const import_definitions = Array.from(semantic_index.imported_symbols.values());
+    const import_definitions = Array.from(
+      semantic_index.imported_symbols.values()
+    );
     this.imports.update_file(file_id, import_definitions);
 
     // Phase 3: Re-resolve affected files (eager!)
@@ -230,10 +188,10 @@ export class Project {
       affected_files,
       this.semantic_indexes,
       this.definitions,
-      this.types,
       this.scopes,
       this.exports,
       this.imports,
+      this.types,
       this.root_folder
     );
 
@@ -263,7 +221,7 @@ export class Project {
     if (!this.root_folder) {
       throw new Error("Project not initialized");
     }
-    
+
     const dependents = this.imports.get_dependents(file_id);
 
     // Remove from file-level stores
@@ -286,10 +244,10 @@ export class Project {
         dependents,
         this.semantic_indexes,
         this.definitions,
-        this.types,
         this.scopes,
         this.exports,
         this.imports,
+        this.types,
         this.root_folder
       );
 
@@ -313,11 +271,10 @@ export class Project {
    * Used for testing and benchmarking.
    */
   get_stats() {
-    const resolution_stats = this.resolutions.get_stats();
     return {
       file_count: this.semantic_indexes.size,
       definition_count: this.definitions.size(),
-      resolution_count: resolution_stats.total_resolutions,
+      resolution_count: this.resolutions.size(),
     };
   }
 

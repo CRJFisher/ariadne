@@ -8,7 +8,7 @@
 import * as path from "path";
 import type { FilePath } from "@ariadnejs/types";
 import type { FileSystemFolder } from "../types";
-import { has_file_in_tree, is_directory_in_tree } from "./import_resolver";
+import { has_file_in_tree } from "./import_resolver";
 
 /**
  * Resolve Python module path to absolute file path
@@ -199,15 +199,15 @@ function find_python_project_root(
 
   // No packages found - look for project root markers
   const project_markers = [
-    'setup.py',
-    'pyproject.toml',
-    '.git',
-    'requirements.txt',
-    'Pipfile',
-    'tox.ini',
-    'poetry.lock',
-    'Pipfile.lock',
-    '.python-version'
+    "setup.py",
+    "pyproject.toml",
+    ".git",
+    "requirements.txt",
+    "Pipfile",
+    "tox.ini",
+    "poetry.lock",
+    "Pipfile.lock",
+    ".python-version"
   ];
 
   let search_dir = start_dir;
@@ -237,7 +237,7 @@ function find_python_project_root(
   // If import_path provided, check if first component matches directory name
   // This prevents duplication like: /python/nested/ + nested.helper = /python/nested/nested/helper.py
   if (import_path) {
-    const first_component = import_path.split('.')[0];
+    const first_component = import_path.split(".")[0];
 
     if (first_component === dir_name) {
       // Path duplication detected - go up one level

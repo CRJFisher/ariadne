@@ -210,51 +210,6 @@ function build_test_scope_to_definitions(definitions: {
   return index;
 }
 
-/**
- * Build exported symbols map from definitions with is_exported: true
- * Mimics the behavior of build_exported_symbols_map in semantic_index.ts
- */
-function build_test_exported_symbols_map(definitions: {
-  functions: Map<SymbolId, FunctionDefinition>;
-  classes: Map<SymbolId, ClassDefinition>;
-  variables: Map<SymbolId, VariableDefinition>;
-  interfaces: Map<SymbolId, InterfaceDefinition>;
-  enums: Map<SymbolId, EnumDefinition>;
-  namespaces: Map<SymbolId, NamespaceDefinition>;
-  types: Map<SymbolId, TypeAliasDefinition>;
-  imports?: Map<SymbolId, ImportDefinition>;
-}): Map<SymbolName, ExportableDefinition> {
-  const map = new Map<SymbolName, ExportableDefinition>();
-
-  const add_to_map = (def: ExportableDefinition) => {
-    // Only add exported symbols
-    if (!("is_exported" in def) || !def.is_exported) {
-      return;
-    }
-
-    // Get the effective export name (alias or original name)
-    const export_name =
-      ("export" in def && def.export?.export_name) || def.name;
-
-    map.set(export_name, def);
-  };
-
-  // Add all exportable definition types
-  definitions.functions.forEach(add_to_map);
-  definitions.classes.forEach(add_to_map);
-  definitions.variables.forEach(add_to_map);
-  definitions.interfaces.forEach(add_to_map);
-  definitions.enums.forEach(add_to_map);
-  definitions.namespaces.forEach(add_to_map);
-  definitions.types.forEach(add_to_map);
-  // Add re-exported imports
-  if (definitions.imports) {
-    definitions.imports.forEach(add_to_map);
-  }
-
-  return map;
-}
-
 export function create_test_index(
   file_path: FilePath,
   options: {
@@ -266,7 +221,6 @@ export function create_test_index(
     interfaces?: TestInterfaceSpec[];
     scopes?: TestScopeSpec[];
     references?: SymbolReference[];
-    exported_symbols?: Map<SymbolName, ExportableDefinition>;
 
     // Low-level overrides for full control
     functions_raw?: Map<SymbolId, FunctionDefinition>;
@@ -572,20 +526,6 @@ export function create_test_index(
     }
   }
 
-  // Build exported_symbols map automatically if not provided
-  const exported_symbols =
-    options.exported_symbols ||
-    build_test_exported_symbols_map({
-      functions,
-      classes,
-      variables,
-      interfaces,
-      enums: new Map(),
-      namespaces: new Map(),
-      types: new Map(),
-      imports,
-    });
-
   // Build scope_to_definitions map automatically if not provided
   const scope_to_definitions =
     options.scope_to_definitions_raw ||
@@ -613,7 +553,6 @@ export function create_test_index(
     namespaces: new Map(),
     types: new Map(),
     imported_symbols: imports,
-    exported_symbols,
     references: options.references || [],
     scope_to_definitions,
     type_bindings,
@@ -734,10 +673,7 @@ export function resolve_symbols_with_registries(
     scopes.update_file(file_path, index.scopes);
 
     // Update export registry
-    const exported_symbol_ids = new Set(
-      Array.from(index.exported_symbols.values()).map((def) => def.symbol_id),
-    );
-    exports.update_file(file_path, exported_symbol_ids);
+    exports.update_file(file_path, index);
 
     // Update import graph (simplified - extract from imported_symbols)
     const import_statements = extract_imports_from_imported_symbols(

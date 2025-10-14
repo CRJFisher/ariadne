@@ -200,6 +200,7 @@ export type AnyDefinition =
   | FunctionDefinition
   | ClassDefinition
   | MethodDefinition
+  | ConstructorDefinition
   | PropertyDefinition
   | ParameterDefinition
   | InterfaceDefinition

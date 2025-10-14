@@ -22,7 +22,6 @@ import type {
   Location,
   AnyDefinition,
   SymbolKind,
-  ExportableDefinition,
 } from "@ariadnejs/types";
 
 import { query_tree } from "./query_code_tree";
@@ -76,9 +75,6 @@ export interface SemanticIndex {
 
   /** References */
   readonly references: readonly SymbolReference[];
-
-  /** Quick lookup: export name -> exported definition */
-  readonly exported_symbols: ReadonlyMap<SymbolName, ExportableDefinition>;
 }
 
 // ============================================================================
@@ -138,10 +134,8 @@ export function build_semantic_index(
   // PASS 5: Build name index
   const scope_to_definitions = build_scope_to_definitions(builder_result);
 
-  // PASS 5.5: Build exported symbols map
-  const exported_symbols = build_exported_symbols_map(builder_result);
-
   // Return complete semantic index (single-file)
+  // Note: exported_symbols is now built by ExportRegistry
   return {
     file_path: file.file_path,
     language,
@@ -157,7 +151,6 @@ export function build_semantic_index(
     imported_symbols: builder_result.imports,
     references: all_references,
     scope_to_definitions,
-    exported_symbols,
   };
 }
 
@@ -282,111 +275,6 @@ function build_scope_to_definitions(
   result.imports.forEach((def) => add_to_index(def));
 
   return index;
-}
-
-/**
- * Build export lookup map from all definitions
- *
- * IMPORTANT: Asserts that export names are unique within a file.
- * If two different symbols are exported with the same name, this indicates
- * a bug in the is_exported logic or a malformed source file.
- *
- * @param result - Builder result containing all definitions
- * @returns Map from export name to definition
- * @throws Error if duplicate export names are found
- */
-function build_exported_symbols_map(
-  result: BuilderResult
-): Map<SymbolName, ExportableDefinition> {
-  const map = new Map<SymbolName, ExportableDefinition>();
-
-  const add_to_map = (def: ExportableDefinition) => {
-    // ImportDefinitions don't have is_exported - check export field directly
-    if (def.kind === "import") {
-      if (!def.export) {
-        return;
-      }
-    } else {
-      // Only add exported symbols
-      if (!def.is_exported) {
-        return;
-      }
-    }
-
-    // Get the effective export name (alias or original name)
-    const export_name = def.export?.export_name || def.name;
-
-    // Check for duplicates - temporarily allow function/variable duplicates for arrow functions
-    const existing = map.get(export_name);
-    if (existing) {
-      console.log(`DEBUG: Found duplicate export "${export_name}"`);
-      console.log(`  Existing: ${existing.kind} ${existing.symbol_id}`);
-      console.log(`  New: ${def.kind} ${def.symbol_id}`);
-
-      // Special case: if we have both a function and a variable/constant with the same name,
-      // prefer the variable (this handles arrow functions assigned to const variables)
-      if (
-        (existing.kind === "function" &&
-          (def.kind === "variable" || def.kind === "constant")) ||
-        (def.kind === "function" &&
-          (existing.kind === "variable" || existing.kind === "constant"))
-      ) {
-        console.log(
-          `DEBUG: Handling function/variable duplicate for "${export_name}"`
-        );
-        // Prefer variable/constant over function for arrow function assignments
-        if (def.kind === "variable" || def.kind === "constant") {
-          console.log("DEBUG: Replacing function with variable");
-          // Replace the function with the variable
-          map.set(export_name, def);
-          return;
-        }
-        console.log("DEBUG: Keeping existing variable, ignoring function");
-        // If current def is function and existing is variable/constant, keep the existing (do nothing)
-        return;
-      }
-
-      // For all other duplicates, this is an error
-      throw new Error(
-        `Duplicate export name "${export_name}" in file.\n` +
-          `  First:  ${existing.kind} ${existing.symbol_id}\n` +
-          `  Second: ${def.kind} ${def.symbol_id}\n` +
-          "This indicates a bug in is_exported logic or malformed source code."
-      );
-    }
-
-    map.set(export_name, def);
-  };
-
-  // Add all exportable definition types
-  result.functions.forEach(add_to_map);
-  result.classes.forEach(add_to_map);
-  result.variables.forEach(add_to_map);
-  result.interfaces.forEach(add_to_map);
-  result.enums.forEach(add_to_map);
-  result.namespaces.forEach(add_to_map);
-  result.types.forEach(add_to_map);
-
-  // Add re-exports (imports with export metadata)
-  // Re-exports need to be in the export map for chain resolution
-  result.imports.forEach((imp) => {
-    if (imp.export) {
-      // This is a re-export - add it to the export map
-      const export_name = imp.export.export_name || imp.name;
-      const existing = map.get(export_name);
-      if (existing) {
-        throw new Error(
-          `Duplicate export name "${export_name}" in file.\n` +
-            `  First:  ${existing.kind} ${existing.symbol_id}\n` +
-            `  Second: ${imp.kind} ${imp.symbol_id}\n` +
-            "This indicates a bug in re-export logic or malformed source code."
-        );
-      }
-      map.set(export_name, imp as any); // ImportDefinition is not ExportableDefinition but should work for chain resolution
-    }
-  });
-
-  return map;
 }
 
 /**

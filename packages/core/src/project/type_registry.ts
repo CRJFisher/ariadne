@@ -4,7 +4,6 @@ import type {
   LocationKey,
   SymbolName,
   TypeMemberInfo,
-  ScopeId,
 } from "@ariadnejs/types";
 import type { SemanticIndex } from "../index_single_file/semantic_index";
 import type { DefinitionRegistry } from "./definition_registry";
@@ -270,7 +269,7 @@ export class TypeRegistry {
         ),
         constructor: def.methods.find((m) => m.name === "constructor")
           ?.symbol_id,
-        extends: def.extends ? [def.extends as SymbolName] : [],
+        extends: def.extends ? def.extends : [],
       };
     } else if (def.kind === "interface") {
       return {
@@ -281,7 +280,7 @@ export class TypeRegistry {
           def.properties.map((p) => [p.name as SymbolName, p.symbol_id])
         ),
         constructor: undefined,
-        extends: def.extends ? (Array.isArray(def.extends) ? def.extends : [def.extends]) as SymbolName[] : [],
+        extends: def.extends ? def.extends : [],
       };
     } else if (def.kind === "enum") {
       // For enums, get members from the member index
@@ -296,8 +295,6 @@ export class TypeRegistry {
 
     return undefined;
   }
-
-  // ===== TypeContext Interface Implementation =====
 
   /**
    * Get the type of a symbol (variable, parameter, etc.)

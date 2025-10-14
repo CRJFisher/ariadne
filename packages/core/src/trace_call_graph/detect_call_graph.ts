@@ -1,24 +1,17 @@
-import type { FilePath, CallGraph, SymbolId, FunctionNode, SymbolReference, FunctionDefinition, MethodDefinition, AnyDefinition, CallReference } from "@ariadnejs/types";
+import type { FilePath, CallGraph, SymbolId, FunctionNode, FunctionDefinition, MethodDefinition, AnyDefinition, ConstructorDefinition } from "@ariadnejs/types";
 import type { SemanticIndex } from "../index_single_file/semantic_index";
 import type { DefinitionRegistry } from "../project/definition_registry";
 import type { ResolutionRegistry } from "../project/resolution_registry";
-import { find_enclosing_function_scope } from "../index_single_file/scopes/scope_utils";
 
 /**
  * Type guard: check if definition is function-like
  */
-function is_function_like(def: AnyDefinition): def is (FunctionDefinition | MethodDefinition) {
+function is_function_like(def: AnyDefinition): def is (FunctionDefinition | MethodDefinition | ConstructorDefinition) {
   return (
     def.kind === "function" ||
-    def.kind === "method"
+    def.kind === "method" ||
+    def.kind === "constructor"
   );
-}
-
-/**
- * Type guard: check if reference is a call reference
- */
-function is_call_reference(ref: SymbolReference): boolean {
-  return ref.type === "call" && ref.call_type !== undefined;
 }
 
 /**
@@ -33,50 +26,31 @@ function build_function_nodes(
   const nodes = new Map<SymbolId, FunctionNode>();
 
   // For each file
-  for (const [file_path, index] of semantic_indexes) {
+  for (const [file_path] of semantic_indexes) {
     // Get all definitions in this file
     const file_defs = definitions.get_file_definitions(file_path);
 
-    // Filter to function/method definitions only
+    // Filter to function/method/constructor definitions only
     const function_defs = file_defs.filter(is_function_like);
 
     // For each function definition
     for (const func_def of function_defs) {
-      // Find all call references enclosed by this function
-      const enclosed_calls: SymbolReference[] = index.references.filter(ref => {
-        // Check if reference is a call reference
-        if (!is_call_reference(ref)) return false;
+      // Get body scope ID (only methods can have undefined body_scope_id for interface methods)
+      const body_scope_id = func_def.body_scope_id;
 
-        // Find the enclosing function scope for this reference
-        const enclosing_function_scope = find_enclosing_function_scope(
-          ref.scope_id,
-          index.scopes,
-        );
+      // Skip if no body scope (e.g., interface methods)
+      if (!body_scope_id) {
+        continue;
+      }
 
-        // Check if call is enclosed by this function
-        return enclosing_function_scope === func_def.body_scope_id;
-      });
-
-      // Convert SymbolReferences to CallReferences for the interface
-      const call_references = enclosed_calls.map(ref => ({
-        location: ref.location,
-        symbol_id: resolutions.get_resolved_symbol_id(ref.location),
-        name: ref.name,
-        scope_id: ref.scope_id,
-        call_type: ref.call_type,
-        receiver: ref.context?.receiver_location ? {
-          location: ref.context.receiver_location,
-          name: undefined, // TODO: add name
-        } : undefined,
-        construct_target: ref.context?.construct_target,
-        enclosing_function_scope_id: func_def.body_scope_id,
-      })) as readonly CallReference[];
+      // Get calls made from this function's body scope
+      const enclosed_calls = resolutions.get_calls_by_caller_scope(body_scope_id);
 
       // Create function node
       nodes.set(func_def.symbol_id, {
         symbol_id: func_def.symbol_id,
         name: func_def.name,
-        enclosed_calls: call_references,
+        enclosed_calls,
         location: func_def.location,
         definition: func_def,
       });
@@ -126,7 +100,7 @@ export function detect_call_graph(
   resolutions: ResolutionRegistry,
 ): CallGraph {
   // Build function nodes with their enclosed calls
-  const nodes = build_function_nodes(semantic_indexes, definitions);
+  const nodes = build_function_nodes(semantic_indexes, definitions, resolutions);
 
   // Detect entry points (functions never called)
   const entry_points = detect_entry_points(nodes, resolutions);

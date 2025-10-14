@@ -112,7 +112,7 @@ describe("Project - Performance Benchmarks", () => {
           : `${imports}\nexport function func${i}() { return ${i} }`;
 
         project_full.update_file(files[i], content);
-        project_full.resolve_file(files[i]);
+        // Note: Resolution now happens automatically during update_file (eager resolution)
       }
       const full_rebuild_time = performance.now() - start_full;
 
@@ -142,15 +142,14 @@ describe("Project - Performance Benchmarks", () => {
         `);
       }
 
-      // Resolve all files
-      for (const file of files) {
-        project.resolve_file(file);
-      }
+      // Note: Resolution now happens automatically during update_file (eager resolution)
+      // No need for explicit resolve_file() calls
 
       const stats_before = project.get_stats();
-      console.log("\nAfter initial resolution:");
-      console.log(`  Cached resolutions: ${stats_before.cached_resolution_count}`);
-      console.log(`  Pending resolution count: ${stats_before.pending_resolution_count}`);
+      console.log("\nAfter initial indexing:");
+      console.log(`  Total resolutions: ${stats_before.resolution_count}`);
+      console.log(`  File count: ${stats_before.file_count}`);
+      console.log(`  Definition count: ${stats_before.definition_count}`);
 
       // Update one file in the middle
       project.update_file(files[5], `
@@ -160,11 +159,11 @@ describe("Project - Performance Benchmarks", () => {
 
       const stats_after_update = project.get_stats();
       console.log("After updating file5:");
-      console.log(`  Cached resolutions: ${stats_after_update.cached_resolution_count}`);
-      console.log(`  Pending resolution count: ${stats_after_update.pending_resolution_count}`);
+      console.log(`  Total resolutions: ${stats_after_update.resolution_count}`);
+      console.log(`  File count: ${stats_after_update.file_count}`);
 
-      // Some resolutions should be invalidated
-      expect(stats_after_update.pending_resolution_count).toBeGreaterThan(0);
+      // Resolutions should be maintained (eager resolution keeps everything up to date)
+      expect(stats_after_update.resolution_count).toBeGreaterThan(0);
     });
   });
 });
