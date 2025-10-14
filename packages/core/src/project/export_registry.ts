@@ -1,6 +1,6 @@
 import type { FilePath, SymbolId, SymbolName, ImportDefinition, ExportableDefinition, Language } from "@ariadnejs/types";
-import type { SemanticIndex } from "../index_single_file/semantic_index";
 import type { FileSystemFolder } from "../resolve_references/types";
+import type { DefinitionRegistry } from "./definition_registry";
 import { resolve_module_path } from "../resolve_references/import_resolution/import_resolver";
 
 /**
@@ -49,15 +49,12 @@ export class ExportRegistry {
   /**
    * Update exports for a file.
    * Replaces any existing export information for the file.
-   * Processes exports directly from SemanticIndex.
-   *
-   * This method combines the logic from build_exported_symbols_map (semantic_index.ts)
-   * and extract_export_metadata (project.ts) to extract and store export metadata.
+   * Gets definitions from DefinitionRegistry.
    *
    * @param file_id - The file being updated
-   * @param semantic_index - Semantic index containing all definitions
+   * @param definitions - Definition registry containing all definitions
    */
-  update_file(file_id: FilePath, semantic_index: SemanticIndex): void {
+  update_file(file_id: FilePath, definitions: DefinitionRegistry): void {
     // Remove old data
     this.remove_file(file_id);
 
@@ -155,19 +152,13 @@ export class ExportRegistry {
       }
     };
 
-    // Process all exportable definition types
-    semantic_index.functions.forEach(add_to_registry);
-    semantic_index.classes.forEach(add_to_registry);
-    semantic_index.variables.forEach(add_to_registry);
-    semantic_index.interfaces.forEach(add_to_registry);
-    semantic_index.enums.forEach(add_to_registry);
-    semantic_index.namespaces.forEach(add_to_registry);
-    semantic_index.types.forEach(add_to_registry);
-    semantic_index.imported_symbols.forEach((imp) => {
-      if (imp.export) {
-        add_to_registry(imp as ExportableDefinition); // Re-exports
-      }
-    });
+    // Get all definitions for this file from DefinitionRegistry
+    const file_definitions = definitions.get_file_definitions(file_id);
+
+    // Process all exportable definitions
+    for (const def of file_definitions) {
+      add_to_registry(def as ExportableDefinition);
+    }
 
     // Store in all indexes
     if (symbol_ids.size > 0) {

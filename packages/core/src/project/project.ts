@@ -175,8 +175,8 @@ export class Project {
     this.definitions.update_file(file_id, all_definitions);
     this.scopes.update_file(file_id, semantic_index.scopes);
 
-    // ExportRegistry now processes exports directly from SemanticIndex
-    this.exports.update_file(file_id, semantic_index);
+    // ExportRegistry gets definitions from DefinitionRegistry
+    this.exports.update_file(file_id, this.definitions);
 
     // ReferenceRegistry persists references (source of truth for ResolutionRegistry)
     this.references.update_file(file_id, semantic_index.references);
