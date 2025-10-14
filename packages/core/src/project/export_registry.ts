@@ -1,4 +1,4 @@
-import type { FilePath, SymbolId, SymbolName, ImportDefinition, ExportableDefinition } from "@ariadnejs/types";
+import type { FilePath, SymbolId, SymbolName, ImportDefinition, ExportableDefinition, Language } from "@ariadnejs/types";
 import type { SemanticIndex } from "../index_single_file/semantic_index";
 import type { FileSystemFolder } from "../resolve_references/types";
 import { resolve_module_path } from "../resolve_references/import_resolution/import_resolver";
@@ -307,7 +307,7 @@ export class ExportRegistry {
    * @param source_file - File containing the export
    * @param export_name - Name of the exported symbol (ignored for default imports)
    * @param import_kind - Type of import (named, default, or namespace)
-   * @param semantic_indexes - Semantic indexes for language lookup
+   * @param languages - Map of file paths to their languages
    * @param root_folder - Root folder for module path resolution
    * @param visited - Set of visited exports for cycle detection (internal)
    * @returns Resolved symbol_id or null if not found
@@ -316,7 +316,7 @@ export class ExportRegistry {
     source_file: FilePath,
     export_name: SymbolName,
     import_kind: "named" | "default" | "namespace",
-    semantic_indexes: ReadonlyMap<FilePath, SemanticIndex>,
+    languages: ReadonlyMap<FilePath, Language>,
     root_folder: FileSystemFolder,
     visited: Set<string> = new Set()
   ): SymbolId | null {
@@ -344,13 +344,12 @@ export class ExportRegistry {
     if (export_meta.is_reexport && export_meta.import_def) {
       const imp_def = export_meta.import_def;
 
-      // Get language from semantic_indexes (the file doing the re-export)
-      const source_index = semantic_indexes.get(source_file);
-      if (!source_index) {
-        // Source file not indexed - cannot resolve re-export
+      // Get language from languages map (the file doing the re-export)
+      const language = languages.get(source_file);
+      if (!language) {
+        // Source file language not available - cannot resolve re-export
         return null;
       }
-      const language = source_index.language;
 
       // Resolve the module path to get the target file
       const resolved_file = resolve_module_path(
@@ -369,7 +368,7 @@ export class ExportRegistry {
         resolved_file,
         original_name,
         next_import_kind,
-        semantic_indexes,
+        languages,
         root_folder,
         visited
       );

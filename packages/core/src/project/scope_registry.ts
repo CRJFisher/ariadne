@@ -179,6 +179,15 @@ export class ScopeRegistry {
   }
 
   /**
+   * Get all scopes (across all files).
+   *
+   * @returns ReadonlyMap of all scopes by ScopeId
+   */
+  get_all_scopes(): ReadonlyMap<ScopeId, LexicalScope> {
+    return this.by_scope_id;
+  }
+
+  /**
    * Get all files with scope trees.
    *
    * @returns Array of file paths

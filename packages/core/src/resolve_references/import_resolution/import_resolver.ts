@@ -83,7 +83,7 @@ export function extract_import_specs(
  * @param export_name - Name of the exported symbol (ignored for default imports)
  * @param export_registry - Registry containing all export metadata
  * @param root_folder - Root of the file system tree
- * @param semantic_indexes - Semantic indexes for language lookup
+ * @param languages - Map of file paths to their languages
  * @param import_kind - Type of import (named, default, or namespace)
  * @param visited - Set of visited exports for cycle detection
  * @returns Symbol ID of the exported symbol, or null if not found
@@ -93,7 +93,7 @@ export function resolve_export_chain(
   export_name: SymbolName,
   export_registry: ExportRegistry,
   root_folder: FileSystemFolder,
-  semantic_indexes: ReadonlyMap<FilePath, SemanticIndex>,
+  languages: ReadonlyMap<FilePath, Language>,
   import_kind: "named" | "default" | "namespace" = "named",
   visited: Set<string> = new Set()
 ): SymbolId | null {
@@ -118,7 +118,7 @@ export function resolve_export_chain(
     source_file,
     export_name,
     import_kind,
-    semantic_indexes,
+    languages,
     root_folder,
     visited
   );

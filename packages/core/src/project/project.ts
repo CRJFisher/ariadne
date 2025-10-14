@@ -189,10 +189,17 @@ export class Project {
 
     // Phase 3: Re-resolve affected files (eager!)
     const affected_files = new Set([file_id, ...dependents]);
+
+    // Create language map from semantic indexes
+    const languages = new Map<FilePath, Language>();
+    for (const [file_path, index] of this.semantic_indexes) {
+      languages.set(file_path, index.language);
+    }
+
     this.resolutions.resolve_files(
       affected_files,
       this.references,
-      this.semantic_indexes,
+      languages,
       this.definitions,
       this.scopes,
       this.exports,
@@ -247,10 +254,16 @@ export class Project {
 
     // Re-resolve dependent files (imports may be broken now)
     if (dependents.size > 0) {
+      // Create language map from semantic indexes
+      const languages = new Map<FilePath, Language>();
+      for (const [file_path, index] of this.semantic_indexes) {
+        languages.set(file_path, index.language);
+      }
+
       this.resolutions.resolve_files(
         dependents,
         this.references,
-        this.semantic_indexes,
+        languages,
         this.definitions,
         this.scopes,
         this.exports,

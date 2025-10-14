@@ -8,7 +8,6 @@ import type {
   Language,
 } from "@ariadnejs/types";
 import type { FileSystemFolder } from "../resolve_references/types";
-import type { SemanticIndex } from "../index_single_file/semantic_index";
 import type { DefinitionRegistry } from "./definition_registry";
 import type { TypeRegistry } from "./type_registry";
 import type { ScopeRegistry } from "./scope_registry";
@@ -92,12 +91,13 @@ export class ResolutionRegistry {
    * @param exports - Export registry
    * @param imports - Import graph
    * @param types - Type registry (for method/constructor resolution)
+   * @param languages - Map of file paths to their languages
    * @param root_folder - Root folder for import resolution
    */
   resolve_files(
     file_ids: Set<FilePath>,
     references: ReferenceRegistry,
-    semantic_indexes: ReadonlyMap<FilePath, SemanticIndex>,
+    languages: ReadonlyMap<FilePath, Language>,
     definitions: DefinitionRegistry,
     scopes: ScopeRegistry,
     exports: ExportRegistry,
@@ -121,11 +121,10 @@ export class ResolutionRegistry {
       }
 
       // Get language for this file
-      const semantic_index = semantic_indexes.get(file_id);
-      if (!semantic_index) {
+      const language = languages.get(file_id);
+      if (!language) {
         continue; // File not indexed
       }
-      const language = semantic_index.language;
 
       // Resolve recursively from root
       const file_resolutions = this.resolve_scope_recursive(
@@ -133,7 +132,7 @@ export class ResolutionRegistry {
         new Map(), // Empty parent resolutions at root
         file_id,
         language,
-        semantic_indexes,
+        languages,
         exports,
         imports,
         definitions,
@@ -168,8 +167,7 @@ export class ResolutionRegistry {
       // Calculate caller scope (the function/method/constructor that contains this call)
       const caller_scope_id = find_enclosing_function_scope(
         call.scope_id,
-        // Need to get scopes from the file's semantic index
-        semantic_indexes.get(call.location.file_path)?.scopes || new Map()
+        scopes.get_all_scopes()
       );
 
       // Add caller_scope_id to the call
@@ -388,7 +386,7 @@ export class ResolutionRegistry {
    * @param parent_resolutions - Resolutions inherited from parent scope
    * @param file_path - File containing this scope
    * @param language - Programming language of the file
-   * @param semantic_indexes - Semantic indexes (for re-export chain resolution)
+   * @param languages - Map of file paths to their languages (for re-export chain resolution)
    * @param exports - Export registry (for resolve_export_chain)
    * @param imports - Import graph (for get_scope_imports and resolved paths)
    * @param definitions - Definition registry (for get_scope_definitions)
@@ -401,7 +399,7 @@ export class ResolutionRegistry {
     parent_resolutions: ReadonlyMap<SymbolName, SymbolId>,
     file_path: FilePath,
     language: Language,
-    semantic_indexes: ReadonlyMap<FilePath, SemanticIndex>,
+    languages: ReadonlyMap<FilePath, Language>,
     exports: ExportRegistry,
     imports: ImportGraph,
     definitions: DefinitionRegistry,
@@ -434,12 +432,12 @@ export class ResolutionRegistry {
         const import_name = (imp_def.original_name ||
           imp_def.name) as SymbolName;
 
-        // Resolve export chain with semantic_indexes and root_folder
+        // Resolve export chain with languages and root_folder
         resolved = exports.resolve_export_chain(
           source_file,
           import_name,
           imp_def.import_kind,
-          semantic_indexes,
+          languages,
           root_folder
         );
       }
@@ -469,7 +467,7 @@ export class ResolutionRegistry {
           scope_resolutions, // Pass down as parent
           file_path,
           language,
-          semantic_indexes,
+          languages,
           exports,
           imports,
           definitions,
