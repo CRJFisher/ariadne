@@ -1,4 +1,4 @@
-import type { FilePath, SymbolId, Language } from "@ariadnejs/types";
+import type { FilePath, SymbolId, Language, SymbolName, ImportDefinition } from "@ariadnejs/types";
 import { build_semantic_index } from "../index_single_file/semantic_index";
 import type { SemanticIndex } from "../index_single_file/semantic_index";
 import type { AnyDefinition } from "@ariadnejs/types";
@@ -18,6 +18,50 @@ import RustParser from "tree-sitter-rust";
 import { FileSystemFolder } from "../resolve_references/types";
 import { readdir, realpath } from "fs/promises";
 import { join } from "path";
+
+/**
+ * Enhanced export metadata for ExportRegistry.
+ * Must match the interface in export_registry.ts
+ */
+interface EnhancedExportMetadata {
+  symbol_id: SymbolId;
+  export_name: SymbolName;
+  is_default: boolean;
+  is_reexport: boolean;
+  import_def?: ImportDefinition;
+}
+
+/**
+ * Extract enhanced export metadata from semantic index.
+ * Converts exported_symbols map to array of EnhancedExportMetadata.
+ *
+ * @param semantic_index - Semantic index containing exported symbols
+ * @returns Array of export metadata for ExportRegistry
+ */
+function extract_export_metadata(
+  semantic_index: SemanticIndex
+): EnhancedExportMetadata[] {
+  const metadata: EnhancedExportMetadata[] = [];
+
+  for (const [export_name, def] of semantic_index.exported_symbols) {
+    // Check if this is a re-export (ImportDefinition with export metadata)
+    const is_reexport = def.export?.is_reexport === true;
+    const is_default = def.export?.is_default === true;
+
+    // For re-exports, the definition itself is an ImportDefinition
+    const import_def = is_reexport && def.kind === "import" ? (def as ImportDefinition) : undefined;
+
+    metadata.push({
+      symbol_id: def.symbol_id,
+      export_name: (def.export?.export_name || export_name) as SymbolName,
+      is_default,
+      is_reexport,
+      import_def,
+    });
+  }
+
+  return metadata;
+}
 
 /**
  * Detect language from file path extension
@@ -81,60 +125,6 @@ function create_parsed_file(
     tree,
     lang: language,
   };
-}
-
-/**
- * Convert ImportDefinitions to Import[] for ImportGraph
- * This is a temporary solution until the data structures are unified
- */
-function extract_imports_from_definitions(
-  imported_symbols: ReadonlyMap<SymbolId, any>,
-  current_file: FilePath
-): any[] {
-  // For now, extract unique import paths from ImportDefinitions
-  // Group imports by source file
-  const imports_by_source = new Map<FilePath, any>();
-
-  for (const imp_def of imported_symbols.values()) {
-    // import_path might be a module path like "./file1" - need to resolve to FilePath
-    // For now, do basic resolution by removing ./ and adding extension if missing
-    let source_path = imp_def.import_path as string;
-
-    // Remove leading ./ if present
-    if (source_path.startsWith("./")) {
-      source_path = source_path.slice(2);
-    } else if (source_path.startsWith("../")) {
-      // For relative imports with ../, keep as-is for now
-      // TODO: resolve relative to current_file
-    }
-
-    // Add .ts extension if no extension present and it's a local file
-    if (
-      !source_path.includes(".") &&
-      !source_path.startsWith("@") &&
-      !source_path.includes("/node_modules/")
-    ) {
-      // Detect extension from current file
-      const ext = current_file.split(".").pop() || "ts";
-      source_path = `${source_path}.${ext}`;
-    }
-
-    const source = source_path as FilePath;
-
-    if (!imports_by_source.has(source)) {
-      imports_by_source.set(source, {
-        kind: "named",
-        source,
-        imports: [],
-        location: imp_def.location,
-        language: imp_def.language || "typescript",
-        node_type: "import_statement",
-        modifiers: [],
-      });
-    }
-  }
-
-  return Array.from(imports_by_source.values());
 }
 
 /**
@@ -224,23 +214,15 @@ export class Project {
     ];
 
     this.definitions.update_file(file_id, all_definitions);
-    this.types.update_file(file_id, semantic_index);
     this.scopes.update_file(file_id, semantic_index.scopes);
 
-    // Convert exported_symbols Map to Set of SymbolIds for ExportRegistry
-    const exported_symbol_ids = new Set(
-      Array.from(semantic_index.exported_symbols.values()).map(
-        (def) => def.symbol_id
-      )
-    );
-    this.exports.update_file(file_id, exported_symbol_ids);
+    // Extract enhanced export metadata for ExportRegistry
+    const export_metadata = extract_export_metadata(semantic_index);
+    this.exports.update_file(file_id, export_metadata);
 
-    // Extract imports from imported_symbols
-    const imports = extract_imports_from_definitions(
-      semantic_index.imported_symbols,
-      file_id
-    );
-    this.imports.update_file(file_id, imports);
+    // Pass ImportDefinitions directly to ImportGraph
+    const import_definitions = Array.from(semantic_index.imported_symbols.values());
+    this.imports.update_file(file_id, import_definitions);
 
     // Phase 3: Re-resolve affected files (eager!)
     const affected_files = new Set([file_id, ...dependents]);
@@ -254,6 +236,20 @@ export class Project {
       this.imports,
       this.root_folder
     );
+
+    // Phase 4: Update type registry for all affected files
+    // Must happen AFTER resolution so type names can be resolved to SymbolIds
+    for (const affected_file of affected_files) {
+      const affected_index = this.semantic_indexes.get(affected_file);
+      if (affected_index) {
+        this.types.update_file(
+          affected_file,
+          affected_index,
+          this.definitions,
+          this.resolutions
+        );
+      }
+    }
   }
 
   /**
@@ -283,6 +279,7 @@ export class Project {
 
     // Remove resolutions for deleted file
     this.resolutions.remove_file(file_id);
+
     // Re-resolve dependent files (imports may be broken now)
     if (dependents.size > 0) {
       this.resolutions.resolve_files(
@@ -295,6 +292,19 @@ export class Project {
         this.imports,
         this.root_folder
       );
+
+      // Update type registry for dependents
+      for (const dependent_file of dependents) {
+        const dependent_index = this.semantic_indexes.get(dependent_file);
+        if (dependent_index) {
+          this.types.update_file(
+            dependent_file,
+            dependent_index,
+            this.definitions,
+            this.resolutions
+          );
+        }
+      }
     }
   }
 

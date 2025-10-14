@@ -35,7 +35,7 @@ export interface CallReference {
   readonly location: Location;
 
   /** Resolved Symbol ID being called */
-  readonly symbol_id?: SymbolId;  // Undefined for unresolved calls
+  readonly symbol_id?: SymbolId | null;  // Null for unresolved calls
 
   /** Name being called */
   readonly name: SymbolName;

@@ -1,67 +1,55 @@
 /**
  * Function Call Resolution
  *
- * Resolves function calls to their definitions using on-demand scope-aware lookup.
- * Delegates to ScopeResolverIndex with caching.
+ * Resolves function calls to their definitions using EAGER pre-computed resolutions.
+ * Uses ResolutionRegistry for O(1) scope-based lookups.
  */
 
-import type { SymbolId, LocationKey, FilePath } from "@ariadnejs/types";
-import { location_key } from "@ariadnejs/types";
-import type { SemanticIndex } from "../../index_single_file/semantic_index";
-import type { ScopeResolverIndex } from "../scope_resolver_index/scope_resolver_index";
-import type { ResolutionCache } from "../resolution_cache/resolution_cache";
-
-/**
- * Map of call location → resolved function symbol_id
- */
-export type FunctionCallMap = Map<LocationKey, SymbolId>;
+import type { SymbolName, FilePath, SymbolReference, CallReference } from "@ariadnejs/types";
+import type { ResolutionRegistry } from "../../project/resolution_registry";
 
 /**
  * Resolve all function calls in the given semantic indices
  *
- * This is the simplest resolver - it delegates all the heavy lifting to ScopeResolverIndex.
- * The resolver handles:
- * - Local function calls (functions in same file/scope)
- * - Imported function calls (functions from other files)
- * - Shadowing (local functions override imports)
- * - Nested scope resolution (lexical scoping)
+ * EAGER approach: Uses pre-computed resolutions from ResolutionRegistry.
+ * The registry has already resolved all symbols when the file was indexed.
  *
- * Resolution is on-demand with caching:
- * - Only referenced functions are resolved (no pre-computation)
- * - Cache ensures repeated lookups are O(1)
+ * Resolution is O(1) per call:
+ * - Look up in pre-computed scope → name map
+ * - No lazy closures, no cache needed
  *
- * @param indices - Map of file_path → SemanticIndex
- * @param resolver_index - Scope resolver index for on-demand lookups
- * @param cache - Resolution cache for O(1) repeated lookups
- * @returns Map of call location → resolved function symbol_id
+ * @param file_references - Map of file_path → references
+ * @param resolutions - Resolution registry with eager resolutions
+ * @returns Array of resolved function call references
  */
 export function resolve_function_calls(
-  indices: ReadonlyMap<FilePath, SemanticIndex>,
-  resolver_index: ScopeResolverIndex,
-  cache: ResolutionCache
-): FunctionCallMap {
-  const resolutions = new Map<LocationKey, SymbolId>();
+  file_references: Map<FilePath, readonly SymbolReference[]>,
+  resolutions: ResolutionRegistry
+): CallReference[] {
+  const resolved_calls: CallReference[] = [];
 
-  for (const index of indices.values()) {
+  for (const references of file_references.values()) {
     // Filter for function call references
-    const function_calls = index.references.filter(
+    const function_calls = references.filter(
       (ref) => ref.type === "call" && ref.call_type === "function"
     );
 
     for (const call_ref of function_calls) {
-      // Resolve ON-DEMAND with caching - that's it!
-      const resolved = resolver_index.resolve(
+      // EAGER: O(1) lookup in pre-computed resolution map
+      const resolved = resolutions.resolve(
         call_ref.scope_id,
-        call_ref.name,
-        cache
+        call_ref.name as SymbolName
       );
 
       if (resolved) {
-        const key = location_key(call_ref.location);
-        resolutions.set(key, resolved);
+        resolved_calls.push({
+          ...call_ref,
+          call_type: "function",
+          symbol_id: resolved,
+        });
       }
     }
   }
 
-  return resolutions;
+  return resolved_calls;
 }

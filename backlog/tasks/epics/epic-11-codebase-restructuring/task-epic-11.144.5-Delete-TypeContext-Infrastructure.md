@@ -2,7 +2,7 @@
 
 **Epic**: Epic 11 - Codebase Restructuring
 **Parent Task**: task-epic-11.144 - Merge TypeContext into TypeRegistry
-**Status**: Not Started
+**Status**: Completed
 **Priority**: High
 **Complexity**: Low
 

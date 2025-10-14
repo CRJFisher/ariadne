@@ -1,10 +1,9 @@
 /**
  * Call Resolution Module
  *
- * Provides on-demand resolution of function, method, and constructor calls
- * using scope-aware lookup with caching.
+ * Provides eager resolution of function, method, and constructor calls.
+ * These are now used internally by ResolutionRegistry.
  */
 
-export { resolve_function_calls, type FunctionCallMap } from "./function_resolver";
-export { resolve_method_calls, type MethodCallMap } from "./method_resolver";
-export { resolve_constructor_calls, type ConstructorCallMap } from "./constructor_resolver";
+export { resolve_single_method_call } from "./method_resolver";
+export { resolve_single_constructor_call } from "./constructor_resolver";

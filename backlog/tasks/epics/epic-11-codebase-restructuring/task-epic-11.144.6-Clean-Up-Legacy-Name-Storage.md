@@ -2,8 +2,8 @@
 
 **Epic**: Epic 11 - Codebase Restructuring
 **Parent Task**: task-epic-11.144 - Merge TypeContext into TypeRegistry
-**Status**: Not Started
-**Priority**: Medium
+**Status**: Deferred
+**Priority**: Low
 **Complexity**: Medium
 
 ## Overview
@@ -383,3 +383,43 @@ After completing this task:
 - Implementation: 1.5-2 hours
 - Testing & Benchmarking: 1-1.5 hours
 - **Total**: 3.5-4.5 hours
+
+## Deferral Decision
+
+**Date**: 2025-10-14
+**Reason for Deferral**: Non-critical optimization
+
+### Analysis Summary
+
+After completing tasks 11.144.1-5, an analysis was performed to determine if this optimization is necessary:
+
+**Current State:**
+
+- TypeRegistry maintains dual storage (name-based + SymbolId-based)
+- Name-based storage is used internally during `extract_type_data()`
+- External APIs exclusively use SymbolId-based storage
+
+**External Usage Analysis:**
+
+- Only `get_type_members()` is used externally by `Project.get_type_info()`
+- All other external consumers use the new SymbolId-based methods
+- Name-based data provides useful metadata during extraction phase
+
+**Decision:**
+
+- Keep current dual storage approach
+- Name-based storage serves as intermediate representation during extraction
+- No memory issues observed in current usage
+- Can be revisited if profiling shows memory concerns
+
+**Recommendation:**
+
+- Defer until memory profiling indicates this is a bottleneck
+- Focus on higher-priority tasks in Epic 11
+- Document this decision for future reference
+
+This task can be revisited in a future optimization pass if:
+
+1. Memory profiling shows significant overhead from dual storage
+2. TypeRegistry becomes a performance bottleneck
+3. Codebase grows to scale where this matters

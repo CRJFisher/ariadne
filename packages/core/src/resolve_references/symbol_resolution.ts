@@ -1,29 +1,37 @@
 /**
- * Symbol Resolution - On-demand scope-aware unified pipeline
+ * @deprecated THIS MODULE IS DEPRECATED
  *
- * This module implements a multi-phase resolution system that resolves all function,
- * method, and constructor calls to their definitions using on-demand scope-aware lookup.
+ * Symbol Resolution - LEGACY lazy resolution system
  *
- * ## Key Design Principles
+ * This module implements the OLD multi-phase lazy resolution system that has been
+ * REPLACED by eager resolution in ResolutionRegistry.
  *
- * ### 1. On-Demand Resolution
- * Instead of pre-computing all possible resolutions, we build lightweight resolver
- * functions that only execute when a symbol is actually referenced.
+ * ## Why Deprecated?
  *
- * ### 2. Resolver Function Design (lightweight closures)
- * Each resolver is a tiny closure (~100 bytes) that captures just enough context to
- * resolve one symbol. Resolvers are organized by scope, forming a scope-aware lookup table.
+ * The lazy resolution approach (closures + cache) has been replaced by a simpler
+ * eager resolution approach that:
+ * - Resolves ALL symbols immediately when files update
+ * - Stores flat Map<ScopeId, Map<SymbolName, SymbolId>> - no closures
+ * - Provides O(1) direct lookups - no cache needed
+ * - Matches the pattern of other registries (DefinitionRegistry, etc.)
  *
- * ### 3. Cache Strategy (in-memory with invalidation)
- * All resolvers share a single cache that stores (scope_id, name) → symbol_id mappings.
- * Cache provides O(1) lookups for repeated references (80%+ hit rate in typical use).
- * Supports file-level invalidation for incremental updates.
+ * ## Migration Guide
  *
- * ### 4. Integration with Type Context
- * Type tracking uses the same resolver index to resolve type names, ensuring consistency
- * between type resolution and symbol resolution.
+ * **Old Way (this file):**
+ * ```typescript
+ * const resolved = resolve_symbols(file_references, definitions, types, scopes, exports, imports, root);
+ * ```
  *
- * ## Architecture Pipeline
+ * **New Way (ResolutionRegistry):**
+ * ```typescript
+ * // In Project class (already migrated):
+ * resolutions.resolve_files(changed_files, semantic_indexes, definitions, types, scopes, exports, imports, root);
+ * const resolved_calls = resolutions.resolve_calls(file_references, scopes, types, definitions);
+ * ```
+ *
+ * ## Legacy Architecture (for reference only)
+ *
+ * This OLD system used a 5-phase pipeline:
  *
  * 1. **Build scope resolver index** - Creates lightweight resolver functions per scope
  * 2. **Create resolution cache** - Shared cache for all resolvers
@@ -31,19 +39,12 @@
  * 4. **Resolve all calls** - Functions, methods, constructors (on-demand with caching)
  * 5. **Combine results** - Unified output with resolved references
  *
- * ## Resolution Flow Example
+ * The new system does this in 2 steps:
+ * 1. **Eager resolution** - Resolve all symbols immediately on file update
+ * 2. **O(1) lookups** - Direct Map access, no closures or cache
  *
- * ```typescript
- * // Given: foo() call in scope S
- * // 1. Check cache: cache.get(S, "foo") → miss
- * // 2. Get resolver: resolver_index[S]["foo"] → resolver function
- * // 3. Execute resolver: resolver() → resolves to symbol_id
- * //    - Checks local definitions in S
- * //    - If not found, checks imports in S
- * //    - If not found, walks up scope chain
- * // 4. Store in cache: cache.set(S, "foo", symbol_id)
- * // 5. Return: symbol_id
- * ```
+ * This file is kept only for backward compatibility with old tests.
+ * It will be removed in a future version.
  */
 
 import {
@@ -65,16 +66,7 @@ import { ScopeRegistry } from "../project/scope_registry";
 import { ExportRegistry } from "../project/export_registry";
 import { ImportGraph } from "../project/import_graph";
 
-import { build_scope_resolver_index } from "./scope_resolver_index/scope_resolver_index";
-import { create_resolution_cache } from "./resolution_cache/resolution_cache";
-import { build_type_context } from "./type_resolution/type_context";
-import {
-  resolve_function_calls,
-  resolve_method_calls,
-  resolve_constructor_calls,
-} from "./call_resolution";
-import { build_namespace_sources } from "./import_resolution/import_resolver";
-import { find_enclosing_function_scope } from "../index_single_file/scopes/scope_utils";
+// Legacy imports removed - this module is deprecated
 
 /**
  * Resolve all symbol references using on-demand scope-aware lookup
@@ -160,189 +152,19 @@ import { find_enclosing_function_scope } from "../index_single_file/scopes/scope
  *
  * @see {@link ScopeResolverIndex} for resolver function architecture
  * @see {@link ResolutionCache} for caching strategy
- * @see {@link build_type_context} for type tracking
+ * @see {@link TypeRegistry} for type tracking
  */
 export function resolve_symbols(
-  indices: ReadonlyMap<FilePath, SemanticIndex>,
-  definitions: DefinitionRegistry,
-  types: TypeRegistry,
-  scopes: ScopeRegistry,
-  exports: ExportRegistry,
-  imports: ImportGraph,
-  root_folder: FileSystemFolder,
-): ResolvedSymbols {
-  // NOTE: Registry parameters are currently unused but required for future refactoring.
-  // Sub-functions (build_scope_resolver_index, build_type_context, etc.) will be
-  // updated to use these registries directly instead of SemanticIndex maps.
-  // This transitional state maintains backwards compatibility while enabling
-  // Project coordination layer integration.
-  // Phase 1: Build scope resolver index (lightweight)
-  // Creates resolver functions: scope_id -> name -> resolver()
-  // Includes lazy import resolvers that follow export chains on-demand
-  // TODO: move this logic/call to the scope registry
-  const resolver_index = build_scope_resolver_index(indices, root_folder);
-
-  // Phase 2: Create resolution cache
-  // Stores on-demand resolutions: (scope_id, name) -> symbol_id
-  // Shared across all resolvers for consistency and performance
-  // TODO: remove resolution cache - should be replaced by the resolution registry
-  const cache = create_resolution_cache();
-
-  // Phase 3: Build namespace sources
-  // Tracks which source file each namespace import points to
-  // Enables resolution of namespace member access (utils.helper())
-  // TODO: move this logic/call to the import/export registry
-  const namespace_sources = build_namespace_sources(indices, root_folder);
-
-  // Phase 4: Build type context
-  // Tracks variable types and type members
-  // Uses resolver_index + cache to resolve type names
-  // Uses namespace_sources for namespace member lookup
-  // Uses O(1) lookups from registries for performance
-  // TODO: move this logic/call to the type registry
-  const type_context = build_type_context(
-    indices,
-    definitions,
-    types,
-    resolver_index,
-    cache,
-    namespace_sources,
-  );
-
-  // Phase 5: Resolve all call types (on-demand with caching)
-  const function_calls = resolve_function_calls(indices, resolver_index, cache);
-  const method_calls = resolve_method_calls(
-    indices,
-    resolver_index,
-    cache,
-    type_context,
-  );
-  const constructor_calls = resolve_constructor_calls(
-    indices,
-    resolver_index,
-    cache,
-    type_context,
-  );
-
-  // Phase 6: Combine results
-  return combine_results(
-    indices,
-    function_calls,
-    method_calls,
-    constructor_calls,
-  );
-}
-
-/**
- * Combine all resolution maps into final output
- *
- * Merges function, method, and constructor call resolutions into:
- * - resolved_references: Map of location -> resolved symbol_id
- * - references_to_symbol: Reverse map of symbol_id -> all reference locations
- * - references: All call references from semantic indices
- * - definitions: All callable definitions (functions, classes, methods, constructors)
- *
- * @param indices - All semantic indices
- * @param function_calls - Resolved function call locations
- * @param method_calls - Resolved method call locations
- * @param constructor_calls - Resolved constructor call locations
- * @returns Combined ResolvedSymbols output
- */
-function combine_results(
-  indices: ReadonlyMap<FilePath, SemanticIndex>,
-  function_calls: Map<LocationKey, SymbolId>,
-  method_calls: Map<LocationKey, SymbolId>,
-  constructor_calls: Map<LocationKey, SymbolId>,
-): ResolvedSymbols {
-  // Master map: any reference location -> resolved SymbolId
-  const resolved_references = new Map<LocationKey, SymbolId>();
-
-  // Add function calls
-  for (const [loc, id] of function_calls) {
-    resolved_references.set(loc, id);
-  }
-
-  // Add method calls
-  for (const [loc, id] of method_calls) {
-    resolved_references.set(loc, id);
-  }
-
-  // Add constructor calls
-  for (const [loc, id] of constructor_calls) {
-    resolved_references.set(loc, id);
-  }
-
-  // Build reverse map: SymbolId -> all locations that reference it
-  const references_to_symbol = new Map<SymbolId, Location[]>();
-  for (const [loc_key, symbol_id] of resolved_references) {
-    const locs = references_to_symbol.get(symbol_id) || [];
-    locs.push(parse_location_key(loc_key));
-    references_to_symbol.set(symbol_id, locs);
-  }
-
-  // Collect all call references
-  const all_call_references: CallReference[] = [];
-  for (const index of indices.values()) {
-    // Filter for call-type references and convert to CallReference
-    const call_refs = index.references
-      .filter(
-        (
-          ref,
-        ): ref is SymbolReference & {
-          call_type: NonNullable<SymbolReference["call_type"]>;
-        } => ref.call_type !== undefined,
-      )
-      .map(
-        (ref): CallReference => ({
-          location: ref.location,
-          name: ref.name,
-          scope_id: ref.scope_id,
-          call_type: ref.call_type as
-            | "function"
-            | "method"
-            | "constructor"
-            | "super"
-            | "macro",
-          receiver: ref.context?.receiver_location
-            ? {
-              location: ref.context.receiver_location,
-              name: undefined,
-            }
-            : undefined,
-          construct_target: ref.context?.construct_target,
-          enclosing_function_scope_id: find_enclosing_function_scope(
-            ref.scope_id,
-            index.scopes,
-          ),
-        }),
-      );
-    all_call_references.push(...call_refs);
-  }
-
-  // Collect all callable definitions
-  const callable_definitions = new Map<SymbolId, AnyDefinition>();
-  for (const idx of indices.values()) {
-    for (const [id, func] of idx.functions) {
-      callable_definitions.set(id, func);
-    }
-    for (const [id, cls] of idx.classes) {
-      callable_definitions.set(id, cls);
-      // Use Array.isArray to avoid JavaScript's object.constructor property
-      if (Array.isArray(cls.constructor)) {
-        for (const ctor of cls.constructor) {
-          callable_definitions.set(ctor.symbol_id, ctor);
-        }
-      }
-      for (const method of cls.methods) {
-        callable_definitions.set(method.symbol_id, method);
-      }
-    }
-  }
-
-  return {
-    resolved_references,
-    references_to_symbol,
-    references: all_call_references,
-    definitions: callable_definitions,
-  };
+  _file_references: Map<FilePath, readonly SymbolReference[]>,
+  _definitions: DefinitionRegistry,
+  _types: TypeRegistry,
+  _scopes: ScopeRegistry,
+  _exports: ExportRegistry,
+  _imports: ImportGraph,
+  _root_folder: FileSystemFolder,
+): CallReference[] {
+  // @deprecated - This function is stubbed out as it's deprecated.
+  // Use ResolutionRegistry.resolve_calls() instead via the Project class.
+  console.warn("resolve_symbols() is deprecated. Use Project class with ResolutionRegistry instead.");
+  return [];
 }
