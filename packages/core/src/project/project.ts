@@ -180,7 +180,7 @@ export class Project {
     const import_definitions = Array.from(
       semantic_index.imported_symbols.values()
     );
-    this.imports.update_file(file_id, import_definitions);
+    this.imports.update_file(file_id, import_definitions, language, this.root_folder);
 
     // Phase 3: Re-resolve affected files (eager!)
     const affected_files = new Set([file_id, ...dependents]);

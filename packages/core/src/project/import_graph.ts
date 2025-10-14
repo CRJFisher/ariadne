@@ -1,4 +1,6 @@
-import type { FilePath, ImportDefinition, ScopeId } from "@ariadnejs/types";
+import type { FilePath, ImportDefinition, ScopeId, Language, SymbolId } from "@ariadnejs/types";
+import type { FileSystemFolder } from "../resolve_references/types";
+import { resolve_module_path } from "../resolve_references/import_resolution/import_resolver";
 
 /**
  * Bidirectional import dependency graph.
@@ -30,15 +32,26 @@ export class ImportGraph {
   /** Scope → ImportDefinitions defined in that scope */
   private imports_by_scope: Map<ScopeId, ImportDefinition[]> = new Map();
 
+  /** Import SymbolId → Resolved file path (pre-computed for performance) */
+  private resolved_import_paths: Map<SymbolId, FilePath> = new Map();
+
   /**
    * Update import relationships for a file.
    * Removes old relationships, establishes new ones.
    * Now accepts ImportDefinition[] to store full metadata.
+   * Pre-resolves module paths for performance.
    *
    * @param file_path - The file being updated
    * @param imports - ImportDefinitions from the file
+   * @param language - Programming language of the file
+   * @param root_folder - Root folder for module resolution
    */
-  update_file(file_path: FilePath, imports: ImportDefinition[]): void {
+  update_file(
+    file_path: FilePath,
+    imports: ImportDefinition[],
+    language: Language,
+    root_folder: FileSystemFolder
+  ): void {
     // Step 1: Get old dependencies to clean up reverse edges
     const old_deps = this.dependencies.get(file_path);
     if (old_deps) {
@@ -56,7 +69,7 @@ export class ImportGraph {
       }
     }
 
-    // Step 2: Clean up old scope index
+    // Step 2: Clean up old scope index and resolved paths
     const old_import_defs = this.imports_by_file.get(file_path);
     if (old_import_defs) {
       for (const imp_def of old_import_defs) {
@@ -70,16 +83,18 @@ export class ImportGraph {
             this.imports_by_scope.set(scope_id, filtered);
           }
         }
+        // Clean up resolved path
+        this.resolved_import_paths.delete(imp_def.symbol_id);
       }
     }
 
-    // Step 3: Extract target files from imports
+    // Step 3: Extract target files from imports and pre-resolve module paths
     const target_files = new Set<FilePath>();
-    
+
     // Store ImportDefinitions for metadata queries
     this.imports_by_file.set(file_path, imports);
 
-    // Build scope index
+    // Build scope index and pre-resolve module paths
     for (const imp_def of imports) {
       const scope_id = imp_def.defining_scope_id;
       if (!this.imports_by_scope.has(scope_id)) {
@@ -90,10 +105,17 @@ export class ImportGraph {
         scope_imports.push(imp_def);
       }
 
-      // For dependency graph: import_path is a ModulePath (e.g., "./utils")
-      // For now, treat it as FilePath - proper resolution will be done by ResolutionRegistry
-      // This is sufficient for dependency tracking
-      target_files.add(imp_def.import_path as unknown as FilePath);
+      // Pre-resolve module path to absolute file path (cache for performance)
+      const resolved_path = resolve_module_path(
+        imp_def.import_path,
+        file_path,
+        language,
+        root_folder
+      );
+      this.resolved_import_paths.set(imp_def.symbol_id, resolved_path);
+
+      // For dependency graph: use resolved path
+      target_files.add(resolved_path);
     }
 
     // Step 4: Update dependencies (file_path → targets)
@@ -339,7 +361,7 @@ export class ImportGraph {
       this.dependents.delete(file_path);
     }
 
-    // Clean up ImportDefinition storage and scope index
+    // Clean up ImportDefinition storage, scope index, and resolved paths
     const old_import_defs = this.imports_by_file.get(file_path);
     if (old_import_defs) {
       for (const imp_def of old_import_defs) {
@@ -353,6 +375,8 @@ export class ImportGraph {
             this.imports_by_scope.set(scope_id, filtered);
           }
         }
+        // Clean up resolved path
+        this.resolved_import_paths.delete(imp_def.symbol_id);
       }
       this.imports_by_file.delete(file_path);
     }
@@ -407,6 +431,17 @@ export class ImportGraph {
   }
 
   /**
+   * Get the resolved file path for an import symbol.
+   * Returns the pre-computed absolute file path that the import points to.
+   *
+   * @param import_symbol_id - The import's symbol ID
+   * @returns Resolved file path, or undefined if import not found
+   */
+  get_resolved_import_path(import_symbol_id: SymbolId): FilePath | undefined {
+    return this.resolved_import_paths.get(import_symbol_id);
+  }
+
+  /**
    * Clear all import relationships from the graph.
    */
   clear(): void {
@@ -414,5 +449,6 @@ export class ImportGraph {
     this.dependents.clear();
     this.imports_by_file.clear();
     this.imports_by_scope.clear();
+    this.resolved_import_paths.clear();
   }
 }

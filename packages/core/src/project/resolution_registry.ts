@@ -19,13 +19,8 @@ import { resolve_single_method_call } from "../resolve_references/call_resolutio
 import { resolve_single_constructor_call } from "../resolve_references/call_resolution/constructor_resolver";
 import { find_enclosing_function_scope } from "../index_single_file/scopes/scope_utils";
 
-// Import module path resolution functions
-import {
-  resolve_module_path_typescript,
-  resolve_module_path_javascript,
-  resolve_module_path_python,
-  resolve_module_path_rust,
-} from "../resolve_references/import_resolution";
+// Import module path resolution function
+import { resolve_module_path } from "../resolve_references/import_resolution/import_resolver";
 
 /**
  * Registry for symbol resolution.
@@ -130,6 +125,7 @@ export class ResolutionRegistry {
         root_scope.id,
         new Map(), // Empty parent resolutions at root
         file_id,
+        semantic_indexes,
         exports,
         imports,
         definitions,
@@ -370,59 +366,6 @@ export class ResolutionRegistry {
   }
 
   /**
-   * Helper: Detect language from file path extension.
-   */
-  private detect_language(file_path: FilePath): Language {
-    const ext = file_path.split(".").pop()?.toLowerCase();
-    switch (ext) {
-      case "ts":
-      case "tsx":
-        return "typescript" as Language;
-      case "js":
-      case "jsx":
-        return "javascript" as Language;
-      case "py":
-        return "python" as Language;
-      case "rs":
-        return "rust" as Language;
-      default:
-        throw new Error(`Unsupported file extension: ${ext}`);
-    }
-  }
-
-  /**
-   * Helper: Resolve module path to absolute FilePath.
-   * Delegates to language-specific resolvers.
-   */
-  private resolve_module_path(
-    import_path: ModulePath,
-    from_file: FilePath,
-    language: Language,
-    root_folder: FileSystemFolder
-  ): FilePath {
-    switch (language) {
-      case "javascript":
-        return resolve_module_path_javascript(
-          import_path,
-          from_file,
-          root_folder
-        );
-      case "typescript":
-        return resolve_module_path_typescript(
-          import_path,
-          from_file,
-          root_folder
-        );
-      case "python":
-        return resolve_module_path_python(import_path, from_file, root_folder);
-      case "rust":
-        return resolve_module_path_rust(import_path, from_file, root_folder);
-      default:
-        throw new Error(`Unsupported language: ${language}`);
-    }
-  }
-
-  /**
    * Recursively resolve all symbols in a scope and its children.
    * Implements same shadowing algorithm as build_resolvers_recursive,
    * but resolves IMMEDIATELY instead of creating closures.
@@ -436,8 +379,9 @@ export class ResolutionRegistry {
    * @param scope_id - Current scope to resolve
    * @param parent_resolutions - Resolutions inherited from parent scope
    * @param file_path - File containing this scope
+   * @param semantic_indexes - Semantic indexes (for language lookup)
    * @param exports - Export registry (for resolve_export_chain)
-   * @param imports - Import graph (for get_scope_imports)
+   * @param imports - Import graph (for get_scope_imports and resolved paths)
    * @param definitions - Definition registry (for get_scope_definitions)
    * @param scopes - Scope registry (for scope tree traversal)
    * @param root_folder - For module path resolution
@@ -447,6 +391,7 @@ export class ResolutionRegistry {
     scope_id: ScopeId,
     parent_resolutions: ReadonlyMap<SymbolName, SymbolId>,
     file_path: FilePath,
+    semantic_indexes: ReadonlyMap<FilePath, SemanticIndex>,
     exports: ExportRegistry,
     imports: ImportGraph,
     definitions: DefinitionRegistry,
@@ -467,20 +412,24 @@ export class ResolutionRegistry {
         resolved = imp_def.symbol_id;
       } else {
         // Named/default: resolve via export chain
-        // Detect language from file path
-        const language = this.detect_language(file_path);
+        // Use pre-resolved path from ImportGraph (cached for performance)
+        const source_file = imports.get_resolved_import_path(imp_def.symbol_id);
 
-        // Resolve the source file path
-        const source_file = this.resolve_module_path(
-          imp_def.import_path,
-          file_path,
-          language,
-          root_folder
-        );
+        if (!source_file) {
+          // Import path couldn't be resolved - skip this import
+          continue;
+        }
 
         // Get the imported symbol name (original_name for aliased imports, else name)
         const import_name = (imp_def.original_name ||
           imp_def.name) as SymbolName;
+
+        // Get source file's language from semantic_indexes
+        const source_index = semantic_indexes.get(source_file);
+        if (!source_index) {
+          // Source file not indexed yet - skip this import
+          continue;
+        }
 
         // Create a bound resolver function for ExportRegistry
         const resolve_module_bound = (
@@ -488,13 +437,14 @@ export class ResolutionRegistry {
           from_file: FilePath,
           lang: Language
         ) =>
-          this.resolve_module_path(import_path, from_file, lang, root_folder);
+          resolve_module_path(import_path, from_file, lang, root_folder);
 
         resolved = exports.resolve_export_chain(
           source_file,
           import_name,
           imp_def.import_kind,
-          resolve_module_bound
+          resolve_module_bound,
+          semantic_indexes
         );
       }
 
@@ -522,6 +472,7 @@ export class ResolutionRegistry {
           child_id,
           scope_resolutions, // Pass down as parent
           file_path,
+          semantic_indexes,
           exports,
           imports,
           definitions,

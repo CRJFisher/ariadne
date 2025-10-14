@@ -135,7 +135,6 @@ export function build_semantic_index(
   const scope_to_definitions = build_scope_to_definitions(builder_result);
 
   // Return complete semantic index (single-file)
-  // Note: exported_symbols is now built by ExportRegistry
   return {
     file_path: file.file_path,
     language,

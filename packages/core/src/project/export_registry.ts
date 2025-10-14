@@ -306,6 +306,7 @@ export class ExportRegistry {
    * @param export_name - Name of the exported symbol (ignored for default imports)
    * @param import_kind - Type of import (named, default, or namespace)
    * @param resolve_module - Function to resolve module paths (from import_resolver)
+   * @param semantic_indexes - Semantic indexes for language lookup
    * @param visited - Set of visited exports for cycle detection (internal)
    * @returns Resolved symbol_id or null if not found
    */
@@ -314,6 +315,7 @@ export class ExportRegistry {
     export_name: SymbolName,
     import_kind: "named" | "default" | "namespace",
     resolve_module: (import_path: ModulePath, from_file: FilePath, language: Language) => FilePath,
+    semantic_indexes: ReadonlyMap<FilePath, SemanticIndex>,
     visited: Set<string> = new Set()
   ): SymbolId | null {
     // Detect cycles
@@ -340,8 +342,13 @@ export class ExportRegistry {
     if (export_meta.is_reexport && export_meta.import_def) {
       const imp_def = export_meta.import_def;
 
-      // Detect language from source file (the file doing the re-export)
-      const language = this.detect_language(source_file);
+      // Get language from semantic_indexes (the file doing the re-export)
+      const source_index = semantic_indexes.get(source_file);
+      if (!source_index) {
+        // Source file not indexed - cannot resolve re-export
+        return null;
+      }
+      const language = source_index.language;
 
       // Resolve the module path to get the target file
       const resolved_file = resolve_module(
@@ -360,32 +367,12 @@ export class ExportRegistry {
         original_name,
         next_import_kind,
         resolve_module,
+        semantic_indexes,
         visited
       );
     }
 
     // Not a re-export, return the symbol
     return export_meta.symbol_id;
-  }
-
-  /**
-   * Helper: Detect language from file path extension.
-   */
-  private detect_language(file_path: FilePath): Language {
-    const ext = file_path.split(".").pop()?.toLowerCase();
-    switch (ext) {
-      case "ts":
-      case "tsx":
-        return "typescript" as Language;
-      case "js":
-      case "jsx":
-        return "javascript" as Language;
-      case "py":
-        return "python" as Language;
-      case "rs":
-        return "rust" as Language;
-      default:
-        throw new Error(`Unsupported file extension: ${ext}`);
-    }
   }
 }
