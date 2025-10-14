@@ -14,6 +14,7 @@ import type { DefinitionRegistry } from "./definition_registry";
 import type { TypeRegistry } from "./type_registry";
 import type { ScopeRegistry } from "./scope_registry";
 import type { ExportRegistry } from "./export_registry";
+import type { ReferenceRegistry } from "./reference_registry";
 import type { ImportGraph } from "./import_graph";
 import { resolve_single_method_call } from "../resolve_references/call_resolution";
 import { resolve_single_constructor_call } from "../resolve_references/call_resolution/constructor_resolver";
@@ -29,6 +30,7 @@ import { resolve_module_path } from "../resolve_references/import_resolution/imp
  * - Resolves ALL symbols immediately when a file is updated
  * - Two-phase resolution: name resolution + call resolution
  * - Stores both scope-based mappings and resolved call references
+ * - Depends on ReferenceRegistry as source of truth for raw references
  *
  * Resolution Process:
  * 1. When a file changes, resolve_files() is called from Project
@@ -41,7 +43,7 @@ import { resolve_module_path } from "../resolve_references/import_resolution/imp
  *      • Recurse to children
  *    - Store: Map<ScopeId, Map<SymbolName, SymbolId>>
  * 3. PHASE 2 - Call resolution (type-aware):
- *    - Extract call references from semantic indexes
+ *    - Get call references from ReferenceRegistry
  *    - Resolve function calls using scope resolution
  *    - Resolve method calls using type information
  *    - Resolve constructor calls using type information
@@ -82,12 +84,13 @@ export class ResolutionRegistry {
    *   4. Store scope-based resolutions
    *
    * PHASE 2 - Call Resolution (type-aware):
-   *   1. Extract call references from semantic indexes
+   *   1. Get call references from ReferenceRegistry
    *   2. Resolve function/method/constructor calls
    *   3. Store resolved call references
    *
    * @param file_ids - Files that need resolution updates
-   * @param semantic_indexes - All semantic indexes (for call resolution)
+   * @param references - Reference registry (source of truth for references)
+   * @param semantic_indexes - All semantic indexes (for scopes during call resolution)
    * @param definitions - Definition registry
    * @param scopes - Scope registry
    * @param exports - Export registry
@@ -97,6 +100,7 @@ export class ResolutionRegistry {
    */
   resolve_files(
     file_ids: Set<FilePath>,
+    references: ReferenceRegistry,
     semantic_indexes: ReadonlyMap<FilePath, SemanticIndex>,
     definitions: DefinitionRegistry,
     scopes: ScopeRegistry,
@@ -140,12 +144,12 @@ export class ResolutionRegistry {
     }
 
     // PHASE 2: Resolve all call references (function/method/constructor calls)
-    // Extract references from semantic indexes for affected files
+    // Get references from ReferenceRegistry (source of truth)
     const file_references = new Map<FilePath, readonly SymbolReference[]>();
     for (const file_id of file_ids) {
-      const index = semantic_indexes.get(file_id);
-      if (index) {
-        file_references.set(file_id, index.references);
+      const refs = references.get_file_references(file_id);
+      if (refs.length > 0) {
+        file_references.set(file_id, refs);
       }
     }
 

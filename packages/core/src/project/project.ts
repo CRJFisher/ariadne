@@ -7,6 +7,7 @@ import { DefinitionRegistry } from "./definition_registry";
 import { TypeRegistry } from "./type_registry";
 import { ScopeRegistry } from "./scope_registry";
 import { ExportRegistry } from "./export_registry";
+import { ReferenceRegistry } from "./reference_registry";
 import { ImportGraph } from "./import_graph";
 import { ResolutionRegistry } from "./resolution_registry";
 import { type CallGraph } from "@ariadnejs/types";
@@ -112,6 +113,7 @@ export class Project {
   private types: TypeRegistry = new TypeRegistry();
   private scopes: ScopeRegistry = new ScopeRegistry();
   private exports: ExportRegistry = new ExportRegistry();
+  private references: ReferenceRegistry = new ReferenceRegistry();
   private imports: ImportGraph = new ImportGraph();
 
   // ===== Resolution layer (always up-to-date) =====
@@ -176,6 +178,9 @@ export class Project {
     // ExportRegistry now processes exports directly from SemanticIndex
     this.exports.update_file(file_id, semantic_index);
 
+    // ReferenceRegistry persists references (source of truth for ResolutionRegistry)
+    this.references.update_file(file_id, semantic_index.references);
+
     // Pass ImportDefinitions directly to ImportGraph
     const import_definitions = Array.from(
       semantic_index.imported_symbols.values()
@@ -186,6 +191,7 @@ export class Project {
     const affected_files = new Set([file_id, ...dependents]);
     this.resolutions.resolve_files(
       affected_files,
+      this.references,
       this.semantic_indexes,
       this.definitions,
       this.scopes,
@@ -233,6 +239,7 @@ export class Project {
     this.types.remove_file(file_id);
     this.scopes.remove_file(file_id);
     this.exports.remove_file(file_id);
+    this.references.remove_file(file_id);
     this.imports.remove_file(file_id);
 
     // Remove resolutions for deleted file
@@ -242,6 +249,7 @@ export class Project {
     if (dependents.size > 0) {
       this.resolutions.resolve_files(
         dependents,
+        this.references,
         this.semantic_indexes,
         this.definitions,
         this.scopes,
@@ -464,6 +472,7 @@ export class Project {
     this.types.clear();
     this.scopes.clear();
     this.exports.clear();
+    this.references.clear();
     this.imports.clear();
     this.resolutions.clear();
   }
