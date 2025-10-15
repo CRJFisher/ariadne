@@ -8,6 +8,58 @@
 - we _never_ add 'extra' functionality outside of this intention tree, even if it is 'well-meaning' and 'might' be used one day. 'extra', surplus code reduces our longterm velocity. it is much better to spend effort reviewing narrow, focussed code and its integration, rather than trying to cover a wide surface area.
 - all namings and documentation should _only_ reflect the trunk and branches of the intention tree, not the 'differential' changes we make to the codebase. E.g. if we're changing 'method_resolution.ts', we don't just create a file like 'enhanced_method_resolution.ts', we just improve 'method_resolution.ts', leaving the core intention tree intact.
 
+## Documentation Style: Canonical and Self-Contained
+
+When writing or updating documentation, always write in a **canonical, self-contained** style. Documentation should describe the system as it currently IS, not as it was or how it changed.
+
+**DO:**
+
+- ✅ Describe the system as it currently IS
+- ✅ Write in present tense ("The system works like this...")
+- ✅ Be authoritative and direct
+- ✅ Assume reader has no prior knowledge or context
+- ✅ Focus on WHAT to do, not what NOT to do
+- ✅ State the approach confidently without justification
+
+**DON'T:**
+
+- ❌ Reference "old approaches," "previous versions," or "deprecated methods"
+- ❌ Use "revised," "updated," or "new" framing
+- ❌ Explain what you're NOT doing or alternative approaches you rejected
+- ❌ Include defensive justifications for design choices
+- ❌ Write comparisons to alternatives (unless teaching concepts)
+- ❌ Use apologetic or hedging language
+- ❌ Assume reader knows the history or evolution
+
+**Why:** Documentation should be the authoritative source of truth about the current system. Historical context belongs in commit messages, architecture decision records (separate files), or changelog files - not in the canonical system documentation.
+
+**Example of RELATIVE writing (bad):**
+
+```markdown
+⚠️ IMPORTANT: Revised Scope
+
+Original plan: Three-stage JSON pipeline
+Revised plan: Semantic index JSON only
+Reason: Solves the real problem without complexity
+
+What we're NOT doing:
+
+- ❌ JSON for registry outputs
+- ❌ JSON for call graph outputs
+```
+
+**Example of CANONICAL writing (good):**
+
+```markdown
+## Scope
+
+The fixture system uses JSON for semantic index outputs. These fixtures serve as inputs for registry and call graph integration tests.
+
+JSON fixtures represent semantic index outputs only. Registry and call graph outputs are verified with code assertions.
+```
+
+**Note:** This applies to system documentation (README, task docs, architecture docs). Implementation notes in task files may reference history when documenting specific changes made.
+
 ### Core
 
 - `packages/core/src/index_single_file`
@@ -19,7 +71,6 @@
 - `packages/core/src/resolve_references`
   - resolves references to symbols, matching symbol-names to symbol-ids
   - resolves symbols by name and scope - start at the bottom of the scope tree and work up i.e. lexical scope resolution
-  - .... on-demand resolution
 - `packages/core/src/trace_call_graph`
   - detects the call graph of a codebase
   - uses the semantic index and resolve_references to find the entry points to the codebase caller scopes that are never called (internally)

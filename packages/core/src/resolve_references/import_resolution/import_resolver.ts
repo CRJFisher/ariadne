@@ -16,6 +16,7 @@ import type {
 import type { SemanticIndex } from "../../index_single_file/semantic_index";
 import type { ImportSpec, NamespaceSources, FileSystemFolder } from "../types";
 import type { ExportRegistry } from "../registries/export_registry";
+import type { DefinitionRegistry } from "../registries/definition_registry";
 import { resolve_module_path_javascript } from "./import_resolver.javascript";
 import { resolve_module_path_typescript } from "./import_resolver.typescript";
 import { resolve_module_path_python } from "./import_resolver.python";
@@ -27,44 +28,62 @@ import * as path from "path";
  * Used by ScopeResolverIndex when building resolver functions.
  *
  * @param scope_id - The scope to extract imports from
- * @param index - The semantic index for the current file
+ * @param index - The semantic index for the current file (for language metadata)
  * @param file_path - Path to the file being processed
  * @param root_folder - Root of the file system tree
+ * @param definitions - Optional DefinitionRegistry for querying imports (recommended)
  * @returns Array of import specifications
  */
 export function extract_import_specs(
   scope_id: ScopeId,
   index: SemanticIndex,
   file_path: FilePath,
-  root_folder: FileSystemFolder
+  root_folder: FileSystemFolder,
+  definitions?: DefinitionRegistry
 ): ImportSpec[] {
   const specs: ImportSpec[] = [];
 
-  // Find all imports in this scope
-  for (const import_def of (index.scope_to_definitions
-    .get(scope_id)
-    ?.get("import") || []) as ImportDefinition[]) {
-    if (import_def.defining_scope_id === scope_id) {
-      // Resolve the module path to a file path using language-specific rules
-      const source_file = resolve_module_path(
-        import_def.import_path,
-        file_path,
-        index.language,
-        root_folder
-      );
+  // Get imports from DefinitionRegistry if available, otherwise fall back to SemanticIndex
+  let import_defs: ImportDefinition[];
+  if (definitions) {
+    import_defs = definitions.get_scope_definitions_by_kind(
+      scope_id,
+      file_path,
+      "import"
+    ) as ImportDefinition[];
+  } else {
+    // Legacy path: use SemanticIndex.scope_to_definitions
+    import_defs = (index.scope_to_definitions
+      .get(scope_id)
+      ?.get("import") || []) as ImportDefinition[];
+  }
 
-      specs.push({
-        symbol_id: import_def.symbol_id,
-        local_name: import_def.name,
-        source_file,
-        // For named imports: use original_name (if aliased) or name
-        // For default imports: original_name is undefined, so falls back to name
-        //   (Note: import_name is ignored when import_kind is "default")
-        // For namespace imports: name is the namespace identifier
-        import_name: import_def.original_name || import_def.name,
-        import_kind: import_def.import_kind,
-      });
+  for (const import_def of import_defs) {
+    // DefinitionRegistry already filters by scope, so no need to check defining_scope_id
+    // Legacy path needs the check for backwards compatibility
+    if (!definitions && import_def.defining_scope_id !== scope_id) {
+      continue;
     }
+
+    // Resolve the module path to a file path using language-specific rules
+    const source_file = resolve_module_path(
+      import_def.import_path,
+      file_path,
+      index.language,
+      root_folder
+    );
+
+    specs.push({
+      symbol_id: import_def.symbol_id,
+      local_name: import_def.name,
+      source_file,
+      // For named imports: use original_name (if aliased) or name
+      // For default imports: original_name is undefined, so falls back to name
+      //   (Note: import_name is ignored when import_kind is "default")
+      // For namespace imports: name is the namespace identifier
+      import_name: import_def.original_name || import_def.name,
+      import_kind: import_def.import_kind,
+    });
   }
 
   return specs;

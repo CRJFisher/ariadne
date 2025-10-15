@@ -20,8 +20,6 @@ import type {
   TypeAliasDefinition,
   SymbolReference,
   Location,
-  AnyDefinition,
-  SymbolKind,
 } from "@ariadnejs/types";
 
 import { query_tree } from "./query_code_tree";
@@ -58,10 +56,6 @@ export interface SemanticIndex {
 
   /** Scope data */
   readonly scopes: ReadonlyMap<ScopeId, LexicalScope>;
-  readonly scope_to_definitions: ReadonlyMap<
-    ScopeId,
-    ReadonlyMap<SymbolKind, AnyDefinition[]>
-  >;
 
   /** Definitions */
   readonly functions: ReadonlyMap<SymbolId, FunctionDefinition>;
@@ -131,10 +125,8 @@ export function build_semantic_index(
     file.file_path
   );
 
-  // PASS 5: Build name index
-  const scope_to_definitions = build_scope_to_definitions(builder_result);
-
   // Return complete semantic index (single-file)
+  // Note: scope_to_definitions has been moved to DefinitionRegistry
   return {
     file_path: file.file_path,
     language,
@@ -149,7 +141,6 @@ export function build_semantic_index(
     types: builder_result.types,
     imported_symbols: builder_result.imports,
     references: all_references,
-    scope_to_definitions,
   };
 }
 
@@ -240,40 +231,6 @@ function process_definitions(
   }
 
   return builder.build();
-}
-
-/**
- * Build name-based lookup index from all definitions
- */
-function build_scope_to_definitions(
-  result: BuilderResult
-): Map<ScopeId, Map<SymbolKind, AnyDefinition[]>> {
-  const index = new Map<ScopeId, Map<SymbolKind, AnyDefinition[]>>();
-
-  const add_to_index = (def: AnyDefinition) => {
-    // Re-exports don't create local bindings - exclude them from scope_to_definitions.
-    // Re-exports are ImportDefinitions with export.is_reexport === true.
-    // They still appear in imported_symbols and exported_symbols for chain resolution,
-    // but are not available for local scope resolution.
-    if (def.kind === "import" && def.export?.is_reexport) {
-      return;
-    }
-
-    const existing = index.get(def.defining_scope_id)?.get(def.kind) || [];
-    existing.push(def);
-    index.get(def.defining_scope_id)?.set(def.kind, existing);
-  };
-
-  result.functions.forEach((def) => add_to_index(def));
-  result.classes.forEach((def) => add_to_index(def));
-  result.variables.forEach((def) => add_to_index(def));
-  result.interfaces.forEach((def) => add_to_index(def));
-  result.enums.forEach((def) => add_to_index(def));
-  result.namespaces.forEach((def) => add_to_index(def));
-  result.types.forEach((def) => add_to_index(def));
-  result.imports.forEach((def) => add_to_index(def));
-
-  return index;
 }
 
 /**

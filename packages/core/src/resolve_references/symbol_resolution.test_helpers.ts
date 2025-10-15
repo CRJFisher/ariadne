@@ -169,46 +169,6 @@ function infer_language_from_path(
   }
 }
 
-/**
- * Build scope_to_definitions map from all definitions
- * Mimics the behavior of build_scope_to_definitions in semantic_index.ts
- */
-function build_test_scope_to_definitions(definitions: {
-  functions: Map<SymbolId, FunctionDefinition>;
-  classes: Map<SymbolId, ClassDefinition>;
-  variables: Map<SymbolId, VariableDefinition>;
-  interfaces: Map<SymbolId, InterfaceDefinition>;
-  imports: Map<SymbolId, ImportDefinition>;
-  enums: Map<SymbolId, EnumDefinition>;
-  namespaces: Map<SymbolId, NamespaceDefinition>;
-  types: Map<SymbolId, TypeAliasDefinition>;
-}): Map<ScopeId, Map<SymbolKind, AnyDefinition[]>> {
-  const index = new Map<ScopeId, Map<SymbolKind, AnyDefinition[]>>();
-
-  const add_to_index = (def: AnyDefinition) => {
-    // Ensure scope map exists
-    if (!index.has(def.defining_scope_id)) {
-      index.set(def.defining_scope_id, new Map());
-    }
-
-    const scope_map = index.get(def.defining_scope_id)!;
-    const existing = scope_map.get(def.kind) || [];
-    existing.push(def);
-    scope_map.set(def.kind, existing);
-  };
-
-  // Add all definition types
-  definitions.functions.forEach(add_to_index);
-  definitions.classes.forEach(add_to_index);
-  definitions.variables.forEach(add_to_index);
-  definitions.interfaces.forEach(add_to_index);
-  definitions.enums.forEach(add_to_index);
-  definitions.namespaces.forEach(add_to_index);
-  definitions.types.forEach(add_to_index);
-  definitions.imports.forEach(add_to_index);
-
-  return index;
-}
 
 export function create_test_index(
   file_path: FilePath,
@@ -231,10 +191,6 @@ export function create_test_index(
     imports_raw?: Map<SymbolId, ImportDefinition>;
     type_bindings_raw?: Map<LocationKey, SymbolName>;
     type_members_raw?: Map<SymbolId, TypeMemberInfo>;
-    scope_to_definitions_raw?: Map<
-      ScopeId,
-      ReadonlyMap<SymbolKind, AnyDefinition[]>
-    >;
 
     // Misc options
     language?: "typescript" | "javascript" | "python" | "rust";
@@ -526,19 +482,8 @@ export function create_test_index(
     }
   }
 
-  // Build scope_to_definitions map automatically if not provided
-  const scope_to_definitions =
-    options.scope_to_definitions_raw ||
-    build_test_scope_to_definitions({
-      functions,
-      classes,
-      variables,
-      interfaces,
-      imports,
-      enums: new Map(),
-      namespaces: new Map(),
-      types: new Map(),
-    });
+  // Note: scope_to_definitions has been moved to DefinitionRegistry
+  // Tests that need scope-based definition lookup should use DefinitionRegistry directly
 
   return {
     file_path,
@@ -554,7 +499,6 @@ export function create_test_index(
     types: new Map(),
     imported_symbols: imports,
     references: options.references || [],
-    scope_to_definitions,
     type_bindings,
     type_members,
     type_alias_metadata: new Map(),

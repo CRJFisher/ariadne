@@ -7,6 +7,7 @@ import type {
   SymbolName,
   CallableDefinition,
   ExportableDefinition,
+  SymbolKind,
 } from "@ariadnejs/types";
 import { is_exportable, location_key } from "@ariadnejs/types";
 
@@ -45,9 +46,20 @@ export class DefinitionRegistry {
   private by_scope: Map<ScopeId, Map<SymbolName, SymbolId>> = new Map();
 
   /**
+   * Scope-to-definitions index: FilePath → (ScopeId → (SymbolKind → AnyDefinition[]))
+   * Built eagerly during update_file(), provides O(1) lookup.
+   * Maps each scope to its definitions, grouped by SymbolKind.
+   * Matches SemanticIndex.scope_to_definitions structure but stored in registry.
+   */
+  private scope_to_definitions_index: Map<
+    FilePath,
+    Map<ScopeId, Map<SymbolKind, AnyDefinition[]>>
+  > = new Map();
+
+  /**
    * Update definitions for a file.
-   * Removes old definitions from the file first, then adds new ones.
-   * Also computes and stores the member index and scope index for this file.
+   * Removes old definitions from this file first, then adds new ones.
+   * Also computes and stores the member index, scope index, and scope-to-definitions index.
    *
    * @param file_id - The file being updated
    * @param definitions - New definitions from the file
@@ -101,6 +113,9 @@ export class DefinitionRegistry {
     if (symbol_ids.size > 0) {
       this.by_file.set(file_id, symbol_ids);
     }
+
+    // Step 3: Build scope-to-definitions index for this file
+    this.scope_to_definitions_index.set(file_id, this.build_scope_to_definitions_index(definitions));
   }
 
   /**
@@ -226,6 +241,89 @@ export class DefinitionRegistry {
   }
 
   /**
+   * Get definitions in a specific scope, optionally filtered by kind.
+   * O(1) lookup since index is built during update_file().
+   *
+   * This method provides the same functionality as SemanticIndex.scope_to_definitions
+   * but is centralized in the registry layer.
+   *
+   * @param scope_id - The scope to query
+   * @param file_id - The file containing the scope
+   * @param kind - Optional filter by SymbolKind (e.g., "import", "function")
+   * @returns Array of definitions in the scope, filtered by kind if specified
+   */
+  get_scope_definitions_by_kind(
+    scope_id: ScopeId,
+    file_id: FilePath,
+    kind?: SymbolKind
+  ): AnyDefinition[] {
+    const file_index = this.scope_to_definitions_index.get(file_id);
+    if (!file_index) {
+      return [];
+    }
+
+    const scope_defs = file_index.get(scope_id);
+    if (!scope_defs) {
+      return [];
+    }
+
+    if (kind) {
+      return scope_defs.get(kind) ?? [];
+    }
+
+    // Return all definitions if no kind specified
+    return Array.from(scope_defs.values()).flat();
+  }
+
+  /**
+   * Build scope-to-definitions index from a list of definitions.
+   * Maps each scope to its definitions, grouped by SymbolKind.
+   *
+   * Mimics the logic from SemanticIndex.build_scope_to_definitions().
+   * Excludes re-exports (they don't create local bindings).
+   *
+   * @param definitions - The definitions to index
+   * @returns Map of ScopeId → (SymbolKind → AnyDefinition[])
+   */
+  private build_scope_to_definitions_index(
+    definitions: AnyDefinition[]
+  ): Map<ScopeId, Map<SymbolKind, AnyDefinition[]>> {
+    const index = new Map<ScopeId, Map<SymbolKind, AnyDefinition[]>>();
+
+    for (const def of definitions) {
+      // Re-exports don't create local bindings - exclude them from scope_to_definitions.
+      // Re-exports are ImportDefinitions with export.is_reexport === true.
+      // They still appear in imported_symbols and exported_symbols for chain resolution,
+      // but are not available for local scope resolution.
+      if (def.kind === "import" && def.export?.is_reexport) {
+        continue;
+      }
+
+      const scope_id = def.defining_scope_id;
+
+      if (!index.has(scope_id)) {
+        index.set(scope_id, new Map());
+      }
+
+      const scope_map = index.get(scope_id);
+      if (!scope_map) {
+        continue;
+      }
+
+      if (!scope_map.has(def.kind)) {
+        scope_map.set(def.kind, []);
+      }
+
+      const kind_array = scope_map.get(def.kind);
+      if (kind_array) {
+        kind_array.push(def);
+      }
+    }
+
+    return index;
+  }
+
+  /**
    * Remove all definitions from a file.
    *
    * @param file_id - The file to remove
@@ -265,6 +363,9 @@ export class DefinitionRegistry {
 
     // Remove file from file index
     this.by_file.delete(file_id);
+
+    // Remove scope-to-definitions index for this file
+    this.scope_to_definitions_index.delete(file_id);
   }
 
   /**
@@ -285,5 +386,6 @@ export class DefinitionRegistry {
     this.location_to_symbol.clear();
     this.member_index.clear();
     this.by_scope.clear();
+    this.scope_to_definitions_index.clear();
   }
 }

@@ -3,254 +3,288 @@
 **Status:** Not Started
 **Parent:** task-epic-11.116
 **Depends On:** task-epic-11.116.2, task-epic-11.116.3
-**Priority:** Medium
-**Created:** 2025-10-03
+**Priority:** High (blocks testing tasks)
+**Created:** 2025-10-14
 
 ## Overview
 
-Use the fixture generation tooling from 116.2 to generate the initial set of JSON fixtures for all code fixtures organized in 116.3. This creates the "golden output" fixtures that integration tests will validate against.
+Use the fixture generation tooling (from 116.2) to generate semantic index JSON fixtures from all organized code files (from 116.3). This creates the fixture library that will be used by all integration tests.
+
+## Prerequisites
+
+- ✅ Task 116.1 complete (schema designed)
+- ✅ Task 116.2 complete (tooling implemented)
+- ✅ Task 116.3 complete (code fixtures organized)
 
 ## Objectives
 
-1. Generate semantic_index JSON for all languages
-2. Generate symbol_resolution JSON for all languages
-3. Generate call_graph JSON for all languages
-4. Review and validate generated fixtures
-5. Commit baseline fixtures to git
+1. Generate semantic index JSON for all code fixtures
+2. Verify generated JSON is valid and complete
+3. Review and commit JSON fixtures to version control
+4. Document fixture regeneration workflow
 
-## Sub-tasks
+## Implementation Steps
 
-### 116.4.1: Generate semantic_index JSON for All Languages
+### 1. Generate All Fixtures (0.5 hours)
 
-Run the semantic_index fixture generator on all code fixtures:
-
-```bash
-npx tsx scripts/generate_semantic_index_fixtures.ts --all
-```
-
-**Expected output structure:**
-```
-fixtures/
-  typescript/semantic_index/
-    classes/
-      basic_class.semantic_index.json
-      inheritance.semantic_index.json
-      ...
-    functions/
-      ...
-  python/semantic_index/
-    ...
-  rust/semantic_index/
-    ...
-  javascript/semantic_index/
-    ...
-```
-
-**Actions:**
-1. Run generator for each language
-2. Verify all code fixtures have corresponding JSON
-3. Check for any parsing errors or warnings
-4. Review sample outputs for correctness
-5. Ensure deterministic output (git diff should be clean on re-run)
-
-**Deliverables:**
-- [ ] All TypeScript code fixtures have semantic_index JSON
-- [ ] All Python code fixtures have semantic_index JSON
-- [ ] All Rust code fixtures have semantic_index JSON
-- [ ] All JavaScript code fixtures have semantic_index JSON
-- [ ] No parsing errors reported
-- [ ] JSON format matches schema from 116.1.2
-
-### 116.4.2: Generate symbol_resolution JSON for All Languages
-
-Run the symbol_resolution fixture generator on all semantic_index fixtures:
+Run the generation tool on all languages:
 
 ```bash
-npx tsx scripts/generate_symbol_resolution_fixtures.ts --all
+cd packages/core
+
+# Generate all fixtures
+npm run generate-fixtures -- --all
+
+# Or per-language
+npm run generate-fixtures:ts
+npm run generate-fixtures:py
+npm run generate-fixtures:rs
+npm run generate-fixtures:js
 ```
 
-**Expected output structure:**
+**Expected output:**
 ```
-fixtures/
-  typescript/resolved_symbols/
-    classes/
-      basic_class.resolved_symbols.json
-      ...
+=== TYPESCRIPT ===
+
+Generating fixture for fixtures/typescript/code/classes/basic_class.ts...
+  ✓ Written to fixtures/typescript/semantic_index/classes/basic_class.json
+
+Generating fixture for fixtures/typescript/code/classes/inheritance.ts...
+  ✓ Written to fixtures/typescript/semantic_index/classes/inheritance.json
+
+... (all fixtures)
+
+Found 25 typescript files
+Generated 25 fixtures successfully
 ```
 
-**Actions:**
-1. Run generator using semantic_index JSON as input
-2. Verify all semantic_index fixtures have corresponding resolved_symbols JSON
-3. Check for resolution failures or unresolved references
-4. Review sample outputs:
-   - Check that references are resolved to correct definitions
-   - Verify symbol ID mapping is correct
-   - Check scope resolution is accurate
-5. Document any expected unresolved references (e.g., external library calls)
+### 2. Verify Generated JSON (1 hour)
 
-**Deliverables:**
-- [ ] All semantic_index fixtures have corresponding resolved_symbols JSON
-- [ ] JSON format matches schema from 116.1.3
-- [ ] Known limitations documented (e.g., cross-file resolution)
-- [ ] Baseline established for what should/shouldn't resolve
+**Automated verification:**
 
-### 116.4.3: Generate call_graph JSON for All Languages
+Create `scripts/verify_fixtures.ts`:
 
-Run the call_graph fixture generator on all resolved_symbols fixtures:
+```typescript
+#!/usr/bin/env tsx
 
+import { glob } from "glob";
+import path from "path";
+import fs from "fs";
+import { deserialize_semantic_index } from "../tests/fixtures/deserialize_semantic_index";
+
+let errors = 0;
+
+// Find all generated JSON fixtures
+const fixtures = glob.sync("tests/fixtures/**/semantic_index/**/*.json");
+
+console.log(`Verifying ${fixtures.length} fixtures...\n`);
+
+for (const fixture_path of fixtures) {
+  try {
+    // Try to load and deserialize
+    const json_string = fs.readFileSync(fixture_path, "utf-8");
+    const json = JSON.parse(json_string);
+    const index = deserialize_semantic_index(json);
+
+    // Basic sanity checks
+    if (!index.file_path) {
+      throw new Error("Missing file_path");
+    }
+    if (!index.root_scope_id) {
+      throw new Error("Missing root_scope_id");
+    }
+    if (index.scopes.size === 0) {
+      throw new Error("No scopes found");
+    }
+
+    console.log(`✓ ${path.relative("tests/fixtures", fixture_path)}`);
+  } catch (error) {
+    console.error(`✗ ${path.relative("tests/fixtures", fixture_path)}`);
+    console.error(`  Error: ${error.message}`);
+    errors++;
+  }
+}
+
+console.log(`\n${fixtures.length - errors} passed, ${errors} failed`);
+process.exit(errors > 0 ? 1 : 0);
+```
+
+Run verification:
 ```bash
-npx tsx scripts/generate_call_graph_fixtures.ts --all
+npm run verify-fixtures
 ```
 
-**Expected output structure:**
+**Manual spot-checks:**
+
+Open a few JSON files and verify:
+- Formatting is readable (2-space indents)
+- Structure matches schema
+- Symbol IDs look correct
+- Scope relationships make sense
+- References are captured
+
+Example review:
+```bash
+# Look at a class fixture
+cat tests/fixtures/typescript/semantic_index/classes/basic_class.json | head -50
+
+# Check a complex one
+cat tests/fixtures/typescript/semantic_index/modules/imports.json | head -100
 ```
-fixtures/
-  typescript/call_graph/
-    classes/
-      basic_class.call_graph.json
-      ...
-```
 
-**Actions:**
-1. Run generator using resolved_symbols JSON as input
-2. Verify all resolved_symbols fixtures have corresponding call_graph JSON
-3. Review sample outputs:
-   - Check that function nodes are created correctly
-   - Verify enclosed_calls are captured
-   - Check entry point detection is accurate
-4. Document entry point semantics for each language
+### 3. Review and Validate (0.5 hours)
 
-**Deliverables:**
-- [ ] All resolved_symbols fixtures have corresponding call_graph JSON
-- [ ] JSON format matches schema from 116.1.4
-- [ ] Entry point detection validated
-- [ ] Call graph structure validated for sample fixtures
+**Check for common issues:**
 
-### 116.4.4: Review and Validate Generated Fixtures
-
-Perform quality review of generated fixtures:
-
-**Validation steps:**
-
-1. **Schema compliance**:
+1. **Missing references:** Ensure call sites are captured
    ```bash
-   npx tsx scripts/manage_fixtures.ts validate
+   # Grep for "references" arrays
+   grep -A 5 '"references":' tests/fixtures/typescript/semantic_index/**/*.json | head -50
    ```
-   - Check all JSON is valid
-   - Verify schema compliance
-   - Check for missing required fields
 
-2. **Pipeline consistency**:
-   - Verify symbol IDs from semantic_index appear in resolved_symbols
-   - Verify symbol IDs from resolved_symbols appear in call_graph
-   - Check location keys are consistent
-
-3. **Manual spot checks**:
-   - Pick 2-3 fixtures per language
-   - Review JSON by hand
-   - Verify it matches expected structure
-   - Check for obvious errors (wrong symbols, missing references, etc.)
-
-4. **Coverage check**:
+2. **Empty fixtures:** Check if any fixtures have no definitions
    ```bash
-   npx tsx scripts/manage_fixtures.ts stats
+   # Find fixtures with empty function/class maps
+   grep -l '"functions": {}' tests/fixtures/typescript/semantic_index/**/*.json
    ```
-   - Verify expected number of fixtures generated
-   - Check for any missing categories
-   - Document coverage gaps
 
-**Deliverables:**
-- [ ] All fixtures pass schema validation
-- [ ] Pipeline consistency verified
-- [ ] Manual review completed for sample fixtures
-- [ ] Coverage stats documented
+3. **Scope trees:** Verify scope parent/child relationships
+   ```bash
+   # Check scope structure in a fixture
+   jq '.scopes | to_entries[] | {id: .key, parent: .value.parent_id}' \
+     tests/fixtures/typescript/semantic_index/classes/basic_class.json
+   ```
 
-## Quality Criteria for Generated Fixtures
+### 4. Commit to Version Control (0.5 hours)
 
-### Semantic Index JSON
+Add fixtures to git:
 
-Should include:
-- ✓ All definitions (functions, classes, variables, etc.)
-- ✓ All references with scope information
-- ✓ Complete scope tree
-- ✓ Type information (where applicable)
-- ✓ Import/export information
-
-### Resolved Symbols JSON
-
-Should include:
-- ✓ All definitions from semantic index
-- ✓ All references with resolution status
-- ✓ Mapping of reference locations to definition IDs
-- ✓ Reverse mapping of definitions to referencing locations
-
-### Call Graph JSON
-
-Should include:
-- ✓ Function nodes for all callable definitions
-- ✓ Enclosed calls for each function
-- ✓ Entry points (uncalled functions)
-- ✓ Resolved call targets
-
-## Handling Issues
-
-If generation reveals bugs or issues:
-
-1. **Parsing errors**: Fix in `build_semantic_index`, then regenerate
-2. **Resolution errors**: Fix in `resolve_symbols`, then regenerate
-3. **Call graph errors**: Fix in `detect_call_graph`, then regenerate
-4. **Schema issues**: Update schema in 116.1, then regenerate
-
-**Don't modify fixtures manually** - always fix the source and regenerate.
-
-## Git Strategy
-
-**Initial commit:**
 ```bash
-git add packages/core/tests/fixtures/
-git commit -m "feat: Add baseline JSON fixtures for integration testing
+git add tests/fixtures/
+git commit -m "feat: add semantic index JSON fixtures for integration tests
 
-- Generated semantic_index fixtures for all languages
-- Generated resolved_symbols fixtures for all languages
-- Generated call_graph fixtures for all languages
-- Establishes golden outputs for integration tests
+Generated from code fixtures using serialize_semantic_index.
 
-Part of task-epic-11.116.4"
+These fixtures will be used as inputs for:
+- Registry integration tests (116.5)
+- Call graph integration tests (116.6)
+
+Fixtures can be regenerated using:
+  npm run generate-fixtures -- --all
+"
 ```
 
-**Large diff considerations:**
-- Fixtures may be large - consider git-lfs if needed
-- Break into multiple commits if helpful (one per language or stage)
-- Include summary stats in commit message
+**Important:** Add fixture regeneration reminder to CONTRIBUTING.md or similar:
 
-## Acceptance Criteria
+```markdown
+## Semantic Index Fixtures
 
-- [ ] All code fixtures have corresponding JSON at all three stages
-- [ ] All generated JSON validates against schemas
-- [ ] Pipeline consistency verified
-- [ ] Manual review completed
-- [ ] Coverage stats documented
-- [ ] Fixtures committed to git
-- [ ] No outstanding generation errors
+JSON fixtures in `tests/fixtures/{language}/semantic_index/` are generated
+from code files in `tests/fixtures/{language}/code/`.
+
+When modifying SemanticIndex schema or adding new code fixtures, regenerate:
+```bash
+npm run generate-fixtures -- --all
+```
+
+## Document Regeneration Workflow (0.5 hours)
+
+Create `tests/fixtures/README.md`:
+
+```markdown
+# Test Fixtures
+
+## Structure
+
+- `{language}/code/` - Source code fixtures
+- `{language}/semantic_index/` - Generated JSON (SemanticIndex objects)
+
+## Generating Fixtures
+
+After adding/modifying code fixtures or changing SemanticIndex schema:
+
+```bash
+# Regenerate all
+npm run generate-fixtures -- --all
+
+# Or specific language
+npm run generate-fixtures:ts
+
+# Or single file
+npm run generate-fixtures -- --file tests/fixtures/typescript/code/classes/new_fixture.ts
+```
+
+## Verification
+
+After generation, verify fixtures are valid:
+
+```bash
+npm run verify-fixtures
+```
+
+## Using in Tests
+
+Load fixtures in integration tests:
+
+```typescript
+import { load_fixture } from "./fixtures/test_helpers";
+
+const index = load_fixture("typescript/classes/basic_class.json");
+```
+
+## When to Regenerate
+
+- After modifying SemanticIndex type
+- After adding/removing code fixtures
+- After fixing bugs in index_single_file
+- Before committing changes to fixtures/
+
+## CI Integration
+
+CI will verify fixtures are up-to-date by:
+1. Running generate-fixtures --all
+2. Checking for git diff
+3. Failing if fixtures are stale
+```
+
+## Deliverables
+
+- [ ] All JSON fixtures generated successfully
+- [ ] Verification script confirms all fixtures are valid
+- [ ] Manual spot-checks completed
+- [ ] Fixtures committed to version control
+- [ ] README.md with regeneration workflow
+- [ ] npm script for verification added
+
+## Success Criteria
+
+- ✅ JSON fixture exists for every code fixture
+- ✅ All fixtures pass verification
+- ✅ JSON is well-formatted and human-readable
+- ✅ Fixtures are committed to git
+- ✅ Regeneration workflow is documented
+- ✅ No errors or warnings during generation
 
 ## Estimated Effort
 
-- **Generation runs**: 1 hour
-- **Validation and review**: 2 hours
-- **Issue investigation and fixes**: 2-3 hours (variable)
-- **Documentation**: 30 minutes
-- **Total**: ~5-6 hours
+**2-3 hours**
+- 0.5 hours: Generate fixtures
+- 1 hour: Implement and run verification
+- 0.5 hours: Manual review and spot-checks
+- 0.5 hours: Documentation and commit
+- 0.5 hours: Buffer for issues/fixes
+
+## Next Steps
+
+After completion, fixtures are ready to use:
+- Proceed to **116.5**: Registry integration tests (use JSON as input)
+- Proceed to **116.6**: Call graph integration tests (use JSON as input)
 
 ## Notes
 
-- This task may uncover bugs in existing implementation - that's good!
-- Expect to iterate between generation and bug fixes
-- Generated fixtures become the source of truth
-- Re-running generation should produce identical output (deterministic)
-
-## Success Metrics
-
-- **Coverage**: 100% of code fixtures have JSON at all stages
-- **Validity**: 100% of JSON passes schema validation
-- **Consistency**: 100% of symbol ID references are valid
-- **Determinism**: Re-running generation produces zero git diff
+- Expect some iteration - may find issues in generation tooling
+- If generation fails for some files, fix tooling (116.2) and regenerate
+- JSON files will be ~2-5KB each for typical fixtures
+- Total fixture library should be < 1MB
+- Keep fixtures in version control (they're source of truth for tests)
+- Consider adding pre-commit hook to verify fixtures are up-to-date
