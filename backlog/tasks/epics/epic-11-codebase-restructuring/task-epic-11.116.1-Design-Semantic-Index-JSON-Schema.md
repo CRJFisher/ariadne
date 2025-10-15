@@ -1,6 +1,6 @@
 # Task epic-11.116.1: Design Semantic Index JSON Schema
 
-**Status:** Not Started
+**Status:** Completed
 **Parent:** task-epic-11.116
 **Priority:** High (blocks all subsequent tasks)
 **Created:** 2025-10-14
@@ -18,17 +18,14 @@ Design the JSON schema for serializing `SemanticIndex` objects. This is the foun
 
 ## Scope
 
-**What we're designing:**
+The fixture system uses JSON for semantic index outputs. These fixtures serve as inputs for registry and call graph integration tests.
 
-- ✅ JSON schema for `SemanticIndex` only
-- ✅ Folder structure: `fixtures/{language}/code/` and `fixtures/{language}/semantic_index/`
-- ✅ Serialization strategy (Maps → Objects)
+**Scope boundaries:**
 
-**What we're NOT designing:**
-
-- ❌ JSON for registry outputs (too complex)
-- ❌ JSON for call graph outputs (too complex)
-- ❌ Multi-stage pipeline (single stage only)
+- JSON fixtures represent semantic index outputs only
+- Registry and call graph outputs are verified with code assertions
+- Folder structure: `fixtures/{language}/code/` and `fixtures/{language}/semantic_index/`
+- Serialization strategy converts Maps to Objects
 
 ## Detailed Design
 
@@ -78,10 +75,11 @@ packages/core/tests/fixtures/
 
 **Core principle:** JSON must be a faithful, complete representation of `SemanticIndex`.
 
-**SemanticIndex type (from codebase):**
+**SemanticIndex type:**
+
+The schema serializes the `SemanticIndex` interface from [semantic_index.ts:52-72](../../../packages/core/src/index_single_file/semantic_index.ts#L52-L72):
 
 ```typescript
-// From packages/core/src/index_single_file/semantic_index.ts lines 52-72
 export interface SemanticIndex {
   readonly file_path: FilePath;
   readonly language: Language;
@@ -178,15 +176,18 @@ export interface SemanticIndex {
 **Key design decisions:**
 
 1. **ReadonlyMaps → Objects:** Serialize ReadonlyMap<K, V> as `{ [key: string]: V }`
+
    - Rationale: Human-readable, diffable, standard JSON
    - Trade-off: Keys must be strings (they are - SymbolId, ScopeId are string brands)
    - Note: JSON has no concept of readonly; deserialization will restore ReadonlyMap
 
 2. **Keep branded types as strings:** SymbolId, ScopeId, FilePath, Language stay as strings
+
    - Rationale: Simple, readable, no special deserialization logic
    - Branded types are just string types at runtime
 
 3. **Preserve all fields:** Every field from SemanticIndex must be in JSON (13 fields total)
+
    - file_path, language, root_scope_id
    - 8 definition maps (functions, classes, variables, interfaces, enums, namespaces, types, imported_symbols)
    - scopes map
@@ -194,9 +195,11 @@ export interface SemanticIndex {
    - Rationale: Complete representation, no information loss
 
 4. **Empty collections as `{}`/`[]`:** Show structure even when empty
+
    - Rationale: Makes schema clear, easier to understand fixture structure
 
 5. **Formatting:** Pretty-print with 2-space indentation
+
    - Rationale: Readable diffs, easy manual inspection
 
 6. **Readonly arrays:** `readonly SymbolReference[]` serializes as regular JSON array
@@ -204,11 +207,9 @@ export interface SemanticIndex {
 
 ### 3. TypeScript Types
 
-Create types for JSON representation:
+The `SemanticIndexJSON` interface in [semantic_index_json.ts](../../../packages/core/tests/fixtures/semantic_index_json.ts) represents the JSON schema:
 
 ```typescript
-// packages/core/tests/fixtures/semantic_index_json.ts
-
 /**
  * JSON representation of SemanticIndex
  * ReadonlyMaps are converted to objects with string keys
@@ -232,7 +233,7 @@ export interface SemanticIndexJSON {
 
 ### 4. Feature Categories
 
-Organize fixtures by language feature:
+Fixtures are organized by language feature:
 
 **TypeScript:**
 
@@ -268,12 +269,12 @@ Organize fixtures by language feature:
 
 ## Deliverables
 
-- [ ] Document finalized folder structure
-- [ ] Define JSON schema with example
-- [ ] Create `SemanticIndexJSON` TypeScript type
-- [ ] List feature categories for each language
-- [ ] Document design rationale
-- [ ] Get approval on schema before implementation
+- [x] Document finalized folder structure
+- [x] Define JSON schema with example
+- [x] Create `SemanticIndexJSON` TypeScript type
+- [x] List feature categories for each language
+- [x] Document design rationale
+- [x] Get approval on schema before implementation
 
 ## Success Criteria
 
@@ -301,7 +302,40 @@ After completion:
 
 ## Notes
 
-- Keep schema simple - don't over-engineer
-- Focus on semantic index only (resist temptation to add registry/call graph)
-- Ensure schema is stable (changes require fixture regeneration)
-- JSON files will be version controlled alongside code
+- Schema stability is critical - changes require fixture regeneration
+- JSON files are version controlled alongside code
+- Scope is limited to semantic index only
+
+## Implementation Notes
+
+**Completed:** 2025-10-15
+
+### Implementation Summary
+
+Created the JSON schema infrastructure in [semantic_index_json.ts](../../../packages/core/tests/fixtures/semantic_index_json.ts):
+
+**Core functions:**
+
+- `semantic_index_to_json()` - Convert SemanticIndex to JSON object
+- `json_to_semantic_index()` - Convert JSON object back to SemanticIndex
+- `semantic_index_to_json_string()` - Serialize to formatted JSON string
+- `json_string_to_semantic_index()` - Deserialize from JSON string
+
+**Folder structure:**
+
+Each language has two parallel directories:
+
+- `code/{category}/` - Source code files organized by feature
+- `semantic_index/{category}/` - Corresponding JSON fixture outputs
+
+Implemented categories: TypeScript (8), Python (3), JavaScript (3), Rust (6).
+
+**Serialization approach:**
+
+- ReadonlyMap → Record<string, V> using `Object.fromEntries()`
+- Record<string, V> → ReadonlyMap using `new Map(Object.entries())`
+- Branded types remain as strings (no special handling)
+- Readonly arrays serialize as regular JSON arrays
+- 2-space indentation for readable git diffs
+
+**Next task:** 116.2 (Implement serialization/deserialization utilities and tests)
