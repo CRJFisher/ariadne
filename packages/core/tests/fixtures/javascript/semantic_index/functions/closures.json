@@ -1,0 +1,4530 @@
+{
+  "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+  "language": "javascript",
+  "root_scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:1:1:110:2",
+  "scopes": {
+    "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:1:1:110:2": {
+      "id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:1:1:110:2",
+      "parent_id": null,
+      "name": null,
+      "type": "module",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 1,
+        "start_column": 1,
+        "end_line": 110,
+        "end_column": 2
+      },
+      "child_ids": [
+        "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:7:26:14:1",
+        "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:17:27:49:1",
+        "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:52:31:63:1",
+        "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:66:29:79:1",
+        "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:82:1:82:36",
+        "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:83:1:83:27",
+        "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:85:1:85:50",
+        "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:86:1:86:42",
+        "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:87:1:87:43",
+        "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:88:1:88:44",
+        "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:90:1:90:44",
+        "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:91:1:91:30",
+        "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:92:1:92:32",
+        "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:94:1:94:38",
+        "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:95:1:95:45"
+      ]
+    },
+    "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:7:26:14:1": {
+      "id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:7:26:14:1",
+      "parent_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:1:1:110:2",
+      "name": "createMultiplier",
+      "type": "function",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 7,
+        "start_column": 26,
+        "end_line": 14,
+        "end_column": 1
+      },
+      "child_ids": [
+        "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:8:18:13:3"
+      ]
+    },
+    "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:8:18:13:3": {
+      "id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:8:18:13:3",
+      "parent_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:7:26:14:1",
+      "name": null,
+      "type": "function",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 8,
+        "start_column": 18,
+        "end_line": 13,
+        "end_column": 3
+      },
+      "child_ids": [
+        "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:9:22:11:5"
+      ]
+    },
+    "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:9:22:11:5": {
+      "id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:9:22:11:5",
+      "parent_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:8:18:13:3",
+      "name": "multiply",
+      "type": "function",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 9,
+        "start_column": 22,
+        "end_line": 11,
+        "end_column": 5
+      },
+      "child_ids": []
+    },
+    "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:17:27:49:1": {
+      "id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:17:27:49:1",
+      "parent_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:1:1:110:2",
+      "name": "createBankAccount",
+      "type": "function",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 17,
+        "start_column": 27,
+        "end_line": 49,
+        "end_column": 1
+      },
+      "child_ids": [
+        "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:21:26:23:3",
+        "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:26:12:30:5",
+        "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:31:13:38:5",
+        "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:39:15:41:5",
+        "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:42:19:44:5",
+        "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:45:24:47:5"
+      ]
+    },
+    "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:21:26:23:3": {
+      "id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:21:26:23:3",
+      "parent_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:17:27:49:1",
+      "name": "addTransaction",
+      "type": "function",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 21,
+        "start_column": 26,
+        "end_line": 23,
+        "end_column": 3
+      },
+      "child_ids": []
+    },
+    "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:26:12:30:5": {
+      "id": "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:26:12:30:5",
+      "parent_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:17:27:49:1",
+      "name": "deposit",
+      "type": "method",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 26,
+        "start_column": 12,
+        "end_line": 30,
+        "end_column": 5
+      },
+      "child_ids": []
+    },
+    "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:31:13:38:5": {
+      "id": "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:31:13:38:5",
+      "parent_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:17:27:49:1",
+      "name": "withdraw",
+      "type": "method",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 31,
+        "start_column": 13,
+        "end_line": 38,
+        "end_column": 5
+      },
+      "child_ids": [
+        "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:32:7:36:7"
+      ]
+    },
+    "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:32:7:36:7": {
+      "id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:32:7:36:7",
+      "parent_id": "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:31:13:38:5",
+      "name": null,
+      "type": "block",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 32,
+        "start_column": 7,
+        "end_line": 36,
+        "end_column": 7
+      },
+      "child_ids": []
+    },
+    "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:39:15:41:5": {
+      "id": "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:39:15:41:5",
+      "parent_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:17:27:49:1",
+      "name": "getBalance",
+      "type": "method",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 39,
+        "start_column": 15,
+        "end_line": 41,
+        "end_column": 5
+      },
+      "child_ids": []
+    },
+    "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:42:19:44:5": {
+      "id": "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:42:19:44:5",
+      "parent_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:17:27:49:1",
+      "name": "getAccountName",
+      "type": "method",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 42,
+        "start_column": 19,
+        "end_line": 44,
+        "end_column": 5
+      },
+      "child_ids": []
+    },
+    "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:45:24:47:5": {
+      "id": "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:45:24:47:5",
+      "parent_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:17:27:49:1",
+      "name": "getTransactionCount",
+      "type": "method",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 45,
+        "start_column": 24,
+        "end_line": 47,
+        "end_column": 5
+      },
+      "child_ids": []
+    },
+    "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:52:31:63:1": {
+      "id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:52:31:63:1",
+      "parent_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:1:1:110:2",
+      "name": "createChainedFunction",
+      "type": "function",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 52,
+        "start_column": 31,
+        "end_line": 63,
+        "end_column": 1
+      },
+      "child_ids": [
+        "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:53:18:61:3"
+      ]
+    },
+    "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:53:18:61:3": {
+      "id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:53:18:61:3",
+      "parent_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:52:31:63:1",
+      "name": "level1",
+      "type": "function",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 53,
+        "start_column": 18,
+        "end_line": 61,
+        "end_column": 3
+      },
+      "child_ids": [
+        "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:54:20:59:5"
+      ]
+    },
+    "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:54:20:59:5": {
+      "id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:54:20:59:5",
+      "parent_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:53:18:61:3",
+      "name": "level2",
+      "type": "function",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 54,
+        "start_column": 20,
+        "end_line": 59,
+        "end_column": 5
+      },
+      "child_ids": [
+        "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:55:25:57:7"
+      ]
+    },
+    "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:55:25:57:7": {
+      "id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:55:25:57:7",
+      "parent_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:54:20:59:5",
+      "name": "calculate",
+      "type": "function",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 55,
+        "start_column": 25,
+        "end_line": 57,
+        "end_column": 7
+      },
+      "child_ids": []
+    },
+    "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:66:29:79:1": {
+      "id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:66:29:79:1",
+      "parent_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:1:1:110:2",
+      "name": "createFunctionArray",
+      "type": "function",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 66,
+        "start_column": 29,
+        "end_line": 79,
+        "end_column": 1
+      },
+      "child_ids": [
+        "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:69:3:76:3"
+      ]
+    },
+    "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:69:3:76:3": {
+      "id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:69:3:76:3",
+      "parent_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:66:29:79:1",
+      "name": null,
+      "type": "block",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 69,
+        "start_column": 3,
+        "end_line": 76,
+        "end_column": 3
+      },
+      "child_ids": [
+        "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:70:28:75:5"
+      ]
+    },
+    "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:70:28:75:5": {
+      "id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:70:28:75:5",
+      "parent_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:69:3:76:3",
+      "name": null,
+      "type": "function",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 70,
+        "start_column": 28,
+        "end_line": 75,
+        "end_column": 5
+      },
+      "child_ids": [
+        "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:71:24:73:7"
+      ]
+    },
+    "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:71:24:73:7": {
+      "id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:71:24:73:7",
+      "parent_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:70:28:75:5",
+      "name": "getValue",
+      "type": "function",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 71,
+        "start_column": 24,
+        "end_line": 73,
+        "end_column": 7
+      },
+      "child_ids": []
+    },
+    "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:82:1:82:36": {
+      "id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:82:1:82:36",
+      "parent_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:1:1:110:2",
+      "name": null,
+      "type": "block",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 82,
+        "start_column": 1,
+        "end_line": 82,
+        "end_column": 36
+      },
+      "child_ids": []
+    },
+    "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:83:1:83:27": {
+      "id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:83:1:83:27",
+      "parent_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:1:1:110:2",
+      "name": null,
+      "type": "block",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 83,
+        "start_column": 1,
+        "end_line": 83,
+        "end_column": 27
+      },
+      "child_ids": []
+    },
+    "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:85:1:85:50": {
+      "id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:85:1:85:50",
+      "parent_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:1:1:110:2",
+      "name": null,
+      "type": "block",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 85,
+        "start_column": 1,
+        "end_line": 85,
+        "end_column": 50
+      },
+      "child_ids": []
+    },
+    "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:86:1:86:42": {
+      "id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:86:1:86:42",
+      "parent_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:1:1:110:2",
+      "name": null,
+      "type": "block",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 86,
+        "start_column": 1,
+        "end_line": 86,
+        "end_column": 42
+      },
+      "child_ids": []
+    },
+    "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:87:1:87:43": {
+      "id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:87:1:87:43",
+      "parent_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:1:1:110:2",
+      "name": null,
+      "type": "block",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 87,
+        "start_column": 1,
+        "end_line": 87,
+        "end_column": 43
+      },
+      "child_ids": []
+    },
+    "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:88:1:88:44": {
+      "id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:88:1:88:44",
+      "parent_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:1:1:110:2",
+      "name": null,
+      "type": "block",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 88,
+        "start_column": 1,
+        "end_line": 88,
+        "end_column": 44
+      },
+      "child_ids": []
+    },
+    "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:90:1:90:44": {
+      "id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:90:1:90:44",
+      "parent_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:1:1:110:2",
+      "name": null,
+      "type": "block",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 90,
+        "start_column": 1,
+        "end_line": 90,
+        "end_column": 44
+      },
+      "child_ids": []
+    },
+    "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:91:1:91:30": {
+      "id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:91:1:91:30",
+      "parent_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:1:1:110:2",
+      "name": null,
+      "type": "block",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 91,
+        "start_column": 1,
+        "end_line": 91,
+        "end_column": 30
+      },
+      "child_ids": []
+    },
+    "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:92:1:92:32": {
+      "id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:92:1:92:32",
+      "parent_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:1:1:110:2",
+      "name": null,
+      "type": "block",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 92,
+        "start_column": 1,
+        "end_line": 92,
+        "end_column": 32
+      },
+      "child_ids": []
+    },
+    "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:94:1:94:38": {
+      "id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:94:1:94:38",
+      "parent_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:1:1:110:2",
+      "name": null,
+      "type": "block",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 94,
+        "start_column": 1,
+        "end_line": 94,
+        "end_column": 38
+      },
+      "child_ids": []
+    },
+    "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:95:1:95:45": {
+      "id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:95:1:95:45",
+      "parent_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:1:1:110:2",
+      "name": null,
+      "type": "block",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 95,
+        "start_column": 1,
+        "end_line": 95,
+        "end_column": 45
+      },
+      "child_ids": [
+        "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:95:34:95:43"
+      ]
+    },
+    "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:95:34:95:43": {
+      "id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:95:34:95:43",
+      "parent_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:95:1:95:45",
+      "name": null,
+      "type": "function",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 95,
+        "start_column": 34,
+        "end_line": 95,
+        "end_column": 43
+      },
+      "child_ids": []
+    }
+  },
+  "functions": {
+    "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:7:10:7:25:createMultiplier": {
+      "kind": "function",
+      "symbol_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:7:10:7:25:createMultiplier",
+      "name": "createMultiplier",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 7,
+        "start_column": 10,
+        "end_line": 7,
+        "end_column": 25
+      },
+      "defining_scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:1:1:110:2",
+      "is_exported": true,
+      "export": {
+        "is_reexport": false
+      },
+      "docstring": "// Basic closure",
+      "signature": {
+        "parameters": [
+          {
+            "kind": "parameter",
+            "defining_scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:7:26:14:1",
+            "symbol_id": "parameter:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:7:27:7:32:factor",
+            "name": "factor",
+            "location": {
+              "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+              "start_line": 7,
+              "start_column": 27,
+              "end_line": 7,
+              "end_column": 32
+            }
+          }
+        ]
+      },
+      "body_scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:7:26:14:1"
+    },
+    "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:9:14:9:21:multiply": {
+      "kind": "function",
+      "symbol_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:9:14:9:21:multiply",
+      "name": "multiply",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 9,
+        "start_column": 14,
+        "end_line": 9,
+        "end_column": 21
+      },
+      "defining_scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:8:18:13:3",
+      "is_exported": false,
+      "signature": {
+        "parameters": []
+      },
+      "body_scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:8:18:13:3"
+    },
+    "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:17:10:17:26:createBankAccount": {
+      "kind": "function",
+      "symbol_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:17:10:17:26:createBankAccount",
+      "name": "createBankAccount",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 17,
+        "start_column": 10,
+        "end_line": 17,
+        "end_column": 26
+      },
+      "defining_scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:1:1:110:2",
+      "is_exported": true,
+      "export": {
+        "is_reexport": false
+      },
+      "docstring": "// Closure with multiple captured variables",
+      "signature": {
+        "parameters": [
+          {
+            "kind": "parameter",
+            "defining_scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:17:27:49:1",
+            "symbol_id": "parameter:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:17:28:17:41:initialBalance",
+            "name": "initialBalance",
+            "location": {
+              "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+              "start_line": 17,
+              "start_column": 28,
+              "end_line": 17,
+              "end_column": 41
+            }
+          },
+          {
+            "kind": "parameter",
+            "defining_scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:17:27:49:1",
+            "symbol_id": "parameter:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:17:44:17:54:accountName",
+            "name": "accountName",
+            "location": {
+              "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+              "start_line": 17,
+              "start_column": 44,
+              "end_line": 17,
+              "end_column": 54
+            }
+          }
+        ]
+      },
+      "body_scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:8:18:13:3"
+    },
+    "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:21:12:21:25:addTransaction": {
+      "kind": "function",
+      "symbol_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:21:12:21:25:addTransaction",
+      "name": "addTransaction",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 21,
+        "start_column": 12,
+        "end_line": 21,
+        "end_column": 25
+      },
+      "defining_scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:17:27:49:1",
+      "is_exported": false,
+      "signature": {
+        "parameters": [
+          {
+            "kind": "parameter",
+            "defining_scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:21:26:23:3",
+            "symbol_id": "parameter:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:21:27:21:30:type",
+            "name": "type",
+            "location": {
+              "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+              "start_line": 21,
+              "start_column": 27,
+              "end_line": 21,
+              "end_column": 30
+            }
+          },
+          {
+            "kind": "parameter",
+            "defining_scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:21:26:23:3",
+            "symbol_id": "parameter:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:21:33:21:38:amount",
+            "name": "amount",
+            "location": {
+              "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+              "start_line": 21,
+              "start_column": 33,
+              "end_line": 21,
+              "end_column": 38
+            }
+          }
+        ]
+      },
+      "body_scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:21:26:23:3"
+    },
+    "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:52:10:52:30:createChainedFunction": {
+      "kind": "function",
+      "symbol_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:52:10:52:30:createChainedFunction",
+      "name": "createChainedFunction",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 52,
+        "start_column": 10,
+        "end_line": 52,
+        "end_column": 30
+      },
+      "defining_scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:1:1:110:2",
+      "is_exported": true,
+      "export": {
+        "is_reexport": false
+      },
+      "docstring": "// Nested closures",
+      "signature": {
+        "parameters": [
+          {
+            "kind": "parameter",
+            "defining_scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:52:31:63:1",
+            "symbol_id": "parameter:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:52:32:52:35:base",
+            "name": "base",
+            "location": {
+              "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+              "start_line": 52,
+              "start_column": 32,
+              "end_line": 52,
+              "end_column": 35
+            }
+          }
+        ]
+      },
+      "body_scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:52:31:63:1"
+    },
+    "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:53:12:53:17:level1": {
+      "kind": "function",
+      "symbol_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:53:12:53:17:level1",
+      "name": "level1",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 53,
+        "start_column": 12,
+        "end_line": 53,
+        "end_column": 17
+      },
+      "defining_scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:52:31:63:1",
+      "is_exported": false,
+      "signature": {
+        "parameters": [
+          {
+            "kind": "parameter",
+            "defining_scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:53:18:61:3",
+            "symbol_id": "parameter:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:53:19:53:28:multiplier",
+            "name": "multiplier",
+            "location": {
+              "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+              "start_line": 53,
+              "start_column": 19,
+              "end_line": 53,
+              "end_column": 28
+            }
+          }
+        ]
+      },
+      "body_scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:53:18:61:3"
+    },
+    "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:54:14:54:19:level2": {
+      "kind": "function",
+      "symbol_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:54:14:54:19:level2",
+      "name": "level2",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 54,
+        "start_column": 14,
+        "end_line": 54,
+        "end_column": 19
+      },
+      "defining_scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:53:18:61:3",
+      "is_exported": false,
+      "signature": {
+        "parameters": [
+          {
+            "kind": "parameter",
+            "defining_scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:54:20:59:5",
+            "symbol_id": "parameter:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:54:21:54:28:addition",
+            "name": "addition",
+            "location": {
+              "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+              "start_line": 54,
+              "start_column": 21,
+              "end_line": 54,
+              "end_column": 28
+            }
+          }
+        ]
+      },
+      "body_scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:54:20:59:5"
+    },
+    "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:55:16:55:24:calculate": {
+      "kind": "function",
+      "symbol_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:55:16:55:24:calculate",
+      "name": "calculate",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 55,
+        "start_column": 16,
+        "end_line": 55,
+        "end_column": 24
+      },
+      "defining_scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:54:20:59:5",
+      "is_exported": false,
+      "signature": {
+        "parameters": []
+      },
+      "body_scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:55:25:57:7"
+    },
+    "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:66:10:66:28:createFunctionArray": {
+      "kind": "function",
+      "symbol_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:66:10:66:28:createFunctionArray",
+      "name": "createFunctionArray",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 66,
+        "start_column": 10,
+        "end_line": 66,
+        "end_column": 28
+      },
+      "defining_scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:1:1:110:2",
+      "is_exported": true,
+      "export": {
+        "is_reexport": false
+      },
+      "docstring": "// Closure in loop (classic closure problem)",
+      "signature": {
+        "parameters": []
+      },
+      "body_scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:66:29:79:1"
+    },
+    "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:71:16:71:23:getValue": {
+      "kind": "function",
+      "symbol_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:71:16:71:23:getValue",
+      "name": "getValue",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 71,
+        "start_column": 16,
+        "end_line": 71,
+        "end_column": 23
+      },
+      "defining_scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:70:28:75:5",
+      "is_exported": false,
+      "signature": {
+        "parameters": []
+      },
+      "body_scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:70:28:75:5"
+    }
+  },
+  "classes": {},
+  "variables": {
+    "variable:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:18:7:18:13:balance": {
+      "kind": "variable",
+      "symbol_id": "variable:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:18:7:18:13:balance",
+      "name": "balance",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 18,
+        "start_column": 7,
+        "end_line": 18,
+        "end_column": 13
+      },
+      "defining_scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:17:27:49:1",
+      "is_exported": false
+    },
+    "variable:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:19:7:19:18:transactions": {
+      "kind": "variable",
+      "symbol_id": "variable:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:19:7:19:18:transactions",
+      "name": "transactions",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 19,
+        "start_column": 7,
+        "end_line": 19,
+        "end_column": 18
+      },
+      "defining_scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:17:27:49:1",
+      "is_exported": false
+    },
+    "variable:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:67:9:67:17:functions": {
+      "kind": "constant",
+      "symbol_id": "variable:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:67:9:67:17:functions",
+      "name": "functions",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 67,
+        "start_column": 9,
+        "end_line": 67,
+        "end_column": 17
+      },
+      "defining_scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:66:29:79:1",
+      "is_exported": false
+    },
+    "variable:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:69:12:69:12:i": {
+      "kind": "variable",
+      "symbol_id": "variable:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:69:12:69:12:i",
+      "name": "i",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 69,
+        "start_column": 12,
+        "end_line": 69,
+        "end_column": 12
+      },
+      "defining_scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:69:3:76:3",
+      "is_exported": false
+    },
+    "variable:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:82:7:82:13:doubler": {
+      "kind": "constant",
+      "symbol_id": "variable:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:82:7:82:13:doubler",
+      "name": "doubler",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 82,
+        "start_column": 7,
+        "end_line": 82,
+        "end_column": 13
+      },
+      "defining_scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:82:1:82:36",
+      "is_exported": true,
+      "docstring": "// Using the closures"
+    },
+    "variable:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:83:7:83:13:doubled": {
+      "kind": "constant",
+      "symbol_id": "variable:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:83:7:83:13:doubled",
+      "name": "doubled",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 83,
+        "start_column": 7,
+        "end_line": 83,
+        "end_column": 13
+      },
+      "defining_scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:83:1:83:27",
+      "is_exported": true
+    },
+    "variable:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:85:7:85:13:account": {
+      "kind": "constant",
+      "symbol_id": "variable:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:85:7:85:13:account",
+      "name": "account",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 85,
+        "start_column": 7,
+        "end_line": 85,
+        "end_column": 13
+      },
+      "defining_scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:85:1:85:50",
+      "is_exported": true
+    },
+    "variable:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:86:7:86:19:depositResult": {
+      "kind": "constant",
+      "symbol_id": "variable:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:86:7:86:19:depositResult",
+      "name": "depositResult",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 86,
+        "start_column": 7,
+        "end_line": 86,
+        "end_column": 19
+      },
+      "defining_scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:86:1:86:42",
+      "is_exported": true
+    },
+    "variable:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:87:7:87:19:balanceResult": {
+      "kind": "constant",
+      "symbol_id": "variable:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:87:7:87:19:balanceResult",
+      "name": "balanceResult",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 87,
+        "start_column": 7,
+        "end_line": 87,
+        "end_column": 19
+      },
+      "defining_scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:87:1:87:43",
+      "is_exported": true
+    },
+    "variable:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:88:7:88:16:nameResult": {
+      "kind": "constant",
+      "symbol_id": "variable:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:88:7:88:16:nameResult",
+      "name": "nameResult",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 88,
+        "start_column": 7,
+        "end_line": 88,
+        "end_column": 16
+      },
+      "defining_scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:88:1:88:44",
+      "is_exported": true
+    },
+    "variable:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:90:7:90:15:chainedFn": {
+      "kind": "constant",
+      "symbol_id": "variable:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:90:7:90:15:chainedFn",
+      "name": "chainedFn",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 90,
+        "start_column": 7,
+        "end_line": 90,
+        "end_column": 15
+      },
+      "defining_scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:90:1:90:44",
+      "is_exported": false
+    },
+    "variable:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:91:7:91:14:level2Fn": {
+      "kind": "constant",
+      "symbol_id": "variable:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:91:7:91:14:level2Fn",
+      "name": "level2Fn",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 91,
+        "start_column": 7,
+        "end_line": 91,
+        "end_column": 14
+      },
+      "defining_scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:91:1:91:30",
+      "is_exported": false
+    },
+    "variable:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:92:7:92:17:chainResult": {
+      "kind": "constant",
+      "symbol_id": "variable:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:92:7:92:17:chainResult",
+      "name": "chainResult",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 92,
+        "start_column": 7,
+        "end_line": 92,
+        "end_column": 17
+      },
+      "defining_scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:92:1:92:32",
+      "is_exported": true
+    },
+    "variable:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:94:7:94:13:fnArray": {
+      "kind": "constant",
+      "symbol_id": "variable:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:94:7:94:13:fnArray",
+      "name": "fnArray",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 94,
+        "start_column": 7,
+        "end_line": 94,
+        "end_column": 13
+      },
+      "defining_scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:94:1:94:38",
+      "is_exported": false
+    },
+    "variable:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:95:7:95:18:arrayResults": {
+      "kind": "constant",
+      "symbol_id": "variable:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:95:7:95:18:arrayResults",
+      "name": "arrayResults",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 95,
+        "start_column": 7,
+        "end_line": 95,
+        "end_column": 18
+      },
+      "defining_scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:95:1:95:45",
+      "is_exported": true
+    }
+  },
+  "interfaces": {},
+  "enums": {},
+  "namespaces": {},
+  "types": {},
+  "imported_symbols": {},
+  "references": [
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 7,
+        "start_column": 10,
+        "end_line": 7,
+        "end_column": 25
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:1:1:110:2",
+      "name": "createMultiplier"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 7,
+        "start_column": 27,
+        "end_line": 7,
+        "end_column": 32
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:7:26:14:1",
+      "name": "factor"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 8,
+        "start_column": 3,
+        "end_line": 13,
+        "end_column": 4
+      },
+      "type": "return",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:7:26:14:1",
+      "name": "return function(number) {\n    function multiply() {\n      return number * factor; // Captures both number and factor\n    }\n    return multiply();\n  };"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 8,
+        "start_column": 10,
+        "end_line": 13,
+        "end_column": 3
+      },
+      "type": "return",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:7:26:14:1",
+      "name": "function(number) {\n    function multiply() {\n      return number * factor; // Captures both number and factor\n    }\n    return multiply();\n  }"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 8,
+        "start_column": 19,
+        "end_line": 8,
+        "end_column": 24
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:8:18:13:3",
+      "name": "number"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 9,
+        "start_column": 14,
+        "end_line": 9,
+        "end_column": 21
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:8:18:13:3",
+      "name": "multiply"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 10,
+        "start_column": 7,
+        "end_line": 10,
+        "end_column": 29
+      },
+      "type": "return",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:9:22:11:5",
+      "name": "return number * factor;"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 10,
+        "start_column": 14,
+        "end_line": 10,
+        "end_column": 28
+      },
+      "type": "return",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:9:22:11:5",
+      "name": "number * factor"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 10,
+        "start_column": 14,
+        "end_line": 10,
+        "end_column": 19
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:9:22:11:5",
+      "name": "number"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 10,
+        "start_column": 23,
+        "end_line": 10,
+        "end_column": 28
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:9:22:11:5",
+      "name": "factor"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 12,
+        "start_column": 5,
+        "end_line": 12,
+        "end_column": 22
+      },
+      "type": "return",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:8:18:13:3",
+      "name": "return multiply();"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 12,
+        "start_column": 12,
+        "end_line": 12,
+        "end_column": 19
+      },
+      "type": "call",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:8:18:13:3",
+      "name": "multiply",
+      "call_type": "function"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 12,
+        "start_column": 12,
+        "end_line": 12,
+        "end_column": 21
+      },
+      "type": "return",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:8:18:13:3",
+      "name": "multiply"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 12,
+        "start_column": 12,
+        "end_line": 12,
+        "end_column": 19
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:8:18:13:3",
+      "name": "multiply"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 17,
+        "start_column": 10,
+        "end_line": 17,
+        "end_column": 26
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:1:1:110:2",
+      "name": "createBankAccount"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 17,
+        "start_column": 28,
+        "end_line": 17,
+        "end_column": 41
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:17:27:49:1",
+      "name": "initialBalance"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 17,
+        "start_column": 44,
+        "end_line": 17,
+        "end_column": 54
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:17:27:49:1",
+      "name": "accountName"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 18,
+        "start_column": 7,
+        "end_line": 18,
+        "end_column": 30
+      },
+      "type": "assignment",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:17:27:49:1",
+      "name": "balance = initialBalance"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 18,
+        "start_column": 7,
+        "end_line": 18,
+        "end_column": 13
+      },
+      "type": "assignment",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:17:27:49:1",
+      "name": "balance"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 18,
+        "start_column": 7,
+        "end_line": 18,
+        "end_column": 13
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:17:27:49:1",
+      "name": "balance"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 18,
+        "start_column": 17,
+        "end_line": 18,
+        "end_column": 30
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:17:27:49:1",
+      "name": "initialBalance"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 18,
+        "start_column": 17,
+        "end_line": 18,
+        "end_column": 30
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:17:27:49:1",
+      "name": "initialBalance"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 19,
+        "start_column": 7,
+        "end_line": 19,
+        "end_column": 23
+      },
+      "type": "assignment",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:17:27:49:1",
+      "name": "transactions = []"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 19,
+        "start_column": 7,
+        "end_line": 19,
+        "end_column": 18
+      },
+      "type": "assignment",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:17:27:49:1",
+      "name": "transactions"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 19,
+        "start_column": 7,
+        "end_line": 19,
+        "end_column": 18
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:17:27:49:1",
+      "name": "transactions"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 19,
+        "start_column": 22,
+        "end_line": 19,
+        "end_column": 23
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:17:27:49:1",
+      "name": "[]"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 21,
+        "start_column": 12,
+        "end_line": 21,
+        "end_column": 25
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:17:27:49:1",
+      "name": "addTransaction"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 21,
+        "start_column": 27,
+        "end_line": 21,
+        "end_column": 30
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:21:26:23:3",
+      "name": "type"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 21,
+        "start_column": 33,
+        "end_line": 21,
+        "end_column": 38
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:21:26:23:3",
+      "name": "amount"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 22,
+        "start_column": 5,
+        "end_line": 22,
+        "end_column": 57
+      },
+      "type": "call",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:21:26:23:3",
+      "name": "push",
+      "context": {
+        "receiver_location": {
+          "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+          "start_line": 22,
+          "start_column": 5,
+          "end_line": 22,
+          "end_column": 16
+        },
+        "property_chain": [
+          "transactions",
+          "push"
+        ]
+      },
+      "call_type": "method",
+      "member_access": {
+        "access_type": "method",
+        "is_optional_chain": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 22,
+        "start_column": 5,
+        "end_line": 22,
+        "end_column": 16
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:21:26:23:3",
+      "name": "transactions"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 22,
+        "start_column": 5,
+        "end_line": 22,
+        "end_column": 21
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:21:26:23:3",
+      "name": "transactions.push"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 22,
+        "start_column": 5,
+        "end_line": 22,
+        "end_column": 16
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:21:26:23:3",
+      "name": "transactions"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 22,
+        "start_column": 5,
+        "end_line": 22,
+        "end_column": 21
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:21:26:23:3",
+      "name": "transactions.push"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 22,
+        "start_column": 5,
+        "end_line": 22,
+        "end_column": 16
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:21:26:23:3",
+      "name": "transactions"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 22,
+        "start_column": 5,
+        "end_line": 22,
+        "end_column": 57
+      },
+      "type": "call",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:21:26:23:3",
+      "name": "push",
+      "context": {
+        "receiver_location": {
+          "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+          "start_line": 22,
+          "start_column": 5,
+          "end_line": 22,
+          "end_column": 16
+        },
+        "property_chain": [
+          "transactions",
+          "push"
+        ]
+      },
+      "call_type": "method",
+      "member_access": {
+        "access_type": "method",
+        "is_optional_chain": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 22,
+        "start_column": 5,
+        "end_line": 22,
+        "end_column": 16
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:21:26:23:3",
+      "name": "transactions"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 22,
+        "start_column": 5,
+        "end_line": 22,
+        "end_column": 16
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:21:26:23:3",
+      "name": "transactions"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 22,
+        "start_column": 18,
+        "end_line": 22,
+        "end_column": 21
+      },
+      "type": "call",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:21:26:23:3",
+      "name": "push",
+      "call_type": "function"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 22,
+        "start_column": 18,
+        "end_line": 22,
+        "end_column": 21
+      },
+      "type": "member_access",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:21:26:23:3",
+      "name": "push",
+      "member_access": {
+        "access_type": "property",
+        "is_optional_chain": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 22,
+        "start_column": 18,
+        "end_line": 22,
+        "end_column": 21
+      },
+      "type": "member_access",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:21:26:23:3",
+      "name": "push",
+      "member_access": {
+        "access_type": "property",
+        "is_optional_chain": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 22,
+        "start_column": 18,
+        "end_line": 22,
+        "end_column": 21
+      },
+      "type": "call",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:21:26:23:3",
+      "name": "push",
+      "call_type": "function"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 22,
+        "start_column": 45,
+        "end_line": 22,
+        "end_column": 54
+      },
+      "type": "call",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:21:26:23:3",
+      "name": "Date",
+      "call_type": "function"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 22,
+        "start_column": 49,
+        "end_line": 22,
+        "end_column": 52
+      },
+      "type": "construct",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:21:26:23:3",
+      "name": "Date",
+      "call_type": "constructor"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 22,
+        "start_column": 49,
+        "end_line": 22,
+        "end_column": 52
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:21:26:23:3",
+      "name": "Date"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 25,
+        "start_column": 3,
+        "end_line": 48,
+        "end_column": 4
+      },
+      "type": "return",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:17:27:49:1",
+      "name": "return {\n    deposit(amount) {\n      balance += amount;\n      addTransaction('deposit', amount);\n      return balance;\n    },\n    withdraw(amount) {\n      if (amount <= balance) {\n        balance -= amount;\n        addTransaction('withdraw', amount);\n        return balance;\n      }\n      return false;\n    },\n    getBalance() {\n      return balance; // Captures balance variable\n    },\n    getAccountName() {\n      return accountName; // Captures accountName parameter\n    },\n    getTransactionCount() {\n      return transactions.length; // Captures transactions array\n    }\n  };"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 25,
+        "start_column": 10,
+        "end_line": 48,
+        "end_column": 3
+      },
+      "type": "return",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:17:27:49:1",
+      "name": "{\n    deposit(amount) {\n      balance += amount;\n      addTransaction('deposit', amount);\n      return balance;\n    },\n    withdraw(amount) {\n      if (amount <= balance) {\n        balance -= amount;\n        addTransaction('withdraw', amount);\n        return balance;\n      }\n      return false;\n    },\n    getBalance() {\n      return balance; // Captures balance variable\n    },\n    getAccountName() {\n      return accountName; // Captures accountName parameter\n    },\n    getTransactionCount() {\n      return transactions.length; // Captures transactions array\n    }\n  }"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 26,
+        "start_column": 13,
+        "end_line": 26,
+        "end_column": 18
+      },
+      "type": "read",
+      "scope_id": "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:26:12:30:5",
+      "name": "amount"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 27,
+        "start_column": 7,
+        "end_line": 27,
+        "end_column": 13
+      },
+      "type": "read",
+      "scope_id": "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:26:12:30:5",
+      "name": "balance"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 27,
+        "start_column": 18,
+        "end_line": 27,
+        "end_column": 23
+      },
+      "type": "read",
+      "scope_id": "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:26:12:30:5",
+      "name": "amount"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 28,
+        "start_column": 7,
+        "end_line": 28,
+        "end_column": 20
+      },
+      "type": "call",
+      "scope_id": "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:26:12:30:5",
+      "name": "addTransaction",
+      "call_type": "function"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 28,
+        "start_column": 7,
+        "end_line": 28,
+        "end_column": 20
+      },
+      "type": "read",
+      "scope_id": "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:26:12:30:5",
+      "name": "addTransaction"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 28,
+        "start_column": 33,
+        "end_line": 28,
+        "end_column": 38
+      },
+      "type": "read",
+      "scope_id": "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:26:12:30:5",
+      "name": "amount"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 29,
+        "start_column": 7,
+        "end_line": 29,
+        "end_column": 21
+      },
+      "type": "return",
+      "scope_id": "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:26:12:30:5",
+      "name": "return balance;"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 29,
+        "start_column": 14,
+        "end_line": 29,
+        "end_column": 20
+      },
+      "type": "return",
+      "scope_id": "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:26:12:30:5",
+      "name": "balance"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 29,
+        "start_column": 14,
+        "end_line": 29,
+        "end_column": 20
+      },
+      "type": "read",
+      "scope_id": "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:26:12:30:5",
+      "name": "balance"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 31,
+        "start_column": 14,
+        "end_line": 31,
+        "end_column": 19
+      },
+      "type": "read",
+      "scope_id": "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:31:13:38:5",
+      "name": "amount"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 32,
+        "start_column": 11,
+        "end_line": 32,
+        "end_column": 16
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:32:7:36:7",
+      "name": "amount"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 32,
+        "start_column": 21,
+        "end_line": 32,
+        "end_column": 27
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:32:7:36:7",
+      "name": "balance"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 33,
+        "start_column": 9,
+        "end_line": 33,
+        "end_column": 15
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:32:7:36:7",
+      "name": "balance"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 33,
+        "start_column": 20,
+        "end_line": 33,
+        "end_column": 25
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:32:7:36:7",
+      "name": "amount"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 34,
+        "start_column": 9,
+        "end_line": 34,
+        "end_column": 22
+      },
+      "type": "call",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:32:7:36:7",
+      "name": "addTransaction",
+      "call_type": "function"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 34,
+        "start_column": 9,
+        "end_line": 34,
+        "end_column": 22
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:32:7:36:7",
+      "name": "addTransaction"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 34,
+        "start_column": 36,
+        "end_line": 34,
+        "end_column": 41
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:32:7:36:7",
+      "name": "amount"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 35,
+        "start_column": 9,
+        "end_line": 35,
+        "end_column": 23
+      },
+      "type": "return",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:32:7:36:7",
+      "name": "return balance;"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 35,
+        "start_column": 16,
+        "end_line": 35,
+        "end_column": 22
+      },
+      "type": "return",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:32:7:36:7",
+      "name": "balance"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 35,
+        "start_column": 16,
+        "end_line": 35,
+        "end_column": 22
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:32:7:36:7",
+      "name": "balance"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 37,
+        "start_column": 7,
+        "end_line": 37,
+        "end_column": 19
+      },
+      "type": "return",
+      "scope_id": "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:31:13:38:5",
+      "name": "return false;"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 37,
+        "start_column": 14,
+        "end_line": 37,
+        "end_column": 18
+      },
+      "type": "return",
+      "scope_id": "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:31:13:38:5",
+      "name": "false"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 40,
+        "start_column": 7,
+        "end_line": 40,
+        "end_column": 21
+      },
+      "type": "return",
+      "scope_id": "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:39:15:41:5",
+      "name": "return balance;"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 40,
+        "start_column": 14,
+        "end_line": 40,
+        "end_column": 20
+      },
+      "type": "return",
+      "scope_id": "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:39:15:41:5",
+      "name": "balance"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 40,
+        "start_column": 14,
+        "end_line": 40,
+        "end_column": 20
+      },
+      "type": "read",
+      "scope_id": "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:39:15:41:5",
+      "name": "balance"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 43,
+        "start_column": 7,
+        "end_line": 43,
+        "end_column": 25
+      },
+      "type": "return",
+      "scope_id": "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:42:19:44:5",
+      "name": "return accountName;"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 43,
+        "start_column": 14,
+        "end_line": 43,
+        "end_column": 24
+      },
+      "type": "return",
+      "scope_id": "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:42:19:44:5",
+      "name": "accountName"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 43,
+        "start_column": 14,
+        "end_line": 43,
+        "end_column": 24
+      },
+      "type": "read",
+      "scope_id": "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:42:19:44:5",
+      "name": "accountName"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 46,
+        "start_column": 7,
+        "end_line": 46,
+        "end_column": 33
+      },
+      "type": "return",
+      "scope_id": "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:45:24:47:5",
+      "name": "return transactions.length;"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 46,
+        "start_column": 14,
+        "end_line": 46,
+        "end_column": 32
+      },
+      "type": "read",
+      "scope_id": "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:45:24:47:5",
+      "name": "transactions.length"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 46,
+        "start_column": 14,
+        "end_line": 46,
+        "end_column": 25
+      },
+      "type": "read",
+      "scope_id": "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:45:24:47:5",
+      "name": "transactions"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 46,
+        "start_column": 14,
+        "end_line": 46,
+        "end_column": 32
+      },
+      "type": "read",
+      "scope_id": "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:45:24:47:5",
+      "name": "transactions.length"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 46,
+        "start_column": 14,
+        "end_line": 46,
+        "end_column": 25
+      },
+      "type": "read",
+      "scope_id": "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:45:24:47:5",
+      "name": "transactions"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 46,
+        "start_column": 14,
+        "end_line": 46,
+        "end_column": 32
+      },
+      "type": "return",
+      "scope_id": "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:45:24:47:5",
+      "name": "transactions.length"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 46,
+        "start_column": 14,
+        "end_line": 46,
+        "end_column": 25
+      },
+      "type": "read",
+      "scope_id": "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:45:24:47:5",
+      "name": "transactions"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 46,
+        "start_column": 27,
+        "end_line": 46,
+        "end_column": 32
+      },
+      "type": "member_access",
+      "scope_id": "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:45:24:47:5",
+      "name": "length",
+      "member_access": {
+        "access_type": "property",
+        "is_optional_chain": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 46,
+        "start_column": 27,
+        "end_line": 46,
+        "end_column": 32
+      },
+      "type": "member_access",
+      "scope_id": "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:45:24:47:5",
+      "name": "length",
+      "member_access": {
+        "access_type": "property",
+        "is_optional_chain": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 52,
+        "start_column": 10,
+        "end_line": 52,
+        "end_column": 30
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:1:1:110:2",
+      "name": "createChainedFunction"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 52,
+        "start_column": 32,
+        "end_line": 52,
+        "end_column": 35
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:52:31:63:1",
+      "name": "base"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 53,
+        "start_column": 12,
+        "end_line": 53,
+        "end_column": 17
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:52:31:63:1",
+      "name": "level1"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 53,
+        "start_column": 19,
+        "end_line": 53,
+        "end_column": 28
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:53:18:61:3",
+      "name": "multiplier"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 54,
+        "start_column": 14,
+        "end_line": 54,
+        "end_column": 19
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:53:18:61:3",
+      "name": "level2"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 54,
+        "start_column": 21,
+        "end_line": 54,
+        "end_column": 28
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:54:20:59:5",
+      "name": "addition"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 55,
+        "start_column": 16,
+        "end_line": 55,
+        "end_column": 24
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:54:20:59:5",
+      "name": "calculate"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 56,
+        "start_column": 9,
+        "end_line": 56,
+        "end_column": 46
+      },
+      "type": "return",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:55:25:57:7",
+      "name": "return (base * multiplier) + addition;"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 56,
+        "start_column": 16,
+        "end_line": 56,
+        "end_column": 45
+      },
+      "type": "return",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:55:25:57:7",
+      "name": "(base * multiplier) + addition"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 56,
+        "start_column": 17,
+        "end_line": 56,
+        "end_column": 20
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:55:25:57:7",
+      "name": "base"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 56,
+        "start_column": 24,
+        "end_line": 56,
+        "end_column": 33
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:55:25:57:7",
+      "name": "multiplier"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 56,
+        "start_column": 38,
+        "end_line": 56,
+        "end_column": 45
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:55:25:57:7",
+      "name": "addition"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 58,
+        "start_column": 7,
+        "end_line": 58,
+        "end_column": 25
+      },
+      "type": "return",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:54:20:59:5",
+      "name": "return calculate();"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 58,
+        "start_column": 14,
+        "end_line": 58,
+        "end_column": 22
+      },
+      "type": "call",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:54:20:59:5",
+      "name": "calculate",
+      "call_type": "function"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 58,
+        "start_column": 14,
+        "end_line": 58,
+        "end_column": 24
+      },
+      "type": "return",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:54:20:59:5",
+      "name": "calculate"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 58,
+        "start_column": 14,
+        "end_line": 58,
+        "end_column": 22
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:54:20:59:5",
+      "name": "calculate"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 60,
+        "start_column": 5,
+        "end_line": 60,
+        "end_column": 18
+      },
+      "type": "return",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:53:18:61:3",
+      "name": "return level2;"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 60,
+        "start_column": 12,
+        "end_line": 60,
+        "end_column": 17
+      },
+      "type": "return",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:53:18:61:3",
+      "name": "level2"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 60,
+        "start_column": 12,
+        "end_line": 60,
+        "end_column": 17
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:53:18:61:3",
+      "name": "level2"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 62,
+        "start_column": 3,
+        "end_line": 62,
+        "end_column": 16
+      },
+      "type": "return",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:52:31:63:1",
+      "name": "return level1;"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 62,
+        "start_column": 10,
+        "end_line": 62,
+        "end_column": 15
+      },
+      "type": "return",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:52:31:63:1",
+      "name": "level1"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 62,
+        "start_column": 10,
+        "end_line": 62,
+        "end_column": 15
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:52:31:63:1",
+      "name": "level1"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 66,
+        "start_column": 10,
+        "end_line": 66,
+        "end_column": 28
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:1:1:110:2",
+      "name": "createFunctionArray"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 67,
+        "start_column": 9,
+        "end_line": 67,
+        "end_column": 22
+      },
+      "type": "assignment",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:66:29:79:1",
+      "name": "functions = []"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 67,
+        "start_column": 9,
+        "end_line": 67,
+        "end_column": 17
+      },
+      "type": "assignment",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:66:29:79:1",
+      "name": "functions"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 67,
+        "start_column": 9,
+        "end_line": 67,
+        "end_column": 17
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:66:29:79:1",
+      "name": "functions"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 67,
+        "start_column": 21,
+        "end_line": 67,
+        "end_column": 22
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:66:29:79:1",
+      "name": "[]"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 69,
+        "start_column": 12,
+        "end_line": 69,
+        "end_column": 16
+      },
+      "type": "assignment",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:69:3:76:3",
+      "name": "i = 0"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 69,
+        "start_column": 12,
+        "end_line": 69,
+        "end_column": 12
+      },
+      "type": "assignment",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:69:3:76:3",
+      "name": "i"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 69,
+        "start_column": 12,
+        "end_line": 69,
+        "end_column": 12
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:69:3:76:3",
+      "name": "i"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 69,
+        "start_column": 16,
+        "end_line": 69,
+        "end_column": 16
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:69:3:76:3",
+      "name": "0"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 69,
+        "start_column": 19,
+        "end_line": 69,
+        "end_column": 19
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:69:3:76:3",
+      "name": "i"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 69,
+        "start_column": 26,
+        "end_line": 69,
+        "end_column": 26
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:69:3:76:3",
+      "name": "i"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 69,
+        "start_column": 26,
+        "end_line": 69,
+        "end_column": 26
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:69:3:76:3",
+      "name": "i"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 70,
+        "start_column": 5,
+        "end_line": 75,
+        "end_column": 6
+      },
+      "type": "call",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:69:3:76:3",
+      "name": "push",
+      "context": {
+        "receiver_location": {
+          "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+          "start_line": 70,
+          "start_column": 5,
+          "end_line": 70,
+          "end_column": 13
+        },
+        "property_chain": [
+          "functions",
+          "push"
+        ]
+      },
+      "call_type": "method",
+      "member_access": {
+        "access_type": "method",
+        "is_optional_chain": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 70,
+        "start_column": 5,
+        "end_line": 70,
+        "end_column": 13
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:69:3:76:3",
+      "name": "functions"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 70,
+        "start_column": 5,
+        "end_line": 70,
+        "end_column": 18
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:69:3:76:3",
+      "name": "functions.push"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 70,
+        "start_column": 5,
+        "end_line": 70,
+        "end_column": 13
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:69:3:76:3",
+      "name": "functions"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 70,
+        "start_column": 5,
+        "end_line": 70,
+        "end_column": 18
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:69:3:76:3",
+      "name": "functions.push"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 70,
+        "start_column": 5,
+        "end_line": 70,
+        "end_column": 13
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:69:3:76:3",
+      "name": "functions"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 70,
+        "start_column": 5,
+        "end_line": 75,
+        "end_column": 6
+      },
+      "type": "call",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:69:3:76:3",
+      "name": "push",
+      "context": {
+        "receiver_location": {
+          "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+          "start_line": 70,
+          "start_column": 5,
+          "end_line": 70,
+          "end_column": 13
+        },
+        "property_chain": [
+          "functions",
+          "push"
+        ]
+      },
+      "call_type": "method",
+      "member_access": {
+        "access_type": "method",
+        "is_optional_chain": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 70,
+        "start_column": 5,
+        "end_line": 70,
+        "end_column": 13
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:69:3:76:3",
+      "name": "functions"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 70,
+        "start_column": 5,
+        "end_line": 70,
+        "end_column": 13
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:69:3:76:3",
+      "name": "functions"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 70,
+        "start_column": 15,
+        "end_line": 70,
+        "end_column": 18
+      },
+      "type": "call",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:69:3:76:3",
+      "name": "push",
+      "call_type": "function"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 70,
+        "start_column": 15,
+        "end_line": 70,
+        "end_column": 18
+      },
+      "type": "member_access",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:69:3:76:3",
+      "name": "push",
+      "member_access": {
+        "access_type": "property",
+        "is_optional_chain": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 70,
+        "start_column": 15,
+        "end_line": 70,
+        "end_column": 18
+      },
+      "type": "member_access",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:69:3:76:3",
+      "name": "push",
+      "member_access": {
+        "access_type": "property",
+        "is_optional_chain": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 70,
+        "start_column": 15,
+        "end_line": 70,
+        "end_column": 18
+      },
+      "type": "call",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:69:3:76:3",
+      "name": "push",
+      "call_type": "function"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 71,
+        "start_column": 16,
+        "end_line": 71,
+        "end_column": 23
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:70:28:75:5",
+      "name": "getValue"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 72,
+        "start_column": 9,
+        "end_line": 72,
+        "end_column": 17
+      },
+      "type": "return",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:71:24:73:7",
+      "name": "return i;"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 72,
+        "start_column": 16,
+        "end_line": 72,
+        "end_column": 16
+      },
+      "type": "return",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:71:24:73:7",
+      "name": "i"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 72,
+        "start_column": 16,
+        "end_line": 72,
+        "end_column": 16
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:71:24:73:7",
+      "name": "i"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 74,
+        "start_column": 7,
+        "end_line": 74,
+        "end_column": 24
+      },
+      "type": "return",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:70:28:75:5",
+      "name": "return getValue();"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 74,
+        "start_column": 14,
+        "end_line": 74,
+        "end_column": 21
+      },
+      "type": "call",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:70:28:75:5",
+      "name": "getValue",
+      "call_type": "function"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 74,
+        "start_column": 14,
+        "end_line": 74,
+        "end_column": 23
+      },
+      "type": "return",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:70:28:75:5",
+      "name": "getValue"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 74,
+        "start_column": 14,
+        "end_line": 74,
+        "end_column": 21
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:70:28:75:5",
+      "name": "getValue"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 78,
+        "start_column": 3,
+        "end_line": 78,
+        "end_column": 19
+      },
+      "type": "return",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:66:29:79:1",
+      "name": "return functions;"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 78,
+        "start_column": 10,
+        "end_line": 78,
+        "end_column": 18
+      },
+      "type": "return",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:66:29:79:1",
+      "name": "functions"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 78,
+        "start_column": 10,
+        "end_line": 78,
+        "end_column": 18
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:66:29:79:1",
+      "name": "functions"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 82,
+        "start_column": 7,
+        "end_line": 82,
+        "end_column": 35
+      },
+      "type": "assignment",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:82:1:82:36",
+      "name": "doubler = createMultiplier(2)"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 82,
+        "start_column": 7,
+        "end_line": 82,
+        "end_column": 13
+      },
+      "type": "assignment",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:82:1:82:36",
+      "name": "doubler"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 82,
+        "start_column": 7,
+        "end_line": 82,
+        "end_column": 13
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:82:1:82:36",
+      "name": "doubler"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 82,
+        "start_column": 17,
+        "end_line": 82,
+        "end_column": 35
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:82:1:82:36",
+      "name": "createMultiplier"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 82,
+        "start_column": 17,
+        "end_line": 82,
+        "end_column": 32
+      },
+      "type": "call",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:82:1:82:36",
+      "name": "createMultiplier",
+      "call_type": "function"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 82,
+        "start_column": 17,
+        "end_line": 82,
+        "end_column": 32
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:82:1:82:36",
+      "name": "createMultiplier"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 83,
+        "start_column": 7,
+        "end_line": 83,
+        "end_column": 26
+      },
+      "type": "assignment",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:83:1:83:27",
+      "name": "doubled = doubler(5)"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 83,
+        "start_column": 7,
+        "end_line": 83,
+        "end_column": 13
+      },
+      "type": "assignment",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:83:1:83:27",
+      "name": "doubled"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 83,
+        "start_column": 7,
+        "end_line": 83,
+        "end_column": 13
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:83:1:83:27",
+      "name": "doubled"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 83,
+        "start_column": 17,
+        "end_line": 83,
+        "end_column": 26
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:83:1:83:27",
+      "name": "doubler"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 83,
+        "start_column": 17,
+        "end_line": 83,
+        "end_column": 23
+      },
+      "type": "call",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:83:1:83:27",
+      "name": "doubler",
+      "call_type": "function"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 83,
+        "start_column": 17,
+        "end_line": 83,
+        "end_column": 23
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:83:1:83:27",
+      "name": "doubler"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 85,
+        "start_column": 7,
+        "end_line": 85,
+        "end_column": 49
+      },
+      "type": "assignment",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:85:1:85:50",
+      "name": "account = createBankAccount(100, \"Savings\")"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 85,
+        "start_column": 7,
+        "end_line": 85,
+        "end_column": 13
+      },
+      "type": "assignment",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:85:1:85:50",
+      "name": "account"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 85,
+        "start_column": 7,
+        "end_line": 85,
+        "end_column": 13
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:85:1:85:50",
+      "name": "account"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 85,
+        "start_column": 17,
+        "end_line": 85,
+        "end_column": 49
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:85:1:85:50",
+      "name": "createBankAccount"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 85,
+        "start_column": 17,
+        "end_line": 85,
+        "end_column": 33
+      },
+      "type": "call",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:85:1:85:50",
+      "name": "createBankAccount",
+      "call_type": "function"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 85,
+        "start_column": 17,
+        "end_line": 85,
+        "end_column": 33
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:85:1:85:50",
+      "name": "createBankAccount"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 86,
+        "start_column": 7,
+        "end_line": 86,
+        "end_column": 41
+      },
+      "type": "assignment",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:86:1:86:42",
+      "name": "depositResult = account.deposit(50)"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 86,
+        "start_column": 7,
+        "end_line": 86,
+        "end_column": 19
+      },
+      "type": "assignment",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:86:1:86:42",
+      "name": "depositResult"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 86,
+        "start_column": 7,
+        "end_line": 86,
+        "end_column": 19
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:86:1:86:42",
+      "name": "depositResult"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 86,
+        "start_column": 23,
+        "end_line": 86,
+        "end_column": 41
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:86:1:86:42",
+      "name": "account.deposit(50)"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 86,
+        "start_column": 23,
+        "end_line": 86,
+        "end_column": 41
+      },
+      "type": "call",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:86:1:86:42",
+      "name": "deposit",
+      "context": {
+        "receiver_location": {
+          "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+          "start_line": 86,
+          "start_column": 23,
+          "end_line": 86,
+          "end_column": 29
+        },
+        "property_chain": [
+          "account",
+          "deposit"
+        ]
+      },
+      "call_type": "method",
+      "member_access": {
+        "access_type": "method",
+        "is_optional_chain": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 86,
+        "start_column": 23,
+        "end_line": 86,
+        "end_column": 29
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:86:1:86:42",
+      "name": "account"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 86,
+        "start_column": 23,
+        "end_line": 86,
+        "end_column": 37
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:86:1:86:42",
+      "name": "account.deposit"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 86,
+        "start_column": 23,
+        "end_line": 86,
+        "end_column": 29
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:86:1:86:42",
+      "name": "account"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 86,
+        "start_column": 23,
+        "end_line": 86,
+        "end_column": 37
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:86:1:86:42",
+      "name": "account.deposit"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 86,
+        "start_column": 23,
+        "end_line": 86,
+        "end_column": 29
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:86:1:86:42",
+      "name": "account"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 86,
+        "start_column": 23,
+        "end_line": 86,
+        "end_column": 41
+      },
+      "type": "call",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:86:1:86:42",
+      "name": "deposit",
+      "context": {
+        "receiver_location": {
+          "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+          "start_line": 86,
+          "start_column": 23,
+          "end_line": 86,
+          "end_column": 29
+        },
+        "property_chain": [
+          "account",
+          "deposit"
+        ]
+      },
+      "call_type": "method",
+      "member_access": {
+        "access_type": "method",
+        "is_optional_chain": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 86,
+        "start_column": 23,
+        "end_line": 86,
+        "end_column": 29
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:86:1:86:42",
+      "name": "account"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 86,
+        "start_column": 23,
+        "end_line": 86,
+        "end_column": 29
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:86:1:86:42",
+      "name": "account"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 86,
+        "start_column": 31,
+        "end_line": 86,
+        "end_column": 37
+      },
+      "type": "call",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:86:1:86:42",
+      "name": "deposit",
+      "call_type": "function"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 86,
+        "start_column": 31,
+        "end_line": 86,
+        "end_column": 37
+      },
+      "type": "member_access",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:86:1:86:42",
+      "name": "deposit",
+      "member_access": {
+        "access_type": "property",
+        "is_optional_chain": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 86,
+        "start_column": 31,
+        "end_line": 86,
+        "end_column": 37
+      },
+      "type": "member_access",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:86:1:86:42",
+      "name": "deposit",
+      "member_access": {
+        "access_type": "property",
+        "is_optional_chain": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 86,
+        "start_column": 31,
+        "end_line": 86,
+        "end_column": 37
+      },
+      "type": "call",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:86:1:86:42",
+      "name": "deposit",
+      "call_type": "function"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 87,
+        "start_column": 7,
+        "end_line": 87,
+        "end_column": 42
+      },
+      "type": "assignment",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:87:1:87:43",
+      "name": "balanceResult = account.getBalance()"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 87,
+        "start_column": 7,
+        "end_line": 87,
+        "end_column": 19
+      },
+      "type": "assignment",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:87:1:87:43",
+      "name": "balanceResult"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 87,
+        "start_column": 7,
+        "end_line": 87,
+        "end_column": 19
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:87:1:87:43",
+      "name": "balanceResult"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 87,
+        "start_column": 23,
+        "end_line": 87,
+        "end_column": 42
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:87:1:87:43",
+      "name": "account.getBalance()"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 87,
+        "start_column": 23,
+        "end_line": 87,
+        "end_column": 42
+      },
+      "type": "call",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:87:1:87:43",
+      "name": "getBalance",
+      "context": {
+        "receiver_location": {
+          "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+          "start_line": 87,
+          "start_column": 23,
+          "end_line": 87,
+          "end_column": 29
+        },
+        "property_chain": [
+          "account",
+          "getBalance"
+        ]
+      },
+      "call_type": "method",
+      "member_access": {
+        "access_type": "method",
+        "is_optional_chain": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 87,
+        "start_column": 23,
+        "end_line": 87,
+        "end_column": 29
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:87:1:87:43",
+      "name": "account"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 87,
+        "start_column": 23,
+        "end_line": 87,
+        "end_column": 40
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:87:1:87:43",
+      "name": "account.getBalance"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 87,
+        "start_column": 23,
+        "end_line": 87,
+        "end_column": 29
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:87:1:87:43",
+      "name": "account"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 87,
+        "start_column": 23,
+        "end_line": 87,
+        "end_column": 40
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:87:1:87:43",
+      "name": "account.getBalance"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 87,
+        "start_column": 23,
+        "end_line": 87,
+        "end_column": 29
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:87:1:87:43",
+      "name": "account"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 87,
+        "start_column": 23,
+        "end_line": 87,
+        "end_column": 42
+      },
+      "type": "call",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:87:1:87:43",
+      "name": "getBalance",
+      "context": {
+        "receiver_location": {
+          "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+          "start_line": 87,
+          "start_column": 23,
+          "end_line": 87,
+          "end_column": 29
+        },
+        "property_chain": [
+          "account",
+          "getBalance"
+        ]
+      },
+      "call_type": "method",
+      "member_access": {
+        "access_type": "method",
+        "is_optional_chain": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 87,
+        "start_column": 23,
+        "end_line": 87,
+        "end_column": 29
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:87:1:87:43",
+      "name": "account"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 87,
+        "start_column": 23,
+        "end_line": 87,
+        "end_column": 29
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:87:1:87:43",
+      "name": "account"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 87,
+        "start_column": 31,
+        "end_line": 87,
+        "end_column": 40
+      },
+      "type": "call",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:87:1:87:43",
+      "name": "getBalance",
+      "call_type": "function"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 87,
+        "start_column": 31,
+        "end_line": 87,
+        "end_column": 40
+      },
+      "type": "member_access",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:87:1:87:43",
+      "name": "getBalance",
+      "member_access": {
+        "access_type": "property",
+        "is_optional_chain": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 87,
+        "start_column": 31,
+        "end_line": 87,
+        "end_column": 40
+      },
+      "type": "member_access",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:87:1:87:43",
+      "name": "getBalance",
+      "member_access": {
+        "access_type": "property",
+        "is_optional_chain": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 87,
+        "start_column": 31,
+        "end_line": 87,
+        "end_column": 40
+      },
+      "type": "call",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:87:1:87:43",
+      "name": "getBalance",
+      "call_type": "function"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 88,
+        "start_column": 7,
+        "end_line": 88,
+        "end_column": 43
+      },
+      "type": "assignment",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:88:1:88:44",
+      "name": "nameResult = account.getAccountName()"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 88,
+        "start_column": 7,
+        "end_line": 88,
+        "end_column": 16
+      },
+      "type": "assignment",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:88:1:88:44",
+      "name": "nameResult"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 88,
+        "start_column": 7,
+        "end_line": 88,
+        "end_column": 16
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:88:1:88:44",
+      "name": "nameResult"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 88,
+        "start_column": 20,
+        "end_line": 88,
+        "end_column": 43
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:88:1:88:44",
+      "name": "account.getAccountName()"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 88,
+        "start_column": 20,
+        "end_line": 88,
+        "end_column": 43
+      },
+      "type": "call",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:88:1:88:44",
+      "name": "getAccountName",
+      "context": {
+        "receiver_location": {
+          "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+          "start_line": 88,
+          "start_column": 20,
+          "end_line": 88,
+          "end_column": 26
+        },
+        "property_chain": [
+          "account",
+          "getAccountName"
+        ]
+      },
+      "call_type": "method",
+      "member_access": {
+        "access_type": "method",
+        "is_optional_chain": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 88,
+        "start_column": 20,
+        "end_line": 88,
+        "end_column": 26
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:88:1:88:44",
+      "name": "account"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 88,
+        "start_column": 20,
+        "end_line": 88,
+        "end_column": 41
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:88:1:88:44",
+      "name": "account.getAccountName"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 88,
+        "start_column": 20,
+        "end_line": 88,
+        "end_column": 26
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:88:1:88:44",
+      "name": "account"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 88,
+        "start_column": 20,
+        "end_line": 88,
+        "end_column": 41
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:88:1:88:44",
+      "name": "account.getAccountName"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 88,
+        "start_column": 20,
+        "end_line": 88,
+        "end_column": 26
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:88:1:88:44",
+      "name": "account"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 88,
+        "start_column": 20,
+        "end_line": 88,
+        "end_column": 43
+      },
+      "type": "call",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:88:1:88:44",
+      "name": "getAccountName",
+      "context": {
+        "receiver_location": {
+          "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+          "start_line": 88,
+          "start_column": 20,
+          "end_line": 88,
+          "end_column": 26
+        },
+        "property_chain": [
+          "account",
+          "getAccountName"
+        ]
+      },
+      "call_type": "method",
+      "member_access": {
+        "access_type": "method",
+        "is_optional_chain": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 88,
+        "start_column": 20,
+        "end_line": 88,
+        "end_column": 26
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:88:1:88:44",
+      "name": "account"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 88,
+        "start_column": 20,
+        "end_line": 88,
+        "end_column": 26
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:88:1:88:44",
+      "name": "account"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 88,
+        "start_column": 28,
+        "end_line": 88,
+        "end_column": 41
+      },
+      "type": "call",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:88:1:88:44",
+      "name": "getAccountName",
+      "call_type": "function"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 88,
+        "start_column": 28,
+        "end_line": 88,
+        "end_column": 41
+      },
+      "type": "member_access",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:88:1:88:44",
+      "name": "getAccountName",
+      "member_access": {
+        "access_type": "property",
+        "is_optional_chain": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 88,
+        "start_column": 28,
+        "end_line": 88,
+        "end_column": 41
+      },
+      "type": "member_access",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:88:1:88:44",
+      "name": "getAccountName",
+      "member_access": {
+        "access_type": "property",
+        "is_optional_chain": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 88,
+        "start_column": 28,
+        "end_line": 88,
+        "end_column": 41
+      },
+      "type": "call",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:88:1:88:44",
+      "name": "getAccountName",
+      "call_type": "function"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 90,
+        "start_column": 7,
+        "end_line": 90,
+        "end_column": 43
+      },
+      "type": "assignment",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:90:1:90:44",
+      "name": "chainedFn = createChainedFunction(10)"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 90,
+        "start_column": 7,
+        "end_line": 90,
+        "end_column": 15
+      },
+      "type": "assignment",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:90:1:90:44",
+      "name": "chainedFn"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 90,
+        "start_column": 7,
+        "end_line": 90,
+        "end_column": 15
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:90:1:90:44",
+      "name": "chainedFn"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 90,
+        "start_column": 19,
+        "end_line": 90,
+        "end_column": 43
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:90:1:90:44",
+      "name": "createChainedFunction"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 90,
+        "start_column": 19,
+        "end_line": 90,
+        "end_column": 39
+      },
+      "type": "call",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:90:1:90:44",
+      "name": "createChainedFunction",
+      "call_type": "function"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 90,
+        "start_column": 19,
+        "end_line": 90,
+        "end_column": 39
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:90:1:90:44",
+      "name": "createChainedFunction"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 91,
+        "start_column": 7,
+        "end_line": 91,
+        "end_column": 29
+      },
+      "type": "assignment",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:91:1:91:30",
+      "name": "level2Fn = chainedFn(3)"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 91,
+        "start_column": 7,
+        "end_line": 91,
+        "end_column": 14
+      },
+      "type": "assignment",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:91:1:91:30",
+      "name": "level2Fn"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 91,
+        "start_column": 7,
+        "end_line": 91,
+        "end_column": 14
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:91:1:91:30",
+      "name": "level2Fn"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 91,
+        "start_column": 18,
+        "end_line": 91,
+        "end_column": 29
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:91:1:91:30",
+      "name": "chainedFn"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 91,
+        "start_column": 18,
+        "end_line": 91,
+        "end_column": 26
+      },
+      "type": "call",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:91:1:91:30",
+      "name": "chainedFn",
+      "call_type": "function"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 91,
+        "start_column": 18,
+        "end_line": 91,
+        "end_column": 26
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:91:1:91:30",
+      "name": "chainedFn"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 92,
+        "start_column": 7,
+        "end_line": 92,
+        "end_column": 31
+      },
+      "type": "assignment",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:92:1:92:32",
+      "name": "chainResult = level2Fn(5)"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 92,
+        "start_column": 7,
+        "end_line": 92,
+        "end_column": 17
+      },
+      "type": "assignment",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:92:1:92:32",
+      "name": "chainResult"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 92,
+        "start_column": 7,
+        "end_line": 92,
+        "end_column": 17
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:92:1:92:32",
+      "name": "chainResult"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 92,
+        "start_column": 21,
+        "end_line": 92,
+        "end_column": 31
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:92:1:92:32",
+      "name": "level2Fn"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 92,
+        "start_column": 21,
+        "end_line": 92,
+        "end_column": 28
+      },
+      "type": "call",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:92:1:92:32",
+      "name": "level2Fn",
+      "call_type": "function"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 92,
+        "start_column": 21,
+        "end_line": 92,
+        "end_column": 28
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:92:1:92:32",
+      "name": "level2Fn"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 94,
+        "start_column": 7,
+        "end_line": 94,
+        "end_column": 37
+      },
+      "type": "assignment",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:94:1:94:38",
+      "name": "fnArray = createFunctionArray()"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 94,
+        "start_column": 7,
+        "end_line": 94,
+        "end_column": 13
+      },
+      "type": "assignment",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:94:1:94:38",
+      "name": "fnArray"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 94,
+        "start_column": 7,
+        "end_line": 94,
+        "end_column": 13
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:94:1:94:38",
+      "name": "fnArray"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 94,
+        "start_column": 17,
+        "end_line": 94,
+        "end_column": 37
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:94:1:94:38",
+      "name": "createFunctionArray"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 94,
+        "start_column": 17,
+        "end_line": 94,
+        "end_column": 35
+      },
+      "type": "call",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:94:1:94:38",
+      "name": "createFunctionArray",
+      "call_type": "function"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 94,
+        "start_column": 17,
+        "end_line": 94,
+        "end_column": 35
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:94:1:94:38",
+      "name": "createFunctionArray"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 95,
+        "start_column": 7,
+        "end_line": 95,
+        "end_column": 44
+      },
+      "type": "assignment",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:95:1:95:45",
+      "name": "arrayResults = fnArray.map(fn => fn())"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 95,
+        "start_column": 7,
+        "end_line": 95,
+        "end_column": 18
+      },
+      "type": "assignment",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:95:1:95:45",
+      "name": "arrayResults"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 95,
+        "start_column": 7,
+        "end_line": 95,
+        "end_column": 18
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:95:1:95:45",
+      "name": "arrayResults"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 95,
+        "start_column": 22,
+        "end_line": 95,
+        "end_column": 44
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:95:1:95:45",
+      "name": "fnArray.map(fn => fn())"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 95,
+        "start_column": 22,
+        "end_line": 95,
+        "end_column": 44
+      },
+      "type": "call",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:95:1:95:45",
+      "name": "map",
+      "context": {
+        "receiver_location": {
+          "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+          "start_line": 95,
+          "start_column": 22,
+          "end_line": 95,
+          "end_column": 28
+        },
+        "property_chain": [
+          "fnArray",
+          "map"
+        ]
+      },
+      "call_type": "method",
+      "member_access": {
+        "access_type": "method",
+        "is_optional_chain": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 95,
+        "start_column": 22,
+        "end_line": 95,
+        "end_column": 28
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:95:1:95:45",
+      "name": "fnArray"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 95,
+        "start_column": 22,
+        "end_line": 95,
+        "end_column": 32
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:95:1:95:45",
+      "name": "fnArray.map"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 95,
+        "start_column": 22,
+        "end_line": 95,
+        "end_column": 28
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:95:1:95:45",
+      "name": "fnArray"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 95,
+        "start_column": 22,
+        "end_line": 95,
+        "end_column": 32
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:95:1:95:45",
+      "name": "fnArray.map"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 95,
+        "start_column": 22,
+        "end_line": 95,
+        "end_column": 28
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:95:1:95:45",
+      "name": "fnArray"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 95,
+        "start_column": 22,
+        "end_line": 95,
+        "end_column": 44
+      },
+      "type": "call",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:95:1:95:45",
+      "name": "map",
+      "context": {
+        "receiver_location": {
+          "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+          "start_line": 95,
+          "start_column": 22,
+          "end_line": 95,
+          "end_column": 28
+        },
+        "property_chain": [
+          "fnArray",
+          "map"
+        ]
+      },
+      "call_type": "method",
+      "member_access": {
+        "access_type": "method",
+        "is_optional_chain": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 95,
+        "start_column": 22,
+        "end_line": 95,
+        "end_column": 28
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:95:1:95:45",
+      "name": "fnArray"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 95,
+        "start_column": 22,
+        "end_line": 95,
+        "end_column": 28
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:95:1:95:45",
+      "name": "fnArray"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 95,
+        "start_column": 30,
+        "end_line": 95,
+        "end_column": 32
+      },
+      "type": "call",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:95:1:95:45",
+      "name": "map",
+      "call_type": "function"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 95,
+        "start_column": 30,
+        "end_line": 95,
+        "end_column": 32
+      },
+      "type": "member_access",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:95:1:95:45",
+      "name": "map",
+      "member_access": {
+        "access_type": "property",
+        "is_optional_chain": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 95,
+        "start_column": 30,
+        "end_line": 95,
+        "end_column": 32
+      },
+      "type": "member_access",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:95:1:95:45",
+      "name": "map",
+      "member_access": {
+        "access_type": "property",
+        "is_optional_chain": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 95,
+        "start_column": 30,
+        "end_line": 95,
+        "end_column": 32
+      },
+      "type": "call",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:95:1:95:45",
+      "name": "map",
+      "call_type": "function"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 95,
+        "start_column": 34,
+        "end_line": 95,
+        "end_column": 35
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:95:34:95:43",
+      "name": "fn"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 95,
+        "start_column": 40,
+        "end_line": 95,
+        "end_column": 41
+      },
+      "type": "call",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:95:34:95:43",
+      "name": "fn",
+      "call_type": "function"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 95,
+        "start_column": 40,
+        "end_line": 95,
+        "end_column": 41
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:95:34:95:43",
+      "name": "fn"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 98,
+        "start_column": 3,
+        "end_line": 98,
+        "end_column": 18
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:1:1:110:2",
+      "name": "createMultiplier"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 99,
+        "start_column": 3,
+        "end_line": 99,
+        "end_column": 19
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:1:1:110:2",
+      "name": "createBankAccount"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 100,
+        "start_column": 3,
+        "end_line": 100,
+        "end_column": 23
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:1:1:110:2",
+      "name": "createChainedFunction"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 101,
+        "start_column": 3,
+        "end_line": 101,
+        "end_column": 21
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:1:1:110:2",
+      "name": "createFunctionArray"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 102,
+        "start_column": 3,
+        "end_line": 102,
+        "end_column": 9
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:1:1:110:2",
+      "name": "doubler"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 103,
+        "start_column": 3,
+        "end_line": 103,
+        "end_column": 9
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:1:1:110:2",
+      "name": "doubled"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 104,
+        "start_column": 3,
+        "end_line": 104,
+        "end_column": 9
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:1:1:110:2",
+      "name": "account"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 105,
+        "start_column": 3,
+        "end_line": 105,
+        "end_column": 15
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:1:1:110:2",
+      "name": "depositResult"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 106,
+        "start_column": 3,
+        "end_line": 106,
+        "end_column": 15
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:1:1:110:2",
+      "name": "balanceResult"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 107,
+        "start_column": 3,
+        "end_line": 107,
+        "end_column": 12
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:1:1:110:2",
+      "name": "nameResult"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 108,
+        "start_column": 3,
+        "end_line": 108,
+        "end_column": 13
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:1:1:110:2",
+      "name": "chainResult"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js",
+        "start_line": 109,
+        "start_column": 3,
+        "end_line": 109,
+        "end_column": 14
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/closures.js:1:1:110:2",
+      "name": "arrayResults"
+    }
+  ]
+}

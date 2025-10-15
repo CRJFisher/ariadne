@@ -389,6 +389,7 @@
             "end_line": 39,
             "end_column": 7
           },
+          "docstring": "// Additional prototype methods for Car",
           "parameters": [],
           "body_scope_id": "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/basic_class.js:39:8:41:3"
         }

@@ -1,0 +1,2379 @@
+{
+  "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js",
+  "language": "javascript",
+  "root_scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:1:1:99:2",
+  "scopes": {
+    "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:1:1:99:2": {
+      "id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:1:1:99:2",
+      "parent_id": null,
+      "name": null,
+      "type": "module",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js",
+        "start_line": 1,
+        "start_column": 1,
+        "end_line": 99,
+        "end_column": 2
+      },
+      "child_ids": [
+        "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:7:1:7:33",
+        "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:9:23:44:1",
+        "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:47:28:53:1",
+        "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:56:26:84:1",
+        "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:87:1:87:36",
+        "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:88:1:88:58",
+        "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:89:1:89:41"
+      ]
+    },
+    "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:7:1:7:33": {
+      "id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:7:1:7:33",
+      "parent_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:1:1:99:2",
+      "name": null,
+      "type": "block",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js",
+        "start_line": 7,
+        "start_column": 1,
+        "end_line": 7,
+        "end_column": 33
+      },
+      "child_ids": []
+    },
+    "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:9:23:44:1": {
+      "id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:9:23:44:1",
+      "parent_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:1:1:99:2",
+      "name": "outerFunction",
+      "type": "function",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js",
+        "start_line": 9,
+        "start_column": 23,
+        "end_line": 44,
+        "end_column": 1
+      },
+      "child_ids": [
+        "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:13:18:15:3",
+        "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:19:3:41:3"
+      ]
+    },
+    "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:13:18:15:3": {
+      "id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:13:18:15:3",
+      "parent_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:9:23:44:1",
+      "name": "helper",
+      "type": "function",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js",
+        "start_line": 13,
+        "start_column": 18,
+        "end_line": 15,
+        "end_column": 3
+      },
+      "child_ids": []
+    },
+    "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:19:3:41:3": {
+      "id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:19:3:41:3",
+      "parent_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:9:23:44:1",
+      "name": null,
+      "type": "block",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js",
+        "start_line": 19,
+        "start_column": 3,
+        "end_line": 41,
+        "end_column": 3
+      },
+      "child_ids": [
+        "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:23:25:25:5",
+        "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:33:24:35:7"
+      ]
+    },
+    "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:23:25:25:5": {
+      "id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:23:25:25:5",
+      "parent_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:19:3:41:3",
+      "name": "blockHelper",
+      "type": "function",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js",
+        "start_line": 23,
+        "start_column": 25,
+        "end_line": 25,
+        "end_column": 5
+      },
+      "child_ids": []
+    },
+    "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:33:24:35:7": {
+      "id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:33:24:35:7",
+      "parent_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:19:3:41:3",
+      "name": null,
+      "type": "function",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js",
+        "start_line": 33,
+        "start_column": 24,
+        "end_line": 35,
+        "end_column": 7
+      },
+      "child_ids": []
+    },
+    "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:47:28:53:1": {
+      "id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:47:28:53:1",
+      "parent_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:1:1:99:2",
+      "name": "parameterShadowing",
+      "type": "function",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js",
+        "start_line": 47,
+        "start_column": 28,
+        "end_line": 53,
+        "end_column": 1
+      },
+      "child_ids": [
+        "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:48:20:50:3"
+      ]
+    },
+    "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:48:20:50:3": {
+      "id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:48:20:50:3",
+      "parent_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:47:28:53:1",
+      "name": "getParam",
+      "type": "function",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js",
+        "start_line": 48,
+        "start_column": 20,
+        "end_line": 50,
+        "end_column": 3
+      },
+      "child_ids": []
+    },
+    "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:56:26:84:1": {
+      "id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:56:26:84:1",
+      "parent_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:1:1:99:2",
+      "name": "complexShadowing",
+      "type": "function",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js",
+        "start_line": 56,
+        "start_column": 26,
+        "end_line": 84,
+        "end_column": 1
+      },
+      "child_ids": [
+        "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:59:18:77:3",
+        "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:79:22:81:3"
+      ]
+    },
+    "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:59:18:77:3": {
+      "id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:59:18:77:3",
+      "parent_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:56:26:84:1",
+      "name": "level2",
+      "type": "function",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js",
+        "start_line": 59,
+        "start_column": 18,
+        "end_line": 77,
+        "end_column": 3
+      },
+      "child_ids": [
+        "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:62:20:70:5",
+        "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:72:27:74:5"
+      ]
+    },
+    "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:62:20:70:5": {
+      "id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:62:20:70:5",
+      "parent_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:59:18:77:3",
+      "name": "level3",
+      "type": "function",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js",
+        "start_line": 62,
+        "start_column": 20,
+        "end_line": 70,
+        "end_column": 5
+      },
+      "child_ids": [
+        "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:65:27:67:7"
+      ]
+    },
+    "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:65:27:67:7": {
+      "id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:65:27:67:7",
+      "parent_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:62:20:70:5",
+      "name": "getDeepData",
+      "type": "function",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js",
+        "start_line": 65,
+        "start_column": 27,
+        "end_line": 67,
+        "end_column": 7
+      },
+      "child_ids": []
+    },
+    "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:72:27:74:5": {
+      "id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:72:27:74:5",
+      "parent_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:59:18:77:3",
+      "name": "getMiddleData",
+      "type": "function",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js",
+        "start_line": 72,
+        "start_column": 27,
+        "end_line": 74,
+        "end_column": 5
+      },
+      "child_ids": []
+    },
+    "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:79:22:81:3": {
+      "id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:79:22:81:3",
+      "parent_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:56:26:84:1",
+      "name": "getTopData",
+      "type": "function",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js",
+        "start_line": 79,
+        "start_column": 22,
+        "end_line": 81,
+        "end_column": 3
+      },
+      "child_ids": []
+    },
+    "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:87:1:87:36": {
+      "id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:87:1:87:36",
+      "parent_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:1:1:99:2",
+      "name": null,
+      "type": "block",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js",
+        "start_line": 87,
+        "start_column": 1,
+        "end_line": 87,
+        "end_column": 36
+      },
+      "child_ids": []
+    },
+    "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:88:1:88:58": {
+      "id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:88:1:88:58",
+      "parent_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:1:1:99:2",
+      "name": null,
+      "type": "block",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js",
+        "start_line": 88,
+        "start_column": 1,
+        "end_line": 88,
+        "end_column": 58
+      },
+      "child_ids": []
+    },
+    "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:89:1:89:41": {
+      "id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:89:1:89:41",
+      "parent_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:1:1:99:2",
+      "name": null,
+      "type": "block",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js",
+        "start_line": 89,
+        "start_column": 1,
+        "end_line": 89,
+        "end_column": 41
+      },
+      "child_ids": []
+    }
+  },
+  "functions": {
+    "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:9:10:9:22:outerFunction": {
+      "kind": "function",
+      "symbol_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:9:10:9:22:outerFunction",
+      "name": "outerFunction",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js",
+        "start_line": 9,
+        "start_column": 10,
+        "end_line": 9,
+        "end_column": 22
+      },
+      "defining_scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:1:1:99:2",
+      "is_exported": true,
+      "export": {
+        "is_reexport": false
+      },
+      "docstring": "// Default import",
+      "signature": {
+        "parameters": []
+      },
+      "body_scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:9:23:44:1"
+    },
+    "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:13:12:13:17:helper": {
+      "kind": "function",
+      "symbol_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:13:12:13:17:helper",
+      "name": "helper",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js",
+        "start_line": 13,
+        "start_column": 12,
+        "end_line": 13,
+        "end_column": 17
+      },
+      "defining_scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:9:23:44:1",
+      "is_exported": false,
+      "signature": {
+        "parameters": []
+      },
+      "body_scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:13:18:15:3"
+    },
+    "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:23:14:23:24:blockHelper": {
+      "kind": "function",
+      "symbol_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:23:14:23:24:blockHelper",
+      "name": "blockHelper",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js",
+        "start_line": 23,
+        "start_column": 14,
+        "end_line": 23,
+        "end_column": 24
+      },
+      "defining_scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:19:3:41:3",
+      "is_exported": false,
+      "signature": {
+        "parameters": []
+      },
+      "body_scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:13:18:15:3"
+    },
+    "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:33:13:33:20:getValue": {
+      "kind": "function",
+      "symbol_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:33:13:33:20:getValue",
+      "name": "getValue",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js",
+        "start_line": 33,
+        "start_column": 13,
+        "end_line": 33,
+        "end_column": 20
+      },
+      "defining_scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:19:3:41:3",
+      "is_exported": false,
+      "signature": {
+        "parameters": []
+      },
+      "body_scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:33:24:35:7"
+    },
+    "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:47:10:47:27:parameterShadowing": {
+      "kind": "function",
+      "symbol_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:47:10:47:27:parameterShadowing",
+      "name": "parameterShadowing",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js",
+        "start_line": 47,
+        "start_column": 10,
+        "end_line": 47,
+        "end_column": 27
+      },
+      "defining_scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:1:1:99:2",
+      "is_exported": true,
+      "export": {
+        "is_reexport": false
+      },
+      "docstring": "// Function parameters shadow outer variables",
+      "signature": {
+        "parameters": [
+          {
+            "kind": "parameter",
+            "defining_scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:47:28:53:1",
+            "symbol_id": "parameter:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:47:29:47:37:globalVar",
+            "name": "globalVar",
+            "location": {
+              "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js",
+              "start_line": 47,
+              "start_column": 29,
+              "end_line": 47,
+              "end_column": 37
+            }
+          }
+        ]
+      },
+      "body_scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:47:28:53:1"
+    },
+    "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:48:12:48:19:getParam": {
+      "kind": "function",
+      "symbol_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:48:12:48:19:getParam",
+      "name": "getParam",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js",
+        "start_line": 48,
+        "start_column": 12,
+        "end_line": 48,
+        "end_column": 19
+      },
+      "defining_scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:47:28:53:1",
+      "is_exported": false,
+      "signature": {
+        "parameters": []
+      },
+      "body_scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:48:20:50:3"
+    },
+    "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:56:10:56:25:complexShadowing": {
+      "kind": "function",
+      "symbol_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:56:10:56:25:complexShadowing",
+      "name": "complexShadowing",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js",
+        "start_line": 56,
+        "start_column": 10,
+        "end_line": 56,
+        "end_column": 25
+      },
+      "defining_scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:1:1:99:2",
+      "is_exported": true,
+      "export": {
+        "is_reexport": false
+      },
+      "docstring": "// Multiple levels of variable shadowing",
+      "signature": {
+        "parameters": []
+      },
+      "body_scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:56:26:84:1"
+    },
+    "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:59:12:59:17:level2": {
+      "kind": "function",
+      "symbol_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:59:12:59:17:level2",
+      "name": "level2",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js",
+        "start_line": 59,
+        "start_column": 12,
+        "end_line": 59,
+        "end_column": 17
+      },
+      "defining_scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:56:26:84:1",
+      "is_exported": false,
+      "signature": {
+        "parameters": []
+      },
+      "body_scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:59:18:77:3"
+    },
+    "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:62:14:62:19:level3": {
+      "kind": "function",
+      "symbol_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:62:14:62:19:level3",
+      "name": "level3",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js",
+        "start_line": 62,
+        "start_column": 14,
+        "end_line": 62,
+        "end_column": 19
+      },
+      "defining_scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:59:18:77:3",
+      "is_exported": false,
+      "signature": {
+        "parameters": []
+      },
+      "body_scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:62:20:70:5"
+    },
+    "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:65:16:65:26:getDeepData": {
+      "kind": "function",
+      "symbol_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:65:16:65:26:getDeepData",
+      "name": "getDeepData",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js",
+        "start_line": 65,
+        "start_column": 16,
+        "end_line": 65,
+        "end_column": 26
+      },
+      "defining_scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:62:20:70:5",
+      "is_exported": false,
+      "signature": {
+        "parameters": []
+      },
+      "body_scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:65:27:67:7"
+    },
+    "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:72:14:72:26:getMiddleData": {
+      "kind": "function",
+      "symbol_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:72:14:72:26:getMiddleData",
+      "name": "getMiddleData",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js",
+        "start_line": 72,
+        "start_column": 14,
+        "end_line": 72,
+        "end_column": 26
+      },
+      "defining_scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:59:18:77:3",
+      "is_exported": false,
+      "signature": {
+        "parameters": []
+      },
+      "body_scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:72:27:74:5"
+    },
+    "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:79:12:79:21:getTopData": {
+      "kind": "function",
+      "symbol_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:79:12:79:21:getTopData",
+      "name": "getTopData",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js",
+        "start_line": 79,
+        "start_column": 12,
+        "end_line": 79,
+        "end_column": 21
+      },
+      "defining_scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:56:26:84:1",
+      "is_exported": false,
+      "signature": {
+        "parameters": []
+      },
+      "body_scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:79:22:81:3"
+    }
+  },
+  "classes": {},
+  "variables": {
+    "variable:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:7:7:7:15:globalVar": {
+      "kind": "constant",
+      "symbol_id": "variable:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:7:7:7:15:globalVar",
+      "name": "globalVar",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js",
+        "start_line": 7,
+        "start_column": 7,
+        "end_line": 7,
+        "end_column": 15
+      },
+      "defining_scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:7:1:7:33",
+      "is_exported": true,
+      "docstring": "// Global variable"
+    },
+    "variable:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:11:9:11:17:globalVar": {
+      "kind": "constant",
+      "symbol_id": "variable:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:11:9:11:17:globalVar",
+      "name": "globalVar",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js",
+        "start_line": 11,
+        "start_column": 9,
+        "end_line": 11,
+        "end_column": 17
+      },
+      "defining_scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:9:23:44:1",
+      "is_exported": true
+    },
+    "variable:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:17:9:17:15:result1": {
+      "kind": "constant",
+      "symbol_id": "variable:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:17:9:17:15:result1",
+      "name": "result1",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js",
+        "start_line": 17,
+        "start_column": 9,
+        "end_line": 17,
+        "end_column": 15
+      },
+      "defining_scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:9:23:44:1",
+      "is_exported": false
+    },
+    "variable:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:21:11:21:19:globalVar": {
+      "kind": "constant",
+      "symbol_id": "variable:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:21:11:21:19:globalVar",
+      "name": "globalVar",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js",
+        "start_line": 21,
+        "start_column": 11,
+        "end_line": 21,
+        "end_column": 19
+      },
+      "defining_scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:19:3:41:3",
+      "is_exported": true
+    },
+    "variable:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:27:11:27:17:result2": {
+      "kind": "constant",
+      "symbol_id": "variable:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:27:11:27:17:result2",
+      "name": "result2",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js",
+        "start_line": 27,
+        "start_column": 11,
+        "end_line": 27,
+        "end_column": 17
+      },
+      "defining_scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:19:3:41:3",
+      "is_exported": false
+    },
+    "variable:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:31:13:31:21:globalVar": {
+      "kind": "constant",
+      "symbol_id": "variable:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:31:13:31:21:globalVar",
+      "name": "globalVar",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js",
+        "start_line": 31,
+        "start_column": 13,
+        "end_line": 31,
+        "end_column": 21
+      },
+      "defining_scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:19:3:41:3",
+      "is_exported": true
+    },
+    "variable:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:33:13:33:20:getValue": {
+      "kind": "constant",
+      "symbol_id": "variable:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:33:13:33:20:getValue",
+      "name": "getValue",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js",
+        "start_line": 33,
+        "start_column": 13,
+        "end_line": 33,
+        "end_column": 20
+      },
+      "defining_scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:19:3:41:3",
+      "is_exported": false
+    },
+    "variable:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:37:13:37:19:result3": {
+      "kind": "constant",
+      "symbol_id": "variable:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:37:13:37:19:result3",
+      "name": "result3",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js",
+        "start_line": 37,
+        "start_column": 13,
+        "end_line": 37,
+        "end_column": 19
+      },
+      "defining_scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:19:3:41:3",
+      "is_exported": false
+    },
+    "variable:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:57:9:57:12:data": {
+      "kind": "constant",
+      "symbol_id": "variable:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:57:9:57:12:data",
+      "name": "data",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js",
+        "start_line": 57,
+        "start_column": 9,
+        "end_line": 57,
+        "end_column": 12
+      },
+      "defining_scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:56:26:84:1",
+      "is_exported": false
+    },
+    "variable:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:60:11:60:14:data": {
+      "kind": "constant",
+      "symbol_id": "variable:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:60:11:60:14:data",
+      "name": "data",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js",
+        "start_line": 60,
+        "start_column": 11,
+        "end_line": 60,
+        "end_column": 14
+      },
+      "defining_scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:59:18:77:3",
+      "is_exported": false
+    },
+    "variable:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:63:13:63:16:data": {
+      "kind": "constant",
+      "symbol_id": "variable:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:63:13:63:16:data",
+      "name": "data",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js",
+        "start_line": 63,
+        "start_column": 13,
+        "end_line": 63,
+        "end_column": 16
+      },
+      "defining_scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:62:20:70:5",
+      "is_exported": false
+    },
+    "variable:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:87:7:87:17:outerResult": {
+      "kind": "constant",
+      "symbol_id": "variable:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:87:7:87:17:outerResult",
+      "name": "outerResult",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js",
+        "start_line": 87,
+        "start_column": 7,
+        "end_line": 87,
+        "end_column": 17
+      },
+      "defining_scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:87:1:87:36",
+      "is_exported": true,
+      "docstring": "// Using the shadowing functions"
+    },
+    "variable:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:88:7:88:17:paramResult": {
+      "kind": "constant",
+      "symbol_id": "variable:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:88:7:88:17:paramResult",
+      "name": "paramResult",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js",
+        "start_line": 88,
+        "start_column": 7,
+        "end_line": 88,
+        "end_column": 17
+      },
+      "defining_scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:88:1:88:58",
+      "is_exported": true
+    },
+    "variable:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:89:7:89:19:complexResult": {
+      "kind": "constant",
+      "symbol_id": "variable:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:89:7:89:19:complexResult",
+      "name": "complexResult",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js",
+        "start_line": 89,
+        "start_column": 7,
+        "end_line": 89,
+        "end_column": 19
+      },
+      "defining_scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:89:1:89:41",
+      "is_exported": true
+    }
+  },
+  "interfaces": {},
+  "enums": {},
+  "namespaces": {},
+  "types": {},
+  "imported_symbols": {},
+  "references": [
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js",
+        "start_line": 7,
+        "start_column": 7,
+        "end_line": 7,
+        "end_column": 32
+      },
+      "type": "assignment",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:7:1:7:33",
+      "name": "globalVar = \"global value\""
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js",
+        "start_line": 7,
+        "start_column": 7,
+        "end_line": 7,
+        "end_column": 15
+      },
+      "type": "assignment",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:7:1:7:33",
+      "name": "globalVar"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js",
+        "start_line": 7,
+        "start_column": 7,
+        "end_line": 7,
+        "end_column": 15
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:7:1:7:33",
+      "name": "globalVar"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js",
+        "start_line": 7,
+        "start_column": 19,
+        "end_line": 7,
+        "end_column": 32
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:7:1:7:33",
+      "name": "\"global value\""
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js",
+        "start_line": 9,
+        "start_column": 10,
+        "end_line": 9,
+        "end_column": 22
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:1:1:99:2",
+      "name": "outerFunction"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js",
+        "start_line": 11,
+        "start_column": 9,
+        "end_line": 11,
+        "end_column": 42
+      },
+      "type": "assignment",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:9:23:44:1",
+      "name": "globalVar = \"outer function value\""
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js",
+        "start_line": 11,
+        "start_column": 9,
+        "end_line": 11,
+        "end_column": 17
+      },
+      "type": "assignment",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:9:23:44:1",
+      "name": "globalVar"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js",
+        "start_line": 11,
+        "start_column": 9,
+        "end_line": 11,
+        "end_column": 17
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:9:23:44:1",
+      "name": "globalVar"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js",
+        "start_line": 11,
+        "start_column": 21,
+        "end_line": 11,
+        "end_column": 42
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:9:23:44:1",
+      "name": "\"outer function value\""
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js",
+        "start_line": 13,
+        "start_column": 12,
+        "end_line": 13,
+        "end_column": 17
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:9:23:44:1",
+      "name": "helper"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js",
+        "start_line": 14,
+        "start_column": 5,
+        "end_line": 14,
+        "end_column": 21
+      },
+      "type": "return",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:13:18:15:3",
+      "name": "return globalVar;"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js",
+        "start_line": 14,
+        "start_column": 12,
+        "end_line": 14,
+        "end_column": 20
+      },
+      "type": "return",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:13:18:15:3",
+      "name": "globalVar"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js",
+        "start_line": 14,
+        "start_column": 12,
+        "end_line": 14,
+        "end_column": 20
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:13:18:15:3",
+      "name": "globalVar"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js",
+        "start_line": 17,
+        "start_column": 9,
+        "end_line": 17,
+        "end_column": 26
+      },
+      "type": "assignment",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:9:23:44:1",
+      "name": "result1 = helper()"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js",
+        "start_line": 17,
+        "start_column": 9,
+        "end_line": 17,
+        "end_column": 15
+      },
+      "type": "assignment",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:9:23:44:1",
+      "name": "result1"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js",
+        "start_line": 17,
+        "start_column": 9,
+        "end_line": 17,
+        "end_column": 15
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:9:23:44:1",
+      "name": "result1"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js",
+        "start_line": 17,
+        "start_column": 19,
+        "end_line": 17,
+        "end_column": 26
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:9:23:44:1",
+      "name": "helper"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js",
+        "start_line": 17,
+        "start_column": 19,
+        "end_line": 17,
+        "end_column": 24
+      },
+      "type": "call",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:9:23:44:1",
+      "name": "helper",
+      "call_type": "function"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js",
+        "start_line": 17,
+        "start_column": 19,
+        "end_line": 17,
+        "end_column": 24
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:9:23:44:1",
+      "name": "helper"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js",
+        "start_line": 21,
+        "start_column": 11,
+        "end_line": 21,
+        "end_column": 41
+      },
+      "type": "assignment",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:19:3:41:3",
+      "name": "globalVar = \"block scope value\""
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js",
+        "start_line": 21,
+        "start_column": 11,
+        "end_line": 21,
+        "end_column": 19
+      },
+      "type": "assignment",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:19:3:41:3",
+      "name": "globalVar"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js",
+        "start_line": 21,
+        "start_column": 11,
+        "end_line": 21,
+        "end_column": 19
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:19:3:41:3",
+      "name": "globalVar"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js",
+        "start_line": 21,
+        "start_column": 23,
+        "end_line": 21,
+        "end_column": 41
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:19:3:41:3",
+      "name": "\"block scope value\""
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js",
+        "start_line": 23,
+        "start_column": 14,
+        "end_line": 23,
+        "end_column": 24
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:19:3:41:3",
+      "name": "blockHelper"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js",
+        "start_line": 24,
+        "start_column": 7,
+        "end_line": 24,
+        "end_column": 23
+      },
+      "type": "return",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:23:25:25:5",
+      "name": "return globalVar;"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js",
+        "start_line": 24,
+        "start_column": 14,
+        "end_line": 24,
+        "end_column": 22
+      },
+      "type": "return",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:23:25:25:5",
+      "name": "globalVar"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js",
+        "start_line": 24,
+        "start_column": 14,
+        "end_line": 24,
+        "end_column": 22
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:23:25:25:5",
+      "name": "globalVar"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js",
+        "start_line": 27,
+        "start_column": 11,
+        "end_line": 27,
+        "end_column": 33
+      },
+      "type": "assignment",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:19:3:41:3",
+      "name": "result2 = blockHelper()"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js",
+        "start_line": 27,
+        "start_column": 11,
+        "end_line": 27,
+        "end_column": 17
+      },
+      "type": "assignment",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:19:3:41:3",
+      "name": "result2"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js",
+        "start_line": 27,
+        "start_column": 11,
+        "end_line": 27,
+        "end_column": 17
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:19:3:41:3",
+      "name": "result2"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js",
+        "start_line": 27,
+        "start_column": 21,
+        "end_line": 27,
+        "end_column": 33
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:19:3:41:3",
+      "name": "blockHelper"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js",
+        "start_line": 27,
+        "start_column": 21,
+        "end_line": 27,
+        "end_column": 31
+      },
+      "type": "call",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:19:3:41:3",
+      "name": "blockHelper",
+      "call_type": "function"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js",
+        "start_line": 27,
+        "start_column": 21,
+        "end_line": 27,
+        "end_column": 31
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:19:3:41:3",
+      "name": "blockHelper"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js",
+        "start_line": 31,
+        "start_column": 13,
+        "end_line": 31,
+        "end_column": 44
+      },
+      "type": "assignment",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:19:3:41:3",
+      "name": "globalVar = \"nested block value\""
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js",
+        "start_line": 31,
+        "start_column": 13,
+        "end_line": 31,
+        "end_column": 21
+      },
+      "type": "assignment",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:19:3:41:3",
+      "name": "globalVar"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js",
+        "start_line": 31,
+        "start_column": 13,
+        "end_line": 31,
+        "end_column": 21
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:19:3:41:3",
+      "name": "globalVar"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js",
+        "start_line": 31,
+        "start_column": 25,
+        "end_line": 31,
+        "end_column": 44
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:19:3:41:3",
+      "name": "\"nested block value\""
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js",
+        "start_line": 33,
+        "start_column": 13,
+        "end_line": 35,
+        "end_column": 7
+      },
+      "type": "assignment",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:19:3:41:3",
+      "name": "getValue = () => {\n        return globalVar; // Should resolve to nested block's globalVar\n      }"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js",
+        "start_line": 33,
+        "start_column": 13,
+        "end_line": 33,
+        "end_column": 20
+      },
+      "type": "assignment",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:19:3:41:3",
+      "name": "getValue"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js",
+        "start_line": 33,
+        "start_column": 13,
+        "end_line": 35,
+        "end_column": 7
+      },
+      "type": "assignment",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:19:3:41:3",
+      "name": "getValue = () => {\n        return globalVar; // Should resolve to nested block's globalVar\n      }"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js",
+        "start_line": 33,
+        "start_column": 13,
+        "end_line": 33,
+        "end_column": 20
+      },
+      "type": "assignment",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:19:3:41:3",
+      "name": "getValue"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js",
+        "start_line": 33,
+        "start_column": 13,
+        "end_line": 33,
+        "end_column": 20
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:19:3:41:3",
+      "name": "getValue"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js",
+        "start_line": 33,
+        "start_column": 24,
+        "end_line": 35,
+        "end_column": 7
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:33:24:35:7",
+      "name": "() => {\n        return globalVar; // Should resolve to nested block's globalVar\n      }"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js",
+        "start_line": 33,
+        "start_column": 24,
+        "end_line": 35,
+        "end_column": 7
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:33:24:35:7",
+      "name": "() => {\n        return globalVar; // Should resolve to nested block's globalVar\n      }"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js",
+        "start_line": 34,
+        "start_column": 9,
+        "end_line": 34,
+        "end_column": 25
+      },
+      "type": "return",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:33:24:35:7",
+      "name": "return globalVar;"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js",
+        "start_line": 34,
+        "start_column": 16,
+        "end_line": 34,
+        "end_column": 24
+      },
+      "type": "return",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:33:24:35:7",
+      "name": "globalVar"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js",
+        "start_line": 34,
+        "start_column": 16,
+        "end_line": 34,
+        "end_column": 24
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:33:24:35:7",
+      "name": "globalVar"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js",
+        "start_line": 37,
+        "start_column": 13,
+        "end_line": 37,
+        "end_column": 32
+      },
+      "type": "assignment",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:19:3:41:3",
+      "name": "result3 = getValue()"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js",
+        "start_line": 37,
+        "start_column": 13,
+        "end_line": 37,
+        "end_column": 19
+      },
+      "type": "assignment",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:19:3:41:3",
+      "name": "result3"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js",
+        "start_line": 37,
+        "start_column": 13,
+        "end_line": 37,
+        "end_column": 19
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:19:3:41:3",
+      "name": "result3"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js",
+        "start_line": 37,
+        "start_column": 23,
+        "end_line": 37,
+        "end_column": 32
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:19:3:41:3",
+      "name": "getValue"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js",
+        "start_line": 37,
+        "start_column": 23,
+        "end_line": 37,
+        "end_column": 30
+      },
+      "type": "call",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:19:3:41:3",
+      "name": "getValue",
+      "call_type": "function"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js",
+        "start_line": 37,
+        "start_column": 23,
+        "end_line": 37,
+        "end_column": 30
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:19:3:41:3",
+      "name": "getValue"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js",
+        "start_line": 40,
+        "start_column": 5,
+        "end_line": 40,
+        "end_column": 32
+      },
+      "type": "return",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:19:3:41:3",
+      "name": "return { result1, result2 };"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js",
+        "start_line": 40,
+        "start_column": 12,
+        "end_line": 40,
+        "end_column": 31
+      },
+      "type": "return",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:19:3:41:3",
+      "name": "{ result1, result2 }"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js",
+        "start_line": 43,
+        "start_column": 3,
+        "end_line": 43,
+        "end_column": 17
+      },
+      "type": "return",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:9:23:44:1",
+      "name": "return result1;"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js",
+        "start_line": 43,
+        "start_column": 10,
+        "end_line": 43,
+        "end_column": 16
+      },
+      "type": "return",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:9:23:44:1",
+      "name": "result1"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js",
+        "start_line": 43,
+        "start_column": 10,
+        "end_line": 43,
+        "end_column": 16
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:9:23:44:1",
+      "name": "result1"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js",
+        "start_line": 47,
+        "start_column": 10,
+        "end_line": 47,
+        "end_column": 27
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:1:1:99:2",
+      "name": "parameterShadowing"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js",
+        "start_line": 47,
+        "start_column": 29,
+        "end_line": 47,
+        "end_column": 37
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:47:28:53:1",
+      "name": "globalVar"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js",
+        "start_line": 48,
+        "start_column": 12,
+        "end_line": 48,
+        "end_column": 19
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:47:28:53:1",
+      "name": "getParam"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js",
+        "start_line": 49,
+        "start_column": 5,
+        "end_line": 49,
+        "end_column": 21
+      },
+      "type": "return",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:48:20:50:3",
+      "name": "return globalVar;"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js",
+        "start_line": 49,
+        "start_column": 12,
+        "end_line": 49,
+        "end_column": 20
+      },
+      "type": "return",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:48:20:50:3",
+      "name": "globalVar"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js",
+        "start_line": 49,
+        "start_column": 12,
+        "end_line": 49,
+        "end_column": 20
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:48:20:50:3",
+      "name": "globalVar"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js",
+        "start_line": 52,
+        "start_column": 3,
+        "end_line": 52,
+        "end_column": 20
+      },
+      "type": "return",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:47:28:53:1",
+      "name": "return getParam();"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js",
+        "start_line": 52,
+        "start_column": 10,
+        "end_line": 52,
+        "end_column": 17
+      },
+      "type": "call",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:47:28:53:1",
+      "name": "getParam",
+      "call_type": "function"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js",
+        "start_line": 52,
+        "start_column": 10,
+        "end_line": 52,
+        "end_column": 19
+      },
+      "type": "return",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:47:28:53:1",
+      "name": "getParam"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js",
+        "start_line": 52,
+        "start_column": 10,
+        "end_line": 52,
+        "end_column": 17
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:47:28:53:1",
+      "name": "getParam"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js",
+        "start_line": 56,
+        "start_column": 10,
+        "end_line": 56,
+        "end_column": 25
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:1:1:99:2",
+      "name": "complexShadowing"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js",
+        "start_line": 57,
+        "start_column": 9,
+        "end_line": 57,
+        "end_column": 24
+      },
+      "type": "assignment",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:56:26:84:1",
+      "name": "data = \"level 1\""
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js",
+        "start_line": 57,
+        "start_column": 9,
+        "end_line": 57,
+        "end_column": 12
+      },
+      "type": "assignment",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:56:26:84:1",
+      "name": "data"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js",
+        "start_line": 57,
+        "start_column": 9,
+        "end_line": 57,
+        "end_column": 12
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:56:26:84:1",
+      "name": "data"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js",
+        "start_line": 57,
+        "start_column": 16,
+        "end_line": 57,
+        "end_column": 24
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:56:26:84:1",
+      "name": "\"level 1\""
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js",
+        "start_line": 59,
+        "start_column": 12,
+        "end_line": 59,
+        "end_column": 17
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:56:26:84:1",
+      "name": "level2"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js",
+        "start_line": 60,
+        "start_column": 11,
+        "end_line": 60,
+        "end_column": 26
+      },
+      "type": "assignment",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:59:18:77:3",
+      "name": "data = \"level 2\""
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js",
+        "start_line": 60,
+        "start_column": 11,
+        "end_line": 60,
+        "end_column": 14
+      },
+      "type": "assignment",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:59:18:77:3",
+      "name": "data"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js",
+        "start_line": 60,
+        "start_column": 11,
+        "end_line": 60,
+        "end_column": 14
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:59:18:77:3",
+      "name": "data"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js",
+        "start_line": 60,
+        "start_column": 18,
+        "end_line": 60,
+        "end_column": 26
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:59:18:77:3",
+      "name": "\"level 2\""
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js",
+        "start_line": 62,
+        "start_column": 14,
+        "end_line": 62,
+        "end_column": 19
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:59:18:77:3",
+      "name": "level3"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js",
+        "start_line": 63,
+        "start_column": 13,
+        "end_line": 63,
+        "end_column": 28
+      },
+      "type": "assignment",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:62:20:70:5",
+      "name": "data = \"level 3\""
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js",
+        "start_line": 63,
+        "start_column": 13,
+        "end_line": 63,
+        "end_column": 16
+      },
+      "type": "assignment",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:62:20:70:5",
+      "name": "data"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js",
+        "start_line": 63,
+        "start_column": 13,
+        "end_line": 63,
+        "end_column": 16
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:62:20:70:5",
+      "name": "data"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js",
+        "start_line": 63,
+        "start_column": 20,
+        "end_line": 63,
+        "end_column": 28
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:62:20:70:5",
+      "name": "\"level 3\""
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js",
+        "start_line": 65,
+        "start_column": 16,
+        "end_line": 65,
+        "end_column": 26
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:62:20:70:5",
+      "name": "getDeepData"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js",
+        "start_line": 66,
+        "start_column": 9,
+        "end_line": 66,
+        "end_column": 20
+      },
+      "type": "return",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:65:27:67:7",
+      "name": "return data;"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js",
+        "start_line": 66,
+        "start_column": 16,
+        "end_line": 66,
+        "end_column": 19
+      },
+      "type": "return",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:65:27:67:7",
+      "name": "data"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js",
+        "start_line": 66,
+        "start_column": 16,
+        "end_line": 66,
+        "end_column": 19
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:65:27:67:7",
+      "name": "data"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js",
+        "start_line": 69,
+        "start_column": 7,
+        "end_line": 69,
+        "end_column": 27
+      },
+      "type": "return",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:62:20:70:5",
+      "name": "return getDeepData();"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js",
+        "start_line": 69,
+        "start_column": 14,
+        "end_line": 69,
+        "end_column": 24
+      },
+      "type": "call",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:62:20:70:5",
+      "name": "getDeepData",
+      "call_type": "function"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js",
+        "start_line": 69,
+        "start_column": 14,
+        "end_line": 69,
+        "end_column": 26
+      },
+      "type": "return",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:62:20:70:5",
+      "name": "getDeepData"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js",
+        "start_line": 69,
+        "start_column": 14,
+        "end_line": 69,
+        "end_column": 24
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:62:20:70:5",
+      "name": "getDeepData"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js",
+        "start_line": 72,
+        "start_column": 14,
+        "end_line": 72,
+        "end_column": 26
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:59:18:77:3",
+      "name": "getMiddleData"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js",
+        "start_line": 73,
+        "start_column": 7,
+        "end_line": 73,
+        "end_column": 18
+      },
+      "type": "return",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:72:27:74:5",
+      "name": "return data;"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js",
+        "start_line": 73,
+        "start_column": 14,
+        "end_line": 73,
+        "end_column": 17
+      },
+      "type": "return",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:72:27:74:5",
+      "name": "data"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js",
+        "start_line": 73,
+        "start_column": 14,
+        "end_line": 73,
+        "end_column": 17
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:72:27:74:5",
+      "name": "data"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js",
+        "start_line": 76,
+        "start_column": 5,
+        "end_line": 76,
+        "end_column": 57
+      },
+      "type": "return",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:59:18:77:3",
+      "name": "return { level3: level3(), middle: getMiddleData() };"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js",
+        "start_line": 76,
+        "start_column": 12,
+        "end_line": 76,
+        "end_column": 56
+      },
+      "type": "return",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:59:18:77:3",
+      "name": "{ level3: level3(), middle: getMiddleData() }"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js",
+        "start_line": 76,
+        "start_column": 22,
+        "end_line": 76,
+        "end_column": 27
+      },
+      "type": "call",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:59:18:77:3",
+      "name": "level3",
+      "call_type": "function"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js",
+        "start_line": 76,
+        "start_column": 22,
+        "end_line": 76,
+        "end_column": 27
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:59:18:77:3",
+      "name": "level3"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js",
+        "start_line": 76,
+        "start_column": 40,
+        "end_line": 76,
+        "end_column": 52
+      },
+      "type": "call",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:59:18:77:3",
+      "name": "getMiddleData",
+      "call_type": "function"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js",
+        "start_line": 76,
+        "start_column": 40,
+        "end_line": 76,
+        "end_column": 52
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:59:18:77:3",
+      "name": "getMiddleData"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js",
+        "start_line": 79,
+        "start_column": 12,
+        "end_line": 79,
+        "end_column": 21
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:56:26:84:1",
+      "name": "getTopData"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js",
+        "start_line": 80,
+        "start_column": 5,
+        "end_line": 80,
+        "end_column": 16
+      },
+      "type": "return",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:79:22:81:3",
+      "name": "return data;"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js",
+        "start_line": 80,
+        "start_column": 12,
+        "end_line": 80,
+        "end_column": 15
+      },
+      "type": "return",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:79:22:81:3",
+      "name": "data"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js",
+        "start_line": 80,
+        "start_column": 12,
+        "end_line": 80,
+        "end_column": 15
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:79:22:81:3",
+      "name": "data"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js",
+        "start_line": 83,
+        "start_column": 3,
+        "end_line": 83,
+        "end_column": 49
+      },
+      "type": "return",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:56:26:84:1",
+      "name": "return { top: getTopData(), nested: level2() };"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js",
+        "start_line": 83,
+        "start_column": 10,
+        "end_line": 83,
+        "end_column": 48
+      },
+      "type": "return",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:56:26:84:1",
+      "name": "{ top: getTopData(), nested: level2() }"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js",
+        "start_line": 83,
+        "start_column": 17,
+        "end_line": 83,
+        "end_column": 26
+      },
+      "type": "call",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:56:26:84:1",
+      "name": "getTopData",
+      "call_type": "function"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js",
+        "start_line": 83,
+        "start_column": 17,
+        "end_line": 83,
+        "end_column": 26
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:56:26:84:1",
+      "name": "getTopData"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js",
+        "start_line": 83,
+        "start_column": 39,
+        "end_line": 83,
+        "end_column": 44
+      },
+      "type": "call",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:56:26:84:1",
+      "name": "level2",
+      "call_type": "function"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js",
+        "start_line": 83,
+        "start_column": 39,
+        "end_line": 83,
+        "end_column": 44
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:56:26:84:1",
+      "name": "level2"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js",
+        "start_line": 87,
+        "start_column": 7,
+        "end_line": 87,
+        "end_column": 35
+      },
+      "type": "assignment",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:87:1:87:36",
+      "name": "outerResult = outerFunction()"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js",
+        "start_line": 87,
+        "start_column": 7,
+        "end_line": 87,
+        "end_column": 17
+      },
+      "type": "assignment",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:87:1:87:36",
+      "name": "outerResult"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js",
+        "start_line": 87,
+        "start_column": 7,
+        "end_line": 87,
+        "end_column": 17
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:87:1:87:36",
+      "name": "outerResult"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js",
+        "start_line": 87,
+        "start_column": 21,
+        "end_line": 87,
+        "end_column": 35
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:87:1:87:36",
+      "name": "outerFunction"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js",
+        "start_line": 87,
+        "start_column": 21,
+        "end_line": 87,
+        "end_column": 33
+      },
+      "type": "call",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:87:1:87:36",
+      "name": "outerFunction",
+      "call_type": "function"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js",
+        "start_line": 87,
+        "start_column": 21,
+        "end_line": 87,
+        "end_column": 33
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:87:1:87:36",
+      "name": "outerFunction"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js",
+        "start_line": 88,
+        "start_column": 7,
+        "end_line": 88,
+        "end_column": 57
+      },
+      "type": "assignment",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:88:1:88:58",
+      "name": "paramResult = parameterShadowing(\"parameter value\")"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js",
+        "start_line": 88,
+        "start_column": 7,
+        "end_line": 88,
+        "end_column": 17
+      },
+      "type": "assignment",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:88:1:88:58",
+      "name": "paramResult"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js",
+        "start_line": 88,
+        "start_column": 7,
+        "end_line": 88,
+        "end_column": 17
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:88:1:88:58",
+      "name": "paramResult"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js",
+        "start_line": 88,
+        "start_column": 21,
+        "end_line": 88,
+        "end_column": 57
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:88:1:88:58",
+      "name": "parameterShadowing"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js",
+        "start_line": 88,
+        "start_column": 21,
+        "end_line": 88,
+        "end_column": 38
+      },
+      "type": "call",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:88:1:88:58",
+      "name": "parameterShadowing",
+      "call_type": "function"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js",
+        "start_line": 88,
+        "start_column": 21,
+        "end_line": 88,
+        "end_column": 38
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:88:1:88:58",
+      "name": "parameterShadowing"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js",
+        "start_line": 89,
+        "start_column": 7,
+        "end_line": 89,
+        "end_column": 40
+      },
+      "type": "assignment",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:89:1:89:41",
+      "name": "complexResult = complexShadowing()"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js",
+        "start_line": 89,
+        "start_column": 7,
+        "end_line": 89,
+        "end_column": 19
+      },
+      "type": "assignment",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:89:1:89:41",
+      "name": "complexResult"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js",
+        "start_line": 89,
+        "start_column": 7,
+        "end_line": 89,
+        "end_column": 19
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:89:1:89:41",
+      "name": "complexResult"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js",
+        "start_line": 89,
+        "start_column": 23,
+        "end_line": 89,
+        "end_column": 40
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:89:1:89:41",
+      "name": "complexShadowing"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js",
+        "start_line": 89,
+        "start_column": 23,
+        "end_line": 89,
+        "end_column": 38
+      },
+      "type": "call",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:89:1:89:41",
+      "name": "complexShadowing",
+      "call_type": "function"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js",
+        "start_line": 89,
+        "start_column": 23,
+        "end_line": 89,
+        "end_column": 38
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:89:1:89:41",
+      "name": "complexShadowing"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js",
+        "start_line": 92,
+        "start_column": 3,
+        "end_line": 92,
+        "end_column": 11
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:1:1:99:2",
+      "name": "globalVar"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js",
+        "start_line": 93,
+        "start_column": 3,
+        "end_line": 93,
+        "end_column": 15
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:1:1:99:2",
+      "name": "outerFunction"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js",
+        "start_line": 94,
+        "start_column": 3,
+        "end_line": 94,
+        "end_column": 20
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:1:1:99:2",
+      "name": "parameterShadowing"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js",
+        "start_line": 95,
+        "start_column": 3,
+        "end_line": 95,
+        "end_column": 18
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:1:1:99:2",
+      "name": "complexShadowing"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js",
+        "start_line": 96,
+        "start_column": 3,
+        "end_line": 96,
+        "end_column": 13
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:1:1:99:2",
+      "name": "outerResult"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js",
+        "start_line": 97,
+        "start_column": 3,
+        "end_line": 97,
+        "end_column": 13
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:1:1:99:2",
+      "name": "paramResult"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js",
+        "start_line": 98,
+        "start_column": 3,
+        "end_line": 98,
+        "end_column": 15
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/variable_shadowing.js:1:1:99:2",
+      "name": "complexResult"
+    }
+  ]
+}

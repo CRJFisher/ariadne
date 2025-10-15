@@ -203,7 +203,6 @@
       },
       "defining_scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/basic_functions.js:1:1:38:0",
       "is_exported": false,
-      "docstring": "// Default import",
       "signature": {
         "parameters": [
           {

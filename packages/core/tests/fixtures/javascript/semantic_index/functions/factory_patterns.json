@@ -1,0 +1,3974 @@
+{
+  "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+  "language": "javascript",
+  "root_scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:1:1:100:2",
+  "scopes": {
+    "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:1:1:100:2": {
+      "id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:1:1:100:2",
+      "parent_id": null,
+      "name": null,
+      "type": "module",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 1,
+        "start_column": 1,
+        "end_line": 100,
+        "end_column": 2
+      },
+      "child_ids": [
+        "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:7:20:23:1",
+        "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:26:23:46:1",
+        "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:49:26:70:1",
+        "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:73:1:73:55",
+        "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:74:1:74:33",
+        "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:75:1:75:35",
+        "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:77:1:77:34",
+        "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:78:1:78:35",
+        "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:79:1:79:34",
+        "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:81:1:81:32",
+        "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:82:1:82:27",
+        "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:83:1:83:36",
+        "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:84:1:84:45"
+      ]
+    },
+    "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:7:20:23:1": {
+      "id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:7:20:23:1",
+      "parent_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:1:1:100:2",
+      "name": "createUser",
+      "type": "function",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 7,
+        "start_column": 20,
+        "end_line": 23,
+        "end_column": 1
+      },
+      "child_ids": [
+        "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:11:12:13:5",
+        "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:14:13:16:5",
+        "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:17:18:21:5"
+      ]
+    },
+    "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:11:12:13:5": {
+      "id": "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:11:12:13:5",
+      "parent_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:7:20:23:1",
+      "name": "getName",
+      "type": "method",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 11,
+        "start_column": 12,
+        "end_line": 13,
+        "end_column": 5
+      },
+      "child_ids": []
+    },
+    "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:14:13:16:5": {
+      "id": "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:14:13:16:5",
+      "parent_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:7:20:23:1",
+      "name": "getEmail",
+      "type": "method",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 14,
+        "start_column": 13,
+        "end_line": 16,
+        "end_column": 5
+      },
+      "child_ids": []
+    },
+    "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:17:18:21:5": {
+      "id": "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:17:18:21:5",
+      "parent_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:7:20:23:1",
+      "name": "updateProfile",
+      "type": "method",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 17,
+        "start_column": 18,
+        "end_line": 21,
+        "end_column": 5
+      },
+      "child_ids": []
+    },
+    "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:26:23:46:1": {
+      "id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:26:23:46:1",
+      "parent_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:1:1:100:2",
+      "name": "createCounter",
+      "type": "function",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 26,
+        "start_column": 23,
+        "end_line": 46,
+        "end_column": 1
+      },
+      "child_ids": [
+        "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:30:14:33:5",
+        "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:34:14:37:5",
+        "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:38:13:40:5",
+        "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:41:10:44:5"
+      ]
+    },
+    "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:30:14:33:5": {
+      "id": "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:30:14:33:5",
+      "parent_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:26:23:46:1",
+      "name": "increment",
+      "type": "method",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 30,
+        "start_column": 14,
+        "end_line": 33,
+        "end_column": 5
+      },
+      "child_ids": []
+    },
+    "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:34:14:37:5": {
+      "id": "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:34:14:37:5",
+      "parent_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:26:23:46:1",
+      "name": "decrement",
+      "type": "method",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 34,
+        "start_column": 14,
+        "end_line": 37,
+        "end_column": 5
+      },
+      "child_ids": []
+    },
+    "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:38:13:40:5": {
+      "id": "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:38:13:40:5",
+      "parent_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:26:23:46:1",
+      "name": "getValue",
+      "type": "method",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 38,
+        "start_column": 13,
+        "end_line": 40,
+        "end_column": 5
+      },
+      "child_ids": []
+    },
+    "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:41:10:44:5": {
+      "id": "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:41:10:44:5",
+      "parent_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:26:23:46:1",
+      "name": "reset",
+      "type": "method",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 41,
+        "start_column": 10,
+        "end_line": 44,
+        "end_column": 5
+      },
+      "child_ids": []
+    },
+    "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:49:26:70:1": {
+      "id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:49:26:70:1",
+      "parent_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:1:1:100:2",
+      "name": "createCalculator",
+      "type": "function",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 49,
+        "start_column": 26,
+        "end_line": 70,
+        "end_column": 1
+      },
+      "child_ids": [
+        "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:50:15:52:3",
+        "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:54:20:56:3",
+        "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:61:12:68:5"
+      ]
+    },
+    "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:50:15:52:3": {
+      "id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:50:15:52:3",
+      "parent_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:49:26:70:1",
+      "name": "add",
+      "type": "function",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 50,
+        "start_column": 15,
+        "end_line": 52,
+        "end_column": 3
+      },
+      "child_ids": []
+    },
+    "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:54:20:56:3": {
+      "id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:54:20:56:3",
+      "parent_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:49:26:70:1",
+      "name": "multiply",
+      "type": "function",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 54,
+        "start_column": 20,
+        "end_line": 56,
+        "end_column": 3
+      },
+      "child_ids": []
+    },
+    "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:61:12:68:5": {
+      "id": "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:61:12:68:5",
+      "parent_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:49:26:70:1",
+      "name": "compute",
+      "type": "method",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 61,
+        "start_column": 12,
+        "end_line": 68,
+        "end_column": 5
+      },
+      "child_ids": [
+        "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:62:7:66:7"
+      ]
+    },
+    "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:62:7:66:7": {
+      "id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:62:7:66:7",
+      "parent_id": "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:61:12:68:5",
+      "name": null,
+      "type": "block",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 62,
+        "start_column": 7,
+        "end_line": 66,
+        "end_column": 7
+      },
+      "child_ids": [
+        "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:64:14:66:7"
+      ]
+    },
+    "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:64:14:66:7": {
+      "id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:64:14:66:7",
+      "parent_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:62:7:66:7",
+      "name": null,
+      "type": "block",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 64,
+        "start_column": 14,
+        "end_line": 66,
+        "end_column": 7
+      },
+      "child_ids": []
+    },
+    "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:73:1:73:55": {
+      "id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:73:1:73:55",
+      "parent_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:1:1:100:2",
+      "name": null,
+      "type": "block",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 73,
+        "start_column": 1,
+        "end_line": 73,
+        "end_column": 55
+      },
+      "child_ids": []
+    },
+    "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:74:1:74:33": {
+      "id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:74:1:74:33",
+      "parent_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:1:1:100:2",
+      "name": null,
+      "type": "block",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 74,
+        "start_column": 1,
+        "end_line": 74,
+        "end_column": 33
+      },
+      "child_ids": []
+    },
+    "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:75:1:75:35": {
+      "id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:75:1:75:35",
+      "parent_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:1:1:100:2",
+      "name": null,
+      "type": "block",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 75,
+        "start_column": 1,
+        "end_line": 75,
+        "end_column": 35
+      },
+      "child_ids": []
+    },
+    "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:77:1:77:34": {
+      "id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:77:1:77:34",
+      "parent_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:1:1:100:2",
+      "name": null,
+      "type": "block",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 77,
+        "start_column": 1,
+        "end_line": 77,
+        "end_column": 34
+      },
+      "child_ids": []
+    },
+    "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:78:1:78:35": {
+      "id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:78:1:78:35",
+      "parent_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:1:1:100:2",
+      "name": null,
+      "type": "block",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 78,
+        "start_column": 1,
+        "end_line": 78,
+        "end_column": 35
+      },
+      "child_ids": []
+    },
+    "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:79:1:79:34": {
+      "id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:79:1:79:34",
+      "parent_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:1:1:100:2",
+      "name": null,
+      "type": "block",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 79,
+        "start_column": 1,
+        "end_line": 79,
+        "end_column": 34
+      },
+      "child_ids": []
+    },
+    "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:81:1:81:32": {
+      "id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:81:1:81:32",
+      "parent_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:1:1:100:2",
+      "name": null,
+      "type": "block",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 81,
+        "start_column": 1,
+        "end_line": 81,
+        "end_column": 32
+      },
+      "child_ids": []
+    },
+    "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:82:1:82:27": {
+      "id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:82:1:82:27",
+      "parent_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:1:1:100:2",
+      "name": null,
+      "type": "block",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 82,
+        "start_column": 1,
+        "end_line": 82,
+        "end_column": 27
+      },
+      "child_ids": []
+    },
+    "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:83:1:83:36": {
+      "id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:83:1:83:36",
+      "parent_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:1:1:100:2",
+      "name": null,
+      "type": "block",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 83,
+        "start_column": 1,
+        "end_line": 83,
+        "end_column": 36
+      },
+      "child_ids": []
+    },
+    "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:84:1:84:45": {
+      "id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:84:1:84:45",
+      "parent_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:1:1:100:2",
+      "name": null,
+      "type": "block",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 84,
+        "start_column": 1,
+        "end_line": 84,
+        "end_column": 45
+      },
+      "child_ids": []
+    }
+  },
+  "functions": {
+    "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:7:10:7:19:createUser": {
+      "kind": "function",
+      "symbol_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:7:10:7:19:createUser",
+      "name": "createUser",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 7,
+        "start_column": 10,
+        "end_line": 7,
+        "end_column": 19
+      },
+      "defining_scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:1:1:100:2",
+      "is_exported": true,
+      "export": {
+        "is_reexport": false
+      },
+      "docstring": "// Simple factory function",
+      "signature": {
+        "parameters": [
+          {
+            "kind": "parameter",
+            "defining_scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:7:20:23:1",
+            "symbol_id": "parameter:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:7:21:7:24:name",
+            "name": "name",
+            "location": {
+              "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+              "start_line": 7,
+              "start_column": 21,
+              "end_line": 7,
+              "end_column": 24
+            }
+          },
+          {
+            "kind": "parameter",
+            "defining_scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:7:20:23:1",
+            "symbol_id": "parameter:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:7:27:7:31:email",
+            "name": "email",
+            "location": {
+              "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+              "start_line": 7,
+              "start_column": 27,
+              "end_line": 7,
+              "end_column": 31
+            }
+          }
+        ]
+      },
+      "body_scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:7:20:23:1"
+    },
+    "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:26:10:26:22:createCounter": {
+      "kind": "function",
+      "symbol_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:26:10:26:22:createCounter",
+      "name": "createCounter",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 26,
+        "start_column": 10,
+        "end_line": 26,
+        "end_column": 22
+      },
+      "defining_scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:1:1:100:2",
+      "is_exported": true,
+      "export": {
+        "is_reexport": false
+      },
+      "docstring": "// Factory with closure",
+      "signature": {
+        "parameters": [
+          {
+            "kind": "parameter",
+            "defining_scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:26:23:46:1",
+            "symbol_id": "parameter:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:26:24:26:35:initialValue",
+            "name": "initialValue",
+            "location": {
+              "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+              "start_line": 26,
+              "start_column": 24,
+              "end_line": 26,
+              "end_column": 35
+            },
+            "default_value": "0"
+          }
+        ]
+      },
+      "body_scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:26:23:46:1"
+    },
+    "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:49:10:49:25:createCalculator": {
+      "kind": "function",
+      "symbol_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:49:10:49:25:createCalculator",
+      "name": "createCalculator",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 49,
+        "start_column": 10,
+        "end_line": 49,
+        "end_column": 25
+      },
+      "defining_scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:1:1:100:2",
+      "is_exported": true,
+      "export": {
+        "is_reexport": false
+      },
+      "docstring": "// Factory with helper functions",
+      "signature": {
+        "parameters": []
+      },
+      "body_scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:49:26:70:1"
+    },
+    "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:50:12:50:14:add": {
+      "kind": "function",
+      "symbol_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:50:12:50:14:add",
+      "name": "add",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 50,
+        "start_column": 12,
+        "end_line": 50,
+        "end_column": 14
+      },
+      "defining_scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:49:26:70:1",
+      "is_exported": false,
+      "signature": {
+        "parameters": [
+          {
+            "kind": "parameter",
+            "defining_scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:50:15:52:3",
+            "symbol_id": "parameter:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:50:16:50:16:a",
+            "name": "a",
+            "location": {
+              "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+              "start_line": 50,
+              "start_column": 16,
+              "end_line": 50,
+              "end_column": 16
+            }
+          },
+          {
+            "kind": "parameter",
+            "defining_scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:50:15:52:3",
+            "symbol_id": "parameter:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:50:19:50:19:b",
+            "name": "b",
+            "location": {
+              "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+              "start_line": 50,
+              "start_column": 19,
+              "end_line": 50,
+              "end_column": 19
+            }
+          }
+        ]
+      },
+      "body_scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:50:15:52:3"
+    },
+    "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:54:12:54:19:multiply": {
+      "kind": "function",
+      "symbol_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:54:12:54:19:multiply",
+      "name": "multiply",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 54,
+        "start_column": 12,
+        "end_line": 54,
+        "end_column": 19
+      },
+      "defining_scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:49:26:70:1",
+      "is_exported": false,
+      "signature": {
+        "parameters": [
+          {
+            "kind": "parameter",
+            "defining_scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:54:20:56:3",
+            "symbol_id": "parameter:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:54:21:54:21:a",
+            "name": "a",
+            "location": {
+              "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+              "start_line": 54,
+              "start_column": 21,
+              "end_line": 54,
+              "end_column": 21
+            }
+          },
+          {
+            "kind": "parameter",
+            "defining_scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:54:20:56:3",
+            "symbol_id": "parameter:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:54:24:54:24:b",
+            "name": "b",
+            "location": {
+              "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+              "start_line": 54,
+              "start_column": 24,
+              "end_line": 54,
+              "end_column": 24
+            }
+          }
+        ]
+      },
+      "body_scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:54:20:56:3"
+    }
+  },
+  "classes": {},
+  "variables": {
+    "variable:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:27:7:27:11:count": {
+      "kind": "variable",
+      "symbol_id": "variable:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:27:7:27:11:count",
+      "name": "count",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 27,
+        "start_column": 7,
+        "end_line": 27,
+        "end_column": 11
+      },
+      "defining_scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:26:23:46:1",
+      "is_exported": false
+    },
+    "variable:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:73:7:73:11:user1": {
+      "kind": "constant",
+      "symbol_id": "variable:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:73:7:73:11:user1",
+      "name": "user1",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 73,
+        "start_column": 7,
+        "end_line": 73,
+        "end_column": 11
+      },
+      "defining_scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:73:1:73:55",
+      "is_exported": true,
+      "docstring": "// Using the factories"
+    },
+    "variable:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:74:7:74:14:userName": {
+      "kind": "constant",
+      "symbol_id": "variable:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:74:7:74:14:userName",
+      "name": "userName",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 74,
+        "start_column": 7,
+        "end_line": 74,
+        "end_column": 14
+      },
+      "defining_scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:74:1:74:33",
+      "is_exported": true
+    },
+    "variable:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:75:7:75:15:userEmail": {
+      "kind": "constant",
+      "symbol_id": "variable:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:75:7:75:15:userEmail",
+      "name": "userEmail",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 75,
+        "start_column": 7,
+        "end_line": 75,
+        "end_column": 15
+      },
+      "defining_scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:75:1:75:35",
+      "is_exported": true
+    },
+    "variable:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:77:7:77:13:counter": {
+      "kind": "constant",
+      "symbol_id": "variable:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:77:7:77:13:counter",
+      "name": "counter",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 77,
+        "start_column": 7,
+        "end_line": 77,
+        "end_column": 13
+      },
+      "defining_scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:77:1:77:34",
+      "is_exported": true
+    },
+    "variable:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:78:7:78:12:count1": {
+      "kind": "constant",
+      "symbol_id": "variable:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:78:7:78:12:count1",
+      "name": "count1",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 78,
+        "start_column": 7,
+        "end_line": 78,
+        "end_column": 12
+      },
+      "defining_scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:78:1:78:35",
+      "is_exported": true
+    },
+    "variable:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:79:7:79:12:count2": {
+      "kind": "constant",
+      "symbol_id": "variable:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:79:7:79:12:count2",
+      "name": "count2",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 79,
+        "start_column": 7,
+        "end_line": 79,
+        "end_column": 12
+      },
+      "defining_scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:79:1:79:34",
+      "is_exported": true
+    },
+    "variable:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:81:7:81:10:calc": {
+      "kind": "constant",
+      "symbol_id": "variable:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:81:7:81:10:calc",
+      "name": "calc",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 81,
+        "start_column": 7,
+        "end_line": 81,
+        "end_column": 10
+      },
+      "defining_scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:81:1:81:32",
+      "is_exported": true
+    },
+    "variable:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:82:7:82:9:sum": {
+      "kind": "constant",
+      "symbol_id": "variable:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:82:7:82:9:sum",
+      "name": "sum",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 82,
+        "start_column": 7,
+        "end_line": 82,
+        "end_column": 9
+      },
+      "defining_scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:82:1:82:27",
+      "is_exported": true
+    },
+    "variable:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:83:7:83:13:product": {
+      "kind": "constant",
+      "symbol_id": "variable:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:83:7:83:13:product",
+      "name": "product",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 83,
+        "start_column": 7,
+        "end_line": 83,
+        "end_column": 13
+      },
+      "defining_scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:83:1:83:36",
+      "is_exported": true
+    },
+    "variable:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:84:7:84:14:computed": {
+      "kind": "constant",
+      "symbol_id": "variable:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:84:7:84:14:computed",
+      "name": "computed",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 84,
+        "start_column": 7,
+        "end_line": 84,
+        "end_column": 14
+      },
+      "defining_scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:84:1:84:45",
+      "is_exported": true
+    }
+  },
+  "interfaces": {},
+  "enums": {},
+  "namespaces": {},
+  "types": {},
+  "imported_symbols": {},
+  "references": [
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 7,
+        "start_column": 10,
+        "end_line": 7,
+        "end_column": 19
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:1:1:100:2",
+      "name": "createUser"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 7,
+        "start_column": 21,
+        "end_line": 7,
+        "end_column": 24
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:7:20:23:1",
+      "name": "name"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 7,
+        "start_column": 27,
+        "end_line": 7,
+        "end_column": 31
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:7:20:23:1",
+      "name": "email"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 8,
+        "start_column": 3,
+        "end_line": 22,
+        "end_column": 4
+      },
+      "type": "return",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:7:20:23:1",
+      "name": "return {\n    name: name,\n    email: email,\n    getName() {\n      return this.name;\n    },\n    getEmail() {\n      return this.email;\n    },\n    updateProfile(newName, newEmail) {\n      this.name = newName;\n      this.email = newEmail;\n      return this;\n    }\n  };"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 8,
+        "start_column": 10,
+        "end_line": 22,
+        "end_column": 3
+      },
+      "type": "return",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:7:20:23:1",
+      "name": "{\n    name: name,\n    email: email,\n    getName() {\n      return this.name;\n    },\n    getEmail() {\n      return this.email;\n    },\n    updateProfile(newName, newEmail) {\n      this.name = newName;\n      this.email = newEmail;\n      return this;\n    }\n  }"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 9,
+        "start_column": 11,
+        "end_line": 9,
+        "end_column": 14
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:7:20:23:1",
+      "name": "name"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 10,
+        "start_column": 12,
+        "end_line": 10,
+        "end_column": 16
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:7:20:23:1",
+      "name": "email"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 12,
+        "start_column": 7,
+        "end_line": 12,
+        "end_column": 23
+      },
+      "type": "return",
+      "scope_id": "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:11:12:13:5",
+      "name": "return this.name;"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 12,
+        "start_column": 14,
+        "end_line": 12,
+        "end_column": 22
+      },
+      "type": "return",
+      "scope_id": "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:11:12:13:5",
+      "name": "this.name"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 12,
+        "start_column": 14,
+        "end_line": 12,
+        "end_column": 17
+      },
+      "type": "read",
+      "scope_id": "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:11:12:13:5",
+      "name": "this"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 15,
+        "start_column": 7,
+        "end_line": 15,
+        "end_column": 24
+      },
+      "type": "return",
+      "scope_id": "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:14:13:16:5",
+      "name": "return this.email;"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 15,
+        "start_column": 14,
+        "end_line": 15,
+        "end_column": 23
+      },
+      "type": "return",
+      "scope_id": "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:14:13:16:5",
+      "name": "this.email"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 15,
+        "start_column": 14,
+        "end_line": 15,
+        "end_column": 17
+      },
+      "type": "read",
+      "scope_id": "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:14:13:16:5",
+      "name": "this"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 17,
+        "start_column": 19,
+        "end_line": 17,
+        "end_column": 25
+      },
+      "type": "read",
+      "scope_id": "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:17:18:21:5",
+      "name": "newName"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 17,
+        "start_column": 28,
+        "end_line": 17,
+        "end_column": 35
+      },
+      "type": "read",
+      "scope_id": "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:17:18:21:5",
+      "name": "newEmail"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 18,
+        "start_column": 7,
+        "end_line": 18,
+        "end_column": 10
+      },
+      "type": "read",
+      "scope_id": "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:17:18:21:5",
+      "name": "this"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 18,
+        "start_column": 19,
+        "end_line": 18,
+        "end_column": 25
+      },
+      "type": "read",
+      "scope_id": "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:17:18:21:5",
+      "name": "newName"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 19,
+        "start_column": 7,
+        "end_line": 19,
+        "end_column": 10
+      },
+      "type": "read",
+      "scope_id": "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:17:18:21:5",
+      "name": "this"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 19,
+        "start_column": 20,
+        "end_line": 19,
+        "end_column": 27
+      },
+      "type": "read",
+      "scope_id": "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:17:18:21:5",
+      "name": "newEmail"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 20,
+        "start_column": 7,
+        "end_line": 20,
+        "end_column": 18
+      },
+      "type": "return",
+      "scope_id": "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:17:18:21:5",
+      "name": "return this;"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 20,
+        "start_column": 14,
+        "end_line": 20,
+        "end_column": 17
+      },
+      "type": "return",
+      "scope_id": "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:17:18:21:5",
+      "name": "this"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 20,
+        "start_column": 14,
+        "end_line": 20,
+        "end_column": 17
+      },
+      "type": "read",
+      "scope_id": "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:17:18:21:5",
+      "name": "this"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 26,
+        "start_column": 10,
+        "end_line": 26,
+        "end_column": 22
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:1:1:100:2",
+      "name": "createCounter"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 26,
+        "start_column": 24,
+        "end_line": 26,
+        "end_column": 35
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:26:23:46:1",
+      "name": "initialValue"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 27,
+        "start_column": 7,
+        "end_line": 27,
+        "end_column": 26
+      },
+      "type": "assignment",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:26:23:46:1",
+      "name": "count = initialValue"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 27,
+        "start_column": 7,
+        "end_line": 27,
+        "end_column": 11
+      },
+      "type": "assignment",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:26:23:46:1",
+      "name": "count"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 27,
+        "start_column": 7,
+        "end_line": 27,
+        "end_column": 11
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:26:23:46:1",
+      "name": "count"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 27,
+        "start_column": 15,
+        "end_line": 27,
+        "end_column": 26
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:26:23:46:1",
+      "name": "initialValue"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 27,
+        "start_column": 15,
+        "end_line": 27,
+        "end_column": 26
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:26:23:46:1",
+      "name": "initialValue"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 29,
+        "start_column": 3,
+        "end_line": 45,
+        "end_column": 4
+      },
+      "type": "return",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:26:23:46:1",
+      "name": "return {\n    increment() {\n      count++;\n      return count;\n    },\n    decrement() {\n      count--;\n      return count;\n    },\n    getValue() {\n      return count;\n    },\n    reset() {\n      count = initialValue;\n      return this;\n    }\n  };"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 29,
+        "start_column": 10,
+        "end_line": 45,
+        "end_column": 3
+      },
+      "type": "return",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:26:23:46:1",
+      "name": "{\n    increment() {\n      count++;\n      return count;\n    },\n    decrement() {\n      count--;\n      return count;\n    },\n    getValue() {\n      return count;\n    },\n    reset() {\n      count = initialValue;\n      return this;\n    }\n  }"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 31,
+        "start_column": 7,
+        "end_line": 31,
+        "end_column": 11
+      },
+      "type": "read",
+      "scope_id": "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:30:14:33:5",
+      "name": "count"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 31,
+        "start_column": 7,
+        "end_line": 31,
+        "end_column": 11
+      },
+      "type": "read",
+      "scope_id": "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:30:14:33:5",
+      "name": "count"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 32,
+        "start_column": 7,
+        "end_line": 32,
+        "end_column": 19
+      },
+      "type": "return",
+      "scope_id": "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:30:14:33:5",
+      "name": "return count;"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 32,
+        "start_column": 14,
+        "end_line": 32,
+        "end_column": 18
+      },
+      "type": "return",
+      "scope_id": "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:30:14:33:5",
+      "name": "count"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 32,
+        "start_column": 14,
+        "end_line": 32,
+        "end_column": 18
+      },
+      "type": "read",
+      "scope_id": "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:30:14:33:5",
+      "name": "count"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 35,
+        "start_column": 7,
+        "end_line": 35,
+        "end_column": 11
+      },
+      "type": "read",
+      "scope_id": "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:34:14:37:5",
+      "name": "count"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 35,
+        "start_column": 7,
+        "end_line": 35,
+        "end_column": 11
+      },
+      "type": "read",
+      "scope_id": "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:34:14:37:5",
+      "name": "count"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 36,
+        "start_column": 7,
+        "end_line": 36,
+        "end_column": 19
+      },
+      "type": "return",
+      "scope_id": "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:34:14:37:5",
+      "name": "return count;"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 36,
+        "start_column": 14,
+        "end_line": 36,
+        "end_column": 18
+      },
+      "type": "return",
+      "scope_id": "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:34:14:37:5",
+      "name": "count"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 36,
+        "start_column": 14,
+        "end_line": 36,
+        "end_column": 18
+      },
+      "type": "read",
+      "scope_id": "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:34:14:37:5",
+      "name": "count"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 39,
+        "start_column": 7,
+        "end_line": 39,
+        "end_column": 19
+      },
+      "type": "return",
+      "scope_id": "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:38:13:40:5",
+      "name": "return count;"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 39,
+        "start_column": 14,
+        "end_line": 39,
+        "end_column": 18
+      },
+      "type": "return",
+      "scope_id": "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:38:13:40:5",
+      "name": "count"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 39,
+        "start_column": 14,
+        "end_line": 39,
+        "end_column": 18
+      },
+      "type": "read",
+      "scope_id": "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:38:13:40:5",
+      "name": "count"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 42,
+        "start_column": 7,
+        "end_line": 42,
+        "end_column": 26
+      },
+      "type": "assignment",
+      "scope_id": "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:41:10:44:5",
+      "name": "count = initialValue"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 42,
+        "start_column": 7,
+        "end_line": 42,
+        "end_column": 11
+      },
+      "type": "read",
+      "scope_id": "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:41:10:44:5",
+      "name": "count"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 42,
+        "start_column": 7,
+        "end_line": 42,
+        "end_column": 11
+      },
+      "type": "read",
+      "scope_id": "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:41:10:44:5",
+      "name": "count"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 42,
+        "start_column": 15,
+        "end_line": 42,
+        "end_column": 26
+      },
+      "type": "read",
+      "scope_id": "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:41:10:44:5",
+      "name": "initialValue"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 42,
+        "start_column": 15,
+        "end_line": 42,
+        "end_column": 26
+      },
+      "type": "read",
+      "scope_id": "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:41:10:44:5",
+      "name": "initialValue"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 43,
+        "start_column": 7,
+        "end_line": 43,
+        "end_column": 18
+      },
+      "type": "return",
+      "scope_id": "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:41:10:44:5",
+      "name": "return this;"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 43,
+        "start_column": 14,
+        "end_line": 43,
+        "end_column": 17
+      },
+      "type": "return",
+      "scope_id": "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:41:10:44:5",
+      "name": "this"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 43,
+        "start_column": 14,
+        "end_line": 43,
+        "end_column": 17
+      },
+      "type": "read",
+      "scope_id": "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:41:10:44:5",
+      "name": "this"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 49,
+        "start_column": 10,
+        "end_line": 49,
+        "end_column": 25
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:1:1:100:2",
+      "name": "createCalculator"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 50,
+        "start_column": 12,
+        "end_line": 50,
+        "end_column": 14
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:49:26:70:1",
+      "name": "add"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 50,
+        "start_column": 16,
+        "end_line": 50,
+        "end_column": 16
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:50:15:52:3",
+      "name": "a"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 50,
+        "start_column": 19,
+        "end_line": 50,
+        "end_column": 19
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:50:15:52:3",
+      "name": "b"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 51,
+        "start_column": 5,
+        "end_line": 51,
+        "end_column": 17
+      },
+      "type": "return",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:50:15:52:3",
+      "name": "return a + b;"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 51,
+        "start_column": 12,
+        "end_line": 51,
+        "end_column": 16
+      },
+      "type": "return",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:50:15:52:3",
+      "name": "a + b"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 51,
+        "start_column": 12,
+        "end_line": 51,
+        "end_column": 12
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:50:15:52:3",
+      "name": "a"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 51,
+        "start_column": 16,
+        "end_line": 51,
+        "end_column": 16
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:50:15:52:3",
+      "name": "b"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 54,
+        "start_column": 12,
+        "end_line": 54,
+        "end_column": 19
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:49:26:70:1",
+      "name": "multiply"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 54,
+        "start_column": 21,
+        "end_line": 54,
+        "end_column": 21
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:54:20:56:3",
+      "name": "a"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 54,
+        "start_column": 24,
+        "end_line": 54,
+        "end_column": 24
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:54:20:56:3",
+      "name": "b"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 55,
+        "start_column": 5,
+        "end_line": 55,
+        "end_column": 17
+      },
+      "type": "return",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:54:20:56:3",
+      "name": "return a * b;"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 55,
+        "start_column": 12,
+        "end_line": 55,
+        "end_column": 16
+      },
+      "type": "return",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:54:20:56:3",
+      "name": "a * b"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 55,
+        "start_column": 12,
+        "end_line": 55,
+        "end_column": 12
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:54:20:56:3",
+      "name": "a"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 55,
+        "start_column": 16,
+        "end_line": 55,
+        "end_column": 16
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:54:20:56:3",
+      "name": "b"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 58,
+        "start_column": 3,
+        "end_line": 69,
+        "end_column": 4
+      },
+      "type": "return",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:49:26:70:1",
+      "name": "return {\n    add: add,\n    multiply: multiply,\n    compute(operation, a, b) {\n      if (operation === 'add') {\n        return add(a, b);\n      } else if (operation === 'multiply') {\n        return multiply(a, b);\n      }\n      return 0;\n    }\n  };"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 58,
+        "start_column": 10,
+        "end_line": 69,
+        "end_column": 3
+      },
+      "type": "return",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:49:26:70:1",
+      "name": "{\n    add: add,\n    multiply: multiply,\n    compute(operation, a, b) {\n      if (operation === 'add') {\n        return add(a, b);\n      } else if (operation === 'multiply') {\n        return multiply(a, b);\n      }\n      return 0;\n    }\n  }"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 59,
+        "start_column": 10,
+        "end_line": 59,
+        "end_column": 12
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:49:26:70:1",
+      "name": "add"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 60,
+        "start_column": 15,
+        "end_line": 60,
+        "end_column": 22
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:49:26:70:1",
+      "name": "multiply"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 61,
+        "start_column": 13,
+        "end_line": 61,
+        "end_column": 21
+      },
+      "type": "read",
+      "scope_id": "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:61:12:68:5",
+      "name": "operation"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 61,
+        "start_column": 24,
+        "end_line": 61,
+        "end_column": 24
+      },
+      "type": "read",
+      "scope_id": "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:61:12:68:5",
+      "name": "a"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 61,
+        "start_column": 27,
+        "end_line": 61,
+        "end_column": 27
+      },
+      "type": "read",
+      "scope_id": "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:61:12:68:5",
+      "name": "b"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 62,
+        "start_column": 11,
+        "end_line": 62,
+        "end_column": 19
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:62:7:66:7",
+      "name": "operation"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 63,
+        "start_column": 9,
+        "end_line": 63,
+        "end_column": 25
+      },
+      "type": "return",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:62:7:66:7",
+      "name": "return add(a, b);"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 63,
+        "start_column": 16,
+        "end_line": 63,
+        "end_column": 18
+      },
+      "type": "call",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:62:7:66:7",
+      "name": "add",
+      "call_type": "function"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 63,
+        "start_column": 16,
+        "end_line": 63,
+        "end_column": 24
+      },
+      "type": "return",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:62:7:66:7",
+      "name": "add"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 63,
+        "start_column": 16,
+        "end_line": 63,
+        "end_column": 18
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:62:7:66:7",
+      "name": "add"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 63,
+        "start_column": 20,
+        "end_line": 63,
+        "end_column": 20
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:62:7:66:7",
+      "name": "a"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 63,
+        "start_column": 23,
+        "end_line": 63,
+        "end_column": 23
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:62:7:66:7",
+      "name": "b"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 64,
+        "start_column": 18,
+        "end_line": 64,
+        "end_column": 26
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:64:14:66:7",
+      "name": "operation"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 65,
+        "start_column": 9,
+        "end_line": 65,
+        "end_column": 30
+      },
+      "type": "return",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:64:14:66:7",
+      "name": "return multiply(a, b);"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 65,
+        "start_column": 16,
+        "end_line": 65,
+        "end_column": 23
+      },
+      "type": "call",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:64:14:66:7",
+      "name": "multiply",
+      "call_type": "function"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 65,
+        "start_column": 16,
+        "end_line": 65,
+        "end_column": 29
+      },
+      "type": "return",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:64:14:66:7",
+      "name": "multiply"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 65,
+        "start_column": 16,
+        "end_line": 65,
+        "end_column": 23
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:64:14:66:7",
+      "name": "multiply"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 65,
+        "start_column": 25,
+        "end_line": 65,
+        "end_column": 25
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:64:14:66:7",
+      "name": "a"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 65,
+        "start_column": 28,
+        "end_line": 65,
+        "end_column": 28
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:64:14:66:7",
+      "name": "b"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 67,
+        "start_column": 7,
+        "end_line": 67,
+        "end_column": 15
+      },
+      "type": "return",
+      "scope_id": "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:61:12:68:5",
+      "name": "return 0;"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 67,
+        "start_column": 14,
+        "end_line": 67,
+        "end_column": 14
+      },
+      "type": "return",
+      "scope_id": "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:61:12:68:5",
+      "name": "0"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 73,
+        "start_column": 7,
+        "end_line": 73,
+        "end_column": 54
+      },
+      "type": "assignment",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:73:1:73:55",
+      "name": "user1 = createUser(\"Alice\", \"alice@example.com\")"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 73,
+        "start_column": 7,
+        "end_line": 73,
+        "end_column": 11
+      },
+      "type": "assignment",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:73:1:73:55",
+      "name": "user1"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 73,
+        "start_column": 7,
+        "end_line": 73,
+        "end_column": 11
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:73:1:73:55",
+      "name": "user1"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 73,
+        "start_column": 15,
+        "end_line": 73,
+        "end_column": 54
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:73:1:73:55",
+      "name": "createUser"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 73,
+        "start_column": 15,
+        "end_line": 73,
+        "end_column": 24
+      },
+      "type": "call",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:73:1:73:55",
+      "name": "createUser",
+      "call_type": "function"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 73,
+        "start_column": 15,
+        "end_line": 73,
+        "end_column": 24
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:73:1:73:55",
+      "name": "createUser"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 74,
+        "start_column": 7,
+        "end_line": 74,
+        "end_column": 32
+      },
+      "type": "assignment",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:74:1:74:33",
+      "name": "userName = user1.getName()"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 74,
+        "start_column": 7,
+        "end_line": 74,
+        "end_column": 14
+      },
+      "type": "assignment",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:74:1:74:33",
+      "name": "userName"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 74,
+        "start_column": 7,
+        "end_line": 74,
+        "end_column": 14
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:74:1:74:33",
+      "name": "userName"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 74,
+        "start_column": 18,
+        "end_line": 74,
+        "end_column": 32
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:74:1:74:33",
+      "name": "user1.getName()"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 74,
+        "start_column": 18,
+        "end_line": 74,
+        "end_column": 32
+      },
+      "type": "call",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:74:1:74:33",
+      "name": "getName",
+      "context": {
+        "receiver_location": {
+          "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+          "start_line": 74,
+          "start_column": 18,
+          "end_line": 74,
+          "end_column": 22
+        },
+        "property_chain": [
+          "user1",
+          "getName"
+        ]
+      },
+      "call_type": "method",
+      "member_access": {
+        "access_type": "method",
+        "is_optional_chain": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 74,
+        "start_column": 18,
+        "end_line": 74,
+        "end_column": 22
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:74:1:74:33",
+      "name": "user1"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 74,
+        "start_column": 18,
+        "end_line": 74,
+        "end_column": 30
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:74:1:74:33",
+      "name": "user1.getName"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 74,
+        "start_column": 18,
+        "end_line": 74,
+        "end_column": 22
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:74:1:74:33",
+      "name": "user1"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 74,
+        "start_column": 18,
+        "end_line": 74,
+        "end_column": 30
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:74:1:74:33",
+      "name": "user1.getName"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 74,
+        "start_column": 18,
+        "end_line": 74,
+        "end_column": 22
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:74:1:74:33",
+      "name": "user1"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 74,
+        "start_column": 18,
+        "end_line": 74,
+        "end_column": 32
+      },
+      "type": "call",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:74:1:74:33",
+      "name": "getName",
+      "context": {
+        "receiver_location": {
+          "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+          "start_line": 74,
+          "start_column": 18,
+          "end_line": 74,
+          "end_column": 22
+        },
+        "property_chain": [
+          "user1",
+          "getName"
+        ]
+      },
+      "call_type": "method",
+      "member_access": {
+        "access_type": "method",
+        "is_optional_chain": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 74,
+        "start_column": 18,
+        "end_line": 74,
+        "end_column": 22
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:74:1:74:33",
+      "name": "user1"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 74,
+        "start_column": 18,
+        "end_line": 74,
+        "end_column": 22
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:74:1:74:33",
+      "name": "user1"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 74,
+        "start_column": 24,
+        "end_line": 74,
+        "end_column": 30
+      },
+      "type": "call",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:74:1:74:33",
+      "name": "getName",
+      "call_type": "function"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 74,
+        "start_column": 24,
+        "end_line": 74,
+        "end_column": 30
+      },
+      "type": "member_access",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:74:1:74:33",
+      "name": "getName",
+      "member_access": {
+        "access_type": "property",
+        "is_optional_chain": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 74,
+        "start_column": 24,
+        "end_line": 74,
+        "end_column": 30
+      },
+      "type": "member_access",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:74:1:74:33",
+      "name": "getName",
+      "member_access": {
+        "access_type": "property",
+        "is_optional_chain": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 74,
+        "start_column": 24,
+        "end_line": 74,
+        "end_column": 30
+      },
+      "type": "call",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:74:1:74:33",
+      "name": "getName",
+      "call_type": "function"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 75,
+        "start_column": 7,
+        "end_line": 75,
+        "end_column": 34
+      },
+      "type": "assignment",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:75:1:75:35",
+      "name": "userEmail = user1.getEmail()"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 75,
+        "start_column": 7,
+        "end_line": 75,
+        "end_column": 15
+      },
+      "type": "assignment",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:75:1:75:35",
+      "name": "userEmail"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 75,
+        "start_column": 7,
+        "end_line": 75,
+        "end_column": 15
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:75:1:75:35",
+      "name": "userEmail"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 75,
+        "start_column": 19,
+        "end_line": 75,
+        "end_column": 34
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:75:1:75:35",
+      "name": "user1.getEmail()"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 75,
+        "start_column": 19,
+        "end_line": 75,
+        "end_column": 34
+      },
+      "type": "call",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:75:1:75:35",
+      "name": "getEmail",
+      "context": {
+        "receiver_location": {
+          "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+          "start_line": 75,
+          "start_column": 19,
+          "end_line": 75,
+          "end_column": 23
+        },
+        "property_chain": [
+          "user1",
+          "getEmail"
+        ]
+      },
+      "call_type": "method",
+      "member_access": {
+        "access_type": "method",
+        "is_optional_chain": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 75,
+        "start_column": 19,
+        "end_line": 75,
+        "end_column": 23
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:75:1:75:35",
+      "name": "user1"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 75,
+        "start_column": 19,
+        "end_line": 75,
+        "end_column": 32
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:75:1:75:35",
+      "name": "user1.getEmail"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 75,
+        "start_column": 19,
+        "end_line": 75,
+        "end_column": 23
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:75:1:75:35",
+      "name": "user1"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 75,
+        "start_column": 19,
+        "end_line": 75,
+        "end_column": 32
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:75:1:75:35",
+      "name": "user1.getEmail"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 75,
+        "start_column": 19,
+        "end_line": 75,
+        "end_column": 23
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:75:1:75:35",
+      "name": "user1"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 75,
+        "start_column": 19,
+        "end_line": 75,
+        "end_column": 34
+      },
+      "type": "call",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:75:1:75:35",
+      "name": "getEmail",
+      "context": {
+        "receiver_location": {
+          "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+          "start_line": 75,
+          "start_column": 19,
+          "end_line": 75,
+          "end_column": 23
+        },
+        "property_chain": [
+          "user1",
+          "getEmail"
+        ]
+      },
+      "call_type": "method",
+      "member_access": {
+        "access_type": "method",
+        "is_optional_chain": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 75,
+        "start_column": 19,
+        "end_line": 75,
+        "end_column": 23
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:75:1:75:35",
+      "name": "user1"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 75,
+        "start_column": 19,
+        "end_line": 75,
+        "end_column": 23
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:75:1:75:35",
+      "name": "user1"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 75,
+        "start_column": 25,
+        "end_line": 75,
+        "end_column": 32
+      },
+      "type": "call",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:75:1:75:35",
+      "name": "getEmail",
+      "call_type": "function"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 75,
+        "start_column": 25,
+        "end_line": 75,
+        "end_column": 32
+      },
+      "type": "member_access",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:75:1:75:35",
+      "name": "getEmail",
+      "member_access": {
+        "access_type": "property",
+        "is_optional_chain": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 75,
+        "start_column": 25,
+        "end_line": 75,
+        "end_column": 32
+      },
+      "type": "member_access",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:75:1:75:35",
+      "name": "getEmail",
+      "member_access": {
+        "access_type": "property",
+        "is_optional_chain": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 75,
+        "start_column": 25,
+        "end_line": 75,
+        "end_column": 32
+      },
+      "type": "call",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:75:1:75:35",
+      "name": "getEmail",
+      "call_type": "function"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 77,
+        "start_column": 7,
+        "end_line": 77,
+        "end_column": 33
+      },
+      "type": "assignment",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:77:1:77:34",
+      "name": "counter = createCounter(10)"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 77,
+        "start_column": 7,
+        "end_line": 77,
+        "end_column": 13
+      },
+      "type": "assignment",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:77:1:77:34",
+      "name": "counter"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 77,
+        "start_column": 7,
+        "end_line": 77,
+        "end_column": 13
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:77:1:77:34",
+      "name": "counter"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 77,
+        "start_column": 17,
+        "end_line": 77,
+        "end_column": 33
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:77:1:77:34",
+      "name": "createCounter"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 77,
+        "start_column": 17,
+        "end_line": 77,
+        "end_column": 29
+      },
+      "type": "call",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:77:1:77:34",
+      "name": "createCounter",
+      "call_type": "function"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 77,
+        "start_column": 17,
+        "end_line": 77,
+        "end_column": 29
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:77:1:77:34",
+      "name": "createCounter"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 78,
+        "start_column": 7,
+        "end_line": 78,
+        "end_column": 34
+      },
+      "type": "assignment",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:78:1:78:35",
+      "name": "count1 = counter.increment()"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 78,
+        "start_column": 7,
+        "end_line": 78,
+        "end_column": 12
+      },
+      "type": "assignment",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:78:1:78:35",
+      "name": "count1"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 78,
+        "start_column": 7,
+        "end_line": 78,
+        "end_column": 12
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:78:1:78:35",
+      "name": "count1"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 78,
+        "start_column": 16,
+        "end_line": 78,
+        "end_column": 34
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:78:1:78:35",
+      "name": "counter.increment()"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 78,
+        "start_column": 16,
+        "end_line": 78,
+        "end_column": 34
+      },
+      "type": "call",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:78:1:78:35",
+      "name": "increment",
+      "context": {
+        "receiver_location": {
+          "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+          "start_line": 78,
+          "start_column": 16,
+          "end_line": 78,
+          "end_column": 22
+        },
+        "property_chain": [
+          "counter",
+          "increment"
+        ]
+      },
+      "call_type": "method",
+      "member_access": {
+        "access_type": "method",
+        "is_optional_chain": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 78,
+        "start_column": 16,
+        "end_line": 78,
+        "end_column": 22
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:78:1:78:35",
+      "name": "counter"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 78,
+        "start_column": 16,
+        "end_line": 78,
+        "end_column": 32
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:78:1:78:35",
+      "name": "counter.increment"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 78,
+        "start_column": 16,
+        "end_line": 78,
+        "end_column": 22
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:78:1:78:35",
+      "name": "counter"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 78,
+        "start_column": 16,
+        "end_line": 78,
+        "end_column": 32
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:78:1:78:35",
+      "name": "counter.increment"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 78,
+        "start_column": 16,
+        "end_line": 78,
+        "end_column": 22
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:78:1:78:35",
+      "name": "counter"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 78,
+        "start_column": 16,
+        "end_line": 78,
+        "end_column": 34
+      },
+      "type": "call",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:78:1:78:35",
+      "name": "increment",
+      "context": {
+        "receiver_location": {
+          "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+          "start_line": 78,
+          "start_column": 16,
+          "end_line": 78,
+          "end_column": 22
+        },
+        "property_chain": [
+          "counter",
+          "increment"
+        ]
+      },
+      "call_type": "method",
+      "member_access": {
+        "access_type": "method",
+        "is_optional_chain": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 78,
+        "start_column": 16,
+        "end_line": 78,
+        "end_column": 22
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:78:1:78:35",
+      "name": "counter"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 78,
+        "start_column": 16,
+        "end_line": 78,
+        "end_column": 22
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:78:1:78:35",
+      "name": "counter"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 78,
+        "start_column": 24,
+        "end_line": 78,
+        "end_column": 32
+      },
+      "type": "call",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:78:1:78:35",
+      "name": "increment",
+      "call_type": "function"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 78,
+        "start_column": 24,
+        "end_line": 78,
+        "end_column": 32
+      },
+      "type": "member_access",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:78:1:78:35",
+      "name": "increment",
+      "member_access": {
+        "access_type": "property",
+        "is_optional_chain": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 78,
+        "start_column": 24,
+        "end_line": 78,
+        "end_column": 32
+      },
+      "type": "member_access",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:78:1:78:35",
+      "name": "increment",
+      "member_access": {
+        "access_type": "property",
+        "is_optional_chain": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 78,
+        "start_column": 24,
+        "end_line": 78,
+        "end_column": 32
+      },
+      "type": "call",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:78:1:78:35",
+      "name": "increment",
+      "call_type": "function"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 79,
+        "start_column": 7,
+        "end_line": 79,
+        "end_column": 33
+      },
+      "type": "assignment",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:79:1:79:34",
+      "name": "count2 = counter.getValue()"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 79,
+        "start_column": 7,
+        "end_line": 79,
+        "end_column": 12
+      },
+      "type": "assignment",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:79:1:79:34",
+      "name": "count2"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 79,
+        "start_column": 7,
+        "end_line": 79,
+        "end_column": 12
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:79:1:79:34",
+      "name": "count2"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 79,
+        "start_column": 16,
+        "end_line": 79,
+        "end_column": 33
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:79:1:79:34",
+      "name": "counter.getValue()"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 79,
+        "start_column": 16,
+        "end_line": 79,
+        "end_column": 33
+      },
+      "type": "call",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:79:1:79:34",
+      "name": "getValue",
+      "context": {
+        "receiver_location": {
+          "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+          "start_line": 79,
+          "start_column": 16,
+          "end_line": 79,
+          "end_column": 22
+        },
+        "property_chain": [
+          "counter",
+          "getValue"
+        ]
+      },
+      "call_type": "method",
+      "member_access": {
+        "access_type": "method",
+        "is_optional_chain": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 79,
+        "start_column": 16,
+        "end_line": 79,
+        "end_column": 22
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:79:1:79:34",
+      "name": "counter"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 79,
+        "start_column": 16,
+        "end_line": 79,
+        "end_column": 31
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:79:1:79:34",
+      "name": "counter.getValue"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 79,
+        "start_column": 16,
+        "end_line": 79,
+        "end_column": 22
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:79:1:79:34",
+      "name": "counter"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 79,
+        "start_column": 16,
+        "end_line": 79,
+        "end_column": 31
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:79:1:79:34",
+      "name": "counter.getValue"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 79,
+        "start_column": 16,
+        "end_line": 79,
+        "end_column": 22
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:79:1:79:34",
+      "name": "counter"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 79,
+        "start_column": 16,
+        "end_line": 79,
+        "end_column": 33
+      },
+      "type": "call",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:79:1:79:34",
+      "name": "getValue",
+      "context": {
+        "receiver_location": {
+          "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+          "start_line": 79,
+          "start_column": 16,
+          "end_line": 79,
+          "end_column": 22
+        },
+        "property_chain": [
+          "counter",
+          "getValue"
+        ]
+      },
+      "call_type": "method",
+      "member_access": {
+        "access_type": "method",
+        "is_optional_chain": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 79,
+        "start_column": 16,
+        "end_line": 79,
+        "end_column": 22
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:79:1:79:34",
+      "name": "counter"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 79,
+        "start_column": 16,
+        "end_line": 79,
+        "end_column": 22
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:79:1:79:34",
+      "name": "counter"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 79,
+        "start_column": 24,
+        "end_line": 79,
+        "end_column": 31
+      },
+      "type": "call",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:79:1:79:34",
+      "name": "getValue",
+      "call_type": "function"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 79,
+        "start_column": 24,
+        "end_line": 79,
+        "end_column": 31
+      },
+      "type": "member_access",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:79:1:79:34",
+      "name": "getValue",
+      "member_access": {
+        "access_type": "property",
+        "is_optional_chain": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 79,
+        "start_column": 24,
+        "end_line": 79,
+        "end_column": 31
+      },
+      "type": "member_access",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:79:1:79:34",
+      "name": "getValue",
+      "member_access": {
+        "access_type": "property",
+        "is_optional_chain": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 79,
+        "start_column": 24,
+        "end_line": 79,
+        "end_column": 31
+      },
+      "type": "call",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:79:1:79:34",
+      "name": "getValue",
+      "call_type": "function"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 81,
+        "start_column": 7,
+        "end_line": 81,
+        "end_column": 31
+      },
+      "type": "assignment",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:81:1:81:32",
+      "name": "calc = createCalculator()"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 81,
+        "start_column": 7,
+        "end_line": 81,
+        "end_column": 10
+      },
+      "type": "assignment",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:81:1:81:32",
+      "name": "calc"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 81,
+        "start_column": 7,
+        "end_line": 81,
+        "end_column": 10
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:81:1:81:32",
+      "name": "calc"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 81,
+        "start_column": 14,
+        "end_line": 81,
+        "end_column": 31
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:81:1:81:32",
+      "name": "createCalculator"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 81,
+        "start_column": 14,
+        "end_line": 81,
+        "end_column": 29
+      },
+      "type": "call",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:81:1:81:32",
+      "name": "createCalculator",
+      "call_type": "function"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 81,
+        "start_column": 14,
+        "end_line": 81,
+        "end_column": 29
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:81:1:81:32",
+      "name": "createCalculator"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 82,
+        "start_column": 7,
+        "end_line": 82,
+        "end_column": 26
+      },
+      "type": "assignment",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:82:1:82:27",
+      "name": "sum = calc.add(5, 3)"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 82,
+        "start_column": 7,
+        "end_line": 82,
+        "end_column": 9
+      },
+      "type": "assignment",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:82:1:82:27",
+      "name": "sum"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 82,
+        "start_column": 7,
+        "end_line": 82,
+        "end_column": 9
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:82:1:82:27",
+      "name": "sum"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 82,
+        "start_column": 13,
+        "end_line": 82,
+        "end_column": 26
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:82:1:82:27",
+      "name": "calc.add(5, 3)"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 82,
+        "start_column": 13,
+        "end_line": 82,
+        "end_column": 26
+      },
+      "type": "call",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:82:1:82:27",
+      "name": "add",
+      "context": {
+        "receiver_location": {
+          "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+          "start_line": 82,
+          "start_column": 13,
+          "end_line": 82,
+          "end_column": 16
+        },
+        "property_chain": [
+          "calc",
+          "add"
+        ]
+      },
+      "call_type": "method",
+      "member_access": {
+        "access_type": "method",
+        "is_optional_chain": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 82,
+        "start_column": 13,
+        "end_line": 82,
+        "end_column": 16
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:82:1:82:27",
+      "name": "calc"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 82,
+        "start_column": 13,
+        "end_line": 82,
+        "end_column": 20
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:82:1:82:27",
+      "name": "calc.add"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 82,
+        "start_column": 13,
+        "end_line": 82,
+        "end_column": 16
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:82:1:82:27",
+      "name": "calc"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 82,
+        "start_column": 13,
+        "end_line": 82,
+        "end_column": 20
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:82:1:82:27",
+      "name": "calc.add"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 82,
+        "start_column": 13,
+        "end_line": 82,
+        "end_column": 16
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:82:1:82:27",
+      "name": "calc"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 82,
+        "start_column": 13,
+        "end_line": 82,
+        "end_column": 26
+      },
+      "type": "call",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:82:1:82:27",
+      "name": "add",
+      "context": {
+        "receiver_location": {
+          "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+          "start_line": 82,
+          "start_column": 13,
+          "end_line": 82,
+          "end_column": 16
+        },
+        "property_chain": [
+          "calc",
+          "add"
+        ]
+      },
+      "call_type": "method",
+      "member_access": {
+        "access_type": "method",
+        "is_optional_chain": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 82,
+        "start_column": 13,
+        "end_line": 82,
+        "end_column": 16
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:82:1:82:27",
+      "name": "calc"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 82,
+        "start_column": 13,
+        "end_line": 82,
+        "end_column": 16
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:82:1:82:27",
+      "name": "calc"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 82,
+        "start_column": 18,
+        "end_line": 82,
+        "end_column": 20
+      },
+      "type": "call",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:82:1:82:27",
+      "name": "add",
+      "call_type": "function"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 82,
+        "start_column": 18,
+        "end_line": 82,
+        "end_column": 20
+      },
+      "type": "member_access",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:82:1:82:27",
+      "name": "add",
+      "member_access": {
+        "access_type": "property",
+        "is_optional_chain": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 82,
+        "start_column": 18,
+        "end_line": 82,
+        "end_column": 20
+      },
+      "type": "member_access",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:82:1:82:27",
+      "name": "add",
+      "member_access": {
+        "access_type": "property",
+        "is_optional_chain": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 82,
+        "start_column": 18,
+        "end_line": 82,
+        "end_column": 20
+      },
+      "type": "call",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:82:1:82:27",
+      "name": "add",
+      "call_type": "function"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 83,
+        "start_column": 7,
+        "end_line": 83,
+        "end_column": 35
+      },
+      "type": "assignment",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:83:1:83:36",
+      "name": "product = calc.multiply(4, 7)"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 83,
+        "start_column": 7,
+        "end_line": 83,
+        "end_column": 13
+      },
+      "type": "assignment",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:83:1:83:36",
+      "name": "product"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 83,
+        "start_column": 7,
+        "end_line": 83,
+        "end_column": 13
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:83:1:83:36",
+      "name": "product"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 83,
+        "start_column": 17,
+        "end_line": 83,
+        "end_column": 35
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:83:1:83:36",
+      "name": "calc.multiply(4, 7)"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 83,
+        "start_column": 17,
+        "end_line": 83,
+        "end_column": 35
+      },
+      "type": "call",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:83:1:83:36",
+      "name": "multiply",
+      "context": {
+        "receiver_location": {
+          "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+          "start_line": 83,
+          "start_column": 17,
+          "end_line": 83,
+          "end_column": 20
+        },
+        "property_chain": [
+          "calc",
+          "multiply"
+        ]
+      },
+      "call_type": "method",
+      "member_access": {
+        "access_type": "method",
+        "is_optional_chain": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 83,
+        "start_column": 17,
+        "end_line": 83,
+        "end_column": 20
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:83:1:83:36",
+      "name": "calc"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 83,
+        "start_column": 17,
+        "end_line": 83,
+        "end_column": 29
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:83:1:83:36",
+      "name": "calc.multiply"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 83,
+        "start_column": 17,
+        "end_line": 83,
+        "end_column": 20
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:83:1:83:36",
+      "name": "calc"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 83,
+        "start_column": 17,
+        "end_line": 83,
+        "end_column": 29
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:83:1:83:36",
+      "name": "calc.multiply"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 83,
+        "start_column": 17,
+        "end_line": 83,
+        "end_column": 20
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:83:1:83:36",
+      "name": "calc"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 83,
+        "start_column": 17,
+        "end_line": 83,
+        "end_column": 35
+      },
+      "type": "call",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:83:1:83:36",
+      "name": "multiply",
+      "context": {
+        "receiver_location": {
+          "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+          "start_line": 83,
+          "start_column": 17,
+          "end_line": 83,
+          "end_column": 20
+        },
+        "property_chain": [
+          "calc",
+          "multiply"
+        ]
+      },
+      "call_type": "method",
+      "member_access": {
+        "access_type": "method",
+        "is_optional_chain": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 83,
+        "start_column": 17,
+        "end_line": 83,
+        "end_column": 20
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:83:1:83:36",
+      "name": "calc"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 83,
+        "start_column": 17,
+        "end_line": 83,
+        "end_column": 20
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:83:1:83:36",
+      "name": "calc"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 83,
+        "start_column": 22,
+        "end_line": 83,
+        "end_column": 29
+      },
+      "type": "call",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:83:1:83:36",
+      "name": "multiply",
+      "call_type": "function"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 83,
+        "start_column": 22,
+        "end_line": 83,
+        "end_column": 29
+      },
+      "type": "member_access",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:83:1:83:36",
+      "name": "multiply",
+      "member_access": {
+        "access_type": "property",
+        "is_optional_chain": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 83,
+        "start_column": 22,
+        "end_line": 83,
+        "end_column": 29
+      },
+      "type": "member_access",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:83:1:83:36",
+      "name": "multiply",
+      "member_access": {
+        "access_type": "property",
+        "is_optional_chain": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 83,
+        "start_column": 22,
+        "end_line": 83,
+        "end_column": 29
+      },
+      "type": "call",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:83:1:83:36",
+      "name": "multiply",
+      "call_type": "function"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 84,
+        "start_column": 7,
+        "end_line": 84,
+        "end_column": 44
+      },
+      "type": "assignment",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:84:1:84:45",
+      "name": "computed = calc.compute('add', 10, 20)"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 84,
+        "start_column": 7,
+        "end_line": 84,
+        "end_column": 14
+      },
+      "type": "assignment",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:84:1:84:45",
+      "name": "computed"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 84,
+        "start_column": 7,
+        "end_line": 84,
+        "end_column": 14
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:84:1:84:45",
+      "name": "computed"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 84,
+        "start_column": 18,
+        "end_line": 84,
+        "end_column": 44
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:84:1:84:45",
+      "name": "calc.compute('add', 10, 20)"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 84,
+        "start_column": 18,
+        "end_line": 84,
+        "end_column": 44
+      },
+      "type": "call",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:84:1:84:45",
+      "name": "compute",
+      "context": {
+        "receiver_location": {
+          "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+          "start_line": 84,
+          "start_column": 18,
+          "end_line": 84,
+          "end_column": 21
+        },
+        "property_chain": [
+          "calc",
+          "compute"
+        ]
+      },
+      "call_type": "method",
+      "member_access": {
+        "access_type": "method",
+        "is_optional_chain": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 84,
+        "start_column": 18,
+        "end_line": 84,
+        "end_column": 21
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:84:1:84:45",
+      "name": "calc"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 84,
+        "start_column": 18,
+        "end_line": 84,
+        "end_column": 29
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:84:1:84:45",
+      "name": "calc.compute"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 84,
+        "start_column": 18,
+        "end_line": 84,
+        "end_column": 21
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:84:1:84:45",
+      "name": "calc"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 84,
+        "start_column": 18,
+        "end_line": 84,
+        "end_column": 29
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:84:1:84:45",
+      "name": "calc.compute"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 84,
+        "start_column": 18,
+        "end_line": 84,
+        "end_column": 21
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:84:1:84:45",
+      "name": "calc"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 84,
+        "start_column": 18,
+        "end_line": 84,
+        "end_column": 44
+      },
+      "type": "call",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:84:1:84:45",
+      "name": "compute",
+      "context": {
+        "receiver_location": {
+          "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+          "start_line": 84,
+          "start_column": 18,
+          "end_line": 84,
+          "end_column": 21
+        },
+        "property_chain": [
+          "calc",
+          "compute"
+        ]
+      },
+      "call_type": "method",
+      "member_access": {
+        "access_type": "method",
+        "is_optional_chain": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 84,
+        "start_column": 18,
+        "end_line": 84,
+        "end_column": 21
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:84:1:84:45",
+      "name": "calc"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 84,
+        "start_column": 18,
+        "end_line": 84,
+        "end_column": 21
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:84:1:84:45",
+      "name": "calc"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 84,
+        "start_column": 23,
+        "end_line": 84,
+        "end_column": 29
+      },
+      "type": "call",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:84:1:84:45",
+      "name": "compute",
+      "call_type": "function"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 84,
+        "start_column": 23,
+        "end_line": 84,
+        "end_column": 29
+      },
+      "type": "member_access",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:84:1:84:45",
+      "name": "compute",
+      "member_access": {
+        "access_type": "property",
+        "is_optional_chain": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 84,
+        "start_column": 23,
+        "end_line": 84,
+        "end_column": 29
+      },
+      "type": "member_access",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:84:1:84:45",
+      "name": "compute",
+      "member_access": {
+        "access_type": "property",
+        "is_optional_chain": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 84,
+        "start_column": 23,
+        "end_line": 84,
+        "end_column": 29
+      },
+      "type": "call",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:84:1:84:45",
+      "name": "compute",
+      "call_type": "function"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 87,
+        "start_column": 3,
+        "end_line": 87,
+        "end_column": 12
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:1:1:100:2",
+      "name": "createUser"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 88,
+        "start_column": 3,
+        "end_line": 88,
+        "end_column": 15
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:1:1:100:2",
+      "name": "createCounter"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 89,
+        "start_column": 3,
+        "end_line": 89,
+        "end_column": 18
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:1:1:100:2",
+      "name": "createCalculator"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 90,
+        "start_column": 3,
+        "end_line": 90,
+        "end_column": 7
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:1:1:100:2",
+      "name": "user1"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 91,
+        "start_column": 3,
+        "end_line": 91,
+        "end_column": 10
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:1:1:100:2",
+      "name": "userName"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 92,
+        "start_column": 3,
+        "end_line": 92,
+        "end_column": 11
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:1:1:100:2",
+      "name": "userEmail"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 93,
+        "start_column": 3,
+        "end_line": 93,
+        "end_column": 9
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:1:1:100:2",
+      "name": "counter"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 94,
+        "start_column": 3,
+        "end_line": 94,
+        "end_column": 8
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:1:1:100:2",
+      "name": "count1"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 95,
+        "start_column": 3,
+        "end_line": 95,
+        "end_column": 8
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:1:1:100:2",
+      "name": "count2"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 96,
+        "start_column": 3,
+        "end_line": 96,
+        "end_column": 6
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:1:1:100:2",
+      "name": "calc"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 97,
+        "start_column": 3,
+        "end_line": 97,
+        "end_column": 5
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:1:1:100:2",
+      "name": "sum"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 98,
+        "start_column": 3,
+        "end_line": 98,
+        "end_column": 9
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:1:1:100:2",
+      "name": "product"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js",
+        "start_line": 99,
+        "start_column": 3,
+        "end_line": 99,
+        "end_column": 10
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/factory_patterns.js:1:1:100:2",
+      "name": "computed"
+    }
+  ]
+}

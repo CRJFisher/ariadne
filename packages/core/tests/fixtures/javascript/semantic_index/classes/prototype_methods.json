@@ -1,0 +1,4498 @@
+{
+  "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+  "language": "javascript",
+  "root_scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:1:1:78:2",
+  "scopes": {
+    "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:1:1:78:2": {
+      "id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:1:1:78:2",
+      "parent_id": null,
+      "name": null,
+      "type": "module",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 1,
+        "start_column": 1,
+        "end_line": 78,
+        "end_column": 2
+      },
+      "child_ids": [
+        "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:7:17:11:1",
+        "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:14:35:17:1",
+        "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:19:34:22:1",
+        "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:24:37:26:1",
+        "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:29:13:32:1",
+        "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:39:30:41:1",
+        "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:43:34:45:1",
+        "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:48:1:48:47",
+        "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:49:1:49:36",
+        "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:50:1:50:38",
+        "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:52:1:52:41",
+        "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:53:1:53:30",
+        "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:54:1:54:30",
+        "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:55:1:55:33",
+        "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:58:21:62:1",
+        "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:64:1:64:36"
+      ]
+    },
+    "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:7:17:11:1": {
+      "id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:7:17:11:1",
+      "parent_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:1:1:78:2",
+      "name": "Vehicle",
+      "type": "function",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 7,
+        "start_column": 17,
+        "end_line": 11,
+        "end_column": 1
+      },
+      "child_ids": []
+    },
+    "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:14:35:17:1": {
+      "id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:14:35:17:1",
+      "parent_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:1:1:78:2",
+      "name": null,
+      "type": "function",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 14,
+        "start_column": 35,
+        "end_line": 17,
+        "end_column": 1
+      },
+      "child_ids": []
+    },
+    "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:19:34:22:1": {
+      "id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:19:34:22:1",
+      "parent_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:1:1:78:2",
+      "name": null,
+      "type": "function",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 19,
+        "start_column": 34,
+        "end_line": 22,
+        "end_column": 1
+      },
+      "child_ids": []
+    },
+    "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:24:37:26:1": {
+      "id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:24:37:26:1",
+      "parent_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:1:1:78:2",
+      "name": null,
+      "type": "function",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 24,
+        "start_column": 37,
+        "end_line": 26,
+        "end_column": 1
+      },
+      "child_ids": []
+    },
+    "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:29:13:32:1": {
+      "id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:29:13:32:1",
+      "parent_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:1:1:78:2",
+      "name": "Car",
+      "type": "function",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 29,
+        "start_column": 13,
+        "end_line": 32,
+        "end_column": 1
+      },
+      "child_ids": []
+    },
+    "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:39:30:41:1": {
+      "id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:39:30:41:1",
+      "parent_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:1:1:78:2",
+      "name": null,
+      "type": "function",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 39,
+        "start_column": 30,
+        "end_line": 41,
+        "end_column": 1
+      },
+      "child_ids": []
+    },
+    "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:43:34:45:1": {
+      "id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:43:34:45:1",
+      "parent_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:1:1:78:2",
+      "name": null,
+      "type": "function",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 43,
+        "start_column": 34,
+        "end_line": 45,
+        "end_column": 1
+      },
+      "child_ids": []
+    },
+    "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:48:1:48:47": {
+      "id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:48:1:48:47",
+      "parent_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:1:1:78:2",
+      "name": null,
+      "type": "block",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 48,
+        "start_column": 1,
+        "end_line": 48,
+        "end_column": 47
+      },
+      "child_ids": []
+    },
+    "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:49:1:49:36": {
+      "id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:49:1:49:36",
+      "parent_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:1:1:78:2",
+      "name": null,
+      "type": "block",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 49,
+        "start_column": 1,
+        "end_line": 49,
+        "end_column": 36
+      },
+      "child_ids": []
+    },
+    "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:50:1:50:38": {
+      "id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:50:1:50:38",
+      "parent_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:1:1:78:2",
+      "name": null,
+      "type": "block",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 50,
+        "start_column": 1,
+        "end_line": 50,
+        "end_column": 38
+      },
+      "child_ids": []
+    },
+    "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:52:1:52:41": {
+      "id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:52:1:52:41",
+      "parent_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:1:1:78:2",
+      "name": null,
+      "type": "block",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 52,
+        "start_column": 1,
+        "end_line": 52,
+        "end_column": 41
+      },
+      "child_ids": []
+    },
+    "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:53:1:53:30": {
+      "id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:53:1:53:30",
+      "parent_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:1:1:78:2",
+      "name": null,
+      "type": "block",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 53,
+        "start_column": 1,
+        "end_line": 53,
+        "end_column": 30
+      },
+      "child_ids": []
+    },
+    "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:54:1:54:30": {
+      "id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:54:1:54:30",
+      "parent_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:1:1:78:2",
+      "name": null,
+      "type": "block",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 54,
+        "start_column": 1,
+        "end_line": 54,
+        "end_column": 30
+      },
+      "child_ids": []
+    },
+    "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:55:1:55:33": {
+      "id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:55:1:55:33",
+      "parent_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:1:1:78:2",
+      "name": null,
+      "type": "block",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 55,
+        "start_column": 1,
+        "end_line": 55,
+        "end_column": 33
+      },
+      "child_ids": []
+    },
+    "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:58:21:62:1": {
+      "id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:58:21:62:1",
+      "parent_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:1:1:78:2",
+      "name": "testVehicle",
+      "type": "function",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 58,
+        "start_column": 21,
+        "end_line": 62,
+        "end_column": 1
+      },
+      "child_ids": []
+    },
+    "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:64:1:64:36": {
+      "id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:64:1:64:36",
+      "parent_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:1:1:78:2",
+      "name": null,
+      "type": "block",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 64,
+        "start_column": 1,
+        "end_line": 64,
+        "end_column": 36
+      },
+      "child_ids": []
+    }
+  },
+  "functions": {
+    "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:7:10:7:16:Vehicle": {
+      "kind": "function",
+      "symbol_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:7:10:7:16:Vehicle",
+      "name": "Vehicle",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 7,
+        "start_column": 10,
+        "end_line": 7,
+        "end_column": 16
+      },
+      "defining_scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:1:1:78:2",
+      "is_exported": false,
+      "docstring": "// Constructor function",
+      "signature": {
+        "parameters": [
+          {
+            "kind": "parameter",
+            "defining_scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:7:17:11:1",
+            "symbol_id": "parameter:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:7:18:7:21:make",
+            "name": "make",
+            "location": {
+              "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+              "start_line": 7,
+              "start_column": 18,
+              "end_line": 7,
+              "end_column": 21
+            }
+          },
+          {
+            "kind": "parameter",
+            "defining_scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:7:17:11:1",
+            "symbol_id": "parameter:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:7:24:7:28:model",
+            "name": "model",
+            "location": {
+              "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+              "start_line": 7,
+              "start_column": 24,
+              "end_line": 7,
+              "end_column": 28
+            }
+          }
+        ]
+      },
+      "body_scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:7:17:11:1"
+    },
+    "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:29:10:29:12:Car": {
+      "kind": "function",
+      "symbol_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:29:10:29:12:Car",
+      "name": "Car",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 29,
+        "start_column": 10,
+        "end_line": 29,
+        "end_column": 12
+      },
+      "defining_scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:1:1:78:2",
+      "is_exported": false,
+      "docstring": "// Another constructor function",
+      "signature": {
+        "parameters": [
+          {
+            "kind": "parameter",
+            "defining_scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:29:13:32:1",
+            "symbol_id": "parameter:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:29:14:29:17:make",
+            "name": "make",
+            "location": {
+              "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+              "start_line": 29,
+              "start_column": 14,
+              "end_line": 29,
+              "end_column": 17
+            }
+          },
+          {
+            "kind": "parameter",
+            "defining_scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:29:13:32:1",
+            "symbol_id": "parameter:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:29:20:29:24:model",
+            "name": "model",
+            "location": {
+              "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+              "start_line": 29,
+              "start_column": 20,
+              "end_line": 29,
+              "end_column": 24
+            }
+          },
+          {
+            "kind": "parameter",
+            "defining_scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:29:13:32:1",
+            "symbol_id": "parameter:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:29:27:29:31:doors",
+            "name": "doors",
+            "location": {
+              "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+              "start_line": 29,
+              "start_column": 27,
+              "end_line": 29,
+              "end_column": 31
+            }
+          }
+        ]
+      },
+      "body_scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:19:34:22:1"
+    },
+    "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:58:10:58:20:testVehicle": {
+      "kind": "function",
+      "symbol_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:58:10:58:20:testVehicle",
+      "name": "testVehicle",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 58,
+        "start_column": 10,
+        "end_line": 58,
+        "end_column": 20
+      },
+      "defining_scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:1:1:78:2",
+      "is_exported": false,
+      "docstring": "// Function that uses prototype methods",
+      "signature": {
+        "parameters": [
+          {
+            "kind": "parameter",
+            "defining_scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:58:21:62:1",
+            "symbol_id": "parameter:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:58:22:58:22:v",
+            "name": "v",
+            "location": {
+              "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+              "start_line": 58,
+              "start_column": 22,
+              "end_line": 58,
+              "end_column": 22
+            }
+          }
+        ]
+      },
+      "body_scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:58:21:62:1"
+    }
+  },
+  "classes": {},
+  "variables": {
+    "variable:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:48:7:48:13:vehicle": {
+      "kind": "constant",
+      "symbol_id": "variable:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:48:7:48:13:vehicle",
+      "name": "vehicle",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 48,
+        "start_column": 7,
+        "end_line": 48,
+        "end_column": 13
+      },
+      "defining_scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:48:1:48:47",
+      "is_exported": false
+    },
+    "variable:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:49:7:49:17:startResult": {
+      "kind": "constant",
+      "symbol_id": "variable:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:49:7:49:17:startResult",
+      "name": "startResult",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 49,
+        "start_column": 7,
+        "end_line": 49,
+        "end_column": 17
+      },
+      "defining_scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:49:1:49:36",
+      "is_exported": false
+    },
+    "variable:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:50:7:50:17:vehicleInfo": {
+      "kind": "constant",
+      "symbol_id": "variable:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:50:7:50:17:vehicleInfo",
+      "name": "vehicleInfo",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 50,
+        "start_column": 7,
+        "end_line": 50,
+        "end_column": 17
+      },
+      "defining_scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:50:1:50:38",
+      "is_exported": false
+    },
+    "variable:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:52:7:52:9:car": {
+      "kind": "constant",
+      "symbol_id": "variable:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:52:7:52:9:car",
+      "name": "car",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 52,
+        "start_column": 7,
+        "end_line": 52,
+        "end_column": 9
+      },
+      "defining_scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:52:1:52:41",
+      "is_exported": false
+    },
+    "variable:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:53:7:53:13:carInfo": {
+      "kind": "constant",
+      "symbol_id": "variable:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:53:7:53:13:carInfo",
+      "name": "carInfo",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 53,
+        "start_column": 7,
+        "end_line": 53,
+        "end_column": 13
+      },
+      "defining_scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:53:1:53:30",
+      "is_exported": false
+    },
+    "variable:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:54:7:54:16:honkResult": {
+      "kind": "constant",
+      "symbol_id": "variable:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:54:7:54:16:honkResult",
+      "name": "honkResult",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 54,
+        "start_column": 7,
+        "end_line": 54,
+        "end_column": 16
+      },
+      "defining_scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:54:1:54:30",
+      "is_exported": false,
+      "docstring": "// Inherited method"
+    },
+    "variable:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:55:7:55:15:doorCount": {
+      "kind": "constant",
+      "symbol_id": "variable:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:55:7:55:15:doorCount",
+      "name": "doorCount",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 55,
+        "start_column": 7,
+        "end_line": 55,
+        "end_column": 15
+      },
+      "defining_scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:55:1:55:33",
+      "is_exported": false
+    },
+    "variable:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:59:9:59:12:info": {
+      "kind": "constant",
+      "symbol_id": "variable:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:59:9:59:12:info",
+      "name": "info",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 59,
+        "start_column": 9,
+        "end_line": 59,
+        "end_column": 12
+      },
+      "defining_scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:58:21:62:1",
+      "is_exported": false
+    },
+    "variable:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:60:9:60:15:started": {
+      "kind": "constant",
+      "symbol_id": "variable:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:60:9:60:15:started",
+      "name": "started",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 60,
+        "start_column": 9,
+        "end_line": 60,
+        "end_column": 15
+      },
+      "defining_scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:58:21:62:1",
+      "is_exported": false
+    },
+    "variable:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:64:7:64:16:testResult": {
+      "kind": "constant",
+      "symbol_id": "variable:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:64:7:64:16:testResult",
+      "name": "testResult",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 64,
+        "start_column": 7,
+        "end_line": 64,
+        "end_column": 16
+      },
+      "defining_scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:64:1:64:36",
+      "is_exported": false
+    }
+  },
+  "interfaces": {},
+  "enums": {},
+  "namespaces": {},
+  "types": {},
+  "imported_symbols": {},
+  "references": [
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 7,
+        "start_column": 10,
+        "end_line": 7,
+        "end_column": 16
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:1:1:78:2",
+      "name": "Vehicle"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 7,
+        "start_column": 18,
+        "end_line": 7,
+        "end_column": 21
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:7:17:11:1",
+      "name": "make"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 7,
+        "start_column": 24,
+        "end_line": 7,
+        "end_column": 28
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:7:17:11:1",
+      "name": "model"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 8,
+        "start_column": 3,
+        "end_line": 8,
+        "end_column": 6
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:7:17:11:1",
+      "name": "this"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 8,
+        "start_column": 15,
+        "end_line": 8,
+        "end_column": 18
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:7:17:11:1",
+      "name": "make"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 9,
+        "start_column": 3,
+        "end_line": 9,
+        "end_column": 6
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:7:17:11:1",
+      "name": "this"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 9,
+        "start_column": 16,
+        "end_line": 9,
+        "end_column": 20
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:7:17:11:1",
+      "name": "model"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 10,
+        "start_column": 3,
+        "end_line": 10,
+        "end_column": 6
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:7:17:11:1",
+      "name": "this"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 14,
+        "start_column": 1,
+        "end_line": 14,
+        "end_column": 17
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:1:1:78:2",
+      "name": "Vehicle.prototype"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 14,
+        "start_column": 1,
+        "end_line": 14,
+        "end_column": 7
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:1:1:78:2",
+      "name": "Vehicle"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 14,
+        "start_column": 1,
+        "end_line": 14,
+        "end_column": 17
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:1:1:78:2",
+      "name": "Vehicle.prototype"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 14,
+        "start_column": 1,
+        "end_line": 14,
+        "end_column": 7
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:1:1:78:2",
+      "name": "Vehicle"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 14,
+        "start_column": 1,
+        "end_line": 14,
+        "end_column": 7
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:1:1:78:2",
+      "name": "Vehicle"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 14,
+        "start_column": 9,
+        "end_line": 14,
+        "end_column": 17
+      },
+      "type": "member_access",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:1:1:78:2",
+      "name": "prototype",
+      "member_access": {
+        "access_type": "property",
+        "is_optional_chain": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 14,
+        "start_column": 9,
+        "end_line": 14,
+        "end_column": 17
+      },
+      "type": "member_access",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:1:1:78:2",
+      "name": "prototype",
+      "member_access": {
+        "access_type": "property",
+        "is_optional_chain": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 15,
+        "start_column": 3,
+        "end_line": 15,
+        "end_column": 6
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:14:35:17:1",
+      "name": "this"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 16,
+        "start_column": 3,
+        "end_line": 16,
+        "end_column": 26
+      },
+      "type": "return",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:14:35:17:1",
+      "name": "return \"Engine started\";"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 16,
+        "start_column": 10,
+        "end_line": 16,
+        "end_column": 25
+      },
+      "type": "return",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:14:35:17:1",
+      "name": "\"Engine started\""
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 19,
+        "start_column": 1,
+        "end_line": 19,
+        "end_column": 17
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:1:1:78:2",
+      "name": "Vehicle.prototype"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 19,
+        "start_column": 1,
+        "end_line": 19,
+        "end_column": 7
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:1:1:78:2",
+      "name": "Vehicle"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 19,
+        "start_column": 1,
+        "end_line": 19,
+        "end_column": 17
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:1:1:78:2",
+      "name": "Vehicle.prototype"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 19,
+        "start_column": 1,
+        "end_line": 19,
+        "end_column": 7
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:1:1:78:2",
+      "name": "Vehicle"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 19,
+        "start_column": 1,
+        "end_line": 19,
+        "end_column": 7
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:1:1:78:2",
+      "name": "Vehicle"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 19,
+        "start_column": 9,
+        "end_line": 19,
+        "end_column": 17
+      },
+      "type": "member_access",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:1:1:78:2",
+      "name": "prototype",
+      "member_access": {
+        "access_type": "property",
+        "is_optional_chain": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 19,
+        "start_column": 9,
+        "end_line": 19,
+        "end_column": 17
+      },
+      "type": "member_access",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:1:1:78:2",
+      "name": "prototype",
+      "member_access": {
+        "access_type": "property",
+        "is_optional_chain": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 20,
+        "start_column": 3,
+        "end_line": 20,
+        "end_column": 6
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:19:34:22:1",
+      "name": "this"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 21,
+        "start_column": 3,
+        "end_line": 21,
+        "end_column": 26
+      },
+      "type": "return",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:19:34:22:1",
+      "name": "return \"Engine stopped\";"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 21,
+        "start_column": 10,
+        "end_line": 21,
+        "end_column": 25
+      },
+      "type": "return",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:19:34:22:1",
+      "name": "\"Engine stopped\""
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 24,
+        "start_column": 1,
+        "end_line": 24,
+        "end_column": 17
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:1:1:78:2",
+      "name": "Vehicle.prototype"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 24,
+        "start_column": 1,
+        "end_line": 24,
+        "end_column": 7
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:1:1:78:2",
+      "name": "Vehicle"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 24,
+        "start_column": 1,
+        "end_line": 24,
+        "end_column": 17
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:1:1:78:2",
+      "name": "Vehicle.prototype"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 24,
+        "start_column": 1,
+        "end_line": 24,
+        "end_column": 7
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:1:1:78:2",
+      "name": "Vehicle"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 24,
+        "start_column": 1,
+        "end_line": 24,
+        "end_column": 7
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:1:1:78:2",
+      "name": "Vehicle"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 24,
+        "start_column": 9,
+        "end_line": 24,
+        "end_column": 17
+      },
+      "type": "member_access",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:1:1:78:2",
+      "name": "prototype",
+      "member_access": {
+        "access_type": "property",
+        "is_optional_chain": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 24,
+        "start_column": 9,
+        "end_line": 24,
+        "end_column": 17
+      },
+      "type": "member_access",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:1:1:78:2",
+      "name": "prototype",
+      "member_access": {
+        "access_type": "property",
+        "is_optional_chain": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 25,
+        "start_column": 3,
+        "end_line": 25,
+        "end_column": 38
+      },
+      "type": "return",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:24:37:26:1",
+      "name": "return `${this.make} ${this.model}`;"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 25,
+        "start_column": 10,
+        "end_line": 25,
+        "end_column": 37
+      },
+      "type": "return",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:24:37:26:1",
+      "name": "`${this.make} ${this.model}`"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 25,
+        "start_column": 13,
+        "end_line": 25,
+        "end_column": 16
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:24:37:26:1",
+      "name": "this"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 25,
+        "start_column": 26,
+        "end_line": 25,
+        "end_column": 29
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:24:37:26:1",
+      "name": "this"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 29,
+        "start_column": 10,
+        "end_line": 29,
+        "end_column": 12
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:1:1:78:2",
+      "name": "Car"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 29,
+        "start_column": 14,
+        "end_line": 29,
+        "end_column": 17
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:29:13:32:1",
+      "name": "make"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 29,
+        "start_column": 20,
+        "end_line": 29,
+        "end_column": 24
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:29:13:32:1",
+      "name": "model"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 29,
+        "start_column": 27,
+        "end_line": 29,
+        "end_column": 31
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:29:13:32:1",
+      "name": "doors"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 30,
+        "start_column": 3,
+        "end_line": 30,
+        "end_column": 33
+      },
+      "type": "call",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:29:13:32:1",
+      "name": "call",
+      "context": {
+        "receiver_location": {
+          "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+          "start_line": 30,
+          "start_column": 3,
+          "end_line": 30,
+          "end_column": 9
+        },
+        "property_chain": [
+          "Vehicle",
+          "call"
+        ]
+      },
+      "call_type": "method",
+      "member_access": {
+        "access_type": "method",
+        "is_optional_chain": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 30,
+        "start_column": 3,
+        "end_line": 30,
+        "end_column": 9
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:29:13:32:1",
+      "name": "Vehicle"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 30,
+        "start_column": 3,
+        "end_line": 30,
+        "end_column": 14
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:29:13:32:1",
+      "name": "Vehicle.call"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 30,
+        "start_column": 3,
+        "end_line": 30,
+        "end_column": 9
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:29:13:32:1",
+      "name": "Vehicle"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 30,
+        "start_column": 3,
+        "end_line": 30,
+        "end_column": 14
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:29:13:32:1",
+      "name": "Vehicle.call"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 30,
+        "start_column": 3,
+        "end_line": 30,
+        "end_column": 9
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:29:13:32:1",
+      "name": "Vehicle"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 30,
+        "start_column": 3,
+        "end_line": 30,
+        "end_column": 33
+      },
+      "type": "call",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:29:13:32:1",
+      "name": "call",
+      "context": {
+        "receiver_location": {
+          "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+          "start_line": 30,
+          "start_column": 3,
+          "end_line": 30,
+          "end_column": 9
+        },
+        "property_chain": [
+          "Vehicle",
+          "call"
+        ]
+      },
+      "call_type": "method",
+      "member_access": {
+        "access_type": "method",
+        "is_optional_chain": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 30,
+        "start_column": 3,
+        "end_line": 30,
+        "end_column": 9
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:29:13:32:1",
+      "name": "Vehicle"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 30,
+        "start_column": 3,
+        "end_line": 30,
+        "end_column": 9
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:29:13:32:1",
+      "name": "Vehicle"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 30,
+        "start_column": 11,
+        "end_line": 30,
+        "end_column": 14
+      },
+      "type": "call",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:29:13:32:1",
+      "name": "call",
+      "call_type": "function"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 30,
+        "start_column": 11,
+        "end_line": 30,
+        "end_column": 14
+      },
+      "type": "member_access",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:29:13:32:1",
+      "name": "call",
+      "member_access": {
+        "access_type": "property",
+        "is_optional_chain": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 30,
+        "start_column": 11,
+        "end_line": 30,
+        "end_column": 14
+      },
+      "type": "member_access",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:29:13:32:1",
+      "name": "call",
+      "member_access": {
+        "access_type": "property",
+        "is_optional_chain": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 30,
+        "start_column": 16,
+        "end_line": 30,
+        "end_column": 19
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:29:13:32:1",
+      "name": "this"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 30,
+        "start_column": 22,
+        "end_line": 30,
+        "end_column": 25
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:29:13:32:1",
+      "name": "make"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 30,
+        "start_column": 28,
+        "end_line": 30,
+        "end_column": 32
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:29:13:32:1",
+      "name": "model"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 31,
+        "start_column": 3,
+        "end_line": 31,
+        "end_column": 6
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:29:13:32:1",
+      "name": "this"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 31,
+        "start_column": 16,
+        "end_line": 31,
+        "end_column": 20
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:29:13:32:1",
+      "name": "doors"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 35,
+        "start_column": 1,
+        "end_line": 35,
+        "end_column": 13
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:1:1:78:2",
+      "name": "Car.prototype"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 35,
+        "start_column": 1,
+        "end_line": 35,
+        "end_column": 3
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:1:1:78:2",
+      "name": "Car"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 35,
+        "start_column": 1,
+        "end_line": 35,
+        "end_column": 13
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:1:1:78:2",
+      "name": "Car.prototype"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 35,
+        "start_column": 1,
+        "end_line": 35,
+        "end_column": 3
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:1:1:78:2",
+      "name": "Car"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 35,
+        "start_column": 1,
+        "end_line": 35,
+        "end_column": 48
+      },
+      "type": "assignment",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:1:1:78:2",
+      "name": "Car.prototype = Object.create(Vehicle.prototype)"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 35,
+        "start_column": 1,
+        "end_line": 35,
+        "end_column": 13
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:1:1:78:2",
+      "name": "Car.prototype"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 35,
+        "start_column": 1,
+        "end_line": 35,
+        "end_column": 3
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:1:1:78:2",
+      "name": "Car"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 35,
+        "start_column": 1,
+        "end_line": 35,
+        "end_column": 3
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:1:1:78:2",
+      "name": "Car"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 35,
+        "start_column": 5,
+        "end_line": 35,
+        "end_column": 13
+      },
+      "type": "member_access",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:1:1:78:2",
+      "name": "prototype",
+      "member_access": {
+        "access_type": "property",
+        "is_optional_chain": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 35,
+        "start_column": 5,
+        "end_line": 35,
+        "end_column": 13
+      },
+      "type": "member_access",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:1:1:78:2",
+      "name": "prototype",
+      "member_access": {
+        "access_type": "property",
+        "is_optional_chain": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 35,
+        "start_column": 5,
+        "end_line": 35,
+        "end_column": 13
+      },
+      "type": "member_access",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:1:1:78:2",
+      "name": "prototype",
+      "member_access": {
+        "access_type": "property",
+        "is_optional_chain": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 35,
+        "start_column": 17,
+        "end_line": 35,
+        "end_column": 48
+      },
+      "type": "call",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:1:1:78:2",
+      "name": "create",
+      "context": {
+        "receiver_location": {
+          "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+          "start_line": 35,
+          "start_column": 17,
+          "end_line": 35,
+          "end_column": 22
+        },
+        "property_chain": [
+          "Object",
+          "create"
+        ]
+      },
+      "call_type": "method",
+      "member_access": {
+        "access_type": "method",
+        "is_optional_chain": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 35,
+        "start_column": 17,
+        "end_line": 35,
+        "end_column": 22
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:1:1:78:2",
+      "name": "Object"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 35,
+        "start_column": 17,
+        "end_line": 35,
+        "end_column": 29
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:1:1:78:2",
+      "name": "Object.create"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 35,
+        "start_column": 17,
+        "end_line": 35,
+        "end_column": 22
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:1:1:78:2",
+      "name": "Object"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 35,
+        "start_column": 17,
+        "end_line": 35,
+        "end_column": 29
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:1:1:78:2",
+      "name": "Object.create"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 35,
+        "start_column": 17,
+        "end_line": 35,
+        "end_column": 22
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:1:1:78:2",
+      "name": "Object"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 35,
+        "start_column": 17,
+        "end_line": 35,
+        "end_column": 48
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:1:1:78:2",
+      "name": "Object.create(Vehicle.prototype)"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 35,
+        "start_column": 17,
+        "end_line": 35,
+        "end_column": 48
+      },
+      "type": "call",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:1:1:78:2",
+      "name": "create",
+      "context": {
+        "receiver_location": {
+          "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+          "start_line": 35,
+          "start_column": 17,
+          "end_line": 35,
+          "end_column": 22
+        },
+        "property_chain": [
+          "Object",
+          "create"
+        ]
+      },
+      "call_type": "method",
+      "member_access": {
+        "access_type": "method",
+        "is_optional_chain": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 35,
+        "start_column": 17,
+        "end_line": 35,
+        "end_column": 22
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:1:1:78:2",
+      "name": "Object"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 35,
+        "start_column": 17,
+        "end_line": 35,
+        "end_column": 22
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:1:1:78:2",
+      "name": "Object"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 35,
+        "start_column": 24,
+        "end_line": 35,
+        "end_column": 29
+      },
+      "type": "call",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:1:1:78:2",
+      "name": "create",
+      "call_type": "function"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 35,
+        "start_column": 24,
+        "end_line": 35,
+        "end_column": 29
+      },
+      "type": "member_access",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:1:1:78:2",
+      "name": "create",
+      "member_access": {
+        "access_type": "property",
+        "is_optional_chain": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 35,
+        "start_column": 24,
+        "end_line": 35,
+        "end_column": 29
+      },
+      "type": "member_access",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:1:1:78:2",
+      "name": "create",
+      "member_access": {
+        "access_type": "property",
+        "is_optional_chain": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 35,
+        "start_column": 31,
+        "end_line": 35,
+        "end_column": 47
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:1:1:78:2",
+      "name": "Vehicle.prototype"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 35,
+        "start_column": 31,
+        "end_line": 35,
+        "end_column": 37
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:1:1:78:2",
+      "name": "Vehicle"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 35,
+        "start_column": 31,
+        "end_line": 35,
+        "end_column": 47
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:1:1:78:2",
+      "name": "Vehicle.prototype"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 35,
+        "start_column": 31,
+        "end_line": 35,
+        "end_column": 37
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:1:1:78:2",
+      "name": "Vehicle"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 35,
+        "start_column": 31,
+        "end_line": 35,
+        "end_column": 37
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:1:1:78:2",
+      "name": "Vehicle"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 35,
+        "start_column": 39,
+        "end_line": 35,
+        "end_column": 47
+      },
+      "type": "member_access",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:1:1:78:2",
+      "name": "prototype",
+      "member_access": {
+        "access_type": "property",
+        "is_optional_chain": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 35,
+        "start_column": 39,
+        "end_line": 35,
+        "end_column": 47
+      },
+      "type": "member_access",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:1:1:78:2",
+      "name": "prototype",
+      "member_access": {
+        "access_type": "property",
+        "is_optional_chain": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 36,
+        "start_column": 1,
+        "end_line": 36,
+        "end_column": 13
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:1:1:78:2",
+      "name": "Car.prototype"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 36,
+        "start_column": 1,
+        "end_line": 36,
+        "end_column": 3
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:1:1:78:2",
+      "name": "Car"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 36,
+        "start_column": 1,
+        "end_line": 36,
+        "end_column": 13
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:1:1:78:2",
+      "name": "Car.prototype"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 36,
+        "start_column": 1,
+        "end_line": 36,
+        "end_column": 3
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:1:1:78:2",
+      "name": "Car"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 36,
+        "start_column": 1,
+        "end_line": 36,
+        "end_column": 3
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:1:1:78:2",
+      "name": "Car"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 36,
+        "start_column": 5,
+        "end_line": 36,
+        "end_column": 13
+      },
+      "type": "member_access",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:1:1:78:2",
+      "name": "prototype",
+      "member_access": {
+        "access_type": "property",
+        "is_optional_chain": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 36,
+        "start_column": 5,
+        "end_line": 36,
+        "end_column": 13
+      },
+      "type": "member_access",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:1:1:78:2",
+      "name": "prototype",
+      "member_access": {
+        "access_type": "property",
+        "is_optional_chain": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 36,
+        "start_column": 29,
+        "end_line": 36,
+        "end_column": 31
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:1:1:78:2",
+      "name": "Car"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 39,
+        "start_column": 1,
+        "end_line": 39,
+        "end_column": 13
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:1:1:78:2",
+      "name": "Car.prototype"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 39,
+        "start_column": 1,
+        "end_line": 39,
+        "end_column": 3
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:1:1:78:2",
+      "name": "Car"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 39,
+        "start_column": 1,
+        "end_line": 39,
+        "end_column": 13
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:1:1:78:2",
+      "name": "Car.prototype"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 39,
+        "start_column": 1,
+        "end_line": 39,
+        "end_column": 3
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:1:1:78:2",
+      "name": "Car"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 39,
+        "start_column": 1,
+        "end_line": 39,
+        "end_column": 3
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:1:1:78:2",
+      "name": "Car"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 39,
+        "start_column": 5,
+        "end_line": 39,
+        "end_column": 13
+      },
+      "type": "member_access",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:1:1:78:2",
+      "name": "prototype",
+      "member_access": {
+        "access_type": "property",
+        "is_optional_chain": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 39,
+        "start_column": 5,
+        "end_line": 39,
+        "end_column": 13
+      },
+      "type": "member_access",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:1:1:78:2",
+      "name": "prototype",
+      "member_access": {
+        "access_type": "property",
+        "is_optional_chain": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 40,
+        "start_column": 3,
+        "end_line": 40,
+        "end_column": 22
+      },
+      "type": "return",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:39:30:41:1",
+      "name": "return \"Beep beep!\";"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 40,
+        "start_column": 10,
+        "end_line": 40,
+        "end_column": 21
+      },
+      "type": "return",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:39:30:41:1",
+      "name": "\"Beep beep!\""
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 43,
+        "start_column": 1,
+        "end_line": 43,
+        "end_column": 13
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:1:1:78:2",
+      "name": "Car.prototype"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 43,
+        "start_column": 1,
+        "end_line": 43,
+        "end_column": 3
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:1:1:78:2",
+      "name": "Car"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 43,
+        "start_column": 1,
+        "end_line": 43,
+        "end_column": 13
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:1:1:78:2",
+      "name": "Car.prototype"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 43,
+        "start_column": 1,
+        "end_line": 43,
+        "end_column": 3
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:1:1:78:2",
+      "name": "Car"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 43,
+        "start_column": 1,
+        "end_line": 43,
+        "end_column": 3
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:1:1:78:2",
+      "name": "Car"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 43,
+        "start_column": 5,
+        "end_line": 43,
+        "end_column": 13
+      },
+      "type": "member_access",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:1:1:78:2",
+      "name": "prototype",
+      "member_access": {
+        "access_type": "property",
+        "is_optional_chain": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 43,
+        "start_column": 5,
+        "end_line": 43,
+        "end_column": 13
+      },
+      "type": "member_access",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:1:1:78:2",
+      "name": "prototype",
+      "member_access": {
+        "access_type": "property",
+        "is_optional_chain": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 44,
+        "start_column": 3,
+        "end_line": 44,
+        "end_column": 20
+      },
+      "type": "return",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:43:34:45:1",
+      "name": "return this.doors;"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 44,
+        "start_column": 10,
+        "end_line": 44,
+        "end_column": 19
+      },
+      "type": "return",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:43:34:45:1",
+      "name": "this.doors"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 44,
+        "start_column": 10,
+        "end_line": 44,
+        "end_column": 13
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:43:34:45:1",
+      "name": "this"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 48,
+        "start_column": 7,
+        "end_line": 48,
+        "end_column": 46
+      },
+      "type": "assignment",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:48:1:48:47",
+      "name": "vehicle = new Vehicle(\"Toyota\", \"Camry\")"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 48,
+        "start_column": 7,
+        "end_line": 48,
+        "end_column": 13
+      },
+      "type": "assignment",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:48:1:48:47",
+      "name": "vehicle"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 48,
+        "start_column": 7,
+        "end_line": 48,
+        "end_column": 46
+      },
+      "type": "assignment",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:48:1:48:47",
+      "name": "vehicle = new Vehicle(\"Toyota\", \"Camry\")"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 48,
+        "start_column": 7,
+        "end_line": 48,
+        "end_column": 13
+      },
+      "type": "assignment",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:48:1:48:47",
+      "name": "vehicle"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 48,
+        "start_column": 7,
+        "end_line": 48,
+        "end_column": 13
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:48:1:48:47",
+      "name": "vehicle"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 48,
+        "start_column": 17,
+        "end_line": 48,
+        "end_column": 46
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:48:1:48:47",
+      "name": "Vehicle"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 48,
+        "start_column": 17,
+        "end_line": 48,
+        "end_column": 46
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:48:1:48:47",
+      "name": "Vehicle"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 48,
+        "start_column": 17,
+        "end_line": 48,
+        "end_column": 46
+      },
+      "type": "call",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:48:1:48:47",
+      "name": "Vehicle",
+      "call_type": "function"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 48,
+        "start_column": 21,
+        "end_line": 48,
+        "end_column": 27
+      },
+      "type": "call",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:48:1:48:47",
+      "name": "Vehicle",
+      "call_type": "function"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 48,
+        "start_column": 21,
+        "end_line": 48,
+        "end_column": 27
+      },
+      "type": "construct",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:48:1:48:47",
+      "name": "Vehicle",
+      "context": {
+        "construct_target": {
+          "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+          "start_line": 48,
+          "start_column": 7,
+          "end_line": 48,
+          "end_column": 13
+        }
+      },
+      "call_type": "constructor"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 48,
+        "start_column": 21,
+        "end_line": 48,
+        "end_column": 27
+      },
+      "type": "construct",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:48:1:48:47",
+      "name": "Vehicle",
+      "context": {
+        "construct_target": {
+          "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+          "start_line": 48,
+          "start_column": 7,
+          "end_line": 48,
+          "end_column": 13
+        }
+      },
+      "call_type": "constructor"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 48,
+        "start_column": 21,
+        "end_line": 48,
+        "end_column": 27
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:48:1:48:47",
+      "name": "Vehicle"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 49,
+        "start_column": 7,
+        "end_line": 49,
+        "end_column": 35
+      },
+      "type": "assignment",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:49:1:49:36",
+      "name": "startResult = vehicle.start()"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 49,
+        "start_column": 7,
+        "end_line": 49,
+        "end_column": 17
+      },
+      "type": "assignment",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:49:1:49:36",
+      "name": "startResult"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 49,
+        "start_column": 7,
+        "end_line": 49,
+        "end_column": 17
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:49:1:49:36",
+      "name": "startResult"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 49,
+        "start_column": 21,
+        "end_line": 49,
+        "end_column": 35
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:49:1:49:36",
+      "name": "vehicle.start()"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 49,
+        "start_column": 21,
+        "end_line": 49,
+        "end_column": 35
+      },
+      "type": "call",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:49:1:49:36",
+      "name": "start",
+      "context": {
+        "receiver_location": {
+          "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+          "start_line": 49,
+          "start_column": 21,
+          "end_line": 49,
+          "end_column": 27
+        },
+        "property_chain": [
+          "vehicle",
+          "start"
+        ]
+      },
+      "call_type": "method",
+      "member_access": {
+        "access_type": "method",
+        "is_optional_chain": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 49,
+        "start_column": 21,
+        "end_line": 49,
+        "end_column": 27
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:49:1:49:36",
+      "name": "vehicle"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 49,
+        "start_column": 21,
+        "end_line": 49,
+        "end_column": 33
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:49:1:49:36",
+      "name": "vehicle.start"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 49,
+        "start_column": 21,
+        "end_line": 49,
+        "end_column": 27
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:49:1:49:36",
+      "name": "vehicle"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 49,
+        "start_column": 21,
+        "end_line": 49,
+        "end_column": 33
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:49:1:49:36",
+      "name": "vehicle.start"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 49,
+        "start_column": 21,
+        "end_line": 49,
+        "end_column": 27
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:49:1:49:36",
+      "name": "vehicle"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 49,
+        "start_column": 21,
+        "end_line": 49,
+        "end_column": 35
+      },
+      "type": "call",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:49:1:49:36",
+      "name": "start",
+      "context": {
+        "receiver_location": {
+          "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+          "start_line": 49,
+          "start_column": 21,
+          "end_line": 49,
+          "end_column": 27
+        },
+        "property_chain": [
+          "vehicle",
+          "start"
+        ]
+      },
+      "call_type": "method",
+      "member_access": {
+        "access_type": "method",
+        "is_optional_chain": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 49,
+        "start_column": 21,
+        "end_line": 49,
+        "end_column": 27
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:49:1:49:36",
+      "name": "vehicle"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 49,
+        "start_column": 21,
+        "end_line": 49,
+        "end_column": 27
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:49:1:49:36",
+      "name": "vehicle"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 49,
+        "start_column": 29,
+        "end_line": 49,
+        "end_column": 33
+      },
+      "type": "call",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:49:1:49:36",
+      "name": "start",
+      "call_type": "function"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 49,
+        "start_column": 29,
+        "end_line": 49,
+        "end_column": 33
+      },
+      "type": "member_access",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:49:1:49:36",
+      "name": "start",
+      "member_access": {
+        "access_type": "property",
+        "is_optional_chain": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 49,
+        "start_column": 29,
+        "end_line": 49,
+        "end_column": 33
+      },
+      "type": "member_access",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:49:1:49:36",
+      "name": "start",
+      "member_access": {
+        "access_type": "property",
+        "is_optional_chain": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 49,
+        "start_column": 29,
+        "end_line": 49,
+        "end_column": 33
+      },
+      "type": "call",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:49:1:49:36",
+      "name": "start",
+      "call_type": "function"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 50,
+        "start_column": 7,
+        "end_line": 50,
+        "end_column": 37
+      },
+      "type": "assignment",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:50:1:50:38",
+      "name": "vehicleInfo = vehicle.getInfo()"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 50,
+        "start_column": 7,
+        "end_line": 50,
+        "end_column": 17
+      },
+      "type": "assignment",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:50:1:50:38",
+      "name": "vehicleInfo"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 50,
+        "start_column": 7,
+        "end_line": 50,
+        "end_column": 17
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:50:1:50:38",
+      "name": "vehicleInfo"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 50,
+        "start_column": 21,
+        "end_line": 50,
+        "end_column": 37
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:50:1:50:38",
+      "name": "vehicle.getInfo()"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 50,
+        "start_column": 21,
+        "end_line": 50,
+        "end_column": 37
+      },
+      "type": "call",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:50:1:50:38",
+      "name": "getInfo",
+      "context": {
+        "receiver_location": {
+          "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+          "start_line": 50,
+          "start_column": 21,
+          "end_line": 50,
+          "end_column": 27
+        },
+        "property_chain": [
+          "vehicle",
+          "getInfo"
+        ]
+      },
+      "call_type": "method",
+      "member_access": {
+        "access_type": "method",
+        "is_optional_chain": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 50,
+        "start_column": 21,
+        "end_line": 50,
+        "end_column": 27
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:50:1:50:38",
+      "name": "vehicle"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 50,
+        "start_column": 21,
+        "end_line": 50,
+        "end_column": 35
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:50:1:50:38",
+      "name": "vehicle.getInfo"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 50,
+        "start_column": 21,
+        "end_line": 50,
+        "end_column": 27
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:50:1:50:38",
+      "name": "vehicle"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 50,
+        "start_column": 21,
+        "end_line": 50,
+        "end_column": 35
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:50:1:50:38",
+      "name": "vehicle.getInfo"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 50,
+        "start_column": 21,
+        "end_line": 50,
+        "end_column": 27
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:50:1:50:38",
+      "name": "vehicle"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 50,
+        "start_column": 21,
+        "end_line": 50,
+        "end_column": 37
+      },
+      "type": "call",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:50:1:50:38",
+      "name": "getInfo",
+      "context": {
+        "receiver_location": {
+          "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+          "start_line": 50,
+          "start_column": 21,
+          "end_line": 50,
+          "end_column": 27
+        },
+        "property_chain": [
+          "vehicle",
+          "getInfo"
+        ]
+      },
+      "call_type": "method",
+      "member_access": {
+        "access_type": "method",
+        "is_optional_chain": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 50,
+        "start_column": 21,
+        "end_line": 50,
+        "end_column": 27
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:50:1:50:38",
+      "name": "vehicle"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 50,
+        "start_column": 21,
+        "end_line": 50,
+        "end_column": 27
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:50:1:50:38",
+      "name": "vehicle"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 50,
+        "start_column": 29,
+        "end_line": 50,
+        "end_column": 35
+      },
+      "type": "call",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:50:1:50:38",
+      "name": "getInfo",
+      "call_type": "function"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 50,
+        "start_column": 29,
+        "end_line": 50,
+        "end_column": 35
+      },
+      "type": "member_access",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:50:1:50:38",
+      "name": "getInfo",
+      "member_access": {
+        "access_type": "property",
+        "is_optional_chain": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 50,
+        "start_column": 29,
+        "end_line": 50,
+        "end_column": 35
+      },
+      "type": "member_access",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:50:1:50:38",
+      "name": "getInfo",
+      "member_access": {
+        "access_type": "property",
+        "is_optional_chain": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 50,
+        "start_column": 29,
+        "end_line": 50,
+        "end_column": 35
+      },
+      "type": "call",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:50:1:50:38",
+      "name": "getInfo",
+      "call_type": "function"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 52,
+        "start_column": 7,
+        "end_line": 52,
+        "end_column": 40
+      },
+      "type": "assignment",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:52:1:52:41",
+      "name": "car = new Car(\"Honda\", \"Civic\", 4)"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 52,
+        "start_column": 7,
+        "end_line": 52,
+        "end_column": 9
+      },
+      "type": "assignment",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:52:1:52:41",
+      "name": "car"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 52,
+        "start_column": 7,
+        "end_line": 52,
+        "end_column": 40
+      },
+      "type": "assignment",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:52:1:52:41",
+      "name": "car = new Car(\"Honda\", \"Civic\", 4)"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 52,
+        "start_column": 7,
+        "end_line": 52,
+        "end_column": 9
+      },
+      "type": "assignment",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:52:1:52:41",
+      "name": "car"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 52,
+        "start_column": 7,
+        "end_line": 52,
+        "end_column": 9
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:52:1:52:41",
+      "name": "car"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 52,
+        "start_column": 13,
+        "end_line": 52,
+        "end_column": 40
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:52:1:52:41",
+      "name": "Car"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 52,
+        "start_column": 13,
+        "end_line": 52,
+        "end_column": 40
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:52:1:52:41",
+      "name": "Car"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 52,
+        "start_column": 13,
+        "end_line": 52,
+        "end_column": 40
+      },
+      "type": "call",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:52:1:52:41",
+      "name": "Car",
+      "call_type": "function"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 52,
+        "start_column": 17,
+        "end_line": 52,
+        "end_column": 19
+      },
+      "type": "call",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:52:1:52:41",
+      "name": "Car",
+      "call_type": "function"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 52,
+        "start_column": 17,
+        "end_line": 52,
+        "end_column": 19
+      },
+      "type": "construct",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:52:1:52:41",
+      "name": "Car",
+      "context": {
+        "construct_target": {
+          "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+          "start_line": 52,
+          "start_column": 7,
+          "end_line": 52,
+          "end_column": 9
+        }
+      },
+      "call_type": "constructor"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 52,
+        "start_column": 17,
+        "end_line": 52,
+        "end_column": 19
+      },
+      "type": "construct",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:52:1:52:41",
+      "name": "Car",
+      "context": {
+        "construct_target": {
+          "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+          "start_line": 52,
+          "start_column": 7,
+          "end_line": 52,
+          "end_column": 9
+        }
+      },
+      "call_type": "constructor"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 52,
+        "start_column": 17,
+        "end_line": 52,
+        "end_column": 19
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:52:1:52:41",
+      "name": "Car"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 53,
+        "start_column": 7,
+        "end_line": 53,
+        "end_column": 29
+      },
+      "type": "assignment",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:53:1:53:30",
+      "name": "carInfo = car.getInfo()"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 53,
+        "start_column": 7,
+        "end_line": 53,
+        "end_column": 13
+      },
+      "type": "assignment",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:53:1:53:30",
+      "name": "carInfo"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 53,
+        "start_column": 7,
+        "end_line": 53,
+        "end_column": 13
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:53:1:53:30",
+      "name": "carInfo"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 53,
+        "start_column": 17,
+        "end_line": 53,
+        "end_column": 29
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:53:1:53:30",
+      "name": "car.getInfo()"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 53,
+        "start_column": 17,
+        "end_line": 53,
+        "end_column": 29
+      },
+      "type": "call",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:53:1:53:30",
+      "name": "getInfo",
+      "context": {
+        "receiver_location": {
+          "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+          "start_line": 53,
+          "start_column": 17,
+          "end_line": 53,
+          "end_column": 19
+        },
+        "property_chain": [
+          "car",
+          "getInfo"
+        ]
+      },
+      "call_type": "method",
+      "member_access": {
+        "access_type": "method",
+        "is_optional_chain": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 53,
+        "start_column": 17,
+        "end_line": 53,
+        "end_column": 19
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:53:1:53:30",
+      "name": "car"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 53,
+        "start_column": 17,
+        "end_line": 53,
+        "end_column": 27
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:53:1:53:30",
+      "name": "car.getInfo"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 53,
+        "start_column": 17,
+        "end_line": 53,
+        "end_column": 19
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:53:1:53:30",
+      "name": "car"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 53,
+        "start_column": 17,
+        "end_line": 53,
+        "end_column": 27
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:53:1:53:30",
+      "name": "car.getInfo"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 53,
+        "start_column": 17,
+        "end_line": 53,
+        "end_column": 19
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:53:1:53:30",
+      "name": "car"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 53,
+        "start_column": 17,
+        "end_line": 53,
+        "end_column": 29
+      },
+      "type": "call",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:53:1:53:30",
+      "name": "getInfo",
+      "context": {
+        "receiver_location": {
+          "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+          "start_line": 53,
+          "start_column": 17,
+          "end_line": 53,
+          "end_column": 19
+        },
+        "property_chain": [
+          "car",
+          "getInfo"
+        ]
+      },
+      "call_type": "method",
+      "member_access": {
+        "access_type": "method",
+        "is_optional_chain": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 53,
+        "start_column": 17,
+        "end_line": 53,
+        "end_column": 19
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:53:1:53:30",
+      "name": "car"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 53,
+        "start_column": 17,
+        "end_line": 53,
+        "end_column": 19
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:53:1:53:30",
+      "name": "car"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 53,
+        "start_column": 21,
+        "end_line": 53,
+        "end_column": 27
+      },
+      "type": "call",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:53:1:53:30",
+      "name": "getInfo",
+      "call_type": "function"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 53,
+        "start_column": 21,
+        "end_line": 53,
+        "end_column": 27
+      },
+      "type": "member_access",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:53:1:53:30",
+      "name": "getInfo",
+      "member_access": {
+        "access_type": "property",
+        "is_optional_chain": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 53,
+        "start_column": 21,
+        "end_line": 53,
+        "end_column": 27
+      },
+      "type": "member_access",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:53:1:53:30",
+      "name": "getInfo",
+      "member_access": {
+        "access_type": "property",
+        "is_optional_chain": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 53,
+        "start_column": 21,
+        "end_line": 53,
+        "end_column": 27
+      },
+      "type": "call",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:53:1:53:30",
+      "name": "getInfo",
+      "call_type": "function"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 54,
+        "start_column": 7,
+        "end_line": 54,
+        "end_column": 29
+      },
+      "type": "assignment",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:54:1:54:30",
+      "name": "honkResult = car.honk()"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 54,
+        "start_column": 7,
+        "end_line": 54,
+        "end_column": 16
+      },
+      "type": "assignment",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:54:1:54:30",
+      "name": "honkResult"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 54,
+        "start_column": 7,
+        "end_line": 54,
+        "end_column": 16
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:54:1:54:30",
+      "name": "honkResult"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 54,
+        "start_column": 20,
+        "end_line": 54,
+        "end_column": 29
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:54:1:54:30",
+      "name": "car.honk()"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 54,
+        "start_column": 20,
+        "end_line": 54,
+        "end_column": 29
+      },
+      "type": "call",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:54:1:54:30",
+      "name": "honk",
+      "context": {
+        "receiver_location": {
+          "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+          "start_line": 54,
+          "start_column": 20,
+          "end_line": 54,
+          "end_column": 22
+        },
+        "property_chain": [
+          "car",
+          "honk"
+        ]
+      },
+      "call_type": "method",
+      "member_access": {
+        "access_type": "method",
+        "is_optional_chain": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 54,
+        "start_column": 20,
+        "end_line": 54,
+        "end_column": 22
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:54:1:54:30",
+      "name": "car"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 54,
+        "start_column": 20,
+        "end_line": 54,
+        "end_column": 27
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:54:1:54:30",
+      "name": "car.honk"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 54,
+        "start_column": 20,
+        "end_line": 54,
+        "end_column": 22
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:54:1:54:30",
+      "name": "car"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 54,
+        "start_column": 20,
+        "end_line": 54,
+        "end_column": 27
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:54:1:54:30",
+      "name": "car.honk"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 54,
+        "start_column": 20,
+        "end_line": 54,
+        "end_column": 22
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:54:1:54:30",
+      "name": "car"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 54,
+        "start_column": 20,
+        "end_line": 54,
+        "end_column": 29
+      },
+      "type": "call",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:54:1:54:30",
+      "name": "honk",
+      "context": {
+        "receiver_location": {
+          "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+          "start_line": 54,
+          "start_column": 20,
+          "end_line": 54,
+          "end_column": 22
+        },
+        "property_chain": [
+          "car",
+          "honk"
+        ]
+      },
+      "call_type": "method",
+      "member_access": {
+        "access_type": "method",
+        "is_optional_chain": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 54,
+        "start_column": 20,
+        "end_line": 54,
+        "end_column": 22
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:54:1:54:30",
+      "name": "car"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 54,
+        "start_column": 20,
+        "end_line": 54,
+        "end_column": 22
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:54:1:54:30",
+      "name": "car"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 54,
+        "start_column": 24,
+        "end_line": 54,
+        "end_column": 27
+      },
+      "type": "call",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:54:1:54:30",
+      "name": "honk",
+      "call_type": "function"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 54,
+        "start_column": 24,
+        "end_line": 54,
+        "end_column": 27
+      },
+      "type": "member_access",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:54:1:54:30",
+      "name": "honk",
+      "member_access": {
+        "access_type": "property",
+        "is_optional_chain": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 54,
+        "start_column": 24,
+        "end_line": 54,
+        "end_column": 27
+      },
+      "type": "member_access",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:54:1:54:30",
+      "name": "honk",
+      "member_access": {
+        "access_type": "property",
+        "is_optional_chain": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 54,
+        "start_column": 24,
+        "end_line": 54,
+        "end_column": 27
+      },
+      "type": "call",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:54:1:54:30",
+      "name": "honk",
+      "call_type": "function"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 55,
+        "start_column": 7,
+        "end_line": 55,
+        "end_column": 32
+      },
+      "type": "assignment",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:55:1:55:33",
+      "name": "doorCount = car.getDoors()"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 55,
+        "start_column": 7,
+        "end_line": 55,
+        "end_column": 15
+      },
+      "type": "assignment",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:55:1:55:33",
+      "name": "doorCount"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 55,
+        "start_column": 7,
+        "end_line": 55,
+        "end_column": 15
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:55:1:55:33",
+      "name": "doorCount"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 55,
+        "start_column": 19,
+        "end_line": 55,
+        "end_column": 32
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:55:1:55:33",
+      "name": "car.getDoors()"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 55,
+        "start_column": 19,
+        "end_line": 55,
+        "end_column": 32
+      },
+      "type": "call",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:55:1:55:33",
+      "name": "getDoors",
+      "context": {
+        "receiver_location": {
+          "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+          "start_line": 55,
+          "start_column": 19,
+          "end_line": 55,
+          "end_column": 21
+        },
+        "property_chain": [
+          "car",
+          "getDoors"
+        ]
+      },
+      "call_type": "method",
+      "member_access": {
+        "access_type": "method",
+        "is_optional_chain": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 55,
+        "start_column": 19,
+        "end_line": 55,
+        "end_column": 21
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:55:1:55:33",
+      "name": "car"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 55,
+        "start_column": 19,
+        "end_line": 55,
+        "end_column": 30
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:55:1:55:33",
+      "name": "car.getDoors"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 55,
+        "start_column": 19,
+        "end_line": 55,
+        "end_column": 21
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:55:1:55:33",
+      "name": "car"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 55,
+        "start_column": 19,
+        "end_line": 55,
+        "end_column": 30
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:55:1:55:33",
+      "name": "car.getDoors"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 55,
+        "start_column": 19,
+        "end_line": 55,
+        "end_column": 21
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:55:1:55:33",
+      "name": "car"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 55,
+        "start_column": 19,
+        "end_line": 55,
+        "end_column": 32
+      },
+      "type": "call",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:55:1:55:33",
+      "name": "getDoors",
+      "context": {
+        "receiver_location": {
+          "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+          "start_line": 55,
+          "start_column": 19,
+          "end_line": 55,
+          "end_column": 21
+        },
+        "property_chain": [
+          "car",
+          "getDoors"
+        ]
+      },
+      "call_type": "method",
+      "member_access": {
+        "access_type": "method",
+        "is_optional_chain": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 55,
+        "start_column": 19,
+        "end_line": 55,
+        "end_column": 21
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:55:1:55:33",
+      "name": "car"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 55,
+        "start_column": 19,
+        "end_line": 55,
+        "end_column": 21
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:55:1:55:33",
+      "name": "car"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 55,
+        "start_column": 23,
+        "end_line": 55,
+        "end_column": 30
+      },
+      "type": "call",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:55:1:55:33",
+      "name": "getDoors",
+      "call_type": "function"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 55,
+        "start_column": 23,
+        "end_line": 55,
+        "end_column": 30
+      },
+      "type": "member_access",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:55:1:55:33",
+      "name": "getDoors",
+      "member_access": {
+        "access_type": "property",
+        "is_optional_chain": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 55,
+        "start_column": 23,
+        "end_line": 55,
+        "end_column": 30
+      },
+      "type": "member_access",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:55:1:55:33",
+      "name": "getDoors",
+      "member_access": {
+        "access_type": "property",
+        "is_optional_chain": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 55,
+        "start_column": 23,
+        "end_line": 55,
+        "end_column": 30
+      },
+      "type": "call",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:55:1:55:33",
+      "name": "getDoors",
+      "call_type": "function"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 58,
+        "start_column": 10,
+        "end_line": 58,
+        "end_column": 20
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:1:1:78:2",
+      "name": "testVehicle"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 58,
+        "start_column": 22,
+        "end_line": 58,
+        "end_column": 22
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:58:21:62:1",
+      "name": "v"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 59,
+        "start_column": 9,
+        "end_line": 59,
+        "end_column": 26
+      },
+      "type": "assignment",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:58:21:62:1",
+      "name": "info = v.getInfo()"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 59,
+        "start_column": 9,
+        "end_line": 59,
+        "end_column": 12
+      },
+      "type": "assignment",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:58:21:62:1",
+      "name": "info"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 59,
+        "start_column": 9,
+        "end_line": 59,
+        "end_column": 12
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:58:21:62:1",
+      "name": "info"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 59,
+        "start_column": 16,
+        "end_line": 59,
+        "end_column": 26
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:58:21:62:1",
+      "name": "v.getInfo()"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 59,
+        "start_column": 16,
+        "end_line": 59,
+        "end_column": 26
+      },
+      "type": "call",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:58:21:62:1",
+      "name": "getInfo",
+      "context": {
+        "receiver_location": {
+          "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+          "start_line": 59,
+          "start_column": 16,
+          "end_line": 59,
+          "end_column": 16
+        },
+        "property_chain": [
+          "v",
+          "getInfo"
+        ]
+      },
+      "call_type": "method",
+      "member_access": {
+        "access_type": "method",
+        "is_optional_chain": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 59,
+        "start_column": 16,
+        "end_line": 59,
+        "end_column": 16
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:58:21:62:1",
+      "name": "v"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 59,
+        "start_column": 16,
+        "end_line": 59,
+        "end_column": 24
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:58:21:62:1",
+      "name": "v.getInfo"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 59,
+        "start_column": 16,
+        "end_line": 59,
+        "end_column": 16
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:58:21:62:1",
+      "name": "v"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 59,
+        "start_column": 16,
+        "end_line": 59,
+        "end_column": 24
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:58:21:62:1",
+      "name": "v.getInfo"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 59,
+        "start_column": 16,
+        "end_line": 59,
+        "end_column": 16
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:58:21:62:1",
+      "name": "v"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 59,
+        "start_column": 16,
+        "end_line": 59,
+        "end_column": 26
+      },
+      "type": "call",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:58:21:62:1",
+      "name": "getInfo",
+      "context": {
+        "receiver_location": {
+          "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+          "start_line": 59,
+          "start_column": 16,
+          "end_line": 59,
+          "end_column": 16
+        },
+        "property_chain": [
+          "v",
+          "getInfo"
+        ]
+      },
+      "call_type": "method",
+      "member_access": {
+        "access_type": "method",
+        "is_optional_chain": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 59,
+        "start_column": 16,
+        "end_line": 59,
+        "end_column": 16
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:58:21:62:1",
+      "name": "v"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 59,
+        "start_column": 16,
+        "end_line": 59,
+        "end_column": 16
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:58:21:62:1",
+      "name": "v"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 59,
+        "start_column": 18,
+        "end_line": 59,
+        "end_column": 24
+      },
+      "type": "call",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:58:21:62:1",
+      "name": "getInfo",
+      "call_type": "function"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 59,
+        "start_column": 18,
+        "end_line": 59,
+        "end_column": 24
+      },
+      "type": "member_access",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:58:21:62:1",
+      "name": "getInfo",
+      "member_access": {
+        "access_type": "property",
+        "is_optional_chain": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 59,
+        "start_column": 18,
+        "end_line": 59,
+        "end_column": 24
+      },
+      "type": "member_access",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:58:21:62:1",
+      "name": "getInfo",
+      "member_access": {
+        "access_type": "property",
+        "is_optional_chain": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 59,
+        "start_column": 18,
+        "end_line": 59,
+        "end_column": 24
+      },
+      "type": "call",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:58:21:62:1",
+      "name": "getInfo",
+      "call_type": "function"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 60,
+        "start_column": 9,
+        "end_line": 60,
+        "end_column": 27
+      },
+      "type": "assignment",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:58:21:62:1",
+      "name": "started = v.start()"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 60,
+        "start_column": 9,
+        "end_line": 60,
+        "end_column": 15
+      },
+      "type": "assignment",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:58:21:62:1",
+      "name": "started"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 60,
+        "start_column": 9,
+        "end_line": 60,
+        "end_column": 15
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:58:21:62:1",
+      "name": "started"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 60,
+        "start_column": 19,
+        "end_line": 60,
+        "end_column": 27
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:58:21:62:1",
+      "name": "v.start()"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 60,
+        "start_column": 19,
+        "end_line": 60,
+        "end_column": 27
+      },
+      "type": "call",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:58:21:62:1",
+      "name": "start",
+      "context": {
+        "receiver_location": {
+          "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+          "start_line": 60,
+          "start_column": 19,
+          "end_line": 60,
+          "end_column": 19
+        },
+        "property_chain": [
+          "v",
+          "start"
+        ]
+      },
+      "call_type": "method",
+      "member_access": {
+        "access_type": "method",
+        "is_optional_chain": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 60,
+        "start_column": 19,
+        "end_line": 60,
+        "end_column": 19
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:58:21:62:1",
+      "name": "v"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 60,
+        "start_column": 19,
+        "end_line": 60,
+        "end_column": 25
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:58:21:62:1",
+      "name": "v.start"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 60,
+        "start_column": 19,
+        "end_line": 60,
+        "end_column": 19
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:58:21:62:1",
+      "name": "v"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 60,
+        "start_column": 19,
+        "end_line": 60,
+        "end_column": 25
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:58:21:62:1",
+      "name": "v.start"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 60,
+        "start_column": 19,
+        "end_line": 60,
+        "end_column": 19
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:58:21:62:1",
+      "name": "v"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 60,
+        "start_column": 19,
+        "end_line": 60,
+        "end_column": 27
+      },
+      "type": "call",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:58:21:62:1",
+      "name": "start",
+      "context": {
+        "receiver_location": {
+          "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+          "start_line": 60,
+          "start_column": 19,
+          "end_line": 60,
+          "end_column": 19
+        },
+        "property_chain": [
+          "v",
+          "start"
+        ]
+      },
+      "call_type": "method",
+      "member_access": {
+        "access_type": "method",
+        "is_optional_chain": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 60,
+        "start_column": 19,
+        "end_line": 60,
+        "end_column": 19
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:58:21:62:1",
+      "name": "v"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 60,
+        "start_column": 19,
+        "end_line": 60,
+        "end_column": 19
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:58:21:62:1",
+      "name": "v"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 60,
+        "start_column": 21,
+        "end_line": 60,
+        "end_column": 25
+      },
+      "type": "call",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:58:21:62:1",
+      "name": "start",
+      "call_type": "function"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 60,
+        "start_column": 21,
+        "end_line": 60,
+        "end_column": 25
+      },
+      "type": "member_access",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:58:21:62:1",
+      "name": "start",
+      "member_access": {
+        "access_type": "property",
+        "is_optional_chain": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 60,
+        "start_column": 21,
+        "end_line": 60,
+        "end_column": 25
+      },
+      "type": "member_access",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:58:21:62:1",
+      "name": "start",
+      "member_access": {
+        "access_type": "property",
+        "is_optional_chain": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 60,
+        "start_column": 21,
+        "end_line": 60,
+        "end_column": 25
+      },
+      "type": "call",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:58:21:62:1",
+      "name": "start",
+      "call_type": "function"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 61,
+        "start_column": 3,
+        "end_line": 61,
+        "end_column": 27
+      },
+      "type": "return",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:58:21:62:1",
+      "name": "return { info, started };"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 61,
+        "start_column": 10,
+        "end_line": 61,
+        "end_column": 26
+      },
+      "type": "return",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:58:21:62:1",
+      "name": "{ info, started }"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 64,
+        "start_column": 7,
+        "end_line": 64,
+        "end_column": 35
+      },
+      "type": "assignment",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:64:1:64:36",
+      "name": "testResult = testVehicle(car)"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 64,
+        "start_column": 7,
+        "end_line": 64,
+        "end_column": 16
+      },
+      "type": "assignment",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:64:1:64:36",
+      "name": "testResult"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 64,
+        "start_column": 7,
+        "end_line": 64,
+        "end_column": 16
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:64:1:64:36",
+      "name": "testResult"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 64,
+        "start_column": 20,
+        "end_line": 64,
+        "end_column": 35
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:64:1:64:36",
+      "name": "testVehicle"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 64,
+        "start_column": 20,
+        "end_line": 64,
+        "end_column": 30
+      },
+      "type": "call",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:64:1:64:36",
+      "name": "testVehicle",
+      "call_type": "function"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 64,
+        "start_column": 20,
+        "end_line": 64,
+        "end_column": 30
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:64:1:64:36",
+      "name": "testVehicle"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 64,
+        "start_column": 32,
+        "end_line": 64,
+        "end_column": 34
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:64:1:64:36",
+      "name": "car"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 66,
+        "start_column": 1,
+        "end_line": 66,
+        "end_column": 14
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:1:1:78:2",
+      "name": "module.exports"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 66,
+        "start_column": 1,
+        "end_line": 66,
+        "end_column": 6
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:1:1:78:2",
+      "name": "module"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 66,
+        "start_column": 1,
+        "end_line": 66,
+        "end_column": 14
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:1:1:78:2",
+      "name": "module.exports"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 66,
+        "start_column": 1,
+        "end_line": 66,
+        "end_column": 6
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:1:1:78:2",
+      "name": "module"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 66,
+        "start_column": 1,
+        "end_line": 78,
+        "end_column": 1
+      },
+      "type": "assignment",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:1:1:78:2",
+      "name": "module.exports = {\n  Vehicle,\n  Car,\n  vehicle,\n  car,\n  startResult,\n  vehicleInfo,\n  carInfo,\n  honkResult,\n  doorCount,\n  testResult,\n  testVehicle,\n}"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 66,
+        "start_column": 1,
+        "end_line": 66,
+        "end_column": 14
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:1:1:78:2",
+      "name": "module.exports"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 66,
+        "start_column": 1,
+        "end_line": 66,
+        "end_column": 6
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:1:1:78:2",
+      "name": "module"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 66,
+        "start_column": 1,
+        "end_line": 66,
+        "end_column": 6
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:1:1:78:2",
+      "name": "module"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 66,
+        "start_column": 8,
+        "end_line": 66,
+        "end_column": 14
+      },
+      "type": "member_access",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:1:1:78:2",
+      "name": "exports",
+      "member_access": {
+        "access_type": "property",
+        "is_optional_chain": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 66,
+        "start_column": 8,
+        "end_line": 66,
+        "end_column": 14
+      },
+      "type": "member_access",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:1:1:78:2",
+      "name": "exports",
+      "member_access": {
+        "access_type": "property",
+        "is_optional_chain": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 66,
+        "start_column": 8,
+        "end_line": 66,
+        "end_column": 14
+      },
+      "type": "member_access",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:1:1:78:2",
+      "name": "exports",
+      "member_access": {
+        "access_type": "property",
+        "is_optional_chain": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js",
+        "start_line": 66,
+        "start_column": 18,
+        "end_line": 78,
+        "end_column": 1
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/prototype_methods.js:1:1:78:2",
+      "name": "{\n  Vehicle,\n  Car,\n  vehicle,\n  car,\n  startResult,\n  vehicleInfo,\n  carInfo,\n  honkResult,\n  doorCount,\n  testResult,\n  testVehicle,\n}"
+    }
+  ]
+}
