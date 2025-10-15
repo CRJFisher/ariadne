@@ -1,6 +1,6 @@
 # Task epic-11.116.4.5: Fix TypeScript Abstract Methods Missing from Classes
 
-**Status:** Not Started
+**Status:** Completed
 **Parent:** task-epic-11.116.4
 **Priority:** Medium (Feature gap - affects API/contract understanding)
 **Created:** 2025-10-15
@@ -122,3 +122,58 @@ vs regular methods:
 
 - May need to coordinate with interface handling
 - Abstract class flag is also not being captured (separate issue?)
+
+## Implementation Notes
+
+**Completed:** 2025-10-15
+
+### Root Cause Identified
+
+The issue was that abstract methods in TypeScript use a different tree-sitter node type than regular methods:
+- Regular methods: `method_definition`
+- Abstract methods: `abstract_method_signature`
+
+The query was only capturing `method_definition` nodes, so abstract methods were not being indexed.
+
+### Changes Made
+
+1. **Updated typescript.scm query** ([typescript.scm:397-415](packages/core/src/index_single_file/query_code_tree/queries/typescript.scm#L397-L415))
+   - Added capture patterns for `abstract_method_signature` nodes
+   - Handles both `abstract_class_declaration` and `class_declaration` (for flexibility)
+   - Tagged as `@definition.method.abstract` to distinguish from regular methods
+
+2. **Added handler in typescript_builder_config.ts** ([typescript_builder_config.ts:466-496](packages/core/src/index_single_file/query_code_tree/language_configs/typescript_builder_config.ts#L466-L496))
+   - New handler for `definition.method.abstract`
+   - Sets `abstract: true` flag
+   - Sets `async: false` (abstract methods cannot be async)
+   - Extracts return type and generics like regular methods
+   - Does not create body scope (abstract methods have no implementation)
+
+### Testing
+
+Verified with `typescript/semantic_index/classes/inheritance.json`:
+
+```json
+{
+  "Animal": {
+    "methods": [
+      {"name": "makeSound", "abstract": true, "return_type": "string"},
+      {"name": "move", "abstract": false, "return_type": "void"}
+    ]
+  }
+}
+```
+
+**Success criteria met:**
+- ✅ Abstract methods appear in class `methods` array
+- ✅ Abstract methods have `abstract: true` flag
+- ✅ Return types captured correctly
+- ✅ Concrete implementations in subclasses have `abstract: false`
+
+### Key Learning
+
+Tree-sitter TypeScript uses specific node types for abstract syntax:
+- `abstract_class_declaration` for abstract classes
+- `abstract_method_signature` for abstract methods
+
+Always verify actual tree-sitter node types when working with language-specific features.

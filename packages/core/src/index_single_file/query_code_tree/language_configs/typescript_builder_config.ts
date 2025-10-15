@@ -12,7 +12,6 @@ import {
   extract_interface_extends,
   find_containing_interface,
   create_method_signature_id,
-  is_optional_member,
   extract_type_parameters,
   extract_return_type,
   create_property_signature_id,
@@ -156,7 +155,9 @@ export const TYPESCRIPT_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
           scope_id: context.get_scope_id(capture.location),
           is_exported: export_info.is_exported,
           export: export_info.export,
-          type_expression: extract_type_expression(capture.node) as SymbolName | undefined,
+          type_expression: extract_type_expression(capture.node) as
+            | SymbolName
+            | undefined,
           generics: capture.node.parent
             ? extract_type_parameters(capture.node.parent)
             : [],
@@ -198,7 +199,7 @@ export const TYPESCRIPT_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
       process: (
         capture: CaptureNode,
         builder: DefinitionBuilder,
-        context: ProcessingContext
+        _: ProcessingContext
       ) => {
         const enum_id = find_containing_enum(capture);
         if (!enum_id) return;
@@ -478,18 +479,22 @@ export const TYPESCRIPT_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
         const method_id = create_method_id(capture);
         const parent = capture.node.parent; // method_signature
 
-        builder.add_method_to_class(class_id, {
-          symbol_id: method_id,
-          name: capture.text,
-          location: capture.location,
-          scope_id: context.get_scope_id(capture.location),
-          access_modifier: extract_access_modifier(capture.node),
-          abstract: true, // method_signature nodes are always abstract
-          static: is_static_method(capture.node),
-          async: false, // abstract methods cannot be async
-          return_type: extract_return_type(capture.node),
-          generics: parent ? extract_type_parameters(parent) : [],
-        });
+        builder.add_method_to_class(
+          class_id,
+          {
+            symbol_id: method_id,
+            name: capture.text,
+            location: capture.location,
+            scope_id: context.get_scope_id(capture.location),
+            access_modifier: extract_access_modifier(capture.node),
+            abstract: true, // method_signature nodes are always abstract
+            static: is_static_method(capture.node),
+            async: false, // abstract methods cannot be async
+            return_type: extract_return_type(capture.node),
+            generics: parent ? extract_type_parameters(parent) : [],
+          },
+          capture
+        );
       },
     },
   ],
@@ -660,7 +665,6 @@ export const TYPESCRIPT_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
         if (!class_id) return;
 
         const prop_id = create_property_id(capture);
-        const parent = capture.node.parent; // required_parameter
 
         builder.add_property_to_class(class_id, {
           symbol_id: prop_id,

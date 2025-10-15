@@ -213,37 +213,22 @@
         {
           "kind": "method",
           "defining_scope_id": "class:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/classes/inheritance.ts:6:23:14:1",
-          "symbol_id": "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/classes/inheritance.ts:7:3:7:13:constructor",
-          "name": "constructor",
+          "symbol_id": "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/classes/inheritance.ts:9:12:9:20:makeSound",
+          "name": "makeSound",
           "location": {
             "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/classes/inheritance.ts",
-            "start_line": 7,
-            "start_column": 3,
-            "end_line": 7,
-            "end_column": 13
+            "start_line": 9,
+            "start_column": 12,
+            "end_line": 9,
+            "end_column": 20
           },
-          "abstract": false,
+          "abstract": true,
           "static": false,
           "async": false,
+          "return_type": "string",
           "generics": [],
-          "parameters": [
-            {
-              "kind": "parameter",
-              "defining_scope_id": "constructor:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/classes/inheritance.ts:7:14:7:37",
-              "symbol_id": "parameter:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/classes/inheritance.ts:7:22:7:25:name",
-              "name": "name",
-              "location": {
-                "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/classes/inheritance.ts",
-                "start_line": 7,
-                "start_column": 22,
-                "end_line": 7,
-                "end_column": 25
-              },
-              "type": "string",
-              "optional": false
-            }
-          ],
-          "body_scope_id": "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/classes/inheritance.ts:7:14:7:37"
+          "parameters": [],
+          "body_scope_id": "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/classes/inheritance.ts:21:12:23:3"
         },
         {
           "kind": "method",
@@ -287,23 +272,6 @@
         {
           "kind": "property",
           "defining_scope_id": "constructor:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/classes/inheritance.ts:7:14:7:37",
-          "symbol_id": "property:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/classes/inheritance.ts:7:15:7:33:public name: string",
-          "name": "public name: string",
-          "location": {
-            "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/classes/inheritance.ts",
-            "start_line": 7,
-            "start_column": 15,
-            "end_line": 7,
-            "end_column": 33
-          },
-          "static": false,
-          "readonly": false,
-          "abstract": false,
-          "decorators": []
-        },
-        {
-          "kind": "property",
-          "defining_scope_id": "constructor:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/classes/inheritance.ts:7:14:7:37",
           "symbol_id": "property:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/classes/inheritance.ts:7:22:7:25:name",
           "name": "name",
           "location": {
@@ -339,41 +307,6 @@
         "is_reexport": false
       },
       "methods": [
-        {
-          "kind": "method",
-          "defining_scope_id": "class:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/classes/inheritance.ts:16:26:28:1",
-          "symbol_id": "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/classes/inheritance.ts:17:3:17:13:constructor",
-          "name": "constructor",
-          "location": {
-            "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/classes/inheritance.ts",
-            "start_line": 17,
-            "start_column": 3,
-            "end_line": 17,
-            "end_column": 13
-          },
-          "abstract": false,
-          "static": false,
-          "async": false,
-          "generics": [],
-          "parameters": [
-            {
-              "kind": "parameter",
-              "defining_scope_id": "constructor:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/classes/inheritance.ts:17:14:19:3",
-              "symbol_id": "parameter:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/classes/inheritance.ts:17:15:17:18:name",
-              "name": "name",
-              "location": {
-                "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/classes/inheritance.ts",
-                "start_line": 17,
-                "start_column": 15,
-                "end_line": 17,
-                "end_column": 18
-              },
-              "type": "string",
-              "optional": false
-            }
-          ],
-          "body_scope_id": "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/classes/inheritance.ts:7:14:7:37"
-        },
         {
           "kind": "method",
           "defining_scope_id": "class:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/classes/inheritance.ts:16:26:28:1",
@@ -445,7 +378,23 @@
             "end_line": 17,
             "end_column": 13
           },
-          "parameters": [],
+          "parameters": [
+            {
+              "kind": "parameter",
+              "defining_scope_id": "constructor:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/classes/inheritance.ts:17:14:19:3",
+              "symbol_id": "parameter:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/classes/inheritance.ts:17:15:17:18:name",
+              "name": "name",
+              "location": {
+                "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/classes/inheritance.ts",
+                "start_line": 17,
+                "start_column": 15,
+                "end_line": 17,
+                "end_column": 18
+              },
+              "type": "string",
+              "optional": false
+            }
+          ],
           "body_scope_id": "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/classes/inheritance.ts:7:14:7:37"
         }
       ],
