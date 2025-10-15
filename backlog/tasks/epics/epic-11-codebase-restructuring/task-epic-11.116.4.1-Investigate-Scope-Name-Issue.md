@@ -1,9 +1,10 @@
 # Task epic-11.116.4.1: Investigate and Fix Scope Name Issue
 
-**Status:** Not Started
+**Status:** Completed
 **Parent:** task-epic-11.116.4
 **Priority:** Medium (Quality issue - fixtures functional but scope names incorrect)
 **Created:** 2025-10-15
+**Completed:** 2025-10-15
 
 ## Overview
 
@@ -232,3 +233,101 @@ export class User {
 ```
 
 **Expected:** Probably `name: null` since the class body scope is anonymous.
+
+## Implementation Notes
+
+**Completed:** 2025-10-15
+
+### Root Cause
+
+The issue was in [scope_processor.ts](../../../packages/core/src/index_single_file/scopes/scope_processor.ts) at line 118:
+
+```typescript
+const symbol_name = capture.text || (scope_type === "block" ? "" : undefined);
+```
+
+This code was using `capture.text` which contained the full text of the captured tree-sitter node. For class scopes, the tree-sitter query captures `(class_body)`, so `capture.text` contained the entire class body including all methods and properties.
+
+### Solution Implemented
+
+1. **Added `extract_scope_name()` helper function** that properly extracts identifier names from tree-sitter nodes:
+   - For class scopes: Checks if we captured a body node, then looks at parent's `name` field
+   - For function/method/constructor scopes: Extracts the `name` field from the node
+   - For anonymous scopes (blocks, arrow functions): Returns `null`
+   - Handles cases where nodes don't have names gracefully
+
+2. **Updated scope_processor.ts** to use `extract_scope_name()` instead of `capture.text`
+
+3. **Fixed test mocks** in `scope_processor.test.ts`:
+   - Added proper node type mapping (e.g., "class" → "class_declaration")
+   - Mock `childForFieldName` now returns proper name, body, and parameters nodes
+   - All 25 tests passing
+
+### Results
+
+**Before fix:**
+```json
+{
+  "name": "{\n  constructor(\n    public name: string,\n    public email: string\n  ) {}\n\n  greet(): string {\n    return `Hello, ${this.name}`;\n  }\n}",
+  "type": "class"
+}
+```
+
+**After fix:**
+```json
+{
+  "name": "User",
+  "type": "class"
+}
+```
+
+### All Fixtures Regenerated
+
+Successfully regenerated all 27 fixtures:
+- TypeScript: 19 fixtures
+- Python: 4 fixtures
+- Rust: 2 fixtures
+- JavaScript: 2 fixtures
+
+All fixtures verified with `npm run verify-fixtures` - 100% pass rate.
+
+### Examples of Corrected Scope Names
+
+**Classes:**
+```json
+{"name": "User", "type": "class"}
+{"name": "Animal", "type": "class"}
+{"name": "Dog", "type": "class"}
+```
+
+**Functions:**
+```json
+{"name": "main", "type": "function"}
+{"name": "processData", "type": "function"}
+{"name": "fetchData", "type": "function"}
+```
+
+**Anonymous functions:**
+```json
+{"name": null, "type": "function"}
+```
+
+**Methods:**
+```json
+{"name": "constructor", "type": "constructor"}
+{"name": "greet", "type": "method"}
+{"name": "getInfo", "type": "method"}
+```
+
+### Deliverables Status
+
+- ✅ Root cause identified and documented
+- ✅ Fix implemented in scope extraction code ([scope_processor.ts](../../../packages/core/src/index_single_file/scopes/scope_processor.ts))
+- ✅ All affected tests passing (25/25)
+- ✅ Fixtures regenerated with corrected scope names
+- ✅ Test cases updated to prevent regression
+- ✅ Fixtures verified successfully (27/27)
+
+### Commit
+
+Fixed in commit: `5d1e312` - "fix: extract proper identifier names for scope names"
