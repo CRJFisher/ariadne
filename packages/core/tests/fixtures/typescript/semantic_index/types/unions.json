@@ -22,7 +22,7 @@
     "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts:30:17:39:1": {
       "id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts:30:17:39:1",
       "parent_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts:1:1:46:0",
-      "name": "function getArea(shape: Shape): number {\n  switch (shape.kind) {\n    case \"circle\":\n      return Math.PI * shape.radius ** 2;\n    case \"square\":\n      return shape.size ** 2;\n    case \"rectangle\":\n      return shape.width * shape.height;\n  }\n}",
+      "name": "getArea",
       "type": "function",
       "location": {
         "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts",
@@ -38,7 +38,7 @@
     "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts:31:3:38:3": {
       "id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts:31:3:38:3",
       "parent_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts:30:17:39:1",
-      "name": "switch (shape.kind) {\n    case \"circle\":\n      return Math.PI * shape.radius ** 2;\n    case \"square\":\n      return shape.size ** 2;\n    case \"rectangle\":\n      return shape.width * shape.height;\n  }",
+      "name": null,
       "type": "block",
       "location": {
         "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts",
@@ -56,7 +56,7 @@
     "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts:32:5:33:41": {
       "id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts:32:5:33:41",
       "parent_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts:31:3:38:3",
-      "name": "case \"circle\":\n      return Math.PI * shape.radius ** 2;",
+      "name": null,
       "type": "block",
       "location": {
         "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts",
@@ -70,7 +70,7 @@
     "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts:34:5:35:29": {
       "id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts:34:5:35:29",
       "parent_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts:31:3:38:3",
-      "name": "case \"square\":\n      return shape.size ** 2;",
+      "name": null,
       "type": "block",
       "location": {
         "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts",
@@ -84,7 +84,7 @@
     "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts:36:5:37:40": {
       "id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts:36:5:37:40",
       "parent_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts:31:3:38:3",
-      "name": "case \"rectangle\":\n      return shape.width * shape.height;",
+      "name": null,
       "type": "block",
       "location": {
         "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts",

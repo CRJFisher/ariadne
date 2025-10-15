@@ -25,7 +25,7 @@
     "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/modules/imports.ts:22:27:30:1": {
       "id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/modules/imports.ts:22:27:30:1",
       "parent_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/modules/imports.ts:1:1:46:0",
-      "name": "function createApplication(): Application {\n  const config: Config = {\n    apiUrl: API_URL,\n    timeout: 5000,\n    retries: 3,\n  };\n\n  return new Application(config);\n}",
+      "name": "createApplication",
       "type": "function",
       "location": {
         "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/modules/imports.ts",
@@ -39,7 +39,7 @@
     "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/modules/imports.ts:32:29:34:1": {
       "id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/modules/imports.ts:32:29:34:1",
       "parent_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/modules/imports.ts:1:1:46:0",
-      "name": "function getCurrentTimestamp(): string {\n  return formatDate(new Date());\n}",
+      "name": "getCurrentTimestamp",
       "type": "function",
       "location": {
         "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/modules/imports.ts",
@@ -53,7 +53,7 @@
     "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/modules/imports.ts:36:20:38:1": {
       "id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/modules/imports.ts:36:20:38:1",
       "parent_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/modules/imports.ts:1:1:46:0",
-      "name": "function makeClient(): HttpClient {\n  return new HttpClient(API_URL);\n}",
+      "name": "makeClient",
       "type": "function",
       "location": {
         "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/modules/imports.ts",
@@ -67,7 +67,7 @@
     "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/modules/imports.ts:41:20:43:1": {
       "id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/modules/imports.ts:41:20:43:1",
       "parent_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/modules/imports.ts:1:1:46:0",
-      "name": "function getVersion(): string {\n  return `${Exports.API_URL}/${Exports.API_VERSION}`;\n}",
+      "name": "getVersion",
       "type": "function",
       "location": {
         "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/modules/imports.ts",

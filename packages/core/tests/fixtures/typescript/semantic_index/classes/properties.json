@@ -22,7 +22,7 @@
     "class:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/classes/properties.ts:6:14:30:1": {
       "id": "class:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/classes/properties.ts:6:14:30:1",
       "parent_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/classes/properties.ts:1:1:33:0",
-      "name": "{\n  public name: string;\n  private age: number;\n  protected address: string;\n  readonly id: number;\n\n  constructor(name: string, age: number, address: string) {\n    this.name = name;\n    this.age = age;\n    this.address = address;\n    this.id = Date.now();\n  }\n\n  public getAge(): number {\n    return this.age;\n  }\n\n  private incrementAge(): void {\n    this.age++;\n  }\n\n  protected getAddress(): string {\n    return this.address;\n  }\n}",
+      "name": "Person",
       "type": "class",
       "location": {
         "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/classes/properties.ts",
@@ -41,7 +41,7 @@
     "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/classes/properties.ts:12:14:17:3": {
       "id": "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/classes/properties.ts:12:14:17:3",
       "parent_id": "class:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/classes/properties.ts:6:14:30:1",
-      "name": "constructor(name: string, age: number, address: string) {\n    this.name = name;\n    this.age = age;\n    this.address = address;\n    this.id = Date.now();\n  }",
+      "name": "constructor",
       "type": "method",
       "location": {
         "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/classes/properties.ts",
@@ -57,7 +57,7 @@
     "constructor:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/classes/properties.ts:12:14:17:3": {
       "id": "constructor:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/classes/properties.ts:12:14:17:3",
       "parent_id": "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/classes/properties.ts:12:14:17:3",
-      "name": "constructor(name: string, age: number, address: string) {\n    this.name = name;\n    this.age = age;\n    this.address = address;\n    this.id = Date.now();\n  }",
+      "name": "constructor",
       "type": "constructor",
       "location": {
         "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/classes/properties.ts",
@@ -71,7 +71,7 @@
     "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/classes/properties.ts:19:16:21:3": {
       "id": "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/classes/properties.ts:19:16:21:3",
       "parent_id": "class:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/classes/properties.ts:6:14:30:1",
-      "name": "public getAge(): number {\n    return this.age;\n  }",
+      "name": "getAge",
       "type": "method",
       "location": {
         "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/classes/properties.ts",
@@ -85,7 +85,7 @@
     "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/classes/properties.ts:23:23:25:3": {
       "id": "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/classes/properties.ts:23:23:25:3",
       "parent_id": "class:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/classes/properties.ts:6:14:30:1",
-      "name": "private incrementAge(): void {\n    this.age++;\n  }",
+      "name": "incrementAge",
       "type": "method",
       "location": {
         "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/classes/properties.ts",
@@ -99,7 +99,7 @@
     "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/classes/properties.ts:27:23:29:3": {
       "id": "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/classes/properties.ts:27:23:29:3",
       "parent_id": "class:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/classes/properties.ts:6:14:30:1",
-      "name": "protected getAddress(): string {\n    return this.address;\n  }",
+      "name": "getAddress",
       "type": "method",
       "location": {
         "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/classes/properties.ts",
@@ -153,8 +153,8 @@
             "entity": "method",
             "name": "definition.method",
             "node": {
-              "0": 3446807424,
-              "1": 32748,
+              "0": 3087798048,
+              "1": 32687,
               "2": 448,
               "3": 11,
               "4": 4,
@@ -6938,8 +6938,8 @@
             "entity": "method",
             "name": "definition.method",
             "node": {
-              "0": 3446814624,
-              "1": 32748,
+              "0": 3087805248,
+              "1": 32687,
               "2": 784,
               "3": 18,
               "4": 18,
@@ -13677,8 +13677,8 @@
             "entity": "method",
             "name": "definition.method",
             "node": {
-              "0": 3446816416,
-              "1": 32748,
+              "0": 3087807040,
+              "1": 32687,
               "2": 894,
               "3": 22,
               "4": 20,
@@ -20416,8 +20416,8 @@
             "entity": "method",
             "name": "definition.method",
             "node": {
-              "0": 3446818464,
-              "1": 32748,
+              "0": 3087809088,
+              "1": 32687,
               "2": 1006,
               "3": 26,
               "4": 24,
@@ -27294,8 +27294,8 @@
             "entity": "constructor",
             "name": "definition.constructor",
             "node": {
-              "0": 3446807424,
-              "1": 32748,
+              "0": 3087798048,
+              "1": 32687,
               "2": 448,
               "3": 11,
               "4": 4,

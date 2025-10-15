@@ -26,7 +26,7 @@
     "class:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/interfaces/basic_interface.ts:6:16:11:1": {
       "id": "class:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/interfaces/basic_interface.ts:6:16:11:1",
       "parent_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/interfaces/basic_interface.ts:1:1:41:0",
-      "name": "{\n  id: number;\n  name: string;\n  email: string;\n  age?: number;\n}",
+      "name": "User",
       "type": "class",
       "location": {
         "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/interfaces/basic_interface.ts",
@@ -40,7 +40,7 @@
     "class:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/interfaces/basic_interface.ts:13:19:18:1": {
       "id": "class:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/interfaces/basic_interface.ts:13:19:18:1",
       "parent_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/interfaces/basic_interface.ts:1:1:41:0",
-      "name": "{\n  readonly id: string;\n  name: string;\n  price: number;\n  inStock: boolean;\n}",
+      "name": "Product",
       "type": "class",
       "location": {
         "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/interfaces/basic_interface.ts",
@@ -54,7 +54,7 @@
     "class:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/interfaces/basic_interface.ts:20:25:25:1": {
       "id": "class:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/interfaces/basic_interface.ts:20:25:25:1",
       "parent_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/interfaces/basic_interface.ts:1:1:41:0",
-      "name": "interface Repository<T> {\n  findById(id: string): T | null;\n  findAll(): T[];\n  save(item: T): void;\n  delete(id: string): boolean;\n}",
+      "name": "Repository",
       "type": "class",
       "location": {
         "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/interfaces/basic_interface.ts",
@@ -73,7 +73,7 @@
     "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/interfaces/basic_interface.ts:21:11:21:22": {
       "id": "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/interfaces/basic_interface.ts:21:11:21:22",
       "parent_id": "class:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/interfaces/basic_interface.ts:20:25:25:1",
-      "name": "findById(id: string): T | null",
+      "name": "findById",
       "type": "method",
       "location": {
         "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/interfaces/basic_interface.ts",
@@ -87,7 +87,7 @@
     "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/interfaces/basic_interface.ts:22:10:22:11": {
       "id": "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/interfaces/basic_interface.ts:22:10:22:11",
       "parent_id": "class:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/interfaces/basic_interface.ts:20:25:25:1",
-      "name": "findAll(): T[]",
+      "name": "findAll",
       "type": "method",
       "location": {
         "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/interfaces/basic_interface.ts",
@@ -101,7 +101,7 @@
     "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/interfaces/basic_interface.ts:23:7:23:15": {
       "id": "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/interfaces/basic_interface.ts:23:7:23:15",
       "parent_id": "class:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/interfaces/basic_interface.ts:20:25:25:1",
-      "name": "save(item: T): void",
+      "name": "save",
       "type": "method",
       "location": {
         "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/interfaces/basic_interface.ts",
@@ -115,7 +115,7 @@
     "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/interfaces/basic_interface.ts:24:9:24:20": {
       "id": "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/interfaces/basic_interface.ts:24:9:24:20",
       "parent_id": "class:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/interfaces/basic_interface.ts:20:25:25:1",
-      "name": "delete(id: string): boolean",
+      "name": "delete",
       "type": "method",
       "location": {
         "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/interfaces/basic_interface.ts",
@@ -129,7 +129,7 @@
     "class:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/interfaces/basic_interface.ts:28:22:33:1": {
       "id": "class:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/interfaces/basic_interface.ts:28:22:33:1",
       "parent_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/interfaces/basic_interface.ts:1:1:41:0",
-      "name": "{\n  add(a: number, b: number): number;\n  subtract(a: number, b: number): number;\n  multiply(a: number, b: number): number;\n  divide(a: number, b: number): number;\n}",
+      "name": "Calculator",
       "type": "class",
       "location": {
         "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/interfaces/basic_interface.ts",
@@ -148,7 +148,7 @@
     "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/interfaces/basic_interface.ts:29:6:29:27": {
       "id": "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/interfaces/basic_interface.ts:29:6:29:27",
       "parent_id": "class:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/interfaces/basic_interface.ts:28:22:33:1",
-      "name": "add(a: number, b: number): number",
+      "name": "add",
       "type": "method",
       "location": {
         "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/interfaces/basic_interface.ts",
@@ -162,7 +162,7 @@
     "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/interfaces/basic_interface.ts:30:11:30:32": {
       "id": "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/interfaces/basic_interface.ts:30:11:30:32",
       "parent_id": "class:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/interfaces/basic_interface.ts:28:22:33:1",
-      "name": "subtract(a: number, b: number): number",
+      "name": "subtract",
       "type": "method",
       "location": {
         "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/interfaces/basic_interface.ts",
@@ -176,7 +176,7 @@
     "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/interfaces/basic_interface.ts:31:11:31:32": {
       "id": "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/interfaces/basic_interface.ts:31:11:31:32",
       "parent_id": "class:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/interfaces/basic_interface.ts:28:22:33:1",
-      "name": "multiply(a: number, b: number): number",
+      "name": "multiply",
       "type": "method",
       "location": {
         "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/interfaces/basic_interface.ts",
@@ -190,7 +190,7 @@
     "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/interfaces/basic_interface.ts:32:9:32:30": {
       "id": "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/interfaces/basic_interface.ts:32:9:32:30",
       "parent_id": "class:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/interfaces/basic_interface.ts:28:22:33:1",
-      "name": "divide(a: number, b: number): number",
+      "name": "divide",
       "type": "method",
       "location": {
         "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/interfaces/basic_interface.ts",
@@ -204,7 +204,7 @@
     "class:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/interfaces/basic_interface.ts:36:22:38:1": {
       "id": "class:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/interfaces/basic_interface.ts:36:22:38:1",
       "parent_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/interfaces/basic_interface.ts:1:1:41:0",
-      "name": "{\n  [key: string]: string;\n}",
+      "name": "Dictionary",
       "type": "class",
       "location": {
         "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/interfaces/basic_interface.ts",

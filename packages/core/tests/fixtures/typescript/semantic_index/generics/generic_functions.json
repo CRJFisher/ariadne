@@ -29,7 +29,7 @@
     "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:7:21:9:1": {
       "id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:7:21:9:1",
       "parent_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:1:1:54:0",
-      "name": "function identity<T>(value: T): T {\n  return value;\n}",
+      "name": "identity",
       "type": "function",
       "location": {
         "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts",
@@ -43,7 +43,7 @@
     "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:12:20:14:1": {
       "id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:12:20:14:1",
       "parent_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:1:1:54:0",
-      "name": "function pair<A, B>(first: A, second: B): [A, B] {\n  return [first, second];\n}",
+      "name": "pair",
       "type": "function",
       "location": {
         "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts",
@@ -57,7 +57,7 @@
     "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:17:43:19:1": {
       "id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:17:43:19:1",
       "parent_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:1:1:54:0",
-      "name": "function getProperty<T, K extends keyof T>(obj: T, key: K): T[K] {\n  return obj[key];\n}",
+      "name": "getProperty",
       "type": "function",
       "location": {
         "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts",
@@ -71,7 +71,7 @@
     "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:22:51:24:1": {
       "id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:22:51:24:1",
       "parent_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:1:1:54:0",
-      "name": "function merge<T extends object, U extends object>(obj1: T, obj2: U): T & U {\n  return { ...obj1, ...obj2 };\n}",
+      "name": "merge",
       "type": "function",
       "location": {
         "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts",
@@ -85,7 +85,7 @@
     "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:27:18:29:1": {
       "id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:27:18:29:1",
       "parent_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:1:1:54:0",
-      "name": "function first<T>(arr: T[]): T | undefined {\n  return arr[0];\n}",
+      "name": "first",
       "type": "function",
       "location": {
         "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts",
@@ -99,7 +99,7 @@
     "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:31:17:33:1": {
       "id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:31:17:33:1",
       "parent_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:1:1:54:0",
-      "name": "function last<T>(arr: T[]): T | undefined {\n  return arr[arr.length - 1];\n}",
+      "name": "last",
       "type": "function",
       "location": {
         "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts",
@@ -113,7 +113,7 @@
     "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:35:19:41:1": {
       "id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:35:19:41:1",
       "parent_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:1:1:54:0",
-      "name": "function map<T, U>(arr: T[], fn: (item: T) => U): U[] {\n  const result: U[] = [];\n  for (const item of arr) {\n    result.push(fn(item));\n  }\n  return result;\n}",
+      "name": "map",
       "type": "function",
       "location": {
         "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts",
@@ -129,7 +129,7 @@
     "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:37:3:39:3": {
       "id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:37:3:39:3",
       "parent_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:35:19:41:1",
-      "name": "for (const item of arr) {\n    result.push(fn(item));\n  }",
+      "name": null,
       "type": "block",
       "location": {
         "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts",
@@ -143,7 +143,7 @@
     "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:43:19:51:1": {
       "id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:43:19:51:1",
       "parent_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:1:1:54:0",
-      "name": "function filter<T>(arr: T[], predicate: (item: T) => boolean): T[] {\n  const result: T[] = [];\n  for (const item of arr) {\n    if (predicate(item)) {\n      result.push(item);\n    }\n  }\n  return result;\n}",
+      "name": "filter",
       "type": "function",
       "location": {
         "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts",
@@ -159,7 +159,7 @@
     "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:45:3:49:3": {
       "id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:45:3:49:3",
       "parent_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:43:19:51:1",
-      "name": "for (const item of arr) {\n    if (predicate(item)) {\n      result.push(item);\n    }\n  }",
+      "name": null,
       "type": "block",
       "location": {
         "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts",
@@ -175,7 +175,7 @@
     "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:46:5:48:5": {
       "id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:46:5:48:5",
       "parent_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:45:3:49:3",
-      "name": "if (predicate(item)) {\n      result.push(item);\n    }",
+      "name": null,
       "type": "block",
       "location": {
         "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts",

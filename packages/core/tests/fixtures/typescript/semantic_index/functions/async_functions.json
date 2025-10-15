@@ -28,7 +28,7 @@
     "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:6:25:9:1": {
       "id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:6:25:9:1",
       "parent_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:1:1:47:0",
-      "name": "async function fetchUser(id: number): Promise<object> {\n  await delay(100);\n  return { id, name: \"User\" + id };\n}",
+      "name": "fetchUser",
       "type": "function",
       "location": {
         "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts",
@@ -42,7 +42,7 @@
     "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:11:26:14:1": {
       "id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:11:26:14:1",
       "parent_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:1:1:47:0",
-      "name": "async function fetchUsers(ids: number[]): Promise<object[]> {\n  const promises = ids.map((id) => fetchUser(id));\n  return Promise.all(promises);\n}",
+      "name": "fetchUsers",
       "type": "function",
       "location": {
         "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts",
@@ -58,7 +58,7 @@
     "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:12:28:12:48": {
       "id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:12:28:12:48",
       "parent_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:11:26:14:1",
-      "name": "(id) => fetchUser(id)",
+      "name": null,
       "type": "function",
       "location": {
         "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts",
@@ -72,7 +72,7 @@
     "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:16:31:20:1": {
       "id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:16:31:20:1",
       "parent_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:1:1:47:0",
-      "name": "async function processUserData(userId: number): Promise<string> {\n  const user = await fetchUser(userId);\n  const processed = await transformUser(user);\n  return formatUserData(processed);\n}",
+      "name": "processUserData",
       "type": "function",
       "location": {
         "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts",
@@ -86,7 +86,7 @@
     "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:22:29:25:1": {
       "id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:22:29:25:1",
       "parent_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:1:1:47:0",
-      "name": "async function transformUser(user: object): Promise<object> {\n  await delay(50);\n  return { ...user, transformed: true };\n}",
+      "name": "transformUser",
       "type": "function",
       "location": {
         "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts",
@@ -100,7 +100,7 @@
     "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:27:24:29:1": {
       "id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:27:24:29:1",
       "parent_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:1:1:47:0",
-      "name": "function formatUserData(user: any): string {\n  return JSON.stringify(user);\n}",
+      "name": "formatUserData",
       "type": "function",
       "location": {
         "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts",
@@ -114,7 +114,7 @@
     "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:31:15:33:1": {
       "id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:31:15:33:1",
       "parent_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:1:1:47:0",
-      "name": "function delay(ms: number): Promise<void> {\n  return new Promise((resolve) => setTimeout(resolve, ms));\n}",
+      "name": "delay",
       "type": "function",
       "location": {
         "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts",
@@ -130,7 +130,7 @@
     "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:32:22:32:57": {
       "id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:32:22:32:57",
       "parent_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:31:15:33:1",
-      "name": "(resolve) => setTimeout(resolve, ms)",
+      "name": null,
       "type": "function",
       "location": {
         "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts",
@@ -144,7 +144,7 @@
     "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:36:25:44:1": {
       "id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:36:25:44:1",
       "parent_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:1:1:47:0",
-      "name": "async function safeFetch(id: number): Promise<object | null> {\n  try {\n    const data = await fetchUser(id);\n    return data;\n  } catch (error) {\n    console.error(\"Fetch failed:\", error);\n    return null;\n  }\n}",
+      "name": "safeFetch",
       "type": "function",
       "location": {
         "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts",
@@ -160,7 +160,7 @@
     "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:37:3:43:3": {
       "id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:37:3:43:3",
       "parent_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:36:25:44:1",
-      "name": "try {\n    const data = await fetchUser(id);\n    return data;\n  } catch (error) {\n    console.error(\"Fetch failed:\", error);\n    return null;\n  }",
+      "name": null,
       "type": "block",
       "location": {
         "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts",
@@ -176,7 +176,7 @@
     "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:40:5:43:3": {
       "id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:40:5:43:3",
       "parent_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:37:3:43:3",
-      "name": "catch (error) {\n    console.error(\"Fetch failed:\", error);\n    return null;\n  }",
+      "name": null,
       "type": "block",
       "location": {
         "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts",
@@ -265,7 +265,7 @@
         "return_type": "Promise<object[]>"
       },
       "return_type": "Promise<object[]>",
-      "body_scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:11:26:14:1"
+      "body_scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:6:25:9:1"
     },
     "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:16:16:16:30:processUserData": {
       "kind": "function",
@@ -304,7 +304,7 @@
         "return_type": "Promise<string>"
       },
       "return_type": "Promise<string>",
-      "body_scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:16:31:20:1"
+      "body_scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:12:28:12:48"
     },
     "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:22:16:22:28:transformUser": {
       "kind": "function",
@@ -340,7 +340,7 @@
         "return_type": "Promise<object>"
       },
       "return_type": "Promise<object>",
-      "body_scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:16:31:20:1"
+      "body_scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:12:28:12:48"
     },
     "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:27:10:27:23:formatUserData": {
       "kind": "function",
@@ -412,7 +412,7 @@
         "return_type": "Promise<void>"
       },
       "return_type": "Promise<void>",
-      "body_scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:22:29:25:1"
+      "body_scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:31:15:33:1"
     },
     "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:36:16:36:24:safeFetch": {
       "kind": "function",
@@ -465,7 +465,7 @@
         "return_type": "Promise<object | null>"
       },
       "return_type": "Promise<object | null>",
-      "body_scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:36:25:44:1"
+      "body_scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:32:22:32:57"
     }
   },
   "classes": {},

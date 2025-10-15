@@ -24,7 +24,7 @@
     "class:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/basic_class.js:6:12:32:1": {
       "id": "class:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/basic_class.js:6:12:32:1",
       "parent_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/basic_class.js:1:1:55:0",
-      "name": "class User {\n  constructor(name, email) {\n    this.name = name;\n    this.email = email;\n    this.active = true;\n  }\n\n  greet() {\n    return `Hello, ${this.name}!`;\n  }\n\n  getInfo() {\n    return {\n      name: this.name,\n      email: this.email,\n      active: this.active,\n    };\n  }\n\n  activate() {\n    this.active = true;\n  }\n\n  deactivate() {\n    this.active = false;\n  }\n}",
+      "name": "User",
       "type": "class",
       "location": {
         "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/basic_class.js",
@@ -44,7 +44,7 @@
     "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/basic_class.js:7:14:11:3": {
       "id": "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/basic_class.js:7:14:11:3",
       "parent_id": "class:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/basic_class.js:6:12:32:1",
-      "name": "constructor(name, email) {\n    this.name = name;\n    this.email = email;\n    this.active = true;\n  }",
+      "name": "constructor",
       "type": "method",
       "location": {
         "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/basic_class.js",
@@ -60,7 +60,7 @@
     "constructor:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/basic_class.js:7:14:11:3": {
       "id": "constructor:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/basic_class.js:7:14:11:3",
       "parent_id": "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/basic_class.js:7:14:11:3",
-      "name": "constructor(name, email) {\n    this.name = name;\n    this.email = email;\n    this.active = true;\n  }",
+      "name": "constructor",
       "type": "constructor",
       "location": {
         "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/basic_class.js",
@@ -74,7 +74,7 @@
     "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/basic_class.js:13:8:15:3": {
       "id": "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/basic_class.js:13:8:15:3",
       "parent_id": "class:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/basic_class.js:6:12:32:1",
-      "name": "greet() {\n    return `Hello, ${this.name}!`;\n  }",
+      "name": "greet",
       "type": "method",
       "location": {
         "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/basic_class.js",
@@ -88,7 +88,7 @@
     "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/basic_class.js:17:10:23:3": {
       "id": "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/basic_class.js:17:10:23:3",
       "parent_id": "class:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/basic_class.js:6:12:32:1",
-      "name": "getInfo() {\n    return {\n      name: this.name,\n      email: this.email,\n      active: this.active,\n    };\n  }",
+      "name": "getInfo",
       "type": "method",
       "location": {
         "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/basic_class.js",
@@ -102,7 +102,7 @@
     "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/basic_class.js:25:11:27:3": {
       "id": "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/basic_class.js:25:11:27:3",
       "parent_id": "class:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/basic_class.js:6:12:32:1",
-      "name": "activate() {\n    this.active = true;\n  }",
+      "name": "activate",
       "type": "method",
       "location": {
         "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/basic_class.js",
@@ -116,7 +116,7 @@
     "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/basic_class.js:29:13:31:3": {
       "id": "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/basic_class.js:29:13:31:3",
       "parent_id": "class:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/basic_class.js:6:12:32:1",
-      "name": "deactivate() {\n    this.active = false;\n  }",
+      "name": "deactivate",
       "type": "method",
       "location": {
         "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/basic_class.js",
@@ -130,7 +130,7 @@
     "class:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/basic_class.js:34:14:42:1": {
       "id": "class:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/basic_class.js:34:14:42:1",
       "parent_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/basic_class.js:1:1:55:0",
-      "name": "class Animal {\n  constructor(name) {\n    this.name = name;\n  }\n\n  speak() {\n    throw new Error(\"Subclass must implement speak()\");\n  }\n}",
+      "name": "Animal",
       "type": "class",
       "location": {
         "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/basic_class.js",
@@ -147,7 +147,7 @@
     "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/basic_class.js:35:14:37:3": {
       "id": "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/basic_class.js:35:14:37:3",
       "parent_id": "class:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/basic_class.js:34:14:42:1",
-      "name": "constructor(name) {\n    this.name = name;\n  }",
+      "name": "constructor",
       "type": "method",
       "location": {
         "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/basic_class.js",
@@ -163,7 +163,7 @@
     "constructor:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/basic_class.js:35:14:37:3": {
       "id": "constructor:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/basic_class.js:35:14:37:3",
       "parent_id": "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/basic_class.js:35:14:37:3",
-      "name": "constructor(name) {\n    this.name = name;\n  }",
+      "name": "constructor",
       "type": "constructor",
       "location": {
         "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/basic_class.js",
@@ -177,7 +177,7 @@
     "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/basic_class.js:39:8:41:3": {
       "id": "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/basic_class.js:39:8:41:3",
       "parent_id": "class:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/basic_class.js:34:14:42:1",
-      "name": "speak() {\n    throw new Error(\"Subclass must implement speak()\");\n  }",
+      "name": "speak",
       "type": "method",
       "location": {
         "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/basic_class.js",
@@ -191,7 +191,7 @@
     "class:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/basic_class.js:44:26:52:1": {
       "id": "class:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/basic_class.js:44:26:52:1",
       "parent_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/basic_class.js:1:1:55:0",
-      "name": "class Dog extends Animal {\n  speak() {\n    return \"Woof!\";\n  }\n\n  fetch(item) {\n    return `${this.name} fetched ${item}`;\n  }\n}",
+      "name": "Dog",
       "type": "class",
       "location": {
         "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/basic_class.js",
@@ -208,7 +208,7 @@
     "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/basic_class.js:45:8:47:3": {
       "id": "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/basic_class.js:45:8:47:3",
       "parent_id": "class:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/basic_class.js:44:26:52:1",
-      "name": "speak() {\n    return \"Woof!\";\n  }",
+      "name": "speak",
       "type": "method",
       "location": {
         "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/basic_class.js",
@@ -222,7 +222,7 @@
     "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/basic_class.js:49:8:51:3": {
       "id": "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/basic_class.js:49:8:51:3",
       "parent_id": "class:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/basic_class.js:44:26:52:1",
-      "name": "fetch(item) {\n    return `${this.name} fetched ${item}`;\n  }",
+      "name": "fetch",
       "type": "method",
       "location": {
         "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/basic_class.js",
@@ -312,7 +312,7 @@
             "end_column": 12
           },
           "parameters": [],
-          "body_scope_id": "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/basic_class.js:29:13:31:3"
+          "body_scope_id": "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/classes/basic_class.js:25:11:27:3"
         }
       ],
       "properties": [],
@@ -334,8 +334,8 @@
             "entity": "constructor",
             "name": "definition.constructor",
             "node": {
-              "0": 2417240128,
-              "1": 32685,
+              "0": 2809395872,
+              "1": 32687,
               "2": 202,
               "3": 6,
               "4": 4,
@@ -4305,8 +4305,8 @@
             "entity": "constructor",
             "name": "definition.constructor",
             "node": {
-              "0": 2417376208,
-              "1": 32685,
+              "0": 2809312560,
+              "1": 32687,
               "2": 958,
               "3": 34,
               "4": 4,

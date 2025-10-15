@@ -28,7 +28,7 @@
     "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/basic_functions.js:6:15:8:1": {
       "id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/basic_functions.js:6:15:8:1",
       "parent_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/basic_functions.js:1:1:38:0",
-      "name": "function greet(name) {\n  return `Hello, ${name}!`;\n}",
+      "name": "greet",
       "type": "function",
       "location": {
         "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/basic_functions.js",
@@ -42,7 +42,7 @@
     "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/basic_functions.js:10:13:12:1": {
       "id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/basic_functions.js:10:13:12:1",
       "parent_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/basic_functions.js:1:1:38:0",
-      "name": "function add(a, b) {\n  return a + b;\n}",
+      "name": "add",
       "type": "function",
       "location": {
         "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/basic_functions.js",
@@ -56,7 +56,7 @@
     "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/basic_functions.js:14:1:14:33": {
       "id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/basic_functions.js:14:1:14:33",
       "parent_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/basic_functions.js:1:1:38:0",
-      "name": "const multiply = (a, b) => a * b;",
+      "name": null,
       "type": "block",
       "location": {
         "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/basic_functions.js",
@@ -72,7 +72,7 @@
     "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/basic_functions.js:14:18:14:32": {
       "id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/basic_functions.js:14:18:14:32",
       "parent_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/basic_functions.js:14:1:14:33",
-      "name": "(a, b) => a * b",
+      "name": null,
       "type": "function",
       "location": {
         "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/basic_functions.js",
@@ -86,7 +86,7 @@
     "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/basic_functions.js:16:1:16:34": {
       "id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/basic_functions.js:16:1:16:34",
       "parent_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/basic_functions.js:1:1:38:0",
-      "name": "const isEven = (n) => n % 2 === 0;",
+      "name": null,
       "type": "block",
       "location": {
         "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/basic_functions.js",
@@ -102,7 +102,7 @@
     "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/basic_functions.js:16:16:16:33": {
       "id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/basic_functions.js:16:16:16:33",
       "parent_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/basic_functions.js:16:1:16:34",
-      "name": "(n) => n % 2 === 0",
+      "name": null,
       "type": "function",
       "location": {
         "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/basic_functions.js",
@@ -116,7 +116,7 @@
     "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/basic_functions.js:18:19:21:1": {
       "id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/basic_functions.js:18:19:21:1",
       "parent_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/basic_functions.js:1:1:38:0",
-      "name": "function callChain() {\n  const data = fetchData();\n  return transformData(data);\n}",
+      "name": "callChain",
       "type": "function",
       "location": {
         "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/basic_functions.js",
@@ -130,7 +130,7 @@
     "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/basic_functions.js:23:19:25:1": {
       "id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/basic_functions.js:23:19:25:1",
       "parent_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/basic_functions.js:1:1:38:0",
-      "name": "function fetchData() {\n  return { value: 42 };\n}",
+      "name": "fetchData",
       "type": "function",
       "location": {
         "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/basic_functions.js",
@@ -144,7 +144,7 @@
     "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/basic_functions.js:27:23:29:1": {
       "id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/basic_functions.js:27:23:29:1",
       "parent_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/basic_functions.js:1:1:38:0",
-      "name": "function transformData(data) {\n  return data.value * 2;\n}",
+      "name": "transformData",
       "type": "function",
       "location": {
         "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/basic_functions.js",
@@ -269,7 +269,7 @@
       "signature": {
         "parameters": []
       },
-      "body_scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/basic_functions.js:16:16:16:33"
+      "body_scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/basic_functions.js:14:18:14:32"
     },
     "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/basic_functions.js:18:10:18:18:callChain": {
       "kind": "function",
@@ -287,7 +287,7 @@
       "signature": {
         "parameters": []
       },
-      "body_scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/basic_functions.js:18:19:21:1"
+      "body_scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/basic_functions.js:14:18:14:32"
     },
     "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/basic_functions.js:23:10:23:18:fetchData": {
       "kind": "function",
@@ -305,7 +305,7 @@
       "signature": {
         "parameters": []
       },
-      "body_scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/basic_functions.js:18:19:21:1"
+      "body_scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/basic_functions.js:14:18:14:32"
     },
     "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/basic_functions.js:27:10:27:22:transformData": {
       "kind": "function",
@@ -337,7 +337,7 @@
           }
         ]
       },
-      "body_scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/basic_functions.js:18:19:21:1"
+      "body_scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/functions/basic_functions.js:27:23:29:1"
     }
   },
   "classes": {},

@@ -24,7 +24,7 @@
     "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/imports.py:19:17:22:19": {
       "id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/imports.py:19:17:22:19",
       "parent_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/imports.py:1:1:23:0",
-      "name": "def process_list(items: List[str]) -> Optional[str]:\n    if not items:\n        return None\n    return items[0]",
+      "name": "process_list",
       "type": "function",
       "location": {
         "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/imports.py",
@@ -40,7 +40,7 @@
     "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/imports.py:11:30:12:27": {
       "id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/imports.py:11:30:12:27",
       "parent_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/imports.py:1:1:23:0",
-      "name": "def get_environment_variables() -> Dict[str, str]:\n    return dict(os.environ)",
+      "name": "get_environment_variables",
       "type": "function",
       "location": {
         "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/imports.py",
@@ -54,7 +54,7 @@
     "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/imports.py:15:23:16:22": {
       "id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/imports.py:15:23:16:22",
       "parent_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/imports.py:1:1:23:0",
-      "name": "def get_python_version() -> str:\n    return sys.version",
+      "name": "get_python_version",
       "type": "function",
       "location": {
         "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/imports.py",
@@ -68,7 +68,7 @@
     "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/imports.py:20:5:21:19": {
       "id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/imports.py:20:5:21:19",
       "parent_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/imports.py:19:17:22:19",
-      "name": "if not items:\n        return None",
+      "name": null,
       "type": "block",
       "location": {
         "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/imports.py",

@@ -22,7 +22,7 @@
     "class:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/classes/basic_class.ts:5:19:14:1": {
       "id": "class:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/classes/basic_class.ts:5:19:14:1",
       "parent_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/classes/basic_class.ts:1:1:15:0",
-      "name": "{\n  constructor(\n    public name: string,\n    public email: string\n  ) {}\n\n  greet(): string {\n    return `Hello, ${this.name}`;\n  }\n}",
+      "name": "User",
       "type": "class",
       "location": {
         "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/classes/basic_class.ts",
@@ -39,7 +39,7 @@
     "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/classes/basic_class.ts:6:14:9:6": {
       "id": "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/classes/basic_class.ts:6:14:9:6",
       "parent_id": "class:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/classes/basic_class.ts:5:19:14:1",
-      "name": "constructor(\n    public name: string,\n    public email: string\n  ) {}",
+      "name": "constructor",
       "type": "method",
       "location": {
         "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/classes/basic_class.ts",
@@ -55,7 +55,7 @@
     "constructor:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/classes/basic_class.ts:6:14:9:6": {
       "id": "constructor:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/classes/basic_class.ts:6:14:9:6",
       "parent_id": "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/classes/basic_class.ts:6:14:9:6",
-      "name": "constructor(\n    public name: string,\n    public email: string\n  ) {}",
+      "name": "constructor",
       "type": "constructor",
       "location": {
         "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/classes/basic_class.ts",
@@ -69,7 +69,7 @@
     "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/classes/basic_class.ts:11:8:13:3": {
       "id": "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/classes/basic_class.ts:11:8:13:3",
       "parent_id": "class:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/classes/basic_class.ts:5:19:14:1",
-      "name": "greet(): string {\n    return `Hello, ${this.name}`;\n  }",
+      "name": "greet",
       "type": "method",
       "location": {
         "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/classes/basic_class.ts",
@@ -120,8 +120,8 @@
             "entity": "method",
             "name": "definition.method",
             "node": {
-              "0": 4264270368,
-              "1": 32748,
+              "0": 3087965232,
+              "1": 32687,
               "2": 132,
               "3": 5,
               "4": 4,
@@ -6890,8 +6890,8 @@
             "entity": "method",
             "name": "definition.method",
             "node": {
-              "0": 4264276784,
-              "1": 32748,
+              "0": 3087967488,
+              "1": 32687,
               "2": 278,
               "3": 10,
               "4": 4,
@@ -13694,8 +13694,8 @@
             "entity": "constructor",
             "name": "definition.constructor",
             "node": {
-              "0": 4264270368,
-              "1": 32748,
+              "0": 3087965232,
+              "1": 32687,
               "2": 132,
               "3": 5,
               "4": 4,

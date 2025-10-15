@@ -20,6 +20,70 @@ import {
   SemanticCategory,
 } from "../semantic_index";
 import { get_scope_boundary_extractor } from "./scope_boundary_extractor";
+import type Parser from "tree-sitter";
+
+/**
+ * Extract the proper identifier name for a scope from a tree-sitter node.
+ *
+ * Different node types require different extraction strategies:
+ * - For class/interface/enum bodies: the name is in the parent node
+ * - For function/method declarations: the name is in the node itself
+ * - For anonymous scopes (blocks, arrow functions): return null
+ *
+ * @param node - The tree-sitter node captured as a scope
+ * @param scope_type - The type of scope being created
+ * @returns The identifier name, or null if the scope is anonymous
+ */
+function extract_scope_name(
+  node: Parser.SyntaxNode,
+  scope_type: ScopeType
+): SymbolName | null {
+  // Block scopes don't have names
+  if (scope_type === "block") {
+    return null;
+  }
+
+  // For class scopes, check if we captured the body or the declaration
+  if (scope_type === "class") {
+    // If we captured the body node, look at the parent for the name
+    if (node.type?.includes("body")) {
+      const parent = node.parent;
+      if (parent) {
+        const name_node = parent.childForFieldName("name");
+        if (name_node) {
+          return name_node.text as SymbolName;
+        }
+      }
+      // No name found (shouldn't happen for valid code)
+      return null;
+    }
+
+    // If we captured the declaration node, get the name field
+    const name_node = node.childForFieldName("name");
+    return name_node ? (name_node.text as SymbolName) : null;
+  }
+
+  // For function/method/constructor scopes
+  if (scope_type === "function" || scope_type === "method" || scope_type === "constructor") {
+    // Try to get the name field first
+    const name_node = node.childForFieldName("name");
+    if (name_node) {
+      return name_node.text as SymbolName;
+    }
+
+    // For arrow functions or anonymous functions, return null
+    if (node.type === "arrow_function") {
+      return null;
+    }
+
+    // No name found
+    return null;
+  }
+
+  // For other scope types (module, namespace, etc.), try to get name field
+  const name_node = node.childForFieldName("name");
+  return name_node ? (name_node.text as SymbolName) : null;
+}
 
 /**
  * Process captures directly into LexicalScope objects (single pass)
@@ -112,20 +176,14 @@ export function process_scopes(
     // Find parent scope using position containment
     const parent = find_containing_scope(location, root_scope_id, scopes);
 
+    // Extract the scope name from the tree-sitter node
+    const scope_name = extract_scope_name(capture.node, scope_type);
 
-    // Block scopes don't have a meaningful name
-    const symbol_name =
-      capture.text || (scope_type === "block" ? "" : undefined);
-    if (!symbol_name && scope_type !== "block") {
-      throw new Error(
-        `Symbol name not found at location: ${location.start_line}:${location.start_column}`
-      );
-    }
     // Create the scope with parent reference
     const scope: LexicalScope = {
       id: scope_id,
       parent_id: parent.id,
-      name: (symbol_name || "") as SymbolName,
+      name: scope_name,
       type: scope_type,
       location,
       child_ids: [],

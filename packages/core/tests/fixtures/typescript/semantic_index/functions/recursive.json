@@ -28,7 +28,7 @@
     "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/recursive.ts:6:19:11:1": {
       "id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/recursive.ts:6:19:11:1",
       "parent_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/recursive.ts:1:1:58:0",
-      "name": "function factorial(n: number): number {\n  if (n <= 1) {\n    return 1;\n  }\n  return n * factorial(n - 1);\n}",
+      "name": "factorial",
       "type": "function",
       "location": {
         "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/recursive.ts",
@@ -44,7 +44,7 @@
     "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/recursive.ts:7:3:9:3": {
       "id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/recursive.ts:7:3:9:3",
       "parent_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/recursive.ts:6:19:11:1",
-      "name": "if (n <= 1) {\n    return 1;\n  }",
+      "name": null,
       "type": "block",
       "location": {
         "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/recursive.ts",
@@ -58,7 +58,7 @@
     "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/recursive.ts:13:19:18:1": {
       "id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/recursive.ts:13:19:18:1",
       "parent_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/recursive.ts:1:1:58:0",
-      "name": "function fibonacci(n: number): number {\n  if (n <= 1) {\n    return n;\n  }\n  return fibonacci(n - 1) + fibonacci(n - 2);\n}",
+      "name": "fibonacci",
       "type": "function",
       "location": {
         "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/recursive.ts",
@@ -74,7 +74,7 @@
     "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/recursive.ts:14:3:16:3": {
       "id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/recursive.ts:14:3:16:3",
       "parent_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/recursive.ts:13:19:18:1",
-      "name": "if (n <= 1) {\n    return n;\n  }",
+      "name": null,
       "type": "block",
       "location": {
         "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/recursive.ts",
@@ -88,7 +88,7 @@
     "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/recursive.ts:20:18:26:1": {
       "id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/recursive.ts:20:18:26:1",
       "parent_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/recursive.ts:1:1:58:0",
-      "name": "function sumArray(arr: number[]): number {\n  if (arr.length === 0) {\n    return 0;\n  }\n  const [first, ...rest] = arr;\n  return first + sumArray(rest);\n}",
+      "name": "sumArray",
       "type": "function",
       "location": {
         "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/recursive.ts",
@@ -104,7 +104,7 @@
     "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/recursive.ts:21:3:23:3": {
       "id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/recursive.ts:21:3:23:3",
       "parent_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/recursive.ts:20:18:26:1",
-      "name": "if (arr.length === 0) {\n    return 0;\n  }",
+      "name": null,
       "type": "block",
       "location": {
         "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/recursive.ts",
@@ -118,7 +118,7 @@
     "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/recursive.ts:29:16:34:1": {
       "id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/recursive.ts:29:16:34:1",
       "parent_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/recursive.ts:1:1:58:0",
-      "name": "function isEven(n: number): boolean {\n  if (n === 0) {\n    return true;\n  }\n  return isOdd(n - 1);\n}",
+      "name": "isEven",
       "type": "function",
       "location": {
         "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/recursive.ts",
@@ -134,7 +134,7 @@
     "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/recursive.ts:30:3:32:3": {
       "id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/recursive.ts:30:3:32:3",
       "parent_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/recursive.ts:29:16:34:1",
-      "name": "if (n === 0) {\n    return true;\n  }",
+      "name": null,
       "type": "block",
       "location": {
         "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/recursive.ts",
@@ -148,7 +148,7 @@
     "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/recursive.ts:36:15:41:1": {
       "id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/recursive.ts:36:15:41:1",
       "parent_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/recursive.ts:1:1:58:0",
-      "name": "function isOdd(n: number): boolean {\n  if (n === 0) {\n    return false;\n  }\n  return isEven(n - 1);\n}",
+      "name": "isOdd",
       "type": "function",
       "location": {
         "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/recursive.ts",
@@ -164,7 +164,7 @@
     "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/recursive.ts:37:3:39:3": {
       "id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/recursive.ts:37:3:39:3",
       "parent_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/recursive.ts:36:15:41:1",
-      "name": "if (n === 0) {\n    return false;\n  }",
+      "name": null,
       "type": "block",
       "location": {
         "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/recursive.ts",
@@ -178,7 +178,7 @@
     "class:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/recursive.ts:44:20:48:1": {
       "id": "class:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/recursive.ts:44:20:48:1",
       "parent_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/recursive.ts:1:1:58:0",
-      "name": "{\n  value: number;\n  left?: TreeNode;\n  right?: TreeNode;\n}",
+      "name": "TreeNode",
       "type": "class",
       "location": {
         "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/recursive.ts",
@@ -192,7 +192,7 @@
     "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/recursive.ts:50:17:55:1": {
       "id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/recursive.ts:50:17:55:1",
       "parent_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/recursive.ts:1:1:58:0",
-      "name": "function sumTree(node: TreeNode | undefined): number {\n  if (!node) {\n    return 0;\n  }\n  return node.value + sumTree(node.left) + sumTree(node.right);\n}",
+      "name": "sumTree",
       "type": "function",
       "location": {
         "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/recursive.ts",
@@ -208,7 +208,7 @@
     "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/recursive.ts:51:3:53:3": {
       "id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/recursive.ts:51:3:53:3",
       "parent_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/recursive.ts:50:17:55:1",
-      "name": "if (!node) {\n    return 0;\n  }",
+      "name": null,
       "type": "block",
       "location": {
         "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/recursive.ts",
@@ -428,7 +428,7 @@
         "return_type": "boolean"
       },
       "return_type": "boolean",
-      "body_scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/recursive.ts:29:16:34:1"
+      "body_scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/recursive.ts:36:15:41:1"
     },
     "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/recursive.ts:50:10:50:16:sumTree": {
       "kind": "function",

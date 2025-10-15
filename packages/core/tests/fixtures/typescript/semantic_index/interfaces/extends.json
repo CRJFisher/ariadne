@@ -28,7 +28,7 @@
     "class:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/interfaces/extends.ts:6:17:8:1": {
       "id": "class:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/interfaces/extends.ts:6:17:8:1",
       "parent_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/interfaces/extends.ts:1:1:42:0",
-      "name": "{\n  name: string;\n}",
+      "name": "Named",
       "type": "class",
       "location": {
         "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/interfaces/extends.ts",
@@ -42,7 +42,7 @@
     "class:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/interfaces/extends.ts:10:24:12:1": {
       "id": "class:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/interfaces/extends.ts:10:24:12:1",
       "parent_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/interfaces/extends.ts:1:1:42:0",
-      "name": "{\n  id: number;\n}",
+      "name": "Identifiable",
       "type": "class",
       "location": {
         "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/interfaces/extends.ts",
@@ -56,7 +56,7 @@
     "class:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/interfaces/extends.ts:14:23:17:1": {
       "id": "class:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/interfaces/extends.ts:14:23:17:1",
       "parent_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/interfaces/extends.ts:1:1:42:0",
-      "name": "{\n  createdAt: Date;\n  updatedAt: Date;\n}",
+      "name": "Timestamped",
       "type": "class",
       "location": {
         "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/interfaces/extends.ts",
@@ -70,7 +70,7 @@
     "class:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/interfaces/extends.ts:20:32:23:1": {
       "id": "class:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/interfaces/extends.ts:20:32:23:1",
       "parent_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/interfaces/extends.ts:1:1:42:0",
-      "name": "{\n  age: number;\n  email: string;\n}",
+      "name": "Person",
       "type": "class",
       "location": {
         "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/interfaces/extends.ts",
@@ -84,7 +84,7 @@
     "class:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/interfaces/extends.ts:26:48:29:1": {
       "id": "class:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/interfaces/extends.ts:26:48:29:1",
       "parent_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/interfaces/extends.ts:1:1:42:0",
-      "name": "{\n  department: string;\n  salary: number;\n}",
+      "name": "Employee",
       "type": "class",
       "location": {
         "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/interfaces/extends.ts",
@@ -98,7 +98,7 @@
     "class:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/interfaces/extends.ts:32:52:34:1": {
       "id": "class:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/interfaces/extends.ts:32:52:34:1",
       "parent_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/interfaces/extends.ts:1:1:42:0",
-      "name": "{\n  version: number;\n}",
+      "name": "Entity",
       "type": "class",
       "location": {
         "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/interfaces/extends.ts",
@@ -112,7 +112,7 @@
     "class:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/interfaces/extends.ts:36:38:39:1": {
       "id": "class:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/interfaces/extends.ts:36:38:39:1",
       "parent_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/interfaces/extends.ts:1:1:42:0",
-      "name": "{\n  email: string;\n  active: boolean;\n}",
+      "name": "User",
       "type": "class",
       "location": {
         "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/interfaces/extends.ts",

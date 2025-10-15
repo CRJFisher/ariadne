@@ -26,7 +26,7 @@
     "class:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs:4:13:8:1": {
       "id": "class:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs:4:13:8:1",
       "parent_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs:1:1:51:0",
-      "name": "{\n    name: String,\n    email: String,\n    age: u32,\n}",
+      "name": null,
       "type": "class",
       "location": {
         "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs",
@@ -40,7 +40,7 @@
     "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs:10:11:26:1": {
       "id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs:10:11:26:1",
       "parent_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs:1:1:51:0",
-      "name": "{\n    fn new(name: String, email: String, age: u32) -> Self {\n        User { name, email, age }\n    }\n\n    fn greet(&self) -> String {\n        format!(\"Hello, I'm {}\", self.name)\n    }\n\n    fn get_age(&self) -> u32 {\n        self.age\n    }\n\n    fn set_age(&mut self, age: u32) {\n        self.age = age;\n    }\n}",
+      "name": null,
       "type": "block",
       "location": {
         "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs",
@@ -59,7 +59,7 @@
     "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs:11:11:13:5": {
       "id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs:11:11:13:5",
       "parent_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs:10:11:26:1",
-      "name": "fn new(name: String, email: String, age: u32) -> Self {\n        User { name, email, age }\n    }",
+      "name": "new",
       "type": "function",
       "location": {
         "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs",
@@ -73,7 +73,7 @@
     "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs:15:13:17:5": {
       "id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs:15:13:17:5",
       "parent_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs:10:11:26:1",
-      "name": "fn greet(&self) -> String {\n        format!(\"Hello, I'm {}\", self.name)\n    }",
+      "name": "greet",
       "type": "function",
       "location": {
         "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs",
@@ -87,7 +87,7 @@
     "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs:19:15:21:5": {
       "id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs:19:15:21:5",
       "parent_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs:10:11:26:1",
-      "name": "fn get_age(&self) -> u32 {\n        self.age\n    }",
+      "name": "get_age",
       "type": "function",
       "location": {
         "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs",
@@ -101,7 +101,7 @@
     "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs:23:15:25:5": {
       "id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs:23:15:25:5",
       "parent_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs:10:11:26:1",
-      "name": "fn set_age(&mut self, age: u32) {\n        self.age = age;\n    }",
+      "name": "set_age",
       "type": "function",
       "location": {
         "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs",
@@ -115,7 +115,7 @@
     "class:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs:28:14:31:1": {
       "id": "class:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs:28:14:31:1",
       "parent_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs:1:1:51:0",
-      "name": "{\n    x: f64,\n    y: f64,\n}",
+      "name": null,
       "type": "class",
       "location": {
         "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs",
@@ -129,7 +129,7 @@
     "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs:33:12:41:1": {
       "id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs:33:12:41:1",
       "parent_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs:1:1:51:0",
-      "name": "{\n    fn new(x: f64, y: f64) -> Self {\n        Point { x, y }\n    }\n\n    fn distance_from_origin(&self) -> f64 {\n        (self.x * self.x + self.y * self.y).sqrt()\n    }\n}",
+      "name": null,
       "type": "block",
       "location": {
         "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs",
@@ -146,7 +146,7 @@
     "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs:34:11:36:5": {
       "id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs:34:11:36:5",
       "parent_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs:33:12:41:1",
-      "name": "fn new(x: f64, y: f64) -> Self {\n        Point { x, y }\n    }",
+      "name": "new",
       "type": "function",
       "location": {
         "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs",
@@ -160,7 +160,7 @@
     "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs:38:28:40:5": {
       "id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs:38:28:40:5",
       "parent_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs:33:12:41:1",
-      "name": "fn distance_from_origin(&self) -> f64 {\n        (self.x * self.x + self.y * self.y).sqrt()\n    }",
+      "name": "distance_from_origin",
       "type": "function",
       "location": {
         "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs",
@@ -174,7 +174,7 @@
     "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs:43:12:50:1": {
       "id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs:43:12:50:1",
       "parent_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs:1:1:51:0",
-      "name": "pub fn main() {\n    let user = User::new(\n        String::from(\"Alice\"),\n        String::from(\"alice@example.com\"),\n        30,\n    );\n    println!(\"{}\", user.greet());\n}",
+      "name": "main",
       "type": "function",
       "location": {
         "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs",

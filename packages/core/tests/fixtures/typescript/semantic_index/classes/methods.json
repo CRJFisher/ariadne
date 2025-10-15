@@ -22,7 +22,7 @@
     "class:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/classes/methods.ts:6:18:34:1": {
       "id": "class:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/classes/methods.ts:6:18:34:1",
       "parent_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/classes/methods.ts:1:1:37:0",
-      "name": "{\n  static readonly VERSION = \"1.0.0\";\n  private history: number[] = [];\n\n  // Instance method\n  add(a: number, b: number): number {\n    const result = a + b;\n    this.history.push(result);\n    return result;\n  }\n\n  // Instance method\n  getHistory(): number[] {\n    return this.history;\n  }\n\n  // Static method\n  static multiply(a: number, b: number): number {\n    return a * b;\n  }\n\n  // Static method\n  static divide(a: number, b: number): number {\n    if (b === 0) {\n      throw new Error(\"Division by zero\");\n    }\n    return a / b;\n  }\n}",
+      "name": "Calculator",
       "type": "class",
       "location": {
         "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/classes/methods.ts",
@@ -41,7 +41,7 @@
     "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/classes/methods.ts:11:6:15:3": {
       "id": "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/classes/methods.ts:11:6:15:3",
       "parent_id": "class:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/classes/methods.ts:6:18:34:1",
-      "name": "add(a: number, b: number): number {\n    const result = a + b;\n    this.history.push(result);\n    return result;\n  }",
+      "name": "add",
       "type": "method",
       "location": {
         "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/classes/methods.ts",
@@ -55,7 +55,7 @@
     "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/classes/methods.ts:18:13:20:3": {
       "id": "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/classes/methods.ts:18:13:20:3",
       "parent_id": "class:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/classes/methods.ts:6:18:34:1",
-      "name": "getHistory(): number[] {\n    return this.history;\n  }",
+      "name": "getHistory",
       "type": "method",
       "location": {
         "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/classes/methods.ts",
@@ -69,7 +69,7 @@
     "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/classes/methods.ts:23:18:25:3": {
       "id": "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/classes/methods.ts:23:18:25:3",
       "parent_id": "class:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/classes/methods.ts:6:18:34:1",
-      "name": "static multiply(a: number, b: number): number {\n    return a * b;\n  }",
+      "name": "multiply",
       "type": "method",
       "location": {
         "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/classes/methods.ts",
@@ -83,7 +83,7 @@
     "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/classes/methods.ts:28:16:33:3": {
       "id": "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/classes/methods.ts:28:16:33:3",
       "parent_id": "class:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/classes/methods.ts:6:18:34:1",
-      "name": "static divide(a: number, b: number): number {\n    if (b === 0) {\n      throw new Error(\"Division by zero\");\n    }\n    return a / b;\n  }",
+      "name": "divide",
       "type": "method",
       "location": {
         "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/classes/methods.ts",
@@ -99,7 +99,7 @@
     "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/classes/methods.ts:29:5:31:5": {
       "id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/classes/methods.ts:29:5:31:5",
       "parent_id": "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/classes/methods.ts:28:16:33:3",
-      "name": "if (b === 0) {\n      throw new Error(\"Division by zero\");\n    }",
+      "name": null,
       "type": "block",
       "location": {
         "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/classes/methods.ts",
@@ -154,8 +154,8 @@
             "entity": "method",
             "name": "definition.method",
             "node": {
-              "0": 4262874448,
-              "1": 32748,
+              "0": 2004089152,
+              "1": 32687,
               "2": 432,
               "3": 10,
               "4": 4,
@@ -6924,8 +6924,8 @@
             "entity": "method",
             "name": "definition.method",
             "node": {
-              "0": 4262880080,
-              "1": 32748,
+              "0": 2004094784,
+              "1": 32687,
               "2": 712,
               "3": 17,
               "4": 4,
@@ -13663,8 +13663,8 @@
             "entity": "method",
             "name": "definition.method",
             "node": {
-              "0": 4262882080,
-              "1": 32748,
+              "0": 2004096784,
+              "1": 32687,
               "2": 878,
               "3": 22,
               "4": 18,
@@ -20433,8 +20433,8 @@
             "entity": "method",
             "name": "definition.method",
             "node": {
-              "0": 4262885520,
-              "1": 32748,
+              "0": 2004100224,
+              "1": 32687,
               "2": 1062,
               "3": 27,
               "4": 18,

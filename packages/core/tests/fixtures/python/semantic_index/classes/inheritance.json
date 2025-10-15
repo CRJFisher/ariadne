@@ -24,7 +24,7 @@
     "class:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/classes/inheritance.py:17:19:26:44": {
       "id": "class:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/classes/inheritance.py:17:19:26:44",
       "parent_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/classes/inheritance.py:1:1:35:0",
-      "name": "def __init__(self, name: str, breed: str):\n        super().__init__(name)\n        self.breed = breed\n\n    def speak(self) -> str:\n        return \"Woof!\"\n\n    def fetch(self, item: str):\n        print(f\"{self.name} fetched {item}\")",
+      "name": null,
       "type": "class",
       "location": {
         "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/classes/inheritance.py",
@@ -42,7 +42,7 @@
     "class:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/classes/inheritance.py:6:14:14:53": {
       "id": "class:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/classes/inheritance.py:6:14:14:53",
       "parent_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/classes/inheritance.py:1:1:35:0",
-      "name": "def __init__(self, name: str):\n        self.name = name\n\n    def speak(self) -> str:\n        raise NotImplementedError(\"Subclass must implement speak()\")\n\n    def move(self, distance: int = 0):\n        print(f\"{self.name} moved {distance} meters\")",
+      "name": null,
       "type": "class",
       "location": {
         "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/classes/inheritance.py",
@@ -60,7 +60,7 @@
     "class:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/classes/inheritance.py:29:19:34:41": {
       "id": "class:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/classes/inheritance.py:29:19:34:41",
       "parent_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/classes/inheritance.py:1:1:35:0",
-      "name": "def speak(self) -> str:\n        return \"Meow!\"\n\n    def climb(self):\n        print(f\"{self.name} is climbing\")",
+      "name": null,
       "type": "class",
       "location": {
         "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/classes/inheritance.py",
@@ -77,7 +77,7 @@
     "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/classes/inheritance.py:18:17:20:26": {
       "id": "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/classes/inheritance.py:18:17:20:26",
       "parent_id": "class:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/classes/inheritance.py:17:19:26:44",
-      "name": "def __init__(self, name: str, breed: str):\n        super().__init__(name)\n        self.breed = breed",
+      "name": "__init__",
       "type": "method",
       "location": {
         "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/classes/inheritance.py",
@@ -93,7 +93,7 @@
     "constructor:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/classes/inheritance.py:18:17:20:26": {
       "id": "constructor:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/classes/inheritance.py:18:17:20:26",
       "parent_id": "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/classes/inheritance.py:18:17:20:26",
-      "name": "def __init__(self, name: str, breed: str):\n        super().__init__(name)\n        self.breed = breed",
+      "name": "__init__",
       "type": "constructor",
       "location": {
         "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/classes/inheritance.py",
@@ -107,7 +107,7 @@
     "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/classes/inheritance.py:10:14:11:68": {
       "id": "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/classes/inheritance.py:10:14:11:68",
       "parent_id": "class:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/classes/inheritance.py:6:14:14:53",
-      "name": "def speak(self) -> str:\n        raise NotImplementedError(\"Subclass must implement speak()\")",
+      "name": "speak",
       "type": "method",
       "location": {
         "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/classes/inheritance.py",
@@ -121,7 +121,7 @@
     "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/classes/inheritance.py:13:13:14:53": {
       "id": "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/classes/inheritance.py:13:13:14:53",
       "parent_id": "class:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/classes/inheritance.py:6:14:14:53",
-      "name": "def move(self, distance: int = 0):\n        print(f\"{self.name} moved {distance} meters\")",
+      "name": "move",
       "type": "method",
       "location": {
         "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/classes/inheritance.py",
@@ -135,7 +135,7 @@
     "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/classes/inheritance.py:25:14:26:44": {
       "id": "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/classes/inheritance.py:25:14:26:44",
       "parent_id": "class:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/classes/inheritance.py:17:19:26:44",
-      "name": "def fetch(self, item: str):\n        print(f\"{self.name} fetched {item}\")",
+      "name": "fetch",
       "type": "method",
       "location": {
         "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/classes/inheritance.py",
@@ -149,7 +149,7 @@
     "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/classes/inheritance.py:33:14:34:41": {
       "id": "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/classes/inheritance.py:33:14:34:41",
       "parent_id": "class:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/classes/inheritance.py:29:19:34:41",
-      "name": "def climb(self):\n        print(f\"{self.name} is climbing\")",
+      "name": "climb",
       "type": "method",
       "location": {
         "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/classes/inheritance.py",
@@ -163,7 +163,7 @@
     "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/classes/inheritance.py:7:17:8:24": {
       "id": "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/classes/inheritance.py:7:17:8:24",
       "parent_id": "class:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/classes/inheritance.py:6:14:14:53",
-      "name": "def __init__(self, name: str):\n        self.name = name",
+      "name": "__init__",
       "type": "method",
       "location": {
         "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/classes/inheritance.py",
@@ -179,7 +179,7 @@
     "constructor:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/classes/inheritance.py:7:17:8:24": {
       "id": "constructor:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/classes/inheritance.py:7:17:8:24",
       "parent_id": "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/classes/inheritance.py:7:17:8:24",
-      "name": "def __init__(self, name: str):\n        self.name = name",
+      "name": "__init__",
       "type": "constructor",
       "location": {
         "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/classes/inheritance.py",
@@ -193,7 +193,7 @@
     "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/classes/inheritance.py:22:14:23:22": {
       "id": "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/classes/inheritance.py:22:14:23:22",
       "parent_id": "class:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/classes/inheritance.py:17:19:26:44",
-      "name": "def speak(self) -> str:\n        return \"Woof!\"",
+      "name": "speak",
       "type": "method",
       "location": {
         "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/classes/inheritance.py",
@@ -207,7 +207,7 @@
     "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/classes/inheritance.py:30:14:31:22": {
       "id": "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/classes/inheritance.py:30:14:31:22",
       "parent_id": "class:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/classes/inheritance.py:29:19:34:41",
-      "name": "def speak(self) -> str:\n        return \"Meow!\"",
+      "name": "speak",
       "type": "method",
       "location": {
         "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/classes/inheritance.py",

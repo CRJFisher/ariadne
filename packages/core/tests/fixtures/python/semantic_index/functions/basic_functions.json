@@ -28,7 +28,7 @@
     "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:22:21:28:21": {
       "id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:22:21:28:21",
       "parent_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:1:1:43:0",
-      "name": "def multiple_returns(value: int) -> str:\n    if value > 0:\n        return \"positive\"\n    elif value < 0:\n        return \"negative\"\n    else:\n        return \"zero\"",
+      "name": "multiple_returns",
       "type": "function",
       "location": {
         "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py",
@@ -44,7 +44,7 @@
     "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:23:5:28:21": {
       "id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:23:5:28:21",
       "parent_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:22:21:28:21",
-      "name": "if value > 0:\n        return \"positive\"\n    elif value < 0:\n        return \"negative\"\n    else:\n        return \"zero\"",
+      "name": null,
       "type": "block",
       "location": {
         "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py",
@@ -61,7 +61,7 @@
     "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:14:17:19:5": {
       "id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:14:17:19:5",
       "parent_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:1:1:43:0",
-      "name": "def process_user(name: str, age: int, active: bool = True) -> dict:\n    return {\n        \"name\": name,\n        \"age\": age,\n        \"active\": active,\n    }",
+      "name": "process_user",
       "type": "function",
       "location": {
         "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py",
@@ -75,7 +75,7 @@
     "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:31:15:34:17": {
       "id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:31:15:34:17",
       "parent_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:1:1:43:0",
-      "name": "def call_chain():\n    data = fetch_data()\n    result = transform_data(data)\n    return result",
+      "name": "call_chain",
       "type": "function",
       "location": {
         "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py",
@@ -89,7 +89,7 @@
     "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:6:10:7:28": {
       "id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:6:10:7:28",
       "parent_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:1:1:43:0",
-      "name": "def greet(name: str) -> str:\n    return f\"Hello, {name}!\"",
+      "name": "greet",
       "type": "function",
       "location": {
         "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py",
@@ -103,7 +103,7 @@
     "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:41:19:42:28": {
       "id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:41:19:42:28",
       "parent_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:1:1:43:0",
-      "name": "def transform_data(data: dict):\n    return data[\"value\"] * 2",
+      "name": "transform_data",
       "type": "function",
       "location": {
         "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py",
@@ -117,7 +117,7 @@
     "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:37:15:38:24": {
       "id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:37:15:38:24",
       "parent_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:1:1:43:0",
-      "name": "def fetch_data():\n    return {\"value\": 42}",
+      "name": "fetch_data",
       "type": "function",
       "location": {
         "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py",
@@ -131,7 +131,7 @@
     "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:25:5:26:25": {
       "id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:25:5:26:25",
       "parent_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:23:5:28:21",
-      "name": "elif value < 0:\n        return \"negative\"",
+      "name": null,
       "type": "block",
       "location": {
         "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py",
@@ -145,7 +145,7 @@
     "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:27:5:28:21": {
       "id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:27:5:28:21",
       "parent_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:23:5:28:21",
-      "name": "else:\n        return \"zero\"",
+      "name": null,
       "type": "block",
       "location": {
         "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py",
@@ -159,7 +159,7 @@
     "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:10:8:11:16": {
       "id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:10:8:11:16",
       "parent_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:1:1:43:0",
-      "name": "def add(a: int, b: int) -> int:\n    return a + b",
+      "name": "add",
       "type": "function",
       "location": {
         "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py",

@@ -41,15 +41,76 @@ describe("scope_processor", () => {
     location: Location,
     symbol_name: string = "test"
   ): CaptureNode {
-    const mock_node = {
+    // Map entity types to proper tree-sitter node types
+    const node_type_map: Record<string, string> = {
+      "class": "class_declaration",
+      "interface": "interface_declaration",
+      "enum": "enum_declaration",
+      "function": "function_declaration",
+      "method": "method_definition",
+      "constructor": "method_definition",
+      "block": "block",
+    };
+
+    const node_type = node_type_map[entity] || entity;
+
+    // Create mock name node
+    const name_node = {
       text: symbol_name,
+      type: "identifier",
       startPosition: {
         row: location.start_line - 1,
         column: location.start_column,
       },
       endPosition: { row: location.end_line - 1, column: location.end_column },
-      // Mock childForFieldName to return null (no parameters node in mock)
-      childForFieldName: () => null,
+    };
+
+    // Create mock body node (for class/interface/enum)
+    const body_node = {
+      text: "{ }",
+      type: node_type.includes("class") ? "class_body" :
+            node_type.includes("interface") ? "interface_body" :
+            node_type.includes("enum") ? "enum_body" : "block",
+      startPosition: {
+        row: location.start_line - 1,
+        column: location.start_column,
+      },
+      endPosition: { row: location.end_line - 1, column: location.end_column },
+    };
+
+    // Create mock parameters node (for functions)
+    const params_node = {
+      text: "()",
+      type: "formal_parameters",
+      startPosition: {
+        row: location.start_line - 1,
+        column: location.start_column,
+      },
+      endPosition: { row: location.end_line - 1, column: location.end_column },
+    };
+
+    const mock_node = {
+      text: symbol_name,
+      type: node_type,
+      startPosition: {
+        row: location.start_line - 1,
+        column: location.start_column,
+      },
+      endPosition: { row: location.end_line - 1, column: location.end_column },
+      // Mock childForFieldName to return appropriate nodes
+      childForFieldName: (field: string) => {
+        if (field === "name") {
+          return name_node as any;
+        }
+        if (field === "body") {
+          return body_node as any;
+        }
+        if (field === "parameters") {
+          return params_node as any;
+        }
+        return null;
+      },
+      parent: null,
     };
 
     return {

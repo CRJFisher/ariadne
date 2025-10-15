@@ -24,7 +24,7 @@
     "class:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/classes/inheritance.ts:6:23:14:1": {
       "id": "class:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/classes/inheritance.ts:6:23:14:1",
       "parent_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/classes/inheritance.ts:1:1:37:0",
-      "name": "{\n  constructor(public name: string) {}\n\n  abstract makeSound(): string;\n\n  move(distance: number = 0): void {\n    console.log(`${this.name} moved ${distance} meters`);\n  }\n}",
+      "name": "Animal",
       "type": "class",
       "location": {
         "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/classes/inheritance.ts",
@@ -41,7 +41,7 @@
     "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/classes/inheritance.ts:7:14:7:37": {
       "id": "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/classes/inheritance.ts:7:14:7:37",
       "parent_id": "class:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/classes/inheritance.ts:6:23:14:1",
-      "name": "constructor(public name: string) {}",
+      "name": "constructor",
       "type": "method",
       "location": {
         "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/classes/inheritance.ts",
@@ -57,7 +57,7 @@
     "constructor:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/classes/inheritance.ts:7:14:7:37": {
       "id": "constructor:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/classes/inheritance.ts:7:14:7:37",
       "parent_id": "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/classes/inheritance.ts:7:14:7:37",
-      "name": "constructor(public name: string) {}",
+      "name": "constructor",
       "type": "constructor",
       "location": {
         "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/classes/inheritance.ts",
@@ -71,7 +71,7 @@
     "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/classes/inheritance.ts:11:7:13:3": {
       "id": "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/classes/inheritance.ts:11:7:13:3",
       "parent_id": "class:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/classes/inheritance.ts:6:23:14:1",
-      "name": "move(distance: number = 0): void {\n    console.log(`${this.name} moved ${distance} meters`);\n  }",
+      "name": "move",
       "type": "method",
       "location": {
         "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/classes/inheritance.ts",
@@ -85,7 +85,7 @@
     "class:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/classes/inheritance.ts:16:26:28:1": {
       "id": "class:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/classes/inheritance.ts:16:26:28:1",
       "parent_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/classes/inheritance.ts:1:1:37:0",
-      "name": "{\n  constructor(name: string) {\n    super(name);\n  }\n\n  makeSound(): string {\n    return \"Woof!\";\n  }\n\n  fetch(item: string): void {\n    console.log(`${this.name} fetched ${item}`);\n  }\n}",
+      "name": "Dog",
       "type": "class",
       "location": {
         "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/classes/inheritance.ts",
@@ -103,7 +103,7 @@
     "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/classes/inheritance.ts:17:14:19:3": {
       "id": "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/classes/inheritance.ts:17:14:19:3",
       "parent_id": "class:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/classes/inheritance.ts:16:26:28:1",
-      "name": "constructor(name: string) {\n    super(name);\n  }",
+      "name": "constructor",
       "type": "method",
       "location": {
         "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/classes/inheritance.ts",
@@ -119,7 +119,7 @@
     "constructor:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/classes/inheritance.ts:17:14:19:3": {
       "id": "constructor:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/classes/inheritance.ts:17:14:19:3",
       "parent_id": "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/classes/inheritance.ts:17:14:19:3",
-      "name": "constructor(name: string) {\n    super(name);\n  }",
+      "name": "constructor",
       "type": "constructor",
       "location": {
         "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/classes/inheritance.ts",
@@ -133,7 +133,7 @@
     "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/classes/inheritance.ts:21:12:23:3": {
       "id": "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/classes/inheritance.ts:21:12:23:3",
       "parent_id": "class:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/classes/inheritance.ts:16:26:28:1",
-      "name": "makeSound(): string {\n    return \"Woof!\";\n  }",
+      "name": "makeSound",
       "type": "method",
       "location": {
         "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/classes/inheritance.ts",
@@ -147,7 +147,7 @@
     "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/classes/inheritance.ts:25:8:27:3": {
       "id": "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/classes/inheritance.ts:25:8:27:3",
       "parent_id": "class:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/classes/inheritance.ts:16:26:28:1",
-      "name": "fetch(item: string): void {\n    console.log(`${this.name} fetched ${item}`);\n  }",
+      "name": "fetch",
       "type": "method",
       "location": {
         "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/classes/inheritance.ts",
@@ -161,7 +161,7 @@
     "class:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/classes/inheritance.ts:30:26:34:1": {
       "id": "class:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/classes/inheritance.ts:30:26:34:1",
       "parent_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/classes/inheritance.ts:1:1:37:0",
-      "name": "{\n  makeSound(): string {\n    return \"Meow!\";\n  }\n}",
+      "name": "Cat",
       "type": "class",
       "location": {
         "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/classes/inheritance.ts",
@@ -177,7 +177,7 @@
     "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/classes/inheritance.ts:31:12:33:3": {
       "id": "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/classes/inheritance.ts:31:12:33:3",
       "parent_id": "class:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/classes/inheritance.ts:30:26:34:1",
-      "name": "makeSound(): string {\n    return \"Meow!\";\n  }",
+      "name": "makeSound",
       "type": "method",
       "location": {
         "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/classes/inheritance.ts",
@@ -231,8 +231,8 @@
             "entity": "method",
             "name": "definition.method",
             "node": {
-              "0": 4264242400,
-              "1": 32748,
+              "0": 3087900736,
+              "1": 32687,
               "2": 260,
               "3": 6,
               "4": 4,
@@ -6986,8 +6986,8 @@
             "entity": "method",
             "name": "definition.method",
             "node": {
-              "0": 4264244832,
-              "1": 32748,
+              "0": 3087903104,
+              "1": 32687,
               "2": 404,
               "3": 10,
               "4": 4,
@@ -13798,8 +13798,8 @@
             "entity": "method",
             "name": "definition.method",
             "node": {
-              "0": 4264250448,
-              "1": 32748,
+              "0": 3087908720,
+              "1": 32687,
               "2": 662,
               "3": 16,
               "4": 4,
@@ -20553,8 +20553,8 @@
             "entity": "method",
             "name": "definition.method",
             "node": {
-              "0": 4264252800,
-              "1": 32748,
+              "0": 3087911072,
+              "1": 32687,
               "2": 766,
               "3": 20,
               "4": 4,
@@ -27292,8 +27292,8 @@
             "entity": "method",
             "name": "definition.method",
             "node": {
-              "0": 4264254480,
-              "1": 32748,
+              "0": 3087912752,
+              "1": 32687,
               "2": 864,
               "3": 24,
               "4": 4,
@@ -34045,8 +34045,8 @@
             "entity": "constructor",
             "name": "definition.constructor",
             "node": {
-              "0": 4264250448,
-              "1": 32748,
+              "0": 3087908720,
+              "1": 32687,
               "2": 662,
               "3": 16,
               "4": 4,
@@ -40806,8 +40806,8 @@
             "entity": "method",
             "name": "definition.method",
             "node": {
-              "0": 4264259808,
-              "1": 32748,
+              "0": 3087918080,
+              "1": 32687,
               "2": 1090,
               "3": 30,
               "4": 4,

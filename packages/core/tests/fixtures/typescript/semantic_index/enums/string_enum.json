@@ -29,7 +29,7 @@
     "class:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts:7:15:13:1": {
       "id": "class:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts:7:15:13:1",
       "parent_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts:1:1:61:0",
-      "name": "{\n  Debug = \"DEBUG\",\n  Info = \"INFO\",\n  Warning = \"WARNING\",\n  Error = \"ERROR\",\n  Fatal = \"FATAL\",\n}",
+      "name": "LogLevel",
       "type": "class",
       "location": {
         "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts",
@@ -43,7 +43,7 @@
     "class:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts:15:17:21:1": {
       "id": "class:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts:15:17:21:1",
       "parent_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts:1:1:61:0",
-      "name": "{\n  Get = \"GET\",\n  Post = \"POST\",\n  Put = \"PUT\",\n  Delete = \"DELETE\",\n  Patch = \"PATCH\",\n}",
+      "name": "HttpMethod",
       "type": "class",
       "location": {
         "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts",
@@ -57,7 +57,7 @@
     "class:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts:23:18:27:1": {
       "id": "class:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts:23:18:27:1",
       "parent_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts:1:1:61:0",
-      "name": "{\n  Development = \"dev\",\n  Staging = \"staging\",\n  Production = \"prod\",\n}",
+      "name": "Environment",
       "type": "class",
       "location": {
         "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts",
@@ -71,7 +71,7 @@
     "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts:30:13:32:1": {
       "id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts:30:13:32:1",
       "parent_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts:1:1:61:0",
-      "name": "function log(level: LogLevel, message: string): void {\n  console.log(`[${level}] ${message}`);\n}",
+      "name": "log",
       "type": "function",
       "location": {
         "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts",
@@ -85,7 +85,7 @@
     "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts:34:21:36:1": {
       "id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts:34:21:36:1",
       "parent_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts:1:1:61:0",
-      "name": "function makeRequest(method: HttpMethod, url: string): Promise<Response> {\n  return fetch(url, { method });\n}",
+      "name": "makeRequest",
       "type": "function",
       "location": {
         "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts",
@@ -99,7 +99,7 @@
     "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts:38:19:47:1": {
       "id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts:38:19:47:1",
       "parent_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts:1:1:61:0",
-      "name": "function getApiUrl(env: Environment): string {\n  switch (env) {\n    case Environment.Development:\n      return \"http://localhost:3000\";\n    case Environment.Staging:\n      return \"https://staging.example.com\";\n    case Environment.Production:\n      return \"https://api.example.com\";\n  }\n}",
+      "name": "getApiUrl",
       "type": "function",
       "location": {
         "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts",
@@ -115,7 +115,7 @@
     "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts:39:3:46:3": {
       "id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts:39:3:46:3",
       "parent_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts:38:19:47:1",
-      "name": "switch (env) {\n    case Environment.Development:\n      return \"http://localhost:3000\";\n    case Environment.Staging:\n      return \"https://staging.example.com\";\n    case Environment.Production:\n      return \"https://api.example.com\";\n  }",
+      "name": null,
       "type": "block",
       "location": {
         "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts",
@@ -133,7 +133,7 @@
     "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts:40:5:41:37": {
       "id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts:40:5:41:37",
       "parent_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts:39:3:46:3",
-      "name": "case Environment.Development:\n      return \"http://localhost:3000\";",
+      "name": null,
       "type": "block",
       "location": {
         "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts",
@@ -147,7 +147,7 @@
     "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts:42:5:43:43": {
       "id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts:42:5:43:43",
       "parent_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts:39:3:46:3",
-      "name": "case Environment.Staging:\n      return \"https://staging.example.com\";",
+      "name": null,
       "type": "block",
       "location": {
         "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts",
@@ -161,7 +161,7 @@
     "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts:44:5:45:39": {
       "id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts:44:5:45:39",
       "parent_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts:39:3:46:3",
-      "name": "case Environment.Production:\n      return \"https://api.example.com\";",
+      "name": null,
       "type": "block",
       "location": {
         "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts",
@@ -175,7 +175,7 @@
     "class:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts:50:18:54:1": {
       "id": "class:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts:50:18:54:1",
       "parent_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts:1:1:61:0",
-      "name": "{\n  Red = \"#ff0000\",\n  Green = \"#00ff00\",\n  Blue = \"#0000ff\",\n}",
+      "name": "Color",
       "type": "class",
       "location": {
         "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts",
@@ -189,7 +189,7 @@
     "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts:56:22:58:1": {
       "id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts:56:22:58:1",
       "parent_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts:1:1:61:0",
-      "name": "function getColorCode(color: Color): string {\n  return color;\n}",
+      "name": "getColorCode",
       "type": "function",
       "location": {
         "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts",

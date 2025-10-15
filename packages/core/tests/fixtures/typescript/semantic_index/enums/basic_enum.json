@@ -26,7 +26,7 @@
     "class:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/basic_enum.ts:7:16:12:1": {
       "id": "class:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/basic_enum.ts:7:16:12:1",
       "parent_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/basic_enum.ts:1:1:59:0",
-      "name": "{\n  Up,\n  Down,\n  Left,\n  Right,\n}",
+      "name": "Direction",
       "type": "class",
       "location": {
         "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/basic_enum.ts",
@@ -40,7 +40,7 @@
     "class:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/basic_enum.ts:15:13:20:1": {
       "id": "class:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/basic_enum.ts:15:13:20:1",
       "parent_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/basic_enum.ts:1:1:59:0",
-      "name": "{\n  Pending = 0,\n  Active = 1,\n  Completed = 2,\n  Failed = 3,\n}",
+      "name": "Status",
       "type": "class",
       "location": {
         "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/basic_enum.ts",
@@ -54,7 +54,7 @@
     "class:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/basic_enum.ts:23:17:29:1": {
       "id": "class:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/basic_enum.ts:23:17:29:1",
       "parent_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/basic_enum.ts:1:1:59:0",
-      "name": "{\n  None = 0,\n  Read = 1 << 0,\n  Write = 1 << 1,\n  Execute = 1 << 2,\n  ReadWrite = Read | Write,\n}",
+      "name": "FileAccess",
       "type": "class",
       "location": {
         "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/basic_enum.ts",
@@ -68,7 +68,7 @@
     "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/basic_enum.ts:32:14:43:1": {
       "id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/basic_enum.ts:32:14:43:1",
       "parent_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/basic_enum.ts:1:1:59:0",
-      "name": "function move(direction: Direction): string {\n  switch (direction) {\n    case Direction.Up:\n      return \"Moving up\";\n    case Direction.Down:\n      return \"Moving down\";\n    case Direction.Left:\n      return \"Moving left\";\n    case Direction.Right:\n      return \"Moving right\";\n  }\n}",
+      "name": "move",
       "type": "function",
       "location": {
         "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/basic_enum.ts",
@@ -84,7 +84,7 @@
     "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/basic_enum.ts:33:3:42:3": {
       "id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/basic_enum.ts:33:3:42:3",
       "parent_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/basic_enum.ts:32:14:43:1",
-      "name": "switch (direction) {\n    case Direction.Up:\n      return \"Moving up\";\n    case Direction.Down:\n      return \"Moving down\";\n    case Direction.Left:\n      return \"Moving left\";\n    case Direction.Right:\n      return \"Moving right\";\n  }",
+      "name": null,
       "type": "block",
       "location": {
         "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/basic_enum.ts",
@@ -103,7 +103,7 @@
     "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/basic_enum.ts:34:5:35:25": {
       "id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/basic_enum.ts:34:5:35:25",
       "parent_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/basic_enum.ts:33:3:42:3",
-      "name": "case Direction.Up:\n      return \"Moving up\";",
+      "name": null,
       "type": "block",
       "location": {
         "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/basic_enum.ts",
@@ -117,7 +117,7 @@
     "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/basic_enum.ts:36:5:37:27": {
       "id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/basic_enum.ts:36:5:37:27",
       "parent_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/basic_enum.ts:33:3:42:3",
-      "name": "case Direction.Down:\n      return \"Moving down\";",
+      "name": null,
       "type": "block",
       "location": {
         "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/basic_enum.ts",
@@ -131,7 +131,7 @@
     "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/basic_enum.ts:38:5:39:27": {
       "id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/basic_enum.ts:38:5:39:27",
       "parent_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/basic_enum.ts:33:3:42:3",
-      "name": "case Direction.Left:\n      return \"Moving left\";",
+      "name": null,
       "type": "block",
       "location": {
         "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/basic_enum.ts",
@@ -145,7 +145,7 @@
     "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/basic_enum.ts:40:5:41:28": {
       "id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/basic_enum.ts:40:5:41:28",
       "parent_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/basic_enum.ts:33:3:42:3",
-      "name": "case Direction.Right:\n      return \"Moving right\";",
+      "name": null,
       "type": "block",
       "location": {
         "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/basic_enum.ts",
@@ -159,7 +159,7 @@
     "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/basic_enum.ts:45:26:56:1": {
       "id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/basic_enum.ts:45:26:56:1",
       "parent_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/basic_enum.ts:1:1:59:0",
-      "name": "function getStatusMessage(status: Status): string {\n  switch (status) {\n    case Status.Pending:\n      return \"Waiting to start\";\n    case Status.Active:\n      return \"Currently running\";\n    case Status.Completed:\n      return \"Successfully completed\";\n    case Status.Failed:\n      return \"Failed with error\";\n  }\n}",
+      "name": "getStatusMessage",
       "type": "function",
       "location": {
         "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/basic_enum.ts",
@@ -175,7 +175,7 @@
     "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/basic_enum.ts:46:3:55:3": {
       "id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/basic_enum.ts:46:3:55:3",
       "parent_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/basic_enum.ts:45:26:56:1",
-      "name": "switch (status) {\n    case Status.Pending:\n      return \"Waiting to start\";\n    case Status.Active:\n      return \"Currently running\";\n    case Status.Completed:\n      return \"Successfully completed\";\n    case Status.Failed:\n      return \"Failed with error\";\n  }",
+      "name": null,
       "type": "block",
       "location": {
         "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/basic_enum.ts",
@@ -194,7 +194,7 @@
     "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/basic_enum.ts:47:5:48:32": {
       "id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/basic_enum.ts:47:5:48:32",
       "parent_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/basic_enum.ts:46:3:55:3",
-      "name": "case Status.Pending:\n      return \"Waiting to start\";",
+      "name": null,
       "type": "block",
       "location": {
         "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/basic_enum.ts",
@@ -208,7 +208,7 @@
     "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/basic_enum.ts:49:5:50:33": {
       "id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/basic_enum.ts:49:5:50:33",
       "parent_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/basic_enum.ts:46:3:55:3",
-      "name": "case Status.Active:\n      return \"Currently running\";",
+      "name": null,
       "type": "block",
       "location": {
         "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/basic_enum.ts",
@@ -222,7 +222,7 @@
     "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/basic_enum.ts:51:5:52:38": {
       "id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/basic_enum.ts:51:5:52:38",
       "parent_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/basic_enum.ts:46:3:55:3",
-      "name": "case Status.Completed:\n      return \"Successfully completed\";",
+      "name": null,
       "type": "block",
       "location": {
         "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/basic_enum.ts",
@@ -236,7 +236,7 @@
     "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/basic_enum.ts:53:5:54:33": {
       "id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/basic_enum.ts:53:5:54:33",
       "parent_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/basic_enum.ts:46:3:55:3",
-      "name": "case Status.Failed:\n      return \"Failed with error\";",
+      "name": null,
       "type": "block",
       "location": {
         "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/basic_enum.ts",

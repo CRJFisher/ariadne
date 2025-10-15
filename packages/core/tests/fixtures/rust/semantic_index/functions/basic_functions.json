@@ -29,7 +29,7 @@
     "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/functions/basic_functions.rs:4:9:6:1": {
       "id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/functions/basic_functions.rs:4:9:6:1",
       "parent_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/functions/basic_functions.rs:1:1:37:0",
-      "name": "fn greet(name: &str) -> String {\n    format!(\"Hello, {}!\", name)\n}",
+      "name": "greet",
       "type": "function",
       "location": {
         "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/functions/basic_functions.rs",
@@ -43,7 +43,7 @@
     "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/functions/basic_functions.rs:8:7:10:1": {
       "id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/functions/basic_functions.rs:8:7:10:1",
       "parent_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/functions/basic_functions.rs:1:1:37:0",
-      "name": "fn add(a: i32, b: i32) -> i32 {\n    a + b\n}",
+      "name": "add",
       "type": "function",
       "location": {
         "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/functions/basic_functions.rs",
@@ -57,7 +57,7 @@
     "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/functions/basic_functions.rs:12:12:14:1": {
       "id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/functions/basic_functions.rs:12:12:14:1",
       "parent_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/functions/basic_functions.rs:1:1:37:0",
-      "name": "fn multiply(a: i32, b: i32) -> i32 {\n    a * b\n}",
+      "name": "multiply",
       "type": "function",
       "location": {
         "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/functions/basic_functions.rs",
@@ -71,7 +71,7 @@
     "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/functions/basic_functions.rs:16:11:18:1": {
       "id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/functions/basic_functions.rs:16:11:18:1",
       "parent_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/functions/basic_functions.rs:1:1:37:0",
-      "name": "fn is_even(n: i32) -> bool {\n    n % 2 == 0\n}",
+      "name": "is_even",
       "type": "function",
       "location": {
         "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/functions/basic_functions.rs",
@@ -85,7 +85,7 @@
     "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/functions/basic_functions.rs:20:14:23:1": {
       "id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/functions/basic_functions.rs:20:14:23:1",
       "parent_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/functions/basic_functions.rs:1:1:37:0",
-      "name": "fn call_chain() -> i32 {\n    let data = fetch_data();\n    transform_data(data)\n}",
+      "name": "call_chain",
       "type": "function",
       "location": {
         "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/functions/basic_functions.rs",
@@ -99,7 +99,7 @@
     "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/functions/basic_functions.rs:25:14:27:1": {
       "id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/functions/basic_functions.rs:25:14:27:1",
       "parent_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/functions/basic_functions.rs:1:1:37:0",
-      "name": "fn fetch_data() -> i32 {\n    42\n}",
+      "name": "fetch_data",
       "type": "function",
       "location": {
         "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/functions/basic_functions.rs",
@@ -113,7 +113,7 @@
     "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/functions/basic_functions.rs:29:18:31:1": {
       "id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/functions/basic_functions.rs:29:18:31:1",
       "parent_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/functions/basic_functions.rs:1:1:37:0",
-      "name": "fn transform_data(value: i32) -> i32 {\n    value * 2\n}",
+      "name": "transform_data",
       "type": "function",
       "location": {
         "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/functions/basic_functions.rs",
@@ -127,7 +127,7 @@
     "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/functions/basic_functions.rs:33:12:36:1": {
       "id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/functions/basic_functions.rs:33:12:36:1",
       "parent_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/functions/basic_functions.rs:1:1:37:0",
-      "name": "pub fn main() {\n    let result = add(5, 3);\n    println!(\"Result: {}\", result);\n}",
+      "name": "main",
       "type": "function",
       "location": {
         "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/functions/basic_functions.rs",

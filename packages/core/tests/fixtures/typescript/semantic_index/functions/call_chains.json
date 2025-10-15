@@ -31,7 +31,7 @@
     "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/call_chains.ts:6:21:10:1": {
       "id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/call_chains.ts:6:21:10:1",
       "parent_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/call_chains.ts:1:1:63:0",
-      "name": "function main() {\n  const result = processData();\n  logResult(result);\n  return result;\n}",
+      "name": "main",
       "type": "function",
       "location": {
         "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/call_chains.ts",
@@ -45,7 +45,7 @@
     "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/call_chains.ts:12:21:17:1": {
       "id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/call_chains.ts:12:21:17:1",
       "parent_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/call_chains.ts:1:1:63:0",
-      "name": "function processData() {\n  const raw = fetchData();\n  const transformed = transformData(raw);\n  const validated = validateData(transformed);\n  return validated;\n}",
+      "name": "processData",
       "type": "function",
       "location": {
         "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/call_chains.ts",
@@ -59,7 +59,7 @@
     "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/call_chains.ts:19:19:21:1": {
       "id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/call_chains.ts:19:19:21:1",
       "parent_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/call_chains.ts:1:1:63:0",
-      "name": "function fetchData() {\n  return { value: 42, timestamp: Date.now() };\n}",
+      "name": "fetchData",
       "type": "function",
       "location": {
         "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/call_chains.ts",
@@ -73,7 +73,7 @@
     "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/call_chains.ts:23:23:29:1": {
       "id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/call_chains.ts:23:23:29:1",
       "parent_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/call_chains.ts:1:1:63:0",
-      "name": "function transformData(data: any) {\n  return {\n    ...data,\n    value: data.value * 2,\n    processed: true,\n  };\n}",
+      "name": "transformData",
       "type": "function",
       "location": {
         "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/call_chains.ts",
@@ -87,7 +87,7 @@
     "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/call_chains.ts:31:22:36:1": {
       "id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/call_chains.ts:31:22:36:1",
       "parent_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/call_chains.ts:1:1:63:0",
-      "name": "function validateData(data: any) {\n  if (data.value < 0) {\n    throw new Error(\"Invalid value\");\n  }\n  return data;\n}",
+      "name": "validateData",
       "type": "function",
       "location": {
         "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/call_chains.ts",
@@ -103,7 +103,7 @@
     "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/call_chains.ts:32:3:34:3": {
       "id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/call_chains.ts:32:3:34:3",
       "parent_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/call_chains.ts:31:22:36:1",
-      "name": "if (data.value < 0) {\n    throw new Error(\"Invalid value\");\n  }",
+      "name": null,
       "type": "block",
       "location": {
         "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/call_chains.ts",
@@ -117,7 +117,7 @@
     "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/call_chains.ts:38:19:40:1": {
       "id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/call_chains.ts:38:19:40:1",
       "parent_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/call_chains.ts:1:1:63:0",
-      "name": "function logResult(result: any): void {\n  console.log(\"Result:\", result);\n}",
+      "name": "logResult",
       "type": "function",
       "location": {
         "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/call_chains.ts",
@@ -131,7 +131,7 @@
     "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/call_chains.ts:43:35:49:1": {
       "id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/call_chains.ts:43:35:49:1",
       "parent_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/call_chains.ts:1:1:63:0",
-      "name": "function conditionalProcess(useCache: boolean) {\n  if (useCache) {\n    return fetchFromCache();\n  } else {\n    return fetchFromNetwork();\n  }\n}",
+      "name": "conditionalProcess",
       "type": "function",
       "location": {
         "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/call_chains.ts",
@@ -147,7 +147,7 @@
     "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/call_chains.ts:44:3:48:3": {
       "id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/call_chains.ts:44:3:48:3",
       "parent_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/call_chains.ts:43:35:49:1",
-      "name": "if (useCache) {\n    return fetchFromCache();\n  } else {\n    return fetchFromNetwork();\n  }",
+      "name": null,
       "type": "block",
       "location": {
         "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/call_chains.ts",
@@ -161,7 +161,7 @@
     "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/call_chains.ts:51:24:53:1": {
       "id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/call_chains.ts:51:24:53:1",
       "parent_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/call_chains.ts:1:1:63:0",
-      "name": "function fetchFromCache() {\n  return { source: \"cache\", data: [] };\n}",
+      "name": "fetchFromCache",
       "type": "function",
       "location": {
         "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/call_chains.ts",
@@ -175,7 +175,7 @@
     "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/call_chains.ts:55:26:58:1": {
       "id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/call_chains.ts:55:26:58:1",
       "parent_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/call_chains.ts:1:1:63:0",
-      "name": "function fetchFromNetwork() {\n  const data = makeRequest();\n  return { source: \"network\", data };\n}",
+      "name": "fetchFromNetwork",
       "type": "function",
       "location": {
         "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/call_chains.ts",
@@ -189,7 +189,7 @@
     "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/call_chains.ts:60:21:62:1": {
       "id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/call_chains.ts:60:21:62:1",
       "parent_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/call_chains.ts:1:1:63:0",
-      "name": "function makeRequest() {\n  return [1, 2, 3];\n}",
+      "name": "makeRequest",
       "type": "function",
       "location": {
         "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/call_chains.ts",
@@ -236,7 +236,7 @@
       "signature": {
         "parameters": []
       },
-      "body_scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/call_chains.ts:6:21:10:1"
+      "body_scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/call_chains.ts:12:21:17:1"
     },
     "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/call_chains.ts:19:10:19:18:fetchData": {
       "kind": "function",
@@ -254,7 +254,7 @@
       "signature": {
         "parameters": []
       },
-      "body_scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/call_chains.ts:12:21:17:1"
+      "body_scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/call_chains.ts:19:19:21:1"
     },
     "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/call_chains.ts:23:10:23:22:transformData": {
       "kind": "function",
@@ -410,7 +410,7 @@
       "signature": {
         "parameters": []
       },
-      "body_scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/call_chains.ts:43:35:49:1"
+      "body_scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/call_chains.ts:51:24:53:1"
     },
     "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/call_chains.ts:55:10:55:25:fetchFromNetwork": {
       "kind": "function",
@@ -446,7 +446,7 @@
       "signature": {
         "parameters": []
       },
-      "body_scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/call_chains.ts:55:26:58:1"
+      "body_scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/call_chains.ts:60:21:62:1"
     }
   },
   "classes": {},

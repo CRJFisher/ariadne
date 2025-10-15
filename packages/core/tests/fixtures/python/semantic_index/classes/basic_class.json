@@ -23,7 +23,7 @@
     "class:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/classes/basic_class.py:6:12:19:44": {
       "id": "class:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/classes/basic_class.py:6:12:19:44",
       "parent_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/classes/basic_class.py:1:1:33:0",
-      "name": "def __init__(self, name: str, email: str):\n        self.name = name\n        self.email = email\n        self.active = True\n\n    def activate(self):\n        self.active = True\n\n    def deactivate(self):\n        self.active = False\n\n    def get_info(self):\n        return f\"{self.name} ({self.email})\"",
+      "name": null,
       "type": "class",
       "location": {
         "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/classes/basic_class.py",
@@ -42,7 +42,7 @@
     "class:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/classes/basic_class.py:22:15:32:25": {
       "id": "class:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/classes/basic_class.py:22:15:32:25",
       "parent_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/classes/basic_class.py:1:1:33:0",
-      "name": "def __init__(self, id: int, name: str, price: float):\n        self.id = id\n        self.name = name\n        self.price = price\n\n    def apply_discount(self, discount: float):\n        self.price = self.price * (1 - discount)\n\n    def get_price(self):\n        return self.price",
+      "name": null,
       "type": "class",
       "location": {
         "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/classes/basic_class.py",
@@ -60,7 +60,7 @@
     "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/classes/basic_class.py:7:17:10:26": {
       "id": "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/classes/basic_class.py:7:17:10:26",
       "parent_id": "class:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/classes/basic_class.py:6:12:19:44",
-      "name": "def __init__(self, name: str, email: str):\n        self.name = name\n        self.email = email\n        self.active = True",
+      "name": "__init__",
       "type": "method",
       "location": {
         "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/classes/basic_class.py",
@@ -76,7 +76,7 @@
     "constructor:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/classes/basic_class.py:7:17:10:26": {
       "id": "constructor:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/classes/basic_class.py:7:17:10:26",
       "parent_id": "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/classes/basic_class.py:7:17:10:26",
-      "name": "def __init__(self, name: str, email: str):\n        self.name = name\n        self.email = email\n        self.active = True",
+      "name": "__init__",
       "type": "constructor",
       "location": {
         "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/classes/basic_class.py",
@@ -90,7 +90,7 @@
     "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/classes/basic_class.py:23:17:26:26": {
       "id": "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/classes/basic_class.py:23:17:26:26",
       "parent_id": "class:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/classes/basic_class.py:22:15:32:25",
-      "name": "def __init__(self, id: int, name: str, price: float):\n        self.id = id\n        self.name = name\n        self.price = price",
+      "name": "__init__",
       "type": "method",
       "location": {
         "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/classes/basic_class.py",
@@ -106,7 +106,7 @@
     "constructor:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/classes/basic_class.py:23:17:26:26": {
       "id": "constructor:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/classes/basic_class.py:23:17:26:26",
       "parent_id": "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/classes/basic_class.py:23:17:26:26",
-      "name": "def __init__(self, id: int, name: str, price: float):\n        self.id = id\n        self.name = name\n        self.price = price",
+      "name": "__init__",
       "type": "constructor",
       "location": {
         "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/classes/basic_class.py",
@@ -120,7 +120,7 @@
     "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/classes/basic_class.py:28:23:29:48": {
       "id": "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/classes/basic_class.py:28:23:29:48",
       "parent_id": "class:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/classes/basic_class.py:22:15:32:25",
-      "name": "def apply_discount(self, discount: float):\n        self.price = self.price * (1 - discount)",
+      "name": "apply_discount",
       "type": "method",
       "location": {
         "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/classes/basic_class.py",
@@ -134,7 +134,7 @@
     "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/classes/basic_class.py:18:17:19:44": {
       "id": "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/classes/basic_class.py:18:17:19:44",
       "parent_id": "class:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/classes/basic_class.py:6:12:19:44",
-      "name": "def get_info(self):\n        return f\"{self.name} ({self.email})\"",
+      "name": "get_info",
       "type": "method",
       "location": {
         "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/classes/basic_class.py",
@@ -148,7 +148,7 @@
     "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/classes/basic_class.py:15:19:16:27": {
       "id": "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/classes/basic_class.py:15:19:16:27",
       "parent_id": "class:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/classes/basic_class.py:6:12:19:44",
-      "name": "def deactivate(self):\n        self.active = False",
+      "name": "deactivate",
       "type": "method",
       "location": {
         "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/classes/basic_class.py",
@@ -162,7 +162,7 @@
     "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/classes/basic_class.py:12:17:13:26": {
       "id": "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/classes/basic_class.py:12:17:13:26",
       "parent_id": "class:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/classes/basic_class.py:6:12:19:44",
-      "name": "def activate(self):\n        self.active = True",
+      "name": "activate",
       "type": "method",
       "location": {
         "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/classes/basic_class.py",
@@ -176,7 +176,7 @@
     "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/classes/basic_class.py:31:18:32:25": {
       "id": "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/classes/basic_class.py:31:18:32:25",
       "parent_id": "class:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/classes/basic_class.py:22:15:32:25",
-      "name": "def get_price(self):\n        return self.price",
+      "name": "get_price",
       "type": "method",
       "location": {
         "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/classes/basic_class.py",
@@ -390,7 +390,7 @@
               }
             }
           ],
-          "body_scope_id": "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/classes/basic_class.py:15:19:16:27"
+          "body_scope_id": "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/classes/basic_class.py:12:17:13:26"
         },
         {
           "kind": "method",

@@ -27,7 +27,7 @@
     "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/arrow_functions.ts:7:16:7:43": {
       "id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/arrow_functions.ts:7:16:7:43",
       "parent_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/arrow_functions.ts:1:1:42:0",
-      "name": "(x: number): number => x * 2",
+      "name": null,
       "type": "function",
       "location": {
         "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/arrow_functions.ts",
@@ -41,7 +41,7 @@
     "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/arrow_functions.ts:10:16:12:1": {
       "id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/arrow_functions.ts:10:16:12:1",
       "parent_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/arrow_functions.ts:1:1:42:0",
-      "name": "(n: number): boolean => {\n  return n % 2 === 0;\n}",
+      "name": null,
       "type": "function",
       "location": {
         "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/arrow_functions.ts",
@@ -55,7 +55,7 @@
     "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/arrow_functions.ts:15:20:19:2": {
       "id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/arrow_functions.ts:15:20:19:2",
       "parent_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/arrow_functions.ts:1:1:42:0",
-      "name": "(name: string, age: number) => ({\n  name,\n  age,\n  createdAt: Date.now(),\n})",
+      "name": null,
       "type": "function",
       "location": {
         "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/arrow_functions.ts",
@@ -69,7 +69,7 @@
     "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/arrow_functions.ts:22:20:24:1": {
       "id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/arrow_functions.ts:22:20:24:1",
       "parent_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/arrow_functions.ts:1:1:42:0",
-      "name": "(first: string, last: string): string => {\n  return `${last}, ${first}`;\n}",
+      "name": null,
       "type": "function",
       "location": {
         "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/arrow_functions.ts",
@@ -83,7 +83,7 @@
     "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/arrow_functions.ts:27:21:30:1": {
       "id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/arrow_functions.ts:27:21:30:1",
       "parent_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/arrow_functions.ts:1:1:42:0",
-      "name": "(start: number = 0) => {\n  let count = start;\n  return () => ++count;\n}",
+      "name": null,
       "type": "function",
       "location": {
         "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/arrow_functions.ts",
@@ -99,7 +99,7 @@
     "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/arrow_functions.ts:29:10:29:22": {
       "id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/arrow_functions.ts:29:10:29:22",
       "parent_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/arrow_functions.ts:27:21:30:1",
-      "name": "() => ++count",
+      "name": null,
       "type": "function",
       "location": {
         "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/arrow_functions.ts",
@@ -113,7 +113,7 @@
     "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/arrow_functions.ts:33:19:39:1": {
       "id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/arrow_functions.ts:33:19:39:1",
       "parent_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/arrow_functions.ts:1:1:42:0",
-      "name": "<T, U>(arr: T[], fn: (item: T) => U): U[] => {\n  const result: U[] = [];\n  for (const item of arr) {\n    result.push(fn(item));\n  }\n  return result;\n}",
+      "name": null,
       "type": "function",
       "location": {
         "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/arrow_functions.ts",
@@ -129,7 +129,7 @@
     "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/arrow_functions.ts:35:3:37:3": {
       "id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/arrow_functions.ts:35:3:37:3",
       "parent_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/arrow_functions.ts:33:19:39:1",
-      "name": "for (const item of arr) {\n    result.push(fn(item));\n  }",
+      "name": null,
       "type": "block",
       "location": {
         "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/arrow_functions.ts",
@@ -182,7 +182,7 @@
       "signature": {
         "parameters": []
       },
-      "body_scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/arrow_functions.ts:10:16:12:1"
+      "body_scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/arrow_functions.ts:7:16:7:43"
     },
     "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/arrow_functions.ts:15:7:15:16:createUser": {
       "kind": "function",
@@ -203,7 +203,7 @@
       "signature": {
         "parameters": []
       },
-      "body_scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/arrow_functions.ts:15:20:19:2"
+      "body_scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/arrow_functions.ts:7:16:7:43"
     },
     "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/arrow_functions.ts:22:7:22:16:formatName": {
       "kind": "function",
@@ -224,7 +224,7 @@
       "signature": {
         "parameters": []
       },
-      "body_scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/arrow_functions.ts:22:20:24:1"
+      "body_scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/arrow_functions.ts:15:20:19:2"
     },
     "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/arrow_functions.ts:27:7:27:17:makeCounter": {
       "kind": "function",
@@ -245,7 +245,7 @@
       "signature": {
         "parameters": []
       },
-      "body_scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/arrow_functions.ts:29:10:29:22"
+      "body_scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/arrow_functions.ts:22:20:24:1"
     },
     "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/arrow_functions.ts:33:7:33:9:map": {
       "kind": "function",
@@ -266,7 +266,7 @@
       "signature": {
         "parameters": []
       },
-      "body_scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/arrow_functions.ts:33:19:39:1"
+      "body_scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/arrow_functions.ts:27:21:30:1"
     }
   },
   "classes": {},
