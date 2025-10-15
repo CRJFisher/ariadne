@@ -43,6 +43,7 @@ import {
   extract_parameter_default_value,
   extract_property_initial_value,
   is_parameter_in_function_type,
+  extract_class_extends,
 } from "./typescript_builder";
 
 // ============================================================================
@@ -155,7 +156,7 @@ export const TYPESCRIPT_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
           scope_id: context.get_scope_id(capture.location),
           is_exported: export_info.is_exported,
           export: export_info.export,
-          type_expression: extract_type_expression(capture.node),
+          type_expression: extract_type_expression(capture.node) as SymbolName | undefined,
           generics: capture.node.parent
             ? extract_type_parameters(capture.node.parent)
             : [],
@@ -370,17 +371,11 @@ export const TYPESCRIPT_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
         const parent = capture.node.parent; // class_declaration or abstract_class_declaration
         const export_info = extract_export_info(capture.node, capture.text);
 
-        // Extract extends
-        const heritage = parent?.childForFieldName?.("heritage");
-        let extends_classes: SymbolName[] = [];
-        if (heritage) {
-          const extendsClause = heritage.childForFieldName?.("extends_clause");
-          if (extendsClause) {
-            const superclass = extendsClause.childForFieldName?.("value");
-            if (superclass) {
-              extends_classes = [superclass.text as SymbolName];
-            }
-          }
+        // Extract extends using the helper function
+        // Try both the identifier node and its parent (class_declaration)
+        let extends_classes = extract_class_extends(capture.node);
+        if (extends_classes.length === 0 && parent) {
+          extends_classes = extract_class_extends(parent);
         }
 
         builder.add_class({
@@ -463,6 +458,38 @@ export const TYPESCRIPT_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
           },
           capture
         );
+      },
+    },
+  ],
+
+  [
+    "definition.method.abstract",
+    {
+      process: (
+        capture: CaptureNode,
+        builder: DefinitionBuilder,
+        context: ProcessingContext
+      ) => {
+        // Abstract methods are method_signature nodes in class bodies
+        // They have no body and are always abstract
+        const class_id = find_containing_class(capture);
+        if (!class_id) return;
+
+        const method_id = create_method_id(capture);
+        const parent = capture.node.parent; // method_signature
+
+        builder.add_method_to_class(class_id, {
+          symbol_id: method_id,
+          name: capture.text,
+          location: capture.location,
+          scope_id: context.get_scope_id(capture.location),
+          access_modifier: extract_access_modifier(capture.node),
+          abstract: true, // method_signature nodes are always abstract
+          static: is_static_method(capture.node),
+          async: false, // abstract methods cannot be async
+          return_type: extract_return_type(capture.node),
+          generics: parent ? extract_type_parameters(parent) : [],
+        });
       },
     },
   ],
@@ -620,35 +647,6 @@ export const TYPESCRIPT_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
   // ============================================================================
   // PARAMETER PROPERTIES (Constructor parameters that become properties)
   // ============================================================================
-  [
-    "param.property",
-    {
-      process: (
-        capture: CaptureNode,
-        builder: DefinitionBuilder,
-        context: ProcessingContext
-      ) => {
-        // This is a constructor parameter that becomes a property
-        const class_id = find_containing_class(capture);
-        if (!class_id) return;
-
-        const prop_id = create_property_id(capture);
-        const parent = capture.node.parent; // required_parameter
-
-        builder.add_property_to_class(class_id, {
-          symbol_id: prop_id,
-          name: capture.text,
-          location: capture.location,
-          scope_id: context.get_scope_id(capture.location),
-          access_modifier: extract_access_modifier(capture.node),
-          readonly: is_readonly_property(capture.node),
-          type: extract_parameter_type(capture.node),
-          initial_value: extract_parameter_default_value(capture.node),
-        });
-      },
-    },
-  ],
-
   [
     "definition.field.param_property",
     {

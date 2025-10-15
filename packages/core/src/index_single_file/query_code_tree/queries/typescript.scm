@@ -233,28 +233,18 @@
 ) @definition.field
 
 ; Constructor parameter properties (with access modifiers)
-(required_parameter
-  (accessibility_modifier) @modifier.access_modifier
-  pattern: (identifier) @definition.parameter
-) @definition.property
-
-; Constructor parameter properties as field definitions (with access modifiers)
+; These create both a parameter AND an implicit class property
 (required_parameter
   (accessibility_modifier)
-  pattern: (identifier) @definition.field.param_property
-) @definition.field
+  pattern: (identifier) @definition.parameter @definition.field.param_property
+)
 
 ; Constructor parameter properties (readonly)
-(required_parameter
-  "readonly" @modifier.readonly_modifier
-  pattern: (identifier) @definition.parameter
-) @definition.property.readonly
-
-; Constructor parameter properties as field definitions (readonly)
+; These create both a parameter AND an implicit class property
 (required_parameter
   "readonly"
-  pattern: (identifier) @definition.field.param_property
-) @definition.field.readonly
+  pattern: (identifier) @definition.parameter @definition.field.param_property
+)
 
 ; Class decorators (decorator first, then target)
 (class_declaration
@@ -398,10 +388,31 @@
   (accessibility_modifier)? @modifier.access_modifier
   "static"? @modifier.visibility
   name: (property_identifier) @definition.method
+  (#not-eq? @definition.method "constructor")
 ) @scope.method
 
 (method_definition
   name: (private_property_identifier) @definition.method.private
+)
+
+; Abstract method signatures in classes (not interfaces)
+; These are abstract methods declared in abstract classes
+; Try both method_signature and abstract_method_signature
+(abstract_class_declaration
+  body: (class_body
+    (abstract_method_signature
+      name: (property_identifier) @definition.method.abstract
+    )
+  )
+)
+
+; Also handle regular class_declaration that might have abstract methods
+(class_declaration
+  body: (class_body
+    (abstract_method_signature
+      name: (property_identifier) @definition.method.abstract
+    )
+  )
 )
 
 ; Constructor

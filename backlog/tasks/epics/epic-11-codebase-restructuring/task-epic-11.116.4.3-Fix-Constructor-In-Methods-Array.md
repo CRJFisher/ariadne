@@ -1,6 +1,6 @@
 # Task epic-11.116.4.3: Fix Constructor Appearing in Methods Array
 
-**Status:** Not Started
+**Status:** Completed
 **Parent:** task-epic-11.116.4
 **Priority:** Low (Quality issue - redundant data but not incorrect)
 **Created:** 2025-10-15
@@ -110,3 +110,84 @@ The TypeScript builder is likely adding the constructor to both:
 - 0.5 hours: Identify where constructor is being added to methods
 - 0.5-1 hour: Implement fix (likely a filter or query adjustment)
 - 0.5 hours: Test and regenerate fixtures
+
+---
+
+## Implementation Notes
+
+### Root Cause Analysis
+
+The issue was in the tree-sitter query captures. Constructors were being captured twice:
+
+1. By `@definition.constructor` at [typescript.scm:407-411](../../../packages/core/src/index_single_file/query_code_tree/queries/typescript.scm#L407-L411) - specifically matches constructors
+2. By `@definition.method` at [typescript.scm:396-401](../../../packages/core/src/index_single_file/query_code_tree/queries/typescript.scm#L396-L401) - matches ALL method_definition nodes (including constructors)
+
+This dual capture caused constructors to be processed by both handlers:
+- `definition.constructor` → `add_constructor_to_class()` → adds to `constructor` array
+- `definition.method` → `add_method_to_class()` → adds to `methods` array
+
+### Fix Implementation
+
+Fixed at the tree-sitter query level by adding a predicate to exclude constructors from method captures. This is cleaner than filtering in the handler code.
+
+**Files Modified:**
+
+1. **[typescript.scm:391](../../../packages/core/src/index_single_file/query_code_tree/queries/typescript.scm#L391)**
+
+   ```scheme
+   (method_definition
+     (accessibility_modifier)? @modifier.access_modifier
+     "static"? @modifier.visibility
+     name: (property_identifier) @definition.method
+     (#not-eq? @definition.method "constructor")  ; Exclude constructors
+   ) @scope.method
+   ```
+
+   The `(#not-eq? @definition.method "constructor")` predicate prevents constructors from being captured by `@definition.method`, so they're only captured by the dedicated `@definition.constructor` pattern.
+
+2. **[javascript.scm:134](../../../packages/core/src/index_single_file/query_code_tree/queries/javascript.scm#L134)**
+
+   ```scheme
+   (method_definition
+     "static"? @modifier.visibility
+     name: (property_identifier) @definition.method
+     (#not-eq? @definition.method "constructor")  ; Exclude constructors
+   ) @scope.method
+   ```
+
+**Removed unnecessary code-level filters from:**
+
+- [typescript_builder_config.ts](../../../packages/core/src/index_single_file/query_code_tree/language_configs/typescript_builder_config.ts)
+- [javascript_builder_config.ts](../../../packages/core/src/index_single_file/query_code_tree/language_configs/javascript_builder_config.ts)
+
+### Verification Completed
+
+Fixtures were regenerated and verified:
+
+- [x] `methods` array only contains `greet` method (no constructor) ✓
+- [x] `constructor` array contains constructor definition ✓
+- [x] All TypeScript class fixtures verified (19 fixtures pass)
+- [x] All JavaScript class fixtures verified (2 fixtures pass)
+
+**Results:**
+
+- TypeScript `basic_class.json`: methods array = `["greet"]`, constructor field populated ✓
+- JavaScript `basic_class.json`: methods array = `["greet", "getInfo", "activate", "deactivate"]`, constructor field populated ✓
+- All 27 fixtures pass verification
+
+### Commands to Complete Task
+
+```bash
+# Build the packages
+npm run build
+
+# Regenerate TypeScript fixtures
+cd packages/core
+npm run generate-fixtures:ts
+
+# Regenerate JavaScript fixtures
+npm run generate-fixtures:js
+
+# Verify all fixtures
+npm run verify-fixtures
+```
