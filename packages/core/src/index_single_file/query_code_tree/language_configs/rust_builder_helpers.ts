@@ -3,7 +3,6 @@ import type { SyntaxNode } from "tree-sitter";
 import type {
   SymbolId,
   SymbolName,
-  Location,
   ModulePath,
   ExportMetadata,
 } from "@ariadnejs/types";
@@ -860,7 +859,7 @@ export function find_containing_callable(
     // Closure expressions
     if (node.type === "closure_expression") {
       // Closures don't have names, use location as identifier
-      return function_symbol(`<closure>` as SymbolName, {
+      return function_symbol("<closure>" as SymbolName, {
         file_path,
         start_line: node.startPosition.row + 1,
         start_column: node.startPosition.column + 1,

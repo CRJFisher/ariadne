@@ -301,7 +301,9 @@
       },
       "defining_scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/classes/inheritance.ts:1:1:37:0",
       "generics": [],
-      "extends": [],
+      "extends": [
+        "Animal"
+      ],
       "is_exported": true,
       "export": {
         "is_reexport": false
@@ -413,7 +415,9 @@
       },
       "defining_scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/classes/inheritance.ts:1:1:37:0",
       "generics": [],
-      "extends": [],
+      "extends": [
+        "Animal"
+      ],
       "is_exported": true,
       "export": {
         "is_reexport": false

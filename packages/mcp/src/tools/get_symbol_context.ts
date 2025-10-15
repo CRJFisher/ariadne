@@ -472,7 +472,7 @@ function extract_test_name(filePath: string, ref: any, project: Project): string
   return null;
 }
 
-function is_reference_in_test_function(filePath: string, _ref: any, _fileGraphs: Map<string, any>): boolean {
+function is_reference_in_test_function(filePath: string, _ref: any, _fileGraphs: ReadonlyMap<string, any>): boolean {
   // Note: We're not using graph or ref parameters currently due to limitations
   // in how Ariadne detects test functions (primarily for named functions, not
   // anonymous functions or code blocks within test suites)

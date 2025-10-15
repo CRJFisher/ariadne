@@ -316,41 +316,6 @@
         {
           "kind": "method",
           "defining_scope_id": "class:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/modules/exports.ts:16:25:22:1",
-          "symbol_id": "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/modules/exports.ts:17:3:17:13:constructor",
-          "name": "constructor",
-          "location": {
-            "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/modules/exports.ts",
-            "start_line": 17,
-            "start_column": 3,
-            "end_line": 17,
-            "end_column": 13
-          },
-          "abstract": false,
-          "static": false,
-          "async": false,
-          "generics": [],
-          "parameters": [
-            {
-              "kind": "parameter",
-              "defining_scope_id": "constructor:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/modules/exports.ts:17:14:17:41",
-              "symbol_id": "parameter:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/modules/exports.ts:17:23:17:29:baseUrl",
-              "name": "baseUrl",
-              "location": {
-                "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/modules/exports.ts",
-                "start_line": 17,
-                "start_column": 23,
-                "end_line": 17,
-                "end_column": 29
-              },
-              "type": "string",
-              "optional": false
-            }
-          ],
-          "body_scope_id": "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/modules/exports.ts:17:14:17:41"
-        },
-        {
-          "kind": "method",
-          "defining_scope_id": "class:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/modules/exports.ts:16:25:22:1",
           "symbol_id": "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/modules/exports.ts:19:9:19:11:get",
           "name": "get",
           "location": {
@@ -389,23 +354,6 @@
         {
           "kind": "property",
           "defining_scope_id": "constructor:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/modules/exports.ts:17:14:17:41",
-          "symbol_id": "property:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/modules/exports.ts:17:15:17:37:private baseUrl: string",
-          "name": "private baseUrl: string",
-          "location": {
-            "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/modules/exports.ts",
-            "start_line": 17,
-            "start_column": 15,
-            "end_line": 17,
-            "end_column": 37
-          },
-          "static": false,
-          "readonly": false,
-          "abstract": false,
-          "decorators": []
-        },
-        {
-          "kind": "property",
-          "defining_scope_id": "constructor:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/modules/exports.ts:17:14:17:41",
           "symbol_id": "property:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/modules/exports.ts:17:23:17:29:baseUrl",
           "name": "baseUrl",
           "location": {
@@ -433,7 +381,23 @@
             "end_line": 17,
             "end_column": 13
           },
-          "parameters": [],
+          "parameters": [
+            {
+              "kind": "parameter",
+              "defining_scope_id": "constructor:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/modules/exports.ts:17:14:17:41",
+              "symbol_id": "parameter:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/modules/exports.ts:17:23:17:29:baseUrl",
+              "name": "baseUrl",
+              "location": {
+                "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/modules/exports.ts",
+                "start_line": 17,
+                "start_column": 23,
+                "end_line": 17,
+                "end_column": 29
+              },
+              "type": "string",
+              "optional": false
+            }
+          ],
           "body_scope_id": "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/modules/exports.ts:17:14:17:41"
         }
       ],
@@ -520,41 +484,6 @@
         {
           "kind": "method",
           "defining_scope_id": "class:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/modules/exports.ts:52:34:58:1",
-          "symbol_id": "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/modules/exports.ts:53:3:53:13:constructor",
-          "name": "constructor",
-          "location": {
-            "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/modules/exports.ts",
-            "start_line": 53,
-            "start_column": 3,
-            "end_line": 53,
-            "end_column": 13
-          },
-          "abstract": false,
-          "static": false,
-          "async": false,
-          "generics": [],
-          "parameters": [
-            {
-              "kind": "parameter",
-              "defining_scope_id": "constructor:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/modules/exports.ts:53:14:53:40",
-              "symbol_id": "parameter:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/modules/exports.ts:53:23:53:28:config",
-              "name": "config",
-              "location": {
-                "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/modules/exports.ts",
-                "start_line": 53,
-                "start_column": 23,
-                "end_line": 53,
-                "end_column": 28
-              },
-              "type": "Config",
-              "optional": false
-            }
-          ],
-          "body_scope_id": "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/modules/exports.ts:53:14:53:40"
-        },
-        {
-          "kind": "method",
-          "defining_scope_id": "class:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/modules/exports.ts:52:34:58:1",
           "symbol_id": "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/modules/exports.ts:55:3:55:7:start",
           "name": "start",
           "location": {
@@ -574,23 +503,6 @@
         }
       ],
       "properties": [
-        {
-          "kind": "property",
-          "defining_scope_id": "constructor:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/modules/exports.ts:53:14:53:40",
-          "symbol_id": "property:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/modules/exports.ts:53:15:53:36:private config: Config",
-          "name": "private config: Config",
-          "location": {
-            "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/modules/exports.ts",
-            "start_line": 53,
-            "start_column": 15,
-            "end_line": 53,
-            "end_column": 36
-          },
-          "static": false,
-          "readonly": false,
-          "abstract": false,
-          "decorators": []
-        },
         {
           "kind": "property",
           "defining_scope_id": "constructor:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/modules/exports.ts:53:14:53:40",
@@ -621,7 +533,23 @@
             "end_line": 53,
             "end_column": 13
           },
-          "parameters": [],
+          "parameters": [
+            {
+              "kind": "parameter",
+              "defining_scope_id": "constructor:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/modules/exports.ts:53:14:53:40",
+              "symbol_id": "parameter:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/modules/exports.ts:53:23:53:28:config",
+              "name": "config",
+              "location": {
+                "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/modules/exports.ts",
+                "start_line": 53,
+                "start_column": 23,
+                "end_line": 53,
+                "end_column": 28
+              },
+              "type": "Config",
+              "optional": false
+            }
+          ],
           "body_scope_id": "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/modules/exports.ts:53:14:53:40"
         }
       ],

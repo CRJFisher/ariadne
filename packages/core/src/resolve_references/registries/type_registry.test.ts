@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { TypeRegistry } from "./type_registry";
 import { DefinitionRegistry } from "./definition_registry";
-import { ResolutionRegistry } from "./resolution_registry";
+import { ResolutionRegistry } from "../resolution_registry";
 import {
   class_symbol,
   method_symbol,
@@ -9,7 +9,7 @@ import {
   location_key,
   interface_symbol,
 } from "@ariadnejs/types";
-import type { SemanticIndex } from "../index_single_file/semantic_index";
+import type { SemanticIndex } from "../../index_single_file/semantic_index";
 import type { FilePath, Location, LocationKey, SymbolId, SymbolName, ScopeId, AnyDefinition } from "@ariadnejs/types";
 
 // Helper to create location keys for testing
@@ -137,7 +137,6 @@ function make_test_index(
     language: "typescript",
     root_scope_id: "module:0:0" as ScopeId,
     scopes: new Map(),
-    scope_to_definitions: new Map(),
     functions: options.functions || new Map(),
     classes: options.classes || new Map(),
     variables: options.variables || new Map(),
@@ -147,7 +146,6 @@ function make_test_index(
     types: options.types || new Map(),
     imported_symbols: new Map(),
     references: options.references || [],
-    exported_symbols: new Map(),
   };
 }
 

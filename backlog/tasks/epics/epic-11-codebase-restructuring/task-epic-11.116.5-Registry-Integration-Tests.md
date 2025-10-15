@@ -86,7 +86,84 @@ describe("Registry Integration Tests", () => {
 - Fixtures reusable across tests
 - Easy to add new test cases
 
+## Sub-Tasks
+
+Before starting the main implementation, verify fixture coverage for each language:
+
+- **task-epic-11.116.5.1**: TypeScript Fixture Coverage
+- **task-epic-11.116.5.2**: JavaScript Fixture Coverage
+- **task-epic-11.116.5.3**: Python Fixture Coverage
+- **task-epic-11.116.5.4**: Rust Fixture Coverage
+
+These sub-tasks audit existing fixtures against integration test requirements and create any missing fixtures before refactoring the tests.
+
 ## Implementation Plan
+
+### 0. Verify Fixture Coverage (2-5 hours per language) ✅ COMPLETED
+
+✅ **ALL SUB-TASKS COMPLETED:**
+- **task-epic-11.116.5.1**: TypeScript Fixture Coverage ✅ **COMPLETE COVERAGE**
+- **task-epic-11.116.5.2**: JavaScript Fixture Coverage ❌ **CRITICAL GAPS**
+- **task-epic-11.116.5.3**: Python Fixture Coverage ⚠️ **SIGNIFICANT GAPS**
+- **task-epic-11.116.5.4**: Rust Fixture Coverage ❌ **CRITICAL GAPS**
+
+**COMPREHENSIVE COVERAGE AUDIT RESULTS:**
+
+## Coverage Summary by Language
+
+| Language | Coverage Status | Critical Gaps | Fixtures Needed |
+|----------|----------------|---------------|-----------------|
+| **TypeScript** | ✅ **COMPLETE** | None | 0 (already created) |
+| **JavaScript** | ❌ **25%** | Module systems, cross-module classes, shadowing, workflows | 9 new files |
+| **Python** | ⚠️ **50%** | Cross-module resolution, shadowing, workflows | 6 new files |
+| **Rust** | ❌ **20%** | Impl blocks, modules, traits, all workflows | 8 new files |
+
+**INTEGRATION TEST REQUIREMENTS MAPPED:**
+
+1. **Basic Resolution** (Local function calls)
+   - ✅ TypeScript: Complete
+   - ⚠️ JavaScript: Partial (missing nested scopes)
+   - ✅ Python: Good coverage
+   - ⚠️ Rust: Partial (missing nested scopes)
+
+2. **Cross-Module Resolution** (Imports + function/method calls)
+   - ✅ TypeScript: Complete with integration fixtures
+   - ❌ JavaScript: No module fixtures at all
+   - ❌ Python: Only standard library imports
+   - ❌ Rust: No module fixtures at all
+
+3. **Shadowing Scenarios** (Local shadows import)
+   - ✅ TypeScript: Complete
+   - ❌ JavaScript: Missing
+   - ❌ Python: Missing
+   - ❌ Rust: Missing
+
+4. **Complete Workflows** (Constructor → type → method chains)
+   - ✅ TypeScript: Complete
+   - ❌ JavaScript: Missing
+   - ❌ Python: Missing
+   - ❌ Rust: Missing (especially critical - no impl blocks)
+
+5. **Nested Function Scopes**
+   - ✅ TypeScript: Complete
+   - ❌ JavaScript: Missing
+   - ❌ Python: Missing
+   - ❌ Rust: Missing
+
+6. **Method and Constructor Calls**
+   - ✅ TypeScript: Complete
+   - ⚠️ JavaScript: Basic classes exist, no workflows
+   - ⚠️ Python: Basic classes exist, no workflows
+   - ❌ Rust: No impl blocks at all
+
+**BLOCKING ISSUES FOR REGISTRY INTEGRATION TEST REFACTORING:**
+
+🔴 **CRITICAL BLOCKERS:**
+- **JavaScript**: Missing ALL module system fixtures (CommonJS + ES6)
+- **Rust**: Missing ALL impl blocks (essential for Rust method resolution)
+- **All Languages**: Missing cross-module class method resolution (except TypeScript)
+
+**RECOMMENDATION:** Complete JavaScript and Rust fixture creation before proceeding with registry integration test refactoring, as these languages have insufficient coverage for realistic testing.
 
 ### 1. Identify Test Categories (0.5 hours)
 

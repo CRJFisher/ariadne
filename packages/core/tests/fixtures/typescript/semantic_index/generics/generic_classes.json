@@ -353,41 +353,6 @@
         {
           "kind": "method",
           "defining_scope_id": "class:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_classes.ts:7:14:17:1",
-          "symbol_id": "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_classes.ts:8:3:8:13:constructor",
-          "name": "constructor",
-          "location": {
-            "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_classes.ts",
-            "start_line": 8,
-            "start_column": 3,
-            "end_line": 8,
-            "end_column": 13
-          },
-          "abstract": false,
-          "static": false,
-          "async": false,
-          "generics": [],
-          "parameters": [
-            {
-              "kind": "parameter",
-              "defining_scope_id": "constructor:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_classes.ts:8:14:8:34",
-              "symbol_id": "parameter:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_classes.ts:8:23:8:27:value",
-              "name": "value",
-              "location": {
-                "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_classes.ts",
-                "start_line": 8,
-                "start_column": 23,
-                "end_line": 8,
-                "end_column": 27
-              },
-              "type": "T",
-              "optional": false
-            }
-          ],
-          "body_scope_id": "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_classes.ts:8:14:8:34"
-        },
-        {
-          "kind": "method",
-          "defining_scope_id": "class:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_classes.ts:7:14:17:1",
           "symbol_id": "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_classes.ts:10:3:10:10:getValue",
           "name": "getValue",
           "location": {
@@ -446,23 +411,6 @@
         {
           "kind": "property",
           "defining_scope_id": "constructor:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_classes.ts:8:14:8:34",
-          "symbol_id": "property:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_classes.ts:8:15:8:30:private value: T",
-          "name": "private value: T",
-          "location": {
-            "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_classes.ts",
-            "start_line": 8,
-            "start_column": 15,
-            "end_line": 8,
-            "end_column": 30
-          },
-          "static": false,
-          "readonly": false,
-          "abstract": false,
-          "decorators": []
-        },
-        {
-          "kind": "property",
-          "defining_scope_id": "constructor:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_classes.ts:8:14:8:34",
           "symbol_id": "property:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_classes.ts:8:23:8:27:value",
           "name": "value",
           "location": {
@@ -490,7 +438,23 @@
             "end_line": 8,
             "end_column": 13
           },
-          "parameters": [],
+          "parameters": [
+            {
+              "kind": "parameter",
+              "defining_scope_id": "constructor:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_classes.ts:8:14:8:34",
+              "symbol_id": "parameter:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_classes.ts:8:23:8:27:value",
+              "name": "value",
+              "location": {
+                "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_classes.ts",
+                "start_line": 8,
+                "start_column": 23,
+                "end_line": 8,
+                "end_column": 27
+              },
+              "type": "T",
+              "optional": false
+            }
+          ],
           "body_scope_id": "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_classes.ts:8:14:8:34"
         }
       ],
@@ -518,56 +482,6 @@
         "is_reexport": false
       },
       "methods": [
-        {
-          "kind": "method",
-          "defining_scope_id": "class:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_classes.ts:20:18:33:1",
-          "symbol_id": "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_classes.ts:21:3:21:13:constructor",
-          "name": "constructor",
-          "location": {
-            "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_classes.ts",
-            "start_line": 21,
-            "start_column": 3,
-            "end_line": 21,
-            "end_column": 13
-          },
-          "abstract": false,
-          "static": false,
-          "async": false,
-          "generics": [],
-          "parameters": [
-            {
-              "kind": "parameter",
-              "defining_scope_id": "constructor:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_classes.ts:21:14:24:6",
-              "symbol_id": "parameter:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_classes.ts:22:12:22:14:key",
-              "name": "key",
-              "location": {
-                "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_classes.ts",
-                "start_line": 22,
-                "start_column": 12,
-                "end_line": 22,
-                "end_column": 14
-              },
-              "type": "K",
-              "optional": false
-            },
-            {
-              "kind": "parameter",
-              "defining_scope_id": "constructor:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_classes.ts:21:14:24:6",
-              "symbol_id": "parameter:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_classes.ts:23:12:23:16:value",
-              "name": "value",
-              "location": {
-                "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_classes.ts",
-                "start_line": 23,
-                "start_column": 12,
-                "end_line": 23,
-                "end_column": 16
-              },
-              "type": "V",
-              "optional": false
-            }
-          ],
-          "body_scope_id": "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_classes.ts:21:14:24:6"
-        },
         {
           "kind": "method",
           "defining_scope_id": "class:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_classes.ts:20:18:33:1",
@@ -613,23 +527,6 @@
         {
           "kind": "property",
           "defining_scope_id": "constructor:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_classes.ts:21:14:24:6",
-          "symbol_id": "property:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_classes.ts:22:5:22:17:public key: K",
-          "name": "public key: K",
-          "location": {
-            "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_classes.ts",
-            "start_line": 22,
-            "start_column": 5,
-            "end_line": 22,
-            "end_column": 17
-          },
-          "static": false,
-          "readonly": false,
-          "abstract": false,
-          "decorators": []
-        },
-        {
-          "kind": "property",
-          "defining_scope_id": "constructor:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_classes.ts:21:14:24:6",
           "symbol_id": "property:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_classes.ts:22:12:22:14:key",
           "name": "key",
           "location": {
@@ -641,23 +538,6 @@
           },
           "readonly": false,
           "type": "K",
-          "decorators": []
-        },
-        {
-          "kind": "property",
-          "defining_scope_id": "constructor:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_classes.ts:21:14:24:6",
-          "symbol_id": "property:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_classes.ts:23:5:23:19:public value: V",
-          "name": "public value: V",
-          "location": {
-            "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_classes.ts",
-            "start_line": 23,
-            "start_column": 5,
-            "end_line": 23,
-            "end_column": 19
-          },
-          "static": false,
-          "readonly": false,
-          "abstract": false,
           "decorators": []
         },
         {
@@ -690,7 +570,38 @@
             "end_line": 21,
             "end_column": 13
           },
-          "parameters": [],
+          "parameters": [
+            {
+              "kind": "parameter",
+              "defining_scope_id": "constructor:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_classes.ts:21:14:24:6",
+              "symbol_id": "parameter:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_classes.ts:22:12:22:14:key",
+              "name": "key",
+              "location": {
+                "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_classes.ts",
+                "start_line": 22,
+                "start_column": 12,
+                "end_line": 22,
+                "end_column": 14
+              },
+              "type": "K",
+              "optional": false
+            },
+            {
+              "kind": "parameter",
+              "defining_scope_id": "constructor:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_classes.ts:21:14:24:6",
+              "symbol_id": "parameter:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_classes.ts:23:12:23:16:value",
+              "name": "value",
+              "location": {
+                "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_classes.ts",
+                "start_line": 23,
+                "start_column": 12,
+                "end_line": 23,
+                "end_column": 16
+              },
+              "type": "V",
+              "optional": false
+            }
+          ],
           "body_scope_id": "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_classes.ts:21:14:24:6"
         }
       ],
@@ -889,71 +800,6 @@
         {
           "kind": "method",
           "defining_scope_id": "class:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_classes.ts:53:37:67:1",
-          "symbol_id": "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_classes.ts:54:3:54:13:constructor",
-          "name": "constructor",
-          "location": {
-            "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_classes.ts",
-            "start_line": 54,
-            "start_column": 3,
-            "end_line": 54,
-            "end_column": 13
-          },
-          "abstract": false,
-          "static": false,
-          "async": false,
-          "generics": [],
-          "parameters": [
-            {
-              "kind": "parameter",
-              "defining_scope_id": "constructor:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_classes.ts:54:14:58:6",
-              "symbol_id": "parameter:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_classes.ts:55:12:55:18:success",
-              "name": "success",
-              "location": {
-                "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_classes.ts",
-                "start_line": 55,
-                "start_column": 12,
-                "end_line": 55,
-                "end_column": 18
-              },
-              "type": "boolean",
-              "optional": false
-            },
-            {
-              "kind": "parameter",
-              "defining_scope_id": "constructor:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_classes.ts:54:14:58:6",
-              "symbol_id": "parameter:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_classes.ts:56:12:56:15:data",
-              "name": "data",
-              "location": {
-                "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_classes.ts",
-                "start_line": 56,
-                "start_column": 12,
-                "end_line": 56,
-                "end_column": 15
-              },
-              "type": "T",
-              "optional": true
-            },
-            {
-              "kind": "parameter",
-              "defining_scope_id": "constructor:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_classes.ts:54:14:58:6",
-              "symbol_id": "parameter:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_classes.ts:57:12:57:16:error",
-              "name": "error",
-              "location": {
-                "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_classes.ts",
-                "start_line": 57,
-                "start_column": 12,
-                "end_line": 57,
-                "end_column": 16
-              },
-              "type": "E",
-              "optional": true
-            }
-          ],
-          "body_scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_classes.ts:44:28:44:51"
-        },
-        {
-          "kind": "method",
-          "defining_scope_id": "class:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_classes.ts:53:37:67:1",
           "symbol_id": "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_classes.ts:60:10:60:11:ok",
           "name": "ok",
           "location": {
@@ -1032,23 +878,6 @@
         {
           "kind": "property",
           "defining_scope_id": "constructor:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_classes.ts:54:14:58:6",
-          "symbol_id": "property:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_classes.ts:55:5:55:27:public success: boolean",
-          "name": "public success: boolean",
-          "location": {
-            "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_classes.ts",
-            "start_line": 55,
-            "start_column": 5,
-            "end_line": 55,
-            "end_column": 27
-          },
-          "static": false,
-          "readonly": false,
-          "abstract": false,
-          "decorators": []
-        },
-        {
-          "kind": "property",
-          "defining_scope_id": "constructor:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_classes.ts:54:14:58:6",
           "symbol_id": "property:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_classes.ts:55:12:55:18:success",
           "name": "success",
           "location": {
@@ -1076,7 +905,53 @@
             "end_line": 54,
             "end_column": 13
           },
-          "parameters": [],
+          "parameters": [
+            {
+              "kind": "parameter",
+              "defining_scope_id": "constructor:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_classes.ts:54:14:58:6",
+              "symbol_id": "parameter:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_classes.ts:55:12:55:18:success",
+              "name": "success",
+              "location": {
+                "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_classes.ts",
+                "start_line": 55,
+                "start_column": 12,
+                "end_line": 55,
+                "end_column": 18
+              },
+              "type": "boolean",
+              "optional": false
+            },
+            {
+              "kind": "parameter",
+              "defining_scope_id": "constructor:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_classes.ts:54:14:58:6",
+              "symbol_id": "parameter:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_classes.ts:56:12:56:15:data",
+              "name": "data",
+              "location": {
+                "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_classes.ts",
+                "start_line": 56,
+                "start_column": 12,
+                "end_line": 56,
+                "end_column": 15
+              },
+              "type": "T",
+              "optional": true
+            },
+            {
+              "kind": "parameter",
+              "defining_scope_id": "constructor:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_classes.ts:54:14:58:6",
+              "symbol_id": "parameter:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_classes.ts:57:12:57:16:error",
+              "name": "error",
+              "location": {
+                "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_classes.ts",
+                "start_line": 57,
+                "start_column": 12,
+                "end_line": 57,
+                "end_column": 16
+              },
+              "type": "E",
+              "optional": true
+            }
+          ],
           "body_scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_classes.ts:44:28:44:51"
         }
       ],

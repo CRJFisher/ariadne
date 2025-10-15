@@ -16,7 +16,7 @@
  */
 
 import type { SyntaxNode } from "tree-sitter";
-import type { Location, SymbolName, TypeInfo, FilePath, SymbolId } from "@ariadnejs/types";
+import type { Location, SymbolName, TypeInfo, FilePath } from "@ariadnejs/types";
 import { type_symbol } from "@ariadnejs/types";
 import type { MetadataExtractors } from "./metadata_types";
 import { node_to_location } from "../../node_utils";
@@ -95,7 +95,7 @@ function extract_typescript_type(node: SyntaxNode): string | undefined {
         }
       }
       // Fallback: remove leading ':' and whitespace
-      return typeAnnotation.text.replace(/^:\s*/, '');
+      return typeAnnotation.text.replace(/^:\s*/, "");
     }
 
     // Handle simple type identifiers
@@ -279,7 +279,7 @@ export const JAVASCRIPT_METADATA_EXTRACTORS: MetadataExtractors = {
         // For computed properties, try to extract string literals
         if (index_node && index_node.type === "string") {
           // Extract string content without quotes (handle both single and double quotes)
-          if (index_node.text.startsWith('"') || index_node.text.startsWith("'")) {
+          if (index_node.text.startsWith("\"") || index_node.text.startsWith("'")) {
             const prop = index_node.text.slice(1, -1);
             chain.push(prop);
           }
@@ -481,7 +481,7 @@ export const JAVASCRIPT_METADATA_EXTRACTORS: MetadataExtractors = {
 
     // Check if the node itself is an optional_chain
     if (node.type === "optional_chain") {
-      if (debug) console.log(`  -> Found optional_chain node directly`);
+      if (debug) console.log("  -> Found optional_chain node directly");
       return true;
     }
 
@@ -499,7 +499,7 @@ export const JAVASCRIPT_METADATA_EXTRACTORS: MetadataExtractors = {
         }
       }
       if (function_node && function_node.type === "optional_chain") {
-        if (debug) console.log(`  -> Found optional_chain in function field`);
+        if (debug) console.log("  -> Found optional_chain in function field");
         return true;
       }
       // Also recursively check if function_node has optional chaining
@@ -514,7 +514,7 @@ export const JAVASCRIPT_METADATA_EXTRACTORS: MetadataExtractors = {
       for (let i = 0; i < node.childCount; i++) {
         const child = node.child(i);
         if (child && child.type === "optional_chain") {
-          if (debug) console.log(`  -> Found optional_chain child in member_expression`);
+          if (debug) console.log("  -> Found optional_chain child in member_expression");
           return true;
         }
       }
@@ -526,7 +526,7 @@ export const JAVASCRIPT_METADATA_EXTRACTORS: MetadataExtractors = {
       }
     }
 
-    if (debug) console.log(`  -> No optional chaining found`);
+    if (debug) console.log("  -> No optional chaining found");
     return false;
   },
 

@@ -102,56 +102,6 @@
         {
           "kind": "method",
           "defining_scope_id": "class:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/classes/basic_class.ts:5:19:14:1",
-          "symbol_id": "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/classes/basic_class.ts:6:3:6:13:constructor",
-          "name": "constructor",
-          "location": {
-            "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/classes/basic_class.ts",
-            "start_line": 6,
-            "start_column": 3,
-            "end_line": 6,
-            "end_column": 13
-          },
-          "abstract": false,
-          "static": false,
-          "async": false,
-          "generics": [],
-          "parameters": [
-            {
-              "kind": "parameter",
-              "defining_scope_id": "constructor:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/classes/basic_class.ts:6:14:9:6",
-              "symbol_id": "parameter:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/classes/basic_class.ts:7:12:7:15:name",
-              "name": "name",
-              "location": {
-                "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/classes/basic_class.ts",
-                "start_line": 7,
-                "start_column": 12,
-                "end_line": 7,
-                "end_column": 15
-              },
-              "type": "string",
-              "optional": false
-            },
-            {
-              "kind": "parameter",
-              "defining_scope_id": "constructor:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/classes/basic_class.ts:6:14:9:6",
-              "symbol_id": "parameter:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/classes/basic_class.ts:8:12:8:16:email",
-              "name": "email",
-              "location": {
-                "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/classes/basic_class.ts",
-                "start_line": 8,
-                "start_column": 12,
-                "end_line": 8,
-                "end_column": 16
-              },
-              "type": "string",
-              "optional": false
-            }
-          ],
-          "body_scope_id": "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/classes/basic_class.ts:6:14:9:6"
-        },
-        {
-          "kind": "method",
-          "defining_scope_id": "class:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/classes/basic_class.ts:5:19:14:1",
           "symbol_id": "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/classes/basic_class.ts:11:3:11:7:greet",
           "name": "greet",
           "location": {
@@ -174,23 +124,6 @@
         {
           "kind": "property",
           "defining_scope_id": "constructor:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/classes/basic_class.ts:6:14:9:6",
-          "symbol_id": "property:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/classes/basic_class.ts:7:5:7:23:public name: string",
-          "name": "public name: string",
-          "location": {
-            "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/classes/basic_class.ts",
-            "start_line": 7,
-            "start_column": 5,
-            "end_line": 7,
-            "end_column": 23
-          },
-          "static": false,
-          "readonly": false,
-          "abstract": false,
-          "decorators": []
-        },
-        {
-          "kind": "property",
-          "defining_scope_id": "constructor:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/classes/basic_class.ts:6:14:9:6",
           "symbol_id": "property:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/classes/basic_class.ts:7:12:7:15:name",
           "name": "name",
           "location": {
@@ -202,23 +135,6 @@
           },
           "readonly": false,
           "type": "string",
-          "decorators": []
-        },
-        {
-          "kind": "property",
-          "defining_scope_id": "constructor:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/classes/basic_class.ts:6:14:9:6",
-          "symbol_id": "property:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/classes/basic_class.ts:8:5:8:24:public email: string",
-          "name": "public email: string",
-          "location": {
-            "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/classes/basic_class.ts",
-            "start_line": 8,
-            "start_column": 5,
-            "end_line": 8,
-            "end_column": 24
-          },
-          "static": false,
-          "readonly": false,
-          "abstract": false,
           "decorators": []
         },
         {
@@ -251,7 +167,38 @@
             "end_line": 6,
             "end_column": 13
           },
-          "parameters": [],
+          "parameters": [
+            {
+              "kind": "parameter",
+              "defining_scope_id": "constructor:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/classes/basic_class.ts:6:14:9:6",
+              "symbol_id": "parameter:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/classes/basic_class.ts:7:12:7:15:name",
+              "name": "name",
+              "location": {
+                "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/classes/basic_class.ts",
+                "start_line": 7,
+                "start_column": 12,
+                "end_line": 7,
+                "end_column": 15
+              },
+              "type": "string",
+              "optional": false
+            },
+            {
+              "kind": "parameter",
+              "defining_scope_id": "constructor:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/classes/basic_class.ts:6:14:9:6",
+              "symbol_id": "parameter:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/classes/basic_class.ts:8:12:8:16:email",
+              "name": "email",
+              "location": {
+                "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/classes/basic_class.ts",
+                "start_line": 8,
+                "start_column": 12,
+                "end_line": 8,
+                "end_column": 16
+              },
+              "type": "string",
+              "optional": false
+            }
+          ],
           "body_scope_id": "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/classes/basic_class.ts:6:14:9:6"
         }
       ],

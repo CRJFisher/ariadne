@@ -39,24 +39,16 @@ export function extract_import_specs(
   index: SemanticIndex,
   file_path: FilePath,
   root_folder: FileSystemFolder,
-  definitions?: DefinitionRegistry
+  definitions: DefinitionRegistry
 ): ImportSpec[] {
   const specs: ImportSpec[] = [];
 
   // Get imports from DefinitionRegistry if available, otherwise fall back to SemanticIndex
-  let import_defs: ImportDefinition[];
-  if (definitions) {
-    import_defs = definitions.get_scope_definitions_by_kind(
-      scope_id,
-      file_path,
-      "import"
-    ) as ImportDefinition[];
-  } else {
-    // Legacy path: use SemanticIndex.scope_to_definitions
-    import_defs = (index.scope_to_definitions
-      .get(scope_id)
-      ?.get("import") || []) as ImportDefinition[];
-  }
+  const import_defs = definitions.get_scope_definitions_by_kind(
+    scope_id,
+    file_path,
+    "import"
+  ) as ImportDefinition[];
 
   for (const import_def of import_defs) {
     // DefinitionRegistry already filters by scope, so no need to check defining_scope_id
@@ -118,9 +110,10 @@ export function resolve_export_chain(
 ): SymbolId | null {
   // Check if export exists BEFORE attempting to resolve the chain
   // This allows us to distinguish between missing exports (throw) and cycles (return null)
-  const export_exists = import_kind === "default"
-    ? export_registry.get_default_export(source_file) !== undefined
-    : export_registry.get_export(source_file, export_name) !== undefined;
+  const export_exists =
+    import_kind === "default"
+      ? export_registry.get_default_export(source_file) !== undefined
+      : export_registry.get_export(source_file, export_name) !== undefined;
 
   if (!export_exists) {
     // Export doesn't exist at all - throw immediately
@@ -158,7 +151,7 @@ export function has_file_in_tree(
 ): boolean {
   // Normalize the path and split into parts
   const normalized = path.normalize(file_path);
-  const parts = normalized.split(path.sep).filter(p => p);
+  const parts = normalized.split(path.sep).filter((p) => p);
 
   let current: FileSystemFolder | undefined = root_folder;
 
@@ -186,7 +179,7 @@ export function is_directory_in_tree(
 ): boolean {
   // Normalize the path and split into parts
   const normalized = path.normalize(folder_path);
-  const parts = normalized.split(path.sep).filter(p => p);
+  const parts = normalized.split(path.sep).filter((p) => p);
 
   let current: FileSystemFolder | undefined = root_folder;
 
@@ -216,11 +209,23 @@ export function resolve_module_path(
 ): FilePath {
   switch (language) {
     case "javascript":
-      return resolve_module_path_javascript(import_path, importing_file, root_folder);
+      return resolve_module_path_javascript(
+        import_path,
+        importing_file,
+        root_folder
+      );
     case "typescript":
-      return resolve_module_path_typescript(import_path, importing_file, root_folder);
+      return resolve_module_path_typescript(
+        import_path,
+        importing_file,
+        root_folder
+      );
     case "python":
-      return resolve_module_path_python(import_path, importing_file, root_folder);
+      return resolve_module_path_python(
+        import_path,
+        importing_file,
+        root_folder
+      );
     case "rust":
       return resolve_module_path_rust(import_path, importing_file, root_folder);
     default:

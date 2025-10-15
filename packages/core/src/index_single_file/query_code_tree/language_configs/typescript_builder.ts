@@ -207,6 +207,29 @@ export function extract_interface_extends(node: SyntaxNode): SymbolName[] {
 }
 
 /**
+ * Extract extends class for classes
+ */
+export function extract_class_extends(node: SyntaxNode): SymbolName[] {
+  // Find class_heritage by searching children (it's NOT a field)
+  const heritage = node.namedChildren?.find(c => c.type === "class_heritage");
+
+  if (heritage) {
+    // Find extends_clause within heritage (also not a field)
+    const extendsClause = heritage.namedChildren?.find(c => c.type === "extends_clause");
+
+    if (extendsClause) {
+      // The identifier is accessed via the 'value' field
+      const valueNode = extendsClause.childForFieldName?.("value");
+      if (valueNode && (valueNode.type === "identifier" || valueNode.type === "type_identifier")) {
+        return [valueNode.text as SymbolName];
+      }
+    }
+  }
+
+  return [];
+}
+
+/**
  * Extract implements interfaces for classes
  */
 export function extract_implements(node: SyntaxNode): SymbolName[] {

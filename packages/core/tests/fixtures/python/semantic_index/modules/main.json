@@ -1,0 +1,2461 @@
+{
+  "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py",
+  "language": "python",
+  "root_scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:1:1:30:1",
+  "scopes": {
+    "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:1:1:30:1": {
+      "id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:1:1:30:1",
+      "parent_id": null,
+      "name": null,
+      "type": "module",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py",
+        "start_line": 1,
+        "start_column": 1,
+        "end_line": 30,
+        "end_column": 1
+      },
+      "child_ids": []
+    }
+  },
+  "functions": {},
+  "classes": {},
+  "variables": {
+    "variable:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:11:1:11:8:greeting": {
+      "kind": "variable",
+      "symbol_id": "variable:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:11:1:11:8:greeting",
+      "name": "greeting",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py",
+        "start_line": 11,
+        "start_column": 1,
+        "end_line": 11,
+        "end_column": 8
+      },
+      "defining_scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:1:1:30:1",
+      "is_exported": true,
+      "initial_value": "helper()"
+    },
+    "variable:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:12:1:12:9:processed": {
+      "kind": "variable",
+      "symbol_id": "variable:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:12:1:12:9:processed",
+      "name": "processed",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py",
+        "start_line": 12,
+        "start_column": 1,
+        "end_line": 12,
+        "end_column": 9
+      },
+      "defining_scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:1:1:30:1",
+      "is_exported": true,
+      "initial_value": "process_data(\"hello world\")"
+    },
+    "variable:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:15:1:15:5:items": {
+      "kind": "variable",
+      "symbol_id": "variable:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:15:1:15:5:items",
+      "name": "items",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py",
+        "start_line": 15,
+        "start_column": 1,
+        "end_line": 15,
+        "end_column": 5
+      },
+      "defining_scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:1:1:30:1",
+      "is_exported": true,
+      "initial_value": "[\n    {\"name\": \"item1\", \"price\": 10.99},\n    {\"name\": \"item2\", \"price\": 20.50}\n]"
+    },
+    "variable:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:19:1:19:5:total": {
+      "kind": "variable",
+      "symbol_id": "variable:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:19:1:19:5:total",
+      "name": "total",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py",
+        "start_line": 19,
+        "start_column": 1,
+        "end_line": 19,
+        "end_column": 5
+      },
+      "defining_scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:1:1:30:1",
+      "is_exported": true,
+      "initial_value": "calculate_total(items)"
+    },
+    "variable:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:22:1:22:8:is_valid": {
+      "kind": "variable",
+      "symbol_id": "variable:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:22:1:22:8:is_valid",
+      "name": "is_valid",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py",
+        "start_line": 22,
+        "start_column": 1,
+        "end_line": 22,
+        "end_column": 8
+      },
+      "defining_scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:1:1:30:1",
+      "is_exported": true,
+      "initial_value": "utils_module.validate_user_data(\"John Doe\", \"john@example.com\")"
+    },
+    "variable:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:25:1:25:7:results": {
+      "kind": "variable",
+      "symbol_id": "variable:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:25:1:25:7:results",
+      "name": "results",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py",
+        "start_line": 25,
+        "start_column": 1,
+        "end_line": 25,
+        "end_column": 7
+      },
+      "defining_scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:1:1:30:1",
+      "is_exported": true,
+      "initial_value": "{\n    \"greeting\": greeting,\n    \"processed\": processed,\n    \"total\": total,\n    \"is_valid\": is_valid,\n}"
+    }
+  },
+  "interfaces": {},
+  "enums": {},
+  "namespaces": {},
+  "types": {},
+  "imported_symbols": {
+    "variable:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:7:20:7:25:helper": {
+      "kind": "import",
+      "symbol_id": "variable:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:7:20:7:25:helper",
+      "name": "helper",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py",
+        "start_line": 7,
+        "start_column": 20,
+        "end_line": 7,
+        "end_column": 25
+      },
+      "defining_scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:1:1:30:1",
+      "import_path": "helper",
+      "import_kind": "named"
+    },
+    "variable:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:7:28:7:39:process_data": {
+      "kind": "import",
+      "symbol_id": "variable:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:7:28:7:39:process_data",
+      "name": "process_data",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py",
+        "start_line": 7,
+        "start_column": 28,
+        "end_line": 7,
+        "end_column": 39
+      },
+      "defining_scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:1:1:30:1",
+      "import_path": "helper",
+      "import_kind": "named"
+    },
+    "variable:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:7:42:7:56:calculate_total": {
+      "kind": "import",
+      "symbol_id": "variable:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:7:42:7:56:calculate_total",
+      "name": "calculate_total",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py",
+        "start_line": 7,
+        "start_column": 42,
+        "end_line": 7,
+        "end_column": 56
+      },
+      "defining_scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:1:1:30:1",
+      "import_path": "helper",
+      "import_kind": "named"
+    },
+    "variable:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:8:8:8:20:modules.utils": {
+      "kind": "import",
+      "symbol_id": "variable:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:8:8:8:20:modules.utils",
+      "name": "utils_module",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py",
+        "start_line": 8,
+        "start_column": 8,
+        "end_line": 8,
+        "end_column": 20
+      },
+      "defining_scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:1:1:30:1",
+      "import_path": "modules.utils",
+      "original_name": "modules.utils",
+      "import_kind": "namespace"
+    },
+    "variable:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:8:25:8:36:utils_module": {
+      "kind": "import",
+      "symbol_id": "variable:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:8:25:8:36:utils_module",
+      "name": "utils_module",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py",
+        "start_line": 8,
+        "start_column": 25,
+        "end_line": 8,
+        "end_column": 36
+      },
+      "defining_scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:1:1:30:1",
+      "import_path": "utils_module",
+      "import_kind": "namespace"
+    }
+  },
+  "references": [
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py",
+        "start_line": 7,
+        "start_column": 7,
+        "end_line": 7,
+        "end_column": 11
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:1:1:30:1",
+      "name": "utils",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:7:7:7:11:utils",
+        "type_name": "utils",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py",
+        "start_line": 7,
+        "start_column": 7,
+        "end_line": 7,
+        "end_column": 11
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:1:1:30:1",
+      "name": "utils",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:7:7:7:11:utils",
+        "type_name": "utils",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py",
+        "start_line": 7,
+        "start_column": 7,
+        "end_line": 7,
+        "end_column": 11
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:1:1:30:1",
+      "name": "utils",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:7:7:7:11:utils",
+        "type_name": "utils",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py",
+        "start_line": 7,
+        "start_column": 20,
+        "end_line": 7,
+        "end_column": 25
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:1:1:30:1",
+      "name": "helper",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:7:20:7:25:helper",
+        "type_name": "helper",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py",
+        "start_line": 7,
+        "start_column": 20,
+        "end_line": 7,
+        "end_column": 25
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:1:1:30:1",
+      "name": "helper",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:7:20:7:25:helper",
+        "type_name": "helper",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py",
+        "start_line": 7,
+        "start_column": 20,
+        "end_line": 7,
+        "end_column": 25
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:1:1:30:1",
+      "name": "helper",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:7:20:7:25:helper",
+        "type_name": "helper",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py",
+        "start_line": 7,
+        "start_column": 28,
+        "end_line": 7,
+        "end_column": 39
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:1:1:30:1",
+      "name": "process_data",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:7:28:7:39:process_data",
+        "type_name": "process_data",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py",
+        "start_line": 7,
+        "start_column": 28,
+        "end_line": 7,
+        "end_column": 39
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:1:1:30:1",
+      "name": "process_data",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:7:28:7:39:process_data",
+        "type_name": "process_data",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py",
+        "start_line": 7,
+        "start_column": 28,
+        "end_line": 7,
+        "end_column": 39
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:1:1:30:1",
+      "name": "process_data",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:7:28:7:39:process_data",
+        "type_name": "process_data",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py",
+        "start_line": 7,
+        "start_column": 42,
+        "end_line": 7,
+        "end_column": 56
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:1:1:30:1",
+      "name": "calculate_total",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:7:42:7:56:calculate_total",
+        "type_name": "calculate_total",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py",
+        "start_line": 7,
+        "start_column": 42,
+        "end_line": 7,
+        "end_column": 56
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:1:1:30:1",
+      "name": "calculate_total",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:7:42:7:56:calculate_total",
+        "type_name": "calculate_total",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py",
+        "start_line": 7,
+        "start_column": 42,
+        "end_line": 7,
+        "end_column": 56
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:1:1:30:1",
+      "name": "calculate_total",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:7:42:7:56:calculate_total",
+        "type_name": "calculate_total",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py",
+        "start_line": 8,
+        "start_column": 8,
+        "end_line": 8,
+        "end_column": 14
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:1:1:30:1",
+      "name": "modules",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:8:8:8:14:modules",
+        "type_name": "modules",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py",
+        "start_line": 8,
+        "start_column": 8,
+        "end_line": 8,
+        "end_column": 14
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:1:1:30:1",
+      "name": "modules",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:8:8:8:14:modules",
+        "type_name": "modules",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py",
+        "start_line": 8,
+        "start_column": 8,
+        "end_line": 8,
+        "end_column": 14
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:1:1:30:1",
+      "name": "modules",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:8:8:8:14:modules",
+        "type_name": "modules",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py",
+        "start_line": 8,
+        "start_column": 16,
+        "end_line": 8,
+        "end_column": 20
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:1:1:30:1",
+      "name": "utils",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:8:16:8:20:utils",
+        "type_name": "utils",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py",
+        "start_line": 8,
+        "start_column": 16,
+        "end_line": 8,
+        "end_column": 20
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:1:1:30:1",
+      "name": "utils",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:8:16:8:20:utils",
+        "type_name": "utils",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py",
+        "start_line": 8,
+        "start_column": 16,
+        "end_line": 8,
+        "end_column": 20
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:1:1:30:1",
+      "name": "utils",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:8:16:8:20:utils",
+        "type_name": "utils",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py",
+        "start_line": 8,
+        "start_column": 25,
+        "end_line": 8,
+        "end_column": 36
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:1:1:30:1",
+      "name": "utils_module",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:8:25:8:36:utils_module",
+        "type_name": "utils_module",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py",
+        "start_line": 8,
+        "start_column": 25,
+        "end_line": 8,
+        "end_column": 36
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:1:1:30:1",
+      "name": "utils_module",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:8:25:8:36:utils_module",
+        "type_name": "utils_module",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py",
+        "start_line": 8,
+        "start_column": 25,
+        "end_line": 8,
+        "end_column": 36
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:1:1:30:1",
+      "name": "utils_module",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:8:25:8:36:utils_module",
+        "type_name": "utils_module",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py",
+        "start_line": 11,
+        "start_column": 1,
+        "end_line": 11,
+        "end_column": 19
+      },
+      "type": "assignment",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:1:1:30:1",
+      "name": "greeting = helper()"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py",
+        "start_line": 11,
+        "start_column": 1,
+        "end_line": 11,
+        "end_column": 8
+      },
+      "type": "assignment",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:1:1:30:1",
+      "name": "greeting",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:11:1:11:8:greeting",
+        "type_name": "greeting",
+        "certainty": "declared",
+        "is_nullable": false
+      },
+      "assignment_type": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:11:1:11:8:greeting",
+        "type_name": "greeting",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py",
+        "start_line": 11,
+        "start_column": 1,
+        "end_line": 11,
+        "end_column": 8
+      },
+      "type": "write",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:1:1:30:1",
+      "name": "greeting",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:11:1:11:8:greeting",
+        "type_name": "greeting",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py",
+        "start_line": 11,
+        "start_column": 1,
+        "end_line": 11,
+        "end_column": 19
+      },
+      "type": "assignment",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:1:1:30:1",
+      "name": "greeting = helper()"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py",
+        "start_line": 11,
+        "start_column": 1,
+        "end_line": 11,
+        "end_column": 8
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:1:1:30:1",
+      "name": "greeting",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:11:1:11:8:greeting",
+        "type_name": "greeting",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py",
+        "start_line": 11,
+        "start_column": 1,
+        "end_line": 11,
+        "end_column": 8
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:1:1:30:1",
+      "name": "greeting",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:11:1:11:8:greeting",
+        "type_name": "greeting",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py",
+        "start_line": 11,
+        "start_column": 1,
+        "end_line": 11,
+        "end_column": 8
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:1:1:30:1",
+      "name": "greeting",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:11:1:11:8:greeting",
+        "type_name": "greeting",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py",
+        "start_line": 11,
+        "start_column": 1,
+        "end_line": 11,
+        "end_column": 8
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:1:1:30:1",
+      "name": "greeting",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:11:1:11:8:greeting",
+        "type_name": "greeting",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py",
+        "start_line": 11,
+        "start_column": 12,
+        "end_line": 11,
+        "end_column": 19
+      },
+      "type": "assignment",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:1:1:30:1",
+      "name": "helper()"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py",
+        "start_line": 11,
+        "start_column": 12,
+        "end_line": 11,
+        "end_column": 17
+      },
+      "type": "call",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:1:1:30:1",
+      "name": "helper",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:11:12:11:17:helper",
+        "type_name": "helper",
+        "certainty": "declared",
+        "is_nullable": false
+      },
+      "call_type": "function"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py",
+        "start_line": 11,
+        "start_column": 12,
+        "end_line": 11,
+        "end_column": 19
+      },
+      "type": "call",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:1:1:30:1",
+      "name": "helper()",
+      "call_type": "function"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py",
+        "start_line": 11,
+        "start_column": 12,
+        "end_line": 11,
+        "end_column": 17
+      },
+      "type": "construct",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:1:1:30:1",
+      "name": "helper",
+      "context": {
+        "construct_target": {
+          "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py",
+          "start_line": 11,
+          "start_column": 1,
+          "end_line": 11,
+          "end_column": 8
+        }
+      },
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:11:12:11:17:helper",
+        "type_name": "helper",
+        "certainty": "declared",
+        "is_nullable": false
+      },
+      "call_type": "constructor"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py",
+        "start_line": 11,
+        "start_column": 12,
+        "end_line": 11,
+        "end_column": 19
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:1:1:30:1",
+      "name": "helper()"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py",
+        "start_line": 11,
+        "start_column": 12,
+        "end_line": 11,
+        "end_column": 17
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:1:1:30:1",
+      "name": "helper",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:11:12:11:17:helper",
+        "type_name": "helper",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py",
+        "start_line": 11,
+        "start_column": 12,
+        "end_line": 11,
+        "end_column": 17
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:1:1:30:1",
+      "name": "helper",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:11:12:11:17:helper",
+        "type_name": "helper",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py",
+        "start_line": 11,
+        "start_column": 12,
+        "end_line": 11,
+        "end_column": 17
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:1:1:30:1",
+      "name": "helper",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:11:12:11:17:helper",
+        "type_name": "helper",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py",
+        "start_line": 12,
+        "start_column": 1,
+        "end_line": 12,
+        "end_column": 39
+      },
+      "type": "assignment",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:1:1:30:1",
+      "name": "processed = process_data(\"hello world\")"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py",
+        "start_line": 12,
+        "start_column": 1,
+        "end_line": 12,
+        "end_column": 9
+      },
+      "type": "assignment",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:1:1:30:1",
+      "name": "processed",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:12:1:12:9:processed",
+        "type_name": "processed",
+        "certainty": "declared",
+        "is_nullable": false
+      },
+      "assignment_type": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:12:1:12:9:processed",
+        "type_name": "processed",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py",
+        "start_line": 12,
+        "start_column": 1,
+        "end_line": 12,
+        "end_column": 9
+      },
+      "type": "write",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:1:1:30:1",
+      "name": "processed",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:12:1:12:9:processed",
+        "type_name": "processed",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py",
+        "start_line": 12,
+        "start_column": 1,
+        "end_line": 12,
+        "end_column": 39
+      },
+      "type": "assignment",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:1:1:30:1",
+      "name": "processed = process_data(\"hello world\")"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py",
+        "start_line": 12,
+        "start_column": 1,
+        "end_line": 12,
+        "end_column": 9
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:1:1:30:1",
+      "name": "processed",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:12:1:12:9:processed",
+        "type_name": "processed",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py",
+        "start_line": 12,
+        "start_column": 1,
+        "end_line": 12,
+        "end_column": 9
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:1:1:30:1",
+      "name": "processed",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:12:1:12:9:processed",
+        "type_name": "processed",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py",
+        "start_line": 12,
+        "start_column": 1,
+        "end_line": 12,
+        "end_column": 9
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:1:1:30:1",
+      "name": "processed",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:12:1:12:9:processed",
+        "type_name": "processed",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py",
+        "start_line": 12,
+        "start_column": 1,
+        "end_line": 12,
+        "end_column": 9
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:1:1:30:1",
+      "name": "processed",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:12:1:12:9:processed",
+        "type_name": "processed",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py",
+        "start_line": 12,
+        "start_column": 13,
+        "end_line": 12,
+        "end_column": 39
+      },
+      "type": "assignment",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:1:1:30:1",
+      "name": "process_data(\"hello world\")"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py",
+        "start_line": 12,
+        "start_column": 13,
+        "end_line": 12,
+        "end_column": 24
+      },
+      "type": "call",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:1:1:30:1",
+      "name": "process_data",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:12:13:12:24:process_data",
+        "type_name": "process_data",
+        "certainty": "declared",
+        "is_nullable": false
+      },
+      "call_type": "function"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py",
+        "start_line": 12,
+        "start_column": 13,
+        "end_line": 12,
+        "end_column": 39
+      },
+      "type": "call",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:1:1:30:1",
+      "name": "process_data(\"hello world\")",
+      "call_type": "function"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py",
+        "start_line": 12,
+        "start_column": 13,
+        "end_line": 12,
+        "end_column": 24
+      },
+      "type": "construct",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:1:1:30:1",
+      "name": "process_data",
+      "context": {
+        "construct_target": {
+          "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py",
+          "start_line": 12,
+          "start_column": 1,
+          "end_line": 12,
+          "end_column": 9
+        }
+      },
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:12:13:12:24:process_data",
+        "type_name": "process_data",
+        "certainty": "declared",
+        "is_nullable": false
+      },
+      "call_type": "constructor"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py",
+        "start_line": 12,
+        "start_column": 13,
+        "end_line": 12,
+        "end_column": 39
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:1:1:30:1",
+      "name": "process_data(\"hello world\")"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py",
+        "start_line": 12,
+        "start_column": 13,
+        "end_line": 12,
+        "end_column": 24
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:1:1:30:1",
+      "name": "process_data",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:12:13:12:24:process_data",
+        "type_name": "process_data",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py",
+        "start_line": 12,
+        "start_column": 13,
+        "end_line": 12,
+        "end_column": 24
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:1:1:30:1",
+      "name": "process_data",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:12:13:12:24:process_data",
+        "type_name": "process_data",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py",
+        "start_line": 12,
+        "start_column": 13,
+        "end_line": 12,
+        "end_column": 24
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:1:1:30:1",
+      "name": "process_data",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:12:13:12:24:process_data",
+        "type_name": "process_data",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py",
+        "start_line": 15,
+        "start_column": 1,
+        "end_line": 18,
+        "end_column": 1
+      },
+      "type": "assignment",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:1:1:30:1",
+      "name": "items = [\n    {\"name\": \"item1\", \"price\": 10.99},\n    {\"name\": \"item2\", \"price\": 20.50}\n]"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py",
+        "start_line": 15,
+        "start_column": 1,
+        "end_line": 15,
+        "end_column": 5
+      },
+      "type": "assignment",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:1:1:30:1",
+      "name": "items",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:15:1:15:5:items",
+        "type_name": "items",
+        "certainty": "declared",
+        "is_nullable": false
+      },
+      "assignment_type": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:15:1:15:5:items",
+        "type_name": "items",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py",
+        "start_line": 15,
+        "start_column": 1,
+        "end_line": 15,
+        "end_column": 5
+      },
+      "type": "write",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:1:1:30:1",
+      "name": "items",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:15:1:15:5:items",
+        "type_name": "items",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py",
+        "start_line": 15,
+        "start_column": 1,
+        "end_line": 18,
+        "end_column": 1
+      },
+      "type": "assignment",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:1:1:30:1",
+      "name": "items = [\n    {\"name\": \"item1\", \"price\": 10.99},\n    {\"name\": \"item2\", \"price\": 20.50}\n]"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py",
+        "start_line": 15,
+        "start_column": 1,
+        "end_line": 15,
+        "end_column": 5
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:1:1:30:1",
+      "name": "items",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:15:1:15:5:items",
+        "type_name": "items",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py",
+        "start_line": 15,
+        "start_column": 1,
+        "end_line": 15,
+        "end_column": 5
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:1:1:30:1",
+      "name": "items",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:15:1:15:5:items",
+        "type_name": "items",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py",
+        "start_line": 15,
+        "start_column": 1,
+        "end_line": 15,
+        "end_column": 5
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:1:1:30:1",
+      "name": "items",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:15:1:15:5:items",
+        "type_name": "items",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py",
+        "start_line": 15,
+        "start_column": 1,
+        "end_line": 15,
+        "end_column": 5
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:1:1:30:1",
+      "name": "items",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:15:1:15:5:items",
+        "type_name": "items",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py",
+        "start_line": 15,
+        "start_column": 9,
+        "end_line": 18,
+        "end_column": 1
+      },
+      "type": "assignment",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:1:1:30:1",
+      "name": "[\n    {\"name\": \"item1\", \"price\": 10.99},\n    {\"name\": \"item2\", \"price\": 20.50}\n]"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py",
+        "start_line": 15,
+        "start_column": 9,
+        "end_line": 18,
+        "end_column": 1
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:1:1:30:1",
+      "name": "[\n    {\"name\": \"item1\", \"price\": 10.99},\n    {\"name\": \"item2\", \"price\": 20.50}\n]"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py",
+        "start_line": 19,
+        "start_column": 1,
+        "end_line": 19,
+        "end_column": 30
+      },
+      "type": "assignment",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:1:1:30:1",
+      "name": "total = calculate_total(items)"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py",
+        "start_line": 19,
+        "start_column": 1,
+        "end_line": 19,
+        "end_column": 5
+      },
+      "type": "assignment",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:1:1:30:1",
+      "name": "total",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:19:1:19:5:total",
+        "type_name": "total",
+        "certainty": "declared",
+        "is_nullable": false
+      },
+      "assignment_type": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:19:1:19:5:total",
+        "type_name": "total",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py",
+        "start_line": 19,
+        "start_column": 1,
+        "end_line": 19,
+        "end_column": 5
+      },
+      "type": "write",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:1:1:30:1",
+      "name": "total",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:19:1:19:5:total",
+        "type_name": "total",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py",
+        "start_line": 19,
+        "start_column": 1,
+        "end_line": 19,
+        "end_column": 30
+      },
+      "type": "assignment",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:1:1:30:1",
+      "name": "total = calculate_total(items)"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py",
+        "start_line": 19,
+        "start_column": 1,
+        "end_line": 19,
+        "end_column": 5
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:1:1:30:1",
+      "name": "total",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:19:1:19:5:total",
+        "type_name": "total",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py",
+        "start_line": 19,
+        "start_column": 1,
+        "end_line": 19,
+        "end_column": 5
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:1:1:30:1",
+      "name": "total",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:19:1:19:5:total",
+        "type_name": "total",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py",
+        "start_line": 19,
+        "start_column": 1,
+        "end_line": 19,
+        "end_column": 5
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:1:1:30:1",
+      "name": "total",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:19:1:19:5:total",
+        "type_name": "total",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py",
+        "start_line": 19,
+        "start_column": 1,
+        "end_line": 19,
+        "end_column": 5
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:1:1:30:1",
+      "name": "total",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:19:1:19:5:total",
+        "type_name": "total",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py",
+        "start_line": 19,
+        "start_column": 9,
+        "end_line": 19,
+        "end_column": 30
+      },
+      "type": "assignment",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:1:1:30:1",
+      "name": "calculate_total(items)"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py",
+        "start_line": 19,
+        "start_column": 9,
+        "end_line": 19,
+        "end_column": 23
+      },
+      "type": "call",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:1:1:30:1",
+      "name": "calculate_total",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:19:9:19:23:calculate_total",
+        "type_name": "calculate_total",
+        "certainty": "declared",
+        "is_nullable": false
+      },
+      "call_type": "function"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py",
+        "start_line": 19,
+        "start_column": 9,
+        "end_line": 19,
+        "end_column": 30
+      },
+      "type": "call",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:1:1:30:1",
+      "name": "calculate_total(items)",
+      "call_type": "function"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py",
+        "start_line": 19,
+        "start_column": 9,
+        "end_line": 19,
+        "end_column": 23
+      },
+      "type": "construct",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:1:1:30:1",
+      "name": "calculate_total",
+      "context": {
+        "construct_target": {
+          "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py",
+          "start_line": 19,
+          "start_column": 1,
+          "end_line": 19,
+          "end_column": 5
+        }
+      },
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:19:9:19:23:calculate_total",
+        "type_name": "calculate_total",
+        "certainty": "declared",
+        "is_nullable": false
+      },
+      "call_type": "constructor"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py",
+        "start_line": 19,
+        "start_column": 9,
+        "end_line": 19,
+        "end_column": 30
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:1:1:30:1",
+      "name": "calculate_total(items)"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py",
+        "start_line": 19,
+        "start_column": 9,
+        "end_line": 19,
+        "end_column": 23
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:1:1:30:1",
+      "name": "calculate_total",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:19:9:19:23:calculate_total",
+        "type_name": "calculate_total",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py",
+        "start_line": 19,
+        "start_column": 9,
+        "end_line": 19,
+        "end_column": 23
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:1:1:30:1",
+      "name": "calculate_total",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:19:9:19:23:calculate_total",
+        "type_name": "calculate_total",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py",
+        "start_line": 19,
+        "start_column": 9,
+        "end_line": 19,
+        "end_column": 23
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:1:1:30:1",
+      "name": "calculate_total",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:19:9:19:23:calculate_total",
+        "type_name": "calculate_total",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py",
+        "start_line": 19,
+        "start_column": 25,
+        "end_line": 19,
+        "end_column": 29
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:1:1:30:1",
+      "name": "items",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:19:25:19:29:items",
+        "type_name": "items",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py",
+        "start_line": 19,
+        "start_column": 25,
+        "end_line": 19,
+        "end_column": 29
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:1:1:30:1",
+      "name": "items",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:19:25:19:29:items",
+        "type_name": "items",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py",
+        "start_line": 19,
+        "start_column": 25,
+        "end_line": 19,
+        "end_column": 29
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:1:1:30:1",
+      "name": "items",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:19:25:19:29:items",
+        "type_name": "items",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py",
+        "start_line": 22,
+        "start_column": 1,
+        "end_line": 22,
+        "end_column": 74
+      },
+      "type": "assignment",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:1:1:30:1",
+      "name": "is_valid = utils_module.validate_user_data(\"John Doe\", \"john@example.com\")"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py",
+        "start_line": 22,
+        "start_column": 1,
+        "end_line": 22,
+        "end_column": 8
+      },
+      "type": "assignment",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:1:1:30:1",
+      "name": "is_valid",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:22:1:22:8:is_valid",
+        "type_name": "is_valid",
+        "certainty": "declared",
+        "is_nullable": false
+      },
+      "assignment_type": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:22:1:22:8:is_valid",
+        "type_name": "is_valid",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py",
+        "start_line": 22,
+        "start_column": 1,
+        "end_line": 22,
+        "end_column": 8
+      },
+      "type": "write",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:1:1:30:1",
+      "name": "is_valid",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:22:1:22:8:is_valid",
+        "type_name": "is_valid",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py",
+        "start_line": 22,
+        "start_column": 1,
+        "end_line": 22,
+        "end_column": 74
+      },
+      "type": "assignment",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:1:1:30:1",
+      "name": "is_valid = utils_module.validate_user_data(\"John Doe\", \"john@example.com\")"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py",
+        "start_line": 22,
+        "start_column": 1,
+        "end_line": 22,
+        "end_column": 8
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:1:1:30:1",
+      "name": "is_valid",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:22:1:22:8:is_valid",
+        "type_name": "is_valid",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py",
+        "start_line": 22,
+        "start_column": 1,
+        "end_line": 22,
+        "end_column": 8
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:1:1:30:1",
+      "name": "is_valid",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:22:1:22:8:is_valid",
+        "type_name": "is_valid",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py",
+        "start_line": 22,
+        "start_column": 1,
+        "end_line": 22,
+        "end_column": 8
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:1:1:30:1",
+      "name": "is_valid",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:22:1:22:8:is_valid",
+        "type_name": "is_valid",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py",
+        "start_line": 22,
+        "start_column": 1,
+        "end_line": 22,
+        "end_column": 8
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:1:1:30:1",
+      "name": "is_valid",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:22:1:22:8:is_valid",
+        "type_name": "is_valid",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py",
+        "start_line": 22,
+        "start_column": 12,
+        "end_line": 22,
+        "end_column": 74
+      },
+      "type": "assignment",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:1:1:30:1",
+      "name": "utils_module.validate_user_data(\"John Doe\", \"john@example.com\")"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py",
+        "start_line": 22,
+        "start_column": 12,
+        "end_line": 22,
+        "end_column": 74
+      },
+      "type": "call",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:1:1:30:1",
+      "name": "validate_user_data",
+      "context": {
+        "receiver_location": {
+          "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py",
+          "start_line": 22,
+          "start_column": 12,
+          "end_line": 22,
+          "end_column": 23
+        },
+        "property_chain": [
+          "utils_module",
+          "validate_user_data"
+        ]
+      },
+      "call_type": "method",
+      "member_access": {
+        "access_type": "method",
+        "is_optional_chain": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py",
+        "start_line": 22,
+        "start_column": 12,
+        "end_line": 22,
+        "end_column": 23
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:1:1:30:1",
+      "name": "utils_module",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:22:12:22:23:utils_module",
+        "type_name": "utils_module",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py",
+        "start_line": 22,
+        "start_column": 12,
+        "end_line": 22,
+        "end_column": 74
+      },
+      "type": "call",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:1:1:30:1",
+      "name": "validate_user_data",
+      "context": {
+        "receiver_location": {
+          "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py",
+          "start_line": 22,
+          "start_column": 12,
+          "end_line": 22,
+          "end_column": 23
+        },
+        "property_chain": [
+          "utils_module",
+          "validate_user_data"
+        ]
+      },
+      "call_type": "method",
+      "member_access": {
+        "access_type": "method",
+        "is_optional_chain": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py",
+        "start_line": 22,
+        "start_column": 12,
+        "end_line": 22,
+        "end_column": 23
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:1:1:30:1",
+      "name": "utils_module",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:22:12:22:23:utils_module",
+        "type_name": "utils_module",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py",
+        "start_line": 22,
+        "start_column": 12,
+        "end_line": 22,
+        "end_column": 42
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:1:1:30:1",
+      "name": "utils_module.validate_user_data"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py",
+        "start_line": 22,
+        "start_column": 12,
+        "end_line": 22,
+        "end_column": 23
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:1:1:30:1",
+      "name": "utils_module",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:22:12:22:23:utils_module",
+        "type_name": "utils_module",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py",
+        "start_line": 22,
+        "start_column": 12,
+        "end_line": 22,
+        "end_column": 74
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:1:1:30:1",
+      "name": "utils_module.validate_user_data(\"John Doe\", \"john@example.com\")"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py",
+        "start_line": 22,
+        "start_column": 12,
+        "end_line": 22,
+        "end_column": 23
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:1:1:30:1",
+      "name": "utils_module",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:22:12:22:23:utils_module",
+        "type_name": "utils_module",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py",
+        "start_line": 22,
+        "start_column": 12,
+        "end_line": 22,
+        "end_column": 23
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:1:1:30:1",
+      "name": "utils_module",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:22:12:22:23:utils_module",
+        "type_name": "utils_module",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py",
+        "start_line": 22,
+        "start_column": 12,
+        "end_line": 22,
+        "end_column": 23
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:1:1:30:1",
+      "name": "utils_module",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:22:12:22:23:utils_module",
+        "type_name": "utils_module",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py",
+        "start_line": 22,
+        "start_column": 25,
+        "end_line": 22,
+        "end_column": 42
+      },
+      "type": "call",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:1:1:30:1",
+      "name": "validate_user_data",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:22:25:22:42:validate_user_data",
+        "type_name": "validate_user_data",
+        "certainty": "declared",
+        "is_nullable": false
+      },
+      "call_type": "function"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py",
+        "start_line": 22,
+        "start_column": 25,
+        "end_line": 22,
+        "end_column": 42
+      },
+      "type": "call",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:1:1:30:1",
+      "name": "validate_user_data",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:22:25:22:42:validate_user_data",
+        "type_name": "validate_user_data",
+        "certainty": "declared",
+        "is_nullable": false
+      },
+      "call_type": "function"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py",
+        "start_line": 22,
+        "start_column": 25,
+        "end_line": 22,
+        "end_column": 42
+      },
+      "type": "member_access",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:1:1:30:1",
+      "name": "validate_user_data",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:22:25:22:42:validate_user_data",
+        "type_name": "validate_user_data",
+        "certainty": "declared",
+        "is_nullable": false
+      },
+      "member_access": {
+        "object_type": {
+          "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:22:25:22:42:validate_user_data",
+          "type_name": "validate_user_data",
+          "certainty": "declared",
+          "is_nullable": false
+        },
+        "access_type": "property",
+        "is_optional_chain": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py",
+        "start_line": 22,
+        "start_column": 25,
+        "end_line": 22,
+        "end_column": 42
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:1:1:30:1",
+      "name": "validate_user_data",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:22:25:22:42:validate_user_data",
+        "type_name": "validate_user_data",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py",
+        "start_line": 22,
+        "start_column": 25,
+        "end_line": 22,
+        "end_column": 42
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:1:1:30:1",
+      "name": "validate_user_data",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:22:25:22:42:validate_user_data",
+        "type_name": "validate_user_data",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py",
+        "start_line": 22,
+        "start_column": 25,
+        "end_line": 22,
+        "end_column": 42
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:1:1:30:1",
+      "name": "validate_user_data",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:22:25:22:42:validate_user_data",
+        "type_name": "validate_user_data",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py",
+        "start_line": 25,
+        "start_column": 1,
+        "end_line": 30,
+        "end_column": 1
+      },
+      "type": "assignment",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:1:1:30:1",
+      "name": "results = {\n    \"greeting\": greeting,\n    \"processed\": processed,\n    \"total\": total,\n    \"is_valid\": is_valid,\n}"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py",
+        "start_line": 25,
+        "start_column": 1,
+        "end_line": 25,
+        "end_column": 7
+      },
+      "type": "assignment",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:1:1:30:1",
+      "name": "results",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:25:1:25:7:results",
+        "type_name": "results",
+        "certainty": "declared",
+        "is_nullable": false
+      },
+      "assignment_type": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:25:1:25:7:results",
+        "type_name": "results",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py",
+        "start_line": 25,
+        "start_column": 1,
+        "end_line": 25,
+        "end_column": 7
+      },
+      "type": "write",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:1:1:30:1",
+      "name": "results",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:25:1:25:7:results",
+        "type_name": "results",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py",
+        "start_line": 25,
+        "start_column": 1,
+        "end_line": 30,
+        "end_column": 1
+      },
+      "type": "assignment",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:1:1:30:1",
+      "name": "results = {\n    \"greeting\": greeting,\n    \"processed\": processed,\n    \"total\": total,\n    \"is_valid\": is_valid,\n}"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py",
+        "start_line": 25,
+        "start_column": 1,
+        "end_line": 25,
+        "end_column": 7
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:1:1:30:1",
+      "name": "results",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:25:1:25:7:results",
+        "type_name": "results",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py",
+        "start_line": 25,
+        "start_column": 1,
+        "end_line": 25,
+        "end_column": 7
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:1:1:30:1",
+      "name": "results",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:25:1:25:7:results",
+        "type_name": "results",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py",
+        "start_line": 25,
+        "start_column": 1,
+        "end_line": 25,
+        "end_column": 7
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:1:1:30:1",
+      "name": "results",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:25:1:25:7:results",
+        "type_name": "results",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py",
+        "start_line": 25,
+        "start_column": 1,
+        "end_line": 25,
+        "end_column": 7
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:1:1:30:1",
+      "name": "results",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:25:1:25:7:results",
+        "type_name": "results",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py",
+        "start_line": 25,
+        "start_column": 11,
+        "end_line": 30,
+        "end_column": 1
+      },
+      "type": "assignment",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:1:1:30:1",
+      "name": "{\n    \"greeting\": greeting,\n    \"processed\": processed,\n    \"total\": total,\n    \"is_valid\": is_valid,\n}"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py",
+        "start_line": 25,
+        "start_column": 11,
+        "end_line": 30,
+        "end_column": 1
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:1:1:30:1",
+      "name": "{\n    \"greeting\": greeting,\n    \"processed\": processed,\n    \"total\": total,\n    \"is_valid\": is_valid,\n}"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py",
+        "start_line": 26,
+        "start_column": 17,
+        "end_line": 26,
+        "end_column": 24
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:1:1:30:1",
+      "name": "greeting",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:26:17:26:24:greeting",
+        "type_name": "greeting",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py",
+        "start_line": 26,
+        "start_column": 17,
+        "end_line": 26,
+        "end_column": 24
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:1:1:30:1",
+      "name": "greeting",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:26:17:26:24:greeting",
+        "type_name": "greeting",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py",
+        "start_line": 26,
+        "start_column": 17,
+        "end_line": 26,
+        "end_column": 24
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:1:1:30:1",
+      "name": "greeting",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:26:17:26:24:greeting",
+        "type_name": "greeting",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py",
+        "start_line": 27,
+        "start_column": 18,
+        "end_line": 27,
+        "end_column": 26
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:1:1:30:1",
+      "name": "processed",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:27:18:27:26:processed",
+        "type_name": "processed",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py",
+        "start_line": 27,
+        "start_column": 18,
+        "end_line": 27,
+        "end_column": 26
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:1:1:30:1",
+      "name": "processed",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:27:18:27:26:processed",
+        "type_name": "processed",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py",
+        "start_line": 27,
+        "start_column": 18,
+        "end_line": 27,
+        "end_column": 26
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:1:1:30:1",
+      "name": "processed",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:27:18:27:26:processed",
+        "type_name": "processed",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py",
+        "start_line": 28,
+        "start_column": 14,
+        "end_line": 28,
+        "end_column": 18
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:1:1:30:1",
+      "name": "total",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:28:14:28:18:total",
+        "type_name": "total",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py",
+        "start_line": 28,
+        "start_column": 14,
+        "end_line": 28,
+        "end_column": 18
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:1:1:30:1",
+      "name": "total",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:28:14:28:18:total",
+        "type_name": "total",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py",
+        "start_line": 28,
+        "start_column": 14,
+        "end_line": 28,
+        "end_column": 18
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:1:1:30:1",
+      "name": "total",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:28:14:28:18:total",
+        "type_name": "total",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py",
+        "start_line": 29,
+        "start_column": 17,
+        "end_line": 29,
+        "end_column": 24
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:1:1:30:1",
+      "name": "is_valid",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:29:17:29:24:is_valid",
+        "type_name": "is_valid",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py",
+        "start_line": 29,
+        "start_column": 17,
+        "end_line": 29,
+        "end_column": 24
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:1:1:30:1",
+      "name": "is_valid",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:29:17:29:24:is_valid",
+        "type_name": "is_valid",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py",
+        "start_line": 29,
+        "start_column": 17,
+        "end_line": 29,
+        "end_column": 24
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:1:1:30:1",
+      "name": "is_valid",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/modules/main.py:29:17:29:24:is_valid",
+        "type_name": "is_valid",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    }
+  ]
+}

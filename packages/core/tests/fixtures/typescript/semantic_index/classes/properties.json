@@ -135,71 +135,6 @@
         {
           "kind": "method",
           "defining_scope_id": "class:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/classes/properties.ts:6:14:30:1",
-          "symbol_id": "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/classes/properties.ts:12:3:12:13:constructor",
-          "name": "constructor",
-          "location": {
-            "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/classes/properties.ts",
-            "start_line": 12,
-            "start_column": 3,
-            "end_line": 12,
-            "end_column": 13
-          },
-          "abstract": false,
-          "static": false,
-          "async": false,
-          "generics": [],
-          "parameters": [
-            {
-              "kind": "parameter",
-              "defining_scope_id": "constructor:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/classes/properties.ts:12:14:17:3",
-              "symbol_id": "parameter:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/classes/properties.ts:12:15:12:18:name",
-              "name": "name",
-              "location": {
-                "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/classes/properties.ts",
-                "start_line": 12,
-                "start_column": 15,
-                "end_line": 12,
-                "end_column": 18
-              },
-              "type": "string",
-              "optional": false
-            },
-            {
-              "kind": "parameter",
-              "defining_scope_id": "constructor:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/classes/properties.ts:12:14:17:3",
-              "symbol_id": "parameter:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/classes/properties.ts:12:29:12:31:age",
-              "name": "age",
-              "location": {
-                "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/classes/properties.ts",
-                "start_line": 12,
-                "start_column": 29,
-                "end_line": 12,
-                "end_column": 31
-              },
-              "type": "number",
-              "optional": false
-            },
-            {
-              "kind": "parameter",
-              "defining_scope_id": "constructor:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/classes/properties.ts:12:14:17:3",
-              "symbol_id": "parameter:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/classes/properties.ts:12:42:12:48:address",
-              "name": "address",
-              "location": {
-                "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/classes/properties.ts",
-                "start_line": 12,
-                "start_column": 42,
-                "end_line": 12,
-                "end_column": 48
-              },
-              "type": "string",
-              "optional": false
-            }
-          ],
-          "body_scope_id": "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/classes/properties.ts:12:14:17:3"
-        },
-        {
-          "kind": "method",
-          "defining_scope_id": "class:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/classes/properties.ts:6:14:30:1",
           "symbol_id": "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/classes/properties.ts:19:10:19:15:getAge",
           "name": "getAge",
           "location": {
@@ -413,7 +348,53 @@
             "end_line": 12,
             "end_column": 13
           },
-          "parameters": [],
+          "parameters": [
+            {
+              "kind": "parameter",
+              "defining_scope_id": "constructor:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/classes/properties.ts:12:14:17:3",
+              "symbol_id": "parameter:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/classes/properties.ts:12:15:12:18:name",
+              "name": "name",
+              "location": {
+                "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/classes/properties.ts",
+                "start_line": 12,
+                "start_column": 15,
+                "end_line": 12,
+                "end_column": 18
+              },
+              "type": "string",
+              "optional": false
+            },
+            {
+              "kind": "parameter",
+              "defining_scope_id": "constructor:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/classes/properties.ts:12:14:17:3",
+              "symbol_id": "parameter:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/classes/properties.ts:12:29:12:31:age",
+              "name": "age",
+              "location": {
+                "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/classes/properties.ts",
+                "start_line": 12,
+                "start_column": 29,
+                "end_line": 12,
+                "end_column": 31
+              },
+              "type": "number",
+              "optional": false
+            },
+            {
+              "kind": "parameter",
+              "defining_scope_id": "constructor:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/classes/properties.ts:12:14:17:3",
+              "symbol_id": "parameter:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/classes/properties.ts:12:42:12:48:address",
+              "name": "address",
+              "location": {
+                "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/classes/properties.ts",
+                "start_line": 12,
+                "start_column": 42,
+                "end_line": 12,
+                "end_column": 48
+              },
+              "type": "string",
+              "optional": false
+            }
+          ],
           "body_scope_id": "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/classes/properties.ts:12:14:17:3"
         }
       ],

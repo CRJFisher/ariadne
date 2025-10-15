@@ -901,7 +901,7 @@ export const RUST_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
           scope_id: context.get_scope_id(capture.location),
           is_exported: export_info.is_exported,
           export: export_info.export,
-          type_expression: extract_type_expression(capture.node),
+          type_expression: extract_type_expression(capture.node) as SymbolName | undefined,
           generics: generics.length > 0 ? generics : undefined,
         });
       },
@@ -930,7 +930,7 @@ export const RUST_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
           scope_id: context.get_scope_id(capture.location),
           is_exported: export_info.is_exported,
           export: export_info.export,
-          type_expression: extract_type_expression(capture.node),
+          type_expression: extract_type_expression(capture.node) as SymbolName | undefined,
           generics: generics.length > 0 ? generics : undefined,
         });
       },
@@ -955,7 +955,7 @@ export const RUST_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
           scope_id: context.get_scope_id(capture.location),
           is_exported: true,
           export: undefined,
-          type_expression: extract_type_expression(capture.node),
+          type_expression: extract_type_expression(capture.node) as SymbolName | undefined,
         });
       },
     },

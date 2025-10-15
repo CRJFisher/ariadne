@@ -5,15 +5,15 @@ import type {
   SymbolName,
   TypeMemberInfo,
 } from "@ariadnejs/types";
-import type { SemanticIndex } from "../index_single_file/semantic_index";
+import type { SemanticIndex } from "../../index_single_file/semantic_index";
 import type { DefinitionRegistry } from "./definition_registry";
-import type { ResolutionRegistry } from "./resolution_registry";
 import {
   extract_type_bindings,
   extract_constructor_bindings,
   extract_type_members,
   extract_type_alias_metadata,
-} from "../index_single_file/type_preprocessing";
+} from "../../index_single_file/type_preprocessing";  // TODO: move these to a folder with this module
+import { ResolutionRegistry } from "../resolution_registry";
 
 /**
  * Extracted type metadata (transient - not persisted).

@@ -18,7 +18,8 @@
     "dist",
     "tests",
     "**/*.test.ts",
-    "**/*.test.tsx"
+    "**/*.test.tsx",
+    "**/*.test_helpers.ts"
   ],
   "references": [
     {

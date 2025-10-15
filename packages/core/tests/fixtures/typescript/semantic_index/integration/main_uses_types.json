@@ -1,0 +1,1259 @@
+{
+  "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/main_uses_types.ts",
+  "language": "typescript",
+  "root_scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/main_uses_types.ts:1:1:19:42",
+  "scopes": {
+    "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/main_uses_types.ts:1:1:19:42": {
+      "id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/main_uses_types.ts:1:1:19:42",
+      "parent_id": null,
+      "name": null,
+      "type": "module",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/main_uses_types.ts",
+        "start_line": 1,
+        "start_column": 1,
+        "end_line": 19,
+        "end_column": 42
+      },
+      "child_ids": []
+    }
+  },
+  "functions": {},
+  "classes": {},
+  "variables": {
+    "variable:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/main_uses_types.ts:9:7:9:10:user": {
+      "kind": "constant",
+      "symbol_id": "variable:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/main_uses_types.ts:9:7:9:10:user",
+      "name": "user",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/main_uses_types.ts",
+        "start_line": 9,
+        "start_column": 7,
+        "end_line": 9,
+        "end_column": 10
+      },
+      "defining_scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/main_uses_types.ts:1:1:19:42",
+      "is_exported": true
+    },
+    "variable:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/main_uses_types.ts:12:7:12:10:name": {
+      "kind": "constant",
+      "symbol_id": "variable:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/main_uses_types.ts:12:7:12:10:name",
+      "name": "name",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/main_uses_types.ts",
+        "start_line": 12,
+        "start_column": 7,
+        "end_line": 12,
+        "end_column": 10
+      },
+      "defining_scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/main_uses_types.ts:1:1:19:42",
+      "is_exported": true
+    },
+    "variable:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/main_uses_types.ts:13:7:13:11:email": {
+      "kind": "constant",
+      "symbol_id": "variable:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/main_uses_types.ts:13:7:13:11:email",
+      "name": "email",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/main_uses_types.ts",
+        "start_line": 13,
+        "start_column": 7,
+        "end_line": 13,
+        "end_column": 11
+      },
+      "defining_scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/main_uses_types.ts:1:1:19:42",
+      "is_exported": true
+    },
+    "variable:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/main_uses_types.ts:17:7:17:17:updatedName": {
+      "kind": "constant",
+      "symbol_id": "variable:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/main_uses_types.ts:17:7:17:17:updatedName",
+      "name": "updatedName",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/main_uses_types.ts",
+        "start_line": 17,
+        "start_column": 7,
+        "end_line": 17,
+        "end_column": 17
+      },
+      "defining_scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/main_uses_types.ts:1:1:19:42",
+      "is_exported": true
+    }
+  },
+  "interfaces": {},
+  "enums": {},
+  "namespaces": {},
+  "types": {},
+  "imported_symbols": {
+    "variable:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/main_uses_types.ts:6:10:6:13:User": {
+      "kind": "import",
+      "symbol_id": "variable:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/main_uses_types.ts:6:10:6:13:User",
+      "name": "User",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/main_uses_types.ts",
+        "start_line": 6,
+        "start_column": 10,
+        "end_line": 6,
+        "end_column": 13
+      },
+      "defining_scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/main_uses_types.ts:1:1:19:42",
+      "import_path": "./types",
+      "import_kind": "named"
+    }
+  },
+  "references": [
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/main_uses_types.ts",
+        "start_line": 6,
+        "start_column": 10,
+        "end_line": 6,
+        "end_column": 13
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/main_uses_types.ts:1:1:19:42",
+      "name": "User"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/main_uses_types.ts",
+        "start_line": 9,
+        "start_column": 7,
+        "end_line": 9,
+        "end_column": 53
+      },
+      "type": "assignment",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/main_uses_types.ts:1:1:19:42",
+      "name": "user = new User(\"John Doe\", \"john@example.com\")"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/main_uses_types.ts",
+        "start_line": 9,
+        "start_column": 7,
+        "end_line": 9,
+        "end_column": 10
+      },
+      "type": "assignment",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/main_uses_types.ts:1:1:19:42",
+      "name": "user"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/main_uses_types.ts",
+        "start_line": 9,
+        "start_column": 7,
+        "end_line": 9,
+        "end_column": 53
+      },
+      "type": "assignment",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/main_uses_types.ts:1:1:19:42",
+      "name": "user = new User(\"John Doe\", \"john@example.com\")"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/main_uses_types.ts",
+        "start_line": 9,
+        "start_column": 7,
+        "end_line": 9,
+        "end_column": 10
+      },
+      "type": "assignment",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/main_uses_types.ts:1:1:19:42",
+      "name": "user"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/main_uses_types.ts",
+        "start_line": 9,
+        "start_column": 7,
+        "end_line": 9,
+        "end_column": 10
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/main_uses_types.ts:1:1:19:42",
+      "name": "user"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/main_uses_types.ts",
+        "start_line": 9,
+        "start_column": 14,
+        "end_line": 9,
+        "end_column": 53
+      },
+      "type": "assignment",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/main_uses_types.ts:1:1:19:42",
+      "name": "User"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/main_uses_types.ts",
+        "start_line": 9,
+        "start_column": 14,
+        "end_line": 9,
+        "end_column": 53
+      },
+      "type": "assignment",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/main_uses_types.ts:1:1:19:42",
+      "name": "User"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/main_uses_types.ts",
+        "start_line": 9,
+        "start_column": 14,
+        "end_line": 9,
+        "end_column": 53
+      },
+      "type": "call",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/main_uses_types.ts:1:1:19:42",
+      "name": "User",
+      "call_type": "function"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/main_uses_types.ts",
+        "start_line": 9,
+        "start_column": 18,
+        "end_line": 9,
+        "end_column": 21
+      },
+      "type": "assignment",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/main_uses_types.ts:1:1:19:42",
+      "name": "User"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/main_uses_types.ts",
+        "start_line": 9,
+        "start_column": 18,
+        "end_line": 9,
+        "end_column": 21
+      },
+      "type": "construct",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/main_uses_types.ts:1:1:19:42",
+      "name": "User",
+      "context": {
+        "construct_target": {
+          "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/main_uses_types.ts",
+          "start_line": 9,
+          "start_column": 7,
+          "end_line": 9,
+          "end_column": 10
+        }
+      },
+      "call_type": "constructor"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/main_uses_types.ts",
+        "start_line": 9,
+        "start_column": 18,
+        "end_line": 9,
+        "end_column": 21
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/main_uses_types.ts:1:1:19:42",
+      "name": "User"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/main_uses_types.ts",
+        "start_line": 12,
+        "start_column": 7,
+        "end_line": 12,
+        "end_column": 27
+      },
+      "type": "assignment",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/main_uses_types.ts:1:1:19:42",
+      "name": "name = user.getName()"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/main_uses_types.ts",
+        "start_line": 12,
+        "start_column": 7,
+        "end_line": 12,
+        "end_column": 10
+      },
+      "type": "assignment",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/main_uses_types.ts:1:1:19:42",
+      "name": "name"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/main_uses_types.ts",
+        "start_line": 12,
+        "start_column": 7,
+        "end_line": 12,
+        "end_column": 10
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/main_uses_types.ts:1:1:19:42",
+      "name": "name"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/main_uses_types.ts",
+        "start_line": 12,
+        "start_column": 14,
+        "end_line": 12,
+        "end_column": 27
+      },
+      "type": "assignment",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/main_uses_types.ts:1:1:19:42",
+      "name": "user.getName()"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/main_uses_types.ts",
+        "start_line": 12,
+        "start_column": 14,
+        "end_line": 12,
+        "end_column": 27
+      },
+      "type": "call",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/main_uses_types.ts:1:1:19:42",
+      "name": "getName",
+      "context": {
+        "receiver_location": {
+          "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/main_uses_types.ts",
+          "start_line": 12,
+          "start_column": 14,
+          "end_line": 12,
+          "end_column": 17
+        },
+        "property_chain": [
+          "user",
+          "getName"
+        ]
+      },
+      "call_type": "method",
+      "member_access": {
+        "access_type": "method",
+        "is_optional_chain": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/main_uses_types.ts",
+        "start_line": 12,
+        "start_column": 14,
+        "end_line": 12,
+        "end_column": 17
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/main_uses_types.ts:1:1:19:42",
+      "name": "user"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/main_uses_types.ts",
+        "start_line": 12,
+        "start_column": 14,
+        "end_line": 12,
+        "end_column": 25
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/main_uses_types.ts:1:1:19:42",
+      "name": "user.getName"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/main_uses_types.ts",
+        "start_line": 12,
+        "start_column": 14,
+        "end_line": 12,
+        "end_column": 17
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/main_uses_types.ts:1:1:19:42",
+      "name": "user"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/main_uses_types.ts",
+        "start_line": 12,
+        "start_column": 14,
+        "end_line": 12,
+        "end_column": 25
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/main_uses_types.ts:1:1:19:42",
+      "name": "user.getName"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/main_uses_types.ts",
+        "start_line": 12,
+        "start_column": 14,
+        "end_line": 12,
+        "end_column": 17
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/main_uses_types.ts:1:1:19:42",
+      "name": "user"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/main_uses_types.ts",
+        "start_line": 12,
+        "start_column": 14,
+        "end_line": 12,
+        "end_column": 27
+      },
+      "type": "call",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/main_uses_types.ts:1:1:19:42",
+      "name": "getName",
+      "context": {
+        "receiver_location": {
+          "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/main_uses_types.ts",
+          "start_line": 12,
+          "start_column": 14,
+          "end_line": 12,
+          "end_column": 17
+        },
+        "property_chain": [
+          "user",
+          "getName"
+        ]
+      },
+      "call_type": "method",
+      "member_access": {
+        "access_type": "method",
+        "is_optional_chain": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/main_uses_types.ts",
+        "start_line": 12,
+        "start_column": 14,
+        "end_line": 12,
+        "end_column": 17
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/main_uses_types.ts:1:1:19:42",
+      "name": "user"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/main_uses_types.ts",
+        "start_line": 12,
+        "start_column": 14,
+        "end_line": 12,
+        "end_column": 17
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/main_uses_types.ts:1:1:19:42",
+      "name": "user"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/main_uses_types.ts",
+        "start_line": 12,
+        "start_column": 19,
+        "end_line": 12,
+        "end_column": 25
+      },
+      "type": "call",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/main_uses_types.ts:1:1:19:42",
+      "name": "getName",
+      "call_type": "function"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/main_uses_types.ts",
+        "start_line": 12,
+        "start_column": 19,
+        "end_line": 12,
+        "end_column": 25
+      },
+      "type": "member_access",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/main_uses_types.ts:1:1:19:42",
+      "name": "getName",
+      "member_access": {
+        "access_type": "property",
+        "is_optional_chain": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/main_uses_types.ts",
+        "start_line": 12,
+        "start_column": 19,
+        "end_line": 12,
+        "end_column": 25
+      },
+      "type": "member_access",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/main_uses_types.ts:1:1:19:42",
+      "name": "getName",
+      "member_access": {
+        "access_type": "property",
+        "is_optional_chain": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/main_uses_types.ts",
+        "start_line": 12,
+        "start_column": 19,
+        "end_line": 12,
+        "end_column": 25
+      },
+      "type": "call",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/main_uses_types.ts:1:1:19:42",
+      "name": "getName",
+      "call_type": "function"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/main_uses_types.ts",
+        "start_line": 13,
+        "start_column": 7,
+        "end_line": 13,
+        "end_column": 29
+      },
+      "type": "assignment",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/main_uses_types.ts:1:1:19:42",
+      "name": "email = user.getEmail()"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/main_uses_types.ts",
+        "start_line": 13,
+        "start_column": 7,
+        "end_line": 13,
+        "end_column": 11
+      },
+      "type": "assignment",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/main_uses_types.ts:1:1:19:42",
+      "name": "email"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/main_uses_types.ts",
+        "start_line": 13,
+        "start_column": 7,
+        "end_line": 13,
+        "end_column": 11
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/main_uses_types.ts:1:1:19:42",
+      "name": "email"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/main_uses_types.ts",
+        "start_line": 13,
+        "start_column": 15,
+        "end_line": 13,
+        "end_column": 29
+      },
+      "type": "assignment",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/main_uses_types.ts:1:1:19:42",
+      "name": "user.getEmail()"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/main_uses_types.ts",
+        "start_line": 13,
+        "start_column": 15,
+        "end_line": 13,
+        "end_column": 29
+      },
+      "type": "call",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/main_uses_types.ts:1:1:19:42",
+      "name": "getEmail",
+      "context": {
+        "receiver_location": {
+          "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/main_uses_types.ts",
+          "start_line": 13,
+          "start_column": 15,
+          "end_line": 13,
+          "end_column": 18
+        },
+        "property_chain": [
+          "user",
+          "getEmail"
+        ]
+      },
+      "call_type": "method",
+      "member_access": {
+        "access_type": "method",
+        "is_optional_chain": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/main_uses_types.ts",
+        "start_line": 13,
+        "start_column": 15,
+        "end_line": 13,
+        "end_column": 18
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/main_uses_types.ts:1:1:19:42",
+      "name": "user"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/main_uses_types.ts",
+        "start_line": 13,
+        "start_column": 15,
+        "end_line": 13,
+        "end_column": 27
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/main_uses_types.ts:1:1:19:42",
+      "name": "user.getEmail"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/main_uses_types.ts",
+        "start_line": 13,
+        "start_column": 15,
+        "end_line": 13,
+        "end_column": 18
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/main_uses_types.ts:1:1:19:42",
+      "name": "user"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/main_uses_types.ts",
+        "start_line": 13,
+        "start_column": 15,
+        "end_line": 13,
+        "end_column": 27
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/main_uses_types.ts:1:1:19:42",
+      "name": "user.getEmail"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/main_uses_types.ts",
+        "start_line": 13,
+        "start_column": 15,
+        "end_line": 13,
+        "end_column": 18
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/main_uses_types.ts:1:1:19:42",
+      "name": "user"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/main_uses_types.ts",
+        "start_line": 13,
+        "start_column": 15,
+        "end_line": 13,
+        "end_column": 29
+      },
+      "type": "call",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/main_uses_types.ts:1:1:19:42",
+      "name": "getEmail",
+      "context": {
+        "receiver_location": {
+          "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/main_uses_types.ts",
+          "start_line": 13,
+          "start_column": 15,
+          "end_line": 13,
+          "end_column": 18
+        },
+        "property_chain": [
+          "user",
+          "getEmail"
+        ]
+      },
+      "call_type": "method",
+      "member_access": {
+        "access_type": "method",
+        "is_optional_chain": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/main_uses_types.ts",
+        "start_line": 13,
+        "start_column": 15,
+        "end_line": 13,
+        "end_column": 18
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/main_uses_types.ts:1:1:19:42",
+      "name": "user"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/main_uses_types.ts",
+        "start_line": 13,
+        "start_column": 15,
+        "end_line": 13,
+        "end_column": 18
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/main_uses_types.ts:1:1:19:42",
+      "name": "user"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/main_uses_types.ts",
+        "start_line": 13,
+        "start_column": 20,
+        "end_line": 13,
+        "end_column": 27
+      },
+      "type": "call",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/main_uses_types.ts:1:1:19:42",
+      "name": "getEmail",
+      "call_type": "function"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/main_uses_types.ts",
+        "start_line": 13,
+        "start_column": 20,
+        "end_line": 13,
+        "end_column": 27
+      },
+      "type": "member_access",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/main_uses_types.ts:1:1:19:42",
+      "name": "getEmail",
+      "member_access": {
+        "access_type": "property",
+        "is_optional_chain": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/main_uses_types.ts",
+        "start_line": 13,
+        "start_column": 20,
+        "end_line": 13,
+        "end_column": 27
+      },
+      "type": "member_access",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/main_uses_types.ts:1:1:19:42",
+      "name": "getEmail",
+      "member_access": {
+        "access_type": "property",
+        "is_optional_chain": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/main_uses_types.ts",
+        "start_line": 13,
+        "start_column": 20,
+        "end_line": 13,
+        "end_column": 27
+      },
+      "type": "call",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/main_uses_types.ts:1:1:19:42",
+      "name": "getEmail",
+      "call_type": "function"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/main_uses_types.ts",
+        "start_line": 16,
+        "start_column": 1,
+        "end_line": 16,
+        "end_column": 27
+      },
+      "type": "call",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/main_uses_types.ts:1:1:19:42",
+      "name": "updateName",
+      "context": {
+        "receiver_location": {
+          "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/main_uses_types.ts",
+          "start_line": 16,
+          "start_column": 1,
+          "end_line": 16,
+          "end_column": 4
+        },
+        "property_chain": [
+          "user",
+          "updateName"
+        ]
+      },
+      "call_type": "method",
+      "member_access": {
+        "access_type": "method",
+        "is_optional_chain": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/main_uses_types.ts",
+        "start_line": 16,
+        "start_column": 1,
+        "end_line": 16,
+        "end_column": 4
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/main_uses_types.ts:1:1:19:42",
+      "name": "user"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/main_uses_types.ts",
+        "start_line": 16,
+        "start_column": 1,
+        "end_line": 16,
+        "end_column": 15
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/main_uses_types.ts:1:1:19:42",
+      "name": "user.updateName"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/main_uses_types.ts",
+        "start_line": 16,
+        "start_column": 1,
+        "end_line": 16,
+        "end_column": 4
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/main_uses_types.ts:1:1:19:42",
+      "name": "user"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/main_uses_types.ts",
+        "start_line": 16,
+        "start_column": 1,
+        "end_line": 16,
+        "end_column": 15
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/main_uses_types.ts:1:1:19:42",
+      "name": "user.updateName"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/main_uses_types.ts",
+        "start_line": 16,
+        "start_column": 1,
+        "end_line": 16,
+        "end_column": 4
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/main_uses_types.ts:1:1:19:42",
+      "name": "user"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/main_uses_types.ts",
+        "start_line": 16,
+        "start_column": 1,
+        "end_line": 16,
+        "end_column": 27
+      },
+      "type": "call",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/main_uses_types.ts:1:1:19:42",
+      "name": "updateName",
+      "context": {
+        "receiver_location": {
+          "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/main_uses_types.ts",
+          "start_line": 16,
+          "start_column": 1,
+          "end_line": 16,
+          "end_column": 4
+        },
+        "property_chain": [
+          "user",
+          "updateName"
+        ]
+      },
+      "call_type": "method",
+      "member_access": {
+        "access_type": "method",
+        "is_optional_chain": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/main_uses_types.ts",
+        "start_line": 16,
+        "start_column": 1,
+        "end_line": 16,
+        "end_column": 4
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/main_uses_types.ts:1:1:19:42",
+      "name": "user"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/main_uses_types.ts",
+        "start_line": 16,
+        "start_column": 1,
+        "end_line": 16,
+        "end_column": 4
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/main_uses_types.ts:1:1:19:42",
+      "name": "user"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/main_uses_types.ts",
+        "start_line": 16,
+        "start_column": 6,
+        "end_line": 16,
+        "end_column": 15
+      },
+      "type": "call",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/main_uses_types.ts:1:1:19:42",
+      "name": "updateName",
+      "call_type": "function"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/main_uses_types.ts",
+        "start_line": 16,
+        "start_column": 6,
+        "end_line": 16,
+        "end_column": 15
+      },
+      "type": "member_access",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/main_uses_types.ts:1:1:19:42",
+      "name": "updateName",
+      "member_access": {
+        "access_type": "property",
+        "is_optional_chain": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/main_uses_types.ts",
+        "start_line": 16,
+        "start_column": 6,
+        "end_line": 16,
+        "end_column": 15
+      },
+      "type": "member_access",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/main_uses_types.ts:1:1:19:42",
+      "name": "updateName",
+      "member_access": {
+        "access_type": "property",
+        "is_optional_chain": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/main_uses_types.ts",
+        "start_line": 16,
+        "start_column": 6,
+        "end_line": 16,
+        "end_column": 15
+      },
+      "type": "call",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/main_uses_types.ts:1:1:19:42",
+      "name": "updateName",
+      "call_type": "function"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/main_uses_types.ts",
+        "start_line": 17,
+        "start_column": 7,
+        "end_line": 17,
+        "end_column": 34
+      },
+      "type": "assignment",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/main_uses_types.ts:1:1:19:42",
+      "name": "updatedName = user.getName()"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/main_uses_types.ts",
+        "start_line": 17,
+        "start_column": 7,
+        "end_line": 17,
+        "end_column": 17
+      },
+      "type": "assignment",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/main_uses_types.ts:1:1:19:42",
+      "name": "updatedName"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/main_uses_types.ts",
+        "start_line": 17,
+        "start_column": 7,
+        "end_line": 17,
+        "end_column": 17
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/main_uses_types.ts:1:1:19:42",
+      "name": "updatedName"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/main_uses_types.ts",
+        "start_line": 17,
+        "start_column": 21,
+        "end_line": 17,
+        "end_column": 34
+      },
+      "type": "assignment",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/main_uses_types.ts:1:1:19:42",
+      "name": "user.getName()"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/main_uses_types.ts",
+        "start_line": 17,
+        "start_column": 21,
+        "end_line": 17,
+        "end_column": 34
+      },
+      "type": "call",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/main_uses_types.ts:1:1:19:42",
+      "name": "getName",
+      "context": {
+        "receiver_location": {
+          "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/main_uses_types.ts",
+          "start_line": 17,
+          "start_column": 21,
+          "end_line": 17,
+          "end_column": 24
+        },
+        "property_chain": [
+          "user",
+          "getName"
+        ]
+      },
+      "call_type": "method",
+      "member_access": {
+        "access_type": "method",
+        "is_optional_chain": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/main_uses_types.ts",
+        "start_line": 17,
+        "start_column": 21,
+        "end_line": 17,
+        "end_column": 24
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/main_uses_types.ts:1:1:19:42",
+      "name": "user"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/main_uses_types.ts",
+        "start_line": 17,
+        "start_column": 21,
+        "end_line": 17,
+        "end_column": 32
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/main_uses_types.ts:1:1:19:42",
+      "name": "user.getName"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/main_uses_types.ts",
+        "start_line": 17,
+        "start_column": 21,
+        "end_line": 17,
+        "end_column": 24
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/main_uses_types.ts:1:1:19:42",
+      "name": "user"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/main_uses_types.ts",
+        "start_line": 17,
+        "start_column": 21,
+        "end_line": 17,
+        "end_column": 32
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/main_uses_types.ts:1:1:19:42",
+      "name": "user.getName"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/main_uses_types.ts",
+        "start_line": 17,
+        "start_column": 21,
+        "end_line": 17,
+        "end_column": 24
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/main_uses_types.ts:1:1:19:42",
+      "name": "user"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/main_uses_types.ts",
+        "start_line": 17,
+        "start_column": 21,
+        "end_line": 17,
+        "end_column": 34
+      },
+      "type": "call",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/main_uses_types.ts:1:1:19:42",
+      "name": "getName",
+      "context": {
+        "receiver_location": {
+          "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/main_uses_types.ts",
+          "start_line": 17,
+          "start_column": 21,
+          "end_line": 17,
+          "end_column": 24
+        },
+        "property_chain": [
+          "user",
+          "getName"
+        ]
+      },
+      "call_type": "method",
+      "member_access": {
+        "access_type": "method",
+        "is_optional_chain": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/main_uses_types.ts",
+        "start_line": 17,
+        "start_column": 21,
+        "end_line": 17,
+        "end_column": 24
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/main_uses_types.ts:1:1:19:42",
+      "name": "user"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/main_uses_types.ts",
+        "start_line": 17,
+        "start_column": 21,
+        "end_line": 17,
+        "end_column": 24
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/main_uses_types.ts:1:1:19:42",
+      "name": "user"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/main_uses_types.ts",
+        "start_line": 17,
+        "start_column": 26,
+        "end_line": 17,
+        "end_column": 32
+      },
+      "type": "call",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/main_uses_types.ts:1:1:19:42",
+      "name": "getName",
+      "call_type": "function"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/main_uses_types.ts",
+        "start_line": 17,
+        "start_column": 26,
+        "end_line": 17,
+        "end_column": 32
+      },
+      "type": "member_access",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/main_uses_types.ts:1:1:19:42",
+      "name": "getName",
+      "member_access": {
+        "access_type": "property",
+        "is_optional_chain": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/main_uses_types.ts",
+        "start_line": 17,
+        "start_column": 26,
+        "end_line": 17,
+        "end_column": 32
+      },
+      "type": "member_access",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/main_uses_types.ts:1:1:19:42",
+      "name": "getName",
+      "member_access": {
+        "access_type": "property",
+        "is_optional_chain": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/main_uses_types.ts",
+        "start_line": 17,
+        "start_column": 26,
+        "end_line": 17,
+        "end_column": 32
+      },
+      "type": "call",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/main_uses_types.ts:1:1:19:42",
+      "name": "getName",
+      "call_type": "function"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/main_uses_types.ts",
+        "start_line": 19,
+        "start_column": 10,
+        "end_line": 19,
+        "end_column": 13
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/main_uses_types.ts:1:1:19:42",
+      "name": "user"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/main_uses_types.ts",
+        "start_line": 19,
+        "start_column": 16,
+        "end_line": 19,
+        "end_column": 19
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/main_uses_types.ts:1:1:19:42",
+      "name": "name"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/main_uses_types.ts",
+        "start_line": 19,
+        "start_column": 22,
+        "end_line": 19,
+        "end_column": 26
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/main_uses_types.ts:1:1:19:42",
+      "name": "email"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/main_uses_types.ts",
+        "start_line": 19,
+        "start_column": 29,
+        "end_line": 19,
+        "end_column": 39
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/main_uses_types.ts:1:1:19:42",
+      "name": "updatedName"
+    }
+  ]
+}

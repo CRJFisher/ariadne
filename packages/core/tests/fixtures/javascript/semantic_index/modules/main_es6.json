@@ -1,0 +1,646 @@
+{
+  "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/modules/main_es6.js",
+  "language": "javascript",
+  "root_scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/modules/main_es6.js:1:1:23:2",
+  "scopes": {
+    "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/modules/main_es6.js:1:1:23:2": {
+      "id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/modules/main_es6.js:1:1:23:2",
+      "parent_id": null,
+      "name": null,
+      "type": "module",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/modules/main_es6.js",
+        "start_line": 1,
+        "start_column": 1,
+        "end_line": 23,
+        "end_column": 2
+      },
+      "child_ids": [
+        "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/modules/main_es6.js:12:1:12:26",
+        "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/modules/main_es6.js:13:1:13:45",
+        "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/modules/main_es6.js:14:1:14:50",
+        "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/modules/main_es6.js:15:1:15:37"
+      ]
+    },
+    "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/modules/main_es6.js:12:1:12:26": {
+      "id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/modules/main_es6.js:12:1:12:26",
+      "parent_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/modules/main_es6.js:1:1:23:2",
+      "name": null,
+      "type": "block",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/modules/main_es6.js",
+        "start_line": 12,
+        "start_column": 1,
+        "end_line": 12,
+        "end_column": 26
+      },
+      "child_ids": []
+    },
+    "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/modules/main_es6.js:13:1:13:45": {
+      "id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/modules/main_es6.js:13:1:13:45",
+      "parent_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/modules/main_es6.js:1:1:23:2",
+      "name": null,
+      "type": "block",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/modules/main_es6.js",
+        "start_line": 13,
+        "start_column": 1,
+        "end_line": 13,
+        "end_column": 45
+      },
+      "child_ids": []
+    },
+    "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/modules/main_es6.js:14:1:14:50": {
+      "id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/modules/main_es6.js:14:1:14:50",
+      "parent_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/modules/main_es6.js:1:1:23:2",
+      "name": null,
+      "type": "block",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/modules/main_es6.js",
+        "start_line": 14,
+        "start_column": 1,
+        "end_line": 14,
+        "end_column": 50
+      },
+      "child_ids": []
+    },
+    "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/modules/main_es6.js:15:1:15:37": {
+      "id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/modules/main_es6.js:15:1:15:37",
+      "parent_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/modules/main_es6.js:1:1:23:2",
+      "name": null,
+      "type": "block",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/modules/main_es6.js",
+        "start_line": 15,
+        "start_column": 1,
+        "end_line": 15,
+        "end_column": 37
+      },
+      "child_ids": []
+    }
+  },
+  "functions": {},
+  "classes": {},
+  "variables": {
+    "variable:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/modules/main_es6.js:12:7:12:14:greeting": {
+      "kind": "constant",
+      "symbol_id": "variable:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/modules/main_es6.js:12:7:12:14:greeting",
+      "name": "greeting",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/modules/main_es6.js",
+        "start_line": 12,
+        "start_column": 7,
+        "end_line": 12,
+        "end_column": 14
+      },
+      "defining_scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/modules/main_es6.js:12:1:12:26",
+      "is_exported": true,
+      "docstring": "// Cross-module function calls"
+    },
+    "variable:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/modules/main_es6.js:13:7:13:15:processed": {
+      "kind": "constant",
+      "symbol_id": "variable:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/modules/main_es6.js:13:7:13:15:processed",
+      "name": "processed",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/modules/main_es6.js",
+        "start_line": 13,
+        "start_column": 7,
+        "end_line": 13,
+        "end_column": 15
+      },
+      "defining_scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/modules/main_es6.js:13:1:13:45",
+      "is_exported": true
+    },
+    "variable:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/modules/main_es6.js:14:7:14:13:isValid": {
+      "kind": "constant",
+      "symbol_id": "variable:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/modules/main_es6.js:14:7:14:13:isValid",
+      "name": "isValid",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/modules/main_es6.js",
+        "start_line": 14,
+        "start_column": 7,
+        "end_line": 14,
+        "end_column": 13
+      },
+      "defining_scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/modules/main_es6.js:14:1:14:50",
+      "is_exported": true
+    },
+    "variable:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/modules/main_es6.js:15:7:15:11:today": {
+      "kind": "constant",
+      "symbol_id": "variable:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/modules/main_es6.js:15:7:15:11:today",
+      "name": "today",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/modules/main_es6.js",
+        "start_line": 15,
+        "start_column": 7,
+        "end_line": 15,
+        "end_column": 11
+      },
+      "defining_scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/modules/main_es6.js:15:1:15:37",
+      "is_exported": true
+    }
+  },
+  "interfaces": {},
+  "enums": {},
+  "namespaces": {},
+  "types": {},
+  "imported_symbols": {
+    "variable:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/modules/main_es6.js:7:10:7:15:helper": {
+      "kind": "import",
+      "symbol_id": "variable:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/modules/main_es6.js:7:10:7:15:helper",
+      "name": "helper",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/modules/main_es6.js",
+        "start_line": 7,
+        "start_column": 10,
+        "end_line": 7,
+        "end_column": 15
+      },
+      "defining_scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/modules/main_es6.js:1:1:23:2",
+      "import_path": "./utils_es6.js",
+      "import_kind": "named"
+    },
+    "variable:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/modules/main_es6.js:7:18:7:28:processData": {
+      "kind": "import",
+      "symbol_id": "variable:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/modules/main_es6.js:7:18:7:28:processData",
+      "name": "processData",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/modules/main_es6.js",
+        "start_line": 7,
+        "start_column": 18,
+        "end_line": 7,
+        "end_column": 28
+      },
+      "defining_scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/modules/main_es6.js:1:1:23:2",
+      "import_path": "./utils_es6.js",
+      "import_kind": "named"
+    },
+    "variable:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/modules/main_es6.js:7:31:7:43:validateEmail": {
+      "kind": "import",
+      "symbol_id": "variable:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/modules/main_es6.js:7:31:7:43:validateEmail",
+      "name": "validateEmail",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/modules/main_es6.js",
+        "start_line": 7,
+        "start_column": 31,
+        "end_line": 7,
+        "end_column": 43
+      },
+      "defining_scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/modules/main_es6.js:1:1:23:2",
+      "import_path": "./utils_es6.js",
+      "import_kind": "named"
+    },
+    "variable:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/modules/main_es6.js:9:8:9:17:formatDate": {
+      "kind": "import",
+      "symbol_id": "variable:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/modules/main_es6.js:9:8:9:17:formatDate",
+      "name": "formatDate",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/modules/main_es6.js",
+        "start_line": 9,
+        "start_column": 8,
+        "end_line": 9,
+        "end_column": 17
+      },
+      "defining_scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/modules/main_es6.js:1:1:23:2",
+      "import_path": "./utils_es6.js",
+      "import_kind": "named"
+    }
+  },
+  "references": [
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/modules/main_es6.js",
+        "start_line": 7,
+        "start_column": 10,
+        "end_line": 7,
+        "end_column": 15
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/modules/main_es6.js:1:1:23:2",
+      "name": "helper"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/modules/main_es6.js",
+        "start_line": 7,
+        "start_column": 18,
+        "end_line": 7,
+        "end_column": 28
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/modules/main_es6.js:1:1:23:2",
+      "name": "processData"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/modules/main_es6.js",
+        "start_line": 7,
+        "start_column": 31,
+        "end_line": 7,
+        "end_column": 43
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/modules/main_es6.js:1:1:23:2",
+      "name": "validateEmail"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/modules/main_es6.js",
+        "start_line": 9,
+        "start_column": 8,
+        "end_line": 9,
+        "end_column": 17
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/modules/main_es6.js:1:1:23:2",
+      "name": "formatDate"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/modules/main_es6.js",
+        "start_line": 12,
+        "start_column": 7,
+        "end_line": 12,
+        "end_column": 25
+      },
+      "type": "assignment",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/modules/main_es6.js:12:1:12:26",
+      "name": "greeting = helper()"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/modules/main_es6.js",
+        "start_line": 12,
+        "start_column": 7,
+        "end_line": 12,
+        "end_column": 14
+      },
+      "type": "assignment",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/modules/main_es6.js:12:1:12:26",
+      "name": "greeting"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/modules/main_es6.js",
+        "start_line": 12,
+        "start_column": 7,
+        "end_line": 12,
+        "end_column": 14
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/modules/main_es6.js:12:1:12:26",
+      "name": "greeting"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/modules/main_es6.js",
+        "start_line": 12,
+        "start_column": 18,
+        "end_line": 12,
+        "end_column": 25
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/modules/main_es6.js:12:1:12:26",
+      "name": "helper"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/modules/main_es6.js",
+        "start_line": 12,
+        "start_column": 18,
+        "end_line": 12,
+        "end_column": 23
+      },
+      "type": "call",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/modules/main_es6.js:12:1:12:26",
+      "name": "helper",
+      "call_type": "function"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/modules/main_es6.js",
+        "start_line": 12,
+        "start_column": 18,
+        "end_line": 12,
+        "end_column": 23
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/modules/main_es6.js:12:1:12:26",
+      "name": "helper"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/modules/main_es6.js",
+        "start_line": 13,
+        "start_column": 7,
+        "end_line": 13,
+        "end_column": 44
+      },
+      "type": "assignment",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/modules/main_es6.js:13:1:13:45",
+      "name": "processed = processData(\"HELLO WORLD\")"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/modules/main_es6.js",
+        "start_line": 13,
+        "start_column": 7,
+        "end_line": 13,
+        "end_column": 15
+      },
+      "type": "assignment",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/modules/main_es6.js:13:1:13:45",
+      "name": "processed"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/modules/main_es6.js",
+        "start_line": 13,
+        "start_column": 7,
+        "end_line": 13,
+        "end_column": 15
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/modules/main_es6.js:13:1:13:45",
+      "name": "processed"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/modules/main_es6.js",
+        "start_line": 13,
+        "start_column": 19,
+        "end_line": 13,
+        "end_column": 44
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/modules/main_es6.js:13:1:13:45",
+      "name": "processData"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/modules/main_es6.js",
+        "start_line": 13,
+        "start_column": 19,
+        "end_line": 13,
+        "end_column": 29
+      },
+      "type": "call",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/modules/main_es6.js:13:1:13:45",
+      "name": "processData",
+      "call_type": "function"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/modules/main_es6.js",
+        "start_line": 13,
+        "start_column": 19,
+        "end_line": 13,
+        "end_column": 29
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/modules/main_es6.js:13:1:13:45",
+      "name": "processData"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/modules/main_es6.js",
+        "start_line": 14,
+        "start_column": 7,
+        "end_line": 14,
+        "end_column": 49
+      },
+      "type": "assignment",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/modules/main_es6.js:14:1:14:50",
+      "name": "isValid = validateEmail(\"test@example.com\")"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/modules/main_es6.js",
+        "start_line": 14,
+        "start_column": 7,
+        "end_line": 14,
+        "end_column": 13
+      },
+      "type": "assignment",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/modules/main_es6.js:14:1:14:50",
+      "name": "isValid"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/modules/main_es6.js",
+        "start_line": 14,
+        "start_column": 7,
+        "end_line": 14,
+        "end_column": 13
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/modules/main_es6.js:14:1:14:50",
+      "name": "isValid"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/modules/main_es6.js",
+        "start_line": 14,
+        "start_column": 17,
+        "end_line": 14,
+        "end_column": 49
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/modules/main_es6.js:14:1:14:50",
+      "name": "validateEmail"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/modules/main_es6.js",
+        "start_line": 14,
+        "start_column": 17,
+        "end_line": 14,
+        "end_column": 29
+      },
+      "type": "call",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/modules/main_es6.js:14:1:14:50",
+      "name": "validateEmail",
+      "call_type": "function"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/modules/main_es6.js",
+        "start_line": 14,
+        "start_column": 17,
+        "end_line": 14,
+        "end_column": 29
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/modules/main_es6.js:14:1:14:50",
+      "name": "validateEmail"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/modules/main_es6.js",
+        "start_line": 15,
+        "start_column": 7,
+        "end_line": 15,
+        "end_column": 36
+      },
+      "type": "assignment",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/modules/main_es6.js:15:1:15:37",
+      "name": "today = formatDate(new Date())"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/modules/main_es6.js",
+        "start_line": 15,
+        "start_column": 7,
+        "end_line": 15,
+        "end_column": 11
+      },
+      "type": "assignment",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/modules/main_es6.js:15:1:15:37",
+      "name": "today"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/modules/main_es6.js",
+        "start_line": 15,
+        "start_column": 7,
+        "end_line": 15,
+        "end_column": 11
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/modules/main_es6.js:15:1:15:37",
+      "name": "today"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/modules/main_es6.js",
+        "start_line": 15,
+        "start_column": 15,
+        "end_line": 15,
+        "end_column": 36
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/modules/main_es6.js:15:1:15:37",
+      "name": "formatDate"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/modules/main_es6.js",
+        "start_line": 15,
+        "start_column": 15,
+        "end_line": 15,
+        "end_column": 24
+      },
+      "type": "call",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/modules/main_es6.js:15:1:15:37",
+      "name": "formatDate",
+      "call_type": "function"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/modules/main_es6.js",
+        "start_line": 15,
+        "start_column": 15,
+        "end_line": 15,
+        "end_column": 24
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/modules/main_es6.js:15:1:15:37",
+      "name": "formatDate"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/modules/main_es6.js",
+        "start_line": 15,
+        "start_column": 26,
+        "end_line": 15,
+        "end_column": 35
+      },
+      "type": "call",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/modules/main_es6.js:15:1:15:37",
+      "name": "Date",
+      "call_type": "function"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/modules/main_es6.js",
+        "start_line": 15,
+        "start_column": 30,
+        "end_line": 15,
+        "end_column": 33
+      },
+      "type": "construct",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/modules/main_es6.js:15:1:15:37",
+      "name": "Date",
+      "context": {
+        "construct_target": {
+          "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/modules/main_es6.js",
+          "start_line": 15,
+          "start_column": 7,
+          "end_line": 15,
+          "end_column": 11
+        }
+      },
+      "call_type": "constructor"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/modules/main_es6.js",
+        "start_line": 15,
+        "start_column": 30,
+        "end_line": 15,
+        "end_column": 33
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/modules/main_es6.js:15:1:15:37",
+      "name": "Date"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/modules/main_es6.js",
+        "start_line": 19,
+        "start_column": 3,
+        "end_line": 19,
+        "end_column": 10
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/modules/main_es6.js:1:1:23:2",
+      "name": "greeting"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/modules/main_es6.js",
+        "start_line": 20,
+        "start_column": 3,
+        "end_line": 20,
+        "end_column": 11
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/modules/main_es6.js:1:1:23:2",
+      "name": "processed"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/modules/main_es6.js",
+        "start_line": 21,
+        "start_column": 3,
+        "end_line": 21,
+        "end_column": 9
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/modules/main_es6.js:1:1:23:2",
+      "name": "isValid"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/modules/main_es6.js",
+        "start_line": 22,
+        "start_column": 3,
+        "end_line": 22,
+        "end_column": 7
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/javascript/code/modules/main_es6.js:1:1:23:2",
+      "name": "today"
+    }
+  ]
+}

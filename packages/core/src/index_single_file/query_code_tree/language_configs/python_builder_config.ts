@@ -1079,7 +1079,7 @@ export const PYTHON_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
         context: ProcessingContext
       ) => {
         const type_id = create_type_alias_id(capture);
-        const type_expression = extract_type_expression(capture.node);
+        const type_expression = extract_type_expression(capture.node) as SymbolName | undefined;
         const defining_scope_id = context.get_scope_id(capture.location);
         const export_info = extract_export_info(
           capture.text,

@@ -3,10 +3,8 @@ import type { SyntaxNode } from "tree-sitter";
 import type {
   SymbolId,
   SymbolName,
-  Location,
   ScopeId,
   ModulePath,
-  FilePath,
 } from "@ariadnejs/types";
 import {
   class_symbol,
@@ -38,10 +36,7 @@ export function create_class_id(capture: CaptureNode): SymbolId {
   return class_symbol(name, location);
 }
 
-export function create_method_id(
-  capture: CaptureNode,
-  class_name?: SymbolName
-): SymbolId {
+export function create_method_id(capture: CaptureNode): SymbolId {
   const name = capture.text;
   const location = capture.location;
   return method_symbol(name, location);
@@ -271,26 +266,6 @@ export function find_containing_callable(capture: CaptureNode): SymbolId {
   }
   // Default to unknown function
   return function_symbol("anonymous" as SymbolName, capture.location);
-}
-
-function has_decorator(node: SyntaxNode, decorator_name: string): boolean {
-  const parent = node.parent;
-  if (!parent || parent.type !== "function_definition") return false;
-
-  // Look for decorated_definition parent
-  const decorated = parent.parent;
-  if (!decorated || decorated.type !== "decorated_definition") return false;
-
-  // Check decorators
-  const decorators = decorated.children.filter(
-    (child) => child.type === "decorator"
-  );
-  return decorators.some((decorator) => {
-    const identifier = decorator.children.find(
-      (child) => child.type === "identifier"
-    );
-    return identifier?.text === decorator_name;
-  });
 }
 
 /**

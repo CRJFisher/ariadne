@@ -260,7 +260,7 @@ export const PYTHON_METADATA_EXTRACTORS: MetadataExtractors = {
         if (subscript_node && subscript_node.type === "string") {
           // Extract string content without quotes
           const text = subscript_node.text;
-          if (text.startsWith('"') || text.startsWith("'")) {
+          if (text.startsWith("\"") || text.startsWith("'")) {
             const key = text.slice(1, -1);
             chain.push(key);
           }

@@ -1,0 +1,832 @@
+{
+  "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/nested_scopes.ts",
+  "language": "typescript",
+  "root_scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/nested_scopes.ts:1:1:35:42",
+  "scopes": {
+    "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/nested_scopes.ts:1:1:35:42": {
+      "id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/nested_scopes.ts:1:1:35:42",
+      "parent_id": null,
+      "name": null,
+      "type": "module",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/nested_scopes.ts",
+        "start_line": 1,
+        "start_column": 1,
+        "end_line": 35,
+        "end_column": 42
+      },
+      "child_ids": [
+        "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/nested_scopes.ts:9:23:26:1",
+        "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/nested_scopes.ts:28:16:30:1"
+      ]
+    },
+    "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/nested_scopes.ts:9:23:26:1": {
+      "id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/nested_scopes.ts:9:23:26:1",
+      "parent_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/nested_scopes.ts:1:1:35:42",
+      "name": "outerFunction",
+      "type": "function",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/nested_scopes.ts",
+        "start_line": 9,
+        "start_column": 23,
+        "end_line": 26,
+        "end_column": 1
+      },
+      "child_ids": [
+        "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/nested_scopes.ts:13:3:16:3",
+        "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/nested_scopes.ts:18:25:22:3"
+      ]
+    },
+    "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/nested_scopes.ts:13:3:16:3": {
+      "id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/nested_scopes.ts:13:3:16:3",
+      "parent_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/nested_scopes.ts:9:23:26:1",
+      "name": null,
+      "type": "block",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/nested_scopes.ts",
+        "start_line": 13,
+        "start_column": 3,
+        "end_line": 16,
+        "end_column": 3
+      },
+      "child_ids": []
+    },
+    "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/nested_scopes.ts:18:25:22:3": {
+      "id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/nested_scopes.ts:18:25:22:3",
+      "parent_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/nested_scopes.ts:9:23:26:1",
+      "name": "innerFunction",
+      "type": "function",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/nested_scopes.ts",
+        "start_line": 18,
+        "start_column": 25,
+        "end_line": 22,
+        "end_column": 3
+      },
+      "child_ids": []
+    },
+    "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/nested_scopes.ts:28:16:30:1": {
+      "id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/nested_scopes.ts:28:16:30:1",
+      "parent_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/nested_scopes.ts:1:1:35:42",
+      "name": "helper",
+      "type": "function",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/nested_scopes.ts",
+        "start_line": 28,
+        "start_column": 16,
+        "end_line": 30,
+        "end_column": 1
+      },
+      "child_ids": []
+    }
+  },
+  "functions": {
+    "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/nested_scopes.ts:9:10:9:22:outerFunction": {
+      "kind": "function",
+      "symbol_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/nested_scopes.ts:9:10:9:22:outerFunction",
+      "name": "outerFunction",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/nested_scopes.ts",
+        "start_line": 9,
+        "start_column": 10,
+        "end_line": 9,
+        "end_column": 22
+      },
+      "defining_scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/nested_scopes.ts:1:1:35:42",
+      "is_exported": false,
+      "signature": {
+        "parameters": []
+      },
+      "body_scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/nested_scopes.ts:9:23:26:1"
+    },
+    "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/nested_scopes.ts:18:12:18:24:innerFunction": {
+      "kind": "function",
+      "symbol_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/nested_scopes.ts:18:12:18:24:innerFunction",
+      "name": "innerFunction",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/nested_scopes.ts",
+        "start_line": 18,
+        "start_column": 12,
+        "end_line": 18,
+        "end_column": 24
+      },
+      "defining_scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/nested_scopes.ts:9:23:26:1",
+      "is_exported": false,
+      "signature": {
+        "parameters": []
+      },
+      "body_scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/nested_scopes.ts:18:25:22:3"
+    },
+    "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/nested_scopes.ts:28:10:28:15:helper": {
+      "kind": "function",
+      "symbol_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/nested_scopes.ts:28:10:28:15:helper",
+      "name": "helper",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/nested_scopes.ts",
+        "start_line": 28,
+        "start_column": 10,
+        "end_line": 28,
+        "end_column": 15
+      },
+      "defining_scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/nested_scopes.ts:1:1:35:42",
+      "is_exported": true,
+      "export": {
+        "is_reexport": false
+      },
+      "signature": {
+        "parameters": [],
+        "return_type": "string"
+      },
+      "return_type": "string",
+      "body_scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/nested_scopes.ts:28:16:30:1"
+    }
+  },
+  "classes": {},
+  "variables": {
+    "variable:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/nested_scopes.ts:7:7:7:14:topLevel": {
+      "kind": "constant",
+      "symbol_id": "variable:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/nested_scopes.ts:7:7:7:14:topLevel",
+      "name": "topLevel",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/nested_scopes.ts",
+        "start_line": 7,
+        "start_column": 7,
+        "end_line": 7,
+        "end_column": 14
+      },
+      "defining_scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/nested_scopes.ts:1:1:35:42",
+      "is_exported": true
+    },
+    "variable:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/nested_scopes.ts:11:9:11:17:outerCall": {
+      "kind": "constant",
+      "symbol_id": "variable:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/nested_scopes.ts:11:9:11:17:outerCall",
+      "name": "outerCall",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/nested_scopes.ts",
+        "start_line": 11,
+        "start_column": 9,
+        "end_line": 11,
+        "end_column": 17
+      },
+      "defining_scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/nested_scopes.ts:9:23:26:1",
+      "is_exported": false
+    },
+    "variable:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/nested_scopes.ts:15:11:15:19:blockCall": {
+      "kind": "constant",
+      "symbol_id": "variable:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/nested_scopes.ts:15:11:15:19:blockCall",
+      "name": "blockCall",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/nested_scopes.ts",
+        "start_line": 15,
+        "start_column": 11,
+        "end_line": 15,
+        "end_column": 19
+      },
+      "defining_scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/nested_scopes.ts:13:3:16:3",
+      "is_exported": false
+    },
+    "variable:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/nested_scopes.ts:20:11:20:19:innerCall": {
+      "kind": "constant",
+      "symbol_id": "variable:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/nested_scopes.ts:20:11:20:19:innerCall",
+      "name": "innerCall",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/nested_scopes.ts",
+        "start_line": 20,
+        "start_column": 11,
+        "end_line": 20,
+        "end_column": 19
+      },
+      "defining_scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/nested_scopes.ts:18:25:22:3",
+      "is_exported": false
+    },
+    "variable:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/nested_scopes.ts:24:9:24:19:innerResult": {
+      "kind": "constant",
+      "symbol_id": "variable:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/nested_scopes.ts:24:9:24:19:innerResult",
+      "name": "innerResult",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/nested_scopes.ts",
+        "start_line": 24,
+        "start_column": 9,
+        "end_line": 24,
+        "end_column": 19
+      },
+      "defining_scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/nested_scopes.ts:9:23:26:1",
+      "is_exported": false
+    },
+    "variable:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/nested_scopes.ts:33:7:33:18:moduleResult": {
+      "kind": "constant",
+      "symbol_id": "variable:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/nested_scopes.ts:33:7:33:18:moduleResult",
+      "name": "moduleResult",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/nested_scopes.ts",
+        "start_line": 33,
+        "start_column": 7,
+        "end_line": 33,
+        "end_column": 18
+      },
+      "defining_scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/nested_scopes.ts:1:1:35:42",
+      "is_exported": true
+    }
+  },
+  "interfaces": {},
+  "enums": {},
+  "namespaces": {},
+  "types": {},
+  "imported_symbols": {},
+  "references": [
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/nested_scopes.ts",
+        "start_line": 7,
+        "start_column": 7,
+        "end_line": 7,
+        "end_column": 25
+      },
+      "type": "assignment",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/nested_scopes.ts:1:1:35:42",
+      "name": "topLevel = helper()"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/nested_scopes.ts",
+        "start_line": 7,
+        "start_column": 7,
+        "end_line": 7,
+        "end_column": 14
+      },
+      "type": "assignment",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/nested_scopes.ts:1:1:35:42",
+      "name": "topLevel"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/nested_scopes.ts",
+        "start_line": 7,
+        "start_column": 7,
+        "end_line": 7,
+        "end_column": 14
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/nested_scopes.ts:1:1:35:42",
+      "name": "topLevel"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/nested_scopes.ts",
+        "start_line": 7,
+        "start_column": 18,
+        "end_line": 7,
+        "end_column": 25
+      },
+      "type": "assignment",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/nested_scopes.ts:1:1:35:42",
+      "name": "helper"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/nested_scopes.ts",
+        "start_line": 7,
+        "start_column": 18,
+        "end_line": 7,
+        "end_column": 23
+      },
+      "type": "call",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/nested_scopes.ts:1:1:35:42",
+      "name": "helper",
+      "call_type": "function"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/nested_scopes.ts",
+        "start_line": 7,
+        "start_column": 18,
+        "end_line": 7,
+        "end_column": 23
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/nested_scopes.ts:1:1:35:42",
+      "name": "helper"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/nested_scopes.ts",
+        "start_line": 9,
+        "start_column": 10,
+        "end_line": 9,
+        "end_column": 22
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/nested_scopes.ts:1:1:35:42",
+      "name": "outerFunction"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/nested_scopes.ts",
+        "start_line": 11,
+        "start_column": 9,
+        "end_line": 11,
+        "end_column": 28
+      },
+      "type": "assignment",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/nested_scopes.ts:9:23:26:1",
+      "name": "outerCall = helper()"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/nested_scopes.ts",
+        "start_line": 11,
+        "start_column": 9,
+        "end_line": 11,
+        "end_column": 17
+      },
+      "type": "assignment",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/nested_scopes.ts:9:23:26:1",
+      "name": "outerCall"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/nested_scopes.ts",
+        "start_line": 11,
+        "start_column": 9,
+        "end_line": 11,
+        "end_column": 17
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/nested_scopes.ts:9:23:26:1",
+      "name": "outerCall"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/nested_scopes.ts",
+        "start_line": 11,
+        "start_column": 21,
+        "end_line": 11,
+        "end_column": 28
+      },
+      "type": "assignment",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/nested_scopes.ts:9:23:26:1",
+      "name": "helper"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/nested_scopes.ts",
+        "start_line": 11,
+        "start_column": 21,
+        "end_line": 11,
+        "end_column": 26
+      },
+      "type": "call",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/nested_scopes.ts:9:23:26:1",
+      "name": "helper",
+      "call_type": "function"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/nested_scopes.ts",
+        "start_line": 11,
+        "start_column": 21,
+        "end_line": 11,
+        "end_column": 26
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/nested_scopes.ts:9:23:26:1",
+      "name": "helper"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/nested_scopes.ts",
+        "start_line": 15,
+        "start_column": 11,
+        "end_line": 15,
+        "end_column": 30
+      },
+      "type": "assignment",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/nested_scopes.ts:13:3:16:3",
+      "name": "blockCall = helper()"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/nested_scopes.ts",
+        "start_line": 15,
+        "start_column": 11,
+        "end_line": 15,
+        "end_column": 19
+      },
+      "type": "assignment",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/nested_scopes.ts:13:3:16:3",
+      "name": "blockCall"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/nested_scopes.ts",
+        "start_line": 15,
+        "start_column": 11,
+        "end_line": 15,
+        "end_column": 19
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/nested_scopes.ts:13:3:16:3",
+      "name": "blockCall"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/nested_scopes.ts",
+        "start_line": 15,
+        "start_column": 23,
+        "end_line": 15,
+        "end_column": 30
+      },
+      "type": "assignment",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/nested_scopes.ts:13:3:16:3",
+      "name": "helper"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/nested_scopes.ts",
+        "start_line": 15,
+        "start_column": 23,
+        "end_line": 15,
+        "end_column": 28
+      },
+      "type": "call",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/nested_scopes.ts:13:3:16:3",
+      "name": "helper",
+      "call_type": "function"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/nested_scopes.ts",
+        "start_line": 15,
+        "start_column": 23,
+        "end_line": 15,
+        "end_column": 28
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/nested_scopes.ts:13:3:16:3",
+      "name": "helper"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/nested_scopes.ts",
+        "start_line": 18,
+        "start_column": 12,
+        "end_line": 18,
+        "end_column": 24
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/nested_scopes.ts:9:23:26:1",
+      "name": "innerFunction"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/nested_scopes.ts",
+        "start_line": 20,
+        "start_column": 11,
+        "end_line": 20,
+        "end_column": 30
+      },
+      "type": "assignment",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/nested_scopes.ts:18:25:22:3",
+      "name": "innerCall = helper()"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/nested_scopes.ts",
+        "start_line": 20,
+        "start_column": 11,
+        "end_line": 20,
+        "end_column": 19
+      },
+      "type": "assignment",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/nested_scopes.ts:18:25:22:3",
+      "name": "innerCall"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/nested_scopes.ts",
+        "start_line": 20,
+        "start_column": 11,
+        "end_line": 20,
+        "end_column": 19
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/nested_scopes.ts:18:25:22:3",
+      "name": "innerCall"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/nested_scopes.ts",
+        "start_line": 20,
+        "start_column": 23,
+        "end_line": 20,
+        "end_column": 30
+      },
+      "type": "assignment",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/nested_scopes.ts:18:25:22:3",
+      "name": "helper"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/nested_scopes.ts",
+        "start_line": 20,
+        "start_column": 23,
+        "end_line": 20,
+        "end_column": 28
+      },
+      "type": "call",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/nested_scopes.ts:18:25:22:3",
+      "name": "helper",
+      "call_type": "function"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/nested_scopes.ts",
+        "start_line": 20,
+        "start_column": 23,
+        "end_line": 20,
+        "end_column": 28
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/nested_scopes.ts:18:25:22:3",
+      "name": "helper"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/nested_scopes.ts",
+        "start_line": 21,
+        "start_column": 5,
+        "end_line": 21,
+        "end_column": 21
+      },
+      "type": "return",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/nested_scopes.ts:18:25:22:3",
+      "name": "return innerCall;"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/nested_scopes.ts",
+        "start_line": 21,
+        "start_column": 12,
+        "end_line": 21,
+        "end_column": 20
+      },
+      "type": "return",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/nested_scopes.ts:18:25:22:3",
+      "name": "innerCall"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/nested_scopes.ts",
+        "start_line": 21,
+        "start_column": 12,
+        "end_line": 21,
+        "end_column": 20
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/nested_scopes.ts:18:25:22:3",
+      "name": "innerCall"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/nested_scopes.ts",
+        "start_line": 24,
+        "start_column": 9,
+        "end_line": 24,
+        "end_column": 37
+      },
+      "type": "assignment",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/nested_scopes.ts:9:23:26:1",
+      "name": "innerResult = innerFunction()"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/nested_scopes.ts",
+        "start_line": 24,
+        "start_column": 9,
+        "end_line": 24,
+        "end_column": 19
+      },
+      "type": "assignment",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/nested_scopes.ts:9:23:26:1",
+      "name": "innerResult"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/nested_scopes.ts",
+        "start_line": 24,
+        "start_column": 9,
+        "end_line": 24,
+        "end_column": 19
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/nested_scopes.ts:9:23:26:1",
+      "name": "innerResult"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/nested_scopes.ts",
+        "start_line": 24,
+        "start_column": 23,
+        "end_line": 24,
+        "end_column": 37
+      },
+      "type": "assignment",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/nested_scopes.ts:9:23:26:1",
+      "name": "innerFunction"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/nested_scopes.ts",
+        "start_line": 24,
+        "start_column": 23,
+        "end_line": 24,
+        "end_column": 35
+      },
+      "type": "call",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/nested_scopes.ts:9:23:26:1",
+      "name": "innerFunction",
+      "call_type": "function"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/nested_scopes.ts",
+        "start_line": 24,
+        "start_column": 23,
+        "end_line": 24,
+        "end_column": 35
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/nested_scopes.ts:9:23:26:1",
+      "name": "innerFunction"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/nested_scopes.ts",
+        "start_line": 25,
+        "start_column": 3,
+        "end_line": 25,
+        "end_column": 36
+      },
+      "type": "return",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/nested_scopes.ts:9:23:26:1",
+      "name": "return { outerCall, innerResult };"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/nested_scopes.ts",
+        "start_line": 25,
+        "start_column": 10,
+        "end_line": 25,
+        "end_column": 35
+      },
+      "type": "return",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/nested_scopes.ts:9:23:26:1",
+      "name": "{ outerCall, innerResult }"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/nested_scopes.ts",
+        "start_line": 28,
+        "start_column": 10,
+        "end_line": 28,
+        "end_column": 15
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/nested_scopes.ts:1:1:35:42",
+      "name": "helper"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/nested_scopes.ts",
+        "start_line": 29,
+        "start_column": 3,
+        "end_line": 29,
+        "end_column": 25
+      },
+      "type": "return",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/nested_scopes.ts:28:16:30:1",
+      "name": "return \"helper result\";"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/nested_scopes.ts",
+        "start_line": 29,
+        "start_column": 10,
+        "end_line": 29,
+        "end_column": 24
+      },
+      "type": "return",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/nested_scopes.ts:28:16:30:1",
+      "name": "\"helper result\""
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/nested_scopes.ts",
+        "start_line": 33,
+        "start_column": 7,
+        "end_line": 33,
+        "end_column": 36
+      },
+      "type": "assignment",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/nested_scopes.ts:1:1:35:42",
+      "name": "moduleResult = outerFunction()"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/nested_scopes.ts",
+        "start_line": 33,
+        "start_column": 7,
+        "end_line": 33,
+        "end_column": 18
+      },
+      "type": "assignment",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/nested_scopes.ts:1:1:35:42",
+      "name": "moduleResult"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/nested_scopes.ts",
+        "start_line": 33,
+        "start_column": 7,
+        "end_line": 33,
+        "end_column": 18
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/nested_scopes.ts:1:1:35:42",
+      "name": "moduleResult"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/nested_scopes.ts",
+        "start_line": 33,
+        "start_column": 22,
+        "end_line": 33,
+        "end_column": 36
+      },
+      "type": "assignment",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/nested_scopes.ts:1:1:35:42",
+      "name": "outerFunction"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/nested_scopes.ts",
+        "start_line": 33,
+        "start_column": 22,
+        "end_line": 33,
+        "end_column": 34
+      },
+      "type": "call",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/nested_scopes.ts:1:1:35:42",
+      "name": "outerFunction",
+      "call_type": "function"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/nested_scopes.ts",
+        "start_line": 33,
+        "start_column": 22,
+        "end_line": 33,
+        "end_column": 34
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/nested_scopes.ts:1:1:35:42",
+      "name": "outerFunction"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/nested_scopes.ts",
+        "start_line": 35,
+        "start_column": 10,
+        "end_line": 35,
+        "end_column": 17
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/nested_scopes.ts:1:1:35:42",
+      "name": "topLevel"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/nested_scopes.ts",
+        "start_line": 35,
+        "start_column": 20,
+        "end_line": 35,
+        "end_column": 31
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/nested_scopes.ts:1:1:35:42",
+      "name": "moduleResult"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/nested_scopes.ts",
+        "start_line": 35,
+        "start_column": 34,
+        "end_line": 35,
+        "end_column": 39
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/integration/nested_scopes.ts:1:1:35:42",
+      "name": "helper"
+    }
+  ]
+}

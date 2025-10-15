@@ -373,11 +373,7 @@ export const TYPESCRIPT_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
         const export_info = extract_export_info(capture.node, capture.text);
 
         // Extract extends using the helper function
-        // Try both the identifier node and its parent (class_declaration)
-        let extends_classes = extract_class_extends(capture.node);
-        if (extends_classes.length === 0 && parent) {
-          extends_classes = extract_class_extends(parent);
-        }
+        const extends_classes = parent ? extract_class_extends(parent) : [];
 
         builder.add_class({
           symbol_id: class_id,

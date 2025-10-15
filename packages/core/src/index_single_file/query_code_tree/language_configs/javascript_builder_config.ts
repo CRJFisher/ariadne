@@ -45,8 +45,8 @@ export const JAVASCRIPT_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
     {
       process: (
         capture: CaptureNode,
-        builder: DefinitionBuilder,
-        context: ProcessingContext
+        _: DefinitionBuilder,
+        __: ProcessingContext
       ) => {
         store_documentation(capture.text, capture.location.end_line);
       },
@@ -58,8 +58,8 @@ export const JAVASCRIPT_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
     {
       process: (
         capture: CaptureNode,
-        builder: DefinitionBuilder,
-        context: ProcessingContext
+        _: DefinitionBuilder,
+        __: ProcessingContext
       ) => {
         store_documentation(capture.text, capture.location.end_line);
       },
@@ -71,8 +71,8 @@ export const JAVASCRIPT_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
     {
       process: (
         capture: CaptureNode,
-        builder: DefinitionBuilder,
-        context: ProcessingContext
+        _: DefinitionBuilder,
+        __: ProcessingContext
       ) => {
         store_documentation(capture.text, capture.location.end_line);
       },
