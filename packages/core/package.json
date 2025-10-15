@@ -20,7 +20,13 @@
     "benchmark": "npm test -- project.bench.ts --reporter=verbose",
     "clean": "rm -rf dist",
     "prepublishOnly": "npm run build && npm test",
-    "discover-features": "tsx scripts/discover_features.ts"
+    "discover-features": "npx tsx scripts/discover_features.ts",
+    "generate-fixtures": "npx tsx scripts/generate_fixtures.ts",
+    "generate-fixtures:all": "npx tsx scripts/generate_fixtures.ts --all",
+    "generate-fixtures:ts": "npx tsx scripts/generate_fixtures.ts --language typescript",
+    "generate-fixtures:js": "npx tsx scripts/generate_fixtures.ts --language javascript",
+    "generate-fixtures:py": "npx tsx scripts/generate_fixtures.ts --language python",
+    "generate-fixtures:rs": "npx tsx scripts/generate_fixtures.ts --language rust"
   },
   "keywords": [
     "tree-sitter",

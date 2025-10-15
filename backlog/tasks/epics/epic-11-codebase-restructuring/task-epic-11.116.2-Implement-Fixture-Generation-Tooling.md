@@ -1,10 +1,11 @@
 # Task epic-11.116.2: Implement Fixture Generation Tooling
 
-**Status:** Not Started
+**Status:** Completed
 **Parent:** task-epic-11.116
 **Depends On:** task-epic-11.116.1
 **Priority:** High (blocks testing tasks)
 **Created:** 2025-10-14
+**Completed:** 2025-10-15
 
 ## Overview
 
@@ -412,3 +413,93 @@ After completion:
 - Ensure proper TypeScript types throughout
 - Add error handling for malformed JSON
 - Consider adding JSON schema validation in future
+
+## Implementation Notes
+
+**Completed:** 2025-10-15
+
+### Files Created/Modified
+
+**Created files:**
+
+1. [semantic_index_json.ts](../../../packages/core/tests/fixtures/semantic_index_json.ts)
+   - Added `write_semantic_index_fixture()` - writes SemanticIndex to JSON file
+   - Added `load_semantic_index_fixture()` - loads SemanticIndex from JSON file
+   - All serialization/deserialization functions in one module
+
+2. [generate_fixtures.ts](../../../packages/core/scripts/generate_fixtures.ts)
+   - CLI tool for generating fixtures from code files
+   - Supports `--all`, `--language <lang>`, and `--file <path>` options
+   - Automatically determines output paths based on input paths
+   - Handles TypeScript, JavaScript, Python, and Rust
+
+3. [fixture_helpers.ts](../../../packages/core/tests/fixtures/fixture_helpers.ts)
+   - `load_fixture(relative_path)` - load single fixture
+   - `load_fixtures(...paths)` - load multiple fixtures
+   - Convenience wrappers for test code
+
+4. [semantic_index_json.test.ts](../../../packages/core/tests/fixtures/semantic_index_json.test.ts)
+   - Round-trip serialization tests
+   - Empty collection handling tests
+   - JSON format validation tests
+   - All 7 tests passing
+
+5. [fixture_helpers.test.ts](../../../packages/core/tests/fixtures/fixture_helpers.test.ts)
+   - Tests for fixture loading helpers
+   - Verifies Map reconstruction after deserialization
+   - All 3 tests passing
+
+**Modified files:**
+
+1. [package.json](../../../packages/core/package.json)
+   - Added 6 npm scripts for fixture generation:
+     - `generate-fixtures` - main command with help
+     - `generate-fixtures:all` - generate all languages
+     - `generate-fixtures:ts` - TypeScript only
+     - `generate-fixtures:js` - JavaScript only
+     - `generate-fixtures:py` - Python only
+     - `generate-fixtures:rs` - Rust only
+
+2. [vitest.config.mjs](../../../packages/core/vitest.config.mjs)
+   - Added `tests/**/*.test.ts` to include pattern
+   - Allows test files in tests/ directory
+
+### Implementation Decisions
+
+1. **Consolidated serialization module:** All serialization functions are in `semantic_index_json.ts` rather than split across multiple files. This keeps related code together.
+
+2. **CLI uses npx tsx:** Scripts use `npx tsx` to run TypeScript directly without requiring tsx as a dependency.
+
+3. **Automatic path mapping:** CLI automatically converts input paths like `fixtures/lang/code/category/file.ext` to output paths like `fixtures/lang/semantic_index/category/file.json`.
+
+4. **Parser initialization:** All language parsers are initialized once at module load time for efficiency.
+
+5. **Test file organization:** Tests are co-located with the code they test in the `tests/fixtures/` directory.
+
+### Usage Examples
+
+```bash
+# Generate all fixtures
+npm run generate-fixtures:all
+
+# Generate TypeScript fixtures only
+npm run generate-fixtures:ts
+
+# Generate single file
+npm run generate-fixtures -- --file tests/fixtures/typescript/code/classes/basic_class.ts
+
+# In tests
+import { load_fixture } from './fixtures/fixture_helpers';
+const index = load_fixture('typescript/semantic_index/classes/basic_class.json');
+```
+
+### Test Coverage
+
+- ✅ 7 serialization/deserialization tests passing
+- ✅ 3 fixture helper tests passing
+- ✅ CLI tool tested with sample TypeScript file
+- ✅ Generated JSON validated for structure and format
+
+### Ready for Next Task
+
+All deliverables completed. Ready for **task 116.3**: Organize code fixtures and create comprehensive test cases.

@@ -12,6 +12,8 @@
  * - Empty collections serialize as {} or [] to make schema clear
  */
 
+import fs from "fs";
+import path from "path";
 import type {
   FilePath,
   Language,
@@ -189,4 +191,34 @@ export function json_string_to_semantic_index(
   json_string: string
 ): import("../../../src/index_single_file/semantic_index").SemanticIndex {
   return json_to_semantic_index(JSON.parse(json_string));
+}
+
+/**
+ * Writes a SemanticIndex to a JSON fixture file
+ *
+ * The file is written with 2-space indentation and a trailing newline
+ * for clean git diffs.
+ *
+ * @param index - The SemanticIndex to write
+ * @param output_path - Absolute path to the output JSON file
+ */
+export function write_semantic_index_fixture(
+  index: import("../../../src/index_single_file/semantic_index").SemanticIndex,
+  output_path: string
+): void {
+  const json_string = semantic_index_to_json_string(index);
+  fs.writeFileSync(output_path, json_string + "\n", "utf-8");
+}
+
+/**
+ * Loads a SemanticIndex from a JSON fixture file
+ *
+ * @param fixture_path - Absolute path to the JSON fixture file
+ * @returns The deserialized SemanticIndex
+ */
+export function load_semantic_index_fixture(
+  fixture_path: string
+): import("../../../src/index_single_file/semantic_index").SemanticIndex {
+  const json_string = fs.readFileSync(fixture_path, "utf-8");
+  return json_string_to_semantic_index(json_string);
 }

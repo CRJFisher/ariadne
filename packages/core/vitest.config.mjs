@@ -11,7 +11,7 @@ export default defineConfig({
       },
     },
     setupFiles: './tests/setup.ts',
-    include: ['src/**/*.test.ts', 'src/**/*.bench.ts'],
+    include: ['src/**/*.test.ts', 'src/**/*.bench.ts', 'tests/**/*.test.ts'],
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json', 'html'],
