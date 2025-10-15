@@ -26,7 +26,8 @@
     "generate-fixtures:ts": "npx tsx scripts/generate_fixtures.ts --language typescript",
     "generate-fixtures:js": "npx tsx scripts/generate_fixtures.ts --language javascript",
     "generate-fixtures:py": "npx tsx scripts/generate_fixtures.ts --language python",
-    "generate-fixtures:rs": "npx tsx scripts/generate_fixtures.ts --language rust"
+    "generate-fixtures:rs": "npx tsx scripts/generate_fixtures.ts --language rust",
+    "verify-fixtures": "npx tsx scripts/verify_fixtures.ts"
   },
   "keywords": [
     "tree-sitter",

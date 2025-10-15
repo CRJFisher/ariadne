@@ -1,0 +1,1825 @@
+{
+  "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts",
+  "language": "typescript",
+  "root_scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts:1:1:61:0",
+  "scopes": {
+    "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts:1:1:61:0": {
+      "id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts:1:1:61:0",
+      "parent_id": null,
+      "name": null,
+      "type": "module",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts",
+        "start_line": 1,
+        "start_column": 1,
+        "end_line": 61,
+        "end_column": 0
+      },
+      "child_ids": [
+        "class:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts:7:15:13:1",
+        "class:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts:15:17:21:1",
+        "class:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts:23:18:27:1",
+        "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts:30:13:32:1",
+        "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts:34:21:36:1",
+        "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts:38:19:47:1",
+        "class:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts:50:18:54:1",
+        "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts:56:22:58:1"
+      ]
+    },
+    "class:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts:7:15:13:1": {
+      "id": "class:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts:7:15:13:1",
+      "parent_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts:1:1:61:0",
+      "name": "{\n  Debug = \"DEBUG\",\n  Info = \"INFO\",\n  Warning = \"WARNING\",\n  Error = \"ERROR\",\n  Fatal = \"FATAL\",\n}",
+      "type": "class",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts",
+        "start_line": 7,
+        "start_column": 15,
+        "end_line": 13,
+        "end_column": 1
+      },
+      "child_ids": []
+    },
+    "class:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts:15:17:21:1": {
+      "id": "class:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts:15:17:21:1",
+      "parent_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts:1:1:61:0",
+      "name": "{\n  Get = \"GET\",\n  Post = \"POST\",\n  Put = \"PUT\",\n  Delete = \"DELETE\",\n  Patch = \"PATCH\",\n}",
+      "type": "class",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts",
+        "start_line": 15,
+        "start_column": 17,
+        "end_line": 21,
+        "end_column": 1
+      },
+      "child_ids": []
+    },
+    "class:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts:23:18:27:1": {
+      "id": "class:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts:23:18:27:1",
+      "parent_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts:1:1:61:0",
+      "name": "{\n  Development = \"dev\",\n  Staging = \"staging\",\n  Production = \"prod\",\n}",
+      "type": "class",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts",
+        "start_line": 23,
+        "start_column": 18,
+        "end_line": 27,
+        "end_column": 1
+      },
+      "child_ids": []
+    },
+    "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts:30:13:32:1": {
+      "id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts:30:13:32:1",
+      "parent_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts:1:1:61:0",
+      "name": "function log(level: LogLevel, message: string): void {\n  console.log(`[${level}] ${message}`);\n}",
+      "type": "function",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts",
+        "start_line": 30,
+        "start_column": 13,
+        "end_line": 32,
+        "end_column": 1
+      },
+      "child_ids": []
+    },
+    "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts:34:21:36:1": {
+      "id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts:34:21:36:1",
+      "parent_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts:1:1:61:0",
+      "name": "function makeRequest(method: HttpMethod, url: string): Promise<Response> {\n  return fetch(url, { method });\n}",
+      "type": "function",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts",
+        "start_line": 34,
+        "start_column": 21,
+        "end_line": 36,
+        "end_column": 1
+      },
+      "child_ids": []
+    },
+    "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts:38:19:47:1": {
+      "id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts:38:19:47:1",
+      "parent_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts:1:1:61:0",
+      "name": "function getApiUrl(env: Environment): string {\n  switch (env) {\n    case Environment.Development:\n      return \"http://localhost:3000\";\n    case Environment.Staging:\n      return \"https://staging.example.com\";\n    case Environment.Production:\n      return \"https://api.example.com\";\n  }\n}",
+      "type": "function",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts",
+        "start_line": 38,
+        "start_column": 19,
+        "end_line": 47,
+        "end_column": 1
+      },
+      "child_ids": [
+        "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts:39:3:46:3"
+      ]
+    },
+    "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts:39:3:46:3": {
+      "id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts:39:3:46:3",
+      "parent_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts:38:19:47:1",
+      "name": "switch (env) {\n    case Environment.Development:\n      return \"http://localhost:3000\";\n    case Environment.Staging:\n      return \"https://staging.example.com\";\n    case Environment.Production:\n      return \"https://api.example.com\";\n  }",
+      "type": "block",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts",
+        "start_line": 39,
+        "start_column": 3,
+        "end_line": 46,
+        "end_column": 3
+      },
+      "child_ids": [
+        "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts:40:5:41:37",
+        "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts:42:5:43:43",
+        "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts:44:5:45:39"
+      ]
+    },
+    "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts:40:5:41:37": {
+      "id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts:40:5:41:37",
+      "parent_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts:39:3:46:3",
+      "name": "case Environment.Development:\n      return \"http://localhost:3000\";",
+      "type": "block",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts",
+        "start_line": 40,
+        "start_column": 5,
+        "end_line": 41,
+        "end_column": 37
+      },
+      "child_ids": []
+    },
+    "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts:42:5:43:43": {
+      "id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts:42:5:43:43",
+      "parent_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts:39:3:46:3",
+      "name": "case Environment.Staging:\n      return \"https://staging.example.com\";",
+      "type": "block",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts",
+        "start_line": 42,
+        "start_column": 5,
+        "end_line": 43,
+        "end_column": 43
+      },
+      "child_ids": []
+    },
+    "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts:44:5:45:39": {
+      "id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts:44:5:45:39",
+      "parent_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts:39:3:46:3",
+      "name": "case Environment.Production:\n      return \"https://api.example.com\";",
+      "type": "block",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts",
+        "start_line": 44,
+        "start_column": 5,
+        "end_line": 45,
+        "end_column": 39
+      },
+      "child_ids": []
+    },
+    "class:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts:50:18:54:1": {
+      "id": "class:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts:50:18:54:1",
+      "parent_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts:1:1:61:0",
+      "name": "{\n  Red = \"#ff0000\",\n  Green = \"#00ff00\",\n  Blue = \"#0000ff\",\n}",
+      "type": "class",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts",
+        "start_line": 50,
+        "start_column": 18,
+        "end_line": 54,
+        "end_column": 1
+      },
+      "child_ids": []
+    },
+    "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts:56:22:58:1": {
+      "id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts:56:22:58:1",
+      "parent_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts:1:1:61:0",
+      "name": "function getColorCode(color: Color): string {\n  return color;\n}",
+      "type": "function",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts",
+        "start_line": 56,
+        "start_column": 22,
+        "end_line": 58,
+        "end_column": 1
+      },
+      "child_ids": []
+    }
+  },
+  "functions": {
+    "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts:30:10:30:12:log": {
+      "kind": "function",
+      "symbol_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts:30:10:30:12:log",
+      "name": "log",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts",
+        "start_line": 30,
+        "start_column": 10,
+        "end_line": 30,
+        "end_column": 12
+      },
+      "defining_scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts:1:1:61:0",
+      "is_exported": true,
+      "export": {
+        "is_reexport": false
+      },
+      "signature": {
+        "parameters": [
+          {
+            "kind": "parameter",
+            "defining_scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts:30:13:32:1",
+            "symbol_id": "parameter:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts:30:14:30:18:level",
+            "name": "level",
+            "location": {
+              "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts",
+              "start_line": 30,
+              "start_column": 14,
+              "end_line": 30,
+              "end_column": 18
+            },
+            "type": "LogLevel",
+            "optional": false
+          },
+          {
+            "kind": "parameter",
+            "defining_scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts:30:13:32:1",
+            "symbol_id": "parameter:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts:30:31:30:37:message",
+            "name": "message",
+            "location": {
+              "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts",
+              "start_line": 30,
+              "start_column": 31,
+              "end_line": 30,
+              "end_column": 37
+            },
+            "type": "string",
+            "optional": false
+          }
+        ],
+        "return_type": "void"
+      },
+      "return_type": "void",
+      "body_scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts:30:13:32:1"
+    },
+    "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts:34:10:34:20:makeRequest": {
+      "kind": "function",
+      "symbol_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts:34:10:34:20:makeRequest",
+      "name": "makeRequest",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts",
+        "start_line": 34,
+        "start_column": 10,
+        "end_line": 34,
+        "end_column": 20
+      },
+      "defining_scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts:1:1:61:0",
+      "is_exported": true,
+      "export": {
+        "is_reexport": false
+      },
+      "signature": {
+        "parameters": [
+          {
+            "kind": "parameter",
+            "defining_scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts:34:21:36:1",
+            "symbol_id": "parameter:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts:34:22:34:27:method",
+            "name": "method",
+            "location": {
+              "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts",
+              "start_line": 34,
+              "start_column": 22,
+              "end_line": 34,
+              "end_column": 27
+            },
+            "type": "HttpMethod",
+            "optional": false
+          },
+          {
+            "kind": "parameter",
+            "defining_scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts:34:21:36:1",
+            "symbol_id": "parameter:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts:34:42:34:44:url",
+            "name": "url",
+            "location": {
+              "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts",
+              "start_line": 34,
+              "start_column": 42,
+              "end_line": 34,
+              "end_column": 44
+            },
+            "type": "string",
+            "optional": false
+          }
+        ],
+        "return_type": "Promise<Response>"
+      },
+      "return_type": "Promise<Response>",
+      "body_scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts:34:21:36:1"
+    },
+    "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts:38:10:38:18:getApiUrl": {
+      "kind": "function",
+      "symbol_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts:38:10:38:18:getApiUrl",
+      "name": "getApiUrl",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts",
+        "start_line": 38,
+        "start_column": 10,
+        "end_line": 38,
+        "end_column": 18
+      },
+      "defining_scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts:1:1:61:0",
+      "is_exported": true,
+      "export": {
+        "is_reexport": false
+      },
+      "signature": {
+        "parameters": [
+          {
+            "kind": "parameter",
+            "defining_scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts:38:19:47:1",
+            "symbol_id": "parameter:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts:38:20:38:22:env",
+            "name": "env",
+            "location": {
+              "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts",
+              "start_line": 38,
+              "start_column": 20,
+              "end_line": 38,
+              "end_column": 22
+            },
+            "type": "Environment",
+            "optional": false
+          }
+        ],
+        "return_type": "string"
+      },
+      "return_type": "string",
+      "body_scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts:38:19:47:1"
+    },
+    "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts:56:10:56:21:getColorCode": {
+      "kind": "function",
+      "symbol_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts:56:10:56:21:getColorCode",
+      "name": "getColorCode",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts",
+        "start_line": 56,
+        "start_column": 10,
+        "end_line": 56,
+        "end_column": 21
+      },
+      "defining_scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts:1:1:61:0",
+      "is_exported": true,
+      "export": {
+        "is_reexport": false
+      },
+      "signature": {
+        "parameters": [
+          {
+            "kind": "parameter",
+            "defining_scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts:56:22:58:1",
+            "symbol_id": "parameter:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts:56:23:56:27:color",
+            "name": "color",
+            "location": {
+              "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts",
+              "start_line": 56,
+              "start_column": 23,
+              "end_line": 56,
+              "end_column": 27
+            },
+            "type": "Color",
+            "optional": false
+          }
+        ],
+        "return_type": "string"
+      },
+      "return_type": "string",
+      "body_scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts:56:22:58:1"
+    }
+  },
+  "classes": {},
+  "variables": {},
+  "interfaces": {},
+  "enums": {
+    "enum:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts:7:1:13:1:enum LogLevel {\n  Debug = \"DEBUG\",\n  Info = \"INFO\",\n  Warning = \"WARNING\",\n  Error = \"ERROR\",\n  Fatal = \"FATAL\",\n}": {
+      "kind": "enum",
+      "symbol_id": "enum:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts:7:1:13:1:enum LogLevel {\n  Debug = \"DEBUG\",\n  Info = \"INFO\",\n  Warning = \"WARNING\",\n  Error = \"ERROR\",\n  Fatal = \"FATAL\",\n}",
+      "name": "enum LogLevel {\n  Debug = \"DEBUG\",\n  Info = \"INFO\",\n  Warning = \"WARNING\",\n  Error = \"ERROR\",\n  Fatal = \"FATAL\",\n}",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts",
+        "start_line": 7,
+        "start_column": 1,
+        "end_line": 13,
+        "end_column": 1
+      },
+      "defining_scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts:1:1:61:0",
+      "is_exported": false,
+      "is_const": false,
+      "members": []
+    },
+    "enum:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts:7:6:7:13:LogLevel": {
+      "kind": "enum",
+      "symbol_id": "enum:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts:7:6:7:13:LogLevel",
+      "name": "LogLevel",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts",
+        "start_line": 7,
+        "start_column": 6,
+        "end_line": 7,
+        "end_column": 13
+      },
+      "defining_scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts:1:1:61:0",
+      "is_exported": true,
+      "export": {
+        "is_reexport": false
+      },
+      "is_const": false,
+      "members": [
+        {
+          "name": "Debug",
+          "value": "\"DEBUG\"",
+          "location": {
+            "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts",
+            "start_line": 8,
+            "start_column": 3,
+            "end_line": 8,
+            "end_column": 7
+          }
+        },
+        {
+          "name": "Info",
+          "value": "\"INFO\"",
+          "location": {
+            "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts",
+            "start_line": 9,
+            "start_column": 3,
+            "end_line": 9,
+            "end_column": 6
+          }
+        },
+        {
+          "name": "Warning",
+          "value": "\"WARNING\"",
+          "location": {
+            "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts",
+            "start_line": 10,
+            "start_column": 3,
+            "end_line": 10,
+            "end_column": 9
+          }
+        },
+        {
+          "name": "Error",
+          "value": "\"ERROR\"",
+          "location": {
+            "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts",
+            "start_line": 11,
+            "start_column": 3,
+            "end_line": 11,
+            "end_column": 7
+          }
+        },
+        {
+          "name": "Fatal",
+          "value": "\"FATAL\"",
+          "location": {
+            "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts",
+            "start_line": 12,
+            "start_column": 3,
+            "end_line": 12,
+            "end_column": 7
+          }
+        }
+      ]
+    },
+    "enum:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts:15:1:21:1:enum HttpMethod {\n  Get = \"GET\",\n  Post = \"POST\",\n  Put = \"PUT\",\n  Delete = \"DELETE\",\n  Patch = \"PATCH\",\n}": {
+      "kind": "enum",
+      "symbol_id": "enum:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts:15:1:21:1:enum HttpMethod {\n  Get = \"GET\",\n  Post = \"POST\",\n  Put = \"PUT\",\n  Delete = \"DELETE\",\n  Patch = \"PATCH\",\n}",
+      "name": "enum HttpMethod {\n  Get = \"GET\",\n  Post = \"POST\",\n  Put = \"PUT\",\n  Delete = \"DELETE\",\n  Patch = \"PATCH\",\n}",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts",
+        "start_line": 15,
+        "start_column": 1,
+        "end_line": 21,
+        "end_column": 1
+      },
+      "defining_scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts:1:1:61:0",
+      "is_exported": false,
+      "is_const": false,
+      "members": []
+    },
+    "enum:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts:15:6:15:15:HttpMethod": {
+      "kind": "enum",
+      "symbol_id": "enum:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts:15:6:15:15:HttpMethod",
+      "name": "HttpMethod",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts",
+        "start_line": 15,
+        "start_column": 6,
+        "end_line": 15,
+        "end_column": 15
+      },
+      "defining_scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts:1:1:61:0",
+      "is_exported": true,
+      "export": {
+        "is_reexport": false
+      },
+      "is_const": false,
+      "members": [
+        {
+          "name": "Get",
+          "value": "\"GET\"",
+          "location": {
+            "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts",
+            "start_line": 16,
+            "start_column": 3,
+            "end_line": 16,
+            "end_column": 5
+          }
+        },
+        {
+          "name": "Post",
+          "value": "\"POST\"",
+          "location": {
+            "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts",
+            "start_line": 17,
+            "start_column": 3,
+            "end_line": 17,
+            "end_column": 6
+          }
+        },
+        {
+          "name": "Put",
+          "value": "\"PUT\"",
+          "location": {
+            "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts",
+            "start_line": 18,
+            "start_column": 3,
+            "end_line": 18,
+            "end_column": 5
+          }
+        },
+        {
+          "name": "Delete",
+          "value": "\"DELETE\"",
+          "location": {
+            "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts",
+            "start_line": 19,
+            "start_column": 3,
+            "end_line": 19,
+            "end_column": 8
+          }
+        },
+        {
+          "name": "Patch",
+          "value": "\"PATCH\"",
+          "location": {
+            "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts",
+            "start_line": 20,
+            "start_column": 3,
+            "end_line": 20,
+            "end_column": 7
+          }
+        }
+      ]
+    },
+    "enum:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts:23:1:27:1:enum Environment {\n  Development = \"dev\",\n  Staging = \"staging\",\n  Production = \"prod\",\n}": {
+      "kind": "enum",
+      "symbol_id": "enum:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts:23:1:27:1:enum Environment {\n  Development = \"dev\",\n  Staging = \"staging\",\n  Production = \"prod\",\n}",
+      "name": "enum Environment {\n  Development = \"dev\",\n  Staging = \"staging\",\n  Production = \"prod\",\n}",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts",
+        "start_line": 23,
+        "start_column": 1,
+        "end_line": 27,
+        "end_column": 1
+      },
+      "defining_scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts:1:1:61:0",
+      "is_exported": false,
+      "is_const": false,
+      "members": []
+    },
+    "enum:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts:23:6:23:16:Environment": {
+      "kind": "enum",
+      "symbol_id": "enum:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts:23:6:23:16:Environment",
+      "name": "Environment",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts",
+        "start_line": 23,
+        "start_column": 6,
+        "end_line": 23,
+        "end_column": 16
+      },
+      "defining_scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts:1:1:61:0",
+      "is_exported": true,
+      "export": {
+        "is_reexport": false
+      },
+      "is_const": false,
+      "members": [
+        {
+          "name": "Development",
+          "value": "\"dev\"",
+          "location": {
+            "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts",
+            "start_line": 24,
+            "start_column": 3,
+            "end_line": 24,
+            "end_column": 13
+          }
+        },
+        {
+          "name": "Staging",
+          "value": "\"staging\"",
+          "location": {
+            "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts",
+            "start_line": 25,
+            "start_column": 3,
+            "end_line": 25,
+            "end_column": 9
+          }
+        },
+        {
+          "name": "Production",
+          "value": "\"prod\"",
+          "location": {
+            "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts",
+            "start_line": 26,
+            "start_column": 3,
+            "end_line": 26,
+            "end_column": 12
+          }
+        }
+      ]
+    },
+    "enum:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts:50:1:54:1:const enum Color {\n  Red = \"#ff0000\",\n  Green = \"#00ff00\",\n  Blue = \"#0000ff\",\n}": {
+      "kind": "enum",
+      "symbol_id": "enum:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts:50:1:54:1:const enum Color {\n  Red = \"#ff0000\",\n  Green = \"#00ff00\",\n  Blue = \"#0000ff\",\n}",
+      "name": "const enum Color {\n  Red = \"#ff0000\",\n  Green = \"#00ff00\",\n  Blue = \"#0000ff\",\n}",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts",
+        "start_line": 50,
+        "start_column": 1,
+        "end_line": 54,
+        "end_column": 1
+      },
+      "defining_scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts:1:1:61:0",
+      "is_exported": false,
+      "is_const": false,
+      "members": []
+    },
+    "enum:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts:50:12:50:16:Color": {
+      "kind": "enum",
+      "symbol_id": "enum:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts:50:12:50:16:Color",
+      "name": "Color",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts",
+        "start_line": 50,
+        "start_column": 12,
+        "end_line": 50,
+        "end_column": 16
+      },
+      "defining_scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts:1:1:61:0",
+      "is_exported": true,
+      "export": {
+        "is_reexport": false
+      },
+      "is_const": true,
+      "members": [
+        {
+          "name": "Red",
+          "value": "\"#ff0000\"",
+          "location": {
+            "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts",
+            "start_line": 51,
+            "start_column": 3,
+            "end_line": 51,
+            "end_column": 5
+          }
+        },
+        {
+          "name": "Green",
+          "value": "\"#00ff00\"",
+          "location": {
+            "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts",
+            "start_line": 52,
+            "start_column": 3,
+            "end_line": 52,
+            "end_column": 7
+          }
+        },
+        {
+          "name": "Blue",
+          "value": "\"#0000ff\"",
+          "location": {
+            "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts",
+            "start_line": 53,
+            "start_column": 3,
+            "end_line": 53,
+            "end_column": 6
+          }
+        }
+      ]
+    }
+  },
+  "namespaces": {},
+  "types": {},
+  "imported_symbols": {},
+  "references": [
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts",
+        "start_line": 7,
+        "start_column": 6,
+        "end_line": 7,
+        "end_column": 13
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts:1:1:61:0",
+      "name": "LogLevel"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts",
+        "start_line": 15,
+        "start_column": 6,
+        "end_line": 15,
+        "end_column": 15
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts:1:1:61:0",
+      "name": "HttpMethod"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts",
+        "start_line": 23,
+        "start_column": 6,
+        "end_line": 23,
+        "end_column": 16
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts:1:1:61:0",
+      "name": "Environment"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts",
+        "start_line": 30,
+        "start_column": 10,
+        "end_line": 30,
+        "end_column": 12
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts:1:1:61:0",
+      "name": "log"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts",
+        "start_line": 30,
+        "start_column": 14,
+        "end_line": 30,
+        "end_column": 18
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts:30:13:32:1",
+      "name": "level"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts",
+        "start_line": 30,
+        "start_column": 21,
+        "end_line": 30,
+        "end_column": 28
+      },
+      "type": "type",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts:30:13:32:1",
+      "name": "LogLevel",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts:30:21:30:28:LogLevel",
+        "type_name": "LogLevel",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts",
+        "start_line": 30,
+        "start_column": 31,
+        "end_line": 30,
+        "end_column": 37
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts:30:13:32:1",
+      "name": "message"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts",
+        "start_line": 31,
+        "start_column": 3,
+        "end_line": 31,
+        "end_column": 38
+      },
+      "type": "call",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts:30:13:32:1",
+      "name": "log",
+      "context": {
+        "receiver_location": {
+          "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts",
+          "start_line": 31,
+          "start_column": 3,
+          "end_line": 31,
+          "end_column": 9
+        },
+        "property_chain": [
+          "console",
+          "log"
+        ]
+      },
+      "call_type": "method",
+      "member_access": {
+        "access_type": "method",
+        "is_optional_chain": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts",
+        "start_line": 31,
+        "start_column": 3,
+        "end_line": 31,
+        "end_column": 9
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts:30:13:32:1",
+      "name": "console"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts",
+        "start_line": 31,
+        "start_column": 3,
+        "end_line": 31,
+        "end_column": 13
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts:30:13:32:1",
+      "name": "console.log"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts",
+        "start_line": 31,
+        "start_column": 3,
+        "end_line": 31,
+        "end_column": 9
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts:30:13:32:1",
+      "name": "console"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts",
+        "start_line": 31,
+        "start_column": 3,
+        "end_line": 31,
+        "end_column": 13
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts:30:13:32:1",
+      "name": "console.log"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts",
+        "start_line": 31,
+        "start_column": 3,
+        "end_line": 31,
+        "end_column": 9
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts:30:13:32:1",
+      "name": "console"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts",
+        "start_line": 31,
+        "start_column": 3,
+        "end_line": 31,
+        "end_column": 38
+      },
+      "type": "call",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts:30:13:32:1",
+      "name": "log",
+      "context": {
+        "receiver_location": {
+          "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts",
+          "start_line": 31,
+          "start_column": 3,
+          "end_line": 31,
+          "end_column": 9
+        },
+        "property_chain": [
+          "console",
+          "log"
+        ]
+      },
+      "call_type": "method",
+      "member_access": {
+        "access_type": "method",
+        "is_optional_chain": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts",
+        "start_line": 31,
+        "start_column": 3,
+        "end_line": 31,
+        "end_column": 9
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts:30:13:32:1",
+      "name": "console"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts",
+        "start_line": 31,
+        "start_column": 3,
+        "end_line": 31,
+        "end_column": 9
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts:30:13:32:1",
+      "name": "console"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts",
+        "start_line": 31,
+        "start_column": 11,
+        "end_line": 31,
+        "end_column": 13
+      },
+      "type": "call",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts:30:13:32:1",
+      "name": "log",
+      "call_type": "function"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts",
+        "start_line": 31,
+        "start_column": 11,
+        "end_line": 31,
+        "end_column": 13
+      },
+      "type": "member_access",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts:30:13:32:1",
+      "name": "log",
+      "member_access": {
+        "access_type": "property",
+        "is_optional_chain": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts",
+        "start_line": 31,
+        "start_column": 11,
+        "end_line": 31,
+        "end_column": 13
+      },
+      "type": "member_access",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts:30:13:32:1",
+      "name": "log",
+      "member_access": {
+        "access_type": "property",
+        "is_optional_chain": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts",
+        "start_line": 31,
+        "start_column": 11,
+        "end_line": 31,
+        "end_column": 13
+      },
+      "type": "call",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts:30:13:32:1",
+      "name": "log",
+      "call_type": "function"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts",
+        "start_line": 31,
+        "start_column": 19,
+        "end_line": 31,
+        "end_column": 23
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts:30:13:32:1",
+      "name": "level"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts",
+        "start_line": 31,
+        "start_column": 29,
+        "end_line": 31,
+        "end_column": 35
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts:30:13:32:1",
+      "name": "message"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts",
+        "start_line": 34,
+        "start_column": 10,
+        "end_line": 34,
+        "end_column": 20
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts:1:1:61:0",
+      "name": "makeRequest"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts",
+        "start_line": 34,
+        "start_column": 22,
+        "end_line": 34,
+        "end_column": 27
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts:34:21:36:1",
+      "name": "method"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts",
+        "start_line": 34,
+        "start_column": 30,
+        "end_line": 34,
+        "end_column": 39
+      },
+      "type": "type",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts:34:21:36:1",
+      "name": "HttpMethod",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts:34:30:34:39:HttpMethod",
+        "type_name": "HttpMethod",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts",
+        "start_line": 34,
+        "start_column": 42,
+        "end_line": 34,
+        "end_column": 44
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts:34:21:36:1",
+      "name": "url"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts",
+        "start_line": 34,
+        "start_column": 56,
+        "end_line": 34,
+        "end_column": 62
+      },
+      "type": "type",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts:34:21:36:1",
+      "name": "Promise",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts:34:56:34:62:Promise",
+        "type_name": "Promise",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts",
+        "start_line": 34,
+        "start_column": 56,
+        "end_line": 34,
+        "end_column": 72
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts:34:21:36:1",
+      "name": "Promise<Response>",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts:34:56:34:72:Promise",
+        "type_name": "Promise",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts",
+        "start_line": 34,
+        "start_column": 56,
+        "end_line": 34,
+        "end_column": 62
+      },
+      "type": "type",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts:34:21:36:1",
+      "name": "Promise",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts:34:56:34:62:Promise",
+        "type_name": "Promise",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts",
+        "start_line": 34,
+        "start_column": 63,
+        "end_line": 34,
+        "end_column": 72
+      },
+      "type": "type",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts:34:21:36:1",
+      "name": "<Response>"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts",
+        "start_line": 34,
+        "start_column": 64,
+        "end_line": 34,
+        "end_column": 71
+      },
+      "type": "type",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts:34:21:36:1",
+      "name": "Response",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts:34:64:34:71:Response",
+        "type_name": "Response",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts",
+        "start_line": 35,
+        "start_column": 3,
+        "end_line": 35,
+        "end_column": 32
+      },
+      "type": "return",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts:34:21:36:1",
+      "name": "return fetch(url, { method });"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts",
+        "start_line": 35,
+        "start_column": 10,
+        "end_line": 35,
+        "end_column": 14
+      },
+      "type": "call",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts:34:21:36:1",
+      "name": "fetch",
+      "call_type": "function"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts",
+        "start_line": 35,
+        "start_column": 10,
+        "end_line": 35,
+        "end_column": 31
+      },
+      "type": "return",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts:34:21:36:1",
+      "name": "fetch"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts",
+        "start_line": 35,
+        "start_column": 10,
+        "end_line": 35,
+        "end_column": 14
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts:34:21:36:1",
+      "name": "fetch"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts",
+        "start_line": 35,
+        "start_column": 16,
+        "end_line": 35,
+        "end_column": 18
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts:34:21:36:1",
+      "name": "url"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts",
+        "start_line": 38,
+        "start_column": 10,
+        "end_line": 38,
+        "end_column": 18
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts:1:1:61:0",
+      "name": "getApiUrl"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts",
+        "start_line": 38,
+        "start_column": 20,
+        "end_line": 38,
+        "end_column": 22
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts:38:19:47:1",
+      "name": "env"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts",
+        "start_line": 38,
+        "start_column": 25,
+        "end_line": 38,
+        "end_column": 35
+      },
+      "type": "type",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts:38:19:47:1",
+      "name": "Environment",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts:38:25:38:35:Environment",
+        "type_name": "Environment",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts",
+        "start_line": 39,
+        "start_column": 11,
+        "end_line": 39,
+        "end_column": 13
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts:39:3:46:3",
+      "name": "env"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts",
+        "start_line": 40,
+        "start_column": 10,
+        "end_line": 40,
+        "end_column": 32
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts:40:5:41:37",
+      "name": "Environment.Development"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts",
+        "start_line": 40,
+        "start_column": 10,
+        "end_line": 40,
+        "end_column": 20
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts:40:5:41:37",
+      "name": "Environment"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts",
+        "start_line": 40,
+        "start_column": 10,
+        "end_line": 40,
+        "end_column": 32
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts:40:5:41:37",
+      "name": "Environment.Development"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts",
+        "start_line": 40,
+        "start_column": 10,
+        "end_line": 40,
+        "end_column": 20
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts:40:5:41:37",
+      "name": "Environment"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts",
+        "start_line": 40,
+        "start_column": 10,
+        "end_line": 40,
+        "end_column": 20
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts:40:5:41:37",
+      "name": "Environment"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts",
+        "start_line": 40,
+        "start_column": 22,
+        "end_line": 40,
+        "end_column": 32
+      },
+      "type": "member_access",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts:40:5:41:37",
+      "name": "Development",
+      "member_access": {
+        "access_type": "property",
+        "is_optional_chain": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts",
+        "start_line": 40,
+        "start_column": 22,
+        "end_line": 40,
+        "end_column": 32
+      },
+      "type": "member_access",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts:40:5:41:37",
+      "name": "Development",
+      "member_access": {
+        "access_type": "property",
+        "is_optional_chain": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts",
+        "start_line": 41,
+        "start_column": 7,
+        "end_line": 41,
+        "end_column": 37
+      },
+      "type": "return",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts:40:5:41:37",
+      "name": "return \"http://localhost:3000\";"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts",
+        "start_line": 41,
+        "start_column": 14,
+        "end_line": 41,
+        "end_column": 36
+      },
+      "type": "return",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts:40:5:41:37",
+      "name": "\"http://localhost:3000\""
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts",
+        "start_line": 42,
+        "start_column": 10,
+        "end_line": 42,
+        "end_column": 28
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts:42:5:43:43",
+      "name": "Environment.Staging"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts",
+        "start_line": 42,
+        "start_column": 10,
+        "end_line": 42,
+        "end_column": 20
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts:42:5:43:43",
+      "name": "Environment"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts",
+        "start_line": 42,
+        "start_column": 10,
+        "end_line": 42,
+        "end_column": 28
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts:42:5:43:43",
+      "name": "Environment.Staging"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts",
+        "start_line": 42,
+        "start_column": 10,
+        "end_line": 42,
+        "end_column": 20
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts:42:5:43:43",
+      "name": "Environment"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts",
+        "start_line": 42,
+        "start_column": 10,
+        "end_line": 42,
+        "end_column": 20
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts:42:5:43:43",
+      "name": "Environment"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts",
+        "start_line": 42,
+        "start_column": 22,
+        "end_line": 42,
+        "end_column": 28
+      },
+      "type": "member_access",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts:42:5:43:43",
+      "name": "Staging",
+      "member_access": {
+        "access_type": "property",
+        "is_optional_chain": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts",
+        "start_line": 42,
+        "start_column": 22,
+        "end_line": 42,
+        "end_column": 28
+      },
+      "type": "member_access",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts:42:5:43:43",
+      "name": "Staging",
+      "member_access": {
+        "access_type": "property",
+        "is_optional_chain": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts",
+        "start_line": 43,
+        "start_column": 7,
+        "end_line": 43,
+        "end_column": 43
+      },
+      "type": "return",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts:42:5:43:43",
+      "name": "return \"https://staging.example.com\";"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts",
+        "start_line": 43,
+        "start_column": 14,
+        "end_line": 43,
+        "end_column": 42
+      },
+      "type": "return",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts:42:5:43:43",
+      "name": "\"https://staging.example.com\""
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts",
+        "start_line": 44,
+        "start_column": 10,
+        "end_line": 44,
+        "end_column": 31
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts:44:5:45:39",
+      "name": "Environment.Production"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts",
+        "start_line": 44,
+        "start_column": 10,
+        "end_line": 44,
+        "end_column": 20
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts:44:5:45:39",
+      "name": "Environment"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts",
+        "start_line": 44,
+        "start_column": 10,
+        "end_line": 44,
+        "end_column": 31
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts:44:5:45:39",
+      "name": "Environment.Production"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts",
+        "start_line": 44,
+        "start_column": 10,
+        "end_line": 44,
+        "end_column": 20
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts:44:5:45:39",
+      "name": "Environment"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts",
+        "start_line": 44,
+        "start_column": 10,
+        "end_line": 44,
+        "end_column": 20
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts:44:5:45:39",
+      "name": "Environment"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts",
+        "start_line": 44,
+        "start_column": 22,
+        "end_line": 44,
+        "end_column": 31
+      },
+      "type": "member_access",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts:44:5:45:39",
+      "name": "Production",
+      "member_access": {
+        "access_type": "property",
+        "is_optional_chain": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts",
+        "start_line": 44,
+        "start_column": 22,
+        "end_line": 44,
+        "end_column": 31
+      },
+      "type": "member_access",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts:44:5:45:39",
+      "name": "Production",
+      "member_access": {
+        "access_type": "property",
+        "is_optional_chain": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts",
+        "start_line": 45,
+        "start_column": 7,
+        "end_line": 45,
+        "end_column": 39
+      },
+      "type": "return",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts:44:5:45:39",
+      "name": "return \"https://api.example.com\";"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts",
+        "start_line": 45,
+        "start_column": 14,
+        "end_line": 45,
+        "end_column": 38
+      },
+      "type": "return",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts:44:5:45:39",
+      "name": "\"https://api.example.com\""
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts",
+        "start_line": 50,
+        "start_column": 12,
+        "end_line": 50,
+        "end_column": 16
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts:1:1:61:0",
+      "name": "Color"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts",
+        "start_line": 56,
+        "start_column": 10,
+        "end_line": 56,
+        "end_column": 21
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts:1:1:61:0",
+      "name": "getColorCode"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts",
+        "start_line": 56,
+        "start_column": 23,
+        "end_line": 56,
+        "end_column": 27
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts:56:22:58:1",
+      "name": "color"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts",
+        "start_line": 56,
+        "start_column": 30,
+        "end_line": 56,
+        "end_column": 34
+      },
+      "type": "type",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts:56:22:58:1",
+      "name": "Color",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts:56:30:56:34:Color",
+        "type_name": "Color",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts",
+        "start_line": 57,
+        "start_column": 3,
+        "end_line": 57,
+        "end_column": 15
+      },
+      "type": "return",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts:56:22:58:1",
+      "name": "return color;"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts",
+        "start_line": 57,
+        "start_column": 10,
+        "end_line": 57,
+        "end_column": 14
+      },
+      "type": "return",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts:56:22:58:1",
+      "name": "color"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts",
+        "start_line": 57,
+        "start_column": 10,
+        "end_line": 57,
+        "end_column": 14
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts:56:22:58:1",
+      "name": "color"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts",
+        "start_line": 60,
+        "start_column": 10,
+        "end_line": 60,
+        "end_column": 17
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts:1:1:61:0",
+      "name": "LogLevel"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts",
+        "start_line": 60,
+        "start_column": 20,
+        "end_line": 60,
+        "end_column": 29
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts:1:1:61:0",
+      "name": "HttpMethod"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts",
+        "start_line": 60,
+        "start_column": 32,
+        "end_line": 60,
+        "end_column": 42
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts:1:1:61:0",
+      "name": "Environment"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts",
+        "start_line": 60,
+        "start_column": 45,
+        "end_line": 60,
+        "end_column": 49
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts:1:1:61:0",
+      "name": "Color"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts",
+        "start_line": 60,
+        "start_column": 52,
+        "end_line": 60,
+        "end_column": 54
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts:1:1:61:0",
+      "name": "log"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts",
+        "start_line": 60,
+        "start_column": 57,
+        "end_line": 60,
+        "end_column": 67
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts:1:1:61:0",
+      "name": "makeRequest"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts",
+        "start_line": 60,
+        "start_column": 70,
+        "end_line": 60,
+        "end_column": 78
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts:1:1:61:0",
+      "name": "getApiUrl"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts",
+        "start_line": 60,
+        "start_column": 81,
+        "end_line": 60,
+        "end_column": 92
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/enums/string_enum.ts:1:1:61:0",
+      "name": "getColorCode"
+    }
+  ]
+}

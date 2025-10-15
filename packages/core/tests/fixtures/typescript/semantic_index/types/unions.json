@@ -1,0 +1,1504 @@
+{
+  "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts",
+  "language": "typescript",
+  "root_scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts:1:1:46:0",
+  "scopes": {
+    "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts:1:1:46:0": {
+      "id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts:1:1:46:0",
+      "parent_id": null,
+      "name": null,
+      "type": "module",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts",
+        "start_line": 1,
+        "start_column": 1,
+        "end_line": 46,
+        "end_column": 0
+      },
+      "child_ids": [
+        "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts:30:17:39:1"
+      ]
+    },
+    "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts:30:17:39:1": {
+      "id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts:30:17:39:1",
+      "parent_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts:1:1:46:0",
+      "name": "function getArea(shape: Shape): number {\n  switch (shape.kind) {\n    case \"circle\":\n      return Math.PI * shape.radius ** 2;\n    case \"square\":\n      return shape.size ** 2;\n    case \"rectangle\":\n      return shape.width * shape.height;\n  }\n}",
+      "type": "function",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts",
+        "start_line": 30,
+        "start_column": 17,
+        "end_line": 39,
+        "end_column": 1
+      },
+      "child_ids": [
+        "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts:31:3:38:3"
+      ]
+    },
+    "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts:31:3:38:3": {
+      "id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts:31:3:38:3",
+      "parent_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts:30:17:39:1",
+      "name": "switch (shape.kind) {\n    case \"circle\":\n      return Math.PI * shape.radius ** 2;\n    case \"square\":\n      return shape.size ** 2;\n    case \"rectangle\":\n      return shape.width * shape.height;\n  }",
+      "type": "block",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts",
+        "start_line": 31,
+        "start_column": 3,
+        "end_line": 38,
+        "end_column": 3
+      },
+      "child_ids": [
+        "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts:32:5:33:41",
+        "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts:34:5:35:29",
+        "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts:36:5:37:40"
+      ]
+    },
+    "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts:32:5:33:41": {
+      "id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts:32:5:33:41",
+      "parent_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts:31:3:38:3",
+      "name": "case \"circle\":\n      return Math.PI * shape.radius ** 2;",
+      "type": "block",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts",
+        "start_line": 32,
+        "start_column": 5,
+        "end_line": 33,
+        "end_column": 41
+      },
+      "child_ids": []
+    },
+    "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts:34:5:35:29": {
+      "id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts:34:5:35:29",
+      "parent_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts:31:3:38:3",
+      "name": "case \"square\":\n      return shape.size ** 2;",
+      "type": "block",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts",
+        "start_line": 34,
+        "start_column": 5,
+        "end_line": 35,
+        "end_column": 29
+      },
+      "child_ids": []
+    },
+    "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts:36:5:37:40": {
+      "id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts:36:5:37:40",
+      "parent_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts:31:3:38:3",
+      "name": "case \"rectangle\":\n      return shape.width * shape.height;",
+      "type": "block",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts",
+        "start_line": 36,
+        "start_column": 5,
+        "end_line": 37,
+        "end_column": 40
+      },
+      "child_ids": []
+    }
+  },
+  "functions": {
+    "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts:30:10:30:16:getArea": {
+      "kind": "function",
+      "symbol_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts:30:10:30:16:getArea",
+      "name": "getArea",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts",
+        "start_line": 30,
+        "start_column": 10,
+        "end_line": 30,
+        "end_column": 16
+      },
+      "defining_scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts:1:1:46:0",
+      "is_exported": true,
+      "export": {
+        "is_reexport": false
+      },
+      "signature": {
+        "parameters": [
+          {
+            "kind": "parameter",
+            "defining_scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts:30:17:39:1",
+            "symbol_id": "parameter:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts:30:18:30:22:shape",
+            "name": "shape",
+            "location": {
+              "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts",
+              "start_line": 30,
+              "start_column": 18,
+              "end_line": 30,
+              "end_column": 22
+            },
+            "type": "Shape",
+            "optional": false
+          }
+        ],
+        "return_type": "number"
+      },
+      "return_type": "number",
+      "body_scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts:30:17:39:1"
+    }
+  },
+  "classes": {},
+  "variables": {},
+  "interfaces": {},
+  "enums": {},
+  "namespaces": {},
+  "types": {
+    "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts:7:1:7:38:type StringOrNumber = string | number;": {
+      "kind": "type_alias",
+      "symbol_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts:7:1:7:38:type StringOrNumber = string | number;",
+      "name": "type StringOrNumber = string | number;",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts",
+        "start_line": 7,
+        "start_column": 1,
+        "end_line": 7,
+        "end_column": 38
+      },
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts:1:1:46:0",
+      "is_exported": false,
+      "generics": [],
+      "defining_scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts:1:1:46:0"
+    },
+    "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts:7:6:7:19:StringOrNumber": {
+      "kind": "type_alias",
+      "symbol_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts:7:6:7:19:StringOrNumber",
+      "name": "StringOrNumber",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts",
+        "start_line": 7,
+        "start_column": 6,
+        "end_line": 7,
+        "end_column": 19
+      },
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts:1:1:46:0",
+      "is_exported": true,
+      "export": {
+        "is_reexport": false
+      },
+      "type_expression": "string | number",
+      "generics": [],
+      "defining_scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts:1:1:46:0"
+    },
+    "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts:8:1:8:60:type Status = \"pending\" | \"active\" | \"completed\" | \"failed\";": {
+      "kind": "type_alias",
+      "symbol_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts:8:1:8:60:type Status = \"pending\" | \"active\" | \"completed\" | \"failed\";",
+      "name": "type Status = \"pending\" | \"active\" | \"completed\" | \"failed\";",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts",
+        "start_line": 8,
+        "start_column": 1,
+        "end_line": 8,
+        "end_column": 60
+      },
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts:1:1:46:0",
+      "is_exported": false,
+      "generics": [],
+      "defining_scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts:1:1:46:0"
+    },
+    "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts:8:6:8:11:Status": {
+      "kind": "type_alias",
+      "symbol_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts:8:6:8:11:Status",
+      "name": "Status",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts",
+        "start_line": 8,
+        "start_column": 6,
+        "end_line": 8,
+        "end_column": 11
+      },
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts:1:1:46:0",
+      "is_exported": true,
+      "export": {
+        "is_reexport": false
+      },
+      "type_expression": "\"pending\" | \"active\" | \"completed\" | \"failed\"",
+      "generics": [],
+      "defining_scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts:1:1:46:0"
+    },
+    "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts:9:1:9:35:type ID = string | number | symbol;": {
+      "kind": "type_alias",
+      "symbol_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts:9:1:9:35:type ID = string | number | symbol;",
+      "name": "type ID = string | number | symbol;",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts",
+        "start_line": 9,
+        "start_column": 1,
+        "end_line": 9,
+        "end_column": 35
+      },
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts:1:1:46:0",
+      "is_exported": false,
+      "generics": [],
+      "defining_scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts:1:1:46:0"
+    },
+    "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts:9:6:9:7:ID": {
+      "kind": "type_alias",
+      "symbol_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts:9:6:9:7:ID",
+      "name": "ID",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts",
+        "start_line": 9,
+        "start_column": 6,
+        "end_line": 9,
+        "end_column": 7
+      },
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts:1:1:46:0",
+      "is_exported": true,
+      "export": {
+        "is_reexport": false
+      },
+      "type_expression": "string | number | symbol",
+      "generics": [],
+      "defining_scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts:1:1:46:0"
+    },
+    "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts:12:1:15:2:type Success = {\n  type: \"success\";\n  data: any;\n};": {
+      "kind": "type_alias",
+      "symbol_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts:12:1:15:2:type Success = {\n  type: \"success\";\n  data: any;\n};",
+      "name": "type Success = {\n  type: \"success\";\n  data: any;\n};",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts",
+        "start_line": 12,
+        "start_column": 1,
+        "end_line": 15,
+        "end_column": 2
+      },
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts:1:1:46:0",
+      "is_exported": false,
+      "generics": [],
+      "defining_scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts:1:1:46:0"
+    },
+    "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts:12:6:12:12:Success": {
+      "kind": "type_alias",
+      "symbol_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts:12:6:12:12:Success",
+      "name": "Success",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts",
+        "start_line": 12,
+        "start_column": 6,
+        "end_line": 12,
+        "end_column": 12
+      },
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts:1:1:46:0",
+      "is_exported": false,
+      "type_expression": "{\n  type: \"success\";\n  data: any;\n}",
+      "generics": [],
+      "defining_scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts:1:1:46:0"
+    },
+    "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts:17:1:20:2:type Failure = {\n  type: \"failure\";\n  error: string;\n};": {
+      "kind": "type_alias",
+      "symbol_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts:17:1:20:2:type Failure = {\n  type: \"failure\";\n  error: string;\n};",
+      "name": "type Failure = {\n  type: \"failure\";\n  error: string;\n};",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts",
+        "start_line": 17,
+        "start_column": 1,
+        "end_line": 20,
+        "end_column": 2
+      },
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts:1:1:46:0",
+      "is_exported": false,
+      "generics": [],
+      "defining_scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts:1:1:46:0"
+    },
+    "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts:17:6:17:12:Failure": {
+      "kind": "type_alias",
+      "symbol_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts:17:6:17:12:Failure",
+      "name": "Failure",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts",
+        "start_line": 17,
+        "start_column": 6,
+        "end_line": 17,
+        "end_column": 12
+      },
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts:1:1:46:0",
+      "is_exported": false,
+      "type_expression": "{\n  type: \"failure\";\n  error: string;\n}",
+      "generics": [],
+      "defining_scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts:1:1:46:0"
+    },
+    "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts:22:1:22:32:type Result = Success | Failure;": {
+      "kind": "type_alias",
+      "symbol_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts:22:1:22:32:type Result = Success | Failure;",
+      "name": "type Result = Success | Failure;",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts",
+        "start_line": 22,
+        "start_column": 1,
+        "end_line": 22,
+        "end_column": 32
+      },
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts:1:1:46:0",
+      "is_exported": false,
+      "generics": [],
+      "defining_scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts:1:1:46:0"
+    },
+    "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts:22:6:22:11:Result": {
+      "kind": "type_alias",
+      "symbol_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts:22:6:22:11:Result",
+      "name": "Result",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts",
+        "start_line": 22,
+        "start_column": 6,
+        "end_line": 22,
+        "end_column": 11
+      },
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts:1:1:46:0",
+      "is_exported": true,
+      "export": {
+        "is_reexport": false
+      },
+      "type_expression": "Success | Failure",
+      "generics": [],
+      "defining_scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts:1:1:46:0"
+    },
+    "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts:25:1:28:57:type Shape =\n  | { kind: \"circle\"; radius: number }\n  | { kind: \"square\"; size: number }\n  | { kind: \"rectangle\"; width: number; height: number };": {
+      "kind": "type_alias",
+      "symbol_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts:25:1:28:57:type Shape =\n  | { kind: \"circle\"; radius: number }\n  | { kind: \"square\"; size: number }\n  | { kind: \"rectangle\"; width: number; height: number };",
+      "name": "type Shape =\n  | { kind: \"circle\"; radius: number }\n  | { kind: \"square\"; size: number }\n  | { kind: \"rectangle\"; width: number; height: number };",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts",
+        "start_line": 25,
+        "start_column": 1,
+        "end_line": 28,
+        "end_column": 57
+      },
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts:1:1:46:0",
+      "is_exported": false,
+      "generics": [],
+      "defining_scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts:1:1:46:0"
+    },
+    "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts:25:6:25:10:Shape": {
+      "kind": "type_alias",
+      "symbol_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts:25:6:25:10:Shape",
+      "name": "Shape",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts",
+        "start_line": 25,
+        "start_column": 6,
+        "end_line": 25,
+        "end_column": 10
+      },
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts:1:1:46:0",
+      "is_exported": true,
+      "export": {
+        "is_reexport": false
+      },
+      "type_expression": "| { kind: \"circle\"; radius: number }\n  | { kind: \"square\"; size: number }\n  | { kind: \"rectangle\"; width: number; height: number }",
+      "generics": [],
+      "defining_scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts:1:1:46:0"
+    },
+    "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts:42:1:42:37:type Maybe<T> = T | null | undefined;": {
+      "kind": "type_alias",
+      "symbol_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts:42:1:42:37:type Maybe<T> = T | null | undefined;",
+      "name": "type Maybe<T> = T | null | undefined;",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts",
+        "start_line": 42,
+        "start_column": 1,
+        "end_line": 42,
+        "end_column": 37
+      },
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts:1:1:46:0",
+      "is_exported": false,
+      "generics": [],
+      "defining_scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts:1:1:46:0"
+    },
+    "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts:42:6:42:10:Maybe": {
+      "kind": "type_alias",
+      "symbol_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts:42:6:42:10:Maybe",
+      "name": "Maybe",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts",
+        "start_line": 42,
+        "start_column": 6,
+        "end_line": 42,
+        "end_column": 10
+      },
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts:1:1:46:0",
+      "is_exported": true,
+      "export": {
+        "is_reexport": false
+      },
+      "type_expression": "T | null | undefined",
+      "generics": [
+        "T"
+      ],
+      "defining_scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts:1:1:46:0"
+    },
+    "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts:43:1:43:33:type Optional<T> = T | undefined;": {
+      "kind": "type_alias",
+      "symbol_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts:43:1:43:33:type Optional<T> = T | undefined;",
+      "name": "type Optional<T> = T | undefined;",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts",
+        "start_line": 43,
+        "start_column": 1,
+        "end_line": 43,
+        "end_column": 33
+      },
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts:1:1:46:0",
+      "is_exported": false,
+      "generics": [],
+      "defining_scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts:1:1:46:0"
+    },
+    "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts:43:6:43:13:Optional": {
+      "kind": "type_alias",
+      "symbol_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts:43:6:43:13:Optional",
+      "name": "Optional",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts",
+        "start_line": 43,
+        "start_column": 6,
+        "end_line": 43,
+        "end_column": 13
+      },
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts:1:1:46:0",
+      "is_exported": true,
+      "export": {
+        "is_reexport": false
+      },
+      "type_expression": "T | undefined",
+      "generics": [
+        "T"
+      ],
+      "defining_scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts:1:1:46:0"
+    }
+  },
+  "imported_symbols": {},
+  "references": [
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts",
+        "start_line": 7,
+        "start_column": 6,
+        "end_line": 7,
+        "end_column": 19
+      },
+      "type": "type",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts:1:1:46:0",
+      "name": "StringOrNumber",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts:7:6:7:19:StringOrNumber",
+        "type_name": "StringOrNumber",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts",
+        "start_line": 8,
+        "start_column": 6,
+        "end_line": 8,
+        "end_column": 11
+      },
+      "type": "type",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts:1:1:46:0",
+      "name": "Status",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts:8:6:8:11:Status",
+        "type_name": "Status",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts",
+        "start_line": 9,
+        "start_column": 6,
+        "end_line": 9,
+        "end_column": 7
+      },
+      "type": "type",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts:1:1:46:0",
+      "name": "ID",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts:9:6:9:7:ID",
+        "type_name": "ID",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts",
+        "start_line": 12,
+        "start_column": 6,
+        "end_line": 12,
+        "end_column": 12
+      },
+      "type": "type",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts:1:1:46:0",
+      "name": "Success",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts:12:6:12:12:Success",
+        "type_name": "Success",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts",
+        "start_line": 17,
+        "start_column": 6,
+        "end_line": 17,
+        "end_column": 12
+      },
+      "type": "type",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts:1:1:46:0",
+      "name": "Failure",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts:17:6:17:12:Failure",
+        "type_name": "Failure",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts",
+        "start_line": 22,
+        "start_column": 6,
+        "end_line": 22,
+        "end_column": 11
+      },
+      "type": "type",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts:1:1:46:0",
+      "name": "Result",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts:22:6:22:11:Result",
+        "type_name": "Result",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts",
+        "start_line": 22,
+        "start_column": 15,
+        "end_line": 22,
+        "end_column": 21
+      },
+      "type": "type",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts:1:1:46:0",
+      "name": "Success",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts:22:15:22:21:Success",
+        "type_name": "Success",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts",
+        "start_line": 22,
+        "start_column": 25,
+        "end_line": 22,
+        "end_column": 31
+      },
+      "type": "type",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts:1:1:46:0",
+      "name": "Failure",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts:22:25:22:31:Failure",
+        "type_name": "Failure",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts",
+        "start_line": 25,
+        "start_column": 6,
+        "end_line": 25,
+        "end_column": 10
+      },
+      "type": "type",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts:1:1:46:0",
+      "name": "Shape",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts:25:6:25:10:Shape",
+        "type_name": "Shape",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts",
+        "start_line": 30,
+        "start_column": 10,
+        "end_line": 30,
+        "end_column": 16
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts:1:1:46:0",
+      "name": "getArea"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts",
+        "start_line": 30,
+        "start_column": 18,
+        "end_line": 30,
+        "end_column": 22
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts:30:17:39:1",
+      "name": "shape"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts",
+        "start_line": 30,
+        "start_column": 25,
+        "end_line": 30,
+        "end_column": 29
+      },
+      "type": "type",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts:30:17:39:1",
+      "name": "Shape",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts:30:25:30:29:Shape",
+        "type_name": "Shape",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts",
+        "start_line": 31,
+        "start_column": 11,
+        "end_line": 31,
+        "end_column": 20
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts:31:3:38:3",
+      "name": "shape.kind"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts",
+        "start_line": 31,
+        "start_column": 11,
+        "end_line": 31,
+        "end_column": 15
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts:31:3:38:3",
+      "name": "shape"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts",
+        "start_line": 31,
+        "start_column": 11,
+        "end_line": 31,
+        "end_column": 20
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts:31:3:38:3",
+      "name": "shape.kind"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts",
+        "start_line": 31,
+        "start_column": 11,
+        "end_line": 31,
+        "end_column": 15
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts:31:3:38:3",
+      "name": "shape"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts",
+        "start_line": 31,
+        "start_column": 11,
+        "end_line": 31,
+        "end_column": 15
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts:31:3:38:3",
+      "name": "shape"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts",
+        "start_line": 31,
+        "start_column": 17,
+        "end_line": 31,
+        "end_column": 20
+      },
+      "type": "member_access",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts:31:3:38:3",
+      "name": "kind",
+      "member_access": {
+        "access_type": "property",
+        "is_optional_chain": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts",
+        "start_line": 31,
+        "start_column": 17,
+        "end_line": 31,
+        "end_column": 20
+      },
+      "type": "member_access",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts:31:3:38:3",
+      "name": "kind",
+      "member_access": {
+        "access_type": "property",
+        "is_optional_chain": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts",
+        "start_line": 33,
+        "start_column": 7,
+        "end_line": 33,
+        "end_column": 41
+      },
+      "type": "return",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts:32:5:33:41",
+      "name": "return Math.PI * shape.radius ** 2;"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts",
+        "start_line": 33,
+        "start_column": 14,
+        "end_line": 33,
+        "end_column": 20
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts:32:5:33:41",
+      "name": "Math.PI"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts",
+        "start_line": 33,
+        "start_column": 14,
+        "end_line": 33,
+        "end_column": 17
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts:32:5:33:41",
+      "name": "Math"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts",
+        "start_line": 33,
+        "start_column": 14,
+        "end_line": 33,
+        "end_column": 20
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts:32:5:33:41",
+      "name": "Math.PI"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts",
+        "start_line": 33,
+        "start_column": 14,
+        "end_line": 33,
+        "end_column": 17
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts:32:5:33:41",
+      "name": "Math"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts",
+        "start_line": 33,
+        "start_column": 14,
+        "end_line": 33,
+        "end_column": 40
+      },
+      "type": "return",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts:32:5:33:41",
+      "name": "Math.PI * shape.radius ** 2"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts",
+        "start_line": 33,
+        "start_column": 14,
+        "end_line": 33,
+        "end_column": 17
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts:32:5:33:41",
+      "name": "Math"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts",
+        "start_line": 33,
+        "start_column": 19,
+        "end_line": 33,
+        "end_column": 20
+      },
+      "type": "member_access",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts:32:5:33:41",
+      "name": "PI",
+      "member_access": {
+        "access_type": "property",
+        "is_optional_chain": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts",
+        "start_line": 33,
+        "start_column": 19,
+        "end_line": 33,
+        "end_column": 20
+      },
+      "type": "member_access",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts:32:5:33:41",
+      "name": "PI",
+      "member_access": {
+        "access_type": "property",
+        "is_optional_chain": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts",
+        "start_line": 33,
+        "start_column": 24,
+        "end_line": 33,
+        "end_column": 35
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts:32:5:33:41",
+      "name": "shape.radius"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts",
+        "start_line": 33,
+        "start_column": 24,
+        "end_line": 33,
+        "end_column": 28
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts:32:5:33:41",
+      "name": "shape"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts",
+        "start_line": 33,
+        "start_column": 24,
+        "end_line": 33,
+        "end_column": 35
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts:32:5:33:41",
+      "name": "shape.radius"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts",
+        "start_line": 33,
+        "start_column": 24,
+        "end_line": 33,
+        "end_column": 28
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts:32:5:33:41",
+      "name": "shape"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts",
+        "start_line": 33,
+        "start_column": 24,
+        "end_line": 33,
+        "end_column": 28
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts:32:5:33:41",
+      "name": "shape"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts",
+        "start_line": 33,
+        "start_column": 30,
+        "end_line": 33,
+        "end_column": 35
+      },
+      "type": "member_access",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts:32:5:33:41",
+      "name": "radius",
+      "member_access": {
+        "access_type": "property",
+        "is_optional_chain": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts",
+        "start_line": 33,
+        "start_column": 30,
+        "end_line": 33,
+        "end_column": 35
+      },
+      "type": "member_access",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts:32:5:33:41",
+      "name": "radius",
+      "member_access": {
+        "access_type": "property",
+        "is_optional_chain": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts",
+        "start_line": 35,
+        "start_column": 7,
+        "end_line": 35,
+        "end_column": 29
+      },
+      "type": "return",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts:34:5:35:29",
+      "name": "return shape.size ** 2;"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts",
+        "start_line": 35,
+        "start_column": 14,
+        "end_line": 35,
+        "end_column": 23
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts:34:5:35:29",
+      "name": "shape.size"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts",
+        "start_line": 35,
+        "start_column": 14,
+        "end_line": 35,
+        "end_column": 18
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts:34:5:35:29",
+      "name": "shape"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts",
+        "start_line": 35,
+        "start_column": 14,
+        "end_line": 35,
+        "end_column": 23
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts:34:5:35:29",
+      "name": "shape.size"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts",
+        "start_line": 35,
+        "start_column": 14,
+        "end_line": 35,
+        "end_column": 18
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts:34:5:35:29",
+      "name": "shape"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts",
+        "start_line": 35,
+        "start_column": 14,
+        "end_line": 35,
+        "end_column": 28
+      },
+      "type": "return",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts:34:5:35:29",
+      "name": "shape.size ** 2"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts",
+        "start_line": 35,
+        "start_column": 14,
+        "end_line": 35,
+        "end_column": 18
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts:34:5:35:29",
+      "name": "shape"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts",
+        "start_line": 35,
+        "start_column": 20,
+        "end_line": 35,
+        "end_column": 23
+      },
+      "type": "member_access",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts:34:5:35:29",
+      "name": "size",
+      "member_access": {
+        "access_type": "property",
+        "is_optional_chain": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts",
+        "start_line": 35,
+        "start_column": 20,
+        "end_line": 35,
+        "end_column": 23
+      },
+      "type": "member_access",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts:34:5:35:29",
+      "name": "size",
+      "member_access": {
+        "access_type": "property",
+        "is_optional_chain": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts",
+        "start_line": 37,
+        "start_column": 7,
+        "end_line": 37,
+        "end_column": 40
+      },
+      "type": "return",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts:36:5:37:40",
+      "name": "return shape.width * shape.height;"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts",
+        "start_line": 37,
+        "start_column": 14,
+        "end_line": 37,
+        "end_column": 24
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts:36:5:37:40",
+      "name": "shape.width"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts",
+        "start_line": 37,
+        "start_column": 14,
+        "end_line": 37,
+        "end_column": 18
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts:36:5:37:40",
+      "name": "shape"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts",
+        "start_line": 37,
+        "start_column": 14,
+        "end_line": 37,
+        "end_column": 24
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts:36:5:37:40",
+      "name": "shape.width"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts",
+        "start_line": 37,
+        "start_column": 14,
+        "end_line": 37,
+        "end_column": 18
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts:36:5:37:40",
+      "name": "shape"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts",
+        "start_line": 37,
+        "start_column": 14,
+        "end_line": 37,
+        "end_column": 39
+      },
+      "type": "return",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts:36:5:37:40",
+      "name": "shape.width * shape.height"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts",
+        "start_line": 37,
+        "start_column": 14,
+        "end_line": 37,
+        "end_column": 18
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts:36:5:37:40",
+      "name": "shape"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts",
+        "start_line": 37,
+        "start_column": 20,
+        "end_line": 37,
+        "end_column": 24
+      },
+      "type": "member_access",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts:36:5:37:40",
+      "name": "width",
+      "member_access": {
+        "access_type": "property",
+        "is_optional_chain": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts",
+        "start_line": 37,
+        "start_column": 20,
+        "end_line": 37,
+        "end_column": 24
+      },
+      "type": "member_access",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts:36:5:37:40",
+      "name": "width",
+      "member_access": {
+        "access_type": "property",
+        "is_optional_chain": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts",
+        "start_line": 37,
+        "start_column": 28,
+        "end_line": 37,
+        "end_column": 39
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts:36:5:37:40",
+      "name": "shape.height"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts",
+        "start_line": 37,
+        "start_column": 28,
+        "end_line": 37,
+        "end_column": 32
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts:36:5:37:40",
+      "name": "shape"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts",
+        "start_line": 37,
+        "start_column": 28,
+        "end_line": 37,
+        "end_column": 39
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts:36:5:37:40",
+      "name": "shape.height"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts",
+        "start_line": 37,
+        "start_column": 28,
+        "end_line": 37,
+        "end_column": 32
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts:36:5:37:40",
+      "name": "shape"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts",
+        "start_line": 37,
+        "start_column": 28,
+        "end_line": 37,
+        "end_column": 32
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts:36:5:37:40",
+      "name": "shape"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts",
+        "start_line": 37,
+        "start_column": 34,
+        "end_line": 37,
+        "end_column": 39
+      },
+      "type": "member_access",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts:36:5:37:40",
+      "name": "height",
+      "member_access": {
+        "access_type": "property",
+        "is_optional_chain": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts",
+        "start_line": 37,
+        "start_column": 34,
+        "end_line": 37,
+        "end_column": 39
+      },
+      "type": "member_access",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts:36:5:37:40",
+      "name": "height",
+      "member_access": {
+        "access_type": "property",
+        "is_optional_chain": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts",
+        "start_line": 42,
+        "start_column": 6,
+        "end_line": 42,
+        "end_column": 10
+      },
+      "type": "type",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts:1:1:46:0",
+      "name": "Maybe",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts:42:6:42:10:Maybe",
+        "type_name": "Maybe",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts",
+        "start_line": 42,
+        "start_column": 12,
+        "end_line": 42,
+        "end_column": 12
+      },
+      "type": "type",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts:1:1:46:0",
+      "name": "T",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts:42:12:42:12:T",
+        "type_name": "T",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts",
+        "start_line": 42,
+        "start_column": 17,
+        "end_line": 42,
+        "end_column": 17
+      },
+      "type": "type",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts:1:1:46:0",
+      "name": "T",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts:42:17:42:17:T",
+        "type_name": "T",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts",
+        "start_line": 43,
+        "start_column": 6,
+        "end_line": 43,
+        "end_column": 13
+      },
+      "type": "type",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts:1:1:46:0",
+      "name": "Optional",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts:43:6:43:13:Optional",
+        "type_name": "Optional",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts",
+        "start_line": 43,
+        "start_column": 15,
+        "end_line": 43,
+        "end_column": 15
+      },
+      "type": "type",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts:1:1:46:0",
+      "name": "T",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts:43:15:43:15:T",
+        "type_name": "T",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts",
+        "start_line": 43,
+        "start_column": 20,
+        "end_line": 43,
+        "end_column": 20
+      },
+      "type": "type",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts:1:1:46:0",
+      "name": "T",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts:43:20:43:20:T",
+        "type_name": "T",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts",
+        "start_line": 45,
+        "start_column": 10,
+        "end_line": 45,
+        "end_column": 23
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts:1:1:46:0",
+      "name": "StringOrNumber"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts",
+        "start_line": 45,
+        "start_column": 26,
+        "end_line": 45,
+        "end_column": 31
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts:1:1:46:0",
+      "name": "Status"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts",
+        "start_line": 45,
+        "start_column": 34,
+        "end_line": 45,
+        "end_column": 35
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts:1:1:46:0",
+      "name": "ID"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts",
+        "start_line": 45,
+        "start_column": 38,
+        "end_line": 45,
+        "end_column": 43
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts:1:1:46:0",
+      "name": "Result"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts",
+        "start_line": 45,
+        "start_column": 46,
+        "end_line": 45,
+        "end_column": 50
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts:1:1:46:0",
+      "name": "Shape"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts",
+        "start_line": 45,
+        "start_column": 53,
+        "end_line": 45,
+        "end_column": 57
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts:1:1:46:0",
+      "name": "Maybe"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts",
+        "start_line": 45,
+        "start_column": 60,
+        "end_line": 45,
+        "end_column": 67
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts:1:1:46:0",
+      "name": "Optional"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts",
+        "start_line": 45,
+        "start_column": 70,
+        "end_line": 45,
+        "end_column": 76
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/types/unions.ts:1:1:46:0",
+      "name": "getArea"
+    }
+  ]
+}

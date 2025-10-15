@@ -1,0 +1,1848 @@
+{
+  "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs",
+  "language": "rust",
+  "root_scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs:1:1:51:0",
+  "scopes": {
+    "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs:1:1:51:0": {
+      "id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs:1:1:51:0",
+      "parent_id": null,
+      "name": null,
+      "type": "module",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs",
+        "start_line": 1,
+        "start_column": 1,
+        "end_line": 51,
+        "end_column": 0
+      },
+      "child_ids": [
+        "class:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs:4:13:8:1",
+        "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs:10:11:26:1",
+        "class:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs:28:14:31:1",
+        "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs:33:12:41:1",
+        "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs:43:12:50:1"
+      ]
+    },
+    "class:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs:4:13:8:1": {
+      "id": "class:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs:4:13:8:1",
+      "parent_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs:1:1:51:0",
+      "name": "{\n    name: String,\n    email: String,\n    age: u32,\n}",
+      "type": "class",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs",
+        "start_line": 4,
+        "start_column": 13,
+        "end_line": 8,
+        "end_column": 1
+      },
+      "child_ids": []
+    },
+    "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs:10:11:26:1": {
+      "id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs:10:11:26:1",
+      "parent_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs:1:1:51:0",
+      "name": "{\n    fn new(name: String, email: String, age: u32) -> Self {\n        User { name, email, age }\n    }\n\n    fn greet(&self) -> String {\n        format!(\"Hello, I'm {}\", self.name)\n    }\n\n    fn get_age(&self) -> u32 {\n        self.age\n    }\n\n    fn set_age(&mut self, age: u32) {\n        self.age = age;\n    }\n}",
+      "type": "block",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs",
+        "start_line": 10,
+        "start_column": 11,
+        "end_line": 26,
+        "end_column": 1
+      },
+      "child_ids": [
+        "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs:11:11:13:5",
+        "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs:15:13:17:5",
+        "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs:19:15:21:5",
+        "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs:23:15:25:5"
+      ]
+    },
+    "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs:11:11:13:5": {
+      "id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs:11:11:13:5",
+      "parent_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs:10:11:26:1",
+      "name": "fn new(name: String, email: String, age: u32) -> Self {\n        User { name, email, age }\n    }",
+      "type": "function",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs",
+        "start_line": 11,
+        "start_column": 11,
+        "end_line": 13,
+        "end_column": 5
+      },
+      "child_ids": []
+    },
+    "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs:15:13:17:5": {
+      "id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs:15:13:17:5",
+      "parent_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs:10:11:26:1",
+      "name": "fn greet(&self) -> String {\n        format!(\"Hello, I'm {}\", self.name)\n    }",
+      "type": "function",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs",
+        "start_line": 15,
+        "start_column": 13,
+        "end_line": 17,
+        "end_column": 5
+      },
+      "child_ids": []
+    },
+    "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs:19:15:21:5": {
+      "id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs:19:15:21:5",
+      "parent_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs:10:11:26:1",
+      "name": "fn get_age(&self) -> u32 {\n        self.age\n    }",
+      "type": "function",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs",
+        "start_line": 19,
+        "start_column": 15,
+        "end_line": 21,
+        "end_column": 5
+      },
+      "child_ids": []
+    },
+    "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs:23:15:25:5": {
+      "id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs:23:15:25:5",
+      "parent_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs:10:11:26:1",
+      "name": "fn set_age(&mut self, age: u32) {\n        self.age = age;\n    }",
+      "type": "function",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs",
+        "start_line": 23,
+        "start_column": 15,
+        "end_line": 25,
+        "end_column": 5
+      },
+      "child_ids": []
+    },
+    "class:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs:28:14:31:1": {
+      "id": "class:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs:28:14:31:1",
+      "parent_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs:1:1:51:0",
+      "name": "{\n    x: f64,\n    y: f64,\n}",
+      "type": "class",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs",
+        "start_line": 28,
+        "start_column": 14,
+        "end_line": 31,
+        "end_column": 1
+      },
+      "child_ids": []
+    },
+    "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs:33:12:41:1": {
+      "id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs:33:12:41:1",
+      "parent_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs:1:1:51:0",
+      "name": "{\n    fn new(x: f64, y: f64) -> Self {\n        Point { x, y }\n    }\n\n    fn distance_from_origin(&self) -> f64 {\n        (self.x * self.x + self.y * self.y).sqrt()\n    }\n}",
+      "type": "block",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs",
+        "start_line": 33,
+        "start_column": 12,
+        "end_line": 41,
+        "end_column": 1
+      },
+      "child_ids": [
+        "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs:34:11:36:5",
+        "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs:38:28:40:5"
+      ]
+    },
+    "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs:34:11:36:5": {
+      "id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs:34:11:36:5",
+      "parent_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs:33:12:41:1",
+      "name": "fn new(x: f64, y: f64) -> Self {\n        Point { x, y }\n    }",
+      "type": "function",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs",
+        "start_line": 34,
+        "start_column": 11,
+        "end_line": 36,
+        "end_column": 5
+      },
+      "child_ids": []
+    },
+    "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs:38:28:40:5": {
+      "id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs:38:28:40:5",
+      "parent_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs:33:12:41:1",
+      "name": "fn distance_from_origin(&self) -> f64 {\n        (self.x * self.x + self.y * self.y).sqrt()\n    }",
+      "type": "function",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs",
+        "start_line": 38,
+        "start_column": 28,
+        "end_line": 40,
+        "end_column": 5
+      },
+      "child_ids": []
+    },
+    "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs:43:12:50:1": {
+      "id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs:43:12:50:1",
+      "parent_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs:1:1:51:0",
+      "name": "pub fn main() {\n    let user = User::new(\n        String::from(\"Alice\"),\n        String::from(\"alice@example.com\"),\n        30,\n    );\n    println!(\"{}\", user.greet());\n}",
+      "type": "function",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs",
+        "start_line": 43,
+        "start_column": 12,
+        "end_line": 50,
+        "end_column": 1
+      },
+      "child_ids": []
+    }
+  },
+  "functions": {
+    "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs:43:1:50:1:main": {
+      "kind": "function",
+      "symbol_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs:43:1:50:1:main",
+      "name": "main",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs",
+        "start_line": 43,
+        "start_column": 8,
+        "end_line": 43,
+        "end_column": 11
+      },
+      "defining_scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs:1:1:51:0",
+      "is_exported": true,
+      "signature": {
+        "parameters": []
+      },
+      "body_scope_id": "mock:function:scope"
+    }
+  },
+  "classes": {
+    "class:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs:4:1:8:1:User": {
+      "kind": "class",
+      "symbol_id": "class:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs:4:1:8:1:User",
+      "name": "User",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs",
+        "start_line": 4,
+        "start_column": 8,
+        "end_line": 4,
+        "end_column": 11
+      },
+      "defining_scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs:1:1:51:0",
+      "extends": [],
+      "is_exported": false,
+      "methods": [
+        {
+          "kind": "method",
+          "defining_scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs:10:11:26:1",
+          "symbol_id": "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs:11:5:13:5:new",
+          "name": "new",
+          "location": {
+            "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs",
+            "start_line": 11,
+            "start_column": 8,
+            "end_line": 11,
+            "end_column": 10
+          },
+          "return_type": "Self",
+          "static": true,
+          "parameters": [
+            {
+              "kind": "parameter",
+              "defining_scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs:11:11:13:5",
+              "symbol_id": "parameter:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs:11:12:11:15:name",
+              "name": "name",
+              "location": {
+                "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs",
+                "start_line": 11,
+                "start_column": 12,
+                "end_line": 11,
+                "end_column": 15
+              },
+              "type": "String",
+              "optional": false
+            },
+            {
+              "kind": "parameter",
+              "defining_scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs:11:11:13:5",
+              "symbol_id": "parameter:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs:11:26:11:30:email",
+              "name": "email",
+              "location": {
+                "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs",
+                "start_line": 11,
+                "start_column": 26,
+                "end_line": 11,
+                "end_column": 30
+              },
+              "type": "String",
+              "optional": false
+            },
+            {
+              "kind": "parameter",
+              "defining_scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs:11:11:13:5",
+              "symbol_id": "parameter:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs:11:41:11:43:age",
+              "name": "age",
+              "location": {
+                "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs",
+                "start_line": 11,
+                "start_column": 41,
+                "end_line": 11,
+                "end_column": 43
+              },
+              "type": "u32",
+              "optional": false
+            }
+          ],
+          "body_scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs:11:11:13:5"
+        },
+        {
+          "kind": "method",
+          "defining_scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs:10:11:26:1",
+          "symbol_id": "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs:15:5:17:5:greet",
+          "name": "greet",
+          "location": {
+            "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs",
+            "start_line": 15,
+            "start_column": 8,
+            "end_line": 15,
+            "end_column": 12
+          },
+          "return_type": "String",
+          "parameters": [
+            {
+              "kind": "parameter",
+              "defining_scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs:15:13:17:5",
+              "symbol_id": "parameter:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs:15:14:15:18:&self",
+              "name": "self",
+              "location": {
+                "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs",
+                "start_line": 15,
+                "start_column": 14,
+                "end_line": 15,
+                "end_column": 18
+              },
+              "type": "User",
+              "optional": false
+            }
+          ],
+          "body_scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs:15:13:17:5"
+        },
+        {
+          "kind": "method",
+          "defining_scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs:10:11:26:1",
+          "symbol_id": "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs:19:5:21:5:get_age",
+          "name": "get_age",
+          "location": {
+            "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs",
+            "start_line": 19,
+            "start_column": 8,
+            "end_line": 19,
+            "end_column": 14
+          },
+          "return_type": "u32",
+          "parameters": [
+            {
+              "kind": "parameter",
+              "defining_scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs:19:15:21:5",
+              "symbol_id": "parameter:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs:19:16:19:20:&self",
+              "name": "self",
+              "location": {
+                "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs",
+                "start_line": 19,
+                "start_column": 16,
+                "end_line": 19,
+                "end_column": 20
+              },
+              "type": "User",
+              "optional": false
+            }
+          ],
+          "body_scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs:19:15:21:5"
+        },
+        {
+          "kind": "method",
+          "defining_scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs:10:11:26:1",
+          "symbol_id": "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs:23:5:25:5:set_age",
+          "name": "set_age",
+          "location": {
+            "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs",
+            "start_line": 23,
+            "start_column": 8,
+            "end_line": 23,
+            "end_column": 14
+          },
+          "parameters": [
+            {
+              "kind": "parameter",
+              "defining_scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs:23:15:25:5",
+              "symbol_id": "parameter:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs:23:16:23:24:&mut self",
+              "name": "self",
+              "location": {
+                "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs",
+                "start_line": 23,
+                "start_column": 16,
+                "end_line": 23,
+                "end_column": 24
+              },
+              "type": "User",
+              "optional": false
+            },
+            {
+              "kind": "parameter",
+              "defining_scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs:23:15:25:5",
+              "symbol_id": "parameter:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs:23:27:23:29:age",
+              "name": "age",
+              "location": {
+                "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs",
+                "start_line": 23,
+                "start_column": 27,
+                "end_line": 23,
+                "end_column": 29
+              },
+              "type": "u32",
+              "optional": false
+            }
+          ],
+          "body_scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs:23:15:25:5"
+        }
+      ],
+      "properties": [],
+      "decorators": []
+    },
+    "class:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs:28:1:31:1:Point": {
+      "kind": "class",
+      "symbol_id": "class:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs:28:1:31:1:Point",
+      "name": "Point",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs",
+        "start_line": 28,
+        "start_column": 8,
+        "end_line": 28,
+        "end_column": 12
+      },
+      "defining_scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs:1:1:51:0",
+      "extends": [],
+      "is_exported": false,
+      "methods": [
+        {
+          "kind": "method",
+          "defining_scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs:33:12:41:1",
+          "symbol_id": "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs:34:5:36:5:new",
+          "name": "new",
+          "location": {
+            "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs",
+            "start_line": 34,
+            "start_column": 8,
+            "end_line": 34,
+            "end_column": 10
+          },
+          "return_type": "Self",
+          "static": true,
+          "parameters": [
+            {
+              "kind": "parameter",
+              "defining_scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs:34:11:36:5",
+              "symbol_id": "parameter:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs:34:12:34:12:x",
+              "name": "x",
+              "location": {
+                "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs",
+                "start_line": 34,
+                "start_column": 12,
+                "end_line": 34,
+                "end_column": 12
+              },
+              "type": "f64",
+              "optional": false
+            },
+            {
+              "kind": "parameter",
+              "defining_scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs:34:11:36:5",
+              "symbol_id": "parameter:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs:34:20:34:20:y",
+              "name": "y",
+              "location": {
+                "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs",
+                "start_line": 34,
+                "start_column": 20,
+                "end_line": 34,
+                "end_column": 20
+              },
+              "type": "f64",
+              "optional": false
+            }
+          ],
+          "body_scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs:34:11:36:5"
+        },
+        {
+          "kind": "method",
+          "defining_scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs:33:12:41:1",
+          "symbol_id": "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs:38:5:40:5:distance_from_origin",
+          "name": "distance_from_origin",
+          "location": {
+            "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs",
+            "start_line": 38,
+            "start_column": 8,
+            "end_line": 38,
+            "end_column": 27
+          },
+          "return_type": "f64",
+          "parameters": [
+            {
+              "kind": "parameter",
+              "defining_scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs:38:28:40:5",
+              "symbol_id": "parameter:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs:38:29:38:33:&self",
+              "name": "self",
+              "location": {
+                "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs",
+                "start_line": 38,
+                "start_column": 29,
+                "end_line": 38,
+                "end_column": 33
+              },
+              "type": "Point",
+              "optional": false
+            }
+          ],
+          "body_scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs:38:28:40:5"
+        }
+      ],
+      "properties": [],
+      "decorators": []
+    }
+  },
+  "variables": {
+    "variable:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs:44:9:44:12:user": {
+      "kind": "variable",
+      "symbol_id": "variable:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs:44:9:44:12:user",
+      "name": "user",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs",
+        "start_line": 44,
+        "start_column": 9,
+        "end_line": 44,
+        "end_column": 12
+      },
+      "defining_scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs:43:12:50:1",
+      "is_exported": false
+    }
+  },
+  "interfaces": {},
+  "enums": {},
+  "namespaces": {},
+  "types": {},
+  "imported_symbols": {},
+  "references": [
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs",
+        "start_line": 4,
+        "start_column": 8,
+        "end_line": 4,
+        "end_column": 11
+      },
+      "type": "type",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs:1:1:51:0",
+      "name": "User",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs:4:8:4:11:User",
+        "type_name": "User",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs",
+        "start_line": 5,
+        "start_column": 11,
+        "end_line": 5,
+        "end_column": 16
+      },
+      "type": "type",
+      "scope_id": "class:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs:4:13:8:1",
+      "name": "String",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs:5:11:5:16:String",
+        "type_name": "String",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs",
+        "start_line": 6,
+        "start_column": 12,
+        "end_line": 6,
+        "end_column": 17
+      },
+      "type": "type",
+      "scope_id": "class:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs:4:13:8:1",
+      "name": "String",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs:6:12:6:17:String",
+        "type_name": "String",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs",
+        "start_line": 10,
+        "start_column": 6,
+        "end_line": 10,
+        "end_column": 9
+      },
+      "type": "type",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs:1:1:51:0",
+      "name": "User",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs:10:6:10:9:User",
+        "type_name": "User",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs",
+        "start_line": 11,
+        "start_column": 8,
+        "end_line": 11,
+        "end_column": 10
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs:10:11:26:1",
+      "name": "new"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs",
+        "start_line": 11,
+        "start_column": 12,
+        "end_line": 11,
+        "end_column": 15
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs:11:11:13:5",
+      "name": "name"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs",
+        "start_line": 11,
+        "start_column": 18,
+        "end_line": 11,
+        "end_column": 23
+      },
+      "type": "type",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs:11:11:13:5",
+      "name": "String",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs:11:18:11:23:String",
+        "type_name": "String",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs",
+        "start_line": 11,
+        "start_column": 26,
+        "end_line": 11,
+        "end_column": 30
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs:11:11:13:5",
+      "name": "email"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs",
+        "start_line": 11,
+        "start_column": 33,
+        "end_line": 11,
+        "end_column": 38
+      },
+      "type": "type",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs:11:11:13:5",
+      "name": "String",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs:11:33:11:38:String",
+        "type_name": "String",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs",
+        "start_line": 11,
+        "start_column": 41,
+        "end_line": 11,
+        "end_column": 43
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs:11:11:13:5",
+      "name": "age"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs",
+        "start_line": 11,
+        "start_column": 54,
+        "end_line": 11,
+        "end_column": 57
+      },
+      "type": "type",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs:11:11:13:5",
+      "name": "Self",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs:11:54:11:57:Self",
+        "type_name": "Self",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs",
+        "start_line": 12,
+        "start_column": 9,
+        "end_line": 12,
+        "end_column": 12
+      },
+      "type": "construct",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs:11:11:13:5",
+      "name": "User",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs:12:9:12:12:User",
+        "type_name": "User",
+        "certainty": "declared",
+        "is_nullable": false
+      },
+      "call_type": "constructor"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs",
+        "start_line": 12,
+        "start_column": 9,
+        "end_line": 12,
+        "end_column": 12
+      },
+      "type": "type",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs:11:11:13:5",
+      "name": "User",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs:12:9:12:12:User",
+        "type_name": "User",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs",
+        "start_line": 12,
+        "start_column": 16,
+        "end_line": 12,
+        "end_column": 19
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs:11:11:13:5",
+      "name": "name"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs",
+        "start_line": 12,
+        "start_column": 22,
+        "end_line": 12,
+        "end_column": 26
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs:11:11:13:5",
+      "name": "email"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs",
+        "start_line": 12,
+        "start_column": 29,
+        "end_line": 12,
+        "end_column": 31
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs:11:11:13:5",
+      "name": "age"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs",
+        "start_line": 15,
+        "start_column": 8,
+        "end_line": 15,
+        "end_column": 12
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs:10:11:26:1",
+      "name": "greet"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs",
+        "start_line": 15,
+        "start_column": 15,
+        "end_line": 15,
+        "end_column": 18
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs:15:13:17:5",
+      "name": "self"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs",
+        "start_line": 15,
+        "start_column": 24,
+        "end_line": 15,
+        "end_column": 29
+      },
+      "type": "type",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs:15:13:17:5",
+      "name": "String",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs:15:24:15:29:String",
+        "type_name": "String",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs",
+        "start_line": 16,
+        "start_column": 9,
+        "end_line": 16,
+        "end_column": 43
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs:15:13:17:5",
+      "name": "format!(\"Hello, I'm {}\", self.name)"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs",
+        "start_line": 16,
+        "start_column": 9,
+        "end_line": 16,
+        "end_column": 14
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs:15:13:17:5",
+      "name": "format"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs",
+        "start_line": 16,
+        "start_column": 9,
+        "end_line": 16,
+        "end_column": 43
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs:15:13:17:5",
+      "name": "format!(\"Hello, I'm {}\", self.name)"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs",
+        "start_line": 16,
+        "start_column": 9,
+        "end_line": 16,
+        "end_column": 14
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs:15:13:17:5",
+      "name": "format"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs",
+        "start_line": 16,
+        "start_column": 9,
+        "end_line": 16,
+        "end_column": 14
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs:15:13:17:5",
+      "name": "format"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs",
+        "start_line": 16,
+        "start_column": 34,
+        "end_line": 16,
+        "end_column": 37
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs:15:13:17:5",
+      "name": "self"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs",
+        "start_line": 16,
+        "start_column": 39,
+        "end_line": 16,
+        "end_column": 42
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs:15:13:17:5",
+      "name": "name"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs",
+        "start_line": 19,
+        "start_column": 8,
+        "end_line": 19,
+        "end_column": 14
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs:10:11:26:1",
+      "name": "get_age"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs",
+        "start_line": 19,
+        "start_column": 17,
+        "end_line": 19,
+        "end_column": 20
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs:19:15:21:5",
+      "name": "self"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs",
+        "start_line": 20,
+        "start_column": 9,
+        "end_line": 20,
+        "end_column": 12
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs:19:15:21:5",
+      "name": "self"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs",
+        "start_line": 20,
+        "start_column": 9,
+        "end_line": 20,
+        "end_column": 12
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs:19:15:21:5",
+      "name": "self"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs",
+        "start_line": 20,
+        "start_column": 14,
+        "end_line": 20,
+        "end_column": 16
+      },
+      "type": "member_access",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs:19:15:21:5",
+      "name": "age",
+      "member_access": {
+        "access_type": "property",
+        "is_optional_chain": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs",
+        "start_line": 23,
+        "start_column": 8,
+        "end_line": 23,
+        "end_column": 14
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs:10:11:26:1",
+      "name": "set_age"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs",
+        "start_line": 23,
+        "start_column": 21,
+        "end_line": 23,
+        "end_column": 24
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs:23:15:25:5",
+      "name": "self"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs",
+        "start_line": 23,
+        "start_column": 27,
+        "end_line": 23,
+        "end_column": 29
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs:23:15:25:5",
+      "name": "age"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs",
+        "start_line": 24,
+        "start_column": 9,
+        "end_line": 24,
+        "end_column": 12
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs:23:15:25:5",
+      "name": "self"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs",
+        "start_line": 24,
+        "start_column": 9,
+        "end_line": 24,
+        "end_column": 12
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs:23:15:25:5",
+      "name": "self"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs",
+        "start_line": 24,
+        "start_column": 14,
+        "end_line": 24,
+        "end_column": 16
+      },
+      "type": "member_access",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs:23:15:25:5",
+      "name": "age",
+      "member_access": {
+        "access_type": "property",
+        "is_optional_chain": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs",
+        "start_line": 24,
+        "start_column": 20,
+        "end_line": 24,
+        "end_column": 22
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs:23:15:25:5",
+      "name": "age"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs",
+        "start_line": 28,
+        "start_column": 8,
+        "end_line": 28,
+        "end_column": 12
+      },
+      "type": "type",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs:1:1:51:0",
+      "name": "Point",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs:28:8:28:12:Point",
+        "type_name": "Point",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs",
+        "start_line": 33,
+        "start_column": 6,
+        "end_line": 33,
+        "end_column": 10
+      },
+      "type": "type",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs:1:1:51:0",
+      "name": "Point",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs:33:6:33:10:Point",
+        "type_name": "Point",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs",
+        "start_line": 34,
+        "start_column": 8,
+        "end_line": 34,
+        "end_column": 10
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs:33:12:41:1",
+      "name": "new"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs",
+        "start_line": 34,
+        "start_column": 12,
+        "end_line": 34,
+        "end_column": 12
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs:34:11:36:5",
+      "name": "x"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs",
+        "start_line": 34,
+        "start_column": 20,
+        "end_line": 34,
+        "end_column": 20
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs:34:11:36:5",
+      "name": "y"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs",
+        "start_line": 34,
+        "start_column": 31,
+        "end_line": 34,
+        "end_column": 34
+      },
+      "type": "type",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs:34:11:36:5",
+      "name": "Self",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs:34:31:34:34:Self",
+        "type_name": "Self",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs",
+        "start_line": 35,
+        "start_column": 9,
+        "end_line": 35,
+        "end_column": 13
+      },
+      "type": "construct",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs:34:11:36:5",
+      "name": "Point",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs:35:9:35:13:Point",
+        "type_name": "Point",
+        "certainty": "declared",
+        "is_nullable": false
+      },
+      "call_type": "constructor"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs",
+        "start_line": 35,
+        "start_column": 9,
+        "end_line": 35,
+        "end_column": 13
+      },
+      "type": "type",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs:34:11:36:5",
+      "name": "Point",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs:35:9:35:13:Point",
+        "type_name": "Point",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs",
+        "start_line": 35,
+        "start_column": 17,
+        "end_line": 35,
+        "end_column": 17
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs:34:11:36:5",
+      "name": "x"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs",
+        "start_line": 35,
+        "start_column": 20,
+        "end_line": 35,
+        "end_column": 20
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs:34:11:36:5",
+      "name": "y"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs",
+        "start_line": 38,
+        "start_column": 8,
+        "end_line": 38,
+        "end_column": 27
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs:33:12:41:1",
+      "name": "distance_from_origin"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs",
+        "start_line": 38,
+        "start_column": 30,
+        "end_line": 38,
+        "end_column": 33
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs:38:28:40:5",
+      "name": "self"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs",
+        "start_line": 39,
+        "start_column": 9,
+        "end_line": 39,
+        "end_column": 43
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs:38:28:40:5",
+      "name": "(self.x * self.x + self.y * self.y)"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs",
+        "start_line": 39,
+        "start_column": 9,
+        "end_line": 39,
+        "end_column": 50
+      },
+      "type": "call",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs:38:28:40:5",
+      "name": "sqrt",
+      "context": {
+        "receiver_location": {
+          "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs",
+          "start_line": 39,
+          "start_column": 9,
+          "end_line": 39,
+          "end_column": 43
+        },
+        "property_chain": [
+          "sqrt"
+        ]
+      },
+      "call_type": "method",
+      "member_access": {
+        "access_type": "method",
+        "is_optional_chain": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs",
+        "start_line": 39,
+        "start_column": 9,
+        "end_line": 39,
+        "end_column": 43
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs:38:28:40:5",
+      "name": "(self.x * self.x + self.y * self.y)"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs",
+        "start_line": 39,
+        "start_column": 9,
+        "end_line": 39,
+        "end_column": 43
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs:38:28:40:5",
+      "name": "(self.x * self.x + self.y * self.y)"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs",
+        "start_line": 39,
+        "start_column": 10,
+        "end_line": 39,
+        "end_column": 13
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs:38:28:40:5",
+      "name": "self"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs",
+        "start_line": 39,
+        "start_column": 10,
+        "end_line": 39,
+        "end_column": 13
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs:38:28:40:5",
+      "name": "self"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs",
+        "start_line": 39,
+        "start_column": 15,
+        "end_line": 39,
+        "end_column": 15
+      },
+      "type": "member_access",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs:38:28:40:5",
+      "name": "x",
+      "member_access": {
+        "access_type": "property",
+        "is_optional_chain": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs",
+        "start_line": 39,
+        "start_column": 19,
+        "end_line": 39,
+        "end_column": 22
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs:38:28:40:5",
+      "name": "self"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs",
+        "start_line": 39,
+        "start_column": 19,
+        "end_line": 39,
+        "end_column": 22
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs:38:28:40:5",
+      "name": "self"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs",
+        "start_line": 39,
+        "start_column": 24,
+        "end_line": 39,
+        "end_column": 24
+      },
+      "type": "member_access",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs:38:28:40:5",
+      "name": "x",
+      "member_access": {
+        "access_type": "property",
+        "is_optional_chain": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs",
+        "start_line": 39,
+        "start_column": 28,
+        "end_line": 39,
+        "end_column": 31
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs:38:28:40:5",
+      "name": "self"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs",
+        "start_line": 39,
+        "start_column": 28,
+        "end_line": 39,
+        "end_column": 31
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs:38:28:40:5",
+      "name": "self"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs",
+        "start_line": 39,
+        "start_column": 33,
+        "end_line": 39,
+        "end_column": 33
+      },
+      "type": "member_access",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs:38:28:40:5",
+      "name": "y",
+      "member_access": {
+        "access_type": "property",
+        "is_optional_chain": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs",
+        "start_line": 39,
+        "start_column": 37,
+        "end_line": 39,
+        "end_column": 40
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs:38:28:40:5",
+      "name": "self"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs",
+        "start_line": 39,
+        "start_column": 37,
+        "end_line": 39,
+        "end_column": 40
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs:38:28:40:5",
+      "name": "self"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs",
+        "start_line": 39,
+        "start_column": 42,
+        "end_line": 39,
+        "end_column": 42
+      },
+      "type": "member_access",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs:38:28:40:5",
+      "name": "y",
+      "member_access": {
+        "access_type": "property",
+        "is_optional_chain": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs",
+        "start_line": 39,
+        "start_column": 45,
+        "end_line": 39,
+        "end_column": 48
+      },
+      "type": "call",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs:38:28:40:5",
+      "name": "sqrt",
+      "context": {
+        "receiver_location": {
+          "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs",
+          "start_line": 39,
+          "start_column": 9,
+          "end_line": 39,
+          "end_column": 43
+        }
+      },
+      "call_type": "method",
+      "member_access": {
+        "access_type": "method",
+        "is_optional_chain": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs",
+        "start_line": 39,
+        "start_column": 45,
+        "end_line": 39,
+        "end_column": 48
+      },
+      "type": "call",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs:38:28:40:5",
+      "name": "sqrt",
+      "context": {
+        "receiver_location": {
+          "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs",
+          "start_line": 39,
+          "start_column": 9,
+          "end_line": 39,
+          "end_column": 43
+        }
+      },
+      "call_type": "method",
+      "member_access": {
+        "access_type": "method",
+        "is_optional_chain": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs",
+        "start_line": 39,
+        "start_column": 45,
+        "end_line": 39,
+        "end_column": 48
+      },
+      "type": "member_access",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs:38:28:40:5",
+      "name": "sqrt",
+      "member_access": {
+        "access_type": "property",
+        "is_optional_chain": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs",
+        "start_line": 43,
+        "start_column": 8,
+        "end_line": 43,
+        "end_column": 11
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs:1:1:51:0",
+      "name": "main"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs",
+        "start_line": 44,
+        "start_column": 9,
+        "end_line": 44,
+        "end_column": 12
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs:43:12:50:1",
+      "name": "user"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs",
+        "start_line": 44,
+        "start_column": 16,
+        "end_line": 44,
+        "end_column": 19
+      },
+      "type": "type",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs:43:12:50:1",
+      "name": "User"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs",
+        "start_line": 44,
+        "start_column": 16,
+        "end_line": 48,
+        "end_column": 5
+      },
+      "type": "call",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs:43:12:50:1",
+      "name": "User::new(\n        String::from(\"Alice\"),\n        String::from(\"alice@example.com\"),\n        30,\n    )",
+      "call_type": "function"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs",
+        "start_line": 44,
+        "start_column": 16,
+        "end_line": 44,
+        "end_column": 19
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs:43:12:50:1",
+      "name": "User"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs",
+        "start_line": 44,
+        "start_column": 16,
+        "end_line": 44,
+        "end_column": 19
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs:43:12:50:1",
+      "name": "User"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs",
+        "start_line": 44,
+        "start_column": 22,
+        "end_line": 44,
+        "end_column": 24
+      },
+      "type": "call",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs:43:12:50:1",
+      "name": "new",
+      "call_type": "function"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs",
+        "start_line": 44,
+        "start_column": 22,
+        "end_line": 44,
+        "end_column": 24
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs:43:12:50:1",
+      "name": "new"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs",
+        "start_line": 45,
+        "start_column": 9,
+        "end_line": 45,
+        "end_column": 14
+      },
+      "type": "type",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs:43:12:50:1",
+      "name": "String"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs",
+        "start_line": 45,
+        "start_column": 9,
+        "end_line": 45,
+        "end_column": 29
+      },
+      "type": "call",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs:43:12:50:1",
+      "name": "String::from(\"Alice\")",
+      "call_type": "function"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs",
+        "start_line": 45,
+        "start_column": 9,
+        "end_line": 45,
+        "end_column": 14
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs:43:12:50:1",
+      "name": "String"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs",
+        "start_line": 45,
+        "start_column": 9,
+        "end_line": 45,
+        "end_column": 14
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs:43:12:50:1",
+      "name": "String"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs",
+        "start_line": 45,
+        "start_column": 17,
+        "end_line": 45,
+        "end_column": 20
+      },
+      "type": "call",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs:43:12:50:1",
+      "name": "from",
+      "call_type": "function"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs",
+        "start_line": 45,
+        "start_column": 17,
+        "end_line": 45,
+        "end_column": 20
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs:43:12:50:1",
+      "name": "from"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs",
+        "start_line": 46,
+        "start_column": 9,
+        "end_line": 46,
+        "end_column": 14
+      },
+      "type": "type",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs:43:12:50:1",
+      "name": "String"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs",
+        "start_line": 46,
+        "start_column": 9,
+        "end_line": 46,
+        "end_column": 41
+      },
+      "type": "call",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs:43:12:50:1",
+      "name": "String::from(\"alice@example.com\")",
+      "call_type": "function"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs",
+        "start_line": 46,
+        "start_column": 9,
+        "end_line": 46,
+        "end_column": 14
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs:43:12:50:1",
+      "name": "String"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs",
+        "start_line": 46,
+        "start_column": 9,
+        "end_line": 46,
+        "end_column": 14
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs:43:12:50:1",
+      "name": "String"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs",
+        "start_line": 46,
+        "start_column": 17,
+        "end_line": 46,
+        "end_column": 20
+      },
+      "type": "call",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs:43:12:50:1",
+      "name": "from",
+      "call_type": "function"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs",
+        "start_line": 46,
+        "start_column": 17,
+        "end_line": 46,
+        "end_column": 20
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs:43:12:50:1",
+      "name": "from"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs",
+        "start_line": 49,
+        "start_column": 5,
+        "end_line": 49,
+        "end_column": 32
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs:43:12:50:1",
+      "name": "println!(\"{}\", user.greet())"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs",
+        "start_line": 49,
+        "start_column": 5,
+        "end_line": 49,
+        "end_column": 11
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs:43:12:50:1",
+      "name": "println"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs",
+        "start_line": 49,
+        "start_column": 5,
+        "end_line": 49,
+        "end_column": 32
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs:43:12:50:1",
+      "name": "println!(\"{}\", user.greet())"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs",
+        "start_line": 49,
+        "start_column": 5,
+        "end_line": 49,
+        "end_column": 11
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs:43:12:50:1",
+      "name": "println"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs",
+        "start_line": 49,
+        "start_column": 5,
+        "end_line": 49,
+        "end_column": 11
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs:43:12:50:1",
+      "name": "println"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs",
+        "start_line": 49,
+        "start_column": 20,
+        "end_line": 49,
+        "end_column": 23
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs:43:12:50:1",
+      "name": "user"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs",
+        "start_line": 49,
+        "start_column": 25,
+        "end_line": 49,
+        "end_column": 29
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs:43:12:50:1",
+      "name": "greet"
+    }
+  ]
+}

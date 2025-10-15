@@ -1,0 +1,2903 @@
+{
+  "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts",
+  "language": "typescript",
+  "root_scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:1:1:54:0",
+  "scopes": {
+    "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:1:1:54:0": {
+      "id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:1:1:54:0",
+      "parent_id": null,
+      "name": null,
+      "type": "module",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts",
+        "start_line": 1,
+        "start_column": 1,
+        "end_line": 54,
+        "end_column": 0
+      },
+      "child_ids": [
+        "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:7:21:9:1",
+        "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:12:20:14:1",
+        "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:17:43:19:1",
+        "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:22:51:24:1",
+        "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:27:18:29:1",
+        "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:31:17:33:1",
+        "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:35:19:41:1",
+        "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:43:19:51:1"
+      ]
+    },
+    "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:7:21:9:1": {
+      "id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:7:21:9:1",
+      "parent_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:1:1:54:0",
+      "name": "function identity<T>(value: T): T {\n  return value;\n}",
+      "type": "function",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts",
+        "start_line": 7,
+        "start_column": 21,
+        "end_line": 9,
+        "end_column": 1
+      },
+      "child_ids": []
+    },
+    "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:12:20:14:1": {
+      "id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:12:20:14:1",
+      "parent_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:1:1:54:0",
+      "name": "function pair<A, B>(first: A, second: B): [A, B] {\n  return [first, second];\n}",
+      "type": "function",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts",
+        "start_line": 12,
+        "start_column": 20,
+        "end_line": 14,
+        "end_column": 1
+      },
+      "child_ids": []
+    },
+    "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:17:43:19:1": {
+      "id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:17:43:19:1",
+      "parent_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:1:1:54:0",
+      "name": "function getProperty<T, K extends keyof T>(obj: T, key: K): T[K] {\n  return obj[key];\n}",
+      "type": "function",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts",
+        "start_line": 17,
+        "start_column": 43,
+        "end_line": 19,
+        "end_column": 1
+      },
+      "child_ids": []
+    },
+    "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:22:51:24:1": {
+      "id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:22:51:24:1",
+      "parent_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:1:1:54:0",
+      "name": "function merge<T extends object, U extends object>(obj1: T, obj2: U): T & U {\n  return { ...obj1, ...obj2 };\n}",
+      "type": "function",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts",
+        "start_line": 22,
+        "start_column": 51,
+        "end_line": 24,
+        "end_column": 1
+      },
+      "child_ids": []
+    },
+    "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:27:18:29:1": {
+      "id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:27:18:29:1",
+      "parent_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:1:1:54:0",
+      "name": "function first<T>(arr: T[]): T | undefined {\n  return arr[0];\n}",
+      "type": "function",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts",
+        "start_line": 27,
+        "start_column": 18,
+        "end_line": 29,
+        "end_column": 1
+      },
+      "child_ids": []
+    },
+    "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:31:17:33:1": {
+      "id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:31:17:33:1",
+      "parent_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:1:1:54:0",
+      "name": "function last<T>(arr: T[]): T | undefined {\n  return arr[arr.length - 1];\n}",
+      "type": "function",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts",
+        "start_line": 31,
+        "start_column": 17,
+        "end_line": 33,
+        "end_column": 1
+      },
+      "child_ids": []
+    },
+    "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:35:19:41:1": {
+      "id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:35:19:41:1",
+      "parent_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:1:1:54:0",
+      "name": "function map<T, U>(arr: T[], fn: (item: T) => U): U[] {\n  const result: U[] = [];\n  for (const item of arr) {\n    result.push(fn(item));\n  }\n  return result;\n}",
+      "type": "function",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts",
+        "start_line": 35,
+        "start_column": 19,
+        "end_line": 41,
+        "end_column": 1
+      },
+      "child_ids": [
+        "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:37:3:39:3"
+      ]
+    },
+    "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:37:3:39:3": {
+      "id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:37:3:39:3",
+      "parent_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:35:19:41:1",
+      "name": "for (const item of arr) {\n    result.push(fn(item));\n  }",
+      "type": "block",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts",
+        "start_line": 37,
+        "start_column": 3,
+        "end_line": 39,
+        "end_column": 3
+      },
+      "child_ids": []
+    },
+    "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:43:19:51:1": {
+      "id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:43:19:51:1",
+      "parent_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:1:1:54:0",
+      "name": "function filter<T>(arr: T[], predicate: (item: T) => boolean): T[] {\n  const result: T[] = [];\n  for (const item of arr) {\n    if (predicate(item)) {\n      result.push(item);\n    }\n  }\n  return result;\n}",
+      "type": "function",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts",
+        "start_line": 43,
+        "start_column": 19,
+        "end_line": 51,
+        "end_column": 1
+      },
+      "child_ids": [
+        "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:45:3:49:3"
+      ]
+    },
+    "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:45:3:49:3": {
+      "id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:45:3:49:3",
+      "parent_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:43:19:51:1",
+      "name": "for (const item of arr) {\n    if (predicate(item)) {\n      result.push(item);\n    }\n  }",
+      "type": "block",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts",
+        "start_line": 45,
+        "start_column": 3,
+        "end_line": 49,
+        "end_column": 3
+      },
+      "child_ids": [
+        "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:46:5:48:5"
+      ]
+    },
+    "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:46:5:48:5": {
+      "id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:46:5:48:5",
+      "parent_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:45:3:49:3",
+      "name": "if (predicate(item)) {\n      result.push(item);\n    }",
+      "type": "block",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts",
+        "start_line": 46,
+        "start_column": 5,
+        "end_line": 48,
+        "end_column": 5
+      },
+      "child_ids": []
+    }
+  },
+  "functions": {
+    "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:7:10:7:17:identity": {
+      "kind": "function",
+      "symbol_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:7:10:7:17:identity",
+      "name": "identity",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts",
+        "start_line": 7,
+        "start_column": 10,
+        "end_line": 7,
+        "end_column": 17
+      },
+      "defining_scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:1:1:54:0",
+      "is_exported": true,
+      "export": {
+        "is_reexport": false
+      },
+      "signature": {
+        "parameters": [
+          {
+            "kind": "parameter",
+            "defining_scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:7:21:9:1",
+            "symbol_id": "parameter:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:7:22:7:26:value",
+            "name": "value",
+            "location": {
+              "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts",
+              "start_line": 7,
+              "start_column": 22,
+              "end_line": 7,
+              "end_column": 26
+            },
+            "type": "T",
+            "optional": false
+          }
+        ],
+        "return_type": "T"
+      },
+      "return_type": "T",
+      "body_scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:7:21:9:1"
+    },
+    "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:12:10:12:13:pair": {
+      "kind": "function",
+      "symbol_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:12:10:12:13:pair",
+      "name": "pair",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts",
+        "start_line": 12,
+        "start_column": 10,
+        "end_line": 12,
+        "end_column": 13
+      },
+      "defining_scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:1:1:54:0",
+      "is_exported": true,
+      "export": {
+        "is_reexport": false
+      },
+      "signature": {
+        "parameters": [
+          {
+            "kind": "parameter",
+            "defining_scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:12:20:14:1",
+            "symbol_id": "parameter:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:12:21:12:25:first",
+            "name": "first",
+            "location": {
+              "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts",
+              "start_line": 12,
+              "start_column": 21,
+              "end_line": 12,
+              "end_column": 25
+            },
+            "type": "A",
+            "optional": false
+          },
+          {
+            "kind": "parameter",
+            "defining_scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:12:20:14:1",
+            "symbol_id": "parameter:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:12:31:12:36:second",
+            "name": "second",
+            "location": {
+              "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts",
+              "start_line": 12,
+              "start_column": 31,
+              "end_line": 12,
+              "end_column": 36
+            },
+            "type": "B",
+            "optional": false
+          }
+        ],
+        "return_type": "[A, B]"
+      },
+      "return_type": "[A, B]",
+      "body_scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:12:20:14:1"
+    },
+    "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:17:10:17:20:getProperty": {
+      "kind": "function",
+      "symbol_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:17:10:17:20:getProperty",
+      "name": "getProperty",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts",
+        "start_line": 17,
+        "start_column": 10,
+        "end_line": 17,
+        "end_column": 20
+      },
+      "defining_scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:1:1:54:0",
+      "is_exported": true,
+      "export": {
+        "is_reexport": false
+      },
+      "signature": {
+        "parameters": [
+          {
+            "kind": "parameter",
+            "defining_scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:17:43:19:1",
+            "symbol_id": "parameter:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:17:44:17:46:obj",
+            "name": "obj",
+            "location": {
+              "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts",
+              "start_line": 17,
+              "start_column": 44,
+              "end_line": 17,
+              "end_column": 46
+            },
+            "type": "T",
+            "optional": false
+          },
+          {
+            "kind": "parameter",
+            "defining_scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:17:43:19:1",
+            "symbol_id": "parameter:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:17:52:17:54:key",
+            "name": "key",
+            "location": {
+              "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts",
+              "start_line": 17,
+              "start_column": 52,
+              "end_line": 17,
+              "end_column": 54
+            },
+            "type": "K",
+            "optional": false
+          }
+        ],
+        "return_type": "T[K]"
+      },
+      "return_type": "T[K]",
+      "body_scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:17:43:19:1"
+    },
+    "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:22:10:22:14:merge": {
+      "kind": "function",
+      "symbol_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:22:10:22:14:merge",
+      "name": "merge",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts",
+        "start_line": 22,
+        "start_column": 10,
+        "end_line": 22,
+        "end_column": 14
+      },
+      "defining_scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:1:1:54:0",
+      "is_exported": true,
+      "export": {
+        "is_reexport": false
+      },
+      "signature": {
+        "parameters": [
+          {
+            "kind": "parameter",
+            "defining_scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:22:51:24:1",
+            "symbol_id": "parameter:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:22:52:22:55:obj1",
+            "name": "obj1",
+            "location": {
+              "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts",
+              "start_line": 22,
+              "start_column": 52,
+              "end_line": 22,
+              "end_column": 55
+            },
+            "type": "T",
+            "optional": false
+          },
+          {
+            "kind": "parameter",
+            "defining_scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:22:51:24:1",
+            "symbol_id": "parameter:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:22:61:22:64:obj2",
+            "name": "obj2",
+            "location": {
+              "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts",
+              "start_line": 22,
+              "start_column": 61,
+              "end_line": 22,
+              "end_column": 64
+            },
+            "type": "U",
+            "optional": false
+          }
+        ],
+        "return_type": "T & U"
+      },
+      "return_type": "T & U",
+      "body_scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:22:51:24:1"
+    },
+    "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:27:10:27:14:first": {
+      "kind": "function",
+      "symbol_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:27:10:27:14:first",
+      "name": "first",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts",
+        "start_line": 27,
+        "start_column": 10,
+        "end_line": 27,
+        "end_column": 14
+      },
+      "defining_scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:1:1:54:0",
+      "is_exported": true,
+      "export": {
+        "is_reexport": false
+      },
+      "signature": {
+        "parameters": [
+          {
+            "kind": "parameter",
+            "defining_scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:27:18:29:1",
+            "symbol_id": "parameter:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:27:19:27:21:arr",
+            "name": "arr",
+            "location": {
+              "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts",
+              "start_line": 27,
+              "start_column": 19,
+              "end_line": 27,
+              "end_column": 21
+            },
+            "type": "T[]",
+            "optional": false
+          }
+        ],
+        "return_type": "T | undefined"
+      },
+      "return_type": "T | undefined",
+      "body_scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:27:18:29:1"
+    },
+    "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:31:10:31:13:last": {
+      "kind": "function",
+      "symbol_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:31:10:31:13:last",
+      "name": "last",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts",
+        "start_line": 31,
+        "start_column": 10,
+        "end_line": 31,
+        "end_column": 13
+      },
+      "defining_scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:1:1:54:0",
+      "is_exported": true,
+      "export": {
+        "is_reexport": false
+      },
+      "signature": {
+        "parameters": [
+          {
+            "kind": "parameter",
+            "defining_scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:31:17:33:1",
+            "symbol_id": "parameter:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:31:18:31:20:arr",
+            "name": "arr",
+            "location": {
+              "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts",
+              "start_line": 31,
+              "start_column": 18,
+              "end_line": 31,
+              "end_column": 20
+            },
+            "type": "T[]",
+            "optional": false
+          }
+        ],
+        "return_type": "T | undefined"
+      },
+      "return_type": "T | undefined",
+      "body_scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:31:17:33:1"
+    },
+    "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:35:10:35:12:map": {
+      "kind": "function",
+      "symbol_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:35:10:35:12:map",
+      "name": "map",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts",
+        "start_line": 35,
+        "start_column": 10,
+        "end_line": 35,
+        "end_column": 12
+      },
+      "defining_scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:1:1:54:0",
+      "is_exported": true,
+      "export": {
+        "is_reexport": false
+      },
+      "signature": {
+        "parameters": [
+          {
+            "kind": "parameter",
+            "defining_scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:35:19:41:1",
+            "symbol_id": "parameter:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:35:20:35:22:arr",
+            "name": "arr",
+            "location": {
+              "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts",
+              "start_line": 35,
+              "start_column": 20,
+              "end_line": 35,
+              "end_column": 22
+            },
+            "type": "T[]",
+            "optional": false
+          },
+          {
+            "kind": "parameter",
+            "defining_scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:35:19:41:1",
+            "symbol_id": "parameter:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:35:30:35:31:fn",
+            "name": "fn",
+            "location": {
+              "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts",
+              "start_line": 35,
+              "start_column": 30,
+              "end_line": 35,
+              "end_column": 31
+            },
+            "type": "(item: T) => U",
+            "optional": false
+          }
+        ],
+        "return_type": "U[]"
+      },
+      "return_type": "U[]",
+      "body_scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:35:19:41:1"
+    },
+    "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:43:10:43:15:filter": {
+      "kind": "function",
+      "symbol_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:43:10:43:15:filter",
+      "name": "filter",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts",
+        "start_line": 43,
+        "start_column": 10,
+        "end_line": 43,
+        "end_column": 15
+      },
+      "defining_scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:1:1:54:0",
+      "is_exported": true,
+      "export": {
+        "is_reexport": false
+      },
+      "signature": {
+        "parameters": [
+          {
+            "kind": "parameter",
+            "defining_scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:43:19:51:1",
+            "symbol_id": "parameter:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:43:20:43:22:arr",
+            "name": "arr",
+            "location": {
+              "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts",
+              "start_line": 43,
+              "start_column": 20,
+              "end_line": 43,
+              "end_column": 22
+            },
+            "type": "T[]",
+            "optional": false
+          },
+          {
+            "kind": "parameter",
+            "defining_scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:43:19:51:1",
+            "symbol_id": "parameter:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:43:30:43:38:predicate",
+            "name": "predicate",
+            "location": {
+              "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts",
+              "start_line": 43,
+              "start_column": 30,
+              "end_line": 43,
+              "end_column": 38
+            },
+            "type": "(item: T) => boolean",
+            "optional": false
+          }
+        ],
+        "return_type": "T[]"
+      },
+      "return_type": "T[]",
+      "body_scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:43:19:51:1"
+    }
+  },
+  "classes": {},
+  "variables": {
+    "variable:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:36:9:36:14:result": {
+      "kind": "constant",
+      "symbol_id": "variable:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:36:9:36:14:result",
+      "name": "result",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts",
+        "start_line": 36,
+        "start_column": 9,
+        "end_line": 36,
+        "end_column": 14
+      },
+      "defining_scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:35:19:41:1",
+      "is_exported": false
+    },
+    "variable:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:44:9:44:14:result": {
+      "kind": "constant",
+      "symbol_id": "variable:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:44:9:44:14:result",
+      "name": "result",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts",
+        "start_line": 44,
+        "start_column": 9,
+        "end_line": 44,
+        "end_column": 14
+      },
+      "defining_scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:43:19:51:1",
+      "is_exported": false
+    }
+  },
+  "interfaces": {},
+  "enums": {},
+  "namespaces": {},
+  "types": {},
+  "imported_symbols": {},
+  "references": [
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts",
+        "start_line": 7,
+        "start_column": 10,
+        "end_line": 7,
+        "end_column": 17
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:1:1:54:0",
+      "name": "identity"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts",
+        "start_line": 7,
+        "start_column": 19,
+        "end_line": 7,
+        "end_column": 19
+      },
+      "type": "type",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:1:1:54:0",
+      "name": "T",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:7:19:7:19:T",
+        "type_name": "T",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts",
+        "start_line": 7,
+        "start_column": 22,
+        "end_line": 7,
+        "end_column": 26
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:7:21:9:1",
+      "name": "value"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts",
+        "start_line": 7,
+        "start_column": 29,
+        "end_line": 7,
+        "end_column": 29
+      },
+      "type": "type",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:7:21:9:1",
+      "name": "T",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:7:29:7:29:T",
+        "type_name": "T",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts",
+        "start_line": 7,
+        "start_column": 33,
+        "end_line": 7,
+        "end_column": 33
+      },
+      "type": "type",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:7:21:9:1",
+      "name": "T",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:7:33:7:33:T",
+        "type_name": "T",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts",
+        "start_line": 8,
+        "start_column": 3,
+        "end_line": 8,
+        "end_column": 15
+      },
+      "type": "return",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:7:21:9:1",
+      "name": "return value;"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts",
+        "start_line": 8,
+        "start_column": 10,
+        "end_line": 8,
+        "end_column": 14
+      },
+      "type": "return",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:7:21:9:1",
+      "name": "value"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts",
+        "start_line": 8,
+        "start_column": 10,
+        "end_line": 8,
+        "end_column": 14
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:7:21:9:1",
+      "name": "value"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts",
+        "start_line": 12,
+        "start_column": 10,
+        "end_line": 12,
+        "end_column": 13
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:1:1:54:0",
+      "name": "pair"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts",
+        "start_line": 12,
+        "start_column": 15,
+        "end_line": 12,
+        "end_column": 15
+      },
+      "type": "type",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:1:1:54:0",
+      "name": "A",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:12:15:12:15:A",
+        "type_name": "A",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts",
+        "start_line": 12,
+        "start_column": 18,
+        "end_line": 12,
+        "end_column": 18
+      },
+      "type": "type",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:1:1:54:0",
+      "name": "B",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:12:18:12:18:B",
+        "type_name": "B",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts",
+        "start_line": 12,
+        "start_column": 21,
+        "end_line": 12,
+        "end_column": 25
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:12:20:14:1",
+      "name": "first"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts",
+        "start_line": 12,
+        "start_column": 28,
+        "end_line": 12,
+        "end_column": 28
+      },
+      "type": "type",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:12:20:14:1",
+      "name": "A",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:12:28:12:28:A",
+        "type_name": "A",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts",
+        "start_line": 12,
+        "start_column": 31,
+        "end_line": 12,
+        "end_column": 36
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:12:20:14:1",
+      "name": "second"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts",
+        "start_line": 12,
+        "start_column": 39,
+        "end_line": 12,
+        "end_column": 39
+      },
+      "type": "type",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:12:20:14:1",
+      "name": "B",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:12:39:12:39:B",
+        "type_name": "B",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts",
+        "start_line": 12,
+        "start_column": 44,
+        "end_line": 12,
+        "end_column": 44
+      },
+      "type": "type",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:12:20:14:1",
+      "name": "A",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:12:44:12:44:A",
+        "type_name": "A",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts",
+        "start_line": 12,
+        "start_column": 47,
+        "end_line": 12,
+        "end_column": 47
+      },
+      "type": "type",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:12:20:14:1",
+      "name": "B",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:12:47:12:47:B",
+        "type_name": "B",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts",
+        "start_line": 13,
+        "start_column": 3,
+        "end_line": 13,
+        "end_column": 25
+      },
+      "type": "return",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:12:20:14:1",
+      "name": "return [first, second];"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts",
+        "start_line": 13,
+        "start_column": 10,
+        "end_line": 13,
+        "end_column": 24
+      },
+      "type": "return",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:12:20:14:1",
+      "name": "[first, second]"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts",
+        "start_line": 13,
+        "start_column": 11,
+        "end_line": 13,
+        "end_column": 15
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:12:20:14:1",
+      "name": "first"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts",
+        "start_line": 13,
+        "start_column": 18,
+        "end_line": 13,
+        "end_column": 23
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:12:20:14:1",
+      "name": "second"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts",
+        "start_line": 17,
+        "start_column": 10,
+        "end_line": 17,
+        "end_column": 20
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:1:1:54:0",
+      "name": "getProperty"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts",
+        "start_line": 17,
+        "start_column": 22,
+        "end_line": 17,
+        "end_column": 22
+      },
+      "type": "type",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:1:1:54:0",
+      "name": "T",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:17:22:17:22:T",
+        "type_name": "T",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts",
+        "start_line": 17,
+        "start_column": 25,
+        "end_line": 17,
+        "end_column": 25
+      },
+      "type": "type",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:1:1:54:0",
+      "name": "K",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:17:25:17:25:K",
+        "type_name": "K",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts",
+        "start_line": 17,
+        "start_column": 41,
+        "end_line": 17,
+        "end_column": 41
+      },
+      "type": "type",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:1:1:54:0",
+      "name": "T",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:17:41:17:41:T",
+        "type_name": "T",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts",
+        "start_line": 17,
+        "start_column": 44,
+        "end_line": 17,
+        "end_column": 46
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:17:43:19:1",
+      "name": "obj"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts",
+        "start_line": 17,
+        "start_column": 49,
+        "end_line": 17,
+        "end_column": 49
+      },
+      "type": "type",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:17:43:19:1",
+      "name": "T",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:17:49:17:49:T",
+        "type_name": "T",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts",
+        "start_line": 17,
+        "start_column": 52,
+        "end_line": 17,
+        "end_column": 54
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:17:43:19:1",
+      "name": "key"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts",
+        "start_line": 17,
+        "start_column": 57,
+        "end_line": 17,
+        "end_column": 57
+      },
+      "type": "type",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:17:43:19:1",
+      "name": "K",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:17:57:17:57:K",
+        "type_name": "K",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts",
+        "start_line": 17,
+        "start_column": 61,
+        "end_line": 17,
+        "end_column": 61
+      },
+      "type": "type",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:17:43:19:1",
+      "name": "T",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:17:61:17:61:T",
+        "type_name": "T",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts",
+        "start_line": 17,
+        "start_column": 63,
+        "end_line": 17,
+        "end_column": 63
+      },
+      "type": "type",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:17:43:19:1",
+      "name": "K",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:17:63:17:63:K",
+        "type_name": "K",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts",
+        "start_line": 18,
+        "start_column": 3,
+        "end_line": 18,
+        "end_column": 18
+      },
+      "type": "return",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:17:43:19:1",
+      "name": "return obj[key];"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts",
+        "start_line": 18,
+        "start_column": 10,
+        "end_line": 18,
+        "end_column": 17
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:17:43:19:1",
+      "name": "obj[key]"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts",
+        "start_line": 18,
+        "start_column": 10,
+        "end_line": 18,
+        "end_column": 12
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:17:43:19:1",
+      "name": "obj"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts",
+        "start_line": 18,
+        "start_column": 10,
+        "end_line": 18,
+        "end_column": 17
+      },
+      "type": "return",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:17:43:19:1",
+      "name": "obj[key]"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts",
+        "start_line": 18,
+        "start_column": 10,
+        "end_line": 18,
+        "end_column": 12
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:17:43:19:1",
+      "name": "obj"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts",
+        "start_line": 18,
+        "start_column": 14,
+        "end_line": 18,
+        "end_column": 16
+      },
+      "type": "member_access",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:17:43:19:1",
+      "name": "key",
+      "member_access": {
+        "access_type": "property",
+        "is_optional_chain": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts",
+        "start_line": 18,
+        "start_column": 14,
+        "end_line": 18,
+        "end_column": 16
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:17:43:19:1",
+      "name": "key"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts",
+        "start_line": 22,
+        "start_column": 10,
+        "end_line": 22,
+        "end_column": 14
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:1:1:54:0",
+      "name": "merge"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts",
+        "start_line": 22,
+        "start_column": 16,
+        "end_line": 22,
+        "end_column": 16
+      },
+      "type": "type",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:1:1:54:0",
+      "name": "T",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:22:16:22:16:T",
+        "type_name": "T",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts",
+        "start_line": 22,
+        "start_column": 34,
+        "end_line": 22,
+        "end_column": 34
+      },
+      "type": "type",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:1:1:54:0",
+      "name": "U",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:22:34:22:34:U",
+        "type_name": "U",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts",
+        "start_line": 22,
+        "start_column": 52,
+        "end_line": 22,
+        "end_column": 55
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:22:51:24:1",
+      "name": "obj1"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts",
+        "start_line": 22,
+        "start_column": 58,
+        "end_line": 22,
+        "end_column": 58
+      },
+      "type": "type",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:22:51:24:1",
+      "name": "T",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:22:58:22:58:T",
+        "type_name": "T",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts",
+        "start_line": 22,
+        "start_column": 61,
+        "end_line": 22,
+        "end_column": 64
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:22:51:24:1",
+      "name": "obj2"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts",
+        "start_line": 22,
+        "start_column": 67,
+        "end_line": 22,
+        "end_column": 67
+      },
+      "type": "type",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:22:51:24:1",
+      "name": "U",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:22:67:22:67:U",
+        "type_name": "U",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts",
+        "start_line": 22,
+        "start_column": 71,
+        "end_line": 22,
+        "end_column": 71
+      },
+      "type": "type",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:22:51:24:1",
+      "name": "T",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:22:71:22:71:T",
+        "type_name": "T",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts",
+        "start_line": 22,
+        "start_column": 75,
+        "end_line": 22,
+        "end_column": 75
+      },
+      "type": "type",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:22:51:24:1",
+      "name": "U",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:22:75:22:75:U",
+        "type_name": "U",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts",
+        "start_line": 23,
+        "start_column": 3,
+        "end_line": 23,
+        "end_column": 30
+      },
+      "type": "return",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:22:51:24:1",
+      "name": "return { ...obj1, ...obj2 };"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts",
+        "start_line": 23,
+        "start_column": 10,
+        "end_line": 23,
+        "end_column": 29
+      },
+      "type": "return",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:22:51:24:1",
+      "name": "{ ...obj1, ...obj2 }"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts",
+        "start_line": 23,
+        "start_column": 15,
+        "end_line": 23,
+        "end_column": 18
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:22:51:24:1",
+      "name": "obj1"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts",
+        "start_line": 23,
+        "start_column": 24,
+        "end_line": 23,
+        "end_column": 27
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:22:51:24:1",
+      "name": "obj2"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts",
+        "start_line": 27,
+        "start_column": 10,
+        "end_line": 27,
+        "end_column": 14
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:1:1:54:0",
+      "name": "first"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts",
+        "start_line": 27,
+        "start_column": 16,
+        "end_line": 27,
+        "end_column": 16
+      },
+      "type": "type",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:1:1:54:0",
+      "name": "T",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:27:16:27:16:T",
+        "type_name": "T",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts",
+        "start_line": 27,
+        "start_column": 19,
+        "end_line": 27,
+        "end_column": 21
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:27:18:29:1",
+      "name": "arr"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts",
+        "start_line": 27,
+        "start_column": 24,
+        "end_line": 27,
+        "end_column": 24
+      },
+      "type": "type",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:27:18:29:1",
+      "name": "T",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:27:24:27:24:T",
+        "type_name": "T",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts",
+        "start_line": 27,
+        "start_column": 30,
+        "end_line": 27,
+        "end_column": 30
+      },
+      "type": "type",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:27:18:29:1",
+      "name": "T",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:27:30:27:30:T",
+        "type_name": "T",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts",
+        "start_line": 28,
+        "start_column": 3,
+        "end_line": 28,
+        "end_column": 16
+      },
+      "type": "return",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:27:18:29:1",
+      "name": "return arr[0];"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts",
+        "start_line": 28,
+        "start_column": 10,
+        "end_line": 28,
+        "end_column": 15
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:27:18:29:1",
+      "name": "arr[0]"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts",
+        "start_line": 28,
+        "start_column": 10,
+        "end_line": 28,
+        "end_column": 12
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:27:18:29:1",
+      "name": "arr"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts",
+        "start_line": 28,
+        "start_column": 10,
+        "end_line": 28,
+        "end_column": 15
+      },
+      "type": "return",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:27:18:29:1",
+      "name": "arr[0]"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts",
+        "start_line": 28,
+        "start_column": 10,
+        "end_line": 28,
+        "end_column": 12
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:27:18:29:1",
+      "name": "arr"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts",
+        "start_line": 28,
+        "start_column": 14,
+        "end_line": 28,
+        "end_column": 14
+      },
+      "type": "member_access",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:27:18:29:1",
+      "name": "0",
+      "member_access": {
+        "access_type": "property",
+        "is_optional_chain": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts",
+        "start_line": 31,
+        "start_column": 10,
+        "end_line": 31,
+        "end_column": 13
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:1:1:54:0",
+      "name": "last"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts",
+        "start_line": 31,
+        "start_column": 15,
+        "end_line": 31,
+        "end_column": 15
+      },
+      "type": "type",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:1:1:54:0",
+      "name": "T",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:31:15:31:15:T",
+        "type_name": "T",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts",
+        "start_line": 31,
+        "start_column": 18,
+        "end_line": 31,
+        "end_column": 20
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:31:17:33:1",
+      "name": "arr"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts",
+        "start_line": 31,
+        "start_column": 23,
+        "end_line": 31,
+        "end_column": 23
+      },
+      "type": "type",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:31:17:33:1",
+      "name": "T",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:31:23:31:23:T",
+        "type_name": "T",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts",
+        "start_line": 31,
+        "start_column": 29,
+        "end_line": 31,
+        "end_column": 29
+      },
+      "type": "type",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:31:17:33:1",
+      "name": "T",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:31:29:31:29:T",
+        "type_name": "T",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts",
+        "start_line": 32,
+        "start_column": 3,
+        "end_line": 32,
+        "end_column": 29
+      },
+      "type": "return",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:31:17:33:1",
+      "name": "return arr[arr.length - 1];"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts",
+        "start_line": 32,
+        "start_column": 10,
+        "end_line": 32,
+        "end_column": 28
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:31:17:33:1",
+      "name": "arr[arr.length - 1]"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts",
+        "start_line": 32,
+        "start_column": 10,
+        "end_line": 32,
+        "end_column": 12
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:31:17:33:1",
+      "name": "arr"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts",
+        "start_line": 32,
+        "start_column": 10,
+        "end_line": 32,
+        "end_column": 28
+      },
+      "type": "return",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:31:17:33:1",
+      "name": "arr[arr.length - 1]"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts",
+        "start_line": 32,
+        "start_column": 10,
+        "end_line": 32,
+        "end_column": 12
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:31:17:33:1",
+      "name": "arr"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts",
+        "start_line": 32,
+        "start_column": 14,
+        "end_line": 32,
+        "end_column": 23
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:31:17:33:1",
+      "name": "arr.length"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts",
+        "start_line": 32,
+        "start_column": 14,
+        "end_line": 32,
+        "end_column": 16
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:31:17:33:1",
+      "name": "arr"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts",
+        "start_line": 32,
+        "start_column": 14,
+        "end_line": 32,
+        "end_column": 27
+      },
+      "type": "member_access",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:31:17:33:1",
+      "name": "arr.length - 1",
+      "member_access": {
+        "access_type": "property",
+        "is_optional_chain": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts",
+        "start_line": 32,
+        "start_column": 14,
+        "end_line": 32,
+        "end_column": 23
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:31:17:33:1",
+      "name": "arr.length"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts",
+        "start_line": 32,
+        "start_column": 14,
+        "end_line": 32,
+        "end_column": 16
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:31:17:33:1",
+      "name": "arr"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts",
+        "start_line": 32,
+        "start_column": 14,
+        "end_line": 32,
+        "end_column": 16
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:31:17:33:1",
+      "name": "arr"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts",
+        "start_line": 32,
+        "start_column": 18,
+        "end_line": 32,
+        "end_column": 23
+      },
+      "type": "member_access",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:31:17:33:1",
+      "name": "length",
+      "member_access": {
+        "access_type": "property",
+        "is_optional_chain": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts",
+        "start_line": 32,
+        "start_column": 18,
+        "end_line": 32,
+        "end_column": 23
+      },
+      "type": "member_access",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:31:17:33:1",
+      "name": "length",
+      "member_access": {
+        "access_type": "property",
+        "is_optional_chain": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts",
+        "start_line": 35,
+        "start_column": 10,
+        "end_line": 35,
+        "end_column": 12
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:1:1:54:0",
+      "name": "map"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts",
+        "start_line": 35,
+        "start_column": 14,
+        "end_line": 35,
+        "end_column": 14
+      },
+      "type": "type",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:1:1:54:0",
+      "name": "T",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:35:14:35:14:T",
+        "type_name": "T",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts",
+        "start_line": 35,
+        "start_column": 17,
+        "end_line": 35,
+        "end_column": 17
+      },
+      "type": "type",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:1:1:54:0",
+      "name": "U",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:35:17:35:17:U",
+        "type_name": "U",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts",
+        "start_line": 35,
+        "start_column": 20,
+        "end_line": 35,
+        "end_column": 22
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:35:19:41:1",
+      "name": "arr"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts",
+        "start_line": 35,
+        "start_column": 25,
+        "end_line": 35,
+        "end_column": 25
+      },
+      "type": "type",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:35:19:41:1",
+      "name": "T",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:35:25:35:25:T",
+        "type_name": "T",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts",
+        "start_line": 35,
+        "start_column": 30,
+        "end_line": 35,
+        "end_column": 31
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:35:19:41:1",
+      "name": "fn"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts",
+        "start_line": 35,
+        "start_column": 35,
+        "end_line": 35,
+        "end_column": 38
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:35:19:41:1",
+      "name": "item"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts",
+        "start_line": 35,
+        "start_column": 41,
+        "end_line": 35,
+        "end_column": 41
+      },
+      "type": "type",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:35:19:41:1",
+      "name": "T",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:35:41:35:41:T",
+        "type_name": "T",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts",
+        "start_line": 35,
+        "start_column": 47,
+        "end_line": 35,
+        "end_column": 47
+      },
+      "type": "type",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:35:19:41:1",
+      "name": "U",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:35:47:35:47:U",
+        "type_name": "U",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts",
+        "start_line": 35,
+        "start_column": 51,
+        "end_line": 35,
+        "end_column": 51
+      },
+      "type": "type",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:35:19:41:1",
+      "name": "U",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:35:51:35:51:U",
+        "type_name": "U",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts",
+        "start_line": 36,
+        "start_column": 9,
+        "end_line": 36,
+        "end_column": 24
+      },
+      "type": "assignment",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:35:19:41:1",
+      "name": "result: U[] = []",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:36:9:36:24:U[]",
+        "type_name": "U[]",
+        "certainty": "declared",
+        "is_nullable": false
+      },
+      "assignment_type": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:36:9:36:24:U[]",
+        "type_name": "U[]",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts",
+        "start_line": 36,
+        "start_column": 9,
+        "end_line": 36,
+        "end_column": 14
+      },
+      "type": "assignment",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:35:19:41:1",
+      "name": "result"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts",
+        "start_line": 36,
+        "start_column": 9,
+        "end_line": 36,
+        "end_column": 14
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:35:19:41:1",
+      "name": "result"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts",
+        "start_line": 36,
+        "start_column": 17,
+        "end_line": 36,
+        "end_column": 17
+      },
+      "type": "type",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:35:19:41:1",
+      "name": "U",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:36:17:36:17:U",
+        "type_name": "U",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts",
+        "start_line": 36,
+        "start_column": 23,
+        "end_line": 36,
+        "end_column": 24
+      },
+      "type": "assignment",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:35:19:41:1",
+      "name": "[]"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts",
+        "start_line": 37,
+        "start_column": 14,
+        "end_line": 37,
+        "end_column": 17
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:37:3:39:3",
+      "name": "item"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts",
+        "start_line": 37,
+        "start_column": 22,
+        "end_line": 37,
+        "end_column": 24
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:37:3:39:3",
+      "name": "arr"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts",
+        "start_line": 38,
+        "start_column": 5,
+        "end_line": 38,
+        "end_column": 25
+      },
+      "type": "call",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:37:3:39:3",
+      "name": "push",
+      "context": {
+        "receiver_location": {
+          "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts",
+          "start_line": 38,
+          "start_column": 5,
+          "end_line": 38,
+          "end_column": 10
+        },
+        "property_chain": [
+          "result",
+          "push"
+        ]
+      },
+      "call_type": "method",
+      "member_access": {
+        "access_type": "method",
+        "is_optional_chain": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts",
+        "start_line": 38,
+        "start_column": 5,
+        "end_line": 38,
+        "end_column": 10
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:37:3:39:3",
+      "name": "result"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts",
+        "start_line": 38,
+        "start_column": 5,
+        "end_line": 38,
+        "end_column": 15
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:37:3:39:3",
+      "name": "result.push"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts",
+        "start_line": 38,
+        "start_column": 5,
+        "end_line": 38,
+        "end_column": 10
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:37:3:39:3",
+      "name": "result"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts",
+        "start_line": 38,
+        "start_column": 5,
+        "end_line": 38,
+        "end_column": 15
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:37:3:39:3",
+      "name": "result.push"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts",
+        "start_line": 38,
+        "start_column": 5,
+        "end_line": 38,
+        "end_column": 10
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:37:3:39:3",
+      "name": "result"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts",
+        "start_line": 38,
+        "start_column": 5,
+        "end_line": 38,
+        "end_column": 25
+      },
+      "type": "call",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:37:3:39:3",
+      "name": "push",
+      "context": {
+        "receiver_location": {
+          "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts",
+          "start_line": 38,
+          "start_column": 5,
+          "end_line": 38,
+          "end_column": 10
+        },
+        "property_chain": [
+          "result",
+          "push"
+        ]
+      },
+      "call_type": "method",
+      "member_access": {
+        "access_type": "method",
+        "is_optional_chain": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts",
+        "start_line": 38,
+        "start_column": 5,
+        "end_line": 38,
+        "end_column": 10
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:37:3:39:3",
+      "name": "result"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts",
+        "start_line": 38,
+        "start_column": 5,
+        "end_line": 38,
+        "end_column": 10
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:37:3:39:3",
+      "name": "result"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts",
+        "start_line": 38,
+        "start_column": 12,
+        "end_line": 38,
+        "end_column": 15
+      },
+      "type": "call",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:37:3:39:3",
+      "name": "push",
+      "call_type": "function"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts",
+        "start_line": 38,
+        "start_column": 12,
+        "end_line": 38,
+        "end_column": 15
+      },
+      "type": "member_access",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:37:3:39:3",
+      "name": "push",
+      "member_access": {
+        "access_type": "property",
+        "is_optional_chain": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts",
+        "start_line": 38,
+        "start_column": 12,
+        "end_line": 38,
+        "end_column": 15
+      },
+      "type": "member_access",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:37:3:39:3",
+      "name": "push",
+      "member_access": {
+        "access_type": "property",
+        "is_optional_chain": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts",
+        "start_line": 38,
+        "start_column": 12,
+        "end_line": 38,
+        "end_column": 15
+      },
+      "type": "call",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:37:3:39:3",
+      "name": "push",
+      "call_type": "function"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts",
+        "start_line": 38,
+        "start_column": 17,
+        "end_line": 38,
+        "end_column": 18
+      },
+      "type": "call",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:37:3:39:3",
+      "name": "fn",
+      "call_type": "function"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts",
+        "start_line": 38,
+        "start_column": 17,
+        "end_line": 38,
+        "end_column": 18
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:37:3:39:3",
+      "name": "fn"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts",
+        "start_line": 38,
+        "start_column": 20,
+        "end_line": 38,
+        "end_column": 23
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:37:3:39:3",
+      "name": "item"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts",
+        "start_line": 40,
+        "start_column": 3,
+        "end_line": 40,
+        "end_column": 16
+      },
+      "type": "return",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:35:19:41:1",
+      "name": "return result;"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts",
+        "start_line": 40,
+        "start_column": 10,
+        "end_line": 40,
+        "end_column": 15
+      },
+      "type": "return",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:35:19:41:1",
+      "name": "result"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts",
+        "start_line": 40,
+        "start_column": 10,
+        "end_line": 40,
+        "end_column": 15
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:35:19:41:1",
+      "name": "result"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts",
+        "start_line": 43,
+        "start_column": 10,
+        "end_line": 43,
+        "end_column": 15
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:1:1:54:0",
+      "name": "filter"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts",
+        "start_line": 43,
+        "start_column": 17,
+        "end_line": 43,
+        "end_column": 17
+      },
+      "type": "type",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:1:1:54:0",
+      "name": "T",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:43:17:43:17:T",
+        "type_name": "T",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts",
+        "start_line": 43,
+        "start_column": 20,
+        "end_line": 43,
+        "end_column": 22
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:43:19:51:1",
+      "name": "arr"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts",
+        "start_line": 43,
+        "start_column": 25,
+        "end_line": 43,
+        "end_column": 25
+      },
+      "type": "type",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:43:19:51:1",
+      "name": "T",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:43:25:43:25:T",
+        "type_name": "T",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts",
+        "start_line": 43,
+        "start_column": 30,
+        "end_line": 43,
+        "end_column": 38
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:43:19:51:1",
+      "name": "predicate"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts",
+        "start_line": 43,
+        "start_column": 42,
+        "end_line": 43,
+        "end_column": 45
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:43:19:51:1",
+      "name": "item"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts",
+        "start_line": 43,
+        "start_column": 48,
+        "end_line": 43,
+        "end_column": 48
+      },
+      "type": "type",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:43:19:51:1",
+      "name": "T",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:43:48:43:48:T",
+        "type_name": "T",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts",
+        "start_line": 43,
+        "start_column": 64,
+        "end_line": 43,
+        "end_column": 64
+      },
+      "type": "type",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:43:19:51:1",
+      "name": "T",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:43:64:43:64:T",
+        "type_name": "T",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts",
+        "start_line": 44,
+        "start_column": 9,
+        "end_line": 44,
+        "end_column": 24
+      },
+      "type": "assignment",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:43:19:51:1",
+      "name": "result: T[] = []",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:44:9:44:24:T[]",
+        "type_name": "T[]",
+        "certainty": "declared",
+        "is_nullable": false
+      },
+      "assignment_type": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:44:9:44:24:T[]",
+        "type_name": "T[]",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts",
+        "start_line": 44,
+        "start_column": 9,
+        "end_line": 44,
+        "end_column": 14
+      },
+      "type": "assignment",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:43:19:51:1",
+      "name": "result"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts",
+        "start_line": 44,
+        "start_column": 9,
+        "end_line": 44,
+        "end_column": 14
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:43:19:51:1",
+      "name": "result"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts",
+        "start_line": 44,
+        "start_column": 17,
+        "end_line": 44,
+        "end_column": 17
+      },
+      "type": "type",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:43:19:51:1",
+      "name": "T",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:44:17:44:17:T",
+        "type_name": "T",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts",
+        "start_line": 44,
+        "start_column": 23,
+        "end_line": 44,
+        "end_column": 24
+      },
+      "type": "assignment",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:43:19:51:1",
+      "name": "[]"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts",
+        "start_line": 45,
+        "start_column": 14,
+        "end_line": 45,
+        "end_column": 17
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:45:3:49:3",
+      "name": "item"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts",
+        "start_line": 45,
+        "start_column": 22,
+        "end_line": 45,
+        "end_column": 24
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:45:3:49:3",
+      "name": "arr"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts",
+        "start_line": 46,
+        "start_column": 9,
+        "end_line": 46,
+        "end_column": 17
+      },
+      "type": "call",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:46:5:48:5",
+      "name": "predicate",
+      "call_type": "function"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts",
+        "start_line": 46,
+        "start_column": 9,
+        "end_line": 46,
+        "end_column": 17
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:46:5:48:5",
+      "name": "predicate"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts",
+        "start_line": 46,
+        "start_column": 19,
+        "end_line": 46,
+        "end_column": 22
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:46:5:48:5",
+      "name": "item"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts",
+        "start_line": 47,
+        "start_column": 7,
+        "end_line": 47,
+        "end_column": 23
+      },
+      "type": "call",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:46:5:48:5",
+      "name": "push",
+      "context": {
+        "receiver_location": {
+          "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts",
+          "start_line": 47,
+          "start_column": 7,
+          "end_line": 47,
+          "end_column": 12
+        },
+        "property_chain": [
+          "result",
+          "push"
+        ]
+      },
+      "call_type": "method",
+      "member_access": {
+        "access_type": "method",
+        "is_optional_chain": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts",
+        "start_line": 47,
+        "start_column": 7,
+        "end_line": 47,
+        "end_column": 12
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:46:5:48:5",
+      "name": "result"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts",
+        "start_line": 47,
+        "start_column": 7,
+        "end_line": 47,
+        "end_column": 17
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:46:5:48:5",
+      "name": "result.push"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts",
+        "start_line": 47,
+        "start_column": 7,
+        "end_line": 47,
+        "end_column": 12
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:46:5:48:5",
+      "name": "result"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts",
+        "start_line": 47,
+        "start_column": 7,
+        "end_line": 47,
+        "end_column": 17
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:46:5:48:5",
+      "name": "result.push"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts",
+        "start_line": 47,
+        "start_column": 7,
+        "end_line": 47,
+        "end_column": 12
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:46:5:48:5",
+      "name": "result"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts",
+        "start_line": 47,
+        "start_column": 7,
+        "end_line": 47,
+        "end_column": 23
+      },
+      "type": "call",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:46:5:48:5",
+      "name": "push",
+      "context": {
+        "receiver_location": {
+          "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts",
+          "start_line": 47,
+          "start_column": 7,
+          "end_line": 47,
+          "end_column": 12
+        },
+        "property_chain": [
+          "result",
+          "push"
+        ]
+      },
+      "call_type": "method",
+      "member_access": {
+        "access_type": "method",
+        "is_optional_chain": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts",
+        "start_line": 47,
+        "start_column": 7,
+        "end_line": 47,
+        "end_column": 12
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:46:5:48:5",
+      "name": "result"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts",
+        "start_line": 47,
+        "start_column": 7,
+        "end_line": 47,
+        "end_column": 12
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:46:5:48:5",
+      "name": "result"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts",
+        "start_line": 47,
+        "start_column": 14,
+        "end_line": 47,
+        "end_column": 17
+      },
+      "type": "call",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:46:5:48:5",
+      "name": "push",
+      "call_type": "function"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts",
+        "start_line": 47,
+        "start_column": 14,
+        "end_line": 47,
+        "end_column": 17
+      },
+      "type": "member_access",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:46:5:48:5",
+      "name": "push",
+      "member_access": {
+        "access_type": "property",
+        "is_optional_chain": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts",
+        "start_line": 47,
+        "start_column": 14,
+        "end_line": 47,
+        "end_column": 17
+      },
+      "type": "member_access",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:46:5:48:5",
+      "name": "push",
+      "member_access": {
+        "access_type": "property",
+        "is_optional_chain": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts",
+        "start_line": 47,
+        "start_column": 14,
+        "end_line": 47,
+        "end_column": 17
+      },
+      "type": "call",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:46:5:48:5",
+      "name": "push",
+      "call_type": "function"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts",
+        "start_line": 47,
+        "start_column": 19,
+        "end_line": 47,
+        "end_column": 22
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:46:5:48:5",
+      "name": "item"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts",
+        "start_line": 50,
+        "start_column": 3,
+        "end_line": 50,
+        "end_column": 16
+      },
+      "type": "return",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:43:19:51:1",
+      "name": "return result;"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts",
+        "start_line": 50,
+        "start_column": 10,
+        "end_line": 50,
+        "end_column": 15
+      },
+      "type": "return",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:43:19:51:1",
+      "name": "result"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts",
+        "start_line": 50,
+        "start_column": 10,
+        "end_line": 50,
+        "end_column": 15
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:43:19:51:1",
+      "name": "result"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts",
+        "start_line": 53,
+        "start_column": 10,
+        "end_line": 53,
+        "end_column": 17
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:1:1:54:0",
+      "name": "identity"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts",
+        "start_line": 53,
+        "start_column": 20,
+        "end_line": 53,
+        "end_column": 23
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:1:1:54:0",
+      "name": "pair"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts",
+        "start_line": 53,
+        "start_column": 26,
+        "end_line": 53,
+        "end_column": 36
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:1:1:54:0",
+      "name": "getProperty"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts",
+        "start_line": 53,
+        "start_column": 39,
+        "end_line": 53,
+        "end_column": 43
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:1:1:54:0",
+      "name": "merge"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts",
+        "start_line": 53,
+        "start_column": 46,
+        "end_line": 53,
+        "end_column": 50
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:1:1:54:0",
+      "name": "first"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts",
+        "start_line": 53,
+        "start_column": 53,
+        "end_line": 53,
+        "end_column": 56
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:1:1:54:0",
+      "name": "last"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts",
+        "start_line": 53,
+        "start_column": 59,
+        "end_line": 53,
+        "end_column": 61
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:1:1:54:0",
+      "name": "map"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts",
+        "start_line": 53,
+        "start_column": 64,
+        "end_line": 53,
+        "end_column": 69
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/generics/generic_functions.ts:1:1:54:0",
+      "name": "filter"
+    }
+  ]
+}

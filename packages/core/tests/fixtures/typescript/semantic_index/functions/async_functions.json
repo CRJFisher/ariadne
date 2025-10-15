@@ -1,0 +1,2745 @@
+{
+  "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts",
+  "language": "typescript",
+  "root_scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:1:1:47:0",
+  "scopes": {
+    "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:1:1:47:0": {
+      "id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:1:1:47:0",
+      "parent_id": null,
+      "name": null,
+      "type": "module",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts",
+        "start_line": 1,
+        "start_column": 1,
+        "end_line": 47,
+        "end_column": 0
+      },
+      "child_ids": [
+        "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:6:25:9:1",
+        "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:11:26:14:1",
+        "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:16:31:20:1",
+        "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:22:29:25:1",
+        "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:27:24:29:1",
+        "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:31:15:33:1",
+        "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:36:25:44:1"
+      ]
+    },
+    "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:6:25:9:1": {
+      "id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:6:25:9:1",
+      "parent_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:1:1:47:0",
+      "name": "async function fetchUser(id: number): Promise<object> {\n  await delay(100);\n  return { id, name: \"User\" + id };\n}",
+      "type": "function",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts",
+        "start_line": 6,
+        "start_column": 25,
+        "end_line": 9,
+        "end_column": 1
+      },
+      "child_ids": []
+    },
+    "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:11:26:14:1": {
+      "id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:11:26:14:1",
+      "parent_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:1:1:47:0",
+      "name": "async function fetchUsers(ids: number[]): Promise<object[]> {\n  const promises = ids.map((id) => fetchUser(id));\n  return Promise.all(promises);\n}",
+      "type": "function",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts",
+        "start_line": 11,
+        "start_column": 26,
+        "end_line": 14,
+        "end_column": 1
+      },
+      "child_ids": [
+        "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:12:28:12:48"
+      ]
+    },
+    "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:12:28:12:48": {
+      "id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:12:28:12:48",
+      "parent_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:11:26:14:1",
+      "name": "(id) => fetchUser(id)",
+      "type": "function",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts",
+        "start_line": 12,
+        "start_column": 28,
+        "end_line": 12,
+        "end_column": 48
+      },
+      "child_ids": []
+    },
+    "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:16:31:20:1": {
+      "id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:16:31:20:1",
+      "parent_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:1:1:47:0",
+      "name": "async function processUserData(userId: number): Promise<string> {\n  const user = await fetchUser(userId);\n  const processed = await transformUser(user);\n  return formatUserData(processed);\n}",
+      "type": "function",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts",
+        "start_line": 16,
+        "start_column": 31,
+        "end_line": 20,
+        "end_column": 1
+      },
+      "child_ids": []
+    },
+    "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:22:29:25:1": {
+      "id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:22:29:25:1",
+      "parent_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:1:1:47:0",
+      "name": "async function transformUser(user: object): Promise<object> {\n  await delay(50);\n  return { ...user, transformed: true };\n}",
+      "type": "function",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts",
+        "start_line": 22,
+        "start_column": 29,
+        "end_line": 25,
+        "end_column": 1
+      },
+      "child_ids": []
+    },
+    "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:27:24:29:1": {
+      "id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:27:24:29:1",
+      "parent_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:1:1:47:0",
+      "name": "function formatUserData(user: any): string {\n  return JSON.stringify(user);\n}",
+      "type": "function",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts",
+        "start_line": 27,
+        "start_column": 24,
+        "end_line": 29,
+        "end_column": 1
+      },
+      "child_ids": []
+    },
+    "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:31:15:33:1": {
+      "id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:31:15:33:1",
+      "parent_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:1:1:47:0",
+      "name": "function delay(ms: number): Promise<void> {\n  return new Promise((resolve) => setTimeout(resolve, ms));\n}",
+      "type": "function",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts",
+        "start_line": 31,
+        "start_column": 15,
+        "end_line": 33,
+        "end_column": 1
+      },
+      "child_ids": [
+        "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:32:22:32:57"
+      ]
+    },
+    "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:32:22:32:57": {
+      "id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:32:22:32:57",
+      "parent_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:31:15:33:1",
+      "name": "(resolve) => setTimeout(resolve, ms)",
+      "type": "function",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts",
+        "start_line": 32,
+        "start_column": 22,
+        "end_line": 32,
+        "end_column": 57
+      },
+      "child_ids": []
+    },
+    "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:36:25:44:1": {
+      "id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:36:25:44:1",
+      "parent_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:1:1:47:0",
+      "name": "async function safeFetch(id: number): Promise<object | null> {\n  try {\n    const data = await fetchUser(id);\n    return data;\n  } catch (error) {\n    console.error(\"Fetch failed:\", error);\n    return null;\n  }\n}",
+      "type": "function",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts",
+        "start_line": 36,
+        "start_column": 25,
+        "end_line": 44,
+        "end_column": 1
+      },
+      "child_ids": [
+        "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:37:3:43:3"
+      ]
+    },
+    "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:37:3:43:3": {
+      "id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:37:3:43:3",
+      "parent_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:36:25:44:1",
+      "name": "try {\n    const data = await fetchUser(id);\n    return data;\n  } catch (error) {\n    console.error(\"Fetch failed:\", error);\n    return null;\n  }",
+      "type": "block",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts",
+        "start_line": 37,
+        "start_column": 3,
+        "end_line": 43,
+        "end_column": 3
+      },
+      "child_ids": [
+        "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:40:5:43:3"
+      ]
+    },
+    "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:40:5:43:3": {
+      "id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:40:5:43:3",
+      "parent_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:37:3:43:3",
+      "name": "catch (error) {\n    console.error(\"Fetch failed:\", error);\n    return null;\n  }",
+      "type": "block",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts",
+        "start_line": 40,
+        "start_column": 5,
+        "end_line": 43,
+        "end_column": 3
+      },
+      "child_ids": []
+    }
+  },
+  "functions": {
+    "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:6:16:6:24:fetchUser": {
+      "kind": "function",
+      "symbol_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:6:16:6:24:fetchUser",
+      "name": "fetchUser",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts",
+        "start_line": 6,
+        "start_column": 16,
+        "end_line": 6,
+        "end_column": 24
+      },
+      "defining_scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:1:1:47:0",
+      "is_exported": true,
+      "export": {
+        "is_reexport": false
+      },
+      "signature": {
+        "parameters": [
+          {
+            "kind": "parameter",
+            "defining_scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:6:25:9:1",
+            "symbol_id": "parameter:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:6:26:6:27:id",
+            "name": "id",
+            "location": {
+              "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts",
+              "start_line": 6,
+              "start_column": 26,
+              "end_line": 6,
+              "end_column": 27
+            },
+            "type": "number",
+            "optional": false
+          }
+        ],
+        "return_type": "Promise<object>"
+      },
+      "return_type": "Promise<object>",
+      "body_scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:6:25:9:1"
+    },
+    "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:11:16:11:25:fetchUsers": {
+      "kind": "function",
+      "symbol_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:11:16:11:25:fetchUsers",
+      "name": "fetchUsers",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts",
+        "start_line": 11,
+        "start_column": 16,
+        "end_line": 11,
+        "end_column": 25
+      },
+      "defining_scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:1:1:47:0",
+      "is_exported": true,
+      "export": {
+        "is_reexport": false
+      },
+      "signature": {
+        "parameters": [
+          {
+            "kind": "parameter",
+            "defining_scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:11:26:14:1",
+            "symbol_id": "parameter:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:11:27:11:29:ids",
+            "name": "ids",
+            "location": {
+              "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts",
+              "start_line": 11,
+              "start_column": 27,
+              "end_line": 11,
+              "end_column": 29
+            },
+            "type": "number[]",
+            "optional": false
+          }
+        ],
+        "return_type": "Promise<object[]>"
+      },
+      "return_type": "Promise<object[]>",
+      "body_scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:11:26:14:1"
+    },
+    "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:16:16:16:30:processUserData": {
+      "kind": "function",
+      "symbol_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:16:16:16:30:processUserData",
+      "name": "processUserData",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts",
+        "start_line": 16,
+        "start_column": 16,
+        "end_line": 16,
+        "end_column": 30
+      },
+      "defining_scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:1:1:47:0",
+      "is_exported": true,
+      "export": {
+        "is_reexport": false
+      },
+      "signature": {
+        "parameters": [
+          {
+            "kind": "parameter",
+            "defining_scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:16:31:20:1",
+            "symbol_id": "parameter:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:16:32:16:37:userId",
+            "name": "userId",
+            "location": {
+              "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts",
+              "start_line": 16,
+              "start_column": 32,
+              "end_line": 16,
+              "end_column": 37
+            },
+            "type": "number",
+            "optional": false
+          }
+        ],
+        "return_type": "Promise<string>"
+      },
+      "return_type": "Promise<string>",
+      "body_scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:16:31:20:1"
+    },
+    "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:22:16:22:28:transformUser": {
+      "kind": "function",
+      "symbol_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:22:16:22:28:transformUser",
+      "name": "transformUser",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts",
+        "start_line": 22,
+        "start_column": 16,
+        "end_line": 22,
+        "end_column": 28
+      },
+      "defining_scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:1:1:47:0",
+      "is_exported": false,
+      "signature": {
+        "parameters": [
+          {
+            "kind": "parameter",
+            "defining_scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:22:29:25:1",
+            "symbol_id": "parameter:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:22:30:22:33:user",
+            "name": "user",
+            "location": {
+              "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts",
+              "start_line": 22,
+              "start_column": 30,
+              "end_line": 22,
+              "end_column": 33
+            },
+            "type": "object",
+            "optional": false
+          }
+        ],
+        "return_type": "Promise<object>"
+      },
+      "return_type": "Promise<object>",
+      "body_scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:16:31:20:1"
+    },
+    "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:27:10:27:23:formatUserData": {
+      "kind": "function",
+      "symbol_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:27:10:27:23:formatUserData",
+      "name": "formatUserData",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts",
+        "start_line": 27,
+        "start_column": 10,
+        "end_line": 27,
+        "end_column": 23
+      },
+      "defining_scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:1:1:47:0",
+      "is_exported": false,
+      "signature": {
+        "parameters": [
+          {
+            "kind": "parameter",
+            "defining_scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:27:24:29:1",
+            "symbol_id": "parameter:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:27:25:27:28:user",
+            "name": "user",
+            "location": {
+              "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts",
+              "start_line": 27,
+              "start_column": 25,
+              "end_line": 27,
+              "end_column": 28
+            },
+            "type": "any",
+            "optional": false
+          }
+        ],
+        "return_type": "string"
+      },
+      "return_type": "string",
+      "body_scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:27:24:29:1"
+    },
+    "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:31:10:31:14:delay": {
+      "kind": "function",
+      "symbol_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:31:10:31:14:delay",
+      "name": "delay",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts",
+        "start_line": 31,
+        "start_column": 10,
+        "end_line": 31,
+        "end_column": 14
+      },
+      "defining_scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:1:1:47:0",
+      "is_exported": false,
+      "signature": {
+        "parameters": [
+          {
+            "kind": "parameter",
+            "defining_scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:31:15:33:1",
+            "symbol_id": "parameter:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:31:16:31:17:ms",
+            "name": "ms",
+            "location": {
+              "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts",
+              "start_line": 31,
+              "start_column": 16,
+              "end_line": 31,
+              "end_column": 17
+            },
+            "type": "number",
+            "optional": false
+          }
+        ],
+        "return_type": "Promise<void>"
+      },
+      "return_type": "Promise<void>",
+      "body_scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:22:29:25:1"
+    },
+    "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:36:16:36:24:safeFetch": {
+      "kind": "function",
+      "symbol_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:36:16:36:24:safeFetch",
+      "name": "safeFetch",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts",
+        "start_line": 36,
+        "start_column": 16,
+        "end_line": 36,
+        "end_column": 24
+      },
+      "defining_scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:1:1:47:0",
+      "is_exported": true,
+      "export": {
+        "is_reexport": false
+      },
+      "signature": {
+        "parameters": [
+          {
+            "kind": "parameter",
+            "defining_scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:36:25:44:1",
+            "symbol_id": "parameter:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:36:26:36:27:id",
+            "name": "id",
+            "location": {
+              "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts",
+              "start_line": 36,
+              "start_column": 26,
+              "end_line": 36,
+              "end_column": 27
+            },
+            "type": "number",
+            "optional": false
+          },
+          {
+            "kind": "parameter",
+            "defining_scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:40:5:43:3",
+            "symbol_id": "parameter:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:40:12:40:16:error",
+            "name": "error",
+            "location": {
+              "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts",
+              "start_line": 40,
+              "start_column": 12,
+              "end_line": 40,
+              "end_column": 16
+            },
+            "optional": false
+          }
+        ],
+        "return_type": "Promise<object | null>"
+      },
+      "return_type": "Promise<object | null>",
+      "body_scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:36:25:44:1"
+    }
+  },
+  "classes": {},
+  "variables": {
+    "variable:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:12:9:12:16:promises": {
+      "kind": "constant",
+      "symbol_id": "variable:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:12:9:12:16:promises",
+      "name": "promises",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts",
+        "start_line": 12,
+        "start_column": 9,
+        "end_line": 12,
+        "end_column": 16
+      },
+      "defining_scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:11:26:14:1",
+      "is_exported": false
+    },
+    "variable:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:17:9:17:12:user": {
+      "kind": "constant",
+      "symbol_id": "variable:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:17:9:17:12:user",
+      "name": "user",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts",
+        "start_line": 17,
+        "start_column": 9,
+        "end_line": 17,
+        "end_column": 12
+      },
+      "defining_scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:16:31:20:1",
+      "is_exported": false
+    },
+    "variable:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:18:9:18:17:processed": {
+      "kind": "constant",
+      "symbol_id": "variable:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:18:9:18:17:processed",
+      "name": "processed",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts",
+        "start_line": 18,
+        "start_column": 9,
+        "end_line": 18,
+        "end_column": 17
+      },
+      "defining_scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:16:31:20:1",
+      "is_exported": false
+    },
+    "variable:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:38:11:38:14:data": {
+      "kind": "constant",
+      "symbol_id": "variable:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:38:11:38:14:data",
+      "name": "data",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts",
+        "start_line": 38,
+        "start_column": 11,
+        "end_line": 38,
+        "end_column": 14
+      },
+      "defining_scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:37:3:43:3",
+      "is_exported": false
+    }
+  },
+  "interfaces": {},
+  "enums": {},
+  "namespaces": {},
+  "types": {},
+  "imported_symbols": {},
+  "references": [
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts",
+        "start_line": 6,
+        "start_column": 16,
+        "end_line": 6,
+        "end_column": 24
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:1:1:47:0",
+      "name": "fetchUser"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts",
+        "start_line": 6,
+        "start_column": 26,
+        "end_line": 6,
+        "end_column": 27
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:6:25:9:1",
+      "name": "id"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts",
+        "start_line": 6,
+        "start_column": 39,
+        "end_line": 6,
+        "end_column": 45
+      },
+      "type": "type",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:6:25:9:1",
+      "name": "Promise",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:6:39:6:45:Promise",
+        "type_name": "Promise",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts",
+        "start_line": 6,
+        "start_column": 39,
+        "end_line": 6,
+        "end_column": 53
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:6:25:9:1",
+      "name": "Promise<object>",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:6:39:6:53:Promise",
+        "type_name": "Promise",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts",
+        "start_line": 6,
+        "start_column": 39,
+        "end_line": 6,
+        "end_column": 45
+      },
+      "type": "type",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:6:25:9:1",
+      "name": "Promise",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:6:39:6:45:Promise",
+        "type_name": "Promise",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts",
+        "start_line": 6,
+        "start_column": 46,
+        "end_line": 6,
+        "end_column": 53
+      },
+      "type": "type",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:6:25:9:1",
+      "name": "<object>"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts",
+        "start_line": 7,
+        "start_column": 9,
+        "end_line": 7,
+        "end_column": 13
+      },
+      "type": "call",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:6:25:9:1",
+      "name": "delay",
+      "call_type": "function"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts",
+        "start_line": 7,
+        "start_column": 9,
+        "end_line": 7,
+        "end_column": 13
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:6:25:9:1",
+      "name": "delay"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts",
+        "start_line": 8,
+        "start_column": 3,
+        "end_line": 8,
+        "end_column": 35
+      },
+      "type": "return",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:6:25:9:1",
+      "name": "return { id, name: \"User\" + id };"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts",
+        "start_line": 8,
+        "start_column": 10,
+        "end_line": 8,
+        "end_column": 34
+      },
+      "type": "return",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:6:25:9:1",
+      "name": "{ id, name: \"User\" + id }"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts",
+        "start_line": 8,
+        "start_column": 31,
+        "end_line": 8,
+        "end_column": 32
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:6:25:9:1",
+      "name": "id"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts",
+        "start_line": 11,
+        "start_column": 16,
+        "end_line": 11,
+        "end_column": 25
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:1:1:47:0",
+      "name": "fetchUsers"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts",
+        "start_line": 11,
+        "start_column": 27,
+        "end_line": 11,
+        "end_column": 29
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:11:26:14:1",
+      "name": "ids"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts",
+        "start_line": 11,
+        "start_column": 43,
+        "end_line": 11,
+        "end_column": 49
+      },
+      "type": "type",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:11:26:14:1",
+      "name": "Promise",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:11:43:11:49:Promise",
+        "type_name": "Promise",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts",
+        "start_line": 11,
+        "start_column": 43,
+        "end_line": 11,
+        "end_column": 59
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:11:26:14:1",
+      "name": "Promise<object[]>",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:11:43:11:59:Promise",
+        "type_name": "Promise",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts",
+        "start_line": 11,
+        "start_column": 43,
+        "end_line": 11,
+        "end_column": 49
+      },
+      "type": "type",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:11:26:14:1",
+      "name": "Promise",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:11:43:11:49:Promise",
+        "type_name": "Promise",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts",
+        "start_line": 11,
+        "start_column": 50,
+        "end_line": 11,
+        "end_column": 59
+      },
+      "type": "type",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:11:26:14:1",
+      "name": "<object[]>"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts",
+        "start_line": 12,
+        "start_column": 9,
+        "end_line": 12,
+        "end_column": 49
+      },
+      "type": "assignment",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:11:26:14:1",
+      "name": "promises = ids.map((id) => fetchUser(id))"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts",
+        "start_line": 12,
+        "start_column": 9,
+        "end_line": 12,
+        "end_column": 16
+      },
+      "type": "assignment",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:11:26:14:1",
+      "name": "promises"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts",
+        "start_line": 12,
+        "start_column": 9,
+        "end_line": 12,
+        "end_column": 16
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:11:26:14:1",
+      "name": "promises"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts",
+        "start_line": 12,
+        "start_column": 20,
+        "end_line": 12,
+        "end_column": 49
+      },
+      "type": "assignment",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:11:26:14:1",
+      "name": "ids.map((id) => fetchUser(id))"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts",
+        "start_line": 12,
+        "start_column": 20,
+        "end_line": 12,
+        "end_column": 49
+      },
+      "type": "call",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:11:26:14:1",
+      "name": "map",
+      "context": {
+        "receiver_location": {
+          "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts",
+          "start_line": 12,
+          "start_column": 20,
+          "end_line": 12,
+          "end_column": 22
+        },
+        "property_chain": [
+          "ids",
+          "map"
+        ]
+      },
+      "call_type": "method",
+      "member_access": {
+        "access_type": "method",
+        "is_optional_chain": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts",
+        "start_line": 12,
+        "start_column": 20,
+        "end_line": 12,
+        "end_column": 22
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:11:26:14:1",
+      "name": "ids"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts",
+        "start_line": 12,
+        "start_column": 20,
+        "end_line": 12,
+        "end_column": 26
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:11:26:14:1",
+      "name": "ids.map"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts",
+        "start_line": 12,
+        "start_column": 20,
+        "end_line": 12,
+        "end_column": 22
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:11:26:14:1",
+      "name": "ids"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts",
+        "start_line": 12,
+        "start_column": 20,
+        "end_line": 12,
+        "end_column": 26
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:11:26:14:1",
+      "name": "ids.map"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts",
+        "start_line": 12,
+        "start_column": 20,
+        "end_line": 12,
+        "end_column": 22
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:11:26:14:1",
+      "name": "ids"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts",
+        "start_line": 12,
+        "start_column": 20,
+        "end_line": 12,
+        "end_column": 49
+      },
+      "type": "call",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:11:26:14:1",
+      "name": "map",
+      "context": {
+        "receiver_location": {
+          "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts",
+          "start_line": 12,
+          "start_column": 20,
+          "end_line": 12,
+          "end_column": 22
+        },
+        "property_chain": [
+          "ids",
+          "map"
+        ]
+      },
+      "call_type": "method",
+      "member_access": {
+        "access_type": "method",
+        "is_optional_chain": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts",
+        "start_line": 12,
+        "start_column": 20,
+        "end_line": 12,
+        "end_column": 22
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:11:26:14:1",
+      "name": "ids"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts",
+        "start_line": 12,
+        "start_column": 20,
+        "end_line": 12,
+        "end_column": 22
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:11:26:14:1",
+      "name": "ids"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts",
+        "start_line": 12,
+        "start_column": 24,
+        "end_line": 12,
+        "end_column": 26
+      },
+      "type": "call",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:11:26:14:1",
+      "name": "map",
+      "call_type": "function"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts",
+        "start_line": 12,
+        "start_column": 24,
+        "end_line": 12,
+        "end_column": 26
+      },
+      "type": "member_access",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:11:26:14:1",
+      "name": "map",
+      "member_access": {
+        "access_type": "property",
+        "is_optional_chain": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts",
+        "start_line": 12,
+        "start_column": 24,
+        "end_line": 12,
+        "end_column": 26
+      },
+      "type": "member_access",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:11:26:14:1",
+      "name": "map",
+      "member_access": {
+        "access_type": "property",
+        "is_optional_chain": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts",
+        "start_line": 12,
+        "start_column": 24,
+        "end_line": 12,
+        "end_column": 26
+      },
+      "type": "call",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:11:26:14:1",
+      "name": "map",
+      "call_type": "function"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts",
+        "start_line": 12,
+        "start_column": 29,
+        "end_line": 12,
+        "end_column": 30
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:12:28:12:48",
+      "name": "id"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts",
+        "start_line": 12,
+        "start_column": 36,
+        "end_line": 12,
+        "end_column": 44
+      },
+      "type": "call",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:12:28:12:48",
+      "name": "fetchUser",
+      "call_type": "function"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts",
+        "start_line": 12,
+        "start_column": 36,
+        "end_line": 12,
+        "end_column": 44
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:12:28:12:48",
+      "name": "fetchUser"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts",
+        "start_line": 12,
+        "start_column": 46,
+        "end_line": 12,
+        "end_column": 47
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:12:28:12:48",
+      "name": "id"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts",
+        "start_line": 13,
+        "start_column": 3,
+        "end_line": 13,
+        "end_column": 31
+      },
+      "type": "return",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:11:26:14:1",
+      "name": "return Promise.all(promises);"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts",
+        "start_line": 13,
+        "start_column": 10,
+        "end_line": 13,
+        "end_column": 30
+      },
+      "type": "call",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:11:26:14:1",
+      "name": "all",
+      "context": {
+        "receiver_location": {
+          "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts",
+          "start_line": 13,
+          "start_column": 10,
+          "end_line": 13,
+          "end_column": 16
+        },
+        "property_chain": [
+          "Promise",
+          "all"
+        ]
+      },
+      "call_type": "method",
+      "member_access": {
+        "access_type": "method",
+        "is_optional_chain": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts",
+        "start_line": 13,
+        "start_column": 10,
+        "end_line": 13,
+        "end_column": 16
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:11:26:14:1",
+      "name": "Promise"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts",
+        "start_line": 13,
+        "start_column": 10,
+        "end_line": 13,
+        "end_column": 20
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:11:26:14:1",
+      "name": "Promise.all"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts",
+        "start_line": 13,
+        "start_column": 10,
+        "end_line": 13,
+        "end_column": 16
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:11:26:14:1",
+      "name": "Promise"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts",
+        "start_line": 13,
+        "start_column": 10,
+        "end_line": 13,
+        "end_column": 20
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:11:26:14:1",
+      "name": "Promise.all"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts",
+        "start_line": 13,
+        "start_column": 10,
+        "end_line": 13,
+        "end_column": 16
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:11:26:14:1",
+      "name": "Promise"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts",
+        "start_line": 13,
+        "start_column": 10,
+        "end_line": 13,
+        "end_column": 30
+      },
+      "type": "call",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:11:26:14:1",
+      "name": "all",
+      "context": {
+        "receiver_location": {
+          "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts",
+          "start_line": 13,
+          "start_column": 10,
+          "end_line": 13,
+          "end_column": 16
+        },
+        "property_chain": [
+          "Promise",
+          "all"
+        ]
+      },
+      "call_type": "method",
+      "member_access": {
+        "access_type": "method",
+        "is_optional_chain": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts",
+        "start_line": 13,
+        "start_column": 10,
+        "end_line": 13,
+        "end_column": 16
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:11:26:14:1",
+      "name": "Promise"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts",
+        "start_line": 13,
+        "start_column": 10,
+        "end_line": 13,
+        "end_column": 30
+      },
+      "type": "return",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:11:26:14:1",
+      "name": "Promise.all(promises)"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts",
+        "start_line": 13,
+        "start_column": 10,
+        "end_line": 13,
+        "end_column": 16
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:11:26:14:1",
+      "name": "Promise"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts",
+        "start_line": 13,
+        "start_column": 18,
+        "end_line": 13,
+        "end_column": 20
+      },
+      "type": "call",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:11:26:14:1",
+      "name": "all",
+      "call_type": "function"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts",
+        "start_line": 13,
+        "start_column": 18,
+        "end_line": 13,
+        "end_column": 20
+      },
+      "type": "member_access",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:11:26:14:1",
+      "name": "all",
+      "member_access": {
+        "access_type": "property",
+        "is_optional_chain": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts",
+        "start_line": 13,
+        "start_column": 18,
+        "end_line": 13,
+        "end_column": 20
+      },
+      "type": "member_access",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:11:26:14:1",
+      "name": "all",
+      "member_access": {
+        "access_type": "property",
+        "is_optional_chain": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts",
+        "start_line": 13,
+        "start_column": 22,
+        "end_line": 13,
+        "end_column": 29
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:11:26:14:1",
+      "name": "promises"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts",
+        "start_line": 16,
+        "start_column": 16,
+        "end_line": 16,
+        "end_column": 30
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:1:1:47:0",
+      "name": "processUserData"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts",
+        "start_line": 16,
+        "start_column": 32,
+        "end_line": 16,
+        "end_column": 37
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:16:31:20:1",
+      "name": "userId"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts",
+        "start_line": 16,
+        "start_column": 49,
+        "end_line": 16,
+        "end_column": 55
+      },
+      "type": "type",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:16:31:20:1",
+      "name": "Promise",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:16:49:16:55:Promise",
+        "type_name": "Promise",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts",
+        "start_line": 16,
+        "start_column": 49,
+        "end_line": 16,
+        "end_column": 63
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:16:31:20:1",
+      "name": "Promise<string>",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:16:49:16:63:Promise",
+        "type_name": "Promise",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts",
+        "start_line": 16,
+        "start_column": 49,
+        "end_line": 16,
+        "end_column": 55
+      },
+      "type": "type",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:16:31:20:1",
+      "name": "Promise",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:16:49:16:55:Promise",
+        "type_name": "Promise",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts",
+        "start_line": 16,
+        "start_column": 56,
+        "end_line": 16,
+        "end_column": 63
+      },
+      "type": "type",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:16:31:20:1",
+      "name": "<string>"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts",
+        "start_line": 17,
+        "start_column": 9,
+        "end_line": 17,
+        "end_column": 38
+      },
+      "type": "assignment",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:16:31:20:1",
+      "name": "user = await fetchUser(userId)"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts",
+        "start_line": 17,
+        "start_column": 9,
+        "end_line": 17,
+        "end_column": 12
+      },
+      "type": "assignment",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:16:31:20:1",
+      "name": "user"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts",
+        "start_line": 17,
+        "start_column": 9,
+        "end_line": 17,
+        "end_column": 12
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:16:31:20:1",
+      "name": "user"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts",
+        "start_line": 17,
+        "start_column": 16,
+        "end_line": 17,
+        "end_column": 38
+      },
+      "type": "assignment",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:16:31:20:1",
+      "name": "await fetchUser(userId)"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts",
+        "start_line": 17,
+        "start_column": 22,
+        "end_line": 17,
+        "end_column": 30
+      },
+      "type": "call",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:16:31:20:1",
+      "name": "fetchUser",
+      "call_type": "function"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts",
+        "start_line": 17,
+        "start_column": 22,
+        "end_line": 17,
+        "end_column": 30
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:16:31:20:1",
+      "name": "fetchUser"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts",
+        "start_line": 17,
+        "start_column": 32,
+        "end_line": 17,
+        "end_column": 37
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:16:31:20:1",
+      "name": "userId"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts",
+        "start_line": 18,
+        "start_column": 9,
+        "end_line": 18,
+        "end_column": 45
+      },
+      "type": "assignment",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:16:31:20:1",
+      "name": "processed = await transformUser(user)"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts",
+        "start_line": 18,
+        "start_column": 9,
+        "end_line": 18,
+        "end_column": 17
+      },
+      "type": "assignment",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:16:31:20:1",
+      "name": "processed"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts",
+        "start_line": 18,
+        "start_column": 9,
+        "end_line": 18,
+        "end_column": 17
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:16:31:20:1",
+      "name": "processed"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts",
+        "start_line": 18,
+        "start_column": 21,
+        "end_line": 18,
+        "end_column": 45
+      },
+      "type": "assignment",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:16:31:20:1",
+      "name": "await transformUser(user)"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts",
+        "start_line": 18,
+        "start_column": 27,
+        "end_line": 18,
+        "end_column": 39
+      },
+      "type": "call",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:16:31:20:1",
+      "name": "transformUser",
+      "call_type": "function"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts",
+        "start_line": 18,
+        "start_column": 27,
+        "end_line": 18,
+        "end_column": 39
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:16:31:20:1",
+      "name": "transformUser"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts",
+        "start_line": 18,
+        "start_column": 41,
+        "end_line": 18,
+        "end_column": 44
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:16:31:20:1",
+      "name": "user"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts",
+        "start_line": 19,
+        "start_column": 3,
+        "end_line": 19,
+        "end_column": 35
+      },
+      "type": "return",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:16:31:20:1",
+      "name": "return formatUserData(processed);"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts",
+        "start_line": 19,
+        "start_column": 10,
+        "end_line": 19,
+        "end_column": 23
+      },
+      "type": "call",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:16:31:20:1",
+      "name": "formatUserData",
+      "call_type": "function"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts",
+        "start_line": 19,
+        "start_column": 10,
+        "end_line": 19,
+        "end_column": 34
+      },
+      "type": "return",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:16:31:20:1",
+      "name": "formatUserData"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts",
+        "start_line": 19,
+        "start_column": 10,
+        "end_line": 19,
+        "end_column": 23
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:16:31:20:1",
+      "name": "formatUserData"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts",
+        "start_line": 19,
+        "start_column": 25,
+        "end_line": 19,
+        "end_column": 33
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:16:31:20:1",
+      "name": "processed"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts",
+        "start_line": 22,
+        "start_column": 16,
+        "end_line": 22,
+        "end_column": 28
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:1:1:47:0",
+      "name": "transformUser"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts",
+        "start_line": 22,
+        "start_column": 30,
+        "end_line": 22,
+        "end_column": 33
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:22:29:25:1",
+      "name": "user"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts",
+        "start_line": 22,
+        "start_column": 45,
+        "end_line": 22,
+        "end_column": 51
+      },
+      "type": "type",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:22:29:25:1",
+      "name": "Promise",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:22:45:22:51:Promise",
+        "type_name": "Promise",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts",
+        "start_line": 22,
+        "start_column": 45,
+        "end_line": 22,
+        "end_column": 59
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:22:29:25:1",
+      "name": "Promise<object>",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:22:45:22:59:Promise",
+        "type_name": "Promise",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts",
+        "start_line": 22,
+        "start_column": 45,
+        "end_line": 22,
+        "end_column": 51
+      },
+      "type": "type",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:22:29:25:1",
+      "name": "Promise",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:22:45:22:51:Promise",
+        "type_name": "Promise",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts",
+        "start_line": 22,
+        "start_column": 52,
+        "end_line": 22,
+        "end_column": 59
+      },
+      "type": "type",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:22:29:25:1",
+      "name": "<object>"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts",
+        "start_line": 23,
+        "start_column": 9,
+        "end_line": 23,
+        "end_column": 13
+      },
+      "type": "call",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:22:29:25:1",
+      "name": "delay",
+      "call_type": "function"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts",
+        "start_line": 23,
+        "start_column": 9,
+        "end_line": 23,
+        "end_column": 13
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:22:29:25:1",
+      "name": "delay"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts",
+        "start_line": 24,
+        "start_column": 3,
+        "end_line": 24,
+        "end_column": 40
+      },
+      "type": "return",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:22:29:25:1",
+      "name": "return { ...user, transformed: true };"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts",
+        "start_line": 24,
+        "start_column": 10,
+        "end_line": 24,
+        "end_column": 39
+      },
+      "type": "return",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:22:29:25:1",
+      "name": "{ ...user, transformed: true }"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts",
+        "start_line": 24,
+        "start_column": 15,
+        "end_line": 24,
+        "end_column": 18
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:22:29:25:1",
+      "name": "user"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts",
+        "start_line": 27,
+        "start_column": 10,
+        "end_line": 27,
+        "end_column": 23
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:1:1:47:0",
+      "name": "formatUserData"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts",
+        "start_line": 27,
+        "start_column": 25,
+        "end_line": 27,
+        "end_column": 28
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:27:24:29:1",
+      "name": "user"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts",
+        "start_line": 28,
+        "start_column": 3,
+        "end_line": 28,
+        "end_column": 30
+      },
+      "type": "return",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:27:24:29:1",
+      "name": "return JSON.stringify(user);"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts",
+        "start_line": 28,
+        "start_column": 10,
+        "end_line": 28,
+        "end_column": 29
+      },
+      "type": "call",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:27:24:29:1",
+      "name": "stringify",
+      "context": {
+        "receiver_location": {
+          "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts",
+          "start_line": 28,
+          "start_column": 10,
+          "end_line": 28,
+          "end_column": 13
+        },
+        "property_chain": [
+          "JSON",
+          "stringify"
+        ]
+      },
+      "call_type": "method",
+      "member_access": {
+        "access_type": "method",
+        "is_optional_chain": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts",
+        "start_line": 28,
+        "start_column": 10,
+        "end_line": 28,
+        "end_column": 13
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:27:24:29:1",
+      "name": "JSON"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts",
+        "start_line": 28,
+        "start_column": 10,
+        "end_line": 28,
+        "end_column": 23
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:27:24:29:1",
+      "name": "JSON.stringify"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts",
+        "start_line": 28,
+        "start_column": 10,
+        "end_line": 28,
+        "end_column": 13
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:27:24:29:1",
+      "name": "JSON"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts",
+        "start_line": 28,
+        "start_column": 10,
+        "end_line": 28,
+        "end_column": 23
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:27:24:29:1",
+      "name": "JSON.stringify"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts",
+        "start_line": 28,
+        "start_column": 10,
+        "end_line": 28,
+        "end_column": 13
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:27:24:29:1",
+      "name": "JSON"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts",
+        "start_line": 28,
+        "start_column": 10,
+        "end_line": 28,
+        "end_column": 29
+      },
+      "type": "call",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:27:24:29:1",
+      "name": "stringify",
+      "context": {
+        "receiver_location": {
+          "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts",
+          "start_line": 28,
+          "start_column": 10,
+          "end_line": 28,
+          "end_column": 13
+        },
+        "property_chain": [
+          "JSON",
+          "stringify"
+        ]
+      },
+      "call_type": "method",
+      "member_access": {
+        "access_type": "method",
+        "is_optional_chain": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts",
+        "start_line": 28,
+        "start_column": 10,
+        "end_line": 28,
+        "end_column": 13
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:27:24:29:1",
+      "name": "JSON"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts",
+        "start_line": 28,
+        "start_column": 10,
+        "end_line": 28,
+        "end_column": 29
+      },
+      "type": "return",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:27:24:29:1",
+      "name": "JSON.stringify(user)"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts",
+        "start_line": 28,
+        "start_column": 10,
+        "end_line": 28,
+        "end_column": 13
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:27:24:29:1",
+      "name": "JSON"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts",
+        "start_line": 28,
+        "start_column": 15,
+        "end_line": 28,
+        "end_column": 23
+      },
+      "type": "call",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:27:24:29:1",
+      "name": "stringify",
+      "call_type": "function"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts",
+        "start_line": 28,
+        "start_column": 15,
+        "end_line": 28,
+        "end_column": 23
+      },
+      "type": "member_access",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:27:24:29:1",
+      "name": "stringify",
+      "member_access": {
+        "access_type": "property",
+        "is_optional_chain": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts",
+        "start_line": 28,
+        "start_column": 15,
+        "end_line": 28,
+        "end_column": 23
+      },
+      "type": "member_access",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:27:24:29:1",
+      "name": "stringify",
+      "member_access": {
+        "access_type": "property",
+        "is_optional_chain": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts",
+        "start_line": 28,
+        "start_column": 25,
+        "end_line": 28,
+        "end_column": 28
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:27:24:29:1",
+      "name": "user"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts",
+        "start_line": 31,
+        "start_column": 10,
+        "end_line": 31,
+        "end_column": 14
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:1:1:47:0",
+      "name": "delay"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts",
+        "start_line": 31,
+        "start_column": 16,
+        "end_line": 31,
+        "end_column": 17
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:31:15:33:1",
+      "name": "ms"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts",
+        "start_line": 31,
+        "start_column": 29,
+        "end_line": 31,
+        "end_column": 35
+      },
+      "type": "type",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:31:15:33:1",
+      "name": "Promise",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:31:29:31:35:Promise",
+        "type_name": "Promise",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts",
+        "start_line": 31,
+        "start_column": 29,
+        "end_line": 31,
+        "end_column": 41
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:31:15:33:1",
+      "name": "Promise<void>",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:31:29:31:41:Promise",
+        "type_name": "Promise",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts",
+        "start_line": 31,
+        "start_column": 29,
+        "end_line": 31,
+        "end_column": 35
+      },
+      "type": "type",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:31:15:33:1",
+      "name": "Promise",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:31:29:31:35:Promise",
+        "type_name": "Promise",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts",
+        "start_line": 31,
+        "start_column": 36,
+        "end_line": 31,
+        "end_column": 41
+      },
+      "type": "type",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:31:15:33:1",
+      "name": "<void>"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts",
+        "start_line": 32,
+        "start_column": 3,
+        "end_line": 32,
+        "end_column": 59
+      },
+      "type": "return",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:31:15:33:1",
+      "name": "return new Promise((resolve) => setTimeout(resolve, ms));"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts",
+        "start_line": 32,
+        "start_column": 10,
+        "end_line": 32,
+        "end_column": 58
+      },
+      "type": "call",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:31:15:33:1",
+      "name": "Promise",
+      "call_type": "function"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts",
+        "start_line": 32,
+        "start_column": 10,
+        "end_line": 32,
+        "end_column": 58
+      },
+      "type": "return",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:31:15:33:1",
+      "name": "Promise"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts",
+        "start_line": 32,
+        "start_column": 14,
+        "end_line": 32,
+        "end_column": 20
+      },
+      "type": "construct",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:31:15:33:1",
+      "name": "Promise",
+      "call_type": "constructor"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts",
+        "start_line": 32,
+        "start_column": 14,
+        "end_line": 32,
+        "end_column": 20
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:31:15:33:1",
+      "name": "Promise"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts",
+        "start_line": 32,
+        "start_column": 23,
+        "end_line": 32,
+        "end_column": 29
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:32:22:32:57",
+      "name": "resolve"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts",
+        "start_line": 32,
+        "start_column": 35,
+        "end_line": 32,
+        "end_column": 44
+      },
+      "type": "call",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:32:22:32:57",
+      "name": "setTimeout",
+      "call_type": "function"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts",
+        "start_line": 32,
+        "start_column": 35,
+        "end_line": 32,
+        "end_column": 44
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:32:22:32:57",
+      "name": "setTimeout"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts",
+        "start_line": 32,
+        "start_column": 46,
+        "end_line": 32,
+        "end_column": 52
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:32:22:32:57",
+      "name": "resolve"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts",
+        "start_line": 32,
+        "start_column": 55,
+        "end_line": 32,
+        "end_column": 56
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:32:22:32:57",
+      "name": "ms"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts",
+        "start_line": 36,
+        "start_column": 16,
+        "end_line": 36,
+        "end_column": 24
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:1:1:47:0",
+      "name": "safeFetch"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts",
+        "start_line": 36,
+        "start_column": 26,
+        "end_line": 36,
+        "end_column": 27
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:36:25:44:1",
+      "name": "id"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts",
+        "start_line": 36,
+        "start_column": 39,
+        "end_line": 36,
+        "end_column": 45
+      },
+      "type": "type",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:36:25:44:1",
+      "name": "Promise",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:36:39:36:45:Promise",
+        "type_name": "Promise",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts",
+        "start_line": 36,
+        "start_column": 39,
+        "end_line": 36,
+        "end_column": 60
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:36:25:44:1",
+      "name": "Promise<object | null>",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:36:39:36:60:Promise",
+        "type_name": "Promise",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts",
+        "start_line": 36,
+        "start_column": 39,
+        "end_line": 36,
+        "end_column": 45
+      },
+      "type": "type",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:36:25:44:1",
+      "name": "Promise",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:36:39:36:45:Promise",
+        "type_name": "Promise",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts",
+        "start_line": 36,
+        "start_column": 46,
+        "end_line": 36,
+        "end_column": 60
+      },
+      "type": "type",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:36:25:44:1",
+      "name": "<object | null>"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts",
+        "start_line": 38,
+        "start_column": 11,
+        "end_line": 38,
+        "end_column": 36
+      },
+      "type": "assignment",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:37:3:43:3",
+      "name": "data = await fetchUser(id)"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts",
+        "start_line": 38,
+        "start_column": 11,
+        "end_line": 38,
+        "end_column": 14
+      },
+      "type": "assignment",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:37:3:43:3",
+      "name": "data"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts",
+        "start_line": 38,
+        "start_column": 11,
+        "end_line": 38,
+        "end_column": 14
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:37:3:43:3",
+      "name": "data"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts",
+        "start_line": 38,
+        "start_column": 18,
+        "end_line": 38,
+        "end_column": 36
+      },
+      "type": "assignment",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:37:3:43:3",
+      "name": "await fetchUser(id)"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts",
+        "start_line": 38,
+        "start_column": 24,
+        "end_line": 38,
+        "end_column": 32
+      },
+      "type": "call",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:37:3:43:3",
+      "name": "fetchUser",
+      "call_type": "function"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts",
+        "start_line": 38,
+        "start_column": 24,
+        "end_line": 38,
+        "end_column": 32
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:37:3:43:3",
+      "name": "fetchUser"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts",
+        "start_line": 38,
+        "start_column": 34,
+        "end_line": 38,
+        "end_column": 35
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:37:3:43:3",
+      "name": "id"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts",
+        "start_line": 39,
+        "start_column": 5,
+        "end_line": 39,
+        "end_column": 16
+      },
+      "type": "return",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:37:3:43:3",
+      "name": "return data;"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts",
+        "start_line": 39,
+        "start_column": 12,
+        "end_line": 39,
+        "end_column": 15
+      },
+      "type": "return",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:37:3:43:3",
+      "name": "data"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts",
+        "start_line": 39,
+        "start_column": 12,
+        "end_line": 39,
+        "end_column": 15
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:37:3:43:3",
+      "name": "data"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts",
+        "start_line": 40,
+        "start_column": 12,
+        "end_line": 40,
+        "end_column": 16
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:40:5:43:3",
+      "name": "error"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts",
+        "start_line": 41,
+        "start_column": 5,
+        "end_line": 41,
+        "end_column": 41
+      },
+      "type": "call",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:40:5:43:3",
+      "name": "error",
+      "context": {
+        "receiver_location": {
+          "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts",
+          "start_line": 41,
+          "start_column": 5,
+          "end_line": 41,
+          "end_column": 11
+        },
+        "property_chain": [
+          "console",
+          "error"
+        ]
+      },
+      "call_type": "method",
+      "member_access": {
+        "access_type": "method",
+        "is_optional_chain": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts",
+        "start_line": 41,
+        "start_column": 5,
+        "end_line": 41,
+        "end_column": 11
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:40:5:43:3",
+      "name": "console"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts",
+        "start_line": 41,
+        "start_column": 5,
+        "end_line": 41,
+        "end_column": 17
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:40:5:43:3",
+      "name": "console.error"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts",
+        "start_line": 41,
+        "start_column": 5,
+        "end_line": 41,
+        "end_column": 11
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:40:5:43:3",
+      "name": "console"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts",
+        "start_line": 41,
+        "start_column": 5,
+        "end_line": 41,
+        "end_column": 17
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:40:5:43:3",
+      "name": "console.error"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts",
+        "start_line": 41,
+        "start_column": 5,
+        "end_line": 41,
+        "end_column": 11
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:40:5:43:3",
+      "name": "console"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts",
+        "start_line": 41,
+        "start_column": 5,
+        "end_line": 41,
+        "end_column": 41
+      },
+      "type": "call",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:40:5:43:3",
+      "name": "error",
+      "context": {
+        "receiver_location": {
+          "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts",
+          "start_line": 41,
+          "start_column": 5,
+          "end_line": 41,
+          "end_column": 11
+        },
+        "property_chain": [
+          "console",
+          "error"
+        ]
+      },
+      "call_type": "method",
+      "member_access": {
+        "access_type": "method",
+        "is_optional_chain": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts",
+        "start_line": 41,
+        "start_column": 5,
+        "end_line": 41,
+        "end_column": 11
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:40:5:43:3",
+      "name": "console"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts",
+        "start_line": 41,
+        "start_column": 5,
+        "end_line": 41,
+        "end_column": 11
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:40:5:43:3",
+      "name": "console"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts",
+        "start_line": 41,
+        "start_column": 13,
+        "end_line": 41,
+        "end_column": 17
+      },
+      "type": "call",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:40:5:43:3",
+      "name": "error",
+      "call_type": "function"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts",
+        "start_line": 41,
+        "start_column": 13,
+        "end_line": 41,
+        "end_column": 17
+      },
+      "type": "member_access",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:40:5:43:3",
+      "name": "error",
+      "member_access": {
+        "access_type": "property",
+        "is_optional_chain": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts",
+        "start_line": 41,
+        "start_column": 13,
+        "end_line": 41,
+        "end_column": 17
+      },
+      "type": "member_access",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:40:5:43:3",
+      "name": "error",
+      "member_access": {
+        "access_type": "property",
+        "is_optional_chain": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts",
+        "start_line": 41,
+        "start_column": 13,
+        "end_line": 41,
+        "end_column": 17
+      },
+      "type": "call",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:40:5:43:3",
+      "name": "error",
+      "call_type": "function"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts",
+        "start_line": 41,
+        "start_column": 36,
+        "end_line": 41,
+        "end_column": 40
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:40:5:43:3",
+      "name": "error"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts",
+        "start_line": 42,
+        "start_column": 5,
+        "end_line": 42,
+        "end_column": 16
+      },
+      "type": "return",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:40:5:43:3",
+      "name": "return null;"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts",
+        "start_line": 42,
+        "start_column": 12,
+        "end_line": 42,
+        "end_column": 15
+      },
+      "type": "return",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:40:5:43:3",
+      "name": "null"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts",
+        "start_line": 46,
+        "start_column": 10,
+        "end_line": 46,
+        "end_column": 18
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:1:1:47:0",
+      "name": "fetchUser"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts",
+        "start_line": 46,
+        "start_column": 21,
+        "end_line": 46,
+        "end_column": 30
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:1:1:47:0",
+      "name": "fetchUsers"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts",
+        "start_line": 46,
+        "start_column": 33,
+        "end_line": 46,
+        "end_column": 47
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:1:1:47:0",
+      "name": "processUserData"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts",
+        "start_line": 46,
+        "start_column": 50,
+        "end_line": 46,
+        "end_column": 58
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/typescript/code/functions/async_functions.ts:1:1:47:0",
+      "name": "safeFetch"
+    }
+  ]
+}

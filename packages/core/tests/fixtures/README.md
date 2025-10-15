@@ -151,6 +151,57 @@ npm run generate-fixtures -- --file tests/fixtures/typescript/code/classes/basic
 
 See [generate_fixtures.ts](../../scripts/generate_fixtures.ts) for implementation details.
 
+## Verifying Fixtures
+
+After generating fixtures, verify they're valid:
+
+```bash
+npm run verify-fixtures
+```
+
+The verification script checks:
+- JSON is valid and parseable
+- All required fields are present (file_path, root_scope_id, language)
+- Root scope exists in scopes map
+- At least some definitions or references are captured
+
+## Fixture Regeneration Workflow
+
+### When to Regenerate
+
+Regenerate fixtures after:
+
+1. **Modifying SemanticIndex type** - Schema changes require regeneration
+2. **Adding/removing code fixtures** - New test cases need JSON
+3. **Fixing bugs in indexing code** - Bug fixes may change output
+4. **Before committing fixture changes** - Ensure fixtures are up-to-date
+
+### Regeneration Steps
+
+```bash
+# 1. Make your changes (add code fixture, fix bug, etc.)
+
+# 2. Regenerate all fixtures
+npm run generate-fixtures:all
+
+# 3. Verify fixtures are valid
+npm run verify-fixtures
+
+# 4. Review changes
+git diff tests/fixtures/**/semantic_index/
+
+# 5. Commit if everything looks good
+git add tests/fixtures/
+git commit -m "feat: regenerate fixtures after [your change]"
+```
+
+### Important Notes
+
+- JSON fixtures are **version controlled** - they're the source of truth for tests
+- Large diffs are normal after schema changes or bug fixes
+- Always run verification after regeneration
+- Absolute file paths in JSON are expected (from generator)
+
 ## Using Fixtures in Tests
 
 ### Loading Fixtures

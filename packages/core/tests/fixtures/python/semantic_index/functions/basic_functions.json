@@ -1,0 +1,3564 @@
+{
+  "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py",
+  "language": "python",
+  "root_scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:1:1:43:0",
+  "scopes": {
+    "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:1:1:43:0": {
+      "id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:1:1:43:0",
+      "parent_id": null,
+      "name": null,
+      "type": "module",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py",
+        "start_line": 1,
+        "start_column": 1,
+        "end_line": 43,
+        "end_column": 0
+      },
+      "child_ids": [
+        "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:22:21:28:21",
+        "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:14:17:19:5",
+        "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:31:15:34:17",
+        "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:6:10:7:28",
+        "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:41:19:42:28",
+        "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:37:15:38:24",
+        "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:10:8:11:16"
+      ]
+    },
+    "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:22:21:28:21": {
+      "id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:22:21:28:21",
+      "parent_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:1:1:43:0",
+      "name": "def multiple_returns(value: int) -> str:\n    if value > 0:\n        return \"positive\"\n    elif value < 0:\n        return \"negative\"\n    else:\n        return \"zero\"",
+      "type": "function",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py",
+        "start_line": 22,
+        "start_column": 21,
+        "end_line": 28,
+        "end_column": 21
+      },
+      "child_ids": [
+        "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:23:5:28:21"
+      ]
+    },
+    "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:23:5:28:21": {
+      "id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:23:5:28:21",
+      "parent_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:22:21:28:21",
+      "name": "if value > 0:\n        return \"positive\"\n    elif value < 0:\n        return \"negative\"\n    else:\n        return \"zero\"",
+      "type": "block",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py",
+        "start_line": 23,
+        "start_column": 5,
+        "end_line": 28,
+        "end_column": 21
+      },
+      "child_ids": [
+        "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:25:5:26:25",
+        "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:27:5:28:21"
+      ]
+    },
+    "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:14:17:19:5": {
+      "id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:14:17:19:5",
+      "parent_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:1:1:43:0",
+      "name": "def process_user(name: str, age: int, active: bool = True) -> dict:\n    return {\n        \"name\": name,\n        \"age\": age,\n        \"active\": active,\n    }",
+      "type": "function",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py",
+        "start_line": 14,
+        "start_column": 17,
+        "end_line": 19,
+        "end_column": 5
+      },
+      "child_ids": []
+    },
+    "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:31:15:34:17": {
+      "id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:31:15:34:17",
+      "parent_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:1:1:43:0",
+      "name": "def call_chain():\n    data = fetch_data()\n    result = transform_data(data)\n    return result",
+      "type": "function",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py",
+        "start_line": 31,
+        "start_column": 15,
+        "end_line": 34,
+        "end_column": 17
+      },
+      "child_ids": []
+    },
+    "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:6:10:7:28": {
+      "id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:6:10:7:28",
+      "parent_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:1:1:43:0",
+      "name": "def greet(name: str) -> str:\n    return f\"Hello, {name}!\"",
+      "type": "function",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py",
+        "start_line": 6,
+        "start_column": 10,
+        "end_line": 7,
+        "end_column": 28
+      },
+      "child_ids": []
+    },
+    "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:41:19:42:28": {
+      "id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:41:19:42:28",
+      "parent_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:1:1:43:0",
+      "name": "def transform_data(data: dict):\n    return data[\"value\"] * 2",
+      "type": "function",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py",
+        "start_line": 41,
+        "start_column": 19,
+        "end_line": 42,
+        "end_column": 28
+      },
+      "child_ids": []
+    },
+    "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:37:15:38:24": {
+      "id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:37:15:38:24",
+      "parent_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:1:1:43:0",
+      "name": "def fetch_data():\n    return {\"value\": 42}",
+      "type": "function",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py",
+        "start_line": 37,
+        "start_column": 15,
+        "end_line": 38,
+        "end_column": 24
+      },
+      "child_ids": []
+    },
+    "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:25:5:26:25": {
+      "id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:25:5:26:25",
+      "parent_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:23:5:28:21",
+      "name": "elif value < 0:\n        return \"negative\"",
+      "type": "block",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py",
+        "start_line": 25,
+        "start_column": 5,
+        "end_line": 26,
+        "end_column": 25
+      },
+      "child_ids": []
+    },
+    "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:27:5:28:21": {
+      "id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:27:5:28:21",
+      "parent_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:23:5:28:21",
+      "name": "else:\n        return \"zero\"",
+      "type": "block",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py",
+        "start_line": 27,
+        "start_column": 5,
+        "end_line": 28,
+        "end_column": 21
+      },
+      "child_ids": []
+    },
+    "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:10:8:11:16": {
+      "id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:10:8:11:16",
+      "parent_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:1:1:43:0",
+      "name": "def add(a: int, b: int) -> int:\n    return a + b",
+      "type": "function",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py",
+        "start_line": 10,
+        "start_column": 8,
+        "end_line": 11,
+        "end_column": 16
+      },
+      "child_ids": []
+    }
+  },
+  "functions": {
+    "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:6:5:6:9:greet": {
+      "kind": "function",
+      "symbol_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:6:5:6:9:greet",
+      "name": "greet",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py",
+        "start_line": 6,
+        "start_column": 5,
+        "end_line": 6,
+        "end_column": 9
+      },
+      "defining_scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:1:1:43:0",
+      "is_exported": true,
+      "signature": {
+        "parameters": [
+          {
+            "kind": "parameter",
+            "defining_scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:6:10:7:28",
+            "symbol_id": "parameter:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:6:11:6:14:name",
+            "name": "name",
+            "location": {
+              "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py",
+              "start_line": 6,
+              "start_column": 11,
+              "end_line": 6,
+              "end_column": 14
+            },
+            "type": "str"
+          }
+        ],
+        "return_type": "str"
+      },
+      "return_type": "str",
+      "body_scope_id": "mock:function:scope"
+    },
+    "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:10:5:10:7:add": {
+      "kind": "function",
+      "symbol_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:10:5:10:7:add",
+      "name": "add",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py",
+        "start_line": 10,
+        "start_column": 5,
+        "end_line": 10,
+        "end_column": 7
+      },
+      "defining_scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:1:1:43:0",
+      "is_exported": true,
+      "signature": {
+        "parameters": [
+          {
+            "kind": "parameter",
+            "defining_scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:10:8:11:16",
+            "symbol_id": "parameter:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:10:9:10:9:a",
+            "name": "a",
+            "location": {
+              "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py",
+              "start_line": 10,
+              "start_column": 9,
+              "end_line": 10,
+              "end_column": 9
+            },
+            "type": "int"
+          },
+          {
+            "kind": "parameter",
+            "defining_scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:10:8:11:16",
+            "symbol_id": "parameter:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:10:17:10:17:b",
+            "name": "b",
+            "location": {
+              "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py",
+              "start_line": 10,
+              "start_column": 17,
+              "end_line": 10,
+              "end_column": 17
+            },
+            "type": "int"
+          }
+        ],
+        "return_type": "int"
+      },
+      "return_type": "int",
+      "body_scope_id": "mock:function:scope"
+    },
+    "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:14:5:14:16:process_user": {
+      "kind": "function",
+      "symbol_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:14:5:14:16:process_user",
+      "name": "process_user",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py",
+        "start_line": 14,
+        "start_column": 5,
+        "end_line": 14,
+        "end_column": 16
+      },
+      "defining_scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:1:1:43:0",
+      "is_exported": true,
+      "signature": {
+        "parameters": [
+          {
+            "kind": "parameter",
+            "defining_scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:14:17:19:5",
+            "symbol_id": "parameter:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:14:18:14:21:name",
+            "name": "name",
+            "location": {
+              "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py",
+              "start_line": 14,
+              "start_column": 18,
+              "end_line": 14,
+              "end_column": 21
+            },
+            "type": "str"
+          },
+          {
+            "kind": "parameter",
+            "defining_scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:14:17:19:5",
+            "symbol_id": "parameter:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:14:29:14:31:age",
+            "name": "age",
+            "location": {
+              "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py",
+              "start_line": 14,
+              "start_column": 29,
+              "end_line": 14,
+              "end_column": 31
+            },
+            "type": "int"
+          },
+          {
+            "kind": "parameter",
+            "defining_scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:14:17:19:5",
+            "symbol_id": "parameter:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:14:39:14:44:active",
+            "name": "active",
+            "location": {
+              "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py",
+              "start_line": 14,
+              "start_column": 39,
+              "end_line": 14,
+              "end_column": 44
+            },
+            "type": "bool",
+            "optional": true
+          }
+        ],
+        "return_type": "dict"
+      },
+      "return_type": "dict",
+      "body_scope_id": "mock:function:scope"
+    },
+    "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:22:5:22:20:multiple_returns": {
+      "kind": "function",
+      "symbol_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:22:5:22:20:multiple_returns",
+      "name": "multiple_returns",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py",
+        "start_line": 22,
+        "start_column": 5,
+        "end_line": 22,
+        "end_column": 20
+      },
+      "defining_scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:1:1:43:0",
+      "is_exported": true,
+      "signature": {
+        "parameters": [
+          {
+            "kind": "parameter",
+            "defining_scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:22:21:28:21",
+            "symbol_id": "parameter:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:22:22:22:26:value",
+            "name": "value",
+            "location": {
+              "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py",
+              "start_line": 22,
+              "start_column": 22,
+              "end_line": 22,
+              "end_column": 26
+            },
+            "type": "int"
+          }
+        ],
+        "return_type": "str"
+      },
+      "return_type": "str",
+      "body_scope_id": "mock:function:scope"
+    },
+    "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:31:5:31:14:call_chain": {
+      "kind": "function",
+      "symbol_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:31:5:31:14:call_chain",
+      "name": "call_chain",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py",
+        "start_line": 31,
+        "start_column": 5,
+        "end_line": 31,
+        "end_column": 14
+      },
+      "defining_scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:1:1:43:0",
+      "is_exported": true,
+      "signature": {
+        "parameters": []
+      },
+      "body_scope_id": "mock:function:scope"
+    },
+    "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:37:5:37:14:fetch_data": {
+      "kind": "function",
+      "symbol_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:37:5:37:14:fetch_data",
+      "name": "fetch_data",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py",
+        "start_line": 37,
+        "start_column": 5,
+        "end_line": 37,
+        "end_column": 14
+      },
+      "defining_scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:1:1:43:0",
+      "is_exported": true,
+      "signature": {
+        "parameters": []
+      },
+      "body_scope_id": "mock:function:scope"
+    },
+    "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:41:5:41:18:transform_data": {
+      "kind": "function",
+      "symbol_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:41:5:41:18:transform_data",
+      "name": "transform_data",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py",
+        "start_line": 41,
+        "start_column": 5,
+        "end_line": 41,
+        "end_column": 18
+      },
+      "defining_scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:1:1:43:0",
+      "is_exported": true,
+      "signature": {
+        "parameters": [
+          {
+            "kind": "parameter",
+            "defining_scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:41:19:42:28",
+            "symbol_id": "parameter:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:41:20:41:23:data",
+            "name": "data",
+            "location": {
+              "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py",
+              "start_line": 41,
+              "start_column": 20,
+              "end_line": 41,
+              "end_column": 23
+            },
+            "type": "dict"
+          }
+        ]
+      },
+      "body_scope_id": "mock:function:scope"
+    }
+  },
+  "classes": {},
+  "variables": {
+    "variable:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:32:5:32:8:data": {
+      "kind": "variable",
+      "symbol_id": "variable:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:32:5:32:8:data",
+      "name": "data",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py",
+        "start_line": 32,
+        "start_column": 5,
+        "end_line": 32,
+        "end_column": 8
+      },
+      "defining_scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:31:15:34:17",
+      "is_exported": false,
+      "initial_value": "fetch_data()"
+    },
+    "variable:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:33:5:33:10:result": {
+      "kind": "variable",
+      "symbol_id": "variable:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:33:5:33:10:result",
+      "name": "result",
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py",
+        "start_line": 33,
+        "start_column": 5,
+        "end_line": 33,
+        "end_column": 10
+      },
+      "defining_scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:31:15:34:17",
+      "is_exported": false,
+      "initial_value": "transform_data(data)"
+    }
+  },
+  "interfaces": {},
+  "enums": {},
+  "namespaces": {},
+  "types": {},
+  "imported_symbols": {},
+  "references": [
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py",
+        "start_line": 6,
+        "start_column": 5,
+        "end_line": 6,
+        "end_column": 9
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:1:1:43:0",
+      "name": "greet",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:6:5:6:9:greet",
+        "type_name": "greet",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py",
+        "start_line": 6,
+        "start_column": 5,
+        "end_line": 6,
+        "end_column": 9
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:1:1:43:0",
+      "name": "greet",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:6:5:6:9:greet",
+        "type_name": "greet",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py",
+        "start_line": 6,
+        "start_column": 5,
+        "end_line": 6,
+        "end_column": 9
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:1:1:43:0",
+      "name": "greet",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:6:5:6:9:greet",
+        "type_name": "greet",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py",
+        "start_line": 6,
+        "start_column": 11,
+        "end_line": 6,
+        "end_column": 14
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:6:10:7:28",
+      "name": "name",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:6:11:6:14:name",
+        "type_name": "name",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py",
+        "start_line": 6,
+        "start_column": 11,
+        "end_line": 6,
+        "end_column": 14
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:6:10:7:28",
+      "name": "name",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:6:11:6:14:name",
+        "type_name": "name",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py",
+        "start_line": 6,
+        "start_column": 11,
+        "end_line": 6,
+        "end_column": 14
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:6:10:7:28",
+      "name": "name",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:6:11:6:14:name",
+        "type_name": "name",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py",
+        "start_line": 6,
+        "start_column": 17,
+        "end_line": 6,
+        "end_column": 19
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:6:10:7:28",
+      "name": "str",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:6:17:6:19:str",
+        "type_name": "str",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py",
+        "start_line": 6,
+        "start_column": 17,
+        "end_line": 6,
+        "end_column": 19
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:6:10:7:28",
+      "name": "str",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:6:17:6:19:str",
+        "type_name": "str",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py",
+        "start_line": 6,
+        "start_column": 17,
+        "end_line": 6,
+        "end_column": 19
+      },
+      "type": "type",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:6:10:7:28",
+      "name": "str",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:6:17:6:19:str",
+        "type_name": "str",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py",
+        "start_line": 6,
+        "start_column": 17,
+        "end_line": 6,
+        "end_column": 19
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:6:10:7:28",
+      "name": "str",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:6:17:6:19:str",
+        "type_name": "str",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py",
+        "start_line": 6,
+        "start_column": 25,
+        "end_line": 6,
+        "end_column": 27
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:6:10:7:28",
+      "name": "str",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:6:25:6:27:str",
+        "type_name": "str",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py",
+        "start_line": 6,
+        "start_column": 25,
+        "end_line": 6,
+        "end_column": 27
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:6:10:7:28",
+      "name": "str",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:6:25:6:27:str",
+        "type_name": "str",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py",
+        "start_line": 6,
+        "start_column": 25,
+        "end_line": 6,
+        "end_column": 27
+      },
+      "type": "type",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:6:10:7:28",
+      "name": "str",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:6:25:6:27:str",
+        "type_name": "str",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py",
+        "start_line": 6,
+        "start_column": 25,
+        "end_line": 6,
+        "end_column": 27
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:6:10:7:28",
+      "name": "str",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:6:25:6:27:str",
+        "type_name": "str",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py",
+        "start_line": 7,
+        "start_column": 5,
+        "end_line": 7,
+        "end_column": 28
+      },
+      "type": "return",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:6:10:7:28",
+      "name": "return f\"Hello, {name}!\""
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py",
+        "start_line": 7,
+        "start_column": 12,
+        "end_line": 7,
+        "end_column": 28
+      },
+      "type": "return",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:6:10:7:28",
+      "name": "f\"Hello, {name}!\""
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py",
+        "start_line": 7,
+        "start_column": 22,
+        "end_line": 7,
+        "end_column": 25
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:6:10:7:28",
+      "name": "name",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:7:22:7:25:name",
+        "type_name": "name",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py",
+        "start_line": 7,
+        "start_column": 22,
+        "end_line": 7,
+        "end_column": 25
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:6:10:7:28",
+      "name": "name",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:7:22:7:25:name",
+        "type_name": "name",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py",
+        "start_line": 7,
+        "start_column": 22,
+        "end_line": 7,
+        "end_column": 25
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:6:10:7:28",
+      "name": "name",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:7:22:7:25:name",
+        "type_name": "name",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py",
+        "start_line": 10,
+        "start_column": 5,
+        "end_line": 10,
+        "end_column": 7
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:1:1:43:0",
+      "name": "add",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:10:5:10:7:add",
+        "type_name": "add",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py",
+        "start_line": 10,
+        "start_column": 5,
+        "end_line": 10,
+        "end_column": 7
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:1:1:43:0",
+      "name": "add",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:10:5:10:7:add",
+        "type_name": "add",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py",
+        "start_line": 10,
+        "start_column": 5,
+        "end_line": 10,
+        "end_column": 7
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:1:1:43:0",
+      "name": "add",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:10:5:10:7:add",
+        "type_name": "add",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py",
+        "start_line": 10,
+        "start_column": 9,
+        "end_line": 10,
+        "end_column": 9
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:10:8:11:16",
+      "name": "a",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:10:9:10:9:a",
+        "type_name": "a",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py",
+        "start_line": 10,
+        "start_column": 9,
+        "end_line": 10,
+        "end_column": 9
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:10:8:11:16",
+      "name": "a",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:10:9:10:9:a",
+        "type_name": "a",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py",
+        "start_line": 10,
+        "start_column": 9,
+        "end_line": 10,
+        "end_column": 9
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:10:8:11:16",
+      "name": "a",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:10:9:10:9:a",
+        "type_name": "a",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py",
+        "start_line": 10,
+        "start_column": 12,
+        "end_line": 10,
+        "end_column": 14
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:10:8:11:16",
+      "name": "int",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:10:12:10:14:int",
+        "type_name": "int",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py",
+        "start_line": 10,
+        "start_column": 12,
+        "end_line": 10,
+        "end_column": 14
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:10:8:11:16",
+      "name": "int",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:10:12:10:14:int",
+        "type_name": "int",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py",
+        "start_line": 10,
+        "start_column": 12,
+        "end_line": 10,
+        "end_column": 14
+      },
+      "type": "type",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:10:8:11:16",
+      "name": "int",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:10:12:10:14:int",
+        "type_name": "int",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py",
+        "start_line": 10,
+        "start_column": 12,
+        "end_line": 10,
+        "end_column": 14
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:10:8:11:16",
+      "name": "int",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:10:12:10:14:int",
+        "type_name": "int",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py",
+        "start_line": 10,
+        "start_column": 17,
+        "end_line": 10,
+        "end_column": 17
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:10:8:11:16",
+      "name": "b",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:10:17:10:17:b",
+        "type_name": "b",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py",
+        "start_line": 10,
+        "start_column": 17,
+        "end_line": 10,
+        "end_column": 17
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:10:8:11:16",
+      "name": "b",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:10:17:10:17:b",
+        "type_name": "b",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py",
+        "start_line": 10,
+        "start_column": 17,
+        "end_line": 10,
+        "end_column": 17
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:10:8:11:16",
+      "name": "b",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:10:17:10:17:b",
+        "type_name": "b",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py",
+        "start_line": 10,
+        "start_column": 20,
+        "end_line": 10,
+        "end_column": 22
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:10:8:11:16",
+      "name": "int",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:10:20:10:22:int",
+        "type_name": "int",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py",
+        "start_line": 10,
+        "start_column": 20,
+        "end_line": 10,
+        "end_column": 22
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:10:8:11:16",
+      "name": "int",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:10:20:10:22:int",
+        "type_name": "int",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py",
+        "start_line": 10,
+        "start_column": 20,
+        "end_line": 10,
+        "end_column": 22
+      },
+      "type": "type",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:10:8:11:16",
+      "name": "int",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:10:20:10:22:int",
+        "type_name": "int",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py",
+        "start_line": 10,
+        "start_column": 20,
+        "end_line": 10,
+        "end_column": 22
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:10:8:11:16",
+      "name": "int",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:10:20:10:22:int",
+        "type_name": "int",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py",
+        "start_line": 10,
+        "start_column": 28,
+        "end_line": 10,
+        "end_column": 30
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:10:8:11:16",
+      "name": "int",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:10:28:10:30:int",
+        "type_name": "int",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py",
+        "start_line": 10,
+        "start_column": 28,
+        "end_line": 10,
+        "end_column": 30
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:10:8:11:16",
+      "name": "int",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:10:28:10:30:int",
+        "type_name": "int",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py",
+        "start_line": 10,
+        "start_column": 28,
+        "end_line": 10,
+        "end_column": 30
+      },
+      "type": "type",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:10:8:11:16",
+      "name": "int",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:10:28:10:30:int",
+        "type_name": "int",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py",
+        "start_line": 10,
+        "start_column": 28,
+        "end_line": 10,
+        "end_column": 30
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:10:8:11:16",
+      "name": "int",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:10:28:10:30:int",
+        "type_name": "int",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py",
+        "start_line": 11,
+        "start_column": 5,
+        "end_line": 11,
+        "end_column": 16
+      },
+      "type": "return",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:10:8:11:16",
+      "name": "return a + b"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py",
+        "start_line": 11,
+        "start_column": 12,
+        "end_line": 11,
+        "end_column": 16
+      },
+      "type": "return",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:10:8:11:16",
+      "name": "a + b"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py",
+        "start_line": 11,
+        "start_column": 12,
+        "end_line": 11,
+        "end_column": 12
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:10:8:11:16",
+      "name": "a",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:11:12:11:12:a",
+        "type_name": "a",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py",
+        "start_line": 11,
+        "start_column": 12,
+        "end_line": 11,
+        "end_column": 12
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:10:8:11:16",
+      "name": "a",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:11:12:11:12:a",
+        "type_name": "a",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py",
+        "start_line": 11,
+        "start_column": 12,
+        "end_line": 11,
+        "end_column": 12
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:10:8:11:16",
+      "name": "a",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:11:12:11:12:a",
+        "type_name": "a",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py",
+        "start_line": 11,
+        "start_column": 16,
+        "end_line": 11,
+        "end_column": 16
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:10:8:11:16",
+      "name": "b",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:11:16:11:16:b",
+        "type_name": "b",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py",
+        "start_line": 11,
+        "start_column": 16,
+        "end_line": 11,
+        "end_column": 16
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:10:8:11:16",
+      "name": "b",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:11:16:11:16:b",
+        "type_name": "b",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py",
+        "start_line": 11,
+        "start_column": 16,
+        "end_line": 11,
+        "end_column": 16
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:10:8:11:16",
+      "name": "b",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:11:16:11:16:b",
+        "type_name": "b",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py",
+        "start_line": 14,
+        "start_column": 5,
+        "end_line": 14,
+        "end_column": 16
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:1:1:43:0",
+      "name": "process_user",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:14:5:14:16:process_user",
+        "type_name": "process_user",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py",
+        "start_line": 14,
+        "start_column": 5,
+        "end_line": 14,
+        "end_column": 16
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:1:1:43:0",
+      "name": "process_user",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:14:5:14:16:process_user",
+        "type_name": "process_user",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py",
+        "start_line": 14,
+        "start_column": 5,
+        "end_line": 14,
+        "end_column": 16
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:1:1:43:0",
+      "name": "process_user",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:14:5:14:16:process_user",
+        "type_name": "process_user",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py",
+        "start_line": 14,
+        "start_column": 18,
+        "end_line": 14,
+        "end_column": 21
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:14:17:19:5",
+      "name": "name",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:14:18:14:21:name",
+        "type_name": "name",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py",
+        "start_line": 14,
+        "start_column": 18,
+        "end_line": 14,
+        "end_column": 21
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:14:17:19:5",
+      "name": "name",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:14:18:14:21:name",
+        "type_name": "name",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py",
+        "start_line": 14,
+        "start_column": 18,
+        "end_line": 14,
+        "end_column": 21
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:14:17:19:5",
+      "name": "name",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:14:18:14:21:name",
+        "type_name": "name",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py",
+        "start_line": 14,
+        "start_column": 24,
+        "end_line": 14,
+        "end_column": 26
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:14:17:19:5",
+      "name": "str",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:14:24:14:26:str",
+        "type_name": "str",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py",
+        "start_line": 14,
+        "start_column": 24,
+        "end_line": 14,
+        "end_column": 26
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:14:17:19:5",
+      "name": "str",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:14:24:14:26:str",
+        "type_name": "str",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py",
+        "start_line": 14,
+        "start_column": 24,
+        "end_line": 14,
+        "end_column": 26
+      },
+      "type": "type",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:14:17:19:5",
+      "name": "str",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:14:24:14:26:str",
+        "type_name": "str",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py",
+        "start_line": 14,
+        "start_column": 24,
+        "end_line": 14,
+        "end_column": 26
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:14:17:19:5",
+      "name": "str",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:14:24:14:26:str",
+        "type_name": "str",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py",
+        "start_line": 14,
+        "start_column": 29,
+        "end_line": 14,
+        "end_column": 31
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:14:17:19:5",
+      "name": "age",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:14:29:14:31:age",
+        "type_name": "age",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py",
+        "start_line": 14,
+        "start_column": 29,
+        "end_line": 14,
+        "end_column": 31
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:14:17:19:5",
+      "name": "age",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:14:29:14:31:age",
+        "type_name": "age",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py",
+        "start_line": 14,
+        "start_column": 29,
+        "end_line": 14,
+        "end_column": 31
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:14:17:19:5",
+      "name": "age",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:14:29:14:31:age",
+        "type_name": "age",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py",
+        "start_line": 14,
+        "start_column": 34,
+        "end_line": 14,
+        "end_column": 36
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:14:17:19:5",
+      "name": "int",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:14:34:14:36:int",
+        "type_name": "int",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py",
+        "start_line": 14,
+        "start_column": 34,
+        "end_line": 14,
+        "end_column": 36
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:14:17:19:5",
+      "name": "int",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:14:34:14:36:int",
+        "type_name": "int",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py",
+        "start_line": 14,
+        "start_column": 34,
+        "end_line": 14,
+        "end_column": 36
+      },
+      "type": "type",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:14:17:19:5",
+      "name": "int",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:14:34:14:36:int",
+        "type_name": "int",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py",
+        "start_line": 14,
+        "start_column": 34,
+        "end_line": 14,
+        "end_column": 36
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:14:17:19:5",
+      "name": "int",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:14:34:14:36:int",
+        "type_name": "int",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py",
+        "start_line": 14,
+        "start_column": 39,
+        "end_line": 14,
+        "end_column": 44
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:14:17:19:5",
+      "name": "active",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:14:39:14:44:active",
+        "type_name": "active",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py",
+        "start_line": 14,
+        "start_column": 39,
+        "end_line": 14,
+        "end_column": 44
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:14:17:19:5",
+      "name": "active",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:14:39:14:44:active",
+        "type_name": "active",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py",
+        "start_line": 14,
+        "start_column": 39,
+        "end_line": 14,
+        "end_column": 44
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:14:17:19:5",
+      "name": "active",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:14:39:14:44:active",
+        "type_name": "active",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py",
+        "start_line": 14,
+        "start_column": 47,
+        "end_line": 14,
+        "end_column": 50
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:14:17:19:5",
+      "name": "bool",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:14:47:14:50:bool",
+        "type_name": "bool",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py",
+        "start_line": 14,
+        "start_column": 47,
+        "end_line": 14,
+        "end_column": 50
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:14:17:19:5",
+      "name": "bool",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:14:47:14:50:bool",
+        "type_name": "bool",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py",
+        "start_line": 14,
+        "start_column": 47,
+        "end_line": 14,
+        "end_column": 50
+      },
+      "type": "type",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:14:17:19:5",
+      "name": "bool",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:14:47:14:50:bool",
+        "type_name": "bool",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py",
+        "start_line": 14,
+        "start_column": 47,
+        "end_line": 14,
+        "end_column": 50
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:14:17:19:5",
+      "name": "bool",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:14:47:14:50:bool",
+        "type_name": "bool",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py",
+        "start_line": 14,
+        "start_column": 63,
+        "end_line": 14,
+        "end_column": 66
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:14:17:19:5",
+      "name": "dict",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:14:63:14:66:dict",
+        "type_name": "dict",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py",
+        "start_line": 14,
+        "start_column": 63,
+        "end_line": 14,
+        "end_column": 66
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:14:17:19:5",
+      "name": "dict",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:14:63:14:66:dict",
+        "type_name": "dict",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py",
+        "start_line": 14,
+        "start_column": 63,
+        "end_line": 14,
+        "end_column": 66
+      },
+      "type": "type",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:14:17:19:5",
+      "name": "dict",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:14:63:14:66:dict",
+        "type_name": "dict",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py",
+        "start_line": 14,
+        "start_column": 63,
+        "end_line": 14,
+        "end_column": 66
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:14:17:19:5",
+      "name": "dict",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:14:63:14:66:dict",
+        "type_name": "dict",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py",
+        "start_line": 15,
+        "start_column": 5,
+        "end_line": 19,
+        "end_column": 5
+      },
+      "type": "return",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:14:17:19:5",
+      "name": "return {\n        \"name\": name,\n        \"age\": age,\n        \"active\": active,\n    }"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py",
+        "start_line": 15,
+        "start_column": 12,
+        "end_line": 19,
+        "end_column": 5
+      },
+      "type": "return",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:14:17:19:5",
+      "name": "{\n        \"name\": name,\n        \"age\": age,\n        \"active\": active,\n    }"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py",
+        "start_line": 16,
+        "start_column": 17,
+        "end_line": 16,
+        "end_column": 20
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:14:17:19:5",
+      "name": "name",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:16:17:16:20:name",
+        "type_name": "name",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py",
+        "start_line": 16,
+        "start_column": 17,
+        "end_line": 16,
+        "end_column": 20
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:14:17:19:5",
+      "name": "name",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:16:17:16:20:name",
+        "type_name": "name",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py",
+        "start_line": 16,
+        "start_column": 17,
+        "end_line": 16,
+        "end_column": 20
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:14:17:19:5",
+      "name": "name",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:16:17:16:20:name",
+        "type_name": "name",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py",
+        "start_line": 17,
+        "start_column": 16,
+        "end_line": 17,
+        "end_column": 18
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:14:17:19:5",
+      "name": "age",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:17:16:17:18:age",
+        "type_name": "age",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py",
+        "start_line": 17,
+        "start_column": 16,
+        "end_line": 17,
+        "end_column": 18
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:14:17:19:5",
+      "name": "age",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:17:16:17:18:age",
+        "type_name": "age",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py",
+        "start_line": 17,
+        "start_column": 16,
+        "end_line": 17,
+        "end_column": 18
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:14:17:19:5",
+      "name": "age",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:17:16:17:18:age",
+        "type_name": "age",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py",
+        "start_line": 18,
+        "start_column": 19,
+        "end_line": 18,
+        "end_column": 24
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:14:17:19:5",
+      "name": "active",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:18:19:18:24:active",
+        "type_name": "active",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py",
+        "start_line": 18,
+        "start_column": 19,
+        "end_line": 18,
+        "end_column": 24
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:14:17:19:5",
+      "name": "active",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:18:19:18:24:active",
+        "type_name": "active",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py",
+        "start_line": 18,
+        "start_column": 19,
+        "end_line": 18,
+        "end_column": 24
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:14:17:19:5",
+      "name": "active",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:18:19:18:24:active",
+        "type_name": "active",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py",
+        "start_line": 22,
+        "start_column": 5,
+        "end_line": 22,
+        "end_column": 20
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:1:1:43:0",
+      "name": "multiple_returns",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:22:5:22:20:multiple_returns",
+        "type_name": "multiple_returns",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py",
+        "start_line": 22,
+        "start_column": 5,
+        "end_line": 22,
+        "end_column": 20
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:1:1:43:0",
+      "name": "multiple_returns",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:22:5:22:20:multiple_returns",
+        "type_name": "multiple_returns",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py",
+        "start_line": 22,
+        "start_column": 5,
+        "end_line": 22,
+        "end_column": 20
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:1:1:43:0",
+      "name": "multiple_returns",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:22:5:22:20:multiple_returns",
+        "type_name": "multiple_returns",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py",
+        "start_line": 22,
+        "start_column": 22,
+        "end_line": 22,
+        "end_column": 26
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:22:21:28:21",
+      "name": "value",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:22:22:22:26:value",
+        "type_name": "value",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py",
+        "start_line": 22,
+        "start_column": 22,
+        "end_line": 22,
+        "end_column": 26
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:22:21:28:21",
+      "name": "value",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:22:22:22:26:value",
+        "type_name": "value",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py",
+        "start_line": 22,
+        "start_column": 22,
+        "end_line": 22,
+        "end_column": 26
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:22:21:28:21",
+      "name": "value",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:22:22:22:26:value",
+        "type_name": "value",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py",
+        "start_line": 22,
+        "start_column": 29,
+        "end_line": 22,
+        "end_column": 31
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:22:21:28:21",
+      "name": "int",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:22:29:22:31:int",
+        "type_name": "int",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py",
+        "start_line": 22,
+        "start_column": 29,
+        "end_line": 22,
+        "end_column": 31
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:22:21:28:21",
+      "name": "int",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:22:29:22:31:int",
+        "type_name": "int",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py",
+        "start_line": 22,
+        "start_column": 29,
+        "end_line": 22,
+        "end_column": 31
+      },
+      "type": "type",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:22:21:28:21",
+      "name": "int",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:22:29:22:31:int",
+        "type_name": "int",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py",
+        "start_line": 22,
+        "start_column": 29,
+        "end_line": 22,
+        "end_column": 31
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:22:21:28:21",
+      "name": "int",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:22:29:22:31:int",
+        "type_name": "int",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py",
+        "start_line": 22,
+        "start_column": 37,
+        "end_line": 22,
+        "end_column": 39
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:22:21:28:21",
+      "name": "str",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:22:37:22:39:str",
+        "type_name": "str",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py",
+        "start_line": 22,
+        "start_column": 37,
+        "end_line": 22,
+        "end_column": 39
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:22:21:28:21",
+      "name": "str",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:22:37:22:39:str",
+        "type_name": "str",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py",
+        "start_line": 22,
+        "start_column": 37,
+        "end_line": 22,
+        "end_column": 39
+      },
+      "type": "type",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:22:21:28:21",
+      "name": "str",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:22:37:22:39:str",
+        "type_name": "str",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py",
+        "start_line": 22,
+        "start_column": 37,
+        "end_line": 22,
+        "end_column": 39
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:22:21:28:21",
+      "name": "str",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:22:37:22:39:str",
+        "type_name": "str",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py",
+        "start_line": 23,
+        "start_column": 8,
+        "end_line": 23,
+        "end_column": 12
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:23:5:28:21",
+      "name": "value",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:23:8:23:12:value",
+        "type_name": "value",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py",
+        "start_line": 23,
+        "start_column": 8,
+        "end_line": 23,
+        "end_column": 12
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:23:5:28:21",
+      "name": "value",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:23:8:23:12:value",
+        "type_name": "value",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py",
+        "start_line": 23,
+        "start_column": 8,
+        "end_line": 23,
+        "end_column": 12
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:23:5:28:21",
+      "name": "value",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:23:8:23:12:value",
+        "type_name": "value",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py",
+        "start_line": 24,
+        "start_column": 9,
+        "end_line": 24,
+        "end_column": 25
+      },
+      "type": "return",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:23:5:28:21",
+      "name": "return \"positive\""
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py",
+        "start_line": 24,
+        "start_column": 16,
+        "end_line": 24,
+        "end_column": 25
+      },
+      "type": "return",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:23:5:28:21",
+      "name": "\"positive\""
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py",
+        "start_line": 25,
+        "start_column": 10,
+        "end_line": 25,
+        "end_column": 14
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:25:5:26:25",
+      "name": "value",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:25:10:25:14:value",
+        "type_name": "value",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py",
+        "start_line": 25,
+        "start_column": 10,
+        "end_line": 25,
+        "end_column": 14
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:25:5:26:25",
+      "name": "value",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:25:10:25:14:value",
+        "type_name": "value",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py",
+        "start_line": 25,
+        "start_column": 10,
+        "end_line": 25,
+        "end_column": 14
+      },
+      "type": "read",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:25:5:26:25",
+      "name": "value",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:25:10:25:14:value",
+        "type_name": "value",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py",
+        "start_line": 26,
+        "start_column": 9,
+        "end_line": 26,
+        "end_column": 25
+      },
+      "type": "return",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:25:5:26:25",
+      "name": "return \"negative\""
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py",
+        "start_line": 26,
+        "start_column": 16,
+        "end_line": 26,
+        "end_column": 25
+      },
+      "type": "return",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:25:5:26:25",
+      "name": "\"negative\""
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py",
+        "start_line": 28,
+        "start_column": 9,
+        "end_line": 28,
+        "end_column": 21
+      },
+      "type": "return",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:27:5:28:21",
+      "name": "return \"zero\""
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py",
+        "start_line": 28,
+        "start_column": 16,
+        "end_line": 28,
+        "end_column": 21
+      },
+      "type": "return",
+      "scope_id": "block:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:27:5:28:21",
+      "name": "\"zero\""
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py",
+        "start_line": 31,
+        "start_column": 5,
+        "end_line": 31,
+        "end_column": 14
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:1:1:43:0",
+      "name": "call_chain",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:31:5:31:14:call_chain",
+        "type_name": "call_chain",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py",
+        "start_line": 31,
+        "start_column": 5,
+        "end_line": 31,
+        "end_column": 14
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:1:1:43:0",
+      "name": "call_chain",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:31:5:31:14:call_chain",
+        "type_name": "call_chain",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py",
+        "start_line": 31,
+        "start_column": 5,
+        "end_line": 31,
+        "end_column": 14
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:1:1:43:0",
+      "name": "call_chain",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:31:5:31:14:call_chain",
+        "type_name": "call_chain",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py",
+        "start_line": 32,
+        "start_column": 5,
+        "end_line": 32,
+        "end_column": 23
+      },
+      "type": "assignment",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:31:15:34:17",
+      "name": "data = fetch_data()"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py",
+        "start_line": 32,
+        "start_column": 5,
+        "end_line": 32,
+        "end_column": 8
+      },
+      "type": "assignment",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:31:15:34:17",
+      "name": "data",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:32:5:32:8:data",
+        "type_name": "data",
+        "certainty": "declared",
+        "is_nullable": false
+      },
+      "assignment_type": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:32:5:32:8:data",
+        "type_name": "data",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py",
+        "start_line": 32,
+        "start_column": 5,
+        "end_line": 32,
+        "end_column": 8
+      },
+      "type": "write",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:31:15:34:17",
+      "name": "data",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:32:5:32:8:data",
+        "type_name": "data",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py",
+        "start_line": 32,
+        "start_column": 5,
+        "end_line": 32,
+        "end_column": 23
+      },
+      "type": "assignment",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:31:15:34:17",
+      "name": "data = fetch_data()"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py",
+        "start_line": 32,
+        "start_column": 5,
+        "end_line": 32,
+        "end_column": 8
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:31:15:34:17",
+      "name": "data",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:32:5:32:8:data",
+        "type_name": "data",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py",
+        "start_line": 32,
+        "start_column": 5,
+        "end_line": 32,
+        "end_column": 8
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:31:15:34:17",
+      "name": "data",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:32:5:32:8:data",
+        "type_name": "data",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py",
+        "start_line": 32,
+        "start_column": 5,
+        "end_line": 32,
+        "end_column": 8
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:31:15:34:17",
+      "name": "data",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:32:5:32:8:data",
+        "type_name": "data",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py",
+        "start_line": 32,
+        "start_column": 5,
+        "end_line": 32,
+        "end_column": 8
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:31:15:34:17",
+      "name": "data",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:32:5:32:8:data",
+        "type_name": "data",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py",
+        "start_line": 32,
+        "start_column": 12,
+        "end_line": 32,
+        "end_column": 23
+      },
+      "type": "assignment",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:31:15:34:17",
+      "name": "fetch_data()"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py",
+        "start_line": 32,
+        "start_column": 12,
+        "end_line": 32,
+        "end_column": 21
+      },
+      "type": "call",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:31:15:34:17",
+      "name": "fetch_data",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:32:12:32:21:fetch_data",
+        "type_name": "fetch_data",
+        "certainty": "declared",
+        "is_nullable": false
+      },
+      "call_type": "function"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py",
+        "start_line": 32,
+        "start_column": 12,
+        "end_line": 32,
+        "end_column": 23
+      },
+      "type": "call",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:31:15:34:17",
+      "name": "fetch_data()",
+      "call_type": "function"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py",
+        "start_line": 32,
+        "start_column": 12,
+        "end_line": 32,
+        "end_column": 21
+      },
+      "type": "construct",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:31:15:34:17",
+      "name": "fetch_data",
+      "context": {
+        "construct_target": {
+          "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py",
+          "start_line": 32,
+          "start_column": 5,
+          "end_line": 32,
+          "end_column": 8
+        }
+      },
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:32:12:32:21:fetch_data",
+        "type_name": "fetch_data",
+        "certainty": "declared",
+        "is_nullable": false
+      },
+      "call_type": "constructor"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py",
+        "start_line": 32,
+        "start_column": 12,
+        "end_line": 32,
+        "end_column": 23
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:31:15:34:17",
+      "name": "fetch_data()"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py",
+        "start_line": 32,
+        "start_column": 12,
+        "end_line": 32,
+        "end_column": 21
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:31:15:34:17",
+      "name": "fetch_data",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:32:12:32:21:fetch_data",
+        "type_name": "fetch_data",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py",
+        "start_line": 32,
+        "start_column": 12,
+        "end_line": 32,
+        "end_column": 21
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:31:15:34:17",
+      "name": "fetch_data",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:32:12:32:21:fetch_data",
+        "type_name": "fetch_data",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py",
+        "start_line": 32,
+        "start_column": 12,
+        "end_line": 32,
+        "end_column": 21
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:31:15:34:17",
+      "name": "fetch_data",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:32:12:32:21:fetch_data",
+        "type_name": "fetch_data",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py",
+        "start_line": 33,
+        "start_column": 5,
+        "end_line": 33,
+        "end_column": 33
+      },
+      "type": "assignment",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:31:15:34:17",
+      "name": "result = transform_data(data)"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py",
+        "start_line": 33,
+        "start_column": 5,
+        "end_line": 33,
+        "end_column": 10
+      },
+      "type": "assignment",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:31:15:34:17",
+      "name": "result",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:33:5:33:10:result",
+        "type_name": "result",
+        "certainty": "declared",
+        "is_nullable": false
+      },
+      "assignment_type": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:33:5:33:10:result",
+        "type_name": "result",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py",
+        "start_line": 33,
+        "start_column": 5,
+        "end_line": 33,
+        "end_column": 10
+      },
+      "type": "write",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:31:15:34:17",
+      "name": "result",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:33:5:33:10:result",
+        "type_name": "result",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py",
+        "start_line": 33,
+        "start_column": 5,
+        "end_line": 33,
+        "end_column": 33
+      },
+      "type": "assignment",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:31:15:34:17",
+      "name": "result = transform_data(data)"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py",
+        "start_line": 33,
+        "start_column": 5,
+        "end_line": 33,
+        "end_column": 10
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:31:15:34:17",
+      "name": "result",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:33:5:33:10:result",
+        "type_name": "result",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py",
+        "start_line": 33,
+        "start_column": 5,
+        "end_line": 33,
+        "end_column": 10
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:31:15:34:17",
+      "name": "result",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:33:5:33:10:result",
+        "type_name": "result",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py",
+        "start_line": 33,
+        "start_column": 5,
+        "end_line": 33,
+        "end_column": 10
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:31:15:34:17",
+      "name": "result",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:33:5:33:10:result",
+        "type_name": "result",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py",
+        "start_line": 33,
+        "start_column": 5,
+        "end_line": 33,
+        "end_column": 10
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:31:15:34:17",
+      "name": "result",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:33:5:33:10:result",
+        "type_name": "result",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py",
+        "start_line": 33,
+        "start_column": 14,
+        "end_line": 33,
+        "end_column": 33
+      },
+      "type": "assignment",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:31:15:34:17",
+      "name": "transform_data(data)"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py",
+        "start_line": 33,
+        "start_column": 14,
+        "end_line": 33,
+        "end_column": 27
+      },
+      "type": "call",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:31:15:34:17",
+      "name": "transform_data",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:33:14:33:27:transform_data",
+        "type_name": "transform_data",
+        "certainty": "declared",
+        "is_nullable": false
+      },
+      "call_type": "function"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py",
+        "start_line": 33,
+        "start_column": 14,
+        "end_line": 33,
+        "end_column": 33
+      },
+      "type": "call",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:31:15:34:17",
+      "name": "transform_data(data)",
+      "call_type": "function"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py",
+        "start_line": 33,
+        "start_column": 14,
+        "end_line": 33,
+        "end_column": 27
+      },
+      "type": "construct",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:31:15:34:17",
+      "name": "transform_data",
+      "context": {
+        "construct_target": {
+          "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py",
+          "start_line": 33,
+          "start_column": 5,
+          "end_line": 33,
+          "end_column": 10
+        }
+      },
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:33:14:33:27:transform_data",
+        "type_name": "transform_data",
+        "certainty": "declared",
+        "is_nullable": false
+      },
+      "call_type": "constructor"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py",
+        "start_line": 33,
+        "start_column": 14,
+        "end_line": 33,
+        "end_column": 33
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:31:15:34:17",
+      "name": "transform_data(data)"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py",
+        "start_line": 33,
+        "start_column": 14,
+        "end_line": 33,
+        "end_column": 27
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:31:15:34:17",
+      "name": "transform_data",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:33:14:33:27:transform_data",
+        "type_name": "transform_data",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py",
+        "start_line": 33,
+        "start_column": 14,
+        "end_line": 33,
+        "end_column": 27
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:31:15:34:17",
+      "name": "transform_data",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:33:14:33:27:transform_data",
+        "type_name": "transform_data",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py",
+        "start_line": 33,
+        "start_column": 14,
+        "end_line": 33,
+        "end_column": 27
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:31:15:34:17",
+      "name": "transform_data",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:33:14:33:27:transform_data",
+        "type_name": "transform_data",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py",
+        "start_line": 33,
+        "start_column": 29,
+        "end_line": 33,
+        "end_column": 32
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:31:15:34:17",
+      "name": "data",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:33:29:33:32:data",
+        "type_name": "data",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py",
+        "start_line": 33,
+        "start_column": 29,
+        "end_line": 33,
+        "end_column": 32
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:31:15:34:17",
+      "name": "data",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:33:29:33:32:data",
+        "type_name": "data",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py",
+        "start_line": 33,
+        "start_column": 29,
+        "end_line": 33,
+        "end_column": 32
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:31:15:34:17",
+      "name": "data",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:33:29:33:32:data",
+        "type_name": "data",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py",
+        "start_line": 34,
+        "start_column": 5,
+        "end_line": 34,
+        "end_column": 17
+      },
+      "type": "return",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:31:15:34:17",
+      "name": "return result"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py",
+        "start_line": 34,
+        "start_column": 12,
+        "end_line": 34,
+        "end_column": 17
+      },
+      "type": "return",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:31:15:34:17",
+      "name": "result",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:34:12:34:17:result",
+        "type_name": "result",
+        "certainty": "declared",
+        "is_nullable": false
+      },
+      "return_type": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:34:12:34:17:result",
+        "type_name": "result",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py",
+        "start_line": 34,
+        "start_column": 12,
+        "end_line": 34,
+        "end_column": 17
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:31:15:34:17",
+      "name": "result",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:34:12:34:17:result",
+        "type_name": "result",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py",
+        "start_line": 34,
+        "start_column": 12,
+        "end_line": 34,
+        "end_column": 17
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:31:15:34:17",
+      "name": "result",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:34:12:34:17:result",
+        "type_name": "result",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py",
+        "start_line": 34,
+        "start_column": 12,
+        "end_line": 34,
+        "end_column": 17
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:31:15:34:17",
+      "name": "result",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:34:12:34:17:result",
+        "type_name": "result",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py",
+        "start_line": 37,
+        "start_column": 5,
+        "end_line": 37,
+        "end_column": 14
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:1:1:43:0",
+      "name": "fetch_data",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:37:5:37:14:fetch_data",
+        "type_name": "fetch_data",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py",
+        "start_line": 37,
+        "start_column": 5,
+        "end_line": 37,
+        "end_column": 14
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:1:1:43:0",
+      "name": "fetch_data",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:37:5:37:14:fetch_data",
+        "type_name": "fetch_data",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py",
+        "start_line": 37,
+        "start_column": 5,
+        "end_line": 37,
+        "end_column": 14
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:1:1:43:0",
+      "name": "fetch_data",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:37:5:37:14:fetch_data",
+        "type_name": "fetch_data",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py",
+        "start_line": 38,
+        "start_column": 5,
+        "end_line": 38,
+        "end_column": 24
+      },
+      "type": "return",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:37:15:38:24",
+      "name": "return {\"value\": 42}"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py",
+        "start_line": 38,
+        "start_column": 12,
+        "end_line": 38,
+        "end_column": 24
+      },
+      "type": "return",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:37:15:38:24",
+      "name": "{\"value\": 42}"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py",
+        "start_line": 41,
+        "start_column": 5,
+        "end_line": 41,
+        "end_column": 18
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:1:1:43:0",
+      "name": "transform_data",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:41:5:41:18:transform_data",
+        "type_name": "transform_data",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py",
+        "start_line": 41,
+        "start_column": 5,
+        "end_line": 41,
+        "end_column": 18
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:1:1:43:0",
+      "name": "transform_data",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:41:5:41:18:transform_data",
+        "type_name": "transform_data",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py",
+        "start_line": 41,
+        "start_column": 5,
+        "end_line": 41,
+        "end_column": 18
+      },
+      "type": "read",
+      "scope_id": "module:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:1:1:43:0",
+      "name": "transform_data",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:41:5:41:18:transform_data",
+        "type_name": "transform_data",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py",
+        "start_line": 41,
+        "start_column": 20,
+        "end_line": 41,
+        "end_column": 23
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:41:19:42:28",
+      "name": "data",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:41:20:41:23:data",
+        "type_name": "data",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py",
+        "start_line": 41,
+        "start_column": 20,
+        "end_line": 41,
+        "end_column": 23
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:41:19:42:28",
+      "name": "data",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:41:20:41:23:data",
+        "type_name": "data",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py",
+        "start_line": 41,
+        "start_column": 20,
+        "end_line": 41,
+        "end_column": 23
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:41:19:42:28",
+      "name": "data",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:41:20:41:23:data",
+        "type_name": "data",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py",
+        "start_line": 41,
+        "start_column": 26,
+        "end_line": 41,
+        "end_column": 29
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:41:19:42:28",
+      "name": "dict",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:41:26:41:29:dict",
+        "type_name": "dict",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py",
+        "start_line": 41,
+        "start_column": 26,
+        "end_line": 41,
+        "end_column": 29
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:41:19:42:28",
+      "name": "dict",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:41:26:41:29:dict",
+        "type_name": "dict",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py",
+        "start_line": 41,
+        "start_column": 26,
+        "end_line": 41,
+        "end_column": 29
+      },
+      "type": "type",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:41:19:42:28",
+      "name": "dict",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:41:26:41:29:dict",
+        "type_name": "dict",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py",
+        "start_line": 41,
+        "start_column": 26,
+        "end_line": 41,
+        "end_column": 29
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:41:19:42:28",
+      "name": "dict",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:41:26:41:29:dict",
+        "type_name": "dict",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py",
+        "start_line": 42,
+        "start_column": 5,
+        "end_line": 42,
+        "end_column": 28
+      },
+      "type": "return",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:41:19:42:28",
+      "name": "return data[\"value\"] * 2"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py",
+        "start_line": 42,
+        "start_column": 12,
+        "end_line": 42,
+        "end_column": 28
+      },
+      "type": "return",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:41:19:42:28",
+      "name": "data[\"value\"] * 2"
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py",
+        "start_line": 42,
+        "start_column": 12,
+        "end_line": 42,
+        "end_column": 24
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:41:19:42:28",
+      "name": "data[\"value\"]",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:42:12:42:24:data[\"value\"]",
+        "type_name": "data[\"value\"]",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py",
+        "start_line": 42,
+        "start_column": 12,
+        "end_line": 42,
+        "end_column": 15
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:41:19:42:28",
+      "name": "data",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:42:12:42:15:data",
+        "type_name": "data",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py",
+        "start_line": 42,
+        "start_column": 12,
+        "end_line": 42,
+        "end_column": 15
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:41:19:42:28",
+      "name": "data",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:42:12:42:15:data",
+        "type_name": "data",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py",
+        "start_line": 42,
+        "start_column": 12,
+        "end_line": 42,
+        "end_column": 15
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:41:19:42:28",
+      "name": "data",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:42:12:42:15:data",
+        "type_name": "data",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py",
+        "start_line": 42,
+        "start_column": 12,
+        "end_line": 42,
+        "end_column": 15
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:41:19:42:28",
+      "name": "data",
+      "type_info": {
+        "type_id": "type:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:42:12:42:15:data",
+        "type_name": "data",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "location": {
+        "file_path": "/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py",
+        "start_line": 42,
+        "start_column": 17,
+        "end_line": 42,
+        "end_column": 23
+      },
+      "type": "read",
+      "scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:41:19:42:28",
+      "name": "\"value\""
+    }
+  ]
+}
