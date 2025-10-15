@@ -339,16 +339,18 @@ export const TYPESCRIPT_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
           scope_id = context.get_scope_id(capture.location);
         }
 
-        builder.add_function({
-          symbol_id: func_id,
-          name: capture.text,
-          location: capture.location,
-          scope_id: scope_id,
-          is_exported: export_info.is_exported,
-          export: export_info.export,
-          return_type: extract_return_type(capture.node),
-          capture: capture,
-        });
+        builder.add_function(
+          {
+            symbol_id: func_id,
+            name: capture.text,
+            location: capture.location,
+            scope_id: scope_id,
+            is_exported: export_info.is_exported,
+            export: export_info.export,
+            return_type: extract_return_type(capture.node),
+          },
+          capture
+        );
       },
     },
   ],
@@ -409,19 +411,22 @@ export const TYPESCRIPT_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
         const method_id = create_method_id(capture);
         const parent = capture.node.parent; // method_definition
 
-        builder.add_method_to_class(class_id, {
-          symbol_id: method_id,
-          name: capture.text,
-          location: capture.location,
-          scope_id: context.get_scope_id(capture.location),
-          access_modifier: extract_access_modifier(capture.node),
-          abstract: is_abstract_method(capture.node),
-          static: is_static_method(capture.node),
-          async: is_async_method(capture.node),
-          return_type: extract_return_type(capture.node),
-          generics: parent ? extract_type_parameters(parent) : [],
-          capture: capture,
-        });
+        builder.add_method_to_class(
+          class_id,
+          {
+            symbol_id: method_id,
+            name: capture.text,
+            location: capture.location,
+            scope_id: context.get_scope_id(capture.location),
+            access_modifier: extract_access_modifier(capture.node),
+            abstract: is_abstract_method(capture.node),
+            static: is_static_method(capture.node),
+            async: is_async_method(capture.node),
+            return_type: extract_return_type(capture.node),
+            generics: parent ? extract_type_parameters(parent) : [],
+          },
+          capture
+        );
       },
     },
   ],
@@ -442,19 +447,22 @@ export const TYPESCRIPT_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
         const method_id = create_method_id(capture);
         const parent = capture.node.parent; // method_definition
 
-        builder.add_method_to_class(class_id, {
-          symbol_id: method_id,
-          name: capture.text,
-          location: capture.location,
-          scope_id: context.get_scope_id(capture.location),
-          access_modifier: "private",
-          abstract: is_abstract_method(capture.node),
-          static: is_static_method(capture.node),
-          async: is_async_method(capture.node),
-          return_type: extract_return_type(capture.node),
-          generics: parent ? extract_type_parameters(parent) : [],
-          capture: capture,
-        });
+        builder.add_method_to_class(
+          class_id,
+          {
+            symbol_id: method_id,
+            name: capture.text,
+            location: capture.location,
+            scope_id: context.get_scope_id(capture.location),
+            access_modifier: "private",
+            abstract: is_abstract_method(capture.node),
+            static: is_static_method(capture.node),
+            async: is_async_method(capture.node),
+            return_type: extract_return_type(capture.node),
+            generics: parent ? extract_type_parameters(parent) : [],
+          },
+          capture
+        );
       },
     },
   ],

@@ -236,7 +236,7 @@
       "signature": {
         "parameters": []
       },
-      "body_scope_id": "mock:function:scope"
+      "body_scope_id": "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/classes/inheritance.py:7:17:8:24"
     },
     "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/classes/inheritance.py:10:9:10:13:speak": {
       "kind": "function",
@@ -256,7 +256,7 @@
         "return_type": "str"
       },
       "return_type": "str",
-      "body_scope_id": "mock:function:scope"
+      "body_scope_id": "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/classes/inheritance.py:10:14:11:68"
     },
     "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/classes/inheritance.py:13:9:13:12:move": {
       "kind": "function",
@@ -274,7 +274,7 @@
       "signature": {
         "parameters": []
       },
-      "body_scope_id": "mock:function:scope"
+      "body_scope_id": "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/classes/inheritance.py:13:13:14:53"
     },
     "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/classes/inheritance.py:18:9:18:16:__init__": {
       "kind": "function",
@@ -292,7 +292,7 @@
       "signature": {
         "parameters": []
       },
-      "body_scope_id": "mock:function:scope"
+      "body_scope_id": "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/classes/inheritance.py:18:17:20:26"
     },
     "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/classes/inheritance.py:22:9:22:13:speak": {
       "kind": "function",
@@ -312,7 +312,7 @@
         "return_type": "str"
       },
       "return_type": "str",
-      "body_scope_id": "mock:function:scope"
+      "body_scope_id": "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/classes/inheritance.py:22:14:23:22"
     },
     "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/classes/inheritance.py:25:9:25:13:fetch": {
       "kind": "function",
@@ -330,7 +330,7 @@
       "signature": {
         "parameters": []
       },
-      "body_scope_id": "mock:function:scope"
+      "body_scope_id": "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/classes/inheritance.py:25:14:26:44"
     },
     "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/classes/inheritance.py:30:9:30:13:speak": {
       "kind": "function",
@@ -350,7 +350,7 @@
         "return_type": "str"
       },
       "return_type": "str",
-      "body_scope_id": "mock:function:scope"
+      "body_scope_id": "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/classes/inheritance.py:22:14:23:22"
     },
     "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/classes/inheritance.py:33:9:33:13:climb": {
       "kind": "function",
@@ -368,7 +368,7 @@
       "signature": {
         "parameters": []
       },
-      "body_scope_id": "mock:function:scope"
+      "body_scope_id": "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/classes/inheritance.py:33:14:34:41"
     }
   },
   "classes": {
@@ -507,7 +507,7 @@
               "type": "str"
             }
           ],
-          "body_scope_id": "mock:constructor:scope"
+          "body_scope_id": "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/classes/inheritance.py:7:17:8:24"
         }
       ],
       "decorators": []
@@ -662,7 +662,7 @@
               "type": "str"
             }
           ],
-          "body_scope_id": "mock:constructor:scope"
+          "body_scope_id": "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/classes/inheritance.py:18:17:20:26"
         }
       ],
       "decorators": []

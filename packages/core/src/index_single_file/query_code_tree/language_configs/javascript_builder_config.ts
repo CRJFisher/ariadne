@@ -135,14 +135,18 @@ export const JAVASCRIPT_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
         const docstring = consume_documentation(capture.location);
 
         if (class_id) {
-          builder.add_method_to_class(class_id, {
-            symbol_id: method_id,
-            name: capture.text,
-            location: capture.location,
-            scope_id: context.get_scope_id(capture.location),
-            return_type: extract_return_type(capture.node),
-            docstring,
-          });
+          builder.add_method_to_class(
+            class_id,
+            {
+              symbol_id: method_id,
+              name: capture.text,
+              location: capture.location,
+              scope_id: context.get_scope_id(capture.location),
+              return_type: extract_return_type(capture.node),
+              docstring,
+            },
+            capture
+          );
         }
       },
     },
@@ -182,14 +186,17 @@ export const JAVASCRIPT_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
             }
           }
 
-          builder.add_constructor_to_class(class_id, {
-            symbol_id: constructor_id,
-            name: "constructor" as SymbolName,
-            location: capture.location,
-            scope_id: context.get_scope_id(capture.location),
-            access_modifier,
-            capture: capture,
-          });
+          builder.add_constructor_to_class(
+            class_id,
+            {
+              symbol_id: constructor_id,
+              name: "constructor" as SymbolName,
+              location: capture.location,
+              scope_id: context.get_scope_id(capture.location),
+              access_modifier,
+            },
+            capture
+          );
         }
       },
     },
@@ -225,16 +232,18 @@ export const JAVASCRIPT_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
           scope_id = context.get_scope_id(capture.location);
         }
 
-        builder.add_function({
-          symbol_id: func_id,
-          name: capture.text,
-          location: capture.location,
-          scope_id: scope_id,
-          is_exported: export_info.is_exported,
-          export: export_info.export,
-          docstring,
-          capture: capture,
-        });
+        builder.add_function(
+          {
+            symbol_id: func_id,
+            name: capture.text,
+            location: capture.location,
+            scope_id: scope_id,
+            is_exported: export_info.is_exported,
+            export: export_info.export,
+            docstring,
+          },
+          capture
+        );
       },
     },
   ],
@@ -250,15 +259,17 @@ export const JAVASCRIPT_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
         const func_id = create_function_id(capture);
         const export_info = extract_export_info(capture.node, capture.text);
 
-        builder.add_function({
-          symbol_id: func_id,
-          name: capture.text,
-          location: capture.location,
-          scope_id: context.get_scope_id(capture.location),
-          is_exported: export_info.is_exported,
-          export: export_info.export,
-          capture: capture,
-        });
+        builder.add_function(
+          {
+            symbol_id: func_id,
+            name: capture.text,
+            location: capture.location,
+            scope_id: context.get_scope_id(capture.location),
+            is_exported: export_info.is_exported,
+            export: export_info.export,
+          },
+          capture
+        );
       },
     },
   ],

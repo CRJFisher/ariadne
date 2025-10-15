@@ -205,7 +205,7 @@
         "return_type": "str"
       },
       "return_type": "str",
-      "body_scope_id": "mock:function:scope"
+      "body_scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:6:10:7:28"
     },
     "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:10:5:10:7:add": {
       "kind": "function",
@@ -254,7 +254,7 @@
         "return_type": "int"
       },
       "return_type": "int",
-      "body_scope_id": "mock:function:scope"
+      "body_scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:10:8:11:16"
     },
     "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:14:5:14:16:process_user": {
       "kind": "function",
@@ -318,7 +318,7 @@
         "return_type": "dict"
       },
       "return_type": "dict",
-      "body_scope_id": "mock:function:scope"
+      "body_scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:14:17:19:5"
     },
     "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:22:5:22:20:multiple_returns": {
       "kind": "function",
@@ -353,7 +353,7 @@
         "return_type": "str"
       },
       "return_type": "str",
-      "body_scope_id": "mock:function:scope"
+      "body_scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:22:21:28:21"
     },
     "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:31:5:31:14:call_chain": {
       "kind": "function",
@@ -371,7 +371,7 @@
       "signature": {
         "parameters": []
       },
-      "body_scope_id": "mock:function:scope"
+      "body_scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:31:15:34:17"
     },
     "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:37:5:37:14:fetch_data": {
       "kind": "function",
@@ -389,7 +389,7 @@
       "signature": {
         "parameters": []
       },
-      "body_scope_id": "mock:function:scope"
+      "body_scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:37:15:38:24"
     },
     "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:41:5:41:18:transform_data": {
       "kind": "function",
@@ -422,7 +422,7 @@
           }
         ]
       },
-      "body_scope_id": "mock:function:scope"
+      "body_scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/functions/basic_functions.py:41:19:42:28"
     }
   },
   "classes": {},

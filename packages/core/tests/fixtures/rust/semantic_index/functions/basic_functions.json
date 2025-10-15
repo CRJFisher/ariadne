@@ -174,7 +174,7 @@
         "return_type": "String"
       },
       "return_type": "String",
-      "body_scope_id": "mock:function:scope"
+      "body_scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/functions/basic_functions.rs:4:9:6:1"
     },
     "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/functions/basic_functions.rs:8:1:10:1:add": {
       "kind": "function",
@@ -225,7 +225,7 @@
         "return_type": "i32"
       },
       "return_type": "i32",
-      "body_scope_id": "mock:function:scope"
+      "body_scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/functions/basic_functions.rs:8:7:10:1"
     },
     "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/functions/basic_functions.rs:12:1:14:1:multiply": {
       "kind": "function",
@@ -276,7 +276,7 @@
         "return_type": "i32"
       },
       "return_type": "i32",
-      "body_scope_id": "mock:function:scope"
+      "body_scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/functions/basic_functions.rs:12:12:14:1"
     },
     "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/functions/basic_functions.rs:16:1:18:1:is_even": {
       "kind": "function",
@@ -312,7 +312,7 @@
         "return_type": "bool"
       },
       "return_type": "bool",
-      "body_scope_id": "mock:function:scope"
+      "body_scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/functions/basic_functions.rs:16:11:18:1"
     },
     "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/functions/basic_functions.rs:20:1:23:1:call_chain": {
       "kind": "function",
@@ -332,7 +332,7 @@
         "return_type": "i32"
       },
       "return_type": "i32",
-      "body_scope_id": "mock:function:scope"
+      "body_scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/functions/basic_functions.rs:20:14:23:1"
     },
     "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/functions/basic_functions.rs:25:1:27:1:fetch_data": {
       "kind": "function",
@@ -352,7 +352,7 @@
         "return_type": "i32"
       },
       "return_type": "i32",
-      "body_scope_id": "mock:function:scope"
+      "body_scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/functions/basic_functions.rs:25:14:27:1"
     },
     "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/functions/basic_functions.rs:29:1:31:1:transform_data": {
       "kind": "function",
@@ -388,7 +388,7 @@
         "return_type": "i32"
       },
       "return_type": "i32",
-      "body_scope_id": "mock:function:scope"
+      "body_scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/functions/basic_functions.rs:29:18:31:1"
     },
     "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/functions/basic_functions.rs:33:1:36:1:main": {
       "kind": "function",
@@ -406,7 +406,7 @@
       "signature": {
         "parameters": []
       },
-      "body_scope_id": "mock:function:scope"
+      "body_scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/functions/basic_functions.rs:33:12:36:1"
     }
   },
   "classes": {},

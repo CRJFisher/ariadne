@@ -110,17 +110,21 @@ export const PYTHON_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
             capture.node.parent || capture.node
           );
 
-          builder.add_method_to_class(class_id, {
-            symbol_id: method_id,
-            name: name,
-            location: capture.location,
-            scope_id: context.get_scope_id(capture.location),
-            return_type: extract_return_type(
-              capture.node.parent || capture.node
-            ),
-            ...methodType,
-            async: isAsync,
-          });
+          builder.add_method_to_class(
+            class_id,
+            {
+              symbol_id: method_id,
+              name: name,
+              location: capture.location,
+              scope_id: context.get_scope_id(capture.location),
+              return_type: extract_return_type(
+                capture.node.parent || capture.node
+              ),
+              ...methodType,
+              async: isAsync,
+            },
+            capture
+          );
         }
       },
     },
@@ -138,17 +142,21 @@ export const PYTHON_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
         const class_id = find_containing_class(capture);
 
         if (class_id) {
-          builder.add_method_to_class(class_id, {
-            symbol_id: method_id,
-            name: capture.text,
-            location: capture.location,
-            scope_id: context.get_scope_id(capture.location),
-            return_type: extract_return_type(
-              capture.node.parent || capture.node
-            ),
-            static: true,
-            async: is_async_function(capture.node.parent || capture.node),
-          });
+          builder.add_method_to_class(
+            class_id,
+            {
+              symbol_id: method_id,
+              name: capture.text,
+              location: capture.location,
+              scope_id: context.get_scope_id(capture.location),
+              return_type: extract_return_type(
+                capture.node.parent || capture.node
+              ),
+              static: true,
+              async: is_async_function(capture.node.parent || capture.node),
+            },
+            capture
+          );
         }
       },
     },
@@ -166,17 +174,21 @@ export const PYTHON_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
         const class_id = find_containing_class(capture);
 
         if (class_id) {
-          builder.add_method_to_class(class_id, {
-            symbol_id: method_id,
-            name: capture.text,
-            location: capture.location,
-            scope_id: context.get_scope_id(capture.location),
-            return_type: extract_return_type(
-              capture.node.parent || capture.node
-            ),
-            abstract: true, // Use abstract flag for classmethod
-            async: is_async_function(capture.node.parent || capture.node),
-          });
+          builder.add_method_to_class(
+            class_id,
+            {
+              symbol_id: method_id,
+              name: capture.text,
+              location: capture.location,
+              scope_id: context.get_scope_id(capture.location),
+              return_type: extract_return_type(
+                capture.node.parent || capture.node
+              ),
+              abstract: true, // Use abstract flag for classmethod
+              async: is_async_function(capture.node.parent || capture.node),
+            },
+            capture
+          );
         }
       },
     },
@@ -195,12 +207,16 @@ export const PYTHON_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
         const class_id = find_containing_class(capture);
 
         if (class_id) {
-          builder.add_constructor_to_class(class_id, {
-            symbol_id: method_id,
-            name: "__init__" as SymbolName,
-            location: capture.location,
-            scope_id: context.get_scope_id(capture.location),
-          });
+          builder.add_constructor_to_class(
+            class_id,
+            {
+              symbol_id: method_id,
+              name: "__init__" as SymbolName,
+              location: capture.location,
+              scope_id: context.get_scope_id(capture.location),
+            },
+            capture
+          );
         }
       },
     },
@@ -275,15 +291,18 @@ export const PYTHON_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
           context.root_scope_id
         );
 
-        builder.add_function({
-          symbol_id: func_id,
-          name: capture.text,
-          location: capture.location,
-          scope_id: defining_scope_id,
-          is_exported: export_info.is_exported,
-          export: export_info.export,
-          return_type: extract_return_type(capture.node.parent || capture.node),
-        });
+        builder.add_function(
+          {
+            symbol_id: func_id,
+            name: capture.text,
+            location: capture.location,
+            scope_id: defining_scope_id,
+            is_exported: export_info.is_exported,
+            export: export_info.export,
+            return_type: extract_return_type(capture.node.parent || capture.node),
+          },
+          capture
+        );
       },
     },
   ],
@@ -304,15 +323,18 @@ export const PYTHON_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
           context.root_scope_id
         );
 
-        builder.add_function({
-          symbol_id: func_id,
-          name: capture.text,
-          location: capture.location,
-          scope_id: defining_scope_id,
-          is_exported: export_info.is_exported,
-          export: export_info.export,
-          return_type: extract_return_type(capture.node.parent || capture.node),
-        });
+        builder.add_function(
+          {
+            symbol_id: func_id,
+            name: capture.text,
+            location: capture.location,
+            scope_id: defining_scope_id,
+            is_exported: export_info.is_exported,
+            export: export_info.export,
+            return_type: extract_return_type(capture.node.parent || capture.node),
+          },
+          capture
+        );
       },
     },
   ],
@@ -327,13 +349,16 @@ export const PYTHON_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
       ) => {
         const func_id = create_function_id(capture);
 
-        builder.add_function({
-          symbol_id: func_id,
-          name: "lambda" as SymbolName,
-          location: capture.location,
-          scope_id: context.get_scope_id(capture.location),
-          is_exported: false, // Lambda functions are never exported
-        });
+        builder.add_function(
+          {
+            symbol_id: func_id,
+            name: "lambda" as SymbolName,
+            location: capture.location,
+            scope_id: context.get_scope_id(capture.location),
+            is_exported: false, // Lambda functions are never exported
+          },
+          capture
+        );
       },
     },
   ],

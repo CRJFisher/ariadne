@@ -205,7 +205,7 @@
       "signature": {
         "parameters": []
       },
-      "body_scope_id": "mock:function:scope"
+      "body_scope_id": "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/classes/basic_class.py:7:17:10:26"
     },
     "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/classes/basic_class.py:12:9:12:16:activate": {
       "kind": "function",
@@ -223,7 +223,7 @@
       "signature": {
         "parameters": []
       },
-      "body_scope_id": "mock:function:scope"
+      "body_scope_id": "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/classes/basic_class.py:12:17:13:26"
     },
     "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/classes/basic_class.py:15:9:15:18:deactivate": {
       "kind": "function",
@@ -241,7 +241,7 @@
       "signature": {
         "parameters": []
       },
-      "body_scope_id": "mock:function:scope"
+      "body_scope_id": "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/classes/basic_class.py:12:17:13:26"
     },
     "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/classes/basic_class.py:18:9:18:16:get_info": {
       "kind": "function",
@@ -259,7 +259,7 @@
       "signature": {
         "parameters": []
       },
-      "body_scope_id": "mock:function:scope"
+      "body_scope_id": "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/classes/basic_class.py:18:17:19:44"
     },
     "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/classes/basic_class.py:23:9:23:16:__init__": {
       "kind": "function",
@@ -277,7 +277,7 @@
       "signature": {
         "parameters": []
       },
-      "body_scope_id": "mock:function:scope"
+      "body_scope_id": "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/classes/basic_class.py:23:17:26:26"
     },
     "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/classes/basic_class.py:28:9:28:22:apply_discount": {
       "kind": "function",
@@ -295,7 +295,7 @@
       "signature": {
         "parameters": []
       },
-      "body_scope_id": "mock:function:scope"
+      "body_scope_id": "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/classes/basic_class.py:28:23:29:48"
     },
     "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/classes/basic_class.py:31:9:31:17:get_price": {
       "kind": "function",
@@ -313,7 +313,7 @@
       "signature": {
         "parameters": []
       },
-      "body_scope_id": "mock:function:scope"
+      "body_scope_id": "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/classes/basic_class.py:31:18:32:25"
     }
   },
   "classes": {
@@ -480,7 +480,7 @@
               "type": "str"
             }
           ],
-          "body_scope_id": "mock:constructor:scope"
+          "body_scope_id": "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/classes/basic_class.py:7:17:10:26"
         }
       ],
       "decorators": []
@@ -646,7 +646,7 @@
               "type": "float"
             }
           ],
-          "body_scope_id": "mock:constructor:scope"
+          "body_scope_id": "method:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/python/code/classes/basic_class.py:23:17:26:26"
         }
       ],
       "decorators": []

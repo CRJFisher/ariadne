@@ -203,7 +203,7 @@
       "signature": {
         "parameters": []
       },
-      "body_scope_id": "mock:function:scope"
+      "body_scope_id": "function:/Users/chuck/workspace/ariadne/packages/core/tests/fixtures/rust/code/structs/basic_struct.rs:43:12:50:1"
     }
   },
   "classes": {

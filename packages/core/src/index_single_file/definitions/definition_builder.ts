@@ -280,15 +280,15 @@ export class DefinitionBuilder {
       async?: boolean;
       generics?: SymbolName[];
       docstring?: string;
-      capture: CaptureNode;
-    }
+    },
+    capture: CaptureNode
   ): DefinitionBuilder {
     const class_state = this.classes.get(class_id);
     if (!class_state) return this;
 
-    // Compute body_scope_id if capture is provided
+    // Compute body_scope_id using the capture parameter
     const body_scope_id: ScopeId = find_body_scope_for_definition(
-      definition.capture,
+      capture,
       this.context.scopes,
       definition.name,
       definition.location
@@ -319,18 +319,18 @@ export class DefinitionBuilder {
       location: Location;
       scope_id: ScopeId;
       access_modifier?: "public" | "private" | "protected";
-      capture?: CaptureNode;
-    }
+    },
+    capture?: CaptureNode
   ): DefinitionBuilder {
     const class_state = this.classes.get(class_id);
     if (!class_state) return this;
 
     // Compute body_scope_id if capture is provided
     let body_scope_id: ScopeId | undefined;
-    if (definition.capture) {
+    if (capture) {
       try {
         body_scope_id = find_body_scope_for_definition(
-          definition.capture,
+          capture,
           this.context.scopes,
           definition.name,
           definition.location
@@ -384,24 +384,26 @@ export class DefinitionBuilder {
   /**
    * Add a function definition
    */
-  add_function(definition: {
-    symbol_id: SymbolId;
-    name: SymbolName;
-    location: Location;
-    scope_id: ScopeId;
-    generics?: SymbolName[];
-    is_exported?: boolean;
-    export?: ExportMetadata;
-    docstring?: string;
-    return_type?: SymbolName;
-    capture?: CaptureNode;
-  }): DefinitionBuilder {
+  add_function(
+    definition: {
+      symbol_id: SymbolId;
+      name: SymbolName;
+      location: Location;
+      scope_id: ScopeId;
+      generics?: SymbolName[];
+      is_exported?: boolean;
+      export?: ExportMetadata;
+      docstring?: string;
+      return_type?: SymbolName;
+    },
+    capture?: CaptureNode
+  ): DefinitionBuilder {
     // Compute body_scope_id if capture is provided
     let body_scope_id: ScopeId | undefined;
-    if (definition.capture) {
+    if (capture) {
       try {
         body_scope_id = find_body_scope_for_definition(
-          definition.capture,
+          capture,
           this.context.scopes,
           definition.name,
           definition.location
