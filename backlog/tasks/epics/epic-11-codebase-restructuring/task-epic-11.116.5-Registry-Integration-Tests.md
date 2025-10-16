@@ -88,14 +88,31 @@ describe("Registry Integration Tests", () => {
 
 ## Sub-Tasks
 
-Before starting the main implementation, verify fixture coverage for each language:
+### Phase 1: Fixture Coverage ✅ COMPLETED
 
-- **task-epic-11.116.5.1**: TypeScript Fixture Coverage
-- **task-epic-11.116.5.2**: JavaScript Fixture Coverage
-- **task-epic-11.116.5.3**: Python Fixture Coverage
-- **task-epic-11.116.5.4**: Rust Fixture Coverage
+Verify fixture coverage for each language:
 
-These sub-tasks audit existing fixtures against integration test requirements and create any missing fixtures before refactoring the tests.
+- **task-epic-11.116.5.1**: TypeScript Fixture Coverage ✅
+- **task-epic-11.116.5.2**: JavaScript Fixture Coverage ✅
+- **task-epic-11.116.5.3**: Python Fixture Coverage ✅
+- **task-epic-11.116.5.4**: Rust Fixture Coverage ✅
+
+### Phase 2: Project Integration Tests (NEW DIRECTION)
+
+**Architectural Shift:** Instead of refactoring `symbol_resolution.integration.test.ts` to use JSON fixtures, create new integration tests that test the actual `Project` class - the real coordinator of all resolution in the system.
+
+- **task-epic-11.116.5.5**: TypeScript Project Integration Tests
+- **task-epic-11.116.5.6**: JavaScript Project Integration Tests
+- **task-epic-11.116.5.7**: Python Project Integration Tests
+- **task-epic-11.116.5.8**: Rust Project Integration Tests
+
+**Why this change:**
+
+- `symbol_resolution.integration.test.ts` was testing a deprecated helper function
+- `Project` class is where resolution actually happens in the real system
+- Tests end-to-end: source code → parse → index → registries → resolution
+- More realistic: tests file updates, dependencies, incremental changes
+- Simpler: no complex registry population helpers needed
 
 ## Implementation Plan
 
