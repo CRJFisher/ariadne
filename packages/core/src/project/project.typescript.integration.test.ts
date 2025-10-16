@@ -340,14 +340,12 @@ describe("Project Integration - TypeScript", () => {
       );
       expect(other_call_v2).toBeDefined();
 
-      // TODO (task-epic-11.116.5.5.4): Stale import definitions should be cleaned up
       // Import should not resolve after source file removes the export
       const resolved_v2 = project.resolutions.resolve(
         other_call_v2!.scope_id,
         other_call_v2!.name
       );
-      // Currently still resolves to stale import definition
-      // expect(resolved_v2).toBeNull();
+      expect(resolved_v2).toBeNull();
     });
 
     it("should handle file removal and update dependents", async () => {
@@ -374,7 +372,6 @@ describe("Project Integration - TypeScript", () => {
       const main = project.get_semantic_index(main_file);
       expect(main).toBeDefined();
 
-      // TODO (task-epic-11.116.5.5.4): Stale import definitions should be cleaned up
       // Call to otherFunction (which was imported) should not resolve after source file removal
       const other_call = main!.references.find(
         (r) => r.name === ("otherFunction" as SymbolName) && r.type === "call"
@@ -384,8 +381,7 @@ describe("Project Integration - TypeScript", () => {
           other_call.scope_id,
           other_call.name
         );
-        // Currently still resolves to stale import definition
-        // expect(resolved).toBeNull();
+        expect(resolved).toBeNull();
       }
     });
   });

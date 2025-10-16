@@ -84,11 +84,15 @@ export class DefinitionRegistry {
 
       // Build scope index: ScopeId → (name → symbol_id)
       // This enables O(1) lookup of definitions in a scope
-      const scope_id = def.defining_scope_id;
-      if (!this.by_scope.has(scope_id)) {
-        this.by_scope.set(scope_id, new Map());
+      // IMPORTANT: Exclude ImportDefinitions - they are resolved via import resolution logic
+      // Adding ImportDefinitions here causes them to override properly resolved imports
+      if (def.kind !== "import") {
+        const scope_id = def.defining_scope_id;
+        if (!this.by_scope.has(scope_id)) {
+          this.by_scope.set(scope_id, new Map());
+        }
+        this.by_scope.get(scope_id)!.set(def.name as SymbolName, def.symbol_id);
       }
-      this.by_scope.get(scope_id)!.set(def.name as SymbolName, def.symbol_id);
 
       // Build member index for classes and interfaces
       // Extract members directly from ClassDefinition/InterfaceDefinition
