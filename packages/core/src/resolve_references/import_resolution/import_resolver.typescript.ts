@@ -75,5 +75,12 @@ function resolve_relative_typescript(
     }
   }
 
+  // If file tree lookup fails, infer the extension
+  // This handles cases where the file tree isn't fully populated yet
+  // Default to .ts for TypeScript imports without extensions
+  if (!path.extname(resolved)) {
+    return `${resolved}.ts` as FilePath;
+  }
+
   return resolved as FilePath;
 }

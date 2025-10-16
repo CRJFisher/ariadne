@@ -72,6 +72,13 @@ function resolve_relative_javascript(
     }
   }
 
+  // If file tree lookup fails, infer the extension
+  // This handles cases where the file tree isn't fully populated yet
+  // Default to .js for JavaScript imports without extensions
+  if (!path.extname(resolved)) {
+    return `${resolved}.js` as FilePath;
+  }
+
   // Return resolved path even if not found (may be generated)
   return resolved as FilePath;
 }
