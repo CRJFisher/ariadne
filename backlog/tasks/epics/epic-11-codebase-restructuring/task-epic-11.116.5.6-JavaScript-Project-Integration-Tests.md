@@ -17,21 +17,23 @@ Create integration tests for the `Project` class using JavaScript fixtures. Test
 JavaScript has TWO module systems that must be tested:
 
 1. **CommonJS** (Node.js traditional)
+
    ```javascript
    // utils.js
    module.exports = { helper };
 
    // main.js
-   const { helper } = require('./utils');
+   const { helper } = require("./utils");
    ```
 
 2. **ES6 Modules** (modern JavaScript)
+
    ```javascript
    // utils.js
    export function helper() {}
 
    // main.js
-   import { helper } from './utils';
+   import { helper } from "./utils";
    ```
 
 ### Key Differences from TypeScript
@@ -63,12 +65,14 @@ describe("Project Integration - JavaScript (CommonJS)", () => {
     project.update_file("main_commonjs.js" as FilePath, main);
 
     // Verify require() creates import definitions
-    const main_index = project.get_semantic_index("main_commonjs.js" as FilePath);
+    const main_index = project.get_semantic_index(
+      "main_commonjs.js" as FilePath
+    );
     const imports = Array.from(main_index.imported_symbols.values());
     expect(imports.length).toBeGreaterThan(0);
 
     // Verify cross-file resolution
-    const call = main_index.references.find(r => r.type === "call");
+    const call = main_index.references.find((r) => r.type === "call");
     const resolved = project.resolutions.resolve(call!.scope_id, call!.name);
     expect(resolved).toBeDefined();
   });
@@ -102,7 +106,7 @@ describe("Project Integration - JavaScript (ES6 Modules)", () => {
     expect(imports.length).toBeGreaterThan(0);
 
     // Verify cross-file resolution
-    const call = main_index.references.find(r => r.type === "call");
+    const call = main_index.references.find((r) => r.type === "call");
     const resolved = project.resolutions.resolve(call!.scope_id, call!.name);
     expect(resolved).toBeDefined();
   });
@@ -128,7 +132,7 @@ describe("Class Methods", () => {
 
     // Find method call
     const method_call = index.references.find(
-      r => r.type === "call" && r.call_type === "method"
+      (r) => r.type === "call" && r.call_type === "method"
     );
     expect(method_call).toBeDefined();
 
@@ -163,7 +167,7 @@ describe("JavaScript Patterns", () => {
 
     // Verify IIFE scope is captured
     const scopes = Array.from(index.scopes.values());
-    const has_function_scope = scopes.some(s => s.type === "function");
+    const has_function_scope = scopes.some((s) => s.type === "function");
     expect(has_function_scope).toBe(true);
   });
 
@@ -275,16 +279,10 @@ import path from "path";
 import fs from "fs";
 import type { FilePath } from "@ariadnejs/types";
 
-const FIXTURE_ROOT = path.join(
-  __dirname,
-  "../tests/fixtures/javascript/code"
-);
+const FIXTURE_ROOT = path.join(__dirname, "../tests/fixtures/javascript/code");
 
 function load_source(relative_path: string): string {
-  return fs.readFileSync(
-    path.join(FIXTURE_ROOT, relative_path),
-    "utf-8"
-  );
+  return fs.readFileSync(path.join(FIXTURE_ROOT, relative_path), "utf-8");
 }
 
 describe("Project Integration - JavaScript", () => {
@@ -295,6 +293,7 @@ describe("Project Integration - JavaScript", () => {
 ## Estimated Effort
 
 **3-4 hours**
+
 - 1 hour: CommonJS module resolution
 - 1 hour: ES6 module resolution
 - 1 hour: Class methods (both syntaxes)
@@ -306,3 +305,81 @@ describe("Project Integration - JavaScript", () => {
 - Dynamic patterns (bracket notation, computed properties) may not resolve
 - Focus on common patterns, not edge cases
 - Document any JavaScript-specific resolution limitations
+
+## Implementation Notes
+
+### Completed (2025-10-16)
+
+Created comprehensive JavaScript integration test suite in:
+
+- `packages/core/src/project/project.javascript.integration.test.ts`
+
+Test structure follows the TypeScript integration test pattern with JavaScript-specific adaptations.
+
+### Test Results
+
+**Overall:** 16 out of 19 tests passing (84% pass rate)
+
+**Passing Tests:**
+
+- ✅ ES6 module resolution (import/export)
+- ✅ Cross-file function call resolution for ES6 modules
+- ✅ ES6 class methods
+- ✅ Prototype methods (basic structure captured)
+- ✅ Method chaining
+- ✅ IIFE patterns
+- ✅ Closures and nested scopes
+- ✅ Factory patterns
+- ✅ Cross-module class resolution
+- ✅ Shadowing
+- ✅ Call graph generation
+- ✅ Incremental updates
+- ✅ File removal handling
+
+**Failing Tests (3):**
+
+1. CommonJS `require()` imports - imports.length === 0
+2. CommonJS cross-file resolution - resolved_def is undefined
+3. Default export resolution - resolved_def is undefined
+
+### Identified Issues
+
+Created sub-tasks to address the failures:
+
+1. **task-epic-11.116.5.6.1**: Add CommonJS require() support
+
+   - Root cause: `javascript.scm` query file only captures ES6 imports, not `require()` calls
+   - Impact: CommonJS modules cannot be resolved across files
+   - Status: To Do
+
+2. **task-epic-11.116.5.6.2**: Fix default export resolution
+   - Root cause: Default exported functions resolve but definition lookup fails
+   - Impact: Default imports work but call resolution fails
+   - Status: To Do
+
+### Coverage Achieved
+
+The test suite covers:
+
+- ✅ ES6 import/export
+- ✅ ES6 class methods
+- ✅ Prototype-based methods
+- ✅ IIFE patterns
+- ✅ Closures
+- ✅ Object literal methods
+- ✅ Shadowing
+- ✅ Call graph
+- ✅ Incremental updates
+- ⚠️ CommonJS (partial - needs query pattern updates)
+- ⚠️ Default exports (partial - needs resolution fix)
+
+### Next Steps
+
+1. Complete sub-task epic-11.116.5.6.1 to add CommonJS support
+2. Complete sub-task epic-11.116.5.6.2 to fix default exports
+3. All tests should pass after these fixes
+4. Consider adding tests for:
+   - Dynamic imports (`import()`)
+   - Namespace imports
+   - Re-exports
+   - Mixed CommonJS/ES6 modules
