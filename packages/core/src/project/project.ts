@@ -1,4 +1,4 @@
-import type { FilePath, SymbolId, Language, ImportDefinition } from "@ariadnejs/types";
+import type { FilePath, SymbolId, Language } from "@ariadnejs/types";
 import type { ParsedFile } from "../index_single_file/file_utils";
 import { build_semantic_index } from "../index_single_file/semantic_index";
 import type { SemanticIndex } from "../index_single_file/semantic_index";
@@ -213,8 +213,19 @@ export class Project {
     // Phase 2.5: Fix ImportDefinition locations to point to source files
     // ImportDefinitions are created with the importing file's location,
     // but they should point to the original definition's location in the source file
-    // TODO: Fix bugs in fix_import_definition_locations (uses non-existent 'add' method)
-    // this.fix_import_definition_locations(file_id, import_definitions);
+    const fixed_import_definitions = fix_import_definition_locations(
+      import_definitions,
+      this.imports,
+      this.exports,
+      this.definitions
+    );
+
+    // Rebuild all_definitions with fixed imports
+    const non_import_definitions = all_definitions.filter(def => def.kind !== "import");
+    const updated_all_definitions = [...non_import_definitions, ...fixed_import_definitions];
+
+    // Update the definitions registry with fixed import locations
+    this.definitions.update_file(file_id, updated_all_definitions);
 
     // Phase 3: Re-resolve affected files (eager!)
     const affected_files = new Set([file_id, ...dependents]);
@@ -328,74 +339,6 @@ export class Project {
     };
   }
 
-  /**
-   * Fix ImportDefinition locations to point to original source files.
-   *
-   * ImportDefinitions are initially created with the importing file's location,
-   * but they should point to the original definition's location in the source file.
-   *
-   * This method resolves each import to its source file, looks up the original
-   * definition, and updates the ImportDefinition with the correct location.
-   *
-   * @param file_id - The file containing imports to fix
-   * @param import_definitions - The import definitions to fix
-   */
-  private fix_import_definition_locations(
-    _file_id: FilePath,
-    _import_definitions: readonly ImportDefinition[]
-  ): void {
-    // TODO: This method needs to be refactored
-    // Issue: DefinitionRegistry doesn't have an 'add' method
-    // Also, the semantics of changing ImportDefinition locations is questionable
-    // ImportDefinitions should point to where the import statement is, not the source
-    // Resolution should follow imports to find the actual source definition
-
-    // Commenting out the entire implementation for now
-    /*
-    for (const import_def of import_definitions) {
-      // Get the resolved file path for this import
-      const source_file_path = this.imports.get_resolved_import_path(import_def.symbol_id);
-
-      if (!source_file_path) {
-        // Can't resolve import path - skip
-        continue;
-      }
-
-      // Get exported symbols from the source file
-      const exported_symbol_ids = this.exports.get_exports(source_file_path);
-
-      // Find the matching exported definition
-      // For named imports, use original_name if present, otherwise use name
-      const import_name = import_def.original_name || import_def.name;
-
-      let original_def: AnyDefinition | undefined;
-
-      for (const exported_symbol_id of exported_symbol_ids) {
-        const def = this.definitions.get(exported_symbol_id);
-        if (def && def.name === import_name) {
-          original_def = def;
-          break;
-        }
-      }
-
-      if (!original_def) {
-        // Can't find original definition - skip
-        // This can happen if the export doesn't exist yet or was removed
-        continue;
-      }
-
-      // Create updated ImportDefinition with correct location
-      const fixed_import_def: ImportDefinition = {
-        ...import_def,
-        location: original_def.location
-      };
-
-      // Update the definition in the registry
-      // We need to replace the old definition with the new one
-      this.definitions.add(fixed_import_def);
-    }
-    */
-  }
 
   /**
    * Get the call graph for the project.

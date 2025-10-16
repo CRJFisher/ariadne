@@ -256,9 +256,6 @@ describe("Project Integration - TypeScript", () => {
       );
       expect(other_call).toBeDefined();
 
-      // TODO: Fix import resolution - imported symbols should resolve to original file
-      // Currently, ImportDefinitions are created with the importing file's path
-      // instead of the original definition's path
       // Verify resolves to imported function from utils.ts
       const resolved = project.resolutions.resolve(
         other_call!.scope_id,
@@ -268,8 +265,8 @@ describe("Project Integration - TypeScript", () => {
 
       const resolved_def = project.definitions.get(resolved!);
       expect(resolved_def).toBeDefined();
-      // Currently fails: resolves to main_shadowing.ts instead of utils.ts
-      // expect(resolved_def!.location.file_path).toContain("utils.ts");
+      // ImportDefinitions now correctly point to the original file
+      expect(resolved_def!.location.file_path).toContain("utils.ts");
       expect(resolved_def!.name).toBe("otherFunction" as SymbolName);
     });
   });
@@ -323,8 +320,8 @@ describe("Project Integration - TypeScript", () => {
       );
       expect(resolved_v1).toBeDefined();
       const resolved_def_v1 = project.definitions.get(resolved_v1!);
-      // TODO: Same import resolution issue as above
-      // expect(resolved_def_v1!.location.file_path).toContain("utils.ts");
+      // ImportDefinitions now correctly point to the original file
+      expect(resolved_def_v1!.location.file_path).toContain("utils.ts");
 
       // Modify utils.ts - rename otherFunction
       const modified_utils = utils_source.replace(
