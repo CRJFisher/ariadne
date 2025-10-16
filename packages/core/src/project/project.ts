@@ -1,4 +1,4 @@
-import type { FilePath, SymbolId, Language } from "@ariadnejs/types";
+import type { FilePath, SymbolId, Language, ImportDefinition } from "@ariadnejs/types";
 import type { ParsedFile } from "../index_single_file/file_utils";
 import { build_semantic_index } from "../index_single_file/semantic_index";
 import type { SemanticIndex } from "../index_single_file/semantic_index";
@@ -12,6 +12,7 @@ import { ImportGraph } from "./import_graph";
 import { ResolutionRegistry } from "../resolve_references/resolution_registry";
 import { type CallGraph } from "@ariadnejs/types";
 import { detect_call_graph } from "../trace_call_graph/detect_call_graph";
+import { fix_import_definition_locations } from "./fix_import_locations";
 import Parser from "tree-sitter";
 import TypeScriptParser from "tree-sitter-typescript";
 import JavaScriptParser from "tree-sitter-javascript";
@@ -109,15 +110,15 @@ export class Project {
   private file_contents: Map<FilePath, string> = new Map();
 
   // ===== Project-level registries (aggregated, incrementally updated) =====
-  private definitions: DefinitionRegistry = new DefinitionRegistry();
-  private types: TypeRegistry = new TypeRegistry();
-  private scopes: ScopeRegistry = new ScopeRegistry();
-  private exports: ExportRegistry = new ExportRegistry();
-  private references: ReferenceRegistry = new ReferenceRegistry();
-  private imports: ImportGraph = new ImportGraph();
+  public definitions: DefinitionRegistry = new DefinitionRegistry();
+  public types: TypeRegistry = new TypeRegistry();
+  public scopes: ScopeRegistry = new ScopeRegistry();
+  public exports: ExportRegistry = new ExportRegistry();
+  public references: ReferenceRegistry = new ReferenceRegistry();
+  public imports: ImportGraph = new ImportGraph();
 
   // ===== Resolution layer (always up-to-date) =====
-  private resolutions: ResolutionRegistry = new ResolutionRegistry();
+  public resolutions: ResolutionRegistry = new ResolutionRegistry();
   private root_folder?: FileSystemFolder = undefined;
 
   async initialize(root_folder_abs_path?: FilePath): Promise<void> {
@@ -172,6 +173,23 @@ export class Project {
       ...Array.from(semantic_index.imported_symbols.values()),
     ];
 
+    // Extract methods from classes, interfaces, and enums
+    // Methods have their own symbol IDs and need to be registered separately
+    for (const class_def of semantic_index.classes.values()) {
+      all_definitions.push(...class_def.methods);
+      if (class_def.constructor) {
+        all_definitions.push(...class_def.constructor);
+      }
+    }
+    for (const interface_def of semantic_index.interfaces.values()) {
+      all_definitions.push(...interface_def.methods);
+    }
+    for (const enum_def of semantic_index.enums.values()) {
+      if (enum_def.methods) {
+        all_definitions.push(...enum_def.methods);
+      }
+    }
+
     this.definitions.update_file(file_id, all_definitions);
     this.scopes.update_file(file_id, semantic_index.scopes);
 
@@ -191,6 +209,12 @@ export class Project {
       language,
       this.root_folder
     );
+
+    // Phase 2.5: Fix ImportDefinition locations to point to source files
+    // ImportDefinitions are created with the importing file's location,
+    // but they should point to the original definition's location in the source file
+    // TODO: Fix bugs in fix_import_definition_locations (uses non-existent 'add' method)
+    // this.fix_import_definition_locations(file_id, import_definitions);
 
     // Phase 3: Re-resolve affected files (eager!)
     const affected_files = new Set([file_id, ...dependents]);
@@ -302,6 +326,75 @@ export class Project {
       definition_count: this.definitions.size(),
       resolution_count: this.resolutions.size(),
     };
+  }
+
+  /**
+   * Fix ImportDefinition locations to point to original source files.
+   *
+   * ImportDefinitions are initially created with the importing file's location,
+   * but they should point to the original definition's location in the source file.
+   *
+   * This method resolves each import to its source file, looks up the original
+   * definition, and updates the ImportDefinition with the correct location.
+   *
+   * @param file_id - The file containing imports to fix
+   * @param import_definitions - The import definitions to fix
+   */
+  private fix_import_definition_locations(
+    _file_id: FilePath,
+    _import_definitions: readonly ImportDefinition[]
+  ): void {
+    // TODO: This method needs to be refactored
+    // Issue: DefinitionRegistry doesn't have an 'add' method
+    // Also, the semantics of changing ImportDefinition locations is questionable
+    // ImportDefinitions should point to where the import statement is, not the source
+    // Resolution should follow imports to find the actual source definition
+
+    // Commenting out the entire implementation for now
+    /*
+    for (const import_def of import_definitions) {
+      // Get the resolved file path for this import
+      const source_file_path = this.imports.get_resolved_import_path(import_def.symbol_id);
+
+      if (!source_file_path) {
+        // Can't resolve import path - skip
+        continue;
+      }
+
+      // Get exported symbols from the source file
+      const exported_symbol_ids = this.exports.get_exports(source_file_path);
+
+      // Find the matching exported definition
+      // For named imports, use original_name if present, otherwise use name
+      const import_name = import_def.original_name || import_def.name;
+
+      let original_def: AnyDefinition | undefined;
+
+      for (const exported_symbol_id of exported_symbol_ids) {
+        const def = this.definitions.get(exported_symbol_id);
+        if (def && def.name === import_name) {
+          original_def = def;
+          break;
+        }
+      }
+
+      if (!original_def) {
+        // Can't find original definition - skip
+        // This can happen if the export doesn't exist yet or was removed
+        continue;
+      }
+
+      // Create updated ImportDefinition with correct location
+      const fixed_import_def: ImportDefinition = {
+        ...import_def,
+        location: original_def.location
+      };
+
+      // Update the definition in the registry
+      // We need to replace the old definition with the new one
+      this.definitions.add(fixed_import_def);
+    }
+    */
   }
 
   /**
