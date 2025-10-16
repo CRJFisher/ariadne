@@ -1,16 +1,23 @@
-# Task epic-11.116.7: Semantic Index Verification Tests (Optional)
+# Task epic-11.116.7: Semantic Index Verification Tests
 
 **Status:** Not Started
 **Parent:** task-epic-11.116
-**Depends On:** task-epic-11.116.4
-**Priority:** Low (optional polish)
+**Depends On:** task-epic-11.116.5.1, task-epic-11.116.5.2, task-epic-11.116.5.3, task-epic-11.116.5.4
+**Priority:** Medium
 **Created:** 2025-10-14
+**Updated:** 2025-10-16
 
 ## Overview
 
-Optionally add tests that verify the semantic index JSON fixtures themselves are correct. This provides an additional validation layer to catch issues in the indexing or serialization process.
+Verify that the comprehensive semantic index JSON fixtures added in tasks 11.116.5.1-4 correctly represent their source code files. This provides validation that our indexing logic properly captures all language features across TypeScript, JavaScript, Python, and Rust.
 
-**Note:** This task is **optional**. The primary value of fixtures is as inputs to registry/call graph tests. Verifying the fixtures themselves is secondary.
+Tasks 11.116.5.1-4 added extensive fixture coverage for:
+- **TypeScript**: 42+ fixtures covering classes, enums, functions, generics, interfaces, modules, types, and integration scenarios
+- **JavaScript**: 21+ fixtures covering classes, functions, modules (CommonJS/ES6), and dynamic patterns
+- **Python**: 17+ fixtures covering classes, functions, modules, and import patterns
+- **Rust**: 8+ fixtures covering structs, functions, and modules
+
+Each fixture includes both source code (`code/`) and corresponding semantic index JSON (`semantic_index/`).
 
 ## Objectives
 
@@ -19,208 +26,84 @@ Optionally add tests that verify the semantic index JSON fixtures themselves are
 3. Provide regression protection for index_single_file
 4. Document expected semantic index outputs
 
-## Approach Options
+## Approach
 
-### Option A: Property-Based Verification (Recommended)
+This task verifies the comprehensive fixtures added in 11.116.5.1-4 by:
 
-Load JSON fixtures and verify structural properties:
+1. **Reading fixture pairs**: For each language, read both source code files and their corresponding JSON files
+2. **Verifying semantic accuracy**: Check that the JSON correctly represents the semantic elements in the code
+3. **Documenting issues**: When discrepancies are found, create sub-tasks to fix the indexing logic or regenerate fixtures
 
-```typescript
-describe("Semantic Index Verification - TypeScript", () => {
-  it("should have valid class structure", () => {
-    const index = load_fixture("typescript/classes/basic_class.json");
+### Verification Strategy
 
-    // Verify basic structure
-    expect(index.language).toBe("typescript");
-    expect(index.file_path).toBeTruthy();
-    expect(index.root_scope_id).toBeTruthy();
+For each fixture category, verify that:
 
-    // Verify class is captured
-    expect(index.classes.size).toBe(1);
+- **Definitions are captured**: All classes, functions, methods, variables are present in the JSON
+- **Scopes are correct**: Scope hierarchy matches the lexical structure
+- **References are accurate**: Function calls, variable references, imports are correctly identified
+- **Types are preserved**: Type information is captured where applicable
+- **Locations are precise**: Source locations correctly point to code positions
 
-    const user_class = Array.from(index.classes.values())[0];
-    expect(user_class.name).toBe("User");
-    expect(user_class.kind).toBe("class");
+### Sub-Task Structure
 
-    // Verify methods are captured in functions map
-    const methods = Array.from(index.functions.values()).filter(
-      f => f.kind === "method"
-    );
-    expect(methods.length).toBeGreaterThan(0);
+Create one verification sub-task per language:
 
-    // Verify each method has correct structure
-    methods.forEach(method => {
-      expect(method.name).toBeTruthy();
-      expect(method.scope_id).toBeTruthy();
-      expect(method.location).toBeDefined();
-    });
-  });
-});
-```
+1. **11.116.7.1**: TypeScript fixtures (42+ fixtures across 8 categories)
+2. **11.116.7.2**: JavaScript fixtures (21+ fixtures across 3 categories)
+3. **11.116.7.3**: Python fixtures (17+ fixtures across 3 categories)
+4. **11.116.7.4**: Rust fixtures (8+ fixtures across 3 categories)
 
-**Pros:**
-- Lightweight (no golden output files)
-- Focuses on invariants, not exact output
-- Easy to maintain
+Each sub-task should:
+- Read all JSON fixtures for that language
+- Read corresponding source code files
+- Verify semantic accuracy
+- Create issue sub-tasks when discrepancies are found
 
-**Cons:**
-- Doesn't catch all regressions
-- Manual assertions required
+## Deliverables
 
-### Option B: Snapshot Testing
+### Main Task
+- [ ] All 4 sub-tasks completed (one per language)
+- [ ] Issue sub-tasks created for any discrepancies found
+- [ ] Summary report of verification results
 
-Compare generated JSON against committed snapshots:
+### Per Sub-Task
+- [ ] All fixtures for that language verified
+- [ ] List of verified semantic elements per fixture
+- [ ] Issue sub-tasks created for problems (if any)
+- [ ] Documentation of verification approach
 
-```typescript
-describe("Semantic Index Snapshots - TypeScript", () => {
-  it("should match snapshot for basic class", () => {
-    const code = load_code_fixture("typescript/classes/basic_class.ts");
-    const index = index_single_file(code, "typescript");
-    const json = serialize_semantic_index(index);
+## Success Criteria
 
-    expect(json).toMatchSnapshot();
-  });
-});
-```
-
-**Pros:**
-- Catches all regressions automatically
-- Easy to update when schema changes
-
-**Cons:**
-- Snapshot churn on schema changes
-- Less readable than explicit assertions
-
-### Option C: Round-Trip Testing
-
-Verify serialization is lossless:
-
-```typescript
-describe("Semantic Index Serialization", () => {
-  it("should round-trip without loss", () => {
-    const code = load_code_fixture("typescript/classes/basic_class.ts");
-    const original = index_single_file(code, "typescript");
-
-    const json = serialize_semantic_index(original);
-    const deserialized = deserialize_semantic_index(json);
-
-    expect(deserialized).toEqual(original);
-  });
-});
-```
-
-**Pros:**
-- Validates serialization logic
-- Ensures no data loss
-
-**Cons:**
-- Doesn't verify index_single_file is correct
-- Only tests serialization, not indexing
-
-## Recommended Implementation
-
-**Hybrid approach:**
-
-1. **Round-trip tests** (in 116.2) - already covered serialization
-2. **Spot-check property tests** (this task) - verify key invariants
-3. **Skip snapshots** - too much maintenance overhead
-
-```typescript
-// packages/core/tests/fixtures/semantic_index_verification.test.ts
-
-import { describe, it, expect } from "vitest";
-import { load_fixture } from "./test_helpers";
-
-describe("Semantic Index Fixture Verification", () => {
-  describe("TypeScript Fixtures", () => {
-    it("classes/basic_class.json has expected structure", () => {
-      const index = load_fixture("typescript/classes/basic_class.json");
-
-      expect(index.language).toBe("typescript");
-      expect(index.classes.size).toBeGreaterThan(0);
-      expect(index.scopes.size).toBeGreaterThan(1); // at least module + class scope
-      expect(index.functions.size).toBeGreaterThan(0); // at least constructor
-    });
-
-    it("functions/call_chains.json captures all calls", () => {
-      const index = load_fixture("typescript/functions/call_chains.json");
-
-      // Verify functions captured
-      const func_names = Array.from(index.functions.values()).map(f => f.name);
-      expect(func_names).toContain("main");
-      expect(func_names).toContain("processData");
-      expect(func_names).toContain("fetchData");
-
-      // Verify call references captured
-      const call_refs = index.references.filter(r => r.type === "call");
-      expect(call_refs.length).toBeGreaterThanOrEqual(2); // At least 2 calls in chain
-    });
-
-    it("modules/imports.json captures import symbols", () => {
-      const index = load_fixture("typescript/modules/imports.json");
-
-      expect(index.imported_symbols.size).toBeGreaterThan(0);
-
-      const imports = Array.from(index.imported_symbols.values());
-      expect(imports.some(imp => imp.source_file)).toBe(true);
-    });
-  });
-
-  describe("Python Fixtures", () => {
-    it("classes/basic_class.json has expected structure", () => {
-      const index = load_fixture("python/classes/basic_class.json");
-
-      expect(index.language).toBe("python");
-      expect(index.classes.size).toBeGreaterThan(0);
-    });
-  });
-
-  // Similar spot-checks for Rust and JavaScript
-});
-```
-
-## Deliverables (if implementing)
-
-- [ ] `semantic_index_verification.test.ts` with spot-checks
-- [ ] One test per major fixture category
-- [ ] All verification tests passing
-- [ ] Documentation of what's being verified
-
-## When to Implement
-
-**Implement if:**
-- You want extra confidence in fixtures
-- You're refactoring index_single_file
-- You want regression protection
-
-**Skip if:**
-- Registry/call graph tests provide enough coverage
-- Time is limited (focus on 116.5 and 116.6 instead)
-- Fixtures are already working well
-
-## Success Criteria (if implementing)
-
-- ✅ Spot-check tests for each language
-- ✅ Tests verify key invariants (not exact output)
-- ✅ Tests are maintainable (not brittle)
-- ✅ All tests passing
+- ✅ All fixture JSON files verified against source code
+- ✅ Semantic accuracy confirmed for all language features
+- ✅ Issues documented as sub-tasks
+- ✅ Verification approach documented
 
 ## Estimated Effort
 
-**3-4 hours** (if implementing)
-- 1 hour: Design verification strategy
-- 2 hours: Write spot-check tests
-- 1 hour: Review and refine
+**12-16 hours total** across 4 sub-tasks:
+- TypeScript: 4-5 hours (42+ fixtures)
+- JavaScript: 3-4 hours (21+ fixtures)
+- Python: 3-4 hours (17+ fixtures)
+- Rust: 2-3 hours (8+ fixtures)
+
+## Sub-Tasks
+
+- [ ] **11.116.7.1**: Verify TypeScript fixtures
+- [ ] **11.116.7.2**: Verify JavaScript fixtures
+- [ ] **11.116.7.3**: Verify Python fixtures
+- [ ] **11.116.7.4**: Verify Rust fixtures
 
 ## Next Steps
 
-- Proceed to **116.8**: Documentation (higher priority)
-- Return to this task if time permits
+1. Create the 4 sub-task files
+2. Start with TypeScript verification (largest fixture set)
+3. Document verification patterns that can be reused across languages
+4. Fix any issues found before moving to registry/call graph tests
 
 ## Notes
 
-- This task is genuinely optional - don't feel obligated to implement
-- Registry and call graph tests already provide significant fixture validation
-- If fixtures work in those tests, they're probably correct
-- Consider implementing only if schema changes frequently
-- Can always add later if needed
+- This task validates the foundation for integration testing
+- Finding and fixing issues now prevents problems in 116.5 and 116.6
+- Each sub-task should create granular issue sub-tasks for problems
+- Verification should be thorough but pragmatic - focus on semantic correctness
