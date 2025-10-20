@@ -482,13 +482,22 @@ export function extract_extends(node: SyntaxNode): SymbolName[] {
 }
 
 export function extract_import_path(node: SyntaxNode): ModulePath {
-  // Look for dotted_name or module name
+  // For "from X import Y" statements, look for module_name field
+  // This handles both absolute (dotted_name) and relative (relative_import) imports
+  const moduleNameNode = node.childForFieldName?.("module_name");
+  if (moduleNameNode) {
+    return moduleNameNode.text as ModulePath;
+  }
+
+  // Fallback: Look for "module" field or find dotted_name child
+  // This handles "import X" statements
   const moduleNode =
     node.childForFieldName?.("module") ||
     node.children?.find((child) => child.type === "dotted_name");
   if (moduleNode) {
     return moduleNode.text as ModulePath;
   }
+
   return "" as ModulePath;
 }
 

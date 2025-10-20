@@ -1,13 +1,33 @@
 # Task epic-11.116.5.7.1: Fix Python Relative Import Resolution
 
-**Status:** Not Started
+**Status:** Completed
 **Parent:** task-epic-11.116.5.7
 **Priority:** High
 **Created:** 2025-10-20
+**Completed:** 2025-10-20
 
 ## Overview
 
 Fix Python relative import resolution so that imports like `from .utils import helper` and `from .user_class import User` correctly resolve to their source definitions.
+
+## Solution
+
+**Root Cause:** The `extract_import_path()` function in `python_builder.ts` was extracting the wrong node from Python import statements.
+
+For `from .utils import helper, process_data`:
+
+- **Expected**: Extract `.utils` (the module_name field)
+- **Actual**: Extracted `helper` (the first dotted_name child)
+
+**Fix:** Updated `extract_import_path()` to check the `module_name` field first, which correctly handles both:
+
+- **Relative imports**: `from .utils import X` → `.utils`
+- **Absolute imports**: `from package.module import X` → `package.module`
+
+**Files Changed:**
+
+- `packages/core/src/index_single_file/query_code_tree/language_configs/python_builder.ts`
+- `packages/core/src/project/project.python.integration.test.ts` (removed workarounds)
 
 ## Problem
 

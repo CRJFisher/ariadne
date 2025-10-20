@@ -149,14 +149,11 @@ describe("Project Integration - Python", () => {
       expect(resolved).toBeDefined();
 
       // Verify resolved to utils.py
-      const def = project.definitions.get(resolved!);
-      // Note: Python relative import resolution may not work yet
-      if (def) {
-        expect(def.location.file_path).toContain("utils.py");
-      } else {
-        // TODO: Fix Python relative import resolution
-        console.warn("Python relative import resolution not working yet for process_data import");
-      }
+      const def = resolved ? project.definitions.get(resolved) : undefined;
+      expect(def).toBeDefined();
+      if (!def) return;
+
+      expect(def.location.file_path).toContain("utils.py");
     });
   });
 
@@ -465,15 +462,11 @@ describe("Project Integration - Python", () => {
       expect(resolved).toBeDefined();
 
       const resolved_def = project.definitions.get(resolved!);
-      // Note: Import resolution for Python relative imports may not work yet
-      // This is a known limitation to be addressed
-      if (resolved_def) {
-        expect(resolved_def.location.file_path).toContain("utils.py");
-        expect(resolved_def.name).toBe("process_data" as SymbolName);
-      } else {
-        // TODO: Fix Python relative import resolution
-        console.warn("Python relative import resolution not working yet");
-      }
+      expect(resolved_def).toBeDefined();
+      if (!resolved_def) return;
+
+      expect(resolved_def.location.file_path).toContain("utils.py");
+      expect(resolved_def.name).toBe("process_data" as SymbolName);
     });
   });
 
@@ -648,11 +641,10 @@ describe("Project Integration - Python", () => {
       );
       expect(resolved_v1).toBeDefined();
       const resolved_def_v1 = project.definitions.get(resolved_v1!);
-      if (resolved_def_v1) {
-        expect(resolved_def_v1.location.file_path).toContain("utils.py");
-      } else {
-        console.warn("Python relative import resolution not working yet");
-      }
+      expect(resolved_def_v1).toBeDefined();
+      if (!resolved_def_v1) return;
+
+      expect(resolved_def_v1.location.file_path).toContain("utils.py");
 
       // Modify utils.py - rename process_data
       const modified_utils = utils_source.replace(
@@ -687,13 +679,6 @@ describe("Project Integration - Python", () => {
 
       // Verify shadowing.py depends on utils.py
       const dependents = project.get_dependents(utils_file);
-      // Python relative imports may not be tracked correctly yet
-      // This is a known limitation
-      if (!dependents.has(shadowing_file)) {
-        console.warn("Python dependency tracking not working correctly for relative imports");
-        // Skip the rest of this test since dependencies aren't tracked
-        return;
-      }
       expect(dependents.has(shadowing_file)).toBe(true);
 
       // Remove utils.py
