@@ -250,9 +250,10 @@ function extract_context(
 
   const kind = determine_reference_kind(capture, extractors);
 
-  // Extract receiver location for method calls
-  // Example: obj.method() → receiver_location points to 'obj'
-  if (kind === ReferenceKind.METHOD_CALL) {
+  // Extract receiver location for method calls and function calls
+  // Method calls: obj.method() → receiver_location points to 'obj'
+  // Associated function calls: Type::function() → receiver_location points to 'Type'
+  if (kind === ReferenceKind.METHOD_CALL || kind === ReferenceKind.FUNCTION_CALL) {
     const call_receiver = extractors.extract_call_receiver(
       capture.node,
       file_path
@@ -280,9 +281,11 @@ function extract_context(
 
   // Extract property chain for member access patterns
   // Example: a.b.c.method() → property_chain is ['a', 'b', 'c', 'method']
+  // Also extract for function calls with receiver (associated functions like Product::new)
   if (
     kind === ReferenceKind.PROPERTY_ACCESS ||
-    kind === ReferenceKind.METHOD_CALL
+    kind === ReferenceKind.METHOD_CALL ||
+    kind === ReferenceKind.FUNCTION_CALL
   ) {
     property_chain = extractors.extract_property_chain(capture.node);
   }
@@ -461,13 +464,23 @@ export class ReferenceBuilder {
 
     // Extract the actual name from call expressions
     let referenceName = capture.text;
-    if (capture.node.type === "call_expression") {
+
+    // Use language-specific extractor to get the call name when available
+    if (this.extractors && (kind === ReferenceKind.FUNCTION_CALL || kind === ReferenceKind.CONSTRUCTOR_CALL)) {
+      const extractedName = this.extractors.extract_call_name(capture.node);
+      if (extractedName) {
+        referenceName = extractedName;
+      }
+    }
+
+    // Fallback for languages without extractors or when extractor returns undefined
+    if (referenceName === capture.text && capture.node.type === "call_expression") {
       // For regular function calls, get the function identifier
       const functionNode = capture.node.childForFieldName("function");
       if (functionNode && functionNode.type === "identifier") {
         referenceName = functionNode.text as SymbolName;
       }
-    } else if (capture.node.type === "new_expression") {
+    } else if (referenceName === capture.text && capture.node.type === "new_expression") {
       // For constructor calls, get the constructor identifier
       const constructorNode = capture.node.childForFieldName("constructor");
       if (constructorNode && constructorNode.type === "identifier") {

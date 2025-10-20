@@ -98,20 +98,46 @@ export function resolve_single_method_call(
 
   // Step 3: Get receiver's type from TypeRegistry
   // This uses resolved type_bindings to determine the class/interface of the receiver
-  const receiver_type = types.get_symbol_type(receiver_symbol);
+  // For associated function calls (Type::function), the receiver IS the type
+  let receiver_type = types.get_symbol_type(receiver_symbol);
 
   if (!receiver_type) {
-    // Receiver has no type information and is not a namespace
+    // Check if receiver_symbol is itself a type (class/interface/enum)
+    // This handles associated function calls like Product::new()
+    // where "Product" resolves to the class definition
+    const receiver_def = definitions.get(receiver_symbol);
+    if (receiver_def &&
+        (receiver_def.kind === "class" ||
+         receiver_def.kind === "interface" ||
+         receiver_def.kind === "enum" ||
+         receiver_def.kind === "type" ||
+         receiver_def.kind === "type_alias")) {
+      receiver_type = receiver_symbol;
+    }
+  }
+
+  if (!receiver_type) {
+    // Receiver has no type information and is not a type or namespace
     // Could be untyped variable or missing type annotation
     return null;
   }
 
   // Step 4: Look up method on that type
-  // Uses resolved type_members to find the method definition
-  const method_symbol = types.get_type_member(
+  // First try the resolved type_members cache
+  let method_symbol = types.get_type_member(
     receiver_type,
     call_ref.name
   );
+
+  // If not found in cache, try direct lookup in DefinitionRegistry
+  // This is needed because TypeRegistry may not be populated yet during resolution
+  if (!method_symbol) {
+    const member_index = definitions.get_member_index();
+    const type_members = member_index.get(receiver_type);
+    if (type_members) {
+      method_symbol = type_members.get(call_ref.name) || null;
+    }
+  }
 
   return method_symbol;
 }

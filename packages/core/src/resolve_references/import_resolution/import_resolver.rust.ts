@@ -13,7 +13,12 @@ import type { FileSystemFolder } from "../types";
  * Check if a file exists in the FileSystemFolder tree
  */
 function file_exists(file_path: FilePath, root_folder: FileSystemFolder): boolean {
-  const parts = file_path.split("/").filter((p) => p);
+  // Convert absolute path to relative path if needed
+  const relative = file_path.startsWith(root_folder.path)
+    ? path.relative(root_folder.path, file_path)
+    : file_path;
+
+  const parts = relative.split(path.sep).filter((p) => p && p !== '.');
   let current = root_folder;
 
   // Navigate through folders
@@ -62,7 +67,18 @@ export function resolve_module_path_rust(
     // Current module
     return resolve_from_current(parts.slice(1), importing_file, root_folder);
   } else {
-    // External crate (future: Cargo.toml resolution)
+    // No prefix: treat as local module relative to current file
+    // Example: `use user_mod::User;` where `mod user_mod;` was declared
+    // Try to resolve relative to current directory first
+    const current_dir = path.dirname(importing_file);
+    const resolved = resolve_rust_module_path(current_dir, parts, root_folder);
+
+    // Check if the resolved path exists
+    if (file_exists(resolved, root_folder)) {
+      return resolved;
+    }
+
+    // Fallback: external crate (future: Cargo.toml resolution)
     return import_path as FilePath;
   }
 }

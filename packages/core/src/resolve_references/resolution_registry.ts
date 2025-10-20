@@ -241,7 +241,21 @@ export class ResolutionRegistry {
 
         switch (ref.call_type) {
           case "function":
-            resolved = this.resolve(ref.scope_id, ref.name);
+            // Check if this is an associated function call (e.g., Type::function())
+            // These have receiver_location context pointing to the type
+            if (ref.context?.receiver_location) {
+              // Treat as method call on the type - resolve using type information
+              resolved = resolve_single_method_call(
+                ref,
+                scopes,
+                definitions,
+                types,
+                this
+              );
+            } else {
+              // Regular function call - resolve using lexical scope
+              resolved = this.resolve(ref.scope_id, ref.name);
+            }
             break;
 
           case "method":

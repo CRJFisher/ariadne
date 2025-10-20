@@ -445,16 +445,25 @@
 ) @definition.function
 
 ; Module declarations without body (external file)
+; These reference modules in other files, so don't need body scopes
 (mod_item
   name: (identifier) @definition.module
   !body
-) @definition.function
+)
 
-; Public module definitions
+; Public module definitions with body
 (mod_item
   (visibility_modifier) @definition.visibility
   name: (identifier) @definition.module.public
+  body: (declaration_list)
 ) @definition.function
+
+; Public module declarations without body (external file)
+(mod_item
+  (visibility_modifier) @definition.visibility
+  name: (identifier) @definition.module.public
+  !body
+)
 
 
 ;; ==============================================================================
@@ -967,12 +976,13 @@
 )
 
 ; Associated function calls (Type::function)
+; Capture the whole call_expression so we can extract receiver context
 (call_expression
   function: (scoped_identifier
     path: (_) @reference.type
-    name: (identifier) @reference.call
+    name: (identifier)
   )
-)
+) @reference.call
 
 ; Static method call (associated function) - uses ::
 (call_expression
