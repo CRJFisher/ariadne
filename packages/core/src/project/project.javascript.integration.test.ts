@@ -438,7 +438,46 @@ describe("Project Integration - JavaScript", () => {
       expect(user_class_def!.location.file_path).toContain("user_class.js");
     });
 
-    it("should capture method calls on imported class instances", async () => {
+    it("should resolve imported class constructor calls", async () => {
+      const user_class = load_source("modules/user_class.js");
+      const uses_user = load_source("modules/uses_user.js");
+      const user_file = file_path("modules/user_class.js");
+      const uses_file = file_path("modules/uses_user.js");
+
+      project.update_file(user_file, user_class);
+      project.update_file(uses_file, uses_user);
+
+      // Get uses_user index
+      const uses_index = project.get_semantic_index(uses_file);
+      expect(uses_index).toBeDefined();
+
+      // Find constructor call
+      const constructor_calls = uses_index!.references.filter(
+        (r) => r.type === "call" && r.call_type === "constructor"
+      );
+      expect(constructor_calls.length).toBeGreaterThan(0);
+
+      // Find User constructor call
+      const user_constructor_call = constructor_calls.find(
+        (c) => c.name === ("User" as SymbolName)
+      );
+      expect(user_constructor_call).toBeDefined();
+
+      // Verify constructor call resolves to User class
+      const resolved = project.resolutions.resolve(
+        user_constructor_call!.scope_id,
+        user_constructor_call!.name
+      );
+      expect(resolved).toBeDefined();
+
+      const resolved_def = project.definitions.get(resolved!);
+      expect(resolved_def).toBeDefined();
+      expect(resolved_def!.kind).toBe("class");
+      expect(resolved_def!.name).toBe("User" as SymbolName);
+      expect(resolved_def!.location.file_path).toContain("user_class.js");
+    });
+
+    it("should resolve method calls on imported class instances", async () => {
       const user_class = load_source("modules/user_class.js");
       const uses_user = load_source("modules/uses_user.js");
       const user_file = file_path("modules/user_class.js");
@@ -462,21 +501,19 @@ describe("Project Integration - JavaScript", () => {
         (c) => c.name === ("getName" as SymbolName)
       );
       expect(getName_call).toBeDefined();
-      expect(getName_call!.name).toBe("getName" as SymbolName);
 
-      // Verify User class exists in user_class.js
-      const user_index = project.get_semantic_index(user_file);
-      const user_class_def = Array.from(user_index!.classes.values()).find(
-        (c) => c.name === ("User" as SymbolName)
+      // Verify method call resolves to method in user_class.js
+      const resolved = project.resolutions.resolve(
+        getName_call!.scope_id,
+        getName_call!.name
       );
-      expect(user_class_def).toBeDefined();
+      expect(resolved).toBeDefined();
 
-      // Verify getName method exists in the User class
-      const getName_method = user_class_def!.methods.find(
-        (m) => m.name === ("getName" as SymbolName)
-      );
-      expect(getName_method).toBeDefined();
-      expect(getName_method!.location.file_path).toContain("user_class.js");
+      const resolved_def = project.definitions.get(resolved!);
+      expect(resolved_def).toBeDefined();
+      expect(resolved_def!.kind).toBe("method");
+      expect(resolved_def!.name).toBe("getName" as SymbolName);
+      expect(resolved_def!.location.file_path).toContain("user_class.js");
     });
 
     it("should follow re-export chains", async () => {
@@ -563,7 +600,7 @@ describe("Project Integration - JavaScript", () => {
       expect(resolved_def!.location.file_path).toContain("utils_aliased.js");
     });
 
-    it("should handle aliased class imports and method calls", async () => {
+    it("should resolve aliased class constructor calls", async () => {
       const utils = load_source("modules/utils_aliased.js");
       const main = load_source("modules/main_aliased.js");
       const utils_file = file_path("modules/utils_aliased.js");
@@ -584,6 +621,42 @@ describe("Project Integration - JavaScript", () => {
       expect(manager_import).toBeDefined();
       expect(manager_import!.original_name).toBe("DataManager" as SymbolName);
 
+      // Find constructor call for Manager
+      const constructor_calls = main_index!.references.filter(
+        (r) => r.type === "call" && r.call_type === "constructor"
+      );
+      const manager_constructor = constructor_calls.find(
+        (c) => c.name === ("Manager" as SymbolName)
+      );
+      expect(manager_constructor).toBeDefined();
+
+      // Verify constructor resolves to DataManager class in utils_aliased.js
+      const resolved = project.resolutions.resolve(
+        manager_constructor!.scope_id,
+        manager_constructor!.name
+      );
+      expect(resolved).toBeDefined();
+
+      const resolved_def = project.definitions.get(resolved!);
+      expect(resolved_def).toBeDefined();
+      expect(resolved_def!.kind).toBe("class");
+      expect(resolved_def!.name).toBe("DataManager" as SymbolName);
+      expect(resolved_def!.location.file_path).toContain("utils_aliased.js");
+    });
+
+    it("should resolve method calls on aliased class instances", async () => {
+      const utils = load_source("modules/utils_aliased.js");
+      const main = load_source("modules/main_aliased.js");
+      const utils_file = file_path("modules/utils_aliased.js");
+      const main_file = file_path("modules/main_aliased.js");
+
+      project.update_file(utils_file, utils);
+      project.update_file(main_file, main);
+
+      // Get main index
+      const main_index = project.get_semantic_index(main_file);
+      expect(main_index).toBeDefined();
+
       // Find method call on manager instance
       const method_calls = main_index!.references.filter(
         (r) => r.type === "call" && r.call_type === "method"
@@ -592,21 +665,19 @@ describe("Project Integration - JavaScript", () => {
         (c) => c.name === ("process" as SymbolName)
       );
       expect(process_call).toBeDefined();
-      expect(process_call!.name).toBe("process" as SymbolName);
 
-      // Verify DataManager class exists in utils_aliased.js
-      const utils_index = project.get_semantic_index(utils_file);
-      const data_manager_class = Array.from(utils_index!.classes.values()).find(
-        (c) => c.name === ("DataManager" as SymbolName)
+      // Verify method call resolves to process method in DataManager class
+      const resolved = project.resolutions.resolve(
+        process_call!.scope_id,
+        process_call!.name
       );
-      expect(data_manager_class).toBeDefined();
+      expect(resolved).toBeDefined();
 
-      // Verify process method exists in the DataManager class
-      const process_method = data_manager_class!.methods.find(
-        (m) => m.name === ("process" as SymbolName)
-      );
-      expect(process_method).toBeDefined();
-      expect(process_method!.location.file_path).toContain("utils_aliased.js");
+      const resolved_def = project.definitions.get(resolved!);
+      expect(resolved_def).toBeDefined();
+      expect(resolved_def!.kind).toBe("method");
+      expect(resolved_def!.name).toBe("process" as SymbolName);
+      expect(resolved_def!.location.file_path).toContain("utils_aliased.js");
     });
   });
 
