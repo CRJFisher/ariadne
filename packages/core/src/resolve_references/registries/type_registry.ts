@@ -260,6 +260,9 @@ export class TypeRegistry {
 
     // Build TypeMemberInfo from definition
     if (def.kind === "class") {
+      // Use the constructor field from ClassDefinition (language-agnostic)
+      const constructor_symbol_id = def.constructor?.[0]?.symbol_id;
+
       return {
         methods: new Map(
           def.methods.map((m) => [m.name as SymbolName, m.symbol_id])
@@ -267,8 +270,7 @@ export class TypeRegistry {
         properties: new Map(
           def.properties.map((p) => [p.name as SymbolName, p.symbol_id])
         ),
-        constructor: def.methods.find((m) => m.name === "constructor")
-          ?.symbol_id,
+        constructor: constructor_symbol_id,
         extends: def.extends ? def.extends : [],
       };
     } else if (def.kind === "interface") {

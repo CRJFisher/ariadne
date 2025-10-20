@@ -1,13 +1,25 @@
 # Task epic-11.116.5.7.2: Fix Python __init__ Constructor in Type Registry
 
-**Status:** Not Started
-**Parent:** task-epic-11.116.5.7
-**Priority:** Medium
-**Created:** 2025-10-20
+__Status:__ Completed
+__Parent:__ task-epic-11.116.5.7
+__Priority:__ Medium
+__Created:__ 2025-10-20
+__Completed:__ 2025-10-20
 
 ## Overview
 
 Ensure Python `__init__` methods are properly captured as constructors in the type registry, consistent with how TypeScript/JavaScript constructors are handled.
+
+## Solution
+
+__Root Cause:__ The type registry was scanning method names for "constructor" but not using the language-agnostic `ClassDefinition.constructor` field.
+
+__Fix:__ Updated `TypeRegistry.get_type_members()` to use `def.constructor?.[0]?.symbol_id` instead of scanning through methods by name. This makes the code language-agnostic - each language's indexer is responsible for populating the `constructor` field correctly.
+
+__Files Changed:__
+
+- `packages/core/src/resolve_references/registries/type_registry.ts` - Line 264
+- `packages/core/src/project/project.python.integration.test.ts` - Removed workarounds, added proper constructor assertions
 
 ## Problem
 

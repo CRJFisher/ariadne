@@ -326,15 +326,24 @@ describe("Project Integration - Python", () => {
       // Get type info for User class
       const type_info = project.get_type_info(user_class!.symbol_id);
       expect(type_info).toBeDefined();
+      if (!type_info) return;
 
-      // Python constructors might not be captured the same way as TypeScript
-      // Skip constructor check and verify methods instead
+      // Verify Python __init__ is captured as constructor
+      expect(type_info.constructor).toBeDefined();
+      if (!type_info.constructor) return;
+
+      // Verify the constructor is the __init__ method
+      const constructor_def = project.definitions.get(type_info.constructor);
+      expect(constructor_def).toBeDefined();
+      if (constructor_def && constructor_def.kind === "method") {
+        expect(constructor_def.name).toBe("__init__");
+      }
 
       // Verify instance methods exist
-      expect(type_info!.methods.size).toBeGreaterThan(0);
+      expect(type_info.methods.size).toBeGreaterThan(0);
 
       // Find get_info method
-      const get_info_method_id = type_info!.methods.get("get_info" as SymbolName);
+      const get_info_method_id = type_info.methods.get("get_info" as SymbolName);
       expect(get_info_method_id).toBeDefined();
 
       // Verify method definition has self parameter
@@ -582,12 +591,16 @@ describe("Project Integration - Python", () => {
       );
       expect(user_class).toBeDefined();
 
-      // Verify __init__ method exists in type registry
+      // Verify __init__ method exists in type registry as constructor
       const type_info = project.get_type_info(user_class!.symbol_id);
       expect(type_info).toBeDefined();
-      // Python __init__ might not be captured as constructor in the same way
-      // Verify methods exist instead
-      expect(type_info!.methods.size).toBeGreaterThan(0);
+      if (!type_info) return;
+
+      // Verify __init__ is captured as constructor
+      expect(type_info.constructor).toBeDefined();
+
+      // Verify instance methods also exist
+      expect(type_info.methods.size).toBeGreaterThan(0);
     });
   });
 
