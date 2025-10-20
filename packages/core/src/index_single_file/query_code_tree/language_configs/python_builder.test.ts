@@ -457,6 +457,66 @@ describe("Python Builder Configuration", () => {
       }
     });
 
+    it("should handle multiple level relative imports (from ..module import name)", () => {
+      const code = "from ..utils import helper";
+      const ast = parser.parse(code);
+
+      // Find the import_from_statement node
+      const importNode = findNodeByType(ast.rootNode, "import_from_statement");
+      expect(importNode).toBeDefined();
+
+      if (importNode) {
+        // Extract the import path - should get "..utils" not "helper"
+        const importPath = extract_import_path(importNode);
+        expect(importPath).toBe("..utils");
+      }
+    });
+
+    it("should handle parent directory relative imports (from .. import name)", () => {
+      const code = "from .. import utils";
+      const ast = parser.parse(code);
+
+      // Find the import_from_statement node
+      const importNode = findNodeByType(ast.rootNode, "import_from_statement");
+      expect(importNode).toBeDefined();
+
+      if (importNode) {
+        // Extract the import path - should get ".." for parent directory
+        const importPath = extract_import_path(importNode);
+        expect(importPath).toBe("..");
+      }
+    });
+
+    it("should handle nested package absolute imports (from a.b.c import name)", () => {
+      const code = "from package.subpackage.module import function";
+      const ast = parser.parse(code);
+
+      // Find the import_from_statement node
+      const importNode = findNodeByType(ast.rootNode, "import_from_statement");
+      expect(importNode).toBeDefined();
+
+      if (importNode) {
+        // Extract the import path - should get full module path
+        const importPath = extract_import_path(importNode);
+        expect(importPath).toBe("package.subpackage.module");
+      }
+    });
+
+    it("should handle dotted module imports (import package.module)", () => {
+      const code = "import os.path";
+      const ast = parser.parse(code);
+
+      // Find the import_statement node
+      const importNode = findNodeByType(ast.rootNode, "import_statement");
+      expect(importNode).toBeDefined();
+
+      if (importNode) {
+        // Extract the import path - should get "os.path"
+        const importPath = extract_import_path(importNode);
+        expect(importPath).toBe("os.path");
+      }
+    });
+
     describe("End-to-end integration tests", () => {
       it("should build complete class definition with methods", () => {
         const code = `class Calculator:

@@ -794,4 +794,188 @@ describe("Project Integration - Python", () => {
       expect(new_func_node.enclosed_calls.length).toBeGreaterThan(0);
     });
   });
+
+  describe("Advanced Import Patterns", () => {
+    it("should track dependencies with multi-level relative imports (from ...module)", async () => {
+      const utils_source = load_source("modules/utils.py");
+      const core_source = load_source("package/subpackage/core.py");
+      const nested_imports_source = load_source("package/subpackage/nested_imports.py");
+
+      const utils_file = file_path("modules/utils.py");
+      const core_file = file_path("package/subpackage/core.py");
+      const nested_imports_file = file_path("package/subpackage/nested_imports.py");
+
+      project.update_file(utils_file, utils_source);
+      project.update_file(core_file, core_source);
+      project.update_file(nested_imports_file, nested_imports_source);
+
+      // Verify nested_imports.py depends on utils.py (via from ...modules.utils import)
+      const deps = project.imports.get_dependencies(nested_imports_file);
+      expect(deps.has(utils_file)).toBe(true);
+
+      // Verify utils.py has nested_imports.py as dependent
+      const dependents = project.get_dependents(utils_file);
+      expect(dependents.has(nested_imports_file)).toBe(true);
+
+      // Verify nested_imports.py depends on core.py (via from .core import)
+      expect(deps.has(core_file)).toBe(true);
+    });
+
+    it("should resolve symbols from multi-level relative imports", async () => {
+      const utils_source = load_source("modules/utils.py");
+      const nested_imports_source = load_source("package/subpackage/nested_imports.py");
+
+      const utils_file = file_path("modules/utils.py");
+      const nested_imports_file = file_path("package/subpackage/nested_imports.py");
+
+      project.update_file(utils_file, utils_source);
+      project.update_file(nested_imports_file, nested_imports_source);
+
+      const nested_index = project.get_semantic_index(nested_imports_file);
+      expect(nested_index).toBeDefined();
+
+      // Find call to helper() which was imported via "from ...modules.utils import helper"
+      const helper_call = nested_index?.references.find(
+        (r) => r.name === ("helper" as SymbolName) && r.type === "call"
+      );
+      expect(helper_call).toBeDefined();
+
+      if (helper_call) {
+        // Resolve helper() - should resolve to utils.py
+        const resolved_helper_id = project.resolutions.resolve(
+          helper_call.scope_id,
+          helper_call.name
+        );
+        expect(resolved_helper_id).toBeDefined();
+
+        if (resolved_helper_id) {
+          const resolved_helper_def = project.definitions.get(resolved_helper_id);
+          expect(resolved_helper_def?.location.file_path).toBe(utils_file);
+        }
+      }
+
+      // Find call to process_data() which was also imported from utils
+      const process_data_call = nested_index?.references.find(
+        (r) => r.name === ("process_data" as SymbolName) && r.type === "call"
+      );
+      expect(process_data_call).toBeDefined();
+
+      if (process_data_call) {
+        // Resolve process_data() - should resolve to utils.py
+        const resolved_process_data_id = project.resolutions.resolve(
+          process_data_call.scope_id,
+          process_data_call.name
+        );
+        expect(resolved_process_data_id).toBeDefined();
+
+        if (resolved_process_data_id) {
+          const resolved_process_data_def = project.definitions.get(resolved_process_data_id);
+          expect(resolved_process_data_def?.location.file_path).toBe(utils_file);
+        }
+      }
+    });
+
+    it("should resolve sibling module imports with relative paths (from .module)", async () => {
+      const core_source = load_source("package/subpackage/core.py");
+      const nested_imports_source = load_source("package/subpackage/nested_imports.py");
+
+      const core_file = file_path("package/subpackage/core.py");
+      const nested_imports_file = file_path("package/subpackage/nested_imports.py");
+
+      project.update_file(core_file, core_source);
+      project.update_file(nested_imports_file, nested_imports_source);
+
+      const nested_index = project.get_semantic_index(nested_imports_file);
+      expect(nested_index).toBeDefined();
+
+      // Find call to core_function() which was imported via "from .core import core_function"
+      const core_call = nested_index?.references.find(
+        (r) => r.name === ("core_function" as SymbolName) && r.type === "call"
+      );
+      expect(core_call).toBeDefined();
+
+      if (core_call) {
+        // Resolve core_function() - should resolve to core.py
+        const resolved_id = project.resolutions.resolve(
+          core_call.scope_id,
+          core_call.name
+        );
+        expect(resolved_id).toBeDefined();
+
+        if (resolved_id) {
+          const resolved_def = project.definitions.get(resolved_id);
+          expect(resolved_def?.location.file_path).toBe(core_file);
+        }
+      }
+    });
+
+    it("should handle dependency invalidation with nested package imports", async () => {
+      const utils_source = load_source("modules/utils.py");
+      const nested_imports_source = load_source("package/subpackage/nested_imports.py");
+
+      const utils_file = file_path("modules/utils.py");
+      const nested_imports_file = file_path("package/subpackage/nested_imports.py");
+
+      project.update_file(utils_file, utils_source);
+      project.update_file(nested_imports_file, nested_imports_source);
+
+      // Verify dependency exists
+      const deps_before = project.imports.get_dependencies(nested_imports_file);
+      expect(deps_before.has(utils_file)).toBe(true);
+
+      // Verify resolution works before removal
+      const nested_index = project.get_semantic_index(nested_imports_file);
+      const helper_call = nested_index?.references.find(
+        (r) => r.name === ("helper" as SymbolName) && r.type === "call"
+      );
+      expect(helper_call).toBeDefined();
+
+      if (helper_call) {
+        const resolved_before = project.resolutions.resolve(
+          helper_call.scope_id,
+          helper_call.name
+        );
+        expect(resolved_before).toBeDefined();
+
+        // Remove utils.py
+        project.remove_file(utils_file);
+
+        // Verify dependency is removed
+        const deps_after = project.imports.get_dependencies(nested_imports_file);
+        expect(deps_after.has(utils_file)).toBe(false);
+
+        // Verify resolution fails after removal
+        const resolved_after = project.resolutions.resolve(
+          helper_call.scope_id,
+          helper_call.name
+        );
+        expect(resolved_after).toBeNull();
+      }
+    });
+
+    it("should handle parent directory imports (from .. import module)", async () => {
+      // Test case for imports like "from .. import subpackage"
+      // This verifies that ".." (parent directory) imports are handled correctly
+      const nested_imports_source = load_source("package/subpackage/nested_imports.py");
+      const nested_imports_file = file_path("package/subpackage/nested_imports.py");
+
+      project.update_file(nested_imports_file, nested_imports_source);
+
+      const index = project.get_semantic_index(nested_imports_file);
+      expect(index).toBeDefined();
+
+      if (index) {
+        // Verify the file was indexed without errors
+        expect(index.references.length).toBeGreaterThan(0);
+
+        // Check that "from .. import subpackage" was processed
+        // The import should be present in the semantic index
+        const subpackage_import = Array.from(index.imported_symbols.values()).find(
+          (imp) => imp.name === ("subpackage" as SymbolName)
+        );
+        expect(subpackage_import).toBeDefined();
+        expect(subpackage_import?.import_path).toBe("..");
+      }
+    });
+  });
 });
