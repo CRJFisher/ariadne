@@ -1,10 +1,11 @@
 # Task epic-11.116.5.7.3: Fix Python Dependency Tracking for Relative Imports
 
-**Status:** Not Started
+**Status:** Completed
 **Parent:** task-epic-11.116.5.7
 **Depends On:** task-epic-11.116.5.7.1
 **Priority:** Medium
 **Created:** 2025-10-20
+**Completed:** 2025-10-20
 
 ## Overview
 
@@ -179,3 +180,68 @@ if (!dependents.has(shadowing_file)) {
 - If not, likely requires import graph updates to track Python imports
 - Test should verify both dependency tracking and invalidation on file removal
 - Consider whether this affects incremental re-indexing and file watching
+
+## Implementation Notes
+
+### Resolution: Fixed Automatically by Task .7.1
+
+Task epic-11.116.5.7.1 (Fix Python Relative Import Resolution) fixed this issue automatically. No additional code changes were required.
+
+### Root Cause Analysis
+
+The dependency tracking issue was caused by incorrect import path extraction in `extract_import_path()`. The import graph relies on `resolve_module_path()` to convert import paths to file paths:
+
+**Import Graph Logic** (packages/core/src/project/import_graph.ts:108-118):
+
+```typescript
+// Pre-resolve module path to absolute file path
+const resolved_path = resolve_module_path(
+  imp_def.import_path,  // This comes from extract_import_path()
+  file_path,
+  language,
+  root_folder
+);
+
+// For dependency graph: use resolved path
+target_files.add(resolved_path);
+```
+
+**Before Task .7.1:**
+
+- `extract_import_path()` extracted "helper" for `from .utils import helper`
+- `resolve_module_path()` tried to resolve "helper" → failed
+- Dependency not tracked in graph
+
+**After Task .7.1:**
+
+- `extract_import_path()` now extracts ".utils" correctly
+- `resolve_module_path()` resolves ".utils" → "modules/utils.py"
+- Dependency correctly tracked in graph
+
+### Test Results
+
+All Python integration tests pass (21/21 passed, 1 todo):
+
+- ✅ "should handle file removal and update dependents" - No workaround needed, passes cleanly
+- ✅ `project.get_dependents(utils_file)` correctly returns files that import from it
+- ✅ Dependency tracking works for relative imports (from .module import name)
+- ✅ File removal properly invalidates dependent file imports
+
+### Files Involved
+
+**No code changes required.** The fix from task .7.1 resolved this issue.
+
+Test verification:
+
+- `packages/core/src/project/project.python.integration.test.ts:684` - Test passes
+- Workaround code has been removed (no longer needed)
+
+### Verification
+
+```bash
+npx vitest run packages/core/src/project/project.python.integration.test.ts -t "should handle file removal and update dependents"
+# Result: ✓ 1 passed
+
+npx vitest run packages/core/src/project/project.python.integration.test.ts
+# Result: ✓ 21 passed | 1 todo (22 total)
+```
