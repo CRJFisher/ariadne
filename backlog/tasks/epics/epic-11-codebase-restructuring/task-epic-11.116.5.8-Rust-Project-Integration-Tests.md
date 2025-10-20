@@ -22,7 +22,7 @@ Create integration tests for the `Project` class using Rust fixtures. Tests Rust
 6. **Self vs self** - Type vs instance
 7. **Pattern Matching** - Comprehensive destructuring
 
-### Critical Rust Patterns
+### Critical Rust Patterns 
 
 ```rust
 // Struct definition (no methods)
