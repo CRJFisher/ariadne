@@ -381,11 +381,11 @@ Successfully migrated all unit tests from `symbol_resolution.javascript.test.ts`
 
 **Created Sub-Tasks for Critical Gaps:**
 
-1. **task-epic-11.116.5.6.3**: Capture constructor calls as references
-   - Issue: `new Foo()` calls are not captured as SymbolReference objects
-   - Impact: Cannot resolve constructor calls to class definitions
-   - Status: To Do
-   - Priority: HIGH (unacceptable gap)
+1. **task-epic-11.116.5.6.3**: Capture constructor calls as references ✅ DONE
+   - Issue: `new Foo()` calls appeared not to be captured as SymbolReference objects
+   - Resolution: Infrastructure was already complete - tests were using wrong filter
+   - Status: Done (2025-10-20)
+   - Priority: HIGH
 
 2. **task-154**: Type Resolution & Heuristic Fallback System (MOVED TO TOP-LEVEL)
    - Issue: Method calls on imported class instances don't resolve via `project.resolutions.resolve()`
@@ -394,21 +394,29 @@ Successfully migrated all unit tests from `symbol_resolution.javascript.test.ts`
    - Priority: Medium (task-154), HIGH for JavaScript tests
    - Note: Originally task-epic-11.116.5.6.4, moved because this is a cross-language issue
 
-**Failing Tests (Expected until sub-tasks complete):**
+**Test Status (Updated 2025-10-20):**
 
-1. should resolve imported class constructor calls
-2. should resolve method calls on imported class instances
-3. should resolve aliased class constructor calls
-4. should resolve method calls on aliased class instances
+23/25 passing, 2 TODO
+
+Passing constructor call tests:
+
+- ✅ should resolve imported class constructor calls
+- ✅ should resolve aliased class constructor calls
+
+TODO tests (waiting on task-154):
+
+- ⏸️ should resolve method calls on imported class instances
+- ⏸️ should resolve method calls on aliased class instances
 
 ### Next Steps
 
 1. Complete sub-task epic-11.116.5.6.1 to add CommonJS support ✅ DONE
 2. Complete sub-task epic-11.116.5.6.2 to fix default exports ✅ DONE
-3. Complete sub-task epic-11.116.5.6.3 to capture constructor calls (NEW - CRITICAL)
-4. Complete task-154 to fix method resolution (MOVED TO TOP-LEVEL - cross-language)
-5. All tests should pass after these fixes
-6. Consider adding tests for:
+3. Complete sub-task epic-11.116.5.6.3 to capture constructor calls ✅ DONE
+4. Complete task-154 to fix method resolution (MOVED TO TOP-LEVEL - cross-language) ⏸️ FUTURE
+5. Consider adding tests for:
    - Dynamic imports (`import()`)
    - Namespace imports
    - Mixed CommonJS/ES6 modules
+
+**Current Status**: JavaScript integration tests are comprehensive and 92% passing (23/25). The 2 TODO tests require cross-language type flow tracking (task-154).

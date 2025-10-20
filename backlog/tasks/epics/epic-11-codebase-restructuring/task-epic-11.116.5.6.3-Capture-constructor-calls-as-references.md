@@ -1,9 +1,10 @@
 # Task: Capture constructor calls as references in JavaScript
 
 **ID**: epic-11.116.5.6.3
-**Status**: To Do
+**Status**: Done
 **Priority**: HIGH
 **Parent**: epic-11.116.5.6
+**Completed**: 2025-10-20
 
 ## Description
 
@@ -63,3 +64,67 @@ Constructor calls (`new Foo()`) are not currently captured as SymbolReference ob
 ## Notes
 
 TypeScript has the same limitation - consider applying the same fix to TypeScript after this is working for JavaScript.
+
+## Implementation Notes (2025-10-20)
+
+**Resolution**: Constructor call capture was **already fully implemented**! The tests were using incorrect filters.
+
+### What We Found
+
+The entire infrastructure for constructor calls was already in place:
+
+1. **Query patterns** exist in `javascript.scm`:
+
+   ```scheme
+   (new_expression
+     constructor: (identifier) @reference.constructor
+   ) @reference.call
+   ```
+
+2. **Reference processing** exists in `reference_builder.ts`:
+   - `ReferenceKind.CONSTRUCTOR_CALL` enum value
+   - `determine_call_type()` returns `"constructor"`
+   - `map_to_reference_type()` returns `"construct"`
+   - `extract_construct_target()` finds the target variable
+
+3. **All handlers** exist - constructor calls are fully processed
+
+### The Actual Issue
+
+Tests were filtering for the wrong reference type:
+
+```typescript
+// ❌ WRONG - Constructor refs have type "construct", not "call"
+r.type === "call" && r.call_type === "constructor"
+
+// ✅ CORRECT - Just check call_type
+r.call_type === "constructor"
+```
+
+### Changes Made
+
+Fixed test filters in `project.javascript.integration.test.ts`:
+
+- Line 454-458: Changed to filter by `call_type` only
+- Line 624-631: Changed to filter by `call_type` only
+
+### Test Results
+
+All 23 tests passing, 2 todo (25 total)
+
+Both constructor call tests now pass:
+
+- ✅ should resolve imported class constructor calls
+- ✅ should resolve aliased class constructor calls
+
+The 2 TODO tests are for method resolution (task-154).
+
+### Key Insight
+
+The reference type hierarchy is:
+
+- `type: "construct"` + `call_type: "constructor"` = constructor calls
+- `type: "call"` + `call_type: "function"` = function calls
+- `type: "call"` + `call_type: "method"` = method calls
+
+This was a documentation/test issue, not an implementation gap.

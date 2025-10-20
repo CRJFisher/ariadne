@@ -451,9 +451,9 @@ describe("Project Integration - JavaScript", () => {
       const uses_index = project.get_semantic_index(uses_file);
       expect(uses_index).toBeDefined();
 
-      // Find constructor call
+      // Find constructor call (type is "construct", not "call")
       const constructor_calls = uses_index!.references.filter(
-        (r) => r.type === "call" && r.call_type === "constructor"
+        (r) => r.call_type === "constructor"
       );
       expect(constructor_calls.length).toBeGreaterThan(0);
 
@@ -621,9 +621,9 @@ describe("Project Integration - JavaScript", () => {
       expect(manager_import).toBeDefined();
       expect(manager_import!.original_name).toBe("DataManager" as SymbolName);
 
-      // Find constructor call for Manager
+      // Find constructor call for Manager (type is "construct", not "call")
       const constructor_calls = main_index!.references.filter(
-        (r) => r.type === "call" && r.call_type === "constructor"
+        (r) => r.call_type === "constructor"
       );
       const manager_constructor = constructor_calls.find(
         (c) => c.name === ("Manager" as SymbolName)
