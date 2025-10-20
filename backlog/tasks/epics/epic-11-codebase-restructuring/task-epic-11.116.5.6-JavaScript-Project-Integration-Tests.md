@@ -387,11 +387,12 @@ Successfully migrated all unit tests from `symbol_resolution.javascript.test.ts`
    - Status: To Do
    - Priority: HIGH (unacceptable gap)
 
-2. **task-epic-11.116.5.6.4**: Fix cross-file method resolution
+2. **task-154**: Type Resolution & Heuristic Fallback System (MOVED TO TOP-LEVEL)
    - Issue: Method calls on imported class instances don't resolve via `project.resolutions.resolve()`
    - Impact: Cannot trace method calls from usage site to definition across files
-   - Status: To Do
-   - Priority: HIGH (unacceptable gap)
+   - Status: Backlog (affects all languages, not just JavaScript)
+   - Priority: Medium (task-154), HIGH for JavaScript tests
+   - Note: Originally task-epic-11.116.5.6.4, moved because this is a cross-language issue
 
 **Failing Tests (Expected until sub-tasks complete):**
 
@@ -405,7 +406,7 @@ Successfully migrated all unit tests from `symbol_resolution.javascript.test.ts`
 1. Complete sub-task epic-11.116.5.6.1 to add CommonJS support ✅ DONE
 2. Complete sub-task epic-11.116.5.6.2 to fix default exports ✅ DONE
 3. Complete sub-task epic-11.116.5.6.3 to capture constructor calls (NEW - CRITICAL)
-4. Complete sub-task epic-11.116.5.6.4 to fix method resolution (NEW - CRITICAL)
+4. Complete task-154 to fix method resolution (MOVED TO TOP-LEVEL - cross-language)
 5. All tests should pass after these fixes
 6. Consider adding tests for:
    - Dynamic imports (`import()`)
