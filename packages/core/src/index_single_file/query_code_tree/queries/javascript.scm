@@ -206,6 +206,30 @@
 )
 
 ;; ==============================================================================
+;; COMMONJS IMPORTS
+;; ==============================================================================
+
+; Destructured require: const { foo, bar } = require('./module')
+(variable_declarator
+  name: (object_pattern
+    (shorthand_property_identifier_pattern) @definition.import.require
+  )
+  value: (call_expression
+    function: (identifier) @_require
+    (#eq? @_require "require")
+  )
+)
+
+; Simple require: const utils = require('./module')
+(variable_declarator
+  name: (identifier) @definition.import.require.simple
+  value: (call_expression
+    function: (identifier) @_require
+    (#eq? @_require "require")
+  )
+)
+
+;; ==============================================================================
 ;; RE-EXPORTS - Import definitions that forward exports
 ;; ==============================================================================
 ;; Re-exports create ImportDefinitions (for chain resolution) but do NOT create

@@ -1,9 +1,10 @@
 # Task epic-11.116.5.6.1: Add CommonJS require() support to JavaScript semantic index
 
-**Status:** To Do
+**Status:** Done
 **Parent:** task-epic-11.116.5.6
 **Priority:** Medium
 **Created:** 2025-10-16
+**Completed:** 2025-10-20
 
 ## Overview
 
@@ -138,3 +139,57 @@ Tests in `project.javascript.integration.test.ts`:
 - `packages/core/src/index_single_file/query_code_tree/queries/javascript.scm` - Add patterns here
 - `packages/core/src/index_single_file/import_processor.ts` - May need updates
 - `packages/core/src/project/project.javascript.integration.test.ts` - Tests to verify
+
+## Implementation Notes
+
+### Changes Made
+
+1. **Added CommonJS require() patterns to javascript.scm** (lines 208-230)
+   - Destructured require: `const { foo, bar } = require('./module')`
+   - Simple require: `const utils = require('./module')`
+   - Used `@_require` prefix for anonymous captures (filtered by system)
+
+2. **Added filter for anonymous captures in semantic_index.ts** (line 90)
+   - Filters out captures starting with `_` (used for tree-sitter predicates)
+   - Prevents "Invalid category" errors for predicate-only captures
+
+3. **Added handlers in javascript_builder_config.ts** (lines 545-643)
+   - `definition.import.require`: Handles destructured require imports
+   - `definition.import.require.simple`: Handles simple require imports
+   - Both extract module path from require() call arguments
+
+4. **Added helper function in javascript_builder.ts** (lines 517-528)
+   - `extract_require_path()`: Extracts module path from string literal
+
+### Test Results
+
+**Passing Tests:**
+- ✓ "should resolve require() imports" - CommonJS imports now tracked in `imported_symbols` map
+- ✓ "should handle module.exports patterns" - Functions defined and available
+
+**Known Issues:**
+- ✗ "should resolve cross-file function calls in CommonJS" - Requires module.exports tracking
+- ✗ "should handle default exports" (ES6) - Pre-existing issue with default export resolution
+
+### Root Cause Analysis
+
+The failing "cross-file function calls" test requires two-way resolution:
+1. Import side: Track `require()` calls ✓ (completed in this task)
+2. Export side: Track `module.exports` assignments ✗ (not yet implemented)
+
+For cross-file resolution to work, the system needs to:
+1. Find `const { helper } = require('./utils')` and create import definition ✓
+2. Find `module.exports = { helper }` and create export definition ✗
+3. Connect import to export through module path matching
+
+### Recommended Follow-up
+
+Create a new task to add CommonJS export tracking:
+- Add query patterns for `module.exports` assignments
+- Add handlers to process CommonJS exports
+- Ensure export definitions link to actual function/variable definitions
+- This will enable full cross-file resolution for CommonJS modules
+
+### Summary
+
+This task successfully implements CommonJS `require()` import tracking. The import side is now complete and functioning. Cross-file resolution requires additional work on the export side (tracking `module.exports`), which should be addressed in a separate task.

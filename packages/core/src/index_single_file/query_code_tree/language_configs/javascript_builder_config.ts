@@ -22,6 +22,7 @@ import {
   extract_initial_value,
   extract_default_value,
   extract_import_path,
+  extract_require_path,
   extract_original_name,
   is_default_import,
   is_namespace_import,
@@ -534,6 +535,106 @@ export const JAVASCRIPT_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
           location: capture.location,
           scope_id: context.get_scope_id(capture.location),
           import_path: extract_import_path(import_stmt),
+          import_kind: "namespace",
+          original_name: undefined,
+        });
+      },
+    },
+  ],
+
+  // ============================================================================
+  // COMMONJS IMPORTS
+  // ============================================================================
+
+  [
+    "definition.import.require",
+    {
+      process: (
+        capture: CaptureNode,
+        builder: DefinitionBuilder,
+        context: ProcessingContext
+      ) => {
+        const import_id = create_import_id(capture);
+        // Navigate up to variable_declarator to find the require call
+        let declarator = capture.node.parent;
+        while (declarator && declarator.type !== "variable_declarator") {
+          declarator = declarator.parent;
+        }
+
+        if (!declarator) {
+          return;
+        }
+
+        // Find the call_expression (require call)
+        const value_node = declarator.childForFieldName("value");
+        if (!value_node || value_node.type !== "call_expression") {
+          return;
+        }
+
+        // Get the string argument from require()
+        const args_node = value_node.childForFieldName("arguments");
+        if (!args_node) {
+          return;
+        }
+
+        // Find the string child in arguments
+        const string_node = args_node.children?.find((c: any) => c.type === "string");
+        if (!string_node) {
+          return;
+        }
+
+        builder.add_import({
+          symbol_id: import_id,
+          name: capture.text,
+          location: capture.location,
+          scope_id: context.get_scope_id(capture.location),
+          import_path: extract_require_path(string_node),
+          import_kind: "named",
+          original_name: undefined,
+        });
+      },
+    },
+  ],
+
+  [
+    "definition.import.require.simple",
+    {
+      process: (
+        capture: CaptureNode,
+        builder: DefinitionBuilder,
+        context: ProcessingContext
+      ) => {
+        const import_id = create_import_id(capture);
+        // Navigate up to variable_declarator
+        const declarator = capture.node.parent;
+        if (!declarator || declarator.type !== "variable_declarator") {
+          return;
+        }
+
+        // Find the call_expression (require call)
+        const value_node = declarator.childForFieldName("value");
+        if (!value_node || value_node.type !== "call_expression") {
+          return;
+        }
+
+        // Get the string argument from require()
+        const args_node = value_node.childForFieldName("arguments");
+        if (!args_node) {
+          return;
+        }
+
+        // Find the string child in arguments
+        const string_node = args_node.children?.find((c: any) => c.type === "string");
+        if (!string_node) {
+          return;
+        }
+
+        builder.add_import({
+          symbol_id: import_id,
+          name: capture.text,
+          location: capture.location,
+          scope_id: context.get_scope_id(capture.location),
+          import_path: extract_require_path(string_node),
           import_kind: "namespace",
           original_name: undefined,
         });

@@ -515,6 +515,19 @@ export function extract_import_path(node: SyntaxNode | null | undefined): Module
 }
 
 /**
+ * Extract module path from require() call
+ * For CommonJS: const x = require('./module')
+ */
+export function extract_require_path(node: SyntaxNode | null | undefined): ModulePath {
+  if (!node || node.type !== "string") {
+    return "" as ModulePath;
+  }
+  // Remove quotes from the string literal
+  const text = node.text;
+  return text.slice(1, -1) as ModulePath;
+}
+
+/**
  * Extract original name for aliased imports
  */
 export function extract_original_name(

@@ -86,8 +86,11 @@ export function build_semantic_index(
   // PASS 1: Query tree-sitter for captures
   const captures: QueryCapture[] = query_tree(language, tree);
 
+  // Filter out captures starting with underscore (anonymous captures for predicates)
+  const filtered_captures = captures.filter((c) => !c.name.startsWith("_"));
+
   // Convert QueryCapture to CaptureNode
-  const capture_nodes: CaptureNode[] = captures.map((c) => {
+  const capture_nodes: CaptureNode[] = filtered_captures.map((c) => {
     const parts = c.name.split(".");
     const category = parts[0] as SemanticCategory;
     if (!Object.values(SemanticCategory).includes(category)) {

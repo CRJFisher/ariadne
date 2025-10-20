@@ -1,9 +1,10 @@
 ---
 id: task-epic-11.116.5.6.1
 title: Add CommonJS require() support to JavaScript semantic index
-status: To Do
+status: Done
 assignee: []
 created_date: '2025-10-16 15:51'
+updated_date: '2025-10-20 15:55'
 labels: []
 dependencies: []
 parent_task_id: task-epic-11.116.5.6
