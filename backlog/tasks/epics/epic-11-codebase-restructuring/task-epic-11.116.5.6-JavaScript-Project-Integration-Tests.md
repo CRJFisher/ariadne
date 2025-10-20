@@ -373,13 +373,41 @@ The test suite covers:
 - ⚠️ CommonJS (partial - needs query pattern updates)
 - ⚠️ Default exports (partial - needs resolution fix)
 
+### Test Migration and Critical Gaps (2025-10-20)
+
+Successfully migrated all unit tests from `symbol_resolution.javascript.test.ts` to integration tests. Added comprehensive coverage for re-export chains and aliased imports.
+
+**Test Results:** 21/25 passing (4 expected failures)
+
+**Created Sub-Tasks for Critical Gaps:**
+
+1. **task-epic-11.116.5.6.3**: Capture constructor calls as references
+   - Issue: `new Foo()` calls are not captured as SymbolReference objects
+   - Impact: Cannot resolve constructor calls to class definitions
+   - Status: To Do
+   - Priority: HIGH (unacceptable gap)
+
+2. **task-epic-11.116.5.6.4**: Fix cross-file method resolution
+   - Issue: Method calls on imported class instances don't resolve via `project.resolutions.resolve()`
+   - Impact: Cannot trace method calls from usage site to definition across files
+   - Status: To Do
+   - Priority: HIGH (unacceptable gap)
+
+**Failing Tests (Expected until sub-tasks complete):**
+
+1. should resolve imported class constructor calls
+2. should resolve method calls on imported class instances
+3. should resolve aliased class constructor calls
+4. should resolve method calls on aliased class instances
+
 ### Next Steps
 
-1. Complete sub-task epic-11.116.5.6.1 to add CommonJS support
-2. Complete sub-task epic-11.116.5.6.2 to fix default exports
-3. All tests should pass after these fixes
-4. Consider adding tests for:
+1. Complete sub-task epic-11.116.5.6.1 to add CommonJS support ✅ DONE
+2. Complete sub-task epic-11.116.5.6.2 to fix default exports ✅ DONE
+3. Complete sub-task epic-11.116.5.6.3 to capture constructor calls (NEW - CRITICAL)
+4. Complete sub-task epic-11.116.5.6.4 to fix method resolution (NEW - CRITICAL)
+5. All tests should pass after these fixes
+6. Consider adding tests for:
    - Dynamic imports (`import()`)
    - Namespace imports
-   - Re-exports
    - Mixed CommonJS/ES6 modules
