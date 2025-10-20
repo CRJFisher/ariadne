@@ -587,7 +587,7 @@ export const JAVASCRIPT_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
           symbol_id: import_id,
           name: capture.text,
           location: capture.location,
-          scope_id: context.get_scope_id(capture.location),
+          scope_id: context.root_scope_id, // CommonJS imports go to root scope
           import_path: extract_require_path(string_node),
           import_kind: "named",
           original_name: undefined,
@@ -633,7 +633,7 @@ export const JAVASCRIPT_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
           symbol_id: import_id,
           name: capture.text,
           location: capture.location,
-          scope_id: context.get_scope_id(capture.location),
+          scope_id: context.root_scope_id, // CommonJS imports go to root scope
           import_path: extract_require_path(string_node),
           import_kind: "namespace",
           original_name: undefined,

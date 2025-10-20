@@ -382,6 +382,15 @@ export function extract_export_info(
         export: named_export,
       };
     }
+
+    // Third, check if this symbol is exported via CommonJS: module.exports = { foo }
+    const commonjs_export = find_commonjs_export_for_symbol(root, symbol_name);
+    if (commonjs_export) {
+      return {
+        is_exported: true,
+        export: commonjs_export,
+      };
+    }
   }
 
   return { is_exported: false };
@@ -421,6 +430,72 @@ function find_named_export_for_symbol(
             export_name: info.alias,
             is_reexport,
           };
+        }
+      }
+    }
+  }
+
+  return undefined;
+}
+
+/**
+ * Find CommonJS export that exports the given symbol
+ * Searches for: module.exports = { foo, bar }
+ */
+function find_commonjs_export_for_symbol(
+  root: SyntaxNode,
+  symbol_name: SymbolName
+): ExportMetadata | undefined {
+  // Search for assignment_expression nodes: module.exports = { ... }
+  for (let i = 0; i < root.childCount; i++) {
+    const child = root.child(i);
+
+    // Check expression_statement nodes
+    if (child?.type === "expression_statement") {
+      const expr = child.child(0);
+
+      if (expr?.type === "assignment_expression") {
+        const left = expr.childForFieldName("left");
+        const right = expr.childForFieldName("right");
+
+        // Check if left side is module.exports
+        if (left?.type === "member_expression") {
+          const object = left.childForFieldName("object");
+          const property = left.childForFieldName("property");
+
+          if (object?.text === "module" && property?.text === "exports") {
+            // Check if right side is an object containing our symbol
+            if (right?.type === "object") {
+              // Search through object properties
+              for (let j = 0; j < right.childCount; j++) {
+                const prop = right.child(j);
+
+                // Handle shorthand properties: { helper }
+                if (prop?.type === "shorthand_property_identifier") {
+                  if (prop.text === symbol_name) {
+                    return {}; // Found! No alias for CommonJS shorthand
+                  }
+                }
+
+                // Handle full properties: { helper: helper }
+                if (prop?.type === "pair") {
+                  const key = prop.childForFieldName("key");
+                  const value = prop.childForFieldName("value");
+
+                  if (value?.type === "identifier" && value.text === symbol_name) {
+                    // Export name is the key
+                    const export_name = key?.type === "property_identifier" || key?.type === "identifier"
+                      ? (key.text as SymbolName)
+                      : undefined;
+
+                    return export_name && export_name !== symbol_name
+                      ? { export_name }
+                      : {};
+                  }
+                }
+              }
+            }
+          }
         }
       }
     }
