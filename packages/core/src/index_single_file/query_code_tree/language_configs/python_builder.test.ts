@@ -16,6 +16,7 @@ import type {
 } from "../../semantic_index";
 import type { Location, ScopeId, SymbolName } from "@ariadnejs/types";
 import { node_to_location } from "../../node_utils";
+import { extract_import_path } from "./python_builder";
 
 describe("Python Builder Configuration", () => {
   let parser: Parser;
@@ -408,6 +409,51 @@ describe("Python Builder Configuration", () => {
       expect(() => {
         config?.process(capture, builder, createTestContext());
       }).not.toThrow();
+    });
+
+    it("should handle relative imports (from .module import name)", () => {
+      const code = "from .utils import helper, process_data";
+      const ast = parser.parse(code);
+
+      // Find the import_from_statement node
+      const importNode = findNodeByType(ast.rootNode, "import_from_statement");
+      expect(importNode).toBeDefined();
+
+      if (importNode) {
+        // Extract the import path - should get ".utils" not "helper"
+        const importPath = extract_import_path(importNode);
+        expect(importPath).toBe(".utils");
+      }
+    });
+
+    it("should handle absolute imports (from package.module import name)", () => {
+      const code = "from os.path import join";
+      const ast = parser.parse(code);
+
+      // Find the import_from_statement node
+      const importNode = findNodeByType(ast.rootNode, "import_from_statement");
+      expect(importNode).toBeDefined();
+
+      if (importNode) {
+        // Extract the import path - should get "os.path"
+        const importPath = extract_import_path(importNode);
+        expect(importPath).toBe("os.path");
+      }
+    });
+
+    it("should handle regular imports (import module)", () => {
+      const code = "import os";
+      const ast = parser.parse(code);
+
+      // Find the import_statement node
+      const importNode = findNodeByType(ast.rootNode, "import_statement");
+      expect(importNode).toBeDefined();
+
+      if (importNode) {
+        // Extract the import path - should get "os"
+        const importPath = extract_import_path(importNode);
+        expect(importPath).toBe("os");
+      }
     });
 
     describe("End-to-end integration tests", () => {
