@@ -13,6 +13,7 @@ Fix dependency tracking for Python files that use relative imports, so that `pro
 ## Problem
 
 Python integration tests show that dependency tracking doesn't work for relative imports:
+
 - `project.get_dependents(utils_file)` does not include `shadowing_file`
 - This happens even though `shadowing.py` imports from `utils.py`
 - The dependency graph is not tracking Python relative imports correctly
@@ -32,9 +33,12 @@ expect(dependents.has(shadowing_file)).toBe(true); // FAILS - returns false
 ```
 
 Test currently works around this:
+
 ```typescript
 if (!dependents.has(shadowing_file)) {
-  console.warn("Python dependency tracking not working correctly for relative imports");
+  console.warn(
+    "Python dependency tracking not working correctly for relative imports"
+  );
   return; // Skip rest of test
 }
 ```
@@ -42,12 +46,14 @@ if (!dependents.has(shadowing_file)) {
 ## Expected Behavior
 
 When a file imports from another file:
+
 ```python
 # modules/shadowing.py
 from .utils import helper, process_data
 ```
 
 Then:
+
 ```typescript
 const dependents = project.get_dependents(utils_file);
 expect(dependents.has(shadowing_file)).toBe(true); // Should PASS
@@ -76,11 +82,13 @@ If relative import paths aren't resolved correctly (task .7.1), the import graph
 **Note:** Complete task epic-11.116.5.7.1 first, then investigate if this issue persists.
 
 1. **Verify import graph construction**
+
    - Check `packages/core/src/project/import_graph.ts`
    - See how dependencies are tracked
    - Verify Python imports are added to the graph
 
 2. **Check dependency retrieval**
+
    - Review `project.get_dependents()` implementation
    - Ensure it queries the import graph correctly
    - Verify reverse dependency lookup works
@@ -93,16 +101,20 @@ If relative import paths aren't resolved correctly (task .7.1), the import graph
 ## Test Cases to Fix
 
 ### Test: Incremental Updates - File Removal
+
 **File:** `packages/core/src/project/project.python.integration.test.ts`
 **Test:** "should handle file removal and update dependents"
 **Line:** ~535
 
 Currently has workaround:
+
 ```typescript
 // Python relative imports may not be tracked correctly yet
 // This is a known limitation
 if (!dependents.has(shadowing_file)) {
-  console.warn("Python dependency tracking not working correctly for relative imports");
+  console.warn(
+    "Python dependency tracking not working correctly for relative imports"
+  );
   return; // Skip rest of test
 }
 ```
@@ -125,21 +137,25 @@ if (!dependents.has(shadowing_file)) {
 ## Implementation Plan
 
 1. **Wait for task .7.1 completion** (blocking)
+
    - Relative import resolution must work first
    - This task cannot proceed until dependencies resolve
 
 2. **Re-test after .7.1** (15 min)
+
    - Run the failing test
    - Check if dependency tracking now works
    - If yes, just remove workaround and mark complete
 
 3. **Debug if still failing** (1-2 hours)
+
    - Add logging to import graph population
    - Verify ImportDefinitions are being processed
    - Check if source file paths are correct
    - Ensure dependency edges are created
 
 4. **Fix import graph** (if needed, 1-2 hours)
+
    - Update import graph to handle Python imports
    - Ensure reverse dependencies are tracked
    - Verify dependency removal on file removal
@@ -152,6 +168,7 @@ if (!dependents.has(shadowing_file)) {
 ## Estimated Effort
 
 **1-3 hours** (after task .7.1 is complete)
+
 - 15 min if .7.1 fixes it automatically
 - 1-3 hours if additional import graph work is needed
 

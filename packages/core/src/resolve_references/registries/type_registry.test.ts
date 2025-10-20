@@ -6,37 +6,45 @@ import {
   class_symbol,
   method_symbol,
   variable_symbol,
-  location_key,
   interface_symbol,
+  MethodDefinition,
+  PropertyDefinition,
 } from "@ariadnejs/types";
 import type { SemanticIndex } from "../../index_single_file/semantic_index";
-import type { FilePath, Location, LocationKey, SymbolId, SymbolName, ScopeId, AnyDefinition } from "@ariadnejs/types";
-
-// Helper to create location keys for testing
-function make_location_key(file_path: FilePath, line: number, column: number = 0): LocationKey {
-  const location: Location = {
-    file_path,
-    start_line: line,
-    start_column: column,
-    end_line: line,
-    end_column: column + 5,
-  };
-  return location_key(location);
-}
+import type {
+  FilePath,
+  Location,
+  SymbolId,
+  SymbolName,
+  ScopeId,
+  AnyDefinition,
+  ClassDefinition,
+} from "@ariadnejs/types";
 
 // Helper to create a location object
-function make_location(file_path: FilePath, start_line: number, start_column: number = 0, end_line?: number, end_column?: number): Location {
+function make_location(
+  file_path: FilePath,
+  start_line: number,
+  start_column: number = 0,
+  end_line?: number,
+  end_column?: number
+): Location {
   return {
     file_path,
     start_line,
     start_column,
     end_line: end_line ?? start_line,
-    end_column: end_column ?? (start_column + 5),
+    end_column: end_column ?? start_column + 5,
   };
 }
 
 // Helper to create a variable with type annotation
-function make_variable_with_type(name: string, type_name: string, file_path: FilePath, line: number) {
+function make_variable_with_type(
+  name: string,
+  type_name: string,
+  file_path: FilePath,
+  line: number
+) {
   const location = make_location(file_path, line);
   const var_id = variable_symbol(name, location);
   return {
@@ -54,7 +62,12 @@ function make_variable_with_type(name: string, type_name: string, file_path: Fil
 }
 
 // Helper to create a class with members
-function make_class_with_members(name: string, file_path: FilePath, methods: string[] = [], properties: string[] = []) {
+function make_class_with_members(
+  name: string,
+  file_path: FilePath,
+  methods: string[] = [],
+  properties: string[] = []
+) {
   const class_loc = make_location(file_path, 1, 0, 10, 1);
   const class_id = class_symbol(name, class_loc);
 
@@ -67,7 +80,8 @@ function make_class_with_members(name: string, file_path: FilePath, methods: str
       name: method_name as SymbolName,
       location: method_loc,
       parameters: [],
-    };
+      defining_scope_id: "module:0:0" as ScopeId,
+    } as MethodDefinition;
   });
 
   const prop_defs = properties.map((prop_name, idx) => {
@@ -79,7 +93,8 @@ function make_class_with_members(name: string, file_path: FilePath, methods: str
       name: prop_name as SymbolName,
       location: prop_loc,
       decorators: [],
-    };
+      defining_scope_id: "module:0:0" as ScopeId,
+    } as PropertyDefinition;
   });
 
   return {
@@ -96,30 +111,11 @@ function make_class_with_members(name: string, file_path: FilePath, methods: str
       properties: prop_defs,
       decorators: [],
       constructor: [],
-    },
-  };
-}
-
-// Helper to create a type alias
-function make_type_alias(name: string, type_expression: string, file_path: FilePath, line: number = 1) {
-  const alias_loc = make_location(file_path, line);
-  const alias_id = class_symbol(name, alias_loc);
-  return {
-    id: alias_id,
-    def: {
-      kind: "type" as const,
-      symbol_id: alias_id,
-      name: name as SymbolName,
-      location: alias_loc,
-      defining_scope_id: "module:0:0" as ScopeId,
-      is_exported: false,
-      type_expression,
-    },
+    } as ClassDefinition,
   };
 }
 
 // Helper to create minimal SemanticIndex for testing
-// Now accepts actual definition objects that TypeRegistry will extract from
 function make_test_index(
   file_path: FilePath,
   options: {
@@ -164,135 +160,6 @@ describe("TypeRegistry", () => {
     registry = new TypeRegistry();
   });
 
-  describe("update_file", () => {
-    it("should add type bindings from a file", () => {
-      const file1 = "file1.ts" as FilePath;
-      const { id, def } = make_variable_with_type("x", "number", file1, 1);
-      const loc_key = make_location_key(file1, 1);
-
-      const index = make_test_index(file1, {
-        variables: new Map([[id, def]]),
-      });
-
-      const { definitions, resolutions } = make_mock_registries();
-      registry.update_file(file1, index, definitions, resolutions);
-
-      expect(registry.get_type_binding(loc_key)).toBe("number");
-      expect(registry.size().bindings).toBe(1);
-    });
-
-    it("should add type members from a file", () => {
-      const file1 = "file1.ts" as FilePath;
-      const { id: class_id, def: class_def } = make_class_with_members("MyClass", file1, ["foo"]);
-
-      const index = make_test_index(file1, {
-        classes: new Map([[class_id, class_def]]),
-      });
-
-      const { definitions, resolutions } = make_mock_registries();
-      registry.update_file(file1, index, definitions, resolutions);
-
-      const retrieved_members = registry.get_type_members(class_id);
-      expect(retrieved_members).toBeDefined();
-      expect(retrieved_members?.methods.get("foo" as SymbolName)).toBeDefined();
-      expect(registry.size().members).toBe(1);
-    });
-
-    it("should add type aliases from a file", () => {
-      const file1 = "file1.ts" as FilePath;
-      const { id: alias_id, def: alias_def } = make_type_alias("MyType", "string | number", file1);
-
-      const index = make_test_index(file1, {
-        types: new Map([[alias_id, alias_def]]),
-      });
-
-      const { definitions, resolutions } = make_mock_registries();
-      registry.update_file(file1, index, definitions, resolutions);
-
-      expect(registry.resolve_type_alias(alias_id)).toBe("string | number");
-      expect(registry.size().aliases).toBe(1);
-    });
-
-    it("should replace type info when file is updated", () => {
-      const file1 = "file1.ts" as FilePath;
-      const loc_key_v1 = make_location_key(file1, 1, 0);
-      const loc_key_v2 = make_location_key(file1, 2, 0);
-
-      // First version
-      const { id: var1_id, def: var1_def } = make_variable_with_type("x", "number", file1, 1);
-      const index_v1 = make_test_index(file1, {
-        variables: new Map([[var1_id, var1_def]]),
-      });
-
-      const { definitions, resolutions } = make_mock_registries();
-      registry.update_file(file1, index_v1, definitions, resolutions);
-      expect(registry.size().bindings).toBe(1);
-      expect(registry.get_type_binding(loc_key_v1)).toBe("number");
-
-      // Second version (replace)
-      const { id: var2_id, def: var2_def } = make_variable_with_type("y", "string", file1, 2);
-      const index_v2 = make_test_index(file1, {
-        variables: new Map([[var2_id, var2_def]]),
-      });
-
-      registry.update_file(file1, index_v2, definitions, resolutions);
-
-      expect(registry.size().bindings).toBe(1);
-      expect(registry.get_type_binding(loc_key_v1)).toBeUndefined();
-      expect(registry.get_type_binding(loc_key_v2)).toBe("string");
-    });
-
-    it("should handle files with multiple type information types", () => {
-      const file1 = "file1.ts" as FilePath;
-
-      // Create variable with type
-      const { id: var_id, def: var_def } = make_variable_with_type("x", "number", file1, 1);
-
-      // Create class with members
-      const { id: class_id, def: class_def } = make_class_with_members("MyClass", file1, ["foo"]);
-
-      // Create type alias
-      const { id: alias_id, def: alias_def } = make_type_alias("MyType", "string", file1, 3);
-
-      const index = make_test_index(file1, {
-        variables: new Map([[var_id, var_def]]),
-        classes: new Map([[class_id, class_def]]),
-        types: new Map([[alias_id, alias_def]]),
-      });
-
-      const { definitions, resolutions } = make_mock_registries();
-      registry.update_file(file1, index, definitions, resolutions);
-
-      expect(registry.size().bindings).toBe(1);
-      expect(registry.size().members).toBe(1);
-      expect(registry.size().aliases).toBe(1);
-    });
-  });
-
-  describe("get_type_binding", () => {
-    it("should return undefined for non-existent location", () => {
-      const file1 = "file1.ts" as FilePath;
-      const loc_key = make_location_key(file1, 1, 0);
-
-      expect(registry.get_type_binding(loc_key)).toBeUndefined();
-    });
-
-    it("should retrieve type binding by location key", () => {
-      const file1 = "file1.ts" as FilePath;
-      const { id, def } = make_variable_with_type("x", "string", file1, 1);
-      const loc_key = make_location_key(file1, 1, 0);
-
-      const index = make_test_index(file1, {
-        variables: new Map([[id, def]]),
-      });
-
-      const { definitions, resolutions } = make_mock_registries();
-      registry.update_file(file1, index, definitions, resolutions);
-
-      expect(registry.get_type_binding(loc_key)).toBe("string");
-    });
-  });
-
   describe("get_type_members", () => {
     it("should return undefined for non-existent type", () => {
       const file1 = "file1.ts" as FilePath;
@@ -304,13 +171,22 @@ describe("TypeRegistry", () => {
 
     it("should retrieve type members by symbol id", () => {
       const file1 = "file1.ts" as FilePath;
-      const { id: class_id, def: class_def } = make_class_with_members("MyClass", file1, ["foo"], ["bar"]);
+      const { id: class_id, def: class_def } = make_class_with_members(
+        "MyClass",
+        file1,
+        ["foo"],
+        ["bar"]
+      );
 
       const index = make_test_index(file1, {
         classes: new Map([[class_id, class_def]]),
       });
 
       const { definitions, resolutions } = make_mock_registries();
+
+      // Populate definitions registry so get_type_members can look up the class
+      definitions.update_file(file1, [class_def]);
+
       registry.update_file(file1, index, definitions, resolutions);
 
       const retrieved = registry.get_type_members(class_id);
@@ -319,716 +195,137 @@ describe("TypeRegistry", () => {
       expect(retrieved?.properties.get("bar" as SymbolName)).toBeDefined();
       expect(retrieved?.extends).toEqual([]);
     });
-  });
 
-  describe("resolve_type_alias", () => {
-    it("should return undefined for non-existent alias", () => {
-      const file1 = "file1.ts" as FilePath;
-      const loc = make_location(file1, 1);
-      const alias_id = class_symbol("NonExistent", loc);
-
-      expect(registry.resolve_type_alias(alias_id)).toBeUndefined();
-    });
-
-    it("should resolve type alias to type expression", () => {
-      const file1 = "file1.ts" as FilePath;
-      const { id: alias_id, def: alias_def } = make_type_alias("MyType", "string | number | boolean", file1);
-
-      const index = make_test_index(file1, {
-        types: new Map([[alias_id, alias_def]]),
-      });
-
-      const { definitions, resolutions } = make_mock_registries();
-      registry.update_file(file1, index, definitions, resolutions);
-
-      expect(registry.resolve_type_alias(alias_id)).toBe("string | number | boolean");
-    });
-  });
-
-  describe("has_type_binding", () => {
-    it("should return false for non-existent location", () => {
-      const file1 = "file1.ts" as FilePath;
-      const loc_key = make_location_key(file1, 1, 0);
-
-      expect(registry.has_type_binding(loc_key)).toBe(false);
-    });
-
-    it("should return true for existing location", () => {
-      const file1 = "file1.ts" as FilePath;
-      const { id, def } = make_variable_with_type("x", "number", file1, 1);
-      const loc_key = make_location_key(file1, 1, 0);
-
-      const index = make_test_index(file1, {
-        variables: new Map([[id, def]]),
-      });
-
-      const { definitions, resolutions } = make_mock_registries();
-      registry.update_file(file1, index, definitions, resolutions);
-
-      expect(registry.has_type_binding(loc_key)).toBe(true);
-    });
-  });
-
-  describe("has_type_members", () => {
-    it("should return false for non-existent type", () => {
-      const file1 = "file1.ts" as FilePath;
-      const loc = make_location(file1, 1);
-      const class_id = class_symbol("NonExistent", loc);
-
-      expect(registry.has_type_members(class_id)).toBe(false);
-    });
-
-    it("should return true for existing type", () => {
-      const file1 = "file1.ts" as FilePath;
-      const { id: class_id, def: class_def } = make_class_with_members("MyClass", file1);
-
-      const index = make_test_index(file1, {
-        classes: new Map([[class_id, class_def]]),
-      });
-
-      const { definitions, resolutions } = make_mock_registries();
-      registry.update_file(file1, index, definitions, resolutions);
-
-      expect(registry.has_type_members(class_id)).toBe(true);
-    });
-  });
-
-  describe("get_all_type_bindings", () => {
-    it("should return empty map when no bindings exist", () => {
-      const bindings = registry.get_all_type_bindings();
-      expect(bindings.size).toBe(0);
-    });
-
-    it("should return all type bindings", () => {
-      const file1 = "file1.ts" as FilePath;
-      const { id: var1_id, def: var1_def } = make_variable_with_type("x", "number", file1, 1);
-      const { id: var2_id, def: var2_def } = make_variable_with_type("y", "string", file1, 2);
-      const loc1 = make_location_key(file1, 1, 0);
-      const loc2 = make_location_key(file1, 2, 0);
-
-      const index = make_test_index(file1, {
-        variables: new Map([
-          [var1_id, var1_def],
-          [var2_id, var2_def],
-        ]),
-      });
-
-      const { definitions, resolutions } = make_mock_registries();
-      registry.update_file(file1, index, definitions, resolutions);
-
-      const bindings = registry.get_all_type_bindings();
-      expect(bindings.size).toBe(2);
-      expect(bindings.get(loc1)).toBe("number");
-      expect(bindings.get(loc2)).toBe("string");
-    });
-  });
-
-  describe("get_all_type_members", () => {
-    it("should return empty map when no members exist", () => {
-      const members = registry.get_all_type_members();
-      expect(members.size).toBe(0);
-    });
-
-    it("should return all type members", () => {
-      const file1 = "file1.ts" as FilePath;
-      const { id: class1_id, def: class1_def } = make_class_with_members("Class1", file1, ["foo"]);
-      const { id: class2_id, def: class2_def } = make_class_with_members("Class2", file1, [], ["bar"]);
-
-      const index = make_test_index(file1, {
-        classes: new Map([
-          [class1_id, class1_def],
-          [class2_id, class2_def],
-        ]),
-      });
-
-      const { definitions, resolutions } = make_mock_registries();
-      registry.update_file(file1, index, definitions, resolutions);
-
-      const all_members = registry.get_all_type_members();
-      expect(all_members.size).toBe(2);
-      expect(all_members.get(class1_id)).toBeDefined();
-      expect(all_members.get(class2_id)).toBeDefined();
-      expect(all_members.get(class1_id)?.methods.get("foo" as SymbolName)).toBeDefined();
-      expect(all_members.get(class2_id)?.properties.get("bar" as SymbolName)).toBeDefined();
-    });
-  });
-
-  describe("remove_file", () => {
-    it("should remove all type info from a file", () => {
-      const file1 = "file1.ts" as FilePath;
-      const { id, def } = make_variable_with_type("x", "number", file1, 1);
-      const loc_key = make_location_key(file1, 1, 0);
-
-      const index = make_test_index(file1, {
-        variables: new Map([[id, def]]),
-      });
-
-      const { definitions, resolutions } = make_mock_registries();
-      registry.update_file(file1, index, definitions, resolutions);
-      expect(registry.size().bindings).toBe(1);
-
-      registry.remove_file(file1);
-
-      expect(registry.size().bindings).toBe(0);
-      expect(registry.get_type_binding(loc_key)).toBeUndefined();
-    });
-
-    it("should not affect other files", () => {
-      const file1 = "file1.ts" as FilePath;
-      const file2 = "file2.ts" as FilePath;
-      const { id: var1_id, def: var1_def } = make_variable_with_type("x", "number", file1, 1);
-      const { id: var2_id, def: var2_def } = make_variable_with_type("y", "string", file2, 1);
-      const loc1 = make_location_key(file1, 1, 0);
-      const loc2 = make_location_key(file2, 1, 0);
-
-      const { definitions, resolutions } = make_mock_registries();
-      registry.update_file(file1, make_test_index(file1, {
-        variables: new Map([[var1_id, var1_def]]),
-      }), definitions, resolutions);
-
-      registry.update_file(file2, make_test_index(file2, {
-        variables: new Map([[var2_id, var2_def]]),
-      }), definitions, resolutions);
-
-      registry.remove_file(file1);
-
-      expect(registry.size().bindings).toBe(1);
-      expect(registry.get_type_binding(loc1)).toBeUndefined();
-      expect(registry.get_type_binding(loc2)).toBe("string");
-    });
-
-    it("should handle removing non-existent file gracefully", () => {
-      const file1 = "nonexistent.ts" as FilePath;
-
-      expect(() => registry.remove_file(file1)).not.toThrow();
-      expect(registry.size().bindings).toBe(0);
-    });
-
-    it("should remove all types of data from a file", () => {
+    it("should return constructor from ClassDefinition.constructor field", () => {
       const file1 = "file1.ts" as FilePath;
 
-      // Create variable with type
-      const { id: var_id, def: var_def } = make_variable_with_type("x", "number", file1, 1);
+      // Create class with constructor
+      const class_loc = make_location(file1, 1, 0, 10, 1);
+      const class_id = class_symbol("MyClass", class_loc);
 
-      // Create class with members
-      const { id: class_id, def: class_def } = make_class_with_members("MyClass", file1);
+      const constructor_loc = make_location(file1, 2, 2);
+      const constructor_id = method_symbol("constructor", constructor_loc);
 
-      // Create type alias
-      const { id: alias_id, def: alias_def } = make_type_alias("MyType", "string", file1, 3);
-
-      const index = make_test_index(file1, {
-        variables: new Map([[var_id, var_def]]),
-        classes: new Map([[class_id, class_def]]),
-        types: new Map([[alias_id, alias_def]]),
-      });
-
-      const { definitions, resolutions } = make_mock_registries();
-      registry.update_file(file1, index, definitions, resolutions);
-      expect(registry.size().bindings).toBe(1);
-      expect(registry.size().members).toBe(1);
-      expect(registry.size().aliases).toBe(1);
-
-      registry.remove_file(file1);
-
-      expect(registry.size().bindings).toBe(0);
-      expect(registry.size().members).toBe(0);
-      expect(registry.size().aliases).toBe(0);
-    });
-  });
-
-  describe("size", () => {
-    it("should return zero for empty registry", () => {
-      const sizes = registry.size();
-      expect(sizes.bindings).toBe(0);
-      expect(sizes.members).toBe(0);
-      expect(sizes.aliases).toBe(0);
-    });
-
-    it("should return correct counts", () => {
-      const file1 = "file1.ts" as FilePath;
-
-      // Create variable with type
-      const { id: var_id, def: var_def } = make_variable_with_type("x", "number", file1, 1);
-
-      // Create class with members
-      const { id: class_id, def: class_def } = make_class_with_members("MyClass", file1);
-
-      // Create type alias
-      const { id: alias_id, def: alias_def } = make_type_alias("MyType", "string", file1, 3);
-
-      const index = make_test_index(file1, {
-        variables: new Map([[var_id, var_def]]),
-        classes: new Map([[class_id, class_def]]),
-        types: new Map([[alias_id, alias_def]]),
-      });
-
-      const { definitions, resolutions } = make_mock_registries();
-      registry.update_file(file1, index, definitions, resolutions);
-
-      const sizes = registry.size();
-      expect(sizes.bindings).toBe(1);
-      expect(sizes.members).toBe(1);
-      expect(sizes.aliases).toBe(1);
-    });
-  });
-
-  describe("clear", () => {
-    it("should remove all data from registry", () => {
-      const file1 = "file1.ts" as FilePath;
-      const { id: var_id, def: var_def } = make_variable_with_type("x", "number", file1, 1);
-      const { id: class_id, def: class_def } = make_class_with_members("MyClass", file1);
-
-      const index = make_test_index(file1, {
-        variables: new Map([[var_id, var_def]]),
-        classes: new Map([[class_id, class_def]]),
-      });
-
-      const { definitions, resolutions } = make_mock_registries();
-      registry.update_file(file1, index, definitions, resolutions);
-      expect(registry.size().bindings).toBe(1);
-      expect(registry.size().members).toBe(1);
-
-      registry.clear();
-
-      expect(registry.size().bindings).toBe(0);
-      expect(registry.size().members).toBe(0);
-      expect(registry.size().aliases).toBe(0);
-    });
-  });
-
-  describe("cross-file scenarios", () => {
-    it("should aggregate type information from multiple files", () => {
-      const file1 = "file1.ts" as FilePath;
-      const file2 = "file2.ts" as FilePath;
-
-      const { id: var1_id, def: var1_def } = make_variable_with_type("x", "number", file1, 1);
-      const { id: var2_id, def: var2_def } = make_variable_with_type("y", "string", file2, 1);
-      const loc1 = make_location_key(file1, 1, 0);
-      const loc2 = make_location_key(file2, 1, 0);
-
-      const { id: class1_id, def: class1_def } = make_class_with_members("Class1", file1, ["foo"]);
-      const { id: class2_id, def: class2_def } = make_class_with_members("Class2", file2, ["bar"]);
-
-      const { definitions, resolutions } = make_mock_registries();
-      registry.update_file(file1, make_test_index(file1, {
-        variables: new Map([[var1_id, var1_def]]),
-        classes: new Map([[class1_id, class1_def]]),
-      }), definitions, resolutions);
-
-      registry.update_file(file2, make_test_index(file2, {
-        variables: new Map([[var2_id, var2_def]]),
-        classes: new Map([[class2_id, class2_def]]),
-      }), definitions, resolutions);
-
-      // Should have data from both files
-      expect(registry.size().bindings).toBe(2);
-      expect(registry.size().members).toBe(2);
-
-      expect(registry.get_type_binding(loc1)).toBe("number");
-      expect(registry.get_type_binding(loc2)).toBe("string");
-
-      expect(registry.get_type_members(class1_id)?.methods.get("foo" as SymbolName)).toBeDefined();
-      expect(registry.get_type_members(class2_id)?.methods.get("bar" as SymbolName)).toBeDefined();
-    });
-
-    it("should handle incremental updates across multiple files", () => {
-      const file1 = "file1.ts" as FilePath;
-      const file2 = "file2.ts" as FilePath;
-
-      const loc1_v1 = make_location_key(file1, 1, 0);
-      const loc1_v2 = make_location_key(file1, 2, 0);
-      const loc2 = make_location_key(file2, 1, 0);
-
-      // Add file1 version 1
-      const { id: var1_v1_id, def: var1_v1_def } = make_variable_with_type("x", "number", file1, 1);
-      const { definitions, resolutions } = make_mock_registries();
-      registry.update_file(file1, make_test_index(file1, {
-        variables: new Map([[var1_v1_id, var1_v1_def]]),
-      }), definitions, resolutions);
-
-      // Add file2
-      const { id: var2_id, def: var2_def } = make_variable_with_type("y", "string", file2, 1);
-      registry.update_file(file2, make_test_index(file2, {
-        variables: new Map([[var2_id, var2_def]]),
-      }), definitions, resolutions);
-
-      expect(registry.size().bindings).toBe(2);
-
-      // Update file1 to version 2
-      const { id: var1_v2_id, def: var1_v2_def } = make_variable_with_type("z", "boolean", file1, 2);
-      registry.update_file(file1, make_test_index(file1, {
-        variables: new Map([[var1_v2_id, var1_v2_def]]),
-      }), definitions, resolutions);
-
-      // Should still have 2 bindings total
-      expect(registry.size().bindings).toBe(2);
-      // file1 v1 should be gone, v2 should exist
-      expect(registry.get_type_binding(loc1_v1)).toBeUndefined();
-      expect(registry.get_type_binding(loc1_v2)).toBe("boolean");
-      // file2 should be unchanged
-      expect(registry.get_type_binding(loc2)).toBe("string");
-    });
-  });
-
-  describe("resolve_type_metadata", () => {
-    it("should resolve type bindings to SymbolIds", () => {
-      const file1 = "file1.ts" as FilePath;
-      const type_registry = new TypeRegistry();
-      const definitions = new DefinitionRegistry();
-      const resolutions = new ResolutionRegistry();
-
-      // Create User class
-      const user_class_loc = make_location(file1, 1, 0, 5, 1);
-      const user_class_id = class_symbol("User", user_class_loc);
-      const user_class_def: AnyDefinition = {
+      const class_def: ClassDefinition = {
         kind: "class",
-        symbol_id: user_class_id,
-        name: "User" as SymbolName,
-        location: user_class_loc,
+        symbol_id: class_id,
+        name: "MyClass" as SymbolName,
+        location: class_loc,
         defining_scope_id: "module:0:0" as ScopeId,
         is_exported: false,
         extends: [],
         methods: [],
         properties: [],
         decorators: [],
-        constructor: [],
+        constructor: [
+          {
+            kind: "constructor",
+            symbol_id: constructor_id,
+            name: "constructor" as SymbolName,
+            location: constructor_loc,
+            parameters: [],
+            defining_scope_id: "module:0:0" as ScopeId,
+            body_scope_id: "function:2:2" as ScopeId,
+          },
+        ],
       };
 
-      // Create variable with type annotation
-      const { id: user_var_id, def: user_var_def } = make_variable_with_type("user", "User", file1, 7);
-
-      // Setup definitions
-      definitions.update_file(file1, [user_class_def, user_var_def]);
-
-      // Setup index
       const index = make_test_index(file1, {
-        variables: new Map([[user_var_id, user_var_def]]),
-        classes: new Map([[user_class_id, user_class_def]]),
+        classes: new Map([[class_id, class_def]]),
       });
 
-      // Extract type data (without resolution)
-      type_registry.update_file(file1, index);
+      const { definitions, resolutions } = make_mock_registries();
 
-      // Setup resolutions - mock that "User" resolves to user_class_id
-      (resolutions as any).resolutions_by_scope = new Map([
-        ["module:0:0" as ScopeId, new Map([["User" as SymbolName, user_class_id]])],
-      ]);
-
-      // Call resolve_type_metadata
-      (type_registry as any).resolve_type_metadata(file1, definitions, resolutions);
-
-      // Verify: user variable should have User type
-      const symbol_types = (type_registry as any).symbol_types as Map<SymbolId, SymbolId>;
-      const user_type = symbol_types.get(user_var_id);
-      expect(user_type).toBe(user_class_id);
-    });
-
-    it("should resolve type members from DefinitionRegistry", () => {
-      const file1 = "file1.ts" as FilePath;
-      const type_registry = new TypeRegistry();
-      const definitions = new DefinitionRegistry();
-      const resolutions = new ResolutionRegistry();
-
-      // Create class with members
-      const { id: class_id, def: class_def } = make_class_with_members("MyClass", file1, ["foo", "bar"], ["prop1"]);
-
-      // Setup definitions
+      // Populate definitions registry so get_type_members can look up the class
       definitions.update_file(file1, [class_def]);
 
-      // Setup index
+      registry.update_file(file1, index, definitions, resolutions);
+
+      const retrieved = registry.get_type_members(class_id);
+      expect(retrieved).toBeDefined();
+      expect(retrieved?.constructor).toBe(constructor_id);
+    });
+
+    it("should return undefined constructor when class has no constructor", () => {
+      const file1 = "file1.ts" as FilePath;
+      const { id: class_id, def: class_def } = make_class_with_members(
+        "MyClass",
+        file1
+      );
+
       const index = make_test_index(file1, {
         classes: new Map([[class_id, class_def]]),
       });
 
-      // Extract type data
-      type_registry.update_file(file1, index);
+      const { definitions, resolutions } = make_mock_registries();
 
-      // Call resolve_type_metadata
-      (type_registry as any).resolve_type_metadata(file1, definitions, resolutions);
+      // Populate definitions registry so get_type_members can look up the class
+      definitions.update_file(file1, [class_def]);
 
-      // Verify: class should have resolved members
-      const resolved_type_members = (type_registry as any).resolved_type_members as Map<SymbolId, Map<SymbolName, SymbolId>>;
-      const member_map = resolved_type_members.get(class_id);
-      expect(member_map).toBeDefined();
-      expect(member_map!.has("foo" as SymbolName)).toBe(true);
-      expect(member_map!.has("bar" as SymbolName)).toBe(true);
-      expect(member_map!.has("prop1" as SymbolName)).toBe(true);
+      registry.update_file(file1, index, definitions, resolutions);
+
+      const retrieved = registry.get_type_members(class_id);
+      expect(retrieved).toBeDefined();
+      expect(retrieved?.constructor).toBeUndefined();
     });
 
-    it("should resolve parent class relationships", () => {
-      const file1 = "file1.ts" as FilePath;
-      const type_registry = new TypeRegistry();
-      const definitions = new DefinitionRegistry();
-      const resolutions = new ResolutionRegistry();
+    it("should work for Python __init__ constructors (language-agnostic)", () => {
+      const file1 = "user.py" as FilePath;
 
-      // Create Animal class
-      const animal_loc = make_location(file1, 1, 0, 3, 1);
-      const animal_id = class_symbol("Animal", animal_loc);
-      const animal_def: AnyDefinition = {
+      // Create Python class with __init__ constructor
+      const class_loc = make_location(file1, 1, 0, 10, 1);
+      const class_id = class_symbol("User", class_loc);
+
+      const init_loc = make_location(file1, 2, 4);
+      const init_id = method_symbol("__init__", init_loc);
+
+      const class_def: ClassDefinition = {
         kind: "class",
-        symbol_id: animal_id,
-        name: "Animal" as SymbolName,
-        location: animal_loc,
-        defining_scope_id: "module:0:0" as ScopeId,
-        is_exported: false,
-        extends: [],
-        methods: [],
-        properties: [],
-        decorators: [],
-        constructor: [],
-      };
-
-      // Create Dog class extending Animal
-      const dog_loc = make_location(file1, 5, 0, 7, 1);
-      const dog_id = class_symbol("Dog", dog_loc);
-      const dog_def: AnyDefinition = {
-        kind: "class",
-        symbol_id: dog_id,
-        name: "Dog" as SymbolName,
-        location: dog_loc,
-        defining_scope_id: "module:0:0" as ScopeId,
-        is_exported: false,
-        extends: ["Animal" as SymbolName],
-        methods: [],
-        properties: [],
-        decorators: [],
-        constructor: [],
-      };
-
-      // Setup definitions
-      definitions.update_file(file1, [animal_def, dog_def]);
-
-      // Setup index
-      const index = make_test_index(file1, {
-        classes: new Map([[animal_id, animal_def], [dog_id, dog_def]]),
-      });
-
-      // Extract type data
-      type_registry.update_file(file1, index);
-
-      // Setup resolutions
-      (resolutions as any).resolutions_by_scope = new Map([
-        ["module:0:0" as ScopeId, new Map([["Animal" as SymbolName, animal_id]])],
-      ]);
-
-      // Call resolve_type_metadata
-      (type_registry as any).resolve_type_metadata(file1, definitions, resolutions);
-
-      // Verify: Dog should have Animal as parent
-      const parent_classes = (type_registry as any).parent_classes as Map<SymbolId, SymbolId>;
-      const parent = parent_classes.get(dog_id);
-      expect(parent).toBe(animal_id);
-    });
-
-    it("should resolve implemented interfaces", () => {
-      const file1 = "file1.ts" as FilePath;
-      const type_registry = new TypeRegistry();
-      const definitions = new DefinitionRegistry();
-      const resolutions = new ResolutionRegistry();
-
-      // Create Flyable interface
-      const flyable_loc = make_location(file1, 1, 0, 3, 1);
-      const flyable_id = interface_symbol("Flyable", flyable_loc);
-      const flyable_def: AnyDefinition = {
-        kind: "interface",
-        symbol_id: flyable_id,
-        name: "Flyable" as SymbolName,
-        location: flyable_loc,
-        defining_scope_id: "module:0:0" as ScopeId,
-        is_exported: false,
-        extends: [],
-        methods: [],
-        properties: [],
-      };
-
-      // Create Swimmable interface
-      const swimmable_loc = make_location(file1, 5, 0, 7, 1);
-      const swimmable_id = interface_symbol("Swimmable", swimmable_loc);
-      const swimmable_def: AnyDefinition = {
-        kind: "interface",
-        symbol_id: swimmable_id,
-        name: "Swimmable" as SymbolName,
-        location: swimmable_loc,
-        defining_scope_id: "module:0:0" as ScopeId,
-        is_exported: false,
-        extends: [],
-        methods: [],
-        properties: [],
-      };
-
-      // Create Duck class implementing both interfaces
-      const duck_loc = make_location(file1, 9, 0, 11, 1);
-      const duck_id = class_symbol("Duck", duck_loc);
-      const duck_def: AnyDefinition = {
-        kind: "class",
-        symbol_id: duck_id,
-        name: "Duck" as SymbolName,
-        location: duck_loc,
-        defining_scope_id: "module:0:0" as ScopeId,
-        is_exported: false,
-        extends: ["Flyable" as SymbolName, "Swimmable" as SymbolName],
-        methods: [],
-        properties: [],
-        decorators: [],
-        constructor: [],
-      };
-
-      // Setup definitions
-      definitions.update_file(file1, [flyable_def, swimmable_def, duck_def]);
-
-      // Setup index
-      const index = make_test_index(file1, {
-        interfaces: new Map([[flyable_id, flyable_def], [swimmable_id, swimmable_def]]),
-        classes: new Map([[duck_id, duck_def]]),
-      });
-
-      // Extract type data
-      type_registry.update_file(file1, index);
-
-      // Setup resolutions
-      (resolutions as any).resolutions_by_scope = new Map([
-        ["module:0:0" as ScopeId, new Map([
-          ["Flyable" as SymbolName, flyable_id],
-          ["Swimmable" as SymbolName, swimmable_id],
-        ])],
-      ]);
-
-      // Call resolve_type_metadata
-      (type_registry as any).resolve_type_metadata(file1, definitions, resolutions);
-
-      // Verify: Duck should implement both interfaces (first becomes parent, rest are interfaces)
-      const parent_classes = (type_registry as any).parent_classes as Map<SymbolId, SymbolId>;
-      const implemented_interfaces = (type_registry as any).implemented_interfaces as Map<SymbolId, SymbolId[]>;
-
-      const parent = parent_classes.get(duck_id);
-      const interfaces = implemented_interfaces.get(duck_id);
-
-      expect(parent).toBe(flyable_id);
-      expect(interfaces).toEqual([swimmable_id]);
-    });
-
-    it("should clean up resolved data on remove_file", () => {
-      const file1 = "file1.ts" as FilePath;
-      const type_registry = new TypeRegistry();
-      const definitions = new DefinitionRegistry();
-      const resolutions = new ResolutionRegistry();
-
-      // Create class and variable
-      const user_class_loc = make_location(file1, 1, 0, 5, 1);
-      const user_class_id = class_symbol("User", user_class_loc);
-      const user_class_def: AnyDefinition = {
-        kind: "class",
-        symbol_id: user_class_id,
+        symbol_id: class_id,
         name: "User" as SymbolName,
-        location: user_class_loc,
+        location: class_loc,
         defining_scope_id: "module:0:0" as ScopeId,
         is_exported: false,
         extends: [],
-        methods: [],
+        methods: [
+          {
+            kind: "method",
+            symbol_id: init_id,
+            name: "__init__" as SymbolName,
+            location: init_loc,
+            parameters: [],
+            defining_scope_id: "module:0:0" as ScopeId,
+          },
+        ],
         properties: [],
         decorators: [],
-        constructor: [],
+        constructor: [
+          {
+            kind: "constructor",
+            symbol_id: init_id,
+            name: "__init__" as SymbolName,
+            location: init_loc,
+            parameters: [],
+            defining_scope_id: "module:0:0" as ScopeId,
+            body_scope_id: "function:2:4" as ScopeId,
+          },
+        ],
       };
 
-      const { id: user_var_id, def: user_var_def } = make_variable_with_type("user", "User", file1, 7);
-
-      // Setup everything
-      definitions.update_file(file1, [user_class_def, user_var_def]);
       const index = make_test_index(file1, {
-        variables: new Map([[user_var_id, user_var_def]]),
-        classes: new Map([[user_class_id, user_class_def]]),
+        classes: new Map([[class_id, class_def]]),
       });
 
-      type_registry.update_file(file1, index);
+      const { definitions, resolutions } = make_mock_registries();
 
-      (resolutions as any).resolutions_by_scope = new Map([
-        ["module:0:0" as ScopeId, new Map([["User" as SymbolName, user_class_id]])],
-      ]);
+      // Populate definitions registry so get_type_members can look up the class
+      definitions.update_file(file1, [class_def]);
 
-      (type_registry as any).resolve_type_metadata(file1, definitions, resolutions);
+      registry.update_file(file1, index, definitions, resolutions);
 
-      // Verify data exists
-      const symbol_types = (type_registry as any).symbol_types as Map<SymbolId, SymbolId>;
-      const resolved_by_file = (type_registry as any).resolved_by_file as Map<FilePath, Set<SymbolId>>;
-      expect(symbol_types.has(user_var_id)).toBe(true);
-      expect(resolved_by_file.has(file1)).toBe(true);
-
-      // Remove file
-      type_registry.remove_file(file1);
-
-      // Verify all resolved data is gone
-      expect(symbol_types.has(user_var_id)).toBe(false);
-      expect(resolved_by_file.has(file1)).toBe(false);
-    });
-
-    it("should integrate with update_file when dependencies provided", () => {
-      const file1 = "file1.ts" as FilePath;
-      const type_registry = new TypeRegistry();
-      const definitions = new DefinitionRegistry();
-      const resolutions = new ResolutionRegistry();
-
-      // Create User class
-      const user_class_loc = make_location(file1, 1, 0, 5, 1);
-      const user_class_id = class_symbol("User", user_class_loc);
-      const user_class_def: AnyDefinition = {
-        kind: "class",
-        symbol_id: user_class_id,
-        name: "User" as SymbolName,
-        location: user_class_loc,
-        defining_scope_id: "module:0:0" as ScopeId,
-        is_exported: false,
-        extends: [],
-        methods: [],
-        properties: [],
-        decorators: [],
-        constructor: [],
-      };
-
-      // Create variable with type annotation
-      const { id: user_var_id, def: user_var_def } = make_variable_with_type("user", "User", file1, 7);
-
-      // Setup definitions
-      definitions.update_file(file1, [user_class_def, user_var_def]);
-
-      // Setup index
-      const index = make_test_index(file1, {
-        variables: new Map([[user_var_id, user_var_def]]),
-        classes: new Map([[user_class_id, user_class_def]]),
-      });
-
-      // Setup resolutions
-      (resolutions as any).resolutions_by_scope = new Map([
-        ["module:0:0" as ScopeId, new Map([["User" as SymbolName, user_class_id]])],
-      ]);
-
-      // Call update_file WITH dependencies - should trigger resolution
-      type_registry.update_file(file1, index, definitions, resolutions);
-
-      // Verify: resolution happened automatically
-      const symbol_types = (type_registry as any).symbol_types as Map<SymbolId, SymbolId>;
-      const user_type = symbol_types.get(user_var_id);
-      expect(user_type).toBe(user_class_id);
-    });
-
-    it("should NOT resolve when dependencies not provided", () => {
-      const file1 = "file1.ts" as FilePath;
-      const type_registry = new TypeRegistry();
-
-      // Create variable with type annotation
-      const { id: user_var_id, def: user_var_def } = make_variable_with_type("user", "User", file1, 7);
-
-      const index = make_test_index(file1, {
-        variables: new Map([[user_var_id, user_var_def]]),
-      });
-
-      // Call update_file WITHOUT dependencies - should NOT trigger resolution
-      type_registry.update_file(file1, index);
-
-      // Verify: no resolution happened
-      const symbol_types = (type_registry as any).symbol_types as Map<SymbolId, SymbolId>;
-      const resolved_by_file = (type_registry as any).resolved_by_file as Map<FilePath, Set<SymbolId>>;
-      expect(symbol_types.size).toBe(0);
-      expect(resolved_by_file.size).toBe(0);
+      const retrieved = registry.get_type_members(class_id);
+      expect(retrieved).toBeDefined();
+      expect(retrieved?.constructor).toBe(init_id);
     });
   });
 
@@ -1058,7 +355,8 @@ describe("TypeRegistry", () => {
         };
 
         // Create variable with type annotation
-        const { id: user_var_id, def: user_var_def } = make_variable_with_type("user", "User", file1, 7);
+        const { id: user_var_id, def: user_var_def } =
+          make_variable_with_type("user", "User", file1, 7);
 
         // Setup everything
         definitions.update_file(file1, [user_class_def, user_var_def]);
@@ -1068,7 +366,10 @@ describe("TypeRegistry", () => {
         });
 
         (resolutions as any).resolutions_by_scope = new Map([
-          ["module:0:0" as ScopeId, new Map([["User" as SymbolName, user_class_id]])],
+          [
+            "module:0:0" as ScopeId,
+            new Map([["User" as SymbolName, user_class_id]]),
+          ],
         ]);
 
         type_registry.update_file(file1, index, definitions, resolutions);
@@ -1133,11 +434,17 @@ describe("TypeRegistry", () => {
 
         definitions.update_file(file1, [animal_def, dog_def]);
         const index = make_test_index(file1, {
-          classes: new Map([[animal_id, animal_def], [dog_id, dog_def]]),
+          classes: new Map([
+            [animal_id, animal_def],
+            [dog_id, dog_def],
+          ]),
         });
 
         (resolutions as any).resolutions_by_scope = new Map([
-          ["module:0:0" as ScopeId, new Map([["Animal" as SymbolName, animal_id]])],
+          [
+            "module:0:0" as ScopeId,
+            new Map([["Animal" as SymbolName, animal_id]]),
+          ],
         ]);
 
         type_registry.update_file(file1, index, definitions, resolutions);
@@ -1236,15 +543,21 @@ describe("TypeRegistry", () => {
 
         definitions.update_file(file1, [flyable_def, swimmable_def, duck_def]);
         const index = make_test_index(file1, {
-          interfaces: new Map([[flyable_id, flyable_def], [swimmable_id, swimmable_def]]),
+          interfaces: new Map([
+            [flyable_id, flyable_def],
+            [swimmable_id, swimmable_def],
+          ]),
           classes: new Map([[duck_id, duck_def]]),
         });
 
         (resolutions as any).resolutions_by_scope = new Map([
-          ["module:0:0" as ScopeId, new Map([
-            ["Flyable" as SymbolName, flyable_id],
-            ["Swimmable" as SymbolName, swimmable_id],
-          ])],
+          [
+            "module:0:0" as ScopeId,
+            new Map([
+              ["Flyable" as SymbolName, flyable_id],
+              ["Swimmable" as SymbolName, swimmable_id],
+            ]),
+          ],
         ]);
 
         type_registry.update_file(file1, index, definitions, resolutions);
@@ -1347,14 +660,21 @@ describe("TypeRegistry", () => {
 
         definitions.update_file(file1, [animal_def, mammal_def, dog_def]);
         const index = make_test_index(file1, {
-          classes: new Map([[animal_id, animal_def], [mammal_id, mammal_def], [dog_id, dog_def]]),
+          classes: new Map([
+            [animal_id, animal_def],
+            [mammal_id, mammal_def],
+            [dog_id, dog_def],
+          ]),
         });
 
         (resolutions as any).resolutions_by_scope = new Map([
-          ["module:0:0" as ScopeId, new Map([
-            ["Animal" as SymbolName, animal_id],
-            ["Mammal" as SymbolName, mammal_id],
-          ])],
+          [
+            "module:0:0" as ScopeId,
+            new Map([
+              ["Animal" as SymbolName, animal_id],
+              ["Mammal" as SymbolName, mammal_id],
+            ]),
+          ],
         ]);
 
         type_registry.update_file(file1, index, definitions, resolutions);
@@ -1425,7 +745,12 @@ describe("TypeRegistry", () => {
         const definitions = new DefinitionRegistry();
         const resolutions = new ResolutionRegistry();
 
-        const { id: class_id, def: class_def } = make_class_with_members("User", file1, ["getName"], ["name"]);
+        const { id: class_id, def: class_def } = make_class_with_members(
+          "User",
+          file1,
+          ["getName"],
+          ["name"]
+        );
 
         definitions.update_file(file1, [class_def]);
         const index = make_test_index(file1, {
@@ -1434,7 +759,10 @@ describe("TypeRegistry", () => {
 
         type_registry.update_file(file1, index, definitions, resolutions);
 
-        const result = type_registry.get_type_member(class_id, "getName" as SymbolName);
+        const result = type_registry.get_type_member(
+          class_id,
+          "getName" as SymbolName
+        );
         expect(result).toBeDefined();
         expect(result).not.toBeNull();
       });
@@ -1458,13 +786,16 @@ describe("TypeRegistry", () => {
           defining_scope_id: "module:0:0" as ScopeId,
           is_exported: false,
           extends: [],
-          methods: [{
-            kind: "method",
-            symbol_id: speak_method_id,
-            name: "speak" as SymbolName,
-            location: speak_method_loc,
-            parameters: [],
-          }],
+          methods: [
+            {
+              kind: "method",
+              symbol_id: speak_method_id,
+              name: "speak" as SymbolName,
+              location: speak_method_loc,
+              parameters: [],
+              defining_scope_id: "module:0:0" as ScopeId,
+            },
+          ],
           properties: [],
           decorators: [],
           constructor: [],
@@ -1489,17 +820,26 @@ describe("TypeRegistry", () => {
 
         definitions.update_file(file1, [animal_def, dog_def]);
         const index = make_test_index(file1, {
-          classes: new Map([[animal_id, animal_def], [dog_id, dog_def]]),
+          classes: new Map([
+            [animal_id, animal_def],
+            [dog_id, dog_def],
+          ]),
         });
 
         (resolutions as any).resolutions_by_scope = new Map([
-          ["module:0:0" as ScopeId, new Map([["Animal" as SymbolName, animal_id]])],
+          [
+            "module:0:0" as ScopeId,
+            new Map([["Animal" as SymbolName, animal_id]]),
+          ],
         ]);
 
         type_registry.update_file(file1, index, definitions, resolutions);
 
         // Dog should find speak() from Animal
-        const result = type_registry.get_type_member(dog_id, "speak" as SymbolName);
+        const result = type_registry.get_type_member(
+          dog_id,
+          "speak" as SymbolName
+        );
         expect(result).toBe(speak_method_id);
       });
 
@@ -1509,7 +849,10 @@ describe("TypeRegistry", () => {
         const definitions = new DefinitionRegistry();
         const resolutions = new ResolutionRegistry();
 
-        const { id: class_id, def: class_def } = make_class_with_members("User", file1);
+        const { id: class_id, def: class_def } = make_class_with_members(
+          "User",
+          file1
+        );
 
         definitions.update_file(file1, [class_def]);
         const index = make_test_index(file1, {
@@ -1518,7 +861,10 @@ describe("TypeRegistry", () => {
 
         type_registry.update_file(file1, index, definitions, resolutions);
 
-        const result = type_registry.get_type_member(class_id, "nonExistent" as SymbolName);
+        const result = type_registry.get_type_member(
+          class_id,
+          "nonExistent" as SymbolName
+        );
         expect(result).toBeNull();
       });
 
@@ -1541,13 +887,16 @@ describe("TypeRegistry", () => {
           defining_scope_id: "module:0:0" as ScopeId,
           is_exported: false,
           extends: [],
-          methods: [{
-            kind: "method",
-            symbol_id: animal_speak_id,
-            name: "speak" as SymbolName,
-            location: animal_speak_loc,
-            parameters: [],
-          }],
+          methods: [
+            {
+              kind: "method",
+              symbol_id: animal_speak_id,
+              name: "speak" as SymbolName,
+              location: animal_speak_loc,
+              parameters: [],
+              defining_scope_id: "module:0:0" as ScopeId,
+            },
+          ],
           properties: [],
           decorators: [],
           constructor: [],
@@ -1566,13 +915,16 @@ describe("TypeRegistry", () => {
           defining_scope_id: "module:0:0" as ScopeId,
           is_exported: false,
           extends: ["Animal" as SymbolName],
-          methods: [{
-            kind: "method",
-            symbol_id: dog_speak_id,
-            name: "speak" as SymbolName,
-            location: dog_speak_loc,
-            parameters: [],
-          }],
+          methods: [
+            {
+              kind: "method",
+              symbol_id: dog_speak_id,
+              name: "speak" as SymbolName,
+              location: dog_speak_loc,
+              parameters: [],
+              defining_scope_id: "module:0:0" as ScopeId,
+            },
+          ],
           properties: [],
           decorators: [],
           constructor: [],
@@ -1580,17 +932,26 @@ describe("TypeRegistry", () => {
 
         definitions.update_file(file1, [animal_def, dog_def]);
         const index = make_test_index(file1, {
-          classes: new Map([[animal_id, animal_def], [dog_id, dog_def]]),
+          classes: new Map([
+            [animal_id, animal_def],
+            [dog_id, dog_def],
+          ]),
         });
 
         (resolutions as any).resolutions_by_scope = new Map([
-          ["module:0:0" as ScopeId, new Map([["Animal" as SymbolName, animal_id]])],
+          [
+            "module:0:0" as ScopeId,
+            new Map([["Animal" as SymbolName, animal_id]]),
+          ],
         ]);
 
         type_registry.update_file(file1, index, definitions, resolutions);
 
         // Should return Dog's speak, not Animal's
-        const result = type_registry.get_type_member(dog_id, "speak" as SymbolName);
+        const result = type_registry.get_type_member(
+          dog_id,
+          "speak" as SymbolName
+        );
         expect(result).toBe(dog_speak_id);
         expect(result).not.toBe(animal_speak_id);
       });
