@@ -36,6 +36,7 @@ describe("Python Builder Configuration", () => {
       scope_depths: new Map(),
       root_scope_id: test_scope_id,
       get_scope_id: (location: Location) => test_scope_id,
+      get_child_scope_with_symbol_name: (_scope_id: ScopeId, _name: SymbolName) => test_scope_id,
     };
   }
 
@@ -240,7 +241,7 @@ describe("Python Builder Configuration", () => {
     });
 
     it("should handle variable definitions", () => {
-      const code = `x = 10`;
+      const code = "x = 10";
       const capture = createCapture(code, "definition.variable", "identifier");
       const builder = new DefinitionBuilder(createTestContext());
       const config = PYTHON_BUILDER_CONFIG.get("definition.variable");
@@ -251,7 +252,7 @@ describe("Python Builder Configuration", () => {
     });
 
     it("should handle import statements", () => {
-      const code = `import os`;
+      const code = "import os";
       const capture = createCapture(code, "import.module", "dotted_name");
       const builder = new DefinitionBuilder(createTestContext());
       const config = PYTHON_BUILDER_CONFIG.get("import.module");
@@ -274,7 +275,7 @@ describe("Python Builder Configuration", () => {
     });
 
     it("should handle lambda functions", () => {
-      const code = `f = lambda x: x * 2`;
+      const code = "f = lambda x: x * 2";
       const capture = createCapture(code, "definition.lambda", "lambda");
       const builder = new DefinitionBuilder(createTestContext());
       const config = PYTHON_BUILDER_CONFIG.get("definition.lambda");
@@ -386,7 +387,7 @@ describe("Python Builder Configuration", () => {
     });
 
     it("should handle from imports", () => {
-      const code = `from os import path`;
+      const code = "from os import path";
       const capture = createCapture(code, "import.named", "dotted_name");
       const builder = new DefinitionBuilder(createTestContext());
       const config = PYTHON_BUILDER_CONFIG.get("import.named");
@@ -397,7 +398,7 @@ describe("Python Builder Configuration", () => {
     });
 
     it("should handle aliased imports", () => {
-      const code = `import numpy as np`;
+      const code = "import numpy as np";
       const capture = createCapture(
         code,
         "import.module.source",
@@ -566,8 +567,8 @@ describe("Python Builder Configuration", () => {
       });
 
       it("should distinguish between constants and variables by naming convention", () => {
-        const code1 = `MAX_SIZE = 100`;
-        const code2 = `current_size = 10`;
+        const code1 = "MAX_SIZE = 100";
+        const code2 = "current_size = 10";
 
         const context = createTestContext();
 
@@ -631,7 +632,7 @@ describe("Python Builder Configuration", () => {
       });
 
       it("should handle complex import patterns", () => {
-        const code = `from typing import List, Dict, Optional`;
+        const code = "from typing import List, Dict, Optional";
 
         const context = createTestContext();
         const builder = new DefinitionBuilder(context);
@@ -781,7 +782,7 @@ describe("Python Builder Configuration", () => {
         const module_scope_id = "module:test.py:1:0:100:0:<module>" as ScopeId;
         const nested_scope_id = "function:test.py:2:0:5:0:outer_func" as ScopeId;
 
-        let current_scope = module_scope_id;
+        const current_scope = module_scope_id;
 
         return {
           captures: [],
@@ -789,6 +790,7 @@ describe("Python Builder Configuration", () => {
           scope_depths: new Map(),
           root_scope_id: module_scope_id,
           get_scope_id: (location: Location) => current_scope,
+          get_child_scope_with_symbol_name: (_scope_id: ScopeId, _name: SymbolName) => current_scope,
         };
       }
 
@@ -890,6 +892,7 @@ describe("Python Builder Configuration", () => {
             scope_depths: new Map(),
             root_scope_id: module_scope_id,
             get_scope_id: (location: Location) => nested_scope_id, // Return nested scope
+            get_child_scope_with_symbol_name: (_scope_id: ScopeId, _name: SymbolName) => nested_scope_id,
           };
 
           const builder = new DefinitionBuilder(context);
@@ -931,7 +934,7 @@ describe("Python Builder Configuration", () => {
         });
 
         it("should have is_exported=false for lambda functions", () => {
-          const code = `f = lambda x: x * 2`;
+          const code = "f = lambda x: x * 2";
           const context = createTestContext();
           const builder = new DefinitionBuilder(context);
           const capture = createCapture(code, "definition.lambda", "lambda");
@@ -1028,6 +1031,7 @@ describe("Python Builder Configuration", () => {
             scope_depths: new Map(),
             root_scope_id: module_scope_id,
             get_scope_id: (location: Location) => nested_scope_id, // Return nested scope
+            get_child_scope_with_symbol_name: (_scope_id: ScopeId, _name: SymbolName) => nested_scope_id,
           };
 
           const builder = new DefinitionBuilder(context);
@@ -1050,7 +1054,7 @@ describe("Python Builder Configuration", () => {
 
       describe("Variables", () => {
         it("should have is_exported=true for module-level public variables", () => {
-          const code = `public_var = 10`;
+          const code = "public_var = 10";
           const context = createTestContext();
           const builder = new DefinitionBuilder(context);
           const capture = createCapture(code, "definition.variable", "identifier");
@@ -1070,7 +1074,7 @@ describe("Python Builder Configuration", () => {
         });
 
         it("should have is_exported=false for module-level private variables", () => {
-          const code = `_private_var = 10`;
+          const code = "_private_var = 10";
           const context = createTestContext();
           const builder = new DefinitionBuilder(context);
           const capture = createCapture(code, "definition.variable", "identifier");
@@ -1113,7 +1117,7 @@ describe("Python Builder Configuration", () => {
 
       describe("Imports", () => {
         it("should have is_exported=true for module-level public imports", () => {
-          const code = `import os`;
+          const code = "import os";
           const context = createTestContext();
           const builder = new DefinitionBuilder(context);
           const capture = createCapture(code, "import.module", "dotted_name");
@@ -1132,7 +1136,7 @@ describe("Python Builder Configuration", () => {
         });
 
         it("should have is_exported=false for module-level private imports", () => {
-          const code = `from internal import _private_module`;
+          const code = "from internal import _private_module";
           const context = createTestContext();
           const builder = new DefinitionBuilder(context);
 
