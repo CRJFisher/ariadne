@@ -187,22 +187,22 @@
 
 ; Named imports
 (import_specifier
-  name: (identifier) @definition.import
+  name: (identifier) @definition.import.named
 )
 
 (import_specifier
   name: (identifier)
-  alias: (identifier) @definition.import
+  alias: (identifier) @definition.import.named
 )
 
 ; Default imports
 (import_clause
-  (identifier) @definition.import
+  (identifier) @definition.import.default
 )
 
 ; Namespace imports
 (namespace_import
-  (identifier) @definition.import
+  (identifier) @definition.import.namespace
 )
 
 ;; ==============================================================================

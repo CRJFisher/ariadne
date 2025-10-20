@@ -463,7 +463,7 @@ export const JAVASCRIPT_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
   ],
 
   [
-    "import.named",
+    "definition.import.named",
     {
       process: (
         capture: CaptureNode,
@@ -491,7 +491,7 @@ export const JAVASCRIPT_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
   ],
 
   [
-    "import.default",
+    "definition.import.default",
     {
       process: (
         capture: CaptureNode,
@@ -515,7 +515,7 @@ export const JAVASCRIPT_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
   ],
 
   [
-    "import.namespace",
+    "definition.import.namespace",
     {
       process: (
         capture: CaptureNode,

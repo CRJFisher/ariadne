@@ -122,3 +122,65 @@ Possible issues:
 - `packages/core/src/index_single_file/import_processor.ts` - Import handling
 - `packages/core/src/resolve_references/index.ts` - Resolution logic
 - `packages/core/src/project/project.javascript.integration.test.ts` - Test file
+
+## Implementation Notes
+
+### Root Cause
+
+The JavaScript query file (`javascript.scm`) was capturing import statements with the wrong capture names, causing default imports to be processed as named imports.
+
+**The Bug:**
+- Default imports were captured as `@definition.import` (line 199-201)
+- This called a generic handler that didn't distinguish import types
+- Default imports were incorrectly assigned `import_kind: "named"`
+- Resolution failed because it looked for a named export instead of the default export
+
+### Solution
+
+Fixed the query patterns and handler registrations to properly distinguish between import types:
+
+**1. Updated javascript.scm** (lines 188-206):
+```scheme
+; Named imports
+(import_specifier
+  name: (identifier) @definition.import.named
+)
+
+; Default imports  
+(import_clause
+  (identifier) @definition.import.default
+)
+
+; Namespace imports
+(namespace_import
+  (identifier) @definition.import.namespace
+)
+```
+
+**2. Updated javascript_builder_config.ts** (lines 466, 494, 518):
+- Renamed `import.named` → `definition.import.named`
+- Renamed `import.default` → `definition.import.default`
+- Renamed `import.namespace` → `definition.import.namespace`
+
+These handlers already existed with the correct logic (setting `import_kind` appropriately), they just needed to match the new capture names.
+
+### Why This Works
+
+1. Query patterns now capture each import type with a unique name
+2. Each capture routes to a specific handler that sets the correct `import_kind`
+3. Resolution uses `import_kind` to determine whether to call:
+   - `get_default_export()` for default imports
+   - `get_export()` for named imports
+4. Default exports are correctly resolved to their function definitions
+
+### Test Results
+
+**Before:** 9 failed / 10 passed
+**After:** 1 failed / 18 passed ✅
+
+The "should handle default exports" test now passes. The remaining failure is the CommonJS cross-file test, which requires module.exports tracking (separate task from epic-11.116.5.6.1).
+
+### Files Modified
+
+1. `packages/core/src/index_single_file/query_code_tree/queries/javascript.scm`
+2. `packages/core/src/index_single_file/query_code_tree/language_configs/javascript_builder_config.ts`
