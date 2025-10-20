@@ -437,6 +437,177 @@ describe("Project Integration - JavaScript", () => {
       expect(user_class_def).toBeDefined();
       expect(user_class_def!.location.file_path).toContain("user_class.js");
     });
+
+    it("should capture method calls on imported class instances", async () => {
+      const user_class = load_source("modules/user_class.js");
+      const uses_user = load_source("modules/uses_user.js");
+      const user_file = file_path("modules/user_class.js");
+      const uses_file = file_path("modules/uses_user.js");
+
+      project.update_file(user_file, user_class);
+      project.update_file(uses_file, uses_user);
+
+      // Get uses_user index
+      const uses_index = project.get_semantic_index(uses_file);
+      expect(uses_index).toBeDefined();
+
+      // Find method calls
+      const method_calls = uses_index!.references.filter(
+        (r) => r.type === "call" && r.call_type === "method"
+      );
+      expect(method_calls.length).toBeGreaterThan(0);
+
+      // Find getName method call
+      const getName_call = method_calls.find(
+        (c) => c.name === ("getName" as SymbolName)
+      );
+      expect(getName_call).toBeDefined();
+      expect(getName_call!.name).toBe("getName" as SymbolName);
+
+      // Verify User class exists in user_class.js
+      const user_index = project.get_semantic_index(user_file);
+      const user_class_def = Array.from(user_index!.classes.values()).find(
+        (c) => c.name === ("User" as SymbolName)
+      );
+      expect(user_class_def).toBeDefined();
+
+      // Verify getName method exists in the User class
+      const getName_method = user_class_def!.methods.find(
+        (m) => m.name === ("getName" as SymbolName)
+      );
+      expect(getName_method).toBeDefined();
+      expect(getName_method!.location.file_path).toContain("user_class.js");
+    });
+
+    it("should follow re-export chains", async () => {
+      const base = load_source("modules/base.js");
+      const middle = load_source("modules/middle.js");
+      const main = load_source("modules/main_reexport.js");
+      const base_file = file_path("modules/base.js");
+      const middle_file = file_path("modules/middle.js");
+      const main_file = file_path("modules/main_reexport.js");
+
+      project.update_file(base_file, base);
+      project.update_file(middle_file, middle);
+      project.update_file(main_file, main);
+
+      // Get main index
+      const main_index = project.get_semantic_index(main_file);
+      expect(main_index).toBeDefined();
+
+      // Find call to coreFunction (imported from middle, re-exported from base)
+      const calls = main_index!.references.filter((r) => r.type === "call");
+      const core_call = calls.find(
+        (c) =>
+          c.name === ("coreFunction" as SymbolName) && c.call_type === "function"
+      );
+      expect(core_call).toBeDefined();
+
+      // Verify it resolves to base.js (not middle.js)
+      const resolved = project.resolutions.resolve(
+        core_call!.scope_id,
+        core_call!.name
+      );
+      expect(resolved).toBeDefined();
+
+      const resolved_def = project.definitions.get(resolved!);
+      expect(resolved_def).toBeDefined();
+      expect(resolved_def!.kind).toBe("function");
+      expect(resolved_def!.name).toBe("coreFunction" as SymbolName);
+      expect(resolved_def!.location.file_path).toContain("base.js");
+    });
+
+    it("should resolve aliased imports", async () => {
+      const utils = load_source("modules/utils_aliased.js");
+      const main = load_source("modules/main_aliased.js");
+      const utils_file = file_path("modules/utils_aliased.js");
+      const main_file = file_path("modules/main_aliased.js");
+
+      project.update_file(utils_file, utils);
+      project.update_file(main_file, main);
+
+      // Get main index
+      const main_index = project.get_semantic_index(main_file);
+      expect(main_index).toBeDefined();
+
+      // Find imports with aliases
+      const imports = Array.from(main_index!.imported_symbols.values());
+      expect(imports.length).toBeGreaterThan(0);
+
+      // Find utilHelper import (aliased from helper)
+      const util_helper_import = imports.find(
+        (i) => i.name === ("utilHelper" as SymbolName)
+      );
+      expect(util_helper_import).toBeDefined();
+      expect(util_helper_import!.original_name).toBe("helper" as SymbolName);
+
+      // Find call to utilHelper
+      const calls = main_index!.references.filter((r) => r.type === "call");
+      const helper_call = calls.find(
+        (c) =>
+          c.name === ("utilHelper" as SymbolName) && c.call_type === "function"
+      );
+      expect(helper_call).toBeDefined();
+
+      // Verify it resolves to helper in utils_aliased.js
+      const resolved = project.resolutions.resolve(
+        helper_call!.scope_id,
+        helper_call!.name
+      );
+      expect(resolved).toBeDefined();
+
+      const resolved_def = project.definitions.get(resolved!);
+      expect(resolved_def).toBeDefined();
+      expect(resolved_def!.kind).toBe("function");
+      expect(resolved_def!.name).toBe("helper" as SymbolName);
+      expect(resolved_def!.location.file_path).toContain("utils_aliased.js");
+    });
+
+    it("should handle aliased class imports and method calls", async () => {
+      const utils = load_source("modules/utils_aliased.js");
+      const main = load_source("modules/main_aliased.js");
+      const utils_file = file_path("modules/utils_aliased.js");
+      const main_file = file_path("modules/main_aliased.js");
+
+      project.update_file(utils_file, utils);
+      project.update_file(main_file, main);
+
+      // Get main index
+      const main_index = project.get_semantic_index(main_file);
+      expect(main_index).toBeDefined();
+
+      // Find Manager import (aliased from DataManager)
+      const imports = Array.from(main_index!.imported_symbols.values());
+      const manager_import = imports.find(
+        (i) => i.name === ("Manager" as SymbolName)
+      );
+      expect(manager_import).toBeDefined();
+      expect(manager_import!.original_name).toBe("DataManager" as SymbolName);
+
+      // Find method call on manager instance
+      const method_calls = main_index!.references.filter(
+        (r) => r.type === "call" && r.call_type === "method"
+      );
+      const process_call = method_calls.find(
+        (c) => c.name === ("process" as SymbolName)
+      );
+      expect(process_call).toBeDefined();
+      expect(process_call!.name).toBe("process" as SymbolName);
+
+      // Verify DataManager class exists in utils_aliased.js
+      const utils_index = project.get_semantic_index(utils_file);
+      const data_manager_class = Array.from(utils_index!.classes.values()).find(
+        (c) => c.name === ("DataManager" as SymbolName)
+      );
+      expect(data_manager_class).toBeDefined();
+
+      // Verify process method exists in the DataManager class
+      const process_method = data_manager_class!.methods.find(
+        (m) => m.name === ("process" as SymbolName)
+      );
+      expect(process_method).toBeDefined();
+      expect(process_method!.location.file_path).toContain("utils_aliased.js");
+    });
   });
 
   describe("Shadowing", () => {

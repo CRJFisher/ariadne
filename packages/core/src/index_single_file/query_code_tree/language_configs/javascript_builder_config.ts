@@ -471,6 +471,43 @@ export const JAVASCRIPT_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
         context: ProcessingContext
       ) => {
         const import_id = create_import_id(capture);
+
+        // Check if this is an aliased import by looking at the parent import_specifier
+        const import_specifier = capture.node.parent;
+        if (import_specifier?.type === "import_specifier") {
+          const alias_node = import_specifier.childForFieldName("alias");
+          const name_node = import_specifier.childForFieldName("name");
+
+          // If there's an alias and we captured the NAME (not the alias), skip it
+          // We'll handle it when we capture the ALIAS
+          if (alias_node && capture.node === name_node) {
+            return; // Skip - will be handled by alias capture
+          }
+
+          // If there's an alias and we captured the ALIAS, extract the original name
+          if (alias_node && capture.node === alias_node) {
+            // Navigate up to find import statement
+            let import_stmt = capture.node.parent;
+            while (import_stmt && import_stmt.type !== "import_statement") {
+              import_stmt = import_stmt.parent;
+            }
+
+            const original_name = name_node?.text as SymbolName | undefined;
+
+            builder.add_import({
+              symbol_id: import_id,
+              name: capture.text, // This is the alias
+              location: capture.location,
+              scope_id: context.get_scope_id(capture.location),
+              import_path: extract_import_path(import_stmt),
+              import_kind: "named",
+              original_name: original_name,
+            });
+            return;
+          }
+        }
+
+        // Simple import (no alias)
         // Navigate up to find import statement
         let import_stmt = capture.node.parent;
         while (import_stmt && import_stmt.type !== "import_statement") {
@@ -484,7 +521,7 @@ export const JAVASCRIPT_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
           scope_id: context.get_scope_id(capture.location),
           import_path: extract_import_path(import_stmt),
           import_kind: "named",
-          original_name: extract_original_name(import_stmt, capture.text),
+          original_name: undefined,
         });
       },
     },
