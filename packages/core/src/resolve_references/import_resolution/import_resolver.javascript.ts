@@ -11,7 +11,7 @@ import type { FileSystemFolder } from "../types";
 import { has_file_in_tree } from "./import_resolver";
 
 /**
- * Resolve JavaScript module path to absolute file path
+ * Resolve JavaScript module path to file path
  *
  * Rules:
  * 1. Relative imports: ./utils, ../helpers
@@ -20,9 +20,9 @@ import { has_file_in_tree } from "./import_resolver";
  * 4. Bare imports: node_modules lookup (future)
  *
  * @param import_path - Import path from import statement
- * @param importing_file - Absolute path to file containing the import
+ * @param importing_file - Path to file containing the import (absolute or relative to root_folder)
  * @param root_folder - Root of the file system tree
- * @returns Absolute path to the imported file
+ * @returns Path to the imported file (relative to root_folder if importing_file is relative, absolute otherwise)
  */
 export function resolve_module_path_javascript(
   import_path: string,
@@ -45,40 +45,53 @@ export function resolve_module_path_javascript(
  * @param relative_path - Relative import path
  * @param base_file - File containing the import
  * @param root_folder - Root of the file system tree
- * @returns Absolute path to the imported file
+ * @returns Path to the imported file (relative to root_folder if base_file is relative, absolute if base_file is absolute)
  */
 function resolve_relative_javascript(
   relative_path: string,
   base_file: FilePath,
   root_folder: FileSystemFolder
 ): FilePath {
-  const base_dir = path.dirname(base_file);
-  const resolved = path.resolve(base_dir, relative_path);
+  // Check if base_file is absolute or relative
+  const is_absolute_path = path.isAbsolute(base_file);
+
+  // Always resolve to absolute path for file tree lookup
+  const absolute_base_file = is_absolute_path ? base_file : path.resolve(root_folder.path, base_file);
+  const base_dir = path.dirname(absolute_base_file);
+  const resolved_absolute = path.resolve(base_dir, relative_path);
 
   // Try extensions in order
   const candidates = [
-    resolved,
-    `${resolved}.js`,
-    `${resolved}.mjs`,
-    `${resolved}.cjs`,
-    path.join(resolved, "index.js"),
-    path.join(resolved, "index.mjs"),
-    path.join(resolved, "index.cjs"),
+    resolved_absolute,
+    `${resolved_absolute}.js`,
+    `${resolved_absolute}.mjs`,
+    `${resolved_absolute}.cjs`,
+    path.join(resolved_absolute, "index.js"),
+    path.join(resolved_absolute, "index.mjs"),
+    path.join(resolved_absolute, "index.cjs"),
   ];
 
+  let found_absolute: string | null = null;
   for (const candidate of candidates) {
     if (has_file_in_tree(candidate as FilePath, root_folder)) {
-      return candidate as FilePath;
+      found_absolute = candidate;
+      break;
     }
   }
 
   // If file tree lookup fails, infer the extension
-  // This handles cases where the file tree isn't fully populated yet
-  // Default to .js for JavaScript imports without extensions
-  if (!path.extname(resolved)) {
-    return `${resolved}.js` as FilePath;
+  if (!found_absolute) {
+    if (!path.extname(resolved_absolute)) {
+      found_absolute = `${resolved_absolute}.js`;
+    } else {
+      found_absolute = resolved_absolute;
+    }
   }
 
-  // Return resolved path even if not found (may be generated)
-  return resolved as FilePath;
+  // If base_file was relative, return relative path; otherwise return absolute
+  if (is_absolute_path) {
+    return found_absolute as FilePath;
+  } else {
+    return path.relative(root_folder.path, found_absolute) as FilePath;
+  }
 }

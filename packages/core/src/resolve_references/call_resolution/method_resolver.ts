@@ -86,14 +86,26 @@ export function resolve_single_method_call(
 
   // Step 2: Check if receiver is a namespace import
   // For expressions like: utils.helper() where utils is import * as utils
-  const namespace_member = types.get_namespace_member(
-    receiver_symbol,
-    call_ref.name
-  );
+  const receiver_def = definitions.get(receiver_symbol);
 
-  if (namespace_member) {
-    // Successfully resolved as namespace member
-    return namespace_member;
+  if (receiver_def && receiver_def.kind === "import" && receiver_def.import_kind === "namespace") {
+    // This is a namespace import! Look up the member in the source file.
+    // The import's location has been fixed to point to the source file.
+    const source_file = receiver_def.location.file_path;
+
+    // Get all exportable definitions from the source file
+    const source_defs = definitions.get_exportable_definitions_in_file(source_file);
+
+    // Find the member by name - it's already filtered to exported definitions
+    for (const def of source_defs) {
+      if (def.name === call_ref.name && def.is_exported) {
+        // Found the exported member!
+        return def.symbol_id;
+      }
+    }
+
+    // Member not found in namespace
+    return null;
   }
 
   // Step 3: Get receiver's type from TypeRegistry

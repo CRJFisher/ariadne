@@ -47,6 +47,20 @@ export function fix_import_definition_locations(
       continue;
     }
 
+    // Namespace imports (import * as name) represent the entire module,
+    // not a specific export. Point to the module file itself.
+    if (import_def.import_kind === "namespace") {
+      const fixed_import_def: ImportDefinition = {
+        ...import_def,
+        location: {
+          ...import_def.location,
+          file_path: source_file_path
+        }
+      };
+      fixed_definitions.push(fixed_import_def);
+      continue;
+    }
+
     // Get exported symbols from the source file
     const exported_symbol_ids = exports.get_exports(source_file_path);
 
