@@ -26,8 +26,6 @@ import type {
   AnyDefinition,
   Location,
   DecoratorDefinition,
-  SymbolKind,
-  ExportableDefinition,
   ResolvedSymbols,
 } from "@ariadnejs/types";
 import { location_key } from "@ariadnejs/types";
@@ -39,7 +37,6 @@ import { ScopeRegistry } from "./registries/scope_registry";
 import { ExportRegistry } from "./registries/export_registry";
 import { ResolutionRegistry } from "./resolution_registry";
 import { ImportGraph } from "../project/import_graph";
-import { resolve_symbols } from "./symbol_resolution";
 
 // ============================================================================
 // Test Helper: Create Semantic Index with Smart Defaults
