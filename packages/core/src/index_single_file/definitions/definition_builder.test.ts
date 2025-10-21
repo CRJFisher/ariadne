@@ -32,12 +32,45 @@ function create_test_location(line: number = 1, column: number = 0): Location {
   };
 }
 
-function create_test_context(): ProcessingContext {
+function create_test_context(with_scopes: boolean = false): ProcessingContext {
   const test_scope_id = "module:test.ts:1:0:100:0:<module>" as ScopeId;
+  const scopes = new Map();
+
+  if (with_scopes) {
+    // Add method body scopes for tests that need them
+    scopes.set("method:test.ts:3:2:5:3:<method_body>" as ScopeId, {
+      id: "method:test.ts:3:2:5:3:<method_body>" as ScopeId,
+      type: "method",
+      name: "method1",
+      location: create_test_location(3, 2),
+      parent_id: test_scope_id,
+    });
+    scopes.set("method:test.ts:7:2:9:3:<method_body>" as ScopeId, {
+      id: "method:test.ts:7:2:9:3:<method_body>" as ScopeId,
+      type: "method",
+      name: "method2",
+      location: create_test_location(7, 2),
+      parent_id: test_scope_id,
+    });
+    scopes.set("method:test.ts:2:2:4:3:<method_body>" as ScopeId, {
+      id: "method:test.ts:2:2:4:3:<method_body>" as ScopeId,
+      type: "method",
+      name: "chainMethod",
+      location: create_test_location(2, 2),
+      parent_id: test_scope_id,
+    });
+    scopes.set("method:test:2:2:4:3:<method_body>" as ScopeId, {
+      id: "method:test:2:2:4:3:<method_body>" as ScopeId,
+      type: "method",
+      name: "decoratedMethod",
+      location: create_test_location(2, 2),
+      parent_id: test_scope_id,
+    });
+  }
 
   return {
     captures: [],
-    scopes: new Map(),
+    scopes,
     scope_depths: new Map(),
     root_scope_id: test_scope_id,
     get_scope_id: (location: Location) => test_scope_id,
@@ -74,7 +107,7 @@ function create_test_capture(
 
 describe("DefinitionBuilder - Complex Assembly", () => {
   it("should assemble class with multiple methods and properties", () => {
-    const context = create_test_context();
+    const context = create_test_context(true); // Need scopes for method bodies
     const builder = new DefinitionBuilder(context);
 
     const class_loc = create_test_location(1, 0);
@@ -225,7 +258,7 @@ describe("DefinitionBuilder - Complex Assembly", () => {
   });
 
   it("should assemble method with decorators", () => {
-    const context = create_test_context();
+    const context = create_test_context(true); // Need scopes for method bodies
     const builder = new DefinitionBuilder(context);
 
     const class_id = "class:test.ts:1:0:10:0:DecoratedClass" as SymbolId;
@@ -576,7 +609,7 @@ describe("DefinitionBuilder - Public API", () => {
   });
 
   it("should properly chain all builder methods", () => {
-    const context = create_test_context();
+    const context = create_test_context(true); // Need scopes for method bodies
     const builder = new DefinitionBuilder(context);
 
     const class_id = "class:test:1:0:10:0:Chain" as SymbolId;
