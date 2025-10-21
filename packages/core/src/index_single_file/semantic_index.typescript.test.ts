@@ -2372,9 +2372,7 @@ describe("Semantic Index - TypeScript", () => {
         }
 
         // Test constructor parameters with edge case defaults
-        const constructor = edgeClass.methods?.find(
-          (m: any) => m.name === "constructor",
-        );
+        const constructor = edgeClass.constructor?.[0];
         expect(constructor).toBeDefined();
 
         if (constructor && constructor.parameters) {
