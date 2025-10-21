@@ -1,6 +1,28 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { Project } from "./project";
-import type { FilePath } from "@ariadnejs/types";
+import type { FilePath, AnyDefinition } from "@ariadnejs/types";
+
+// Helper function to get all definitions from a file
+function get_file_definitions(project: Project, file_path: FilePath): AnyDefinition[] {
+  const index = project.get_semantic_index(file_path);
+  if (!index) {
+    return [];
+  }
+
+  const definitions: AnyDefinition[] = [];
+
+  // Collect all definition types
+  definitions.push(...Array.from(index.functions.values()));
+  definitions.push(...Array.from(index.classes.values()));
+  definitions.push(...Array.from(index.variables.values()));
+  definitions.push(...Array.from(index.interfaces.values()));
+  definitions.push(...Array.from(index.enums.values()));
+  definitions.push(...Array.from(index.namespaces.values()));
+  definitions.push(...Array.from(index.types.values()));
+  definitions.push(...Array.from(index.imported_symbols.values()));
+
+  return definitions;
+}
 
 describe("Project", () => {
   let project: Project;
@@ -21,7 +43,7 @@ describe("Project", () => {
 
       project.update_file(file1, code);
 
-      const defs = project.get_file_definitions(file1);
+      const defs = get_file_definitions(project, file1);
       expect(defs.length).toBeGreaterThan(0);
 
       const foo_def = defs.find(d => d.name === "foo");
@@ -35,11 +57,11 @@ describe("Project", () => {
 
       // First version
       project.update_file(file1, "function foo() {}");
-      expect(project.get_file_definitions(file1).length).toBe(1);
+      expect(get_file_definitions(project, file1).length).toBe(1);
 
       // Second version
       project.update_file(file1, "function foo() {}\nfunction bar() {}");
-      expect(project.get_file_definitions(file1).length).toBe(2);
+      expect(get_file_definitions(project, file1).length).toBe(2);
     });
 
     it("should immediately resolve references when file is updated", async () => {
@@ -101,11 +123,11 @@ describe("Project", () => {
       const file1 = "file1.ts" as FilePath;
       project.update_file(file1, "function foo() {}");
 
-      expect(project.get_file_definitions(file1).length).toBe(1);
+      expect(get_file_definitions(project, file1).length).toBe(1);
 
       project.remove_file(file1);
 
-      expect(project.get_file_definitions(file1).length).toBe(0);
+      expect(get_file_definitions(project, file1).length).toBe(0);
       expect(project.get_all_files()).not.toContain(file1);
     });
 
@@ -283,7 +305,7 @@ describe("Project", () => {
       const file1 = "file1.ts" as FilePath;
       project.update_file(file1, "function foo() {}");
 
-      const defs = project.get_file_definitions(file1);
+      const defs = get_file_definitions(project, file1);
       const foo_def = defs.find(d => d.name === "foo");
       expect(foo_def).toBeDefined();
 
