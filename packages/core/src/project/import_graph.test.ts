@@ -1,18 +1,25 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { ImportGraph } from "./import_graph";
-import type { FilePath, Import, SymbolName } from "@ariadnejs/types";
+import type {
+  FilePath,
+  ImportDefinition,
+  SymbolName,
+  Language,
+  ScopeId,
+} from "@ariadnejs/types";
+import type { FileSystemFolder } from "../resolve_references/file_folders";
 
-// Helper to create a simple named import for testing
-function create_import(source: FilePath, file: FilePath): Import {
+// Helper to create a simple ImportDefinition for testing
+function create_import_definition(
+  source: FilePath,
+  file: FilePath
+): ImportDefinition {
   return {
-    kind: "named",
-    source,
-    imports: [
-      {
-        name: "foo" as SymbolName,
-        is_type_only: false,
-      },
-    ],
+    kind: "import",
+    symbol_id: `import:${file}:1:0:1:10:foo` as any,
+    name: "foo" as SymbolName,
+    import_path: source,
+    import_kind: "named",
     location: {
       file_path: file,
       start_line: 1,
@@ -20,11 +27,21 @@ function create_import(source: FilePath, file: FilePath): Import {
       end_line: 1,
       end_column: 10,
     },
-    language: "typescript",
-    node_type: "import_statement",
-    modifiers: [],
+    scope_id: `module:${file}:1:0:100:0:<module>` as ScopeId,
+    defining_scope_id: `module:${file}:1:0:100:0:<module>` as ScopeId,
+    is_exported: false,
   };
 }
+
+// Mock root folder for testing - returns a permissive folder that "contains" any .ts file
+// This allows the tests to work without having to list every file used
+const MOCK_ROOT_FOLDER: FileSystemFolder = {
+  path: "/test" as FilePath,
+  files: new Map(), // Empty but the import resolver will resolve relative paths
+  folders: new Map(),
+};
+
+const TEST_LANGUAGE: Language = "typescript";
 
 describe("ImportGraph", () => {
   let graph: ImportGraph;
@@ -38,9 +55,9 @@ describe("ImportGraph", () => {
       const file1 = "file1.ts" as FilePath;
       const file2 = "file2.ts" as FilePath;
 
-      const imports: Import[] = [create_import(file2, file1)];
+      const imports: ImportDefinition[] = [create_import_definition(file2, file1)];
 
-      graph.update_file(file1, imports);
+      graph.update_file(file1, imports, TEST_LANGUAGE, MOCK_ROOT_FOLDER);
 
       expect(graph.get_dependencies(file1).has(file2)).toBe(true);
       expect(graph.get_dependents(file2).has(file1)).toBe(true);
@@ -51,12 +68,12 @@ describe("ImportGraph", () => {
       const file2 = "file2.ts" as FilePath;
       const file3 = "file3.ts" as FilePath;
 
-      const imports: Import[] = [
-        create_import(file2, file1),
-        create_import(file3, file1),
+      const imports: ImportDefinition[] = [
+        create_import_definition(file2, file1),
+        create_import_definition(file3, file1),
       ];
 
-      graph.update_file(file1, imports);
+      graph.update_file(file1, imports, TEST_LANGUAGE, MOCK_ROOT_FOLDER);
 
       const deps = graph.get_dependencies(file1);
       expect(deps.size).toBe(2);
@@ -70,13 +87,13 @@ describe("ImportGraph", () => {
       const file3 = "file3.ts" as FilePath;
 
       // First version: imports file2
-      graph.update_file(file1, [create_import(file2, file1)]);
+      graph.update_file(file1, [create_import_definition(file2, file1)], TEST_LANGUAGE, MOCK_ROOT_FOLDER);
 
       expect(graph.get_dependencies(file1).has(file2)).toBe(true);
       expect(graph.get_dependents(file2).has(file1)).toBe(true);
 
       // Second version: imports file3 instead
-      graph.update_file(file1, [create_import(file3, file1)]);
+      graph.update_file(file1, [create_import_definition(file3, file1)], TEST_LANGUAGE, MOCK_ROOT_FOLDER);
 
       expect(graph.get_dependencies(file1).has(file2)).toBe(false);
       expect(graph.get_dependencies(file1).has(file3)).toBe(true);
@@ -87,7 +104,7 @@ describe("ImportGraph", () => {
     it("should handle empty imports", () => {
       const file1 = "file1.ts" as FilePath;
 
-      graph.update_file(file1, []);
+      graph.update_file(file1, [], TEST_LANGUAGE, MOCK_ROOT_FOLDER);
 
       expect(graph.get_dependencies(file1).size).toBe(0);
     });
@@ -97,12 +114,12 @@ describe("ImportGraph", () => {
       const file2 = "file2.ts" as FilePath;
 
       // Multiple imports from the same file
-      const imports: Import[] = [
-        create_import(file2, file1),
-        create_import(file2, file1),
+      const imports: ImportDefinition[] = [
+        create_import_definition(file2, file1),
+        create_import_definition(file2, file1),
       ];
 
-      graph.update_file(file1, imports);
+      graph.update_file(file1, imports, TEST_LANGUAGE, MOCK_ROOT_FOLDER);
 
       const deps = graph.get_dependencies(file1);
       expect(deps.size).toBe(1);
@@ -120,7 +137,7 @@ describe("ImportGraph", () => {
       const file1 = "file1.ts" as FilePath;
       const file2 = "file2.ts" as FilePath;
 
-      graph.update_file(file1, [create_import(file2, file1)]);
+      graph.update_file(file1, [create_import_definition(file2, file1)], TEST_LANGUAGE, MOCK_ROOT_FOLDER);
 
       const deps1 = graph.get_dependencies(file1);
       const deps2 = graph.get_dependencies(file1);
@@ -142,8 +159,8 @@ describe("ImportGraph", () => {
       const file3 = "file3.ts" as FilePath;
 
       // Both file2 and file3 import from file1
-      graph.update_file(file2, [create_import(file1, file2)]);
-      graph.update_file(file3, [create_import(file1, file3)]);
+      graph.update_file(file2, [create_import_definition(file1, file2)], TEST_LANGUAGE, MOCK_ROOT_FOLDER);
+      graph.update_file(file3, [create_import_definition(file1, file3)], TEST_LANGUAGE, MOCK_ROOT_FOLDER);
 
       const dependents = graph.get_dependents(file1);
       expect(dependents.size).toBe(2);
@@ -159,8 +176,8 @@ describe("ImportGraph", () => {
       const file3 = "file3.ts" as FilePath;
 
       // file1 → file2 → file3
-      graph.update_file(file1, [create_import(file2, file1)]);
-      graph.update_file(file2, [create_import(file3, file2)]);
+      graph.update_file(file1, [create_import_definition(file2, file1)], TEST_LANGUAGE, MOCK_ROOT_FOLDER);
+      graph.update_file(file2, [create_import_definition(file3, file2)], TEST_LANGUAGE, MOCK_ROOT_FOLDER);
 
       const transitive = graph.get_transitive_dependencies(file1);
       expect(transitive.size).toBe(2);
@@ -173,8 +190,8 @@ describe("ImportGraph", () => {
       const file2 = "file2.ts" as FilePath;
 
       // file1 → file2 → file1 (cycle)
-      graph.update_file(file1, [create_import(file2, file1)]);
-      graph.update_file(file2, [create_import(file1, file2)]);
+      graph.update_file(file1, [create_import_definition(file2, file1)], TEST_LANGUAGE, MOCK_ROOT_FOLDER);
+      graph.update_file(file2, [create_import_definition(file1, file2)], TEST_LANGUAGE, MOCK_ROOT_FOLDER);
 
       // Should not hang
       const transitive = graph.get_transitive_dependencies(file1);
@@ -191,9 +208,9 @@ describe("ImportGraph", () => {
 
       // file1 → file2 → file4
       //      ↘ file3 → file5
-      graph.update_file(file1, [create_import(file2, file1), create_import(file3, file1)]);
-      graph.update_file(file2, [create_import(file4, file2)]);
-      graph.update_file(file3, [create_import(file5, file3)]);
+      graph.update_file(file1, [create_import_definition(file2, file1), create_import_definition(file3, file1)], TEST_LANGUAGE, MOCK_ROOT_FOLDER);
+      graph.update_file(file2, [create_import_definition(file4, file2)], TEST_LANGUAGE, MOCK_ROOT_FOLDER);
+      graph.update_file(file3, [create_import_definition(file5, file3)], TEST_LANGUAGE, MOCK_ROOT_FOLDER);
 
       const transitive = graph.get_transitive_dependencies(file1);
       expect(transitive.size).toBe(4);
@@ -211,9 +228,9 @@ describe("ImportGraph", () => {
 
       // file1 → file2 → file4
       //      ↘ file3 ↗
-      graph.update_file(file1, [create_import(file2, file1), create_import(file3, file1)]);
-      graph.update_file(file2, [create_import(file4, file2)]);
-      graph.update_file(file3, [create_import(file4, file3)]);
+      graph.update_file(file1, [create_import_definition(file2, file1), create_import_definition(file3, file1)], TEST_LANGUAGE, MOCK_ROOT_FOLDER);
+      graph.update_file(file2, [create_import_definition(file4, file2)], TEST_LANGUAGE, MOCK_ROOT_FOLDER);
+      graph.update_file(file3, [create_import_definition(file4, file3)], TEST_LANGUAGE, MOCK_ROOT_FOLDER);
 
       const transitive = graph.get_transitive_dependencies(file1);
       expect(transitive.size).toBe(3);
@@ -226,7 +243,7 @@ describe("ImportGraph", () => {
       const file1 = "file1.ts" as FilePath;
       const file2 = "file2.ts" as FilePath;
 
-      graph.update_file(file1, [create_import(file2, file1)]);
+      graph.update_file(file1, [create_import_definition(file2, file1)], TEST_LANGUAGE, MOCK_ROOT_FOLDER);
 
       const transitive = graph.get_transitive_dependencies(file1);
       expect(transitive.has(file1)).toBe(false);
@@ -241,8 +258,8 @@ describe("ImportGraph", () => {
 
       // file1 → file2 → file3
       // So file3 has transitive dependents: file2, file1
-      graph.update_file(file1, [create_import(file2, file1)]);
-      graph.update_file(file2, [create_import(file3, file2)]);
+      graph.update_file(file1, [create_import_definition(file2, file1)], TEST_LANGUAGE, MOCK_ROOT_FOLDER);
+      graph.update_file(file2, [create_import_definition(file3, file2)], TEST_LANGUAGE, MOCK_ROOT_FOLDER);
 
       const transitive = graph.get_transitive_dependents(file3);
       expect(transitive.size).toBe(2);
@@ -260,10 +277,10 @@ describe("ImportGraph", () => {
       // file1 → file3 ← file2
       //              ↓
       //         file4 ← file5
-      graph.update_file(file1, [create_import(file3, file1)]);
-      graph.update_file(file2, [create_import(file3, file2)]);
-      graph.update_file(file3, [create_import(file4, file3)]);
-      graph.update_file(file5, [create_import(file4, file5)]);
+      graph.update_file(file1, [create_import_definition(file3, file1)], TEST_LANGUAGE, MOCK_ROOT_FOLDER);
+      graph.update_file(file2, [create_import_definition(file3, file2)], TEST_LANGUAGE, MOCK_ROOT_FOLDER);
+      graph.update_file(file3, [create_import_definition(file4, file3)], TEST_LANGUAGE, MOCK_ROOT_FOLDER);
+      graph.update_file(file5, [create_import_definition(file4, file5)], TEST_LANGUAGE, MOCK_ROOT_FOLDER);
 
       const transitive = graph.get_transitive_dependents(file4);
       expect(transitive.size).toBe(4);
@@ -277,7 +294,7 @@ describe("ImportGraph", () => {
       const file1 = "file1.ts" as FilePath;
       const file2 = "file2.ts" as FilePath;
 
-      graph.update_file(file1, [create_import(file2, file1)]);
+      graph.update_file(file1, [create_import_definition(file2, file1)], TEST_LANGUAGE, MOCK_ROOT_FOLDER);
 
       const transitive = graph.get_transitive_dependents(file2);
       expect(transitive.has(file2)).toBe(false);
@@ -289,7 +306,7 @@ describe("ImportGraph", () => {
       const file1 = "file1.ts" as FilePath;
       const file2 = "file2.ts" as FilePath;
 
-      graph.update_file(file1, [create_import(file2, file1)]);
+      graph.update_file(file1, [create_import_definition(file2, file1)], TEST_LANGUAGE, MOCK_ROOT_FOLDER);
 
       expect(graph.has_dependency(file1, file2)).toBe(true);
     });
@@ -307,8 +324,8 @@ describe("ImportGraph", () => {
       const file3 = "file3.ts" as FilePath;
 
       // file1 → file2 → file3
-      graph.update_file(file1, [create_import(file2, file1)]);
-      graph.update_file(file2, [create_import(file3, file2)]);
+      graph.update_file(file1, [create_import_definition(file2, file1)], TEST_LANGUAGE, MOCK_ROOT_FOLDER);
+      graph.update_file(file2, [create_import_definition(file3, file2)], TEST_LANGUAGE, MOCK_ROOT_FOLDER);
 
       expect(graph.has_dependency(file1, file3)).toBe(false);
     });
@@ -320,8 +337,8 @@ describe("ImportGraph", () => {
       const file2 = "file2.ts" as FilePath;
 
       // file1 → file2 → file1
-      graph.update_file(file1, [create_import(file2, file1)]);
-      graph.update_file(file2, [create_import(file1, file2)]);
+      graph.update_file(file1, [create_import_definition(file2, file1)], TEST_LANGUAGE, MOCK_ROOT_FOLDER);
+      graph.update_file(file2, [create_import_definition(file1, file2)], TEST_LANGUAGE, MOCK_ROOT_FOLDER);
 
       const cycle = graph.detect_cycle(file1);
       expect(cycle.length).toBeGreaterThan(0);
@@ -333,9 +350,9 @@ describe("ImportGraph", () => {
       const file3 = "file3.ts" as FilePath;
 
       // file1 → file2 → file3 → file1
-      graph.update_file(file1, [create_import(file2, file1)]);
-      graph.update_file(file2, [create_import(file3, file2)]);
-      graph.update_file(file3, [create_import(file1, file3)]);
+      graph.update_file(file1, [create_import_definition(file2, file1)], TEST_LANGUAGE, MOCK_ROOT_FOLDER);
+      graph.update_file(file2, [create_import_definition(file3, file2)], TEST_LANGUAGE, MOCK_ROOT_FOLDER);
+      graph.update_file(file3, [create_import_definition(file1, file3)], TEST_LANGUAGE, MOCK_ROOT_FOLDER);
 
       const cycle = graph.detect_cycle(file1);
       expect(cycle.length).toBeGreaterThan(0);
@@ -345,7 +362,7 @@ describe("ImportGraph", () => {
       const file1 = "file1.ts" as FilePath;
       const file2 = "file2.ts" as FilePath;
 
-      graph.update_file(file1, [create_import(file2, file1)]);
+      graph.update_file(file1, [create_import_definition(file2, file1)], TEST_LANGUAGE, MOCK_ROOT_FOLDER);
 
       const cycle = graph.detect_cycle(file1);
       expect(cycle).toEqual([]);
@@ -364,7 +381,7 @@ describe("ImportGraph", () => {
       const file1 = "file1.ts" as FilePath;
       const file2 = "file2.ts" as FilePath;
 
-      graph.update_file(file1, [create_import(file2, file1)]);
+      graph.update_file(file1, [create_import_definition(file2, file1)], TEST_LANGUAGE, MOCK_ROOT_FOLDER);
 
       graph.remove_file(file1);
 
@@ -377,8 +394,8 @@ describe("ImportGraph", () => {
       const file2 = "file2.ts" as FilePath;
       const file3 = "file3.ts" as FilePath;
 
-      graph.update_file(file1, [create_import(file2, file1)]);
-      graph.update_file(file3, [create_import(file2, file3)]);
+      graph.update_file(file1, [create_import_definition(file2, file1)], TEST_LANGUAGE, MOCK_ROOT_FOLDER);
+      graph.update_file(file3, [create_import_definition(file2, file3)], TEST_LANGUAGE, MOCK_ROOT_FOLDER);
 
       graph.remove_file(file1);
 
@@ -391,7 +408,7 @@ describe("ImportGraph", () => {
       const file1 = "file1.ts" as FilePath;
       const file2 = "file2.ts" as FilePath;
 
-      graph.update_file(file1, [create_import(file2, file1)]);
+      graph.update_file(file1, [create_import_definition(file2, file1)], TEST_LANGUAGE, MOCK_ROOT_FOLDER);
 
       graph.remove_file(file2);
 
@@ -415,8 +432,8 @@ describe("ImportGraph", () => {
       const file2 = "file2.ts" as FilePath;
       const file3 = "file3.ts" as FilePath;
 
-      graph.update_file(file1, [create_import(file2, file1)]);
-      graph.update_file(file2, [create_import(file3, file2)]);
+      graph.update_file(file1, [create_import_definition(file2, file1)], TEST_LANGUAGE, MOCK_ROOT_FOLDER);
+      graph.update_file(file2, [create_import_definition(file3, file2)], TEST_LANGUAGE, MOCK_ROOT_FOLDER);
 
       const files = graph.get_all_files();
       expect(files.size).toBe(3);
@@ -429,7 +446,7 @@ describe("ImportGraph", () => {
       const file1 = "file1.ts" as FilePath;
       const file2 = "file2.ts" as FilePath;
 
-      graph.update_file(file1, [create_import(file2, file1)]);
+      graph.update_file(file1, [create_import_definition(file2, file1)], TEST_LANGUAGE, MOCK_ROOT_FOLDER);
 
       const files = graph.get_all_files();
       expect(files.has(file2)).toBe(true);  // file2 has no dependencies but has dependents
@@ -455,7 +472,7 @@ describe("ImportGraph", () => {
       // file1 → file2
       // file1 → file3
       // Total: 3 files, 2 edges
-      graph.update_file(file1, [create_import(file2, file1), create_import(file3, file1)]);
+      graph.update_file(file1, [create_import_definition(file2, file1), create_import_definition(file3, file1)], TEST_LANGUAGE, MOCK_ROOT_FOLDER);
 
       const stats = graph.get_stats();
       expect(stats.file_count).toBe(3);
@@ -470,7 +487,7 @@ describe("ImportGraph", () => {
       const file1 = "file1.ts" as FilePath;
       const file2 = "file2.ts" as FilePath;
 
-      graph.update_file(file1, [create_import(file2, file1)]);
+      graph.update_file(file1, [create_import_definition(file2, file1)], TEST_LANGUAGE, MOCK_ROOT_FOLDER);
 
       expect(graph.get_all_files().size).toBeGreaterThan(0);
 
