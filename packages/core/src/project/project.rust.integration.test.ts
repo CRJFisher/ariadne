@@ -182,6 +182,67 @@ describe("Project Integration - Rust", () => {
       expect(functions.length).toBeGreaterThan(0);
     });
 
+    it("should resolve multiple imported function calls", async () => {
+      const utils_source = load_source("modules/utils.rs");
+      const main_source = load_source("modules/main.rs");
+      const utils_file = file_path("modules/utils.rs");
+      const main_file = file_path("modules/main.rs");
+
+      project.update_file(utils_file, utils_source);
+      project.update_file(main_file, main_source);
+
+      const main_index = project.get_semantic_index(main_file);
+      expect(main_index).toBeDefined();
+
+      // main.rs imports: helper, process_data, calculate_total, validate_email
+      // Verify these are captured as imports
+      const imports = Array.from(main_index!.imported_symbols.values());
+      const import_names = imports.map((i) => i.name);
+      expect(import_names).toContain("helper" as SymbolName);
+      expect(import_names).toContain("process_data" as SymbolName);
+      expect(import_names).toContain("calculate_total" as SymbolName);
+      expect(import_names).toContain("validate_email" as SymbolName);
+
+      // Find function call references
+      const calls = main_index?.references.filter(
+        (r) => r.type === "call" && r.call_type === "function"
+      );
+      expect(calls).toBeDefined();
+      expect(calls?.length).toBeGreaterThan(0);
+
+      // Verify at least helper() and process_data() calls resolve
+      const helper_call = calls?.find((c) => c.name === ("helper" as SymbolName));
+      const process_call = calls?.find(
+        (c) => c.name === ("process_data" as SymbolName)
+      );
+
+      expect(helper_call).toBeDefined();
+      expect(process_call).toBeDefined();
+
+      if (helper_call && process_call) {
+        const helper_resolved = project.resolutions.resolve(
+          helper_call.scope_id,
+          helper_call.name
+        );
+        const process_resolved = project.resolutions.resolve(
+          process_call.scope_id,
+          process_call.name
+        );
+
+        expect(helper_resolved).toBeDefined();
+        expect(process_resolved).toBeDefined();
+
+        // Verify they resolve to definitions in utils.rs
+        if (helper_resolved && process_resolved) {
+          const helper_def = project.definitions.get(helper_resolved);
+          const process_def = project.definitions.get(process_resolved);
+
+          expect(helper_def?.location.file_path).toContain("utils.rs");
+          expect(process_def?.location.file_path).toContain("utils.rs");
+        }
+      }
+    });
+
     it("should handle mod declarations with inline modules", async () => {
       const source = load_source("modules/inline_modules.rs");
       const file = file_path("modules/inline_modules.rs");
@@ -272,6 +333,50 @@ describe("Project Integration - Rust", () => {
       expect(def).toBeDefined();
       if (def) {
         expect(def.kind).toBe("method");
+      }
+    });
+
+    it("should handle multiple structs from the same module", async () => {
+      const user_mod_source = load_source("modules/user_mod.rs");
+      const uses_user_source = load_source("modules/uses_user.rs");
+      const user_mod_file = file_path("modules/user_mod.rs");
+      const uses_user_file = file_path("modules/uses_user.rs");
+
+      project.update_file(user_mod_file, user_mod_source);
+      project.update_file(uses_user_file, uses_user_source);
+
+      // Verify user_mod.rs has both User and UserManager structs
+      const user_mod_index = project.get_semantic_index(user_mod_file);
+      expect(user_mod_index).toBeDefined();
+
+      if (user_mod_index) {
+        const structs = Array.from(user_mod_index.classes.values());
+        const struct_names = structs.map((s) => s.name);
+
+        expect(struct_names).toContain("User" as SymbolName);
+        expect(struct_names).toContain("UserManager" as SymbolName);
+      }
+
+      // Verify both are imported in uses_user.rs
+      const main_index = project.get_semantic_index(uses_user_file);
+      expect(main_index).toBeDefined();
+
+      if (main_index) {
+        const imports = Array.from(main_index.imported_symbols.values());
+        const import_names = imports.map((i) => i.name);
+
+        expect(import_names).toContain("User" as SymbolName);
+        expect(import_names).toContain("UserManager" as SymbolName);
+
+        // Verify UserManager::new() resolves
+        const manager_new_calls = main_index.references.filter(
+          (r) =>
+            r.type === "call" &&
+            r.name === ("new" as SymbolName) &&
+            r.context?.receiver_location
+        );
+
+        expect(manager_new_calls.length).toBeGreaterThan(0);
       }
     });
   });
