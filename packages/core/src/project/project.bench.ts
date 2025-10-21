@@ -13,8 +13,9 @@ import type { FilePath } from "@ariadnejs/types";
  */
 describe("Project - Performance Benchmarks", () => {
   describe("update_file performance", () => {
-    it("should handle small file updates", { timeout: 15000 }, () => {
+    it("should handle small file updates", { timeout: 15000 }, async () => {
       const project = new Project();
+      await project.initialize();
       const file1 = "file1.ts" as FilePath;
 
       // Small file (~80 lines)
@@ -42,7 +43,7 @@ describe("Project - Performance Benchmarks", () => {
   });
 
   describe("eager resolution performance", () => {
-    it("should demonstrate eager resolution in update_file", async () => {
+    it("should demonstrate eager resolution in update_file", { timeout: 15000 }, async () => {
       const project = new Project();
       await project.initialize();
       const file1 = "file1.ts" as FilePath;
@@ -103,6 +104,7 @@ describe("Project - Performance Benchmarks", () => {
 
       // === FULL REBUILD ===
       const project_full = new Project();
+      await project_full.initialize();
       const start_full = performance.now();
 
       for (let i = 0; i < files.length; i++) {
@@ -129,8 +131,9 @@ describe("Project - Performance Benchmarks", () => {
   });
 
   describe("cache hit rate", () => {
-    it("should measure resolution cache behavior", () => {
+    it("should measure resolution cache behavior", async () => {
       const project = new Project();
+      await project.initialize();
       const files = Array.from({ length: 10 }, (_, i) => `file${i}.ts` as FilePath);
 
       // Create files with dependencies
