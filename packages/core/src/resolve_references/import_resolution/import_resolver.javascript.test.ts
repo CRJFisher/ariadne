@@ -10,7 +10,7 @@ import { resolve_module_path_javascript } from "./import_resolver.javascript";
 import type { FilePath, Language } from "@ariadnejs/types";
 import { build_semantic_index } from "../../index_single_file/semantic_index";
 import type { ParsedFile } from "../../index_single_file/file_utils";
-import { build_file_tree } from "../symbol_resolution.test_helpers";
+import { build_file_tree } from "../file_folders_test_helper";
 
 // Temporary test directory
 const TEST_DIR = path.join(process.cwd(), ".test-js-modules");
@@ -38,7 +38,11 @@ describe("resolve_module_path_javascript", () => {
     const main_file = path.join(TEST_DIR, "main.js") as FilePath;
     const root_folder = build_file_tree([utils_file as FilePath, main_file]);
 
-    const result = resolve_module_path_javascript("./utils.js", main_file, root_folder);
+    const result = resolve_module_path_javascript(
+      "./utils.js",
+      main_file,
+      root_folder
+    );
 
     expect(result).toBe(utils_file);
   });
@@ -48,7 +52,11 @@ describe("resolve_module_path_javascript", () => {
     const main_file = path.join(TEST_DIR, "main.js") as FilePath;
     const root_folder = build_file_tree([utils_file as FilePath, main_file]);
 
-    const result = resolve_module_path_javascript("./utils", main_file, root_folder);
+    const result = resolve_module_path_javascript(
+      "./utils",
+      main_file,
+      root_folder
+    );
 
     expect(result).toBe(utils_file);
   });
@@ -58,7 +66,11 @@ describe("resolve_module_path_javascript", () => {
     const main_file = path.join(TEST_DIR, "main.js") as FilePath;
     const root_folder = build_file_tree([utils_file as FilePath, main_file]);
 
-    const result = resolve_module_path_javascript("./utils", main_file, root_folder);
+    const result = resolve_module_path_javascript(
+      "./utils",
+      main_file,
+      root_folder
+    );
 
     expect(result).toBe(utils_file);
   });
@@ -68,7 +80,11 @@ describe("resolve_module_path_javascript", () => {
     const main_file = path.join(TEST_DIR, "main.js") as FilePath;
     const root_folder = build_file_tree([utils_file as FilePath, main_file]);
 
-    const result = resolve_module_path_javascript("./utils", main_file, root_folder);
+    const result = resolve_module_path_javascript(
+      "./utils",
+      main_file,
+      root_folder
+    );
 
     expect(result).toBe(utils_file);
   });
@@ -78,7 +94,11 @@ describe("resolve_module_path_javascript", () => {
     const main_file = path.join(TEST_DIR, "main.js") as FilePath;
     const root_folder = build_file_tree([index_file as FilePath, main_file]);
 
-    const result = resolve_module_path_javascript("./utils", main_file, root_folder);
+    const result = resolve_module_path_javascript(
+      "./utils",
+      main_file,
+      root_folder
+    );
 
     expect(result).toBe(index_file);
   });
@@ -88,7 +108,11 @@ describe("resolve_module_path_javascript", () => {
     const main_file = path.join(TEST_DIR, "main.js") as FilePath;
     const root_folder = build_file_tree([index_file as FilePath, main_file]);
 
-    const result = resolve_module_path_javascript("./utils", main_file, root_folder);
+    const result = resolve_module_path_javascript(
+      "./utils",
+      main_file,
+      root_folder
+    );
 
     expect(result).toBe(index_file);
   });
@@ -98,7 +122,11 @@ describe("resolve_module_path_javascript", () => {
     const main_file = path.join(TEST_DIR, "sub", "main.js") as FilePath;
     const root_folder = build_file_tree([utils_file as FilePath, main_file]);
 
-    const result = resolve_module_path_javascript("../utils.js", main_file, root_folder);
+    const result = resolve_module_path_javascript(
+      "../utils.js",
+      main_file,
+      root_folder
+    );
 
     expect(result).toBe(utils_file);
   });
@@ -117,12 +145,16 @@ describe("resolve_module_path_javascript", () => {
     expect(result).toBe(utils_file);
   });
 
-  it("should return resolved path for non-existent files", () => {
+  it("should return resolved path with extension for non-existent files", () => {
     const main_file = path.join(TEST_DIR, "main.js") as FilePath;
     const root_folder = build_file_tree([main_file]);
-    const expected = path.join(TEST_DIR, "nonexistent");
+    const expected = path.join(TEST_DIR, "nonexistent.js"); // Adds .js extension
 
-    const result = resolve_module_path_javascript("./nonexistent", main_file, root_folder);
+    const result = resolve_module_path_javascript(
+      "./nonexistent",
+      main_file,
+      root_folder
+    );
 
     expect(result).toBe(expected);
   });
@@ -133,7 +165,11 @@ describe("resolve_module_path_javascript", () => {
     const main_file = path.join(TEST_DIR, "main.js") as FilePath;
     const root_folder = build_file_tree([utils_no_ext as FilePath, main_file]);
 
-    const result = resolve_module_path_javascript("./utils", main_file, root_folder);
+    const result = resolve_module_path_javascript(
+      "./utils",
+      main_file,
+      root_folder
+    );
 
     expect(result).toBe(utils_no_ext);
   });
@@ -142,7 +178,11 @@ describe("resolve_module_path_javascript", () => {
     const main_file = path.join(TEST_DIR, "main.js") as FilePath;
     const root_folder = build_file_tree([main_file]);
 
-    const result = resolve_module_path_javascript("lodash", main_file, root_folder);
+    const result = resolve_module_path_javascript(
+      "lodash",
+      main_file,
+      root_folder
+    );
 
     expect(result).toBe("lodash");
   });
@@ -151,9 +191,17 @@ describe("resolve_module_path_javascript", () => {
     const utils_js = path.join(TEST_DIR, "utils.js");
     const utils_mjs = path.join(TEST_DIR, "utils.mjs");
     const main_file = path.join(TEST_DIR, "main.js") as FilePath;
-    const root_folder = build_file_tree([utils_js as FilePath, utils_mjs as FilePath, main_file]);
+    const root_folder = build_file_tree([
+      utils_js as FilePath,
+      utils_mjs as FilePath,
+      main_file,
+    ]);
 
-    const result = resolve_module_path_javascript("./utils", main_file, root_folder);
+    const result = resolve_module_path_javascript(
+      "./utils",
+      main_file,
+      root_folder
+    );
 
     expect(result).toBe(utils_js);
   });

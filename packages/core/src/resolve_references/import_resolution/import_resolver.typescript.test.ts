@@ -10,7 +10,7 @@ import { resolve_module_path_typescript } from "./import_resolver.typescript";
 import type { FilePath, Language } from "@ariadnejs/types";
 import { build_semantic_index } from "../../index_single_file/semantic_index";
 import type { ParsedFile } from "../../index_single_file/file_utils";
-import { build_file_tree } from "../symbol_resolution.test_helpers";
+import { build_file_tree } from "../file_folders_test_helper";
 
 // Helper to create ParsedFile for TypeScript
 function create_parsed_file(
@@ -36,7 +36,11 @@ describe("resolve_module_path_typescript", () => {
     const main_file = path.join(TEST_DIR, "main.ts") as FilePath;
     const root_folder = build_file_tree([utils_file as FilePath, main_file]);
 
-    const result = resolve_module_path_typescript("./utils.ts", main_file, root_folder);
+    const result = resolve_module_path_typescript(
+      "./utils.ts",
+      main_file,
+      root_folder
+    );
 
     expect(result).toBe(utils_file);
   });
@@ -46,7 +50,11 @@ describe("resolve_module_path_typescript", () => {
     const main_file = path.join(TEST_DIR, "main.ts") as FilePath;
     const root_folder = build_file_tree([utils_file as FilePath, main_file]);
 
-    const result = resolve_module_path_typescript("./utils", main_file, root_folder);
+    const result = resolve_module_path_typescript(
+      "./utils",
+      main_file,
+      root_folder
+    );
 
     expect(result).toBe(utils_file);
   });
@@ -54,9 +62,16 @@ describe("resolve_module_path_typescript", () => {
   it("should resolve .tsx files", () => {
     const component_file = path.join(TEST_DIR, "Component.tsx");
     const main_file = path.join(TEST_DIR, "main.tsx") as FilePath;
-    const root_folder = build_file_tree([component_file as FilePath, main_file]);
+    const root_folder = build_file_tree([
+      component_file as FilePath,
+      main_file,
+    ]);
 
-    const result = resolve_module_path_typescript("./Component", main_file, root_folder);
+    const result = resolve_module_path_typescript(
+      "./Component",
+      main_file,
+      root_folder
+    );
 
     expect(result).toBe(component_file);
   });
@@ -66,7 +81,11 @@ describe("resolve_module_path_typescript", () => {
     const main_file = path.join(TEST_DIR, "main.ts") as FilePath;
     const root_folder = build_file_tree([utils_file as FilePath, main_file]);
 
-    const result = resolve_module_path_typescript("./utils", main_file, root_folder);
+    const result = resolve_module_path_typescript(
+      "./utils",
+      main_file,
+      root_folder
+    );
 
     expect(result).toBe(utils_file);
   });
@@ -74,9 +93,16 @@ describe("resolve_module_path_typescript", () => {
   it("should resolve .jsx files in TypeScript projects", () => {
     const component_file = path.join(TEST_DIR, "Component.jsx");
     const main_file = path.join(TEST_DIR, "main.tsx") as FilePath;
-    const root_folder = build_file_tree([component_file as FilePath, main_file]);
+    const root_folder = build_file_tree([
+      component_file as FilePath,
+      main_file,
+    ]);
 
-    const result = resolve_module_path_typescript("./Component", main_file, root_folder);
+    const result = resolve_module_path_typescript(
+      "./Component",
+      main_file,
+      root_folder
+    );
 
     expect(result).toBe(component_file);
   });
@@ -85,9 +111,17 @@ describe("resolve_module_path_typescript", () => {
     const utils_ts = path.join(TEST_DIR, "utils.ts");
     const utils_js = path.join(TEST_DIR, "utils.js");
     const main_file = path.join(TEST_DIR, "main.ts") as FilePath;
-    const root_folder = build_file_tree([utils_ts as FilePath, utils_js as FilePath, main_file]);
+    const root_folder = build_file_tree([
+      utils_ts as FilePath,
+      utils_js as FilePath,
+      main_file,
+    ]);
 
-    const result = resolve_module_path_typescript("./utils", main_file, root_folder);
+    const result = resolve_module_path_typescript(
+      "./utils",
+      main_file,
+      root_folder
+    );
 
     expect(result).toBe(utils_ts);
   });
@@ -98,7 +132,11 @@ describe("resolve_module_path_typescript", () => {
     const main_file = path.join(TEST_DIR, "main.ts") as FilePath;
     const root_folder = build_file_tree([index_file as FilePath, main_file]);
 
-    const result = resolve_module_path_typescript("./utils", main_file, root_folder);
+    const result = resolve_module_path_typescript(
+      "./utils",
+      main_file,
+      root_folder
+    );
 
     expect(result).toBe(index_file);
   });
@@ -109,7 +147,11 @@ describe("resolve_module_path_typescript", () => {
     const main_file = path.join(TEST_DIR, "main.tsx") as FilePath;
     const root_folder = build_file_tree([index_file as FilePath, main_file]);
 
-    const result = resolve_module_path_typescript("./utils", main_file, root_folder);
+    const result = resolve_module_path_typescript(
+      "./utils",
+      main_file,
+      root_folder
+    );
 
     expect(result).toBe(index_file);
   });
@@ -120,7 +162,11 @@ describe("resolve_module_path_typescript", () => {
     const main_file = path.join(TEST_DIR, "main.ts") as FilePath;
     const root_folder = build_file_tree([index_file as FilePath, main_file]);
 
-    const result = resolve_module_path_typescript("./utils", main_file, root_folder);
+    const result = resolve_module_path_typescript(
+      "./utils",
+      main_file,
+      root_folder
+    );
 
     expect(result).toBe(index_file);
   });
@@ -131,7 +177,11 @@ describe("resolve_module_path_typescript", () => {
     const main_file = path.join(sub_dir, "main.ts") as FilePath;
     const root_folder = build_file_tree([utils_file as FilePath, main_file]);
 
-    const result = resolve_module_path_typescript("../utils", main_file, root_folder);
+    const result = resolve_module_path_typescript(
+      "../utils",
+      main_file,
+      root_folder
+    );
 
     expect(result).toBe(utils_file);
   });
@@ -142,17 +192,25 @@ describe("resolve_module_path_typescript", () => {
     const main_file = path.join(TEST_DIR, "main.ts") as FilePath;
     const root_folder = build_file_tree([utils_file as FilePath, main_file]);
 
-    const result = resolve_module_path_typescript("./helpers/utils", main_file, root_folder);
+    const result = resolve_module_path_typescript(
+      "./helpers/utils",
+      main_file,
+      root_folder
+    );
 
     expect(result).toBe(utils_file);
   });
 
-  it("should return resolved path for non-existent files", () => {
+  it("should return resolved path with extension for non-existent files", () => {
     const main_file = path.join(TEST_DIR, "main.ts") as FilePath;
-    const expected = path.join(TEST_DIR, "nonexistent");
+    const expected = path.join(TEST_DIR, "nonexistent.ts"); // Adds .ts extension
     const root_folder = build_file_tree([main_file]);
 
-    const result = resolve_module_path_typescript("./nonexistent", main_file, root_folder);
+    const result = resolve_module_path_typescript(
+      "./nonexistent",
+      main_file,
+      root_folder
+    );
 
     expect(result).toBe(expected);
   });
@@ -161,7 +219,11 @@ describe("resolve_module_path_typescript", () => {
     const main_file = path.join(TEST_DIR, "main.ts") as FilePath;
     const root_folder = build_file_tree([main_file]);
 
-    const result = resolve_module_path_typescript("react", main_file, root_folder);
+    const result = resolve_module_path_typescript(
+      "react",
+      main_file,
+      root_folder
+    );
 
     expect(result).toBe("react");
   });
@@ -172,7 +234,11 @@ describe("resolve_module_path_typescript", () => {
     const main_file = path.join(TEST_DIR, "main.ts") as FilePath;
     const root_folder = build_file_tree([utils_no_ext as FilePath, main_file]);
 
-    const result = resolve_module_path_typescript("./utils", main_file, root_folder);
+    const result = resolve_module_path_typescript(
+      "./utils",
+      main_file,
+      root_folder
+    );
 
     expect(result).toBe(utils_no_ext);
   });

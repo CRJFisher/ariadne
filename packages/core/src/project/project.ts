@@ -18,7 +18,7 @@ import TypeScriptParser from "tree-sitter-typescript";
 import JavaScriptParser from "tree-sitter-javascript";
 import PythonParser from "tree-sitter-python";
 import RustParser from "tree-sitter-rust";
-import type { FileSystemFolder } from "../resolve_references/types";
+import type { FileSystemFolder } from "../resolve_references/file_folders";
 import { readdir, realpath } from "fs/promises";
 import { join } from "path";
 
@@ -221,8 +221,13 @@ export class Project {
     );
 
     // Rebuild all_definitions with fixed imports
-    const non_import_definitions = all_definitions.filter(def => def.kind !== "import");
-    const updated_all_definitions = [...non_import_definitions, ...fixed_import_definitions];
+    const non_import_definitions = all_definitions.filter(
+      (def) => def.kind !== "import"
+    );
+    const updated_all_definitions = [
+      ...non_import_definitions,
+      ...fixed_import_definitions,
+    ];
 
     // Update the definitions registry with fixed import locations
     this.definitions.update_file(file_id, updated_all_definitions);
@@ -339,7 +344,6 @@ export class Project {
     };
   }
 
-
   /**
    * Get the call graph for the project.
    *
@@ -355,10 +359,7 @@ export class Project {
   get_call_graph(): CallGraph {
     // Build call graph from current state
     // All resolutions are always up-to-date (eager resolution)
-    return detect_call_graph(
-      this.definitions,
-      this.resolutions
-    );
+    return detect_call_graph(this.definitions, this.resolutions);
   }
 
   /**

@@ -6,7 +6,7 @@ import { describe, it, expect } from "vitest";
 import * as path from "path";
 import { resolve_module_path_python } from "./import_resolver.python";
 import type { FilePath } from "@ariadnejs/types";
-import { build_file_tree } from "../symbol_resolution.test_helpers";
+import { build_file_tree } from "../file_folders_test_helper";
 
 // Temporary test directory
 const TEST_DIR = path.join(process.cwd(), ".test-py-modules");
@@ -642,7 +642,10 @@ describe("resolve_module_path_python - comprehensive relative imports", () => {
     const deep_dir = path.join(a_dir, "b", "c");
     const main_file = path.join(deep_dir, "main.py") as FilePath;
 
-    const root_folder = build_file_tree([processor_file as FilePath, main_file]);
+    const root_folder = build_file_tree([
+      processor_file as FilePath,
+      main_file,
+    ]);
 
     const result = resolve_module_path_python(
       "...utils.helpers.processor",
@@ -806,7 +809,10 @@ describe("resolve_module_path_python - comprehensive relative imports", () => {
     const sub_dir = path.join(pkg_dir, "sub");
     const main_file = path.join(sub_dir, "main.py") as FilePath;
 
-    const root_folder = build_file_tree([processor_file as FilePath, main_file]);
+    const root_folder = build_file_tree([
+      processor_file as FilePath,
+      main_file,
+    ]);
 
     const result = resolve_module_path_python(
       "...lib.utils.helpers.processor",

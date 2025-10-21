@@ -7,8 +7,8 @@
 
 import * as path from "path";
 import type { FilePath } from "@ariadnejs/types";
-import type { FileSystemFolder } from "../types";
-import { has_file_in_tree } from "./import_resolver";
+import type { FileSystemFolder } from "../file_folders";
+import { has_file_in_tree } from "../file_folders";
 
 /**
  * Resolve JavaScript module path to file path
@@ -31,7 +31,11 @@ export function resolve_module_path_javascript(
 ): FilePath {
   // Relative imports
   if (import_path.startsWith("./") || import_path.startsWith("../")) {
-    return resolve_relative_javascript(import_path, importing_file, root_folder);
+    return resolve_relative_javascript(
+      import_path,
+      importing_file,
+      root_folder
+    );
   }
 
   // Bare imports (future: node_modules)
@@ -56,7 +60,9 @@ function resolve_relative_javascript(
   const is_absolute_path = path.isAbsolute(base_file);
 
   // Always resolve to absolute path for file tree lookup
-  const absolute_base_file = is_absolute_path ? base_file : path.resolve(root_folder.path, base_file);
+  const absolute_base_file = is_absolute_path
+    ? base_file
+    : path.resolve(root_folder.path, base_file);
   const base_dir = path.dirname(absolute_base_file);
   const resolved_absolute = path.resolve(base_dir, relative_path);
 

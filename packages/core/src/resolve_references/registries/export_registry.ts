@@ -7,8 +7,8 @@ import {
   type Language,
 } from "@ariadnejs/types";
 import type { DefinitionRegistry } from "./definition_registry";
-import { resolve_module_path } from "../import_resolution/import_resolver";
-import { FileSystemFolder } from "../types";
+import { resolve_module_path } from "../import_resolution";
+import { FileSystemFolder } from "../file_folders";
 
 /**
  * Extended export metadata for resolution.
@@ -167,7 +167,8 @@ export class ExportRegistry {
     };
 
     // Get all definitions for this file from DefinitionRegistry
-    const file_definitions = definitions.get_exportable_definitions_in_file(file_id);
+    const file_definitions =
+      definitions.get_exportable_definitions_in_file(file_id);
 
     // Process all exportable definitions
     for (const def of file_definitions) {

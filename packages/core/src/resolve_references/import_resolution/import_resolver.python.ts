@@ -7,8 +7,8 @@
 
 import * as path from "path";
 import type { FilePath } from "@ariadnejs/types";
-import type { FileSystemFolder } from "../types";
-import { has_file_in_tree } from "./import_resolver";
+import type { FileSystemFolder } from "../file_folders";
+import { has_file_in_tree } from "../file_folders";
 
 /**
  * Resolve Python module path to absolute file path
@@ -69,10 +69,7 @@ function resolve_relative_python(
   const file_path = path.join(target_dir, ...module_path.split("."));
 
   // Try as file or package
-  const candidates = [
-    `${file_path}.py`,
-    path.join(file_path, "__init__.py"),
-  ];
+  const candidates = [`${file_path}.py`, path.join(file_path, "__init__.py")];
 
   for (const candidate of candidates) {
     if (has_file_in_tree(candidate as FilePath, root_folder)) {
@@ -99,16 +96,17 @@ function resolve_absolute_python(
   // For project-local imports, search from project root
   // Find project root by looking for __init__.py
   const base_dir = path.dirname(base_file);
-  const project_root = find_python_project_root(base_dir, absolute_path, root_folder);
+  const project_root = find_python_project_root(
+    base_dir,
+    absolute_path,
+    root_folder
+  );
 
   // Convert dotted path to file path
   const parts = absolute_path.split(".");
   let file_path = path.join(project_root, ...parts);
 
-  const candidates = [
-    `${file_path}.py`,
-    path.join(file_path, "__init__.py"),
-  ];
+  const candidates = [`${file_path}.py`, path.join(file_path, "__init__.py")];
 
   for (const candidate of candidates) {
     if (has_file_in_tree(candidate as FilePath, root_folder)) {
@@ -165,7 +163,10 @@ function find_python_project_root(
 
   // First, check if start_dir itself is a package
   const start_init = path.join(current, "__init__.py");
-  const start_is_package = has_file_in_tree(start_init as FilePath, root_folder);
+  const start_is_package = has_file_in_tree(
+    start_init as FilePath,
+    root_folder
+  );
 
   if (start_is_package) {
     topmost_package = current;
@@ -181,7 +182,10 @@ function find_python_project_root(
     }
 
     const parent_init = path.join(parent, "__init__.py");
-    const parent_is_package = has_file_in_tree(parent_init as FilePath, root_folder);
+    const parent_is_package = has_file_in_tree(
+      parent_init as FilePath,
+      root_folder
+    );
 
     if (parent_is_package) {
       topmost_package = parent;
@@ -207,7 +211,7 @@ function find_python_project_root(
     "tox.ini",
     "poetry.lock",
     "Pipfile.lock",
-    ".python-version"
+    ".python-version",
   ];
 
   let search_dir = start_dir;

@@ -1,6 +1,12 @@
-import type { FilePath, ImportDefinition, ScopeId, Language, SymbolId } from "@ariadnejs/types";
-import type { FileSystemFolder } from "../resolve_references/types";
-import { resolve_module_path } from "../resolve_references/import_resolution/import_resolver";
+import type {
+  FilePath,
+  ImportDefinition,
+  ScopeId,
+  Language,
+  SymbolId,
+} from "@ariadnejs/types";
+import type { FileSystemFolder } from "../resolve_references/file_folders";
+import { resolve_module_path } from "../resolve_references/import_resolution";
 
 /**
  * Bidirectional import dependency graph.
@@ -76,7 +82,9 @@ export class ImportGraph {
         const scope_id = imp_def.defining_scope_id;
         const scope_imports = this.imports_by_scope.get(scope_id);
         if (scope_imports) {
-          const filtered = scope_imports.filter(d => d.symbol_id !== imp_def.symbol_id);
+          const filtered = scope_imports.filter(
+            (d) => d.symbol_id !== imp_def.symbol_id
+          );
           if (filtered.length === 0) {
             this.imports_by_scope.delete(scope_id);
           } else {
@@ -180,7 +188,7 @@ export class ImportGraph {
       }
 
       if (visited.has(current)) {
-        continue;  // Already visited (cycle or duplicate)
+        continue; // Already visited (cycle or duplicate)
       }
 
       visited.add(current);
@@ -271,7 +279,7 @@ export class ImportGraph {
       }
 
       if (visited.has(current)) {
-        return false;  // Already explored, no cycle
+        return false; // Already explored, no cycle
       }
 
       visited.add(current);
@@ -368,7 +376,9 @@ export class ImportGraph {
         const scope_id = imp_def.defining_scope_id;
         const scope_imports = this.imports_by_scope.get(scope_id);
         if (scope_imports) {
-          const filtered = scope_imports.filter(d => d.symbol_id !== imp_def.symbol_id);
+          const filtered = scope_imports.filter(
+            (d) => d.symbol_id !== imp_def.symbol_id
+          );
           if (filtered.length === 0) {
             this.imports_by_scope.delete(scope_id);
           } else {
@@ -388,11 +398,11 @@ export class ImportGraph {
    * @returns Graph statistics
    */
   get_stats(): {
-    file_count: number
-    edge_count: number
-    avg_dependencies: number
-    avg_dependents: number
-    } {
+    file_count: number;
+    edge_count: number;
+    avg_dependencies: number;
+    avg_dependents: number;
+  } {
     const files = this.get_all_files();
     const file_count = files.size;
 

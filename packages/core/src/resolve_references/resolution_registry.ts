@@ -7,7 +7,7 @@ import type {
   SymbolName,
   Language,
 } from "@ariadnejs/types";
-import type { FileSystemFolder } from "./types";
+import type { FileSystemFolder } from "./file_folders";
 import type { DefinitionRegistry } from "./registries/definition_registry";
 import type { TypeRegistry } from "./registries/type_registry";
 import type { ScopeRegistry } from "./registries/scope_registry";
@@ -157,7 +157,12 @@ export class ResolutionRegistry {
     }
 
     // Resolve all calls and add caller_scope_id to each
-    const resolved_calls = this.resolve_calls(file_references, scopes, types, definitions);
+    const resolved_calls = this.resolve_calls(
+      file_references,
+      scopes,
+      types,
+      definitions
+    );
 
     // Group resolved calls by file AND by caller scope
     const calls_by_file = new Map<FilePath, CallReference[]>();
@@ -198,7 +203,10 @@ export class ResolutionRegistry {
 
     // Store resolved calls by file
     for (const file_id of file_ids) {
-      this.resolved_calls_by_file.set(file_id, calls_by_file.get(file_id) || []);
+      this.resolved_calls_by_file.set(
+        file_id,
+        calls_by_file.get(file_id) || []
+      );
     }
 
     // Store resolved calls by caller scope
@@ -223,7 +231,6 @@ export class ResolutionRegistry {
     types: TypeRegistry,
     definitions: DefinitionRegistry
   ): CallReference[] {
-
     const resolved_calls: CallReference[] = [];
 
     for (const references of file_references.values()) {
@@ -292,7 +299,6 @@ export class ResolutionRegistry {
 
     return resolved_calls;
   }
-
 
   /**
    * Remove all resolutions for a file.
@@ -370,7 +376,9 @@ export class ResolutionRegistry {
    * @param caller_scope_id - The function/method/constructor body scope
    * @returns Array of calls made from that scope
    */
-  get_calls_by_caller_scope(caller_scope_id: ScopeId): readonly CallReference[] {
+  get_calls_by_caller_scope(
+    caller_scope_id: ScopeId
+  ): readonly CallReference[] {
     return this.calls_by_caller_scope.get(caller_scope_id) || [];
   }
 

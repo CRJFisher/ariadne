@@ -7,18 +7,21 @@
 
 import * as path from "path";
 import type { FilePath } from "@ariadnejs/types";
-import type { FileSystemFolder } from "../types";
+import type { FileSystemFolder } from "../file_folders";
 
 /**
  * Check if a file exists in the FileSystemFolder tree
  */
-function file_exists(file_path: FilePath, root_folder: FileSystemFolder): boolean {
+function file_exists(
+  file_path: FilePath,
+  root_folder: FileSystemFolder
+): boolean {
   // Convert absolute path to relative path if needed
   const relative = file_path.startsWith(root_folder.path)
     ? path.relative(root_folder.path, file_path)
     : file_path;
 
-  const parts = relative.split(path.sep).filter((p) => p && p !== '.');
+  const parts = relative.split(path.sep).filter((p) => p && p !== ".");
   let current = root_folder;
 
   // Navigate through folders
@@ -112,9 +115,8 @@ function resolve_from_parent(
 
   // If this is a mod.rs file, go up two levels
   // Otherwise, stay at current directory (parent module is in same dir)
-  const parent_dir = base_name === "mod.rs"
-    ? path.dirname(current_dir)
-    : current_dir;
+  const parent_dir =
+    base_name === "mod.rs" ? path.dirname(current_dir) : current_dir;
 
   return resolve_rust_module_path(parent_dir, module_parts, root_folder);
 }
@@ -171,7 +173,10 @@ function resolve_rust_module_path(
 /**
  * Find Rust crate root by looking for lib.rs, main.rs, or Cargo.toml
  */
-function find_rust_crate_root(start_file: FilePath, root_folder: FileSystemFolder): string {
+function find_rust_crate_root(
+  start_file: FilePath,
+  root_folder: FileSystemFolder
+): string {
   let current = path.dirname(start_file);
 
   while (true) {
@@ -184,7 +189,9 @@ function find_rust_crate_root(start_file: FilePath, root_folder: FileSystemFolde
     }
 
     // Look for Cargo.toml
-    if (file_exists(path.join(current, "Cargo.toml") as FilePath, root_folder)) {
+    if (
+      file_exists(path.join(current, "Cargo.toml") as FilePath, root_folder)
+    ) {
       // Check for src/ directory
       const src_dir = path.join(current, "src");
       if (

@@ -10,7 +10,7 @@ import { resolve_module_path_rust } from "./import_resolver.rust";
 import type { FilePath, Language } from "@ariadnejs/types";
 import { build_semantic_index } from "../../index_single_file/semantic_index";
 import type { ParsedFile } from "../../index_single_file/file_utils";
-import { build_file_tree } from "../symbol_resolution.test_helpers";
+import { build_file_tree } from "../file_folders_test_helper";
 
 // Helper to create ParsedFile for Rust
 function create_parsed_file(
@@ -42,7 +42,11 @@ describe("resolve_module_path_rust", () => {
       main_file,
     ]);
 
-    const result = resolve_module_path_rust("crate::utils", main_file, root_folder);
+    const result = resolve_module_path_rust(
+      "crate::utils",
+      main_file,
+      root_folder
+    );
 
     expect(result).toBe(utils_file);
   });
@@ -62,7 +66,11 @@ describe("resolve_module_path_rust", () => {
       main_file,
     ]);
 
-    const result = resolve_module_path_rust("crate::utils", main_file, root_folder);
+    const result = resolve_module_path_rust(
+      "crate::utils",
+      main_file,
+      root_folder
+    );
 
     expect(result).toBe(utils_file);
   });
@@ -73,12 +81,13 @@ describe("resolve_module_path_rust", () => {
     const sub_dir = path.join(TEST_DIR, "sub");
     const main_file = path.join(sub_dir, "mod.rs") as FilePath;
 
-    const root_folder = build_file_tree([
-      utils_file as FilePath,
-      main_file,
-    ]);
+    const root_folder = build_file_tree([utils_file as FilePath, main_file]);
 
-    const result = resolve_module_path_rust("super::utils", main_file, root_folder);
+    const result = resolve_module_path_rust(
+      "super::utils",
+      main_file,
+      root_folder
+    );
 
     expect(result).toBe(utils_file);
   });
@@ -89,12 +98,13 @@ describe("resolve_module_path_rust", () => {
     const utils_file = path.join(module_dir, "utils.rs");
     const main_file = path.join(module_dir, "mod.rs") as FilePath;
 
-    const root_folder = build_file_tree([
-      utils_file as FilePath,
-      main_file,
-    ]);
+    const root_folder = build_file_tree([utils_file as FilePath, main_file]);
 
-    const result = resolve_module_path_rust("self::utils", main_file, root_folder);
+    const result = resolve_module_path_rust(
+      "self::utils",
+      main_file,
+      root_folder
+    );
 
     expect(result).toBe(utils_file);
   });
@@ -111,7 +121,11 @@ describe("resolve_module_path_rust", () => {
       main_file,
     ]);
 
-    const result = resolve_module_path_rust("crate::utils", main_file, root_folder);
+    const result = resolve_module_path_rust(
+      "crate::utils",
+      main_file,
+      root_folder
+    );
 
     expect(result).toBe(utils_file);
   });
@@ -129,7 +143,11 @@ describe("resolve_module_path_rust", () => {
       main_file,
     ]);
 
-    const result = resolve_module_path_rust("crate::utils", main_file, root_folder);
+    const result = resolve_module_path_rust(
+      "crate::utils",
+      main_file,
+      root_folder
+    );
 
     expect(result).toBe(mod_file);
   });
@@ -149,7 +167,11 @@ describe("resolve_module_path_rust", () => {
       main_file,
     ]);
 
-    const result = resolve_module_path_rust("crate::utils", main_file, root_folder);
+    const result = resolve_module_path_rust(
+      "crate::utils",
+      main_file,
+      root_folder
+    );
 
     expect(result).toBe(utils_file);
   });
@@ -169,7 +191,11 @@ describe("resolve_module_path_rust", () => {
       main_file,
     ]);
 
-    const result = resolve_module_path_rust("crate::utils::helpers", main_file, root_folder);
+    const result = resolve_module_path_rust(
+      "crate::utils::helpers",
+      main_file,
+      root_folder
+    );
 
     expect(result).toBe(helpers_file);
   });
@@ -192,7 +218,11 @@ describe("resolve_module_path_rust", () => {
       main_file,
     ]);
 
-    const result = resolve_module_path_rust("crate::a::b::c", main_file, root_folder);
+    const result = resolve_module_path_rust(
+      "crate::a::b::c",
+      main_file,
+      root_folder
+    );
 
     expect(result).toBe(c_file);
   });
@@ -203,7 +233,11 @@ describe("resolve_module_path_rust", () => {
 
     const root_folder = build_file_tree([main_file]);
 
-    const result = resolve_module_path_rust("std::collections", main_file, root_folder);
+    const result = resolve_module_path_rust(
+      "std::collections",
+      main_file,
+      root_folder
+    );
 
     expect(result).toBe("std::collections");
   });
@@ -214,12 +248,13 @@ describe("resolve_module_path_rust", () => {
     const utils_file = path.join(TEST_DIR, "utils.rs");
     const main_file = main_file_path as FilePath;
 
-    const root_folder = build_file_tree([
-      main_file,
-      utils_file as FilePath,
-    ]);
+    const root_folder = build_file_tree([main_file, utils_file as FilePath]);
 
-    const result = resolve_module_path_rust("crate::utils", main_file, root_folder);
+    const result = resolve_module_path_rust(
+      "crate::utils",
+      main_file,
+      root_folder
+    );
 
     expect(result).toBe(utils_file);
   });
@@ -237,7 +272,11 @@ describe("resolve_module_path_rust", () => {
       helpers_file as FilePath,
     ]);
 
-    const result = resolve_module_path_rust("super::utils", main_file, root_folder);
+    const result = resolve_module_path_rust(
+      "super::utils",
+      main_file,
+      root_folder
+    );
 
     expect(result).toBe(utils_file);
   });
@@ -250,7 +289,11 @@ describe("resolve_module_path_rust", () => {
 
     const root_folder = build_file_tree([lib_file as FilePath]);
 
-    const result = resolve_module_path_rust("crate::nonexistent", main_file, root_folder);
+    const result = resolve_module_path_rust(
+      "crate::nonexistent",
+      main_file,
+      root_folder
+    );
 
     expect(result).toBe(expected);
   });
@@ -268,7 +311,11 @@ describe("resolve_module_path_rust", () => {
       utils_file as FilePath,
     ]);
 
-    const result = resolve_module_path_rust("crate::utils", main_file, root_folder);
+    const result = resolve_module_path_rust(
+      "crate::utils",
+      main_file,
+      root_folder
+    );
 
     expect(result).toBe(utils_file);
   });

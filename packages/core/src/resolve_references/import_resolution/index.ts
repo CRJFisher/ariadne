@@ -5,8 +5,7 @@
  */
 
 export {
-  extract_import_specs,
-  resolve_export_chain,
+  resolve_module_path,
 } from "./import_resolver";
 
 export { resolve_module_path_javascript } from "./import_resolver.javascript";
