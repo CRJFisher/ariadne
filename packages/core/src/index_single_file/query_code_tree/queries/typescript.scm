@@ -510,24 +510,27 @@
 ;; IMPORTS - Standard JavaScript imports
 ;; ==============================================================================
 
-; Named imports
+; Named imports - captures both simple and aliased imports
+; For simple imports (no alias): captures the name
+; For aliased imports: captures the alias, handler extracts original name
 (import_specifier
-  name: (identifier) @definition.import
+  name: (identifier) @_import_name
+  alias: (identifier) @definition.import.named
 )
 
 (import_specifier
-  name: (identifier)
-  alias: (identifier) @definition.import
+  name: (identifier) @definition.import.named
+  !alias
 )
 
 ; Default imports
 (import_clause
-  (identifier) @definition.import
+  (identifier) @definition.import.default
 )
 
 ; Namespace imports
 (namespace_import
-  (identifier) @definition.import
+  (identifier) @definition.import.namespace
 )
 
 ;; ==============================================================================

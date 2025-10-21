@@ -288,10 +288,9 @@ describe("Project Integration - TypeScript", () => {
       const imports = Array.from(main!.imported_symbols.values());
       const namespace_import = imports.find((i) => i.name === ("utils" as SymbolName));
       expect(namespace_import).toBeDefined();
-      // TODO: BUG - TypeScript indexer marks namespace imports as "named" instead of "namespace"
-      // if (namespace_import) {
-      //   expect(namespace_import.import_kind).toBe("namespace");
-      // }
+      if (namespace_import) {
+        expect(namespace_import.import_kind).toBe("namespace");
+      }
 
       // Find calls to utils.helper() and utils.otherFunction()
       const method_calls = main!.references.filter(
