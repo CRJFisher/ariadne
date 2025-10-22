@@ -19,11 +19,7 @@ import { ReferenceBuilder } from "../../references/reference_builder";
 import { JAVASCRIPT_METADATA_EXTRACTORS } from "./javascript_metadata";
 import { node_to_location } from "../../node_utils";
 
-// These tests are redundant with integration tests in semantic_index.javascript.test.ts
-// They test individual processors in isolation without running scope processing first,
-// causing "No body scope found" errors. The functionality is fully tested by 41 passing
-// integration tests that run the complete pipeline.
-describe.skip("JavaScript Builder Configuration", () => {
+describe("JavaScript Builder Configuration", () => {
   let parser: Parser;
 
   beforeAll(() => {
@@ -34,11 +30,56 @@ describe.skip("JavaScript Builder Configuration", () => {
   const TEST_FILE_PATH = "/test/file.js" as FilePath;
 
   // Helper function to create test context
-  function createTestContext(): ProcessingContext {
+  function createTestContext(with_scopes: boolean = false): ProcessingContext {
     const test_scope_id = "module:test.js:1:0:100:0:<module>" as ScopeId;
+    const scopes = new Map();
+
+    if (with_scopes) {
+      // Add method body scopes for tests that need them
+      scopes.set("method:test.js:3:2:5:3:<method_body>" as ScopeId, {
+        id: "method:test.js:3:2:5:3:<method_body>" as ScopeId,
+        type: "method",
+        name: "myMethod",
+        location: {
+          file_path: TEST_FILE_PATH,
+          start_line: 3,
+          start_column: 2,
+          end_line: 5,
+          end_column: 3,
+        },
+        parent_id: test_scope_id,
+      });
+      scopes.set("method:test.js:7:2:9:3:<method_body>" as ScopeId, {
+        id: "method:test.js:7:2:9:3:<method_body>" as ScopeId,
+        type: "method",
+        name: "add",
+        location: {
+          file_path: TEST_FILE_PATH,
+          start_line: 7,
+          start_column: 2,
+          end_line: 9,
+          end_column: 3,
+        },
+        parent_id: test_scope_id,
+      });
+      // Add function scope for parameter tests
+      scopes.set("function:test.js:1:0:3:1:<function_body>" as ScopeId, {
+        id: "function:test.js:1:0:3:1:<function_body>" as ScopeId,
+        type: "function",
+        name: "myFunc",
+        location: {
+          file_path: TEST_FILE_PATH,
+          start_line: 1,
+          start_column: 0,
+          end_line: 3,
+          end_column: 1,
+        },
+        parent_id: test_scope_id,
+      });
+    }
 
     return {
-      scopes: new Map(),
+      scopes,
       captures: [],
       scope_depths: new Map(),
       root_scope_id: test_scope_id,
@@ -111,9 +152,9 @@ describe.skip("JavaScript Builder Configuration", () => {
     it("should contain import capture mappings with process functions", () => {
       const importMappings = [
         "definition.import",
-        "import.named",
-        "import.default",
-        "import.namespace",
+        "definition.import.named",
+        "definition.import.default",
+        "definition.import.namespace",
       ];
 
       for (const mapping of importMappings) {
@@ -231,7 +272,7 @@ describe.skip("JavaScript Builder Configuration", () => {
             myMethod() { }
           }
         `;
-        const context = createTestContext();
+        const context = createTestContext(true); // Need scopes for method bodies
         const builder = new DefinitionBuilder(context);
 
         const ast = parser.parse(code);
@@ -302,7 +343,7 @@ describe.skip("JavaScript Builder Configuration", () => {
         }
 
         const capture: CaptureNode = {
-          name: "import.default",
+          name: "definition.import.default",
           category: "definition" as SemanticCategory,
           entity: "import" as SemanticEntity,
           node: nameNode as any,
@@ -310,7 +351,7 @@ describe.skip("JavaScript Builder Configuration", () => {
           location: node_to_location(nameNode, TEST_FILE_PATH),
         };
 
-        const processor = JAVASCRIPT_BUILDER_CONFIG.get("import.default");
+        const processor = JAVASCRIPT_BUILDER_CONFIG.get("definition.import.default");
         expect(processor).toBeDefined();
         processor?.process(capture, builder, context);
 
@@ -364,7 +405,7 @@ describe.skip("JavaScript Builder Configuration", () => {
             myProperty = 42;
           }
         `;
-        const context = createTestContext();
+        const context = createTestContext(true); // Need scopes for class bodies
         const builder = new DefinitionBuilder(context);
 
         const ast = parser.parse(code);
@@ -422,7 +463,7 @@ describe.skip("JavaScript Builder Configuration", () => {
 
       it("should process function parameters", () => {
         const code = "function myFunc(param1, param2) { }";
-        const context = createTestContext();
+        const context = createTestContext(true); // Need scopes for function bodies
         const builder = new DefinitionBuilder(context);
 
         const ast = parser.parse(code);
@@ -1109,7 +1150,7 @@ export { foo };
             }
           }
         `;
-        const context = createTestContext();
+        const context = createTestContext(true); // Need scopes for method bodies
         const builder = new DefinitionBuilder(context);
         const ast = parser.parse(code);
 
