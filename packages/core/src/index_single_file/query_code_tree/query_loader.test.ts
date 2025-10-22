@@ -258,7 +258,7 @@ describe("Query Loader", () => {
       });
 
       it("should throw when load_query would throw", () => {
-        const invalid_langs = ["java", "go", "cpp"] as Language[];
+        const invalid_langs = ["java", "go", "cpp"] as unknown as Language[];
         for (const lang of invalid_langs) {
           expect(() => has_query(lang)).toThrow();
           expect(() => load_query(lang)).toThrow();
