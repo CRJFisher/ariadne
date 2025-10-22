@@ -1,9 +1,11 @@
 # Task: Strip MCP to Foundation
 
-**Status**: To Do
+**Status**: Completed
 **Epic**: epic-11.147 - Overhaul MCP Package for Call Graph Analysis
 **Created**: 2025-10-22
+**Completed**: 2025-10-22
 **Priority**: Medium
+**Commit**: ca8e73e
 
 ## Overview
 
@@ -105,19 +107,57 @@ After cleanup, verify:
 
 ## Acceptance Criteria
 
-- [ ] All tool files deleted from `packages/mcp/src/tools/`
-- [ ] `types.ts` removed (legacy adapters)
-- [ ] `start_server.ts` updated to use new `Project` API
-- [ ] `start_server.ts` calls `await project.initialize()`
-- [ ] `index.ts` exports cleaned (no tool exports)
-- [ ] Server starts successfully via `node dist/server.js`
-- [ ] No tools registered (MCP client shows 0 tools)
-- [ ] No TypeScript errors
-- [ ] No runtime errors on startup
-- [ ] Project initializes without error
+- [x] All tool files deleted from `packages/mcp/src/tools/`
+- [x] `types.ts` removed (legacy adapters)
+- [x] `start_server.ts` updated to use new `Project` API
+- [x] `start_server.ts` calls `await project.initialize()`
+- [x] `index.ts` exports cleaned (no tool exports)
+- [x] Server starts successfully via `node dist/server.js`
+- [x] No tools registered (MCP client shows 0 tools)
+- [x] No TypeScript errors
+- [x] No runtime errors on startup
+- [x] Project initializes without error
+
+## Implementation Summary
+
+### Changes Made
+
+**Deletions (1891 lines)**:
+- Removed all 4 legacy tool files from `packages/mcp/src/tools/`
+- Removed `packages/mcp/src/types.ts` (legacy type adapters)
+- Removed all tool registration and handler code from `start_server.ts`
+
+**Updates (109 lines)**:
+- `start_server.ts`:
+  - Imports `Project` directly from `@ariadnejs/core` instead of stub
+  - Calls `await project.initialize(projectPath as FilePath)`
+  - Kept file loading infrastructure (`load_project_files`, `load_file_if_needed`) - exported for reuse
+  - TODO comment marks where tools will be registered in subsequent tasks
+
+- `index.ts`:
+  - Exports only: `start_server`, `load_project_files`, `load_file_if_needed`
+  - Exports only: `AriadneMCPServerOptions` type
+  - Removed all legacy tool exports
+
+### Verification
+
+✅ TypeScript compiles without errors
+✅ Server starts successfully
+✅ No tools registered (ready for new implementation)
+✅ Project initialization works correctly
+
+### Result
+
+**Net: -1782 lines (-94%)**
+
+MCP package successfully stripped to foundation. Ready for call graph analysis tools.
 
 ## Related Files
 
 - [start_server.ts](../../../../packages/mcp/src/start_server.ts)
 - [index.ts](../../../../packages/mcp/src/index.ts)
 - [project.ts](../../../../packages/core/src/project/project.ts)
+
+## Next Steps
+
+Proceed to [task-epic-11.147.2](task-epic-11.147.2-Implement-list_functions-Tool.md) to implement the first call graph analysis tool.
