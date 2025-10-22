@@ -58,7 +58,7 @@ function build_signature(definition: any): string | undefined {
         .join(", ") || "";
       return `constructor(${params})`;
     }
-  } catch (error) {
+  } catch {
     // Gracefully handle any errors in signature building
     return undefined;
   }
@@ -126,7 +126,8 @@ async function load_project_files(
           entry.name === "node_modules" ||
           entry.name === "dist" ||
           entry.name === ".git" ||
-          entry.name === "coverage"
+          entry.name === "coverage" ||
+          entry.name === "tests"
         ) {
           continue;
         }
@@ -157,9 +158,9 @@ async function analyze_packages_core(): Promise<AnalysisResult> {
   console.error(`Analyzing packages/core at: ${project_path}`);
   console.error("Loading files...");
 
-  // Initialize project
+  // Initialize project with excluded folders
   const project = new Project();
-  await project.initialize(project_path as FilePath);
+  await project.initialize(project_path as FilePath, ["tests"]);
 
   // Load all source files
   const files_loaded = await load_project_files(project, project_path);
@@ -245,7 +246,7 @@ async function main() {
     // Write JSON to file
     await fs.writeFile(output_file, json, "utf-8");
 
-    console.error(`✅ Analysis complete!`);
+    console.error("✅ Analysis complete!");
     console.error(`📊 Files analyzed: ${result.total_files_analyzed}`);
     console.error(`🎯 Entry points found: ${result.total_entry_points}`);
     console.error(`📁 Output written to: ${output_file}`);

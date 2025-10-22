@@ -120,10 +120,20 @@ export class Project {
   // ===== Resolution layer (always up-to-date) =====
   public resolutions: ResolutionRegistry = new ResolutionRegistry();
   private root_folder?: FileSystemFolder = undefined;
+  private excluded_folders: Set<string> = new Set();
 
-  async initialize(root_folder_abs_path?: FilePath): Promise<void> {
+  async initialize(
+    root_folder_abs_path?: FilePath,
+    excluded_folders?: string[]
+  ): Promise<void> {
     const resolved_path =
       root_folder_abs_path ?? ((await realpath(process.cwd())) as FilePath);
+
+    // Store excluded folders for use in get_file_tree
+    if (excluded_folders) {
+      this.excluded_folders = new Set(excluded_folders);
+    }
+
     this.root_folder = await this.get_file_tree(resolved_path);
   }
 
@@ -380,6 +390,11 @@ export class Project {
     // Process each entry
     for (const entry of entries) {
       if (entry.isDirectory()) {
+        // Skip excluded folders
+        if (this.excluded_folders.has(entry.name)) {
+          continue;
+        }
+
         // Recursively process subdirectory
         const sub_folder_path = join(root_folder, entry.name) as FilePath;
         const sub_tree = await this.get_file_tree(sub_folder_path);
