@@ -107,3 +107,37 @@ Once properly configured with the right setup, all tests validated important beh
 - 50447cd - fix: Enable 7 skipped member extraction tests with corrected assertions
 - 5190379 - fix: Enable 7 skipped reference builder tests with mock extractors
 - 21a97ed - fix: Enable 2 skipped edge case tests (nested functions, Python extractor)
+
+## Verification (2025-10-22)
+
+Full test suite run completed to verify all fixes:
+
+### Test Results Summary
+
+```text
+Test Files  47 passed (47)
+Tests       1334 passed | 4 todo (1338)
+Duration    73.27s
+```
+
+### Remaining Skipped Tests: 4 (All Intentional)
+
+All remaining skipped tests use `.todo()` to mark planned features requiring future work:
+
+1. **project.python.integration.test.ts:247**: "should resolve method calls on cross-file constructed instances (requires assignment tracking)"
+2. **project.javascript.integration.test.ts:480**: "should resolve method calls on imported class instances"
+3. **project.javascript.integration.test.ts:647**: "should resolve method calls on aliased class instances"
+4. **project.integration.test.ts:325**: "should resolve method calls on imported classes across files in TypeScript"
+
+All `.todo()` tests are properly documented with feature requirements.
+
+### Failing Tests: 0
+
+All 1334 tests pass successfully. Debug messages in test output are expected and do not indicate failures.
+
+### Status: ✅ VERIFIED
+
+- **Zero** inappropriate `.skip()` calls remain
+- **100%** test pass rate (1334/1334 passing tests)
+- **All** skipped tests are intentional `.todo()` markers
+- **Comprehensive** test coverage maintained across all semantic index components
