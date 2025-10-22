@@ -239,15 +239,25 @@ describe("ReferenceBuilder", () => {
       expect(references[0].call_type).toBe("constructor");
     });
 
-    // Skipped: Requires language-specific metadata extractors (task 104.3+)
-    it.skip("should process type references", () => {
+    it("should process type references", () => {
+      const mockExtractors = create_mock_extractors({
+        extract_type_from_annotation: vi.fn((node, file_path) => ({
+          type_name: "MyType" as SymbolName,
+          type_id: "type:MyType:test.ts:1:0" as SymbolId,
+          certainty: "declared" as const,
+        })),
+      });
+
+      const builder = new ReferenceBuilder(
+        context,
+        mockExtractors,
+        TEST_FILE_PATH
+      );
+
       const capture = create_test_capture({
         category: SemanticCategory.REFERENCE,
         entity: SemanticEntity.TYPE,
         symbol_name: "MyType",
-        context: {
-          type_name: "MyType",
-        },
       });
 
       builder.process(capture);
@@ -259,15 +269,26 @@ describe("ReferenceBuilder", () => {
       expect(references[0].type_info?.type_name).toBe("MyType");
     });
 
-    it.skip("should process type references with generics", () => {
+    it("should process type references with generics", () => {
+      const mockExtractors = create_mock_extractors({
+        extract_type_from_annotation: vi.fn((node, file_path) => ({
+          type_name: "Array" as SymbolName,
+          type_id: "type:Array:test.ts:1:0" as SymbolId,
+          certainty: "declared" as const,
+        })),
+        extract_type_arguments: vi.fn((node) => ["string"]),
+      });
+
+      const builder = new ReferenceBuilder(
+        context,
+        mockExtractors,
+        TEST_FILE_PATH
+      );
+
       const capture = create_test_capture({
         category: SemanticCategory.REFERENCE,
         entity: SemanticEntity.TYPE,
         symbol_name: "Array",
-        context: {
-          type_name: "Array",
-          type_arguments: "string",
-        },
       });
 
       builder.process(capture);
@@ -279,17 +300,26 @@ describe("ReferenceBuilder", () => {
       expect(references[0].type_info?.type_name).toBe("Array<string>");
     });
 
-    it.skip("should process property access", () => {
+    it("should process property access", () => {
+      const mockExtractors = create_mock_extractors({
+        extract_type_from_annotation: vi.fn((node, file_path) => ({
+          type_name: "Array" as SymbolName,
+          type_id: "type:Array:test.ts:1:0" as SymbolId,
+          certainty: "declared" as const,
+        })),
+        extract_is_optional_chain: vi.fn((node) => true),
+      });
+
+      const builder = new ReferenceBuilder(
+        context,
+        mockExtractors,
+        TEST_FILE_PATH
+      );
+
       const capture = create_test_capture({
         category: SemanticCategory.REFERENCE,
         entity: SemanticEntity.PROPERTY,
         symbol_name: "length",
-        context: {
-          type_name: "Array",
-        },
-        modifiers: {
-          is_optional: true,
-        },
       });
 
       builder.process(capture);
@@ -303,14 +333,25 @@ describe("ReferenceBuilder", () => {
       expect(references[0].member_access?.is_optional_chain).toBe(true);
     });
 
-    it.skip("should process assignments with type flow", () => {
+    it("should process assignments with type flow", () => {
+      const mockExtractors = create_mock_extractors({
+        extract_type_from_annotation: vi.fn((node, file_path) => ({
+          type_name: "number" as SymbolName,
+          type_id: "type:number:test.ts:1:0" as SymbolId,
+          certainty: "declared" as const,
+        })),
+      });
+
+      const builder = new ReferenceBuilder(
+        context,
+        mockExtractors,
+        TEST_FILE_PATH
+      );
+
       const capture = create_test_capture({
         category: SemanticCategory.ASSIGNMENT,
         entity: SemanticEntity.VARIABLE,
         symbol_name: "result",
-        context: {
-          type_name: "number",
-        },
       });
 
       builder.process(capture);
@@ -857,14 +898,27 @@ describe("ReferenceBuilder", () => {
   });
 
   describe("complex scenarios", () => {
-    it.skip("should handle method call with property chain", () => {
+    it("should handle method call with property chain", () => {
+      const propertyChain: SymbolName[] = [
+        "person",
+        "address",
+        "toString",
+      ] as SymbolName[];
+
+      const mockExtractors = create_mock_extractors({
+        extract_property_chain: vi.fn((node) => propertyChain),
+      });
+
+      const builder = new ReferenceBuilder(
+        context,
+        mockExtractors,
+        TEST_FILE_PATH
+      );
+
       const capture = create_test_capture({
         category: SemanticCategory.REFERENCE,
         entity: SemanticEntity.METHOD,
         symbol_name: "toString",
-        context: {
-          property_chain: ["person", "address", "toString"],
-        },
       });
 
       builder.process(capture);
@@ -878,14 +932,25 @@ describe("ReferenceBuilder", () => {
       ]);
     });
 
-    it.skip("should handle type references", () => {
+    it("should handle type references", () => {
+      const mockExtractors = create_mock_extractors({
+        extract_type_from_annotation: vi.fn((node, file_path) => ({
+          type_name: "string" as SymbolName,
+          type_id: "type:string:test.ts:1:0" as SymbolId,
+          certainty: "declared" as const,
+        })),
+      });
+
+      const builder = new ReferenceBuilder(
+        context,
+        mockExtractors,
+        TEST_FILE_PATH
+      );
+
       const capture = create_test_capture({
         category: SemanticCategory.REFERENCE,
         entity: SemanticEntity.TYPE,
         symbol_name: "string",
-        context: {
-          type_name: "string",
-        },
       });
 
       builder.process(capture);
@@ -895,14 +960,25 @@ describe("ReferenceBuilder", () => {
       expect(references[0].type_info?.type_name).toBe("string");
     });
 
-    it.skip("should handle assignments", () => {
+    it("should handle assignments", () => {
+      const mockExtractors = create_mock_extractors({
+        extract_type_from_annotation: vi.fn((node, file_path) => ({
+          type_name: "string" as SymbolName,
+          type_id: "type:string:test.ts:1:0" as SymbolId,
+          certainty: "declared" as const,
+        })),
+      });
+
+      const builder = new ReferenceBuilder(
+        context,
+        mockExtractors,
+        TEST_FILE_PATH
+      );
+
       const capture = create_test_capture({
         category: SemanticCategory.ASSIGNMENT,
         entity: SemanticEntity.VARIABLE,
         symbol_name: "value",
-        context: {
-          type_name: "string",
-        },
       });
 
       builder.process(capture);
