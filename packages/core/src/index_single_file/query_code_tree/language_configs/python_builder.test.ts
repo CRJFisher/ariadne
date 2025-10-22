@@ -18,11 +18,7 @@ import type { Location, ScopeId, SymbolName } from "@ariadnejs/types";
 import { node_to_location } from "../../node_utils";
 import { extract_import_path } from "./python_builder";
 
-// These tests are redundant with integration tests in semantic_index.python.test.ts
-// They test individual processors in isolation without running scope processing first,
-// causing "No body scope found" errors. The functionality is fully tested by 46 passing
-// integration tests that run the complete pipeline.
-describe.skip("Python Builder Configuration", () => {
+describe("Python Builder Configuration", () => {
   let parser: Parser;
 
   beforeAll(() => {
@@ -31,12 +27,57 @@ describe.skip("Python Builder Configuration", () => {
   });
 
   // Helper function to create test context
-  function createTestContext(): ProcessingContext {
+  function createTestContext(with_scopes: boolean = false): ProcessingContext {
     const test_scope_id = "module:test.py:1:0:100:0:<module>" as ScopeId;
+    const scopes = new Map();
+
+    if (with_scopes) {
+      // Add method body scopes for tests that need them
+      scopes.set("method:test.py:3:2:5:3:<method_body>" as ScopeId, {
+        id: "method:test.py:3:2:5:3:<method_body>" as ScopeId,
+        type: "method",
+        name: "my_method",
+        location: {
+          file_path: "test.py" as any,
+          start_line: 3,
+          start_column: 2,
+          end_line: 5,
+          end_column: 3,
+        },
+        parent_id: test_scope_id,
+      });
+      scopes.set("method:test.py:7:2:9:3:<method_body>" as ScopeId, {
+        id: "method:test.py:7:2:9:3:<method_body>" as ScopeId,
+        type: "method",
+        name: "__init__",
+        location: {
+          file_path: "test.py" as any,
+          start_line: 7,
+          start_column: 2,
+          end_line: 9,
+          end_column: 3,
+        },
+        parent_id: test_scope_id,
+      });
+      // Add function scope for parameter tests
+      scopes.set("function:test.py:1:0:3:1:<function_body>" as ScopeId, {
+        id: "function:test.py:1:0:3:1:<function_body>" as ScopeId,
+        type: "function",
+        name: "my_function",
+        location: {
+          file_path: "test.py" as any,
+          start_line: 1,
+          start_column: 0,
+          end_line: 3,
+          end_column: 1,
+        },
+        parent_id: test_scope_id,
+      });
+    }
 
     return {
       captures: [],
-      scopes: new Map(),
+      scopes,
       scope_depths: new Map(),
       root_scope_id: test_scope_id,
       get_scope_id: (location: Location) => test_scope_id,
@@ -236,11 +277,12 @@ describe.skip("Python Builder Configuration", () => {
       const code = `def my_function():
     pass`;
       const capture = createCapture(code, "definition.function", "identifier");
-      const builder = new DefinitionBuilder(createTestContext());
+      const context = createTestContext(true); // Need scopes for function bodies
+      const builder = new DefinitionBuilder(context);
       const config = PYTHON_BUILDER_CONFIG.get("definition.function");
 
       expect(() => {
-        config?.process(capture, builder, createTestContext());
+        config?.process(capture, builder, context);
       }).not.toThrow();
     });
 
@@ -270,22 +312,24 @@ describe.skip("Python Builder Configuration", () => {
       const code = `async def async_function():
     pass`;
       const capture = createCapture(code, "definition.function.async", "identifier");
-      const builder = new DefinitionBuilder(createTestContext());
+      const context = createTestContext(true); // Need scopes for function bodies
+      const builder = new DefinitionBuilder(context);
       const config = PYTHON_BUILDER_CONFIG.get("definition.function.async");
 
       expect(() => {
-        config?.process(capture, builder, createTestContext());
+        config?.process(capture, builder, context);
       }).not.toThrow();
     });
 
     it("should handle lambda functions", () => {
       const code = "f = lambda x: x * 2";
       const capture = createCapture(code, "definition.lambda", "lambda");
-      const builder = new DefinitionBuilder(createTestContext());
+      const context = createTestContext(true); // Need scopes for function bodies
+      const builder = new DefinitionBuilder(context);
       const config = PYTHON_BUILDER_CONFIG.get("definition.lambda");
 
       expect(() => {
-        config?.process(capture, builder, createTestContext());
+        config?.process(capture, builder, context);
       }).not.toThrow();
     });
 
@@ -593,7 +637,7 @@ describe.skip("Python Builder Configuration", () => {
         const code = `def greet(name: str, age: int = 0) -> str:
     return f"Hello {name}"`;
 
-        const context = createTestContext();
+        const context = createTestContext(true); // Need scopes for function bodies
         const builder = new DefinitionBuilder(context);
 
         const ast = parser.parse(code);
@@ -862,7 +906,7 @@ describe.skip("Python Builder Configuration", () => {
         it("should have is_exported=true for module-level public functions", () => {
           const code = `def public_function():
     pass`;
-          const context = createTestContext();
+          const context = createTestContext(true); // Need scopes for function bodies
           const builder = new DefinitionBuilder(context);
           const capture = createCapture(code, "definition.function", "identifier");
 
@@ -883,7 +927,7 @@ describe.skip("Python Builder Configuration", () => {
         it("should have is_exported=false for module-level private functions (single underscore)", () => {
           const code = `def _private_function():
     pass`;
-          const context = createTestContext();
+          const context = createTestContext(true); // Need scopes for function bodies
           const builder = new DefinitionBuilder(context);
           const capture = createCapture(code, "definition.function", "identifier");
 
@@ -904,7 +948,7 @@ describe.skip("Python Builder Configuration", () => {
         it("should have is_exported=false for module-level private functions (double underscore)", () => {
           const code = `def __private_function():
     pass`;
-          const context = createTestContext();
+          const context = createTestContext(true); // Need scopes for function bodies
           const builder = new DefinitionBuilder(context);
           const capture = createCapture(code, "definition.function", "identifier");
 
@@ -925,7 +969,7 @@ describe.skip("Python Builder Configuration", () => {
         it("should have is_exported=true for module-level magic functions (dunder)", () => {
           const code = `def __init__():
     pass`;
-          const context = createTestContext();
+          const context = createTestContext(true); // Need scopes for function bodies
           const builder = new DefinitionBuilder(context);
           const capture = createCapture(code, "definition.function", "identifier");
 
@@ -950,9 +994,25 @@ describe.skip("Python Builder Configuration", () => {
           const nested_scope_id = "function:test.py:2:0:5:0:outer_func" as ScopeId;
           const module_scope_id = "module:test.py:1:0:100:0:<module>" as ScopeId;
 
+          const scopes = new Map();
+          // Add function scope for nested function bodies
+          scopes.set("function:test.py:1:0:3:1:<function_body>" as ScopeId, {
+            id: "function:test.py:1:0:3:1:<function_body>" as ScopeId,
+            type: "function",
+            name: "inner_function",
+            location: {
+              file_path: "test.py" as any,
+              start_line: 1,
+              start_column: 0,
+              end_line: 3,
+              end_column: 1,
+            },
+            parent_id: nested_scope_id,
+          });
+
           const context: ProcessingContext = {
             captures: [],
-            scopes: new Map(),
+            scopes,
             scope_depths: new Map(),
             root_scope_id: module_scope_id,
             get_scope_id: (location: Location) => nested_scope_id, // Return nested scope
@@ -979,7 +1039,7 @@ describe.skip("Python Builder Configuration", () => {
         it("should have is_exported=true for module-level async functions", () => {
           const code = `async def async_function():
     pass`;
-          const context = createTestContext();
+          const context = createTestContext(true); // Need scopes for function bodies
           const builder = new DefinitionBuilder(context);
           const capture = createCapture(code, "definition.function.async", "identifier");
 
@@ -999,7 +1059,7 @@ describe.skip("Python Builder Configuration", () => {
 
         it("should have is_exported=false for lambda functions", () => {
           const code = "f = lambda x: x * 2";
-          const context = createTestContext();
+          const context = createTestContext(true); // Need scopes for function bodies
           const builder = new DefinitionBuilder(context);
           const capture = createCapture(code, "definition.lambda", "lambda");
 
