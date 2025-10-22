@@ -19,7 +19,8 @@ build/
 !packages/types/**/*.js
 
 # IDE and editor files
-.vscode/
+.vscode/*
+!.vscode/launch.json
 .idea/
 *.swp
 *.swo
@@ -39,6 +40,9 @@ coverage/
 *.tmp
 *.temp
 .cache/
+
+# Analysis output
+analysis_output/
 
 # Claude AI specific
 .claude/settings.local.json

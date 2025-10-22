@@ -1,0 +1,40 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Analyze Self (Core)",
+      "type": "node",
+      "request": "launch",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["tsx"],
+      "args": ["packages/core/analyze_self.ts"],
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal",
+      "internalConsoleOptions": "neverOpen"
+    },
+    {
+      "name": "Analyze Self (Core - Pretty)",
+      "type": "node",
+      "request": "launch",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["tsx"],
+      "args": ["packages/core/analyze_self.ts", "--pretty"],
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal",
+      "internalConsoleOptions": "neverOpen"
+    },
+    {
+      "name": "Analyze Self (Core - Debug)",
+      "type": "node",
+      "request": "launch",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["tsx"],
+      "args": ["packages/core/analyze_self.ts", "--pretty"],
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal",
+      "internalConsoleOptions": "neverOpen",
+      "sourceMaps": true,
+      "skipFiles": ["<node_internals>/**"]
+    }
+  ]
+}
