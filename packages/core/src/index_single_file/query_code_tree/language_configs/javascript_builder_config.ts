@@ -85,8 +85,8 @@ export const JAVASCRIPT_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
     {
       process: (
         capture: CaptureNode,
-        builder: DefinitionBuilder,
-        context: ProcessingContext
+        _builder: DefinitionBuilder,
+        _context: ProcessingContext
       ) => {
         store_documentation(capture.text, capture.location.end_line);
       },

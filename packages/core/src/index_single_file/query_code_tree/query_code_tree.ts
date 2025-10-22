@@ -1,4 +1,4 @@
-import type { Language, FilePath } from "@ariadnejs/types";
+import type { Language } from "@ariadnejs/types";
 import { type Tree, Query, type QueryCapture } from "tree-sitter";
 import { load_query, LANGUAGE_TO_TREESITTER_LANG } from "./query_loader";
 

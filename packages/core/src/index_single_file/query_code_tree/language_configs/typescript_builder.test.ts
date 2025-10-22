@@ -28,6 +28,7 @@ describe("TypeScript Builder Configuration", () => {
     root_scope_id: "scope:root" as ScopeId,
     get_scope_id: (location: Location): ScopeId =>
       `scope:${location.start_line}:${location.start_column}` as ScopeId,
+    get_child_scope_with_symbol_name: (_scope_id: ScopeId, _name: SymbolName) => "scope:root" as ScopeId,
   };
 
   beforeAll(() => {
@@ -177,7 +178,7 @@ describe("TypeScript Builder Configuration", () => {
 
   describe("Type alias handling", () => {
     it("should process type alias definitions", () => {
-      const code = `type UserID = string | number;`;
+      const code = "type UserID = string | number;";
       const ast = getAstNode(code);
       const typeAliasNode = findNodeByType(ast, "type_alias_declaration");
       const nameNode = typeAliasNode?.childForFieldName?.("name");
@@ -201,7 +202,7 @@ describe("TypeScript Builder Configuration", () => {
     });
 
     it("should process generic type aliases", () => {
-      const code = `type Result<T, E> = { ok: T } | { error: E };`;
+      const code = "type Result<T, E> = { ok: T } | { error: E };";
       const ast = getAstNode(code);
       const typeAliasNode = findNodeByType(ast, "type_alias_declaration");
       const nameNode = typeAliasNode?.childForFieldName?.("name");
@@ -509,7 +510,7 @@ describe("TypeScript Builder Configuration", () => {
 
   describe("Return type extraction", () => {
     it("should extract return type from function declaration", () => {
-      const code = `function getValue(): string { return "test"; }`;
+      const code = "function getValue(): string { return \"test\"; }";
       const ast = getAstNode(code);
       const functionNode = findNodeByType(ast, "function_declaration");
       const identifier = functionNode?.childForFieldName?.("name");
@@ -522,7 +523,7 @@ describe("TypeScript Builder Configuration", () => {
     });
 
     it("should extract complex return types", () => {
-      const code = `function getUser(): Promise<User> { return Promise.resolve({} as User); }`;
+      const code = "function getUser(): Promise<User> { return Promise.resolve({} as User); }";
       const ast = getAstNode(code);
       const functionNode = findNodeByType(ast, "function_declaration");
       const identifier = functionNode?.childForFieldName?.("name");
@@ -535,7 +536,7 @@ describe("TypeScript Builder Configuration", () => {
     });
 
     it("should return undefined for functions without return type", () => {
-      const code = `function doSomething() { console.log("test"); }`;
+      const code = "function doSomething() { console.log(\"test\"); }";
       const ast = getAstNode(code);
       const functionNode = findNodeByType(ast, "function_declaration");
       const identifier = functionNode?.childForFieldName?.("name");

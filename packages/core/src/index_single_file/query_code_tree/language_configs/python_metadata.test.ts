@@ -20,7 +20,7 @@ describe("Python Metadata Extractors", () => {
 
   describe("extract_type_from_annotation", () => {
     it("should extract type from function parameter annotation", () => {
-      const code = `def f(x: int): pass`;
+      const code = "def f(x: int): pass";
       const tree = parser.parse(code);
       const typedParam = tree.rootNode.descendantsOfType("typed_parameter")[0];
 
@@ -33,7 +33,7 @@ describe("Python Metadata Extractors", () => {
     });
 
     it("should extract type from function return annotation", () => {
-      const code = `def f() -> str: pass`;
+      const code = "def f() -> str: pass";
       const tree = parser.parse(code);
       const funcDef = tree.rootNode.descendantsOfType("function_definition")[0];
 
@@ -45,7 +45,7 @@ describe("Python Metadata Extractors", () => {
     });
 
     it("should extract type from variable annotation", () => {
-      const code = `x: int = 5`;
+      const code = "x: int = 5";
       const tree = parser.parse(code);
       const assignment = tree.rootNode.descendantsOfType("assignment")[0];
 
@@ -56,7 +56,7 @@ describe("Python Metadata Extractors", () => {
     });
 
     it("should extract complex generic type", () => {
-      const code = `x: List[str] = []`;
+      const code = "x: List[str] = []";
       const tree = parser.parse(code);
       const assignment = tree.rootNode.descendantsOfType("assignment")[0];
 
@@ -67,7 +67,7 @@ describe("Python Metadata Extractors", () => {
     });
 
     it("should detect nullable Optional types", () => {
-      const code = `x: Optional[int] = None`;
+      const code = "x: Optional[int] = None";
       const tree = parser.parse(code);
       const assignment = tree.rootNode.descendantsOfType("assignment")[0];
 
@@ -78,7 +78,7 @@ describe("Python Metadata Extractors", () => {
     });
 
     it("should detect nullable Union types with None", () => {
-      const code = `x: Union[str, None] = None`;
+      const code = "x: Union[str, None] = None";
       const tree = parser.parse(code);
       const assignment = tree.rootNode.descendantsOfType("assignment")[0];
 
@@ -89,7 +89,7 @@ describe("Python Metadata Extractors", () => {
     });
 
     it("should handle Python 3.10+ union syntax", () => {
-      const code = `def f(x: str | int): pass`;
+      const code = "def f(x: str | int): pass";
       const tree = parser.parse(code);
       const typedParam = tree.rootNode.descendantsOfType("typed_parameter")[0];
 
@@ -100,7 +100,7 @@ describe("Python Metadata Extractors", () => {
     });
 
     it("should handle parameters with default values", () => {
-      const code = `def f(x: int = 5): pass`;
+      const code = "def f(x: int = 5): pass";
       const tree = parser.parse(code);
       const typedDefaultParam = tree.rootNode.descendantsOfType("typed_default_parameter")[0];
 
@@ -121,7 +121,7 @@ describe("Python Metadata Extractors", () => {
     });
 
     it("should detect nullable with pipe None syntax", () => {
-      const code = `def f(x: str | None): pass`;
+      const code = "def f(x: str | None): pass";
       const tree = parser.parse(code);
       const typedParam = tree.rootNode.descendantsOfType("typed_parameter")[0];
 
@@ -133,7 +133,7 @@ describe("Python Metadata Extractors", () => {
     });
 
     it("should return undefined for nodes without type annotation", () => {
-      const code = `x = 5`;  // Assignment without type annotation
+      const code = "x = 5";  // Assignment without type annotation
       const tree = parser.parse(code);
       const assignment = tree.rootNode.descendantsOfType("assignment")[0];
 
@@ -145,7 +145,7 @@ describe("Python Metadata Extractors", () => {
     });
 
     it("should handle identifier node as type", () => {
-      const code = `def f(x): pass`;
+      const code = "def f(x): pass";
       const tree = parser.parse(code);
       // When we pass a raw identifier, it treats it as a type name
       const param = tree.rootNode.descendantsOfType("identifier").find(n => n.text === "x");
@@ -158,7 +158,7 @@ describe("Python Metadata Extractors", () => {
     });
 
     it("should handle custom type identifiers", () => {
-      const code = `def f(x: MyCustomType): pass`;
+      const code = "def f(x: MyCustomType): pass";
       const tree = parser.parse(code);
       const typedParam = tree.rootNode.descendantsOfType("typed_parameter")[0];
 
@@ -169,7 +169,7 @@ describe("Python Metadata Extractors", () => {
     });
 
     it("should extract type from type node directly", () => {
-      const code = `x: int = 5`;
+      const code = "x: int = 5";
       const tree = parser.parse(code);
       const typeNode = tree.rootNode.descendantsOfType("type")[0];
 
@@ -184,7 +184,7 @@ describe("Python Metadata Extractors", () => {
 
   describe("extract_call_receiver", () => {
     it("should extract receiver from method call", () => {
-      const code = `obj.method()`;
+      const code = "obj.method()";
       const tree = parser.parse(code);
       const call = tree.rootNode.descendantsOfType("call")[0];
 
@@ -197,7 +197,7 @@ describe("Python Metadata Extractors", () => {
     });
 
     it("should extract receiver from chained method call", () => {
-      const code = `user.profile.get_name()`;
+      const code = "user.profile.get_name()";
       const tree = parser.parse(code);
       const call = tree.rootNode.descendantsOfType("call")[0];
 
@@ -210,7 +210,7 @@ describe("Python Metadata Extractors", () => {
     });
 
     it("should extract 'self' as receiver", () => {
-      const code = `self.process()`;
+      const code = "self.process()";
       const tree = parser.parse(code);
       const call = tree.rootNode.descendantsOfType("call")[0];
 
@@ -222,7 +222,7 @@ describe("Python Metadata Extractors", () => {
     });
 
     it("should extract 'cls' as receiver", () => {
-      const code = `cls.create()`;
+      const code = "cls.create()";
       const tree = parser.parse(code);
       const call = tree.rootNode.descendantsOfType("call")[0];
 
@@ -234,7 +234,7 @@ describe("Python Metadata Extractors", () => {
     });
 
     it("should extract receiver from super() call", () => {
-      const code = `super().method()`;
+      const code = "super().method()";
       const tree = parser.parse(code);
       const call = tree.rootNode.descendantsOfType("call")[0]; // First call is the outer method call
 
@@ -246,7 +246,7 @@ describe("Python Metadata Extractors", () => {
     });
 
     it("should return undefined for standalone function call", () => {
-      const code = `print("hello")`;
+      const code = "print(\"hello\")";
       const tree = parser.parse(code);
       const call = tree.rootNode.descendantsOfType("call")[0];
 
@@ -256,7 +256,7 @@ describe("Python Metadata Extractors", () => {
     });
 
     it("should handle attribute node directly (not in call)", () => {
-      const code = `obj.prop`;
+      const code = "obj.prop";
       const tree = parser.parse(code);
       const attribute = tree.rootNode.descendantsOfType("attribute")[0];
 
@@ -268,7 +268,7 @@ describe("Python Metadata Extractors", () => {
     });
 
     it("should handle nested attribute node directly", () => {
-      const code = `user.profile.name`;
+      const code = "user.profile.name";
       const tree = parser.parse(code);
       const attribute = tree.rootNode.descendantsOfType("attribute")[0];
 
@@ -282,7 +282,7 @@ describe("Python Metadata Extractors", () => {
 
   describe("extract_property_chain", () => {
     it("should extract simple property chain", () => {
-      const code = `a.b.c`;
+      const code = "a.b.c";
       const tree = parser.parse(code);
       const attribute = tree.rootNode.descendantsOfType("attribute")[0];
 
@@ -292,7 +292,7 @@ describe("Python Metadata Extractors", () => {
     });
 
     it("should extract chain with method call", () => {
-      const code = `obj.prop.method()`;
+      const code = "obj.prop.method()";
       const tree = parser.parse(code);
       const call = tree.rootNode.descendantsOfType("call")[0];
 
@@ -302,7 +302,7 @@ describe("Python Metadata Extractors", () => {
     });
 
     it("should handle 'self' in property chain", () => {
-      const code = `self.data.items`;
+      const code = "self.data.items";
       const tree = parser.parse(code);
       const attribute = tree.rootNode.descendantsOfType("attribute")[0];
 
@@ -312,7 +312,7 @@ describe("Python Metadata Extractors", () => {
     });
 
     it("should handle subscript notation", () => {
-      const code = `obj['key'].prop`;
+      const code = "obj['key'].prop";
       const tree = parser.parse(code);
       const attribute = tree.rootNode.descendantsOfType("attribute")[0];
 
@@ -325,7 +325,7 @@ describe("Python Metadata Extractors", () => {
     });
 
     it("should handle super() in chain", () => {
-      const code = `super().method`;
+      const code = "super().method";
       const tree = parser.parse(code);
       const attribute = tree.rootNode.descendantsOfType("attribute")[0];
 
@@ -337,7 +337,7 @@ describe("Python Metadata Extractors", () => {
     });
 
     it("should handle nested subscripts", () => {
-      const code = `obj["key1"]["key2"]`;
+      const code = "obj[\"key1\"][\"key2\"]";
       const tree = parser.parse(code);
       const subscript = tree.rootNode.descendantsOfType("subscript")[0];
 
@@ -347,7 +347,7 @@ describe("Python Metadata Extractors", () => {
     });
 
     it("should handle integer subscript", () => {
-      const code = `obj[0].prop`;
+      const code = "obj[0].prop";
       const tree = parser.parse(code);
       const attribute = tree.rootNode.descendantsOfType("attribute")[0];
 
@@ -360,7 +360,7 @@ describe("Python Metadata Extractors", () => {
     });
 
     it("should handle variable subscript", () => {
-      const code = `obj[index].prop`;
+      const code = "obj[index].prop";
       const tree = parser.parse(code);
       const attribute = tree.rootNode.descendantsOfType("attribute")[0];
 
@@ -373,7 +373,7 @@ describe("Python Metadata Extractors", () => {
     });
 
     it("should return undefined for simple identifier", () => {
-      const code = `x`;
+      const code = "x";
       const tree = parser.parse(code);
       const identifier = tree.rootNode.descendantsOfType("identifier")[0];
 
@@ -383,7 +383,7 @@ describe("Python Metadata Extractors", () => {
     });
 
     it("should handle mixed subscript and attribute access", () => {
-      const code = `data["users"][0].profile.name`;
+      const code = "data[\"users\"][0].profile.name";
       const tree = parser.parse(code);
       const attribute = tree.rootNode.descendantsOfType("attribute")[0];
 
@@ -399,7 +399,7 @@ describe("Python Metadata Extractors", () => {
 
   describe("extract_assignment_parts", () => {
     it("should extract parts from simple assignment", () => {
-      const code = `x = y`;
+      const code = "x = y";
       const tree = parser.parse(code);
       const assignment = tree.rootNode.descendantsOfType("assignment")[0];
 
@@ -412,7 +412,7 @@ describe("Python Metadata Extractors", () => {
     });
 
     it("should extract parts from annotated assignment", () => {
-      const code = `x: int = 5`;
+      const code = "x: int = 5";
       const tree = parser.parse(code);
       const assignment = tree.rootNode.descendantsOfType("assignment")[0];
 
@@ -425,7 +425,7 @@ describe("Python Metadata Extractors", () => {
     });
 
     it("should extract parts from augmented assignment", () => {
-      const code = `x += 5`;
+      const code = "x += 5";
       const tree = parser.parse(code);
       const augmentedAssign = tree.rootNode.descendantsOfType("augmented_assignment")[0];
 
@@ -438,7 +438,7 @@ describe("Python Metadata Extractors", () => {
     });
 
     it("should extract parts from multiple assignment", () => {
-      const code = `a, b = c, d`;
+      const code = "a, b = c, d";
       const tree = parser.parse(code);
       const assignment = tree.rootNode.descendantsOfType("assignment")[0];
 
@@ -449,7 +449,7 @@ describe("Python Metadata Extractors", () => {
     });
 
     it("should extract parts from attribute assignment", () => {
-      const code = `obj.prop = value`;
+      const code = "obj.prop = value";
       const tree = parser.parse(code);
       const assignment = tree.rootNode.descendantsOfType("assignment")[0];
 
@@ -461,7 +461,7 @@ describe("Python Metadata Extractors", () => {
     });
 
     it("should handle walrus operator", () => {
-      const code = `if (n := len(data)) > 0: pass`;
+      const code = "if (n := len(data)) > 0: pass";
       const tree = parser.parse(code);
       const namedExpr = tree.rootNode.descendantsOfType("named_expression")[0];
 
@@ -474,7 +474,7 @@ describe("Python Metadata Extractors", () => {
 
   describe("extract_construct_target", () => {
     it("should extract target from constructor in assignment", () => {
-      const code = `obj = MyClass()`;
+      const code = "obj = MyClass()";
       const tree = parser.parse(code);
       const call = tree.rootNode.descendantsOfType("call")[0];
 
@@ -486,7 +486,7 @@ describe("Python Metadata Extractors", () => {
     });
 
     it("should extract target from constructor in attribute assignment", () => {
-      const code = `self.prop = Thing()`;
+      const code = "self.prop = Thing()";
       const tree = parser.parse(code);
       const call = tree.rootNode.descendantsOfType("call")[0];
 
@@ -498,7 +498,7 @@ describe("Python Metadata Extractors", () => {
     });
 
     it("should extract target from annotated assignment with constructor", () => {
-      const code = `items: List[Item] = ItemList()`;
+      const code = "items: List[Item] = ItemList()";
       const tree = parser.parse(code);
       const call = tree.rootNode.descendantsOfType("call")[0];
 
@@ -510,7 +510,7 @@ describe("Python Metadata Extractors", () => {
     });
 
     it("should handle walrus operator with constructor", () => {
-      const code = `if (obj := MyClass()) is not None: pass`;
+      const code = "if (obj := MyClass()) is not None: pass";
       const tree = parser.parse(code);
       const call = tree.rootNode.descendantsOfType("call")[0];
 
@@ -520,7 +520,7 @@ describe("Python Metadata Extractors", () => {
     });
 
     it("should return undefined for standalone constructor call", () => {
-      const code = `MyClass()`;
+      const code = "MyClass()";
       const tree = parser.parse(code);
       const call = tree.rootNode.descendantsOfType("call")[0];
 
@@ -532,7 +532,7 @@ describe("Python Metadata Extractors", () => {
 
   describe("extract_type_arguments", () => {
     it("should extract type arguments from simple generic", () => {
-      const code = `x: List[int] = []`;
+      const code = "x: List[int] = []";
       const tree = parser.parse(code);
       const genericType = tree.rootNode.descendantsOfType("generic_type")[0];
 
@@ -542,7 +542,7 @@ describe("Python Metadata Extractors", () => {
     });
 
     it("should extract multiple type arguments", () => {
-      const code = `d: Dict[str, int] = {}`;
+      const code = "d: Dict[str, int] = {}";
       const tree = parser.parse(code);
       const genericType = tree.rootNode.descendantsOfType("generic_type")[0];
 
@@ -552,7 +552,7 @@ describe("Python Metadata Extractors", () => {
     });
 
     it("should extract nested generic type arguments", () => {
-      const code = `x: List[Dict[str, int]] = []`;
+      const code = "x: List[Dict[str, int]] = []";
       const tree = parser.parse(code);
       const genericType = tree.rootNode.descendantsOfType("generic_type")[0];
 
@@ -562,7 +562,7 @@ describe("Python Metadata Extractors", () => {
     });
 
     it("should extract Union type arguments", () => {
-      const code = `x: Union[str, int, None] = None`;
+      const code = "x: Union[str, int, None] = None";
       const tree = parser.parse(code);
       const genericType = tree.rootNode.descendantsOfType("generic_type")[0];
 
@@ -572,7 +572,7 @@ describe("Python Metadata Extractors", () => {
     });
 
     it("should extract Callable type arguments", () => {
-      const code = `f: Callable[[int, str], bool] = lambda x, y: True`;
+      const code = "f: Callable[[int, str], bool] = lambda x, y: True";
       const tree = parser.parse(code);
       const genericType = tree.rootNode.descendantsOfType("generic_type")[0];
 
@@ -583,7 +583,7 @@ describe("Python Metadata Extractors", () => {
     });
 
     it("should return undefined for non-generic types", () => {
-      const code = `x: int = 5`;
+      const code = "x: int = 5";
       const tree = parser.parse(code);
       const identifier = tree.rootNode.descendantsOfType("identifier")[0];
 
@@ -593,7 +593,7 @@ describe("Python Metadata Extractors", () => {
     });
 
     it("should extract exact Callable arguments", () => {
-      const code = `f: Callable[[int, str], bool] = lambda x, y: True`;
+      const code = "f: Callable[[int, str], bool] = lambda x, y: True";
       const tree = parser.parse(code);
       const genericType = tree.rootNode.descendantsOfType("generic_type")[0];
 
@@ -607,7 +607,7 @@ describe("Python Metadata Extractors", () => {
     });
 
     it("should handle deeply nested generics", () => {
-      const code = `x: Dict[str, List[Tuple[int, str]]] = {}`;
+      const code = "x: Dict[str, List[Tuple[int, str]]] = {}";
       const tree = parser.parse(code);
       const genericType = tree.rootNode.descendantsOfType("generic_type")[0];
 
@@ -620,7 +620,7 @@ describe("Python Metadata Extractors", () => {
     });
 
     it("should handle Optional as special case of Union", () => {
-      const code = `x: Optional[str] = None`;
+      const code = "x: Optional[str] = None";
       const tree = parser.parse(code);
       const genericType = tree.rootNode.descendantsOfType("generic_type")[0];
 
@@ -631,7 +631,7 @@ describe("Python Metadata Extractors", () => {
     });
 
     it("should handle complex nested Union types", () => {
-      const code = `x: Union[int, List[str], Dict[str, Any]] = []`;
+      const code = "x: Union[int, List[str], Dict[str, Any]] = []";
       const tree = parser.parse(code);
       const genericType = tree.rootNode.descendantsOfType("generic_type")[0];
 
@@ -645,7 +645,7 @@ describe("Python Metadata Extractors", () => {
     });
 
     it("should handle Literal type arguments", () => {
-      const code = `x: Literal["foo", "bar"] = "foo"`;
+      const code = "x: Literal[\"foo\", \"bar\"] = \"foo\"";
       const tree = parser.parse(code);
       const genericType = tree.rootNode.descendantsOfType("generic_type")[0];
 
@@ -720,7 +720,7 @@ describe("Python Metadata Extractors", () => {
 
   describe("edge cases", () => {
     it("should handle deeply nested property chains", () => {
-      const code = `a.b.c.d.e.f`;
+      const code = "a.b.c.d.e.f";
       const tree = parser.parse(code);
       const attribute = tree.rootNode.descendantsOfType("attribute")[0];
 
@@ -732,7 +732,7 @@ describe("Python Metadata Extractors", () => {
     });
 
     it("should handle super() with arguments in older Python", () => {
-      const code = `super(MyClass, self).method()`;
+      const code = "super(MyClass, self).method()";
       const tree = parser.parse(code);
       const call = tree.rootNode.descendantsOfType("call")[0]; // First call is the method call
 
@@ -742,7 +742,7 @@ describe("Python Metadata Extractors", () => {
     });
 
     it("should handle assignment with unpacking", () => {
-      const code = `a, *rest = values`;
+      const code = "a, *rest = values";
       const tree = parser.parse(code);
       const assignment = tree.rootNode.descendantsOfType("assignment")[0];
 
@@ -753,7 +753,7 @@ describe("Python Metadata Extractors", () => {
     });
 
     it("should handle method chaining with multiple calls", () => {
-      const code = `obj.method1().method2().method3()`;
+      const code = "obj.method1().method2().method3()";
       const tree = parser.parse(code);
       const calls = tree.rootNode.descendantsOfType("call");
 
@@ -779,7 +779,7 @@ def value(self):
 
   describe("is_method_call", () => {
     it("should return true for method calls", () => {
-      const code = `obj.method()`;
+      const code = "obj.method()";
       const tree = parser.parse(code);
       const call = tree.rootNode.descendantsOfType("call")[0];
 
@@ -789,7 +789,7 @@ def value(self):
     });
 
     it("should return false for function calls", () => {
-      const code = `func()`;
+      const code = "func()";
       const tree = parser.parse(code);
       const call = tree.rootNode.descendantsOfType("call")[0];
 
@@ -799,7 +799,7 @@ def value(self):
     });
 
     it("should return true for chained method calls", () => {
-      const code = `obj.nested.method()`;
+      const code = "obj.nested.method()";
       const tree = parser.parse(code);
       const call = tree.rootNode.descendantsOfType("call")[0];
 
@@ -809,7 +809,7 @@ def value(self):
     });
 
     it("should return true for method calls on 'self'", () => {
-      const code = `self.method()`;
+      const code = "self.method()";
       const tree = parser.parse(code);
       const call = tree.rootNode.descendantsOfType("call")[0];
 
@@ -819,7 +819,7 @@ def value(self):
     });
 
     it("should return false for non-call nodes", () => {
-      const code = `x = 42`;
+      const code = "x = 42";
       const tree = parser.parse(code);
       const identifier = tree.rootNode.descendantsOfType("identifier")[0];
 
@@ -831,7 +831,7 @@ def value(self):
 
   describe("extract_call_name", () => {
     it("should extract method name from method call", () => {
-      const code = `obj.method()`;
+      const code = "obj.method()";
       const tree = parser.parse(code);
       const call = tree.rootNode.descendantsOfType("call")[0];
 
@@ -841,7 +841,7 @@ def value(self):
     });
 
     it("should extract function name from function call", () => {
-      const code = `func()`;
+      const code = "func()";
       const tree = parser.parse(code);
       const call = tree.rootNode.descendantsOfType("call")[0];
 
@@ -851,7 +851,7 @@ def value(self):
     });
 
     it("should extract method name from chained call", () => {
-      const code = `obj.nested.method()`;
+      const code = "obj.nested.method()";
       const tree = parser.parse(code);
       const call = tree.rootNode.descendantsOfType("call")[0];
 
@@ -861,7 +861,7 @@ def value(self):
     });
 
     it("should extract method name from 'self' call", () => {
-      const code = `self.method()`;
+      const code = "self.method()";
       const tree = parser.parse(code);
       const call = tree.rootNode.descendantsOfType("call")[0];
 
@@ -871,7 +871,7 @@ def value(self):
     });
 
     it("should return undefined for non-call nodes", () => {
-      const code = `x = 42`;
+      const code = "x = 42";
       const tree = parser.parse(code);
       const identifier = tree.rootNode.descendantsOfType("identifier")[0];
 
@@ -881,7 +881,7 @@ def value(self):
     });
 
     it("should extract constructor name", () => {
-      const code = `MyClass()`;
+      const code = "MyClass()";
       const tree = parser.parse(code);
       const call = tree.rootNode.descendantsOfType("call")[0];
 

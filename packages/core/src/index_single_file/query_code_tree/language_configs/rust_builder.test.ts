@@ -8,13 +8,9 @@ import type {
   ProcessingContext,
   CaptureNode,
 } from "../../semantic_index";
-import type { Location } from "@ariadnejs/types";
+import type { Location, SymbolName, ScopeId } from "@ariadnejs/types";
 
-// These tests are redundant with integration tests in semantic_index.rust.test.ts
-// They test individual processors in isolation without running scope processing first,
-// causing "No body scope found" errors. The functionality is fully tested by 58 passing
-// integration tests that run the complete pipeline.
-describe.skip("rust_builder", () => {
+describe("rust_builder", () => {
   let parser: Parser;
 
   beforeEach(() => {
@@ -23,14 +19,64 @@ describe.skip("rust_builder", () => {
   });
 
   // Helper to create mock context
-  function createMockContext(): ProcessingContext {
+  function createMockContext(with_scopes: boolean = false): ProcessingContext {
+    const root_scope_id = "module:test.rs:1:0:100:0:<module>" as any;
+    const scopes = new Map();
+
+    if (with_scopes) {
+      // Add function body scopes for tests that need them
+      scopes.set("function:test.rs:1:0:3:1:<function_body>" as any, {
+        id: "function:test.rs:1:0:3:1:<function_body>" as any,
+        type: "function",
+        name: "my_function",
+        location: {
+          file_path: "test.rs" as any,
+          start_line: 1,
+          start_column: 0,
+          end_line: 3,
+          end_column: 1,
+        },
+        parent_id: root_scope_id,
+      });
+      // Add impl block scope for associated functions
+      scopes.set("impl:test.rs:2:0:6:1:<impl_body>" as any, {
+        id: "impl:test.rs:2:0:6:1:<impl_body>" as any,
+        type: "impl",
+        name: "MyStruct",
+        location: {
+          file_path: "test.rs" as any,
+          start_line: 2,
+          start_column: 0,
+          end_line: 6,
+          end_column: 1,
+        },
+        parent_id: root_scope_id,
+      });
+      // Add method scope within impl block
+      scopes.set("method:test.rs:3:4:5:5:<method_body>" as any, {
+        id: "method:test.rs:3:4:5:5:<method_body>" as any,
+        type: "method",
+        name: "new",
+        location: {
+          file_path: "test.rs" as any,
+          start_line: 3,
+          start_column: 4,
+          end_line: 5,
+          end_column: 5,
+        },
+        parent_id: "impl:test.rs:2:0:6:1:<impl_body>" as any,
+      });
+    }
+
     return {
       captures: [],
-      scopes: new Map(),
+      scopes,
       scope_depths: new Map(),
-      root_scope_id: "module:test.rs:1:0:100:0:<module>" as any,
-      get_scope_id: (_location: Location) =>
-        "module:test.rs:1:0:100:0:<module>" as any,
+      root_scope_id,
+      get_scope_id: (_location: Location) => root_scope_id,
+      get_child_scope_with_symbol_name: (scope_id: ScopeId, name: SymbolName) => {
+        throw new Error(`Child scope with name ${name} not found in scope ${scope_id}`);
+      },
     };
   }
 
@@ -39,7 +85,8 @@ describe.skip("rust_builder", () => {
     code: string,
     captureName: string,
     nodeType: string,
-    expectedText?: string
+    expectedText?: string,
+    with_scopes: boolean = false
   ) {
     const tree = parser.parse(code);
     const node = findNode(tree.rootNode, nodeType, expectedText);
@@ -72,7 +119,7 @@ describe.skip("rust_builder", () => {
       node,
     };
 
-    const context = createMockContext();
+    const context = createMockContext(with_scopes);
     const builder = new DefinitionBuilder(context);
     const processor = RUST_BUILDER_CONFIG.get(captureName);
 
@@ -146,7 +193,7 @@ describe.skip("rust_builder", () => {
     });
 
     it("should process tuple struct", () => {
-      const code = `pub struct Point(f32, f32);`;
+      const code = "pub struct Point(f32, f32);";
 
       const definitions = processCapture(
         code,
@@ -160,7 +207,7 @@ describe.skip("rust_builder", () => {
     });
 
     it("should handle pub(crate) visibility", () => {
-      const code = `pub(crate) struct InternalStruct {}`;
+      const code = "pub(crate) struct InternalStruct {}";
 
       const definitions = processCapture(
         code,
@@ -290,7 +337,8 @@ describe.skip("rust_builder", () => {
         code,
         "definition.function",
         "identifier",
-        "calculate"
+        "calculate",
+        true
       );
 
       expect(definitions.functions).toHaveLength(1);
@@ -307,7 +355,8 @@ describe.skip("rust_builder", () => {
         code,
         "definition.function.async",
         "identifier",
-        "fetch_data"
+        "fetch_data",
+        true
       );
 
       expect(definitions.functions).toHaveLength(1);
@@ -325,7 +374,8 @@ describe.skip("rust_builder", () => {
         code,
         "definition.function.const",
         "identifier",
-        "compute"
+        "compute",
+        true
       );
 
       expect(definitions.functions).toHaveLength(1);
@@ -342,7 +392,8 @@ describe.skip("rust_builder", () => {
         code,
         "definition.function.unsafe",
         "identifier",
-        "raw_access"
+        "raw_access",
+        true
       );
 
       expect(definitions.functions).toHaveLength(1);
@@ -359,7 +410,8 @@ describe.skip("rust_builder", () => {
         code,
         "definition.function.generic",
         "identifier",
-        "compare"
+        "compare",
+        true
       );
 
       expect(definitions.functions).toHaveLength(1);
@@ -399,7 +451,29 @@ describe.skip("rust_builder", () => {
         location,
       };
 
-      const context = createMockContext();
+      // Create custom context with scope matching the actual method location
+      const root_scope_id = "module:test.rs:1:0:100:0:<module>" as any;
+      const scopes = new Map();
+      const method_scope_id = `method:test.rs:${location.start_line}:${location.start_column}:${location.end_line}:${location.end_column}:<method_body>` as any;
+      scopes.set(method_scope_id, {
+        id: method_scope_id,
+        type: "method",
+        name: "get_value",
+        location,
+        parent_id: root_scope_id,
+      });
+
+      const context = {
+        captures: [],
+        scopes,
+        scope_depths: new Map(),
+        root_scope_id,
+        get_scope_id: (_location: Location) => root_scope_id,
+        get_child_scope_with_symbol_name: (_scope_id: ScopeId, _name: SymbolName) => {
+          throw new Error(`Child scope with name ${_name} not found in scope ${_scope_id}`);
+        },
+      } as ProcessingContext;
+
       const builder = new DefinitionBuilder(context);
 
       // Add a class first to attach method to
@@ -449,7 +523,29 @@ describe.skip("rust_builder", () => {
         location,
       };
 
-      const context = createMockContext();
+      // Create custom context with scope matching the actual method location
+      const root_scope_id = "module:test.rs:1:0:100:0:<module>" as any;
+      const scopes = new Map();
+      const method_scope_id = `method:test.rs:${location.start_line}:${location.start_column}:${location.end_line}:${location.end_column}:<method_body>` as any;
+      scopes.set(method_scope_id, {
+        id: method_scope_id,
+        type: "method",
+        name: "new",
+        location,
+        parent_id: root_scope_id,
+      });
+
+      const context = {
+        captures: [],
+        scopes,
+        scope_depths: new Map(),
+        root_scope_id,
+        get_scope_id: (_location: Location) => root_scope_id,
+        get_child_scope_with_symbol_name: (_scope_id: ScopeId, _name: SymbolName) => {
+          throw new Error(`Child scope with name ${_name} not found in scope ${_scope_id}`);
+        },
+      } as ProcessingContext;
+
       const builder = new DefinitionBuilder(context);
 
       builder.add_class({
@@ -472,7 +568,7 @@ describe.skip("rust_builder", () => {
 
   describe("variable and constant definitions", () => {
     it("should process let binding", () => {
-      const code = `let mut count: usize = 0;`;
+      const code = "let mut count: usize = 0;";
 
       const definitions = processCapture(
         code,
@@ -487,7 +583,7 @@ describe.skip("rust_builder", () => {
     });
 
     it("should process const definition", () => {
-      const code = `pub const MAX_SIZE: usize = 1024;`;
+      const code = "pub const MAX_SIZE: usize = 1024;";
 
       const definitions = processCapture(
         code,
@@ -502,7 +598,7 @@ describe.skip("rust_builder", () => {
     });
 
     it("should process static variable", () => {
-      const code = `static mut COUNTER: AtomicUsize = AtomicUsize::new(0);`;
+      const code = "static mut COUNTER: AtomicUsize = AtomicUsize::new(0);";
 
       const definitions = processCapture(
         code,
@@ -519,7 +615,7 @@ describe.skip("rust_builder", () => {
 
   describe("parameter definitions", () => {
     it("should process function parameter", () => {
-      const code = `fn process(data: &str) {}`;
+      const code = "fn process(data: &str) {}";
 
       const definitions = processCapture(
         code,
@@ -534,7 +630,7 @@ describe.skip("rust_builder", () => {
     });
 
     it("should process mutable parameter", () => {
-      const code = `fn modify(mut value: Vec<u8>) {}`;
+      const code = "fn modify(mut value: Vec<u8>) {}";
 
       const definitions = processCapture(
         code,
@@ -548,7 +644,7 @@ describe.skip("rust_builder", () => {
     });
 
     it("should process self parameter", () => {
-      const code = `fn method(&self) {}`;
+      const code = "fn method(&self) {}";
 
       const tree = parser.parse(code);
       const selfNode = findNode(tree.rootNode, "self");
@@ -588,7 +684,7 @@ describe.skip("rust_builder", () => {
 
   describe("type definitions", () => {
     it("should process type alias", () => {
-      const code = `pub type Result<T> = std::result::Result<T, Error>;`;
+      const code = "pub type Result<T> = std::result::Result<T, Error>;";
 
       const definitions = processCapture(
         code,
@@ -631,7 +727,8 @@ describe.skip("rust_builder", () => {
         code,
         "definition.macro",
         "identifier",
-        "debug_log"
+        "debug_log",
+        true
       );
 
       expect(definitions.functions).toHaveLength(1);
@@ -764,13 +861,14 @@ describe.skip("rust_builder", () => {
 
   describe("is_exported flag", () => {
     it("should set is_exported=true for pub fn", () => {
-      const code = `pub fn foo() {}`;
+      const code = "pub fn foo() {}";
 
       const definitions = processCapture(
         code,
         "definition.function",
         "identifier",
-        "foo"
+        "foo",
+        true
       );
 
       expect(definitions.functions).toHaveLength(1);
@@ -780,13 +878,14 @@ describe.skip("rust_builder", () => {
     });
 
     it("should set is_exported=false for private fn", () => {
-      const code = `fn foo() {}`;
+      const code = "fn foo() {}";
 
       const definitions = processCapture(
         code,
         "definition.function",
         "identifier",
-        "foo"
+        "foo",
+        true
       );
 
       expect(definitions.functions).toHaveLength(1);
@@ -796,7 +895,7 @@ describe.skip("rust_builder", () => {
     });
 
     it("should set is_exported=true for pub struct", () => {
-      const code = `pub struct Bar {}`;
+      const code = "pub struct Bar {}";
 
       const definitions = processCapture(
         code,
@@ -812,7 +911,7 @@ describe.skip("rust_builder", () => {
     });
 
     it("should set is_exported=false for private struct", () => {
-      const code = `struct Bar {}`;
+      const code = "struct Bar {}";
 
       const definitions = processCapture(
         code,
@@ -828,13 +927,14 @@ describe.skip("rust_builder", () => {
     });
 
     it("should set is_exported=true for pub(crate) fn", () => {
-      const code = `pub(crate) fn foo() {}`;
+      const code = "pub(crate) fn foo() {}";
 
       const definitions = processCapture(
         code,
         "definition.function",
         "identifier",
-        "foo"
+        "foo",
+        true
       );
 
       expect(definitions.functions).toHaveLength(1);
@@ -844,7 +944,7 @@ describe.skip("rust_builder", () => {
     });
 
     it("should set is_exported=true for pub enum", () => {
-      const code = `pub enum Status { Ok, Err }`;
+      const code = "pub enum Status { Ok, Err }";
 
       const definitions = processCapture(
         code,
@@ -860,7 +960,7 @@ describe.skip("rust_builder", () => {
     });
 
     it("should set is_exported=false for private enum", () => {
-      const code = `enum Status { Ok, Err }`;
+      const code = "enum Status { Ok, Err }";
 
       const definitions = processCapture(
         code,
@@ -876,7 +976,7 @@ describe.skip("rust_builder", () => {
     });
 
     it("should set is_exported=true for pub const", () => {
-      const code = `pub const X: i32 = 1;`;
+      const code = "pub const X: i32 = 1;";
 
       const definitions = processCapture(
         code,
@@ -892,7 +992,7 @@ describe.skip("rust_builder", () => {
     });
 
     it("should set is_exported=false for private const", () => {
-      const code = `const X: i32 = 1;`;
+      const code = "const X: i32 = 1;";
 
       const definitions = processCapture(
         code,
@@ -908,7 +1008,7 @@ describe.skip("rust_builder", () => {
     });
 
     it("should set is_exported=true for pub(super) struct", () => {
-      const code = `pub(super) struct Internal {}`;
+      const code = "pub(super) struct Internal {}";
 
       const definitions = processCapture(
         code,
@@ -924,7 +1024,7 @@ describe.skip("rust_builder", () => {
     });
 
     it("should set is_exported=true for pub type alias", () => {
-      const code = `pub type Result<T> = std::result::Result<T, Error>;`;
+      const code = "pub type Result<T> = std::result::Result<T, Error>;";
 
       const definitions = processCapture(
         code,
@@ -940,7 +1040,7 @@ describe.skip("rust_builder", () => {
     });
 
     it("should set is_exported=false for private type alias", () => {
-      const code = `type Result<T> = std::result::Result<T, Error>;`;
+      const code = "type Result<T> = std::result::Result<T, Error>;";
 
       const definitions = processCapture(
         code,
@@ -956,7 +1056,7 @@ describe.skip("rust_builder", () => {
     });
 
     it("should set is_exported=true for pub trait", () => {
-      const code = `pub trait Display {}`;
+      const code = "pub trait Display {}";
 
       const definitions = processCapture(
         code,
@@ -972,7 +1072,7 @@ describe.skip("rust_builder", () => {
     });
 
     it("should set is_exported=false for private trait", () => {
-      const code = `trait Display {}`;
+      const code = "trait Display {}";
 
       const definitions = processCapture(
         code,
@@ -988,7 +1088,7 @@ describe.skip("rust_builder", () => {
     });
 
     it("should set is_exported=true for pub generic struct", () => {
-      const code = `pub struct Vec<T> { data: T }`;
+      const code = "pub struct Vec<T> { data: T }";
 
       const definitions = processCapture(
         code,
@@ -1004,7 +1104,7 @@ describe.skip("rust_builder", () => {
     });
 
     it("should set is_exported=false for private generic struct", () => {
-      const code = `struct Vec<T> { data: T }`;
+      const code = "struct Vec<T> { data: T }";
 
       const definitions = processCapture(
         code,
@@ -1020,13 +1120,14 @@ describe.skip("rust_builder", () => {
     });
 
     it("should set is_exported=true for pub async fn", () => {
-      const code = `pub async fn fetch() {}`;
+      const code = "pub async fn fetch() {}";
 
       const definitions = processCapture(
         code,
         "definition.function.async",
         "identifier",
-        "fetch"
+        "fetch",
+        true
       );
 
       expect(definitions.functions).toHaveLength(1);
@@ -1036,13 +1137,14 @@ describe.skip("rust_builder", () => {
     });
 
     it("should set is_exported=true for pub unsafe fn", () => {
-      const code = `pub unsafe fn raw_ptr() {}`;
+      const code = "pub unsafe fn raw_ptr() {}";
 
       const definitions = processCapture(
         code,
         "definition.function.unsafe",
         "identifier",
-        "raw_ptr"
+        "raw_ptr",
+        true
       );
 
       expect(definitions.functions).toHaveLength(1);
@@ -1052,7 +1154,7 @@ describe.skip("rust_builder", () => {
     });
 
     it("should set is_exported=true for pub mod", () => {
-      const code = `pub mod utils;`;
+      const code = "pub mod utils;";
 
       const definitions = processCapture(
         code,
@@ -1068,7 +1170,7 @@ describe.skip("rust_builder", () => {
     });
 
     it("should set is_exported=false for private mod", () => {
-      const code = `mod utils;`;
+      const code = "mod utils;";
 
       const definitions = processCapture(
         code,

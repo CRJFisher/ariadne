@@ -20,7 +20,7 @@ describe("Rust Metadata Extractors", () => {
 
   describe("extract_type_from_annotation", () => {
     it("should extract type from let binding", () => {
-      const code = `let x: i32 = 5;`;
+      const code = "let x: i32 = 5;";
       const tree = parser.parse(code);
       const letDecl = tree.rootNode.descendantsOfType("let_declaration")[0];
 
@@ -33,7 +33,7 @@ describe("Rust Metadata Extractors", () => {
     });
 
     it("should extract type from function parameter", () => {
-      const code = `fn foo(x: String) {}`;
+      const code = "fn foo(x: String) {}";
       const tree = parser.parse(code);
       const param = tree.rootNode.descendantsOfType("parameter")[0];
 
@@ -45,7 +45,7 @@ describe("Rust Metadata Extractors", () => {
     });
 
     it("should extract function return type", () => {
-      const code = `fn bar() -> bool { true }`;
+      const code = "fn bar() -> bool { true }";
       const tree = parser.parse(code);
       const funcItem = tree.rootNode.descendantsOfType("function_item")[0];
 
@@ -56,7 +56,7 @@ describe("Rust Metadata Extractors", () => {
     });
 
     it("should extract reference type", () => {
-      const code = `let s: &str = "hello";`;
+      const code = "let s: &str = \"hello\";";
       const tree = parser.parse(code);
       const letDecl = tree.rootNode.descendantsOfType("let_declaration")[0];
 
@@ -67,7 +67,7 @@ describe("Rust Metadata Extractors", () => {
     });
 
     it("should extract mutable reference type", () => {
-      const code = `let v: &mut Vec<i32> = &mut vec![];`;
+      const code = "let v: &mut Vec<i32> = &mut vec![];";
       const tree = parser.parse(code);
       const letDecl = tree.rootNode.descendantsOfType("let_declaration")[0];
 
@@ -78,7 +78,7 @@ describe("Rust Metadata Extractors", () => {
     });
 
     it("should extract generic type", () => {
-      const code = `let v: Vec<String> = Vec::new();`;
+      const code = "let v: Vec<String> = Vec::new();";
       const tree = parser.parse(code);
       const letDecl = tree.rootNode.descendantsOfType("let_declaration")[0];
 
@@ -89,7 +89,7 @@ describe("Rust Metadata Extractors", () => {
     });
 
     it("should detect Option as nullable", () => {
-      const code = `let opt: Option<i32> = None;`;
+      const code = "let opt: Option<i32> = None;";
       const tree = parser.parse(code);
       const letDecl = tree.rootNode.descendantsOfType("let_declaration")[0];
 
@@ -101,7 +101,7 @@ describe("Rust Metadata Extractors", () => {
     });
 
     it("should extract tuple type", () => {
-      const code = `let t: (i32, String, bool) = (1, String::new(), true);`;
+      const code = "let t: (i32, String, bool) = (1, String::new(), true);";
       const tree = parser.parse(code);
       const letDecl = tree.rootNode.descendantsOfType("let_declaration")[0];
 
@@ -112,7 +112,7 @@ describe("Rust Metadata Extractors", () => {
     });
 
     it("should extract array type", () => {
-      const code = `let arr: [u8; 10] = [0; 10];`;
+      const code = "let arr: [u8; 10] = [0; 10];";
       const tree = parser.parse(code);
       const letDecl = tree.rootNode.descendantsOfType("let_declaration")[0];
 
@@ -123,7 +123,7 @@ describe("Rust Metadata Extractors", () => {
     });
 
     it("should extract scoped type", () => {
-      const code = `let map: std::collections::HashMap<String, i32> = HashMap::new();`;
+      const code = "let map: std::collections::HashMap<String, i32> = HashMap::new();";
       const tree = parser.parse(code);
       const letDecl = tree.rootNode.descendantsOfType("let_declaration")[0];
 
@@ -134,7 +134,7 @@ describe("Rust Metadata Extractors", () => {
     });
 
     it("should return undefined for declarations without type annotation", () => {
-      const code = `let x = 5;`;
+      const code = "let x = 5;";
       const tree = parser.parse(code);
       const letDecl = tree.rootNode.descendantsOfType("let_declaration")[0];
 
@@ -144,7 +144,7 @@ describe("Rust Metadata Extractors", () => {
     });
 
     it("should handle function pointer types", () => {
-      const code = `let f: fn(i32) -> bool = |x| x > 0;`;
+      const code = "let f: fn(i32) -> bool = |x| x > 0;";
       const tree = parser.parse(code);
       const letDecl = tree.rootNode.descendantsOfType("let_declaration")[0];
       const typeNode = letDecl.childForFieldName("type");
@@ -156,7 +156,7 @@ describe("Rust Metadata Extractors", () => {
     });
 
     it("should handle trait object types", () => {
-      const code = `let iter: Box<dyn Iterator<Item = i32>> = Box::new(vec![1, 2, 3].into_iter());`;
+      const code = "let iter: Box<dyn Iterator<Item = i32>> = Box::new(vec![1, 2, 3].into_iter());";
       const tree = parser.parse(code);
       const letDecl = tree.rootNode.descendantsOfType("let_declaration")[0];
       const typeNode = letDecl.childForFieldName("type");
@@ -168,7 +168,7 @@ describe("Rust Metadata Extractors", () => {
     });
 
     it("should handle impl trait types", () => {
-      const code = `fn foo() -> impl Display { 42 }`;
+      const code = "fn foo() -> impl Display { 42 }";
       const tree = parser.parse(code);
       const funcItem = tree.rootNode.descendantsOfType("function_item")[0];
       const returnType = funcItem.childForFieldName("return_type");
@@ -191,7 +191,7 @@ describe("Rust Metadata Extractors", () => {
     });
 
     it("should handle pointer types", () => {
-      const code = `let x: *const i32 = std::ptr::null();`;
+      const code = "let x: *const i32 = std::ptr::null();";
       const tree = parser.parse(code);
       const letDecl = tree.rootNode.descendantsOfType("let_declaration")[0];
       const typeNode = letDecl.childForFieldName("type");
@@ -203,7 +203,7 @@ describe("Rust Metadata Extractors", () => {
     });
 
     it("should handle bounded types", () => {
-      const code = `fn foo<T: Display + Clone>(x: T) {}`;
+      const code = "fn foo<T: Display + Clone>(x: T) {}";
       const tree = parser.parse(code);
       const param = tree.rootNode.descendantsOfType("parameter")[0];
       const typeNode = param.childForFieldName("type");
@@ -215,7 +215,7 @@ describe("Rust Metadata Extractors", () => {
     });
 
     it("should handle slice types", () => {
-      const code = `fn foo(data: &[u8]) {}`;
+      const code = "fn foo(data: &[u8]) {}";
       const tree = parser.parse(code);
       const param = tree.rootNode.descendantsOfType("parameter")[0];
       const typeNode = param.childForFieldName("type");
@@ -227,7 +227,7 @@ describe("Rust Metadata Extractors", () => {
     });
 
     it("should detect Option with turbofish", () => {
-      const code = `let x: Option :: <String> = None;`;
+      const code = "let x: Option :: <String> = None;";
       const tree = parser.parse(code);
       const letDecl = tree.rootNode.descendantsOfType("let_declaration")[0];
       const typeNode = letDecl.childForFieldName("type");
@@ -244,7 +244,7 @@ describe("Rust Metadata Extractors", () => {
     });
 
     it("should extract type from function_signature_item", () => {
-      const code = `trait MyTrait { fn method() -> String; }`;
+      const code = "trait MyTrait { fn method() -> String; }";
       const tree = parser.parse(code);
       const funcSig = tree.rootNode.descendantsOfType("function_signature_item")[0];
 
@@ -256,7 +256,7 @@ describe("Rust Metadata Extractors", () => {
     });
 
     it("should extract type from type_annotation node", () => {
-      const code = `let x: i32 = 5;`;
+      const code = "let x: i32 = 5;";
       const tree = parser.parse(code);
       const letDecl = tree.rootNode.descendantsOfType("let_declaration")[0];
       const typeNode = letDecl.childForFieldName("type");
@@ -271,7 +271,7 @@ describe("Rust Metadata Extractors", () => {
     });
 
     it("should extract type from identifier node by walking up to parent let_declaration", () => {
-      const code = `let service: Service = create_service();`;
+      const code = "let service: Service = create_service();";
       const tree = parser.parse(code);
       const identifiers = tree.rootNode.descendantsOfType("identifier");
 
@@ -291,7 +291,7 @@ describe("Rust Metadata Extractors", () => {
     });
 
     it("should extract type from identifier with generic type annotation", () => {
-      const code = `let vec: Vec<String> = Vec::new();`;
+      const code = "let vec: Vec<String> = Vec::new();";
       const tree = parser.parse(code);
       const identifiers = tree.rootNode.descendantsOfType("identifier");
 
@@ -311,7 +311,7 @@ describe("Rust Metadata Extractors", () => {
     });
 
     it("should extract type from identifier with reference type annotation", () => {
-      const code = `let s: &str = "hello";`;
+      const code = "let s: &str = \"hello\";";
       const tree = parser.parse(code);
       const identifiers = tree.rootNode.descendantsOfType("identifier");
 
@@ -331,7 +331,7 @@ describe("Rust Metadata Extractors", () => {
     });
 
     it("should return undefined for identifier without type annotation", () => {
-      const code = `let x = 42;`;
+      const code = "let x = 42;";
       const tree = parser.parse(code);
       const identifiers = tree.rootNode.descendantsOfType("identifier");
 
@@ -349,7 +349,7 @@ describe("Rust Metadata Extractors", () => {
     });
 
     it("should return undefined for identifier not in let_declaration", () => {
-      const code = `fn main() { println!("hello"); }`;
+      const code = "fn main() { println!(\"hello\"); }";
       const tree = parser.parse(code);
       const identifiers = tree.rootNode.descendantsOfType("identifier");
 
@@ -372,7 +372,7 @@ describe("Rust Metadata Extractors", () => {
 
   describe("extract_call_receiver", () => {
     it("should extract receiver from method call", () => {
-      const code = `obj.method();`;
+      const code = "obj.method();";
       const tree = parser.parse(code);
       const callExpr = tree.rootNode.descendantsOfType("call_expression")[0];
 
@@ -385,7 +385,7 @@ describe("Rust Metadata Extractors", () => {
     });
 
     it("should extract receiver from chained method call", () => {
-      const code = `vec.iter().map(|x| x * 2);`;
+      const code = "vec.iter().map(|x| x * 2);";
       const tree = parser.parse(code);
       const calls = tree.rootNode.descendantsOfType("call_expression");
 
@@ -401,7 +401,7 @@ describe("Rust Metadata Extractors", () => {
     });
 
     it("should extract receiver from self method call", () => {
-      const code = `self.process();`;
+      const code = "self.process();";
       const tree = parser.parse(code);
       const callExpr = tree.rootNode.descendantsOfType("call_expression")[0];
 
@@ -413,7 +413,7 @@ describe("Rust Metadata Extractors", () => {
     });
 
     it("should extract receiver from field method call", () => {
-      const code = `self.data.process();`;
+      const code = "self.data.process();";
       const tree = parser.parse(code);
       const callExpr = tree.rootNode.descendantsOfType("call_expression")[0];
 
@@ -425,7 +425,7 @@ describe("Rust Metadata Extractors", () => {
     });
 
     it("should extract path from associated function call", () => {
-      const code = `String::new();`;
+      const code = "String::new();";
       const tree = parser.parse(code);
       const callExpr = tree.rootNode.descendantsOfType("call_expression")[0];
 
@@ -437,7 +437,7 @@ describe("Rust Metadata Extractors", () => {
     });
 
     it("should extract receiver with turbofish syntax", () => {
-      const code = `vec.iter::<i32>().collect();`;
+      const code = "vec.iter::<i32>().collect();";
       const tree = parser.parse(code);
       const calls = tree.rootNode.descendantsOfType("call_expression");
 
@@ -471,7 +471,7 @@ describe("Rust Metadata Extractors", () => {
     });
 
     it("should return undefined for function calls without receiver", () => {
-      const code = `foo();`;
+      const code = "foo();";
       const tree = parser.parse(code);
       const callExpr = tree.rootNode.descendantsOfType("call_expression")[0];
 
@@ -481,7 +481,7 @@ describe("Rust Metadata Extractors", () => {
     });
 
     it("should handle field_expression directly", () => {
-      const code = `obj.field`;
+      const code = "obj.field";
       const tree = parser.parse(code);
       const fieldExpr = tree.rootNode.descendantsOfType("field_expression")[0];
 
@@ -495,7 +495,7 @@ describe("Rust Metadata Extractors", () => {
 
   describe("extract_property_chain", () => {
     it("should extract simple field access chain", () => {
-      const code = `obj.field1.field2;`;
+      const code = "obj.field1.field2;";
       const tree = parser.parse(code);
       const fieldExpr = tree.rootNode.descendantsOfType("field_expression")[0];
 
@@ -506,7 +506,7 @@ describe("Rust Metadata Extractors", () => {
     });
 
     it("should extract self field chain", () => {
-      const code = `self.data.items;`;
+      const code = "self.data.items;";
       const tree = parser.parse(code);
       const fieldExpr = tree.rootNode.descendantsOfType("field_expression")[0];
 
@@ -517,7 +517,7 @@ describe("Rust Metadata Extractors", () => {
     });
 
     it("should extract chain with method calls", () => {
-      const code = `vec.iter().next();`;
+      const code = "vec.iter().next();";
       const tree = parser.parse(code);
       // Get the outermost call expression which is vec.iter().next()
       const calls = tree.rootNode.descendantsOfType("call_expression");
@@ -532,7 +532,7 @@ describe("Rust Metadata Extractors", () => {
     });
 
     it("should extract scoped identifier chain", () => {
-      const code = `std::collections::HashMap::new();`;
+      const code = "std::collections::HashMap::new();";
       const tree = parser.parse(code);
       const callExpr = tree.rootNode.descendantsOfType("call_expression")[0];
 
@@ -543,7 +543,7 @@ describe("Rust Metadata Extractors", () => {
     });
 
     it("should extract chain with index access", () => {
-      const code = `array[0].field;`;
+      const code = "array[0].field;";
       const tree = parser.parse(code);
       const fieldExpr = tree.rootNode.descendantsOfType("field_expression")[0];
 
@@ -554,7 +554,7 @@ describe("Rust Metadata Extractors", () => {
     });
 
     it("should return undefined for non-chain expressions", () => {
-      const code = `42;`;
+      const code = "42;";
       const tree = parser.parse(code);
       const literal = tree.rootNode.descendantsOfType("integer_literal")[0];
 
@@ -574,7 +574,7 @@ describe("Rust Metadata Extractors", () => {
     });
 
     it("should handle deeply nested field access", () => {
-      const code = `a.b.c.d.e`;
+      const code = "a.b.c.d.e";
       const tree = parser.parse(code);
       const fieldExprs = tree.rootNode.descendantsOfType("field_expression");
       // The outermost field_expression is the first one in the list for nested expressions
@@ -586,7 +586,7 @@ describe("Rust Metadata Extractors", () => {
     });
 
     it("should handle scoped identifier in field expression", () => {
-      const code = `Module::Type.method`;
+      const code = "Module::Type.method";
       const tree = parser.parse(code);
       const fieldExpr = tree.rootNode.descendantsOfType("field_expression")[0];
 
@@ -596,7 +596,7 @@ describe("Rust Metadata Extractors", () => {
     });
 
     it("should skip non-literal index values", () => {
-      const code = `array[i].field`;
+      const code = "array[i].field";
       const tree = parser.parse(code);
       const fieldExpr = tree.rootNode.descendantsOfType("field_expression")[0];
 
@@ -606,7 +606,7 @@ describe("Rust Metadata Extractors", () => {
     });
 
     it("should handle mixed field and index access", () => {
-      const code = `data.items[5].value`;
+      const code = "data.items[5].value";
       const tree = parser.parse(code);
       const fieldExprs = tree.rootNode.descendantsOfType("field_expression");
       // Get the outermost field expression containing the full chain
@@ -620,7 +620,7 @@ describe("Rust Metadata Extractors", () => {
 
   describe("extract_assignment_parts", () => {
     it("should extract let binding parts", () => {
-      const code = `let x = 42;`;
+      const code = "let x = 42;";
       const tree = parser.parse(code);
       const letDecl = tree.rootNode.descendantsOfType("let_declaration")[0];
 
@@ -633,7 +633,7 @@ describe("Rust Metadata Extractors", () => {
     });
 
     it("should extract mutable binding parts", () => {
-      const code = `let mut x = vec![1, 2, 3];`;
+      const code = "let mut x = vec![1, 2, 3];";
       const tree = parser.parse(code);
       const letDecl = tree.rootNode.descendantsOfType("let_declaration")[0];
 
@@ -644,7 +644,7 @@ describe("Rust Metadata Extractors", () => {
     });
 
     it("should extract assignment expression parts", () => {
-      const code = `x = 100;`;
+      const code = "x = 100;";
       const tree = parser.parse(code);
       const assignment = tree.rootNode.descendantsOfType("assignment_expression")[0];
 
@@ -657,7 +657,7 @@ describe("Rust Metadata Extractors", () => {
     });
 
     it("should extract field assignment parts", () => {
-      const code = `self.value = 42;`;
+      const code = "self.value = 42;";
       const tree = parser.parse(code);
       const assignment = tree.rootNode.descendantsOfType("assignment_expression")[0];
 
@@ -669,7 +669,7 @@ describe("Rust Metadata Extractors", () => {
     });
 
     it("should extract compound assignment parts", () => {
-      const code = `x += 5;`;
+      const code = "x += 5;";
       const tree = parser.parse(code);
       const compoundAssign = tree.rootNode.descendantsOfType("compound_assignment_expr")[0];
 
@@ -682,7 +682,7 @@ describe("Rust Metadata Extractors", () => {
     });
 
     it("should extract pattern destructuring", () => {
-      const code = `let (a, b) = (1, 2);`;
+      const code = "let (a, b) = (1, 2);";
       const tree = parser.parse(code);
       const letDecl = tree.rootNode.descendantsOfType("let_declaration")[0];
 
@@ -693,7 +693,7 @@ describe("Rust Metadata Extractors", () => {
     });
 
     it("should extract struct destructuring", () => {
-      const code = `let Point { x, y } = point;`;
+      const code = "let Point { x, y } = point;";
       const tree = parser.parse(code);
       const letDecl = tree.rootNode.descendantsOfType("let_declaration")[0];
 
@@ -704,7 +704,7 @@ describe("Rust Metadata Extractors", () => {
     });
 
     it("should return undefined for non-assignment nodes", () => {
-      const code = `println!("hello");`;
+      const code = "println!(\"hello\");";
       const tree = parser.parse(code);
       const macroCall = tree.rootNode.descendantsOfType("macro_invocation")[0];
 
@@ -727,7 +727,7 @@ describe("Rust Metadata Extractors", () => {
     });
 
     it("should handle let declaration without value", () => {
-      const code = `let x: i32;`;
+      const code = "let x: i32;";
       const tree = parser.parse(code);
       const letDecl = tree.rootNode.descendantsOfType("let_declaration")[0];
 
@@ -738,7 +738,7 @@ describe("Rust Metadata Extractors", () => {
     });
 
     it("should handle index assignment", () => {
-      const code = `array[0] = value;`;
+      const code = "array[0] = value;";
       const tree = parser.parse(code);
       const assignment = tree.rootNode.descendantsOfType("assignment_expression")[0];
 
@@ -753,7 +753,7 @@ describe("Rust Metadata Extractors", () => {
 
   describe("extract_construct_target", () => {
     it("should extract target for struct instantiation", () => {
-      const code = `let point = Point { x: 1, y: 2 };`;
+      const code = "let point = Point { x: 1, y: 2 };";
       const tree = parser.parse(code);
       const structExpr = tree.rootNode.descendantsOfType("struct_expression")[0];
 
@@ -765,7 +765,7 @@ describe("Rust Metadata Extractors", () => {
     });
 
     it("should extract target for Vec::new()", () => {
-      const code = `let vec = Vec::new();`;
+      const code = "let vec = Vec::new();";
       const tree = parser.parse(code);
       const callExpr = tree.rootNode.descendantsOfType("call_expression")[0];
 
@@ -776,7 +776,7 @@ describe("Rust Metadata Extractors", () => {
     });
 
     it("should extract target for Box::new()", () => {
-      const code = `let boxed = Box::new(42);`;
+      const code = "let boxed = Box::new(42);";
       const tree = parser.parse(code);
       const callExpr = tree.rootNode.descendantsOfType("call_expression")[0];
 
@@ -787,7 +787,7 @@ describe("Rust Metadata Extractors", () => {
     });
 
     it("should extract target for tuple struct", () => {
-      const code = `let color = Color(255, 0, 0);`;
+      const code = "let color = Color(255, 0, 0);";
       const tree = parser.parse(code);
       const callExpr = tree.rootNode.descendantsOfType("call_expression")[0];
 
@@ -798,7 +798,7 @@ describe("Rust Metadata Extractors", () => {
     });
 
     it("should extract target for enum variant", () => {
-      const code = `let opt = Some(42);`;
+      const code = "let opt = Some(42);";
       const tree = parser.parse(code);
       const callExpr = tree.rootNode.descendantsOfType("call_expression")[0];
 
@@ -809,7 +809,7 @@ describe("Rust Metadata Extractors", () => {
     });
 
     it("should extract target from assignment", () => {
-      const code = `obj = MyStruct::new();`;
+      const code = "obj = MyStruct::new();";
       const tree = parser.parse(code);
       const callExpr = tree.rootNode.descendantsOfType("call_expression")[0];
 
@@ -820,7 +820,7 @@ describe("Rust Metadata Extractors", () => {
     });
 
     it("should extract field assignment target", () => {
-      const code = `self.data = Vec::new();`;
+      const code = "self.data = Vec::new();";
       const tree = parser.parse(code);
       const callExpr = tree.rootNode.descendantsOfType("call_expression")[0];
 
@@ -832,7 +832,7 @@ describe("Rust Metadata Extractors", () => {
     });
 
     it("should return undefined for constructor without assignment", () => {
-      const code = `Vec::new();`;
+      const code = "Vec::new();";
       const tree = parser.parse(code);
       const callExpr = tree.rootNode.descendantsOfType("call_expression")[0];
 
@@ -852,7 +852,7 @@ describe("Rust Metadata Extractors", () => {
     });
 
     it("should extract target from builder pattern", () => {
-      const code = `let obj = Builder::new().build();`;
+      const code = "let obj = Builder::new().build();";
       const tree = parser.parse(code);
       const callExprs = tree.rootNode.descendantsOfType("call_expression");
       const buildCall = callExprs[callExprs.length - 1];
@@ -864,7 +864,7 @@ describe("Rust Metadata Extractors", () => {
     });
 
     it("should handle pattern with identifier name field", () => {
-      const code = `let Some(value) = opt;`;
+      const code = "let Some(value) = opt;";
       const tree = parser.parse(code);
       const letDecl = tree.rootNode.descendantsOfType("let_declaration")[0];
       const pattern = letDecl.childForFieldName("pattern");
@@ -877,7 +877,7 @@ describe("Rust Metadata Extractors", () => {
     });
 
     it("should return undefined for struct expression without assignment", () => {
-      const code = `Point { x: 1, y: 2 };`; // No assignment
+      const code = "Point { x: 1, y: 2 };"; // No assignment
       const tree = parser.parse(code);
       const structExpr = tree.rootNode.descendantsOfType("struct_expression")[0];
 
@@ -889,7 +889,7 @@ describe("Rust Metadata Extractors", () => {
 
   describe("extract_type_arguments", () => {
     it("should extract single type argument", () => {
-      const code = `let v: Vec<i32> = Vec::new();`;
+      const code = "let v: Vec<i32> = Vec::new();";
       const tree = parser.parse(code);
       const genericType = tree.rootNode.descendantsOfType("generic_type")[0];
 
@@ -900,7 +900,7 @@ describe("Rust Metadata Extractors", () => {
     });
 
     it("should extract multiple type arguments", () => {
-      const code = `let map: HashMap<String, u64> = HashMap::new();`;
+      const code = "let map: HashMap<String, u64> = HashMap::new();";
       const tree = parser.parse(code);
       const genericType = tree.rootNode.descendantsOfType("generic_type")[0];
 
@@ -911,7 +911,7 @@ describe("Rust Metadata Extractors", () => {
     });
 
     it("should extract nested generic arguments", () => {
-      const code = `let v: Vec<Option<String>> = Vec::new();`;
+      const code = "let v: Vec<Option<String>> = Vec::new();";
       const tree = parser.parse(code);
       const genericType = tree.rootNode.descendantsOfType("generic_type")[0];
 
@@ -922,7 +922,7 @@ describe("Rust Metadata Extractors", () => {
     });
 
     it("should extract turbofish type arguments", () => {
-      const code = `vec.collect::<Vec<i32>>();`;
+      const code = "vec.collect::<Vec<i32>>();";
       const tree = parser.parse(code);
       const genericFunc = tree.rootNode.descendantsOfType("generic_function")[0];
 
@@ -935,7 +935,7 @@ describe("Rust Metadata Extractors", () => {
     });
 
     it("should extract lifetime parameters", () => {
-      const code = `let r: &'a str = "hello";`;
+      const code = "let r: &'a str = \"hello\";";
       const tree = parser.parse(code);
       // Look for reference_type which might contain lifetime
       const refType = tree.rootNode.descendantsOfType("reference_type")[0];
@@ -950,7 +950,7 @@ describe("Rust Metadata Extractors", () => {
     });
 
     it("should extract Result type arguments", () => {
-      const code = `fn foo() -> Result<String, std::io::Error> {}`;
+      const code = "fn foo() -> Result<String, std::io::Error> {}";
       const tree = parser.parse(code);
       const genericType = tree.rootNode.descendantsOfType("generic_type")[0];
 
@@ -961,7 +961,7 @@ describe("Rust Metadata Extractors", () => {
     });
 
     it("should handle complex nested generics", () => {
-      const code = `let map: HashMap<String, Vec<(i32, String)>> = HashMap::new();`;
+      const code = "let map: HashMap<String, Vec<(i32, String)>> = HashMap::new();";
       const tree = parser.parse(code);
       const genericType = tree.rootNode.descendantsOfType("generic_type")[0];
 
@@ -972,7 +972,7 @@ describe("Rust Metadata Extractors", () => {
     });
 
     it("should return undefined for non-generic types", () => {
-      const code = `let x: i32 = 5;`;
+      const code = "let x: i32 = 5;";
       const tree = parser.parse(code);
       const primitiveType = tree.rootNode.descendantsOfType("primitive_type")[0];
 
@@ -992,7 +992,7 @@ describe("Rust Metadata Extractors", () => {
     });
 
     it("should extract from type_arguments node directly", () => {
-      const code = `Vec::<i32>::new();`;
+      const code = "Vec::<i32>::new();";
       const tree = parser.parse(code);
       const typeArgs = tree.rootNode.descendantsOfType("type_arguments")[0];
 
@@ -1002,7 +1002,7 @@ describe("Rust Metadata Extractors", () => {
     });
 
     it("should handle associated types in bracketed_type", () => {
-      const code = `fn foo() -> impl Iterator<Item = i32> {}`;
+      const code = "fn foo() -> impl Iterator<Item = i32> {}";
       const tree = parser.parse(code);
       const bracketedType = tree.rootNode.descendantsOfType("bracketed_type")[0];
 
@@ -1049,7 +1049,7 @@ describe("Rust Metadata Extractors", () => {
 
     it("should handle type arguments from tree-sitter parsed node", () => {
       // Use actual tree-sitter parsed code instead of mock
-      const code = `let x: Result<HashMap<String, Vec<Option<i32>>>, Error> = Ok(HashMap::new());`;
+      const code = "let x: Result<HashMap<String, Vec<Option<i32>>>, Error> = Ok(HashMap::new());";
       const tree = parser.parse(code);
       const genericType = tree.rootNode.descendantsOfType("generic_type")[0];
 
@@ -1081,7 +1081,7 @@ impl MyStruct {
     });
 
     it("should handle trait implementations", () => {
-      const code = `impl Display for MyStruct {}`;
+      const code = "impl Display for MyStruct {}";
       const tree = parser.parse(code);
       const typeIdents = tree.rootNode.descendantsOfType("type_identifier");
       const displayTrait = typeIdents.find(node => node.text === "Display");
@@ -1094,7 +1094,7 @@ impl MyStruct {
     });
 
     it("should handle macro calls in let bindings", () => {
-      const code = `let v = vec![1, 2, 3];`;
+      const code = "let v = vec![1, 2, 3];";
       const tree = parser.parse(code);
       const letDecl = tree.rootNode.descendantsOfType("let_declaration")[0];
 
@@ -1105,7 +1105,7 @@ impl MyStruct {
     });
 
     it("should handle closure types", () => {
-      const code = `let closure: Box<dyn Fn(i32) -> i32> = Box::new(|x| x * 2);`;
+      const code = "let closure: Box<dyn Fn(i32) -> i32> = Box::new(|x| x * 2);";
       const tree = parser.parse(code);
       const letDecl = tree.rootNode.descendantsOfType("let_declaration")[0];
       const typeNode = letDecl.childForFieldName("type");
@@ -1117,7 +1117,7 @@ impl MyStruct {
     });
 
     it("should handle where clauses in functions", () => {
-      const code = `fn foo<T>() -> T where T: Default {}`;
+      const code = "fn foo<T>() -> T where T: Default {}";
       const tree = parser.parse(code);
       const funcItem = tree.rootNode.descendantsOfType("function_item")[0];
       const returnType = funcItem.childForFieldName("return_type");
@@ -1129,7 +1129,7 @@ impl MyStruct {
     });
 
     it("should handle async functions", () => {
-      const code = `async fn fetch() -> Result<String, Error> {}`;
+      const code = "async fn fetch() -> Result<String, Error> {}";
       const tree = parser.parse(code);
       const funcItem = tree.rootNode.descendantsOfType("function_item")[0];
       const returnType = funcItem.childForFieldName("return_type");
@@ -1141,7 +1141,7 @@ impl MyStruct {
     });
 
     it("should handle const generics", () => {
-      const code = `let arr: [i32; 10] = [0; 10];`;
+      const code = "let arr: [i32; 10] = [0; 10];";
       const tree = parser.parse(code);
       const letDecl = tree.rootNode.descendantsOfType("let_declaration")[0];
       const typeNode = letDecl.childForFieldName("type");
@@ -1153,7 +1153,7 @@ impl MyStruct {
     });
 
     it("should handle range types", () => {
-      const code = `let range: std::ops::Range<usize> = 0..10;`;
+      const code = "let range: std::ops::Range<usize> = 0..10;";
       const tree = parser.parse(code);
       const letDecl = tree.rootNode.descendantsOfType("let_declaration")[0];
       const typeNode = letDecl.childForFieldName("type");
@@ -1165,7 +1165,7 @@ impl MyStruct {
     });
 
     it("should handle dynamic types", () => {
-      const code = `let x: dyn Debug = &42;`;
+      const code = "let x: dyn Debug = &42;";
       const tree = parser.parse(code);
       const letDecl = tree.rootNode.descendantsOfType("let_declaration")[0];
       const typeNode = letDecl.childForFieldName("type");
@@ -1178,7 +1178,7 @@ impl MyStruct {
     });
 
     it("should handle Arc/Rc constructors", () => {
-      const code = `let arc = Arc::new(value);`;
+      const code = "let arc = Arc::new(value);";
       const tree = parser.parse(code);
       const callExpr = tree.rootNode.descendantsOfType("call_expression")[0];
 
@@ -1191,7 +1191,7 @@ impl MyStruct {
 
   describe("is_method_call", () => {
     it("should return true for method calls", () => {
-      const code = `obj.method()`;
+      const code = "obj.method()";
       const tree = parser.parse(code);
       const callExpr = tree.rootNode.descendantsOfType("call_expression")[0];
 
@@ -1201,7 +1201,7 @@ impl MyStruct {
     });
 
     it("should return false for function calls", () => {
-      const code = `func()`;
+      const code = "func()";
       const tree = parser.parse(code);
       const callExpr = tree.rootNode.descendantsOfType("call_expression")[0];
 
@@ -1211,7 +1211,7 @@ impl MyStruct {
     });
 
     it("should return true for chained method calls", () => {
-      const code = `obj.nested.method()`;
+      const code = "obj.nested.method()";
       const tree = parser.parse(code);
       const callExpr = tree.rootNode.descendantsOfType("call_expression")[0];
 
@@ -1221,7 +1221,7 @@ impl MyStruct {
     });
 
     it("should return true for method calls on self", () => {
-      const code = `self.method()`;
+      const code = "self.method()";
       const tree = parser.parse(code);
       const callExpr = tree.rootNode.descendantsOfType("call_expression")[0];
 
@@ -1231,7 +1231,7 @@ impl MyStruct {
     });
 
     it("should return false for non-call nodes", () => {
-      const code = `let x = 42;`;
+      const code = "let x = 42;";
       const tree = parser.parse(code);
       const identifier = tree.rootNode.descendantsOfType("identifier")[0];
 
@@ -1241,7 +1241,7 @@ impl MyStruct {
     });
 
     it("should handle field_identifier nodes in method calls", () => {
-      const code = `vec.push(5)`;
+      const code = "vec.push(5)";
       const tree = parser.parse(code);
       const fieldIdentifier = tree.rootNode.descendantsOfType("field_identifier")[0];
 
@@ -1253,7 +1253,7 @@ impl MyStruct {
 
   describe("extract_call_name", () => {
     it("should extract method name from method call", () => {
-      const code = `obj.method()`;
+      const code = "obj.method()";
       const tree = parser.parse(code);
       const callExpr = tree.rootNode.descendantsOfType("call_expression")[0];
 
@@ -1263,7 +1263,7 @@ impl MyStruct {
     });
 
     it("should extract function name from function call", () => {
-      const code = `func()`;
+      const code = "func()";
       const tree = parser.parse(code);
       const callExpr = tree.rootNode.descendantsOfType("call_expression")[0];
 
@@ -1273,7 +1273,7 @@ impl MyStruct {
     });
 
     it("should extract method name from chained call", () => {
-      const code = `obj.nested.method()`;
+      const code = "obj.nested.method()";
       const tree = parser.parse(code);
       const callExpr = tree.rootNode.descendantsOfType("call_expression")[0];
 
@@ -1283,7 +1283,7 @@ impl MyStruct {
     });
 
     it("should extract method name from self call", () => {
-      const code = `self.method()`;
+      const code = "self.method()";
       const tree = parser.parse(code);
       const callExpr = tree.rootNode.descendantsOfType("call_expression")[0];
 
@@ -1293,7 +1293,7 @@ impl MyStruct {
     });
 
     it("should return undefined for non-call nodes", () => {
-      const code = `let x = 42;`;
+      const code = "let x = 42;";
       const tree = parser.parse(code);
       const identifier = tree.rootNode.descendantsOfType("identifier")[0];
 
@@ -1303,7 +1303,7 @@ impl MyStruct {
     });
 
     it("should extract name from scoped identifier calls", () => {
-      const code = `std::println!("test")`;
+      const code = "std::println!(\"test\")";
       const tree = parser.parse(code);
       const macroInvocation = tree.rootNode.descendantsOfType("macro_invocation")[0];
 
@@ -1315,7 +1315,7 @@ impl MyStruct {
     });
 
     it("should extract name from Vec::new pattern", () => {
-      const code = `Vec::new()`;
+      const code = "Vec::new()";
       const tree = parser.parse(code);
       const callExpr = tree.rootNode.descendantsOfType("call_expression")[0];
 

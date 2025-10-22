@@ -84,6 +84,7 @@ describe("JavaScript Builder Configuration", () => {
       scope_depths: new Map(),
       root_scope_id: test_scope_id,
       get_scope_id: (location: Location) => test_scope_id,
+      get_child_scope_with_symbol_name: (_scope_id: ScopeId, _name: SymbolName) => test_scope_id,
     };
   }
 
@@ -906,7 +907,7 @@ export { internal as external };
       it("should detect re-exports and set export.is_reexport=true", () => {
         // Note: This tests the detection logic, but in practice re-exports
         // wouldn't create definitions in the current file
-        const code = `export { foo } from './other';`;
+        const code = "export { foo } from './other';";
         const ast = parser.parse(code);
         const exportNode = findNodeByType(ast.rootNode, "export_statement");
 
@@ -1280,7 +1281,7 @@ export { foo };
       });
 
       it("should not attach documentation when there is no comment", () => {
-        const code = `function noDoc() { return 42; }`;
+        const code = "function noDoc() { return 42; }";
         const context = createTestContext();
         const builder = new DefinitionBuilder(context);
         const ast = parser.parse(code);
