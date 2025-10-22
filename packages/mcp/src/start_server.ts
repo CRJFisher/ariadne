@@ -1,10 +1,15 @@
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
+import {
+  CallToolRequestSchema,
+  ListToolsRequestSchema,
+} from "@modelcontextprotocol/sdk/types.js";
 import * as path from "path";
 import * as fs from "fs/promises";
 import { VERSION } from "./version";
 import { Project } from "@ariadnejs/core";
 import { FilePath } from "@ariadnejs/types";
+import { list_functions } from "./tools/list_functions.js";
 
 export interface AriadneMCPServerOptions {
   projectPath?: string;
@@ -35,7 +40,63 @@ export async function start_server(
   const project = new Project();
   await project.initialize(projectPath as FilePath);
 
-  // TODO: Register tools here (in subsequent tasks)
+  // Register tools
+  server.setRequestHandler(ListToolsRequestSchema, async () => {
+    return {
+      tools: [
+        {
+          name: "list_functions",
+          description:
+            "Lists all top-level (entry point) functions ordered by call tree complexity. Shows function signatures with parameters and return types, along with the total number of functions transitively called. Entry points are functions never called by other functions in the codebase - potential execution starting points.",
+          inputSchema: {
+            type: "object",
+            properties: {},
+            required: [],
+          },
+        },
+      ],
+    };
+  });
+
+  // Handle tool calls
+  server.setRequestHandler(CallToolRequestSchema, async (request) => {
+    const { name } = request.params;
+
+    try {
+      switch (name) {
+        case "list_functions": {
+          // Load all project files before analysis
+          await load_project_files(project, projectPath);
+
+          const result = await list_functions(project);
+
+          return {
+            content: [
+              {
+                type: "text",
+                text: result,
+              },
+            ],
+          };
+        }
+
+        default:
+          throw new Error(`Unknown tool: ${name}`);
+      }
+    } catch (error) {
+      return {
+        content: [
+          {
+            type: "text",
+            text: `Error: ${
+              error instanceof Error ? error.message : String(error)
+            }`,
+          },
+        ],
+        isError: true,
+      };
+    }
+  });
 
   // Connect transport based on options
   if (options.transport === "stdio" || !options.transport) {
