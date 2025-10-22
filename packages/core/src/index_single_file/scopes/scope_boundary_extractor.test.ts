@@ -46,10 +46,7 @@ describe("scope_boundary_extractor infrastructure", () => {
   });
 
   describe("get_scope_boundary_extractor", () => {
-    it.skip("should return PythonScopeBoundaryExtractor for python", () => {
-      // TODO: Fix require path issue in test environment
-      // The Python extractor works correctly in isolation (see python_scope_boundary_extractor.test.ts)
-      // but the factory function has require path issues in the test environment
+    it("should return PythonScopeBoundaryExtractor for python", () => {
       const extractor = get_scope_boundary_extractor("python" as Language);
       expect(extractor).toBeDefined();
       expect(extractor.constructor.name).toBe("PythonScopeBoundaryExtractor");

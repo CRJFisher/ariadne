@@ -2750,7 +2750,7 @@ describe("Semantic Index - TypeScript", () => {
       }
     });
 
-    it.skip("should handle nested functions with correct body_scope_id mapping", () => {
+    it("should handle nested functions with correct body_scope_id mapping", () => {
       const code = `
         function level1() {
           function level2() {
