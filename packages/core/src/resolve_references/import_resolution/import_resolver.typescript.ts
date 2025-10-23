@@ -90,7 +90,12 @@ function resolve_relative_typescript(
 
   // If file tree lookup fails, infer the extension
   if (!found_absolute) {
-    if (!path.extname(resolved_absolute)) {
+    const ext = path.extname(resolved_absolute);
+    const valid_exts = [".ts", ".tsx", ".js", ".jsx"];
+
+    // Only accept paths that already have a valid TS/JS extension
+    // Otherwise, add .ts (e.g., ./import_resolver.rust → ./import_resolver.rust.ts)
+    if (!ext || !valid_exts.includes(ext)) {
       found_absolute = `${resolved_absolute}.ts`;
     } else {
       found_absolute = resolved_absolute;

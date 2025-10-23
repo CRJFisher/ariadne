@@ -87,7 +87,12 @@ function resolve_relative_javascript(
 
   // If file tree lookup fails, infer the extension
   if (!found_absolute) {
-    if (!path.extname(resolved_absolute)) {
+    const ext = path.extname(resolved_absolute);
+    const valid_exts = [".js", ".jsx", ".mjs", ".cjs"];
+
+    // Only accept paths that already have a valid JS extension
+    // Otherwise, add .js
+    if (!ext || !valid_exts.includes(ext)) {
       found_absolute = `${resolved_absolute}.js`;
     } else {
       found_absolute = resolved_absolute;

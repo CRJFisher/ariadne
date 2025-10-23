@@ -205,6 +205,40 @@ describe("resolve_module_path_javascript", () => {
 
     expect(result).toBe(utils_js);
   });
+
+  it("should append .js to paths with invalid extensions (e.g., import_resolver.rust)", () => {
+    // Bug fix: import paths like './import_resolver.rust' should resolve to './import_resolver.rust.js'
+    // Previously, the code only checked if ANY extension existed, not if it was VALID
+    const resolver_file = path.join(TEST_DIR, "import_resolver.rust.js");
+    const main_file = path.join(TEST_DIR, "main.js") as FilePath;
+    const root_folder = build_file_tree([
+      resolver_file as FilePath,
+      main_file,
+    ]);
+
+    const result = resolve_module_path_javascript(
+      "./import_resolver.rust",
+      main_file,
+      root_folder
+    );
+
+    expect(result).toBe(resolver_file);
+  });
+
+  it("should append .js when file not found and has invalid extension", () => {
+    // Even if file doesn't exist in tree, should infer .js extension for invalid extensions
+    const main_file = path.join(TEST_DIR, "main.js") as FilePath;
+    const root_folder = build_file_tree([main_file]);
+    const expected = path.join(TEST_DIR, "utils.custom.js"); // Should add .js
+
+    const result = resolve_module_path_javascript(
+      "./utils.custom",
+      main_file,
+      root_folder
+    );
+
+    expect(result).toBe(expected);
+  });
 });
 
 describe("Body-based scopes - JavaScript", () => {
