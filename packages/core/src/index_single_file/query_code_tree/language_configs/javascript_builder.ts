@@ -547,9 +547,67 @@ export function extract_parameter_type(node: SyntaxNode): SymbolName | undefined
 }
 
 /**
+ * Extract type from JSDoc comment
+ * Looks for @type {TypeName} annotations in JSDoc comments
+ */
+export function extract_jsdoc_type(comment_text: string): SymbolName | undefined {
+  // Match @type {TypeName} pattern
+  // Handles single-line: /** @type {Foo} */
+  // Handles multi-line:  /**
+  //                       * @type {Bar}
+  //                       */
+  const type_match = comment_text.match(/@type\s*\{([^}]+)\}/);
+  if (type_match && type_match[1]) {
+    return type_match[1].trim() as SymbolName;
+  }
+  return undefined;
+}
+
+/**
+ * Find JSDoc comment immediately preceding a node
+ * Returns the comment node if found, undefined otherwise
+ */
+export function find_preceding_jsdoc(node: SyntaxNode): SyntaxNode | undefined {
+  // Look for comment nodes among previous siblings
+  let current = node.previousSibling;
+
+  // Skip whitespace and newlines
+  while (current && (current.type === "comment" || current.text.trim() === "")) {
+    if (current.type === "comment" && current.text.startsWith("/**")) {
+      return current;
+    }
+    current = current.previousSibling;
+  }
+
+  // Also check parent's previous siblings (for field_definition nodes)
+  if (node.parent) {
+    current = node.parent.previousSibling;
+    while (current && (current.type === "comment" || current.text.trim() === "")) {
+      if (current.type === "comment" && current.text.startsWith("/**")) {
+        return current;
+      }
+      current = current.previousSibling;
+    }
+  }
+
+  return undefined;
+}
+
+/**
  * Extract property type
+ * For JavaScript, this extracts type information from JSDoc @type annotations
  */
 export function extract_property_type(node: SyntaxNode): SymbolName | undefined {
+  // First check for JSDoc comment
+  const jsdoc_comment = find_preceding_jsdoc(node);
+  if (jsdoc_comment) {
+    const type = extract_jsdoc_type(jsdoc_comment.text);
+    if (type) {
+      return type;
+    }
+  }
+
+  // Fall back to standard type annotation (for TypeScript-style annotations if present)
   return extract_parameter_type(node);
 }
 

@@ -1646,4 +1646,164 @@ export const NESTED = {
       });
     });
   });
+
+  describe("Property Type Extraction from JSDoc", () => {
+    // Helper to build semantic index from code (for integration tests)
+    async function buildIndexFromCode(code: string) {
+      const tree = parser.parse(code);
+      const lines = code.split("\n");
+      const parsed_file = {
+        file_path: TEST_FILE_PATH,
+        file_lines: lines.length,
+        file_end_column: lines[lines.length - 1].length + 1,
+        tree: tree,
+        lang: "javascript" as const,
+      };
+
+      // Dynamic import build_semantic_index
+      const { build_semantic_index } = await import("../../semantic_index");
+      return build_semantic_index(parsed_file, tree, "javascript");
+    }
+
+    it("should extract type from JSDoc annotation on class field", async () => {
+      const code = `
+        class Registry {
+          /** @type {Map<string, Symbol>} */
+          symbols = new Map();
+        }
+      `;
+
+      const index = await buildIndexFromCode(code);
+      const classes = Array.from(index.classes.values());
+      expect(classes.length).toBe(1);
+
+      const registry_class = classes[0];
+      expect(registry_class.name).toBe("Registry");
+      expect(registry_class.properties.length).toBeGreaterThan(0);
+
+      const symbols_prop = registry_class.properties.find(p => p.name === "symbols");
+      expect(symbols_prop).toBeDefined();
+      expect(symbols_prop?.type).toBe("Map<string, Symbol>");
+    });
+
+    it("should extract type from multiline JSDoc", async () => {
+      const code = `
+        class Config {
+          /**
+           * Application settings
+           * @type {AppSettings}
+           */
+          settings = {};
+        }
+      `;
+
+      const index = await buildIndexFromCode(code);
+      const classes = Array.from(index.classes.values());
+      expect(classes.length).toBe(1);
+
+      const config_class = classes[0];
+      const settings_prop = config_class.properties.find(p => p.name === "settings");
+      expect(settings_prop).toBeDefined();
+      expect(settings_prop?.type).toBe("AppSettings");
+    });
+
+    it.skip("should extract type from JSDoc on constructor assignment (not yet implemented)", async () => {
+      // Constructor assignments require additional infrastructure to track as properties
+      // This is a known limitation - JSDoc types on constructor assignments aren't extracted yet
+      const code = `
+        class Project {
+          constructor() {
+            /** @type {DefinitionRegistry} */
+            this.definitions = new DefinitionRegistry();
+          }
+        }
+      `;
+
+      const index = await buildIndexFromCode(code);
+      const classes = Array.from(index.classes.values());
+      expect(classes.length).toBe(1);
+
+      const project_class = classes[0];
+      const definitions_prop = project_class.properties.find(p => p.name === "definitions");
+      expect(definitions_prop).toBeDefined();
+      expect(definitions_prop?.type).toBe("DefinitionRegistry");
+    });
+
+    it("should extract array type annotations", async () => {
+      const code = `
+        class Foo {
+          /** @type {number[]} */
+          numbers = [];
+
+          /** @type {Array<string>} */
+          items = [];
+        }
+      `;
+
+      const index = await buildIndexFromCode(code);
+      const classes = Array.from(index.classes.values());
+      expect(classes.length).toBe(1);
+
+      const foo_class = classes[0];
+
+      const numbers_prop = foo_class.properties.find(p => p.name === "numbers");
+      expect(numbers_prop?.type).toBe("number[]");
+
+      const items_prop = foo_class.properties.find(p => p.name === "items");
+      expect(items_prop?.type).toBe("Array<string>");
+    });
+
+    it("should extract union type annotations", async () => {
+      const code = `
+        class Foo {
+          /** @type {string | number | null} */
+          value = null;
+        }
+      `;
+
+      const index = await buildIndexFromCode(code);
+      const classes = Array.from(index.classes.values());
+      expect(classes.length).toBe(1);
+
+      const foo_class = classes[0];
+      const value_prop = foo_class.properties.find(p => p.name === "value");
+      expect(value_prop).toBeDefined();
+      expect(value_prop?.type).toBe("string | number | null");
+    });
+
+    it("should extract function type annotations", async () => {
+      const code = `
+        class Foo {
+          /** @type {(data: string) => void} */
+          handler = null;
+        }
+      `;
+
+      const index = await buildIndexFromCode(code);
+      const classes = Array.from(index.classes.values());
+      expect(classes.length).toBe(1);
+
+      const foo_class = classes[0];
+      const handler_prop = foo_class.properties.find(p => p.name === "handler");
+      expect(handler_prop).toBeDefined();
+      expect(handler_prop?.type).toBe("(data: string) => void");
+    });
+
+    it("should handle properties without JSDoc", async () => {
+      const code = `
+        class Foo {
+          data = 42;
+        }
+      `;
+
+      const index = await buildIndexFromCode(code);
+      const classes = Array.from(index.classes.values());
+      expect(classes.length).toBe(1);
+
+      const foo_class = classes[0];
+      const data_prop = foo_class.properties.find(p => p.name === "data");
+      expect(data_prop).toBeDefined();
+      expect(data_prop?.type).toBeUndefined();
+    });
+  });
 });
