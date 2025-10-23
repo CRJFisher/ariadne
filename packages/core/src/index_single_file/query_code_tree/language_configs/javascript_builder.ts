@@ -357,6 +357,8 @@ export function extract_export_info(
   let current: SyntaxNode | null = node;
 
   // First, check if this is a direct export: export function foo() {}
+  // BUT: Stop if we enter a nested function/arrow function scope
+  // Variables inside nested functions are NOT exported even if the outer const is exported
   while (current) {
     const parent: SyntaxNode | null = current.parent;
 
@@ -366,6 +368,24 @@ export function extract_export_info(
         is_exported: true,
         export: export_metadata,
       };
+    }
+
+    // Stop walking up if we're at a function body (statement_block inside a function)
+    // This prevents marking variables inside nested functions as exported
+    const is_inside_function_body =
+      current.type === "statement_block" &&
+      parent &&
+      (parent.type === "function_declaration" ||
+        parent.type === "function_expression" ||
+        parent.type === "arrow_function" ||
+        parent.type === "method_definition" ||
+        parent.type === "generator_function_declaration" ||
+        parent.type === "generator_function");
+
+    if (is_inside_function_body) {
+      // We're at a function body boundary - stop here
+      // Variables inside this function should not inherit the outer export status
+      break;
     }
 
     current = parent;

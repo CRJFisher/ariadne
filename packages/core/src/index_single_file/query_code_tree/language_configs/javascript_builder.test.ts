@@ -991,6 +991,201 @@ export { foo };
         expect(variables).toHaveLength(1);
         expect(variables[0].is_exported).toBe(true);
       });
+
+      it("should NOT mark variables inside exported object literals as exported", () => {
+        const code = `
+export const CONFIG = {
+  handler: () => {
+    const local_var = 42;
+    return local_var;
+  }
+};`;
+        const ast = parser.parse(code);
+        const context = createTestContext();
+        const builder = new DefinitionBuilder(context);
+
+        // Process all variable definitions
+        const config = JAVASCRIPT_BUILDER_CONFIG.get("definition.variable");
+        if (!config) {
+          throw new Error("definition.variable config not found");
+        }
+
+        // Find all variable identifiers
+        const captures: Array<{ node: SyntaxNode; text: string }> = [];
+        function findVariables(node: SyntaxNode) {
+          if (node.type === "identifier") {
+            const parent = node.parent;
+            // Check if this is a variable declarator name
+            if (parent?.type === "variable_declarator" && parent.childForFieldName("name") === node) {
+              captures.push({ node, text: node.text });
+            }
+          }
+          for (let i = 0; i < node.childCount; i++) {
+            const child = node.child(i);
+            if (child) findVariables(child);
+          }
+        }
+        findVariables(ast.rootNode);
+
+        // Process each variable
+        for (const cap of captures) {
+          const capture = {
+            node: cap.node,
+            text: cap.text as SymbolName,
+            location: node_to_location(cap.node, code),
+            type: "definition.variable",
+          };
+          config.process(capture, builder, context);
+        }
+
+        const result = builder.build();
+        const variables = Array.from(result.variables.values());
+
+        // Should have 2 variables: CONFIG and local_var
+        expect(variables.length).toBe(2);
+
+        const config_var = variables.find(v => v.name === "CONFIG");
+        const local_var = variables.find(v => v.name === "local_var");
+
+        expect(config_var).toBeDefined();
+        expect(local_var).toBeDefined();
+
+        // CONFIG should be exported
+        expect(config_var!.is_exported).toBe(true);
+
+        // local_var should NOT be exported (it's inside a nested arrow function)
+        expect(local_var!.is_exported).toBe(false);
+      });
+
+      it("should NOT mark variables inside exported arrays with functions as exported", () => {
+        const code = `
+export const HANDLERS = [
+  function process(item) {
+    const temp = item.value;
+    return temp;
+  }
+];`;
+        const ast = parser.parse(code);
+        const context = createTestContext();
+        const builder = new DefinitionBuilder(context);
+
+        // Process all variable definitions
+        const config = JAVASCRIPT_BUILDER_CONFIG.get("definition.variable");
+        if (!config) {
+          throw new Error("definition.variable config not found");
+        }
+
+        // Find all variable identifiers
+        const captures: Array<{ node: SyntaxNode; text: string }> = [];
+        function findVariables(node: SyntaxNode) {
+          if (node.type === "identifier") {
+            const parent = node.parent;
+            if (parent?.type === "variable_declarator" && parent.childForFieldName("name") === node) {
+              captures.push({ node, text: node.text });
+            }
+          }
+          for (let i = 0; i < node.childCount; i++) {
+            const child = node.child(i);
+            if (child) findVariables(child);
+          }
+        }
+        findVariables(ast.rootNode);
+
+        // Process each variable
+        for (const cap of captures) {
+          const capture = {
+            node: cap.node,
+            text: cap.text as SymbolName,
+            location: node_to_location(cap.node, code),
+            type: "definition.variable",
+          };
+          config.process(capture, builder, context);
+        }
+
+        const result = builder.build();
+        const variables = Array.from(result.variables.values());
+
+        // Should have 2 variables: HANDLERS and temp
+        expect(variables.length).toBe(2);
+
+        const handlers_var = variables.find(v => v.name === "HANDLERS");
+        const temp_var = variables.find(v => v.name === "temp");
+
+        expect(handlers_var).toBeDefined();
+        expect(temp_var).toBeDefined();
+
+        // HANDLERS should be exported
+        expect(handlers_var!.is_exported).toBe(true);
+
+        // temp should NOT be exported (it's inside a nested function)
+        expect(temp_var!.is_exported).toBe(false);
+      });
+
+      it("should NOT mark deeply nested variables in exported objects as exported", () => {
+        const code = `
+export const NESTED = {
+  outer: {
+    middle: () => {
+      const deeply_nested = true;
+      return deeply_nested;
+    }
+  }
+};`;
+        const ast = parser.parse(code);
+        const context = createTestContext();
+        const builder = new DefinitionBuilder(context);
+
+        // Process all variable definitions
+        const config = JAVASCRIPT_BUILDER_CONFIG.get("definition.variable");
+        if (!config) {
+          throw new Error("definition.variable config not found");
+        }
+
+        // Find all variable identifiers
+        const captures: Array<{ node: SyntaxNode; text: string }> = [];
+        function findVariables(node: SyntaxNode) {
+          if (node.type === "identifier") {
+            const parent = node.parent;
+            if (parent?.type === "variable_declarator" && parent.childForFieldName("name") === node) {
+              captures.push({ node, text: node.text });
+            }
+          }
+          for (let i = 0; i < node.childCount; i++) {
+            const child = node.child(i);
+            if (child) findVariables(child);
+          }
+        }
+        findVariables(ast.rootNode);
+
+        // Process each variable
+        for (const cap of captures) {
+          const capture = {
+            node: cap.node,
+            text: cap.text as SymbolName,
+            location: node_to_location(cap.node, code),
+            type: "definition.variable",
+          };
+          config.process(capture, builder, context);
+        }
+
+        const result = builder.build();
+        const variables = Array.from(result.variables.values());
+
+        // Should have 2 variables: NESTED and deeply_nested
+        expect(variables.length).toBe(2);
+
+        const nested_var = variables.find(v => v.name === "NESTED");
+        const deeply_var = variables.find(v => v.name === "deeply_nested");
+
+        expect(nested_var).toBeDefined();
+        expect(deeply_var).toBeDefined();
+
+        // NESTED should be exported
+        expect(nested_var!.is_exported).toBe(true);
+
+        // deeply_nested should NOT be exported (it's inside a nested arrow function)
+        expect(deeply_var!.is_exported).toBe(false);
+      });
     });
 
     describe("JSDoc Documentation Extraction", () => {

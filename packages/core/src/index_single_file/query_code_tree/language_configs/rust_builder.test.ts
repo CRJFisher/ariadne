@@ -1185,4 +1185,8 @@ describe("rust_builder", () => {
       expect(definitions.namespaces[0].export).toBeUndefined();
     });
   });
+
+  // NOTE: Rust's export detection is already correct - it uses `pub` visibility modifiers
+  // with limited parent walking that stops at function boundaries. The nested variable
+  // export bug only affected JavaScript/TypeScript which use AST traversal. No additional tests needed.
 });

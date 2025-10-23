@@ -1536,5 +1536,9 @@ class Drawable(Protocol):
         }
       });
     });
+
+    // NOTE: Python's export detection is already correct - it uses scope-based logic
+    // (only module-level = exported). The nested variable export bug only affected
+    // JavaScript/TypeScript which use AST traversal. No additional tests needed.
   });
 });

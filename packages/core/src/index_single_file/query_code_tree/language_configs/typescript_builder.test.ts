@@ -548,4 +548,191 @@ describe("TypeScript Builder Configuration", () => {
       expect(returnType).toBeUndefined();
     });
   });
+
+  describe("Export Detection for Nested Variables", () => {
+    it("should NOT mark variables inside exported object literals as exported", () => {
+      const code = `
+export const CONFIG = {
+  handler: () => {
+    const local_var = 42;
+    return local_var;
+  }
+};`;
+      const ast = getAstNode(code);
+      const builder = new DefinitionBuilder(mockContext);
+
+      // Find all variable declarators
+      function findAllVariables(node: SyntaxNode): Array<{node: SyntaxNode, name: string}> {
+        const results: Array<{node: SyntaxNode, name: string}> = [];
+
+        if (node.type === "variable_declarator") {
+          const nameNode = node.childForFieldName?.("name");
+          if (nameNode) {
+            results.push({node: nameNode, name: nameNode.text});
+          }
+        }
+
+        for (let i = 0; i < node.childCount; i++) {
+          const child = node.child(i);
+          if (child) {
+            results.push(...findAllVariables(child));
+          }
+        }
+
+        return results;
+      }
+
+      const variables = findAllVariables(ast);
+
+      // Process each variable using the JavaScript config (TypeScript uses same logic)
+      const varConfig = JAVASCRIPT_BUILDER_CONFIG.get("definition.variable");
+      expect(varConfig).toBeDefined();
+
+      for (const {node, name} of variables) {
+        const capture = createRawCapture("definition.variable", node, name);
+        varConfig!.process(capture, builder, mockContext);
+      }
+
+      const result = builder.build();
+      const vars = Array.from(result.variables.values());
+
+      expect(vars.length).toBe(2);
+
+      const config_var = vars.find(v => v.name === "CONFIG");
+      const local_var = vars.find(v => v.name === "local_var");
+
+      expect(config_var).toBeDefined();
+      expect(local_var).toBeDefined();
+
+      // CONFIG should be exported
+      expect(config_var!.is_exported).toBe(true);
+
+      // local_var should NOT be exported (it's inside a nested arrow function)
+      expect(local_var!.is_exported).toBe(false);
+    });
+
+    it("should NOT mark variables inside exported arrays with functions as exported", () => {
+      const code = `
+export const HANDLERS: Array<Function> = [
+  function process(item: any): any {
+    const temp = item.value;
+    return temp;
+  }
+];`;
+      const ast = getAstNode(code);
+      const builder = new DefinitionBuilder(mockContext);
+
+      function findAllVariables(node: SyntaxNode): Array<{node: SyntaxNode, name: string}> {
+        const results: Array<{node: SyntaxNode, name: string}> = [];
+
+        if (node.type === "variable_declarator") {
+          const nameNode = node.childForFieldName?.("name");
+          if (nameNode) {
+            results.push({node: nameNode, name: nameNode.text});
+          }
+        }
+
+        for (let i = 0; i < node.childCount; i++) {
+          const child = node.child(i);
+          if (child) {
+            results.push(...findAllVariables(child));
+          }
+        }
+
+        return results;
+      }
+
+      const variables = findAllVariables(ast);
+
+      const varConfig = JAVASCRIPT_BUILDER_CONFIG.get("definition.variable");
+      expect(varConfig).toBeDefined();
+
+      for (const {node, name} of variables) {
+        const capture = createRawCapture("definition.variable", node, name);
+        varConfig!.process(capture, builder, mockContext);
+      }
+
+      const result = builder.build();
+      const vars = Array.from(result.variables.values());
+
+      expect(vars.length).toBe(2);
+
+      const handlers_var = vars.find(v => v.name === "HANDLERS");
+      const temp_var = vars.find(v => v.name === "temp");
+
+      expect(handlers_var).toBeDefined();
+      expect(temp_var).toBeDefined();
+
+      // HANDLERS should be exported
+      expect(handlers_var!.is_exported).toBe(true);
+
+      // temp should NOT be exported (it's inside a nested function)
+      expect(temp_var!.is_exported).toBe(false);
+    });
+
+    it("should NOT mark deeply nested variables in exported type-annotated objects as exported", () => {
+      const code = `
+export const NESTED: {
+  outer: {
+    middle: () => boolean
+  }
+} = {
+  outer: {
+    middle: () => {
+      const deeply_nested = true;
+      return deeply_nested;
+    }
+  }
+};`;
+      const ast = getAstNode(code);
+      const builder = new DefinitionBuilder(mockContext);
+
+      function findAllVariables(node: SyntaxNode): Array<{node: SyntaxNode, name: string}> {
+        const results: Array<{node: SyntaxNode, name: string}> = [];
+
+        if (node.type === "variable_declarator") {
+          const nameNode = node.childForFieldName?.("name");
+          if (nameNode) {
+            results.push({node: nameNode, name: nameNode.text});
+          }
+        }
+
+        for (let i = 0; i < node.childCount; i++) {
+          const child = node.child(i);
+          if (child) {
+            results.push(...findAllVariables(child));
+          }
+        }
+
+        return results;
+      }
+
+      const variables = findAllVariables(ast);
+
+      const varConfig = JAVASCRIPT_BUILDER_CONFIG.get("definition.variable");
+      expect(varConfig).toBeDefined();
+
+      for (const {node, name} of variables) {
+        const capture = createRawCapture("definition.variable", node, name);
+        varConfig!.process(capture, builder, mockContext);
+      }
+
+      const result = builder.build();
+      const vars = Array.from(result.variables.values());
+
+      expect(vars.length).toBe(2);
+
+      const nested_var = vars.find(v => v.name === "NESTED");
+      const deeply_var = vars.find(v => v.name === "deeply_nested");
+
+      expect(nested_var).toBeDefined();
+      expect(deeply_var).toBeDefined();
+
+      // NESTED should be exported
+      expect(nested_var!.is_exported).toBe(true);
+
+      // deeply_nested should NOT be exported (it's inside a nested arrow function)
+      expect(deeply_var!.is_exported).toBe(false);
+    });
+  });
 });
