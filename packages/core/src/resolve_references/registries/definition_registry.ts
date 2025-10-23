@@ -102,11 +102,17 @@ export class DefinitionRegistry {
         // Combine methods into flat map
         for (const method of def.methods) {
           flat_members.set(method.name, method.symbol_id);
+          // Add method to location index for type binding resolution
+          const method_loc_key = location_key(method.location);
+          this.location_to_symbol.set(method_loc_key, method.symbol_id);
         }
 
         // Combine properties into flat map
         for (const prop of def.properties) {
           flat_members.set(prop.name, prop.symbol_id);
+          // Add property to location index for type binding resolution
+          const prop_loc_key = location_key(prop.location);
+          this.location_to_symbol.set(prop_loc_key, prop.symbol_id);
         }
 
         this.member_index.set(def.symbol_id, flat_members);
@@ -147,12 +153,58 @@ export class DefinitionRegistry {
    * Get the defining scope for a symbol.
    * Fast O(1) lookup that finds the definition and returns its defining_scope_id.
    *
+   * For property and method symbols, extracts the class/interface symbol and returns its scope.
+   *
    * @param symbol_id - The symbol to look up
    * @returns The ScopeId where this symbol is defined, or undefined if not found
    */
   get_symbol_scope(symbol_id: SymbolId): ScopeId | undefined {
     const def = this.by_symbol.get(symbol_id);
-    return def?.defining_scope_id;
+    if (def) {
+      return def.defining_scope_id;
+    }
+
+    // Handle property and method symbols (not in by_symbol, but in class.properties/methods)
+    // Symbol ID format: "property:FILE_PATH:startLine:startCol:endLine:endCol:name"
+    // Example: "property:/path/to/file.ts:118:10:118:16:imports"
+    if (symbol_id.startsWith("property:") || symbol_id.startsWith("method:")) {
+      const parts = symbol_id.split(":");
+      if (parts.length < 7) return undefined; // Need at least: kind:path:line:col:line:col:name
+
+      // File path is everything from parts[1] until we hit the first numeric part
+      // This handles paths with colons (like Windows paths or URIs)
+      let file_path_parts = [];
+      for (let i = 1; i < parts.length; i++) {
+        if (/^\d+$/.test(parts[i])) {
+          // Found the start of line numbers
+          break;
+        }
+        file_path_parts.push(parts[i]);
+      }
+
+      const file_path = file_path_parts.join(":");
+
+      // Search through all classes/interfaces in this file to find the containing one
+      const file_symbols = this.by_file.get(file_path as FilePath);
+      if (file_symbols) {
+        for (const class_symbol_id of file_symbols) {
+          const class_def = this.by_symbol.get(class_symbol_id);
+          if (class_def && (class_def.kind === "class" || class_def.kind === "interface")) {
+            // Check if this symbol is in the class's properties or methods
+            const has_property = class_def.properties.some(p => p.symbol_id === symbol_id);
+            const has_method = class_def.methods.some(m => m.symbol_id === symbol_id);
+
+            if (has_property || has_method) {
+              // Properties and methods are defined in the class's scope (not the class itself)
+              // Return the scope that contains the class body
+              return class_def.defining_scope_id;
+            }
+          }
+        }
+      }
+    }
+
+    return undefined;
   }
 
   /**
@@ -345,6 +397,18 @@ export class DefinitionRegistry {
         // Remove from location index
         const loc_key = location_key(def.location);
         this.location_to_symbol.delete(loc_key);
+
+        // Remove property and method locations for classes/interfaces
+        if (def.kind === "class" || def.kind === "interface") {
+          for (const method of def.methods) {
+            const method_loc_key = location_key(method.location);
+            this.location_to_symbol.delete(method_loc_key);
+          }
+          for (const prop of def.properties) {
+            const prop_loc_key = location_key(prop.location);
+            this.location_to_symbol.delete(prop_loc_key);
+          }
+        }
 
         // Remove from scope index
         const scope_id = def.defining_scope_id;
