@@ -1,10 +1,13 @@
 # Task 154: Type Resolution & Heuristic Fallback System
 
+**Parent**: task-155 (Type Flow Inference Through Built-in Methods)
 **Status**: Backlog
-**Priority**: Medium (Required for Call Graph Accuracy)
-**Estimated Effort**: 3-4 weeks
+**Priority**: High (Required for Call Graph Accuracy)
+**Estimated Effort**: 2-3 weeks (reduced scope - heuristics only)
 **Created**: 2025-10-09
-**Updated**: 2025-10-20
+**Updated**: 2025-10-23
+
+**Note**: This task is now a sub-task of task-155. The type stub system (task-155) handles built-in method type flow. This task provides the **heuristic fallback layer** when type information is unavailable or stubs don't match.
 
 ## Problem Statement
 
@@ -94,11 +97,20 @@ This is:
 - **Error-prone**: Can get out of sync with actual return type
 - **Anti-pattern**: Modern languages have inference to avoid this
 
-## Solution: Two-Pronged Resolution Strategy
+## Solution: Heuristic Fallback Layer
 
-### Strategy 1: Analytical Type Tracking (Primary)
+**Role in task-155 architecture**: This task implements **Layer 3** of the resolution pipeline:
 
-Track types through **simple, common patterns**:
+```text
+Layer 1: Explicit type annotations (current)
+Layer 2: Type stub inference (task-155 - built-in methods)
+Layer 3: Heuristic fallback (THIS TASK - when stubs don't apply)
+Layer 4: Multiple candidates (task-155.8)
+```
+
+### Strategy: Heuristic Matching When Type Information Unavailable
+
+When neither explicit types nor type stubs resolve the call, use heuristics:
 
 #### Pattern 1: Constructor Assignments
 ```javascript
