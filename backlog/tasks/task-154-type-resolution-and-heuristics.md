@@ -4,12 +4,7 @@
 **Priority**: Medium (Required for Call Graph Accuracy)
 **Estimated Effort**: 3-4 weeks
 **Created**: 2025-10-09
-**Updated**: 2025-10-20 (JavaScript integration tests now depend on this)
-**Related Epic**: epic-11 (infrastructure was built there)
-**Dependencies**: task-epic-11.123 (Rust metadata extraction)
-**Blocks**:
-- task-epic-11.116.5.6 (JavaScript integration tests - 2 failing tests)
-- Similar issues in TypeScript, Python, Rust integration tests
+**Updated**: 2025-10-20
 
 ## Problem Statement
 
