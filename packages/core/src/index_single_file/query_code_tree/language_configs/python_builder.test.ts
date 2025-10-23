@@ -1541,4 +1541,173 @@ class Drawable(Protocol):
     // (only module-level = exported). The nested variable export bug only affected
     // JavaScript/TypeScript which use AST traversal. No additional tests needed.
   });
+
+  describe("Property Type Extraction", () => {
+    async function buildIndexFromCode(code: string) {
+      const tree = parser.parse(code);
+      const lines = code.split("\n");
+      const parsed_file = {
+        file_path: "test.py" as any,
+        file_lines: lines.length,
+        file_end_column: lines[lines.length - 1]?.length || 0,
+        tree,
+        lang: "python" as const,
+      };
+      const { build_semantic_index } = await import("../../semantic_index");
+      return build_semantic_index(parsed_file, tree, "python");
+    }
+
+    it("should extract type from class attribute annotation", async () => {
+      const code = `
+class Service:
+    registry: DefinitionRegistry
+    cache: dict[str, int] = {}
+`;
+
+      const index = await buildIndexFromCode(code);
+      const service_class = Array.from(index.classes.values())[0];
+
+      expect(service_class).toBeDefined();
+      expect(service_class.properties).toBeDefined();
+      expect(service_class.properties.length).toBe(2);
+
+      const registry_prop = service_class.properties.find(p => p.name === "registry");
+      expect(registry_prop).toBeDefined();
+      expect(registry_prop?.type).toBe("DefinitionRegistry");
+
+      const cache_prop = service_class.properties.find(p => p.name === "cache");
+      expect(cache_prop).toBeDefined();
+      expect(cache_prop?.type).toBe("dict[str, int]");
+    });
+
+    it("should extract generic types with List and Dict", async () => {
+      const code = `
+from typing import List, Dict
+
+class Container:
+    items: List[Item]
+    mapping: Dict[str, int]
+`;
+
+      const index = await buildIndexFromCode(code);
+      const container_class = Array.from(index.classes.values())[0];
+
+      expect(container_class.properties.length).toBe(2);
+
+      const items_prop = container_class.properties.find(p => p.name === "items");
+      expect(items_prop?.type).toBe("List[Item]");
+
+      const mapping_prop = container_class.properties.find(p => p.name === "mapping");
+      expect(mapping_prop?.type).toBe("Dict[str, int]");
+    });
+
+    it("should extract Union and Optional types", async () => {
+      const code = `
+from typing import Optional, Union
+
+class Config:
+    value: Optional[str]
+    data: Union[int, str, None]
+`;
+
+      const index = await buildIndexFromCode(code);
+      const config_class = Array.from(index.classes.values())[0];
+
+      expect(config_class.properties.length).toBe(2);
+
+      const value_prop = config_class.properties.find(p => p.name === "value");
+      expect(value_prop?.type).toBe("Optional[str]");
+
+      const data_prop = config_class.properties.find(p => p.name === "data");
+      expect(data_prop?.type).toBe("Union[int, str, None]");
+    });
+
+    it("should extract modern Python 3.10+ union syntax", async () => {
+      const code = `
+class Modern:
+    numbers: list[int]
+    text: str | None
+    mixed: int | str | float
+`;
+
+      const index = await buildIndexFromCode(code);
+      const modern_class = Array.from(index.classes.values())[0];
+
+      expect(modern_class.properties.length).toBe(3);
+
+      const numbers_prop = modern_class.properties.find(p => p.name === "numbers");
+      expect(numbers_prop?.type).toBe("list[int]");
+
+      const text_prop = modern_class.properties.find(p => p.name === "text");
+      expect(text_prop?.type).toBe("str | None");
+
+      const mixed_prop = modern_class.properties.find(p => p.name === "mixed");
+      expect(mixed_prop?.type).toBe("int | str | float");
+    });
+
+    it("should handle properties without type annotations", async () => {
+      const code = `
+class NoTypes:
+    plain = 42
+    another = "hello"
+`;
+
+      const index = await buildIndexFromCode(code);
+      const no_types_class = Array.from(index.classes.values())[0];
+
+      expect(no_types_class.properties.length).toBe(2);
+
+      const plain_prop = no_types_class.properties.find(p => p.name === "plain");
+      expect(plain_prop).toBeDefined();
+      expect(plain_prop?.type).toBeUndefined();
+
+      const another_prop = no_types_class.properties.find(p => p.name === "another");
+      expect(another_prop).toBeDefined();
+      expect(another_prop?.type).toBeUndefined();
+    });
+
+    it("should extract complex nested generic types", async () => {
+      const code = `
+from typing import Dict, List, Optional
+
+class Complex:
+    nested: Dict[str, List[Optional[Item]]]
+`;
+
+      const index = await buildIndexFromCode(code);
+      const complex_class = Array.from(index.classes.values())[0];
+
+      expect(complex_class.properties.length).toBe(1);
+
+      const nested_prop = complex_class.properties[0];
+      expect(nested_prop.name).toBe("nested");
+      expect(nested_prop.type).toBe("Dict[str, List[Optional[Item]]]");
+    });
+
+    it("should extract types from dataclass fields", async () => {
+      const code = `
+from dataclasses import dataclass
+
+@dataclass
+class Point:
+    x: int
+    y: int
+    label: str = "origin"
+`;
+
+      const index = await buildIndexFromCode(code);
+      const point_class = Array.from(index.classes.values())[0];
+
+      expect(point_class.properties.length).toBe(3);
+
+      const x_prop = point_class.properties.find(p => p.name === "x");
+      expect(x_prop?.type).toBe("int");
+
+      const y_prop = point_class.properties.find(p => p.name === "y");
+      expect(y_prop?.type).toBe("int");
+
+      const label_prop = point_class.properties.find(p => p.name === "label");
+      expect(label_prop?.type).toBe("str");
+    });
+  });
 });

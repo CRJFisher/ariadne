@@ -268,13 +268,13 @@
   )
 )
 
-; Class attributes
+; Class attributes (with or without assignments, with or without types)
 (class_definition
   body: (block
     (expression_statement
       (assignment
         left: (identifier) @definition.field
-        right: (_) @reference.variable
+        right: (_)? @reference.variable
       )
     )
   )
