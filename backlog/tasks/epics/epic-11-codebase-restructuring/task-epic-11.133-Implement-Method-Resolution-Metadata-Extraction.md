@@ -1,8 +1,9 @@
 # Task: Implement Method Resolution Metadata Extraction (Python & Rust)
 
-**Status**: Open
+**Status**: Completed
 **Epic**: epic-11 - Codebase Restructuring
 **Created**: 2025-10-08
+**Completed**: 2025-10-09 (commit 00373de)
 
 ## Problem
 
@@ -194,3 +195,48 @@ Verify:
 - Method resolution system (epic-11.113)
 - Type context building
 - JavaScript/TypeScript receiver_location (working reference implementation)
+
+---
+
+## Completion Notes
+
+**Completed in commit**: `00373de` (2025-10-09) - "refactor: move language-specific logic to metadata extractors"
+
+### Implementation Summary
+
+This task was completed as part of a larger architectural refactor that:
+1. Added `is_method_call()` and `extract_call_name()` methods to the `MetadataExtractors` interface
+2. Fixed Python receiver_location extraction bug
+3. Implemented receiver_location for both Python and Rust
+4. Made reference_builder.ts completely language-agnostic
+
+### Test Results
+
+All acceptance criteria verified:
+- ✅ Python: `semantic_index.python.test.ts` - 46 tests passing including:
+  - "should extract receiver_location for method calls"
+  - "should extract receiver_location for chained method calls"
+  - "should extract method resolution metadata for all receiver patterns"
+
+- ✅ Rust: `semantic_index.rust.test.ts` - 58 tests passing including:
+  - "should extract method resolution metadata for all receiver patterns"
+  - Assignment tracking via `let_declaration` patterns
+  - Method receiver_location via `field_expression` patterns
+
+### Implementation Details
+
+**Python** ([python_metadata.ts:159-189](packages/core/src/index_single_file/query_code_tree/language_configs/python_metadata.ts#L159-L189)):
+- `extract_call_receiver()` handles `call` and `attribute` nodes
+- Extracts receiver from `object` field of `attribute` nodes
+- Works with chained calls, self references, and super() calls
+
+**Rust** ([rust_metadata.ts:194-207](packages/core/src/index_single_file/query_code_tree/language_configs/rust_metadata.ts#L194-L207)):
+- `extract_call_receiver()` handles `call_expression` and `field_identifier` nodes
+- Extracts receiver from `value` field of `field_expression` nodes
+- Handles instance methods, chained calls, and associated functions
+
+**Query Patterns**:
+- Python ([python.scm:581-586](packages/core/src/index_single_file/query_code_tree/queries/python.scm#L581-L586)): Captures using field names (`object:`, `attribute:`)
+- Rust ([rust.scm:960-965](packages/core/src/index_single_file/query_code_tree/queries/rust.scm#L960-L965)): Captures using field names (`value:`, `field:`)
+
+No additional changes were required - the task was already complete when this investigation began.

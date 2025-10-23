@@ -9,6 +9,8 @@ import type { SyntaxNode } from "tree-sitter";
 import { TYPESCRIPT_BUILDER_CONFIG, extract_return_type } from "./typescript_builder";
 import { JAVASCRIPT_BUILDER_CONFIG } from "./javascript_builder";
 import { DefinitionBuilder } from "../../definitions/definition_builder";
+import { build_semantic_index } from "../../semantic_index";
+import type { ParsedFile } from "../../file_utils";
 import type {
   ProcessingContext,
   CaptureNode,
@@ -72,6 +74,20 @@ describe("TypeScript Builder Configuration", () => {
         end_column: node.endPosition.column + 1,
       },
     };
+  }
+
+  // Helper to build semantic index from code (for integration tests)
+  function buildIndexFromCode(code: string) {
+    const tree = parser.parse(code);
+    const lines = code.split("\n");
+    const parsed_file: ParsedFile = {
+      file_path: "test.ts" as FilePath,
+      file_lines: lines.length,
+      file_end_column: lines[lines.length - 1].length + 1,
+      tree: tree,
+      lang: "typescript",
+    };
+    return build_semantic_index(parsed_file, tree, "typescript");
   }
 
   describe("TYPESCRIPT_BUILDER_CONFIG", () => {
@@ -733,6 +749,163 @@ export const NESTED: {
 
       // deeply_nested should NOT be exported (it's inside a nested arrow function)
       expect(deeply_var!.is_exported).toBe(false);
+    });
+  });
+
+  // ============================================================================
+  // PROPERTY TYPE EXTRACTION TESTS (Task 11.150.1)
+  // ============================================================================
+
+  describe("Property type extraction", () => {
+    it("should extract type from public field with annotation", () => {
+      const code = `
+        class Foo {
+          public field: Registry = new Registry();
+        }
+      `;
+
+      const index = buildIndexFromCode(code);
+      const classes = Array.from(index.classes.values());
+      expect(classes.length).toBe(1);
+
+      const fooClass = classes[0];
+      expect(fooClass.name).toBe("Foo");
+      expect(fooClass.properties.length).toBeGreaterThan(0);
+
+      const fieldProp = fooClass.properties.find(p => p.name === "field");
+      expect(fieldProp).toBeDefined();
+      expect(fieldProp?.type).toBe("Registry");
+    });
+
+    it("should extract type from private field", () => {
+      const code = `
+        class Foo {
+          private data: Map<string, number>;
+        }
+      `;
+
+      const index = buildIndexFromCode(code);
+      const classes = Array.from(index.classes.values());
+      const fooClass = classes[0];
+      const dataProp = fooClass.properties.find(p => p.name === "data");
+      expect(dataProp).toBeDefined();
+      expect(dataProp?.type).toBe("Map<string, number>");
+    });
+
+    it("should extract type from optional field", () => {
+      const code = `
+        class Foo {
+          optional?: string;
+        }
+      `;
+
+      const index = buildIndexFromCode(code);
+      const classes = Array.from(index.classes.values());
+      const fooClass = classes[0];
+      const optionalProp = fooClass.properties.find(p => p.name === "optional");
+      expect(optionalProp).toBeDefined();
+      expect(optionalProp?.type).toBe("string");
+      // Note: optional modifier tracking is not yet implemented for PropertyDefinition
+    });
+
+    it("should extract type from readonly field", () => {
+      const code = `
+        class Foo {
+          readonly config: Config;
+        }
+      `;
+
+      const index = buildIndexFromCode(code);
+      const classes = Array.from(index.classes.values());
+      const fooClass = classes[0];
+      const configProp = fooClass.properties.find(p => p.name === "config");
+      expect(configProp).toBeDefined();
+      expect(configProp?.type).toBe("Config");
+      // Note: readonly modifier tracking is not yet implemented for PropertyDefinition
+    });
+
+    it("should extract type from static field", () => {
+      const code = `
+        class Foo {
+          static instance: Foo;
+        }
+      `;
+
+      const index = buildIndexFromCode(code);
+      const classes = Array.from(index.classes.values());
+      const fooClass = classes[0];
+      const instanceProp = fooClass.properties.find(p => p.name === "instance");
+      expect(instanceProp).toBeDefined();
+      expect(instanceProp?.type).toBe("Foo");
+      // Note: static modifier tracking is not yet implemented for PropertyDefinition
+    });
+
+    it("should extract generic type annotations", () => {
+      const code = `
+        class Foo {
+          items: Map<string, Item[]>;
+        }
+      `;
+
+      const index = buildIndexFromCode(code);
+      const classes = Array.from(index.classes.values());
+      const fooClass = classes[0];
+      const itemsProp = fooClass.properties.find(p => p.name === "items");
+      expect(itemsProp).toBeDefined();
+      expect(itemsProp?.type).toBe("Map<string, Item[]>");
+    });
+
+    it("should extract array type annotations", () => {
+      const code = `
+        class Foo {
+          numbers: number[];
+          items: Array<string>;
+        }
+      `;
+
+      const index = buildIndexFromCode(code);
+      const classes = Array.from(index.classes.values());
+      const fooClass = classes[0];
+      expect(fooClass.properties.length).toBeGreaterThan(0);
+
+      const numbersProp = fooClass.properties.find(p => p.name === "numbers");
+      const itemsProp = fooClass.properties.find(p => p.name === "items");
+
+      expect(numbersProp).toBeDefined();
+      expect(numbersProp?.type).toBe("number[]");
+
+      expect(itemsProp).toBeDefined();
+      expect(itemsProp?.type).toBe("Array<string>");
+    });
+
+    it("should extract union type annotations", () => {
+      const code = `
+        class Foo {
+          value: string | number | null;
+        }
+      `;
+
+      const index = buildIndexFromCode(code);
+      const classes = Array.from(index.classes.values());
+      const fooClass = classes[0];
+      const valueProp = fooClass.properties.find(p => p.name === "value");
+      expect(valueProp).toBeDefined();
+      expect(valueProp?.type).toBe("string | number | null");
+    });
+
+    it("should extract function type annotations", () => {
+      const code = `
+        class Foo {
+          handler: (data: string) => void;
+        }
+      `;
+
+      const index = buildIndexFromCode(code);
+      const classes = Array.from(index.classes.values());
+      const fooClass = classes[0];
+      const handlerProp = fooClass.properties.find(p => p.name === "handler");
+      expect(handlerProp).toBeDefined();
+      expect(handlerProp?.type).toBe("(data: string) => void");
     });
   });
 });

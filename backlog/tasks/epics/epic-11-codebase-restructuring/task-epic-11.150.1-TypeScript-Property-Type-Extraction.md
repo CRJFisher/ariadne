@@ -1,13 +1,32 @@
 # Task: TypeScript Property Type Extraction
 
 **Parent**: task-epic-11.150
-**Status**: TODO
+**Status**: Completed
 **Priority**: High
 **Estimated Effort**: 1 day
+**Completed**: 2025-10-23
 
 ## Goal
 
 Extract type annotations from TypeScript class properties and pass them to TypeRegistry for type binding.
+
+## Completion Summary
+
+Property type extraction was already working via the existing `extract_property_type()` function in [typescript_builder.ts](packages/core/src/index_single_file/query_code_tree/language_configs/typescript_builder.ts#L584-L597). This task added comprehensive test coverage to verify the functionality.
+
+### Implementation Status
+
+✅ **Already Working**: Property type extraction via `extract_property_type()`
+
+- Handles simple types: `field: Registry`
+- Handles generic types: `Map<string, Item[]>`
+- Handles array types: `number[]`, `Array<string>`
+- Handles union types: `string | number | null`
+- Handles function types: `(data: string) => void`
+
+✅ **Tests Added**: 9 comprehensive tests in [typescript_builder.test.ts](packages/core/src/index_single_file/query_code_tree/language_configs/typescript_builder.test.ts#L759-L909)
+
+**Note**: Modifier tracking (optional, readonly, static) is not yet implemented in PropertyDefinition type, only in MethodDefinition. Tests were adjusted to focus on type extraction only.
 
 ## Files to Modify
 
