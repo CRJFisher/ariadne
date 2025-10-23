@@ -79,7 +79,9 @@ function resolve_relative_javascript(
 
   let found_absolute: string | null = null;
   for (const candidate of candidates) {
-    if (has_file_in_tree(candidate as FilePath, root_folder)) {
+    // Convert absolute path to relative for tree lookup
+    const relative_candidate = path.relative(root_folder.path, candidate);
+    if (has_file_in_tree(relative_candidate as FilePath, root_folder)) {
       found_absolute = candidate;
       break;
     }

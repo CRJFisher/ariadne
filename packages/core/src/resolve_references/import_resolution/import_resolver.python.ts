@@ -72,7 +72,11 @@ function resolve_relative_python(
   const candidates = [`${file_path}.py`, path.join(file_path, "__init__.py")];
 
   for (const candidate of candidates) {
-    if (has_file_in_tree(candidate as FilePath, root_folder)) {
+    // Convert absolute path to relative for tree lookup
+    const relative_candidate = path.isAbsolute(candidate)
+      ? path.relative(root_folder.path, candidate)
+      : candidate;
+    if (has_file_in_tree(relative_candidate as FilePath, root_folder)) {
       return candidate as FilePath;
     }
   }
@@ -109,7 +113,11 @@ function resolve_absolute_python(
   const candidates = [`${file_path}.py`, path.join(file_path, "__init__.py")];
 
   for (const candidate of candidates) {
-    if (has_file_in_tree(candidate as FilePath, root_folder)) {
+    // Convert absolute path to relative for tree lookup
+    const relative_candidate = path.isAbsolute(candidate)
+      ? path.relative(root_folder.path, candidate)
+      : candidate;
+    if (has_file_in_tree(relative_candidate as FilePath, root_folder)) {
       return candidate as FilePath;
     }
   }
@@ -131,7 +139,11 @@ function resolve_absolute_python(
     ];
 
     for (const candidate of search_candidates) {
-      if (has_file_in_tree(candidate as FilePath, root_folder)) {
+      // Convert absolute path to relative for tree lookup
+      const relative_candidate = path.isAbsolute(candidate)
+        ? path.relative(root_folder.path, candidate)
+        : candidate;
+      if (has_file_in_tree(relative_candidate as FilePath, root_folder)) {
         return candidate as FilePath;
       }
     }
@@ -163,8 +175,11 @@ function find_python_project_root(
 
   // First, check if start_dir itself is a package
   const start_init = path.join(current, "__init__.py");
+  const relative_start_init = path.isAbsolute(start_init)
+    ? path.relative(root_folder.path, start_init)
+    : start_init;
   const start_is_package = has_file_in_tree(
-    start_init as FilePath,
+    relative_start_init as FilePath,
     root_folder
   );
 
@@ -182,8 +197,11 @@ function find_python_project_root(
     }
 
     const parent_init = path.join(parent, "__init__.py");
+    const relative_parent_init = path.isAbsolute(parent_init)
+      ? path.relative(root_folder.path, parent_init)
+      : parent_init;
     const parent_is_package = has_file_in_tree(
-      parent_init as FilePath,
+      relative_parent_init as FilePath,
       root_folder
     );
 
@@ -221,7 +239,10 @@ function find_python_project_root(
     // Check for project markers in current search directory
     for (const marker of project_markers) {
       const marker_path = path.join(search_dir, marker);
-      if (has_file_in_tree(marker_path as FilePath, root_folder)) {
+      const relative_marker = path.isAbsolute(marker_path)
+        ? path.relative(root_folder.path, marker_path)
+        : marker_path;
+      if (has_file_in_tree(relative_marker as FilePath, root_folder)) {
         return search_dir;
       }
     }
