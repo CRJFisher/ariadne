@@ -461,10 +461,16 @@ export function find_containing_struct(
     if (node.type === "struct_item") {
       const nameNode = node.childForFieldName?.("name");
       if (nameNode) {
-        return class_symbol(
-          nameNode.text as SymbolName,
-          node_to_location(nameNode, capture.location.file_path)
-        );
+        // Use the struct_item node's location, not the name's location
+        // This matches how create_struct_id generates IDs
+        const location = {
+          file_path: capture.location.file_path,
+          start_line: node.startPosition.row + 1,
+          start_column: node.startPosition.column + 1,
+          end_line: node.endPosition.row + 1,
+          end_column: node.endPosition.column,
+        };
+        return class_symbol(nameNode.text as SymbolName, location);
       }
     }
     if (node.parent) {

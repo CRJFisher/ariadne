@@ -1,13 +1,36 @@
 # Task: Rust Property Type Extraction
 
 **Parent**: task-epic-11.150
-**Status**: TODO
+**Status**: Completed
 **Priority**: High
 **Estimated Effort**: 0.75 day
+**Completed**: 2025-10-23
 
 ## Goal
 
 Extract field types from Rust struct definitions, handling generics and lifetime annotations.
+
+## Completion Summary
+
+Property type extraction infrastructure was already in place via `extract_parameter_type()` in rust_builder_helpers.ts, but it wasn't working due to a SymbolId mismatch bug. The field processor called `find_containing_struct()` which created a different SymbolId than `create_struct_id()`, causing fields to fail silently when trying to add them to non-existent structs.
+
+### Implementation Status
+
+✅ **Bug Fixed**: Fixed `find_containing_struct()` to use struct_item node location instead of name node location, matching `create_struct_id()`
+
+✅ **Already Working**: Property type extraction via `extract_parameter_type()`
+- Handles simple types: `registry: DefinitionRegistry`
+- Handles generic types: `Vec<T>`, `HashMap<String, T>`
+- Handles lifetime-annotated types: `&'a str`, `&'a mut Vec<u8>`
+- Handles Option/Result types: `Option<String>`, `Result<i32, Error>`
+- Handles reference types: `&String`, `&mut String`, `Box<String>`
+- Handles complex nested generics: `HashMap<String, Vec<Option<Item>>>`
+- Handles function pointers: `Box<dyn Fn(i32) -> Result<String, Error>>`
+- Handles array and slice types: `[u8; 32]`, `&[u8]`
+
+✅ **Tests Added**: 8 comprehensive tests in [rust_builder.test.ts](packages/core/src/index_single_file/query_code_tree/language_configs/rust_builder.test.ts#L1193-L1380)
+
+All 56 Rust builder tests pass with no regressions.
 
 ## Files to Modify
 

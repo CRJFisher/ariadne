@@ -1189,4 +1189,192 @@ describe("rust_builder", () => {
   // NOTE: Rust's export detection is already correct - it uses `pub` visibility modifiers
   // with limited parent walking that stops at function boundaries. The nested variable
   // export bug only affected JavaScript/TypeScript which use AST traversal. No additional tests needed.
+
+  describe("Property Type Extraction", () => {
+    async function buildIndexFromCode(code: string) {
+      const tree = parser.parse(code);
+      const lines = code.split("\n");
+      const parsed_file = {
+        file_path: "test.rs" as any,
+        file_lines: lines.length,
+        file_end_column: lines[lines.length - 1]?.length || 0,
+        tree,
+        lang: "rust" as const,
+      };
+      const { build_semantic_index } = await import("../../semantic_index");
+      return build_semantic_index(parsed_file, tree, "rust");
+    }
+
+    it("should extract type from struct field", async () => {
+      const code = `
+struct Service {
+    registry: DefinitionRegistry,
+    cache: HashMap<String, i32>,
+}
+`;
+
+      const index = await buildIndexFromCode(code);
+      const service_struct = Array.from(index.classes.values())[0];
+
+      expect(service_struct).toBeDefined();
+      expect(service_struct.properties).toBeDefined();
+      expect(service_struct.properties.length).toBe(2);
+
+      const registry_field = service_struct.properties.find(p => p.name === "registry");
+      expect(registry_field).toBeDefined();
+      expect(registry_field?.type).toBe("DefinitionRegistry");
+
+      const cache_field = service_struct.properties.find(p => p.name === "cache");
+      expect(cache_field).toBeDefined();
+      expect(cache_field?.type).toBe("HashMap<String, i32>");
+    });
+
+    it("should extract type from pub field", async () => {
+      const code = `
+struct Config {
+    pub name: String,
+    pub count: usize,
+}
+`;
+
+      const index = await buildIndexFromCode(code);
+      const config_struct = Array.from(index.classes.values())[0];
+
+      expect(config_struct.properties.length).toBe(2);
+
+      const name_field = config_struct.properties.find(p => p.name === "name");
+      expect(name_field?.type).toBe("String");
+
+      const count_field = config_struct.properties.find(p => p.name === "count");
+      expect(count_field?.type).toBe("usize");
+    });
+
+    it("should extract generic types from struct fields", async () => {
+      const code = `
+struct Container<T> {
+    items: Vec<T>,
+    mapping: HashMap<String, T>,
+    nested: Option<Box<T>>,
+}
+`;
+
+      const index = await buildIndexFromCode(code);
+      const container_struct = Array.from(index.classes.values())[0];
+
+      expect(container_struct.properties.length).toBe(3);
+
+      const items_field = container_struct.properties.find(p => p.name === "items");
+      expect(items_field?.type).toBe("Vec<T>");
+
+      const mapping_field = container_struct.properties.find(p => p.name === "mapping");
+      expect(mapping_field?.type).toBe("HashMap<String, T>");
+
+      const nested_field = container_struct.properties.find(p => p.name === "nested");
+      expect(nested_field?.type).toBe("Option<Box<T>>");
+    });
+
+    it("should extract lifetime-annotated types", async () => {
+      const code = `
+struct Wrapper<'a> {
+    data: &'a str,
+    owner: &'a mut Vec<u8>,
+}
+`;
+
+      const index = await buildIndexFromCode(code);
+      const wrapper_struct = Array.from(index.classes.values())[0];
+
+      expect(wrapper_struct.properties.length).toBe(2);
+
+      const data_field = wrapper_struct.properties.find(p => p.name === "data");
+      expect(data_field?.type).toBe("&'a str");
+
+      const owner_field = wrapper_struct.properties.find(p => p.name === "owner");
+      expect(owner_field?.type).toBe("&'a mut Vec<u8>");
+    });
+
+    it("should extract Option and Result types", async () => {
+      const code = `
+struct State {
+    value: Option<String>,
+    result: Result<i32, Error>,
+}
+`;
+
+      const index = await buildIndexFromCode(code);
+      const state_struct = Array.from(index.classes.values())[0];
+
+      expect(state_struct.properties.length).toBe(2);
+
+      const value_field = state_struct.properties.find(p => p.name === "value");
+      expect(value_field?.type).toBe("Option<String>");
+
+      const result_field = state_struct.properties.find(p => p.name === "result");
+      expect(result_field?.type).toBe("Result<i32, Error>");
+    });
+
+    it("should extract reference types with various mutability", async () => {
+      const code = `
+struct Refs {
+    immutable: &String,
+    mutable: &mut String,
+    boxed: Box<String>,
+}
+`;
+
+      const index = await buildIndexFromCode(code);
+      const refs_struct = Array.from(index.classes.values())[0];
+
+      expect(refs_struct.properties.length).toBe(3);
+
+      const immutable_field = refs_struct.properties.find(p => p.name === "immutable");
+      expect(immutable_field?.type).toBe("&String");
+
+      const mutable_field = refs_struct.properties.find(p => p.name === "mutable");
+      expect(mutable_field?.type).toBe("&mut String");
+
+      const boxed_field = refs_struct.properties.find(p => p.name === "boxed");
+      expect(boxed_field?.type).toBe("Box<String>");
+    });
+
+    it("should extract complex nested generic types", async () => {
+      const code = `
+struct Complex {
+    nested: HashMap<String, Vec<Option<Item>>>,
+    callback: Box<dyn Fn(i32) -> Result<String, Error>>,
+}
+`;
+
+      const index = await buildIndexFromCode(code);
+      const complex_struct = Array.from(index.classes.values())[0];
+
+      expect(complex_struct.properties.length).toBe(2);
+
+      const nested_field = complex_struct.properties.find(p => p.name === "nested");
+      expect(nested_field?.type).toBe("HashMap<String, Vec<Option<Item>>>");
+
+      const callback_field = complex_struct.properties.find(p => p.name === "callback");
+      expect(callback_field?.type).toBe("Box<dyn Fn(i32) -> Result<String, Error>>");
+    });
+
+    it("should extract array and slice types", async () => {
+      const code = `
+struct Arrays {
+    fixed: [u8; 32],
+    slice: &[u8],
+}
+`;
+
+      const index = await buildIndexFromCode(code);
+      const arrays_struct = Array.from(index.classes.values())[0];
+
+      expect(arrays_struct.properties.length).toBe(2);
+
+      const fixed_field = arrays_struct.properties.find(p => p.name === "fixed");
+      expect(fixed_field?.type).toBe("[u8; 32]");
+
+      const slice_field = arrays_struct.properties.find(p => p.name === "slice");
+      expect(slice_field?.type).toBe("&[u8]");
+    });
+  });
 });
