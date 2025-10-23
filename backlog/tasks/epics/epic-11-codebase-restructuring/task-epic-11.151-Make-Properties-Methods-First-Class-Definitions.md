@@ -1,11 +1,12 @@
 # Task: Make Properties and Methods First-Class Definitions
 
-**Status**: Open
+**Status**: ✅ Completed
 **Epic**: epic-11 - Codebase Restructuring
 **Priority**: High
-**Estimated Effort**: 2-3 days
+**Estimated Effort**: 2-3 days (Actual: 3 hours)
 **Dependencies**: Builds on task-epic-11.150 (property type extraction)
 **Created**: 2025-10-23
+**Completed**: 2025-10-23
 
 ## Problem
 
@@ -415,16 +416,16 @@ All existing tests must pass:
 
 ## Acceptance Criteria
 
-- [ ] PropertyDefinition has `defining_scope_id` field
-- [ ] MethodDefinition has `defining_scope_id` field
-- [ ] All language builders set `defining_scope_id` when building properties/methods
-- [ ] Properties registered in DefinitionRegistry.by_symbol
-- [ ] Methods registered in DefinitionRegistry.by_symbol
-- [ ] `get_symbol_scope()` simplified to < 10 lines
-- [ ] No string-parsing code for symbol lookups
-- [ ] All existing tests pass (no regressions)
-- [ ] Entry point count stays at 120
-- [ ] Property chain resolution still works
+- [x] PropertyDefinition has `defining_scope_id` field (already existed, inherited from base Definition)
+- [x] MethodDefinition has `defining_scope_id` field (already existed, inherited from base Definition)
+- [x] All language builders set `defining_scope_id` when building properties/methods (already working)
+- [x] Properties registered in DefinitionRegistry.by_symbol
+- [x] Methods registered in DefinitionRegistry.by_symbol
+- [x] `get_symbol_scope()` simplified to < 10 lines (reduced to 3 lines!)
+- [x] No string-parsing code for symbol lookups
+- [x] All existing tests pass (no regressions) - 1380 tests passing
+- [x] Entry point count stays at 120
+- [x] Property chain resolution still works
 
 ## Success Metrics
 
@@ -476,6 +477,139 @@ This is a **breaking change** to the type definitions. However:
 - **task-epic-11.150**: Property type extraction (provides the types)
 - **task-epic-11.133**: Method resolution metadata (provides receiver_location)
 - **task-epic-11.136**: Method call resolution (will benefit from clean architecture)
+
+## Implementation Summary (2025-10-23)
+
+### Key Discovery
+
+The type definitions **already had `defining_scope_id`** - PropertyDefinition and MethodDefinition both inherit from the base `Definition` interface which includes this field. The language builders were also already setting it correctly via `context.get_scope_id(capture.location)`.
+
+The only missing pieces were:
+
+1. Registering properties/methods in `by_symbol` during `update_file()`
+2. Removing them from `by_symbol` during `remove_file()`
+
+### Changes Made
+
+#### 1. DefinitionRegistry.update_file() - Register Properties/Methods
+
+**File**: [definition_registry.ts:103-122](packages/core/src/resolve_references/registries/definition_registry.ts#L103-L122)
+
+Added registration of properties and methods in `by_symbol` map:
+
+```typescript
+// Build member index for classes and interfaces
+if (def.kind === "class" || def.kind === "interface") {
+  const flat_members = new Map<SymbolName, SymbolId>();
+
+  // Combine methods into flat map
+  for (const method of def.methods) {
+    // Register method as first-class definition in by_symbol
+    this.by_symbol.set(method.symbol_id, method);  // ← ADDED
+
+    flat_members.set(method.name, method.symbol_id);
+    const method_loc_key = location_key(method.location);
+    this.location_to_symbol.set(method_loc_key, method.symbol_id);
+  }
+
+  // Combine properties into flat map
+  for (const prop of def.properties) {
+    // Register property as first-class definition in by_symbol
+    this.by_symbol.set(prop.symbol_id, prop);  // ← ADDED
+
+    flat_members.set(prop.name, prop.symbol_id);
+    const prop_loc_key = location_key(prop.location);
+    this.location_to_symbol.set(prop_loc_key, prop.symbol_id);
+  }
+
+  this.member_index.set(def.symbol_id, flat_members);
+}
+```
+
+#### 2. DefinitionRegistry.remove_file() - Cleanup Properties/Methods
+
+**File**: [definition_registry.ts:367,373](packages/core/src/resolve_references/registries/definition_registry.ts#L367)
+
+Added cleanup of properties and methods from `by_symbol`:
+
+```typescript
+// Remove property and method locations for classes/interfaces
+if (def.kind === "class" || def.kind === "interface") {
+  for (const method of def.methods) {
+    const method_loc_key = location_key(method.location);
+    this.location_to_symbol.delete(method_loc_key);
+    // Remove method from by_symbol (first-class definition cleanup)
+    this.by_symbol.delete(method.symbol_id);  // ← ADDED
+  }
+  for (const prop of def.properties) {
+    const prop_loc_key = location_key(prop.location);
+    this.location_to_symbol.delete(prop_loc_key);
+    // Remove property from by_symbol (first-class definition cleanup)
+    this.by_symbol.delete(prop.symbol_id);  // ← ADDED
+  }
+}
+```
+
+#### 3. DefinitionRegistry.get_symbol_scope() - Simplified to 3 Lines
+
+**File**: [definition_registry.ts:165-168](packages/core/src/resolve_references/registries/definition_registry.ts#L165-L168)
+
+Removed 40+ lines of string-parsing hack:
+
+```typescript
+// BEFORE: 48 lines with string parsing and O(n*m) search
+get_symbol_scope(symbol_id: SymbolId): ScopeId | undefined {
+  const def = this.by_symbol.get(symbol_id);
+  if (def) return def.defining_scope_id;
+
+  // Handle property and method symbols (not in by_symbol, but in class.properties/methods)
+  if (symbol_id.startsWith("property:") || symbol_id.startsWith("method:")) {
+    const parts = symbol_id.split(":");
+    // ... 40+ lines of string parsing and linear search ...
+  }
+
+  return undefined;
+}
+
+// AFTER: 3 lines with O(1) lookup
+get_symbol_scope(symbol_id: SymbolId): ScopeId | undefined {
+  const def = this.by_symbol.get(symbol_id);
+  return def?.defining_scope_id;
+}
+```
+
+#### 4. Comprehensive Test Coverage
+
+**File**: [definition_registry.test.ts:729-1161](packages/core/src/resolve_references/registries/definition_registry.test.ts#L729-L1161)
+
+Added 6 comprehensive tests demonstrating first-class property/method support:
+
+1. `should register class properties in by_symbol index`
+2. `should register class methods in by_symbol index`
+3. `should support get_symbol_scope for properties via O(1) lookup`
+4. `should support get_symbol_scope for methods via O(1) lookup`
+5. `should handle class with multiple properties and methods`
+6. `should clean up properties and methods when class is updated`
+
+### Test Results
+
+✅ **All tests passing (27/27 in definition_registry.test.ts)**
+✅ **All core tests passing (1380 passed, 2 skipped, 4 todo)**
+✅ **Property chain resolution validated** (analyze_self.ts shows 120 entry points, unchanged)
+✅ **No regressions detected**
+
+### Performance Impact
+
+- **Before**: `get_symbol_scope()` was O(n*m) worst case (file scan × class member scan)
+- **After**: `get_symbol_scope()` is O(1) (direct map lookup)
+- **Code size**: Reduced by ~45 lines (removed string-parsing hack, added 2 lines registration + 2 lines cleanup)
+
+### Related Work
+
+**Follow-on tasks created from skipped tests investigation:**
+
+- [task-156](../../task-156 - Support-Aliased-Re-Exports-in-Resolution-Registry.md) - Support Aliased Re-Exports in Resolution Registry
+- [task-157](../../task-157 - Extract-Property-Types-from-JSDoc-on-JavaScript-Constructor-Assignments.md) - Extract Property Types from JSDoc on JavaScript Constructor Assignments
 
 ## Future Work
 
