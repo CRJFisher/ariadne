@@ -6,8 +6,10 @@
  * containing all top-level (entry point) functions with their locations.
  *
  * Usage:
- *   npx tsx packages/core/analyze_self.ts
- *   npx tsx packages/core/analyze_self.ts --pretty
+ *   npx tsx packages/core/analyze_self.ts           # Write formatted JSON to file + output to stdout
+ *   npx tsx packages/core/analyze_self.ts --stdout  # Only output to stdout (no file)
+ *
+ * Note: All JSON output is formatted with 2-space indentation for readability.
  */
 
 import { Project } from "./src/project/project.js";
@@ -166,6 +168,17 @@ async function analyze_packages_core(): Promise<AnalysisResult> {
   const files_loaded = await load_project_files(project, project_path);
   console.error(`Loaded ${files_loaded} files`);
 
+  // Check how many files were actually indexed successfully
+  const stats = project.get_stats();
+  const files_indexed = stats.file_count;
+
+  if (files_indexed !== files_loaded) {
+    console.error(`⚠️  Warning: ${files_loaded} files loaded but only ${files_indexed} successfully indexed`);
+    console.error(`   ${files_loaded - files_indexed} files failed to index`);
+  } else {
+    console.error(`✅ All ${files_indexed} files successfully indexed`);
+  }
+
   // Get call graph
   console.error("Building call graph...");
   const call_graph = project.get_call_graph();
@@ -198,7 +211,7 @@ async function analyze_packages_core(): Promise<AnalysisResult> {
 
   return {
     project_path,
-    total_files_analyzed: files_loaded,
+    total_files_analyzed: files_indexed,
     total_entry_points: entry_points.length,
     entry_points,
     generated_at: new Date().toISOString(),
@@ -210,20 +223,17 @@ async function analyze_packages_core(): Promise<AnalysisResult> {
  */
 async function main() {
   const args = process.argv.slice(2);
-  const pretty = args.includes("--pretty");
   const stdout_only = args.includes("--stdout");
 
   try {
     const result = await analyze_packages_core();
 
-    // Generate JSON
-    const json = pretty
-      ? JSON.stringify(result, null, 2)
-      : JSON.stringify(result);
+    // Always format JSON with 2-space indentation
+    const json_formatted = JSON.stringify(result, null, 2);
 
     // Always output to stdout if requested
     if (stdout_only) {
-      console.log(json);
+      console.log(json_formatted);
       return;
     }
 
@@ -243,8 +253,8 @@ async function main() {
     // Create output directory if it doesn't exist
     await fs.mkdir(output_dir, { recursive: true });
 
-    // Write JSON to file
-    await fs.writeFile(output_file, json, "utf-8");
+    // Write formatted JSON to file
+    await fs.writeFile(output_file, json_formatted, "utf-8");
 
     console.error("✅ Analysis complete!");
     console.error(`📊 Files analyzed: ${result.total_files_analyzed}`);
@@ -252,7 +262,7 @@ async function main() {
     console.error(`📁 Output written to: ${output_file}`);
 
     // Also output to stdout for piping
-    console.log(json);
+    console.log(json_formatted);
   } catch (error) {
     console.error("Error during analysis:", error);
     process.exit(1);

@@ -21,7 +21,7 @@ import RustParser from "tree-sitter-rust";
 import type { FileSystemFolder } from "../resolve_references/file_folders";
 import { readdir, realpath } from "fs/promises";
 import { join } from "path";
-
+// TODO: make a systematic approach for going through the analysis file errors and seeing if they should actually be top-level functions
 /**
  * Detect language from file path extension
  */

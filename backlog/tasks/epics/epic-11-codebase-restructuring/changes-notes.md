@@ -87,3 +87,14 @@
   - the helper maps e.g. scope->symbol-name->symbol-id (scope_to_definitions)
   - ...
 - Rewrite MCP server
+
+## Debugging using analyze_self.ts
+
+we're at the end of a complete overhaul of packages/core and packages/mcp. we created @packages/core/analyze_self.ts which runs the `core` app on this code base. the script outputs json files like: @analysis_output/packages-core-analysis_2025-10-22_20-20-53-685Z.json
+The goal is to look at the `entry_points` and verify which ones shouldn't be marked as entry points because they are actually referenced elsewhere. in these cases, we need to debug the parsing code to see why they aren't being properly parsed/indexed.
+After each fix, we should re-run the analysis script and see how many entrypoints are being detected (`total_entry_points`) - this number should come down to the handfull of actual top-level entrypoints i.e. the API for this project.
+ultrathink and proceed with this debugging process
+
+- please add a test case to import_resolver.javascript.test.ts.
+- if there is a full, separate implementation for TS, i.e. not inheriting from the js implementation, also add the fix to the import_resolver.typescript.ts and add a corresponding test to import_resolver.typescript.test.ts
+- check if the other two languages (python, rust) import_resolver's have this bug. fix and add tests as appropriate to verify the bug is fixed.
