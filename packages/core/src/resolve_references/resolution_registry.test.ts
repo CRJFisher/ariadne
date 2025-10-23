@@ -342,10 +342,9 @@ export function use_aliased(y: number): number {
     expect(aliased_calls.length).toBe(1);
   });
 
-  it.skip("should handle re-exports with nested directory structure and relative imports", async () => {
-    // TODO: Fix FileSystemFolder tree updating issue
-    // This test fails because import path resolves to import_resolution.ts instead of import_resolution/index.ts
-    // The FileSystemFolder tree is built once during initialization and doesn't include files added later
+  it("should handle re-exports with nested directory structure and relative imports", async () => {
+    // This test verifies that directory-based imports resolve correctly to index.ts files
+    // after fixing the has_file_in_tree bug
 
     // This test matches the real codebase structure:
     // resolve_references/
