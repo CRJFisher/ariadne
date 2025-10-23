@@ -1,7 +1,7 @@
 # Task 155.8: Multiple Candidate Resolution
 
 **Parent**: task-155
-**Dependencies**: task-155.2 (stub resolver), task-154 (heuristic fallback)
+**Dependencies**: task-155.2 (stub resolver), task-155.7 (heuristic fallback)
 **Status**: TODO
 **Priority**: Medium
 **Estimated Effort**: 0.5 day

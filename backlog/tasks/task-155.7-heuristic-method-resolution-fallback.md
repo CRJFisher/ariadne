@@ -1,13 +1,14 @@
-# Task 154: Type Resolution & Heuristic Fallback System
+# Task 155.7: Heuristic Method Resolution Fallback
 
 **Parent**: task-155 (Type Flow Inference Through Built-in Methods)
-**Status**: Backlog
+**Status**: TODO
 **Priority**: High (Required for Call Graph Accuracy)
-**Estimated Effort**: 2-3 weeks (reduced scope - heuristics only)
+**Estimated Effort**: 2-3 weeks
 **Created**: 2025-10-09
 **Updated**: 2025-10-23
+**Original ID**: task-154 (renamed to task-155.7)
 
-**Note**: This task is now a sub-task of task-155. The type stub system (task-155) handles built-in method type flow. This task provides the **heuristic fallback layer** when type information is unavailable or stubs don't match.
+**Note**: This task implements **Layer 3** of the resolution pipeline from task-155. The type stub system (tasks 155.1-155.6) handles built-in method type flow. This task provides the **heuristic fallback layer** when type information is unavailable or stubs don't match.
 
 ## Problem Statement
 

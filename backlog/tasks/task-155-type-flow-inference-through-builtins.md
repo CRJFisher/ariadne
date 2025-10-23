@@ -115,8 +115,8 @@ This is **data-driven** - no hardcoded logic for each built-in.
    - `Result<T, E>`: `map`, `and_then`, `unwrap_or`
    - `Vec<T>`: `iter`, `iter_mut`, `into_iter`
 
-7. **task-154**: Heuristic method resolution fallback (EXISTING TASK)
-   - Update to be a sub-task of this parent task
+7. **task-155.7**: Heuristic method resolution fallback (2-3 weeks)
+   - Previously task-154, renamed to task-155.7
    - When stubs don't match, fall back to name-based heuristics
    - Rank candidates by confidence
 
