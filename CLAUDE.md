@@ -8,6 +8,10 @@
 - we _never_ add 'extra' functionality outside of this intention tree, even if it is 'well-meaning' and 'might' be used one day. 'extra', surplus code reduces our longterm velocity. it is much better to spend effort reviewing narrow, focussed code and its integration, rather than trying to cover a wide surface area.
 - all namings and documentation should _only_ reflect the trunk and branches of the intention tree, not the 'differential' changes we make to the codebase. E.g. if we're changing 'method_resolution.ts', we don't just create a file like 'enhanced_method_resolution.ts', we just improve 'method_resolution.ts', leaving the core intention tree intact.
 
+## Refactoring Ethos
+
+- DO NOT SUPPORT BACKWARD COMPATIBILITY - JUST _CHANGE_ THE CODE.
+
 ## Documentation Style: Canonical and Self-Contained
 
 When writing or updating documentation, always write in a **canonical, self-contained** style. Documentation should describe the system as it currently IS, not as it was or how it changed.

@@ -381,6 +381,58 @@ describe("Project Integration - Rust", () => {
     });
   });
 
+  describe("Parameter Type Resolution", () => {
+    it("should register function parameters as first-class definitions", async () => {
+      const code = `
+        struct Database;
+
+        impl Database {
+            fn query(&self, sql: &str) {}
+        }
+
+        fn process_data(db: &Database) {
+            db.query("SELECT * FROM users");
+        }
+      `;
+      const file = file_path("test_param_function.rs");
+      project.update_file(file, code);
+
+      // Verify parameter appears in DefinitionRegistry
+      const db_param = Array.from(project.definitions["by_symbol"].values()).find(
+        (def) => def.kind === "parameter" && def.name === ("db" as SymbolName)
+      );
+      expect(db_param).toBeDefined();
+      expect(db_param?.kind).toBe("parameter");
+    });
+
+    it("should register method parameters as first-class definitions", async () => {
+      const code = `
+        struct Logger;
+
+        impl Logger {
+            fn log(&self, message: &str) {}
+        }
+
+        struct Service;
+
+        impl Service {
+            fn process(&self, logger: &Logger) {
+                logger.log("Processing...");
+            }
+        }
+      `;
+      const file = file_path("test_param_method.rs");
+      project.update_file(file, code);
+
+      // Verify parameter in method appears in registry
+      const logger_param = Array.from(project.definitions["by_symbol"].values()).find(
+        (def) => def.kind === "parameter" && def.name === ("logger" as SymbolName)
+      );
+      expect(logger_param).toBeDefined();
+      expect(logger_param?.kind).toBe("parameter");
+    });
+  });
+
   describe("Shadowing", () => {
     it("should resolve to local definition when it shadows import", async () => {
       const utils_source = load_source("modules/utils.rs");

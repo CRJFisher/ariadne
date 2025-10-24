@@ -63,7 +63,7 @@
 ; JSDoc comment before variable/constant declaration
 (program
   (comment) @definition.variable.documentation
-  (lexical_declaration) @scope.variable.documented
+  (lexical_declaration) @definition.variable.documented
 )
 
 ; JSDoc comment before method definition

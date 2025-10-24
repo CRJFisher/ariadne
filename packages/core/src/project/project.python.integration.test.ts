@@ -244,7 +244,7 @@ describe("Project Integration - Python", () => {
     // Currently, we don't track that `user = User(...)` creates a binding
     // from the variable `user` to the type `User`, so method calls like
     // `user.get_name()` cannot be resolved through the assignment chain.
-    it.todo("should resolve method calls on cross-file constructed instances (requires assignment tracking)", async () => {
+    it("should resolve method calls on cross-file constructed instances (requires assignment tracking)", async () => {
       const user_class_source = load_source("modules/user_class.py");
       const uses_user_source = load_source("modules/uses_user.py");
       const user_class_file = file_path("modules/user_class.py");
@@ -548,6 +548,57 @@ describe("Project Integration - Python", () => {
 
       expect(resolved_discount).toBeDefined();
       expect(resolved_mark).toBeDefined();
+    });
+  });
+
+  describe("Parameter Type Resolution", () => {
+    it("should register function parameters as first-class definitions with type hints", async () => {
+      const code = `
+class Database:
+    def query(self, sql: str) -> None:
+        pass
+
+def process_data(db: Database) -> None:
+    db.query("SELECT * FROM users")
+      `;
+      const file = file_path("test_param_function.py");
+      project.update_file(file, code);
+
+      // Verify parameter appears in DefinitionRegistry
+      const db_param = Array.from(project.definitions["by_symbol"].values()).find(
+        (def) => def.kind === "parameter" && def.name === ("db" as SymbolName)
+      );
+      expect(db_param).toBeDefined();
+      expect(db_param?.kind).toBe("parameter");
+
+      // Verify type binding was created for parameter
+      const type_binding = project.types.get_symbol_type(db_param!.symbol_id);
+      expect(type_binding).toBeDefined();
+    });
+
+    it("should register method parameters as first-class definitions with type hints", async () => {
+      const code = `
+class Logger:
+    def log(self, message: str) -> None:
+        pass
+
+class Service:
+    def process(self, logger: Logger) -> None:
+        logger.log("Processing...")
+      `;
+      const file = file_path("test_param_method.py");
+      project.update_file(file, code);
+
+      // Verify parameter in method appears in registry
+      const logger_param = Array.from(project.definitions["by_symbol"].values()).find(
+        (def) => def.kind === "parameter" && def.name === ("logger" as SymbolName)
+      );
+      expect(logger_param).toBeDefined();
+      expect(logger_param?.kind).toBe("parameter");
+
+      // Verify type binding for method parameter
+      const type_binding = project.types.get_symbol_type(logger_param!.symbol_id);
+      expect(type_binding).toBeDefined();
     });
   });
 

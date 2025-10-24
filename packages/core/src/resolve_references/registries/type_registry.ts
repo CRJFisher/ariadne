@@ -81,7 +81,7 @@ export class TypeRegistry {
    * 1. Extract type metadata from semantic index (names) - TRANSIENT
    * 2. Resolve type metadata to SymbolIds (using ResolutionRegistry) - PERSISTED
    *
-   * NOTE: Must be called AFTER ResolutionRegistry.resolve_files() for the file.
+   * NOTE: Must be called AFTER ResolutionRegistry.resolve_names() for the file.
    *
    * @param file_path - The file being updated
    * @param index - Semantic index containing type information

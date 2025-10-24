@@ -118,6 +118,89 @@ describe("Project Integration - TypeScript", () => {
     });
   });
 
+  describe("Parameter Type Resolution", () => {
+    it("should register function parameters as first-class definitions with type bindings", async () => {
+      const code = `
+        class Database {
+          query(sql: string): void {}
+        }
+
+        function processData(db: Database): void {
+          db.query("SELECT * FROM users");
+        }
+      `;
+      const file = file_path("test_param_function.ts");
+      project.update_file(file, code);
+
+      // Verify parameter appears in DefinitionRegistry
+      const db_param_symbol = Array.from(project.definitions["by_symbol"].values()).find(
+        (def) => def.kind === "parameter" && def.name === ("db" as SymbolName)
+      );
+      expect(db_param_symbol).toBeDefined();
+
+      // Verify type binding was created for parameter
+      const type_binding = project.types.get_symbol_type(db_param_symbol!.symbol_id);
+      expect(type_binding).toBeDefined();
+
+      // Note: Full method call resolution on parameters requires additional work
+      // This test verifies parameters are registered and have type bindings
+    });
+
+    it("should register method parameters as first-class definitions with type bindings", async () => {
+      const code = `
+        class Logger {
+          log(message: string): void {}
+        }
+
+        class Service {
+          process(logger: Logger): void {
+            logger.log("Processing...");
+          }
+        }
+      `;
+      const file = file_path("test_param_method.ts");
+      project.update_file(file, code);
+
+      // Verify parameter in method
+      const logger_param = Array.from(project.definitions["by_symbol"].values()).find(
+        (def) => def.kind === "parameter" && def.name === ("logger" as SymbolName)
+      );
+      expect(logger_param).toBeDefined();
+
+      // Verify type binding for method parameter
+      const type_binding = project.types.get_symbol_type(logger_param!.symbol_id);
+      expect(type_binding).toBeDefined();
+    });
+
+    it("should register constructor parameters as first-class definitions with type bindings", async () => {
+      const code = `
+        class Config {
+          get(key: string): string {
+            return "";
+          }
+        }
+
+        class Application {
+          constructor(config: Config) {
+            const value = config.get("api_key");
+          }
+        }
+      `;
+      const file = file_path("test_param_constructor.ts");
+      project.update_file(file, code);
+
+      // Verify constructor parameter
+      const config_param = Array.from(project.definitions["by_symbol"].values()).find(
+        (def) => def.kind === "parameter" && def.name === ("config" as SymbolName)
+      );
+      expect(config_param).toBeDefined();
+
+      // Verify type binding for constructor parameter
+      const type_binding = project.types.get_symbol_type(config_param!.symbol_id);
+      expect(type_binding).toBeDefined();
+    });
+  });
+
   describe("Cross-Module Resolution", () => {
     it("should resolve imported class and methods", async () => {
       // Index both files

@@ -28,7 +28,7 @@ import { find_enclosing_function_scope } from "../index_single_file/scopes/scope
  * - Depends on ReferenceRegistry as source of truth for raw references
  *
  * Resolution Process:
- * 1. When a file changes, resolve_files() is called from Project
+ * 1. When a file changes, resolve_names() is called from Project
  * 2. PHASE 1 - Name resolution (scope-based):
  *    - For each file: get root scope → resolve_scope_recursive()
  *    - resolve_scope_recursive() implements lexical scoping:
@@ -37,13 +37,15 @@ import { find_enclosing_function_scope } from "../index_single_file/scopes/scope
  *      • Add local definitions (shadows everything)
  *      • Recurse to children
  *    - Store: Map<ScopeId, Map<SymbolName, SymbolId>>
- * 3. PHASE 2 - Call resolution (type-aware):
+ * 3. TypeRegistry.update_file() is called (between phases)
+ * 4. PHASE 2 - Call resolution (type-aware):
+ *    - resolve_calls_for_files() is called from Project
  *    - Get call references from ReferenceRegistry
  *    - Resolve function calls using scope resolution
  *    - Resolve method calls using type information
  *    - Resolve constructor calls using type information
  *    - Store: Map<FilePath, CallReference[]>
- * 4. Query:
+ * 5. Query:
  *    - Names: resolve(scope_id, name) → O(1) lookup
  *    - Calls: get_file_calls(file_path) → resolved calls
  *
@@ -68,48 +70,39 @@ export class ResolutionRegistry {
   private calls_by_caller_scope: Map<ScopeId, CallReference[]> = new Map();
 
   /**
-   * Resolve symbols for a set of files and update resolutions.
-   * Two-phase resolution: name resolution + call resolution.
+   * PHASE 1: Resolve all symbol names in scopes for a set of files.
    *
-   * Process:
-   * PHASE 1 - Name Resolution (scope-based):
+   * Name Resolution (scope-based):
    *   1. For each file, remove old resolutions
    *   2. Get root scope from ScopeRegistry
    *   3. Call resolve_scope_recursive to resolve all names
    *   4. Store scope-based resolutions
    *
-   * PHASE 2 - Call Resolution (type-aware):
-   *   1. Get call references from ReferenceRegistry
-   *   2. Resolve function/method/constructor calls
-   *   3. Store resolved call references
+   * NOTE: Must be called BEFORE resolve_calls_for_files().
+   * Type resolution needs name resolution results but happens between these phases.
    *
    * @param file_ids - Files that need resolution updates
-   * @param references - Reference registry (source of truth for references)
-   * @param semantic_indexes - All semantic indexes (for scopes during call resolution)
+   * @param languages - Map of file paths to their languages
    * @param definitions - Definition registry
    * @param scopes - Scope registry
    * @param exports - Export registry
    * @param imports - Import graph
-   * @param types - Type registry (for method/constructor resolution)
-   * @param languages - Map of file paths to their languages
    * @param root_folder - Root folder for import resolution
    */
-  resolve_files(
+  resolve_names(
     file_ids: Set<FilePath>,
-    references: ReferenceRegistry,
     languages: ReadonlyMap<FilePath, Language>,
     definitions: DefinitionRegistry,
     scopes: ScopeRegistry,
     exports: ExportRegistry,
     imports: ImportGraph,
-    types: TypeRegistry,
     root_folder: FileSystemFolder
   ): void {
     if (file_ids.size === 0) {
       return;
     }
 
-    // PHASE 1: Resolve all symbols in all scopes (name → symbol_id)
+    // Resolve all symbols in all scopes (name → symbol_id)
     for (const file_id of file_ids) {
       // Remove old scope-based resolutions for this file
       this.remove_file(file_id);
@@ -145,8 +138,36 @@ export class ResolutionRegistry {
         this.resolutions_by_scope.set(scope_id, scope_resolutions);
       }
     }
+  }
 
-    // PHASE 2: Resolve all call references (function/method/constructor calls)
+  /**
+   * PHASE 2: Resolve all call references for a set of files.
+   *
+   * Call Resolution (type-aware):
+   *   1. Get call references from ReferenceRegistry
+   *   2. Resolve function/method/constructor calls (uses TypeRegistry)
+   *   3. Store resolved call references grouped by file and caller scope
+   *
+   * NOTE: Must be called AFTER resolve_names() AND TypeRegistry.update_file().
+   * Requires both name resolutions and type information to be available.
+   *
+   * @param file_ids - Files that need call resolution updates
+   * @param references - Reference registry (source of truth for references)
+   * @param scopes - Scope registry (for caller scope calculation)
+   * @param types - Type registry (for method/constructor resolution) - MUST BE POPULATED
+   * @param definitions - Definition registry
+   */
+  resolve_calls_for_files(
+    file_ids: Set<FilePath>,
+    references: ReferenceRegistry,
+    scopes: ScopeRegistry,
+    types: TypeRegistry,
+    definitions: DefinitionRegistry
+  ): void {
+    if (file_ids.size === 0) {
+      return;
+    }
+
     // Get references from ReferenceRegistry (source of truth)
     const file_references = new Map<FilePath, readonly SymbolReference[]>();
     for (const file_id of file_ids) {

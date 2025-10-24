@@ -9,7 +9,7 @@
  * - New: Use Project class which calls ResolutionRegistry.resolve_calls() internally
  *
  * The new eager resolution system:
- * 1. Resolves ALL symbols immediately when files are updated (via ResolutionRegistry.resolve_files())
+ * 1. Resolves ALL symbols immediately when files are updated (via ResolutionRegistry.resolve_names() + resolve_calls_for_files())
  * 2. Stores direct mappings: Scope → (Name → SymbolId) in memory
  * 3. Provides O(1) lookups via ResolutionRegistry.resolve(scope_id, name)
  * 4. No closures, no caches - just direct Map lookups

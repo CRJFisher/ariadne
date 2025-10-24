@@ -13,6 +13,7 @@ import { ResolutionRegistry } from "../resolve_references/resolution_registry";
 import { type CallGraph } from "@ariadnejs/types";
 import { detect_call_graph } from "../trace_call_graph/detect_call_graph";
 import { fix_import_definition_locations } from "./fix_import_locations";
+import { extract_all_parameters } from "./extract_nested_definitions";
 import Parser from "tree-sitter";
 import TypeScriptParser from "tree-sitter-typescript";
 import JavaScriptParser from "tree-sitter-javascript";
@@ -183,22 +184,28 @@ export class Project {
       ...Array.from(semantic_index.imported_symbols.values()),
     ];
 
-    // Extract methods from classes, interfaces, and enums
-    // Methods have their own symbol IDs and need to be registered separately
+    // Extract nested definitions (methods, properties, parameters)
+    // These have their own symbol IDs and need to be registered as first-class definitions
     for (const class_def of semantic_index.classes.values()) {
       all_definitions.push(...class_def.methods);
+      all_definitions.push(...class_def.properties);
       if (class_def.constructor) {
         all_definitions.push(...class_def.constructor);
       }
     }
     for (const interface_def of semantic_index.interfaces.values()) {
       all_definitions.push(...interface_def.methods);
+      all_definitions.push(...interface_def.properties);
     }
     for (const enum_def of semantic_index.enums.values()) {
       if (enum_def.methods) {
         all_definitions.push(...enum_def.methods);
       }
     }
+
+    // Extract parameters from all callables (functions, methods, constructors)
+    // Parameters need to be in DefinitionRegistry for type binding resolution
+    all_definitions.push(...extract_all_parameters(semantic_index));
 
     this.definitions.update_file(file_id, all_definitions);
     this.scopes.update_file(file_id, semantic_index.scopes);
@@ -251,20 +258,20 @@ export class Project {
       languages.set(file_path, index.language);
     }
 
-    this.resolutions.resolve_files(
+    // Phase 3: Name resolution (no calls yet)
+    this.resolutions.resolve_names(
       affected_files,
-      this.references,
       languages,
       this.definitions,
       this.scopes,
       this.exports,
       this.imports,
-      this.types,
       this.root_folder
     );
 
-    // Phase 4: Update type registry for all affected files
-    // Must happen AFTER resolution so type names can be resolved to SymbolIds
+    // Phase 4: Type registry
+    // Must happen AFTER name resolution BUT BEFORE call resolution.
+    // Uses name resolutions to resolve type names to SymbolIds.
     for (const affected_file of affected_files) {
       const affected_index = this.semantic_indexes.get(affected_file);
       if (affected_index) {
@@ -276,6 +283,17 @@ export class Project {
         );
       }
     }
+
+    // Phase 5: Call resolution (uses type information)
+    // Must happen AFTER type registry is populated.
+    // Method resolution needs types.get_symbol_type() to work correctly.
+    this.resolutions.resolve_calls_for_files(
+      affected_files,
+      this.references,
+      this.scopes,
+      this.types,
+      this.definitions
+    );
   }
 
   /**
@@ -315,19 +333,18 @@ export class Project {
         languages.set(file_path, index.language);
       }
 
-      this.resolutions.resolve_files(
+      // Phase 1: Name resolution
+      this.resolutions.resolve_names(
         dependents,
-        this.references,
         languages,
         this.definitions,
         this.scopes,
         this.exports,
         this.imports,
-        this.types,
         this.root_folder
       );
 
-      // Update type registry for dependents
+      // Phase 2: Type registry (uses name resolutions)
       for (const dependent_file of dependents) {
         const dependent_index = this.semantic_indexes.get(dependent_file);
         if (dependent_index) {
@@ -339,6 +356,15 @@ export class Project {
           );
         }
       }
+
+      // Phase 3: Call resolution (uses types)
+      this.resolutions.resolve_calls_for_files(
+        dependents,
+        this.references,
+        this.scopes,
+        this.types,
+        this.definitions
+      );
     }
   }
 

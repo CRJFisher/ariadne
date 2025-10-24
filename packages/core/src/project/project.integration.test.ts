@@ -319,10 +319,7 @@ const name = user.getName();
       expect(method_call).toBeDefined();
     });
 
-    // TODO(task-154): Cross-file method resolution requires type resolution
-    // Method resolution depends on knowing the type of 'user', which requires
-    // resolving User's constructor, then looking up methods on that type.
-    it.todo("should resolve method calls on imported classes across files in TypeScript", () => {
+    it("should resolve method calls on imported classes across files in TypeScript", async () => {
       project.update_file("types.ts" as FilePath, `
 export class User {
   getName() { return "Alice"; }
@@ -334,23 +331,35 @@ const user = new User();
 const name = user.getName();
       `);
 
+      // TEMP: Add diagnostics
       const main_index = project.get_semantic_index("main.ts" as FilePath);
-
-      // Find method call
-      const method_call = main_index?.references.find(
-        (r) => r.type === "call" && r.name === ("getName" as SymbolName)
-      );
-      expect(method_call).toBeDefined();
-
-      // FULL TEST: Verify method call resolves to method definition in types.ts
-      if (method_call) {
-        const resolved = project.resolutions.resolve(method_call.scope_id, method_call.name);
-        expect(resolved).toBeDefined();
-        const resolved_def = project.definitions.get(resolved!);
-        expect(resolved_def?.location.file_path).toContain("types.ts");
-        expect(resolved_def?.name).toBe("getName" as SymbolName);
-        expect(resolved_def?.kind).toBe("method");
+      const method_ref = main_index?.references.find(r => r.name === "getName" && r.call_type === "method");
+      if (method_ref) {
+        console.log("\n===== TYPESCRIPT DIAGNOSTICS =====");
+        console.log("Method call scope_id:", method_ref.scope_id);
+        const scope_res = project.resolutions["resolutions_by_scope"].get(method_ref.scope_id);
+        console.log("Resolutions in scope:", scope_res ? scope_res.size : 0);
+        if (scope_res) {
+          console.log("Names:", Array.from(scope_res.keys()).slice(0, 20));
+          console.log("'user' in map?:", scope_res.has("user" as any));
+        }
       }
+
+      // Get all resolved calls from main.ts (true integration test)
+      const resolved_calls = project.resolutions.get_file_calls("main.ts" as FilePath);
+
+      // Find the getName method call
+      const get_name_call = resolved_calls.find(
+        (c) => c.name === ("getName" as SymbolName) && c.call_type === "method"
+      );
+      expect(get_name_call).toBeDefined();
+      expect(get_name_call?.symbol_id).toBeDefined();
+
+      // Verify it resolves to method in types.ts
+      const resolved_def = project.definitions.get(get_name_call!.symbol_id);
+      expect(resolved_def?.location.file_path).toContain("types.ts");
+      expect(resolved_def?.name).toBe("getName" as SymbolName);
+      expect(resolved_def?.kind).toBe("method");
     });
 
     it("should resolve imported functions in Python", () => {

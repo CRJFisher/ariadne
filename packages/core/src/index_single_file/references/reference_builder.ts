@@ -591,7 +591,7 @@ export function process_references(
         capture.category === "return"
     )
     .reduce(
-      (builder, capture) => builder.process(capture), // TODO: how we detect the type of `builder` here?
+      (builder, capture) => builder.process(capture),
       new ReferenceBuilder(context, extractors, file_path)
     )
     .build();

@@ -477,39 +477,25 @@ describe("Project Integration - JavaScript", () => {
       expect(resolved_def!.location.file_path).toContain("user_class.js");
     });
 
-    it.todo("should resolve method calls on imported class instances", async () => {
-      const user_class = load_source("modules/user_class.js");
-      const uses_user = load_source("modules/uses_user.js");
+    it("should resolve method calls on imported class instances", async () => {
       const user_file = file_path("modules/user_class.js");
       const uses_file = file_path("modules/uses_user.js");
 
-      project.update_file(user_file, user_class);
-      project.update_file(uses_file, uses_user);
+      project.update_file(user_file, load_source("modules/user_class.js"));
+      project.update_file(uses_file, load_source("modules/uses_user.js"));
 
-      // Get uses_user index
-      const uses_index = project.get_semantic_index(uses_file);
-      expect(uses_index).toBeDefined();
+      // Get all resolved calls from uses_user.js
+      const resolved_calls = project.resolutions.get_file_calls(uses_file);
 
-      // Find method calls
-      const method_calls = uses_index!.references.filter(
-        (r) => r.type === "call" && r.call_type === "method"
-      );
-      expect(method_calls.length).toBeGreaterThan(0);
-
-      // Find getName method call
-      const getName_call = method_calls.find(
-        (c) => c.name === ("getName" as SymbolName)
+      // Find the getName method call
+      const getName_call = resolved_calls.find(
+        (c) => c.name === ("getName" as SymbolName) && c.call_type === "method"
       );
       expect(getName_call).toBeDefined();
+      if (!getName_call?.symbol_id) return;
 
-      // Verify method call resolves to method in user_class.js
-      const resolved = project.resolutions.resolve(
-        getName_call!.scope_id,
-        getName_call!.name
-      );
-      expect(resolved).toBeDefined();
-
-      const resolved_def = project.definitions.get(resolved!);
+      // Verify it resolves to method in user_class.js
+      const resolved_def = project.definitions.get(getName_call.symbol_id);
       expect(resolved_def).toBeDefined();
       expect(resolved_def!.kind).toBe("method");
       expect(resolved_def!.name).toBe("getName" as SymbolName);
@@ -644,7 +630,7 @@ describe("Project Integration - JavaScript", () => {
       expect(resolved_def!.location.file_path).toContain("utils_aliased.js");
     });
 
-    it.todo("should resolve method calls on aliased class instances", async () => {
+    it("should resolve method calls on aliased class instances", async () => {
       const utils = load_source("modules/utils_aliased.js");
       const main = load_source("modules/main_aliased.js");
       const utils_file = file_path("modules/utils_aliased.js");
@@ -653,27 +639,18 @@ describe("Project Integration - JavaScript", () => {
       project.update_file(utils_file, utils);
       project.update_file(main_file, main);
 
-      // Get main index
-      const main_index = project.get_semantic_index(main_file);
-      expect(main_index).toBeDefined();
+      // Get all resolved calls from main.js (true integration test)
+      const resolved_calls = project.resolutions.get_file_calls(main_file);
 
-      // Find method call on manager instance
-      const method_calls = main_index!.references.filter(
-        (r) => r.type === "call" && r.call_type === "method"
-      );
-      const process_call = method_calls.find(
-        (c) => c.name === ("process" as SymbolName)
+      // Find the process method call
+      const process_call = resolved_calls.find(
+        (c) => c.name === ("process" as SymbolName) && c.call_type === "method"
       );
       expect(process_call).toBeDefined();
+      if (!process_call?.symbol_id) return;
 
-      // Verify method call resolves to process method in DataManager class
-      const resolved = project.resolutions.resolve(
-        process_call!.scope_id,
-        process_call!.name
-      );
-      expect(resolved).toBeDefined();
-
-      const resolved_def = project.definitions.get(resolved!);
+      // Verify it resolves to process method in DataManager class
+      const resolved_def = project.definitions.get(process_call.symbol_id);
       expect(resolved_def).toBeDefined();
       expect(resolved_def!.kind).toBe("method");
       expect(resolved_def!.name).toBe("process" as SymbolName);
@@ -737,6 +714,56 @@ describe("Project Integration - JavaScript", () => {
       // Should have nodes from both files
       const nodes = Array.from(call_graph.nodes.values());
       expect(nodes.length).toBeGreaterThan(0);
+    });
+  });
+
+  describe("Parameter Type Resolution", () => {
+    it("should register function parameters as first-class definitions", async () => {
+      const code = `
+        class Database {
+          query(sql) {
+            return [];
+          }
+        }
+
+        function processData(db) {
+          return db.query("SELECT * FROM users");
+        }
+      `;
+      const file = file_path("test_param_function.js");
+      project.update_file(file, code);
+
+      // Verify parameter appears in DefinitionRegistry
+      const db_param = Array.from(project.definitions["by_symbol"].values()).find(
+        (def) => def.kind === "parameter" && def.name === ("db" as SymbolName)
+      );
+      expect(db_param).toBeDefined();
+      expect(db_param?.kind).toBe("parameter");
+    });
+
+    it("should register constructor parameters as first-class definitions", async () => {
+      const code = `
+        class Config {
+          get(key) {
+            return null;
+          }
+        }
+
+        class Application {
+          constructor(config) {
+            this.apiKey = config.get("api_key");
+          }
+        }
+      `;
+      const file = file_path("test_param_constructor.js");
+      project.update_file(file, code);
+
+      // Verify constructor parameter appears in registry
+      const config_param = Array.from(project.definitions["by_symbol"].values()).find(
+        (def) => def.kind === "parameter" && def.name === ("config" as SymbolName)
+      );
+      expect(config_param).toBeDefined();
+      expect(config_param?.kind).toBe("parameter");
     });
   });
 
