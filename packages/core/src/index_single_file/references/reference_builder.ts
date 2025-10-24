@@ -409,7 +409,7 @@ function process_type_reference(
 // ============================================================================
 
 export class ReferenceBuilder {
-  private readonly references: SymbolReference[] = [];
+  public readonly references: SymbolReference[] = [];
 
   constructor(
     private readonly context: ProcessingContext,
@@ -556,13 +556,6 @@ export class ReferenceBuilder {
     this.references.push(reference);
     return this;
   }
-
-  /**
-   * Build final references array
-   */
-  build(): SymbolReference[] {
-    return this.references;
-  }
 }
 
 // ============================================================================
@@ -594,5 +587,5 @@ export function process_references(
       (builder, capture) => builder.process(capture),
       new ReferenceBuilder(context, extractors, file_path)
     )
-    .build();
+    .references;
 }

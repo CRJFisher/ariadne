@@ -167,7 +167,7 @@ describe("ReferenceBuilder", () => {
       });
 
       builder.process(capture);
-      const references = builder.build();
+      const references = builder.references;
 
       expect(references).toHaveLength(0);
     });
@@ -180,7 +180,7 @@ describe("ReferenceBuilder", () => {
       });
 
       builder.process(capture);
-      const references = builder.build();
+      const references = builder.references;
 
       expect(references).toHaveLength(1);
       expect(references[0].name).toBe("myVar");
@@ -195,7 +195,7 @@ describe("ReferenceBuilder", () => {
       });
 
       builder.process(capture);
-      const references = builder.build();
+      const references = builder.references;
 
       expect(references).toHaveLength(1);
       expect(references[0].name).toBe("doSomething");
@@ -211,7 +211,7 @@ describe("ReferenceBuilder", () => {
       });
 
       builder.process(capture);
-      const references = builder.build();
+      const references = builder.references;
 
       expect(references).toHaveLength(1);
       expect(references[0].name).toBe("getValue");
@@ -231,7 +231,7 @@ describe("ReferenceBuilder", () => {
       });
 
       builder.process(capture);
-      const references = builder.build();
+      const references = builder.references;
 
       expect(references).toHaveLength(1);
       expect(references[0].name).toBe("MyClass");
@@ -261,7 +261,7 @@ describe("ReferenceBuilder", () => {
       });
 
       builder.process(capture);
-      const references = builder.build();
+      const references = builder.references;
 
       expect(references).toHaveLength(1);
       expect(references[0].name).toBe("MyType");
@@ -292,7 +292,7 @@ describe("ReferenceBuilder", () => {
       });
 
       builder.process(capture);
-      const references = builder.build();
+      const references = builder.references;
 
       expect(references).toHaveLength(1);
       expect(references[0].name).toBe("Array");
@@ -323,7 +323,7 @@ describe("ReferenceBuilder", () => {
       });
 
       builder.process(capture);
-      const references = builder.build();
+      const references = builder.references;
 
       expect(references).toHaveLength(1);
       expect(references[0].name).toBe("length");
@@ -355,7 +355,7 @@ describe("ReferenceBuilder", () => {
       });
 
       builder.process(capture);
-      const references = builder.build();
+      const references = builder.references;
 
       expect(references).toHaveLength(1);
       expect(references[0].name).toBe("result");
@@ -372,7 +372,7 @@ describe("ReferenceBuilder", () => {
       });
 
       builder.process(capture);
-      const references = builder.build();
+      const references = builder.references;
 
       expect(references).toHaveLength(1);
       expect(references[0].name).toBe("value");
@@ -389,7 +389,7 @@ describe("ReferenceBuilder", () => {
       });
 
       builder.process(capture);
-      const references = builder.build();
+      const references = builder.references;
 
       expect(references).toHaveLength(1);
       expect(references[0].name).toBe("super");
@@ -417,7 +417,7 @@ describe("ReferenceBuilder", () => {
       });
 
       builder.process(capture1).process(capture2).process(capture3);
-      const references = builder.build();
+      const references = builder.references;
 
       expect(references).toHaveLength(3);
       expect(references[0].name).toBe("var1");
@@ -514,7 +514,7 @@ describe("ReferenceBuilder", () => {
       });
 
       builder.process(capture);
-      const references = builder.build();
+      const references = builder.references;
 
       expect(mockExtractors.extract_type_from_annotation).toHaveBeenCalledWith(
         capture.node,
@@ -545,7 +545,7 @@ describe("ReferenceBuilder", () => {
       });
 
       builder.process(capture);
-      const references = builder.build();
+      const references = builder.references;
 
       expect(mockExtractors.extract_call_receiver).toHaveBeenCalledWith(
         capture.node,
@@ -578,7 +578,7 @@ describe("ReferenceBuilder", () => {
       });
 
       builder.process(capture);
-      const references = builder.build();
+      const references = builder.references;
 
       expect(mockExtractors.extract_property_chain).toHaveBeenCalledWith(
         capture.node
@@ -604,7 +604,7 @@ describe("ReferenceBuilder", () => {
       });
 
       builder.process(capture);
-      const references = builder.build();
+      const references = builder.references;
 
       expect(mockExtractors.extract_construct_target).toHaveBeenCalledWith(
         capture.node,
@@ -636,7 +636,7 @@ describe("ReferenceBuilder", () => {
       });
 
       builder.process(capture);
-      const references = builder.build();
+      const references = builder.references;
 
       expect(mockExtractors.extract_type_arguments).toHaveBeenCalledWith(
         capture.node
@@ -671,7 +671,7 @@ describe("ReferenceBuilder", () => {
       });
 
       builder.process(capture);
-      const references = builder.build();
+      const references = builder.references;
 
       // Verify all relevant extractors were called
       expect(mockExtractors.extract_call_receiver).toHaveBeenCalled();
@@ -696,7 +696,7 @@ describe("ReferenceBuilder", () => {
       });
 
       builder.process(capture);
-      const references = builder.build();
+      const references = builder.references;
 
       expect(references).toHaveLength(1);
       expect(references[0].name).toBe("getValue");
@@ -722,7 +722,7 @@ describe("ReferenceBuilder", () => {
       });
 
       builder.process(capture);
-      const references = builder.build();
+      const references = builder.references;
 
       expect(references).toHaveLength(1);
       expect(references[0].name).toBe("getValue");
@@ -753,7 +753,7 @@ describe("ReferenceBuilder", () => {
       });
 
       builder.process(capture);
-      const references = builder.build();
+      const references = builder.references;
 
       expect(references[0].member_access).toBeDefined();
       expect(references[0].member_access?.access_type).toBe("property");
@@ -783,7 +783,7 @@ describe("ReferenceBuilder", () => {
       });
 
       builder.process(capture);
-      const references = builder.build();
+      const references = builder.references;
 
       expect(references[0].assignment_type).toBeDefined();
       expect(references[0].assignment_type).toEqual(typeInfo);
@@ -812,7 +812,7 @@ describe("ReferenceBuilder", () => {
       });
 
       builder.process(capture);
-      const references = builder.build();
+      const references = builder.references;
 
       expect(references[0].return_type).toEqual(typeInfo);
     });
@@ -832,7 +832,7 @@ describe("ReferenceBuilder", () => {
       });
 
       builder.process(capture);
-      const references = builder.build();
+      const references = builder.references;
 
       expect(references[0].context).toBeUndefined();
     });
@@ -855,7 +855,7 @@ describe("ReferenceBuilder", () => {
       });
 
       builder.process(capture);
-      const references = builder.build();
+      const references = builder.references;
 
       expect(references[0].context).toBeDefined();
       expect(references[0].context?.property_chain).toEqual(propertyChain);
@@ -888,7 +888,7 @@ describe("ReferenceBuilder", () => {
       });
 
       builder.process(capture);
-      const references = builder.build();
+      const references = builder.references;
 
       expect(references).toHaveLength(1);
       expect(references[0].context?.property_chain).toEqual([
@@ -920,7 +920,7 @@ describe("ReferenceBuilder", () => {
       });
 
       builder.process(capture);
-      const references = builder.build();
+      const references = builder.references;
 
       expect(references).toHaveLength(1);
       expect(references[0].type_info?.type_name).toBe("string");
@@ -948,7 +948,7 @@ describe("ReferenceBuilder", () => {
       });
 
       builder.process(capture);
-      const references = builder.build();
+      const references = builder.references;
 
       expect(references).toHaveLength(1);
       expect(references[0].type).toBe("assignment");
