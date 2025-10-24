@@ -16,12 +16,19 @@ import {
   load_query,
   has_query,
   clear_all_caches,
-  clear_query_cache,
+  query_cache,
   get_cache_size,
   get_queries_dir,
   test_path_resolution,
   SUPPORTED_LANGUAGES,
 } from "./query_loader";
+
+/**
+ * Clear the query cache (test helper)
+ */
+function clear_query_cache(): void {
+  query_cache.clear();
+}
 
 describe("Query Loader", () => {
   beforeEach(() => {

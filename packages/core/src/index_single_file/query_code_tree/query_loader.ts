@@ -30,8 +30,9 @@ export const SUPPORTED_LANGUAGES: readonly Language[] = [
 
 /**
  * Query cache for performance
+ * Exported for testing purposes only
  */
-const query_cache = new Map<Language, string>();
+export const query_cache = new Map<Language, string>();
 
 /**
  * Cache for the queries directory path (computed once per process)
@@ -220,13 +221,6 @@ export function has_query(language: Language): boolean {
   const query_path = join(queries_dir, `${language}.scm`);
 
   return existsSync(query_path);
-}
-
-/**
- * Clear the query cache (useful for testing)
- */
-export function clear_query_cache(): void {
-  query_cache.clear();
 }
 
 /**
