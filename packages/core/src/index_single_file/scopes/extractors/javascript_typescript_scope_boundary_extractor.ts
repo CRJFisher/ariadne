@@ -3,8 +3,8 @@ import type Parser from "tree-sitter";
 import {
   CommonScopeBoundaryExtractor,
   type ScopeBoundaries,
-  node_to_location,
 } from "../scope_boundary_base";
+import { node_to_location } from "../../node_utils";
 
 /**
  * Shared scope boundary extraction for JavaScript and TypeScript.

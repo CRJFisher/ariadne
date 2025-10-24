@@ -4,7 +4,7 @@
  * Provides helpers for working with tree-sitter AST nodes
  */
 
-import { SyntaxNode, Point } from "tree-sitter";
+import { SyntaxNode } from "tree-sitter";
 import { FilePath, Location } from "@ariadnejs/types";
 
 /**
@@ -24,27 +24,5 @@ export function node_to_location(
     start_column: node.startPosition.column + 1,
     end_line: node.endPosition.row + 1,
     end_column: node.endPosition.column,
-  };
-}
-
-/**
- * Create a location from explicit start and end positions.
- *
- * Use this when you have Parser.Point objects but not a SyntaxNode.
- * Example: When manually finding delimiter positions (Python's colon).
- *
- * Tree-sitter positions are 0-indexed, we convert to 1-indexed.
- */
-export function position_to_location(
-  start: Point,
-  end: Point,
-  file_path: FilePath,
-): Location {
-  return {
-    file_path,
-    start_line: start.row + 1,
-    start_column: start.column + 1,
-    end_line: end.row + 1,
-    end_column: end.column,
   };
 }

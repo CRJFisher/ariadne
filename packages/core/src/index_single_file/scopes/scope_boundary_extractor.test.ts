@@ -2,30 +2,12 @@ import { describe, it, expect } from "vitest";
 import type Parser from "tree-sitter";
 import type { FilePath, Language } from "@ariadnejs/types";
 import {
-  node_to_location,
-  position_to_location,
-  get_scope_boundary_extractor,
   CommonScopeBoundaryExtractor,
-} from "./scope_boundary_extractor";
+} from "./scope_boundary_base";
+import { node_to_location } from "../node_utils";
+import { get_scope_boundary_extractor } from "./scope_boundary_extractor";
 
 describe("scope_boundary_extractor infrastructure", () => {
-  describe("position_to_location", () => {
-    it("should convert tree-sitter positions to location correctly", () => {
-      const start = { row: 0, column: 5 } as Parser.Point;
-      const end = { row: 2, column: 10 } as Parser.Point;
-
-      const location = position_to_location(start, end, "test.py" as FilePath);
-
-      expect(location).toEqual({
-        file_path: "test.py",
-        start_line: 1,      // 0-indexed → 1-indexed
-        start_column: 6,    // 0-indexed → 1-indexed
-        end_line: 3,
-        end_column: 10,
-      });
-    });
-  });
-
   describe("node_to_location", () => {
     it("should convert tree-sitter node to location correctly", () => {
       const mock_node = {

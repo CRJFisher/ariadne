@@ -176,6 +176,3 @@ export class CommonScopeBoundaryExtractor implements ScopeBoundaryExtractor {
     };
   }
 }
-
-// Re-export node utilities for convenience
-export { node_to_location, position_to_location } from "../node_utils";

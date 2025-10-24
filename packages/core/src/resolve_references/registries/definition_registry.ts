@@ -257,41 +257,6 @@ export class DefinitionRegistry {
   }
 
   /**
-   * Get definitions in a specific scope, optionally filtered by kind.
-   * O(1) lookup since index is built during update_file().
-   *
-   * This method provides the same functionality as SemanticIndex.scope_to_definitions
-   * but is centralized in the registry layer.
-   *
-   * @param scope_id - The scope to query
-   * @param file_id - The file containing the scope
-   * @param kind - Optional filter by SymbolKind (e.g., "import", "function")
-   * @returns Array of definitions in the scope, filtered by kind if specified
-   */
-  get_scope_definitions_by_kind(
-    scope_id: ScopeId,
-    file_id: FilePath,
-    kind?: SymbolKind
-  ): AnyDefinition[] {
-    const file_index = this.scope_to_definitions_index.get(file_id);
-    if (!file_index) {
-      return [];
-    }
-
-    const scope_defs = file_index.get(scope_id);
-    if (!scope_defs) {
-      return [];
-    }
-
-    if (kind) {
-      return scope_defs.get(kind) ?? [];
-    }
-
-    // Return all definitions if no kind specified
-    return Array.from(scope_defs.values()).flat();
-  }
-
-  /**
    * Build scope-to-definitions index from a list of definitions.
    * Maps each scope to its definitions, grouped by SymbolKind.
    *

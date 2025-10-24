@@ -42,7 +42,7 @@ describe("JavaScriptTypeScriptScopeBoundaryExtractor", () => {
       descendantForPosition: () => null as any,
       namedDescendantForIndex: () => null as any,
       namedDescendantForPosition: () => null as any,
-    } as Parser.SyntaxNode;
+    } as unknown as Parser.SyntaxNode;
   }
 
   describe("extract_class_boundaries", () => {

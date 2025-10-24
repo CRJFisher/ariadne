@@ -38,7 +38,7 @@ describe("CommonScopeBoundaryExtractor", () => {
       descendantForPosition: () => null as any,
       namedDescendantForIndex: () => null as any,
       namedDescendantForPosition: () => null as any,
-    } as Parser.SyntaxNode;
+    } as unknown as Parser.SyntaxNode;
   }
 
   describe("extract_boundaries", () => {
