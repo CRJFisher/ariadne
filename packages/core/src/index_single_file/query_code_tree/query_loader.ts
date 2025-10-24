@@ -36,16 +36,17 @@ export const query_cache = new Map<Language, string>();
 
 /**
  * Cache for the queries directory path (computed once per process)
+ * Exported as object for testing purposes only
  */
-let cached_queries_dir: string | null = null;
+export const cached_queries_dir_cache = { value: null as string | null };
 
 /**
  * Get the queries directory path (robust across different environments)
  */
 export function get_queries_dir(): string {
   // Return cached result if available
-  if (cached_queries_dir !== null) {
-    return cached_queries_dir;
+  if (cached_queries_dir_cache.value !== null) {
+    return cached_queries_dir_cache.value;
   }
 
   // Strategy: Try multiple approaches to find the queries directory
@@ -86,7 +87,7 @@ export function get_queries_dir(): string {
   // Try each path until we find one that exists
   for (const path of possible_paths) {
     if (existsSync(path)) {
-      cached_queries_dir = path;
+      cached_queries_dir_cache.value = path;
       return path;
     }
   }
@@ -223,76 +224,3 @@ export function has_query(language: Language): boolean {
   return existsSync(query_path);
 }
 
-/**
- * Clear all caches including path cache (useful for testing different environments)
- */
-export function clear_all_caches(): void {
-  query_cache.clear();
-  cached_queries_dir = null;
-}
-
-/**
- * Get cache size (useful for monitoring)
- */
-export function get_cache_size(): number {
-  return query_cache.size;
-}
-
-/**
- * Test path resolution without throwing errors (useful for debugging)
- */
-export function test_path_resolution(): {
-  found_path: string | null;
-  tried_paths: Array<{ path: string; exists: boolean }>;
-  environment_info: Record<string, unknown>;
-} {
-  const possible_paths = [
-    join(dirname(__filename), "queries"),
-    join(__dirname, "queries"),
-    join(
-      process.cwd(),
-      "packages",
-      "core",
-      "dist",
-      "semantic_index",
-      "queries"
-    ),
-    join(process.cwd(), "packages", "core", "src", "semantic_index", "queries"),
-    join(process.cwd(), "dist", "semantic_index", "queries"),
-    join(process.cwd(), "src", "semantic_index", "queries"),
-    join(
-      process.cwd(),
-      "node_modules",
-      "@ariadnejs",
-      "core",
-      "dist",
-      "semantic_index",
-      "queries"
-    ),
-  ];
-
-  const tried_paths = possible_paths.map((path) => ({
-    path,
-    exists: existsSync(path),
-  }));
-
-  const found_path = tried_paths.find((p) => p.exists)?.path || null;
-
-  const environment_info = {
-    node_env: process.env.NODE_ENV,
-    cwd: process.cwd(),
-    filename: __filename,
-    dirname: __dirname,
-    argv0: process.argv[0],
-    argv1: process.argv[1],
-    platform: process.platform,
-    arch: process.arch,
-    cached_queries_dir,
-  };
-
-  return {
-    found_path,
-    tried_paths,
-    environment_info,
-  };
-}

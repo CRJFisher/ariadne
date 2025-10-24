@@ -11,15 +11,15 @@ import JavaScript from "tree-sitter-javascript";
 import Python from "tree-sitter-python";
 import Rust from "tree-sitter-rust";
 import TypeScript from "tree-sitter-typescript";
+import { existsSync } from "fs";
+import { join, dirname } from "path";
 import {
   LANGUAGE_TO_TREESITTER_LANG,
   load_query,
   has_query,
-  clear_all_caches,
   query_cache,
-  get_cache_size,
+  cached_queries_dir_cache,
   get_queries_dir,
-  test_path_resolution,
   SUPPORTED_LANGUAGES,
 } from "./query_loader";
 
@@ -29,6 +29,81 @@ import {
 function clear_query_cache(): void {
   query_cache.clear();
 }
+
+/**
+ * Clear all caches including path cache (useful for testing different environments)
+ */
+function clear_all_caches(): void {
+  query_cache.clear();
+  cached_queries_dir_cache.value = null;
+}
+
+/**
+ * Get cache size (useful for monitoring)
+ */
+function get_cache_size(): number {
+  return query_cache.size;
+}
+
+/**
+ * Test path resolution without throwing errors (useful for debugging)
+ */
+function test_path_resolution(): {
+  found_path: string | null;
+  tried_paths: Array<{ path: string; exists: boolean }>;
+  environment_info: Record<string, unknown>;
+} {
+  const possible_paths = [
+    join(dirname(__filename), "queries"),
+    join(__dirname, "queries"),
+    join(
+      process.cwd(),
+      "packages",
+      "core",
+      "dist",
+      "semantic_index",
+      "queries"
+    ),
+    join(process.cwd(), "packages", "core", "src", "semantic_index", "queries"),
+    join(process.cwd(), "dist", "semantic_index", "queries"),
+    join(process.cwd(), "src", "semantic_index", "queries"),
+    join(
+      process.cwd(),
+      "node_modules",
+      "@ariadnejs",
+      "core",
+      "dist",
+      "semantic_index",
+      "queries"
+    ),
+  ];
+
+  const tried_paths = possible_paths.map((path) => ({
+    path,
+    exists: existsSync(path),
+  }));
+
+  const found_path = tried_paths.find((p) => p.exists)?.path || null;
+
+  const environment_info = {
+    node_env: process.env.NODE_ENV,
+    cwd: process.cwd(),
+    filename: __filename,
+    dirname: __dirname,
+    argv0: process.argv[0],
+    argv1: process.argv[1],
+    platform: process.platform,
+    arch: process.arch,
+    cached_queries_dir: cached_queries_dir_cache.value,
+  };
+
+  return {
+    found_path,
+    tried_paths,
+    environment_info,
+  };
+}
+
 
 describe("Query Loader", () => {
   beforeEach(() => {

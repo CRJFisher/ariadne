@@ -596,14 +596,3 @@ export function process_references(
     )
     .build();
 }
-
-/**
- * Check if a capture is a reference
- */
-export function is_reference_capture(capture: CaptureNode): boolean {
-  return (
-    capture.category === "reference" ||
-    capture.category === "assignment" ||
-    capture.category === "return"
-  );
-}

@@ -6,7 +6,6 @@ import { describe, it, expect, beforeEach, vi } from "vitest";
 import {
   ReferenceBuilder,
   process_references,
-  is_reference_capture,
 } from "./reference_builder";
 import type { ProcessingContext, CaptureNode } from "../semantic_index";
 import { SemanticCategory, SemanticEntity } from "../semantic_index";
@@ -75,6 +74,7 @@ function create_test_context(): ProcessingContext {
     scope_depths: new Map(),
     root_scope_id,
     get_scope_id: (loc: Location) => root_scope_id,
+    get_child_scope_with_symbol_name: (scope_id: ScopeId, name: SymbolName) => root_scope_id,
   };
 }
 
@@ -489,40 +489,6 @@ describe("ReferenceBuilder", () => {
 
       expect(references).toHaveLength(1);
       expect(references[0].scope_id).toBe(custom_scope_id);
-    });
-  });
-
-  describe("is_reference_capture", () => {
-    it("should return true for reference captures", () => {
-      const capture = create_test_capture({
-        category: SemanticCategory.REFERENCE,
-      });
-
-      expect(is_reference_capture(capture)).toBe(true);
-    });
-
-    it("should return true for assignment captures", () => {
-      const capture = create_test_capture({
-        category: SemanticCategory.ASSIGNMENT,
-      });
-
-      expect(is_reference_capture(capture)).toBe(true);
-    });
-
-    it("should return true for return captures", () => {
-      const capture = create_test_capture({
-        category: SemanticCategory.RETURN,
-      });
-
-      expect(is_reference_capture(capture)).toBe(true);
-    });
-
-    it("should return false for non-reference captures", () => {
-      const capture = create_test_capture({
-        category: SemanticCategory.DEFINITION,
-      });
-
-      expect(is_reference_capture(capture)).toBe(false);
     });
   });
 
