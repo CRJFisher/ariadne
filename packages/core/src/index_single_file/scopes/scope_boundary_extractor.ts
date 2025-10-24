@@ -3,22 +3,14 @@ import { PythonScopeBoundaryExtractor } from "./extractors/python_scope_boundary
 import { TypeScriptScopeBoundaryExtractor } from "./extractors/typescript_scope_boundary_extractor";
 import { JavaScriptScopeBoundaryExtractor } from "./extractors/javascript_scope_boundary_extractor";
 import { RustScopeBoundaryExtractor } from "./extractors/rust_scope_boundary_extractor";
-
-// Re-export the base interfaces and classes
-export {
-  type ScopeBoundaries,
-  type ScopeBoundaryExtractor,
-  CommonScopeBoundaryExtractor,
-  node_to_location,
-  position_to_location,
-} from "./scope_boundary_base";
+import { type ScopeBoundaryExtractor } from "./scope_boundary_base";
 
 /**
  * Get the scope boundary extractor for a given language.
  */
 export function get_scope_boundary_extractor(
   language: Language
-) {
+): ScopeBoundaryExtractor {
   switch (language) {
     case "python":
       return new PythonScopeBoundaryExtractor();
