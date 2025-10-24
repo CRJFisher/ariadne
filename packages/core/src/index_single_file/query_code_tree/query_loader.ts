@@ -41,7 +41,7 @@ let cached_queries_dir: string | null = null;
 /**
  * Get the queries directory path (robust across different environments)
  */
-function get_queries_dir(): string {
+export function get_queries_dir(): string {
   // Return cached result if available
   if (cached_queries_dir !== null) {
     return cached_queries_dir;
@@ -242,13 +242,6 @@ export function clear_all_caches(): void {
  */
 export function get_cache_size(): number {
   return query_cache.size;
-}
-
-/**
- * Get the current queries directory path (useful for debugging)
- */
-export function get_current_queries_dir(): string {
-  return get_queries_dir();
 }
 
 /**

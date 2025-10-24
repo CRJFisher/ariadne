@@ -18,7 +18,7 @@ import {
   clear_all_caches,
   clear_query_cache,
   get_cache_size,
-  get_current_queries_dir,
+  get_queries_dir,
   test_path_resolution,
   SUPPORTED_LANGUAGES,
 } from "./query_loader";
@@ -187,7 +187,7 @@ describe("Query Loader", () => {
 
       it("should use correct file extension (.scm)", () => {
         // All queries should be in .scm files
-        const queries_dir = get_current_queries_dir();
+        const queries_dir = get_queries_dir();
         expect(queries_dir).toContain("queries");
       });
     });
@@ -301,10 +301,10 @@ describe("Query Loader", () => {
 
     it("should cache the queries directory path", () => {
       // First call should compute the path
-      const path1 = get_current_queries_dir();
+      const path1 = get_queries_dir();
 
       // Second call should return cached result
-      const path2 = get_current_queries_dir();
+      const path2 = get_queries_dir();
 
       expect(path1).toBe(path2);
       expect(path1).toBeTruthy();
@@ -327,7 +327,7 @@ describe("Query Loader", () => {
     });
 
     it("should work in development environment", () => {
-      expect(() => get_current_queries_dir()).not.toThrow();
+      expect(() => get_queries_dir()).not.toThrow();
     });
 
     it("should handle path resolution gracefully", () => {

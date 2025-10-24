@@ -20,7 +20,6 @@ import {
   module_symbol,
 } from "@ariadnejs/types";
 import type { CaptureNode } from "../../semantic_index";
-import { node_to_location } from "../../node_utils";
 
 // ============================================================================
 // Symbol ID Creation
@@ -483,31 +482,6 @@ export function find_containing_struct(
   return undefined;
 }
 
-export function find_containing_enum(
-  capture: CaptureNode
-): SymbolId | undefined {
-  let node = capture.node;
-
-  while (node) {
-    if (node.type === "enum_item") {
-      const nameNode = node.childForFieldName?.("name");
-      if (nameNode) {
-        return enum_symbol(
-          nameNode.text as SymbolName,
-          node_to_location(nameNode, capture.location.file_path)
-        );
-      }
-    }
-    if (node.parent) {
-      node = node.parent;
-    } else {
-      break;
-    }
-  }
-
-  return undefined;
-}
-
 export function find_containing_trait(
   capture: CaptureNode
 ): SymbolName | undefined {
@@ -529,61 +503,6 @@ export function find_containing_trait(
   }
 
   return undefined;
-}
-
-export function find_containing_module(
-  capture: CaptureNode
-): SymbolId | undefined {
-  let node = capture.node;
-
-  while (node) {
-    if (node.type === "mod_item") {
-      const nameNode = node.childForFieldName?.("name");
-      if (nameNode) {
-        return module_symbol(
-          node_to_location(nameNode, capture.location.file_path)
-        );
-      }
-    }
-    if (node.parent) {
-      node = node.parent;
-    } else {
-      break;
-    }
-  }
-
-  return undefined;
-}
-
-export function extract_struct_fields(node: SyntaxNode): SymbolName[] {
-  const fields: SymbolName[] = [];
-  const body = node.childForFieldName?.("body");
-
-  if (body) {
-    if (body.type === "field_declaration_list") {
-      // Named fields
-      for (const child of body.children || []) {
-        if (child.type === "field_declaration") {
-          const nameNode = child.childForFieldName?.("name");
-          if (nameNode) {
-            fields.push(nameNode.text as SymbolName);
-          }
-        }
-      }
-    } else if (body.type === "ordered_field_declaration_list") {
-      // Tuple struct fields
-      for (const child of body.children || []) {
-        if (
-          child.type === "type_identifier" ||
-          child.type === "primitive_type"
-        ) {
-          fields.push(`field_${fields.length}` as SymbolName);
-        }
-      }
-    }
-  }
-
-  return fields;
 }
 
 export function extract_enum_variants(node: SyntaxNode): SymbolName[] {
@@ -634,33 +553,6 @@ export function is_associated_function(node: SyntaxNode): boolean {
 
   // No self parameter means it's an associated function (static)
   return true;
-}
-
-export function extract_import_path(node: SyntaxNode): ModulePath {
-  // Extract path from use declaration
-  const path = node.childForFieldName?.("argument");
-  if (path) {
-    if (path.type === "scoped_identifier" || path.type === "identifier") {
-      return path.text as ModulePath;
-    }
-    // Handle use lists
-    if (path.type === "use_list") {
-      const parent = path.parent?.childForFieldName?.("path");
-      if (parent) {
-        return parent.text as ModulePath;
-      }
-    }
-  }
-  return "" as ModulePath;
-}
-
-export function extract_import_alias(node: SyntaxNode): SymbolName | undefined {
-  // Check for 'as' alias
-  const alias = node.childForFieldName?.("alias");
-  if (alias) {
-    return alias.text as SymbolName;
-  }
-  return undefined;
 }
 
 export function extract_use_path(capture: CaptureNode): ModulePath {

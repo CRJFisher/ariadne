@@ -177,53 +177,6 @@ export class PythonScopeBoundaryExtractor implements ScopeBoundaryExtractor {
   }
 
   /**
-   * Find the ":" token that starts a function body.
-   *
-   * In Python AST, function_definition has children like:
-   * [def_keyword, name, parameters, ":", body]
-   *
-   * We need to find the ":" token position.
-   */
-  private find_colon_after_params(
-    func_node: Parser.SyntaxNode,
-    params_node: Parser.SyntaxNode
-  ): Parser.Point {
-    // Strategy: Search for ":" in func_node's children after the parameters
-    let found_params = false;
-
-    for (let i = 0; i < func_node.childCount; i++) {
-      const child = func_node.child(i);
-      if (!child) continue;
-
-      // Track when we've passed the parameters node
-      if (child.id === params_node.id) {
-        found_params = true;
-        continue;
-      }
-
-      // After parameters, look for ":" token
-      if (found_params && child.text === ":") {
-        return child.startPosition;
-      }
-
-      // Also check if this is a ":" node by type
-      if (found_params && child.type === ":") {
-        return child.startPosition;
-      }
-    }
-
-    // Fallback: If we can't find the colon (shouldn't happen for valid Python),
-    // use the position right after the parameters
-    console.warn(
-      `Could not find colon in function definition at line ${params_node.startPosition.row + 1}`
-    );
-    return {
-      row: params_node.endPosition.row,
-      column: params_node.endPosition.column + 1,
-    };
-  }
-
-  /**
    * Find the ":" token that starts a class body.
    *
    * In Python AST, class_definition has children like:
