@@ -1,9 +1,10 @@
 # Task: Extract Property Type Annotations For Method Resolution
 
 **Epic**: 11 - Codebase Restructuring
-**Status**: TODO
+**Status**: ✅ Completed
 **Priority**: High
 **Created**: 2025-10-23
+**Completed**: 2025-10-24
 
 ## Context
 
