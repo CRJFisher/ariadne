@@ -47,7 +47,6 @@ import { find_enclosing_function_scope } from "../index_single_file/scopes/scope
  *    - Store: Map<FilePath, CallReference[]>
  * 5. Query:
  *    - Names: resolve(scope_id, name) → O(1) lookup
- *    - Calls: get_file_calls(file_path) → resolved calls
  *
  * Benefits:
  * - Simple: No closures, no cache layer
@@ -379,16 +378,6 @@ export class ResolutionRegistry {
     }
 
     return referenced;
-  }
-
-  /**
-   * Get all resolved call references for a file.
-   *
-   * @param file_path - File to get calls for
-   * @returns Array of resolved call references
-   */
-  get_file_calls(file_path: FilePath): readonly CallReference[] {
-    return this.resolved_calls_by_file.get(file_path) || [];
   }
 
   /**

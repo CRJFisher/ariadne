@@ -484,18 +484,23 @@ describe("Project Integration - JavaScript", () => {
       project.update_file(user_file, load_source("modules/user_class.js"));
       project.update_file(uses_file, load_source("modules/uses_user.js"));
 
-      // Get all resolved calls from uses_user.js
-      const resolved_calls = project.resolutions.get_file_calls(uses_file);
+      // Get semantic index for uses_user.js
+      const uses_index = project.get_semantic_index(uses_file);
+      expect(uses_index).toBeDefined();
 
       // Find the getName method call
-      const getName_call = resolved_calls.find(
-        (c) => c.name === ("getName" as SymbolName) && c.call_type === "method"
+      const getName_call = uses_index!.references.find(
+        (ref) => ref.name === ("getName" as SymbolName) && ref.call_type === "method"
       );
       expect(getName_call).toBeDefined();
-      if (!getName_call?.symbol_id) return;
+      if (!getName_call) return;
+
+      // Resolve using the public API
+      const resolved_symbol_id = project.resolutions.resolve(getName_call.scope_id, getName_call.name);
+      if (!resolved_symbol_id) return;
 
       // Verify it resolves to method in user_class.js
-      const resolved_def = project.definitions.get(getName_call.symbol_id);
+      const resolved_def = project.definitions.get(resolved_symbol_id);
       expect(resolved_def).toBeDefined();
       expect(resolved_def!.kind).toBe("method");
       expect(resolved_def!.name).toBe("getName" as SymbolName);
@@ -639,18 +644,23 @@ describe("Project Integration - JavaScript", () => {
       project.update_file(utils_file, utils);
       project.update_file(main_file, main);
 
-      // Get all resolved calls from main.js (true integration test)
-      const resolved_calls = project.resolutions.get_file_calls(main_file);
+      // Get semantic index for main.js
+      const main_index = project.get_semantic_index(main_file);
+      expect(main_index).toBeDefined();
 
       // Find the process method call
-      const process_call = resolved_calls.find(
-        (c) => c.name === ("process" as SymbolName) && c.call_type === "method"
+      const process_call = main_index!.references.find(
+        (ref) => ref.name === ("process" as SymbolName) && ref.call_type === "method"
       );
       expect(process_call).toBeDefined();
-      if (!process_call?.symbol_id) return;
+      if (!process_call) return;
+
+      // Resolve using the public API
+      const resolved_symbol_id = project.resolutions.resolve(process_call.scope_id, process_call.name);
+      if (!resolved_symbol_id) return;
 
       // Verify it resolves to process method in DataManager class
-      const resolved_def = project.definitions.get(process_call.symbol_id);
+      const resolved_def = project.definitions.get(resolved_symbol_id);
       expect(resolved_def).toBeDefined();
       expect(resolved_def!.kind).toBe("method");
       expect(resolved_def!.name).toBe("process" as SymbolName);
@@ -734,7 +744,8 @@ describe("Project Integration - JavaScript", () => {
       project.update_file(file, code);
 
       // Verify parameter appears in DefinitionRegistry
-      const db_param = Array.from(project.definitions["by_symbol"].values()).find(
+      const all_defs = project.definitions.get_all_definitions();
+      const db_param = all_defs.find(
         (def) => def.kind === "parameter" && def.name === ("db" as SymbolName)
       );
       expect(db_param).toBeDefined();
@@ -759,7 +770,8 @@ describe("Project Integration - JavaScript", () => {
       project.update_file(file, code);
 
       // Verify constructor parameter appears in registry
-      const config_param = Array.from(project.definitions["by_symbol"].values()).find(
+      const all_defs = project.definitions.get_all_definitions();
+      const config_param = all_defs.find(
         (def) => def.kind === "parameter" && def.name === ("config" as SymbolName)
       );
       expect(config_param).toBeDefined();

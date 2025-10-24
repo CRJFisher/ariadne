@@ -121,22 +121,29 @@ export function use_helper(y: number): number {
     project.update_file(reexport_file, reexport_code);
     project.update_file(consumer_file, consumer_code);
 
-    // TEST 2: Verify the call is in the resolved calls
-    const consumer_calls = (project.resolutions as any).get_file_calls(consumer_file);
+    // TEST 2: Verify the call is resolved
+    // Get semantic index and find the helper call
+    const consumer_index = project.get_semantic_index(consumer_file);
+    expect(consumer_index).toBeDefined();
 
-    // Find the call to "helper"
-    const helper_calls = consumer_calls.filter((call: any) => call.name === "helper");
-
-    // Should have exactly 1 call to helper
+    const helper_calls = consumer_index!.references.filter(
+      (ref) => ref.name === "helper" && ref.type === "call"
+    );
     expect(helper_calls.length).toBe(1);
 
-    // The call should be resolved to the original function
+    // Resolve the call using the public API
     const helper_call = helper_calls[0];
-    expect(helper_call.symbol_id).not.toBeNull();
-    expect(helper_call.symbol_id).toBeDefined();
-    expect(helper_call.symbol_id).toContain("function:");
-    expect(helper_call.symbol_id).toContain("original.ts");
-    expect(helper_call.symbol_id).toContain("helper");
+    const resolved_symbol_id = project.resolutions.resolve(
+      helper_call.scope_id,
+      helper_call.name
+    );
+
+    // The call should be resolved to the original function
+    expect(resolved_symbol_id).not.toBeNull();
+    expect(resolved_symbol_id).toBeDefined();
+    expect(resolved_symbol_id).toContain("function:");
+    expect(resolved_symbol_id).toContain("original.ts");
+    expect(resolved_symbol_id).toContain("helper");
   });
 
   it("should not mark re-exported functions as entry points when they are called", () => {
@@ -249,10 +256,20 @@ export function use_deep_helper(y: number): number {
     expect(resolved_helper).toContain("deepHelper");
 
     // Verify the call is detected
-    const consumer_calls = (project.resolutions as any).get_file_calls(consumer_file);
-    const deep_helper_calls = consumer_calls.filter((call: any) => call.name === "deepHelper");
+    const consumer_index = project.get_semantic_index(consumer_file);
+    expect(consumer_index).toBeDefined();
+
+    const deep_helper_calls = consumer_index!.references.filter(
+      (ref) => ref.name === "deepHelper" && ref.type === "call"
+    );
     expect(deep_helper_calls.length).toBe(1);
-    expect(deep_helper_calls[0].symbol_id).toContain("original.ts");
+
+    // Resolve the call
+    const resolved_deep_helper = project.resolutions.resolve(
+      deep_helper_calls[0].scope_id,
+      deep_helper_calls[0].name
+    );
+    expect(resolved_deep_helper).toContain("original.ts");
   });
 
   it("should resolve imports from re-exports in nested function scopes", () => {
@@ -288,16 +305,23 @@ export function resolve_export_chain(source_file: string): string | null {
     project.update_file(consumer_file, consumer_code);
 
     // Verify the call inside the function is detected
-    const consumer_calls = (project.resolutions as any).get_file_calls(consumer_file);
-    const resolve_calls = consumer_calls.filter((call: any) =>
-      call.name === "resolve_module_path"
+    const consumer_index = project.get_semantic_index(consumer_file);
+    expect(consumer_index).toBeDefined();
+
+    const resolve_calls = consumer_index!.references.filter(
+      (ref) => ref.name === "resolve_module_path" && ref.type === "call"
     );
 
     // The call should be detected and resolved
     expect(resolve_calls.length).toBe(1);
-    expect(resolve_calls[0].symbol_id).not.toBeNull();
-    expect(resolve_calls[0].symbol_id).toBeDefined();
-    expect(resolve_calls[0].symbol_id).toContain("original.ts");
+
+    const resolved_symbol_id = project.resolutions.resolve(
+      resolve_calls[0].scope_id,
+      resolve_calls[0].name
+    );
+    expect(resolved_symbol_id).not.toBeNull();
+    expect(resolved_symbol_id).toBeDefined();
+    expect(resolved_symbol_id).toContain("original.ts");
   });
 
   it.skip("should handle re-exports with aliases", () => {
@@ -337,8 +361,12 @@ export function use_aliased(y: number): number {
     expect(resolved).not.toBeNull();
     expect(resolved).toContain("originalName");
 
-    const consumer_calls = (project.resolutions as any).get_file_calls(consumer_file);
-    const aliased_calls = consumer_calls.filter((call: any) => call.name === "aliasedName");
+    const consumer_index = project.get_semantic_index(consumer_file);
+    expect(consumer_index).toBeDefined();
+
+    const aliased_calls = consumer_index!.references.filter(
+      (ref) => ref.name === "aliasedName" && ref.type === "call"
+    );
     expect(aliased_calls.length).toBe(1);
   });
 
@@ -411,14 +439,21 @@ export function resolve_export_chain(source_file: string): string | null {
     expect(resolved).toContain("resolve_module_path");
 
     // Verify the call is detected
-    const registry_calls = (project.resolutions as any).get_file_calls(export_registry_file);
-    const resolve_calls = registry_calls.filter((call: any) =>
-      call.name === "resolve_module_path"
+    const registry_index = project.get_semantic_index(export_registry_file);
+    expect(registry_index).toBeDefined();
+
+    const resolve_calls = registry_index!.references.filter(
+      (ref) => ref.name === "resolve_module_path" && ref.type === "call"
     );
 
     expect(resolve_calls.length).toBe(1);
-    expect(resolve_calls[0].symbol_id).not.toBeNull();
-    expect(resolve_calls[0].symbol_id).toBeDefined();
-    expect(resolve_calls[0].symbol_id).toContain("import_resolver.ts");
+
+    const resolved_call_symbol = project.resolutions.resolve(
+      resolve_calls[0].scope_id,
+      resolve_calls[0].name
+    );
+    expect(resolved_call_symbol).not.toBeNull();
+    expect(resolved_call_symbol).toBeDefined();
+    expect(resolved_call_symbol).toContain("import_resolver.ts");
   });
 });

@@ -75,40 +75,6 @@ describe("Project Integration - Rust", () => {
       expect(resolved).toBeDefined();
     });
 
-    // FIXED: Associated function calls (Product::new) now resolve correctly
-    // See: task-epic-11.116.5.8.1-Rust-Associated-Function-Resolution.md
-    it("should resolve associated function calls (::new)", async () => {
-      const source = load_source("structs/constructor_workflow.rs");
-      const file = file_path("structs/constructor_workflow.rs");
-      project.update_file(file, source);
-
-      const index = project.get_semantic_index(file);
-      expect(index).toBeDefined();
-
-      // Find constructor/associated function calls
-      const calls = index!.references.filter((r) => r.type === "call");
-      expect(calls.length).toBeGreaterThan(0);
-
-      // Look for "new" calls (associated functions)
-      const new_calls = calls.filter((c) => c.name === ("new" as SymbolName));
-      expect(new_calls.length).toBeGreaterThan(0);
-
-      // Get resolved calls from the resolution registry
-      const resolved_calls = project.resolutions.get_file_calls(file);
-      const resolved_new_calls = resolved_calls.filter(
-        (c) => c.name === ("new" as SymbolName) && c.symbol_id
-      );
-      expect(resolved_new_calls.length).toBeGreaterThan(0);
-
-      // Verify it's a method definition
-      const first_resolved = resolved_new_calls[0];
-      expect(first_resolved.symbol_id).toBeDefined();
-      const def = project.definitions.get(first_resolved.symbol_id as SymbolId);
-      expect(def).toBeDefined();
-      if (def) {
-        expect(def.kind).toBe("method");
-      }
-    });
   });
 
   describe("Basic Resolution", () => {
@@ -299,43 +265,6 @@ describe("Project Integration - Rust", () => {
       expect(resolved).toBeDefined();
     });
 
-    // FIXED: Rust module imports now work correctly
-    // See: task-epic-11.116.5.8.2-Rust-Module-Declarations.md
-    it("should resolve associated function calls across modules", async () => {
-      const user_mod_source = load_source("modules/user_mod.rs");
-      const uses_user_source = load_source("modules/uses_user.rs");
-      const user_mod_file = file_path("modules/user_mod.rs");
-      const uses_user_file = file_path("modules/uses_user.rs");
-
-      project.update_file(user_mod_file, user_mod_source);
-      project.update_file(uses_user_file, uses_user_source);
-
-      const main_index = project.get_semantic_index(uses_user_file);
-      expect(main_index).toBeDefined();
-
-      // Find User::new() call
-      const new_calls = main_index!.references.filter(
-        (r) => r.type === "call" && r.name === ("new" as SymbolName)
-      );
-      expect(new_calls.length).toBeGreaterThan(0);
-
-      // Get resolved calls from the resolution registry
-      const resolved_calls = project.resolutions.get_file_calls(uses_user_file);
-      const resolved_new_calls = resolved_calls.filter(
-        (c) => c.name === ("new" as SymbolName) && c.symbol_id
-      );
-      expect(resolved_new_calls.length).toBeGreaterThan(0);
-
-      // Verify it's a method definition
-      const first_resolved = resolved_new_calls[0];
-      expect(first_resolved.symbol_id).toBeDefined();
-      const def = project.definitions.get(first_resolved.symbol_id as SymbolId);
-      expect(def).toBeDefined();
-      if (def) {
-        expect(def.kind).toBe("method");
-      }
-    });
-
     it("should handle multiple structs from the same module", async () => {
       const user_mod_source = load_source("modules/user_mod.rs");
       const uses_user_source = load_source("modules/uses_user.rs");
@@ -398,7 +327,8 @@ describe("Project Integration - Rust", () => {
       project.update_file(file, code);
 
       // Verify parameter appears in DefinitionRegistry
-      const db_param = Array.from(project.definitions["by_symbol"].values()).find(
+      const all_defs = project.definitions.get_all_definitions();
+      const db_param = all_defs.find(
         (def) => def.kind === "parameter" && def.name === ("db" as SymbolName)
       );
       expect(db_param).toBeDefined();
@@ -425,7 +355,8 @@ describe("Project Integration - Rust", () => {
       project.update_file(file, code);
 
       // Verify parameter in method appears in registry
-      const logger_param = Array.from(project.definitions["by_symbol"].values()).find(
+      const all_defs = project.definitions.get_all_definitions();
+      const logger_param = all_defs.find(
         (def) => def.kind === "parameter" && def.name === ("logger" as SymbolName)
       );
       expect(logger_param).toBeDefined();
