@@ -1,0 +1,50 @@
+[
+  {
+    "name": "get_call_graph",
+    "file_path": "packages/core/src/project/project.ts",
+    "line": 395,
+    "signature": "get_call_graph(): CallGraph",
+    "detected_at_line": 395,
+    "reasoning": "Correctly identified as entry point. Get the call graph for the entire project"
+  },
+  {
+    "name": "get_all_scope_graphs",
+    "file_path": "packages/core/src/project/project.ts",
+    "line": 446,
+    "signature": "get_all_scope_graphs(): ReadonlyMap<FilePath, SemanticIndex>",
+    "detected_at_line": 446,
+    "reasoning": "Correctly identified as entry point. Get all semantic indexes (scope graphs) for all files"
+  },
+  {
+    "name": "get_all_files",
+    "file_path": "packages/core/src/project/project.ts",
+    "line": 463,
+    "signature": "get_all_files(): FilePath[]",
+    "detected_at_line": 463,
+    "reasoning": "Correctly identified as entry point. Get list of all files in the project"
+  },
+  {
+    "name": "get_semantic_index",
+    "file_path": "packages/core/src/project/project.ts",
+    "line": 472,
+    "signature": "get_semantic_index(file_id: FilePath): SemanticIndex | undefined",
+    "detected_at_line": 472,
+    "reasoning": "Correctly identified as entry point. Get the semantic index for a specific file"
+  },
+  {
+    "name": "get_source_code",
+    "file_path": "packages/core/src/project/project.ts",
+    "line": 509,
+    "signature": "get_source_code(def: any, file_path?: FilePath): string",
+    "detected_at_line": 509,
+    "reasoning": "Correctly identified as entry point. Get source code for a definition"
+  },
+  {
+    "name": "get_definition",
+    "file_path": "packages/core/src/project/project.ts",
+    "line": 546,
+    "signature": "get_definition(symbol_id: SymbolId): AnyDefinition | undefined",
+    "detected_at_line": 546,
+    "reasoning": "Correctly identified as entry point. Get a definition by symbol ID"
+  }
+]

@@ -1,0 +1,21 @@
+{
+  "name": "top-level-nodes-analysis",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Self-analysis tools for identifying entry points in packages/core",
+  "scripts": {
+    "analyze": "npx tsx analyze_self.ts",
+    "verify": "npx tsx verify_entry_points.ts"
+  },
+  "dependencies": {
+    "@ariadnejs/core": "file:../packages/core",
+    "@ariadnejs/types": "file:../packages/types",
+    "@anthropic-ai/claude-agent-sdk": "*"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.14",
+    "tsx": "^4.19.2",
+    "typescript": "^5.8.3"
+  }
+}
