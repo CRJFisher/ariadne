@@ -1,4 +1,3 @@
-/* global performance */
 import { describe, it, expect } from "vitest";
 import { Project } from "./project";
 import type { FilePath } from "@ariadnejs/types";

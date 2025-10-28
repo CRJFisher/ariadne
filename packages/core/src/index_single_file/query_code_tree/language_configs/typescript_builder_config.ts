@@ -95,7 +95,7 @@ export const TYPESCRIPT_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
         const interface_id = find_containing_interface(capture);
         if (!interface_id) return;
 
-        const method_id = create_method_signature_id(capture, capture.text);
+        const method_id = create_method_signature_id(capture);
 
         builder.add_method_signature_to_interface(interface_id, {
           symbol_id: method_id,

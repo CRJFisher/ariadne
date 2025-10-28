@@ -2,35 +2,56 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "Analyze Self (Core)",
+      "name": "Analyze Self",
       "type": "node",
       "request": "launch",
       "runtimeExecutable": "npx",
       "runtimeArgs": ["tsx"],
-      "args": ["packages/core/analyze_self.ts"],
+      "args": ["top-level-nodes-analysis/detect_entrypoints_using_ariadne.ts"],
       "cwd": "${workspaceFolder}",
       "console": "integratedTerminal",
-      "internalConsoleOptions": "neverOpen"
+      "internalConsoleOptions": "neverOpen",
+      "sourceMaps": true,
+      "skipFiles": ["<node_internals>/**"]
     },
     {
-      "name": "Analyze Self (Core - Pretty)",
+      "name": "Phase 1: API Coverage Analysis",
       "type": "node",
       "request": "launch",
       "runtimeExecutable": "npx",
       "runtimeArgs": ["tsx"],
-      "args": ["packages/core/analyze_self.ts", "--pretty"],
+      "args": [
+        "top-level-nodes-analysis/triage_false_negative_entrypoints.ts"
+      ],
       "cwd": "${workspaceFolder}",
       "console": "integratedTerminal",
-      "internalConsoleOptions": "neverOpen"
+      "internalConsoleOptions": "neverOpen",
+      "sourceMaps": true,
+      "skipFiles": ["<node_internals>/**"]
     },
     {
-      "name": "Analyze Self (Core - Debug)",
+      "name": "Phase 2: Internal Triage Analysis",
       "type": "node",
       "request": "launch",
       "runtimeExecutable": "npx",
       "runtimeArgs": ["tsx"],
-      "args": ["packages/core/analyze_self.ts", "--pretty"],
+      "args": [
+        "top-level-nodes-analysis/traige_false_positive_entrypoints.ts"
+      ],
       "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal",
+      "internalConsoleOptions": "neverOpen",
+      "sourceMaps": true,
+      "skipFiles": ["<node_internals>/**"]
+    },
+    {
+      "name": "Debug: Current TypeScript File",
+      "type": "node",
+      "request": "launch",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["tsx", "--inspect-brk"],
+      "args": ["${file}"],
+      "cwd": "${fileDirname}",
       "console": "integratedTerminal",
       "internalConsoleOptions": "neverOpen",
       "sourceMaps": true,

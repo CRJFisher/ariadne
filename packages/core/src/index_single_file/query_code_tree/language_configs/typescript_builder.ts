@@ -17,9 +17,6 @@ import type {
   SymbolId,
   SymbolName,
   Location,
-  ScopeId,
-  ModulePath,
-  FilePath,
 } from "@ariadnejs/types";
 import {
   class_symbol,
@@ -31,7 +28,6 @@ import {
   parameter_symbol,
   property_symbol,
   type_symbol,
-  variable_symbol,
 } from "@ariadnejs/types";
 import type { CaptureNode } from "../../semantic_index";
 import { node_to_location } from "../../node_utils";
@@ -95,7 +91,6 @@ export function create_enum_member_id(
  */
 export function create_method_signature_id(
   capture: CaptureNode,
-  interface_name: SymbolName
 ): SymbolId {
   const name = capture.text;
   const location = capture.location;
@@ -127,24 +122,6 @@ export function create_method_id(capture: CaptureNode): SymbolId {
   const name = capture.text;
   const location = capture.location;
   return method_symbol(name, location);
-}
-
-/**
- * Create a function symbol ID
- */
-function create_function_id(capture: CaptureNode): SymbolId {
-  const name = capture.text;
-  const location = capture.location;
-  return function_symbol(name, location);
-}
-
-/**
- * Create a variable symbol ID
- */
-function create_variable_id(capture: CaptureNode): SymbolId {
-  const name = capture.text;
-  const location = capture.location;
-  return variable_symbol(name, location);
 }
 
 /**
