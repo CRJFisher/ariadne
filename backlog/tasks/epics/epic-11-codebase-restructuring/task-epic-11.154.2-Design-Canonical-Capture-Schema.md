@@ -10,7 +10,7 @@
 
 ## Objective
 
-Design a language-agnostic canonical schema that defines required, optional, and prohibited capture patterns for all tree-sitter query files.
+Design a language-agnostic canonical schema that defines required and optional capture patterns for all tree-sitter query files. Uses positive validation - any capture not explicitly listed is invalid.
 
 ---
 
@@ -40,10 +40,13 @@ This task translates that analysis into a formal schema that will:
 /**
  * Canonical capture schema for all tree-sitter query files
  *
- * Defines the contract that all .scm files must adhere to:
+ * Uses POSITIVE validation:
  * - Required captures (must exist in every language)
- * - Optional captures (language-specific features)
- * - Prohibited patterns (known problematic patterns)
+ * - Optional captures (allowed language-specific features)
+ * - Everything else is implicitly invalid
+ *
+ * This approach is closed and maintainable - we explicitly list what IS allowed,
+ * rather than trying to enumerate everything that ISN'T allowed.
  */
 
 import { SemanticCategory, SemanticEntity } from "../semantic_index";
@@ -55,18 +58,18 @@ import { SemanticCategory, SemanticEntity } from "../semantic_index";
 export interface CaptureSchema {
   /**
    * Required captures - every language MUST have these
+   *
+   * Based on common captures from analysis (24 core patterns)
    */
   required: CapturePattern[];
 
   /**
    * Optional captures - language-specific features allowed
+   *
+   * Explicitly lists all valid optional captures.
+   * Any capture not in required OR optional is INVALID.
    */
   optional: CapturePattern[];
-
-  /**
-   * Prohibited patterns - known problematic captures that should never be used
-   */
-  prohibited: ProhibitedPattern[];
 
   /**
    * Naming conventions and rules
@@ -107,32 +110,6 @@ export interface CapturePattern {
   notes?: string;
 }
 
-export interface ProhibitedPattern {
-  /**
-   * Pattern to detect (will trigger validation error)
-   */
-  pattern: RegExp;
-
-  /**
-   * Why this pattern is prohibited
-   */
-  reason: string;
-
-  /**
-   * What to use instead
-   */
-  alternative: string;
-
-  /**
-   * Example of incorrect usage
-   */
-  bad_example: string;
-
-  /**
-   * Example of correct usage
-   */
-  good_example: string;
-}
 
 export interface NamingRules {
   /**
@@ -265,50 +242,10 @@ export const CANONICAL_CAPTURE_SCHEMA: CaptureSchema = {
   ],
 
   // ========================================
-  // PROHIBITED PATTERNS
-  // ========================================
-  prohibited: [
-    {
-      pattern: /^@reference\.call\.(full|chained|deep)$/,
-      reason:
-        "Creates duplicate captures for the same method call, causing false self-references in call graph detection",
-      alternative:
-        "Use single @reference.call on the call_expression node. Extract method name using metadata extractors (extract_call_name).",
-      bad_example: `; BAD - Creates TWO captures
-(call_expression
-  function: (member_expression
-    property: (property_identifier) @reference.call    ; Capture 1
-  )
-) @reference.call.full                                 ; Capture 2`,
-      good_example: `; GOOD - Single capture
-(call_expression
-  function: (member_expression
-    property: (property_identifier)
-  )
-) @reference.call`,
-    },
-    {
-      pattern: /^@[^.]+\.[^.]+\.[^.]+\.[^.]+$/,
-      reason:
-        "More than 3 levels of nesting (@a.b.c.d) indicates over-granular captures that should be simplified",
-      alternative: "Simplify to @category.entity[.qualifier] (max 3 parts)",
-      bad_example: "@reference.call.method.chained.deep",
-      good_example: "@reference.call",
-    },
-    {
-      pattern: /^@.*\.(temp|tmp|old|new|test)$/,
-      reason: "Temporary or experimental qualifiers should not be committed",
-      alternative: "Remove temporary captures or use proper semantic naming",
-      bad_example: "@definition.function.temp",
-      good_example: "@definition.function",
-    },
-
-    // Add more prohibited patterns...
-  ],
-
-  // ========================================
   // OPTIONAL CAPTURES
   // ========================================
+  // Explicitly lists all valid optional captures.
+  // Any capture not in required OR optional will be flagged as invalid.
   optional: [
     // TypeScript-specific
     {
@@ -407,21 +344,24 @@ export const CANONICAL_CAPTURE_SCHEMA: CaptureSchema = {
 
 /**
  * Check if a capture name is valid according to the schema
+ *
+ * Uses POSITIVE validation: capture must be in required OR optional lists
  */
 export function is_valid_capture(capture_name: string): boolean {
-  // Must match overall pattern
+  // Must match overall naming pattern
   if (!CANONICAL_CAPTURE_SCHEMA.rules.pattern.test(capture_name)) {
     return false;
   }
 
-  // Must not be prohibited
-  for (const prohibited of CANONICAL_CAPTURE_SCHEMA.prohibited) {
-    if (prohibited.pattern.test(capture_name)) {
-      return false;
-    }
-  }
+  // Must be in required OR optional lists
+  const is_required = CANONICAL_CAPTURE_SCHEMA.required.some(p =>
+    p.pattern.test(capture_name)
+  );
+  const is_optional = CANONICAL_CAPTURE_SCHEMA.optional.some(p =>
+    p.pattern.test(capture_name)
+  );
 
-  return true;
+  return is_required || is_optional;
 }
 
 /**
@@ -445,12 +385,19 @@ export function get_capture_errors(capture_name: string): string[] {
     );
   }
 
-  // Check for prohibited patterns
-  for (const prohibited of CANONICAL_CAPTURE_SCHEMA.prohibited) {
-    if (prohibited.pattern.test(capture_name)) {
-      errors.push(`Prohibited pattern: ${prohibited.reason}`);
-      errors.push(`Use instead: ${prohibited.alternative}`);
-    }
+  // Check if capture is in allowed lists (required OR optional)
+  const is_required = CANONICAL_CAPTURE_SCHEMA.required.some(p =>
+    p.pattern.test(capture_name)
+  );
+  const is_optional = CANONICAL_CAPTURE_SCHEMA.optional.some(p =>
+    p.pattern.test(capture_name)
+  );
+
+  if (!is_required && !is_optional) {
+    errors.push(
+      `Capture '${capture_name}' is not in required or optional lists. ` +
+      `All valid captures must be explicitly defined in the schema.`
+    );
   }
 
   // Check for reserved keywords
@@ -559,49 +506,41 @@ Language-specific features:
 - `@definition.trait` - Trait definitions
 - `@definition.impl` - Impl blocks
 
-## Prohibited Patterns
+## Validation Approach
 
-**NEVER use these patterns:**
+**Uses POSITIVE validation** - only explicitly listed captures are valid.
 
-### ❌ Duplicate Captures
+Any capture not in the required OR optional lists will be flagged as invalid during validation.
+
+### Why This Approach?
+
+Instead of maintaining an ever-growing list of "prohibited" patterns, we explicitly define what IS allowed:
+- **Required captures**: Must exist in every language
+- **Optional captures**: Allowed language-specific features
+
+Everything else is implicitly invalid - no need to enumerate all possible bad patterns.
+
+### Example: Why @reference.call.full is Invalid
 
 ```scheme
-; BAD - Creates duplicate captures for same call
-(call_expression
-  function: (member_expression
-    property: (property_identifier) @reference.call    ; Duplicate 1
-  )
-) @reference.call.full                                 ; Duplicate 2
-````
+; This will fail validation:
+) @reference.call.full
 
-```scheme
-; GOOD - Single capture
-(call_expression
-  function: (member_expression
-    property: (property_identifier)
-  )
-) @reference.call                                      ; Single source of truth
+; Because @reference.call.full is NOT in required or optional lists
+; Only @reference.call is defined in required captures
 ```
 
-**Why prohibited**: Creates ambiguity in processing, causes false self-references
-
-### ❌ Over-nesting
-
-```scheme
-; BAD
-@reference.call.method.chain.deep
+The validation error will be:
+```
+Capture '@reference.call.full' is not in required or optional lists.
+All valid captures must be explicitly defined in the schema.
 ```
 
-```scheme
-; GOOD
-@reference.call
-```
+### Reserved Keywords
 
-**Why prohibited**: Indicates over-granular captures that complicate processing
-
-### ❌ Reserved Qualifiers
-
-Never use: `full`, `chained`, `deep`, `temp`, `tmp`, `old`, `new`, `test`
+These qualifiers cannot be used (defined in `rules.reserved_keywords`):
+- `full`, `chained`, `deep` - Were causing duplicate capture problems
+- `temp`, `tmp`, `old`, `new`, `test` - Temporary/version naming
 
 ## Adding a New Language
 
@@ -632,9 +571,9 @@ npm run validate:captures
 **Validation checks:**
 
 - All required captures present
-- No prohibited patterns used
+- All captures are in required OR optional lists (positive validation)
 - Naming convention followed
-- No reserved keywords
+- No reserved keywords used as qualifiers
 - Reasonable depth (<= 3 parts)
 
 ## Examples by Language
@@ -718,16 +657,19 @@ Read `CAPTURE-SCHEMA-ANALYSIS.md` from Task 11.154.1:
 ### Step 2: Draft Schema
 
 Create initial version of `capture_schema.ts`:
-- Start with required captures (common to all)
-- Add prohibited patterns (from analysis)
-- Define naming rules
+
+- Start with required captures (based on 24 common captures from analysis)
+- Add optional captures (based on 138 language-specific captures from analysis)
+- Define naming rules (pattern, max_depth, reserved_keywords)
+- Use positive validation: only list what IS allowed
 
 ### Step 3: Team Review Meeting
 
 Schedule 2-hour meeting with team:
-- Present schema design
-- Discuss required vs optional
-- Review prohibited patterns
+
+- Present schema design and positive validation approach
+- Discuss required vs optional boundaries
+- Review which captures should be allowed
 - Get buy-in on naming convention
 
 **Key questions:**
@@ -811,15 +753,17 @@ Ensure all deliverables are complete:
 
 ## Acceptance Criteria
 
-- [ ] `capture_schema.ts` is complete with required, optional, prohibited patterns
+- [ ] `capture_schema.ts` is complete with required and optional patterns (positive validation)
 - [ ] All `SemanticCategory` and `SemanticEntity` values mapped
 - [ ] Naming rules clearly defined with regex
+- [ ] Reserved keywords list defined (full, chained, deep, temp, etc.)
 - [ ] User documentation (`CAPTURE-SCHEMA.md`) written and reviewed
 - [ ] Template `.scm` file created
 - [ ] Team review meeting completed with approval
 - [ ] At least 2 team members have reviewed and approved schema
 - [ ] Schema accounts for all four current languages (TS, JS, Py, Rust)
-- [ ] Prohibited patterns include all duplicates found in analysis
+- [ ] All currently valid captures explicitly listed in required OR optional
+- [ ] Duplicate captures (call.full, call.chained) NOT in allowed lists
 
 ---
 
