@@ -70,8 +70,9 @@ interface ValidationError {
 
 - Schema loading and parsing
 - Capture extraction from .scm files
-- Prohibited pattern detection
+- Positive validation (required/optional list checking)
 - Required pattern checking
+- Fragment capture detection (heuristic warnings)
 - Naming convention validation
 - Error message formatting
 - Stats collection
@@ -152,7 +153,7 @@ export function extract_captures(content: string): ParsedCapture[] {
 }
 
 /**
- * Validate captures against schema
+ * Validate captures against schema (POSITIVE validation)
  */
 export function validate_captures(
   captures: ParsedCapture[],
@@ -160,32 +161,42 @@ export function validate_captures(
 ): ValidationError[] {
   const errors: ValidationError[] = [];
 
-  // Check for prohibited patterns
+  // Check if each capture is in required OR optional lists
   for (const capture of captures) {
-    for (const prohibited of schema.prohibited) {
-      if (prohibited.pattern.test(capture.full_name)) {
-        errors.push({
-          line: capture.line,
-          column: capture.column,
-          capture: capture.full_name,
-          rule_violated: "prohibited_pattern",
-          message: prohibited.reason,
-          fix: prohibited.alternative,
-          example: prohibited.good_example,
-        });
-      }
+    const is_required = schema.required.some(p => p.pattern.test(capture.full_name));
+    const is_optional = schema.optional.some(p => p.pattern.test(capture.full_name));
+
+    if (!is_required && !is_optional) {
+      errors.push({
+        line: capture.line,
+        column: capture.column,
+        capture: capture.full_name,
+        rule_violated: "not_in_schema",
+        message: `Capture '${capture.full_name}' is not in required or optional lists`,
+        fix: "Either add to schema as optional capture (if needed) or remove from query file"
+      });
     }
   }
 
   // Check naming conventions
   for (const capture of captures) {
-    const naming_errors = get_capture_errors(capture.full_name);
-    for (const error_msg of naming_errors) {
+    if (!schema.rules.pattern.test(capture.full_name)) {
       errors.push({
         line: capture.line,
         capture: capture.full_name,
         rule_violated: "naming_convention",
-        message: error_msg,
+        message: "Must follow pattern: @category.entity[.qualifier]"
+      });
+    }
+
+    // Check max depth
+    const parts = capture.full_name.substring(1).split('.');
+    if (parts.length > schema.rules.max_depth) {
+      errors.push({
+        line: capture.line,
+        capture: capture.full_name,
+        rule_violated: "max_depth_exceeded",
+        message: `Too many parts (${parts.length}), max is ${schema.rules.max_depth}`
       });
     }
   }
@@ -214,6 +225,66 @@ export function validate_captures(
 /**
  * Validate a single .scm file
  */
+/**
+ * Detect fragment captures (heuristic warnings)
+ *
+ * These are warnings, not errors - they suggest possible improvements
+ * but don't fail validation (manual review recommended)
+ */
+export function detect_fragment_captures(content: string): ValidationWarning[] {
+  const warnings: ValidationWarning[] = [];
+  const lines = content.split('\n');
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    const line_num = i + 1;
+
+    // Pattern 1: property_identifier with @reference.call (TypeScript/JavaScript)
+    if (line.match(/property_identifier\)\s+@reference\.call(?!\w)/)) {
+      warnings.push({
+        line: line_num,
+        capture: "@reference.call",
+        message: "Capture on property_identifier (fragment). Should capture call_expression (complete unit)",
+        suggestion: "Move @reference.call to parent call_expression node"
+      });
+    }
+
+    // Pattern 2: field_identifier with @reference.call (Rust)
+    if (line.match(/field_identifier\)\s+@reference\.call(?!\w)/)) {
+      warnings.push({
+        line: line_num,
+        capture: "@reference.call",
+        message: "Capture on field_identifier (fragment). Should capture call_expression (complete unit)",
+        suggestion: "Move @reference.call to parent call_expression node"
+      });
+    }
+
+    // Pattern 3: identifier in attribute context with @reference.call (Python)
+    if (line.match(/attribute:\s*\(identifier\)\s+@reference\.call(?!\w)/) &&
+        !line.match(/function:\s*\(identifier\)/)) {  // Exclude top-level function calls
+      warnings.push({
+        line: line_num,
+        capture: "@reference.call",
+        message: "Capture on attribute identifier (fragment). Should capture call node (complete unit)",
+        suggestion: "Move @reference.call to parent call node"
+      });
+    }
+
+    // Pattern 4: Duplicate captures on same line
+    const call_captures = (line.match(/@reference\.call(\.\w+)?/g) || []);
+    if (call_captures.length > 1) {
+      warnings.push({
+        line: line_num,
+        capture: call_captures.join(', '),
+        message: "Multiple @reference.call captures on same line (duplicates)",
+        suggestion: "Use single capture on complete node only"
+      });
+    }
+  }
+
+  return warnings;
+}
+
 export function validate_scm_file(
   file_path: string,
   schema: CaptureSchema
@@ -222,18 +293,38 @@ export function validate_scm_file(
   const language = path.basename(file_path, ".scm") as Language;
   const captures = extract_captures(content);
   const errors = validate_captures(captures, schema);
+  const warnings = detect_fragment_captures(content);
   const stats = collect_stats(captures);
 
   return {
     file: file_path,
     language,
     errors,
-    warnings: [],
+    warnings,
     stats,
-    passed: errors.length === 0,
+    passed: errors.length === 0,  // Warnings don't fail validation
   };
 }
 ```
+
+### Step 1b: Fragment Capture Detection Patterns
+
+**Regex patterns to detect fragment captures** (heuristic, not perfect):
+
+| Pattern | Regex | Language | What It Detects |
+|---------|-------|----------|-----------------|
+| Property identifier fragment | `/property_identifier\)\s+@reference\.call(?!\w)/` | TS/JS | Capture on property_identifier instead of call_expression |
+| Field identifier fragment | `/field_identifier\)\s+@reference\.call(?!\w)/` | Rust | Capture on field_identifier instead of call_expression |
+| Attribute identifier fragment | `/attribute:\s*\(identifier\)\s+@reference\.call(?!\w)/` | Python | Capture on identifier instead of call node |
+| Duplicate on same line | `/@reference\.call(\.\w+)?/g` (count > 1) | All | Multiple captures for same construct |
+
+**Key insight**: Fragment captures appear on **child nodes** (property_identifier, field_identifier, identifier in attribute) while complete captures appear on **parent nodes** (call_expression, call).
+
+**Validation approach**:
+
+- Patterns above generate **warnings** (not errors)
+- Warnings don't fail CI but flag for review
+- Developers should fix warnings during query refactoring
 
 ### Step 2: Implement Statistics Collection (0.5 day)
 
@@ -528,17 +619,19 @@ jobs:
 
 - [ ] `validate_captures.ts` implements all core validation functions
 - [ ] Can extract captures from .scm files with line numbers
-- [ ] Detects all prohibited patterns from schema
+- [ ] Positive validation: checks all captures are in required OR optional lists
 - [ ] Checks for missing required patterns
+- [ ] Fragment detection: warns about captures on child nodes (property_identifier, field_identifier, etc.)
 - [ ] Validates naming conventions
 - [ ] Collects meaningful statistics
-- [ ] Formats human-readable error reports
+- [ ] Formats human-readable error/warning reports (errors fail CI, warnings don't)
 - [ ] Supports JSON output for CI
 - [ ] Test suite has >90% coverage
 - [ ] All tests pass
-- [ ] CLI tool works with all options
+- [ ] CLI tool works with all options (--lang, --verbose, --json)
 - [ ] CI integration validates on every commit
-- [ ] Failing validation blocks PR merge
+- [ ] Schema violations (errors) block PR merge
+- [ ] Fragment warnings visible in CI output but don't block
 
 ---
 

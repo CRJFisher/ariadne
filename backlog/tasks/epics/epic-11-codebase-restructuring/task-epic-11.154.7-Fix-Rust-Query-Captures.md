@@ -10,7 +10,7 @@
 
 ## Objective
 
-Refactor Rust query file, handling both `.` method calls and `::` associated functions.
+Refactor Rust query file to use complete captures (call_expression, not field_identifier), handling both `.` method calls and `::` associated functions.
 
 ---
 

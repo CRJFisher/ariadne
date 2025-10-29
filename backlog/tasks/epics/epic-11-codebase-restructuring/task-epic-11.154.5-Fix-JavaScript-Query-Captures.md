@@ -10,7 +10,7 @@
 
 ## Objective
 
-Refactor JavaScript query file to match TypeScript patterns (similar languages, similar captures).
+Refactor JavaScript query file to use complete captures and match TypeScript patterns (similar languages, similar captures).
 
 ---
 

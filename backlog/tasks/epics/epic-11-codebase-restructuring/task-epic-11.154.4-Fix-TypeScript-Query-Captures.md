@@ -10,7 +10,7 @@
 
 ## Objective
 
-Refactor TypeScript query file to eliminate duplicate captures and conform to canonical schema.
+Refactor TypeScript query file to use complete captures (not fragments) and conform to canonical schema's positive validation approach.
 
 ---
 
@@ -83,8 +83,10 @@ Refactor TypeScript query file to eliminate duplicate captures and conform to ca
 ## Acceptance Criteria
 
 - [ ] Validation passes: `npm run validate:captures -- --lang=typescript`
-- [ ] Zero prohibited captures
+- [ ] Zero schema violations (all captures in required/optional lists)
+- [ ] Zero fragment warnings (no captures on property_identifier, etc.)
 - [ ] All required captures present
+- [ ] Only complete captures (call_expression, not property_identifier)
 - [ ] TypeScript semantic index tests pass: `npm test -- typescript`
 - [ ] Project entry points correctly detected (all 4 methods)
 - [ ] No false self-references in call graph

@@ -10,7 +10,7 @@
 
 ## Objective
 
-Refactor Python query file, accounting for Python-specific AST nodes (`attribute` vs `member_expression`, `call` vs `call_expression`).
+Refactor Python query file to use complete captures (call node, not identifier), accounting for Python-specific AST nodes (`attribute` vs `member_expression`, `call` vs `call_expression`).
 
 ---
 
