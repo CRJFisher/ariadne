@@ -508,7 +508,192 @@ export const CANONICAL_CAPTURE_SCHEMA: CaptureSchema = {
       example: "(jsx_element) @reference.call.jsx"
     },
 
-    // Add more optional patterns as needed from language-specific analysis
+    // TypeScript - Interface members
+    {
+      pattern: /^@definition\.interface\.(method|property)$/,
+      description: "Interface method or property definition",
+      category: SemanticCategory.DEFINITION,
+      entity: SemanticEntity.METHOD,
+      example: "(method_signature name: (property_identifier) @definition.interface.method)"
+    },
+
+    // Type system
+    {
+      pattern: /^@type\.type_assertion$/,
+      description: "TypeScript type assertion",
+      category: SemanticCategory.TYPE,
+      entity: SemanticEntity.TYPE_ALIAS,
+      example: "(as_expression) @type.type_assertion"
+    },
+
+    // Scopes - language-specific
+    {
+      pattern: /^@scope\.(namespace|constructor|comprehension)$/,
+      description: "Language-specific scope types",
+      category: SemanticCategory.SCOPE,
+      entity: SemanticEntity.NAMESPACE,
+      example: "(namespace_declaration) @scope.namespace"
+    },
+
+    // Rust - Macros
+    {
+      pattern: /^@decorator\.macro$/,
+      description: "Rust macro decorator",
+      category: SemanticCategory.DECORATOR,
+      entity: SemanticEntity.FUNCTION,
+      example: "(attribute_item) @decorator.macro"
+    },
+    {
+      pattern: /^@reference\.macro$/,
+      description: "Rust macro invocation",
+      category: SemanticCategory.REFERENCE,
+      entity: SemanticEntity.CALL,
+      example: "(macro_invocation) @reference.macro"
+    },
+
+    // Rust - Function modifiers
+    {
+      pattern: /^@definition\.function\.(unsafe|const|async)$/,
+      description: "Rust function modifiers",
+      category: SemanticCategory.DEFINITION,
+      entity: SemanticEntity.FUNCTION,
+      example: "(function_item) @definition.function.unsafe"
+    },
+
+    // Rust - Type system
+    {
+      pattern: /^@reference\.type$/,
+      description: "Rust type reference (for associated functions)",
+      category: SemanticCategory.REFERENCE,
+      entity: SemanticEntity.VARIABLE,
+      example: "(type_identifier) @reference.type"
+    },
+
+    // Rust - Memory/ownership
+    {
+      pattern: /^@reference\.variable\.borrowed$/,
+      description: "Rust borrowed reference",
+      category: SemanticCategory.REFERENCE,
+      entity: SemanticEntity.VARIABLE,
+      example: "(reference_expression) @reference.variable.borrowed"
+    },
+
+    // Universal - Write references
+    {
+      pattern: /^@reference\.write$/,
+      description: "Write/mutation reference",
+      category: SemanticCategory.REFERENCE,
+      entity: SemanticEntity.VARIABLE,
+      example: "(assignment_expression left: (_)) @reference.write"
+    },
+
+    // Universal - Return functions
+    {
+      pattern: /^@return\.function$/,
+      description: "Returning a function value",
+      category: SemanticCategory.RETURN,
+      entity: SemanticEntity.FUNCTION,
+      example: "(return_statement value: (function)) @return.function"
+    },
+
+    // Universal - typeof operator
+    {
+      pattern: /^@reference\.typeof$/,
+      description: "typeof operator reference",
+      category: SemanticCategory.REFERENCE,
+      entity: SemanticEntity.VARIABLE,
+      example: "(typeof_expression) @reference.typeof"
+    },
+
+    // Definition - Import variations
+    {
+      pattern: /^@definition\.import\.named$/,
+      description: "Named import specifier",
+      category: SemanticCategory.IMPORT,
+      entity: SemanticEntity.IMPORT,
+      example: "(import_specifier) @definition.import.named"
+    },
+
+    // Modifiers - Additional
+    {
+      pattern: /^@modifier\.(readonly|static|async)$/,
+      description: "Additional modifiers",
+      category: SemanticCategory.MODIFIER,
+      entity: SemanticEntity.VARIABLE,
+      example: "(readonly_modifier) @modifier.readonly"
+    },
+
+    // Rust - Specific references
+    {
+      pattern: /^@reference\.(field|struct)$/,
+      description: "Rust field and struct references",
+      category: SemanticCategory.REFERENCE,
+      entity: SemanticEntity.VARIABLE,
+      example: "(field_identifier) @reference.field"
+    },
+
+    // Constructor variants
+    {
+      pattern: /^@reference\.constructor\.struct$/,
+      description: "Rust struct constructor",
+      category: SemanticCategory.REFERENCE,
+      entity: SemanticEntity.CONSTRUCTOR,
+      example: "(struct_expression) @reference.constructor.struct"
+    },
+
+    // Decorator variants
+    {
+      pattern: /^@decorator\.(class_var|property_decorator)$/,
+      description: "Python decorator variants",
+      category: SemanticCategory.DECORATOR,
+      entity: SemanticEntity.PROPERTY,
+      example: "(decorator) @decorator.property_decorator"
+    },
+
+    // Variable update references
+    {
+      pattern: /^@reference\.variable\.update$/,
+      description: "Update expression reference (++, --, etc.)",
+      category: SemanticCategory.REFERENCE,
+      entity: SemanticEntity.VARIABLE,
+      example: "(update_expression) @reference.variable.update"
+    },
+
+    // Type - Generic context
+    {
+      pattern: /^@reference\.type\.generic$/,
+      description: "Generic type reference",
+      category: SemanticCategory.REFERENCE,
+      entity: SemanticEntity.VARIABLE,
+      example: "(generic_type) @reference.type.generic"
+    },
+
+    // Import source
+    {
+      pattern: /^@import\.(source|module_path)$/,
+      description: "Import source path",
+      category: SemanticCategory.IMPORT,
+      entity: SemanticEntity.IMPORT,
+      example: "(import_statement source: (string)) @import.source"
+    },
+
+    // Scope - method (some languages separate method scope from body)
+    {
+      pattern: /^@scope\.method\.body$/,
+      description: "Method body scope",
+      category: SemanticCategory.SCOPE,
+      entity: SemanticEntity.METHOD,
+      example: "(statement_block) @scope.method.body"
+    },
+
+    // Variable - object reference (for method receivers)
+    {
+      pattern: /^@reference\.variable\.object$/,
+      description: "Object reference in property access",
+      category: SemanticCategory.REFERENCE,
+      entity: SemanticEntity.VARIABLE,
+      example: "(member_expression object: (identifier)) @reference.variable.object"
+    },
   ],
 
   // ========================================
