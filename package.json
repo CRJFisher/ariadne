@@ -19,7 +19,8 @@
     "release": "npm run build && changeset publish",
     "prepublishOnly": "npm run build",
     "check:size": "npx tsx scripts/check-file-sizes.ts",
-    "check:size:warn": "npx tsx scripts/check-file-sizes.ts || true"
+    "check:size:warn": "npx tsx scripts/check-file-sizes.ts || true",
+    "validate:captures": "npx tsx scripts/validate_captures.ts"
   },
   "devDependencies": {
     "@changesets/cli": "^2.27.1",
