@@ -1,0 +1,586 @@
+/**
+ * Canonical capture schema for all tree-sitter query files
+ *
+ * DESIGN PRINCIPLES:
+ *
+ * 1. COMPLETE CAPTURES - Capture entire syntactic units, not fragments
+ *    - Capture the full method_definition node, not method name + parameters separately
+ *    - Capture the full call_expression node, not property_identifier + call separately
+ *    - One capture → multiple semantic entities extracted by builders
+ *
+ * 2. POSITIVE VALIDATION - Only explicitly allowed captures are valid
+ *    - Required captures (must exist in every language)
+ *    - Optional captures (language-specific features)
+ *    - Everything else is implicitly invalid
+ *
+ * 3. BUILDER EXTRACTION - Builders extract multiple entities from single captures
+ *    - @definition.method capture → method def + parameters + return type
+ *    - @reference.call capture → call ref + receiver + property chain
+ *    - Eliminates duplicate/overlapping captures
+ *
+ * This approach is closed and maintainable - we explicitly list what IS allowed,
+ * rather than trying to enumerate everything that ISN'T allowed.
+ */
+
+import { SemanticCategory, SemanticEntity } from "../semantic_index";
+
+// ============================================================================
+// Core Types
+// ============================================================================
+
+export interface CaptureSchema {
+  /**
+   * Required captures - every language MUST have these
+   *
+   * Based on common captures from analysis (24 core patterns)
+   */
+  required: CapturePattern[];
+
+  /**
+   * Optional captures - language-specific features allowed
+   *
+   * Explicitly lists all valid optional captures.
+   * Any capture not in required OR optional is INVALID.
+   */
+  optional: CapturePattern[];
+
+  /**
+   * Naming conventions and rules
+   */
+  rules: NamingRules;
+}
+
+export interface CapturePattern {
+  /**
+   * Regular expression matching valid capture names
+   * Example: /^@definition\.function$/
+   */
+  pattern: RegExp;
+
+  /**
+   * Human-readable description of what this captures
+   */
+  description: string;
+
+  /**
+   * Which semantic category this maps to
+   */
+  category: SemanticCategory;
+
+  /**
+   * Which semantic entity this maps to
+   */
+  entity: SemanticEntity;
+
+  /**
+   * Example usage in .scm file
+   */
+  example: string;
+
+  /**
+   * Expected node types for this capture across languages
+   * Used to enforce "complete capture" principle
+   *
+   * Example for @reference.call:
+   * - TypeScript/JavaScript: call_expression
+   * - Python: call
+   * - Rust: call_expression
+   *
+   * Validation can warn if capture targets fragment nodes like:
+   * - property_identifier (should be on parent call_expression)
+   * - identifier in attribute context (should be on parent call)
+   */
+  expected_node_types?: {
+    typescript?: string[];
+    javascript?: string[];
+    python?: string[];
+    rust?: string[];
+  };
+
+  /**
+   * Language-specific notes (if any)
+   */
+  notes?: string;
+}
+
+export interface NamingRules {
+  /**
+   * Overall pattern: @{category}.{entity}[.{qualifier}]
+   */
+  pattern: RegExp;
+
+  /**
+   * Maximum nesting depth (e.g., @a.b.c.d = 4 parts)
+   */
+  max_depth: number;
+}
+
+// ============================================================================
+// Canonical Schema Definition
+// ============================================================================
+
+export const CANONICAL_CAPTURE_SCHEMA: CaptureSchema = {
+  // ========================================
+  // REQUIRED CAPTURES
+  // ========================================
+  // Based on 24 common captures from analysis, filtered to remove duplicates
+  required: [
+    // --- Scope Captures ---
+    {
+      pattern: /^@scope\.module$/,
+      description: "Module/file-level scope",
+      category: SemanticCategory.SCOPE,
+      entity: SemanticEntity.MODULE,
+      example: "(program) @scope.module"
+    },
+    {
+      pattern: /^@scope\.function$/,
+      description: "Function scope",
+      category: SemanticCategory.SCOPE,
+      entity: SemanticEntity.FUNCTION,
+      example: "(function_declaration) @scope.function"
+    },
+    {
+      pattern: /^@scope\.class$/,
+      description: "Class scope",
+      category: SemanticCategory.SCOPE,
+      entity: SemanticEntity.CLASS,
+      example: "(class_declaration) @scope.class"
+    },
+    {
+      pattern: /^@scope\.block$/,
+      description: "Block scope (if/while/for bodies, etc.)",
+      category: SemanticCategory.SCOPE,
+      entity: SemanticEntity.BLOCK,
+      example: "(statement_block) @scope.block"
+    },
+
+    // --- Definition Captures ---
+    {
+      pattern: /^@definition\.function$/,
+      description: "Function definition name",
+      category: SemanticCategory.DEFINITION,
+      entity: SemanticEntity.FUNCTION,
+      example: "(function_declaration name: (identifier) @definition.function)"
+    },
+    {
+      pattern: /^@definition\.class$/,
+      description: "Class definition name",
+      category: SemanticCategory.DEFINITION,
+      entity: SemanticEntity.CLASS,
+      example: "(class_declaration name: (identifier) @definition.class)"
+    },
+    {
+      pattern: /^@definition\.method$/,
+      description: "Method definition name",
+      category: SemanticCategory.DEFINITION,
+      entity: SemanticEntity.METHOD,
+      example: "(method_definition name: (property_identifier) @definition.method)"
+    },
+    {
+      pattern: /^@definition\.constructor$/,
+      description: "Constructor definition",
+      category: SemanticCategory.DEFINITION,
+      entity: SemanticEntity.CONSTRUCTOR,
+      example: "(method_definition name: (property_identifier) @definition.constructor)"
+    },
+    {
+      pattern: /^@definition\.variable$/,
+      description: "Variable definition name",
+      category: SemanticCategory.DEFINITION,
+      entity: SemanticEntity.VARIABLE,
+      example: "(variable_declarator name: (identifier) @definition.variable)"
+    },
+    {
+      pattern: /^@definition\.parameter$/,
+      description: "Function/method parameter name",
+      category: SemanticCategory.DEFINITION,
+      entity: SemanticEntity.PARAMETER,
+      example: "(formal_parameter name: (identifier) @definition.parameter)"
+    },
+    {
+      pattern: /^@definition\.field$/,
+      description: "Class field/property definition",
+      category: SemanticCategory.DEFINITION,
+      entity: SemanticEntity.FIELD,
+      example: "(field_definition name: (property_identifier) @definition.field)"
+    },
+
+    // --- Reference Captures ---
+    {
+      pattern: /^@reference\.call$/,
+      description: "Function/method call - single capture on complete call node",
+      category: SemanticCategory.REFERENCE,
+      entity: SemanticEntity.CALL,
+      example: "(call_expression) @reference.call",
+      expected_node_types: {
+        typescript: ["call_expression"],
+        javascript: ["call_expression"],
+        python: ["call"],
+        rust: ["call_expression"]
+      },
+      notes: "Captures complete call node. Extractors derive: method name, receiver, property chain, call type."
+    },
+    {
+      pattern: /^@reference\.variable$/,
+      description: "Variable reference",
+      category: SemanticCategory.REFERENCE,
+      entity: SemanticEntity.VARIABLE,
+      example: "(identifier) @reference.variable"
+    },
+    {
+      pattern: /^@reference\.variable\.base$/,
+      description: "Base object in property chain (for tracking receivers)",
+      category: SemanticCategory.REFERENCE,
+      entity: SemanticEntity.VARIABLE,
+      example: "(identifier) @reference.variable.base"
+    },
+    {
+      pattern: /^@reference\.variable\.source$/,
+      description: "Source variable in assignments/flows",
+      category: SemanticCategory.REFERENCE,
+      entity: SemanticEntity.VARIABLE,
+      example: "(identifier) @reference.variable.source"
+    },
+    {
+      pattern: /^@reference\.variable\.target$/,
+      description: "Target variable in assignments/flows",
+      category: SemanticCategory.REFERENCE,
+      entity: SemanticEntity.VARIABLE,
+      example: "(identifier) @reference.variable.target"
+    },
+    {
+      pattern: /^@reference\.this$/,
+      description: "Reference to 'this' keyword",
+      category: SemanticCategory.REFERENCE,
+      entity: SemanticEntity.VARIABLE,
+      example: "(this) @reference.this"
+    },
+    {
+      pattern: /^@reference\.super$/,
+      description: "Reference to 'super' keyword",
+      category: SemanticCategory.REFERENCE,
+      entity: SemanticEntity.CALL,
+      example: "(super) @reference.super"
+    },
+    {
+      pattern: /^@reference\.type_reference$/,
+      description: "Reference to a type/class name",
+      category: SemanticCategory.REFERENCE,
+      entity: SemanticEntity.VARIABLE,
+      example: "(type_identifier) @reference.type_reference"
+    },
+
+    // --- Assignment/Return ---
+    {
+      pattern: /^@assignment\.variable$/,
+      description: "Variable assignment",
+      category: SemanticCategory.ASSIGNMENT,
+      entity: SemanticEntity.VARIABLE,
+      example: "(assignment_expression) @assignment.variable"
+    },
+    {
+      pattern: /^@return\.variable$/,
+      description: "Return statement value",
+      category: SemanticCategory.RETURN,
+      entity: SemanticEntity.VARIABLE,
+      example: "(return_statement) @return.variable"
+    },
+
+    // --- Export ---
+    {
+      pattern: /^@export\.variable$/,
+      description: "Exported variable/function",
+      category: SemanticCategory.EXPORT,
+      entity: SemanticEntity.VARIABLE,
+      example: "(export_statement) @export.variable"
+    },
+
+    // --- Modifier ---
+    {
+      pattern: /^@modifier\.visibility$/,
+      description: "Visibility modifier (public, private, protected, etc.)",
+      category: SemanticCategory.MODIFIER,
+      entity: SemanticEntity.VARIABLE, // Modifier is a special category
+      example: "(accessibility_modifier) @modifier.visibility"
+    },
+  ],
+
+  // ========================================
+  // OPTIONAL CAPTURES
+  // ========================================
+  // Language-specific features explicitly allowed
+  optional: [
+    // TypeScript-specific
+    {
+      pattern: /^@definition\.interface$/,
+      description: "TypeScript interface definition",
+      category: SemanticCategory.DEFINITION,
+      entity: SemanticEntity.INTERFACE,
+      example: "(interface_declaration name: (type_identifier) @definition.interface)"
+    },
+    {
+      pattern: /^@definition\.type_alias$/,
+      description: "TypeScript/Rust type alias",
+      category: SemanticCategory.DEFINITION,
+      entity: SemanticEntity.TYPE_ALIAS,
+      example: "(type_alias_declaration name: (type_identifier) @definition.type_alias)"
+    },
+    {
+      pattern: /^@definition\.enum$/,
+      description: "TypeScript/Rust enum definition",
+      category: SemanticCategory.DEFINITION,
+      entity: SemanticEntity.ENUM,
+      example: "(enum_declaration name: (identifier) @definition.enum)"
+    },
+    {
+      pattern: /^@definition\.enum_member$/,
+      description: "Enum member definition",
+      category: SemanticCategory.DEFINITION,
+      entity: SemanticEntity.ENUM_MEMBER,
+      example: "(enum_member name: (identifier) @definition.enum_member)"
+    },
+    {
+      pattern: /^@definition\.namespace$/,
+      description: "TypeScript namespace definition",
+      category: SemanticCategory.DEFINITION,
+      entity: SemanticEntity.NAMESPACE,
+      example: "(namespace_declaration name: (identifier) @definition.namespace)"
+    },
+    {
+      pattern: /^@definition\.type_parameter$/,
+      description: "Generic type parameter",
+      category: SemanticCategory.DEFINITION,
+      entity: SemanticEntity.TYPE_PARAMETER,
+      example: "(type_parameter name: (type_identifier) @definition.type_parameter)"
+    },
+    {
+      pattern: /^@definition\.property$/,
+      description: "Class property/field definition",
+      category: SemanticCategory.DEFINITION,
+      entity: SemanticEntity.PROPERTY,
+      example: "(property_definition name: (property_identifier) @definition.property)"
+    },
+
+    // Python-specific
+    {
+      pattern: /^@decorator\.(function|class|method|property)$/,
+      description: "Python decorator",
+      category: SemanticCategory.DECORATOR,
+      entity: SemanticEntity.FUNCTION, // Entity depends on what's decorated
+      example: "(decorator) @decorator.function"
+    },
+
+    // Rust-specific
+    {
+      pattern: /^@definition\.trait$/,
+      description: "Rust trait definition",
+      category: SemanticCategory.DEFINITION,
+      entity: SemanticEntity.INTERFACE, // Map to interface semantically
+      example: "(trait_item name: (type_identifier) @definition.trait)"
+    },
+    {
+      pattern: /^@definition\.impl$/,
+      description: "Rust impl block",
+      category: SemanticCategory.DEFINITION,
+      entity: SemanticEntity.CLASS, // impl block is like extending a class
+      example: "(impl_item) @definition.impl)"
+    },
+
+    // Generic/Type-specific (TypeScript/Rust)
+    {
+      pattern: /^@reference\.call\.generic$/,
+      description: "Generic function/method call with type arguments",
+      category: SemanticCategory.REFERENCE,
+      entity: SemanticEntity.CALL,
+      example: "(call_expression type_arguments: (_)) @reference.call.generic"
+    },
+    {
+      pattern: /^@reference\.constructor$/,
+      description: "Constructor call",
+      category: SemanticCategory.REFERENCE,
+      entity: SemanticEntity.CONSTRUCTOR,
+      example: "(new_expression) @reference.constructor"
+    },
+    {
+      pattern: /^@reference\.constructor\.generic$/,
+      description: "Generic constructor call with type arguments",
+      category: SemanticCategory.REFERENCE,
+      entity: SemanticEntity.CONSTRUCTOR,
+      example: "(new_expression type_arguments: (_)) @reference.constructor.generic"
+    },
+
+    // Property access
+    {
+      pattern: /^@reference\.property$/,
+      description: "Property access (not a call)",
+      category: SemanticCategory.REFERENCE,
+      entity: SemanticEntity.PROPERTY,
+      example: "(member_expression) @reference.property"
+    },
+    {
+      pattern: /^@reference\.property\.(optional|computed|assign)$/,
+      description: "Property access with qualifiers",
+      category: SemanticCategory.REFERENCE,
+      entity: SemanticEntity.PROPERTY,
+      example: "(member_expression) @reference.property.optional"
+    },
+    {
+      pattern: /^@reference\.member_access(\.optional|\.computed|\.assign)?$/,
+      description: "Member access patterns",
+      category: SemanticCategory.REFERENCE,
+      entity: SemanticEntity.PROPERTY,
+      example: "(member_expression) @reference.member_access"
+    },
+
+    // Import/Export variants
+    {
+      pattern: /^@definition\.import$/,
+      description: "Import definition",
+      category: SemanticCategory.IMPORT,
+      entity: SemanticEntity.IMPORT,
+      example: "(import_statement) @definition.import"
+    },
+    {
+      pattern: /^@import\.reexport$/,
+      description: "Re-export pattern",
+      category: SemanticCategory.IMPORT,
+      entity: SemanticEntity.IMPORT,
+      example: "(export_statement source: (_)) @import.reexport"
+    },
+    {
+      pattern: /^@export\.(class|function|variable|interface|enum|type_alias|namespace)$/,
+      description: "Export declarations",
+      category: SemanticCategory.EXPORT,
+      entity: SemanticEntity.VARIABLE, // Varies by what's exported
+      example: "(export_statement) @export.function"
+    },
+
+    // Assignment variants
+    {
+      pattern: /^@assignment\.(property|constructor)$/,
+      description: "Property or constructor assignments",
+      category: SemanticCategory.ASSIGNMENT,
+      entity: SemanticEntity.PROPERTY,
+      example: "(assignment_expression) @assignment.property"
+    },
+
+    // Modifier variants
+    {
+      pattern: /^@modifier\.(access_modifier|readonly_modifier|static|async)$/,
+      description: "Various language modifiers",
+      category: SemanticCategory.MODIFIER,
+      entity: SemanticEntity.VARIABLE,
+      example: "(public_modifier) @modifier.access_modifier"
+    },
+
+    // Scope variants
+    {
+      pattern: /^@scope\.method$/,
+      description: "Method scope (some languages capture method separate from body)",
+      category: SemanticCategory.SCOPE,
+      entity: SemanticEntity.METHOD,
+      example: "(method_definition) @scope.method"
+    },
+    {
+      pattern: /^@scope\.(closure|namespace|interface|enum|trait|impl)$/,
+      description: "Language-specific scope types",
+      category: SemanticCategory.SCOPE,
+      entity: SemanticEntity.FUNCTION, // Varies by scope type
+      example: "(arrow_function) @scope.closure"
+    },
+
+    // Type references
+    {
+      pattern: /^@type\.(identifier|annotation)$/,
+      description: "Type identifier or annotation",
+      category: SemanticCategory.TYPE,
+      entity: SemanticEntity.TYPE_ALIAS,
+      example: "(type_identifier) @type.identifier"
+    },
+
+    // JSX-specific (JavaScript/TypeScript)
+    {
+      pattern: /^@reference\.call\.jsx$/,
+      description: "JSX element as function call",
+      category: SemanticCategory.REFERENCE,
+      entity: SemanticEntity.CALL,
+      example: "(jsx_element) @reference.call.jsx"
+    },
+
+    // Add more optional patterns as needed from language-specific analysis
+  ],
+
+  // ========================================
+  // NAMING RULES
+  // ========================================
+  rules: {
+    pattern: /^@[a-z_]+\.[a-z_]+(\.[a-z_]+)?$/,
+    max_depth: 3
+  }
+};
+
+// ============================================================================
+// Validation Helpers
+// ============================================================================
+
+/**
+ * Check if a capture name is valid according to the schema
+ *
+ * Uses POSITIVE validation: capture must be in required OR optional lists
+ */
+export function is_valid_capture(capture_name: string): boolean {
+  // Must match overall naming pattern
+  if (!CANONICAL_CAPTURE_SCHEMA.rules.pattern.test(capture_name)) {
+    return false;
+  }
+
+  // Must be in required OR optional lists
+  const is_required = CANONICAL_CAPTURE_SCHEMA.required.some((p) =>
+    p.pattern.test(capture_name)
+  );
+  const is_optional = CANONICAL_CAPTURE_SCHEMA.optional.some((p) =>
+    p.pattern.test(capture_name)
+  );
+
+  return is_required || is_optional;
+}
+
+/**
+ * Get validation errors for a capture name
+ */
+export function get_capture_errors(capture_name: string): string[] {
+  const errors: string[] = [];
+
+  // Check naming rules
+  if (!CANONICAL_CAPTURE_SCHEMA.rules.pattern.test(capture_name)) {
+    errors.push(
+      `Invalid capture name format. Must follow: @category.entity[.qualifier]`
+    );
+  }
+
+  // Check depth
+  const parts = capture_name.substring(1).split("."); // Remove leading @
+  if (parts.length > CANONICAL_CAPTURE_SCHEMA.rules.max_depth) {
+    errors.push(
+      `Too many nesting levels (${parts.length}). Maximum is ${CANONICAL_CAPTURE_SCHEMA.rules.max_depth}`
+    );
+  }
+
+  // Check if capture is in allowed lists (required OR optional)
+  const is_required = CANONICAL_CAPTURE_SCHEMA.required.some((p) =>
+    p.pattern.test(capture_name)
+  );
+  const is_optional = CANONICAL_CAPTURE_SCHEMA.optional.some((p) =>
+    p.pattern.test(capture_name)
+  );
+
+  if (!is_required && !is_optional) {
+    errors.push(
+      `Capture '${capture_name}' is not in required or optional lists. ` +
+        `All valid captures must be explicitly defined in the schema.`
+    );
+  }
+
+  return errors;
+}

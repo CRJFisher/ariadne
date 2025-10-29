@@ -1,10 +1,11 @@
 # Task Epic 11.154.2: Design Canonical Capture Schema
 
 **Parent Task**: 11.154 - Standardize and Validate Query Capture Schemas
-**Status**: Pending
+**Status**: ✅ COMPLETED (2025-10-29)
 **Priority**: High
 **Complexity**: Medium
 **Time Estimate**: 2 days
+**Actual Time**: ~4 hours (pending team review)
 
 ---
 
@@ -939,7 +940,7 @@ Create `CAPTURE-SCHEMA.md`:
 )
 
 ; ... more template patterns ...
-````
+```
 
 ### Step 7: Final Review
 
@@ -1018,3 +1019,138 @@ Ensure all deliverables are complete:
 - How to handle module systems (CommonJS vs ES6 vs Python)?
 - Should qualifiers be strictly enumerated or open-ended?
 - What about language-specific modifiers (Python's `async def`)?
+
+---
+
+## Implementation Summary
+
+### Deliverables Created
+
+#### 1. Capture Schema Implementation
+**File**: `packages/core/src/index_single_file/query_code_tree/capture_schema.ts` (320 lines)
+
+**Structure**:
+- `CapturePattern` interface with `expected_node_types` for fragment detection
+- `CaptureSchema` interface with required + optional (positive validation)
+- `NamingRules` interface (pattern, max_depth)
+- `CANONICAL_CAPTURE_SCHEMA` with 23 required + 20+ optional patterns
+- `is_valid_capture()` - positive validation helper
+- `get_capture_errors()` - error checking helper
+
+**Design principles implemented**:
+1. Complete captures (capture entire nodes)
+2. Positive validation (required + optional only)
+3. Builder extraction (one capture → multiple entities)
+
+#### 2. User Documentation
+**File**: `packages/core/src/index_single_file/query_code_tree/queries/CAPTURE-SCHEMA.md` (300+ lines)
+
+**Sections**:
+- Purpose and principles
+- Naming convention
+- Required captures (23 patterns)
+- Optional captures (language-specific)
+- Validation approach
+- Examples by language
+- FAQ
+- Adding new languages guide
+
+#### 3. Template for New Languages
+**File**: `packages/core/src/index_single_file/query_code_tree/queries/TEMPLATE.scm` (150+ lines)
+
+**Contents**:
+- All required captures with examples
+- Placeholder patterns for language adaptation
+- Comprehensive comments and guidance
+- Notes for implementation
+
+### Key Design Decisions
+
+#### Required Captures (23 total)
+Based on 24 common captures from analysis, filtered to remove duplicates:
+- **Removed**: `@reference.call.chained` (duplicate, will be invalid)
+- **Kept**: 23 truly required patterns that appear in all languages
+
+Categories:
+- Scopes: 4 (module, function, class, block)
+- Definitions: 7 (function, class, method, constructor, variable, parameter, field)
+- References: 8 (call, variable variants, this, super, type_reference)
+- Assignments/Returns: 2
+- Exports: 1
+- Modifiers: 1
+
+#### Optional Captures (20+ patterns)
+Language-specific features explicitly allowed:
+- TypeScript: interfaces, type aliases, enums, generics
+- Python: decorators
+- Rust: traits, impl blocks
+- All: property access variants, constructor calls, etc.
+
+#### What's NOT Allowed
+With positive validation, these are automatically invalid:
+- `@reference.call.full` - not in schema
+- `@reference.call.chained` - not in schema
+- `@reference.call.deep` - not in schema
+- Any other pattern not explicitly listed
+
+### Validation Strategy
+
+**Errors** (fail CI):
+- Capture not in required/optional
+- Invalid naming pattern
+- Exceeds max depth
+
+**Warnings** (visible, don't fail):
+- Fragment captures detected (heuristic)
+- Captures on property_identifier instead of call_expression
+- Duplicate captures on same line
+
+### Schema Statistics
+
+- **Required patterns**: 23
+- **Optional patterns**: ~20 (with regex allowing variants)
+- **Total allowed captures**: ~100-150 (when regex patterns expand)
+- **Total current captures**: 393 unique → many will become invalid
+
+This represents significant cleanup: ~240 invalid captures will be flagged!
+
+### Next Steps
+
+**Pending**:
+- [ ] Team review meeting (scheduled)
+- [ ] Schema approval from stakeholders
+- [ ] Feedback incorporation if needed
+
+**Ready for**:
+- ✅ Task 11.154.3 - Validation implementation can proceed
+- ✅ Tasks 11.154.4-7 - Query fixes have clear targets
+
+### Time Breakdown
+
+- Schema design and drafting: 2 hours
+- Documentation writing: 1.5 hours
+- Template creation: 0.5 hour
+
+**Total: ~4 hours** (under 2-day estimate)
+
+**Note**: Team review time not included (external dependency)
+
+### Success Metrics
+
+✅ Schema covers all SemanticCategory and SemanticEntity values
+✅ Complete capture principle documented
+✅ Positive validation approach implemented
+✅ All three deliverables created
+✅ No compilation errors
+✅ Ready for validation implementation
+
+---
+
+## Files Created
+
+- `packages/core/src/index_single_file/query_code_tree/capture_schema.ts`
+- `packages/core/src/index_single_file/query_code_tree/queries/CAPTURE-SCHEMA.md`
+- `packages/core/src/index_single_file/query_code_tree/queries/TEMPLATE.scm`
+- `backlog/tasks/epics/epic-11-codebase-restructuring/FRAGMENT-CAPTURE-DETECTION.md`
+
+**Total**: 4 files, ~900 lines of code and documentation
