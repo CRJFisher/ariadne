@@ -18,7 +18,20 @@ Refactor JavaScript query file to use complete captures and match TypeScript pat
 
 **File**: `packages/core/src/index_single_file/query_code_tree/queries/javascript.scm`
 
-Apply same fixes as TypeScript - remove duplicate captures, use single `@reference.call`.
+**Current validation status**: 85 errors, 10 warnings
+
+**Changes needed** (similar to TypeScript):
+
+### Error Categories
+
+1. **Duplicate method call captures** - `.chained`, `.deep` (remove)
+2. **Import/export fragments** - reexport variants (remove)
+3. **Property/variable fragments** - `.chain`, `.prop` (remove)
+4. **Potentially valid** - `@definition.import.require` for CommonJS (evaluate)
+
+Apply same fixes as TypeScript - remove duplicate captures, use complete captures only.
+
+**Expected outcome**: 85 errors → ~3-5 errors
 
 ---
 

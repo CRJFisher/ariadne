@@ -18,12 +18,48 @@ Refactor TypeScript query file to use complete captures (not fragments) and conf
 
 **File**: `packages/core/src/index_single_file/query_code_tree/queries/typescript.scm`
 
+**Current validation status**: 109 errors, 10 warnings
+
 **Changes needed** (from validation report):
 
-1. Remove `@reference.call.full`, `.chained`, `.deep` captures
-2. Use single `@reference.call` on `call_expression` only
-3. Ensure all required captures present
-4. Fix any naming convention violations
+### 1. Remove Duplicate Method Call Captures (Priority 1)
+
+- `@reference.call.full` (1 pattern)
+- `@reference.call.chained` (2 patterns)
+- `@reference.call.deep` (2 patterns)
+- Move captures from `property_identifier` to parent `call_expression`
+
+**Impact**: Fixes entry point detection bug (root cause)
+
+### 2. Remove/Consolidate Type System Fragments (Priority 2)
+
+- `@type.type_annotation` (6 occurrences) - fragment
+- `@type.type_parameters` (5 occurrences) - fragment
+- `@type.type_parameter` (2 occurrences) - fragment
+- `@type.type_reference` (2 occurrences) - fragment on child nodes
+- `@type.type_constraint`, `@type.type_alias` - fragments
+
+**Action**: Remove these captures, let builders extract type info from definition nodes
+
+### 3. Remove/Consolidate Import/Export Fragments (Priority 3)
+
+- `@import.reexport.named/default/as_default` variants (10 patterns)
+- `@export.variable.class`, `@export.namespace.source` - fragments
+
+**Action**: Use complete `@definition.import` capture, extract details via builders
+
+### 4. Remove Property/Variable Fragments (Priority 4)
+
+- `@reference.variable.chain` (2 occurrences)
+- `@reference.property.prop` (2 occurrences)
+
+### 5. Review Potentially Valid Patterns
+
+- `@definition.enum.member` vs `@definition.enum_member` - pick one or add to schema
+- `@definition.method.abstract`, `@definition.field.param_property` - may need to add to schema
+- `@definition.variable.destructured` - may need to add to schema
+
+**Expected outcome**: ~109 errors → ~5-10 errors (patterns that need schema addition)
 
 ---
 

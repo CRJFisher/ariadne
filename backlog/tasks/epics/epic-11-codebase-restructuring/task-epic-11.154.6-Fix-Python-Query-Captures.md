@@ -18,11 +18,24 @@ Refactor Python query file to use complete captures (call node, not identifier),
 
 **File**: `packages/core/src/index_single_file/query_code_tree/queries/python.scm`
 
-**Python-specific considerations:**
+**Current validation status**: 60 errors, 10 warnings
+
+**Python-specific AST nodes:**
 
 - Uses `attribute` instead of `member_expression`
 - Uses `call` instead of `call_expression`
 - Uses `identifier` for attribute names (not `property_identifier`)
+
+**Changes needed**:
+
+### Error Categories
+
+1. **Type system fragments** - `@type.type_reference` (16 occurrences!) - fragments on child nodes
+2. **Duplicate method calls** - `.chained`, `.deep`, `.full` (remove)
+3. **Property/variable fragments** - `.chain`, `.prop` (remove)
+4. **Definition fragments** - `@definition.variable.multiple`, `@definition.property.interface`, `@definition.parameter.typed` (evaluate)
+
+**Expected outcome**: 60 errors → ~5-8 errors (some Python-specific may need schema addition)
 
 ### Before
 
