@@ -121,16 +121,6 @@ export interface NamingRules {
    * Maximum nesting depth (e.g., @a.b.c.d = 4 parts)
    */
   max_depth: number;
-
-  /**
-   * Allowed qualifiers (third part of capture name)
-   */
-  allowed_qualifiers: string[];
-
-  /**
-   * Reserved keywords that cannot be used
-   */
-  reserved_keywords: string[];
 }
 
 // ============================================================================
@@ -315,26 +305,7 @@ export const CANONICAL_CAPTURE_SCHEMA: CaptureSchema = {
   // ========================================
   rules: {
     pattern: /^@[a-z_]+\.[a-z_]+(\.[a-z_]+)?$/,
-    max_depth: 3,
-    allowed_qualifiers: [
-      "body", // Scopes: @scope.function.body
-      "generic", // Calls with type args: @reference.call.generic
-      "optional", // Optional chaining: @reference.property.optional
-      "computed", // Computed access: @reference.property.computed
-      "static", // Static members: @definition.method.static
-      "async", // Async functions: @definition.function.async
-      // Add more as needed...
-    ],
-    reserved_keywords: [
-      "full", // Prohibited: creates duplicates
-      "chained", // Prohibited: creates duplicates
-      "deep", // Prohibited: creates duplicates
-      "temp", // Prohibited: temporary naming
-      "tmp", // Prohibited: temporary naming
-      "old", // Prohibited: version naming
-      "new", // Prohibited: version naming
-      "test", // Prohibited: test captures
-    ],
+    max_depth: 3
   },
 };
 
@@ -398,15 +369,6 @@ export function get_capture_errors(capture_name: string): string[] {
       `Capture '${capture_name}' is not in required or optional lists. ` +
       `All valid captures must be explicitly defined in the schema.`
     );
-  }
-
-  // Check for reserved keywords
-  const qualifier = parts[2]; // Third part if exists
-  if (
-    qualifier &&
-    CANONICAL_CAPTURE_SCHEMA.rules.reserved_keywords.includes(qualifier)
-  ) {
-    errors.push(`Reserved keyword '${qualifier}' cannot be used as qualifier`);
   }
 
   return errors;
@@ -536,11 +498,6 @@ Capture '@reference.call.full' is not in required or optional lists.
 All valid captures must be explicitly defined in the schema.
 ```
 
-### Reserved Keywords
-
-These qualifiers cannot be used (defined in `rules.reserved_keywords`):
-- `full`, `chained`, `deep` - Were causing duplicate capture problems
-- `temp`, `tmp`, `old`, `new`, `test` - Temporary/version naming
 
 ## Adding a New Language
 
@@ -572,9 +529,8 @@ npm run validate:captures
 
 - All required captures present
 - All captures are in required OR optional lists (positive validation)
-- Naming convention followed
-- No reserved keywords used as qualifiers
-- Reasonable depth (<= 3 parts)
+- Naming convention followed (@category.entity[.qualifier])
+- Maximum depth enforced (<= 3 parts)
 
 ## Examples by Language
 
@@ -625,7 +581,7 @@ npm run validate:captures
 
 ### Q: Can I use custom qualifiers?
 
-**A**: Yes, but they must be documented. Add to `allowed_qualifiers` in `capture_schema.ts` first.
+**A**: Yes, but they must be added to the schema. Add the full capture pattern (e.g., `@reference.call.myqualifier`) to the optional captures list in `capture_schema.ts`.
 
 ### Q: What if my language needs something not in the schema?
 
@@ -660,8 +616,9 @@ Create initial version of `capture_schema.ts`:
 
 - Start with required captures (based on 24 common captures from analysis)
 - Add optional captures (based on 138 language-specific captures from analysis)
-- Define naming rules (pattern, max_depth, reserved_keywords)
+- Define naming rules (pattern, max_depth)
 - Use positive validation: only list what IS allowed
+- No need for reserved keywords or prohibited lists - if it's not in required/optional, it's invalid
 
 ### Step 3: Team Review Meeting
 
@@ -756,7 +713,7 @@ Ensure all deliverables are complete:
 - [ ] `capture_schema.ts` is complete with required and optional patterns (positive validation)
 - [ ] All `SemanticCategory` and `SemanticEntity` values mapped
 - [ ] Naming rules clearly defined with regex
-- [ ] Reserved keywords list defined (full, chained, deep, temp, etc.)
+- [ ] Max depth enforced (no more than 3 parts)
 - [ ] User documentation (`CAPTURE-SCHEMA.md`) written and reviewed
 - [ ] Template `.scm` file created
 - [ ] Team review meeting completed with approval
