@@ -697,34 +697,13 @@
 ) @reference.call.generic
 
 ; Method calls with receiver tracking
+; Complete capture - extractor derives method name, receiver, property chain
 (call_expression
   function: (member_expression
     object: (_) @reference.variable
-    property: (property_identifier) @reference.call
+    property: (property_identifier)
   )
-) @reference.call.full
-
-; Chained method calls (2 levels)
-(call_expression
-  function: (member_expression
-    object: (member_expression
-      object: (_) @reference.variable.base
-      property: (property_identifier) @reference.property.prop1
-    ) @reference.variable.chain
-    property: (property_identifier) @reference.call.chained
-  )
-) @reference.call.chained
-
-; Deep property chains (3+ levels)
-(call_expression
-  function: (member_expression
-    object: (member_expression
-      object: (member_expression) @reference.variable.deep
-      property: (property_identifier) @reference.property.prop2
-    ) @reference.variable.chain2
-    property: (property_identifier) @reference.call.deep
-  )
-) @reference.call.deep
+) @reference.call
 
 ; Constructor calls
 (new_expression
