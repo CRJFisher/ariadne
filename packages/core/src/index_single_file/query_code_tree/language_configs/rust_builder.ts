@@ -1059,25 +1059,18 @@ export const RUST_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
     },
   ],
 
+  // Re-exports (pub use)
   [
-    "import.import.declaration",
+    "export.reexport",
     {
       process: (
         capture: CaptureNode,
         builder: DefinitionBuilder,
         context: ProcessingContext
       ) => {
-        const import_path = extract_use_path(capture);
-        const is_wildcard = is_wildcard_import(capture);
-
-        builder.add_import({
-          symbol_id: `import:${capture.location.file_path}:${capture.location.start_line}:${capture.text}` as SymbolId,
-          name: capture.text,
-          location: capture.location,
-          scope_id: context.get_scope_id(capture.location),
-          import_path,
-          import_kind: is_wildcard ? "namespace" : "named",
-        });
+        // Re-exports are handled through the import system
+        // The visibility_modifier indicates it's exported
+        // Individual imported names will be captured separately
       },
     },
   ],

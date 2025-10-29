@@ -232,6 +232,11 @@ export function extract_implements(node: SyntaxNode): SymbolName[] {
 export function extract_access_modifier(
   node: SyntaxNode
 ): "public" | "private" | "protected" | undefined {
+  // Check if this is a private field/method using # syntax
+  if (node.type === "private_property_identifier" || node.text.startsWith("#")) {
+    return "private";
+  }
+
   const parent = node.parent;
   if (parent) {
     for (const child of parent.children || []) {

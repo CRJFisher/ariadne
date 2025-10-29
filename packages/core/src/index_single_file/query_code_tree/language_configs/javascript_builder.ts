@@ -184,7 +184,7 @@ export function find_containing_callable(capture: CaptureNode): SymbolId {
       node.type === "arrow_function" ||
       node.type === "method_definition"
     ) {
-      const nameNode = node.childForFieldName?.("name");
+      const nameNode = node.childForFieldName("name");
 
       if (node.type === "method_definition") {
         const methodName = nameNode ? nameNode.text : "anonymous";
@@ -528,7 +528,7 @@ function find_commonjs_export_for_symbol(
  * Extract return type from function/method node
  */
 export function extract_return_type(node: SyntaxNode): SymbolName | undefined {
-  const returnType = node.childForFieldName?.("return_type");
+  const returnType = node.childForFieldName("return_type");
   if (returnType) {
     return returnType.text as SymbolName;
   }
@@ -539,7 +539,7 @@ export function extract_return_type(node: SyntaxNode): SymbolName | undefined {
  * Extract parameter type
  */
 export function extract_parameter_type(node: SyntaxNode): SymbolName | undefined {
-  const typeNode = node.childForFieldName?.("type");
+  const typeNode = node.childForFieldName("type");
   if (typeNode) {
     return typeNode.text as SymbolName;
   }
@@ -615,7 +615,7 @@ export function extract_property_type(node: SyntaxNode): SymbolName | undefined 
  * Extract type annotation
  */
 export function extract_type_annotation(node: SyntaxNode): SymbolName | undefined {
-  const typeAnnotation = node.childForFieldName?.("type");
+  const typeAnnotation = node.childForFieldName("type");
   if (typeAnnotation) {
     return typeAnnotation.text as SymbolName;
   }
@@ -626,8 +626,14 @@ export function extract_type_annotation(node: SyntaxNode): SymbolName | undefine
  * Extract initial value
  */
 export function extract_initial_value(node: SyntaxNode): string | undefined {
+  // If node is an identifier, check parent for value/init field
+  let targetNode = node;
+  if (node.type === "identifier" || node.type === "property_identifier" || node.type === "private_property_identifier") {
+    targetNode = node.parent || node;
+  }
+
   const valueNode =
-    node.childForFieldName?.("value") || node.childForFieldName?.("init");
+    targetNode.childForFieldName("value") || targetNode.childForFieldName("init");
   if (valueNode) {
     return valueNode.text;
   }
@@ -641,7 +647,7 @@ export function extract_initial_value(node: SyntaxNode): string | undefined {
 export function extract_default_value(node: SyntaxNode): string | undefined {
   // Check if parent is assignment_pattern (e.g., param = defaultValue)
   if (node.parent?.type === "assignment_pattern") {
-    const rightSide = node.parent.childForFieldName?.("right");
+    const rightSide = node.parent.childForFieldName("right");
     if (rightSide) {
       return rightSide.text;
     }
@@ -691,15 +697,15 @@ export function extract_original_name(
     return undefined;
   }
   // Check if this is an aliased import
-  const importClause = node.childForFieldName?.("import_clause");
+  const importClause = node.childForFieldName("import_clause");
   if (importClause) {
-    const namedImports = importClause.childForFieldName?.("named_imports");
+    const namedImports = importClause.childForFieldName("named_imports");
     if (namedImports) {
       for (const child of namedImports.children || []) {
         if (child.type === "import_specifier") {
-          const alias = child.childForFieldName?.("alias");
+          const alias = child.childForFieldName("alias");
           if (alias?.text === local_name) {
-            const name = child.childForFieldName?.("name");
+            const name = child.childForFieldName("name");
             return name?.text as SymbolName;
           }
         }
@@ -713,9 +719,9 @@ export function extract_original_name(
  * Check if this is a default import
  */
 export function is_default_import(node: SyntaxNode, name: SymbolName): boolean {
-  const importClause = node.childForFieldName?.("import_clause");
+  const importClause = node.childForFieldName("import_clause");
   if (importClause) {
-    const defaultImport = importClause.childForFieldName?.("default");
+    const defaultImport = importClause.childForFieldName("default");
     return defaultImport?.text === name;
   }
   return false;
@@ -725,10 +731,11 @@ export function is_default_import(node: SyntaxNode, name: SymbolName): boolean {
  * Check if this is a namespace import
  */
 export function is_namespace_import(node: SyntaxNode): boolean {
-  const importClause = node.childForFieldName?.("import_clause");
+  // Find import_clause child (may not have a field name)
+  const importClause = node.children.find(c => c.type === "import_clause");
   if (importClause) {
-    const namespaceImport =
-      importClause.childForFieldName?.("namespace_import");
+    // Check if it contains a namespace_import child
+    const namespaceImport = importClause.children.find(c => c.type === "namespace_import");
     return namespaceImport !== undefined;
   }
   return false;
@@ -738,11 +745,11 @@ export function is_namespace_import(node: SyntaxNode): boolean {
  * Extract extends classes
  */
 export function extract_extends(node: SyntaxNode): SymbolName[] {
-  const heritage = node.childForFieldName?.("heritage");
+  const heritage = node.childForFieldName("heritage");
   if (heritage) {
     const superclass =
-      heritage.childForFieldName?.("superclass") ||
-      heritage.childForFieldName?.("parent");
+      heritage.childForFieldName("superclass") ||
+      heritage.childForFieldName("parent");
     if (superclass) {
       return [superclass.text as SymbolName];
     }
