@@ -119,11 +119,11 @@ COMMON PATTERNS (use as classification):
 - "dynamic/indirect method call"
 
 INSTRUCTIONS:
-- Use tools freely (Read, Grep, Glob) to thoroughly investigate
+- Thoroughly investigate
 - Search the codebase for calls to this function
 - Take multiple turns to understand the full picture
 - Be specific about what you find
-- When done investigating, say "Investigation complete" and I'll ask you to summarize`;
+- When done investigating, summarize your findings in full detail`;
 
   // Phase 2: Extraction prompt - Get structured JSON output
   const extraction_prompt = `Based on your investigation, provide a structured summary in JSON format.

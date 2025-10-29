@@ -1,5 +1,13 @@
 [
   {
+    "name": "initialize",
+    "file_path": "packages/core/src/project/project.ts",
+    "line": 126,
+    "signature": "async initialize(root_folder_abs_path?: FilePath, excluded_folders?: string[]): Promise<void>",
+    "detected_at_line": 126,
+    "reasoning": "Correctly identified as entry point. Initialize the project with a root folder and optional exclusions"
+  },
+  {
     "name": "get_call_graph",
     "file_path": "packages/core/src/project/project.ts",
     "line": 395,

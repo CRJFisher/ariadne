@@ -1,1 +1,48 @@
-[]
+[
+  {
+    "name": "update_file",
+    "file_path": "packages/core/src/project/project.ts",
+    "line": 156,
+    "signature": "update_file(file_id: FilePath, content: string): void",
+    "triage_analysis": {
+      "why_missed": "Method calls like `this.definitions.update_file()` incorrectly create fallback function-type CallReferences that resolve via simple name lookup, finding `Project.update_file` in class scope and marking it as called.",
+      "existing_task_fixes": [],
+      "suggested_new_task_fix": "Fix call resolution to prevent method calls on objects (e.g., `this.definitions.update_file()`) from creating fallback function-type CallReferences; method syntax should only resolve via type-based method lookup, not lexical scope name resolution."
+    }
+  },
+  {
+    "name": "remove_file",
+    "file_path": "packages/core/src/project/project.ts",
+    "line": 306,
+    "signature": "remove_file(file_id: FilePath): void",
+    "triage_analysis": {
+      "why_missed": "The semantic index creates duplicate function call references (without receiver context) for method calls like `this.definitions.remove_file()`. These function call references incorrectly resolve to `Project.remove_file` itself in lexical scope, marking it as called and excluding it from entry points.",
+      "existing_task_fixes": [],
+      "suggested_new_task_fix": "Fix tree-sitter queries or reference builder to only create method call references (with receiver context) for method invocations, not additional function call references that lack receiver context and resolve incorrectly."
+    }
+  },
+  {
+    "name": "get_dependents",
+    "file_path": "packages/core/src/project/project.ts",
+    "line": 455,
+    "signature": "get_dependents(file_id: FilePath): Set<FilePath>",
+    "triage_analysis": {
+      "why_missed": "Tree-sitter captures create duplicate references for the same call: the property_identifier node 'get_dependents' is misclassified as a FUNCTION_CALL (instead of METHOD_CALL) because determine_reference_kind() calls is_method_call() on a property_identifier node rather than its call_expression parent. This triggers lexical scope resolution which finds the method definition itself, creating a false self-reference that marks get_dependents as 'called' and excludes it from entry points.",
+      "existing_task_fixes": [],
+      "suggested_new_task_fix": "Fix determine_reference_kind() in reference_builder.ts to check parent/grandparent node types when classifying property_identifier captures, ensuring method calls in property chains are correctly identified as METHOD_CALL instead of FUNCTION_CALL to prevent false self-references."
+    }
+  },
+  {
+    "name": "clear",
+    "file_path": "packages/core/src/project/project.ts",
+    "line": 554,
+    "signature": "clear(): void",
+    "triage_analysis": {
+      "why_missed": "Method calls to Map.clear() and registry.clear() inside Project.clear() (lines 555-563) were incorrectly resolved to Project.clear() itself, causing the entry point detector to think Project.clear() is called somewhere when it actually isn't.",
+      "existing_task_fixes": [
+        "task-155"
+      ],
+      "suggested_new_task_fix": "Create a task to detect built-in types (Map, Set, Array) and prevent their method calls from being resolved to user-defined methods with the same name, either by excluding built-in method calls from get_all_referenced_symbols() or implementing minimal built-in type stubs."
+    }
+  }
+]

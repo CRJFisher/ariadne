@@ -19,7 +19,7 @@ import type {
   APIMissingFromDetection,
   FunctionEntry,
 } from "./types.js";
-import { load_json, two_phase_query, find_most_recent_analysis } from "./utils.js";
+import { load_json, two_phase_query, find_most_recent_analysis, save_json } from "./utils.js";
 
 /**
  * Analyze why an API method was missed
@@ -166,6 +166,17 @@ async function main() {
   const missing_from_detection: APIMissingFromDetection[] = [];
   // const internals_exposed: APIInternalsExposed[] = [];
 
+  const correctly_detected_output_file = path.join(
+    __dirname,
+    "results",
+    "api_correctly_detected.json"
+  );
+  const missing_api_output_file = path.join(
+    __dirname,
+    "results",
+    "api_missing_from_detection.json"
+  );
+
   // Check each API method
   for (const api_method of api_methods) {
     const detected = project_entry_points.find(
@@ -183,11 +194,13 @@ async function main() {
         detected_at_line: detected.start_line,
         reasoning: `Correctly identified as entry point. ${api_method.description}`,
       });
+      await save_json(correctly_detected_output_file, correctly_detected);
       console.error(`✅ ${api_method.name} - correctly detected`);
     } else {
       // Analyze why it was missed
       const analysis_result = await analyze_missing_api(api_method);
       missing_from_detection.push(analysis_result);
+      await save_json(missing_api_output_file, missing_from_detection);
       console.error(`❌ ${api_method.name} - MISSING from detection`);
 
       // Rate limit
