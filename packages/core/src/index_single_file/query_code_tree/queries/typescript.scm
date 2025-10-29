@@ -87,7 +87,6 @@
 ; Type alias definitions
 (type_alias_declaration
   name: (type_identifier) @definition.type_alias
-  value: (_) @type.type_alias
 ) @definition.type_alias
 
 ; Enum definitions
@@ -97,13 +96,12 @@
 
 ; Enum members
 (enum_body
-  (property_identifier) @definition.enum.member
+  (property_identifier) @definition.enum_member
 )
 
 (enum_body
   (enum_assignment
-    name: (property_identifier) @definition.enum.member
-    value: (_) @definition.enum_member.value
+    name: (property_identifier) @definition.enum_member
   )
 )
 
@@ -115,82 +113,14 @@
 ; Type parameter definitions
 (type_parameter
   (type_identifier) @definition.type_parameter
-  constraint: (constraint
-    (_) @type.type_constraint
-  )?
 ) @definition.type_parameter
 
 ;; ==============================================================================
 ;; TYPE ANNOTATIONS AND GENERICS
 ;; ==============================================================================
 
-; Generic type parameters on functions
-(function_declaration
-  name: (identifier) @definition.function
-  type_parameters: (type_parameters) @type.type_parameters
-) @scope.function
-
-; Generic type parameters on classes
-(class_declaration
-  name: (type_identifier) @type.type_reference
-  type_parameters: (type_parameters) @type.type_parameters
-) @type.type_parameter
-
-(abstract_class_declaration
-  name: (type_identifier) @type.type_reference
-  type_parameters: (type_parameters) @type.type_parameters
-) @type.type_parameter
-
-; Generic type parameters on interfaces
-(interface_declaration
-  name: (type_identifier) @definition.interface
-  type_parameters: (type_parameters) @type.type_parameters
-) @scope.interface
-
-; Generic type parameters on methods
-(method_definition
-  name: (property_identifier) @definition.method
-  type_parameters: (type_parameters) @type.type_parameters
-) @scope.method
-
-; Return type annotations
-(function_declaration
-  name: (identifier) @definition.function
-  return_type: (type_annotation
-    (_) @type.type_annotation
-  )
-) @scope.function
-
-(method_definition
-  name: (property_identifier) @definition.method
-  return_type: (type_annotation
-    (_) @type.type_annotation
-  )
-) @scope.method
-
-; Arrow functions with return types
-; Note: Removed @definition.function to avoid duplicates with variable assignments
-(arrow_function
-  return_type: (type_annotation
-    (_) @type.type_annotation
-  )
-) @type.function
-
-; Property type annotations (interface)
-(property_signature
-  name: (property_identifier) @definition.property
-  type: (type_annotation
-    (_) @type.type_annotation
-  )
-) @type.type_annotation
-
-; Field type annotations (class)
-(public_field_definition
-  name: (property_identifier) @definition.field
-  type: (type_annotation
-    (_) @type.type_annotation
-  )
-) @definition.field
+; Note: Type parameters and return type annotations are extracted by builders
+; from the complete node captures. We don't capture them separately to avoid fragments.
 
 ; Variable declarations - simple pattern that matches all variable names
 ; This ensures variables are captured even when they have type annotations
@@ -236,14 +166,14 @@
 ; These create both a parameter AND an implicit class property
 (required_parameter
   (accessibility_modifier)
-  pattern: (identifier) @definition.parameter @definition.field.param_property
+  pattern: (identifier) @definition.parameter @definition.field
 )
 
 ; Constructor parameter properties (readonly)
 ; These create both a parameter AND an implicit class property
 (required_parameter
   "readonly"
-  pattern: (identifier) @definition.parameter @definition.field.param_property
+  pattern: (identifier) @definition.parameter @definition.field
 )
 
 ; Class decorators (decorator first, then target)
@@ -332,7 +262,7 @@
 ; Arrow functions assigned to variables (captures both assignment and function definition)
 (variable_declarator
   name: (identifier) @definition.function @assignment.variable
-  value: (arrow_function) @assignment.variable.arrow
+  value: (arrow_function)
 ) @assignment.variable
 
 ; Variable declarations with assignments
@@ -346,16 +276,16 @@
   name: (identifier) @definition.variable @assignment.variable
   value: (new_expression
     constructor: (identifier) @assignment.constructor
-  ) @assignment.variable.constructor
+  )
 ) @assignment.constructor
 
 ; Destructuring
 (variable_declarator
-  name: (object_pattern) @definition.variable.destructured
+  name: (object_pattern) @definition.variable
 )
 
 (variable_declarator
-  name: (array_pattern) @definition.variable.destructured
+  name: (array_pattern) @definition.variable
 )
 
 ; Class definitions with inheritance and implements
@@ -392,7 +322,7 @@
 ) @scope.method
 
 (method_definition
-  name: (private_property_identifier) @definition.method.private
+  name: (private_property_identifier) @definition.method
 )
 
 ; Abstract method signatures in classes (not interfaces)
@@ -401,7 +331,7 @@
 (abstract_class_declaration
   body: (class_body
     (abstract_method_signature
-      name: (property_identifier) @definition.method.abstract
+      name: (property_identifier) @definition.method
     )
   )
 )
@@ -410,7 +340,7 @@
 (class_declaration
   body: (class_body
     (abstract_method_signature
-      name: (property_identifier) @definition.method.abstract
+      name: (property_identifier) @definition.method
     )
   )
 )
@@ -430,7 +360,7 @@
 ) @definition.field
 
 (public_field_definition
-  name: (private_property_identifier) @definition.field.private
+  name: (private_property_identifier) @definition.field
 )
 
 ; Parameters - Apply to ALL callables (functions, methods, interface method signatures)
@@ -460,13 +390,13 @@
 
 ; Optional parameters (contain ? token)
 (optional_parameter
-  pattern: (identifier) @definition.parameter.optional
+  pattern: (identifier) @definition.parameter
 )
 
 ; Rest parameters (...args)
 ; Note: rest_pattern does NOT have a field name for the identifier child
 (rest_pattern
-  (identifier) @definition.parameter.rest
+  (identifier) @definition.parameter
 )
 
 ; Catch clause parameter
@@ -514,23 +444,22 @@
 ; For simple imports (no alias): captures the name
 ; For aliased imports: captures the alias, handler extracts original name
 (import_specifier
-  name: (identifier) @_import_name
-  alias: (identifier) @definition.import.named
+  alias: (identifier) @definition.import
 )
 
 (import_specifier
-  name: (identifier) @definition.import.named
+  name: (identifier) @definition.import
   !alias
 )
 
 ; Default imports
 (import_clause
-  (identifier) @definition.import.default
+  (identifier) @definition.import
 )
 
 ; Namespace imports
 (namespace_import
-  (identifier) @definition.import.namespace
+  (identifier) @definition.import
 )
 
 ;; ==============================================================================
@@ -539,58 +468,14 @@
 ;; Re-exports create ImportDefinitions (for chain resolution) but do NOT create
 ;; local bindings in scope_to_definitions.
 
-; Re-export with alias: export { foo as bar } from 'module'
-; Note: This must come BEFORE the non-aliased pattern to match correctly
+; Re-export patterns: export { foo } from 'module'
+; Capture complete export_statement, handler extracts details
 (export_statement
   (export_clause
-    (export_specifier
-      name: (identifier) @import.reexport.named.original
-      alias: (identifier) @import.reexport.named.alias
-    )
+    (export_specifier)
   )
-  source: (string) @import.reexport.source.aliased
-)
-
-; Re-export named as default: export { foo as default } from 'module'
-(export_statement
-  (export_clause
-    (export_specifier
-      name: (identifier) @import.reexport.as_default.original
-      alias: (identifier) @import.reexport.as_default.alias
-      (#eq? @import.reexport.as_default.alias "default")
-    )
-  )
-  source: (string) @import.reexport.as_default.source
-)
-
-; Re-export default as named: export { default as foo } from 'module'
-(export_statement
-  (export_clause
-    (export_specifier
-      name: (identifier) @import.reexport.default.original
-      (#eq? @import.reexport.default.original "default")
-      alias: (identifier) @import.reexport.default.alias
-    )
-  )
-  source: (string) @import.reexport.default.source
-)
-
-; Re-export named (no alias): export { foo } from 'module'
-; Must check in handler that export_specifier does NOT have an alias field
-(export_statement
-  (export_clause
-    (export_specifier
-      name: (identifier) @import.reexport.named.simple
-    )
-  )
-  source: (string) @import.reexport.named.simple.source
-)
-
-; Namespace re-export with alias: export * as utils from 'module'
-(export_statement
-  (namespace_export (identifier) @import.reexport.namespace.alias)
-  source: (string) @import.reexport.namespace.aliased.source
-)
+  source: (string)
+) @import.reexport
 
 ;; ==============================================================================
 ;; EXPORTS - Standard JavaScript exports
@@ -601,32 +486,9 @@
   name: (identifier) @export.variable
 )
 
-(export_specifier
-  name: (identifier) @export.variable.source
-  alias: (identifier) @export.variable.alias
-)
-
 ; Default exports
 (export_statement
   (identifier) @export.variable
-)
-
-(export_statement
-  declaration: (function_declaration
-    name: (identifier) @export.variable.function
-  )
-)
-
-(export_statement
-  declaration: (class_declaration
-    name: (type_identifier) @export.variable.class
-  )
-)
-
-(export_statement
-  declaration: (abstract_class_declaration
-    name: (type_identifier) @export.variable.class
-  )
 )
 
 ; Export declarations
@@ -649,32 +511,21 @@
 ; Export function declarations
 (export_statement
   declaration: (function_declaration
-    name: (identifier) @export.variable
+    name: (identifier) @export.function
   )
 )
 
 ; Export class declarations
 (export_statement
   declaration: (class_declaration
-    name: (type_identifier) @export.variable
+    name: (type_identifier) @export.class
   )
 )
 
 (export_statement
   declaration: (abstract_class_declaration
-    name: (type_identifier) @export.variable
+    name: (type_identifier) @export.class
   )
-)
-
-; Namespace exports (export * from 'module')
-(export_statement
-  source: (string) @export.namespace.source
-)
-
-; Namespace exports with alias (export * as ns from 'module')
-(export_statement
-  (namespace_export (identifier) @export.namespace.alias)
-  source: (string) @export.namespace.source.aliased
 )
 
 ; NOTE: Re-exports (export { foo } from 'module') are now handled by the
@@ -693,7 +544,7 @@
 ; Generic function calls (TypeScript)
 (call_expression
   function: (identifier) @reference.call.generic
-  type_arguments: (type_arguments) @reference.call.type_args
+  type_arguments: (type_arguments)
 ) @reference.call.generic
 
 ; Method calls with receiver tracking
@@ -713,12 +564,12 @@
 ; Constructor calls with type arguments (TypeScript)
 (new_expression
   constructor: (identifier) @reference.constructor.generic
-  type_arguments: (type_arguments) @reference.constructor.type_args
+  type_arguments: (type_arguments)
 ) @reference.call.generic
 
 ; Property access
 (member_expression
-  object: (identifier) @reference.variable
+  object: (identifier) @reference.variable.base
   property: (property_identifier) @reference.property
 ) @reference.member_access
 
@@ -738,14 +589,14 @@
 (call_expression
   function: (member_expression
     object: (identifier) @reference.type_reference
-    property: (property_identifier) @modifier.visibility)
+    property: (property_identifier))
   (#match? @reference.type_reference "^[A-Z]")) @reference.call
 
 ; Instance method call - object is lowercase/instance
 (call_expression
   function: (member_expression
     object: (identifier) @reference.variable
-    property: (property_identifier) @reference.call)
+    property: (property_identifier))
   (#not-match? @reference.variable "^[A-Z]")) @reference.call
 
 ; Type references (TypeScript)
@@ -753,8 +604,8 @@
 
 (generic_type
   name: (type_identifier) @reference.type.generic
-  type_arguments: (type_arguments) @reference.type.args
-) @reference.type_reference.generic
+  type_arguments: (type_arguments)
+)
 
 ; Assignments (capture both sides)
 (assignment_expression
@@ -767,7 +618,7 @@
     object: (identifier) @reference.variable.object
     property: (property_identifier) @reference.property.assign
   ) @reference.member_access.assign
-  right: (_) @reference.variable.source.member
+  right: (_) @reference.variable.source
 ) @assignment.property
 
 ; Return statements
@@ -796,10 +647,7 @@
 (super) @reference.super
 
 ; Type assertions (TypeScript - only 'as' expressions, angle brackets parse as JSX)
-(as_expression
-  (_) @reference.variable
-  (_) @type.type_assertion
-) @type.type_assertion
+(as_expression) @type.type_assertion
 
 ; Typeof queries (TypeScript)
 (type_query
