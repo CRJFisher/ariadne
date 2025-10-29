@@ -47,12 +47,35 @@ Refactor Python query file to use complete captures (call node, not identifier),
 
 ---
 
+## Implementation Steps
+
+1. Update `python.scm` - remove duplicates, use complete `call` captures
+2. Verify `python_metadata.ts` extractors handle `call` nodes (not `identifier`)
+3. Update `python_builder_config.ts` if needed
+4. Update test files
+5. Run validation
+
+---
+
 ## Acceptance Criteria
 
-- [ ] Validation passes
-- [ ] Python semantic index tests pass
+- [ ] `python.scm` has no duplicate/fragment captures
+- [ ] All captures on complete nodes (`call`, not `identifier` in attribute)
+- [ ] Extractors (`python_metadata.ts`) work with complete captures
+- [ ] All Python semantic index tests pass
+- [ ] Validation passes with 0 errors, 0 warnings
 - [ ] Method calls resolved correctly
 - [ ] Class/instance method differentiation works
+
+---
+
+## Files Modified
+
+- `queries/python.scm`
+- `language_configs/python_metadata.ts` (verify/update)
+- `language_configs/python_builder_config.ts` (verify)
+- `semantic_index.python.test.ts`
+- `python_metadata.test.ts`
 
 ---
 

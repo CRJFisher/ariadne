@@ -56,12 +56,35 @@ Refactor Rust query file to use complete captures (call_expression, not field_id
 
 ---
 
+## Implementation Steps
+
+1. Update `rust.scm` - remove duplicates, use complete `call_expression` captures
+2. Verify `rust_metadata.ts` extractors handle both `.` and `::` syntax
+3. Update `rust_builder.ts` if needed
+4. Update test files
+5. Run validation
+
+---
+
 ## Acceptance Criteria
 
-- [ ] Validation passes
-- [ ] Rust semantic index tests pass
-- [ ] Both `.` and `::` calls handled
+- [ ] `rust.scm` has no duplicate/fragment captures
+- [ ] All captures on complete nodes (`call_expression`, not `field_identifier`)
+- [ ] Extractors (`rust_metadata.ts`) work with complete captures
+- [ ] All Rust semantic index tests pass
+- [ ] Validation passes with 0 errors, 0 warnings
+- [ ] Both `.` and `::` calls handled correctly
 - [ ] Trait method resolution works
+
+---
+
+## Files Modified
+
+- `queries/rust.scm`
+- `language_configs/rust_metadata.ts` (verify/update)
+- `language_configs/rust_builder.ts` (verify)
+- `semantic_index.rust.test.ts`
+- `rust_metadata.test.ts`
 
 ---
 
