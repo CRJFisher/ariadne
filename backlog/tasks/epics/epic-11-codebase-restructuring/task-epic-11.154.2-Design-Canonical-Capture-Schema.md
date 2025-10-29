@@ -377,7 +377,7 @@ export function get_capture_errors(capture_name: string): string[] {
 
 ### 2. User-Facing Documentation
 
-**File**: `packages/core/docs/CAPTURE-SCHEMA.md`
+**File**: `packages/core/src/index_single_file/query_code_tree/queries/CAPTURE-SCHEMA.md`
 
 ```markdown
 # Tree-Sitter Capture Schema
@@ -661,7 +661,7 @@ Create `CAPTURE-SCHEMA.md`:
 ;
 ; Required captures marked with [REQUIRED]
 ; Optional captures marked with [OPTIONAL]
-; See packages/core/docs/CAPTURE-SCHEMA.md for details
+; See CAPTURE-SCHEMA.md in this directory for details
 
 ; ============================================================================
 ; SCOPES [REQUIRED]
