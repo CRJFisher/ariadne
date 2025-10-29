@@ -30,6 +30,117 @@ This task translates that analysis into a formal schema that will:
 
 ---
 
+## Core Design Principle: Complete Captures
+
+### The Problem with Fragment Captures
+
+**Current problematic pattern** (creates duplicates):
+```scheme
+(call_expression
+  function: (member_expression
+    property: (property_identifier) @reference.call     ; Fragment 1
+  )
+) @reference.call.full                                  ; Fragment 2
+```
+
+This creates TWO captures for ONE syntactic construct, leading to processing ambiguity.
+
+### The Solution: Complete Captures
+
+**Capture the entire syntactic unit ONCE**, then extract multiple semantic entities from it:
+
+```scheme
+(call_expression
+  function: (member_expression
+    object: (_) @reference.variable
+    property: (property_identifier)
+  )
+) @reference.call                                       ; Single complete capture
+```
+
+The builder/extractor then extracts:
+- Call reference (the method call itself)
+- Receiver location (from member_expression object field)
+- Method name (from property_identifier via extract_call_name())
+- Property chain (via extract_property_chain())
+
+**One capture in → multiple entities out**
+
+### Examples Across Entity Types
+
+#### Method Definitions
+
+**Complete capture**:
+```scheme
+(method_definition
+  name: (property_identifier) @definition.method
+  parameters: (formal_parameters) @_params
+  body: (statement_block) @scope.method.body
+)
+```
+
+**Builder extracts**:
+- Method definition (name, location, scope_id)
+- Parameters (from traversing formal_parameters node)
+- Return type annotation (if present in node)
+- Body scope (from scope capture)
+
+#### Function Calls
+
+**Complete capture**:
+```scheme
+(call_expression) @reference.call
+```
+
+**Extractor extracts** (via metadata extractors):
+- Call reference (name, location)
+- Receiver location (if method call)
+- Property chain (for chained calls)
+- Call type (function vs method vs constructor)
+
+#### Class Definitions
+
+**Complete capture**:
+```scheme
+(class_declaration
+  name: (identifier) @definition.class
+  body: (class_body) @scope.class.body
+)
+```
+
+**Builder extracts**:
+- Class definition (name, location)
+- Superclass (if present in heritage clause)
+- Methods (accumulated from @definition.method captures within class scope)
+- Properties (accumulated from @definition.property captures)
+- Decorators (accumulated from @decorator.class captures)
+
+### How Validation Enforces This
+
+**Validation checks**:
+
+1. **No fragment captures allowed** - Only complete syntactic units in schema
+   - ❌ `@reference.call` on `property_identifier` → NOT in schema → invalid
+   - ✅ `@reference.call` on `call_expression` → in schema → valid
+
+2. **No duplicate qualifiers** - `.full`, `.chained`, `.deep` won't be in schema
+   - Because we capture complete units, there's no need for these
+
+3. **One-to-many relationship** - One capture can produce many entities
+   - Schema defines what we capture (syntactic)
+   - Builders define what we extract (semantic)
+   - Clear separation of concerns
+
+### Benefits
+
+✅ **Eliminates duplicates** - One capture per construct
+✅ **Clear intent** - Capture complete syntactic units
+✅ **Flexible extraction** - Builders can extract whatever they need
+✅ **Maintainable** - Adding new extracted data doesn't require new captures
+✅ **Testable** - Easy to validate "one capture per construct"
+
+---
+
 ## Deliverables
 
 ### 1. Schema Implementation
@@ -40,10 +151,22 @@ This task translates that analysis into a formal schema that will:
 /**
  * Canonical capture schema for all tree-sitter query files
  *
- * Uses POSITIVE validation:
- * - Required captures (must exist in every language)
- * - Optional captures (allowed language-specific features)
- * - Everything else is implicitly invalid
+ * DESIGN PRINCIPLES:
+ *
+ * 1. COMPLETE CAPTURES - Capture entire syntactic units, not fragments
+ *    - Capture the full method_definition node, not method name + parameters separately
+ *    - Capture the full call_expression node, not property_identifier + call separately
+ *    - One capture → multiple semantic entities extracted by builders
+ *
+ * 2. POSITIVE VALIDATION - Only explicitly allowed captures are valid
+ *    - Required captures (must exist in every language)
+ *    - Optional captures (language-specific features)
+ *    - Everything else is implicitly invalid
+ *
+ * 3. BUILDER EXTRACTION - Builders extract multiple entities from single captures
+ *    - @definition.method capture → method def + parameters + return type
+ *    - @reference.call capture → call ref + receiver + property chain
+ *    - Eliminates duplicate/overlapping captures
  *
  * This approach is closed and maintainable - we explicitly list what IS allowed,
  * rather than trying to enumerate everything that ISN'T allowed.
@@ -103,6 +226,26 @@ export interface CapturePattern {
    * Example usage in .scm file
    */
   example: string;
+
+  /**
+   * Expected node types for this capture across languages
+   * Used to enforce "complete capture" principle
+   *
+   * Example for @reference.call:
+   * - TypeScript/JavaScript: call_expression
+   * - Python: call
+   * - Rust: call_expression
+   *
+   * Validation can warn if capture targets fragment nodes like:
+   * - property_identifier (should be on parent call_expression)
+   * - identifier in attribute context (should be on parent call)
+   */
+  expected_node_types?: {
+    typescript?: string[];
+    javascript?: string[];
+    python?: string[];
+    rust?: string[];
+  };
 
   /**
    * Language-specific notes (if any)
@@ -204,12 +347,18 @@ export const CANONICAL_CAPTURE_SCHEMA: CaptureSchema = {
     {
       pattern: /^@reference\.call$/,
       description:
-        "Function/method call - SINGLE capture on call_expression node only",
+        "Function/method call - SINGLE capture on complete call node",
       category: SemanticCategory.REFERENCE,
       entity: SemanticEntity.CALL,
       example: "(call_expression) @reference.call",
+      expected_node_types: {
+        typescript: ["call_expression"],
+        javascript: ["call_expression"],
+        python: ["call"],
+        rust: ["call_expression"]
+      },
       notes:
-        "DO NOT capture both property_identifier AND call_expression. Use extractors to get method name.",
+        "Captures complete call node. Extractors derive: method name, receiver, property chain, call type. DO NOT capture fragments (property_identifier, identifier).",
     },
     {
       pattern: /^@reference\.variable$/,
@@ -373,6 +522,44 @@ export function get_capture_errors(capture_name: string): string[] {
 
   return errors;
 }
+
+/**
+ * Get recommendations for improving a capture (node type checking)
+ *
+ * Note: Full node type validation requires parsing the .scm file context,
+ * which is complex. This provides heuristic checks based on common patterns.
+ */
+export function get_capture_recommendations(
+  capture_name: string,
+  capture_context: string
+): string[] {
+  const recommendations: string[] = [];
+
+  // Check for fragment capture patterns (heuristic)
+  if (capture_name === "@reference.call") {
+    // Look for problematic patterns in context
+    if (capture_context.includes("property_identifier") ||
+        capture_context.includes("field_identifier") ||
+        (capture_context.includes("identifier") && capture_context.includes("attribute"))) {
+      recommendations.push(
+        "WARNING: @reference.call should capture complete call node (call_expression/call), " +
+        "not property/field/attribute identifier. Move capture to parent call node."
+      );
+    }
+  }
+
+  // Add more heuristic checks for other common fragment patterns
+  if (capture_name.startsWith("@definition.")) {
+    if (capture_context.includes("@" + capture_name.substring(1)) &&
+        !capture_context.includes("name:")) {
+      recommendations.push(
+        "Consider capturing at declaration level, not just name identifier."
+      );
+    }
+  }
+
+  return recommendations;
+}
 ```
 
 ### 2. User-Facing Documentation
@@ -468,6 +655,62 @@ Language-specific features:
 - `@definition.trait` - Trait definitions
 - `@definition.impl` - Impl blocks
 
+## Capture Philosophy: Complete Units, Builder Extraction
+
+### Capture Complete Syntactic Units
+
+Queries should capture **complete nodes**, not fragments:
+
+```scheme
+✅ GOOD - Capture complete call_expression
+(call_expression
+  function: (member_expression
+    object: (_) @reference.variable
+    property: (property_identifier)
+  )
+) @reference.call
+
+❌ BAD - Capture fragments (property_identifier AND call_expression)
+(call_expression
+  function: (member_expression
+    property: (property_identifier) @reference.call    ; Fragment 1
+  )
+) @reference.call.full                                 ; Fragment 2
+```
+
+### Builders Extract Multiple Entities
+
+**One capture produces multiple semantic entities:**
+
+`@reference.call` on `call_expression` → Extractor derives:
+- Call reference (name via extract_call_name())
+- Receiver location (via extract_call_receiver())
+- Property chain (via extract_property_chain())
+- Call type: function vs method (via is_method_call())
+
+`@definition.method` on method name → Builder accumulates:
+- Method definition
+- Parameters (from @definition.parameter captures in method scope)
+- Return type (from traversing method node's return type field)
+- Body scope (from @scope.method.body)
+- Decorators (from @decorator.method captures)
+
+### Division of Responsibility
+
+**Queries (.scm files)**:
+- Capture complete syntactic units
+- One capture per construct
+- Target top-level nodes (call_expression, method_definition, etc.)
+
+**Builders/Extractors (TypeScript)**:
+- Extract multiple semantic entities from single capture
+- Traverse node structure to find child data
+- Build complete definitions from accumulated captures
+
+This separation means: **Adding new extracted data doesn't require new captures**
+
+Example: If we want to extract JSDoc comments from methods, we update the builder, not the query.
+
 ## Validation Approach
 
 **Uses POSITIVE validation** - only explicitly listed captures are valid.
@@ -477,6 +720,7 @@ Any capture not in the required OR optional lists will be flagged as invalid dur
 ### Why This Approach?
 
 Instead of maintaining an ever-growing list of "prohibited" patterns, we explicitly define what IS allowed:
+
 - **Required captures**: Must exist in every language
 - **Optional captures**: Allowed language-specific features
 
