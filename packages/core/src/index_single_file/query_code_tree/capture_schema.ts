@@ -386,6 +386,111 @@ export const CANONICAL_CAPTURE_SCHEMA: CaptureSchema = {
       entity: SemanticEntity.CLASS, // impl block is like extending a class
       example: "(impl_item) @definition.impl)"
     },
+    {
+      pattern: /^@definition\.constant$/,
+      description: "Rust constant definition",
+      category: SemanticCategory.DEFINITION,
+      entity: SemanticEntity.VARIABLE,
+      example: "(const_item name: (identifier) @definition.constant)"
+    },
+    {
+      pattern: /^@definition\.macro$/,
+      description: "Rust macro definition",
+      category: SemanticCategory.DEFINITION,
+      entity: SemanticEntity.FUNCTION,
+      example: "(macro_definition name: (identifier) @definition.macro)"
+    },
+    {
+      pattern: /^@definition\.module$/,
+      description: "Rust module definition",
+      category: SemanticCategory.DEFINITION,
+      entity: SemanticEntity.MODULE,
+      example: "(mod_item name: (identifier) @definition.module)"
+    },
+    {
+      pattern: /^@definition\.(class|enum|function|interface)\.generic$/,
+      description: "Generic struct/enum/function/trait with type parameters",
+      category: SemanticCategory.DEFINITION,
+      entity: SemanticEntity.FUNCTION, // Varies
+      example: "(function_item type_parameters: (_) name: (identifier) @definition.function.generic)"
+    },
+    {
+      pattern: /^@definition\.method\.async$/,
+      description: "Async method definition",
+      category: SemanticCategory.DEFINITION,
+      entity: SemanticEntity.METHOD,
+      example: "(function_item (function_modifiers 'async') name: (identifier) @definition.method.async)"
+    },
+    {
+      pattern: /^@definition\.function\.closure$/,
+      description: "Closure expression",
+      category: SemanticCategory.DEFINITION,
+      entity: SemanticEntity.FUNCTION,
+      example: "(closure_expression) @definition.function.closure"
+    },
+    {
+      pattern: /^@definition\.parameter\.self$/,
+      description: "Rust self parameter",
+      category: SemanticCategory.DEFINITION,
+      entity: SemanticEntity.PARAMETER,
+      example: "(self_parameter) @definition.parameter.self"
+    },
+    {
+      pattern: /^@definition\.variable\.mut$/,
+      description: "Mutable variable definition",
+      category: SemanticCategory.DEFINITION,
+      entity: SemanticEntity.VARIABLE,
+      example: "(let_declaration (mutable_specifier) pattern: (identifier) @definition.variable.mut)"
+    },
+    {
+      pattern: /^@reference\.macro$/,
+      description: "Macro invocation",
+      category: SemanticCategory.REFERENCE,
+      entity: SemanticEntity.CALL,
+      example: "(macro_invocation macro: (identifier) @reference.macro)"
+    },
+    {
+      pattern: /^@reference\.variable\.borrowed$/,
+      description: "Borrowed reference (&)",
+      category: SemanticCategory.REFERENCE,
+      entity: SemanticEntity.VARIABLE,
+      example: "(reference_expression value: (_) @reference.variable.borrowed)"
+    },
+    {
+      pattern: /^@import\.declaration$/,
+      description: "Import/use declaration",
+      category: SemanticCategory.IMPORT,
+      entity: SemanticEntity.IMPORT,
+      example: "(use_declaration) @import.declaration"
+    },
+    {
+      pattern: /^@export\.(module|declaration)$/,
+      description: "Export module or re-export declaration",
+      category: SemanticCategory.EXPORT,
+      entity: SemanticEntity.MODULE,
+      example: "(mod_item (visibility_modifier) name: (identifier) @export.module)"
+    },
+    {
+      pattern: /^@scope\.block\.(unsafe|async)$/,
+      description: "Rust unsafe or async block",
+      category: SemanticCategory.SCOPE,
+      entity: SemanticEntity.BLOCK,
+      example: "(unsafe_block) @scope.block.unsafe"
+    },
+    {
+      pattern: /^@modifier\.(mutability|visibility)$/,
+      description: "Rust mutability or visibility modifier",
+      category: SemanticCategory.MODIFIER,
+      entity: SemanticEntity.VARIABLE,
+      example: "(mut_pattern) @modifier.mutability"
+    },
+    {
+      pattern: /^@decorator\.macro$/,
+      description: "Rust attribute macro",
+      category: SemanticCategory.DECORATOR,
+      entity: SemanticEntity.FUNCTION,
+      example: "(attribute_item) @decorator.macro"
+    },
 
     // Generic/Type-specific (TypeScript/Rust)
     {

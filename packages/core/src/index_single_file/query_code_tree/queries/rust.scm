@@ -5,8 +5,8 @@
 ;;
 ;; IMPORTANT PATTERN NOTES:
 ;; 1. Most identifiers are DIRECT CHILDREN, not named fields
-;;    ✓ Correct: (parameter (identifier) @capture)
-;;    ✗ Wrong:   (parameter pattern: (identifier) @capture)
+;;    ✓ Correct: (parameter (identifier) @definition.parameter)
+;;    ✗ Wrong:   (parameter pattern: (identifier) @definition.parameter)
 ;;
 ;; 2. Trait method signatures use function_signature_item (no body)
 ;;    Trait default methods use function_item (with body)
@@ -223,16 +223,8 @@
 ; Trait implementations
 (impl_item
   trait: (type_identifier) @reference.type_reference
-  type: (type_identifier) @reference.type
-) @reference.type_reference.impl
-
-; Trait implementations with generic type
-(impl_item
-  trait: (type_identifier) @reference.type_reference
-  type: (generic_type
-    type: (type_identifier) @reference.type.generic
-  )
-) @reference.type_reference.impl.generic
+  type: (_)
+)
 
 ; Async methods in trait implementations - capture all async methods
 (impl_item
@@ -301,7 +293,7 @@
 (trait_item
   body: (declaration_list
     (function_item
-      (identifier) @definition.method.default
+      (identifier) @definition.method
     )
   )
 )
@@ -320,7 +312,7 @@
   trait: (_)
   body: (declaration_list
     (type_item
-      name: (type_identifier) @definition.type_alias.impl
+      name: (type_identifier) @definition.type_alias
     )
   )
 )
@@ -384,32 +376,18 @@
 ; Closure expressions
 (closure_expression) @definition.function.closure
 
-; Async closures (experimental feature)
-; Pattern: |args| async { ... }
-(closure_expression
-  body: (async_block) @modifier.block
-) @definition.function.async_closure
-
-; Async move closures
-; Pattern: |args| async move { ... }
-(closure_expression
-  body: (async_block
-    "move" @modifier.reference
-  )
-) @definition.function.async_move_closure
-
 ; Closure parameters - simple identifiers
 (closure_expression
   parameters: (closure_parameters
-    (identifier) @definition.parameter.closure
+    (identifier) @definition.parameter
   )
 )
 
-; Closure parameters with type annotations - same structure as function parameters
+; Closure parameters with type annotations
 (closure_expression
   parameters: (closure_parameters
     (parameter
-      (identifier) @definition.parameter.closure
+      (identifier) @definition.parameter
     )
   )
 )
@@ -441,8 +419,8 @@
 ; Module definitions with body
 (mod_item
   name: (identifier) @definition.module
-  body: (declaration_list) @definition.function
-) @definition.function
+  body: (declaration_list)
+)
 
 ; Module declarations without body (external file)
 ; These reference modules in other files, so don't need body scopes
@@ -453,15 +431,15 @@
 
 ; Public module definitions with body
 (mod_item
-  (visibility_modifier) @definition.visibility
-  name: (identifier) @definition.module.public
+  (visibility_modifier)
+  name: (identifier) @export.module
   body: (declaration_list)
-) @definition.function
+)
 
 ; Public module declarations without body (external file)
 (mod_item
-  (visibility_modifier) @definition.visibility
-  name: (identifier) @definition.module.public
+  (visibility_modifier)
+  name: (identifier) @export.module
   !body
 )
 
@@ -477,8 +455,7 @@
 
 ; Constrained type parameters (e.g., T: Clone)
 (constrained_type_parameter
-  left: (type_identifier) @definition.type_parameter.constrained
-  bounds: (trait_bounds) @type.type_constraint
+  left: (type_identifier) @definition.type_parameter
 )
 
 ; Const parameters
@@ -486,215 +463,21 @@
   name: (identifier) @definition.parameter
 )
 
-; Lifetime parameters in type parameters
-(type_parameters
-  (lifetime) @type.type_parameter
-)
-
-; Lifetime parameters in type arguments
-(type_arguments
-  (lifetime) @type.type_parameter
-)
-
-; Lifetime references in types
-(reference_type
-  (lifetime) @type.type_reference
-)
-
-; Lifetimes in trait bounds
-(trait_bounds
-  (lifetime) @type.type_reference
-)
-
 ;; ==============================================================================
 ;; FUNCTION TYPES AND HIGHER-ORDER PATTERNS
 ;; ==============================================================================
 
-; Function pointer types
-(function_type
-  "fn" @type.type_reference
-  parameters: (parameters) @type.type_parameters
-  return_type: (_)? @type.type_annotation
-) @type.type_reference
-
-; Trait object function types (Fn, FnMut, FnOnce)
-(generic_type
-  type: (type_identifier) @type.type_reference
-  (#match? @type.type_reference "^(Fn|FnMut|FnOnce)$")
-) @type.type_reference
-
-; Higher-order function calls (map, filter, fold, etc.)
-(call_expression
-  function: (field_expression
-    value: (_) @reference.call
-    field: (field_identifier) @reference.call
-    (#match? @reference.call "^(map|filter|fold|for_each|find|any|all|collect|flat_map|filter_map|take|skip|take_while|skip_while)$")
-  )
-) @reference.call
-
-; Functions returning impl Trait
-(function_item
-  return_type: (abstract_type) @return.variable
-) @definition.function.returns_impl
-
-; Functions accepting impl Trait parameters
-(function_item
-  parameters: (parameters
-    (parameter
-      type: (abstract_type) @definition.interface
-    )
-  )
-) @definition.function.accepts_impl
-
-;; ==============================================================================
-;; WHERE CLAUSES AND CONSTRAINTS
-;; ==============================================================================
-
-; Where clause
-(where_clause) @type.type_constraint
-
-; Where predicates with type bounds
-(where_predicate
-  left: (type_identifier) @type.type
-  bounds: (trait_bounds) @type.type_constraint
-)
-
-; Lifetime where predicates
-(where_predicate
-  left: (lifetime) @type.type_parameter
-  bounds: (trait_bounds) @type.type_constraint
-)
-
-; Trait bounds in where clauses
-(trait_bounds
-  (type_identifier) @type.type_reference
-)
-
-; Generic trait bounds
-(trait_bounds
-  (generic_type
-    type: (type_identifier) @type.type_reference.generic
-  )
-)
+; (No special patterns needed - method calls are handled in REFERENCES AND CALLS section)
 
 ;; ==============================================================================
 ;; IMPORTS
 ;; ==============================================================================
 
-; Simple use statements with full path - capturing the last identifier as the import name
-(use_declaration
-  argument: (scoped_identifier
-    (identifier) @import.import
-  )
-) @import.import
+; All use declarations
+(use_declaration) @import.declaration
 
-; Simple use statements without path (e.g., use self)
-(use_declaration
-  argument: (identifier) @import.import
-) @import.import
-
-; Use with alias (scoped path)
-(use_declaration
-  argument: (use_as_clause
-    (scoped_identifier
-      name: (identifier) @import.import
-    )
-    "as"
-    (identifier) @import.import
-  )
-) @import.import.aliased
-
-; Use with alias (simple identifier)
-(use_declaration
-  argument: (use_as_clause
-    (identifier) @import.import
-    "as"
-    (identifier) @import.import
-  )
-) @import.import.aliased
-
-; Wildcard imports
-(use_declaration
-  argument: (use_wildcard) @import.import
-) @import.import.declaration
-
-; Use lists (e.g., use module::{A, B, C})
-(use_declaration
-  argument: (use_list
-    (identifier) @import.import
-  )
-) @import.import
-
-; Scoped use lists with simple items (e.g., std::fmt::{Display, Formatter})
-(use_declaration
-  argument: (scoped_use_list
-    path: (_) @import.import
-    list: (use_list
-      (identifier) @import.import
-    )
-  )
-) @import.import
-
-; Scoped use lists with scoped items
-(use_declaration
-  argument: (scoped_use_list
-    path: (_) @import.import
-    list: (use_list
-      (scoped_identifier
-        name: (identifier) @import.import
-      )
-    )
-  )
-) @import.import
-
-; Scoped use lists with aliases
-(use_declaration
-  argument: (scoped_use_list
-    path: (_) @import.import
-    list: (use_list
-      (use_as_clause
-        (identifier) @import.import
-        "as"
-        (identifier) @import.import
-      )
-    )
-  )
-) @import.import
-
-; Nested use lists (e.g., use std::{collections::{HashMap, HashSet}})
-(use_declaration
-  argument: (scoped_use_list
-    list: (use_list
-      (scoped_use_list
-        path: (_) @import.import
-        list: (use_list
-          (identifier) @import.import
-        )
-      )
-    )
-  )
-) @import.import
-
-; Self imports in use lists (e.g., use std::fmt::{self, Display})
-(use_declaration
-  argument: (scoped_use_list
-    list: (use_list
-      (self) @import.import
-    )
-  )
-) @import.import.declaration
-
-; External crates (with or without alias)
-(extern_crate_declaration
-  (identifier) @import.import
-) @import.import.declaration
-
-; External crates with alias specifically
-(extern_crate_declaration
-  (identifier) @import.import.original
-  "as"
-  (identifier) @import.import.alias
-) @import.import.aliased
+; External crates
+(extern_crate_declaration) @import.declaration
 
 ;; ==============================================================================
 ;; VISIBILITY MODIFIERS
@@ -712,19 +495,19 @@
 
 ; Super visibility - pub(super)
 (visibility_modifier
-  (super) @modifier.visibility
-) @modifier.super
+  (super)
+)
 
 ; Path visibility - pub(in path::to::module)
 (visibility_modifier
   "in"
-  (scoped_identifier) @modifier.visibility
-) @modifier.visibility
+  (scoped_identifier)
+)
 
 ; Self visibility - pub(self) (equivalent to private)
 (visibility_modifier
-  (self) @modifier.visibility
-) @modifier.reference
+  (self)
+)
 
 ;; ==============================================================================
 ;; EXPORTS (public items)
@@ -748,6 +531,18 @@
   name: (identifier) @export.function
 )
 
+; Public constants (exported variables)
+(const_item
+  (visibility_modifier)
+  name: (identifier) @export.variable
+)
+
+; Public statics (exported variables)
+(static_item
+  (visibility_modifier)
+  name: (identifier) @export.variable
+)
+
 ; Public traits
 (trait_item
   (visibility_modifier)
@@ -760,67 +555,10 @@
   name: (identifier) @export.module
 )
 
-; Re-exports (pub use with alias - scoped)
+; Re-exports (pub use)
 (use_declaration
-  (visibility_modifier) @export.variable.visibility
-  argument: (use_as_clause
-    (scoped_identifier
-      name: (identifier) @export.variable.original_name
-    ) @export.variable.source
-    "as"
-    (identifier) @export.variable.alias
-  )
-) @export.variable.aliased
-
-; Re-exports (pub use simple alias)
-(use_declaration
-  (visibility_modifier) @export.variable.visibility
-  argument: (use_as_clause
-    (identifier) @export.variable.original_name
-    "as"
-    (identifier) @export.variable.alias
-  )
-) @export.variable.aliased
-
-; Re-exports (pub use with scoped path)
-(use_declaration
-  (visibility_modifier) @export.variable.visibility
-  argument: (scoped_identifier
-    name: (identifier) @export.variable.name
-  ) @export.variable.path
-) @export.variable
-
-; Re-exports (pub use simple identifier)
-(use_declaration
-  (visibility_modifier) @export.variable.visibility
-  argument: (identifier) @export.variable.name
-) @export.variable.simple
-
-; Re-exports (pub use with use_list)
-(use_declaration
-  (visibility_modifier) @export.variable.visibility
-  argument: (scoped_use_list
-    path: (_) @export.variable.source_path
-    list: (use_list
-      (identifier) @export.variable.item
-    )
-  )
-) @export.variable.list
-
-; Re-exports (pub use with wildcard)
-(use_declaration
-  (visibility_modifier) @export.variable.visibility
-  argument: (use_wildcard
-    (scoped_identifier) @export.variable.wildcard_path
-  )
-) @export.variable.wildcard
-
-; Re-exports with any visibility modifier
-; This captures all pub use including pub(crate) use, pub(super) use, etc.
-(use_declaration
-  (visibility_modifier) @export.variable.visibility.any
-  argument: (_) @export.variable.item
-) @export.variable.any_visibility
+  (visibility_modifier)
+) @export.declaration
 
 ;; ==============================================================================
 ;; MACROS
@@ -828,33 +566,20 @@
 
 ; Macro definitions (declarative)
 (macro_definition
-  name: (identifier) @definition.macro) @reference.macro
+  name: (identifier) @definition.macro
+)
 
 ; Macro invocations
 (macro_invocation
-  macro: (identifier) @reference.macro) @reference.macro
+  macro: (identifier) @reference.macro
+)
 
 ; Scoped macro invocations
 (macro_invocation
   macro: (scoped_identifier
-    name: (identifier) @reference.macro.scoped
-  )) @reference.macro
-
-; Built-in macro invocations
-(macro_invocation
-  macro: (identifier) @reference.macro.builtin
-  (#match? @reference.macro.builtin "^(println|eprintln|print|eprint|vec|panic|assert|debug_assert|format|write|writeln|todo|unimplemented|unreachable|compile_error|include|include_str|include_bytes|concat|stringify|env|option_env|cfg|column|file|line|module_path|assert_eq|assert_ne|debug_assert_eq|debug_assert_ne|matches|dbg|try|join|select)$")
-) @reference.macro
-
-; Async macro invocations (tokio::select!, tokio::join!, etc.)
-(macro_invocation
-  macro: (scoped_identifier
-    path: (identifier) @modifier.visibility
-    name: (identifier) @reference.macro.async
+    name: (identifier) @reference.macro
   )
-  (#eq? @modifier.visibility "tokio")
-  (#match? @reference.macro.async "^(select|join|spawn|timeout)$")
-) @reference.macro
+)
 
 ; Attribute macros
 (attribute_item
@@ -878,74 +603,21 @@
 ;; OWNERSHIP AND REFERENCES
 ;; ==============================================================================
 
-; Reference expressions (borrow) - matches all references
+; Reference expressions (borrow)
 (reference_expression
   value: (_) @reference.variable.borrowed
-) @reference.variable
+)
 
 ; Mutable reference expressions (mutable borrow)
 (reference_expression
   (mutable_specifier)
   value: (_) @reference.variable.borrowed
-) @reference.variable.mut
+)
 
 ; Dereference expressions
 (unary_expression
   (_) @reference.variable
-) @reference.variable
-
-; Reference types
-(reference_type
-  type: (_) @type.type_reference.inner
-) @type.type_reference
-
-; Mutable reference types
-(reference_type
-  (mutable_specifier)
-  type: (_) @type.type_reference.inner
-) @type.type_reference.mut
-
-; Smart pointer types (Box, Rc, Arc, RefCell, Weak)
-(generic_type
-  type: (type_identifier) @type.type_reference
-  type_arguments: (type_arguments) @type.type_argument
-) @type.type_reference
-  (#match? @type.type_reference "^(Box|Rc|Arc|RefCell|Weak|Mutex|RwLock)$")
-
-; Specific smart pointer patterns for better matching
-(generic_type
-  type: (type_identifier) @type.type_reference
-  (#match? @type.type_reference "^Box$")
-) @type.type_reference
-
-(generic_type
-  type: (type_identifier) @type.type_reference
-  (#match? @type.type_reference "^Rc$")
-) @type.type_reference
-
-(generic_type
-  type: (type_identifier) @type.type_reference
-  (#match? @type.type_reference "^Arc$")
-) @type.type_reference
-
-; Box::new() calls (smart pointer allocation)
-(call_expression
-  function: (scoped_identifier
-    path: (identifier) @type.module
-    name: (identifier) @type.function
-  )
-  (#eq? @type.module "Box")
-  (#eq? @type.function "new")
-) @type.type_reference
-
-; Smart pointer method calls (clone, as_ref, as_mut, etc.)
-(call_expression
-  function: (field_expression
-    value: (_) @type.type_reference
-    field: (field_identifier) @type.method
-  )
-  (#match? @type.method "^(clone|as_ref|as_mut|get|get_mut|borrow|borrow_mut|try_borrow|try_borrow_mut|lock|try_lock|read|write|try_read|try_write)$")
-) @type.type_reference
+)
 
 ;; ==============================================================================
 ;; REFERENCES AND CALLS
@@ -956,58 +628,26 @@
   function: (identifier) @reference.call
 )
 
-; Method calls
+; Method calls (field_expression based)
 (call_expression
-  function: (field_expression
-    value: (_) @reference.variable
-    field: (field_identifier) @reference.call
-  )
-)
-
-; Chained method calls
-(call_expression
-  function: (field_expression
-    value: (field_expression
-      value: (_) @reference.variable.base
-      field: (field_identifier) @reference.property.field1
-    )
-    field: (field_identifier) @reference.call.chained
-  )
+  function: (field_expression) @reference.call
 )
 
 ; Associated function calls (Type::function)
-; Capture the whole call_expression so we can extract receiver context
 (call_expression
-  function: (scoped_identifier
-    path: (_) @reference.type
-    name: (identifier)
-  )
-) @reference.call
-
-; Static method call (associated function) - uses ::
-(call_expression
-  function: (scoped_identifier
-    path: (identifier) @reference.type_reference
-    name: (identifier) @modifier.visibility)
-) @reference.call
-
-; Instance method call - uses .
-(call_expression
-  function: (field_expression
-    value: (_) @reference.variable
-    field: (field_identifier) @reference.call)
-) @reference.call
+  function: (scoped_identifier) @reference.call
+)
 
 ; Generic function calls
 (call_expression
   function: (generic_function
-    function: (identifier) @reference.call.generic
+    function: (identifier) @reference.call
   )
 )
 
 ; Field access
 (field_expression
-  value: (_) @reference.variable
+  value: (identifier) @reference.variable.base
   field: (field_identifier) @reference.field
 )
 

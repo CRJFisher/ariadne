@@ -81,15 +81,15 @@
 ; Lambda functions assigned to variables
 (assignment
   left: (identifier) @assignment.variable
-  right: (lambda) @assignment.variable.lambda
+  right: (lambda)
 ) @assignment.variable
 
 ; Enum class detection (classes inheriting from Enum)
 (class_definition
   name: (identifier) @definition.enum
   superclasses: (argument_list
-    (identifier) @type.type_reference
-    (#match? @type.type_reference "^(Enum|IntEnum|Flag|IntFlag|StrEnum)$")
+    (identifier) @reference.type
+    (#match? @reference.type "^(Enum|IntEnum|Flag|IntFlag|StrEnum)$")
   )
 )
 
@@ -98,8 +98,8 @@
   name: (identifier) @definition.enum
   superclasses: (argument_list
     (attribute
-      attribute: (identifier) @type.type_reference
-      (#match? @type.type_reference "^(Enum|IntEnum|Flag|IntFlag|StrEnum)$")
+      attribute: (identifier) @reference.type
+      (#match? @reference.type "^(Enum|IntEnum|Flag|IntFlag|StrEnum)$")
     )
   )
 )
@@ -108,8 +108,8 @@
 (class_definition
   name: (identifier) @definition.interface
   superclasses: (argument_list
-    (identifier) @type.type_reference
-    (#eq? @type.type_reference "Protocol")
+    (identifier) @reference.type
+    (#eq? @reference.type "Protocol")
   )
 )
 
@@ -118,8 +118,8 @@
   name: (identifier) @definition.interface
   superclasses: (argument_list
     (attribute
-      attribute: (identifier) @type.type_reference
-      (#eq? @type.type_reference "Protocol")
+      attribute: (identifier) @reference.type
+      (#eq? @reference.type "Protocol")
     )
   )
 )
@@ -134,21 +134,21 @@
 (class_definition
   name: (identifier) @definition.class
   superclasses: (argument_list
-    (identifier) @reference.type_reference
-    (#not-match? @reference.type_reference "^(Enum|IntEnum|Flag|IntFlag|StrEnum|Protocol)$")
+    (identifier) @reference.type
+    (#not-match? @reference.type "^(Enum|IntEnum|Flag|IntFlag|StrEnum|Protocol)$")
   )
 )
 
 ; Protocol property signatures (annotated assignments without values)
 (class_definition
   superclasses: (argument_list
-    (identifier) @type.type_reference
-    (#eq? @type.type_reference "Protocol")
+    (identifier) @reference.type
+    (#eq? @reference.type "Protocol")
   )
   body: (block
     (expression_statement
       (assignment
-        left: (identifier) @definition.property.interface
+        left: (identifier) @definition.property
       )
     )
   )
@@ -158,14 +158,14 @@
 (class_definition
   superclasses: (argument_list
     (attribute
-      attribute: (identifier) @type.type_reference
-      (#eq? @type.type_reference "Protocol")
+      attribute: (identifier) @reference.type
+      (#eq? @reference.type "Protocol")
     )
   )
   body: (block
     (expression_statement
       (assignment
-        left: (identifier) @definition.property.interface
+        left: (identifier) @definition.property
       )
     )
   )
@@ -200,7 +200,7 @@
         (#eq? @modifier.visibility "staticmethod")
       )
       definition: (function_definition
-        name: (identifier) @definition.method.static
+        name: (identifier) @definition.method
       )
     ) @modifier.visibility
   )
@@ -215,7 +215,7 @@
         (#eq? @modifier.visibility "classmethod")
       )
       definition: (function_definition
-        name: (identifier) @definition.method.class
+        name: (identifier) @definition.method
       )
     ) @scope.method
   )
@@ -239,8 +239,8 @@
 ; Enum members (class attributes in Enum classes)
 (class_definition
   superclasses: (argument_list
-    (identifier) @type.type_reference
-    (#match? @type.type_reference "^(Enum|IntEnum|Flag|IntFlag|StrEnum)$")
+    (identifier) @reference.type
+    (#match? @reference.type "^(Enum|IntEnum|Flag|IntFlag|StrEnum)$")
   )
   body: (block
     (expression_statement
@@ -255,8 +255,8 @@
 (class_definition
   superclasses: (argument_list
     (attribute
-      attribute: (identifier) @type.type_reference
-      (#match? @type.type_reference "^(Enum|IntEnum|Flag|IntFlag|StrEnum)$")
+      attribute: (identifier) @reference.type
+      (#match? @reference.type "^(Enum|IntEnum|Flag|IntFlag|StrEnum)$")
     )
   )
   body: (block
@@ -288,25 +288,25 @@
 
 ; Annotated assignments (with type hints)
 (assignment
-  left: (identifier) @definition.variable.typed @assignment.variable
-  type: (_) @type.type_annotation
-  right: (_)? @assignment.variable.typed
+  left: (identifier) @definition.variable @assignment.variable
+  type: (_)
+  right: (_)?
 ) @assignment.variable
 
 ; Multiple assignments
 (assignment
   left: (pattern_list
-    (identifier) @definition.variable.multiple
+    (identifier) @definition.variable
   )
-  right: (_) @assignment.variable.multiple
+  right: (_)
 ) @assignment.variable
 
 ; Tuple unpacking
 (assignment
   left: (tuple_pattern
-    (identifier) @definition.variable.tuple
+    (identifier) @definition.variable
   )
-  right: (_) @assignment.variable.tuple
+  right: (_)
 ) @assignment.variable
 
 ; Parameters
@@ -316,34 +316,34 @@
 
 (parameters
   (default_parameter
-    name: (identifier) @definition.parameter.default
+    name: (identifier) @definition.parameter
   )
 )
 
 (parameters
   (typed_parameter
-    (identifier) @definition.parameter.typed
-    type: (_) @type.type_annotation
+    (identifier) @definition.parameter
+    type: (_)
   )
 )
 
 (parameters
   (typed_default_parameter
-    name: (identifier) @definition.parameter.typed.default
-    type: (_) @type.type_annotation.default
+    name: (identifier) @definition.parameter
+    type: (_)
   )
 )
 
 ; *args and **kwargs
 (parameters
   (list_splat_pattern
-    (identifier) @definition.parameter.args
+    (identifier) @definition.parameter
   )
 )
 
 (parameters
   (dictionary_splat_pattern
-    (identifier) @definition.parameter.kwargs
+    (identifier) @definition.parameter
   )
 )
 
@@ -354,7 +354,7 @@
 
 (for_statement
   left: (pattern_list
-    (identifier) @definition.variable.multiple
+    (identifier) @definition.variable
   )
 )
 
@@ -459,7 +459,7 @@
     (assignment
       left: (identifier) @export.variable
       (#eq? @export.variable "__all__")
-      right: (list) @export.variable.list
+      right: (list)
     )
   )
 )
@@ -468,8 +468,8 @@
 (module
   (expression_statement
     (assignment
-      left: (identifier) @_all_var
-      (#eq? @_all_var "__all__")
+      left: (identifier)
+      (#eq? @export.variable "__all__")
       right: (list
         (string) @export.variable
       )
@@ -581,31 +581,9 @@
 (call
   function: (attribute
     object: (_) @reference.variable
-    attribute: (identifier) @reference.call
+    attribute: (identifier)
   )
-) @reference.call.full
-
-; Chained method calls (2 levels)
-(call
-  function: (attribute
-    object: (attribute
-      object: (_) @reference.variable.base
-      attribute: (identifier) @reference.property.prop1
-    ) @reference.variable.chain
-    attribute: (identifier) @reference.call.chained
-  )
-) @reference.call.chained
-
-; Deep property chains (3+ levels)
-(call
-  function: (attribute
-    object: (attribute
-      object: (attribute) @reference.variable.deep
-      attribute: (identifier) @reference.property.prop2
-    ) @reference.variable.chain2
-    attribute: (identifier) @reference.call.deep
-  )
-) @reference.call.deep
+) @reference.call
 
 ; Constructor calls (class instantiation)
 (call
@@ -624,19 +602,19 @@
 (call
   function: (attribute
     object: (identifier) @reference.variable
-    attribute: (identifier) @reference.call)
+    attribute: (identifier))
   (#not-match? @reference.variable "^[A-Z]")) @reference.call
 
 ; Attribute access
 (attribute
-  object: (identifier) @reference.variable
+  object: (identifier) @reference.variable.base
   attribute: (identifier) @reference.property
 ) @reference.member_access
 
 ; Subscript access
 (subscript
-  value: (identifier) @reference.variable.subscript
-  subscript: (_) @reference.variable.index
+  value: (identifier) @reference.variable
+  subscript: (_)
 ) @reference.member_access
 
 ; Assignments (capture both sides)
@@ -647,10 +625,10 @@
 
 (assignment
   left: (attribute
-    object: (identifier) @reference.variable.object
-    attribute: (identifier) @reference.property.assign
-  ) @reference.member_access.assign
-  right: (_) @reference.variable.source.member
+    object: (identifier) @reference.variable
+    attribute: (identifier) @reference.property
+  ) @reference.member_access
+  right: (_)
 ) @assignment.property
 
 ; Augmented assignments (+=, -=, etc.)
@@ -682,14 +660,14 @@
 ; Decorators - capture for decorator tracking
 (decorated_definition
   (decorator
-    (identifier) @decorator.variable
+    (identifier) @reference.call
   )
 )
 
 (decorated_definition
   (decorator
     (call
-      function: (identifier) @decorator.function
+      function: (identifier) @reference.call
     )
   )
 )
@@ -697,7 +675,7 @@
 (decorated_definition
   (decorator
     (attribute
-      attribute: (identifier) @decorator.property
+      attribute: (identifier) @reference.property
     )
   )
 )
@@ -709,7 +687,7 @@
 
 (decorator
   (call
-    function: (identifier) @reference.call.decorator
+    function: (identifier) @reference.call
   )
 )
 
