@@ -644,6 +644,14 @@ export const RUST_METADATA_EXTRACTORS: MetadataExtractors = {
       }
     }
 
+    // field_expression in method call (captured on the field expression itself)
+    if (node.type === "field_expression") {
+      const callExpr = node.parent;
+      if (callExpr && callExpr.type === "call_expression") {
+        return true;
+      }
+    }
+
     // field_identifier in method call (captured on method name)
     if (node.type === "field_identifier") {
       const fieldExpr = node.parent;
@@ -668,6 +676,14 @@ export const RUST_METADATA_EXTRACTORS: MetadataExtractors = {
    * @returns The name of the method or function, or undefined
    */
   extract_call_name(node: SyntaxNode): SymbolName | undefined {
+    // If the node is a field_expression directly (captured from the query)
+    if (node.type === "field_expression") {
+      const fieldNode = node.childForFieldName("field");
+      if (fieldNode) {
+        return fieldNode.text as SymbolName;
+      }
+    }
+
     if (node.type === "call_expression") {
       const functionNode = node.childForFieldName("function");
 

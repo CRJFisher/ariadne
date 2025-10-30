@@ -684,6 +684,71 @@ export const JAVASCRIPT_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
   // ============================================================================
 
   [
+    "import.reexport",
+    {
+      process: (
+        capture: CaptureNode,
+        builder: DefinitionBuilder,
+        context: ProcessingContext
+      ) => {
+        // This handler processes the complete export_statement node
+        // Extract all export_specifiers and create import definitions
+        const export_stmt = capture.node;
+        const export_clause = export_stmt.childForFieldName("declaration");
+
+        if (!export_clause || export_clause.type !== "export_clause") {
+          return;
+        }
+
+        // Process each export_specifier
+        for (let i = 0; i < export_clause.namedChildCount; i++) {
+          const specifier = export_clause.namedChild(i);
+          if (!specifier || specifier.type !== "export_specifier") {
+            continue;
+          }
+
+          const name_node = specifier.childForFieldName("name");
+          const alias_node = specifier.childForFieldName("alias");
+
+          if (!name_node) {
+            continue;
+          }
+
+          const local_name = (alias_node?.text || name_node.text) as SymbolName;
+          const original_name = alias_node ? (name_node.text as SymbolName) : undefined;
+
+          const location = {
+            file_path: capture.location.file_path,
+            start_line: specifier.startPosition.row + 1,
+            start_column: specifier.startPosition.column + 1,
+            end_line: specifier.endPosition.row + 1,
+            end_column: specifier.endPosition.column + 1,
+          };
+
+          const import_id = create_import_id({
+            ...capture,
+            text: local_name,
+            location,
+          });
+
+          const export_info = extract_export_info(export_stmt, local_name);
+
+          builder.add_import({
+            symbol_id: import_id,
+            name: local_name,
+            location,
+            scope_id: context.get_scope_id(location),
+            import_path: extract_import_path(export_stmt),
+            import_kind: "named",
+            original_name,
+            export: export_info.export,
+          });
+        }
+      },
+    },
+  ],
+
+  [
     "import.reexport.named.simple",
     {
       process: (

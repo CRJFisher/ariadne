@@ -631,8 +631,8 @@ describe("JavaScript Builder Configuration", () => {
           TEST_FILE_PATH
         );
 
-        const references = builder.process(captures[0]);
-        const methodCalls = references.build().filter((r) => r.type === "call");
+        builder.process(captures[0]);
+        const methodCalls = builder.references.filter((r) => r.type === "call");
 
         // Verify basic call reference is created
         expect(methodCalls).toHaveLength(1);
@@ -686,8 +686,8 @@ describe("JavaScript Builder Configuration", () => {
           TEST_FILE_PATH
         );
 
-        const references = builder.process(captures[0]);
-        const methodCalls = references.build().filter((r) => r.type === "call");
+        builder.process(captures[0]);
+        const methodCalls = builder.references.filter((r) => r.type === "call");
 
         // Verify basic call reference is created
         expect(methodCalls).toHaveLength(1);
@@ -789,10 +789,10 @@ describe("JavaScript Builder Configuration", () => {
           TEST_FILE_PATH
         );
 
-        const references = builder.process(captures[0]);
-        const assignments = references
-          .build()
-          .filter((r) => r.type === "assignment");
+        builder.process(captures[0]);
+        const assignments = builder.references.filter(
+          (r) => r.type === "assignment"
+        );
 
         expect(assignments).toBeDefined();
         // Assignment parts would be extracted through metadata extractors
@@ -834,10 +834,10 @@ describe("JavaScript Builder Configuration", () => {
           TEST_FILE_PATH
         );
 
-        const references = builder.process(captures[0]);
-        const constructorCalls = references
-          .build()
-          .filter((r) => r.type === "construct");
+        builder.process(captures[0]);
+        const constructorCalls = builder.references.filter(
+          (r) => r.type === "construct"
+        );
 
         expect(constructorCalls).toHaveLength(1);
         expect(constructorCalls[0]?.context?.construct_target).toBeDefined();
