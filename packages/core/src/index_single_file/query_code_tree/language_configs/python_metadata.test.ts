@@ -278,6 +278,36 @@ describe("Python Metadata Extractors", () => {
       expect(result?.start_column).toBe(1);
       expect(result?.end_column).toBe(12); // end of "user.profile"
     });
+
+    it("should extract receiver from static/class method call", () => {
+      // Python static/class methods: ClassName.method()
+      const code = "MyClass.create()";
+      const tree = parser.parse(code);
+      const call = tree.rootNode.descendantsOfType("call")[0];
+
+      const result = PYTHON_METADATA_EXTRACTORS.extract_call_receiver(call, TEST_FILE);
+
+      expect(result).toBeDefined();
+      expect(result?.start_column).toBe(1);
+      expect(result?.end_column).toBe(7); // end of "MyClass"
+    });
+
+    it("should extract receiver from attribute node for static call", () => {
+      // Test when the attribute node is passed directly (as captured by queries)
+      const code = "UserManager.new()";
+      const tree = parser.parse(code);
+      const call = tree.rootNode.descendantsOfType("call")[0];
+
+      // In Python, call has a function field which is the attribute
+      const func = call.childForFieldName("function");
+      expect(func?.type).toBe("attribute");
+
+      const result = PYTHON_METADATA_EXTRACTORS.extract_call_receiver(func!, TEST_FILE);
+
+      expect(result).toBeDefined();
+      expect(result?.start_column).toBe(1);
+      expect(result?.end_column).toBe(11); // end of "UserManager"
+    });
   });
 
   describe("extract_property_chain", () => {

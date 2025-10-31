@@ -297,11 +297,14 @@ describe("Project Integration - Rust", () => {
         expect(import_names).toContain("User" as SymbolName);
         expect(import_names).toContain("UserManager" as SymbolName);
 
-        // Verify UserManager::new() resolves
+        // Verify UserManager::new() has receiver_location for method resolution
+        // Associated function calls have the full scoped name (UserManager::new)
+        // and receiver_location points to the type (UserManager)
         const manager_new_calls = main_index.references.filter(
           (r) =>
             r.type === "call" &&
-            r.name === ("new" as SymbolName) &&
+            r.name.includes("UserManager") &&
+            r.name.includes("new") &&
             r.context?.receiver_location
         );
 

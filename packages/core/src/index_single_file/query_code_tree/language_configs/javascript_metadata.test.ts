@@ -105,6 +105,36 @@ describe("JavaScript Metadata Extractors", () => {
       expect(result?.start_column).toBe(1);
       expect(result?.end_column).toBe(4);
     });
+
+    it("should extract receiver from static/class method call", () => {
+      // JavaScript static methods: ClassName.method()
+      const code = "Math.floor(3.7)";
+      const tree = parser.parse(code);
+      const callExpr = tree.rootNode.descendantsOfType("call_expression")[0];
+
+      const result = JAVASCRIPT_METADATA_EXTRACTORS.extract_call_receiver(callExpr, TEST_FILE);
+
+      expect(result).toBeDefined();
+      expect(result?.start_column).toBe(1);
+      expect(result?.end_column).toBe(4); // end of "Math"
+    });
+
+    it("should extract receiver from member_expression node for static call", () => {
+      // Test when the member_expression node is passed directly (as captured by queries)
+      const code = "UserManager.create()";
+      const tree = parser.parse(code);
+      const callExpr = tree.rootNode.descendantsOfType("call_expression")[0];
+
+      // In JS, call_expression has a function field which is the member_expression
+      const func = callExpr.childForFieldName("function");
+      expect(func?.type).toBe("member_expression");
+
+      const result = JAVASCRIPT_METADATA_EXTRACTORS.extract_call_receiver(func!, TEST_FILE);
+
+      expect(result).toBeDefined();
+      expect(result?.start_column).toBe(1);
+      expect(result?.end_column).toBe(11); // end of "UserManager"
+    });
   });
 
   describe("extract_property_chain", () => {

@@ -436,6 +436,23 @@ describe("Rust Metadata Extractors", () => {
       expect(result?.end_column).toBe(6); // "String"
     });
 
+    it("should extract receiver from scoped_identifier node directly", () => {
+      // This tests the case where rust.scm captures @reference.call on scoped_identifier
+      // rather than on the call_expression
+      const code = "let manager = UserManager::new();";
+      const tree = parser.parse(code);
+      const callExpr = tree.rootNode.descendantsOfType("call_expression")[0];
+      const scopedId = callExpr.childForFieldName('function');
+
+      expect(scopedId?.type).toBe('scoped_identifier');
+
+      const result = RUST_METADATA_EXTRACTORS.extract_call_receiver(scopedId!, TEST_FILE);
+
+      expect(result).toBeDefined();
+      expect(result?.start_column).toBe(15); // Points to "UserManager"
+      expect(result?.end_column).toBe(25);
+    });
+
     it("should extract receiver with turbofish syntax", () => {
       const code = "vec.iter::<i32>().collect();";
       const tree = parser.parse(code);

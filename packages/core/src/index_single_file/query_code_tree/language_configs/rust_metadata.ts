@@ -191,6 +191,17 @@ export const RUST_METADATA_EXTRACTORS: MetadataExtractors = {
       return undefined;
     }
 
+    // Handle scoped_identifier - this is captured directly by @reference.call
+    // For associated function calls like UserManager::new()
+    // Return the location of the path (type name), which is the receiver
+    if (node.type === "scoped_identifier") {
+      const path_node = node.childForFieldName("path");
+      if (path_node) {
+        return node_to_location(path_node, file_path);
+      }
+      return undefined;
+    }
+
     // Handle field_identifier - walk up to find call_expression
     // This handles captures like @reference.call on the method name
     if (node.type === "field_identifier") {
