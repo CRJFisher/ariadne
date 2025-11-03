@@ -10,11 +10,11 @@
  *   npx tsx verify_entry_points.ts <analysis-file-path>
  */
 
-import { query } from "@anthropic-ai/claude-agent-sdk";
 import * as fs from "fs/promises";
 import * as path from "path";
 import { fileURLToPath } from "url";
 import { dirname } from "path";
+import { run_query } from "./utils.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -180,100 +180,18 @@ EXAMPLES OF root_cause STRINGS (use these EXACT strings when applicable):
 
 CRITICAL: If the root cause matches one of the examples above, use that EXACT string. Be consistent.`;
 
-  // Use Claude Agent SDK query
+  // Use centralized query runner
   console.error(`   📤 Sending prompt (${prompt.length} chars)...`);
 
-  // Strip debug/inspect flags from environment to prevent debugger attachment
-  const clean_env = { ...process.env };
-  delete clean_env.NODE_OPTIONS;
-
-  const result_message = query({
-    prompt,
-    options: {
-      model: "sonnet",
-      permissionMode: "bypassPermissions",
-      env: clean_env,
-      executableArgs: [], // Ensure no inspect flags are passed
-      stderr: (data: string) => {
-        // Capture stderr to debug process failures
-        if (data.trim()) {
-          console.error(`   STDERR: ${data.trim()}`);
-        }
-      }
-    }
-  });
-
-  let response_text = "";
-  let total_cost = 0;
-  const tokens_used = { input: 0, output: 0 };
-  let error_message = "";
-  let message_count = 0;
-
-  // Collect the assistant's response and stats
-  console.error("   📥 Receiving messages...");
-  try {
-    for await (const message of result_message) {
-      message_count++;
-      const subtype = "subtype" in message ? message.subtype : "N/A";
-      console.error(`   📨 Message ${message_count}: type=${message.type}, subtype=${subtype}`);
-
-    if (message.type === "assistant") {
-      // Extract text content from the message
-      for (const block of message.message.content) {
-        if (block.type === "text") {
-          response_text += block.text + "\n";
-        }
-      }
-    } else if (message.type === "user") {
-      for (const block of message.message.content) {
-        if (block.type === "text") {
-          // response_text += ">>> " + block.text + "\n";
-          console.error(`     📤 User message: ${block.text}`);
-        }
-      }
-    } else if (message.type === "result") {
-      if (message.subtype === "success") {
-        // Extract cost and usage information
-        total_cost = message.total_cost_usd;
-        tokens_used.input = message.usage.input_tokens;
-        tokens_used.output = message.usage.output_tokens;
-      } else if (message.subtype === "error_during_execution" || message.subtype === "error_max_turns") {
-        error_message = `Query failed with subtype: ${message.subtype}`;
-        tokens_used.input = message.usage.input_tokens;
-        tokens_used.output = message.usage.output_tokens;
-      }
-    } else if (message.type === "system" && message.subtype === "init") {
-      // Log system initialization for debugging
-      console.error(`   🔧 Model: ${message.model}, Permission: ${message.permissionMode}`);
-    }
-  }
-  } catch (error) {
-    // If the SDK throws an error during message iteration, capture it
-    console.error(`   ⚠️  Error during message iteration: ${error}`);
-    throw error;
-  }
-
-  console.error(`   ✓ Received ${message_count} messages total`);
-
-  // Check if there was an error
-  if (error_message) {
-    throw new Error(`${error_message}\nResponse so far: ${response_text || "(no response)"}`);
-  }
+  const response = await run_query(prompt);
 
   // Log cost information
-  if (total_cost > 0) {
-    console.error(`   💰 Cost: $${total_cost.toFixed(6)} (${tokens_used.input} in / ${tokens_used.output} out)`);
-  }
-
-  // Check if we got any response
-  if (!response_text) {
-    throw new Error("No response received from Claude");
-  }
+  console.error(`   💰 Cost: $${response.total_cost.toFixed(6)} (${response.tokens_used.input} in / ${response.tokens_used.output} out)`);
 
   // Try to extract JSON from the response
-  const json_match = response_text.match(/\{[\s\S]*\}/);
+  const json_match = response.response_text.match(/\{[\s\S]*\}/);
   if (!json_match) {
-    throw new Error(`Failed to extract JSON from Claude response. Full response:\n${response_text}`);
+    throw new Error(`Failed to extract JSON from Claude response. Full response:\n${response.response_text}`);
   }
 
   const result: VerificationResult = JSON.parse(json_match[0]);
