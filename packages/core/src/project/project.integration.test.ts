@@ -225,8 +225,9 @@ fn main() {
       const index = project.get_semantic_index("test.rs" as FilePath);
 
       // Find User::new() call (associated function)
+      // Note: Rust associated function calls have full scoped name (User::new)
       const new_calls = index?.references.filter(
-        (r) => r.type === "call" && r.name === ("new" as SymbolName) && r.context?.receiver_location
+        (r) => r.type === "call" && r.name.includes("new") && r.name.includes("User") && r.context?.receiver_location
       );
       expect(new_calls?.length).toBeGreaterThan(0);
 
@@ -367,8 +368,9 @@ fn main() {
       expect(imports.find((i) => i.name === ("User" as SymbolName))).toBeDefined();
 
       // Find User::new() call
+      // Note: Rust associated function calls have full scoped name (User::new)
       const new_call = main_index?.references.find(
-        (r) => r.type === "call" && r.name === ("new" as SymbolName) && r.context?.receiver_location
+        (r) => r.type === "call" && r.name.includes("new") && r.name.includes("User") && r.context?.receiver_location
       );
       expect(new_call).toBeDefined();
     });
