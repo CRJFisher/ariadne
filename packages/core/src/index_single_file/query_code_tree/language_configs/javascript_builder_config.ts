@@ -694,7 +694,11 @@ export const JAVASCRIPT_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
         // This handler processes the complete export_statement node
         // Extract all export_specifiers and create import definitions
         const export_stmt = capture.node;
-        const export_clause = export_stmt.childForFieldName("declaration");
+
+        // export_clause is the first named child, not in a "declaration" field
+        // For re-exports like: export { helper } from "./original"
+        // AST: (export_statement (export_clause) source: (string))
+        const export_clause = export_stmt.namedChild(0);
 
         if (!export_clause || export_clause.type !== "export_clause") {
           return;
