@@ -696,16 +696,32 @@ export function extract_original_name(
   if (!node) {
     return undefined;
   }
-  // Check if this is an aliased import
-  const importClause = node.childForFieldName("import_clause");
+
+  // Find import_clause as a child (not a field in JavaScript grammar)
+  let importClause: SyntaxNode | null = null;
+  for (const child of node.children || []) {
+    if (child.type === "import_clause") {
+      importClause = child;
+      break;
+    }
+  }
+
   if (importClause) {
-    const namedImports = importClause.childForFieldName("named_imports");
+    // Find named_imports as a child (not a field)
+    let namedImports: SyntaxNode | null = null;
+    for (const child of importClause.children || []) {
+      if (child.type === "named_imports") {
+        namedImports = child;
+        break;
+      }
+    }
+
     if (namedImports) {
       for (const child of namedImports.children || []) {
         if (child.type === "import_specifier") {
-          const alias = child.childForFieldName("alias");
+          const alias = child.childForFieldName("alias"); // alias IS a field
           if (alias?.text === local_name) {
-            const name = child.childForFieldName("name");
+            const name = child.childForFieldName("name"); // name IS a field
             return name?.text as SymbolName;
           }
         }

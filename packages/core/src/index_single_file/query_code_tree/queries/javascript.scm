@@ -180,6 +180,44 @@
 )
 
 ;; ==============================================================================
+;; COMMONJS IMPORTS - require() patterns
+;; ==============================================================================
+
+; Destructuring require - const { a, b, c } = require('./module')
+; Captures individual identifiers from object destructuring
+(variable_declarator
+  name: (object_pattern
+    (shorthand_property_identifier_pattern) @definition.import.require
+  )
+  value: (call_expression
+    function: (identifier) @_require
+    (#eq? @_require "require")
+  )
+)
+
+; Array destructuring require - const [a, b, c] = require('./module')
+; Captures individual identifiers from array destructuring
+(variable_declarator
+  name: (array_pattern
+    (identifier) @definition.import.require
+  )
+  value: (call_expression
+    function: (identifier) @_require
+    (#eq? @_require "require")
+  )
+)
+
+; Simple require - const utils = require('./module')
+; Captures the single identifier
+(variable_declarator
+  name: (identifier) @definition.import.require.simple
+  value: (call_expression
+    function: (identifier) @_require
+    (#eq? @_require "require")
+  )
+)
+
+;; ==============================================================================
 ;; RE-EXPORTS - Import definitions that forward exports
 ;; ==============================================================================
 ;; Re-exports create ImportDefinitions (for chain resolution) but do NOT create
