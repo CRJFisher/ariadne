@@ -508,6 +508,18 @@ export const TYPESCRIPT_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
 
         const prop_id = create_property_id(capture);
 
+        // Check if this is a parameter property (constructor parameter with access modifier)
+        // Parameter properties have identifier node with required_parameter parent
+        const is_param_property =
+          capture.node.type === "identifier" &&
+          (capture.node.parent?.type === "required_parameter" ||
+           capture.node.parent?.type === "optional_parameter");
+
+        // Use appropriate extraction function based on context
+        const initial_value = is_param_property
+          ? extract_parameter_default_value(capture.node)
+          : extract_property_initial_value(capture.node);
+
         builder.add_property_to_class(class_id, {
           symbol_id: prop_id,
           name: capture.text,
@@ -517,8 +529,10 @@ export const TYPESCRIPT_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
           static: is_static_method(capture.node),
           readonly: is_readonly_property(capture.node),
           abstract: is_abstract_method(capture.node),
-          type: extract_property_type(capture.node),
-          initial_value: extract_property_initial_value(capture.node),
+          type: is_param_property
+            ? extract_parameter_type(capture.node)
+            : extract_property_type(capture.node),
+          initial_value: initial_value,
         });
       },
     },
