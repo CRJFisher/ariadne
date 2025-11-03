@@ -733,12 +733,27 @@ export function extract_original_name(
 
 /**
  * Check if this is a default import
+ * Default import: import formatDate from './utils'
+ * Structure: import_clause contains a direct identifier child (not inside named_imports)
  */
 export function is_default_import(node: SyntaxNode, name: SymbolName): boolean {
-  const importClause = node.childForFieldName("import_clause");
+  // Find import_clause as a child (not a field in JavaScript grammar)
+  let importClause: SyntaxNode | null = null;
+  for (const child of node.children || []) {
+    if (child.type === "import_clause") {
+      importClause = child;
+      break;
+    }
+  }
+
   if (importClause) {
-    const defaultImport = importClause.childForFieldName("default");
-    return defaultImport?.text === name;
+    // Check if import_clause has a direct identifier child (the default import)
+    // This identifier is NOT inside named_imports or namespace_import
+    for (const child of importClause.children || []) {
+      if (child.type === "identifier" && child.text === name) {
+        return true;
+      }
+    }
   }
   return false;
 }

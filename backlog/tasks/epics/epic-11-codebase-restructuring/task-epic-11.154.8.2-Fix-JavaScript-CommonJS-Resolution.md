@@ -1,17 +1,17 @@
 # Task Epic 11.154.8.2: Fix JavaScript CommonJS Module Resolution
 
 **Parent Task**: 11.154.8 - Final Integration
-**Status**: Completed (Partial) ✅
+**Status**: Completed ✅
 **Priority**: High
 **Complexity**: Medium
-**Actual Time**: 1.5 hours
-**Test Impact**: Fixed 4 of 5 tests (80%)
+**Actual Time**: 2 hours
+**Test Impact**: Fixed 5 of 5 tests (100%)
 
 ---
 
 ## Summary
 
-Fixed CommonJS require() detection and aliased ES6 imports by adding query captures for require() patterns and fixing the `extract_original_name()` function to properly navigate the tree-sitter AST.
+Fixed CommonJS require() detection, aliased ES6 imports, and default imports by adding query captures for require() patterns and fixing AST navigation functions to properly iterate children instead of using childForFieldName() for non-field nodes.
 
 ---
 
@@ -21,7 +21,7 @@ Fixed CommonJS require() detection and aliased ES6 imports by adding query captu
 
 1. ✅ "should resolve require() imports" - 0 imports found
 2. ✅ "should resolve cross-file function calls in CommonJS" - resolution undefined
-3. ❌ "should handle default exports" - resolution undefined (not fixed - different issue)
+3. ✅ "should handle default exports" - import_kind was "named" instead of "default"
 4. ✅ "should resolve aliased imports" - original_name undefined
 5. ✅ "should resolve aliased class constructor calls" - original_name undefined
 
@@ -135,18 +135,51 @@ if (importClause) {
 
 **Result**: `import { helper as utilHelper }` now correctly sets `original_name="helper"` ✅
 
+### 3. Default Imports Detected as Named (Fixed 1 test) ✅
+
+**Problem**: `import formatDate from './utils'` created import with `import_kind="named"` instead of `"default"`
+
+**Root Cause**: `is_default_import()` in javascript_builder.ts used `childForFieldName()` for non-field nodes.
+
+**Fix**: Changed javascript_builder.ts lines 739-758 to iterate children:
+
+```typescript
+export function is_default_import(node: SyntaxNode, name: SymbolName): boolean {
+  // Find import_clause as a child (not a field in JavaScript grammar)
+  let importClause: SyntaxNode | null = null;
+  for (const child of node.children || []) {
+    if (child.type === "import_clause") {
+      importClause = child;
+      break;
+    }
+  }
+
+  if (importClause) {
+    // Check if import_clause has a direct identifier child (the default import)
+    for (const child of importClause.children || []) {
+      if (child.type === "identifier" && child.text === name) {
+        return true;
+      }
+    }
+  }
+  return false;
+}
+```
+
+**Result**: `import formatDate from './utils'` now correctly sets `import_kind="default"` ✅
+
 ---
 
 ## Verification
 
-### Tests Fixed (4 of 5) ✅
+### All 5 Tests Fixed ✅
 
 ```text
 ✅ should resolve require() imports
 ✅ should resolve cross-file function calls in CommonJS
+✅ should handle default exports
 ✅ should resolve aliased imports
 ✅ should resolve aliased class constructor calls
-❌ should handle default exports (separate issue - likely in task 11.154.8.4)
 ```
 
 ### Patterns Verified
@@ -162,12 +195,17 @@ if (importClause) {
 - `import { helper as utilHelper }` → original_name="helper" ✅
 - `import { DataManager as Manager }` → original_name="DataManager" ✅
 
+**Default imports**:
+
+- `import formatDate from './utils'` → import_kind="default" ✅
+- Default export resolution now works correctly ✅
+
 ### Test Impact
 
 - Before: 11 total failures
-- After: 7 total failures
-- **Fixed**: 4 tests
-- Remaining 7 failures: 1 default export + 2 TypeScript + 2 Python + 2 Rust
+- After: 6 total failures
+- **Fixed**: 5 tests (all JavaScript import/CommonJS tests)
+- Remaining 6 failures: 2 TypeScript + 2 Python + 2 Rust
 
 ---
 
@@ -177,19 +215,12 @@ if (importClause) {
 
 - `packages/core/src/index_single_file/query_code_tree/queries/javascript.scm` - Added CommonJS require() query patterns (lines 182-218)
 - `packages/core/src/index_single_file/query_code_tree/language_configs/javascript_builder.ts` - Fixed extract_original_name() to iterate children (lines 700-731)
+- `packages/core/src/index_single_file/query_code_tree/language_configs/javascript_builder.ts` - Fixed is_default_import() to iterate children (lines 739-758)
 
 ### No Changes Needed
 
 - `javascript_builder_config.ts` - require() handlers already existed and work correctly
-- Resolution logic already handles CommonJS imports correctly
-
----
-
-## Remaining Issue
-
-**Default exports** (1 test) - Not addressed in this task
-
-The failing test "should handle default exports" involves resolving default import/export pairs. This appears to be a separate issue from CommonJS and aliased imports, likely belonging to task 11.154.8.4 (edge cases).
+- Resolution logic already handles all import types correctly
 
 ---
 
@@ -199,20 +230,27 @@ The failing test "should handle default exports" involves resolving default impo
 - [x] CommonJS cross-file function calls work
 - [x] Aliased imports work with correct original_name
 - [x] Aliased class constructor calls work
+- [x] Default imports/exports work correctly
 - [x] NO new fragment captures added (used complete node captures with predicates)
 - [x] Validation still passes (0 errors, 0 warnings)
-- [ ] Default exports work (not fixed - separate issue)
 
 ---
 
 ## Impact
 
-CommonJS and ES6 aliased imports now work correctly:
+All JavaScript import patterns now work correctly:
 
-- ✅ require() with destructuring creates individual import definitions
-- ✅ require() with simple assignment creates namespace import
-- ✅ Aliased imports properly track original_name for resolution
-- ✅ Cross-module CommonJS resolution works
-- ✅ Entry point detection works with CommonJS modules
+- ✅ CommonJS require() with destructuring creates individual import definitions
+- ✅ CommonJS require() with simple assignment creates namespace import
+- ✅ ES6 aliased imports properly track original_name for resolution
+- ✅ ES6 default imports/exports resolve correctly with import_kind="default"
+- ✅ Cross-module resolution works for both CommonJS and ES6
+- ✅ Entry point detection works with all module types
 
 This enables mixed ES6/CommonJS codebases to be analyzed correctly! 🎉
+
+## Root Pattern
+
+The root issue across all 3 fixes was the same: **using `childForFieldName()` for nodes that aren't fields in the JavaScript tree-sitter grammar.**
+
+JavaScript grammar only defines fields for specific nodes (like `name`, `alias`, `source`), but many structural nodes (`import_clause`, `named_imports`, `export_clause`) are just children without field names and must be accessed by iterating `node.children`.
