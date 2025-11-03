@@ -173,7 +173,7 @@ export async function load_json<T>(file_path: string): Promise<T> {
 export async function find_most_recent_analysis(): Promise<string> {
   const __filename = fileURLToPath(import.meta.url);
   const __dirname = dirname(__filename);
-  const analysis_dir = path.resolve(__dirname, "../analysis_output");
+  const analysis_dir = path.resolve(__dirname, "analysis_output");
 
   try {
     const files = await fs.readdir(analysis_dir);

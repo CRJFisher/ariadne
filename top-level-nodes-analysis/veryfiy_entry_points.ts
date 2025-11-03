@@ -214,7 +214,7 @@ async function main() {
   if (args.length === 0) {
     console.error("Usage: npx tsx verify_entry_points.ts <analysis-file-path>");
     console.error("\nExample:");
-    console.error("  npx tsx verify_entry_points.ts ../analysis_output/packages-core-analysis_2025-10-26_21-13-38-396Z.json");
+    console.error("  npx tsx verify_entry_points.ts analysis_output/packages-core-analysis_2025-10-26_21-13-38-396Z.json");
     process.exit(1);
   }
 

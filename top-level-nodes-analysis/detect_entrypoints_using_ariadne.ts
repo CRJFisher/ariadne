@@ -260,7 +260,7 @@ async function main() {
       .replace("T", "_")
       .split(".")[0]; // Format: YYYY-MM-DD_HH-MM-SS
 
-    const output_dir = path.join(__dirname, "../analysis_output");
+    const output_dir = path.join(__dirname, "analysis_output");
     const output_file = path.join(
       output_dir,
       `packages-core-analysis_${timestamp}.json`

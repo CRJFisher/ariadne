@@ -41,9 +41,6 @@ coverage/
 *.temp
 .cache/
 
-# Analysis output
-analysis_output/
-
 # Claude AI specific
 .claude/settings.local.json
 CLAUDE.local.md
