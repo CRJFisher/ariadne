@@ -220,6 +220,29 @@ export function extract_property_type(
       return typeNode.text as SymbolName;
     }
   }
+
+  // For Protocol property signatures (x: int without assignment)
+  // Pattern: expression_statement contains typed_parameter or type annotation
+  // The node might be inside an expression_statement that contains the type
+  let current = node.parent;
+  while (current) {
+    if (current.type === "expression_statement") {
+      // Look for type annotation child
+      for (const child of current.children || []) {
+        if (child.type === "type") {
+          return child.text as SymbolName;
+        }
+      }
+      // Also check for typed_parameter pattern
+      const typeNode = current.childForFieldName?.("type");
+      if (typeNode) {
+        return typeNode.text as SymbolName;
+      }
+      break;
+    }
+    current = current.parent;
+  }
+
   return undefined;
 }
 

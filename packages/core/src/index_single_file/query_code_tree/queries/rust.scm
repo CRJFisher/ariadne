@@ -473,97 +473,11 @@
 ;; IMPORTS
 ;; ==============================================================================
 
-; Simple use statements with full path - capturing the last identifier as the import name
-(use_declaration
-  argument: (scoped_identifier
-    (identifier) @import.import
-  )
-)
+; Simple use declarations - capture complete node
+(use_declaration) @definition.import
 
-; Simple use statements without path (e.g., use self)
-(use_declaration
-  argument: (identifier) @import.import
-)
-
-; Use with alias (scoped path)
-(use_declaration
-  argument: (use_as_clause
-    (scoped_identifier
-      name: (identifier) @import.import
-    )
-    "as"
-    (identifier) @import.import
-  )
-)
-
-; Use with alias (simple identifier)
-(use_declaration
-  argument: (use_as_clause
-    (identifier) @import.import
-    "as"
-    (identifier) @import.import
-  )
-)
-
-; Wildcard imports
-(use_declaration
-  argument: (use_wildcard) @import.import
-)
-
-; Use lists (e.g., use module::{A, B, C})
-(use_declaration
-  argument: (use_list
-    (identifier) @import.import
-  )
-)
-
-; Scoped use lists with simple items (e.g., std::fmt::{Display, Formatter})
-(use_declaration
-  argument: (scoped_use_list
-    path: (_)
-    list: (use_list
-      (identifier) @import.import
-    )
-  )
-)
-
-; Scoped use lists with scoped items
-(use_declaration
-  argument: (scoped_use_list
-    path: (_)
-    list: (use_list
-      (scoped_identifier
-        name: (identifier) @import.import
-      )
-    )
-  )
-)
-
-; Scoped use lists with aliases
-(use_declaration
-  argument: (scoped_use_list
-    path: (_)
-    list: (use_list
-      (use_as_clause
-        (identifier) @import.import
-        "as"
-        (identifier) @import.import
-      )
-    )
-  )
-)
-
-; Extern crate
-(extern_crate_declaration
-  (identifier) @import.import
-)
-
-; Extern crate with alias
-(extern_crate_declaration
-  (identifier) @import.import
-  "as"
-  (identifier) @import.import
-)
+; Extern crate declarations - capture complete node
+(extern_crate_declaration) @definition.import
 
 ;; ==============================================================================
 ;; VISIBILITY MODIFIERS
@@ -644,7 +558,7 @@
 ; Re-exports (pub use)
 (use_declaration
   (visibility_modifier)
-) @export.reexport
+) @import.reexport
 
 ;; ==============================================================================
 ;; MACROS

@@ -160,17 +160,24 @@ async function load_project_files(
  * Main analysis function
  */
 async function analyze_packages_core(): Promise<AnalysisResult> {
+  const start_time = Date.now();
+
   const project_path = path.resolve(__dirname, "../packages/core");
   console.error(`Analyzing packages/core at: ${project_path}`);
   console.error("Loading files...");
 
   // Initialize project with excluded folders
+  const init_start = Date.now();
   const project = new Project();
   await project.initialize(project_path as FilePath, ["tests"]);
+  const init_time = Date.now() - init_start;
+  console.error(`⏱️  Initialization: ${init_time}ms`);
 
   // Load all source files
+  const load_start = Date.now();
   const files_loaded = await load_project_files(project, project_path);
-  console.error(`Loaded ${files_loaded} files`);
+  const load_time = Date.now() - load_start;
+  console.error(`Loaded ${files_loaded} files in ${load_time}ms`);
 
   // Check how many files were actually indexed successfully
   const stats = project.get_stats();
@@ -185,8 +192,10 @@ async function analyze_packages_core(): Promise<AnalysisResult> {
 
   // Get call graph
   console.error("Building call graph...");
+  const callgraph_start = Date.now();
   const call_graph = project.get_call_graph();
-  console.error(`Found ${call_graph.entry_points.length} entry points`);
+  const callgraph_time = Date.now() - callgraph_start;
+  console.error(`Found ${call_graph.entry_points.length} entry points in ${callgraph_time}ms`);
 
   // Extract entry point information
   const entry_points: FunctionEntry[] = [];
@@ -212,6 +221,9 @@ async function analyze_packages_core(): Promise<AnalysisResult> {
 
   // Sort by tree_size descending
   entry_points.sort((a, b) => b.tree_size - a.tree_size);
+
+  const total_time = Date.now() - start_time;
+  console.error(`⏱️  Total analysis time: ${total_time}ms (${(total_time / 1000).toFixed(2)}s)`);
 
   return {
     project_path,

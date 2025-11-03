@@ -390,7 +390,7 @@
 
 ; Optional parameters (contain ? token)
 (optional_parameter
-  pattern: (identifier) @definition.parameter
+  pattern: (identifier) @definition.parameter.optional
 )
 
 ; Rest parameters (...args)

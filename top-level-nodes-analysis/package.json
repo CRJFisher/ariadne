@@ -6,15 +6,19 @@
   "description": "Self-analysis tools for identifying entry points in packages/core",
   "scripts": {
     "analyze": "npx tsx analyze_self.ts",
-    "verify": "npx tsx verify_entry_points.ts"
+    "verify": "npx tsx verify_entry_points.ts",
+    "profile": "clinic doctor -- node --import tsx detect_entrypoints_using_ariadne.ts",
+    "profile:flame": "clinic flame -- node --import tsx detect_entrypoints_using_ariadne.ts",
+    "profile:simple": "NODE_ENV=production node --cpu-prof --cpu-prof-interval=100 --import tsx detect_entrypoints_using_ariadne.ts"
   },
   "dependencies": {
+    "@anthropic-ai/claude-agent-sdk": "*",
     "@ariadnejs/core": "file:../packages/core",
-    "@ariadnejs/types": "file:../packages/types",
-    "@anthropic-ai/claude-agent-sdk": "*"
+    "@ariadnejs/types": "file:../packages/types"
   },
   "devDependencies": {
     "@types/node": "^24.0.14",
+    "clinic": "^13.0.0",
     "tsx": "^4.19.2",
     "typescript": "^5.8.3"
   }

@@ -148,7 +148,7 @@
   body: (block
     (expression_statement
       (assignment
-        left: (identifier) @definition.property
+        left: (identifier) @definition.property.interface
       )
     )
   )
@@ -165,7 +165,7 @@
   body: (block
     (expression_statement
       (assignment
-        left: (identifier) @definition.property
+        left: (identifier) @definition.property.interface
       )
     )
   )
@@ -233,6 +233,20 @@
         name: (identifier) @definition.property
       )
     ) @definition.property
+  )
+)
+
+; Method decorators (@staticmethod, @classmethod, etc.)
+(class_definition
+  body: (block
+    (decorated_definition
+      (decorator
+        (identifier) @decorator.method
+      )
+      definition: (function_definition
+        name: (identifier) @definition.method
+      )
+    )
   )
 )
 

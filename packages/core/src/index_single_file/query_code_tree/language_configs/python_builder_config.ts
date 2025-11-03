@@ -1066,6 +1066,28 @@ export const PYTHON_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
     },
   ],
 
+  [
+    "decorator.method",
+    {
+      process: (
+        capture: CaptureNode,
+        builder: DefinitionBuilder,
+        context: ProcessingContext
+      ) => {
+        const target_id = find_decorator_target(capture);
+        if (!target_id) return;
+
+        const decorator_name = capture.text;
+
+        builder.add_decorator_to_target(target_id, {
+          name: decorator_name,
+          defining_scope_id: context.get_scope_id(capture.location),
+          location: capture.location,
+        });
+      },
+    },
+  ],
+
   // ============================================================================
   // TYPE ALIASES (Python 3.12+)
   // ============================================================================
