@@ -236,7 +236,8 @@ describe("ReferenceBuilder", () => {
       expect(references[0].name).toBe("MyClass");
       expect(references[0].kind).toBe("constructor_call");
       if (references[0].kind === "constructor_call") {
-        expect(references[0].construct_target).toBeDefined();
+        // Without extractors, construct_target will be undefined (standalone call)
+        expect(references[0].construct_target).toBeUndefined();
       }
     });
 

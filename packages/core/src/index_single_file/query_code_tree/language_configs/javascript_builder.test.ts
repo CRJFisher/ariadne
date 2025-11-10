@@ -14,7 +14,14 @@ import type {
   SemanticCategory,
   SemanticEntity,
 } from "../../semantic_index";
-import type { Location, ScopeId, FilePath, SymbolName } from "@ariadnejs/types";
+import type {
+  Location,
+  ScopeId,
+  FilePath,
+  SymbolName,
+  MethodCallReference,
+  ConstructorCallReference,
+} from "@ariadnejs/types";
 import { ReferenceBuilder } from "../../references/reference_builder";
 import { JAVASCRIPT_METADATA_EXTRACTORS } from "./javascript_metadata";
 import { node_to_location } from "../../node_utils";
@@ -602,6 +609,7 @@ describe("JavaScript Builder Configuration", () => {
         const captures: CaptureNode[] = [];
 
         // Find the method call
+        // Real query captures the call_expression with member_expression function
         const callNode = findNodeByType(ast.rootNode, "call_expression");
         if (callNode) {
           const memberExpr = callNode.childForFieldName("function");
@@ -612,7 +620,7 @@ describe("JavaScript Builder Configuration", () => {
                 name: "ref.call",
                 category: "reference" as SemanticCategory,
                 entity: "call" as SemanticEntity,
-                node: propNode as any,
+                node: callNode as any,  // Pass call_expression, not just property
                 text: propNode.text as SymbolName,
                 location: node_to_location(propNode, TEST_FILE_PATH),
               });
@@ -632,14 +640,17 @@ describe("JavaScript Builder Configuration", () => {
         );
 
         builder.process(captures[0]);
-        const methodCalls = builder.references.filter((r) => r.type === "call");
 
-        // Verify basic call reference is created
+        const methodCalls = builder.references.filter(
+          (r): r is MethodCallReference => r.kind === "method_call"
+        );
+
+        // Verify method call reference is created with proper detection
         expect(methodCalls).toHaveLength(1);
         expect(methodCalls[0].name).toBe("method");
-        expect(methodCalls[0].type).toBe("call");
-        // Note: receiver_location metadata requires full query context
-        // See semantic_index tests for full metadata extraction validation
+        expect(methodCalls[0].kind).toBe("method_call");
+        expect(methodCalls[0].receiver_location).toBeDefined();
+        expect(methodCalls[0].property_chain).toEqual(["obj", "method"]);
       });
 
       it("should process property chains with metadata", () => {
@@ -657,6 +668,7 @@ describe("JavaScript Builder Configuration", () => {
         const captures: CaptureNode[] = [];
 
         // Find the chained method call
+        // Real query captures the call_expression with nested member_expression
         const callNode = findNodeByType(ast.rootNode, "call_expression");
         if (callNode) {
           const memberExpr = callNode.childForFieldName("function");
@@ -667,7 +679,7 @@ describe("JavaScript Builder Configuration", () => {
                 name: "ref.call",
                 category: "reference" as SemanticCategory,
                 entity: "call" as SemanticEntity,
-                node: propNode as any,
+                node: callNode as any,  // Pass call_expression for proper detection
                 text: propNode.text as SymbolName,
                 location: node_to_location(propNode, TEST_FILE_PATH),
               });
@@ -687,14 +699,17 @@ describe("JavaScript Builder Configuration", () => {
         );
 
         builder.process(captures[0]);
-        const methodCalls = builder.references.filter((r) => r.type === "call");
 
-        // Verify basic call reference is created
+        const methodCalls = builder.references.filter(
+          (r): r is MethodCallReference => r.kind === "method_call"
+        );
+
+        // Verify method call with proper property chain extraction
         expect(methodCalls).toHaveLength(1);
         expect(methodCalls[0].name).toBe("list");
-        expect(methodCalls[0].type).toBe("call");
-        // Note: property_chain metadata requires full query context
-        // See semantic_index tests for full metadata extraction validation
+        expect(methodCalls[0].kind).toBe("method_call");
+        expect(methodCalls[0].receiver_location).toBeDefined();
+        expect(methodCalls[0].property_chain).toEqual(["api", "users", "list"]);
       });
 
       it("should extract type annotations from JSDoc", () => {
@@ -836,11 +851,11 @@ describe("JavaScript Builder Configuration", () => {
 
         builder.process(captures[0]);
         const constructorCalls = builder.references.filter(
-          (r) => r.type === "construct"
+          (r): r is ConstructorCallReference => r.kind === "constructor_call"
         );
 
         expect(constructorCalls).toHaveLength(1);
-        expect(constructorCalls[0]?.context?.construct_target).toBeDefined();
+        expect(constructorCalls[0]?.construct_target).toBeDefined();
       });
     });
 

@@ -478,8 +478,8 @@ export class ReferenceBuilder {
     }
 
     // For property access, extract just the property name from member_expression/attribute
-    if (kind === ReferenceKind.PROPERTY_ACCESS) {
-      // Try to get the property/attribute child node
+    if (kind === ReferenceKind.PROPERTY_ACCESS && typeof capture.node.childForFieldName === 'function') {
+      // Try to get the property/attribute child node (only if node has tree-sitter methods)
       const property_node = capture.node.childForFieldName("property") ||
                            capture.node.childForFieldName("attribute");
       if (property_node) {
