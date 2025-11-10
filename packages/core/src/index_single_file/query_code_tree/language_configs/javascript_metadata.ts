@@ -357,12 +357,17 @@ export const JAVASCRIPT_METADATA_EXTRACTORS: MetadataExtractors = {
       }
 
       // Regular object receiver (not a keyword)
-      const receiver_name = object_node.text;
+      // Use extract_property_chain for nested receivers like obj.prop.method()
+      const object_chain = JAVASCRIPT_METADATA_EXTRACTORS.extract_property_chain(target_node);
+
+      // Fallback: if chain extraction failed, use simple receiver + property
+      const chain = object_chain || (property_name
+        ? [object_node.text as SymbolName, property_name as SymbolName]
+        : [object_node.text as SymbolName]);
+
       return {
         receiver_location: node_to_location(object_node, file_path),
-        property_chain: property_name
-          ? [receiver_name as SymbolName, property_name as SymbolName]
-          : [receiver_name as SymbolName],
+        property_chain: chain,
         is_self_reference: false,
       };
     }

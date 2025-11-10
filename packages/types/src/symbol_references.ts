@@ -101,6 +101,9 @@ export type SelfReferenceKeyword = 'this' | 'self' | 'super' | 'cls';
  * const user = getUser();
  * user.getName();  // MethodCallReference
  * // → { receiver_location: <loc of 'user'>, property_chain: ['user', 'getName'] }
+ *
+ * @example Optional chaining
+ * obj?.method();  // MethodCallReference with optional_chaining: true
  */
 export interface MethodCallReference extends BaseReference {
   readonly kind: 'method_call';
@@ -108,6 +111,8 @@ export interface MethodCallReference extends BaseReference {
   readonly receiver_location: Location;
   /** Property chain (REQUIRED) */
   readonly property_chain: readonly SymbolName[];
+  /** Whether this uses optional chaining (obj?.method()) */
+  readonly optional_chaining?: boolean;
 }
 
 /**

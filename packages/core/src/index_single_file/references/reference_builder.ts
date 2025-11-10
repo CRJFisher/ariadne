@@ -25,9 +25,20 @@ import type {
   TypeInfo,
 } from "@ariadnejs/types";
 
+import {
+  create_self_reference_call,
+  create_method_call_reference,
+  create_function_call_reference,
+  create_constructor_call_reference,
+  create_variable_reference,
+  create_property_access_reference,
+  create_type_reference,
+  create_assignment_reference,
+} from "./reference_factories";
+
 import type { CaptureNode } from "../semantic_index";
 import type { ProcessingContext } from "../semantic_index";
-import type { MetadataExtractors } from "../query_code_tree/language_configs/metadata_types";
+import type { MetadataExtractors, ReceiverInfo } from "../query_code_tree/language_configs/metadata_types";
 
 // ============================================================================
 // Reference Kind Enum
@@ -306,17 +317,15 @@ function extract_context(
 /**
  * Process method reference with object context
  *
- * Specialized handler for method calls that extracts comprehensive metadata
- * for method resolution. Builds a SymbolReference with:
- * - call_type: "method"
- * - context: receiver_location and property_chain
- * - member_access: object_type, access_type, is_optional_chain
- * - type_info: inferred from type annotations if available
+ * Uses factory functions to create typed reference variants based on receiver type.
+ * Distinguishes between self-reference calls (this.method()) and regular method calls (obj.method()).
  *
  * Handles patterns like:
- * - `obj.method()` → receiver: obj, chain: ['obj', 'method']
- * - `a.b.c()` → receiver: a.b, chain: ['a', 'b', 'c']
- * - `obj?.method()` → receiver: obj, is_optional_chain: true
+ * - `this.method()` → SelfReferenceCall with keyword: 'this'
+ * - `self.method()` → SelfReferenceCall with keyword: 'self'
+ * - `super.method()` → SelfReferenceCall with keyword: 'super'
+ * - `obj.method()` → MethodCallReference with receiver: obj
+ * - `a.b.c()` → MethodCallReference with chain: ['a', 'b', 'c']
  */
 function process_method_reference(
   capture: CaptureNode,
@@ -325,49 +334,60 @@ function process_method_reference(
   file_path: FilePath
 ): SymbolReference {
   const scope_id = context.get_scope_id(capture.location);
-  const reference_type = map_to_reference_type(ReferenceKind.METHOD_CALL);
+  const location = capture.location;
 
-  // Extract type information using extractors if available
-  const type_info = extract_type_info(capture, extractors, file_path);
-
-  // Detect optional chaining syntax using extractors
-  const is_optional_chain = extractors
-    ? extractors.extract_is_optional_chain(capture.node)
-    : false;
-
-  // Build member access details - object_type might come from type_info
-  const member_access = {
-    object_type: type_info ? type_info : undefined,
-    access_type: "method" as const,
-    is_optional_chain: is_optional_chain,
-  };
-
-  // Extract just the method name from method calls
-  // If the capture is for a full call expression like "obj.method()",
-  // we need to extract just the property/method name
-  // Use language-specific extractor when available
-  let methodName = capture.text;
+  // Extract method name using language-specific extractor
+  let method_name = capture.text as SymbolName;
   if (extractors) {
-    const extractedName = extractors.extract_call_name(capture.node);
-    if (extractedName) {
-      methodName = extractedName;
+    const extracted_name = extractors.extract_call_name(capture.node);
+    if (extracted_name) {
+      method_name = extracted_name as SymbolName;
     }
   }
 
-  return {
-    location: capture.location,
-    type: reference_type,
-    scope_id: scope_id,
-    name: methodName,
-    context: extract_context(capture, extractors, file_path),
-    type_info: type_info,
-    call_type: "method",
-    member_access: member_access,
-  };
+  // Extract receiver information with keyword detection (NEW in task-152.3)
+  const receiver_info = extractors
+    ? extractors.extract_receiver_info(capture.node, file_path)
+    : undefined;
+
+  // Route to appropriate factory based on receiver type
+  if (receiver_info) {
+    // Check if this is a self-reference call (this.method(), self.method(), etc.)
+    if (receiver_info.is_self_reference && receiver_info.self_keyword) {
+      return create_self_reference_call(
+        method_name,
+        location,
+        scope_id,
+        receiver_info.self_keyword,
+        receiver_info.property_chain
+      );
+    }
+
+    // Regular method call with explicit receiver
+    // Extract optional chaining for method calls
+    const optional_chaining = extractors
+      ? extractors.extract_is_optional_chain(capture.node)
+      : false;
+
+    return create_method_call_reference(
+      method_name,
+      location,
+      scope_id,
+      receiver_info.receiver_location,
+      receiver_info.property_chain,
+      optional_chaining
+    );
+  }
+
+  // Fallback: No receiver info available, treat as function call
+  return create_function_call_reference(method_name, location, scope_id);
 }
 
 /**
  * Process type reference with generics
+ *
+ * Uses factory function to create TypeReference variant.
+ * Type context is always 'annotation' for references (extends/implements are handled separately).
  */
 function process_type_reference(
   capture: CaptureNode,
@@ -376,32 +396,12 @@ function process_type_reference(
   file_path: FilePath
 ): SymbolReference {
   const scope_id = context.get_scope_id(capture.location);
+  const location = capture.location;
+  const type_name = capture.text as SymbolName;
 
-  // Extract generic type arguments using extractors if available
-  const type_args = extractors
-    ? extractors.extract_type_arguments(capture.node)
-    : undefined;
-  const type_info = extract_type_info(capture, extractors, file_path);
-
-  // Enhance type info with generic parameters
-  const enhanced_type_info =
-    type_args && type_info
-      ? {
-          ...type_info,
-          type_name: `${type_info.type_name}<${type_args.join(
-            ", "
-          )}>` as SymbolName,
-        }
-      : type_info;
-
-  return {
-    location: capture.location,
-    type: "type",
-    scope_id: scope_id,
-    name: capture.text,
-    context: extract_context(capture, extractors, file_path),
-    type_info: enhanced_type_info,
-  };
+  // For now, default to 'annotation' context
+  // TODO: In future tasks, detect context from capture name or node type
+  return create_type_reference(type_name, location, scope_id, "annotation");
 }
 
 // ============================================================================
@@ -458,99 +458,130 @@ export class ReferenceBuilder {
       return this;
     }
 
-    // Build standard reference
+    // Build standard reference using factory functions
     const scope_id = this.context.get_scope_id(capture.location);
-    const reference_type = map_to_reference_type(kind);
+    const location = capture.location;
 
     // Extract the actual name from call expressions
-    let referenceName = capture.text;
+    let reference_name = capture.text as SymbolName;
 
     // Use language-specific extractor to get the call name when available
     if (this.extractors && (kind === ReferenceKind.FUNCTION_CALL || kind === ReferenceKind.CONSTRUCTOR_CALL)) {
-      const extractedName = this.extractors.extract_call_name(capture.node);
-      if (extractedName) {
-        referenceName = extractedName;
+      const extracted_name = this.extractors.extract_call_name(capture.node);
+      if (extracted_name) {
+        reference_name = extracted_name as SymbolName;
       }
     }
 
     // Fallback for languages without extractors or when extractor returns undefined
-    if (referenceName === capture.text && capture.node.type === "call_expression") {
+    if (reference_name === (capture.text as SymbolName) && capture.node.type === "call_expression") {
       // For regular function calls, get the function identifier
-      const functionNode = capture.node.childForFieldName("function");
-      if (functionNode && functionNode.type === "identifier") {
-        referenceName = functionNode.text as SymbolName;
+      const function_node = capture.node.childForFieldName("function");
+      if (function_node && function_node.type === "identifier") {
+        reference_name = function_node.text as SymbolName;
       }
-    } else if (referenceName === capture.text && capture.node.type === "new_expression") {
+    } else if (reference_name === (capture.text as SymbolName) && capture.node.type === "new_expression") {
       // For constructor calls, get the constructor identifier
-      const constructorNode = capture.node.childForFieldName("constructor");
-      if (constructorNode && constructorNode.type === "identifier") {
-        referenceName = constructorNode.text as SymbolName;
+      const constructor_node = capture.node.childForFieldName("constructor");
+      if (constructor_node && constructor_node.type === "identifier") {
+        reference_name = constructor_node.text as SymbolName;
       }
     }
 
-    const reference: SymbolReference = {
-      location: capture.location,
-      type: reference_type,
-      scope_id: scope_id,
-      name: referenceName,
-      context: extract_context(capture, this.extractors, this.file_path),
-      type_info: extract_type_info(capture, this.extractors, this.file_path),
-      call_type: determine_call_type(kind),
-    };
+    // Route to appropriate factory function based on reference kind
+    let reference: SymbolReference;
 
-    // Add assignment type information for assignments with explicit type annotations
-    if (kind === ReferenceKind.ASSIGNMENT) {
-      const assignment_type = extract_type_info(
-        capture,
-        this.extractors,
-        this.file_path
-      );
+    switch (kind) {
+      case ReferenceKind.FUNCTION_CALL:
+        reference = create_function_call_reference(reference_name, location, scope_id);
+        break;
 
-      // Only add assignment_type if we have explicit type annotation
-      if (assignment_type) {
-        const updated_ref = { ...reference, assignment_type };
-        this.references.push(updated_ref);
-        return this;
+      case ReferenceKind.CONSTRUCTOR_CALL: {
+        const construct_target = this.extractors
+          ? this.extractors.extract_construct_target(capture.node, this.file_path)
+          : undefined;
+
+        if (construct_target) {
+          reference = create_constructor_call_reference(
+            reference_name,
+            location,
+            scope_id,
+            construct_target
+          );
+        } else {
+          // Fallback if no target found - still create constructor call with dummy location
+          reference = create_constructor_call_reference(
+            reference_name,
+            location,
+            scope_id,
+            location
+          );
+        }
+        break;
       }
-    }
 
-    // Add return type for return references
-    if (kind === ReferenceKind.RETURN) {
-      const return_type = extract_type_info(
-        capture,
-        this.extractors,
-        this.file_path
-      );
-      if (return_type) {
-        const updated_ref = { ...reference, return_type };
-        this.references.push(updated_ref);
-        return this;
+      case ReferenceKind.VARIABLE_REFERENCE:
+        reference = create_variable_reference(reference_name, location, scope_id, "read");
+        break;
+
+      case ReferenceKind.VARIABLE_WRITE:
+        reference = create_variable_reference(reference_name, location, scope_id, "write");
+        break;
+
+      case ReferenceKind.PROPERTY_ACCESS: {
+        const receiver_info = this.extractors
+          ? this.extractors.extract_receiver_info(capture.node, this.file_path)
+          : undefined;
+
+        if (receiver_info) {
+          const is_optional_chain = this.extractors
+            ? this.extractors.extract_is_optional_chain(capture.node)
+            : false;
+
+          reference = create_property_access_reference(
+            reference_name,
+            location,
+            scope_id,
+            receiver_info.receiver_location,
+            receiver_info.property_chain,
+            "property",
+            is_optional_chain
+          );
+        } else {
+          // Fallback: create variable read if no receiver info
+          reference = create_variable_reference(reference_name, location, scope_id, "read");
+        }
+        break;
       }
-    }
 
-    // Add member access details for property access
-    if (kind === ReferenceKind.PROPERTY_ACCESS) {
-      // Extract type using extractors if available
-      const type_info = extract_type_info(
-        capture,
-        this.extractors,
-        this.file_path
-      );
+      case ReferenceKind.ASSIGNMENT: {
+        const context = extract_context(capture, this.extractors, this.file_path);
+        const target_location = context?.construct_target || location;
+        reference = create_assignment_reference(reference_name, location, scope_id, target_location);
+        break;
+      }
 
-      // Detect optional chaining syntax using extractors
-      const is_optional_chain = this.extractors
-        ? this.extractors.extract_is_optional_chain(capture.node)
-        : false;
+      case ReferenceKind.SUPER_CALL:
+        // Super calls are handled as self-reference calls with 'super' keyword
+        reference = create_self_reference_call(
+          reference_name,
+          location,
+          scope_id,
+          "super",
+          ["super" as SymbolName, reference_name]
+        );
+        break;
 
-      const member_access_info = {
-        object_type: type_info ? type_info : undefined,
-        access_type: "property" as const,
-        is_optional_chain: is_optional_chain,
-      };
+      case ReferenceKind.RETURN:
+        // Return references become variable reads for now
+        // TODO: Create dedicated return reference type in future
+        reference = create_variable_reference(reference_name, location, scope_id, "read");
+        break;
 
-      const updated_ref = { ...reference, member_access: member_access_info };
-      this.references.push(updated_ref);
-      return this;
+      default:
+        // Default to variable reference for unknown kinds
+        reference = create_variable_reference(reference_name, location, scope_id, "read");
+        break;
     }
 
     this.references.push(reference);

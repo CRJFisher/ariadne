@@ -72,7 +72,8 @@ export function create_method_call_reference(
   location: Location,
   scope_id: ScopeId,
   receiver_location: Location,
-  property_chain: readonly SymbolName[]
+  property_chain: readonly SymbolName[],
+  optional_chaining?: boolean
 ): MethodCallReference {
   return {
     kind: 'method_call',
@@ -81,6 +82,7 @@ export function create_method_call_reference(
     scope_id,
     receiver_location,
     property_chain,
+    ...(optional_chaining !== undefined && { optional_chaining }),
   };
 }
 
