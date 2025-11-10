@@ -67,7 +67,7 @@ describe("Project Integration - JavaScript", () => {
       expect(main_index).toBeDefined();
 
       // Find call to helper
-      const calls = main_index!.references.filter((r) => r.type === "call");
+      const calls = main_index!.references.filter((r) => r.kind === "function_call" || r.kind === "method_call" || r.kind === "self_reference_call" || r.kind === "constructor_call");
       expect(calls.length).toBeGreaterThan(0);
 
       const helper_call = calls.find(
@@ -153,7 +153,7 @@ describe("Project Integration - JavaScript", () => {
       expect(main_index).toBeDefined();
 
       // Find call to helper
-      const calls = main_index!.references.filter((r) => r.type === "call");
+      const calls = main_index!.references.filter((r) => r.kind === "function_call" || r.kind === "method_call" || r.kind === "self_reference_call" || r.kind === "constructor_call");
       expect(calls.length).toBeGreaterThan(0);
 
       const helper_call = calls.find(
@@ -197,7 +197,7 @@ describe("Project Integration - JavaScript", () => {
       expect(format_date_import).toBeDefined();
 
       // Find call to formatDate
-      const calls = main_index!.references.filter((r) => r.type === "call");
+      const calls = main_index!.references.filter((r) => r.kind === "function_call" || r.kind === "method_call" || r.kind === "self_reference_call" || r.kind === "constructor_call");
       const format_date_call = calls.find(
         (c) => c.name === ("formatDate" as SymbolName)
       );
@@ -377,7 +377,7 @@ describe("Project Integration - JavaScript", () => {
       expect(function_scopes.length).toBeGreaterThan(5); // Multiple nested functions
 
       // Find inner function calls
-      const calls = index!.references.filter((r) => r.type === "call");
+      const calls = index!.references.filter((r) => r.kind === "function_call" || r.kind === "method_call" || r.kind === "self_reference_call" || r.kind === "constructor_call");
       expect(calls.length).toBeGreaterThan(0);
 
       // Find multiply call (inside closure)
@@ -530,7 +530,7 @@ describe("Project Integration - JavaScript", () => {
       expect(main_index).toBeDefined();
 
       // Find call to coreFunction (imported from middle, re-exported from base)
-      const calls = main_index!.references.filter((r) => r.type === "call");
+      const calls = main_index!.references.filter((r) => r.kind === "function_call" || r.kind === "method_call" || r.kind === "self_reference_call" || r.kind === "constructor_call");
       const core_call = calls.find(
         (c): c is FunctionCallReference =>
           c.name === ("coreFunction" as SymbolName) && c.kind === "function_call"
@@ -576,7 +576,7 @@ describe("Project Integration - JavaScript", () => {
       expect(util_helper_import!.original_name).toBe("helper" as SymbolName);
 
       // Find call to utilHelper
-      const calls = main_index!.references.filter((r) => r.type === "call");
+      const calls = main_index!.references.filter((r) => r.kind === "function_call" || r.kind === "method_call" || r.kind === "self_reference_call" || r.kind === "constructor_call");
       const helper_call = calls.find(
         (c): c is FunctionCallReference =>
           c.name === ("utilHelper" as SymbolName) && c.kind === "function_call"

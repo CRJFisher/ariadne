@@ -27,7 +27,7 @@ const result = helper();
 
       const main_index = project.get_semantic_index("main.ts" as FilePath);
       const helper_call = main_index?.references.find(
-        (r) => r.type === "call" && r.name === ("helper" as SymbolName)
+        (r) => r.kind === "function_call" && r.name === ("helper" as SymbolName)
       );
 
       expect(helper_call).toBeDefined();
@@ -50,7 +50,7 @@ const result = helper();
 
       const main_index = project.get_semantic_index("main.js" as FilePath);
       const helper_call = main_index?.references.find(
-        (r) => r.type === "call" && r.name === ("helper" as SymbolName)
+        (r) => r.kind === "function_call" && r.name === ("helper" as SymbolName)
       );
 
       if (helper_call) {
@@ -73,7 +73,7 @@ result = helper()
 
       const main_index = project.get_semantic_index("main.py" as FilePath);
       const helper_call = main_index?.references.find(
-        (r) => r.type === "call" && r.name === ("helper" as SymbolName)
+        (r) => r.kind === "function_call" && r.name === ("helper" as SymbolName)
       );
 
       if (helper_call) {
@@ -162,7 +162,7 @@ const name = user.getName();
 
       // Find method call
       const method_calls = index?.references.filter(
-        (r) => r.type === "call" && r.name === ("getName" as SymbolName)
+        (r) => r.kind === "method_call" && r.name === ("getName" as SymbolName)
       );
       expect(method_calls?.length).toBeGreaterThan(0);
 
@@ -196,7 +196,7 @@ name = user.get_name()
 
       // Find method call
       const method_calls = index?.references.filter(
-        (r) => r.type === "call" && r.name === ("get_name" as SymbolName)
+        (r) => r.kind === "method_call" && r.name === ("get_name" as SymbolName)
       );
       expect(method_calls?.length).toBeGreaterThan(0);
 
@@ -239,7 +239,7 @@ fn main() {
 
       // Find get_name() method call
       const method_calls = index?.references.filter(
-        (r) => r.type === "call" && r.name === ("get_name" as SymbolName)
+        (r) => r.kind === "method_call" && r.name === ("get_name" as SymbolName)
       );
       expect(method_calls?.length).toBeGreaterThan(0);
 
@@ -269,7 +269,7 @@ const result = helper();
 
       // Find call - verifies call capture works
       const helper_call = main_index?.references.find(
-        (r) => r.type === "call" && r.name === ("helper" as SymbolName)
+        (r) => r.kind === "function_call" && r.name === ("helper" as SymbolName)
       );
       expect(helper_call).toBeDefined();
 
@@ -321,7 +321,7 @@ const name = user.getName();
 
       // Find method call
       const method_call = main_index?.references.find(
-        (r) => r.type === "call" && r.name === ("getName" as SymbolName)
+        (r) => r.kind === "method_call" && r.name === ("getName" as SymbolName)
       );
       expect(method_call).toBeDefined();
     });
@@ -336,7 +336,7 @@ result = helper()
 
       const main_index = project.get_semantic_index("main.py" as FilePath);
       const helper_call = main_index?.references.find(
-        (r) => r.type === "call" && r.name === ("helper" as SymbolName)
+        (r) => r.kind === "function_call" && r.name === ("helper" as SymbolName)
       );
 
       if (helper_call) {
@@ -400,7 +400,7 @@ const result = utils.helper();
 
       // Find method call (namespace member access becomes method call with receiver)
       const helper_call = main_index?.references.find(
-        (r) => r.type === "call" && r.name === ("helper" as SymbolName)
+        (r) => r.kind === "method_call" && r.name === ("helper" as SymbolName)
       );
       expect(helper_call).toBeDefined();
 
@@ -438,10 +438,10 @@ const y = utils.b();
 
       // Find both calls
       const a_call = main_index?.references.find(
-        (r) => r.type === "call" && r.name === ("a" as SymbolName)
+        (r) => r.kind === "method_call" && r.name === ("a" as SymbolName)
       );
       const b_call = main_index?.references.find(
-        (r) => r.type === "call" && r.name === ("b" as SymbolName)
+        (r) => r.kind === "method_call" && r.name === ("b" as SymbolName)
       );
 
       expect(a_call).toBeDefined();
@@ -486,7 +486,7 @@ const x = utils.missing();
 
       // Find call to missing function
       const missing_call = main_index?.references.find(
-        (r) => r.type === "call" && r.name === ("missing" as SymbolName)
+        (r) => r.kind === "method_call" && r.name === ("missing" as SymbolName)
       );
       expect(missing_call).toBeDefined();
 

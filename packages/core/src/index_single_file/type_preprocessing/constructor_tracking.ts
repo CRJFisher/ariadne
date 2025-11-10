@@ -41,13 +41,17 @@ export function extract_constructor_bindings(
     // Only process constructor calls using discriminated union
     // TypeScript automatically narrows the type in this block
     if (ref.kind === "constructor_call") {
-      // ref.construct_target is guaranteed to exist (no undefined check needed)
-      const target_location = ref.construct_target;
-      const key = location_key(target_location);
-      const type_name = ref.name;
+      // construct_target is optional - only process if defined
+      // Standalone constructor calls (e.g., MyClass() with no assignment) have undefined construct_target
+      if (ref.construct_target !== undefined) {
+        const target_location = ref.construct_target;
+        const key = location_key(target_location);
+        const type_name = ref.name;
 
-      // Map the target location to the type name
-      bindings.set(key, type_name);
+        // Map the target location to the type name
+        bindings.set(key, type_name);
+      }
+      // Skip standalone constructor calls (no assignment target)
     }
   }
 
