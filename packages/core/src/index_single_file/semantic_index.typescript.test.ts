@@ -7,7 +7,17 @@ import { readFileSync } from "fs";
 import { join } from "path";
 import Parser from "tree-sitter";
 import TypeScript from "tree-sitter-typescript";
-import type { Language, FilePath } from "@ariadnejs/types";
+import type {
+  Language,
+  FilePath,
+  FunctionCallReference,
+  MethodCallReference,
+  ConstructorCallReference,
+  SelfReferenceCall,
+  TypeReference,
+  PropertyAccessReference,
+  AssignmentReference,
+} from "@ariadnejs/types";
 import { build_semantic_index } from "./semantic_index";
 import { query_tree } from "./query_code_tree/query_code_tree";
 import type { ParsedFile } from "./file_utils";
@@ -291,7 +301,7 @@ describe("Semantic Index - TypeScript", () => {
 
       // Check method calls on async methods
       const methodCalls = index.references.filter(
-        (r) => r.type === "call" && r.call_type === "method",
+        (r): r is MethodCallReference => r.kind === "method_call",
       );
       const getDataCall = methodCalls.find((r) => r.name === "getData");
       const processDataCall = methodCalls.find((r) => r.name === "processData");
@@ -300,10 +310,10 @@ describe("Semantic Index - TypeScript", () => {
       expect(processDataCall).toBeDefined();
 
       if (getDataCall) {
-        expect(getDataCall.context?.receiver_location).toBeDefined();
+        expect(getDataCall.receiver_location).toBeDefined();
       }
       if (processDataCall) {
-        expect(processDataCall.context?.receiver_location).toBeDefined();
+        expect(processDataCall.receiver_location).toBeDefined();
       }
     });
   });
@@ -415,13 +425,13 @@ describe("Semantic Index - TypeScript", () => {
 
       // Check method call has receiver location
       const methodCalls = index.references.filter(
-        (r) => r.type === "call" && r.call_type === "method",
+        (r): r is MethodCallReference => r.kind === "method_call",
       );
       const getDataCall = methodCalls.find((r) => r.name === "getData");
       expect(getDataCall).toBeDefined();
       if (getDataCall) {
-        expect(getDataCall.context?.receiver_location).toBeDefined();
-        expect(getDataCall.context?.receiver_location?.start_line).toBe(9);
+        expect(getDataCall.receiver_location).toBeDefined();
+        expect(getDataCall.receiver_location?.start_line).toBe(9);
       }
     });
 
@@ -471,7 +481,7 @@ describe("Semantic Index - TypeScript", () => {
 
       // Check method calls on interface-typed object
       const methodCalls = index.references.filter(
-        (r) => r.type === "call" && r.call_type === "method",
+        (r): r is MethodCallReference => r.kind === "method_call",
       );
       const addCall = methodCalls.find((r) => r.name === "add");
       const subtractCall = methodCalls.find((r) => r.name === "subtract");
@@ -481,10 +491,10 @@ describe("Semantic Index - TypeScript", () => {
 
       // Both should have receiver location
       if (addCall) {
-        expect(addCall.context?.receiver_location).toBeDefined();
+        expect(addCall.receiver_location).toBeDefined();
       }
       if (subtractCall) {
-        expect(subtractCall.context?.receiver_location).toBeDefined();
+        expect(subtractCall.receiver_location).toBeDefined();
       }
     });
 
@@ -516,15 +526,15 @@ describe("Semantic Index - TypeScript", () => {
       );
 
       const methodCalls = index.references.filter(
-        (r) => r.type === "call" && r.call_type === "method",
+        (r): r is MethodCallReference => r.kind === "method_call",
       );
       const whereCall = methodCalls.find((r) => r.name === "where");
       const orderByCall = methodCalls.find((r) => r.name === "orderBy");
       const limitCall = methodCalls.find((r) => r.name === "limit");
 
-      expect(whereCall?.context?.receiver_location).toBeDefined();
-      expect(orderByCall?.context?.receiver_location).toBeDefined();
-      expect(limitCall?.context?.receiver_location).toBeDefined();
+      expect(whereCall?.receiver_location).toBeDefined();
+      expect(orderByCall?.receiver_location).toBeDefined();
+      expect(limitCall?.receiver_location).toBeDefined();
     });
 
     it("should detect optional chaining in method calls and property access", () => {
@@ -559,25 +569,23 @@ describe("Semantic Index - TypeScript", () => {
 
       // Regular method call - should NOT have optional chaining
       const regularCall = result.references.find(
-        (ref) =>
-          ref.type === "call" &&
+        (ref): ref is MethodCallReference =>
+          ref.kind === "method_call" &&
           ref.name === "getDisplayName" &&
-          ref.member_access &&
-          !ref.member_access.is_optional_chain,
+          !ref.optional_chaining,
       );
       expect(regularCall).toBeDefined();
-      expect(regularCall?.member_access?.is_optional_chain).toBe(false);
+      expect(regularCall?.optional_chaining).toBeFalsy(); // Can be undefined or false
 
       // Optional chaining method call - should have optional chaining
       const optionalCall = result.references.find(
-        (ref) =>
-          ref.type === "call" &&
+        (ref): ref is MethodCallReference =>
+          ref.kind === "method_call" &&
           ref.name === "getDisplayName" &&
-          ref.member_access &&
-          ref.member_access.is_optional_chain,
+          ref.optional_chaining === true,
       );
       expect(optionalCall).toBeDefined();
-      expect(optionalCall?.member_access?.is_optional_chain).toBe(true);
+      expect(optionalCall?.optional_chaining).toBe(true);
     });
 
     it("should extract type info for interface references", () => {
@@ -604,7 +612,9 @@ describe("Semantic Index - TypeScript", () => {
         "typescript" as Language,
       );
 
-      const typeRefs = index.references.filter((r) => r.type === "type");
+      const typeRefs = index.references.filter(
+        (r): r is TypeReference => r.kind === "type_reference",
+      );
       const userRefs = typeRefs.filter((r) => r.name === "User");
 
       expect(userRefs.length).toBeGreaterThan(0);
@@ -639,7 +649,9 @@ describe("Semantic Index - TypeScript", () => {
         "typescript" as Language,
       );
 
-      const typeRefs = index.references.filter((r) => r.type === "type");
+      const typeRefs = index.references.filter(
+        (r): r is TypeReference => r.kind === "type_reference",
+      );
       const resultRefs = typeRefs.filter((r) => r.name === "Result");
 
       expect(resultRefs.length).toBeGreaterThan(0);
@@ -678,13 +690,13 @@ describe("Semantic Index - TypeScript", () => {
       );
 
       const constructorRefs = index.references.filter(
-        (r) => r.type === "construct",
+        (r): r is ConstructorCallReference => r.kind === "constructor_call",
       );
 
       expect(constructorRefs.length).toBe(2);
       constructorRefs.forEach((ref) => {
         expect(ref.name).toBe("MyClass");
-        expect(ref.context?.construct_target).toBeDefined();
+        expect(ref.construct_target).toBeDefined();
       });
     });
 
@@ -713,7 +725,7 @@ describe("Semantic Index - TypeScript", () => {
       );
 
       const constructorRefs = index.references.filter(
-        (r) => r.type === "construct",
+        (r): r is ConstructorCallReference => r.kind === "constructor_call",
       );
 
       // Should have at least 3 constructor calls
@@ -725,7 +737,7 @@ describe("Semantic Index - TypeScript", () => {
       );
       expect(containerRefs.length).toBeGreaterThanOrEqual(3);
       containerRefs.forEach((ref) => {
-        expect(ref.context?.construct_target).toBeDefined();
+        expect(ref.construct_target).toBeDefined();
       });
     });
 
@@ -766,7 +778,8 @@ describe("Semantic Index - TypeScript", () => {
       // Scenario 1: Receiver type from annotation (const service1: Service = ...)
       // Verify the assignment is captured
       const service1Assignment = index.references.find(
-        (r) => r.type === "assignment" && r.name === "service1",
+        (r): r is AssignmentReference =>
+          r.kind === "assignment" && r.name === "service1",
       );
       expect(service1Assignment).toBeDefined();
 
@@ -775,8 +788,8 @@ describe("Semantic Index - TypeScript", () => {
 
       // Verify method calls have receiver_location
       const methodCalls = index.references.filter(
-        (r) =>
-          r.type === "call" && r.call_type === "method" && r.name === "getData",
+        (r): r is MethodCallReference =>
+          r.kind === "method_call" && r.name === "getData",
       );
 
       // Should have at least 2 getData method calls (may include more from return type methods)
@@ -784,18 +797,19 @@ describe("Semantic Index - TypeScript", () => {
 
       // At least some method calls should have receiver_location
       const callsWithReceiver = methodCalls.filter(
-        (c) => c.context?.receiver_location,
+        (c) => c.receiver_location,
       );
       expect(callsWithReceiver.length).toBeGreaterThan(0);
 
       // Scenario 2: Verify constructor call has construct_target
       const constructorCalls = index.references.filter(
-        (r) => r.type === "construct" && r.name === "Service",
+        (r): r is ConstructorCallReference =>
+          r.kind === "constructor_call" && r.name === "Service",
       );
 
       // Should have at least one constructor call with construct_target
       const constructWithTarget = constructorCalls.find(
-        (c) => c.context?.construct_target,
+        (c) => c.construct_target,
       );
       expect(constructWithTarget).toBeDefined();
     });
@@ -853,7 +867,7 @@ describe("Semantic Index - TypeScript", () => {
 
       // Check member access through optional chaining
       const memberAccessRefs = index.references.filter(
-        (r) => r.type === "member_access",
+        (r): r is PropertyAccessReference => r.kind === "property_access",
       );
       expect(memberAccessRefs.length).toBeGreaterThan(0);
 
@@ -894,14 +908,14 @@ describe("Semantic Index - TypeScript", () => {
 
       // Check property access on enum
       const memberAccessRefs = index.references.filter(
-        (r) => r.type === "member_access",
+        (r): r is PropertyAccessReference => r.kind === "property_access",
       );
       const activeRefs = memberAccessRefs.filter((r) => r.name === "Active");
 
       expect(activeRefs.length).toBeGreaterThan(0);
       activeRefs.forEach((ref) => {
-        if (ref.context?.property_chain) {
-          expect(ref.context.property_chain).toEqual(["Status", "Active"]);
+        if (ref.property_chain) {
+          expect(ref.property_chain).toEqual(["Status", "Active"]);
         }
       });
     });
@@ -935,13 +949,13 @@ describe("Semantic Index - TypeScript", () => {
 
       // Check method call through namespace
       const methodCalls = index.references.filter(
-        (r) => r.type === "call" && r.call_type === "method",
+        (r): r is MethodCallReference => r.kind === "method_call",
       );
       const formatCall = methodCalls.find((r) => r.name === "format");
 
       expect(formatCall).toBeDefined();
       if (formatCall) {
-        expect(formatCall.context?.receiver_location).toBeDefined();
+        expect(formatCall.receiver_location).toBeDefined();
       }
     });
 
@@ -976,7 +990,7 @@ describe("Semantic Index - TypeScript", () => {
 
       // Check decorator function calls
       const functionCalls = index.references.filter(
-        (r) => r.type === "call" && r.call_type === "function",
+        (r): r is FunctionCallReference => r.kind === "function_call",
       );
       const componentCall = functionCalls.find((r) => r.name === "Component");
       expect(componentCall).toBeDefined();

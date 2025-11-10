@@ -15,6 +15,13 @@ import { join } from "path";
 import Parser from "tree-sitter";
 import Rust from "tree-sitter-rust";
 import type { FilePath, Language } from "@ariadnejs/types";
+import type {
+  FunctionCallReference,
+  MethodCallReference,
+  ConstructorCallReference,
+  TypeReference,
+  AssignmentReference,
+} from "@ariadnejs/types";
 import { build_semantic_index } from "./semantic_index";
 import type { ParsedFile } from "./file_utils";
 
@@ -831,7 +838,7 @@ fn main() {
 
       // Verify function calls are tracked
       const function_calls = index.references.filter(
-        (r) => r.type === "call" && r.call_type === "function",
+        (r): r is FunctionCallReference => r.kind === "function_call",
       );
       expect(function_calls.length).toBeGreaterThan(0);
 
@@ -863,7 +870,7 @@ fn main() {
       const index = build_semantic_index(parsed_file, tree, "rust");
 
       // Verify associated function call is tracked
-      const calls = index.references.filter((r) => r.type === "call");
+      const calls = index.references.filter((r) => r.kind === "function_call" || r.kind === "method_call" || r.kind === "constructor_call");
       expect(calls.length).toBeGreaterThan(0);
 
       const new_call = calls.find((c) => c.name.includes("new"));
@@ -1368,7 +1375,7 @@ fn greet(name: &str, age: u32) -> String {
       const index = build_semantic_index(parsed_file, tree, "rust");
 
       // Check that type references were extracted
-      const type_refs = index.references.filter((r) => r.type === "type");
+      const type_refs = index.references.filter((r): r is TypeReference => r.kind === "type_reference");
       expect(type_refs.length).toBeGreaterThan(0);
 
       // Check that type_info is populated
@@ -1396,7 +1403,7 @@ fn main() {
 
       const index = build_semantic_index(parsed_file, tree, "rust");
 
-      const type_refs = index.references.filter((r) => r.type === "type");
+      const type_refs = index.references.filter((r): r is TypeReference => r.kind === "type_reference");
       const types_with_info = type_refs.filter((r) => r.type_info);
 
       expect(types_with_info.length).toBeGreaterThan(0);
@@ -1422,7 +1429,7 @@ fn process(items: Vec<String>, mapping: HashMap<String, i32>) -> Option<String> 
 
       const index = build_semantic_index(parsed_file, tree, "rust");
 
-      const type_refs = index.references.filter((r) => r.type === "type");
+      const type_refs = index.references.filter((r): r is TypeReference => r.kind === "type_reference");
       const types_with_info = type_refs.filter((r) => r.type_info);
 
       // Check that we have type references with metadata
@@ -1467,7 +1474,7 @@ fn main() {
 
       // Verify method call is captured
       const method_calls = index.references.filter(
-        (r) => r.type === "call" && r.call_type === "method",
+        (r): r is MethodCallReference => r.kind === "method_call",
       );
       expect(method_calls.length).toBeGreaterThan(0);
 
@@ -1496,7 +1503,7 @@ fn main() {
 
       // Verify method calls are captured
       const method_calls = index.references.filter(
-        (r) => r.type === "call" && r.call_type === "method",
+        (r): r is MethodCallReference => r.kind === "method_call",
       );
       expect(method_calls.length).toBeGreaterThan(0);
 
@@ -1561,13 +1568,13 @@ fn main() {
 
       // Verify construct call is captured
       const construct_calls = index.references.filter(
-        (r) => r.type === "construct",
+        (r): r is ConstructorCallReference => r.kind === "constructor_call",
       );
       expect(construct_calls.length).toBeGreaterThan(0);
 
       const config_construct = construct_calls.find((c) => c.name === "Config");
       expect(config_construct).toBeDefined();
-      expect(config_construct?.context?.construct_target).toBeDefined();
+      expect(config_construct?.construct_target).toBeDefined();
     });
 
     it("should extract method resolution metadata for all receiver patterns", () => {
@@ -1605,7 +1612,7 @@ fn main() {
       // Scenario 1: Receiver from type annotation
       // Verify the assignment is captured
       const service1_assignment = result.references.find(
-        (ref) => ref.type === "assignment" && ref.name === "service1",
+        (ref): ref is AssignmentReference => ref.kind === "assignment" && ref.name === "service1",
       );
       expect(service1_assignment).toBeDefined();
 
@@ -1615,7 +1622,7 @@ fn main() {
 
       // Verify method calls have receiver_location
       const method_calls = result.references.filter(
-        (ref) => ref.type === "call" && ref.name === "get_data",
+        (ref): ref is MethodCallReference => ref.kind === "method_call" && ref.name === "get_data",
       );
 
       // Should have at least 2 get_data method calls
@@ -1623,18 +1630,18 @@ fn main() {
 
       // At least some method calls should have receiver_location
       const calls_with_receiver = method_calls.filter(
-        (c) => c.context?.receiver_location,
+        (c) => c.receiver_location,
       );
       expect(calls_with_receiver.length).toBeGreaterThan(0);
 
       // Scenario 2: Verify struct instantiation has construct_target
       const constructor_calls = result.references.filter(
-        (ref) => ref.type === "construct" && ref.name === "Service",
+        (ref): ref is ConstructorCallReference => ref.kind === "constructor_call" && ref.name === "Service",
       );
 
       // Should have at least one constructor call with construct_target
       const construct_with_target = constructor_calls.find(
-        (c) => c.context?.construct_target,
+        (c) => c.construct_target,
       );
       expect(construct_with_target).toBeDefined();
     });
@@ -1713,8 +1720,8 @@ fn main() {
       expect(index.file_path).toBe(file_path);
 
       // Check that various reference types are captured
-      const type_refs = index.references.filter((r) => r.type === "type");
-      const call_refs = index.references.filter((r) => r.type === "call");
+      const type_refs = index.references.filter((r): r is TypeReference => r.kind === "type_reference");
+      const call_refs = index.references.filter((r) => r.kind === "function_call" || r.kind === "method_call" || r.kind === "constructor_call");
 
       expect(type_refs.length).toBeGreaterThan(0);
       expect(call_refs.length).toBeGreaterThan(0);
