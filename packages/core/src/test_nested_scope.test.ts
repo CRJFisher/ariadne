@@ -2,6 +2,12 @@ import { describe, it, expect, beforeAll } from "vitest";
 import { build_semantic_index } from "./index_single_file/semantic_index";
 import { ResolutionRegistry } from "./resolve_references/resolution_registry";
 import type { FilePath, Language } from "@ariadnejs/types";
+import type {
+  ConstructorCallReference,
+  MethodCallReference,
+  SelfReferenceCall,
+  FunctionCallReference,
+} from "@ariadnejs/types";
 import Parser from "tree-sitter";
 import TypeScript from "tree-sitter-typescript";
 import type { ParsedFile } from "./index_single_file/file_utils";
@@ -130,15 +136,14 @@ export function process_references(context: string): string[] {
     for (const ref of result.references) {
       console.log({
         name: ref.name,
-        type: ref.type,
-        call_type: ref.call_type,
+        kind: ref.kind,
         location: `${ref.location.start_line}:${ref.location.start_column}`,
       });
     }
 
     // Find the constructor call reference
     const constructor_call = result.references.find(
-      (ref) => ref.call_type === "constructor"
+      (ref): ref is ConstructorCallReference => ref.kind === "constructor_call"
     );
 
     console.log("\n=== CONSTRUCTOR CALL CHECK ===");
@@ -147,7 +152,6 @@ export function process_references(context: string): string[] {
     // Verify the constructor call was captured
     expect(constructor_call).toBeDefined();
     expect(constructor_call?.name).toBe("ReferenceBuilder");
-    expect(constructor_call?.type).toBe("construct");
 
     // Verify the class definition exists
     const class_def = Array.from(result.classes.values()).find(
@@ -183,15 +187,14 @@ export function process_references(context: string): string[] {
 
     // Find constructor call (the one at line 588: new ReferenceBuilder(...))
     const constructor_calls = result.references.filter(
-      (ref) => ref.call_type === "constructor" && ref.name === "ReferenceBuilder"
+      (ref): ref is ConstructorCallReference => ref.kind === "constructor_call" && ref.name === "ReferenceBuilder"
     );
 
     console.log("\nConstructor calls found:", constructor_calls.length);
     for (const call of constructor_calls) {
       console.log({
         name: call.name,
-        type: call.type,
-        call_type: call.call_type,
+        kind: call.kind,
         location: `${call.location.start_line}:${call.location.start_column}`,
       });
     }
@@ -244,22 +247,22 @@ export class TypeRegistry {
     for (const ref of result.references) {
       console.log({
         name: ref.name,
-        type: ref.type,
-        call_type: ref.call_type,
+        kind: ref.kind,
         location: `${ref.location.start_line}:${ref.location.start_column}`,
-        context: ref.context,
       });
     }
 
-    // Find the call to walk_inheritance_chain
+    // Find the call to walk_inheritance_chain (self-reference call)
     const method_call = result.references.find(
-      (ref) => ref.name === "walk_inheritance_chain" && ref.type === "call"
+      (ref): ref is SelfReferenceCall => ref.kind === "self_reference_call" && ref.name === "walk_inheritance_chain"
     );
 
     console.log("\nMethod call to walk_inheritance_chain:", method_call);
 
     expect(method_call).toBeDefined();
-    expect(method_call?.context?.property_chain).toEqual(["this", "walk_inheritance_chain"]);
+    if (method_call) {
+      expect(method_call.keyword).toBe("this");
+    }
   });
 
   it("should resolve this.method() calls in call graph", async () => {

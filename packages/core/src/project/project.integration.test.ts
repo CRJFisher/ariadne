@@ -1,6 +1,12 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { Project } from "./project";
 import type { FilePath, SymbolName } from "@ariadnejs/types";
+import type {
+  ConstructorCallReference,
+  MethodCallReference,
+  SelfReferenceCall,
+  FunctionCallReference,
+} from "@ariadnejs/types";
 
 describe("Project - Language-Agnostic Resolution Patterns", () => {
   let project: Project;
@@ -148,9 +154,9 @@ const name = user.getName();
 
       const index = project.get_semantic_index("test.ts" as FilePath);
 
-      // Find constructor call (type is "construct" not "call")
+      // Find constructor call
       const constructor_calls = index?.references.filter(
-        (r) => r.type === "construct"
+        (r): r is ConstructorCallReference => r.kind === "constructor_call"
       );
       expect(constructor_calls?.length).toBeGreaterThan(0);
 
@@ -182,9 +188,9 @@ name = user.get_name()
 
       const index = project.get_semantic_index("test.py" as FilePath);
 
-      // Find constructor call (type is "construct" not "call")
+      // Find constructor call
       const constructor_calls = index?.references.filter(
-        (r) => r.type === "construct"
+        (r): r is ConstructorCallReference => r.kind === "constructor_call"
       );
       expect(constructor_calls?.length).toBeGreaterThan(0);
 
@@ -227,7 +233,7 @@ fn main() {
       // Find User::new() call (associated function)
       // Note: Rust associated function calls have full scoped name (User::new)
       const new_calls = index?.references.filter(
-        (r) => r.type === "call" && r.name.includes("new") && r.name.includes("User") && r.context?.receiver_location
+        (r): r is MethodCallReference => r.kind === "method_call" && r.name.includes("new") && r.name.includes("User") && r.receiver_location !== undefined
       );
       expect(new_calls?.length).toBeGreaterThan(0);
 
@@ -299,7 +305,7 @@ const name = user.getName();
 
       // Find constructor call
       const constructor_call = main_index?.references.find(
-        (r) => r.type === "construct" && r.name === ("User" as SymbolName)
+        (r): r is ConstructorCallReference => r.kind === "constructor_call" && r.name === ("User" as SymbolName)
       );
       expect(constructor_call).toBeDefined();
 
@@ -370,7 +376,7 @@ fn main() {
       // Find User::new() call
       // Note: Rust associated function calls have full scoped name (User::new)
       const new_call = main_index?.references.find(
-        (r) => r.type === "call" && r.name.includes("new") && r.name.includes("User") && r.context?.receiver_location
+        (r): r is MethodCallReference => r.kind === "method_call" && r.name.includes("new") && r.name.includes("User") && r.receiver_location !== undefined
       );
       expect(new_call).toBeDefined();
     });
@@ -552,16 +558,11 @@ function bar() { return 42; }
       const index = project.get_semantic_index("test.ts" as FilePath);
 
       for (const ref of index!.references) {
-        // SymbolReference fields: location, type, scope_id, name
+        // SymbolReference fields: location, kind, scope_id, name
         expect(ref.name).toBeDefined();
-        expect(ref.type).toBeDefined();
+        expect(ref.kind).toBeDefined();
         expect(ref.scope_id).toBeDefined();
         expect(ref.location).toBeDefined();
-
-        // call_type is only present for call/construct references
-        if (ref.type === "call" || ref.type === "construct") {
-          expect(ref.call_type).toBeDefined();
-        }
       }
     });
 

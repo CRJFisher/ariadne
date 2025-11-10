@@ -3,6 +3,12 @@ import { Project } from "./project";
 import path from "path";
 import fs from "fs";
 import type { FilePath, SymbolName } from "@ariadnejs/types";
+import type {
+  ConstructorCallReference,
+  MethodCallReference,
+  SelfReferenceCall,
+  FunctionCallReference,
+} from "@ariadnejs/types";
 
 const FIXTURE_ROOT = path.join(
   __dirname,
@@ -65,8 +71,8 @@ describe("Project Integration - JavaScript", () => {
       expect(calls.length).toBeGreaterThan(0);
 
       const helper_call = calls.find(
-        (c) =>
-          c.name === ("helper" as SymbolName) && c.call_type === "function"
+        (c): c is FunctionCallReference =>
+          c.name === ("helper" as SymbolName) && c.kind === "function_call"
       );
       expect(helper_call).toBeDefined();
 
@@ -151,8 +157,8 @@ describe("Project Integration - JavaScript", () => {
       expect(calls.length).toBeGreaterThan(0);
 
       const helper_call = calls.find(
-        (c) =>
-          c.name === ("helper" as SymbolName) && c.call_type === "function"
+        (c): c is FunctionCallReference =>
+          c.name === ("helper" as SymbolName) && c.kind === "function_call"
       );
       expect(helper_call).toBeDefined();
 
@@ -231,7 +237,7 @@ describe("Project Integration - JavaScript", () => {
 
       // Find method call
       const method_calls = index!.references.filter(
-        (r) => r.type === "call" && r.call_type === "method"
+        (r): r is MethodCallReference => r.kind === "method_call"
       );
       expect(method_calls.length).toBeGreaterThan(0);
 
@@ -271,7 +277,7 @@ describe("Project Integration - JavaScript", () => {
 
       // Find method calls
       const method_calls = index!.references.filter(
-        (r) => r.type === "call" && r.call_type === "method"
+        (r): r is MethodCallReference => r.kind === "method_call"
       );
       expect(method_calls.length).toBeGreaterThan(0);
 
@@ -302,7 +308,7 @@ describe("Project Integration - JavaScript", () => {
 
       // Find method calls
       const method_calls = index!.references.filter(
-        (r) => r.type === "call" && r.call_type === "method"
+        (r): r is MethodCallReference => r.kind === "method_call"
       );
 
       // Find applyDiscount and markOutOfStock calls (method chaining)
@@ -451,9 +457,9 @@ describe("Project Integration - JavaScript", () => {
       const uses_index = project.get_semantic_index(uses_file);
       expect(uses_index).toBeDefined();
 
-      // Find constructor call (type is "construct", not "call")
+      // Find constructor call
       const constructor_calls = uses_index!.references.filter(
-        (r) => r.call_type === "constructor"
+        (r): r is ConstructorCallReference => r.kind === "constructor_call"
       );
       expect(constructor_calls.length).toBeGreaterThan(0);
 
@@ -490,7 +496,7 @@ describe("Project Integration - JavaScript", () => {
 
       // Find the getName method call
       const getName_call = uses_index!.references.find(
-        (ref) => ref.name === ("getName" as SymbolName) && ref.call_type === "method"
+        (ref): ref is MethodCallReference => ref.name === ("getName" as SymbolName) && ref.kind === "method_call"
       );
       expect(getName_call).toBeDefined();
       if (!getName_call) return;
@@ -526,8 +532,8 @@ describe("Project Integration - JavaScript", () => {
       // Find call to coreFunction (imported from middle, re-exported from base)
       const calls = main_index!.references.filter((r) => r.type === "call");
       const core_call = calls.find(
-        (c) =>
-          c.name === ("coreFunction" as SymbolName) && c.call_type === "function"
+        (c): c is FunctionCallReference =>
+          c.name === ("coreFunction" as SymbolName) && c.kind === "function_call"
       );
       expect(core_call).toBeDefined();
 
@@ -572,8 +578,8 @@ describe("Project Integration - JavaScript", () => {
       // Find call to utilHelper
       const calls = main_index!.references.filter((r) => r.type === "call");
       const helper_call = calls.find(
-        (c) =>
-          c.name === ("utilHelper" as SymbolName) && c.call_type === "function"
+        (c): c is FunctionCallReference =>
+          c.name === ("utilHelper" as SymbolName) && c.kind === "function_call"
       );
       expect(helper_call).toBeDefined();
 
@@ -612,9 +618,9 @@ describe("Project Integration - JavaScript", () => {
       expect(manager_import).toBeDefined();
       expect(manager_import!.original_name).toBe("DataManager" as SymbolName);
 
-      // Find constructor call for Manager (type is "construct", not "call")
+      // Find constructor call for Manager
       const constructor_calls = main_index!.references.filter(
-        (r) => r.call_type === "constructor"
+        (r): r is ConstructorCallReference => r.kind === "constructor_call"
       );
       const manager_constructor = constructor_calls.find(
         (c) => c.name === ("Manager" as SymbolName)
@@ -650,7 +656,7 @@ describe("Project Integration - JavaScript", () => {
 
       // Find the process method call
       const process_call = main_index!.references.find(
-        (ref) => ref.name === ("process" as SymbolName) && ref.call_type === "method"
+        (ref): ref is MethodCallReference => ref.name === ("process" as SymbolName) && ref.kind === "method_call"
       );
       expect(process_call).toBeDefined();
       if (!process_call) return;
@@ -818,10 +824,9 @@ describe("Project Integration - JavaScript", () => {
       // Verify initial state - helper call resolves
       const main_v1 = project.get_semantic_index(main_file);
       const helper_call_v1 = main_v1!.references.find(
-        (r) =>
+        (r): r is FunctionCallReference =>
           r.name === ("helper" as SymbolName) &&
-          r.type === "call" &&
-          r.call_type === "function"
+          r.kind === "function_call"
       );
       expect(helper_call_v1).toBeDefined();
 
@@ -841,10 +846,9 @@ describe("Project Integration - JavaScript", () => {
       // Verify main.js still has the reference (source unchanged)
       const main_v2 = project.get_semantic_index(main_file);
       const helper_call_v2 = main_v2!.references.find(
-        (r) =>
+        (r): r is FunctionCallReference =>
           r.name === ("helper" as SymbolName) &&
-          r.type === "call" &&
-          r.call_type === "function"
+          r.kind === "function_call"
       );
       expect(helper_call_v2).toBeDefined();
 
@@ -882,10 +886,9 @@ describe("Project Integration - JavaScript", () => {
 
       // Call to helper (which was imported) should not resolve after source file removal
       const helper_call = main!.references.find(
-        (r) =>
+        (r): r is FunctionCallReference =>
           r.name === ("helper" as SymbolName) &&
-          r.type === "call" &&
-          r.call_type === "function"
+          r.kind === "function_call"
       );
       if (helper_call) {
         const resolved = project.resolutions.resolve(
