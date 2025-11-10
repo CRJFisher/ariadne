@@ -230,10 +230,11 @@ fn main() {
 
       const index = project.get_semantic_index("test.rs" as FilePath);
 
-      // Find User::new() call (associated function)
-      // Note: Rust associated function calls have full scoped name (User::new)
+      // Find User::new() call (associated function / static method)
+      // Note: Rust associated function calls are captured as function_call, not method_call
+      // They have the full scoped name (User::new)
       const new_calls = index?.references.filter(
-        (r): r is MethodCallReference => r.kind === "method_call" && r.name.includes("new") && r.name.includes("User") && r.receiver_location !== undefined
+        (r): r is FunctionCallReference => r.kind === "function_call" && r.name === "User::new"
       );
       expect(new_calls?.length).toBeGreaterThan(0);
 
@@ -373,10 +374,10 @@ fn main() {
       const imports = Array.from(main_index!.imported_symbols.values());
       expect(imports.find((i) => i.name === ("User" as SymbolName))).toBeDefined();
 
-      // Find User::new() call
-      // Note: Rust associated function calls have full scoped name (User::new)
+      // Find User::new() call (associated function / static method)
+      // Note: Rust associated function calls are captured as function_call, not method_call
       const new_call = main_index?.references.find(
-        (r): r is MethodCallReference => r.kind === "method_call" && r.name.includes("new") && r.name.includes("User") && r.receiver_location !== undefined
+        (r): r is FunctionCallReference => r.kind === "function_call" && r.name === "User::new"
       );
       expect(new_call).toBeDefined();
     });
