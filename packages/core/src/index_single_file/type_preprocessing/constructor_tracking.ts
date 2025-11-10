@@ -15,8 +15,10 @@ import { location_key } from "@ariadnejs/types";
  * Extract constructor bindings from references
  *
  * Extracts type names from constructor calls where:
- * - call_type === "constructor"
- * - context.construct_target is defined
+ * - kind === "constructor_call"
+ * - construct_target is defined
+ *
+ * Uses discriminated union pattern matching to identify constructor calls.
  *
  * @param references - Array of symbol references from semantic index
  * @returns Map from construct_target location to constructed type name (string)
@@ -36,9 +38,11 @@ export function extract_constructor_bindings(
   const bindings = new Map<LocationKey, SymbolName>();
 
   for (const ref of references) {
-    // Only process constructor calls with construct_target
-    if (ref.call_type === "constructor" && ref.context?.construct_target) {
-      const target_location = ref.context.construct_target;
+    // Only process constructor calls using discriminated union
+    // TypeScript automatically narrows the type in this block
+    if (ref.kind === "constructor_call") {
+      // ref.construct_target is guaranteed to exist (no undefined check needed)
+      const target_location = ref.construct_target;
       const key = location_key(target_location);
       const type_name = ref.name;
 

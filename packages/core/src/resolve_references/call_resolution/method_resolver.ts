@@ -25,10 +25,9 @@
  */
 
 import type {
-  LexicalScope,
   SymbolId,
   SymbolName,
-  SymbolReference,
+  MethodCallReference,
 } from "@ariadnejs/types";
 import { ScopeRegistry } from "../registries/scope_registry";
 import { DefinitionRegistry } from "../registries/definition_registry";
@@ -59,114 +58,24 @@ import type { TypeRegistry } from "../registries/type_registry";
  * @returns Resolved method symbol_id or null if resolution fails
  */
 export function resolve_single_method_call(
-  call_ref: SymbolReference,
+  call_ref: MethodCallReference,
   scopes: ScopeRegistry,
   definitions: DefinitionRegistry,
   types: TypeRegistry,
   resolutions: ResolutionRegistry
 ): SymbolId | null {
-  // Extract receiver location from context
-  // This tells us where the receiver object is in the source
-  const receiver_loc = call_ref.context?.receiver_location;
-  if (!receiver_loc) {
-    // Method call without receiver context - malformed reference
+  // Resolve the receiver type from property chain
+  // No more chain length branching - all method calls use same logic
+  const receiver_type = resolve_property_chain(
+    call_ref,
+    scopes,
+    definitions,
+    types,
+    resolutions
+  );
+
+  if (!receiver_type) {
     return null;
-  }
-
-  // Step 1: Check for property chain and resolve it
-  // For calls like this.definitions.update_file(), we need to walk the chain
-  const chain = call_ref.context?.property_chain;
-
-  let receiver_type: SymbolId | null = null;
-
-  if (chain && chain.length > 2) {
-    // Multi-step property chain: this.definitions.update_file
-    // Use property chain resolution to walk through each step
-    receiver_type = resolve_property_chain(
-      call_ref,
-      scopes,
-      definitions,
-      types,
-      resolutions
-    );
-
-    if (!receiver_type) {
-      return null;
-    }
-  } else {
-    // Simple method call or namespace import
-    // Extract the receiver name (first element of chain or call name)
-    const receiver_name = (chain && chain[0]) || call_ref.name;
-
-    // EAGER: O(1) lookup in pre-computed resolution map
-    const receiver_symbol = resolutions.resolve(
-      call_ref.scope_id,
-      receiver_name as SymbolName
-    );
-
-    if (!receiver_symbol) {
-      // Receiver not found in scope (undefined variable or import)
-      return null;
-    }
-
-    // Step 2: Check if receiver is a namespace import
-    // For expressions like: utils.helper() where utils is import * as utils
-    const receiver_def = definitions.get(receiver_symbol);
-
-    if (
-      receiver_def &&
-      receiver_def.kind === "import" &&
-      receiver_def.import_kind === "namespace"
-    ) {
-      // This is a namespace import! Look up the member in the source file.
-      // The import's location has been fixed to point to the source file.
-      const source_file = receiver_def.location.file_path;
-
-      // Get all exportable definitions from the source file
-      const source_defs = definitions.get_exportable_definitions_in_file(source_file);
-
-      // Find the member by name - it's already filtered to exported definitions
-      for (const def of source_defs) {
-        if (def.name === call_ref.name) {
-          // ExportableDefinition includes only definitions that can be exported
-          // Check if it's actually exported (imports don't have is_exported)
-          if (def.kind !== "import" && def.is_exported) {
-            return def.symbol_id;
-          }
-        }
-      }
-
-      // Member not found in namespace
-      return null;
-    }
-
-    // Step 3: Get receiver's type from TypeRegistry
-    // This uses resolved type_bindings to determine the class/interface of the receiver
-    // For associated function calls (Type::function), the receiver IS the type
-    receiver_type = types.get_symbol_type(receiver_symbol);
-
-    if (!receiver_type) {
-      // Check if receiver_symbol is itself a type (class/interface/enum)
-      // This handles associated function calls like Product::new()
-      // where "Product" resolves to the class definition
-      const receiver_def = definitions.get(receiver_symbol);
-      if (
-        receiver_def &&
-        (receiver_def.kind === "class" ||
-          receiver_def.kind === "interface" ||
-          receiver_def.kind === "enum" ||
-          receiver_def.kind === "type" ||
-          receiver_def.kind === "type_alias")
-      ) {
-        receiver_type = receiver_symbol;
-      }
-    }
-
-    if (!receiver_type) {
-      // Receiver has no type information and is not a type or namespace
-      // Could be untyped variable or missing type annotation
-      return null;
-    }
   }
 
   // Step 4: Look up method on that type
@@ -192,37 +101,40 @@ export function resolve_single_method_call(
 /**
  * Resolve property chain to final receiver type
  *
- * For calls like `this.definitions.update_file()`:
- * - property_chain: ["this", "definitions", "update_file"]
- * - Walk: "this" → get class type → look up "definitions" field → get field type
- * - Returns: DefinitionRegistry type (the type of the definitions field)
+ * For calls like `obj.field.method()`:
+ * - property_chain: ["obj", "field", "method"]
+ * - Walk: "obj" → get type → look up "field" → get field type
+ * - Returns: Type of the field
  *
  * For simple calls like `user.getName()`:
  * - property_chain: ["user", "getName"]
- * - Walk: "this" → get type
+ * - Walk: "user" → get User type
  * - Returns: User type
  *
  * Handles:
- * - `this` keyword resolution
+ * - Variable/parameter receivers
  * - Field access on classes
  * - Namespace imports
  * - Multi-level property chains
  *
+ * NOTE: Self-reference keywords (this, self, super) are NOT handled here.
+ * They are routed to self_reference_resolver.ts by the entry point.
+ *
  * @param call_ref - Method call reference with property chain
- * @param scopes - Scope registry (unused, kept for compatibility)
+ * @param scopes - Scope registry (for scope lookups)
  * @param definitions - Definition registry for looking up fields
  * @param types - TypeRegistry for type tracking
  * @param resolutions - Resolution registry for symbol resolution
  * @returns Type symbol_id of the final receiver, or null if resolution fails
  */
 function resolve_property_chain(
-  call_ref: SymbolReference,
+  call_ref: MethodCallReference,
   scopes: ScopeRegistry,
   definitions: DefinitionRegistry,
   types: TypeRegistry,
   resolutions: ResolutionRegistry
 ): SymbolId | null {
-  const chain = call_ref.context?.property_chain;
+  const chain = call_ref.property_chain;
   if (!chain || chain.length === 0) {
     return null;
   }
@@ -236,88 +148,52 @@ function resolve_property_chain(
     const prop_name = chain[i] as SymbolName;
 
     if (i === 0) {
-      // First element: resolve in scope or handle special keywords
-      if (prop_name === "this") {
-        // Special handling for "this" keyword
-        // Find the containing class/interface scope
-        const scope = scopes.get_scope(call_ref.scope_id);
-        if (!scope) {
-          return null;
-        }
+      // First element: resolve in scope
+      // NOTE: Self-reference keywords (this, self, super) are NOT handled here
+      // They are filtered out by the entry point and routed to self_reference_resolver
+      current_symbol = resolutions.resolve(call_ref.scope_id, prop_name);
+      if (!current_symbol) {
+        return null;
+      }
 
-        // Walk up the scope chain to find a class scope
-        let class_scope: LexicalScope | null = null;
-        let current_scope: LexicalScope | undefined = scope;
+      // Check if receiver is a namespace import
+      const receiver_def = definitions.get(current_symbol);
+      if (
+        receiver_def &&
+        receiver_def.kind === "import" &&
+        receiver_def.import_kind === "namespace"
+      ) {
+        // Namespace import! Look up the member in the source file
+        const source_file = receiver_def.location.file_path;
+        const source_defs = definitions.get_exportable_definitions_in_file(source_file);
 
-        while (current_scope) {
-          if (current_scope.type === "class") {
-            class_scope = current_scope;
-            break;
-          }
-
-          // Move to parent scope
-          if (current_scope.parent_id) {
-            current_scope = scopes.get_scope(current_scope.parent_id);
-            if (!current_scope) {
-              break;
-            }
-          } else {
-            break;
-          }
-        }
-
-        if (!class_scope) {
-          return null;
-        }
-
-        // Find the class definition that created this class scope
-        // The class definition would be in the parent scope (file scope)
-        // and its name should match the class scope's name
-        let containing_class_id: SymbolId | null = null;
-
-        if (class_scope.parent_id && class_scope.name) {
-          const parent_scope_defs = definitions.get_scope_definitions(class_scope.parent_id);
-          if (parent_scope_defs) {
-            const class_symbol = parent_scope_defs.get(class_scope.name);
-            if (class_symbol) {
-              const class_def = definitions.get(class_symbol);
-              if (class_def && class_def.kind === "class") {
-                containing_class_id = class_symbol;
-              }
+        for (const def of source_defs) {
+          if (def.name === call_ref.name) {
+            if (def.kind !== "import" && def.is_exported) {
+              return def.symbol_id;
             }
           }
         }
 
-        if (!containing_class_id) {
-          return null;
-        }
+        // Member not found in namespace
+        return null;
+      }
 
-        // "this" resolves to the class type
-        current_symbol = containing_class_id;
-        current_type = containing_class_id;
-      } else {
-        // Regular symbol: resolve in scope
-        current_symbol = resolutions.resolve(call_ref.scope_id, prop_name);
-        if (!current_symbol) {
-          return null;
-        }
+      // Get the type of the first symbol
+      current_type = types.get_symbol_type(current_symbol);
 
-        // Get the type of the first symbol
-        current_type = types.get_symbol_type(current_symbol);
-
-        // Check if it's itself a type (for associated function calls)
-        if (!current_type) {
-          const def = definitions.get(current_symbol);
-          if (def && (def.kind === "class" || def.kind === "interface" ||
-                      def.kind === "enum" || def.kind === "type" ||
-                      def.kind === "type_alias")) {
-            current_type = current_symbol;
-          }
+      // Check if it's itself a type (for associated function calls like Type::function())
+      if (!current_type) {
+        const def = definitions.get(current_symbol);
+        if (def && (def.kind === "class" || def.kind === "interface" ||
+                    def.kind === "enum" || def.kind === "type" ||
+                    def.kind === "type_alias")) {
+          current_type = current_symbol;
         }
+      }
 
-        if (!current_type) {
-          return null;
-        }
+      if (!current_type) {
+        return null;
       }
     } else {
       // Subsequent elements: look up as member/field on current type

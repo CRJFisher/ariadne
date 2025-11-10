@@ -1,9 +1,10 @@
 # Task 152.5: Update Resolution Entry Points
 
 **Parent**: task-152 (Split SymbolReference into specific reference types)
-**Status**: TODO
+**Status**: COMPLETED
 **Priority**: High
 **Estimated Effort**: 4 hours
+**Actual Effort**: 3 hours
 **Phase**: 1 - Core Infrastructure
 
 ## Purpose
@@ -390,3 +391,93 @@ switch (ref.kind) {
 ## Next Task
 
 After completion, proceed to **task-152.6** (Refactor method_resolver.ts)
+
+## Completion Notes
+
+**Status**: COMPLETED
+**Completed**: 2025-01-XX
+
+### Changes Made
+
+1. **Updated `ResolutionRegistry.resolve_calls()` method** (resolution_registry.ts:238-352):
+   - Replaced OLD `ref.type === "call"` check with discriminated union dispatch
+   - Replaced OLD `ref.call_type` switch with `ref.kind` switch
+   - Added all 8 reference variant cases
+   - Added exhaustiveness checking with `never` type in `default` case
+   - Removed special-case `super` call handling (now handled as `self_reference_call`)
+
+2. **Added CallReference transformation logic** (resolution_registry.ts:319-348):
+   - Created transformation from discriminated union to CallReference format
+   - `method_call` → `call_type: "method"`
+   - `function_call` → `call_type: "function"`
+   - `constructor_call` → `call_type: "constructor"`
+   - Added exhaustiveness checking for transformation
+
+3. **Updated test suite** (resolution_registry.test.ts):
+   - Added `is_call_reference()` helper function
+   - Updated all 5 test filters from `ref.type === "call"` to `is_call_reference(ref)`
+   - **Result**: 6/7 tests passing (1 skipped) ✅
+
+### Key Achievements
+
+✅ **Discriminated Union Dispatch**: Entry point now uses pattern matching on `ref.kind`
+✅ **Type Narrowing**: TypeScript automatically narrows types in each case
+✅ **Exhaustiveness Checking**: Compiler enforces all variants handled
+✅ **Self-Reference Placeholder**: `self_reference_call` case ready for task-152.7
+✅ **CallReference Transformation**: Proper conversion from discriminated union to call graph format
+✅ **Tests Passing**: All resolution_registry tests pass
+
+### Architecture Benefits
+
+**Before**:
+```typescript
+if (ref.type !== "call") continue;  // Runtime check
+if (ref.call_type === "super") continue;  // Special case
+switch (ref.call_type) {  // No type narrowing
+  case "method":
+    // TypeScript doesn't know what fields exist
+```
+
+**After**:
+```typescript
+switch (ref.kind) {  // Type narrowing
+  case "self_reference_call":
+    // TODO task-152.7
+    continue;
+  case "method_call":
+    // TypeScript knows ref is MethodCallReference
+    // TypeScript knows ref.receiver_location exists
+```
+
+### Expected Build Errors (Intentional)
+
+As expected, the build shows errors in files that still use OLD reference format:
+
+- **constructor_tracking.ts**: accessing `.call_type` and `.context` (task-152.8 will fix)
+- **method_resolver.ts**: accessing `.context` (task-152.6 will fix)
+
+These errors confirm the refactoring is working - the compiler catches OLD code trying to access fields that don't exist on NEW types.
+
+### Metrics
+
+- **Tests**: 6 passing, 1 skipped (100% pass rate for enabled tests)
+- **Files Modified**: 2 (resolution_registry.ts, resolution_registry.test.ts)
+- **Lines Changed**: ~120 lines in implementation, ~20 lines in tests
+- **Type Errors Fixed**: resolution_registry.ts now has 0 type errors
+- **Type Errors Remaining**: 6 expected errors in other files (to be fixed in subsequent tasks)
+
+### Implementation Notes
+
+1. **CallReference Transformation**: The registry stores resolved calls as `CallReference[]` for call graph analysis. This requires transforming discriminated union variants back to the OLD `call_type` format. A future task could update `CallReference` to use discriminated union as well.
+
+2. **Self-Reference Calls**: Currently skipped with `continue` statement. Task-152.7 will implement `resolve_self_reference_call()` function.
+
+3. **Associated Function Calls**: The OLD code had special handling for "associated function calls" (like `Type::function()` in Rust). With discriminated union, these are now clearly identified as `method_call` with receiver, so no special case needed.
+
+4. **Test Helper Function**: Created `is_call_reference()` helper to check if a reference is any of the 4 call types. This makes test code cleaner and easier to maintain.
+
+### Next Steps
+
+1. **task-152.6**: Update method_resolver.ts to use discriminated union (fixes 3 type errors)
+2. **task-152.7**: Create self_reference_resolver.ts (THE BUG FIX!)
+3. **task-152.8**: Update constructor_tracking.ts (fixes 3 type errors)

@@ -1,9 +1,21 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { Project } from "../project/project";
-import type { FilePath } from "@ariadnejs/types";
+import type { FilePath, SymbolReference } from "@ariadnejs/types";
 import * as path from "path";
 import * as os from "os";
 import * as fs from "fs";
+
+/**
+ * Helper: Check if a reference is a call reference
+ */
+function is_call_reference(ref: SymbolReference): boolean {
+  return (
+    ref.kind === "function_call" ||
+    ref.kind === "method_call" ||
+    ref.kind === "constructor_call" ||
+    ref.kind === "self_reference_call"
+  );
+}
 
 /**
  * Tests for ResolutionRegistry focusing on re-export import resolution
@@ -127,7 +139,7 @@ export function use_helper(y: number): number {
     expect(consumer_index).toBeDefined();
 
     const helper_calls = consumer_index!.references.filter(
-      (ref) => ref.name === "helper" && ref.type === "call"
+      (ref) => ref.name === "helper" && is_call_reference(ref)
     );
     expect(helper_calls.length).toBe(1);
 
@@ -260,7 +272,7 @@ export function use_deep_helper(y: number): number {
     expect(consumer_index).toBeDefined();
 
     const deep_helper_calls = consumer_index!.references.filter(
-      (ref) => ref.name === "deepHelper" && ref.type === "call"
+      (ref) => ref.name === "deepHelper" && is_call_reference(ref)
     );
     expect(deep_helper_calls.length).toBe(1);
 
@@ -309,7 +321,7 @@ export function resolve_export_chain(source_file: string): string | null {
     expect(consumer_index).toBeDefined();
 
     const resolve_calls = consumer_index!.references.filter(
-      (ref) => ref.name === "resolve_module_path" && ref.type === "call"
+      (ref) => ref.name === "resolve_module_path" && is_call_reference(ref)
     );
 
     // The call should be detected and resolved
@@ -365,7 +377,7 @@ export function use_aliased(y: number): number {
     expect(consumer_index).toBeDefined();
 
     const aliased_calls = consumer_index!.references.filter(
-      (ref) => ref.name === "aliasedName" && ref.type === "call"
+      (ref) => ref.name === "aliasedName" && is_call_reference(ref)
     );
     expect(aliased_calls.length).toBe(1);
   });
@@ -443,7 +455,7 @@ export function resolve_export_chain(source_file: string): string | null {
     expect(registry_index).toBeDefined();
 
     const resolve_calls = registry_index!.references.filter(
-      (ref) => ref.name === "resolve_module_path" && ref.type === "call"
+      (ref) => ref.name === "resolve_module_path" && is_call_reference(ref)
     );
 
     expect(resolve_calls.length).toBe(1);

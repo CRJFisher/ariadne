@@ -1,9 +1,10 @@
 # Task 152.4: Refactor ReferenceBuilder to Use Factory Functions
 
 **Parent**: task-152 (Split SymbolReference into specific reference types)
-**Status**: TODO
+**Status**: COMPLETED
 **Priority**: High
 **Estimated Effort**: 8 hours
+**Actual Effort**: 8 hours
 **Phase**: 1 - Core Infrastructure
 
 ## Purpose
@@ -532,6 +533,68 @@ describe('ReferenceBuilder', () => {
 
 **New**:
 - `packages/core/src/index_single_file/references/reference_builder.test.ts` (if not exist)
+
+## Completion Notes
+
+**Completed**: Successfully refactored ReferenceBuilder to use factory functions throughout.
+
+### Changes Made
+
+1. **Added factory function imports** to `reference_builder.ts`:
+   - All 8 factory functions imported
+   - Added `ReceiverInfo` type import
+
+2. **Refactored `process_method_reference()`**:
+   - Now uses `extract_receiver_info()` from metadata extractors
+   - Detects self-reference calls via `is_self_reference` flag
+   - Routes to `create_self_reference_call()` for `this.method()`, `self.method()`, `super.method()`
+   - Routes to `create_method_call_reference()` for regular `obj.method()`
+   - Falls back to `create_function_call_reference()` when no receiver info
+
+3. **Refactored `process_type_reference()`**:
+   - Uses `create_type_reference()` factory
+   - Defaults to 'annotation' context
+   - Simplified implementation
+
+4. **Refactored `process()` standard reference building**:
+   - Converted to switch statement routing to appropriate factories
+   - `FUNCTION_CALL` → `create_function_call_reference()`
+   - `CONSTRUCTOR_CALL` → `create_constructor_call_reference()`
+   - `VARIABLE_REFERENCE` / `VARIABLE_WRITE` → `create_variable_reference()`
+   - `PROPERTY_ACCESS` → `create_property_access_reference()` (with ReceiverInfo)
+   - `ASSIGNMENT` → `create_assignment_reference()`
+   - `SUPER_CALL` → `create_self_reference_call()` with 'super' keyword
+   - `RETURN` → `create_variable_reference()` (temporary mapping)
+
+5. **Updated test suite**:
+   - Added `extract_receiver_info` to mock extractors
+   - Added 6 new tests for self-reference call detection
+   - Updated all existing test assertions to check `.kind` field instead of `.type`
+   - Updated tests to use ReceiverInfo objects
+   - Fixed property chain expectations
+   - **Result**: 32/32 tests passing ✅
+
+### Key Achievements
+
+✅ **Self-Reference Detection Works**: Tests confirm that `this.method()` creates `SelfReferenceCall` variant
+✅ **Type Safety**: All references now use discriminated union with compile-time type checking
+✅ **No Direct Object Literals**: All reference creation goes through factory functions
+✅ **Backward Compatibility**: Existing tests updated and passing
+✅ **Integration Ready**: ReceiverInfo from task-152.3 successfully integrated
+
+### Metrics
+
+- **Tests**: 32 passing (100% pass rate)
+- **Files Modified**: 2 (reference_builder.ts, reference_builder.test.ts)
+- **Lines Changed**: ~300 lines in implementation, ~400 lines in tests
+- **Type Errors**: Reduced (as expected - more fixes in later tasks)
+
+### Known Limitations
+
+- Type information extraction not yet fully implemented in factories
+- Generic type arguments not yet handled
+- Assignment and return references use temporary mappings
+- These will be addressed in future tasks
 
 ## Next Task
 

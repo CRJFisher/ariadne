@@ -16,6 +16,7 @@ import type { ReferenceRegistry } from "./registries/reference_registry";
 import type { ImportGraph } from "../project/import_graph";
 import { resolve_single_method_call } from "./call_resolution";
 import { resolve_single_constructor_call } from "./call_resolution/constructor_resolver";
+import { resolve_self_reference_call } from "./call_resolution/self_reference_resolver";
 import { find_enclosing_function_scope } from "../index_single_file/scopes/scope_utils";
 
 /**
@@ -236,8 +237,13 @@ export class ResolutionRegistry {
   }
 
   /**
-   * Resolve all call references (function, method, constructor).
+   * Resolve all call references (function, method, constructor, self-reference).
    * Uses pre-computed resolutions from this registry.
+   *
+   * Dispatch Logic:
+   * - Uses discriminated union pattern matching on ref.kind
+   * - Type narrowing provides type safety in each case
+   * - Exhaustiveness checking ensures all variants handled
    *
    * @param file_references - Map of file_path → references
    * @param scopes - Scope registry (for method resolution)
@@ -255,38 +261,24 @@ export class ResolutionRegistry {
 
     for (const references of file_references.values()) {
       for (const ref of references) {
-        if (ref.type !== "call") {
-          continue;
-        }
-
-        // Skip super calls for now - they need special handling
-        if (ref.call_type === "super") {
-          continue;
-        }
-
         let resolved: SymbolId | null = null;
 
-        switch (ref.call_type) {
-          case "function":
-            // Check if this is an associated function call (e.g., Type::function())
-            // These have receiver_location context pointing to the type
-            if (ref.context?.receiver_location) {
-              // Treat as method call on the type - resolve using type information
-              resolved = resolve_single_method_call(
-                ref,
-                scopes,
-                definitions,
-                types,
-                this
-              );
-            } else {
-              // Regular function call - resolve using lexical scope
-              resolved = this.resolve(ref.scope_id, ref.name);
-            }
+        // Dispatch on discriminated union kind field
+        switch (ref.kind) {
+          case "self_reference_call":
+            // Self-reference calls: this.method(), self.method(), super.method()
+            // TypeScript knows ref is SelfReferenceCall here
+            resolved = resolve_self_reference_call(
+              ref,
+              scopes,
+              definitions,
+              types
+            );
             break;
 
-          case "method":
-            // Method calls use TypeRegistry directly for type tracking and member lookup
+          case "method_call":
+            // Method calls: obj.method()
+            // TypeScript knows ref is MethodCallReference here
             resolved = resolve_single_method_call(
               ref,
               scopes,
@@ -296,8 +288,16 @@ export class ResolutionRegistry {
             );
             break;
 
-          case "constructor":
-            // Constructor calls use TypeRegistry directly
+          case "function_call":
+            // Function calls: func()
+            // TypeScript knows ref is FunctionCallReference here
+            // Resolve using lexical scope
+            resolved = this.resolve(ref.scope_id, ref.name);
+            break;
+
+          case "constructor_call":
+            // Constructor calls: new MyClass()
+            // TypeScript knows ref is ConstructorCallReference here
             resolved = resolve_single_constructor_call(
               ref,
               definitions,
@@ -305,13 +305,55 @@ export class ResolutionRegistry {
               types
             );
             break;
+
+          case "variable_reference":
+          case "property_access":
+          case "type_reference":
+          case "assignment":
+            // Not call references - skip
+            continue;
+
+          default:
+            // Exhaustiveness checking: if we add a new variant and forget to handle it,
+            // TypeScript will show a compile error here
+            const _exhaustive: never = ref;
+            throw new Error(
+              `Unhandled reference kind: ${(_exhaustive as any).kind}`
+            );
         }
 
-        if (resolved && ref.call_type) {
+        // Store resolved call - transform discriminated union to CallReference format
+        if (resolved) {
+          // Determine call_type from discriminated union kind
+          let call_type: "function" | "method" | "constructor";
+          switch (ref.kind) {
+            case "self_reference_call":
+              // Self-reference calls are method calls (this.method(), self.method())
+              call_type = "method";
+              break;
+            case "method_call":
+              call_type = "method";
+              break;
+            case "function_call":
+              call_type = "function";
+              break;
+            case "constructor_call":
+              call_type = "constructor";
+              break;
+            default:
+              // Exhaustiveness check - should never reach here
+              const _exhaustive_call: never = ref;
+              throw new Error(
+                `Cannot convert reference to CallReference: ${(_exhaustive_call as any).kind}`
+              );
+          }
+
           resolved_calls.push({
-            ...ref,
-            call_type: ref.call_type,
+            location: ref.location,
             symbol_id: resolved,
+            name: ref.name,
+            scope_id: ref.scope_id,
+            call_type,
           });
         }
       }

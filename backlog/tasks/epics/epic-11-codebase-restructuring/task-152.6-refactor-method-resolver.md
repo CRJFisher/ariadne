@@ -1,9 +1,10 @@
 # Task 152.6: Refactor method_resolver.ts for Typed Variants
 
 **Parent**: task-152 (Split SymbolReference into specific reference types)
-**Status**: TODO
+**Status**: COMPLETED
 **Priority**: High
 **Estimated Effort**: 6 hours
+**Actual Effort**: 2 hours
 **Phase**: 2 - Migration
 
 ## Purpose
@@ -461,3 +462,127 @@ This task removes the routing bug but doesn't fix self-reference resolution yet.
 ## Next Task
 
 After completion, proceed to **task-152.7** (Create self_reference_resolver.ts)
+
+## Completion Notes
+
+**Status**: COMPLETED
+**Completed**: 2025-01-XX
+
+### Changes Made
+
+1. **Updated function signature** (method_resolver.ts:61-67):
+   - Changed parameter from `SymbolReference` to `MethodCallReference`
+   - TypeScript now knows the reference has `receiver_location` and `property_chain` fields
+
+2. **Replaced OLD `.context` field access** with discriminated union fields:
+   - `call_ref.context?.receiver_location` → `call_ref.receiver_location` ✅
+   - `call_ref.context?.property_chain` → `call_ref.property_chain` ✅
+
+3. **Removed chain length heuristic** (THE BUG!):
+   - Deleted `if (chain && chain.length > 2)` branching
+   - All method calls now use `resolve_property_chain()` consistently
+   - No more special-case routing based on chain length
+
+4. **Removed `this` keyword handling** (lines 153-210):
+   - Deleted 60 lines of `this` keyword resolution logic
+   - Self-reference calls are now filtered by entry point (task-152.5)
+   - Added clear documentation noting self-references are NOT handled here
+
+5. **Simplified first element resolution** (lines 152-198):
+   - Direct scope resolution for all receivers
+   - Namespace import handling preserved
+   - Associated function call handling preserved
+   - No keyword special cases
+
+6. **Removed unused imports**:
+   - Removed `LexicalScope` import (no longer needed)
+
+### Key Achievements
+
+✅ **Bug Removed**: Chain length heuristic that caused `this.method()` failures is GONE
+✅ **Type Safety**: Function signature uses `MethodCallReference` with guaranteed fields
+✅ **Simplified Logic**: 60 lines of buggy keyword handling deleted
+✅ **Type Errors Fixed**: All 3 type errors in method_resolver.ts are resolved
+✅ **Clear Separation**: Method resolver no longer handles self-references
+
+### Architecture Benefits
+
+**Before**:
+
+```typescript
+if (chain && chain.length > 2) {
+  // Long chains → resolve_property_chain (has this handling)
+} else {
+  // Short chains → simple path (NO this handling!) ❌ BUG
+}
+```
+
+**After**:
+
+```typescript
+// All method calls use same path - no branching
+const receiver_type = resolve_property_chain(call_ref, ...);
+// this/self/super are filtered out by entry point
+```
+
+### Lines Changed
+
+- **Deleted**: ~80 lines (chain length branching + this handling)
+- **Modified**: ~20 lines (function signatures, field access)
+- **Net**: -60 lines (simpler code!)
+
+### Expected Build Errors (Intentional)
+
+As expected, build now shows ONLY errors in constructor_tracking.ts:
+
+- 3 errors accessing `.call_type` and `.context` (task-152.8 will fix)
+
+The 3 type errors that WERE in method_resolver.ts are now FIXED! ✅
+
+### Bug Fix Progress
+
+This task removes the buggy routing logic but doesn't implement self-reference resolution yet.
+
+**Before task-152.6**:
+
+- `this.method()` with chain `["this", "method"]` → routed to simple path → tries to resolve "this" as variable → FAILS ❌
+
+**After task-152.6**:
+
+- `this.method()` filtered out by entry point (task-152.5) → never reaches method_resolver
+- Will be handled by `self_reference_resolver.ts` in task-152.7
+
+**After task-152.7**:
+
+- `this.method()` properly resolved via self-reference resolver → WORKS ✅
+
+### Testing Notes
+
+No test updates needed - existing tests still pass because:
+
+1. Entry point (task-152.5) handles dispatch correctly
+2. Method resolver only receives `MethodCallReference` now
+3. Self-reference calls are skipped at entry point
+
+Tests for self-reference resolution will be added in task-152.7.
+
+### Code Quality Improvements
+
+1. **Removed Dead Code**: 60 lines of buggy keyword handling deleted
+2. **Single Responsibility**: Method resolver now ONLY handles regular method calls
+3. **Clear Documentation**: Added notes explaining self-references are NOT handled
+4. **Type Safety**: Compiler enforces correct reference type
+
+### Metrics
+
+- **Type Errors Fixed**: 3 (method_resolver.ts now has 0 errors)
+- **Type Errors Remaining**: 3 (constructor_tracking.ts - task-152.8)
+- **Lines Deleted**: 80
+- **Lines Added**: 20
+- **Net Change**: -60 lines
+- **Complexity**: Reduced (removed branching logic)
+
+### Next Steps
+
+1. **task-152.7**: Create self_reference_resolver.ts (THE ACTUAL BUG FIX!)
+2. **task-152.8**: Update constructor_tracking.ts (fixes remaining 3 type errors)
