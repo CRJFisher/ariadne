@@ -18,7 +18,7 @@
 import type { SyntaxNode } from "tree-sitter";
 import type { Location, SymbolName, TypeInfo, FilePath } from "@ariadnejs/types";
 import { type_symbol } from "@ariadnejs/types";
-import type { MetadataExtractors } from "./metadata_types";
+import type { MetadataExtractors, ReceiverInfo } from "./metadata_types";
 import { node_to_location } from "../../node_utils";
 
 
@@ -298,6 +298,76 @@ export const JAVASCRIPT_METADATA_EXTRACTORS: MetadataExtractors = {
     traverse(node);
 
     return chain.length > 0 ? chain.map(name => name as SymbolName) : undefined;
+  },
+
+  /**
+   * Extract receiver information with self-reference keyword detection
+   *
+   * Detects `this` and `super` keywords in JavaScript/TypeScript and returns
+   * enriched information about the receiver, including whether it's a self-reference.
+   *
+   * Examples:
+   * - `this.method()` → is_self_reference: true, keyword: 'this'
+   * - `user.getName()` → is_self_reference: false
+   * - `super.process()` → is_self_reference: true, keyword: 'super'
+   */
+  extract_receiver_info(
+    node: SyntaxNode,
+    file_path: FilePath
+  ): ReceiverInfo | undefined {
+    // Handle call_expression: extract from function field
+    let target_node = node;
+    if (node.type === "call_expression") {
+      const function_node = node.childForFieldName("function");
+      if (function_node) {
+        target_node = function_node;
+      }
+    }
+
+    // Handle member_expression or optional_chain
+    if (target_node.type === "member_expression" || target_node.type === "optional_chain") {
+      const object_node = target_node.childForFieldName("object");
+      const property_node = target_node.childForFieldName("property");
+
+      if (!object_node) return undefined;
+
+      const property_name = property_node?.text;
+
+      // Detect self-reference keywords
+      if (object_node.type === "this") {
+        return {
+          receiver_location: node_to_location(object_node, file_path),
+          property_chain: property_name
+            ? ["this" as SymbolName, property_name as SymbolName]
+            : ["this" as SymbolName],
+          is_self_reference: true,
+          self_keyword: "this",
+        };
+      }
+
+      if (object_node.type === "super") {
+        return {
+          receiver_location: node_to_location(object_node, file_path),
+          property_chain: property_name
+            ? ["super" as SymbolName, property_name as SymbolName]
+            : ["super" as SymbolName],
+          is_self_reference: true,
+          self_keyword: "super",
+        };
+      }
+
+      // Regular object receiver (not a keyword)
+      const receiver_name = object_node.text;
+      return {
+        receiver_location: node_to_location(object_node, file_path),
+        property_chain: property_name
+          ? [receiver_name as SymbolName, property_name as SymbolName]
+          : [receiver_name as SymbolName],
+        is_self_reference: false,
+      };
+    }
+
+    return undefined;
   },
 
   /**

@@ -1,5 +1,22 @@
 import type { SyntaxNode } from "tree-sitter";
-import type { Location, SymbolName, TypeInfo, FilePath } from "@ariadnejs/types";
+import type { Location, SymbolName, TypeInfo, FilePath, SelfReferenceKeyword } from "@ariadnejs/types";
+
+/**
+ * Receiver information for method calls and property access
+ *
+ * Contains information about the receiver object in member access expressions,
+ * including whether it's a self-reference keyword (this, self, super, cls).
+ */
+export interface ReceiverInfo {
+  /** Location of the receiver object */
+  readonly receiver_location: Location;
+  /** Property access chain */
+  readonly property_chain: readonly SymbolName[];
+  /** Whether the receiver is a self-reference keyword */
+  readonly is_self_reference: boolean;
+  /** The self-reference keyword used (if is_self_reference is true) */
+  readonly self_keyword?: SelfReferenceKeyword;
+}
 
 /**
  * Language-specific metadata extraction functions
@@ -63,6 +80,27 @@ export interface MetadataExtractors {
   extract_property_chain(
     node: SyntaxNode
   ): SymbolName[] | undefined;
+
+  /**
+   * Extract receiver information with self-reference keyword detection
+   *
+   * For method calls and property access, extracts receiver location, property chain,
+   * and detects if the receiver is a self-reference keyword (this, self, super, cls).
+   *
+   * Examples:
+   * - JavaScript: `this.method()` → { receiver_location, property_chain: ['this', 'method'], is_self_reference: true, self_keyword: 'this' }
+   * - JavaScript: `user.getName()` → { receiver_location, property_chain: ['user', 'getName'], is_self_reference: false }
+   * - Python: `self.process()` → { receiver_location, property_chain: ['self', 'process'], is_self_reference: true, self_keyword: 'self' }
+   * - Python: `super().method()` → { receiver_location, property_chain: ['super', 'method'], is_self_reference: true, self_keyword: 'super' }
+   *
+   * @param node - The SyntaxNode representing a member expression or method call
+   * @param file_path - The file containing the node (needed for Location creation)
+   * @returns ReceiverInfo with keyword detection or undefined if not a member access
+   */
+  extract_receiver_info(
+    node: SyntaxNode,
+    file_path: FilePath
+  ): ReceiverInfo | undefined;
 
   /**
    * Extract assignment source and target locations

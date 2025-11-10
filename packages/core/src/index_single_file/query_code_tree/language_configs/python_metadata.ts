@@ -18,7 +18,7 @@
 import type { SyntaxNode } from "tree-sitter";
 import type { Location, SymbolName, TypeInfo, FilePath } from "@ariadnejs/types";
 import { type_symbol } from "@ariadnejs/types";
-import type { MetadataExtractors } from "./metadata_types";
+import type { MetadataExtractors, ReceiverInfo } from "./metadata_types";
 import { node_to_location } from "../../node_utils";
 
 /**
@@ -277,6 +277,91 @@ export const PYTHON_METADATA_EXTRACTORS: MetadataExtractors = {
     traverse(node);
 
     return chain.length > 0 ? chain.map(name => name as SymbolName) : undefined;
+  },
+
+  /**
+   * Extract receiver information with self-reference keyword detection
+   *
+   * Detects `self`, `cls`, and `super()` keywords in Python and returns
+   * enriched information about the receiver, including whether it's a self-reference.
+   *
+   * Examples:
+   * - `self.method()` → is_self_reference: true, keyword: 'self'
+   * - `user.get_name()` → is_self_reference: false
+   * - `cls.class_method()` → is_self_reference: true, keyword: 'cls'
+   * - `super().method()` → is_self_reference: true, keyword: 'super'
+   */
+  extract_receiver_info(
+    node: SyntaxNode,
+    file_path: FilePath
+  ): ReceiverInfo | undefined {
+    // Handle call: extract from function field
+    let target_node = node;
+    if (node.type === "call") {
+      const function_node = node.childForFieldName("function");
+      if (function_node) {
+        target_node = function_node;
+      }
+    }
+
+    // Handle attribute
+    if (target_node.type === "attribute") {
+      const object_node = target_node.childForFieldName("object");
+      const attr_node = target_node.childForFieldName("attribute");
+
+      if (!object_node) return undefined;
+
+      const attr_name = attr_node?.text;
+      const object_text = object_node.text;
+
+      // Detect self-reference keywords
+      if (object_node.type === "identifier") {
+        if (object_text === "self") {
+          return {
+            receiver_location: node_to_location(object_node, file_path),
+            property_chain: attr_name
+              ? ["self" as SymbolName, attr_name as SymbolName]
+              : ["self" as SymbolName],
+            is_self_reference: true,
+            self_keyword: "self",
+          };
+        }
+
+        if (object_text === "cls") {
+          return {
+            receiver_location: node_to_location(object_node, file_path),
+            property_chain: attr_name
+              ? ["cls" as SymbolName, attr_name as SymbolName]
+              : ["cls" as SymbolName],
+            is_self_reference: true,
+            self_keyword: "cls",
+          };
+        }
+      }
+
+      // Detect super() calls
+      if (object_node.type === "call" && object_node.text.startsWith("super()")) {
+        return {
+          receiver_location: node_to_location(object_node, file_path),
+          property_chain: attr_name
+            ? ["super" as SymbolName, attr_name as SymbolName]
+            : ["super" as SymbolName],
+          is_self_reference: true,
+          self_keyword: "super",
+        };
+      }
+
+      // Regular object receiver (not a keyword)
+      return {
+        receiver_location: node_to_location(object_node, file_path),
+        property_chain: attr_name
+          ? [object_text as SymbolName, attr_name as SymbolName]
+          : [object_text as SymbolName],
+        is_self_reference: false,
+      };
+    }
+
+    return undefined;
   },
 
   /**

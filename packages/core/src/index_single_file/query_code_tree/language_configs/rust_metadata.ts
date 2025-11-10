@@ -19,7 +19,7 @@
 import type { SyntaxNode } from "tree-sitter";
 import type { Location, SymbolName, TypeInfo, FilePath } from "@ariadnejs/types";
 import { type_symbol } from "@ariadnejs/types";
-import type { MetadataExtractors } from "./metadata_types";
+import type { MetadataExtractors, ReceiverInfo } from "./metadata_types";
 import { node_to_location } from "../../node_utils";
 
 /**
@@ -363,6 +363,67 @@ export const RUST_METADATA_EXTRACTORS: MetadataExtractors = {
     traverse(node);
 
     return chain.length > 0 ? chain.map(name => name as SymbolName) : undefined;
+  },
+
+  /**
+   * Extract receiver information with self-reference keyword detection
+   *
+   * Detects `self` and `super` keywords in Rust and returns
+   * enriched information about the receiver, including whether it's a self-reference.
+   *
+   * Note: Rust doesn't have `super` as a self-reference in the same way as Python/JS.
+   * `super` in Rust is used for parent module access, not parent class.
+   *
+   * Examples:
+   * - `self.method()` → is_self_reference: true, keyword: 'self'
+   * - `vec.push(5)` → is_self_reference: false
+   */
+  extract_receiver_info(
+    node: SyntaxNode,
+    file_path: FilePath
+  ): ReceiverInfo | undefined {
+    // Handle call_expression: extract from function field
+    let target_node = node;
+    if (node.type === "call_expression") {
+      const function_node = node.childForFieldName("function");
+      if (function_node) {
+        target_node = function_node;
+      }
+    }
+
+    // Handle field_expression
+    if (target_node.type === "field_expression") {
+      const value_node = target_node.childForFieldName("value");
+      const field_node = target_node.childForFieldName("field");
+
+      if (!value_node) return undefined;
+
+      const field_name = field_node?.text;
+      const value_text = value_node.text;
+
+      // Detect self keyword
+      if (value_node.type === "self") {
+        return {
+          receiver_location: node_to_location(value_node, file_path),
+          property_chain: field_name
+            ? ["self" as SymbolName, field_name as SymbolName]
+            : ["self" as SymbolName],
+          is_self_reference: true,
+          self_keyword: "self",
+        };
+      }
+
+      // Regular value receiver (not a keyword)
+      return {
+        receiver_location: node_to_location(value_node, file_path),
+        property_chain: field_name
+          ? [value_text as SymbolName, field_name as SymbolName]
+          : [value_text as SymbolName],
+        is_self_reference: false,
+      };
+    }
+
+    return undefined;
   },
 
   /**
