@@ -563,7 +563,17 @@ export class ReferenceBuilder {
       case ReferenceKind.ASSIGNMENT: {
         const context = extract_context(capture, this.extractors, this.file_path);
         const target_location = context?.construct_target || location;
-        reference = create_assignment_reference(reference_name, location, scope_id, target_location);
+
+        // Extract type information from type annotation (if present)
+        const assignment_type = extract_type_info(capture, this.extractors, this.file_path);
+
+        reference = create_assignment_reference(
+          reference_name,
+          location,
+          scope_id,
+          target_location,
+          assignment_type
+        );
         break;
       }
 

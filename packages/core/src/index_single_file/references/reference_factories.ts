@@ -238,12 +238,17 @@ export function create_type_reference(
  * @example
  * // x = getValue()
  * create_assignment_reference('x', location, scope_id, x_location)
+ *
+ * @example With type annotation
+ * // let service1: Service = create_service()
+ * create_assignment_reference('service1', location, scope_id, service1_location, type_info)
  */
 export function create_assignment_reference(
   name: SymbolName,
   location: Location,
   scope_id: ScopeId,
-  target_location: Location
+  target_location: Location,
+  assignment_type?: TypeInfo
 ): AssignmentReference {
   return {
     kind: 'assignment',
@@ -251,5 +256,6 @@ export function create_assignment_reference(
     location,
     scope_id,
     target_location,
+    ...(assignment_type && { assignment_type }),
   };
 }
