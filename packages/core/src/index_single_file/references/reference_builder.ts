@@ -114,6 +114,7 @@ function determine_reference_kind(
 
     case "property":
     case "field":
+    case "member_access":
       return ReferenceKind.PROPERTY_ACCESS;
 
     case "variable":
@@ -399,9 +400,12 @@ function process_type_reference(
   const location = capture.location;
   const type_name = capture.text as SymbolName;
 
+  // Extract type info from annotation
+  const type_info = extract_type_info(capture, extractors, file_path);
+
   // For now, default to 'annotation' context
   // TODO: In future tasks, detect context from capture name or node type
-  return create_type_reference(type_name, location, scope_id, "annotation");
+  return create_type_reference(type_name, location, scope_id, "annotation", type_info);
 }
 
 // ============================================================================
@@ -473,6 +477,16 @@ export class ReferenceBuilder {
       }
     }
 
+    // For property access, extract just the property name from member_expression/attribute
+    if (kind === ReferenceKind.PROPERTY_ACCESS) {
+      // Try to get the property/attribute child node
+      const property_node = capture.node.childForFieldName("property") ||
+                           capture.node.childForFieldName("attribute");
+      if (property_node) {
+        reference_name = property_node.text as SymbolName;
+      }
+    }
+
     // Fallback for languages without extractors or when extractor returns undefined
     if (reference_name === (capture.text as SymbolName) && capture.node.type === "call_expression") {
       // For regular function calls, get the function identifier
@@ -501,22 +515,14 @@ export class ReferenceBuilder {
           ? this.extractors.extract_construct_target(capture.node, this.file_path)
           : undefined;
 
-        if (construct_target) {
-          reference = create_constructor_call_reference(
-            reference_name,
-            location,
-            scope_id,
-            construct_target
-          );
-        } else {
-          // Fallback if no target found - still create constructor call with dummy location
-          reference = create_constructor_call_reference(
-            reference_name,
-            location,
-            scope_id,
-            location
-          );
-        }
+        // Create constructor call with optional target
+        // Target is undefined for standalone calls like MyClass() with no assignment
+        reference = create_constructor_call_reference(
+          reference_name,
+          location,
+          scope_id,
+          construct_target
+        );
         break;
       }
 

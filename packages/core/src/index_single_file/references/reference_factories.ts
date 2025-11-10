@@ -12,6 +12,7 @@ import type {
   SymbolName,
   ScopeId,
   SelfReferenceKeyword,
+  TypeInfo,
 } from "@ariadnejs/types";
 
 /**
@@ -109,7 +110,7 @@ export function create_function_call_reference(
 /**
  * Factory for constructor calls: new MyClass(), MyClass() (Python)
  *
- * @example
+ * @example With assignment
  * // const obj = new MyClass()
  * create_constructor_call_reference(
  *   'MyClass',
@@ -117,19 +118,27 @@ export function create_function_call_reference(
  *   scope_id,
  *   obj_location
  * )
+ *
+ * @example Standalone
+ * // MyClass()  // side effect only
+ * create_constructor_call_reference(
+ *   'MyClass',
+ *   call_location,
+ *   scope_id
+ * )
  */
 export function create_constructor_call_reference(
   name: SymbolName,
   location: Location,
   scope_id: ScopeId,
-  construct_target: Location
+  construct_target?: Location
 ): ConstructorCallReference {
   return {
     kind: 'constructor_call',
     name,
     location,
     scope_id,
-    construct_target,
+    ...(construct_target && { construct_target }),
   };
 }
 
@@ -210,7 +219,8 @@ export function create_type_reference(
   name: SymbolName,
   location: Location,
   scope_id: ScopeId,
-  type_context: 'annotation' | 'extends' | 'implements' | 'generic' | 'return'
+  type_context: 'annotation' | 'extends' | 'implements' | 'generic' | 'return',
+  type_info?: TypeInfo
 ): TypeReference {
   return {
     kind: 'type_reference',
@@ -218,6 +228,7 @@ export function create_type_reference(
     location,
     scope_id,
     type_context,
+    ...(type_info && { type_info }),
   };
 }
 

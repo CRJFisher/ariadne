@@ -136,18 +136,22 @@ export interface FunctionCallReference extends BaseReference {
  *
  * Represents constructor invocations using `new` keyword.
  *
- * @example TypeScript
+ * @example TypeScript with assignment
  * const obj = new MyClass();
  * // → ConstructorCallReference { construct_target: <loc of 'obj'> }
  *
- * @example Python (call without new keyword)
+ * @example Python with assignment
  * obj = MyClass()
  * // → ConstructorCallReference { construct_target: <loc of 'obj'> }
+ *
+ * @example Standalone (no assignment)
+ * MyClass()  // side effect only
+ * // → ConstructorCallReference { construct_target: undefined }
  */
 export interface ConstructorCallReference extends BaseReference {
   readonly kind: 'constructor_call';
-  /** Location of the variable being assigned (REQUIRED) */
-  readonly construct_target: Location;
+  /** Location of the variable being assigned (optional - undefined for standalone calls) */
+  readonly construct_target?: Location;
   /** Type being constructed */
   readonly constructed_type?: TypeInfo;
 }

@@ -8,7 +8,18 @@
 import { describe, it, expect, beforeAll } from "vitest";
 import Parser from "tree-sitter";
 import Python from "tree-sitter-python";
-import type { FilePath, Language } from "@ariadnejs/types";
+import type {
+  FilePath,
+  Language,
+  TypeReference,
+  MethodCallReference,
+  SelfReferenceCall,
+  ConstructorCallReference,
+  PropertyAccessReference,
+  VariableReference,
+  AssignmentReference,
+  FunctionCallReference,
+} from "@ariadnejs/types";
 import { build_semantic_index } from "./semantic_index";
 import type { ParsedFile } from "./file_utils";
 
@@ -56,7 +67,9 @@ def greet(name: str, age: int) -> str:
       const index = build_semantic_index(parsed_file, tree, "python");
 
       // Check that type references were extracted
-      const type_refs = index.references.filter((r) => r.type === "type");
+      const type_refs = index.references.filter(
+        (r): r is TypeReference => r.kind === "type_reference"
+      );
       expect(type_refs.length).toBeGreaterThan(0);
 
       // Check that type_info is populated (this proves extractors are working)
@@ -82,7 +95,9 @@ items: list[str] = []
 
       const index = build_semantic_index(parsed_file, tree, "python");
 
-      const type_refs = index.references.filter((r) => r.type === "type");
+      const type_refs = index.references.filter(
+        (r): r is TypeReference => r.kind === "type_reference"
+      );
       const types_with_info = type_refs.filter((r) => r.type_info);
 
       expect(types_with_info.length).toBeGreaterThan(0);
@@ -107,7 +122,9 @@ def process(items: List[str], mapping: Dict[str, int]) -> None:
 
       const index = build_semantic_index(parsed_file, tree, "python");
 
-      const type_refs = index.references.filter((r) => r.type === "type");
+      const type_refs = index.references.filter(
+        (r): r is TypeReference => r.kind === "type_reference"
+      );
       const types_with_info = type_refs.filter((r) => r.type_info);
 
       // Should have extracted types from generic annotations
@@ -125,7 +142,9 @@ def typed_function(x: int, y: str, z: List[int]) -> Dict[str, Any]:
       const result = build_semantic_index(parsed_file, tree, "python");
 
       // Find type references
-      const type_refs = result.references.filter((ref) => ref.type === "type");
+      const type_refs = result.references.filter(
+        (ref): ref is TypeReference => ref.kind === "type_reference"
+      );
       expect(type_refs.length).toBeGreaterThan(0);
 
       // Check int type reference
@@ -153,7 +172,9 @@ data: List[Dict[str, Any]] = []
       const parsed_file = createParsedFile(code, file_path, tree, "python");
       const result = build_semantic_index(parsed_file, tree, "python");
 
-      const type_refs = result.references.filter((ref) => ref.type === "type");
+      const type_refs = result.references.filter(
+        (ref): ref is TypeReference => ref.kind === "type_reference"
+      );
 
       // Check Optional type
       const optional_ref = type_refs.find((ref) => ref.name === "Optional");
@@ -180,7 +201,9 @@ def get_union() -> Union[int, str]:
       const parsed_file = createParsedFile(code, file_path, tree, "python");
       const result = build_semantic_index(parsed_file, tree, "python");
 
-      const type_refs = result.references.filter((ref) => ref.type === "type");
+      const type_refs = result.references.filter(
+        (ref): ref is TypeReference => ref.kind === "type_reference"
+      );
 
       // Check Union type
       const union_ref = type_refs.find((ref) => ref.name === "Union");
@@ -209,7 +232,9 @@ func: Callable[[int, str], bool] = lambda x, y: True
       const parsed_file = createParsedFile(code, file_path, tree, "python");
       const result = build_semantic_index(parsed_file, tree, "python");
 
-      const type_refs = result.references.filter((ref) => ref.type === "type");
+      const type_refs = result.references.filter(
+        (ref): ref is TypeReference => ref.kind === "type_reference"
+      );
 
       // Check Dict type
       const dict_ref = type_refs.find((ref) => ref.name === "Dict");
@@ -238,9 +263,10 @@ self.instance_method()
       const parsed_file = createParsedFile(code, file_path, tree, "python");
       const result = build_semantic_index(parsed_file, tree, "python");
 
-      // Find method call references
+      // Find method call references (obj.method())
       const method_calls = result.references.filter(
-        (ref) => ref.type === "call" && ref.name === "method",
+        (ref): ref is MethodCallReference =>
+          ref.kind === "method_call" && ref.name === "method"
       );
 
       expect(method_calls).toBeDefined();
@@ -249,18 +275,15 @@ self.instance_method()
       // Check that method calls have receiver_location populated
       const method_call = method_calls[0];
       expect(method_call).toBeDefined();
-      if (method_call?.context?.receiver_location) {
-        expect(method_call.context.receiver_location).toHaveProperty(
-          "start_line",
-        );
-        expect(method_call.context.receiver_location).toHaveProperty(
-          "start_column",
-        );
+      if (method_call?.receiver_location) {
+        expect(method_call.receiver_location).toHaveProperty("start_line");
+        expect(method_call.receiver_location).toHaveProperty("start_column");
       }
 
-      // Check self.instance_method() has receiver
+      // Check self.instance_method() has receiver (self-reference call)
       const self_method = result.references.find(
-        (ref) => ref.type === "call" && ref.name === "instance_method",
+        (ref): ref is SelfReferenceCall =>
+          ref.kind === "self_reference_call" && ref.name === "instance_method"
       );
       expect(self_method).toBeDefined();
     });
@@ -276,7 +299,7 @@ data.transform().validate().save()
       const result = build_semantic_index(parsed_file, tree, "python");
 
       const method_calls = result.references.filter(
-        (ref) => ref.type === "call",
+        (ref): ref is MethodCallReference => ref.kind === "method_call"
       );
 
       // Check list() has api.users as receiver
@@ -307,26 +330,24 @@ result = data['key'].attribute
 
       // Find member access references
       const member_accesses = result.references.filter(
-        (ref) => ref.type === "member_access",
+        (ref): ref is PropertyAccessReference => ref.kind === "property_access"
       );
       expect(member_accesses.length).toBeGreaterThan(0);
 
       // Check simple property access
       const prop_access = member_accesses.find((ref) => ref.name === "prop");
       expect(prop_access).toBeDefined();
-      if (prop_access?.context?.property_chain) {
+      if (prop_access?.property_chain) {
         // Should have ["obj", "prop"]
-        expect(prop_access.context.property_chain).toContain("obj");
-        expect(prop_access.context.property_chain).toContain("prop");
+        expect(prop_access.property_chain).toContain("obj");
+        expect(prop_access.property_chain).toContain("prop");
       }
 
       // Check nested property access
       const deep_access = member_accesses.find((ref) => ref.name === "deep");
-      if (deep_access?.context?.property_chain) {
+      if (deep_access?.property_chain) {
         // Should have multiple levels in the chain
-        expect(
-          deep_access.context.property_chain.length,
-        ).toBeGreaterThanOrEqual(2);
+        expect(deep_access.property_chain.length).toBeGreaterThanOrEqual(2);
       }
     });
 
@@ -347,29 +368,28 @@ class MyClass:
       const parsed_file = createParsedFile(code, file_path, tree, "python");
       const result = build_semantic_index(parsed_file, tree, "python");
 
-
       const member_accesses = result.references.filter(
-        (ref) => ref.type === "member_access",
+        (ref): ref is PropertyAccessReference => ref.kind === "property_access"
       );
 
       // Check self.instance_var
       const self_access = member_accesses.find(
-        (ref) => ref.name === "instance_var",
+        (ref) => ref.name === "instance_var"
       );
       expect(self_access).toBeDefined();
-      if (self_access?.context?.property_chain) {
-        expect(self_access.context.property_chain).toContain("self");
-        expect(self_access.context.property_chain).toContain("instance_var");
+      if (self_access?.property_chain) {
+        expect(self_access.property_chain).toContain("self");
+        expect(self_access.property_chain).toContain("instance_var");
       }
 
       // Check cls.class_var
       const cls_access = member_accesses.find(
-        (ref) => ref.name === "class_var",
+        (ref) => ref.name === "class_var"
       );
       expect(cls_access).toBeDefined();
-      if (cls_access?.context?.property_chain) {
-        expect(cls_access.context.property_chain).toContain("cls");
-        expect(cls_access.context.property_chain).toContain("class_var");
+      if (cls_access?.property_chain) {
+        expect(cls_access.property_chain).toContain("cls");
+        expect(cls_access.property_chain).toContain("class_var");
       }
     });
   });
@@ -398,7 +418,9 @@ class Calculator:
       expect(index.classes.size).toBeGreaterThan(0);
 
       // Check type annotations on methods were extracted
-      const type_refs = index.references.filter((r) => r.type === "type");
+      const type_refs = index.references.filter(
+        (r): r is TypeReference => r.kind === "type_reference"
+      );
       expect(type_refs.length).toBeGreaterThan(0);
     });
 
@@ -417,7 +439,9 @@ person = Person("Alice")
       const index = build_semantic_index(parsed_file, tree, "python");
 
       // Check that constructor call was captured
-      const constructs = index.references.filter((r) => r.type === "construct");
+      const constructs = index.references.filter(
+        (r): r is ConstructorCallReference => r.kind === "constructor_call"
+      );
       expect(constructs.length).toBeGreaterThan(0);
     });
   });
@@ -440,22 +464,20 @@ typed_obj: MyClass = MyClass()
 
       // Find constructor calls
       const constructor_calls = result.references.filter(
-        (ref) => ref.type === "construct",
+        (ref): ref is ConstructorCallReference => ref.kind === "constructor_call"
       );
       expect(constructor_calls.length).toBeGreaterThan(0);
 
       // Check MyClass() constructor
       const my_class_construct = constructor_calls.find(
-        (ref) => ref.name === "MyClass",
+        (ref) => ref.name === "MyClass"
       );
       expect(my_class_construct).toBeDefined();
-      if (my_class_construct?.context?.construct_target) {
+      if (my_class_construct?.construct_target) {
         // Should point to the variable being assigned
-        expect(my_class_construct.context.construct_target).toHaveProperty(
-          "start_line",
-        );
-        expect(my_class_construct.context.construct_target).toHaveProperty(
-          "start_column",
+        expect(my_class_construct.construct_target).toHaveProperty("start_line");
+        expect(my_class_construct.construct_target).toHaveProperty(
+          "start_column"
         );
       }
     });
@@ -471,18 +493,18 @@ result = process(Factory.create())
       const result = build_semantic_index(parsed_file, tree, "python");
 
       const constructor_calls = result.references.filter(
-        (ref) => ref.type === "construct",
+        (ref): ref is ConstructorCallReference => ref.kind === "constructor_call"
       );
 
       // Check Wrapper constructor
       const wrapper_construct = constructor_calls.find(
-        (ref) => ref.name === "Wrapper",
+        (ref) => ref.name === "Wrapper"
       );
       expect(wrapper_construct).toBeDefined();
 
       // Check Inner constructor (nested)
       const inner_construct = constructor_calls.find(
-        (ref) => ref.name === "Inner",
+        (ref) => ref.name === "Inner"
       );
       expect(inner_construct).toBeDefined();
     });
@@ -507,7 +529,7 @@ result = calculate(y)
 
       // Check that assignments were captured
       const assignments = index.references.filter(
-        (r) => r.type === "assignment",
+        (r): r is AssignmentReference => r.kind === "assignment"
       );
       expect(assignments.length).toBeGreaterThan(0);
     });
@@ -525,9 +547,11 @@ name: str = "test"
 
       // Check assignments and type annotations
       const assignments = index.references.filter(
-        (r) => r.type === "assignment",
+        (r): r is AssignmentReference => r.kind === "assignment"
       );
-      const type_refs = index.references.filter((r) => r.type === "type");
+      const type_refs = index.references.filter(
+        (r): r is TypeReference => r.kind === "type_reference"
+      );
 
       expect(assignments.length).toBeGreaterThan(0);
       expect(type_refs.length).toBeGreaterThan(0);
@@ -545,7 +569,10 @@ count = 0
       const index = build_semantic_index(parsed_file, tree, "python");
 
       // Check write references were created
-      const write_refs = index.references.filter((r) => r.type === "write");
+      const write_refs = index.references.filter(
+        (r): r is VariableReference =>
+          r.kind === "variable_reference" && r.access_type === "write"
+      );
       expect(write_refs.length).toBeGreaterThanOrEqual(3);
 
       // Check specific variable writes
@@ -570,7 +597,10 @@ value -= 5
       const parsed_file = createParsedFile(code, file_path, tree, "python");
       const index = build_semantic_index(parsed_file, tree, "python");
 
-      const write_refs = index.references.filter((r) => r.type === "write");
+      const write_refs = index.references.filter(
+        (r): r is VariableReference =>
+          r.kind === "variable_reference" && r.access_type === "write"
+      );
 
       // Should have writes for initial assignments and augmented assignments
       expect(write_refs.length).toBeGreaterThanOrEqual(5);
@@ -590,7 +620,10 @@ x, y = calculate()
       const parsed_file = createParsedFile(code, file_path, tree, "python");
       const index = build_semantic_index(parsed_file, tree, "python");
 
-      const write_refs = index.references.filter((r) => r.type === "write");
+      const write_refs = index.references.filter(
+        (r): r is VariableReference =>
+          r.kind === "variable_reference" && r.access_type === "write"
+      );
 
       // Should have write references for a, b, c, x, y
       expect(write_refs.length).toBeGreaterThanOrEqual(5);
@@ -627,7 +660,9 @@ def greet(name: str) -> None:
       expect(index.functions.size).toBeGreaterThan(0);
 
       // Check type annotations were extracted
-      const type_refs = index.references.filter((r) => r.type === "type");
+      const type_refs = index.references.filter(
+        (r): r is TypeReference => r.kind === "type_reference"
+      );
       const types_with_info = type_refs.filter((r) => r.type_info);
       expect(types_with_info.length).toBeGreaterThan(0);
     });
@@ -747,7 +782,9 @@ class DecoratedClass:
       expect(index.classes.size).toBeGreaterThan(0);
 
       // Check decorator function calls in references
-      const function_calls = index.references.filter((r) => r.type === "call");
+      const function_calls = index.references.filter(
+        (r): r is FunctionCallReference => r.kind === "function_call"
+      );
       const decorator_call = function_calls.find(
         (r) => r.name === "my_decorator",
       );
@@ -778,7 +815,9 @@ def decorated_function():
       expect(decorated_func).toBeDefined();
 
       // Check decorator call
-      const function_calls = index.references.filter((r) => r.type === "call");
+      const function_calls = index.references.filter(
+        (r): r is FunctionCallReference => r.kind === "function_call"
+      );
       const decorator_call = function_calls.find(
         (r) => r.name === "decorator_with_args",
       );
@@ -806,7 +845,9 @@ y: int | str = 42
       const parsed_file = createParsedFile(code, file_path, tree, "python");
       const result = build_semantic_index(parsed_file, tree, "python");
 
-      const type_refs = result.references.filter((ref) => ref.type === "type");
+      const type_refs = result.references.filter(
+        (ref): ref is TypeReference => ref.kind === "type_reference"
+      );
 
       // Optional[str] should be captured
       const optional_ref = type_refs.find((ref) => ref.name === "Optional");
@@ -833,7 +874,9 @@ def maybe_str() -> str | None:
       const parsed_file = createParsedFile(code, file_path, tree, "python");
       const result = build_semantic_index(parsed_file, tree, "python");
 
-      const type_refs = result.references.filter((ref) => ref.type === "type");
+      const type_refs = result.references.filter(
+        (ref): ref is TypeReference => ref.kind === "type_reference"
+      );
 
       // Should have None type references
       const none_refs = type_refs.filter((ref) => ref.name === "None");
@@ -853,7 +896,9 @@ def handle(data: None) -> str:
       const parsed_file = createParsedFile(code, file_path, tree, "python");
       const result = build_semantic_index(parsed_file, tree, "python");
 
-      const type_refs = result.references.filter((ref) => ref.type === "type");
+      const type_refs = result.references.filter(
+        (ref): ref is TypeReference => ref.kind === "type_reference"
+      );
       const none_refs = type_refs.filter((ref) => ref.name === "None");
 
       // Should have None from parameter types and return type
@@ -872,7 +917,9 @@ result: list[str] | None = []
       const parsed_file = createParsedFile(code, file_path, tree, "python");
       const result = build_semantic_index(parsed_file, tree, "python");
 
-      const type_refs = result.references.filter((ref) => ref.type === "type");
+      const type_refs = result.references.filter(
+        (ref): ref is TypeReference => ref.kind === "type_reference"
+      );
       const none_refs = type_refs.filter((ref) => ref.name === "None");
 
       // Should have None from all variable type annotations
@@ -898,7 +945,7 @@ z = [1, 2, 3]
 
       // Simple variables shouldn't have property chains
       const member_accesses = result.references.filter(
-        (ref) => ref.type === "member_access",
+        (ref): ref is PropertyAccessReference => ref.kind === "property_access"
       );
       // There should be no member accesses in this code
       expect(member_accesses.length).toBe(0);
@@ -923,7 +970,9 @@ class UntypedClass:
       expect(functions.length).toBeGreaterThan(0);
 
       // Type references should be minimal or empty
-      const type_refs = result.references.filter((ref) => ref.type === "type");
+      const type_refs = result.references.filter(
+        (ref): ref is TypeReference => ref.kind === "type_reference"
+      );
       // Should be empty or very few since no type hints
       expect(type_refs.length).toBeLessThanOrEqual(1);
     });
@@ -939,16 +988,16 @@ print(Factory.create())
       const result = build_semantic_index(parsed_file, tree, "python");
 
       const constructor_calls = result.references.filter(
-        (ref) => ref.type === "construct",
+        (ref): ref is ConstructorCallReference => ref.kind === "constructor_call"
       );
 
       // Standalone MyClass() won't have construct_target
       const standalone = constructor_calls.find(
-        (ref) => ref.name === "MyClass",
+        (ref) => ref.name === "MyClass"
       );
       expect(standalone).toBeDefined();
       // construct_target should be undefined for standalone calls
-      expect(standalone?.context?.construct_target).toBeUndefined();
+      expect(standalone?.construct_target).toBeUndefined();
     });
 
     it("should extract method resolution metadata for all receiver patterns", () => {
@@ -977,7 +1026,8 @@ service2.get_data()
       // Scenario 1: Receiver from type annotation
       // Verify the assignment is captured
       const service1_assignment = result.references.find(
-        (ref) => ref.type === "assignment" && ref.name === "service1",
+        (ref): ref is AssignmentReference =>
+          ref.kind === "assignment" && ref.name === "service1"
       );
       expect(service1_assignment).toBeDefined();
 
@@ -985,9 +1035,9 @@ service2.get_data()
 
       // Verify method calls have receiver_location
       const method_calls = result.references.filter(
-        (ref) => ref.type === "call" && ref.name === "get_data",
+        (ref): ref is MethodCallReference =>
+          ref.kind === "method_call" && ref.name === "get_data"
       );
-
 
       // Should have at least 2 get_data method calls
       expect(method_calls.length).toBeGreaterThanOrEqual(2);
@@ -995,18 +1045,19 @@ service2.get_data()
       // At least some method calls should have receiver_location
       // (calls within class definitions may not have it)
       const calls_with_receiver = method_calls.filter(
-        (c) => c.context?.receiver_location,
+        (c) => c.receiver_location
       );
       expect(calls_with_receiver.length).toBeGreaterThan(0);
 
       // Scenario 2: Verify constructor call has construct_target
       const constructor_calls = result.references.filter(
-        (ref) => ref.type === "construct" && ref.name === "Service",
+        (ref): ref is ConstructorCallReference =>
+          ref.kind === "constructor_call" && ref.name === "Service"
       );
 
       // Should have at least one constructor call with construct_target
       const construct_with_target = constructor_calls.find(
-        (c) => c.context?.construct_target,
+        (c) => c.construct_target
       );
       expect(construct_with_target).toBeDefined();
     });
