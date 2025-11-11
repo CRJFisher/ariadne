@@ -138,7 +138,7 @@ export function create_constructor_call_reference(
     name,
     location,
     scope_id,
-    ...(construct_target && { construct_target }),
+    ...(construct_target !== undefined && { construct_target }),
   };
 }
 
