@@ -2,7 +2,14 @@ import { describe, it, expect, beforeEach } from "vitest";
 import { Project } from "./project";
 import path from "path";
 import fs from "fs";
-import type { FilePath, SymbolName } from "@ariadnejs/types";
+import type {
+  FilePath,
+  SymbolName,
+  FunctionCallReference,
+  MethodCallReference,
+  SelfReferenceCall,
+  ConstructorCallReference,
+} from "@ariadnejs/types";
 
 const FIXTURE_ROOT = path.join(__dirname, "../../tests/fixtures/python/code");
 
@@ -40,7 +47,13 @@ describe("Project Integration - Python", () => {
       expect(helper_fn).toBeDefined();
 
       // Find call references
-      const calls = index!.references.filter((r) => r.type === "call");
+      const calls = index!.references.filter(
+        (r): r is FunctionCallReference | MethodCallReference | SelfReferenceCall | ConstructorCallReference =>
+          r.kind === "function_call" ||
+          r.kind === "method_call" ||
+          r.kind === "self_reference_call" ||
+          r.kind === "constructor_call"
+      );
       expect(calls.length).toBeGreaterThan(0);
 
       // Verify resolution - find a call to "helper"
@@ -85,7 +98,8 @@ describe("Project Integration - Python", () => {
 
       // Find method call references
       const method_calls = index!.references.filter(
-        (r) => r.type === "call" && r.call_type === "method"
+        (r): r is MethodCallReference | SelfReferenceCall =>
+          r.kind === "method_call" || r.kind === "self_reference_call"
       );
       expect(method_calls.length).toBeGreaterThan(0);
 
@@ -138,7 +152,12 @@ describe("Project Integration - Python", () => {
 
       // Verify call to imported function resolves
       const process_data_call = shadowing_index!.references.find(
-        (r) => r.type === "call" && r.name === ("process_data" as SymbolName)
+        (r): r is FunctionCallReference | MethodCallReference | SelfReferenceCall | ConstructorCallReference =>
+          (r.kind === "function_call" ||
+            r.kind === "method_call" ||
+            r.kind === "self_reference_call" ||
+            r.kind === "constructor_call") &&
+          r.name === ("process_data" as SymbolName)
       );
       expect(process_data_call).toBeDefined();
 
@@ -173,7 +192,12 @@ describe("Project Integration - Python", () => {
 
       // Find call to process_data (imported function)
       const process_data_call = shadowing_index!.references.find(
-        (r) => r.type === "call" && r.name === ("process_data" as SymbolName)
+        (r): r is FunctionCallReference | MethodCallReference | SelfReferenceCall | ConstructorCallReference =>
+          (r.kind === "function_call" ||
+            r.kind === "method_call" ||
+            r.kind === "self_reference_call" ||
+            r.kind === "constructor_call") &&
+          r.name === ("process_data" as SymbolName)
       );
       expect(process_data_call).toBeDefined();
 
@@ -210,7 +234,12 @@ describe("Project Integration - Python", () => {
 
       // Find User constructor call (should be a call with call_type "constructor" or "function")
       const constructor_calls = uses_user_index!.references.filter(
-        (r) => r.type === "call" && r.name === ("User" as SymbolName)
+        (r): r is FunctionCallReference | MethodCallReference | SelfReferenceCall | ConstructorCallReference =>
+          (r.kind === "function_call" ||
+            r.kind === "method_call" ||
+            r.kind === "self_reference_call" ||
+            r.kind === "constructor_call") &&
+          r.name === ("User" as SymbolName)
       );
       expect(constructor_calls.length).toBeGreaterThan(0);
 
@@ -259,7 +288,12 @@ describe("Project Integration - Python", () => {
 
       // Find get_name method call
       const get_name_call = uses_user_index!.references.find(
-        (r) => r.type === "call" && r.name === ("get_name" as SymbolName)
+        (r): r is FunctionCallReference | MethodCallReference | SelfReferenceCall | ConstructorCallReference =>
+          (r.kind === "function_call" ||
+            r.kind === "method_call" ||
+            r.kind === "self_reference_call" ||
+            r.kind === "constructor_call") &&
+          r.name === ("get_name" as SymbolName)
       );
       expect(get_name_call).toBeDefined();
       if (!get_name_call) return;
@@ -367,7 +401,8 @@ describe("Project Integration - Python", () => {
 
       // Find method call references
       const method_calls = uses_user_index!.references.filter(
-        (r) => r.type === "call" && r.call_type === "method"
+        (r): r is MethodCallReference | SelfReferenceCall =>
+          r.kind === "method_call" || r.kind === "self_reference_call"
       );
       expect(method_calls.length).toBeGreaterThan(0);
 
@@ -421,10 +456,8 @@ describe("Project Integration - Python", () => {
 
       // Find call to "helper"
       const helper_call = shadowing_index!.references.find(
-        (r) =>
-          r.type === "call" &&
-          r.name === ("helper" as SymbolName) &&
-          r.call_type === "function"
+        (r): r is FunctionCallReference =>
+          r.kind === "function_call" && r.name === ("helper" as SymbolName)
       );
       expect(helper_call).toBeDefined();
 
@@ -456,10 +489,8 @@ describe("Project Integration - Python", () => {
 
       // Find call to "process_data" (not shadowed)
       const process_data_call = shadowing_index!.references.find(
-        (r) =>
-          r.type === "call" &&
-          r.name === ("process_data" as SymbolName) &&
-          r.call_type === "function"
+        (r): r is FunctionCallReference =>
+          r.kind === "function_call" && r.name === ("process_data" as SymbolName)
       );
       expect(process_data_call).toBeDefined();
 
@@ -504,7 +535,12 @@ describe("Project Integration - Python", () => {
 
       // Find method call in the file
       const method_call = index!.references.find(
-        (r) => r.type === "call" && r.name === ("get_name" as SymbolName)
+        (r): r is FunctionCallReference | MethodCallReference | SelfReferenceCall | ConstructorCallReference =>
+          (r.kind === "function_call" ||
+            r.kind === "method_call" ||
+            r.kind === "self_reference_call" ||
+            r.kind === "constructor_call") &&
+          r.name === ("get_name" as SymbolName)
       );
       expect(method_call).toBeDefined();
 
@@ -526,13 +562,23 @@ describe("Project Integration - Python", () => {
 
       // Find apply_discount method call (part of method chain)
       const apply_discount_call = index!.references.find(
-        (r) => r.type === "call" && r.name === ("apply_discount" as SymbolName)
+        (r): r is FunctionCallReference | MethodCallReference | SelfReferenceCall | ConstructorCallReference =>
+          (r.kind === "function_call" ||
+            r.kind === "method_call" ||
+            r.kind === "self_reference_call" ||
+            r.kind === "constructor_call") &&
+          r.name === ("apply_discount" as SymbolName)
       );
       expect(apply_discount_call).toBeDefined();
 
       // Find mark_out_of_stock method call (chained after apply_discount)
       const mark_out_of_stock_call = index!.references.find(
-        (r) => r.type === "call" && r.name === ("mark_out_of_stock" as SymbolName)
+        (r): r is FunctionCallReference | MethodCallReference | SelfReferenceCall | ConstructorCallReference =>
+          (r.kind === "function_call" ||
+            r.kind === "method_call" ||
+            r.kind === "self_reference_call" ||
+            r.kind === "constructor_call") &&
+          r.name === ("mark_out_of_stock" as SymbolName)
       );
       expect(mark_out_of_stock_call).toBeDefined();
 
@@ -695,7 +741,12 @@ class Service:
       // Verify initial state - process_data call resolves
       const shadowing_v1 = project.get_semantic_index(shadowing_file);
       const process_data_call_v1 = shadowing_v1!.references.find(
-        (r) => r.name === ("process_data" as SymbolName) && r.type === "call"
+        (r): r is FunctionCallReference | MethodCallReference | SelfReferenceCall | ConstructorCallReference =>
+          (r.kind === "function_call" ||
+            r.kind === "method_call" ||
+            r.kind === "self_reference_call" ||
+            r.kind === "constructor_call") &&
+          r.name === ("process_data" as SymbolName)
       );
       expect(process_data_call_v1).toBeDefined();
 
@@ -720,7 +771,12 @@ class Service:
       // Verify shadowing.py still has the reference (source unchanged)
       const shadowing_v2 = project.get_semantic_index(shadowing_file);
       const process_data_call_v2 = shadowing_v2!.references.find(
-        (r) => r.name === ("process_data" as SymbolName) && r.type === "call"
+        (r): r is FunctionCallReference | MethodCallReference | SelfReferenceCall | ConstructorCallReference =>
+          (r.kind === "function_call" ||
+            r.kind === "method_call" ||
+            r.kind === "self_reference_call" ||
+            r.kind === "constructor_call") &&
+          r.name === ("process_data" as SymbolName)
       );
       expect(process_data_call_v2).toBeDefined();
 
@@ -758,7 +814,12 @@ class Service:
 
       // Call to process_data (which was imported) should not resolve after source file removal
       const process_data_call = shadowing!.references.find(
-        (r) => r.name === ("process_data" as SymbolName) && r.type === "call"
+        (r): r is FunctionCallReference | MethodCallReference | SelfReferenceCall | ConstructorCallReference =>
+          (r.kind === "function_call" ||
+            r.kind === "method_call" ||
+            r.kind === "self_reference_call" ||
+            r.kind === "constructor_call") &&
+          r.name === ("process_data" as SymbolName)
       );
       if (process_data_call) {
         const resolved = project.resolutions.resolve(
@@ -887,7 +948,12 @@ class Service:
 
       // Find call to helper() which was imported via "from ...modules.utils import helper"
       const helper_call = nested_index?.references.find(
-        (r) => r.name === ("helper" as SymbolName) && r.type === "call"
+        (r): r is FunctionCallReference | MethodCallReference | SelfReferenceCall | ConstructorCallReference =>
+          (r.kind === "function_call" ||
+            r.kind === "method_call" ||
+            r.kind === "self_reference_call" ||
+            r.kind === "constructor_call") &&
+          r.name === ("helper" as SymbolName)
       );
       expect(helper_call).toBeDefined();
 
@@ -907,7 +973,12 @@ class Service:
 
       // Find call to process_data() which was also imported from utils
       const process_data_call = nested_index?.references.find(
-        (r) => r.name === ("process_data" as SymbolName) && r.type === "call"
+        (r): r is FunctionCallReference | MethodCallReference | SelfReferenceCall | ConstructorCallReference =>
+          (r.kind === "function_call" ||
+            r.kind === "method_call" ||
+            r.kind === "self_reference_call" ||
+            r.kind === "constructor_call") &&
+          r.name === ("process_data" as SymbolName)
       );
       expect(process_data_call).toBeDefined();
 
@@ -941,7 +1012,12 @@ class Service:
 
       // Find call to core_function() which was imported via "from .core import core_function"
       const core_call = nested_index?.references.find(
-        (r) => r.name === ("core_function" as SymbolName) && r.type === "call"
+        (r): r is FunctionCallReference | MethodCallReference | SelfReferenceCall | ConstructorCallReference =>
+          (r.kind === "function_call" ||
+            r.kind === "method_call" ||
+            r.kind === "self_reference_call" ||
+            r.kind === "constructor_call") &&
+          r.name === ("core_function" as SymbolName)
       );
       expect(core_call).toBeDefined();
 
@@ -977,7 +1053,12 @@ class Service:
       // Verify resolution works before removal
       const nested_index = project.get_semantic_index(nested_imports_file);
       const helper_call = nested_index?.references.find(
-        (r) => r.name === ("helper" as SymbolName) && r.type === "call"
+        (r): r is FunctionCallReference | MethodCallReference | SelfReferenceCall | ConstructorCallReference =>
+          (r.kind === "function_call" ||
+            r.kind === "method_call" ||
+            r.kind === "self_reference_call" ||
+            r.kind === "constructor_call") &&
+          r.name === ("helper" as SymbolName)
       );
       expect(helper_call).toBeDefined();
 

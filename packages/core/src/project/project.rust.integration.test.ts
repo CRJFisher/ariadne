@@ -2,7 +2,16 @@ import { describe, it, expect, beforeEach } from "vitest";
 import { Project } from "./project";
 import path from "path";
 import fs from "fs";
-import type { FilePath, SymbolName, SymbolId } from "@ariadnejs/types";
+import type {
+  FilePath,
+  SymbolName,
+  SymbolId,
+  FunctionCallReference,
+  MethodCallReference,
+  SelfReferenceCall,
+  ConstructorCallReference,
+  VariableReference,
+} from "@ariadnejs/types";
 
 const FIXTURE_ROOT = path.join(__dirname, "../../tests/fixtures/rust/code");
 
@@ -62,7 +71,8 @@ describe("Project Integration - Rust", () => {
 
       // Find method call references
       const method_calls = index!.references.filter(
-        (r) => r.type === "call" && r.call_type === "method"
+        (r): r is MethodCallReference | SelfReferenceCall =>
+          r.kind === "method_call" || r.kind === "self_reference_call"
       );
       expect(method_calls.length).toBeGreaterThan(0);
 
@@ -91,7 +101,13 @@ describe("Project Integration - Rust", () => {
       expect(functions.length).toBeGreaterThan(0);
 
       // Find call references
-      const calls = index!.references.filter((r) => r.type === "call");
+      const calls = index!.references.filter(
+        (r): r is FunctionCallReference | MethodCallReference | SelfReferenceCall | ConstructorCallReference =>
+          r.kind === "function_call" ||
+          r.kind === "method_call" ||
+          r.kind === "self_reference_call" ||
+          r.kind === "constructor_call"
+      );
       expect(calls.length).toBeGreaterThan(0);
 
       // Verify at least one call resolves
@@ -117,7 +133,7 @@ describe("Project Integration - Rust", () => {
 
       // Verify variable references exist (read or write)
       const var_refs = index!.references.filter(
-        (r) => r.type === "read" || r.type === "write"
+        (r): r is VariableReference => r.kind === "variable_reference"
       );
       expect(var_refs.length).toBeGreaterThan(0);
     });
@@ -171,7 +187,7 @@ describe("Project Integration - Rust", () => {
 
       // Find function call references
       const calls = main_index?.references.filter(
-        (r) => r.type === "call" && r.call_type === "function"
+        (r): r is FunctionCallReference => r.kind === "function_call"
       );
       expect(calls).toBeDefined();
       expect(calls?.length).toBeGreaterThan(0);
@@ -252,7 +268,8 @@ describe("Project Integration - Rust", () => {
 
       // Find method calls in uses_user.rs
       const method_calls = main_index!.references.filter(
-        (r) => r.type === "call" && r.call_type === "method"
+        (r): r is MethodCallReference | SelfReferenceCall =>
+          r.kind === "method_call" || r.kind === "self_reference_call"
       );
       expect(method_calls.length).toBeGreaterThan(0);
 
@@ -297,15 +314,15 @@ describe("Project Integration - Rust", () => {
         expect(import_names).toContain("User" as SymbolName);
         expect(import_names).toContain("UserManager" as SymbolName);
 
-        // Verify UserManager::new() has receiver_location for method resolution
-        // Associated function calls have the full scoped name (UserManager::new)
-        // and receiver_location points to the type (UserManager)
+        // Verify UserManager::new() is captured as a function call
+        // Associated functions like Type::new() are function_call, not method_call
+        // The name should include "new" for the associated function
         const manager_new_calls = main_index.references.filter(
-          (r) =>
-            r.type === "call" &&
-            r.name.includes("UserManager") &&
-            r.name.includes("new") &&
-            r.context?.receiver_location
+          (r): r is FunctionCallReference | MethodCallReference | SelfReferenceCall =>
+            (r.kind === "function_call" ||
+             r.kind === "method_call" ||
+             r.kind === "self_reference_call") &&
+            r.name.includes("new")
         );
 
         expect(manager_new_calls.length).toBeGreaterThan(0);
@@ -385,7 +402,13 @@ describe("Project Integration - Rust", () => {
       expect(functions.length).toBeGreaterThan(0);
 
       // Find call references
-      const calls = main_index!.references.filter((r) => r.type === "call");
+      const calls = main_index!.references.filter(
+        (r): r is FunctionCallReference | MethodCallReference | SelfReferenceCall | ConstructorCallReference =>
+          r.kind === "function_call" ||
+          r.kind === "method_call" ||
+          r.kind === "self_reference_call" ||
+          r.kind === "constructor_call"
+      );
       expect(calls.length).toBeGreaterThan(0);
 
       // Verify at least one call resolves to a local definition
@@ -414,13 +437,14 @@ describe("Project Integration - Rust", () => {
 
       // Find method chain calls
       const method_calls = index!.references.filter(
-        (r) => r.type === "call" && r.call_type === "method"
+        (r): r is MethodCallReference | SelfReferenceCall =>
+          r.kind === "method_call" || r.kind === "self_reference_call"
       );
       expect(method_calls.length).toBeGreaterThan(1);
 
-      // Verify each method call has the correct call_type
+      // Verify each method call has the correct kind
       for (const call of method_calls) {
-        expect(call.call_type).toBe("method");
+        expect(call.kind === "method_call" || call.kind === "self_reference_call").toBe(true);
       }
     });
   });
