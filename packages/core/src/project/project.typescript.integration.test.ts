@@ -2,7 +2,14 @@ import { describe, it, expect, beforeEach } from "vitest";
 import { Project } from "./project";
 import path from "path";
 import fs from "fs";
-import type { FilePath, SymbolName } from "@ariadnejs/types";
+import type {
+  FilePath,
+  SymbolName,
+  FunctionCallReference,
+  MethodCallReference,
+  SelfReferenceCall,
+  ConstructorCallReference,
+} from "@ariadnejs/types";
 
 const FIXTURE_ROOT = path.join(
   __dirname,
@@ -45,7 +52,13 @@ describe("Project Integration - TypeScript", () => {
       expect(helper_fn).toBeDefined();
 
       // Find call references
-      const calls = index!.references.filter((r) => r.type === "call");
+      const calls = index!.references.filter(
+        (r): r is FunctionCallReference | MethodCallReference | SelfReferenceCall | ConstructorCallReference =>
+          r.kind === "function_call" ||
+          r.kind === "method_call" ||
+          r.kind === "self_reference_call" ||
+          r.kind === "constructor_call"
+      );
       expect(calls.length).toBeGreaterThan(0);
 
       // Verify resolution - find a call to "helper"
@@ -91,7 +104,7 @@ describe("Project Integration - TypeScript", () => {
 
       // Find method call references
       const method_calls = index!.references.filter(
-        (r) => r.type === "call" && r.call_type === "method"
+        (r): r is MethodCallReference => r.kind === "method_call"
       );
       expect(method_calls.length).toBeGreaterThan(0);
 
@@ -249,7 +262,7 @@ describe("Project Integration - TypeScript", () => {
 
       // Find method calls
       const method_calls = main!.references.filter(
-        (r) => r.type === "call" && r.call_type === "method"
+        (r): r is MethodCallReference => r.kind === "method_call"
       );
       expect(method_calls.length).toBeGreaterThan(0);
 
@@ -297,10 +310,8 @@ describe("Project Integration - TypeScript", () => {
 
       // Find call to "helper"
       const helper_call = main!.references.find(
-        (r) =>
-          r.type === "call" &&
-          r.name === ("helper" as SymbolName) &&
-          r.call_type === "function"
+        (r): r is FunctionCallReference =>
+          r.kind === "function_call" && r.name === ("helper" as SymbolName)
       );
       expect(helper_call).toBeDefined();
 
@@ -332,10 +343,8 @@ describe("Project Integration - TypeScript", () => {
 
       // Find call to "otherFunction" (not shadowed)
       const other_call = main!.references.find(
-        (r) =>
-          r.type === "call" &&
-          r.name === ("otherFunction" as SymbolName) &&
-          r.call_type === "function"
+        (r): r is FunctionCallReference =>
+          r.kind === "function_call" && r.name === ("otherFunction" as SymbolName)
       );
       expect(other_call).toBeDefined();
 
@@ -377,7 +386,7 @@ describe("Project Integration - TypeScript", () => {
 
       // Find calls to utils.helper() and utils.otherFunction()
       const method_calls = main!.references.filter(
-        (r) => r.type === "call" && r.call_type === "method"
+        (r): r is MethodCallReference => r.kind === "method_call"
       );
 
       // Should have at least 2 method calls (helper and otherFunction)
@@ -425,7 +434,7 @@ describe("Project Integration - TypeScript", () => {
 
       // Find all method calls
       const method_calls = main!.references.filter(
-        (r) => r.type === "call" && r.call_type === "method"
+        (r): r is MethodCallReference => r.kind === "method_call"
       );
 
       // Find both helper and otherFunction calls
@@ -503,7 +512,12 @@ describe("Project Integration - TypeScript", () => {
       // Verify initial state - otherFunction call resolves
       const main_v1 = project.get_semantic_index(main_file);
       const other_call_v1 = main_v1!.references.find(
-        (r) => r.name === ("otherFunction" as SymbolName) && r.type === "call"
+        (r): r is FunctionCallReference | MethodCallReference | SelfReferenceCall | ConstructorCallReference =>
+          (r.kind === "function_call" ||
+            r.kind === "method_call" ||
+            r.kind === "self_reference_call" ||
+            r.kind === "constructor_call") &&
+          r.name === ("otherFunction" as SymbolName)
       );
       expect(other_call_v1).toBeDefined();
 
@@ -526,7 +540,12 @@ describe("Project Integration - TypeScript", () => {
       // Verify main.ts still has the reference (source unchanged)
       const main_v2 = project.get_semantic_index(main_file);
       const other_call_v2 = main_v2!.references.find(
-        (r) => r.name === ("otherFunction" as SymbolName) && r.type === "call"
+        (r): r is FunctionCallReference | MethodCallReference | SelfReferenceCall | ConstructorCallReference =>
+          (r.kind === "function_call" ||
+            r.kind === "method_call" ||
+            r.kind === "self_reference_call" ||
+            r.kind === "constructor_call") &&
+          r.name === ("otherFunction" as SymbolName)
       );
       expect(other_call_v2).toBeDefined();
 
@@ -564,7 +583,12 @@ describe("Project Integration - TypeScript", () => {
 
       // Call to otherFunction (which was imported) should not resolve after source file removal
       const other_call = main!.references.find(
-        (r) => r.name === ("otherFunction" as SymbolName) && r.type === "call"
+        (r): r is FunctionCallReference | MethodCallReference | SelfReferenceCall | ConstructorCallReference =>
+          (r.kind === "function_call" ||
+            r.kind === "method_call" ||
+            r.kind === "self_reference_call" ||
+            r.kind === "constructor_call") &&
+          r.name === ("otherFunction" as SymbolName)
       );
       if (other_call) {
         const resolved = project.resolutions.resolve(
