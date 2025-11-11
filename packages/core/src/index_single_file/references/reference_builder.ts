@@ -20,8 +20,6 @@ import type {
   Location,
   SymbolName,
   SymbolReference,
-  ReferenceType,
-  ReferenceContext,
   TypeInfo,
 } from "@ariadnejs/types";
 
@@ -38,7 +36,7 @@ import {
 
 import type { CaptureNode } from "../semantic_index";
 import type { ProcessingContext } from "../semantic_index";
-import type { MetadataExtractors, ReceiverInfo } from "../query_code_tree/language_configs/metadata_types";
+import type { MetadataExtractors } from "../query_code_tree/language_configs/metadata_types";
 
 // ============================================================================
 // Reference Kind Enum
@@ -137,60 +135,6 @@ function determine_reference_kind(
 }
 
 /**
- * Map ReferenceKind to ReferenceType
- */
-function map_to_reference_type(kind: ReferenceKind): ReferenceType {
-  switch (kind) {
-    case ReferenceKind.FUNCTION_CALL:
-    case ReferenceKind.METHOD_CALL:
-    case ReferenceKind.SUPER_CALL:
-      return "call";
-
-    case ReferenceKind.CONSTRUCTOR_CALL:
-      return "construct";
-
-    case ReferenceKind.PROPERTY_ACCESS:
-      return "member_access";
-
-    case ReferenceKind.TYPE_REFERENCE:
-      return "type";
-
-    case ReferenceKind.VARIABLE_WRITE:
-      return "write";
-
-    case ReferenceKind.ASSIGNMENT:
-      return "assignment";
-
-    case ReferenceKind.RETURN:
-      return "return";
-
-    case ReferenceKind.VARIABLE_REFERENCE:
-    default:
-      return "read";
-  }
-}
-
-/**
- * Determine call type from reference kind
- */
-function determine_call_type(
-  kind: ReferenceKind
-): "function" | "method" | "constructor" | "super" | undefined {
-  switch (kind) {
-    case ReferenceKind.FUNCTION_CALL:
-      return "function";
-    case ReferenceKind.METHOD_CALL:
-      return "method";
-    case ReferenceKind.CONSTRUCTOR_CALL:
-      return "constructor";
-    case ReferenceKind.SUPER_CALL:
-      return "super";
-    default:
-      return undefined;
-  }
-}
-
-/**
  * Extract type information from capture
  *
  * Attempts to infer type information from annotations or JSDoc comments.
@@ -221,98 +165,6 @@ function extract_type_info(
 
   // No type information available without extractors
   return undefined;
-}
-
-/**
- * Extract reference context from capture for method call resolution
- *
- * Builds ReferenceContext by extracting relevant metadata based on reference kind.
- * Each field is populated using language-specific extractors that traverse the AST.
- *
- * Extraction strategy by reference kind:
- * - METHOD_CALL: Extract receiver_location and property_chain
- *   - receiver_location: Points to the object the method is called on
- *   - property_chain: Complete chain of property/method accesses
- *
- * - CONSTRUCTOR_CALL: Extract construct_target
- *   - construct_target: Points to the variable being assigned to
- *
- * - PROPERTY_ACCESS: Extract property_chain
- *   - property_chain: All properties accessed in the chain
- *
- * Returns undefined if no extractors available or no context data found.
- *
- * @param capture - Tree-sitter capture node
- * @param extractors - Language-specific metadata extractors
- * @param file_path - File being processed
- * @returns ReferenceContext with extracted fields, or undefined
- */
-function extract_context(
-  capture: CaptureNode,
-  extractors: MetadataExtractors | undefined,
-  file_path: FilePath
-): ReferenceContext | undefined {
-  if (!extractors) {
-    return undefined;
-  }
-
-  let receiver_location: Location | undefined;
-  let construct_target: Location | undefined;
-  let property_chain: readonly SymbolName[] | undefined;
-
-  const kind = determine_reference_kind(capture, extractors);
-
-  // Extract receiver location for method calls and function calls
-  // Method calls: obj.method() → receiver_location points to 'obj'
-  // Associated function calls: Type::function() → receiver_location points to 'Type'
-  if (kind === ReferenceKind.METHOD_CALL || kind === ReferenceKind.FUNCTION_CALL) {
-    const call_receiver = extractors.extract_call_receiver(
-      capture.node,
-      file_path
-    );
-    // If extractor returns undefined, we simply don't add receiver_location
-    // This can happen when the tree-sitter node doesn't have receiver info
-    if (call_receiver) {
-      receiver_location = call_receiver;
-    }
-  }
-
-  // For super calls, the receiver is the super keyword itself
-  if (kind === ReferenceKind.SUPER_CALL) {
-    receiver_location = capture.location;
-  }
-
-  // Extract constructor target variable
-  // Example: const x = new Class() → construct_target points to 'x'
-  if (kind === ReferenceKind.CONSTRUCTOR_CALL) {
-    construct_target = extractors.extract_construct_target(
-      capture.node,
-      file_path
-    );
-  }
-
-  // Extract property chain for member access patterns
-  // Example: a.b.c.method() → property_chain is ['a', 'b', 'c', 'method']
-  // Also extract for function calls with receiver (associated functions like Product::new)
-  if (
-    kind === ReferenceKind.PROPERTY_ACCESS ||
-    kind === ReferenceKind.METHOD_CALL ||
-    kind === ReferenceKind.FUNCTION_CALL
-  ) {
-    property_chain = extractors.extract_property_chain(capture.node);
-  }
-
-  // Only return context if we extracted at least one field
-  const has_data = receiver_location || construct_target || property_chain;
-
-  if (!has_data) return undefined;
-
-  // Build context object with only defined properties
-  return {
-    ...(receiver_location && { receiver_location }),
-    ...(construct_target && { construct_target }),
-    ...(property_chain && { property_chain }),
-  };
 }
 
 /**
@@ -478,7 +330,7 @@ export class ReferenceBuilder {
     }
 
     // For property access, extract just the property name from member_expression/attribute
-    if (kind === ReferenceKind.PROPERTY_ACCESS && typeof capture.node.childForFieldName === 'function') {
+    if (kind === ReferenceKind.PROPERTY_ACCESS && typeof capture.node.childForFieldName === "function") {
       // Try to get the property/attribute child node (only if node has tree-sitter methods)
       const property_node = capture.node.childForFieldName("property") ||
                            capture.node.childForFieldName("attribute");
@@ -561,8 +413,12 @@ export class ReferenceBuilder {
       }
 
       case ReferenceKind.ASSIGNMENT: {
-        const context = extract_context(capture, this.extractors, this.file_path);
-        const target_location = context?.construct_target || location;
+        // Extract the variable being assigned to (e.g., 'x' in 'const x = new Class()')
+        const construct_target = this.extractors?.extract_construct_target(
+          capture.node,
+          this.file_path
+        );
+        const target_location = construct_target || location;
 
         // Extract type information from type annotation (if present)
         const assignment_type = extract_type_info(capture, this.extractors, this.file_path);

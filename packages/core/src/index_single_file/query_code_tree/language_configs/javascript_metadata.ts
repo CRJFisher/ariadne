@@ -2,7 +2,7 @@
  * JavaScript/TypeScript metadata extraction functions
  *
  * Language-specific implementation of metadata extractors for method call resolution.
- * Extracts ReferenceContext fields and TypeInfo from JavaScript/TypeScript AST nodes.
+ * Extracts reference context and TypeInfo from JavaScript/TypeScript AST nodes.
  *
  * Supports:
  * - Type annotations: TypeScript type_annotation and JSDoc comments

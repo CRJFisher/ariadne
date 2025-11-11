@@ -1,6 +1,6 @@
 import type { Location } from "./common";
 import type { ScopeId } from "./scopes";
-import { ReferenceType, TypeInfo } from "./semantic_index";
+import type { TypeInfo } from "./semantic_index";
 import type { SymbolName } from "./symbol";
 
 /**
@@ -79,7 +79,7 @@ interface BaseReference {
  * // → SelfReferenceCall { keyword: 'super', property_chain: ['super', 'process'] }
  */
 export interface SelfReferenceCall extends BaseReference {
-  readonly kind: 'self_reference_call';
+  readonly kind: "self_reference_call";
   /** Self-reference keyword used */
   readonly keyword: SelfReferenceKeyword;
   /** Property chain (always starts with keyword) */
@@ -89,7 +89,7 @@ export interface SelfReferenceCall extends BaseReference {
 /**
  * Self-reference keywords across all supported languages
  */
-export type SelfReferenceKeyword = 'this' | 'self' | 'super' | 'cls';
+export type SelfReferenceKeyword = "this" | "self" | "super" | "cls";
 
 /**
  * Regular method call: obj.method(), receiver.getName()
@@ -106,7 +106,7 @@ export type SelfReferenceKeyword = 'this' | 'self' | 'super' | 'cls';
  * obj?.method();  // MethodCallReference with optional_chaining: true
  */
 export interface MethodCallReference extends BaseReference {
-  readonly kind: 'method_call';
+  readonly kind: "method_call";
   /** Location of the receiver object (REQUIRED) */
   readonly receiver_location: Location;
   /** Property chain (REQUIRED) */
@@ -126,7 +126,7 @@ export interface MethodCallReference extends BaseReference {
  * // → { name: 'processData' }
  */
 export interface FunctionCallReference extends BaseReference {
-  readonly kind: 'function_call';
+  readonly kind: "function_call";
   /** Optional argument type information */
   readonly argument_types?: readonly TypeInfo[];
 }
@@ -149,7 +149,7 @@ export interface FunctionCallReference extends BaseReference {
  * // → ConstructorCallReference { construct_target: undefined }
  */
 export interface ConstructorCallReference extends BaseReference {
-  readonly kind: 'constructor_call';
+  readonly kind: "constructor_call";
   /** Location of the variable being assigned (optional - undefined for standalone calls) */
   readonly construct_target?: Location;
   /** Type being constructed */
@@ -167,9 +167,9 @@ export interface ConstructorCallReference extends BaseReference {
  * x = 10;       // VariableReference { name: 'x', access_type: 'write' }
  */
 export interface VariableReference extends BaseReference {
-  readonly kind: 'variable_reference';
+  readonly kind: "variable_reference";
   /** How the variable is accessed */
-  readonly access_type: 'read' | 'write';
+  readonly access_type: "read" | "write";
   /** For writes: the type being assigned */
   readonly assignment_type?: TypeInfo;
 }
@@ -186,13 +186,13 @@ export interface VariableReference extends BaseReference {
  * const name = user.getName();  // MethodCallReference
  */
 export interface PropertyAccessReference extends BaseReference {
-  readonly kind: 'property_access';
+  readonly kind: "property_access";
   /** Object whose property is accessed */
   readonly receiver_location: Location;
   /** Property chain (REQUIRED) */
   readonly property_chain: readonly SymbolName[];
   /** Access type */
-  readonly access_type: 'property' | 'index';
+  readonly access_type: "property" | "index";
   /** Whether this uses optional chaining (obj?.field) */
   readonly is_optional_chain: boolean;
 }
@@ -209,9 +209,9 @@ export interface PropertyAccessReference extends BaseReference {
  * function<T extends Base>   // TypeReference { context: 'generic' }
  */
 export interface TypeReference extends BaseReference {
-  readonly kind: 'type_reference';
+  readonly kind: "type_reference";
   /** Context where the type is referenced */
-  readonly type_context: 'annotation' | 'extends' | 'implements' | 'generic' | 'return';
+  readonly type_context: "annotation" | "extends" | "implements" | "generic" | "return";
 }
 
 /**
@@ -224,7 +224,7 @@ export interface TypeReference extends BaseReference {
  * this.field = obj;  // AssignmentReference
  */
 export interface AssignmentReference extends BaseReference {
-  readonly kind: 'assignment';
+  readonly kind: "assignment";
   /** Target location being assigned to */
   readonly target_location: Location;
   /** Type of the value being assigned (if known) */
@@ -235,70 +235,33 @@ export interface AssignmentReference extends BaseReference {
  * Type guards for each reference variant
  */
 export function is_self_reference_call(ref: SymbolReference): ref is SelfReferenceCall {
-  return ref.kind === 'self_reference_call';
+  return ref.kind === "self_reference_call";
 }
 
 export function is_method_call(ref: SymbolReference): ref is MethodCallReference {
-  return ref.kind === 'method_call';
+  return ref.kind === "method_call";
 }
 
 export function is_function_call(ref: SymbolReference): ref is FunctionCallReference {
-  return ref.kind === 'function_call';
+  return ref.kind === "function_call";
 }
 
 export function is_constructor_call(ref: SymbolReference): ref is ConstructorCallReference {
-  return ref.kind === 'constructor_call';
+  return ref.kind === "constructor_call";
 }
 
 export function is_variable_reference(ref: SymbolReference): ref is VariableReference {
-  return ref.kind === 'variable_reference';
+  return ref.kind === "variable_reference";
 }
 
 export function is_property_access(ref: SymbolReference): ref is PropertyAccessReference {
-  return ref.kind === 'property_access';
+  return ref.kind === "property_access";
 }
 
 export function is_type_reference(ref: SymbolReference): ref is TypeReference {
-  return ref.kind === 'type_reference';
+  return ref.kind === "type_reference";
 }
 
 export function is_assignment(ref: SymbolReference): ref is AssignmentReference {
-  return ref.kind === 'assignment';
-}
-
-/**
- * Backward compatibility: Old ReferenceContext interface
- *
- * DEPRECATED: This interface is kept temporarily for migration purposes.
- * New code should use the typed reference variants above.
- *
- * Will be removed once all code is migrated to discriminated unions.
- */
-export interface ReferenceContext {
-  readonly receiver_location?: Location;
-  readonly property_chain?: readonly SymbolName[];
-  readonly construct_target?: Location;
-}
-
-/**
- * Legacy SymbolReference interface
- *
- * DEPRECATED: Kept for backward compatibility during migration.
- * Use the discriminated union type above for new code.
- */
-export interface LegacySymbolReference {
-  readonly location: Location;
-  readonly type: ReferenceType;
-  readonly scope_id: ScopeId;
-  readonly name: SymbolName;
-  readonly context?: ReferenceContext;
-  readonly type_info?: TypeInfo;
-  readonly call_type?: "function" | "method" | "constructor" | "super";
-  readonly assignment_type?: TypeInfo;
-  readonly return_type?: TypeInfo;
-  readonly member_access?: {
-    object_type?: TypeInfo;
-    access_type: "property" | "method" | "index";
-    is_optional_chain: boolean;
-  };
+  return ref.kind === "assignment";
 }

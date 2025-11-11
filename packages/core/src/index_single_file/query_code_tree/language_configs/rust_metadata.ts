@@ -2,7 +2,7 @@
  * Rust metadata extraction functions
  *
  * Language-specific implementation of metadata extractors for method call resolution.
- * Extracts ReferenceContext fields and TypeInfo from Rust AST nodes.
+ * Extracts reference context and TypeInfo from Rust AST nodes.
  *
  * Supports:
  * - Type annotations: Rust's explicit type system with generics and lifetimes

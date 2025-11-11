@@ -1,7 +1,7 @@
 # Task 152.12: Remove Legacy Code
 
 **Parent**: task-152 (Split SymbolReference into specific reference types)
-**Status**: TODO
+**Status**: Completed
 **Priority**: Medium
 **Estimated Effort**: 3 hours
 **Phase**: 4 - Cleanup
