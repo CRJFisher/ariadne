@@ -1,7 +1,7 @@
 # Task 152.10: Write Comprehensive Self-Reference Tests
 
 **Parent**: task-152 (Split SymbolReference into specific reference types)
-**Status**: TODO
+**Status**: Completed
 **Priority**: Critical
 **Estimated Effort**: 6 hours
 **Phase**: 3 - Self-Reference Bug Fix
@@ -588,7 +588,19 @@ describe('Self-Reference Call Resolution - JavaScript', () => {
 ## Files Changed
 
 **New**:
-- `packages/core/src/__tests__/integration/self_reference_integration.test.ts`
+
+- `packages/core/src/resolve_references/call_resolution/self_reference_resolution.integration.test.ts` (Note: Created in the correct location following the codebase pattern of placing integration tests next to the module under test)
+
+## Implementation Notes
+
+- Created integration test file with 15 comprehensive tests (8 TypeScript, 5 Python, 2 JavaScript)
+- Tests use Project class for full pipeline testing rather than mocked registries
+- All 15 tests pass successfully
+- Tests verify self-reference resolution for:
+  - TypeScript: this.method(), super.method(), property chains, static methods, nested arrow functions
+  - Python: self.method(), cls.method() (classmethods), super().method(), chained calls
+  - JavaScript: ES6 class this.method(), prototype pattern this.method()
+- File placed in `packages/core/src/resolve_references/call_resolution/` following the codebase convention of `*.integration.test.ts` files next to the code under test
 
 ## Verification
 
