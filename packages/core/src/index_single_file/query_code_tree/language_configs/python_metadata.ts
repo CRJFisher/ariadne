@@ -2,7 +2,6 @@
  * Python metadata extraction functions
  *
  * Language-specific implementation of metadata extractors for method call resolution.
- * Extracts reference context and TypeInfo from Python AST nodes.
  *
  * Supports:
  * - Type hints: PEP 484 type annotations and Python 3.10+ union syntax

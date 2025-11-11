@@ -17,7 +17,6 @@
 
 import type {
   FilePath,
-  Location,
   SymbolName,
   SymbolReference,
   TypeInfo,
