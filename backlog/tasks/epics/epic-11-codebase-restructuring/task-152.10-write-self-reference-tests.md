@@ -593,13 +593,14 @@ describe('Self-Reference Call Resolution - JavaScript', () => {
 
 ## Implementation Notes
 
-- Created integration test file with 15 comprehensive tests (8 TypeScript, 5 Python, 2 JavaScript)
+- Created integration test file with 17 comprehensive tests (8 TypeScript, 5 Python, 2 JavaScript, 2 Rust)
 - Tests use Project class for full pipeline testing rather than mocked registries
-- All 15 tests pass successfully
+- All 17 tests pass successfully
 - Tests verify self-reference resolution for:
   - TypeScript: this.method(), super.method(), property chains, static methods, nested arrow functions
   - Python: self.method(), cls.method() (classmethods), super().method(), chained calls
   - JavaScript: ES6 class this.method(), prototype pattern this.method()
+  - Rust: self.method() in impl blocks, borrowing patterns (&self, &mut self)
 - File placed in `packages/core/src/resolve_references/call_resolution/` following the codebase convention of `*.integration.test.ts` files next to the code under test
 
 ## Verification
@@ -615,8 +616,9 @@ Expected output:
 ✓ Self-Reference Call Resolution - TypeScript (8 tests)
 ✓ Self-Reference Call Resolution - Python (5 tests)
 ✓ Self-Reference Call Resolution - JavaScript (2 tests)
+✓ Self-Reference Call Resolution - Rust (2 tests)
 
-Tests passed: 15/15
+Tests passed: 17/17
 ```
 
 ## Next Task

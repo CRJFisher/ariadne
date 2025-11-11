@@ -641,4 +641,92 @@ class Service:
       expect(counter_fn).toBeDefined();
     });
   });
+
+  describe("Rust - self.method()", () => {
+    it("should resolve self.method() in impl block", () => {
+      const code = `
+        struct Counter {
+          count: i32,
+        }
+
+        impl Counter {
+          fn new() -> Self {
+            Self { count: 0 }
+          }
+
+          fn increment(&mut self) {
+            self.set_count(self.count + 1);
+          }
+
+          fn set_count(&mut self, value: i32) {
+            self.count = value;
+          }
+
+          fn get_count(&self) -> i32 {
+            self.count
+          }
+        }
+      `;
+
+      const file = path.join(tempDir, "counter.rs") as FilePath;
+      project.update_file(file, code);
+
+      const index = project.get_semantic_index(file);
+      expect(index).toBeDefined();
+
+      // Verify Counter struct exists
+      const counter_struct = Array.from(index!.classes.values()).find(
+        (c) => c.name === ("Counter" as SymbolName)
+      );
+      expect(counter_struct).toBeDefined();
+
+      // Verify methods exist in type info
+      const type_info = project.get_type_info(counter_struct!.symbol_id);
+      expect(type_info).toBeDefined();
+      expect(type_info!.methods.has("set_count" as SymbolName)).toBe(true);
+      expect(type_info!.methods.has("get_count" as SymbolName)).toBe(true);
+    });
+
+    it("should handle self parameter borrowing patterns", () => {
+      const code = `
+        struct Data {
+          value: String,
+        }
+
+        impl Data {
+          fn get_value(&self) -> &str {
+            &self.value
+          }
+
+          fn update(&mut self, new_value: String) {
+            self.value = new_value;
+          }
+
+          fn process(&mut self) {
+            let current = self.get_value();
+            self.update(format!("Processed: {}", current));
+          }
+        }
+      `;
+
+      const file = path.join(tempDir, "data.rs") as FilePath;
+      project.update_file(file, code);
+
+      const index = project.get_semantic_index(file);
+      expect(index).toBeDefined();
+
+      // Verify Data struct exists
+      const data_struct = Array.from(index!.classes.values()).find(
+        (c) => c.name === ("Data" as SymbolName)
+      );
+      expect(data_struct).toBeDefined();
+
+      // Verify methods are captured
+      const type_info = project.get_type_info(data_struct!.symbol_id);
+      expect(type_info).toBeDefined();
+      expect(type_info!.methods.has("get_value" as SymbolName)).toBe(true);
+      expect(type_info!.methods.has("update" as SymbolName)).toBe(true);
+      expect(type_info!.methods.has("process" as SymbolName)).toBe(true);
+    });
+  });
 });
