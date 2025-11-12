@@ -293,6 +293,7 @@ export enum SemanticEntity {
   PROPERTY = "property",
   TYPE_PARAMETER = "type_parameter",
   ENUM_MEMBER = "enum_member",
+  ANONYMOUS_FUNCTION = "anonymous_function",
 
   // Imports/Exports
   REEXPORT = "reexport",

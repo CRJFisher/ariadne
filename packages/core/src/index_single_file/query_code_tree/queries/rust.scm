@@ -386,11 +386,6 @@
   (closure_expression) @definition.anonymous_function
 )
 
-; Closures in macro arguments (common in Rust)
-(token_tree
-  (closure_expression) @definition.anonymous_function
-)
-
 ; Closure parameters - simple identifiers
 (closure_expression
   parameters: (closure_parameters

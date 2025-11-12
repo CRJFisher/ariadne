@@ -33,6 +33,7 @@ import {
   extract_import_path,
 } from "./python_builder";
 import { PYTHON_IMPORT_HANDLERS } from "./python_imports";
+import { anonymous_function_symbol } from "@ariadnejs/types";
 
 export const PYTHON_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
   // Classes
@@ -356,6 +357,34 @@ export const PYTHON_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
             location: capture.location,
             scope_id: context.get_scope_id(capture.location),
             is_exported: false, // Lambda functions are never exported
+          },
+          capture
+        );
+      },
+    },
+  ],
+
+  // ============================================================================
+  // ANONYMOUS FUNCTIONS - Lambda expressions used inline
+  // ============================================================================
+  [
+    "definition.anonymous_function",
+    {
+      process: (
+        capture: CaptureNode,
+        builder: DefinitionBuilder,
+        context: ProcessingContext
+      ) => {
+        // Generate location-based symbol ID for anonymous lambda
+        const anon_id = anonymous_function_symbol(capture.location);
+        const scope_id = context.get_scope_id(capture.location);
+
+        builder.add_anonymous_function(
+          {
+            symbol_id: anon_id,
+            location: capture.location,
+            scope_id: scope_id,
+            return_type: extract_return_type(capture.node),
           },
           capture
         );

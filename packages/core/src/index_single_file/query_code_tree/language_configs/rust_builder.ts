@@ -1,5 +1,5 @@
 // Rust language configuration using builder pattern
-import { enum_member_symbol, type SymbolId, type SymbolName, type ModulePath } from "@ariadnejs/types";
+import { enum_member_symbol, anonymous_function_symbol, type SymbolId, type SymbolName, type ModulePath } from "@ariadnejs/types";
 import type { DefinitionBuilder } from "../../definitions/definition_builder";
 import type { CaptureNode } from "../../semantic_index";
 import type { ProcessingContext } from "../../semantic_index";
@@ -1050,6 +1050,34 @@ export const RUST_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
 
         // For now, we handle re-exports in the definition.import handler
         // by checking for visibility_modifier on the use_declaration node
+      },
+    },
+  ],
+
+  // ============================================================================
+  // ANONYMOUS FUNCTIONS - Closure expressions used inline
+  // ============================================================================
+  [
+    "definition.anonymous_function",
+    {
+      process: (
+        capture: CaptureNode,
+        builder: DefinitionBuilder,
+        context: ProcessingContext
+      ) => {
+        // Generate location-based symbol ID for anonymous closure
+        const anon_id = anonymous_function_symbol(capture.location);
+        const scope_id = context.get_scope_id(capture.location);
+
+        builder.add_anonymous_function(
+          {
+            symbol_id: anon_id,
+            location: capture.location,
+            scope_id: scope_id,
+            return_type: extract_return_type(capture.node),
+          },
+          capture
+        );
       },
     },
   ],

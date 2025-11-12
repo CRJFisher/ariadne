@@ -30,7 +30,7 @@ import {
   store_documentation,
   consume_documentation,
 } from "./javascript_builder";
-import { method_symbol } from "@ariadnejs/types";
+import { method_symbol, anonymous_function_symbol } from "@ariadnejs/types";
 
 // ============================================================================
 // JavaScript/TypeScript Builder Configuration
@@ -268,6 +268,28 @@ export const JAVASCRIPT_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
             scope_id: context.get_scope_id(capture.location),
             is_exported: export_info.is_exported,
             export: export_info.export,
+          },
+          capture
+        );
+      },
+    },
+  ],
+
+  // Anonymous functions (inline callbacks, etc.)
+  [
+    "definition.anonymous_function",
+    {
+      process: (
+        capture: CaptureNode,
+        builder: DefinitionBuilder,
+        context: ProcessingContext
+      ) => {
+        builder.add_anonymous_function(
+          {
+            symbol_id: anonymous_function_symbol(capture.location),
+            location: capture.location,
+            scope_id: context.get_scope_id(capture.location),
+            return_type: extract_return_type(capture.node),
           },
           capture
         );
