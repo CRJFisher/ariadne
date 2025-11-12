@@ -439,6 +439,60 @@ export class DefinitionBuilder {
   }
 
   /**
+   * Add an anonymous function (arrow function, lambda, closure)
+   *
+   * Anonymous functions don't have a name in the source code, so we generate a synthetic
+   * SymbolId based on their location and use "<anonymous>" as the display name.
+   *
+   * @param definition - Function properties (symbol_id should be pre-generated location-based ID)
+   * @param capture - Optional capture node for finding body scope
+   * @returns this for chaining
+   */
+  add_anonymous_function(
+    definition: {
+      symbol_id: SymbolId;
+      location: Location;
+      scope_id: ScopeId;
+      return_type?: SymbolName;
+    },
+    capture?: CaptureNode
+  ): DefinitionBuilder {
+    // Compute body_scope_id if capture is provided
+    let body_scope_id: ScopeId | undefined;
+    if (capture) {
+      try {
+        body_scope_id = find_body_scope_for_definition(
+          capture,
+          this.context.scopes,
+          "<anonymous>" as SymbolName,
+          definition.location
+        );
+      } catch (error) {
+        // Anonymous functions might not have traditional body scopes
+        // (e.g., single-expression arrow functions), so this is expected
+      }
+    }
+
+    this.functions.set(definition.symbol_id, {
+      base: {
+        kind: "function",
+        symbol_id: definition.symbol_id,
+        name: "<anonymous>" as SymbolName,  // Synthetic display name
+        location: definition.location,
+        defining_scope_id: definition.scope_id,
+        is_exported: false,  // Anonymous functions are never exported
+      },
+      signature: {
+        parameters: new Map(),
+        return_type: definition.return_type,
+      },
+      decorators: [],
+      body_scope_id,
+    });
+    return this;
+  }
+
+  /**
    * Add a parameter to a callable (function/method/constructor)
    */
   add_parameter_to_callable(

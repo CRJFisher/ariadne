@@ -84,6 +84,36 @@
   right: (lambda)
 ) @assignment.variable
 
+; === Anonymous lambda functions (inline callbacks, comprehensions, etc.) ===
+
+; Inline lambda in function call arguments (map, filter, etc.)
+(argument_list
+  (lambda) @definition.anonymous_function
+)
+
+; Lambda in list/dict/set comprehensions
+(list_comprehension
+  (lambda) @definition.anonymous_function
+)
+
+(dictionary_comprehension
+  (lambda) @definition.anonymous_function
+)
+
+(set_comprehension
+  (lambda) @definition.anonymous_function
+)
+
+; Lambda in dictionary values
+(pair
+  value: (lambda) @definition.anonymous_function
+)
+
+; Lambda in list literals
+(list
+  (lambda) @definition.anonymous_function
+)
+
 ; Enum class detection (classes inheriting from Enum)
 (class_definition
   name: (identifier) @definition.enum

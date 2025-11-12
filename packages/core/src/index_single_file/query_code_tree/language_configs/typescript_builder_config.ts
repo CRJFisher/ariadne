@@ -1,5 +1,5 @@
 import type { SymbolName } from "@ariadnejs/types";
-import { function_symbol } from "@ariadnejs/types";
+import { function_symbol, anonymous_function_symbol } from "@ariadnejs/types";
 import type { DefinitionBuilder } from "../../definitions";
 import type { CaptureNode, ProcessingContext } from "../../semantic_index";
 import {
@@ -349,6 +349,34 @@ export const TYPESCRIPT_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
             scope_id: scope_id,
             is_exported: export_info.is_exported,
             export: export_info.export,
+            return_type: extract_return_type(capture.node),
+          },
+          capture
+        );
+      },
+    },
+  ],
+
+  // ============================================================================
+  // ANONYMOUS FUNCTIONS - Arrow functions and function expressions used inline
+  // ============================================================================
+  [
+    "definition.anonymous_function",
+    {
+      process: (
+        capture: CaptureNode,
+        builder: DefinitionBuilder,
+        context: ProcessingContext
+      ) => {
+        // Generate location-based symbol ID for anonymous function
+        const anon_id = anonymous_function_symbol(capture.location);
+        const scope_id = context.get_scope_id(capture.location);
+
+        builder.add_anonymous_function(
+          {
+            symbol_id: anon_id,
+            location: capture.location,
+            scope_id: scope_id,
             return_type: extract_return_type(capture.node),
           },
           capture

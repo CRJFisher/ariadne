@@ -373,8 +373,23 @@
 ; Self parameters - capture the whole node
 (self_parameter) @definition.parameter.self
 
-; Closure expressions
+; Closure expressions (named, assigned to variables)
 (closure_expression) @definition.function.closure
+
+; === Anonymous closures (inline callbacks in iterators, etc.) ===
+; Note: In Rust, most closures are anonymous. The above pattern catches ALL closures.
+; For consistency with other languages, we also tag inline closures as anonymous_function
+; when they appear in common callback contexts.
+
+; Closures in method call arguments (map, filter, etc.)
+(arguments
+  (closure_expression) @definition.anonymous_function
+)
+
+; Closures in macro arguments (common in Rust)
+(token_tree
+  (closure_expression) @definition.anonymous_function
+)
 
 ; Closure parameters - simple identifiers
 (closure_expression

@@ -59,6 +59,44 @@
   value: (arrow_function) @reference.variable
 ) @assignment.variable
 
+; === Anonymous arrow functions (inline callbacks, config objects, etc.) ===
+
+; Inline arrow functions in call expression arguments (forEach, map, filter, etc.)
+(call_expression
+  arguments: (arguments
+    (arrow_function) @definition.anonymous_function
+  )
+)
+
+; Arrow functions in object properties (config objects)
+(pair
+  value: (arrow_function) @definition.anonymous_function
+)
+
+; Arrow functions in array literals
+(array
+  (arrow_function) @definition.anonymous_function
+)
+
+; IIFEs (Immediately Invoked Function Expressions)
+(call_expression
+  function: (parenthesized_expression
+    (arrow_function) @definition.anonymous_function
+  )
+)
+
+; Traditional function expressions in call arguments
+(call_expression
+  arguments: (arguments
+    (function_expression) @definition.anonymous_function
+  )
+)
+
+; Traditional function expressions in object properties
+(pair
+  value: (function_expression) @definition.anonymous_function
+)
+
 ; Variable declarations with assignments
 (variable_declarator
   name: (identifier) @definition.variable @assignment.variable

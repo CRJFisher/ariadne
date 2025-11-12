@@ -128,6 +128,35 @@ export function function_symbol(
 }
 
 /**
+ * Create an anonymous function symbol
+ *
+ * Anonymous functions (arrow functions, lambdas, closures) don't have a source name,
+ * so we use their location to generate a unique, stable identifier.
+ *
+ * @param location - The source location where the anonymous function is defined
+ * @returns A SymbolId for the anonymous function
+ *
+ * @example
+ * ```typescript
+ * const anonId = anonymous_function_symbol({
+ *   file_path: 'src/app.ts',
+ *   start_line: 10,
+ *   start_column: 20,
+ *   end_line: 12,
+ *   end_column: 5
+ * });
+ * // Returns: "function:src/app.ts:10:20:12:5:<anonymous>"
+ * ```
+ */
+export function anonymous_function_symbol(location: Location): SymbolId {
+  return symbol_string({
+    kind: "function",
+    name: "<anonymous>" as SymbolName,
+    location,
+  });
+}
+
+/**
  * Create a class symbol
  *
  * @param name - The class name
