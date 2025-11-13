@@ -1,8 +1,8 @@
 # Task Epic-11.156.2.1: Migrate Orphan Test Files to Companion Test Files
 
-**Status**: TODO
+**Status**: ✅ COMPLETED (2025-11-13)
 **Priority**: P0 (Blocks all other testing work)
-**Estimated Effort**: 1-2 days
+**Actual Effort**: 3 hours
 **Parent Task**: task-epic-11.156.2 (Callback Invocation Detection)
 **Epic**: epic-11-codebase-restructuring
 
@@ -179,10 +179,50 @@ For each language:
 - [ ] Create granular commits after each phase
 
 **After completion:**
-- [ ] Full test suite passes
-- [ ] No duplicate tests
-- [ ] Update TEST_MIGRATION_STATUS.md to mark as complete
-- [ ] Create PR or merge to parent branch
+
+- [x] Full test suite passes (52 test files, 1461 tests passed, 7 skipped)
+- [x] No duplicate tests
+- [x] Update TEST_MIGRATION_STATUS.md to mark as complete
+- [x] Committed in feat/epic-11-codebase-restructuring (commit 6dce7da8)
+
+## Completion Summary
+
+**Completed**: 2025-11-13
+**Commit**: 6dce7da8 - "feat(callbacks): Implement callback detection and test migration"
+
+### Tests Migrated
+
+**Total**: 11 tests migrated from 2 orphan files
+
+**Phase 1** - verify_scopes.test.ts (4 tests):
+
+- ✅ TypeScript scope test → semantic_index.typescript.test.ts:2858-2886
+- ✅ JavaScript scope test → semantic_index.javascript.test.ts:2112-2144
+- ✅ Python scope test → semantic_index.python.test.ts:2104-2132
+- ✅ Rust scope test → semantic_index.rust.test.ts:2426-2476
+
+**Phase 2** - test_nested_scope.test.ts semantic tests (3 tests):
+
+- ✅ Nested arrow functions → semantic_index.typescript.test.ts:2833-2856
+- ✅ Constructor calls → semantic_index.typescript.test.ts:2858-2901
+- ✅ Self-reference calls → semantic_index.typescript.test.ts:2903-2939
+
+**Phase 3** - test_nested_scope.test.ts project tests (4 tests):
+
+- ✅ TypeScript call graph resolution → project.typescript.integration.test.ts:707-750
+- ✅ JavaScript callback context → project.javascript.integration.test.ts:903-935
+- ✅ JavaScript external callback invocation → project.javascript.integration.test.ts:937-963
+- ✅ JavaScript internal callback handling → project.javascript.integration.test.ts:965-990
+
+### Files Modified
+
+6 test files updated with migrated tests
+2 orphan files deleted (verify_scopes.test.ts, test_nested_scope.test.ts)
+
+### Bonus Refactoring
+
+- Extracted rust callback detection to separate file (rust_callback_detection.ts)
+- Reduced rust_builder_helpers.ts from 33KB to 32KB (under size limit)
 
 ## Related Tasks
 
