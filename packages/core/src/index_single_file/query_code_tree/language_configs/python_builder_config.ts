@@ -31,6 +31,7 @@ import {
   create_type_alias_id,
   extract_type_expression,
   extract_import_path,
+  detect_callback_context,
 } from "./python_builder";
 import { PYTHON_IMPORT_HANDLERS } from "./python_imports";
 import { anonymous_function_symbol } from "@ariadnejs/types";
@@ -379,12 +380,19 @@ export const PYTHON_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
         const anon_id = anonymous_function_symbol(capture.location);
         const scope_id = context.get_scope_id(capture.location);
 
+        // Detect if this lambda is a callback
+        const callback_context = detect_callback_context(
+          capture.node,
+          capture.location.file_path
+        );
+
         builder.add_anonymous_function(
           {
             symbol_id: anon_id,
             location: capture.location,
             scope_id: scope_id,
             return_type: extract_return_type(capture.node),
+            callback_context: callback_context,
           },
           capture
         );

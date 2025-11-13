@@ -54,6 +54,7 @@ export interface FunctionDefinition extends Definition {
   readonly return_type?: SymbolName;
   readonly generics?: SymbolName[];
   readonly body_scope_id: ScopeId; // The scope ID of this function's body
+  readonly callback_context?: import("./call_chains").CallbackContext; // For anonymous functions that are callbacks
 }
 
 export interface FunctionSignature {

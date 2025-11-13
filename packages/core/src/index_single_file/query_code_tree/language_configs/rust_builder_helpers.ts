@@ -20,10 +20,11 @@ import {
   module_symbol,
 } from "@ariadnejs/types";
 import type { CaptureNode } from "../../semantic_index";
+export { detect_callback_context } from "./rust_callback_detection";
 
-// ============================================================================
+//
 // Symbol ID Creation
-// ============================================================================
+//
 
 export function create_struct_id(capture: CaptureNode): SymbolId {
   const name = capture.text;
@@ -142,9 +143,9 @@ export function create_type_alias_id(capture: CaptureNode): SymbolId {
   return type_alias_symbol(name, location);
 }
 
-// ============================================================================
+//
 // Rust-Specific Extractors
-// ============================================================================
+//
 
 /**
  * Check if a Rust node has pub visibility modifier
@@ -772,9 +773,9 @@ export function find_containing_callable(
   return undefined;
 }
 
-// ============================================================================
+//
 // Import Extraction from Complete Nodes
-// ============================================================================
+//
 
 export interface ImportInfo {
   name: SymbolName;

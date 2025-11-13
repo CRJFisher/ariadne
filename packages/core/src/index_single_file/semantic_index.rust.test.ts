@@ -2422,4 +2422,56 @@ type SerializeFn<T: Serialize + Send + 'static> = Box<dyn Fn(T) -> String>;
       expect(serializeFn?.generics).toEqual(["T"]);
     });
   });
+
+  describe("Scope assignment", () => {
+    it("should assign struct, enum, and trait to module scope", () => {
+      const code = `struct MyStruct {
+    field: i32,
+}
+
+enum MyEnum {
+    A, B, C
+}
+
+trait MyTrait {
+    fn method(&self);
+}`;
+
+      const tree = parser.parse(code);
+      const parsedFile = createParsedFile(
+        code,
+        "test.rs" as FilePath,
+        tree,
+        "rust" as Language
+      );
+      const index = build_semantic_index(parsedFile, tree, "rust" as Language);
+
+      // Find module scope
+      const moduleScope = Array.from(index.scopes.values()).find(
+        (s) => s.type === "module" && s.parent_id === null
+      );
+      expect(moduleScope).toBeDefined();
+
+      // Check struct
+      const myStruct = Array.from(index.classes.values()).find(
+        (c) => c.name === "MyStruct"
+      );
+      expect(myStruct).toBeDefined();
+      expect(myStruct!.defining_scope_id).toBe(moduleScope!.id);
+
+      // Check enum
+      const myEnum = Array.from(index.enums.values()).find(
+        (e) => e.name === "MyEnum"
+      );
+      expect(myEnum).toBeDefined();
+      expect(myEnum!.defining_scope_id).toBe(moduleScope!.id);
+
+      // Check trait
+      const myTrait = Array.from(index.interfaces.values()).find(
+        (i) => i.name === "MyTrait"
+      );
+      expect(myTrait).toBeDefined();
+      expect(myTrait!.defining_scope_id).toBe(moduleScope!.id);
+    });
+  });
 });

@@ -2108,4 +2108,38 @@ describe("Semantic Index - JavaScript", () => {
       }
     });
   });
+
+  describe("Scope assignment", () => {
+    it("should assign class to module scope", () => {
+      const code = `class MyClass {
+  method() {}
+}`;
+
+      const tree = parser.parse(code);
+      const parsedFile = createParsedFile(
+        code,
+        "test.js" as FilePath,
+        tree,
+        "javascript" as Language
+      );
+      const index = build_semantic_index(
+        parsedFile,
+        tree,
+        "javascript" as Language
+      );
+
+      // Find module scope
+      const moduleScope = Array.from(index.scopes.values()).find(
+        (s) => s.type === "module" && s.parent_id === null
+      );
+      expect(moduleScope).toBeDefined();
+
+      // Check class
+      const myClass = Array.from(index.classes.values()).find(
+        (c) => c.name === "MyClass"
+      );
+      expect(myClass).toBeDefined();
+      expect(myClass!.defining_scope_id).toBe(moduleScope!.id);
+    });
+  });
 });

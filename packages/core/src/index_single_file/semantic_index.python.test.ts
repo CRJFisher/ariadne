@@ -2100,4 +2100,34 @@ type Handler = Callable[[str], None]
       expect(inner_class!.defining_scope_id).toBe(method_scope_id);
     });
   });
+
+  describe("Scope assignment", () => {
+    it("should assign class to module scope", () => {
+      const code = `class MyClass:
+    def method(self):
+        pass`;
+
+      const tree = parser.parse(code);
+      const parsedFile = createParsedFile(
+        code,
+        "test.py" as FilePath,
+        tree,
+        "python" as Language
+      );
+      const index = build_semantic_index(parsedFile, tree, "python" as Language);
+
+      // Find module scope
+      const moduleScope = Array.from(index.scopes.values()).find(
+        (s) => s.type === "module" && s.parent_id === null
+      );
+      expect(moduleScope).toBeDefined();
+
+      // Check class
+      const myClass = Array.from(index.classes.values()).find(
+        (c) => c.name === "MyClass"
+      );
+      expect(myClass).toBeDefined();
+      expect(myClass!.defining_scope_id).toBe(moduleScope!.id);
+    });
+  });
 });

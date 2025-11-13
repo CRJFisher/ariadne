@@ -619,3 +619,39 @@ export function find_decorator_target(
 
   return undefined;
 }
+
+/**
+ * Detect if a lambda/anonymous function is passed as a callback argument.
+ * Walks up the AST to find if the function is inside an argument_list.
+ */
+export function detect_callback_context(
+  node: SyntaxNode,
+  file_path: string
+): import("@ariadnejs/types").CallbackContext {
+  let current: SyntaxNode | null = node.parent;
+  let depth = 0;
+  const MAX_DEPTH = 5;
+
+  while (current && depth < MAX_DEPTH) {
+    // Python uses 'argument_list' for function call arguments
+    if (current.type === "argument_list") {
+      const call_node = current.parent;
+      // Python uses 'call' for function calls
+      if (call_node && call_node.type === "call") {
+        return {
+          is_callback: true,
+          receiver_is_external: null,
+          receiver_location: node_to_location(call_node, file_path as any),
+        };
+      }
+    }
+    current = current.parent;
+    depth++;
+  }
+
+  return {
+    is_callback: false,
+    receiver_is_external: null,
+    receiver_location: null,
+  };
+}

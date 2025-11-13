@@ -899,4 +899,93 @@ describe("Project Integration - JavaScript", () => {
       }
     });
   });
+
+  describe("Callback detection and invocation", () => {
+    it("should detect callback context for anonymous functions in array methods", async () => {
+      const project = new Project();
+      await project.initialize();
+
+      const code = `
+const items = [1, 2, 3];
+items.forEach((item) => {
+  process(item);
+});
+
+function process(x) {}
+      `.trim();
+
+      const file_path = "/test/callback.js" as FilePath;
+      project.update_file(file_path, code);
+
+      const definitions = project.definitions;
+      const anon_funcs = Array.from(definitions.get_callable_definitions()).filter(
+        (d) => d.name === "<anonymous>"
+      );
+
+      expect(anon_funcs.length).toBe(1);
+      const anon = anon_funcs[0];
+
+      // Check callback context is captured
+      expect((anon as any).callback_context).toBeDefined();
+      expect((anon as any).callback_context.is_callback).toBe(true);
+      expect((anon as any).callback_context.receiver_location).toBeDefined();
+    });
+
+    it("should create callback invocation reference for external function callbacks", async () => {
+      const project = new Project();
+      await project.initialize();
+
+      const code = `
+const items = [1, 2, 3];
+items.forEach((item) => {
+  process(item);
+});
+
+function process(x) {}
+      `.trim();
+
+      const file_path = "/test/callback.js" as FilePath;
+      project.update_file(file_path, code);
+
+      const resolutions = project.resolutions;
+      const references = resolutions.get_file_calls(file_path);
+
+      // Check if callback invocation was created
+      const callback_invocations = references.filter((ref) => ref.is_callback_invocation);
+
+      expect(callback_invocations.length).toBe(1);
+
+      const invocation = callback_invocations[0];
+      expect(invocation.name).toBe("<anonymous>");
+      expect(invocation.call_type).toBe("function");
+    });
+
+    it("should NOT create callback invocation for internal function callbacks", async () => {
+      const project = new Project();
+      await project.initialize();
+
+      const code = `
+function runCallback(callback) {
+  callback();
+}
+
+runCallback(() => {
+  doSomething();
+});
+
+function doSomething() {}
+      `.trim();
+
+      const file_path = "/test/internal_callback.js" as FilePath;
+      project.update_file(file_path, code);
+
+      const resolutions = project.resolutions;
+      const references = resolutions.get_file_calls(file_path);
+
+      // Should NOT create callback invocation since runCallback is internal
+      const callback_invocations = references.filter((ref) => ref.is_callback_invocation);
+
+      expect(callback_invocations.length).toBe(0);
+    });
+  });
 });

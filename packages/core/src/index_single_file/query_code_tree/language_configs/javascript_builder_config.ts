@@ -28,6 +28,7 @@ import {
   is_namespace_import,
   extract_extends,
   store_documentation,
+  detect_callback_context,
   consume_documentation,
 } from "./javascript_builder";
 import { method_symbol, anonymous_function_symbol } from "@ariadnejs/types";
@@ -284,12 +285,19 @@ export const JAVASCRIPT_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
         builder: DefinitionBuilder,
         context: ProcessingContext
       ) => {
+        // Detect if this function is being passed as a callback
+        const callback_context = detect_callback_context(
+          capture.node,
+          capture.location.file_path
+        );
+
         builder.add_anonymous_function(
           {
             symbol_id: anonymous_function_symbol(capture.location),
             location: capture.location,
             scope_id: context.get_scope_id(capture.location),
             return_type: extract_return_type(capture.node),
+            callback_context: callback_context,
           },
           capture
         );

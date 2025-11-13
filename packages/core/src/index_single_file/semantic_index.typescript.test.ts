@@ -2830,4 +2830,168 @@ describe("Semantic Index - TypeScript", () => {
     });
   });
 
+  describe("Anonymous functions and nested scopes", () => {
+    it("should create separate scopes for nested arrow functions", () => {
+      const code = `
+export function parent_function() {
+  const nested_function = () => {
+    console.log("nested");
+    nested_function(); // recursive call
+  };
+
+  nested_function(); // call from parent
+}
+`;
+
+      const tree = parser.parse(code);
+      const parsedFile = createParsedFile(code, "test.ts" as FilePath, tree, "typescript" as Language);
+      const index = build_semantic_index(parsedFile, tree, "typescript" as Language);
+
+      // We expect:
+      // 1. Module scope
+      // 2. parent_function scope
+      // 3. nested_function scope (arrow function)
+      expect(index.scopes.size).toBe(3);
+    });
+  });
+
+  describe("Constructor calls", () => {
+    it("should track constructor calls within same file", () => {
+      const code = `
+class ReferenceBuilder {
+  public readonly references: string[] = [];
+
+  constructor(private readonly context: string) {}
+
+  process(capture: string): ReferenceBuilder {
+    console.log(\`Processing: \${capture}\`);
+    return this;
+  }
+}
+
+export function process_references(context: string): string[] {
+  return ["a", "b", "c"]
+    .reduce(
+      (builder, capture) => builder.process(capture),
+      new ReferenceBuilder(context)
+    )
+    .references;
+}
+`;
+
+      const tree = parser.parse(code);
+      const parsedFile = createParsedFile(code, "test.ts" as FilePath, tree, "typescript" as Language);
+      const index = build_semantic_index(parsedFile, tree, "typescript" as Language);
+
+      // Find the constructor call reference
+      const constructor_call = index.references.find(
+        (ref): ref is ConstructorCallReference => ref.kind === "constructor_call"
+      );
+
+      // Verify the constructor call was captured
+      expect(constructor_call).toBeDefined();
+      expect(constructor_call?.name).toBe("ReferenceBuilder");
+
+      // Verify the class definition exists
+      const class_def = Array.from(index.classes.values()).find(
+        (def) => def.name === "ReferenceBuilder"
+      );
+      expect(class_def).toBeDefined();
+    });
+  });
+
+  describe("Self-reference calls", () => {
+    it("should track this.method() calls within same class", () => {
+      const code = `
+export class TypeRegistry {
+  walk_inheritance_chain(class_id: string): string[] {
+    const chain: string[] = [class_id];
+    return chain;
+  }
+
+  get_type_member(type_id: string, member_name: string): string | null {
+    // This call should be detected
+    const chain = this.walk_inheritance_chain(type_id);
+
+    for (const class_id of chain) {
+      // do something
+    }
+
+    return null;
+  }
+}
+`;
+
+      const tree = parser.parse(code);
+      const parsedFile = createParsedFile(code, "test.ts" as FilePath, tree, "typescript" as Language);
+      const index = build_semantic_index(parsedFile, tree, "typescript" as Language);
+
+      // Find the call to walk_inheritance_chain (self-reference call)
+      const method_call = index.references.find(
+        (ref): ref is SelfReferenceCall => ref.kind === "self_reference_call" && ref.name === "walk_inheritance_chain"
+      );
+
+      expect(method_call).toBeDefined();
+      if (method_call) {
+        expect(method_call.keyword).toBe("this");
+      }
+    });
+  });
+
+  describe("Scope assignment", () => {
+    it("should assign class, interface, and enum to module scope", () => {
+      const code = `class MyClass {
+  method() {}
+}
+
+interface MyInterface {
+  prop: string;
+}
+
+enum MyEnum {
+  A, B, C
+}`;
+
+      const tree = parser.parse(code);
+      const parsedFile = createParsedFile(
+        code,
+        "test.ts" as FilePath,
+        tree,
+        "typescript" as Language
+      );
+      const index = build_semantic_index(
+        parsedFile,
+        tree,
+        "typescript" as Language
+      );
+
+      // Find module scope
+      const moduleScope = Array.from(index.scopes.values()).find(
+        (s) => s.type === "module" && s.parent_id === null
+      );
+      expect(moduleScope).toBeDefined();
+
+      // Check class
+      const myClass = Array.from(index.classes.values()).find(
+        (c) => c.name === "MyClass"
+      );
+      expect(myClass).toBeDefined();
+      expect(myClass!.defining_scope_id).toBe(moduleScope!.id);
+
+      // Check interface
+      const myInterface = Array.from(index.interfaces.values()).find(
+        (i) => i.name === "MyInterface"
+      );
+      expect(myInterface).toBeDefined();
+      expect(myInterface!.defining_scope_id).toBe(moduleScope!.id);
+
+      // Check enum
+      const myEnum = Array.from(index.enums.values()).find(
+        (e) => e.name === "MyEnum"
+      );
+      expect(myEnum).toBeDefined();
+      expect(myEnum!.defining_scope_id).toBe(moduleScope!.id);
+    });
+  });
+
 });

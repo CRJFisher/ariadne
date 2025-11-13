@@ -703,4 +703,49 @@ describe("Project Integration - TypeScript", () => {
       expect(new_func_node.enclosed_calls.length).toBeGreaterThan(0);
     });
   });
+
+  describe("Call graph resolution", () => {
+    it("should resolve this.method() calls in call graph", async () => {
+      const project = new Project();
+      await project.initialize(".", ["**/*.ts"]);
+
+      const code = `
+export class TypeRegistry {
+  walk_inheritance_chain(class_id: string): string[] {
+    const chain: string[] = [class_id];
+    return chain;
+  }
+
+  get_type_member(type_id: string, member_name: string): string | null {
+    // This call should be detected
+    const chain = this.walk_inheritance_chain(type_id);
+
+    for (const class_id of chain) {
+      // do something
+    }
+
+    return null;
+  }
+}
+`;
+
+      await project.update_file("test.ts" as FilePath, code);
+
+      // Get call graph
+      const call_graph = project.get_call_graph();
+
+      // Find the methods
+      const nodes = Array.from(call_graph.nodes.values());
+      const walk_inheritance_chain_node = nodes.find(n => n.name === "walk_inheritance_chain");
+      const get_type_member_node = nodes.find(n => n.name === "get_type_member");
+
+      // Check that walk_inheritance_chain is NOT an entry point (it's called by get_type_member)
+      expect(walk_inheritance_chain_node).toBeDefined();
+      expect(get_type_member_node).toBeDefined();
+
+      // THIS IS THE KEY TEST: walk_inheritance_chain should NOT be an entry point
+      const is_entry_point = call_graph.entry_points.includes(walk_inheritance_chain_node!.symbol_id);
+      expect(is_entry_point).toBe(false);
+    });
+  });
 });

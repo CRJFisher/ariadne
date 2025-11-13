@@ -32,6 +32,7 @@ import {
   extract_export_info,
   extract_imports_from_use_declaration,
   extract_import_from_extern_crate,
+  detect_callback_context,
   type ImportInfo,
 } from "./rust_builder_helpers";
 
@@ -1069,12 +1070,19 @@ export const RUST_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
         const anon_id = anonymous_function_symbol(capture.location);
         const scope_id = context.get_scope_id(capture.location);
 
+        // Detect if this closure is a callback
+        const callback_context = detect_callback_context(
+          capture.node,
+          capture.location.file_path
+        );
+
         builder.add_anonymous_function(
           {
             symbol_id: anon_id,
             location: capture.location,
             scope_id: scope_id,
             return_type: extract_return_type(capture.node),
+            callback_context: callback_context,
           },
           capture
         );

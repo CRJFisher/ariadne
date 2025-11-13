@@ -43,6 +43,7 @@ import {
   extract_property_initial_value,
   is_parameter_in_function_type,
   extract_class_extends,
+  detect_callback_context,
 } from "./typescript_builder";
 
 // ============================================================================
@@ -372,12 +373,19 @@ export const TYPESCRIPT_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
         const anon_id = anonymous_function_symbol(capture.location);
         const scope_id = context.get_scope_id(capture.location);
 
+        // Detect if this function is being passed as a callback
+        const callback_context = detect_callback_context(
+          capture.node,
+          capture.location.file_path
+        );
+
         builder.add_anonymous_function(
           {
             symbol_id: anon_id,
             location: capture.location,
             scope_id: scope_id,
             return_type: extract_return_type(capture.node),
+            callback_context: callback_context,
           },
           capture
         );

@@ -185,11 +185,22 @@ export class ResolutionRegistry {
       definitions
     );
 
+    // Resolve callback invocations for anonymous functions
+    const callback_invocations = this.resolve_callback_invocations(
+      file_ids,
+      references,
+      scopes,
+      definitions
+    );
+
+    // Combine regular calls with callback invocations
+    const all_calls = [...resolved_calls, ...callback_invocations];
+
     // Group resolved calls by file AND by caller scope
     const calls_by_file = new Map<FilePath, CallReference[]>();
     const calls_by_caller = new Map<ScopeId, CallReference[]>();
 
-    for (const call of resolved_calls) {
+    for (const call of all_calls) {
       // Calculate caller scope (the function/method/constructor that contains this call)
       const caller_scope_id = find_enclosing_function_scope(
         call.scope_id,
@@ -435,6 +446,16 @@ export class ResolutionRegistry {
   }
 
   /**
+   * Get all resolved calls in a file.
+   *
+   * @param file_path - File to get calls for
+   * @returns Array of calls in that file
+   */
+  get_file_calls(file_path: FilePath): readonly CallReference[] {
+    return this.resolved_calls_by_file.get(file_path) || [];
+  }
+
+  /**
    * Resolve a symbol name in a scope.
    *
    * @param scope_id - Scope where the symbol is referenced
@@ -558,6 +579,121 @@ export class ResolutionRegistry {
     }
 
     return result;
+  }
+
+  /**
+   * Resolve callback invocations for anonymous functions passed to external functions.
+   *
+   * Strategy:
+   * 1. Find all anonymous functions with callback_context.is_callback = true
+   * 2. For each callback, find the call reference at receiver_location
+   * 3. Try to resolve the receiver function (the function receiving the callback)
+   * 4. If receiver is external (unresolved or type-only), create invocation edge
+   * 5. Mark the edge with is_callback_invocation: true
+   *
+   * This marks callbacks to built-in/library functions as "invoked", removing them
+   * from entry points while preserving callbacks to user code as entry points.
+   *
+   * @param file_ids - Files being processed
+   * @param references - Reference registry to find call references
+   * @param scopes - Scope registry for caller scope calculation
+   * @param definitions - Definition registry to access function definitions
+   * @returns Array of synthetic callback invocation call references
+   */
+  private resolve_callback_invocations(
+    file_ids: Set<FilePath>,
+    references: ReferenceRegistry,
+    scopes: ScopeRegistry,
+    definitions: DefinitionRegistry
+  ): CallReference[] {
+    const invocations: CallReference[] = [];
+
+    // Get all callable definitions (includes anonymous functions)
+    const all_callables = definitions.get_callable_definitions();
+
+    for (const callable of all_callables) {
+      // Only process anonymous functions with callback context
+      if (callable.name !== ("<anonymous>" as SymbolName)) {
+        continue;
+      }
+
+      // Check if this file is being processed
+      if (!file_ids.has(callable.location.file_path)) {
+        continue;
+      }
+
+      // Get callback context from function definition
+      const callback_context = (callable as any).callback_context as
+        | import("@ariadnejs/types").CallbackContext
+        | undefined;
+
+      if (!callback_context || !callback_context.is_callback) {
+        continue; // Not a callback
+      }
+
+      if (!callback_context.receiver_location) {
+        continue; // Missing receiver location (shouldn't happen)
+      }
+
+      // Find the call reference at the receiver location
+      // This is the call expression that passes the callback (e.g., forEach call)
+      const file_refs = references.get_file_references(
+        callback_context.receiver_location.file_path
+      );
+
+      const receiver_location = callback_context.receiver_location;
+      const receiver_call = file_refs.find(
+        (ref) =>
+          (ref.kind === "function_call" || ref.kind === "method_call") &&
+          ref.location.start_line === receiver_location.start_line &&
+          ref.location.start_column === receiver_location.start_column
+      );
+
+      if (!receiver_call) {
+        continue; // Couldn't find receiver call (shouldn't happen)
+      }
+
+      // Classify: Try to resolve the receiver function
+      // If it resolves to our code → internal (keep as entry point)
+      // If it doesn't resolve or resolves to type-only → external (mark as invoked)
+      const receiver_symbol_id = this.resolve(
+        receiver_call.scope_id,
+        receiver_call.name
+      );
+
+      let is_external = false;
+
+      if (!receiver_symbol_id) {
+        // Can't resolve → likely built-in or library function → external
+        is_external = true;
+      } else {
+        // Check if it resolves to a concrete definition in our code
+        const receiver_def = definitions.get(receiver_symbol_id);
+        if (!receiver_def) {
+          // Resolved but no definition → type definition only → external
+          is_external = true;
+        } else {
+          // Has definition in our code → internal
+          is_external = false;
+        }
+      }
+
+      // Only create invocation edge for external callbacks
+      if (is_external) {
+        // Create synthetic call reference: receiver → callback
+        // This marks the callback as "invoked" by the external function
+        invocations.push({
+          location: callback_context.receiver_location,
+          symbol_id: callable.symbol_id, // The anonymous function being invoked
+          name: "<anonymous>" as SymbolName,
+          scope_id: callable.defining_scope_id, // Scope where callback is defined
+          call_type: "function",
+          is_callback_invocation: true, // Mark as synthetic callback invocation
+        });
+      }
+    }
+
+    return invocations;
   }
 
   /**

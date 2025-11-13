@@ -824,6 +824,50 @@ export function consume_documentation(location: Location): string | undefined {
   return undefined;
 }
 
+/**
+ * Detect if an anonymous function node is being passed as a callback to another function.
+ * Returns callback context with:
+ * - is_callback: true if the function is in call expression arguments
+ * - receiver_location: location of the call expression receiving this callback
+ * - receiver_is_external: null (will be classified during resolution phase)
+ */
+export function detect_callback_context(
+  node: SyntaxNode,
+  file_path: string
+): import("@ariadnejs/types").CallbackContext {
+  let current: SyntaxNode | null = node.parent;
+  let depth = 0;
+  const MAX_DEPTH = 5; // Limit upward traversal
+
+  while (current && depth < MAX_DEPTH) {
+    // Check if we're in an arguments node
+    if (current.type === "arguments") {
+      // Check if the parent of arguments is a call_expression or new_expression
+      const call_node = current.parent;
+      if (
+        call_node &&
+        (call_node.type === "call_expression" ||
+          call_node.type === "new_expression")
+      ) {
+        return {
+          is_callback: true,
+          receiver_is_external: null, // Will be classified during resolution
+          receiver_location: node_to_location(call_node, file_path as any),
+        };
+      }
+    }
+    current = current.parent;
+    depth++;
+  }
+
+  // Not a callback
+  return {
+    is_callback: false,
+    receiver_is_external: null,
+    receiver_location: null,
+  };
+}
+
 // ============================================================================
 // JavaScript/TypeScript Builder Configuration
 // ============================================================================

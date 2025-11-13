@@ -111,11 +111,12 @@ interface PropertyBuilderState {
  */
 interface FunctionBuilderState {
   base: Partial<
-    Omit<FunctionDefinition, "signature" | "decorators" | "body_scope_id">
+    Omit<FunctionDefinition, "signature" | "decorators" | "body_scope_id" | "callback_context">
   >;
   signature: FunctionSignatureState;
   decorators: DecoratorDefinition[];
   body_scope_id?: ScopeId;
+  callback_context?: import("@ariadnejs/types").CallbackContext;
 }
 
 /**
@@ -454,6 +455,7 @@ export class DefinitionBuilder {
       location: Location;
       scope_id: ScopeId;
       return_type?: SymbolName;
+      callback_context?: import("@ariadnejs/types").CallbackContext;
     },
     capture?: CaptureNode
   ): DefinitionBuilder {
@@ -488,6 +490,7 @@ export class DefinitionBuilder {
       },
       decorators: [],
       body_scope_id,
+      callback_context: definition.callback_context,
     });
     return this;
   }
@@ -982,6 +985,7 @@ export class DefinitionBuilder {
       decorators: state.decorators.length > 0 ? state.decorators : undefined,
       return_type: state.signature.return_type,
       body_scope_id: body_scope_id,
+      callback_context: state.callback_context,
     } as FunctionDefinition;
   }
 

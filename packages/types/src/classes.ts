@@ -1,5 +1,5 @@
 import { Location } from "./common";
-import { QualifiedName, TypeString } from "./aliases";
+import { TypeString } from "./aliases";
 import { FilePath } from "./common";
 import { SymbolId } from "./symbol";
 
