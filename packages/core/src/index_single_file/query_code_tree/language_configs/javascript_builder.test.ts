@@ -6,7 +6,7 @@ import { describe, it, expect, beforeAll } from "vitest";
 import Parser from "tree-sitter";
 import JavaScript from "tree-sitter-javascript";
 import type { SyntaxNode } from "tree-sitter";
-import { JAVASCRIPT_BUILDER_CONFIG, analyze_export_statement } from "./javascript_builder";
+import { JAVASCRIPT_BUILDER_CONFIG, analyze_export_statement, detect_callback_context } from "./javascript_builder";
 import { DefinitionBuilder } from "../../definitions/definition_builder";
 import type {
   ProcessingContext,
@@ -1819,6 +1819,193 @@ export const NESTED = {
       const data_prop = foo_class.properties.find(p => p.name === "data");
       expect(data_prop).toBeDefined();
       expect(data_prop?.type).toBeUndefined();
+    });
+  });
+
+  // ============================================================================
+  // DETECT_CALLBACK_CONTEXT UNIT TESTS (Task 11.156.2.2)
+  // ============================================================================
+
+  describe("detect_callback_context", () => {
+    function find_arrow_function(node: SyntaxNode): SyntaxNode | null {
+      if (node.type === "arrow_function") {
+        return node;
+      }
+      for (const child of node.children) {
+        const result = find_arrow_function(child);
+        if (result) return result;
+      }
+      return null;
+    }
+
+    describe("Callback detection - positive cases", () => {
+      it("should detect callback in array.forEach()", () => {
+        const code = `items.forEach((item) => { console.log(item); });`;
+        const tree = parser.parse(code);
+        const arrow_fn = find_arrow_function(tree.rootNode);
+
+        expect(arrow_fn).not.toBeNull();
+        const context = detect_callback_context(arrow_fn!, "test.js");
+
+        expect(context.is_callback).toBe(true);
+        expect(context.receiver_is_external).toBeNull();
+        expect(context.receiver_location).not.toBeNull();
+        expect(context.receiver_location?.start_line).toBe(1);
+      });
+
+      it("should detect callback in array.map()", () => {
+        const code = `numbers.map(x => x * 2);`;
+        const tree = parser.parse(code);
+        const arrow_fn = find_arrow_function(tree.rootNode);
+
+        expect(arrow_fn).not.toBeNull();
+        const context = detect_callback_context(arrow_fn!, "test.js");
+
+        expect(context.is_callback).toBe(true);
+        expect(context.receiver_location).not.toBeNull();
+      });
+
+      it("should detect callback in array.filter()", () => {
+        const code = `items.filter(item => item.active);`;
+        const tree = parser.parse(code);
+        const arrow_fn = find_arrow_function(tree.rootNode);
+
+        expect(arrow_fn).not.toBeNull();
+        const context = detect_callback_context(arrow_fn!, "test.js");
+
+        expect(context.is_callback).toBe(true);
+      });
+
+      it("should detect callback as second argument", () => {
+        const code = `setTimeout(() => console.log("done"), 1000);`;
+        const tree = parser.parse(code);
+        const arrow_fn = find_arrow_function(tree.rootNode);
+
+        expect(arrow_fn).not.toBeNull();
+        const context = detect_callback_context(arrow_fn!, "test.js");
+
+        expect(context.is_callback).toBe(true);
+      });
+
+      it("should detect nested callback (callback inside callback)", () => {
+        const code = `items.map(x => [x].filter(y => y > 0));`;
+        const tree = parser.parse(code);
+
+        // Find both arrow functions
+        const arrow_fns: SyntaxNode[] = [];
+        function collect_arrows(node: SyntaxNode) {
+          if (node.type === "arrow_function") {
+            arrow_fns.push(node);
+          }
+          for (const child of node.children) {
+            collect_arrows(child);
+          }
+        }
+        collect_arrows(tree.rootNode);
+
+        expect(arrow_fns.length).toBe(2);
+
+        // Both should be detected as callbacks
+        const outer_context = detect_callback_context(arrow_fns[0], "test.js");
+        const inner_context = detect_callback_context(arrow_fns[1], "test.js");
+
+        expect(outer_context.is_callback).toBe(true);
+        expect(inner_context.is_callback).toBe(true);
+      });
+
+      it("should detect callback in method call", () => {
+        const code = `obj.subscribe(event => handle(event));`;
+        const tree = parser.parse(code);
+        const arrow_fn = find_arrow_function(tree.rootNode);
+
+        expect(arrow_fn).not.toBeNull();
+        const context = detect_callback_context(arrow_fn!, "test.js");
+
+        expect(context.is_callback).toBe(true);
+      });
+    });
+
+    describe("Non-callback detection - negative cases", () => {
+      it("should NOT detect callback in variable assignment", () => {
+        const code = `const fn = () => { console.log("test"); };`;
+        const tree = parser.parse(code);
+        const arrow_fn = find_arrow_function(tree.rootNode);
+
+        expect(arrow_fn).not.toBeNull();
+        const context = detect_callback_context(arrow_fn!, "test.js");
+
+        expect(context.is_callback).toBe(false);
+        expect(context.receiver_location).toBeNull();
+      });
+
+      it("should NOT detect callback in return statement", () => {
+        const code = `function factory() { return () => {}; }`;
+        const tree = parser.parse(code);
+        const arrow_fn = find_arrow_function(tree.rootNode);
+
+        expect(arrow_fn).not.toBeNull();
+        const context = detect_callback_context(arrow_fn!, "test.js");
+
+        expect(context.is_callback).toBe(false);
+      });
+
+      it("should NOT detect callback in object literal", () => {
+        const code = `const obj = { handler: () => {} };`;
+        const tree = parser.parse(code);
+        const arrow_fn = find_arrow_function(tree.rootNode);
+
+        expect(arrow_fn).not.toBeNull();
+        const context = detect_callback_context(arrow_fn!, "test.js");
+
+        expect(context.is_callback).toBe(false);
+      });
+
+      it("should NOT detect callback in array literal", () => {
+        const code = `const fns = [() => {}];`;
+        const tree = parser.parse(code);
+        const arrow_fn = find_arrow_function(tree.rootNode);
+
+        expect(arrow_fn).not.toBeNull();
+        const context = detect_callback_context(arrow_fn!, "test.js");
+
+        expect(context.is_callback).toBe(false);
+      });
+    });
+
+    describe("Receiver location capture", () => {
+      it("should capture correct receiver location for forEach call", () => {
+        const code = `items.forEach((x) => x * 2);`;
+        const tree = parser.parse(code);
+        const arrow_fn = find_arrow_function(tree.rootNode);
+
+        expect(arrow_fn).not.toBeNull();
+        const context = detect_callback_context(arrow_fn!, "test.js");
+
+        expect(context.receiver_location).toEqual({
+          file_path: "test.js",
+          start_line: 1,
+          start_column: 1,
+          end_line: 1,
+          end_column: 27,
+        });
+      });
+
+      it("should capture receiver location spanning multiple lines", () => {
+        const code = `items.forEach(
+  (item) => {
+    console.log(item);
+  }
+);`;
+        const tree = parser.parse(code);
+        const arrow_fn = find_arrow_function(tree.rootNode);
+
+        expect(arrow_fn).not.toBeNull();
+        const context = detect_callback_context(arrow_fn!, "test.js");
+
+        expect(context.receiver_location).not.toBeNull();
+        expect(context.receiver_location?.start_line).toBe(1);
+        expect(context.receiver_location?.end_line).toBe(5);
+      });
     });
   });
 });

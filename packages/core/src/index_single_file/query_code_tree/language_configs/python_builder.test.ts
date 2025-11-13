@@ -16,7 +16,7 @@ import type {
 } from "../../semantic_index";
 import type { Location, ScopeId, SymbolName } from "@ariadnejs/types";
 import { node_to_location } from "../../node_utils";
-import { extract_import_path } from "./python_builder";
+import { extract_import_path, detect_callback_context } from "./python_builder";
 
 describe("Python Builder Configuration", () => {
   let parser: Parser;
@@ -1708,6 +1708,174 @@ class Point:
 
       const label_prop = point_class.properties.find(p => p.name === "label");
       expect(label_prop?.type).toBe("str");
+    });
+  });
+
+  describe("detect_callback_context", () => {
+    function find_lambda(node: SyntaxNode): SyntaxNode | null {
+      if (node.type === "lambda") {
+        return node;
+      }
+      for (const child of node.children) {
+        const result = find_lambda(child);
+        if (result) return result;
+      }
+      return null;
+    }
+
+    describe("Callback detection - positive cases", () => {
+      it("should detect callback in list(map())", () => {
+        const code = `list(map(lambda x: x * 2, items))`;
+        const tree = parser.parse(code);
+        const lambda_fn = find_lambda(tree.rootNode);
+        expect(lambda_fn).not.toBeNull();
+
+        const context = detect_callback_context(lambda_fn!, "test.py");
+        expect(context.is_callback).toBe(true);
+        expect(context.receiver_is_external).toBeNull();
+        expect(context.receiver_location).not.toBeNull();
+      });
+
+      it("should detect callback in list(filter())", () => {
+        const code = `list(filter(lambda x: x > 0, items))`;
+        const tree = parser.parse(code);
+        const lambda_fn = find_lambda(tree.rootNode);
+        expect(lambda_fn).not.toBeNull();
+
+        const context = detect_callback_context(lambda_fn!, "test.py");
+        expect(context.is_callback).toBe(true);
+        expect(context.receiver_is_external).toBeNull();
+        expect(context.receiver_location).not.toBeNull();
+      });
+
+      it("should detect callback in sorted()", () => {
+        const code = `sorted(items, key=lambda x: x.name)`;
+        const tree = parser.parse(code);
+        const lambda_fn = find_lambda(tree.rootNode);
+        expect(lambda_fn).not.toBeNull();
+
+        const context = detect_callback_context(lambda_fn!, "test.py");
+        expect(context.is_callback).toBe(true);
+        expect(context.receiver_is_external).toBeNull();
+        expect(context.receiver_location).not.toBeNull();
+      });
+
+      it("should detect callback in functools.reduce()", () => {
+        const code = `reduce(lambda acc, x: acc + x, items, 0)`;
+        const tree = parser.parse(code);
+        const lambda_fn = find_lambda(tree.rootNode);
+        expect(lambda_fn).not.toBeNull();
+
+        const context = detect_callback_context(lambda_fn!, "test.py");
+        expect(context.is_callback).toBe(true);
+        expect(context.receiver_is_external).toBeNull();
+        expect(context.receiver_location).not.toBeNull();
+      });
+
+      it("should detect callback in nested function calls", () => {
+        const code = `list(map(lambda x: x * 2, filter(lambda y: y > 0, items)))`;
+        const tree = parser.parse(code);
+        // Find first lambda (the one in map)
+        const lambda_fn = find_lambda(tree.rootNode);
+        expect(lambda_fn).not.toBeNull();
+
+        const context = detect_callback_context(lambda_fn!, "test.py");
+        expect(context.is_callback).toBe(true);
+        expect(context.receiver_is_external).toBeNull();
+        expect(context.receiver_location).not.toBeNull();
+      });
+
+      it("should detect callback in method call", () => {
+        const code = `obj.transform(lambda x: x.upper())`;
+        const tree = parser.parse(code);
+        const lambda_fn = find_lambda(tree.rootNode);
+        expect(lambda_fn).not.toBeNull();
+
+        const context = detect_callback_context(lambda_fn!, "test.py");
+        expect(context.is_callback).toBe(true);
+        expect(context.receiver_is_external).toBeNull();
+        expect(context.receiver_location).not.toBeNull();
+      });
+    });
+
+    describe("Non-callback detection - negative cases", () => {
+      it("should NOT detect callback in variable assignment", () => {
+        const code = `fn = lambda x: x * 2`;
+        const tree = parser.parse(code);
+        const lambda_fn = find_lambda(tree.rootNode);
+        expect(lambda_fn).not.toBeNull();
+
+        const context = detect_callback_context(lambda_fn!, "test.py");
+        expect(context.is_callback).toBe(false);
+        expect(context.receiver_location).toBeNull();
+      });
+
+      it("should NOT detect callback in return statement", () => {
+        const code = `def foo():\n    return lambda x: x * 2`;
+        const tree = parser.parse(code);
+        const lambda_fn = find_lambda(tree.rootNode);
+        expect(lambda_fn).not.toBeNull();
+
+        const context = detect_callback_context(lambda_fn!, "test.py");
+        expect(context.is_callback).toBe(false);
+        expect(context.receiver_location).toBeNull();
+      });
+
+      it("should NOT detect callback in dictionary literal", () => {
+        const code = `{"handler": lambda x: x * 2}`;
+        const tree = parser.parse(code);
+        const lambda_fn = find_lambda(tree.rootNode);
+        expect(lambda_fn).not.toBeNull();
+
+        const context = detect_callback_context(lambda_fn!, "test.py");
+        expect(context.is_callback).toBe(false);
+        expect(context.receiver_location).toBeNull();
+      });
+
+      it("should NOT detect callback in list literal", () => {
+        const code = `[lambda x: x * 2, lambda y: y + 1]`;
+        const tree = parser.parse(code);
+        const lambda_fn = find_lambda(tree.rootNode);
+        expect(lambda_fn).not.toBeNull();
+
+        const context = detect_callback_context(lambda_fn!, "test.py");
+        expect(context.is_callback).toBe(false);
+        expect(context.receiver_location).toBeNull();
+      });
+    });
+
+    describe("Receiver location capture", () => {
+      it("should capture correct receiver location for map call", () => {
+        const code = `list(map(lambda x: x * 2, items))`;
+        const tree = parser.parse(code);
+        const lambda_fn = find_lambda(tree.rootNode);
+        expect(lambda_fn).not.toBeNull();
+
+        const context = detect_callback_context(lambda_fn!, "test.py");
+        expect(context.receiver_location).toEqual({
+          file_path: "test.py",
+          start_line: 1,
+          start_column: 6,
+          end_line: 1,
+          end_column: 32,
+        });
+      });
+
+      it("should capture correct receiver location for multi-line call", () => {
+        const code = `result = sorted(\n    items,\n    key=lambda x: x.name\n)`;
+        const tree = parser.parse(code);
+        const lambda_fn = find_lambda(tree.rootNode);
+        expect(lambda_fn).not.toBeNull();
+
+        const context = detect_callback_context(lambda_fn!, "test.py");
+        expect(context.receiver_location).toEqual({
+          file_path: "test.py",
+          start_line: 1,
+          start_column: 10,
+          end_line: 4,
+          end_column: 1,
+        });
+      });
     });
   });
 });

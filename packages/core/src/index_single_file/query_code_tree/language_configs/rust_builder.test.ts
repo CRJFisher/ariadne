@@ -3,12 +3,14 @@ import { describe, it, expect, beforeEach } from "vitest";
 import Parser from "tree-sitter";
 import Rust from "tree-sitter-rust";
 import { RUST_BUILDER_CONFIG } from "./rust_builder";
+import { detect_callback_context } from "./rust_callback_detection";
 import { DefinitionBuilder } from "../../definitions/definition_builder";
 import type {
   ProcessingContext,
   CaptureNode,
 } from "../../semantic_index";
 import type { Location, SymbolName, ScopeId } from "@ariadnejs/types";
+import type { SyntaxNode } from "tree-sitter";
 
 describe("rust_builder", () => {
   let parser: Parser;
@@ -1375,6 +1377,174 @@ struct Arrays {
 
       const slice_field = arrays_struct.properties.find(p => p.name === "slice");
       expect(slice_field?.type).toBe("&[u8]");
+    });
+  });
+
+  describe("detect_callback_context", () => {
+    function find_closure(node: SyntaxNode): SyntaxNode | null {
+      if (node.type === "closure_expression") {
+        return node;
+      }
+      for (const child of node.children) {
+        const result = find_closure(child);
+        if (result) return result;
+      }
+      return null;
+    }
+
+    describe("Callback detection - positive cases", () => {
+      it("should detect callback in iter().map()", () => {
+        const code = `items.iter().map(|x| x * 2)`;
+        const tree = parser.parse(code);
+        const closure = find_closure(tree.rootNode);
+        expect(closure).not.toBeNull();
+
+        const context = detect_callback_context(closure!, "test.rs");
+        expect(context.is_callback).toBe(true);
+        expect(context.receiver_is_external).toBeNull();
+        expect(context.receiver_location).not.toBeNull();
+      });
+
+      it("should detect callback in iter().filter()", () => {
+        const code = `items.iter().filter(|x| *x > 0)`;
+        const tree = parser.parse(code);
+        const closure = find_closure(tree.rootNode);
+        expect(closure).not.toBeNull();
+
+        const context = detect_callback_context(closure!, "test.rs");
+        expect(context.is_callback).toBe(true);
+        expect(context.receiver_is_external).toBeNull();
+        expect(context.receiver_location).not.toBeNull();
+      });
+
+      it("should detect callback in for_each()", () => {
+        const code = `items.iter().for_each(|x| println!("{}", x))`;
+        const tree = parser.parse(code);
+        const closure = find_closure(tree.rootNode);
+        expect(closure).not.toBeNull();
+
+        const context = detect_callback_context(closure!, "test.rs");
+        expect(context.is_callback).toBe(true);
+        expect(context.receiver_is_external).toBeNull();
+        expect(context.receiver_location).not.toBeNull();
+      });
+
+      it("should detect callback in sort_by()", () => {
+        const code = `items.sort_by(|a, b| a.cmp(b))`;
+        const tree = parser.parse(code);
+        const closure = find_closure(tree.rootNode);
+        expect(closure).not.toBeNull();
+
+        const context = detect_callback_context(closure!, "test.rs");
+        expect(context.is_callback).toBe(true);
+        expect(context.receiver_is_external).toBeNull();
+        expect(context.receiver_location).not.toBeNull();
+      });
+
+      it("should detect callback in nested iterator chains", () => {
+        const code = `items.iter().map(|x| x * 2).filter(|y| *y > 0)`;
+        const tree = parser.parse(code);
+        // Find first closure (the one in map)
+        const closure = find_closure(tree.rootNode);
+        expect(closure).not.toBeNull();
+
+        const context = detect_callback_context(closure!, "test.rs");
+        expect(context.is_callback).toBe(true);
+        expect(context.receiver_is_external).toBeNull();
+        expect(context.receiver_location).not.toBeNull();
+      });
+
+      it("should detect callback in method call", () => {
+        const code = `obj.process(|x| x.to_string())`;
+        const tree = parser.parse(code);
+        const closure = find_closure(tree.rootNode);
+        expect(closure).not.toBeNull();
+
+        const context = detect_callback_context(closure!, "test.rs");
+        expect(context.is_callback).toBe(true);
+        expect(context.receiver_is_external).toBeNull();
+        expect(context.receiver_location).not.toBeNull();
+      });
+    });
+
+    describe("Non-callback detection - negative cases", () => {
+      it("should NOT detect callback in variable assignment", () => {
+        const code = `let f = |x| x * 2;`;
+        const tree = parser.parse(code);
+        const closure = find_closure(tree.rootNode);
+        expect(closure).not.toBeNull();
+
+        const context = detect_callback_context(closure!, "test.rs");
+        expect(context.is_callback).toBe(false);
+        expect(context.receiver_location).toBeNull();
+      });
+
+      it("should NOT detect callback in return statement", () => {
+        const code = `fn foo() -> impl Fn(i32) -> i32 { |x| x * 2 }`;
+        const tree = parser.parse(code);
+        const closure = find_closure(tree.rootNode);
+        expect(closure).not.toBeNull();
+
+        const context = detect_callback_context(closure!, "test.rs");
+        expect(context.is_callback).toBe(false);
+        expect(context.receiver_location).toBeNull();
+      });
+
+      it("should NOT detect callback in struct initialization", () => {
+        const code = `Handler { func: |x| x * 2 }`;
+        const tree = parser.parse(code);
+        const closure = find_closure(tree.rootNode);
+        expect(closure).not.toBeNull();
+
+        const context = detect_callback_context(closure!, "test.rs");
+        expect(context.is_callback).toBe(false);
+        expect(context.receiver_location).toBeNull();
+      });
+
+      it("should NOT detect callback in array literal", () => {
+        const code = `let funcs = [|x| x * 2, |y| y + 1];`;
+        const tree = parser.parse(code);
+        const closure = find_closure(tree.rootNode);
+        expect(closure).not.toBeNull();
+
+        const context = detect_callback_context(closure!, "test.rs");
+        expect(context.is_callback).toBe(false);
+        expect(context.receiver_location).toBeNull();
+      });
+    });
+
+    describe("Receiver location capture", () => {
+      it("should capture correct receiver location for map call", () => {
+        const code = `items.iter().map(|x| x * 2)`;
+        const tree = parser.parse(code);
+        const closure = find_closure(tree.rootNode);
+        expect(closure).not.toBeNull();
+
+        const context = detect_callback_context(closure!, "test.rs");
+        expect(context.receiver_location).toEqual({
+          file_path: "test.rs",
+          start_line: 1,
+          start_column: 1,
+          end_line: 1,
+          end_column: 27,
+        });
+      });
+
+      it("should capture correct receiver location for multi-line call", () => {
+        const code = `result = items.sort_by(\n    |a, b| a.cmp(b)\n)`;
+        const tree = parser.parse(code);
+        const closure = find_closure(tree.rootNode);
+        expect(closure).not.toBeNull();
+
+        const context = detect_callback_context(closure!, "test.rs");
+        expect(context.receiver_location).toEqual({
+          file_path: "test.rs",
+          start_line: 1,
+          start_column: 10,
+          end_line: 3,
+          end_column: 1,
+        });
+      });
     });
   });
 });
