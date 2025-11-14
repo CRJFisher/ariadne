@@ -1110,4 +1110,163 @@ class Service:
       }
     });
   });
+
+  describe("Callback detection and invocation", () => {
+    it("should detect callback context for lambda in array methods", async () => {
+      const project = new Project();
+      await project.initialize();
+
+      const code = `
+numbers = [1, 2, 3, 4, 5]
+
+def process():
+    doubled = list(map(lambda x: x * 2, numbers))
+      `.trim();
+
+      const file_path_str = "/test/callback.py" as FilePath;
+      project.update_file(file_path_str, code);
+
+      const definitions = project.definitions;
+      const anon_funcs = Array.from(definitions.get_callable_definitions()).filter(
+        (d) => d.name === "<anonymous>"
+      );
+
+      expect(anon_funcs.length).toBe(1);
+      const anon = anon_funcs[0];
+
+      // Check callback context is captured
+      expect((anon as any).callback_context).toBeDefined();
+      expect((anon as any).callback_context.is_callback).toBe(true);
+      expect((anon as any).callback_context.receiver_location).toBeDefined();
+    });
+
+    it("should create callback invocation reference for external function callbacks", async () => {
+      const project = new Project();
+      await project.initialize();
+
+      const code = `
+numbers = [1, 2, 3, 4, 5]
+
+def process():
+    doubled = list(map(lambda x: x * 2, numbers))
+      `.trim();
+
+      const file_path_str = "/test/callback.py" as FilePath;
+      project.update_file(file_path_str, code);
+
+      const resolutions = project.resolutions;
+      const references = resolutions.get_file_calls(file_path_str);
+
+      // Check if callback invocation was created
+      const callback_invocations = references.filter((ref) => ref.is_callback_invocation);
+
+      expect(callback_invocations.length).toBe(1);
+
+      const invocation = callback_invocations[0];
+      expect(invocation.name).toBe("<anonymous>");
+      expect(invocation.call_type).toBe("function");
+    });
+
+    it("should NOT create callback invocation for internal function callbacks", async () => {
+      const project = new Project();
+      await project.initialize();
+
+      const code = `
+def run_callback(callback):
+    callback()
+
+def process():
+    run_callback(lambda: print("hello"))
+      `.trim();
+
+      const file_path_str = "/test/internal_callback.py" as FilePath;
+      project.update_file(file_path_str, code);
+
+      const resolutions = project.resolutions;
+      const references = resolutions.get_file_calls(file_path_str);
+
+      // Should NOT create callback invocation since run_callback is internal
+      const callback_invocations = references.filter((ref) => ref.is_callback_invocation);
+
+      expect(callback_invocations.length).toBe(0);
+    });
+
+    it("should NOT mark external callbacks as entry points", async () => {
+      const project = new Project();
+      await project.initialize();
+
+      const code = `
+numbers = [1, 2, 3, 4, 5]
+
+def process():
+    doubled = list(map(lambda x: x * 2, numbers))
+    evens = list(filter(lambda x: x % 2 == 0, numbers))
+      `.trim();
+
+      const file_path_str = "/test/callbacks_entry.py" as FilePath;
+      project.update_file(file_path_str, code);
+
+      const definitions = project.definitions;
+      const call_graph = project.get_call_graph();
+
+      // Find lambdas
+      const lambdas = Array.from(definitions.get_callable_definitions()).filter(
+        (d) => d.name === "<anonymous>"
+      );
+      expect(lambdas.length).toBe(2);
+
+      // Verify lambdas are NOT entry points
+      const entry_point_ids = new Set(call_graph.entry_points);
+      for (const lambda of lambdas) {
+        expect(entry_point_ids.has(lambda.symbol_id)).toBe(false);
+      }
+
+      // Verify process() IS an entry point
+      const process_def = Array.from(definitions.get_callable_definitions()).find(
+        (d) => d.name === "process"
+      );
+      expect(process_def).toBeDefined();
+      expect(entry_point_ids.has(process_def!.symbol_id)).toBe(true);
+    });
+
+    it("should handle multiple callbacks in same function", async () => {
+      const project = new Project();
+      await project.initialize();
+
+      const code = `
+from functools import reduce
+
+numbers = [1, 2, 3, 4, 5]
+
+def process():
+    doubled = list(map(lambda x: x * 2, numbers))
+    evens = list(filter(lambda x: x % 2 == 0, numbers))
+    sum_result = reduce(lambda acc, x: acc + x, numbers, 0)
+      `.trim();
+
+      const file_path_str = "/test/multiple_callbacks.py" as FilePath;
+      project.update_file(file_path_str, code);
+
+      const definitions = project.definitions;
+
+      // Find all lambdas
+      const lambdas = Array.from(definitions.get_callable_definitions()).filter(
+        (d) => d.name === "<anonymous>"
+      );
+      expect(lambdas.length).toBe(3);
+
+      // All should be callbacks to external functions
+      for (const lambda of lambdas) {
+        expect((lambda as any).callback_context).toBeDefined();
+        expect((lambda as any).callback_context.is_callback).toBe(true);
+      }
+
+      // All should have callback invocation references
+      const resolutions = project.resolutions;
+      const references = resolutions.get_file_calls(file_path_str);
+      const callback_invocations = references.filter((ref) => ref.is_callback_invocation);
+
+      expect(callback_invocations.length).toBe(3);
+    });
+  });
 });

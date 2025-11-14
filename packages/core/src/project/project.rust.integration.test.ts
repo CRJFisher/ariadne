@@ -472,4 +472,163 @@ describe("Project Integration - Rust", () => {
       expect(type_info!.methods.size).toBeGreaterThan(0);
     });
   });
+
+  describe("Callback detection and invocation", () => {
+    it("should detect callback context for closures in iterator methods", async () => {
+      const project = new Project();
+      await project.initialize();
+
+      const code = `
+fn main() {
+    let numbers = vec![1, 2, 3, 4, 5];
+    let doubled: Vec<i32> = numbers.iter().map(|x| x * 2).collect();
+}
+      `.trim();
+
+      const file_path_str = "/test/callback.rs" as FilePath;
+      project.update_file(file_path_str, code);
+
+      const definitions = project.definitions;
+      const anon_funcs = Array.from(definitions.get_callable_definitions()).filter(
+        (d) => d.name === "<anonymous>"
+      );
+
+      expect(anon_funcs.length).toBe(1);
+      const anon = anon_funcs[0];
+
+      // Check callback context is captured
+      expect((anon as any).callback_context).toBeDefined();
+      expect((anon as any).callback_context.is_callback).toBe(true);
+      expect((anon as any).callback_context.receiver_location).toBeDefined();
+    });
+
+    it("should create callback invocation reference for external function callbacks", async () => {
+      const project = new Project();
+      await project.initialize();
+
+      const code = `
+fn main() {
+    let numbers = vec![1, 2, 3, 4, 5];
+    let doubled: Vec<i32> = numbers.iter().map(|x| x * 2).collect();
+}
+      `.trim();
+
+      const file_path_str = "/test/callback.rs" as FilePath;
+      project.update_file(file_path_str, code);
+
+      const resolutions = project.resolutions;
+      const references = resolutions.get_file_calls(file_path_str);
+
+      // Check if callback invocation was created
+      const callback_invocations = references.filter((ref) => ref.is_callback_invocation);
+
+      expect(callback_invocations.length).toBe(1);
+
+      const invocation = callback_invocations[0];
+      expect(invocation.name).toBe("<anonymous>");
+      expect(invocation.call_type).toBe("function");
+    });
+
+    it("should NOT create callback invocation for internal function callbacks", async () => {
+      const project = new Project();
+      await project.initialize();
+
+      const code = `
+fn run_callback<F>(callback: F) where F: Fn() {
+    callback();
+}
+
+fn main() {
+    run_callback(|| println!("hello"));
+}
+      `.trim();
+
+      const file_path_str = "/test/internal_callback.rs" as FilePath;
+      project.update_file(file_path_str, code);
+
+      const resolutions = project.resolutions;
+      const references = resolutions.get_file_calls(file_path_str);
+
+      // Should NOT create callback invocation since run_callback is internal
+      const callback_invocations = references.filter((ref) => ref.is_callback_invocation);
+
+      expect(callback_invocations.length).toBe(0);
+    });
+
+    it("should NOT mark external callbacks as entry points", async () => {
+      const project = new Project();
+      await project.initialize();
+
+      const code = `
+fn main() {
+    let numbers = vec![1, 2, 3, 4, 5];
+    let doubled: Vec<i32> = numbers.iter().map(|x| x * 2).collect();
+    let evens: Vec<&i32> = numbers.iter().filter(|x| *x % 2 == 0).collect();
+}
+      `.trim();
+
+      const file_path_str = "/test/callbacks_entry.rs" as FilePath;
+      project.update_file(file_path_str, code);
+
+      const definitions = project.definitions;
+      const call_graph = project.get_call_graph();
+
+      // Find closures
+      const closures = Array.from(definitions.get_callable_definitions()).filter(
+        (d) => d.name === "<anonymous>"
+      );
+      expect(closures.length).toBe(2);
+
+      // Verify closures are NOT entry points
+      const entry_point_ids = new Set(call_graph.entry_points);
+      for (const closure of closures) {
+        expect(entry_point_ids.has(closure.symbol_id)).toBe(false);
+      }
+
+      // Verify main() IS an entry point
+      const main_def = Array.from(definitions.get_callable_definitions()).find(
+        (d) => d.name === "main"
+      );
+      expect(main_def).toBeDefined();
+      expect(entry_point_ids.has(main_def!.symbol_id)).toBe(true);
+    });
+
+    it("should handle multiple callbacks in same function", async () => {
+      const project = new Project();
+      await project.initialize();
+
+      const code = `
+fn process() {
+    let numbers = vec![1, 2, 3, 4, 5];
+    let doubled: Vec<i32> = numbers.iter().map(|x| x * 2).collect();
+    let evens: Vec<&i32> = numbers.iter().filter(|x| *x % 2 == 0).collect();
+    numbers.iter().for_each(|x| println!("{}", x));
+}
+      `.trim();
+
+      const file_path_str = "/test/multiple_callbacks.rs" as FilePath;
+      project.update_file(file_path_str, code);
+
+      const definitions = project.definitions;
+
+      // Find all closures
+      const closures = Array.from(definitions.get_callable_definitions()).filter(
+        (d) => d.name === "<anonymous>"
+      );
+      expect(closures.length).toBe(3);
+
+      // All should be callbacks to external functions
+      for (const closure of closures) {
+        expect((closure as any).callback_context).toBeDefined();
+        expect((closure as any).callback_context.is_callback).toBe(true);
+      }
+
+      // All should have callback invocation references
+      const resolutions = project.resolutions;
+      const references = resolutions.get_file_calls(file_path_str);
+      const callback_invocations = references.filter((ref) => ref.is_callback_invocation);
+
+      expect(callback_invocations.length).toBe(3);
+    });
+  });
 });
