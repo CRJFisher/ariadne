@@ -2130,4 +2130,105 @@ type Handler = Callable[[str], None]
       expect(myClass!.defining_scope_id).toBe(moduleScope!.id);
     });
   });
+
+  describe("Callback context detection", () => {
+    it("should detect callback context for lambda in map", () => {
+      const code = `numbers = [1, 2, 3, 4, 5]
+doubled = list(map(lambda x: x * 2, numbers))`;
+
+      const tree = parser.parse(code);
+      const parsedFile = createParsedFile(
+        code,
+        "test.py" as FilePath,
+        tree,
+        "python" as Language
+      );
+      const index = build_semantic_index(parsedFile, tree, "python" as Language);
+
+      // Find the lambda function
+      const lambdas = Array.from(index.functions.values()).filter(
+        (f) => f.name === "<anonymous>"
+      );
+      expect(lambdas.length).toBe(1);
+
+      const lambda = lambdas[0];
+      expect(lambda.callback_context).not.toBe(undefined);
+      expect(lambda.callback_context!.is_callback).toBe(true);
+      expect(lambda.callback_context!.receiver_location).not.toBe(null);
+      expect(lambda.callback_context!.receiver_location?.start_line).toBe(2);
+    });
+
+    it("should detect callback context for lambda in filter", () => {
+      const code = `numbers = [1, 2, 3, 4, 5]
+evens = list(filter(lambda x: x % 2 == 0, numbers))`;
+
+      const tree = parser.parse(code);
+      const parsedFile = createParsedFile(
+        code,
+        "test.py" as FilePath,
+        tree,
+        "python" as Language
+      );
+      const index = build_semantic_index(parsedFile, tree, "python" as Language);
+
+      const lambdas = Array.from(index.functions.values()).filter(
+        (f) => f.name === "<anonymous>"
+      );
+      expect(lambdas.length).toBe(1);
+
+      const lambda = lambdas[0];
+      expect(lambda.callback_context!.is_callback).toBe(true);
+      expect(lambda.callback_context!.receiver_location).not.toBe(null);
+    });
+
+    it("should detect callback context for lambda in reduce", () => {
+      const code = `from functools import reduce
+numbers = [1, 2, 3, 4, 5]
+sum_result = reduce(lambda acc, x: acc + x, numbers, 0)`;
+
+      const tree = parser.parse(code);
+      const parsedFile = createParsedFile(
+        code,
+        "test.py" as FilePath,
+        tree,
+        "python" as Language
+      );
+      const index = build_semantic_index(parsedFile, tree, "python" as Language);
+
+      const lambdas = Array.from(index.functions.values()).filter(
+        (f) => f.name === "<anonymous>"
+      );
+      expect(lambdas.length).toBe(1);
+
+      const lambda = lambdas[0];
+      expect(lambda.callback_context!.is_callback).toBe(true);
+    });
+
+    it("should detect nested callback contexts", () => {
+      const code = `numbers = [1, 2, 3]
+nested = list(map(lambda n: list(filter(lambda x: x > 2, [n])), numbers))`;
+
+      const tree = parser.parse(code);
+      const parsedFile = createParsedFile(
+        code,
+        "test.py" as FilePath,
+        tree,
+        "python" as Language
+      );
+      const index = build_semantic_index(parsedFile, tree, "python" as Language);
+
+      const lambdas = Array.from(index.functions.values()).filter(
+        (f) => f.name === "<anonymous>"
+      );
+      expect(lambdas.length).toBe(2);
+
+      // Both should be callbacks
+      expect(lambdas[0].callback_context!.is_callback).toBe(true);
+      expect(lambdas[1].callback_context!.is_callback).toBe(true);
+
+      // Each should have receiver locations
+      expect(lambdas[0].callback_context!.receiver_location).not.toBe(null);
+      expect(lambdas[1].callback_context!.receiver_location).not.toBe(null);
+    });
+  });
 });

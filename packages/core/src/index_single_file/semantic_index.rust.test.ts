@@ -2474,4 +2474,108 @@ trait MyTrait {
       expect(myTrait!.defining_scope_id).toBe(moduleScope!.id);
     });
   });
+
+  describe("Callback context detection", () => {
+    it("should detect callback context for closure in iter().map()", () => {
+      const code = `fn main() {
+    let numbers = vec![1, 2, 3, 4, 5];
+    let doubled: Vec<i32> = numbers.iter().map(|x| x * 2).collect();
+}`;
+
+      const tree = parser.parse(code);
+      const parsedFile = createParsedFile(
+        code,
+        "test.rs" as FilePath,
+        tree,
+        "rust" as Language
+      );
+      const index = build_semantic_index(parsedFile, tree, "rust" as Language);
+
+      // Find the closure
+      const closures = Array.from(index.functions.values()).filter(
+        (f) => f.name === "<anonymous>"
+      );
+      expect(closures.length).toBe(1);
+
+      const closure = closures[0];
+      expect(closure.callback_context).not.toBe(undefined);
+      expect(closure.callback_context!.is_callback).toBe(true);
+      expect(closure.callback_context!.receiver_location).not.toBe(null);
+    });
+
+    it("should detect callback context for closure in iter().filter()", () => {
+      const code = `fn main() {
+    let numbers = vec![1, 2, 3, 4, 5];
+    let evens: Vec<&i32> = numbers.iter().filter(|x| *x % 2 == 0).collect();
+}`;
+
+      const tree = parser.parse(code);
+      const parsedFile = createParsedFile(
+        code,
+        "test.rs" as FilePath,
+        tree,
+        "rust" as Language
+      );
+      const index = build_semantic_index(parsedFile, tree, "rust" as Language);
+
+      const closures = Array.from(index.functions.values()).filter(
+        (f) => f.name === "<anonymous>"
+      );
+      expect(closures.length).toBe(1);
+
+      const closure = closures[0];
+      expect(closure.callback_context!.is_callback).toBe(true);
+    });
+
+    it("should detect callback context for closure in for_each()", () => {
+      const code = `fn main() {
+    let numbers = vec![1, 2, 3, 4, 5];
+    numbers.iter().for_each(|x| println!("{}", x));
+}`;
+
+      const tree = parser.parse(code);
+      const parsedFile = createParsedFile(
+        code,
+        "test.rs" as FilePath,
+        tree,
+        "rust" as Language
+      );
+      const index = build_semantic_index(parsedFile, tree, "rust" as Language);
+
+      const closures = Array.from(index.functions.values()).filter(
+        (f) => f.name === "<anonymous>"
+      );
+      expect(closures.length).toBe(1);
+
+      const closure = closures[0];
+      expect(closure.callback_context!.is_callback).toBe(true);
+    });
+
+    it("should detect nested callback contexts", () => {
+      const code = `fn main() {
+    let numbers = vec![1, 2, 3];
+    let nested: Vec<Vec<i32>> = numbers.iter()
+        .map(|n| vec![*n].into_iter().filter(|x| *x > 2).collect())
+        .collect();
+}`;
+
+      const tree = parser.parse(code);
+      const parsedFile = createParsedFile(
+        code,
+        "test.rs" as FilePath,
+        tree,
+        "rust" as Language
+      );
+      const index = build_semantic_index(parsedFile, tree, "rust" as Language);
+
+      const closures = Array.from(index.functions.values()).filter(
+        (f) => f.name === "<anonymous>"
+      );
+      expect(closures.length).toBe(2);
+
+      // Both should be callbacks
+      expect(closures[0].callback_context!.is_callback).toBe(true);
+      expect(closures[1].callback_context!.is_callback).toBe(true);
+    });
+  });
 });
