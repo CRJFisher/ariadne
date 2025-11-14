@@ -2578,4 +2578,76 @@ trait MyTrait {
       expect(closures[1].callback_context!.is_callback).toBe(true);
     });
   });
+
+  describe("Callback edge cases", () => {
+    it("should detect move closures", () => {
+      const code = `fn process() {
+    let data = vec![1, 2, 3];
+    let items = vec![10, 20, 30];
+    let result: Vec<_> = items.iter().map(move |x| x + data[0]).collect();
+}`;
+
+      const tree = parser.parse(code);
+      const parsedFile = createParsedFile(code, "test.rs" as FilePath, tree, "rust" as Language);
+      const index = build_semantic_index(parsedFile, tree, "rust" as Language);
+
+      const callbacks = Array.from(index.functions.values()).filter(
+        (f) => f.name === "<anonymous>"
+      );
+      expect(callbacks.length).toBe(1);
+
+      const moveClosure = callbacks[0];
+      expect(moveClosure.callback_context).not.toBe(undefined);
+      expect(moveClosure.callback_context!.is_callback).toBe(true);
+      expect(moveClosure.callback_context!.receiver_location).not.toBe(null);
+    });
+
+    it("should detect closures with type annotations", () => {
+      const code = `fn process() {
+    let items = vec![1, 2, 3];
+    let result: Vec<_> = items.iter().map(|x: &i32| -> i32 { x * 2 }).collect();
+}`;
+
+      const tree = parser.parse(code);
+      const parsedFile = createParsedFile(code, "test.rs" as FilePath, tree, "rust" as Language);
+      const index = build_semantic_index(parsedFile, tree, "rust" as Language);
+
+      const callbacks = Array.from(index.functions.values()).filter(
+        (f) => f.name === "<anonymous>"
+      );
+      expect(callbacks.length).toBe(1);
+
+      const typedClosure = callbacks[0];
+      expect(typedClosure.callback_context).not.toBe(undefined);
+      expect(typedClosure.callback_context!.is_callback).toBe(true);
+      expect(typedClosure.callback_context!.receiver_location).not.toBe(null);
+    });
+
+    it("should detect callbacks in chained iterator methods", () => {
+      const code = `fn process() {
+    let items = vec![1, 2, 3, 4, 5];
+    let result: Vec<_> = items
+        .iter()
+        .filter(|x| **x > 2)
+        .map(|x| x * 2)
+        .collect();
+}`;
+
+      const tree = parser.parse(code);
+      const parsedFile = createParsedFile(code, "test.rs" as FilePath, tree, "rust" as Language);
+      const index = build_semantic_index(parsedFile, tree, "rust" as Language);
+
+      const callbacks = Array.from(index.functions.values()).filter(
+        (f) => f.name === "<anonymous>"
+      );
+      expect(callbacks.length).toBe(2);
+
+      // Both closures should be detected as callbacks
+      for (const callback of callbacks) {
+        expect(callback.callback_context).not.toBe(undefined);
+        expect(callback.callback_context!.is_callback).toBe(true);
+        expect(callback.callback_context!.receiver_location).not.toBe(null);
+      }
+    });
+  });
 });

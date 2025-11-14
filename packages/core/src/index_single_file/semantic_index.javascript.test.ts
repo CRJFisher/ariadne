@@ -2142,4 +2142,50 @@ describe("Semantic Index - JavaScript", () => {
       expect(myClass!.defining_scope_id).toBe(moduleScope!.id);
     });
   });
+
+  describe("Callback edge cases", () => {
+    it("should detect callbacks with try-catch blocks", () => {
+      const code = `const items = [1, 2, 3];
+items.forEach((item) => {
+  try {
+    process(item);
+  } catch (e) {
+    console.error(e);
+  }
+});`;
+
+      const tree = parser.parse(code);
+      const parsedFile = createParsedFile(code, "test.js" as FilePath, tree, "javascript" as Language);
+      const index = build_semantic_index(parsedFile, tree, "javascript" as Language);
+
+      const callbacks = Array.from(index.functions.values()).filter(
+        (f) => f.name === "<anonymous>"
+      );
+      expect(callbacks.length).toBe(1);
+
+      const callback = callbacks[0];
+      expect(callback.callback_context).not.toBe(undefined);
+      expect(callback.callback_context!.is_callback).toBe(true);
+      expect(callback.callback_context!.receiver_location).not.toBe(null);
+    });
+
+    it("should detect callbacks with destructured parameters", () => {
+      const code = `const items = [{id: 1, name: 'Alice'}, {id: 2, name: 'Bob'}];
+const names = items.map(({id, name}) => name);`;
+
+      const tree = parser.parse(code);
+      const parsedFile = createParsedFile(code, "test.js" as FilePath, tree, "javascript" as Language);
+      const index = build_semantic_index(parsedFile, tree, "javascript" as Language);
+
+      const callbacks = Array.from(index.functions.values()).filter(
+        (f) => f.name === "<anonymous>"
+      );
+      expect(callbacks.length).toBe(1);
+
+      const callback = callbacks[0];
+      expect(callback.callback_context).not.toBe(undefined);
+      expect(callback.callback_context!.is_callback).toBe(true);
+      expect(callback.callback_context!.receiver_location).not.toBe(null);
+    });
+  });
 });

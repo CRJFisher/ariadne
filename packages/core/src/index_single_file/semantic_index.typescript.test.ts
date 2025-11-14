@@ -2994,4 +2994,50 @@ enum MyEnum {
     });
   });
 
+  describe("Callback edge cases", () => {
+    it("should detect async callbacks", () => {
+      const code = `const items = [1, 2, 3];
+const urls = items.map(async (x) => await fetch(\`/api/\${x}\`));`;
+
+      const tree = parser.parse(code);
+      const parsedFile = createParsedFile(code, "test.ts" as FilePath, tree, "typescript" as Language);
+      const index = build_semantic_index(parsedFile, tree, "typescript" as Language);
+
+      const callbacks = Array.from(index.functions.values()).filter(
+        (f) => f.name === "<anonymous>"
+      );
+      expect(callbacks.length).toBe(1);
+
+      const asyncCallback = callbacks[0];
+      expect(asyncCallback.callback_context).not.toBe(undefined);
+      expect(asyncCallback.callback_context!.is_callback).toBe(true);
+      expect(asyncCallback.callback_context!.receiver_location).not.toBe(null);
+    });
+
+    it("should detect 3-level nested callbacks", () => {
+      const code = `const items = [1, 2, 3];
+const result = items.map((x) =>
+  [x].filter((y) =>
+    [y].map((z) => z * 2)
+  )
+);`;
+
+      const tree = parser.parse(code);
+      const parsedFile = createParsedFile(code, "test.ts" as FilePath, tree, "typescript" as Language);
+      const index = build_semantic_index(parsedFile, tree, "typescript" as Language);
+
+      const callbacks = Array.from(index.functions.values()).filter(
+        (f) => f.name === "<anonymous>"
+      );
+      expect(callbacks.length).toBe(3);
+
+      // All 3 should be detected as callbacks
+      for (const callback of callbacks) {
+        expect(callback.callback_context).not.toBe(undefined);
+        expect(callback.callback_context!.is_callback).toBe(true);
+        expect(callback.callback_context!.receiver_location).not.toBe(null);
+      }
+    });
+  });
+
 });
