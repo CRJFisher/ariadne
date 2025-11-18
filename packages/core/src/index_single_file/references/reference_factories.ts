@@ -1,5 +1,4 @@
 import type {
-  SymbolReference,
   SelfReferenceCall,
   MethodCallReference,
   FunctionCallReference,
@@ -46,7 +45,7 @@ export function create_self_reference_call(
   property_chain: readonly SymbolName[]
 ): SelfReferenceCall {
   return {
-    kind: 'self_reference_call',
+    kind: "self_reference_call",
     name,
     location,
     scope_id,
@@ -77,7 +76,7 @@ export function create_method_call_reference(
   optional_chaining?: boolean
 ): MethodCallReference {
   return {
-    kind: 'method_call',
+    kind: "method_call",
     name,
     location,
     scope_id,
@@ -100,7 +99,7 @@ export function create_function_call_reference(
   scope_id: ScopeId
 ): FunctionCallReference {
   return {
-    kind: 'function_call',
+    kind: "function_call",
     name,
     location,
     scope_id,
@@ -134,7 +133,7 @@ export function create_constructor_call_reference(
   construct_target?: Location
 ): ConstructorCallReference {
   return {
-    kind: 'constructor_call',
+    kind: "constructor_call",
     name,
     location,
     scope_id,
@@ -157,10 +156,10 @@ export function create_variable_reference(
   name: SymbolName,
   location: Location,
   scope_id: ScopeId,
-  access_type: 'read' | 'write'
+  access_type: "read" | "write"
 ): VariableReference {
   return {
-    kind: 'variable_reference',
+    kind: "variable_reference",
     name,
     location,
     scope_id,
@@ -189,11 +188,11 @@ export function create_property_access_reference(
   scope_id: ScopeId,
   receiver_location: Location,
   property_chain: readonly SymbolName[],
-  access_type: 'property' | 'index',
+  access_type: "property" | "index",
   is_optional_chain: boolean
 ): PropertyAccessReference {
   return {
-    kind: 'property_access',
+    kind: "property_access",
     name,
     location,
     scope_id,
@@ -219,11 +218,11 @@ export function create_type_reference(
   name: SymbolName,
   location: Location,
   scope_id: ScopeId,
-  type_context: 'annotation' | 'extends' | 'implements' | 'generic' | 'return',
+  type_context: "annotation" | "extends" | "implements" | "generic" | "return",
   type_info?: TypeInfo
 ): TypeReference {
   return {
-    kind: 'type_reference',
+    kind: "type_reference",
     name,
     location,
     scope_id,
@@ -251,7 +250,7 @@ export function create_assignment_reference(
   assignment_type?: TypeInfo
 ): AssignmentReference {
   return {
-    kind: 'assignment',
+    kind: "assignment",
     name,
     location,
     scope_id,
