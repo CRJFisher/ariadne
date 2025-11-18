@@ -369,6 +369,22 @@ export class ResolutionRegistry {
 
           // Build proper CallReference with Resolution objects
           // Each resolved symbol gets Resolution metadata
+          //
+          // Detect interface implementations: if we have multiple resolutions for a method call,
+          // it's likely from polymorphic interface resolution (task 11.158)
+          const is_interface_impl =
+            call_type === "method" && resolved_symbols.length > 1;
+
+          // For interface implementations, try to find the interface type
+          // by checking the receiver type in the method resolver flow
+          let interface_id: SymbolId | undefined;
+          if (is_interface_impl && ref.kind === "method_call") {
+            // For now, we don't have easy access to the receiver type here
+            // This can be enhanced later if needed for better metadata
+            // For now, we'll just mark multi-candidate method calls as interface_implementation
+            interface_id = undefined; // Could be extracted from type flow if needed
+          }
+
           resolved_calls.push({
             location: ref.location,
             name: ref.name,
@@ -377,7 +393,12 @@ export class ResolutionRegistry {
             resolutions: resolved_symbols.map((symbol_id) => ({
               symbol_id,
               confidence: "certain" as const,
-              reason: { type: "direct" as const },
+              reason: is_interface_impl
+                ? ({
+                    type: "interface_implementation" as const,
+                    interface_id: interface_id || ("unknown" as SymbolId),
+                  } as const)
+                : ({ type: "direct" as const } as const),
             })),
           });
         }

@@ -47,10 +47,9 @@ import type { TypeRegistry } from "../registries/type_registry";
  * Returns:
  * - []: Resolution failed (no receiver, no type, or no method)
  * - [symbol]: Concrete method call (user.getName())
- * - [a, b, c]: Polymorphic method call (handler.process()) - future tasks will add this
+ * - [a, b, c]: Polymorphic method call (handler.process() where handler is an interface)
  *
- * Future tasks (11.158, 11.156.3) will add multi-candidate logic.
- * This task only changes the return type to array.
+ * Task 11.158 adds polymorphic resolution for interface method calls.
  *
  * @param call_ref - Method call reference from semantic index
  * @param scopes - Scope registry (unused, kept for signature compatibility)
@@ -101,9 +100,83 @@ export function resolve_method_call(
     return [];
   }
 
-  // For now, return single element array
-  // Task 11.158 will add polymorphic resolution logic here
+  // Check if this is a polymorphic call (interface)
+  // Note: We only check for interfaces since ClassDefinition doesn't have is_abstract field
+  // Abstract classes could be added in the future if needed
+  const receiver_type_def = definitions.get(receiver_type);
+
+  const is_polymorphic = receiver_type_def?.kind === "interface";
+
+  if (is_polymorphic) {
+    // Polymorphic call: resolve to ALL implementations
+    return resolve_polymorphic_method(
+      receiver_type,
+      call_ref.name,
+      definitions
+    );
+  }
+
+  // Concrete call: single resolution
   return [method_symbol];
+}
+
+/**
+ * Resolve a polymorphic method call to all concrete implementations.
+ *
+ * When a method is called on an interface, we need to find all classes that
+ * implement it and return their implementations of the method.
+ *
+ * Example:
+ * ```typescript
+ * interface Handler {
+ *   process(): void;
+ * }
+ * class HandlerA implements Handler { process() { } }
+ * class HandlerB implements Handler { process() { } }
+ *
+ * function run(handler: Handler) {
+ *   handler.process();  // Resolves to [HandlerA.process, HandlerB.process]
+ * }
+ * ```
+ *
+ * Note: Abstract classes are not currently supported since ClassDefinition
+ * doesn't have an is_abstract field. This can be added in the future.
+ *
+ * @param interface_type_id - SymbolId of the interface
+ * @param method_name - Name of the method being called
+ * @param definitions - Definition registry with type inheritance index
+ * @returns Array of SymbolIds for all implementation methods
+ */
+function resolve_polymorphic_method(
+  interface_type_id: SymbolId,
+  method_name: SymbolName,
+  definitions: DefinitionRegistry
+): SymbolId[] {
+  // Get all types that implement/extend this interface/abstract class
+  const subtypes = definitions.get_subtypes(interface_type_id);
+
+  if (subtypes.size === 0) {
+    // No implementations found - might be an abstract interface with no implementations yet
+    return [];
+  }
+
+  const implementations: SymbolId[] = [];
+  const member_index = definitions.get_member_index();
+
+  // Look up the method in each implementing class
+  for (const subtype_id of subtypes) {
+    const subtype_members = member_index.get(subtype_id);
+    if (!subtype_members) {
+      continue;
+    }
+
+    const impl_method_id = subtype_members.get(method_name);
+    if (impl_method_id) {
+      implementations.push(impl_method_id);
+    }
+  }
+
+  return implementations;
 }
 
 /**

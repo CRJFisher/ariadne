@@ -734,4 +734,328 @@ describe('Method Call Resolution', () => {
       expect(resolved).toEqual([]);
     });
   });
+
+  describe('Polymorphic Interface Resolution (Task 11.158)', () => {
+    it('should resolve interface method call to all implementations', () => {
+      // Setup: interface Handler { process(): void; }
+      //        class HandlerA implements Handler { process() {} }
+      //        class HandlerB implements Handler { process() {} }
+      //        function run(h: Handler) { h.process(); }
+
+      const handler_param_id = variable_symbol('h', MOCK_LOCATION);
+      const interface_id = class_symbol('Handler', TEST_FILE, {
+        ...MOCK_LOCATION,
+        start_line: 1,
+      });
+      const interface_method_id = method_symbol('process', {
+        ...MOCK_LOCATION,
+        start_line: 1,
+        start_column: 20,
+      });
+
+      const handler_a_id = class_symbol('HandlerA', TEST_FILE, {
+        ...MOCK_LOCATION,
+        start_line: 3,
+      });
+      const handler_a_process_id = method_symbol('process', {
+        ...MOCK_LOCATION,
+        start_line: 3,
+        start_column: 20,
+      });
+
+      const handler_b_id = class_symbol('HandlerB', TEST_FILE, {
+        ...MOCK_LOCATION,
+        start_line: 6,
+      });
+      const handler_b_process_id = method_symbol('process', {
+        ...MOCK_LOCATION,
+        start_line: 6,
+        start_column: 20,
+      });
+
+      // Create interface definition
+      const interface_method: MethodDefinition = {
+        kind: 'method',
+        symbol_id: interface_method_id,
+        name: 'process' as SymbolName,
+        defining_scope_id: 'scope:Handler' as ScopeId,
+        location: {
+          ...MOCK_LOCATION,
+          start_line: 1,
+          start_column: 20,
+        },
+        parameters: [],
+      };
+
+      const interface_def: import('@ariadnejs/types').InterfaceDefinition = {
+        kind: 'interface',
+        symbol_id: interface_id,
+        name: 'Handler' as SymbolName,
+        defining_scope_id: FILE_SCOPE_ID,
+        location: { ...MOCK_LOCATION, start_line: 1 },
+        is_exported: false,
+        extends: [],
+        methods: [interface_method],
+        properties: [],
+      };
+
+      // Create HandlerA implementation
+      const handler_a_method: MethodDefinition = {
+        kind: 'method',
+        symbol_id: handler_a_process_id,
+        name: 'process' as SymbolName,
+        defining_scope_id: 'scope:HandlerA' as ScopeId,
+        location: {
+          ...MOCK_LOCATION,
+          start_line: 3,
+          start_column: 20,
+        },
+        parameters: [],
+        body_scope_id: 'scope:HandlerA.process' as ScopeId,
+      };
+
+      const handler_a_def: ClassDefinition = {
+        kind: 'class',
+        symbol_id: handler_a_id,
+        name: 'HandlerA' as SymbolName,
+        defining_scope_id: FILE_SCOPE_ID,
+        location: { ...MOCK_LOCATION, start_line: 3 },
+        is_exported: false,
+        extends: ['Handler' as SymbolName], // implements Handler
+        methods: [handler_a_method],
+        properties: [],
+        decorators: [],
+      };
+
+      // Create HandlerB implementation
+      const handler_b_method: MethodDefinition = {
+        kind: 'method',
+        symbol_id: handler_b_process_id,
+        name: 'process' as SymbolName,
+        defining_scope_id: 'scope:HandlerB' as ScopeId,
+        location: {
+          ...MOCK_LOCATION,
+          start_line: 6,
+          start_column: 20,
+        },
+        parameters: [],
+        body_scope_id: 'scope:HandlerB.process' as ScopeId,
+      };
+
+      const handler_b_def: ClassDefinition = {
+        kind: 'class',
+        symbol_id: handler_b_id,
+        name: 'HandlerB' as SymbolName,
+        defining_scope_id: FILE_SCOPE_ID,
+        location: { ...MOCK_LOCATION, start_line: 6 },
+        is_exported: false,
+        extends: ['Handler' as SymbolName], // implements Handler
+        methods: [handler_b_method],
+        properties: [],
+        decorators: [],
+      };
+
+      // Create parameter definition
+      const param_def: VariableDefinition = {
+        kind: 'variable',
+        symbol_id: handler_param_id,
+        name: 'h' as SymbolName,
+        defining_scope_id: METHOD_SCOPE_ID,
+        location: MOCK_LOCATION,
+      };
+
+      // Register definitions
+      definitions.update_file(TEST_FILE, [
+        interface_def,
+        handler_a_def,
+        handler_b_def,
+        param_def,
+      ]);
+
+      // Set type binding: h has type Handler (interface)
+      types['symbol_types'] = new Map();
+      types['symbol_types'].set(handler_param_id, interface_id);
+
+      // Resolve 'h' in scope
+      const scope_resolutions = new Map<SymbolName, SymbolId>();
+      scope_resolutions.set('h' as SymbolName, handler_param_id);
+      resolutions['resolutions_by_scope'] = new Map();
+      resolutions['resolutions_by_scope'].set(METHOD_SCOPE_ID, scope_resolutions);
+
+      // Create method call: h.process()
+      const call_ref = create_method_call_reference(
+        'process' as SymbolName,
+        MOCK_LOCATION,
+        METHOD_SCOPE_ID,
+        MOCK_RECEIVER_LOCATION,
+        ['h', 'process'] as SymbolName[]
+      );
+
+      // Act
+      const resolved = resolve_method_call(
+        call_ref,
+        scopes,
+        definitions,
+        types,
+        resolutions
+      );
+
+      // Assert: Should resolve to BOTH implementations
+      expect(resolved).toHaveLength(2);
+      expect(resolved).toContain(handler_a_process_id);
+      expect(resolved).toContain(handler_b_process_id);
+    });
+
+    it('should return single resolution for concrete class method call', () => {
+      // Setup: class User { getName(): string {} }
+      //        function test(u: User) { u.getName(); }
+      // This is NOT polymorphic - should return single resolution
+
+      const user_param_id = variable_symbol('u', MOCK_LOCATION);
+      const class_id = class_symbol('User', TEST_FILE, MOCK_LOCATION);
+      const method_id = method_symbol('getName', {
+        ...MOCK_LOCATION,
+        start_line: 2,
+      });
+
+      const method_def: MethodDefinition = {
+        kind: 'method',
+        symbol_id: method_id,
+        name: 'getName' as SymbolName,
+        defining_scope_id: CLASS_SCOPE_ID,
+        location: { ...MOCK_LOCATION, start_line: 2 },
+        parameters: [],
+        body_scope_id: 'scope:User.getName' as ScopeId,
+      };
+
+      const class_def: ClassDefinition = {
+        kind: 'class',
+        symbol_id: class_id,
+        name: 'User' as SymbolName,
+        defining_scope_id: FILE_SCOPE_ID,
+        location: MOCK_LOCATION,
+        is_exported: false,
+        extends: [],
+        methods: [method_def],
+        properties: [],
+        decorators: [],
+      };
+
+      const param_def: VariableDefinition = {
+        kind: 'variable',
+        symbol_id: user_param_id,
+        name: 'u' as SymbolName,
+        defining_scope_id: METHOD_SCOPE_ID,
+        location: MOCK_LOCATION,
+      };
+
+      definitions.update_file(TEST_FILE, [class_def, param_def]);
+
+      // Set type binding
+      types['symbol_types'] = new Map();
+      types['symbol_types'].set(user_param_id, class_id);
+
+      // Resolve 'u' in scope
+      const scope_resolutions = new Map<SymbolName, SymbolId>();
+      scope_resolutions.set('u' as SymbolName, user_param_id);
+      resolutions['resolutions_by_scope'] = new Map();
+      resolutions['resolutions_by_scope'].set(METHOD_SCOPE_ID, scope_resolutions);
+
+      // Create method call: u.getName()
+      const call_ref = create_method_call_reference(
+        'getName' as SymbolName,
+        MOCK_LOCATION,
+        METHOD_SCOPE_ID,
+        MOCK_RECEIVER_LOCATION,
+        ['u', 'getName'] as SymbolName[]
+      );
+
+      // Act
+      const resolved = resolve_method_call(
+        call_ref,
+        scopes,
+        definitions,
+        types,
+        resolutions
+      );
+
+      // Assert: Should return single resolution (not polymorphic)
+      expect(resolved).toEqual([method_id]);
+    });
+
+    it('should return empty array when interface has no implementations', () => {
+      // Setup: interface EmptyHandler { process(): void; }
+      //        function run(h: EmptyHandler) { h.process(); }
+      // No implementations exist
+
+      const handler_param_id = variable_symbol('h', MOCK_LOCATION);
+      const interface_id = class_symbol('EmptyHandler', TEST_FILE, MOCK_LOCATION);
+      const interface_method_id = method_symbol('process', {
+        ...MOCK_LOCATION,
+        start_line: 1,
+      });
+
+      const interface_method: MethodDefinition = {
+        kind: 'method',
+        symbol_id: interface_method_id,
+        name: 'process' as SymbolName,
+        defining_scope_id: 'scope:EmptyHandler' as ScopeId,
+        location: { ...MOCK_LOCATION, start_line: 1 },
+        parameters: [],
+      };
+
+      const interface_def: import('@ariadnejs/types').InterfaceDefinition = {
+        kind: 'interface',
+        symbol_id: interface_id,
+        name: 'EmptyHandler' as SymbolName,
+        defining_scope_id: FILE_SCOPE_ID,
+        location: MOCK_LOCATION,
+        is_exported: false,
+        extends: [],
+        methods: [interface_method],
+        properties: [],
+      };
+
+      const param_def: VariableDefinition = {
+        kind: 'variable',
+        symbol_id: handler_param_id,
+        name: 'h' as SymbolName,
+        defining_scope_id: METHOD_SCOPE_ID,
+        location: MOCK_LOCATION,
+      };
+
+      definitions.update_file(TEST_FILE, [interface_def, param_def]);
+
+      // Set type binding
+      types['symbol_types'] = new Map();
+      types['symbol_types'].set(handler_param_id, interface_id);
+
+      // Resolve 'h' in scope
+      const scope_resolutions = new Map<SymbolName, SymbolId>();
+      scope_resolutions.set('h' as SymbolName, handler_param_id);
+      resolutions['resolutions_by_scope'] = new Map();
+      resolutions['resolutions_by_scope'].set(METHOD_SCOPE_ID, scope_resolutions);
+
+      // Create method call: h.process()
+      const call_ref = create_method_call_reference(
+        'process' as SymbolName,
+        MOCK_LOCATION,
+        METHOD_SCOPE_ID,
+        MOCK_RECEIVER_LOCATION,
+        ['h', 'process'] as SymbolName[]
+      );
+
+      // Act
+      const resolved = resolve_method_call(
+        call_ref,
+        scopes,
+        definitions,
+        types,
+        resolutions
+      );
+
+      // Assert: Should return empty array (no implementations found)
+      expect(resolved).toEqual([]);
+    });
+  });
 });
