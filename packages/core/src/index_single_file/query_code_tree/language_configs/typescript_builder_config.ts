@@ -43,6 +43,7 @@ import {
   extract_property_initial_value,
   is_parameter_in_function_type,
   extract_class_extends,
+  extract_implements,
   detect_callback_context,
 } from "./typescript_builder";
 
@@ -408,8 +409,11 @@ export const TYPESCRIPT_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
         const parent = capture.node.parent; // class_declaration or abstract_class_declaration
         const export_info = extract_export_info(capture.node, capture.text);
 
-        // Extract extends using the helper function
+        // Extract both extends and implements, combining into unified extends field
+        // Task 11.158: For polymorphic resolution, both inheritance and implementation work the same way
         const extends_classes = parent ? extract_class_extends(parent) : [];
+        const implements_interfaces = parent ? extract_implements(parent) : [];
+        const all_extends = [...extends_classes, ...implements_interfaces];
 
         builder.add_class({
           symbol_id: class_id,
@@ -418,7 +422,7 @@ export const TYPESCRIPT_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
           scope_id: context.get_scope_id(capture.location),
           is_exported: export_info.is_exported,
           export: export_info.export,
-          extends: extends_classes,
+          extends: all_extends,
           generics: parent ? extract_type_parameters(parent) : [],
         });
       },

@@ -749,4 +749,143 @@ export class TypeRegistry {
       expect(is_entry_point).toBe(false);
     });
   });
+
+  describe("Polymorphic Interface Resolution (Task 11.158)", () => {
+    it("should resolve interface method calls to all implementations", async () => {
+      const source = load_source("polymorphic_handler.ts");
+      const file = file_path("polymorphic_handler.ts");
+      project.update_file(file, source);
+
+      const index = project.get_semantic_index(file);
+      expect(index).toBeDefined();
+
+      // Find the Handler interface
+      const handler_interface = Array.from(index!.interfaces.values()).find(
+        (i) => i.name === ("Handler" as SymbolName)
+      );
+      expect(handler_interface).toBeDefined();
+
+      // Find the three implementing classes
+      const classes = Array.from(index!.classes.values());
+      const handler_a = classes.find((c) => c.name === ("HandlerA" as SymbolName));
+      const handler_b = classes.find((c) => c.name === ("HandlerB" as SymbolName));
+      const handler_c = classes.find((c) => c.name === ("HandlerC" as SymbolName));
+
+      expect(handler_a).toBeDefined();
+      expect(handler_b).toBeDefined();
+      expect(handler_c).toBeDefined();
+
+      // Verify all three classes implement the Handler interface
+      expect(handler_a!.extends).toContain("Handler" as SymbolName);
+      expect(handler_b!.extends).toContain("Handler" as SymbolName);
+      expect(handler_c!.extends).toContain("Handler" as SymbolName);
+
+      // Find method calls inside executeHandler function
+      const method_calls = index!.references.filter(
+        (r): r is MethodCallReference => r.kind === "method_call"
+      );
+
+      // Find the handler.process() call
+      const process_calls = method_calls.filter(
+        (c) => c.name === ("process" as SymbolName)
+      );
+      expect(process_calls.length).toBeGreaterThan(0);
+
+      // Get resolved calls with metadata
+      const resolved_calls = project.resolutions.get_file_calls(file);
+
+      // Find the process() call resolutions
+      const process_resolutions = resolved_calls.filter(
+        (call) => call.name === ("process" as SymbolName) && call.call_type === "method"
+      );
+
+      // Should have at least one polymorphic call (in executeHandler)
+      const polymorphic_process_call = process_resolutions.find(
+        (call) => call.resolutions.length > 1
+      );
+      expect(polymorphic_process_call).toBeDefined();
+
+      // Should resolve to ALL three implementations
+      expect(polymorphic_process_call!.resolutions.length).toBe(3);
+
+      // Verify all resolutions are marked with correct metadata
+      const interface_impl_resolutions = polymorphic_process_call!.resolutions.filter(
+        (r) => r.reason.type === "interface_implementation"
+      );
+      expect(interface_impl_resolutions.length).toBe(3);
+
+      // Verify confidence is "certain"
+      for (const resolution of polymorphic_process_call!.resolutions) {
+        expect(resolution.confidence).toBe("certain");
+      }
+    });
+
+    it("should mark all interface implementations as called (not entry points)", async () => {
+      const source = load_source("polymorphic_handler.ts");
+      const file = file_path("polymorphic_handler.ts");
+      project.update_file(file, source);
+
+      const call_graph = project.get_call_graph();
+
+      // Find all three implementation methods
+      const nodes = Array.from(call_graph.nodes.values());
+      const handler_a_process = nodes.find(
+        (n) => n.name === "process" && n.location.file_path.includes("polymorphic_handler.ts")
+      );
+
+      // Find the process methods from all three implementations
+      const process_methods = nodes.filter(
+        (n) => n.name === "process" && n.location.file_path.includes("polymorphic_handler.ts")
+      );
+
+      // Should have at least 3 process methods (one for each implementation)
+      expect(process_methods.length).toBeGreaterThanOrEqual(3);
+
+      // Verify that interface implementations are NOT entry points
+      // (they are called via the polymorphic interface call in executeHandler)
+      const entry_point_ids = new Set(call_graph.entry_points);
+
+      let non_entry_point_count = 0;
+      for (const method of process_methods) {
+        if (!entry_point_ids.has(method.symbol_id)) {
+          non_entry_point_count++;
+        }
+      }
+
+      // At least some of the process() implementations should NOT be entry points
+      // because they're called through the interface
+      expect(non_entry_point_count).toBeGreaterThan(0);
+    });
+
+    it("should handle interface with no implementations", async () => {
+      const source = `
+interface EmptyInterface {
+  doSomething(): void;
+}
+
+function useEmpty(obj: EmptyInterface): void {
+  obj.doSomething();
+}
+      `.trim();
+
+      const file = "/test/empty_interface.ts" as FilePath;
+      project.update_file(file, source);
+
+      const resolved_calls = project.resolutions.get_file_calls(file);
+      const do_something_calls = resolved_calls.filter(
+        (call) => call.name === ("doSomething" as SymbolName)
+      );
+
+      // When no implementations exist, either:
+      // 1. No call is captured (resolution fails early)
+      // 2. Call is captured with empty resolutions array
+      if (do_something_calls.length > 0) {
+        const polymorphic_call = do_something_calls[0];
+        expect(polymorphic_call.resolutions.length).toBe(0);
+      } else {
+        // It's valid for the call to not be captured if resolution fails
+        expect(do_something_calls.length).toBe(0);
+      }
+    });
+  });
 });

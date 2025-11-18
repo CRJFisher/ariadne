@@ -210,12 +210,16 @@ export function extract_class_extends(node: SyntaxNode): SymbolName[] {
  * Extract implements interfaces for classes
  */
 export function extract_implements(node: SyntaxNode): SymbolName[] {
-  const heritage = node.childForFieldName?.("heritage");
+  // Find class_heritage by searching children (it's NOT a field)
+  const heritage = node.namedChildren?.find(c => c.type === "class_heritage");
+
   if (heritage) {
-    const implementsClause = heritage.childForFieldName?.("implements_clause");
+    // Find implements_clause within heritage (also not a field)
+    const implementsClause = heritage.namedChildren?.find(c => c.type === "implements_clause");
+
     if (implementsClause) {
       const interfaces: SymbolName[] = [];
-      for (const child of implementsClause.children || []) {
+      for (const child of implementsClause.namedChildren || []) {
         if (child.type === "type_identifier") {
           interfaces.push(child.text as SymbolName);
         }
