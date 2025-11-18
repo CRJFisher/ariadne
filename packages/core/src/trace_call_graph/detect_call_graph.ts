@@ -4,7 +4,16 @@ import type { ResolutionRegistry } from "../resolve_references/resolution_regist
 
 /**
  * Build function nodes with their enclosed calls.
- * Note: Working with current SymbolReference until enclosing_function_scope_id is added
+ *
+ * Each node contains:
+ * - symbol_id: The function/method identifier
+ * - enclosed_calls: All calls made from this function's body
+ *   - Each CallReference has resolutions array with all possible targets
+ *   - Multi-candidate calls have multiple resolutions (polymorphic, collection, etc.)
+ *
+ * @param definitions - Definition registry containing all callable definitions
+ * @param resolutions - Resolution registry with resolved call references
+ * @returns Map of symbol_id to CallableNode
  */
 function build_function_nodes(
   definitions: DefinitionRegistry,
@@ -46,10 +55,13 @@ function build_function_nodes(
  *
  * Algorithm:
  * 1. Get set of all SymbolIds that are referenced (called)
+ *    - Includes ALL symbols from ALL resolutions (handles multi-candidate calls)
+ *    - Polymorphic calls mark all implementations as called
+ *    - Collection dispatch marks all stored functions as called
  * 2. Find function nodes whose SymbolId is NOT in that set
  *
  * @param nodes - All function nodes in the call graph
- * @param resolutions - Resolution cache (to find what's called)
+ * @param resolutions - Resolution registry (get_all_referenced_symbols iterates all resolutions)
  * @returns Array of SymbolIds that are entry points
  */
 function detect_entry_points(
@@ -57,6 +69,7 @@ function detect_entry_points(
   resolutions: ResolutionRegistry
 ): SymbolId[] {
   // Get all SymbolIds that are referenced (called)
+  // This correctly handles multi-candidate calls by processing all resolutions
   const called_symbols = resolutions.get_all_referenced_symbols();
 
   // Entry points are functions NOT in the called set
@@ -73,6 +86,19 @@ function detect_entry_points(
 
 /**
  * Detect the call graph from semantic indexes and registries
+ *
+ * Returns a CallGraph with:
+ * - nodes: Map of callable symbols to their CallableNode (contains enclosed_calls)
+ * - entry_points: Array of SymbolIds for functions never called
+ *
+ * Multi-candidate resolution support:
+ * - CallReference.resolutions contains all possible targets for each call
+ * - Entry point detection processes all resolutions (marks all candidates as called)
+ * - No special handling needed - works correctly with single or multiple resolutions
+ *
+ * @param definitions - Definition registry with all function/method definitions
+ * @param resolutions - Resolution registry with resolved call references
+ * @returns CallGraph with nodes and entry points
  */
 export function detect_call_graph(
   definitions: DefinitionRegistry,

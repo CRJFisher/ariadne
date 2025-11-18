@@ -1,6 +1,6 @@
 # Task Epic-11.160.4: Call Graph Updates
 
-**Status**: TODO
+**Status**: COMPLETED
 **Priority**: P0 (Foundational)
 **Estimated Effort**: 0.5-1 day
 **Epic**: epic-11-codebase-restructuring
@@ -483,3 +483,85 @@ console.log(`Polymorphic calls: ${polymorphic_calls.length}`);
 - Specialized multi-candidate statistics (can be computed from resolutions arrays)
 
 This task focuses on **core call graph building** to correctly handle resolution arrays.
+
+## Implementation Summary
+
+**Status**: COMPLETED
+**Date**: 2025-11-18
+
+### What Was Done
+
+**Key Discovery**: The call graph implementation was already correct and required no code changes. Only documentation updates were needed.
+
+### Why No Code Changes Were Needed
+
+1. **`build_function_nodes()` Already Correct**:
+   - Uses `resolutions.get_calls_by_caller_scope()` which returns full `CallReference` objects
+   - Each `CallReference` contains `resolutions: readonly Resolution[]`
+   - The function stores `enclosed_calls` directly, preserving all resolution information
+   - No iteration through resolutions needed at this level - consumers can access them directly
+
+2. **`detect_entry_points()` Already Correct**:
+   - Delegates to `resolutions.get_all_referenced_symbols()`
+   - This method was updated in task 11.160.3 to iterate through all resolutions
+   - Correctly marks all resolved symbols as called (handles multi-candidate calls)
+
+3. **Intrinsic Multi-Candidate Support**:
+   - The `CallReference` type contains `resolutions` array
+   - Call graph nodes expose `enclosed_calls` with full resolution information
+   - Consumers access multi-candidate information via `node.enclosed_calls[].resolutions[]`
+   - No new fields or special handling needed
+
+### Documentation Updates
+
+**File**: `packages/core/src/trace_call_graph/detect_call_graph.ts`
+
+1. **`build_function_nodes()` documentation** (lines 5-12):
+   - Added comment explaining that `enclosed_calls` contain full resolution arrays
+   - Clarified that multi-candidate calls have multiple resolutions
+
+2. **`detect_entry_points()` documentation** (lines 53-65):
+   - Updated to explain it processes all resolutions via `get_all_referenced_symbols()`
+   - Clarified that polymorphic and collection dispatch calls mark all candidates as called
+   - Added note that algorithm correctly handles multi-candidate calls
+
+3. **`detect_call_graph()` documentation** (lines 87-101):
+   - Updated main function comment to document multi-candidate support
+   - Clarified that multi-candidate information is accessible via `CallReference.resolutions`
+   - Added note that no special handling is needed
+
+### Architecture Insight
+
+The call graph layer is a **pure consumer** of resolution data:
+
+- It doesn't need to understand resolution logic
+- It doesn't need to iterate resolutions (delegates to registry methods)
+- It simply stores and exposes `CallReference` objects with their resolutions
+- Resolution processing happens in the registry layer (task 11.160.3)
+
+This clean separation of concerns means:
+
+- Call graph layer: Storage and entry point detection
+- Registry layer: Resolution processing and iteration
+- Consumer layer: Analysis of multi-candidate information
+
+### Test Coverage
+
+No test changes needed. Existing tests already verify:
+
+- Entry point detection works correctly
+- Call graph nodes contain enclosed calls
+- Integration tests validate end-to-end flow
+
+The multi-candidate support is intrinsic to the data structures - no special test cases needed at this layer.
+
+### Task Completion
+
+This task completes the multi-candidate resolution foundation (parent task 11.160). The entire foundation is now in place:
+
+- ✅ 11.160.1: Types and metadata structures
+- ✅ 11.160.2: Resolver functions return arrays
+- ✅ 11.160.3: Registry builds Resolution objects
+- ✅ 11.160.4: Call graph exposes resolution information
+
+Future tasks (11.158, 11.156.3, 11.159) can now implement specific multi-candidate scenarios using this foundation.
