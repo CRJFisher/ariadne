@@ -237,7 +237,7 @@ describe("Self-Reference Call Resolution", () => {
       const resolved = resolve_self_reference_call(call_ref, scopes, definitions, types);
 
       // Assert
-      expect(resolved).toBe(method_id);
+      expect(resolved).toEqual([method_id]);
     });
 
     it("should resolve this.method() from nested block scope", () => {
@@ -258,7 +258,7 @@ describe("Self-Reference Call Resolution", () => {
 
       const resolved = resolve_self_reference_call(call_ref, scopes, definitions, types);
 
-      expect(resolved).toBe(method_id);
+      expect(resolved).toEqual([method_id]);
     });
 
     it("should resolve different this.method() calls to different methods", () => {
@@ -384,7 +384,7 @@ describe("Self-Reference Call Resolution", () => {
       );
 
       const resolved_a = resolve_self_reference_call(call_a, scopes, definitions, types);
-      expect(resolved_a).toBe(method_a_id);
+      expect(resolved_a).toEqual([method_a_id]);
 
       // Test this.methodB()
       const call_b = create_self_reference_call(
@@ -396,7 +396,7 @@ describe("Self-Reference Call Resolution", () => {
       );
 
       const resolved_b = resolve_self_reference_call(call_b, scopes, definitions, types);
-      expect(resolved_b).toBe(method_b_id);
+      expect(resolved_b).toEqual([method_b_id]);
     });
   });
 
@@ -422,7 +422,7 @@ describe("Self-Reference Call Resolution", () => {
 
       const resolved = resolve_self_reference_call(call_ref, scopes, definitions, types);
 
-      expect(resolved).toBe(method_id);
+      expect(resolved).toEqual([method_id]);
     });
   });
 
@@ -448,7 +448,7 @@ describe("Self-Reference Call Resolution", () => {
 
       const resolved = resolve_self_reference_call(call_ref, scopes, definitions, types);
 
-      expect(resolved).toBe(method_id);
+      expect(resolved).toEqual([method_id]);
     });
   });
 
@@ -685,7 +685,7 @@ describe("Self-Reference Call Resolution", () => {
 
       const resolved = resolve_self_reference_call(call_ref, scopes, definitions, types);
 
-      expect(resolved).toBeNull();
+      expect(resolved).toEqual([]);
     });
 
     it("should return null when this.method() used outside class", () => {
@@ -726,7 +726,7 @@ describe("Self-Reference Call Resolution", () => {
 
       const resolved = resolve_self_reference_call(call_ref, scopes, definitions, types);
 
-      expect(resolved).toBeNull(); // No containing class
+      expect(resolved).toEqual([]); // No containing class
     });
 
     it("should return null when super called but no parent class", () => {
@@ -743,7 +743,7 @@ describe("Self-Reference Call Resolution", () => {
 
       const resolved = resolve_self_reference_call(call_ref, scopes, definitions, types);
 
-      expect(resolved).toBeNull(); // No parent class
+      expect(resolved).toEqual([]); // No parent class
     });
   });
 
@@ -850,7 +850,7 @@ describe("Self-Reference Call Resolution", () => {
 
       const resolved = resolve_self_reference_call(call_ref, scopes, definitions, types);
 
-      expect(resolved).toBe(method_id);
+      expect(resolved).toEqual([method_id]);
     });
   });
 });

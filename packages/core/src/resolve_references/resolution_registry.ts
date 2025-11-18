@@ -14,8 +14,8 @@ import type { ScopeRegistry } from "./registries/scope_registry";
 import type { ExportRegistry } from "./registries/export_registry";
 import type { ReferenceRegistry } from "./registries/reference_registry";
 import type { ImportGraph } from "../project/import_graph";
-import { resolve_single_method_call } from "./call_resolution";
-import { resolve_single_constructor_call } from "./call_resolution/constructor_resolver";
+import { resolve_method_call } from "./call_resolution";
+import { resolve_constructor_call } from "./call_resolution/constructor_resolver";
 import { resolve_self_reference_call } from "./call_resolution/self_reference_resolver";
 import { find_enclosing_function_scope } from "../index_single_file/scopes/scope_utils";
 
@@ -256,6 +256,12 @@ export class ResolutionRegistry {
    * - Type narrowing provides type safety in each case
    * - Exhaustiveness checking ensures all variants handled
    *
+   * Resolution Results:
+   * - Resolvers now return SymbolId[] instead of SymbolId | null
+   * - [] means resolution failed
+   * - [symbol] means concrete resolution
+   * - [a, b, c] means multi-candidate resolution (future tasks)
+   *
    * @param file_references - Map of file_path → references
    * @param scopes - Scope registry (for method resolution)
    * @param types - Type registry (provides type information directly)
@@ -272,14 +278,14 @@ export class ResolutionRegistry {
 
     for (const references of file_references.values()) {
       for (const ref of references) {
-        let resolved: SymbolId | null = null;
+        let resolved_symbols: SymbolId[] = [];
 
         // Dispatch on discriminated union kind field
         switch (ref.kind) {
           case "self_reference_call":
             // Self-reference calls: this.method(), self.method(), super.method()
             // TypeScript knows ref is SelfReferenceCall here
-            resolved = resolve_self_reference_call(
+            resolved_symbols = resolve_self_reference_call(
               ref,
               scopes,
               definitions,
@@ -290,7 +296,7 @@ export class ResolutionRegistry {
           case "method_call":
             // Method calls: obj.method()
             // TypeScript knows ref is MethodCallReference here
-            resolved = resolve_single_method_call(
+            resolved_symbols = resolve_method_call(
               ref,
               scopes,
               definitions,
@@ -299,17 +305,19 @@ export class ResolutionRegistry {
             );
             break;
 
-          case "function_call":
+          case "function_call": {
             // Function calls: func()
             // TypeScript knows ref is FunctionCallReference here
             // Resolve using lexical scope
-            resolved = this.resolve(ref.scope_id, ref.name);
+            const func_symbol = this.resolve(ref.scope_id, ref.name);
+            resolved_symbols = func_symbol ? [func_symbol] : [];
             break;
+          }
 
           case "constructor_call":
             // Constructor calls: new MyClass()
             // TypeScript knows ref is ConstructorCallReference here
-            resolved = resolve_single_constructor_call(
+            resolved_symbols = resolve_constructor_call(
               ref,
               definitions,
               this,
@@ -334,7 +342,9 @@ export class ResolutionRegistry {
         }
 
         // Store resolved call - transform discriminated union to CallReference format
-        if (resolved) {
+        // For now, we only handle single-candidate resolutions (backward compatibility)
+        // Future tasks will populate the full resolutions array with metadata
+        if (resolved_symbols.length > 0) {
           // Determine call_type from discriminated union kind
           let call_type: "function" | "method" | "constructor";
           switch (ref.kind) {
@@ -359,9 +369,11 @@ export class ResolutionRegistry {
               );
           }
 
+          // TEMPORARY: Use first symbol for backward compatibility with old CallReference.symbol_id
+          // Task 11.160.3 will update this to properly populate resolutions array with metadata
           resolved_calls.push({
             location: ref.location,
-            symbol_id: resolved,
+            symbol_id: resolved_symbols[0],
             name: ref.name,
             scope_id: ref.scope_id,
             call_type,

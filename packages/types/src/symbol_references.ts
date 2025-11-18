@@ -1,7 +1,7 @@
 import type { Location } from "./common";
 import type { ScopeId } from "./scopes";
 import type { TypeInfo } from "./semantic_index";
-import type { SymbolName } from "./symbol";
+import type { SymbolName, SymbolId } from "./symbol";
 
 /**
  * Discriminated union of all reference types
@@ -264,4 +264,41 @@ export function is_type_reference(ref: SymbolReference): ref is TypeReference {
 
 export function is_assignment(ref: SymbolReference): ref is AssignmentReference {
   return ref.kind === "assignment";
+}
+
+// ============================================================================
+// Resolution Types
+// ============================================================================
+
+/**
+ * Confidence level for symbol resolution
+ */
+export type ResolutionConfidence =
+  | "certain"    // Definite resolution (direct or all polymorphic implementations)
+  | "probable"   // High-confidence heuristic match
+  | "possible";  // Lower-confidence candidate
+
+/**
+ * Structured reason for resolution
+ *
+ * Discriminated union allows type-safe analysis and serialization.
+ */
+export type ResolutionReason =
+  | { type: "direct" }
+  | { type: "interface_implementation"; interface_id: SymbolId }
+  | { type: "collection_member"; collection_id: SymbolId; access_pattern?: string }
+  | { type: "heuristic_match"; score: number };
+
+/**
+ * Single resolution candidate with metadata
+ */
+export interface Resolution {
+  /** Resolved symbol identifier */
+  symbol_id: SymbolId;
+
+  /** Confidence level for this resolution */
+  confidence: ResolutionConfidence;
+
+  /** Structured reason explaining why this symbol was selected */
+  reason: ResolutionReason;
 }

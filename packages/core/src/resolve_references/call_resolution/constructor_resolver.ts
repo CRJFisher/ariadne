@@ -23,7 +23,7 @@ import type { DefinitionRegistry } from "../registries/definition_registry";
 import type { ResolutionRegistry } from "../resolution_registry";
 
 /**
- * Resolve a single constructor call reference.
+ * Resolve a constructor call to zero, one, or more symbols
  *
  * EAGER approach: Uses pre-computed resolutions from ResolutionRegistry.
  *
@@ -36,18 +36,25 @@ import type { ResolutionRegistry } from "../resolution_registry";
  * are not yet supported in eager resolution. This is a rare case that
  * can be added as a future enhancement.
  *
+ * Returns:
+ * - []: Resolution failed (no class found or not a class)
+ * - [symbol]: Concrete constructor call (new User())
+ *
+ * Future tasks (11.158, 11.156.3) will add multi-candidate logic.
+ * This task only changes the return type to array.
+ *
  * @param call_ref - Constructor call reference from semantic index
  * @param definitions - Definition registry for class lookup
  * @param resolutions - Resolution registry with eager resolutions
  * @param _types - TypeRegistry (unused, kept for signature compatibility)
- * @returns Resolved constructor/class symbol_id or null if resolution fails
+ * @returns Array of resolved constructor/class symbol_ids (empty if resolution fails)
  */
-export function resolve_single_constructor_call(
+export function resolve_constructor_call(
   call_ref: SymbolReference,
   definitions: DefinitionRegistry,
   resolutions: ResolutionRegistry,
   _types: TypeRegistry
-): SymbolId | null {
+): SymbolId[] {
   // Step 1: Resolve class name using EAGER resolution
   // The call_ref.name contains the class name (e.g., "User" in new User())
   const class_symbol = resolutions.resolve(
@@ -57,7 +64,7 @@ export function resolve_single_constructor_call(
 
   if (!class_symbol) {
     // Class name not found in scope (undefined class or missing import)
-    return null;
+    return [];
   }
 
   // Step 2: Verify it's actually a class and get constructor
@@ -65,7 +72,7 @@ export function resolve_single_constructor_call(
 
   if (!class_def) {
     // Symbol is not a class (might be variable, function, etc.)
-    return null;
+    return [];
   }
 
   // Step 3: Return constructor symbol if exists, otherwise class symbol
@@ -74,7 +81,7 @@ export function resolve_single_constructor_call(
     (method) => method.name === "constructor"
   )?.symbol_id;
 
-  return constructor_symbol || class_symbol;
+  return [constructor_symbol || class_symbol];
 }
 
 

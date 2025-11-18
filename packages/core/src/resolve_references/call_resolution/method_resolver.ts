@@ -36,7 +36,7 @@ import type { TypeRegistry } from "../registries/type_registry";
 
 
 /**
- * Resolve a single method call reference
+ * Resolve a method call to zero, one, or more symbols
  *
  * Four-step resolution:
  * 1. Resolve receiver symbol (e.g., "user" in user.getName())
@@ -44,26 +44,28 @@ import type { TypeRegistry } from "../registries/type_registry";
  * 3. Get receiver's type (e.g., User class)
  * 4. Look up method/member on type or namespace
  *
- * Returns null if any step fails:
- * - No receiver location in context
- * - Receiver not found in scope
- * - Receiver has no type information and is not a namespace
- * - Type/namespace doesn't have the method/member
+ * Returns:
+ * - []: Resolution failed (no receiver, no type, or no method)
+ * - [symbol]: Concrete method call (user.getName())
+ * - [a, b, c]: Polymorphic method call (handler.process()) - future tasks will add this
+ *
+ * Future tasks (11.158, 11.156.3) will add multi-candidate logic.
+ * This task only changes the return type to array.
  *
  * @param call_ref - Method call reference from semantic index
  * @param scopes - Scope registry (unused, kept for signature compatibility)
  * @param definitions - Definition registry (unused, kept for signature compatibility)
  * @param types - TypeRegistry for type tracking and member lookup
  * @param resolutions - Resolution registry for eager receiver resolution
- * @returns Resolved method symbol_id or null if resolution fails
+ * @returns Array of resolved method symbol_ids (empty if resolution fails)
  */
-export function resolve_single_method_call(
+export function resolve_method_call(
   call_ref: MethodCallReference,
   scopes: ScopeRegistry,
   definitions: DefinitionRegistry,
   types: TypeRegistry,
   resolutions: ResolutionRegistry
-): SymbolId | null {
+): SymbolId[] {
   // Resolve the receiver type from property chain
   // No more chain length branching - all method calls use same logic
   const receiver_type = resolve_property_chain(
@@ -75,7 +77,7 @@ export function resolve_single_method_call(
   );
 
   if (!receiver_type) {
-    return null;
+    return [];
   }
 
   // Step 4: Look up method on that type
@@ -95,7 +97,13 @@ export function resolve_single_method_call(
     }
   }
 
-  return method_symbol;
+  if (!method_symbol) {
+    return [];
+  }
+
+  // For now, return single element array
+  // Task 11.158 will add polymorphic resolution logic here
+  return [method_symbol];
 }
 
 /**

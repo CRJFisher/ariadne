@@ -1,17 +1,17 @@
 /**
  * Tests for Method Call Resolution
  *
- * Verifies that resolve_single_method_call() correctly:
+ * Verifies that resolve_method_call() correctly:
  * 1. Resolves basic obj.method() calls
  * 2. Resolves method calls after constructor
  * 3. Resolves chained method calls
  * 4. Resolves property access chains
- * 5. Returns null for unresolved cases
+ * 5. Returns empty array for unresolved cases
  * 6. Handles namespace imports (utils.helper())
  */
 
 import { describe, it, expect, beforeEach } from 'vitest';
-import { resolve_single_method_call } from './method_resolver';
+import { resolve_method_call } from './method_resolver';
 import { ScopeRegistry } from '../registries/scope_registry';
 import { DefinitionRegistry } from '../registries/definition_registry';
 import { TypeRegistry } from '../registries/type_registry';
@@ -154,7 +154,7 @@ describe('Method Call Resolution', () => {
       );
 
       // Act
-      const resolved = resolve_single_method_call(
+      const resolved = resolve_method_call(
         call_ref,
         scopes,
         definitions,
@@ -163,7 +163,7 @@ describe('Method Call Resolution', () => {
       );
 
       // Assert
-      expect(resolved).toBe(method_id);
+      expect(resolved).toEqual([method_id]);
     });
 
     it('should resolve method call using TypeRegistry.get_type_member', () => {
@@ -212,7 +212,7 @@ describe('Method Call Resolution', () => {
       );
 
       // Act
-      const resolved = resolve_single_method_call(
+      const resolved = resolve_method_call(
         call_ref,
         scopes,
         definitions,
@@ -221,7 +221,7 @@ describe('Method Call Resolution', () => {
       );
 
       // Assert
-      expect(resolved).toBe(method_id);
+      expect(resolved).toEqual([method_id]);
     });
   });
 
@@ -272,7 +272,7 @@ describe('Method Call Resolution', () => {
       );
 
       // Act
-      const resolved = resolve_single_method_call(
+      const resolved = resolve_method_call(
         call_ref,
         scopes,
         definitions,
@@ -281,7 +281,7 @@ describe('Method Call Resolution', () => {
       );
 
       // Assert
-      expect(resolved).toBe(method_id);
+      expect(resolved).toEqual([method_id]);
     });
   });
 
@@ -341,7 +341,7 @@ describe('Method Call Resolution', () => {
         ['builder', 'setName'] as SymbolName[]
       );
 
-      const resolved_first = resolve_single_method_call(
+      const resolved_first = resolve_method_call(
         first_call,
         scopes,
         definitions,
@@ -349,7 +349,7 @@ describe('Method Call Resolution', () => {
         resolutions
       );
 
-      expect(resolved_first).toBe(set_name_id);
+      expect(resolved_first).toEqual([set_name_id]);
 
       // Test second call: (result).setAge()
       // NOTE: In real resolution, the property_chain would be:
@@ -363,7 +363,7 @@ describe('Method Call Resolution', () => {
         ['builder', 'setAge'] as SymbolName[]
       );
 
-      const resolved_second = resolve_single_method_call(
+      const resolved_second = resolve_method_call(
         second_call,
         scopes,
         definitions,
@@ -371,7 +371,7 @@ describe('Method Call Resolution', () => {
         resolutions
       );
 
-      expect(resolved_second).toBe(set_age_id);
+      expect(resolved_second).toEqual([set_age_id]);
     });
   });
 
@@ -437,7 +437,7 @@ describe('Method Call Resolution', () => {
       );
 
       // Act
-      const resolved = resolve_single_method_call(
+      const resolved = resolve_method_call(
         call_ref,
         scopes,
         definitions,
@@ -446,7 +446,7 @@ describe('Method Call Resolution', () => {
       );
 
       // Assert
-      expect(resolved).toBe(method_id);
+      expect(resolved).toEqual([method_id]);
     });
   });
 
@@ -522,7 +522,7 @@ describe('Method Call Resolution', () => {
       );
 
       // Act
-      const resolved = resolve_single_method_call(
+      const resolved = resolve_method_call(
         call_ref,
         scopes,
         definitions,
@@ -569,7 +569,7 @@ describe('Method Call Resolution', () => {
       );
 
       // Act
-      const resolved = resolve_single_method_call(
+      const resolved = resolve_method_call(
         call_ref,
         scopes,
         definitions,
@@ -578,7 +578,7 @@ describe('Method Call Resolution', () => {
       );
 
       // Assert
-      expect(resolved).toBeNull();
+      expect(resolved).toEqual([]);
     });
 
     it('should return null when receiver not in scope', () => {
@@ -599,7 +599,7 @@ describe('Method Call Resolution', () => {
       );
 
       // Act
-      const resolved = resolve_single_method_call(
+      const resolved = resolve_method_call(
         call_ref,
         scopes,
         definitions,
@@ -608,7 +608,7 @@ describe('Method Call Resolution', () => {
       );
 
       // Assert
-      expect(resolved).toBeNull();
+      expect(resolved).toEqual([]);
     });
 
     it('should return null when method not on type', () => {
@@ -649,7 +649,7 @@ describe('Method Call Resolution', () => {
       );
 
       // Act
-      const resolved = resolve_single_method_call(
+      const resolved = resolve_method_call(
         call_ref,
         scopes,
         definitions,
@@ -658,7 +658,7 @@ describe('Method Call Resolution', () => {
       );
 
       // Assert
-      expect(resolved).toBeNull();
+      expect(resolved).toEqual([]);
     });
 
     it('should return null for empty property chain', () => {
@@ -672,7 +672,7 @@ describe('Method Call Resolution', () => {
       );
 
       // Act
-      const resolved = resolve_single_method_call(
+      const resolved = resolve_method_call(
         call_ref,
         scopes,
         definitions,
@@ -681,7 +681,7 @@ describe('Method Call Resolution', () => {
       );
 
       // Assert
-      expect(resolved).toBeNull();
+      expect(resolved).toEqual([]);
     });
 
     it('should return null when property chain has unresolved intermediate', () => {
@@ -722,7 +722,7 @@ describe('Method Call Resolution', () => {
       );
 
       // Act
-      const resolved = resolve_single_method_call(
+      const resolved = resolve_method_call(
         call_ref,
         scopes,
         definitions,
@@ -731,7 +731,7 @@ describe('Method Call Resolution', () => {
       );
 
       // Assert
-      expect(resolved).toBeNull();
+      expect(resolved).toEqual([]);
     });
   });
 });

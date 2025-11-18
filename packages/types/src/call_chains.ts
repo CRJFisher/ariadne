@@ -46,14 +46,18 @@ export interface CallGraph {
 }
 /**
  * Call reference - Represents a function/method/constructor call
+ *
+ * The resolutions array contains all possible targets:
+ * - Empty array: Resolution failed
+ * - Single element: Concrete resolution
+ * - Multiple elements: Polymorphic/dynamic/ambiguous
  */
+
+import type { Resolution } from "./symbol_references";
 
 export interface CallReference {
   /** Reference location */
   readonly location: Location;
-
-  /** Resolved Symbol ID being called */
-  readonly symbol_id?: SymbolId | null; // Null for unresolved calls
 
   /** Name being called */
   readonly name: SymbolName;
@@ -64,6 +68,9 @@ export interface CallReference {
   /** Type of call */
   readonly call_type: "function" | "method" | "constructor";
 
+  /** All resolved candidates with metadata */
+  readonly resolutions: readonly Resolution[];
+
   /**
    * True if this call reference represents a callback invocation.
    * Callback invocations are synthetic edges created when a function is passed
@@ -73,7 +80,7 @@ export interface CallReference {
    *   items.forEach((item) => { ... });
    *   // Creates CallReference with is_callback_invocation: true
    *   // location: forEach call site
-   *   // symbol_id: anonymous function
+   *   // resolutions: [{ symbol_id: anonymous function, ... }]
    */
   readonly is_callback_invocation?: boolean;
 } // ============================================================================

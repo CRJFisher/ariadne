@@ -39,23 +39,30 @@ import { DefinitionRegistry } from "../registries/definition_registry";
 import type { TypeRegistry } from "../registries/type_registry";
 
 /**
- * Resolve self-reference call: this.method(), self.method(), super.method()
+ * Resolve self-reference call to zero, one, or more symbols
  *
  * Handles method calls where the receiver is a self-reference keyword
  * that refers to the containing class or parent class.
+ *
+ * Returns:
+ * - []: Resolution failed (not in class context or method not found)
+ * - [symbol]: Concrete self-reference call (this.method())
+ *
+ * Future tasks (11.158) may add polymorphic resolution for super calls.
+ * This task only changes the return type to array.
  *
  * @param call_ref - Self-reference call from semantic index
  * @param scopes - Scope registry for finding containing class
  * @param definitions - Definition registry for method lookups
  * @param types - Type registry for parent class resolution
- * @returns Resolved method symbol_id or null if resolution fails
+ * @returns Array of resolved method symbol_ids (empty if resolution fails)
  */
 export function resolve_self_reference_call(
   call_ref: SelfReferenceCall,
   scopes: ScopeRegistry,
   definitions: DefinitionRegistry,
   types: TypeRegistry
-): SymbolId | null {
+): SymbolId[] {
   // Dispatch based on keyword type
   switch (call_ref.keyword) {
     case "this":
@@ -83,23 +90,28 @@ export function resolve_self_reference_call(
  * @param call_ref - Self-reference call
  * @param scopes - Scope registry
  * @param definitions - Definition registry
- * @returns Method symbol_id or null
+ * @returns Array of resolved method symbol_ids (empty if resolution fails)
  */
 function resolve_this_or_self_call(
   call_ref: SelfReferenceCall,
   scopes: ScopeRegistry,
   definitions: DefinitionRegistry
-): SymbolId | null {
+): SymbolId[] {
   // Find the class scope containing this reference
   const class_scope_id = find_containing_class_scope(call_ref.scope_id, scopes);
 
   if (!class_scope_id) {
     // Not in a class context - unresolved
-    return null;
+    return [];
   }
 
   // Find method definition in the class scope
-  return find_method_in_scope(call_ref.name, class_scope_id, definitions);
+  const method_symbol = find_method_in_scope(call_ref.name, class_scope_id, definitions);
+  if (!method_symbol) {
+    return [];
+  }
+
+  return [method_symbol];
 }
 
 /**
@@ -114,37 +126,37 @@ function resolve_this_or_self_call(
  * @param scopes - Scope registry
  * @param definitions - Definition registry
  * @param types - Type registry for parent class lookup
- * @returns Method symbol_id or null
+ * @returns Array of resolved method symbol_ids (empty if resolution fails)
  */
 function resolve_super_call(
   call_ref: SelfReferenceCall,
   scopes: ScopeRegistry,
   definitions: DefinitionRegistry,
   types: TypeRegistry
-): SymbolId | null {
+): SymbolId[] {
   // Find the class scope containing this reference
   const class_scope_id = find_containing_class_scope(call_ref.scope_id, scopes);
 
   if (!class_scope_id) {
-    return null;
+    return [];
   }
 
   // Find the class definition to get its parent
   const class_symbol_id = find_class_in_scope(class_scope_id, definitions);
   if (!class_symbol_id) {
-    return null;
+    return [];
   }
 
   // Get parent class from type registry
   const parent_class_id = types.get_parent_class(class_symbol_id);
   if (!parent_class_id) {
-    return null;
+    return [];
   }
 
   // Find parent class definition to get its scope
   const parent_definition = definitions.get(parent_class_id);
   if (!parent_definition) {
-    return null;
+    return [];
   }
 
   // For class definitions, the body_scope_id is where methods are defined
@@ -160,13 +172,13 @@ function resolve_super_call(
     if (parent_members) {
       const method_id = parent_members.get(call_ref.name);
       if (method_id) {
-        return method_id;
+        return [method_id];
       }
     }
-    return null;
+    return [];
   }
 
-  return null;
+  return [];
 }
 
 /**
