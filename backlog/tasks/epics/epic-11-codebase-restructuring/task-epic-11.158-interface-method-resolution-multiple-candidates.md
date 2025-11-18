@@ -1,8 +1,9 @@
 # Task Epic-11.158: Interface Method Resolution with Multiple Candidates
 
-**Status**: TODO
+**Status**: COMPLETED
 **Priority**: P1 (Medium Impact)
 **Estimated Effort**: 4-5 days
+**Actual Effort**: 2-3 days (reduced due to task 11.160 foundation)
 **Epic**: epic-11-codebase-restructuring
 **Impact**: Fixes 9 misidentified symbols (6.7% of call graph bugs)
 **Related**: Extends task-43 (moved to epic-11)
@@ -726,3 +727,130 @@ This is a **backward-compatible extension**:
 - Gradual migration: update callers to use candidate list
 
 **No breaking changes** to existing code.
+
+## Implementation Summary
+
+**Status**: COMPLETED
+**Completion Date**: 2025-11-18
+**Commit**: `0328c8bc`
+
+### Overview
+
+Successfully implemented polymorphic interface method resolution, enabling calls through interface-typed parameters to resolve to ALL concrete implementations. This fixes 6.7% of entry point misidentifications where concrete methods appeared uncalled due to polymorphic dispatch.
+
+### What Was Implemented
+
+#### Phase 1: Type Inheritance Index (1 day)
+
+- Added `type_subtypes: Map<SymbolId, Set<SymbolId>>` to DefinitionRegistry
+- Populates during `update_file()` by resolving ClassDefinition.extends names
+- Added `resolve_type_name_in_scope()` for name→SymbolId resolution
+- Added `get_subtypes()` public accessor
+- Clean up in `remove_file()` to handle index maintenance
+
+#### Phase 2: Polymorphic Method Resolution (1 day)
+
+- Updated `resolve_method_call()` in method_resolver.ts
+- Detects interface receivers: `receiver_type_def?.kind === "interface"`
+- Added `resolve_polymorphic_method()` function to find all implementations
+- Returns array of all implementation method SymbolIds
+- Maintains single resolution for concrete class calls (no regression)
+
+#### Phase 3: Resolution Metadata (0.5 days)
+
+- Detect multi-candidate method calls in resolution_registry.ts
+- Mark with `reason: {type: "interface_implementation", interface_id: "unknown"}`
+- Uses heuristic: multiple resolutions + method call type = interface impl
+- Note: `interface_id` currently "unknown" (can be enhanced with type flow)
+
+#### Phase 4: Comprehensive Tests (0.5 days)
+
+- Added 3-test suite in method_resolver.test.ts
+- Test 1: Interface call resolves to 2 implementations
+- Test 2: Concrete class call returns single resolution
+- Test 3: Interface with no implementations returns empty array
+
+### Key Architectural Decisions
+
+1. **Unified extends Field**: No data model changes needed
+   - ClassDefinition.extends already contains both parent classes and interfaces
+   - type_subtypes index works for both inheritance and implementation
+   - Simpler than separating extends vs implements
+
+2. **Interface-Only Detection**:
+   - Only checks `kind === "interface"` (no abstract class support)
+   - ClassDefinition doesn't have `is_abstract` field
+   - Can be added later if needed
+
+3. **Direct Implementations Only**:
+   - No transitive closure (Interface1 extends Interface2)
+   - Keeps implementation simple
+   - Can be enhanced later if needed
+
+4. **Resolution Metadata Heuristic**:
+   - Uses multi-resolution + method call as proxy for interface
+   - interface_id set to "unknown" (lacks type flow context)
+   - Good enough for current use case (entry point detection)
+
+### Limitations & Future Enhancements
+
+**Current Limitations**:
+
+- Abstract classes not supported (no is_abstract field)
+- interface_id in metadata is "unknown" (needs type flow)
+- No transitive interface inheritance
+- Python/JS duck typing not supported (no explicit implements)
+
+**Future Enhancements**:
+
+- Add is_abstract field to ClassDefinition
+- Pass interface_id through resolution chain
+- Implement transitive closure for interface hierarchies
+- Structural typing for duck typing scenarios
+
+### Integration with Task 11.160
+
+This task heavily benefited from the multi-candidate resolution foundation:
+
+- ✅ Resolvers already return `SymbolId[]` (11.160.2)
+- ✅ Resolution metadata structure ready (11.160.1)
+- ✅ CallReference.resolutions array (11.160.3)
+- ✅ Entry point detection handles multiple resolutions (11.160.4)
+
+**Effort savings**: ~1-2 days by not having to build the foundation.
+
+### Testing
+
+All tests passing:
+
+- ✅ 3 new polymorphic resolution tests
+- ✅ Existing method resolution tests unchanged
+- ✅ Type inheritance index tests (via integration)
+
+### Impact
+
+**Expected Reduction**: 6.7% of entry point misidentifications
+**Pattern**: Interface methods called via polymorphic dispatch now correctly resolve to concrete implementations
+
+**Example fixed scenario**:
+
+```typescript
+interface Handler {
+  process(): void;
+}
+
+class HandlerA implements Handler {
+  process() { /* ... */ }  // ✅ Now marked as called
+}
+
+class HandlerB implements Handler {
+  process() { /* ... */ }  // ✅ Now marked as called
+}
+
+function run(handler: Handler) {
+  handler.process();  // Resolves to [HandlerA.process, HandlerB.process]
+}
+```
+
+Before: HandlerA.process and HandlerB.process appeared as entry points
+After: Correctly identified as called via interface
