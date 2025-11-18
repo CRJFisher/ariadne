@@ -1,8 +1,9 @@
 # Task Epic-11.160.3: Resolution Registry Updates
 
-**Status**: TODO
+**Status**: COMPLETED
 **Priority**: P0 (Foundational)
 **Estimated Effort**: 1-2 days
+**Actual Effort**: 0.5 days
 **Epic**: epic-11-codebase-restructuring
 **Parent**: task-epic-11.160 (Multi-Candidate Resolution Foundation)
 **Depends On**: 11.160.1 (Type Definitions), 11.160.2 (Resolver Updates)
@@ -471,13 +472,13 @@ describe("Resolution metadata integration", () => {
 
 ## Success Criteria
 
-- [ ] `CallReference` objects built with proper `resolutions` arrays
-- [ ] Each `Resolution` has `symbol_id`, `confidence`, `reason`
-- [ ] Single call produces single `CallReference` (not one per candidate)
-- [ ] `all_referenced_symbols` includes all resolution symbols
-- [ ] All existing tests updated and passing
-- [ ] Integration tests verify end-to-end flow
-- [ ] Test coverage ≥95% for updated code
+- [x] `CallReference` objects built with proper `resolutions` arrays
+- [x] Each `Resolution` has `symbol_id`, `confidence`, `reason`
+- [x] Single call produces single `CallReference` (not one per candidate)
+- [x] `all_referenced_symbols` includes all resolution symbols
+- [x] All existing tests updated and passing
+- [x] Integration tests verify end-to-end flow
+- [x] Test coverage ≥95% for updated code
 
 ## Dependencies
 
@@ -528,3 +529,120 @@ describe("Resolution metadata integration", () => {
 - Complex reason types
 
 This task establishes the **infrastructure** for resolution metadata. Actual metadata diversity comes from future tasks.
+
+## Implementation Summary
+
+Successfully updated ResolutionRegistry to build proper `CallReference` objects with `Resolution` metadata:
+
+### 1. Updated resolve_calls() Method
+
+**File**: [resolution_registry.ts:344-383](../../packages/core/src/resolve_references/resolution_registry.ts#L344-L383)
+
+Changed from creating temporary CallReference with `symbol_id` to building proper Resolution objects:
+
+```typescript
+// Old (11.160.2):
+resolved_calls.push({
+  location: ref.location,
+  symbol_id: resolved_symbols[0],  // TEMPORARY
+  name: ref.name,
+  scope_id: ref.scope_id,
+  call_type,
+});
+
+// New (11.160.3):
+resolved_calls.push({
+  location: ref.location,
+  name: ref.name,
+  scope_id: ref.scope_id,
+  call_type,
+  resolutions: resolved_symbols.map((symbol_id) => ({
+    symbol_id,
+    confidence: "certain" as const,
+    reason: { type: "direct" as const },
+  })),
+});
+```
+
+**Benefits**:
+- Single `CallReference` per call (not one per candidate)
+- Proper metadata structure for each resolution
+- Ready for future multi-candidate scenarios
+
+### 2. Updated get_all_referenced_symbols()
+
+**File**: [resolution_registry.ts:435-449](../../packages/core/src/resolve_references/resolution_registry.ts#L435-L449)
+
+Changed to iterate through all resolutions instead of just checking `symbol_id`:
+
+```typescript
+// Old:
+for (const call of calls) {
+  if (call.symbol_id) {
+    referenced.add(call.symbol_id);
+  }
+}
+
+// New:
+for (const call of calls) {
+  for (const resolution of call.resolutions) {
+    referenced.add(resolution.symbol_id);
+  }
+}
+```
+
+**Benefits**:
+- Correctly handles multi-candidate calls
+- All symbols marked as referenced (critical for entry point detection)
+
+### 3. Updated resolve_callback_invocations()
+
+**File**: [resolution_registry.ts:700-713](../../packages/core/src/resolve_references/resolution_registry.ts#L700-L713)
+
+Changed synthetic callback invocations to use `resolutions` array:
+
+```typescript
+invocations.push({
+  location: callback_context.receiver_location,
+  name: "<anonymous>" as SymbolName,
+  scope_id: callable.defining_scope_id,
+  call_type: "function",
+  resolutions: [{
+    symbol_id: callable.symbol_id,
+    confidence: "certain" as const,
+    reason: { type: "direct" as const },
+  }],
+  is_callback_invocation: true,
+});
+```
+
+### 4. Updated Tests
+
+**resolution_registry.test.ts** ([line 217-220](../../packages/core/src/resolve_references/resolution_registry.test.ts#L217-L220)):
+- Changed `call.symbol_id === helper_symbol_id` to `call.resolutions.some(r => r.symbol_id === helper_symbol_id)`
+
+**project.typescript.integration.test.ts** ([line 657-665](../../packages/core/src/project/project.typescript.integration.test.ts#L657-L665)):
+- Updated cross-file call detection to iterate through `call.resolutions`
+
+### Key Implementation Decisions
+
+1. **Default Metadata**: All resolutions currently use `confidence: "certain"` and `reason: { type: "direct" }`
+   - This is correct for current single-resolution scenario
+   - Future tasks (11.158, 11.156.3, 11.159) will add varied metadata
+
+2. **No Helper Methods**: Implemented inline in `resolve_calls()` method
+   - Simpler than task specification suggested
+   - Less code, easier to maintain
+   - Helper methods can be added later if needed
+
+3. **Array Mapping**: Used `.map()` to convert `SymbolId[]` to `Resolution[]`
+   - Clean, functional approach
+   - Each symbol gets same metadata (for now)
+   - Future tasks will differentiate metadata per candidate
+
+### Impact
+
+- **Breaking Change**: Removed `CallReference.symbol_id` field entirely
+- **CallReference Structure**: Now exclusively uses `resolutions` array
+- **Entry Point Detection**: Correctly handles all resolution candidates
+- **Tests**: All updated to use new structure

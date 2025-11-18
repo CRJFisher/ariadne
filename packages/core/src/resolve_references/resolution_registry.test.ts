@@ -215,7 +215,7 @@ export function use_helper(y: number): number {
 
     // One of use_helper's calls should be to helper
     const calls_to_helper = use_helper_node!.enclosed_calls.filter(
-      call => call.symbol_id === helper_symbol_id
+      call => call.resolutions.some(r => r.symbol_id === helper_symbol_id)
     );
     expect(calls_to_helper.length).toBe(1);
   });

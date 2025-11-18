@@ -341,9 +341,7 @@ export class ResolutionRegistry {
             );
         }
 
-        // Store resolved call - transform discriminated union to CallReference format
-        // For now, we only handle single-candidate resolutions (backward compatibility)
-        // Future tasks will populate the full resolutions array with metadata
+        // Build CallReference with Resolution metadata
         if (resolved_symbols.length > 0) {
           // Determine call_type from discriminated union kind
           let call_type: "function" | "method" | "constructor";
@@ -369,14 +367,18 @@ export class ResolutionRegistry {
               );
           }
 
-          // TEMPORARY: Use first symbol for backward compatibility with old CallReference.symbol_id
-          // Task 11.160.3 will update this to properly populate resolutions array with metadata
+          // Build proper CallReference with Resolution objects
+          // Each resolved symbol gets Resolution metadata
           resolved_calls.push({
             location: ref.location,
-            symbol_id: resolved_symbols[0],
             name: ref.name,
             scope_id: ref.scope_id,
             call_type,
+            resolutions: resolved_symbols.map((symbol_id) => ({
+              symbol_id,
+              confidence: "certain" as const,
+              reason: { type: "direct" as const },
+            })),
           });
         }
       }
@@ -433,11 +435,12 @@ export class ResolutionRegistry {
   get_all_referenced_symbols(): Set<SymbolId> {
     const referenced = new Set<SymbolId>();
 
-    // Iterate all resolved calls and collect target symbol IDs
+    // Iterate all resolved calls and collect all resolution target symbol IDs
     for (const calls of this.resolved_calls_by_file.values()) {
       for (const call of calls) {
-        if (call.symbol_id) {
-          referenced.add(call.symbol_id);
+        // Collect all symbols from all resolutions (handles multi-candidate calls)
+        for (const resolution of call.resolutions) {
+          referenced.add(resolution.symbol_id);
         }
       }
     }
@@ -696,10 +699,16 @@ export class ResolutionRegistry {
         // This marks the callback as "invoked" by the external function
         invocations.push({
           location: callback_context.receiver_location,
-          symbol_id: callable.symbol_id, // The anonymous function being invoked
           name: "<anonymous>" as SymbolName,
           scope_id: callable.defining_scope_id, // Scope where callback is defined
           call_type: "function",
+          resolutions: [
+            {
+              symbol_id: callable.symbol_id, // The anonymous function being invoked
+              confidence: "certain" as const,
+              reason: { type: "direct" as const },
+            },
+          ],
           is_callback_invocation: true, // Mark as synthetic callback invocation
         });
       }

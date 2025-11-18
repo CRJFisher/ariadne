@@ -654,13 +654,14 @@ describe("Project Integration - TypeScript", () => {
       if (nodes.length > 0) {
         const has_cross_file_calls = nodes.some((node) =>
           node.enclosed_calls.some((call) => {
-            const target_symbol_id = call.symbol_id;
-            if (!target_symbol_id) return false;
-            const called_node = call_graph.nodes.get(target_symbol_id);
-            return (
-              called_node &&
-              called_node.location.file_path !== node.location.file_path
-            );
+            // Check if any resolution points to a cross-file symbol
+            return call.resolutions.some((resolution) => {
+              const called_node = call_graph.nodes.get(resolution.symbol_id);
+              return (
+                called_node &&
+                called_node.location.file_path !== node.location.file_path
+              );
+            });
           })
         );
         // Can only verify cross-file calls if nodes exist
