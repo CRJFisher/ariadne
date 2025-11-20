@@ -1068,3 +1068,129 @@ export function extract_import_from_extern_crate(
     original_name: alias ? (crate_name as SymbolName) : undefined,
   };
 }
+
+/**
+ * Detect if a variable/constant declaration contains a function collection.
+ * Returns collection metadata if detected, null otherwise.
+ *
+ * Patterns detected:
+ * - const CONFIG: Vec<fn()> = vec![handler1, handler2];
+ * - let handlers = [fn1, fn2, fn3];
+ * - const map: HashMap<&str, fn()> = HashMap::from([("key", handler)]);
+ *
+ * Note: Rust's function collections are more complex due to strong typing.
+ * We focus on detecting:
+ * - Array expressions with closures/function pointers
+ * - Vec/HashMap macro invocations with functions
+ */
+export function detect_function_collection(
+  node: SyntaxNode,
+  file_path: string
+): import("@ariadnejs/types").FunctionCollection | null {
+  // Get the let_declaration node which contains name and value
+  let declaration = node;
+  if (node.type === "let_declaration" || node.type === "const_item") {
+    // node is already the declaration
+  } else {
+    // Try to find declaration from identifier
+    declaration = node.parent || node;
+  }
+
+  // Get the initializer/value
+  const value_node = declaration.childForFieldName?.("value");
+  if (!value_node) return null;
+
+  // Check for array expression: [fn1, fn2, fn3]
+  if (value_node.type === "array_expression") {
+    const functions = extract_functions_from_array(value_node, file_path);
+    if (functions.length > 0) {
+      return {
+        collection_id: null as any, // Will be set by caller
+        collection_type: "Array",
+        location: node_to_location(value_node, file_path as any),
+        stored_functions: functions,
+      };
+    }
+  }
+
+  // Check for macro invocation: vec![...], hashmap!{...}, etc.
+  if (value_node.type === "macro_invocation") {
+    const macro_name_node = value_node.childForFieldName?.("macro");
+    const macro_name = macro_name_node?.text;
+
+    if (macro_name === "vec" || macro_name === "Vec") {
+      const functions = extract_functions_from_macro(value_node, file_path);
+      if (functions.length > 0) {
+        return {
+          collection_id: null as any,
+          collection_type: "Array",
+          location: node_to_location(value_node, file_path as any),
+          stored_functions: functions,
+        };
+      }
+    }
+
+    if (macro_name === "hashmap" || macro_name === "HashMap") {
+      const functions = extract_functions_from_macro(value_node, file_path);
+      if (functions.length > 0) {
+        return {
+          collection_id: null as any,
+          collection_type: "Map",
+          location: node_to_location(value_node, file_path as any),
+          stored_functions: functions,
+        };
+      }
+    }
+  }
+
+  return null;
+}
+
+/**
+ * Extract function SymbolIds from Rust array expression: [fn1, fn2, fn3]
+ */
+function extract_functions_from_array(
+  array_node: SyntaxNode,
+  file_path: string
+): SymbolId[] {
+  const function_ids: SymbolId[] = [];
+
+  for (let i = 0; i < array_node.namedChildCount; i++) {
+    const element = array_node.namedChild(i);
+    if (!element) continue;
+
+    if (element.type === "closure_expression") {
+      const location = node_to_location(element, file_path as any);
+      function_ids.push(anonymous_function_symbol(location));
+    }
+  }
+
+  return function_ids;
+}
+
+/**
+ * Extract function SymbolIds from Rust macro invocation.
+ * Searches for closure_expression nodes within the macro.
+ */
+function extract_functions_from_macro(
+  macro_node: SyntaxNode,
+  file_path: string
+): SymbolId[] {
+  const function_ids: SymbolId[] = [];
+
+  // Traverse all descendants looking for closure_expression nodes
+  function visit(node: SyntaxNode) {
+    if (node.type === "closure_expression") {
+      const location = node_to_location(node, file_path as any);
+      function_ids.push(anonymous_function_symbol(location));
+    }
+
+    for (let i = 0; i < node.namedChildCount; i++) {
+      const child = node.namedChild(i);
+      if (child) visit(child);
+    }
+  }
+
+  visit(macro_node);
+  return function_ids;
+}

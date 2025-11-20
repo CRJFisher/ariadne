@@ -5,7 +5,11 @@ import type { CaptureNode, ProcessingContext } from "../../semantic_index";
 import {
   type LanguageBuilderConfig,
   JAVASCRIPT_BUILDER_CONFIG,
+  create_variable_id,
   extract_export_info,
+  extract_type_annotation,
+  extract_initial_value,
+  consume_documentation,
 } from "./javascript_builder";
 import {
   create_interface_id,
@@ -45,6 +49,7 @@ import {
   extract_class_extends,
   extract_implements,
   detect_callback_context,
+  detect_function_collection,
 } from "./typescript_builder";
 
 // ============================================================================
@@ -56,6 +61,62 @@ export const TYPESCRIPT_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
   // JAVASCRIPT FOUNDATION - Start with all JavaScript mappings
   // ============================================================================
   ...Array.from(JAVASCRIPT_BUILDER_CONFIG),
+
+  // ============================================================================
+  // VARIABLES - Override JavaScript to add function collection detection
+  // ============================================================================
+  [
+    "definition.variable",
+    {
+      process: (
+        capture: CaptureNode,
+        builder: DefinitionBuilder,
+        context: ProcessingContext
+      ) => {
+        const var_id = create_variable_id(capture);
+        const export_info = extract_export_info(capture.node, capture.text);
+        const docstring = consume_documentation(capture.location);
+
+        // Check for const by looking at parent (variable_declarator) and its parent (lexical_declaration)
+        let is_const = false;
+        const parent = capture.node.parent; // variable_declarator
+        if (parent && parent.parent) {
+          const lexicalDecl = parent.parent; // lexical_declaration
+          if (lexicalDecl.type === "lexical_declaration") {
+            // Check the first token for 'const'
+            const firstChild = lexicalDecl.firstChild;
+            if (firstChild && firstChild.type === "const") {
+              is_const = true;
+            }
+          }
+        }
+
+        // Detect function collections (Task 11.156.3)
+        const collection_info = parent
+          ? detect_function_collection(parent, context.file_path)
+          : null;
+        const function_collection = collection_info
+          ? {
+              ...collection_info,
+              collection_id: var_id, // Set the collection_id to the variable's symbol_id
+            }
+          : undefined;
+
+        builder.add_variable({
+          kind: is_const ? "constant" : "variable",
+          symbol_id: var_id,
+          name: capture.text,
+          location: capture.location,
+          scope_id: context.get_scope_id(capture.location),
+          is_exported: export_info.is_exported,
+          type: extract_type_annotation(capture.node),
+          initial_value: extract_initial_value(capture.node),
+          docstring,
+          function_collection,
+        });
+      },
+    },
+  ],
 
   // ============================================================================
   // INTERFACES

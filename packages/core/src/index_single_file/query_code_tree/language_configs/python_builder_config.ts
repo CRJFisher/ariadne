@@ -32,6 +32,7 @@ import {
   extract_type_expression,
   extract_import_path,
   detect_callback_context,
+  detect_function_collection,
 } from "./python_builder";
 import { PYTHON_IMPORT_HANDLERS } from "./python_imports";
 import { anonymous_function_symbol } from "@ariadnejs/types";
@@ -561,6 +562,18 @@ export const PYTHON_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
           context.root_scope_id
         );
 
+        // Detect function collections (Task 11.156.3)
+        const parent = capture.node.parent;
+        const collection_info = parent
+          ? detect_function_collection(parent, context.file_path)
+          : null;
+        const function_collection = collection_info
+          ? {
+              ...collection_info,
+              collection_id: var_id,
+            }
+          : undefined;
+
         builder.add_variable({
           kind: is_const ? "constant" : "variable",
           symbol_id: var_id,
@@ -571,6 +584,7 @@ export const PYTHON_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
           export: export_info.export,
           type: extract_type_annotation(capture.node),
           initial_value: extract_initial_value(capture.node),
+          function_collection,
         });
       },
     },

@@ -655,3 +655,115 @@ export function detect_callback_context(
     receiver_location: null,
   };
 }
+
+/**
+ * Detect if a variable assignment contains a function collection (list/dict/tuple with functions).
+ * Returns collection metadata if detected, null otherwise.
+ *
+ * Patterns detected:
+ * - handlers = [fn1, fn2, fn3]
+ * - config = {"success": handle_success, "error": handle_error}
+ * - callbacks = (on_start, on_end, on_error)
+ */
+export function detect_function_collection(
+  node: SyntaxNode,
+  file_path: string
+): import("@ariadnejs/types").FunctionCollection | null {
+  // Get the assignment node
+  let assignment = node;
+  if (node.type !== "assignment") {
+    assignment = node.parent || node;
+  }
+
+  // Get the right side (value being assigned)
+  const value_node = assignment.childForFieldName?.("right");
+  if (!value_node) return null;
+
+  // Check for list literal: [fn1, fn2, fn3]
+  if (value_node.type === "list") {
+    const functions = extract_functions_from_list(value_node, file_path);
+    if (functions.length > 0) {
+      return {
+        collection_id: null as any, // Will be set by caller
+        collection_type: "Array",
+        location: node_to_location(value_node, file_path as any),
+        stored_functions: functions,
+      };
+    }
+  }
+
+  // Check for dict literal: {"key": fn, ...}
+  if (value_node.type === "dictionary") {
+    const functions = extract_functions_from_dict(value_node, file_path);
+    if (functions.length > 0) {
+      return {
+        collection_id: null as any,
+        collection_type: "Object",
+        location: node_to_location(value_node, file_path as any),
+        stored_functions: functions,
+      };
+    }
+  }
+
+  // Check for tuple literal: (fn1, fn2, fn3)
+  if (value_node.type === "tuple") {
+    const functions = extract_functions_from_list(value_node, file_path);
+    if (functions.length > 0) {
+      return {
+        collection_id: null as any,
+        collection_type: "Array",
+        location: node_to_location(value_node, file_path as any),
+        stored_functions: functions,
+      };
+    }
+  }
+
+  return null;
+}
+
+/**
+ * Extract function SymbolIds from Python list or tuple: [fn1, fn2] or (fn1, fn2)
+ */
+function extract_functions_from_list(
+  list_node: SyntaxNode,
+  file_path: string
+): SymbolId[] {
+  const function_ids: SymbolId[] = [];
+
+  for (let i = 0; i < list_node.namedChildCount; i++) {
+    const element = list_node.namedChild(i);
+    if (!element) continue;
+
+    if (element.type === "lambda") {
+      const location = node_to_location(element, file_path as any);
+      function_ids.push(anonymous_function_symbol(location));
+    }
+  }
+
+  return function_ids;
+}
+
+/**
+ * Extract function SymbolIds from Python dict: {"key": fn, ...}
+ */
+function extract_functions_from_dict(
+  dict_node: SyntaxNode,
+  file_path: string
+): SymbolId[] {
+  const function_ids: SymbolId[] = [];
+
+  for (let i = 0; i < dict_node.namedChildCount; i++) {
+    const pair = dict_node.namedChild(i);
+    if (pair?.type !== "pair") continue;
+
+    const value = pair.childForFieldName?.("value");
+    if (!value) continue;
+
+    if (value.type === "lambda") {
+      const location = node_to_location(value, file_path as any);
+      function_ids.push(anonymous_function_symbol(location));
+    }
+  }
+
+  return function_ids;
+}

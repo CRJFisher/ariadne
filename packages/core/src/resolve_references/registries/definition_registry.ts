@@ -71,6 +71,22 @@ export class DefinitionRegistry {
   private type_subtypes: Map<SymbolId, Set<SymbolId>> = new Map();
 
   /**
+   * Function collection index: Maps variable SymbolIds to their function collections.
+   * Tracks variables that hold collections (Map/Array/Object) containing functions.
+   *
+   * Example patterns:
+   * - const CONFIG = new Map([["class", classHandler], ["function", funcHandler]])
+   * - const handlers = [onSuccess, onError, onComplete]
+   * - const config = { success: handleSuccess, error: handleError }
+   *
+   * Used for collection dispatch resolution (Task 11.156.3).
+   */
+  private function_collections: Map<
+    SymbolId,
+    import("@ariadnejs/types").FunctionCollection
+  > = new Map();
+
+  /**
    * Update definitions for a file.
    * Removes old definitions from this file first, then adds new ones.
    * Also computes and stores the member index, scope index, and scope-to-definitions index.
@@ -152,6 +168,11 @@ export class DefinitionRegistry {
     for (const def of definitions) {
       if (def.kind === "class" || def.kind === "interface") {
         this.register_type_inheritance(def);
+      }
+
+      // Step 5: Build function collection index (Task 11.156.3)
+      if ((def.kind === "variable" || def.kind === "constant") && def.function_collection) {
+        this.function_collections.set(def.symbol_id, def.function_collection);
       }
     }
   }
@@ -486,6 +507,36 @@ export class DefinitionRegistry {
   }
 
   /**
+   * Get function collection metadata for a variable.
+   * Used for collection dispatch resolution (Task 11.156.3).
+   *
+   * Example:
+   * - CONFIG variable → FunctionCollection with all handler functions in the Map
+   * - handlers variable → FunctionCollection with all functions in the array
+   *
+   * @param variable_id - SymbolId of the variable holding the collection
+   * @returns FunctionCollection metadata, or undefined if variable doesn't hold a function collection
+   */
+  get_function_collection(
+    variable_id: SymbolId
+  ): import("@ariadnejs/types").FunctionCollection | undefined {
+    return this.function_collections.get(variable_id);
+  }
+
+  /**
+   * Get all function collections in the registry.
+   * Used for debugging and testing.
+   *
+   * @returns ReadonlyMap of all function collections
+   */
+  get_all_function_collections(): ReadonlyMap<
+    SymbolId,
+    import("@ariadnejs/types").FunctionCollection
+  > {
+    return this.function_collections;
+  }
+
+  /**
    * Clear all definitions from the registry.
    */
   clear(): void {
@@ -496,5 +547,6 @@ export class DefinitionRegistry {
     this.by_scope.clear();
     this.scope_to_definitions_index.clear();
     this.type_subtypes.clear();
+    this.function_collections.clear();
   }
 }

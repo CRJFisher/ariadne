@@ -33,6 +33,7 @@ import {
   extract_imports_from_use_declaration,
   extract_import_from_extern_crate,
   detect_callback_context,
+  detect_function_collection,
   type ImportInfo,
 } from "./rust_builder_helpers";
 
@@ -766,6 +767,18 @@ export const RUST_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
         );
         const export_info = extract_export_info(capture.node.parent || capture.node);
 
+        // Detect function collections (Task 11.156.3)
+        const parent = capture.node.parent;
+        const collection_info = parent
+          ? detect_function_collection(parent, context.file_path)
+          : null;
+        const function_collection = collection_info
+          ? {
+              ...collection_info,
+              collection_id: var_id,
+            }
+          : undefined;
+
         builder.add_variable({
           kind: "variable",
           symbol_id: var_id,
@@ -775,6 +788,7 @@ export const RUST_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
           is_exported: export_info.is_exported,
           export: export_info.export,
           type: var_type,
+          function_collection,
         });
       },
     },
@@ -794,6 +808,18 @@ export const RUST_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
         );
         const export_info = extract_export_info(capture.node.parent || capture.node);
 
+        // Detect function collections (Task 11.156.3)
+        const parent = capture.node.parent;
+        const collection_info = parent
+          ? detect_function_collection(parent, context.file_path)
+          : null;
+        const function_collection = collection_info
+          ? {
+              ...collection_info,
+              collection_id: const_id,
+            }
+          : undefined;
+
         builder.add_variable({
           kind: "constant",
           symbol_id: const_id,
@@ -803,6 +829,7 @@ export const RUST_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
           is_exported: export_info.is_exported,
           export: export_info.export,
           type: const_type,
+          function_collection,
         });
       },
     },
@@ -822,6 +849,18 @@ export const RUST_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
         );
         const export_info = extract_export_info(capture.node.parent || capture.node);
 
+        // Detect function collections (Task 11.156.3)
+        const parent = capture.node.parent;
+        const collection_info = parent
+          ? detect_function_collection(parent, context.file_path)
+          : null;
+        const function_collection = collection_info
+          ? {
+              ...collection_info,
+              collection_id: var_id,
+            }
+          : undefined;
+
         builder.add_variable({
           kind: "variable",
           symbol_id: var_id,
@@ -831,6 +870,7 @@ export const RUST_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
           is_exported: export_info.is_exported,
           export: export_info.export,
           type: var_type,
+          function_collection,
         });
       },
     },

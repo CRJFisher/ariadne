@@ -29,6 +29,7 @@ import {
   extract_extends,
   store_documentation,
   detect_callback_context,
+  detect_function_collection,
   consume_documentation,
 } from "./javascript_builder";
 import { method_symbol, anonymous_function_symbol } from "@ariadnejs/types";
@@ -377,6 +378,17 @@ export const JAVASCRIPT_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
           }
         }
 
+        // Detect function collections (Task 11.156.3)
+        const collection_info = parent
+          ? detect_function_collection(parent, context.file_path)
+          : null;
+        const function_collection = collection_info
+          ? {
+              ...collection_info,
+              collection_id: var_id, // Set the collection_id to the variable's symbol_id
+            }
+          : undefined;
+
         builder.add_variable({
           kind: is_const ? "constant" : "variable",
           symbol_id: var_id,
@@ -387,6 +399,7 @@ export const JAVASCRIPT_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
           type: extract_type_annotation(capture.node),
           initial_value: extract_initial_value(capture.node),
           docstring,
+          function_collection,
         });
       },
     },

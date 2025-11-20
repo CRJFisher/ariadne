@@ -12,6 +12,7 @@ import type {
   ModulePath,
 } from "@ariadnejs/types";
 import {
+  anonymous_function_symbol,
   class_symbol,
   function_symbol,
   method_symbol,
@@ -866,6 +867,167 @@ export function detect_callback_context(
     receiver_is_external: null,
     receiver_location: null,
   };
+}
+
+/**
+ * Detect if a variable declaration contains a function collection (Map/Array/Object with functions).
+ * Returns collection metadata if detected, null otherwise.
+ *
+ * Patterns detected:
+ * - const CONFIG = new Map([["key", handler], ...])
+ * - const handlers = [fn1, fn2, fn3]
+ * - const config = { success: handler1, error: handler2 }
+ */
+export function detect_function_collection(
+  node: SyntaxNode,
+  file_path: string
+): import("@ariadnejs/types").FunctionCollection | null {
+  // Get the variable declarator node (contains name and initializer)
+  let declarator = node;
+  if (node.type === "variable_declaration") {
+    declarator = node.namedChildren?.[0] ?? node;
+  }
+
+  // Get the initializer (value being assigned)
+  const initializer = declarator.childForFieldName?.("value");
+  if (!initializer) return null;
+
+  // Check for new Map([...]) or new Set([...])
+  if (initializer.type === "new_expression") {
+    const constructor_node = initializer.childForFieldName?.("constructor");
+    if (
+      constructor_node?.text === "Map" ||
+      constructor_node?.text === "Set"
+    ) {
+      const args = initializer.childForFieldName?.("arguments");
+      const functions = extract_functions_from_collection_args(args, file_path);
+      if (functions.length > 0) {
+        return {
+          collection_id: null as any, // Will be set by caller
+          collection_type: constructor_node.text as "Map" | "Set",
+          location: node_to_location(initializer, file_path as any),
+          stored_functions: functions,
+        };
+      }
+    }
+  }
+
+  // Check for array literal: [fn1, fn2, ...]
+  if (initializer.type === "array") {
+    const functions = extract_functions_from_array(initializer, file_path);
+    if (functions.length > 0) {
+      return {
+        collection_id: null as any, // Will be set by caller
+        collection_type: "Array",
+        location: node_to_location(initializer, file_path as any),
+        stored_functions: functions,
+      };
+    }
+  }
+
+  // Check for object literal: { key: fn, ... }
+  if (initializer.type === "object") {
+    const functions = extract_functions_from_object(initializer, file_path);
+    if (functions.length > 0) {
+      return {
+        collection_id: null as any, // Will be set by caller
+        collection_type: "Object",
+        location: node_to_location(initializer, file_path as any),
+        stored_functions: functions,
+      };
+    }
+  }
+
+  return null;
+}
+
+/**
+ * Extract function SymbolIds from Map/Set constructor arguments.
+ * For Map: new Map([["key", fn], ...])
+ * For Set: new Set([fn1, fn2, ...])
+ */
+function extract_functions_from_collection_args(
+  args: SyntaxNode | null | undefined,
+  file_path: string
+): SymbolId[] {
+  if (!args) return [];
+
+  const function_ids: SymbolId[] = [];
+
+  // Traverse all descendants looking for arrow_function or function_expression nodes
+  function visit(node: SyntaxNode) {
+    if (
+      node.type === "arrow_function" ||
+      node.type === "function_expression" ||
+      node.type === "function"
+    ) {
+      const location = node_to_location(node, file_path as any);
+      function_ids.push(anonymous_function_symbol(location));
+    }
+
+    for (let i = 0; i < node.namedChildCount; i++) {
+      const child = node.namedChild(i);
+      if (child) visit(child);
+    }
+  }
+
+  visit(args);
+  return function_ids;
+}
+
+/**
+ * Extract function SymbolIds from array literal: [fn1, fn2, fn3]
+ */
+function extract_functions_from_array(
+  array_node: SyntaxNode,
+  file_path: string
+): SymbolId[] {
+  const function_ids: SymbolId[] = [];
+
+  for (let i = 0; i < array_node.namedChildCount; i++) {
+    const element = array_node.namedChild(i);
+    if (!element) continue;
+
+    if (
+      element.type === "arrow_function" ||
+      element.type === "function_expression" ||
+      element.type === "function"
+    ) {
+      const location = node_to_location(element, file_path as any);
+      function_ids.push(anonymous_function_symbol(location));
+    }
+  }
+
+  return function_ids;
+}
+
+/**
+ * Extract function SymbolIds from object literal: { key: fn, ... }
+ */
+function extract_functions_from_object(
+  obj_node: SyntaxNode,
+  file_path: string
+): SymbolId[] {
+  const function_ids: SymbolId[] = [];
+
+  for (let i = 0; i < obj_node.namedChildCount; i++) {
+    const pair = obj_node.namedChild(i);
+    if (pair?.type !== "pair") continue;
+
+    const value = pair.childForFieldName?.("value");
+    if (!value) continue;
+
+    if (
+      value.type === "arrow_function" ||
+      value.type === "function_expression" ||
+      value.type === "function"
+    ) {
+      const location = node_to_location(value, file_path as any);
+      function_ids.push(anonymous_function_symbol(location));
+    }
+  }
+
+  return function_ids;
 }
 
 // ============================================================================

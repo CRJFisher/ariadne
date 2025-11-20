@@ -157,6 +157,22 @@ export interface EnumMember {
 }
 
 /**
+ * Function collection metadata for dispatch handlers
+ * Tracks collections (Map/Array/Object) that store functions for dynamic dispatch
+ *
+ * Example patterns:
+ * - const handlers = new Map([["add", addHandler], ["remove", removeHandler]])
+ * - const callbacks = [onSuccess, onError, onComplete]
+ * - const config = { success: handleSuccess, error: handleError }
+ */
+export interface FunctionCollection {
+  readonly collection_id: SymbolId;
+  readonly collection_type: "Map" | "Set" | "Array" | "Object";
+  readonly location: Location;
+  readonly stored_functions: readonly SymbolId[];
+}
+
+/**
  * Variable/constant definition
  */
 export interface VariableDefinition extends Definition {
@@ -165,6 +181,7 @@ export interface VariableDefinition extends Definition {
   readonly type?: SymbolName;
   readonly initial_value?: string;
   readonly docstring?: DocString;
+  readonly function_collection?: FunctionCollection;
 }
 
 /**
