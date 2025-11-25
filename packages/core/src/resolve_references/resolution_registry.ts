@@ -369,13 +369,14 @@ export class ResolutionRegistry {
             // Not call references - skip
             continue;
 
-          default:
+          default: {
             // Exhaustiveness checking: if we add a new variant and forget to handle it,
             // TypeScript will show a compile error here
             const _exhaustive: never = ref;
             throw new Error(
-              `Unhandled reference kind: ${(_exhaustive as any).kind}`
+              `Unhandled reference kind: ${(_exhaustive as unknown as { kind: string }).kind}`
             );
+          }
         }
 
         // Build CallReference with Resolution metadata
@@ -396,12 +397,13 @@ export class ResolutionRegistry {
             case "constructor_call":
               call_type = "constructor";
               break;
-            default:
+            default: {
               // Exhaustiveness check - should never reach here
               const _exhaustive_call: never = ref;
               throw new Error(
-                `Cannot convert reference to CallReference: ${(_exhaustive_call as any).kind}`
+                `Cannot convert reference to CallReference: ${(_exhaustive_call as unknown as { kind: string }).kind}`
               );
+            }
           }
 
           // Build proper CallReference with Resolution objects
