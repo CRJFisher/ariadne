@@ -2007,5 +2007,57 @@ export const NESTED = {
         expect(context.receiver_location?.end_line).toBe(5);
       });
     });
+    describe("Derived Variable Detection", () => {
+      it("should detect derived_from for config.get() pattern", () => {
+        const code = `
+          const CONFIG = new Map([]);
+          const handler = CONFIG.get('key');
+        `;
+        const context = createTestContext();
+        const builder = new DefinitionBuilder(context);
+
+        const ast = parser.parse(code);
+        
+        // Find 'handler' variable
+        const varNodes: SyntaxNode[] = [];
+        function findVars(node: SyntaxNode) {
+          if (node.type === "variable_declarator") {
+            varNodes.push(node);
+          }
+          for (let i = 0; i < node.childCount; i++) {
+            findVars(node.child(i)!);
+          }
+        }
+        findVars(ast.rootNode);
+        
+        const handlerNode = varNodes[1]; // Second one is handler
+        const nameNode = handlerNode?.childForFieldName("name");
+
+        if (!nameNode) {
+          throw new Error("Could not find handler variable name");
+        }
+
+        const capture: CaptureNode = {
+          name: "definition.variable",
+          category: "definition" as SemanticCategory,
+          entity: "variable" as SemanticEntity,
+          node: nameNode as any,
+          text: nameNode.text as SymbolName,
+          location: node_to_location(nameNode, TEST_FILE_PATH),
+        };
+
+        const processor = JAVASCRIPT_BUILDER_CONFIG.get("definition.variable");
+        expect(processor).toBeDefined();
+        processor?.process(capture, builder, context);
+
+        const result = builder.build();
+        const variables = Array.from(result.variables.values());
+        expect(variables).toHaveLength(1);
+        
+        const handlerVar = variables[0];
+        expect(handlerVar.name).toBe("handler");
+        expect(handlerVar.derived_from).toBe("CONFIG");
+      });
+    });
   });
 });

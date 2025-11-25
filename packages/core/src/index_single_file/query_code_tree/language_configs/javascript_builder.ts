@@ -3,6 +3,7 @@
  */
 
 import type { SyntaxNode } from "tree-sitter";
+
 import type {
   SymbolId,
   SymbolName,
@@ -10,6 +11,8 @@ import type {
   Location,
   ScopeId,
   ModulePath,
+  CallbackContext,
+  FunctionCollection,
 } from "@ariadnejs/types";
 import {
   anonymous_function_symbol,
@@ -526,6 +529,11 @@ function find_commonjs_export_for_symbol(
 }
 
 /**
+ * Extract derived from type from class/interface node
+ */
+
+
+/**
  * Extract return type from function/method node
  */
 export function extract_return_type(node: SyntaxNode): SymbolName | undefined {
@@ -800,6 +808,56 @@ export function extract_extends(node: SyntaxNode): SymbolName[] {
 const pending_documentation = new Map<number, string>();
 
 /**
+ * Extract the name of the variable this definition is derived from.
+ * Used to track variables assigned from collection lookups.
+ *
+ * Patterns detected:
+ * 1. const handler = config.get("key");  -> returns "config"
+ * 2. const handler = config["key"];      -> returns "config"
+ */
+export function extract_derived_from(node: SyntaxNode): SymbolName | undefined {
+  // Get initial value node (init or value)
+  let targetNode = node;
+  if (node.type === "identifier" || node.type === "property_identifier") {
+    targetNode = node.parent || node;
+  }
+
+  const valueNode =
+    targetNode.childForFieldName("value") || targetNode.childForFieldName("init");
+
+  if (!valueNode) {
+    return undefined;
+  }
+
+  if (!valueNode) {
+    return undefined;
+  }
+
+
+
+  // Case 1: Method call (config.get(...))
+  if (valueNode.type === "call_expression") {
+    const functionNode = valueNode.childForFieldName("function");
+    if (functionNode?.type === "member_expression") {
+      const objectNode = functionNode.childForFieldName("object");
+      if (objectNode?.type === "identifier") {
+        return objectNode.text as SymbolName;
+      }
+    }
+  }
+
+  // Case 2: Member access (config[...])
+  if (valueNode.type === "member_expression" || valueNode.type === "subscript_expression") {
+    const objectNode = valueNode.childForFieldName("object");
+    if (objectNode?.type === "identifier") {
+      return objectNode.text as SymbolName;
+    }
+  }
+
+  return undefined;
+}
+
+/**
  * Store documentation comment for association with next definition
  */
 export function store_documentation(comment: string, end_line: number): void {
@@ -835,7 +893,7 @@ export function consume_documentation(location: Location): string | undefined {
 export function detect_callback_context(
   node: SyntaxNode,
   file_path: string
-): import("@ariadnejs/types").CallbackContext {
+): CallbackContext {
   let current: SyntaxNode | null = node.parent;
   let depth = 0;
   const MAX_DEPTH = 5; // Limit upward traversal
@@ -881,7 +939,7 @@ export function detect_callback_context(
 export function detect_function_collection(
   node: SyntaxNode,
   file_path: string
-): import("@ariadnejs/types").FunctionCollection | null {
+): FunctionCollection | null {
   // Get the variable declarator node (contains name and initializer)
   let declarator = node;
   if (node.type === "variable_declaration") {
@@ -889,8 +947,9 @@ export function detect_function_collection(
   }
 
   // Get the initializer (value being assigned)
-  const initializer = declarator.childForFieldName?.("value");
+  const initializer = declarator.childForFieldName?.("value") || declarator.childForFieldName?.("init");
   if (!initializer) return null;
+
 
   // Check for new Map([...]) or new Set([...])
   if (initializer.type === "new_expression") {
@@ -900,13 +959,15 @@ export function detect_function_collection(
       constructor_node?.text === "Set"
     ) {
       const args = initializer.childForFieldName?.("arguments");
-      const functions = extract_functions_from_collection_args(args, file_path);
-      if (functions.length > 0) {
+      const { functions, references } = extract_functions_from_collection_args(args, file_path);
+      if (functions.length > 0 || references.length > 0) {
+
         return {
           collection_id: null as any, // Will be set by caller
           collection_type: constructor_node.text as "Map" | "Set",
           location: node_to_location(initializer, file_path as any),
           stored_functions: functions,
+          stored_references: references,
         };
       }
     }
@@ -914,26 +975,28 @@ export function detect_function_collection(
 
   // Check for array literal: [fn1, fn2, ...]
   if (initializer.type === "array") {
-    const functions = extract_functions_from_array(initializer, file_path);
-    if (functions.length > 0) {
+    const { functions, references } = extract_functions_from_array(initializer, file_path);
+    if (functions.length > 0 || references.length > 0) {
       return {
         collection_id: null as any, // Will be set by caller
         collection_type: "Array",
         location: node_to_location(initializer, file_path as any),
         stored_functions: functions,
+        stored_references: references,
       };
     }
   }
 
   // Check for object literal: { key: fn, ... }
   if (initializer.type === "object") {
-    const functions = extract_functions_from_object(initializer, file_path);
-    if (functions.length > 0) {
+    const { functions, references } = extract_functions_from_object(initializer, file_path);
+    if (functions.length > 0 || references.length > 0) {
       return {
         collection_id: null as any, // Will be set by caller
         collection_type: "Object",
         location: node_to_location(initializer, file_path as any),
         stored_functions: functions,
+        stored_references: references,
       };
     }
   }
@@ -949,13 +1012,15 @@ export function detect_function_collection(
 function extract_functions_from_collection_args(
   args: SyntaxNode | null | undefined,
   file_path: string
-): SymbolId[] {
-  if (!args) return [];
+): { functions: SymbolId[]; references: SymbolName[] } {
+  if (!args) return { functions: [], references: [] };
 
   const function_ids: SymbolId[] = [];
+  const references: SymbolName[] = [];
 
   // Traverse all descendants looking for arrow_function or function_expression nodes
   function visit(node: SyntaxNode) {
+
     if (
       node.type === "arrow_function" ||
       node.type === "function_expression" ||
@@ -963,6 +1028,12 @@ function extract_functions_from_collection_args(
     ) {
       const location = node_to_location(node, file_path as any);
       function_ids.push(anonymous_function_symbol(location));
+    } else if (node.type === "identifier") {
+      // Capture variable references (potential functions)
+      // Check if parent is array (Map entry) or arguments
+      if (node.parent?.type === "array" || node.parent?.type === "arguments") {
+         references.push(node.text as SymbolName);
+      }
     }
 
     for (let i = 0; i < node.namedChildCount; i++) {
@@ -972,7 +1043,7 @@ function extract_functions_from_collection_args(
   }
 
   visit(args);
-  return function_ids;
+  return { functions: function_ids, references };
 }
 
 /**
@@ -981,8 +1052,9 @@ function extract_functions_from_collection_args(
 function extract_functions_from_array(
   array_node: SyntaxNode,
   file_path: string
-): SymbolId[] {
+): { functions: SymbolId[]; references: SymbolName[] } {
   const function_ids: SymbolId[] = [];
+  const references: SymbolName[] = [];
 
   for (let i = 0; i < array_node.namedChildCount; i++) {
     const element = array_node.namedChild(i);
@@ -995,10 +1067,12 @@ function extract_functions_from_array(
     ) {
       const location = node_to_location(element, file_path as any);
       function_ids.push(anonymous_function_symbol(location));
+    } else if (element.type === "identifier") {
+      references.push(element.text as SymbolName);
     }
   }
 
-  return function_ids;
+  return { functions: function_ids, references };
 }
 
 /**
@@ -1007,8 +1081,9 @@ function extract_functions_from_array(
 function extract_functions_from_object(
   obj_node: SyntaxNode,
   file_path: string
-): SymbolId[] {
+): { functions: SymbolId[]; references: SymbolName[] } {
   const function_ids: SymbolId[] = [];
+  const references: SymbolName[] = [];
 
   for (let i = 0; i < obj_node.namedChildCount; i++) {
     const pair = obj_node.namedChild(i);
@@ -1024,10 +1099,12 @@ function extract_functions_from_object(
     ) {
       const location = node_to_location(value, file_path as any);
       function_ids.push(anonymous_function_symbol(location));
+    } else if (value.type === "identifier") {
+      references.push(value.text as SymbolName);
     }
   }
 
-  return function_ids;
+  return { functions: function_ids, references };
 }
 
 // ============================================================================

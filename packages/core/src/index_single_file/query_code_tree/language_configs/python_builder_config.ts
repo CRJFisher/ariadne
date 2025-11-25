@@ -33,6 +33,7 @@ import {
   extract_import_path,
   detect_callback_context,
   detect_function_collection,
+  extract_derived_from,
 } from "./python_builder";
 import { PYTHON_IMPORT_HANDLERS } from "./python_imports";
 import { anonymous_function_symbol } from "@ariadnejs/types";
@@ -565,7 +566,7 @@ export const PYTHON_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
         // Detect function collections (Task 11.156.3)
         const parent = capture.node.parent;
         const collection_info = parent
-          ? detect_function_collection(parent, context.file_path)
+          ? detect_function_collection(parent, capture.location.file_path)
           : null;
         const function_collection = collection_info
           ? {
@@ -573,6 +574,8 @@ export const PYTHON_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
               collection_id: var_id,
             }
           : undefined;
+
+          const derived_from = extract_derived_from(capture.node);
 
         builder.add_variable({
           kind: is_const ? "constant" : "variable",
@@ -585,6 +588,7 @@ export const PYTHON_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
           type: extract_type_annotation(capture.node),
           initial_value: extract_initial_value(capture.node),
           function_collection,
+          derived_from,
         });
       },
     },
@@ -608,6 +612,8 @@ export const PYTHON_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
           context.root_scope_id
         );
 
+        const derived_from = extract_derived_from(capture.node);
+
         builder.add_variable({
           kind: "variable",
           symbol_id: var_id,
@@ -618,6 +624,7 @@ export const PYTHON_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
           export: export_info.export,
           type: extract_type_annotation(capture.node),
           initial_value: extract_initial_value(capture.node),
+          derived_from,
         });
       },
     },

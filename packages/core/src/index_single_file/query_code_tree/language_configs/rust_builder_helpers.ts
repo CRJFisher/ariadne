@@ -5,6 +5,7 @@ import type {
   SymbolName,
   ModulePath,
   ExportMetadata,
+  FunctionCollection,
 } from "@ariadnejs/types";
 import {
   class_symbol,
@@ -18,8 +19,10 @@ import {
   constant_symbol,
   type_alias_symbol,
   module_symbol,
+  anonymous_function_symbol,
 } from "@ariadnejs/types";
 import type { CaptureNode } from "../../semantic_index";
+import { node_to_location } from "../../node_utils";
 export { detect_callback_context } from "./rust_callback_detection";
 
 //
@@ -1086,7 +1089,7 @@ export function extract_import_from_extern_crate(
 export function detect_function_collection(
   node: SyntaxNode,
   file_path: string
-): import("@ariadnejs/types").FunctionCollection | null {
+): FunctionCollection | null {
   // Get the let_declaration node which contains name and value
   let declaration = node;
   if (node.type === "let_declaration" || node.type === "const_item") {
@@ -1102,13 +1105,14 @@ export function detect_function_collection(
 
   // Check for array expression: [fn1, fn2, fn3]
   if (value_node.type === "array_expression") {
-    const functions = extract_functions_from_array(value_node, file_path);
-    if (functions.length > 0) {
+    const { functions, references } = extract_functions_from_array(value_node, file_path);
+    if (functions.length > 0 || references.length > 0) {
       return {
         collection_id: null as any, // Will be set by caller
         collection_type: "Array",
         location: node_to_location(value_node, file_path as any),
         stored_functions: functions,
+        stored_references: references,
       };
     }
   }
@@ -1119,25 +1123,29 @@ export function detect_function_collection(
     const macro_name = macro_name_node?.text;
 
     if (macro_name === "vec" || macro_name === "Vec") {
-      const functions = extract_functions_from_macro(value_node, file_path);
-      if (functions.length > 0) {
+      // Use the token tree (arguments) to avoid capturing the macro name
+      const token_tree = value_node.children.find(c => c.type === "token_tree") || value_node;
+      const { functions, references } = extract_functions_from_macro(token_tree, file_path);
+      if (functions.length > 0 || references.length > 0) {
         return {
           collection_id: null as any,
           collection_type: "Array",
           location: node_to_location(value_node, file_path as any),
           stored_functions: functions,
+          stored_references: references,
         };
       }
     }
 
     if (macro_name === "hashmap" || macro_name === "HashMap") {
-      const functions = extract_functions_from_macro(value_node, file_path);
-      if (functions.length > 0) {
+      const { functions, references } = extract_functions_from_macro(value_node, file_path);
+      if (functions.length > 0 || references.length > 0) {
         return {
           collection_id: null as any,
           collection_type: "Map",
           location: node_to_location(value_node, file_path as any),
           stored_functions: functions,
+          stored_references: references,
         };
       }
     }
@@ -1152,8 +1160,9 @@ export function detect_function_collection(
 function extract_functions_from_array(
   array_node: SyntaxNode,
   file_path: string
-): SymbolId[] {
+): { functions: SymbolId[]; references: SymbolName[] } {
   const function_ids: SymbolId[] = [];
+  const references: SymbolName[] = [];
 
   for (let i = 0; i < array_node.namedChildCount; i++) {
     const element = array_node.namedChild(i);
@@ -1162,10 +1171,12 @@ function extract_functions_from_array(
     if (element.type === "closure_expression") {
       const location = node_to_location(element, file_path as any);
       function_ids.push(anonymous_function_symbol(location));
+    } else if (element.type === "identifier") {
+      references.push(element.text as SymbolName);
     }
   }
 
-  return function_ids;
+  return { functions: function_ids, references };
 }
 
 /**
@@ -1175,14 +1186,19 @@ function extract_functions_from_array(
 function extract_functions_from_macro(
   macro_node: SyntaxNode,
   file_path: string
-): SymbolId[] {
+): { functions: SymbolId[]; references: SymbolName[] } {
   const function_ids: SymbolId[] = [];
+  const references: SymbolName[] = [];
 
   // Traverse all descendants looking for closure_expression nodes
   function visit(node: SyntaxNode) {
     if (node.type === "closure_expression") {
       const location = node_to_location(node, file_path as any);
       function_ids.push(anonymous_function_symbol(location));
+    } else if (node.type === "identifier") {
+      // Check if parent is part of the collection structure (arg list, etc.)
+      // This is a heuristic; might capture too much but safe for resolution candidates
+      references.push(node.text as SymbolName);
     }
 
     for (let i = 0; i < node.namedChildCount; i++) {
@@ -1192,5 +1208,55 @@ function extract_functions_from_macro(
   }
 
   visit(macro_node);
-  return function_ids;
+  return { functions: function_ids, references };
+}
+
+/**
+ * Extract the name of the variable this definition is derived from.
+ * Used to track variables assigned from collection lookups.
+ *
+ * Patterns detected:
+ * 1. let handler = config.get("key");  -> returns "config"
+ * 2. let handler = config["key"];      -> returns "config"
+ */
+export function extract_derived_from(node: SyntaxNode): SymbolName | undefined {
+  // Get initial value node (right side of assignment)
+  let assignment = node;
+  if (node.type === "identifier") {
+    assignment = node.parent || node;
+  }
+
+  // Handle let_declaration: let x = ...
+  if (assignment.type === "let_declaration" || assignment.type === "const_item") {
+    const valueNode = assignment.childForFieldName?.("value");
+    if (!valueNode) return undefined;
+
+    // Case 1: Method call (config.get(...))
+    if (valueNode.type === "call_expression") {
+      const functionNode = valueNode.childForFieldName?.("function");
+      if (functionNode?.type === "field_expression") {
+        const value = functionNode.childForFieldName?.("value");
+        const field = functionNode.childForFieldName?.("field");
+        
+        if (value?.type === "identifier" && field?.text === "get") {
+          return value.text as SymbolName;
+        }
+      }
+    }
+
+    // Case 2: Index access (config["key"])
+    if (valueNode.type === "index_expression") {
+      let operand = valueNode.childForFieldName?.("operand");
+      if (!operand) {
+        // Fallback to first child if field name is not available
+        operand = valueNode.child(0) || null;
+      }
+      
+      if (operand?.type === "identifier") {
+        return operand.text as SymbolName;
+      }
+    }
+  }
+
+  return undefined;
 }

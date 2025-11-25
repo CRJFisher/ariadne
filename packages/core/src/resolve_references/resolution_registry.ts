@@ -6,6 +6,7 @@ import type {
   ScopeId,
   SymbolName,
   Language,
+  CallbackContext,
 } from "@ariadnejs/types";
 import type { FileSystemFolder } from "./file_folders";
 import type { DefinitionRegistry } from "./registries/definition_registry";
@@ -17,7 +18,12 @@ import type { ImportGraph } from "../project/import_graph";
 import { resolve_method_call } from "./call_resolution";
 import { resolve_constructor_call } from "./call_resolution/constructor_resolver";
 import { resolve_self_reference_call } from "./call_resolution/self_reference_resolver";
+import { resolve_collection_dispatch } from "./call_resolution/collection_dispatch_resolver";
 import { find_enclosing_function_scope } from "../index_single_file/scopes/scope_utils";
+
+// ... existing imports ...
+
+
 
 /**
  * Registry for symbol resolution.
@@ -303,6 +309,15 @@ export class ResolutionRegistry {
               types,
               this
             );
+
+            // If standard resolution failed, try collection dispatch resolution (Task 11.156.3)
+            if (resolved_symbols.length === 0) {
+              resolved_symbols = resolve_collection_dispatch(
+                ref,
+                definitions,
+                this
+              );
+            }
             break;
 
           case "function_call": {
@@ -311,6 +326,28 @@ export class ResolutionRegistry {
             // Resolve using lexical scope
             const func_symbol = this.resolve(ref.scope_id, ref.name);
             resolved_symbols = func_symbol ? [func_symbol] : [];
+
+            // Check for collection dispatch (Task 11.156.3)
+            // Even if we resolved a variable, it might be a dispatcher (e.g. const handler = config.get(...))
+            // If so, we want the functions in the collection, not the variable itself.
+            let try_dispatch = resolved_symbols.length === 0;
+            if (resolved_symbols.length === 1) {
+              const def = definitions.get(resolved_symbols[0]);
+              if (def && (def.kind === "variable" || def.kind === "constant") && def.derived_from) {
+                try_dispatch = true;
+              }
+            }
+
+            if (try_dispatch) {
+              const dispatch_ids = resolve_collection_dispatch(
+                ref,
+                definitions,
+                this
+              );
+              if (dispatch_ids.length > 0) {
+                 resolved_symbols = dispatch_ids;
+              }
+            }
             break;
           }
 
@@ -659,8 +696,8 @@ export class ResolutionRegistry {
       }
 
       // Get callback context from function definition
-      const callback_context = (callable as any).callback_context as
-        | import("@ariadnejs/types").CallbackContext
+      const callback_context = callable.callback_context as
+        | CallbackContext
         | undefined;
 
       if (!callback_context || !callback_context.is_callback) {

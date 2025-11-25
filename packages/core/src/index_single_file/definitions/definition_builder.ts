@@ -28,6 +28,8 @@ import {
   type ModulePath,
   decorator_symbol,
   ConstructorDefinition,
+  CallbackContext,
+  FunctionCollection,
 } from "@ariadnejs/types";
 
 import type { ProcessingContext, CaptureNode } from "../semantic_index";
@@ -116,7 +118,7 @@ interface FunctionBuilderState {
   signature: FunctionSignatureState;
   decorators: DecoratorDefinition[];
   body_scope_id?: ScopeId;
-  callback_context?: import("@ariadnejs/types").CallbackContext;
+  callback_context?: CallbackContext;
 }
 
 /**
@@ -455,7 +457,7 @@ export class DefinitionBuilder {
       location: Location;
       scope_id: ScopeId;
       return_type?: SymbolName;
-      callback_context?: import("@ariadnejs/types").CallbackContext;
+      callback_context?: CallbackContext;
     },
     capture?: CaptureNode
   ): DefinitionBuilder {
@@ -470,6 +472,7 @@ export class DefinitionBuilder {
           definition.location
         );
       } catch (error) {
+        console.warn(`Could not find body scope for anonymous function ${definition.symbol_id}: ${error}`);
         // Anonymous functions might not have traditional body scopes
         // (e.g., single-expression arrow functions), so this is expected
       }
@@ -566,6 +569,8 @@ export class DefinitionBuilder {
     type?: SymbolName;
     initial_value?: string;
     docstring?: string;
+    function_collection?: FunctionCollection;
+    derived_from?: SymbolName;
   }): DefinitionBuilder {
     this.variables.set(definition.symbol_id, {
       kind: definition.kind,
@@ -578,6 +583,8 @@ export class DefinitionBuilder {
       type: definition.type,
       initial_value: definition.initial_value,
       docstring: definition.docstring,
+      function_collection: definition.function_collection,
+      derived_from: definition.derived_from,
     });
     return this;
   }

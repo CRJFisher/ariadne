@@ -5,6 +5,9 @@ import type {
   SymbolName,
   ScopeId,
   ModulePath,
+  CallbackContext,
+  ExportMetadata,
+  FunctionCollection,
 } from "@ariadnejs/types";
 import {
   class_symbol,
@@ -16,6 +19,7 @@ import {
   interface_symbol,
   type_symbol,
   enum_symbol,
+  anonymous_function_symbol,
 } from "@ariadnejs/types";
 import type { DefinitionBuilder } from "../../definitions/definition_builder";
 import type { CaptureNode } from "../../semantic_index";
@@ -367,7 +371,7 @@ export function extract_export_info(
   module_scope_id: ScopeId
 ): {
   is_exported: boolean;
-  export?: import("@ariadnejs/types").ExportMetadata;
+  export?: ExportMetadata;
 } {
   // Names starting with underscore are private (convention)
   // Exception: Dunder methods (__name__) are NOT private
@@ -627,7 +631,7 @@ export function find_decorator_target(
 export function detect_callback_context(
   node: SyntaxNode,
   file_path: string
-): import("@ariadnejs/types").CallbackContext {
+): CallbackContext {
   let current: SyntaxNode | null = node.parent;
   let depth = 0;
   const MAX_DEPTH = 5;
@@ -668,7 +672,7 @@ export function detect_callback_context(
 export function detect_function_collection(
   node: SyntaxNode,
   file_path: string
-): import("@ariadnejs/types").FunctionCollection | null {
+): FunctionCollection | null {
   // Get the assignment node
   let assignment = node;
   if (node.type !== "assignment") {
@@ -679,41 +683,46 @@ export function detect_function_collection(
   const value_node = assignment.childForFieldName?.("right");
   if (!value_node) return null;
 
+
+
   // Check for list literal: [fn1, fn2, fn3]
   if (value_node.type === "list") {
-    const functions = extract_functions_from_list(value_node, file_path);
-    if (functions.length > 0) {
+    const { functions, references } = extract_functions_from_list(value_node, file_path);
+    if (functions.length > 0 || references.length > 0) {
       return {
         collection_id: null as any, // Will be set by caller
         collection_type: "Array",
         location: node_to_location(value_node, file_path as any),
         stored_functions: functions,
+        stored_references: references,
       };
     }
   }
 
   // Check for dict literal: {"key": fn, ...}
   if (value_node.type === "dictionary") {
-    const functions = extract_functions_from_dict(value_node, file_path);
-    if (functions.length > 0) {
+    const { functions, references } = extract_functions_from_dict(value_node, file_path);
+    if (functions.length > 0 || references.length > 0) {
       return {
         collection_id: null as any,
         collection_type: "Object",
         location: node_to_location(value_node, file_path as any),
         stored_functions: functions,
+        stored_references: references,
       };
     }
   }
 
   // Check for tuple literal: (fn1, fn2, fn3)
   if (value_node.type === "tuple") {
-    const functions = extract_functions_from_list(value_node, file_path);
-    if (functions.length > 0) {
+    const { functions, references } = extract_functions_from_list(value_node, file_path);
+    if (functions.length > 0 || references.length > 0) {
       return {
         collection_id: null as any,
         collection_type: "Array",
         location: node_to_location(value_node, file_path as any),
         stored_functions: functions,
+        stored_references: references,
       };
     }
   }
@@ -722,13 +731,74 @@ export function detect_function_collection(
 }
 
 /**
+ * Extract the name of the variable this definition is derived from.
+ * Used to track variables assigned from collection lookups.
+ *
+ * Patterns detected:
+ * 1. handler = config.get("key")  -> returns "config"
+ * 2. handler = config["key"]      -> returns "config"
+ */
+export function extract_derived_from(node: SyntaxNode): SymbolName | undefined {
+  // Get initial value node (right side of assignment)
+  let assignment = node;
+  if (node.type === "identifier" || node.type === "attribute") {
+    assignment = node.parent || node;
+  }
+
+  if (assignment.type !== "assignment") {
+    // Try to find parent assignment
+    let current = node.parent;
+    while (current) {
+      if (current.type === "assignment") {
+        assignment = current;
+        break;
+      }
+      current = current.parent;
+    }
+  }
+
+  if (assignment.type !== "assignment") {
+    return undefined;
+  }
+
+  const valueNode = assignment.childForFieldName?.("right");
+  if (!valueNode) {
+    return undefined;
+  }
+
+  // Case 1: Method call (config.get(...))
+  if (valueNode.type === "call") {
+    const functionNode = valueNode.childForFieldName?.("function");
+    if (functionNode?.type === "attribute") {
+      const objectNode = functionNode.childForFieldName?.("object");
+      const attributeNode = functionNode.childForFieldName?.("attribute");
+      
+      if (objectNode?.type === "identifier" && attributeNode?.text === "get") {
+        return objectNode.text as SymbolName;
+      }
+    }
+  }
+
+  // Case 2: Subscript access (config[...])
+  if (valueNode.type === "subscript") {
+    const value = valueNode.childForFieldName?.("value");
+    if (value?.type === "identifier") {
+      return value.text as SymbolName;
+    }
+  }
+
+  return undefined;
+}
+
+/**
  * Extract function SymbolIds from Python list or tuple: [fn1, fn2] or (fn1, fn2)
  */
 function extract_functions_from_list(
   list_node: SyntaxNode,
   file_path: string
-): SymbolId[] {
+): { functions: SymbolId[]; references: SymbolName[] } {
   const function_ids: SymbolId[] = [];
+  const references: SymbolName[] = [];
 
   for (let i = 0; i < list_node.namedChildCount; i++) {
     const element = list_node.namedChild(i);
@@ -737,10 +807,12 @@ function extract_functions_from_list(
     if (element.type === "lambda") {
       const location = node_to_location(element, file_path as any);
       function_ids.push(anonymous_function_symbol(location));
+    } else if (element.type === "identifier") {
+      references.push(element.text as SymbolName);
     }
   }
 
-  return function_ids;
+  return { functions: function_ids, references };
 }
 
 /**
@@ -749,8 +821,9 @@ function extract_functions_from_list(
 function extract_functions_from_dict(
   dict_node: SyntaxNode,
   file_path: string
-): SymbolId[] {
+): { functions: SymbolId[]; references: SymbolName[] } {
   const function_ids: SymbolId[] = [];
+  const references: SymbolName[] = [];
 
   for (let i = 0; i < dict_node.namedChildCount; i++) {
     const pair = dict_node.namedChild(i);
@@ -762,8 +835,10 @@ function extract_functions_from_dict(
     if (value.type === "lambda") {
       const location = node_to_location(value, file_path as any);
       function_ids.push(anonymous_function_symbol(location));
+    } else if (value.type === "identifier") {
+      references.push(value.text as SymbolName);
     }
   }
 
-  return function_ids;
+  return { functions: function_ids, references };
 }

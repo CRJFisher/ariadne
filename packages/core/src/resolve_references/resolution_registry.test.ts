@@ -469,3 +469,79 @@ export function resolve_export_chain(source_file: string): string | null {
     expect(resolved_call_symbol).toContain("import_resolver.ts");
   });
 });
+
+describe("ResolutionRegistry - Collection Dispatch Resolution", () => {
+  let project: Project;
+  let temp_dir: string;
+
+  beforeEach(async () => {
+    temp_dir = fs.mkdtempSync(path.join(os.tmpdir(), "resolution-test-"));
+    project = new Project();
+    await project.initialize(temp_dir as FilePath, []);
+  });
+
+  afterEach(() => {
+    if (temp_dir && fs.existsSync(temp_dir)) {
+      fs.rmSync(temp_dir, { recursive: true, force: true });
+    }
+  });
+
+  it("should resolve calls to functions retrieved from a collection", () => {
+    const file_path = path.join(temp_dir, "collection.ts") as FilePath;
+    const code = `
+      const handler1 = () => {};
+      const handler2 = () => {};
+      
+      const CONFIG = new Map([
+        ["type1", handler1],
+        ["type2", handler2]
+      ]);
+
+      const handler = CONFIG.get("type1");
+      handler(); // Should resolve to [handler1, handler2]
+    `;
+
+    project.update_file(file_path, code);
+
+    // Get semantic index
+    const index = project.get_semantic_index(file_path);
+    expect(index).toBeDefined();
+
+    // Find the call to 'handler'
+    const call_ref = index!.references.find(
+      (ref) => ref.name === "handler" && ref.kind === "function_call"
+    );
+    expect(call_ref).toBeDefined();
+
+    // Resolve calls
+    // We need to trigger resolve_calls_for_files manually or via project
+    // project.update_file calls resolve_names but NOT resolve_calls_for_files automatically?
+    // Actually project.update_file calls analyze_file -> resolve_names -> update_types -> resolve_calls
+    // So it should be done.
+
+    const resolved_calls = project.resolutions.get_file_calls(file_path);
+    const handler_call = resolved_calls.find(
+      (call) => call.location.start_line === call_ref!.location.start_line
+    );
+
+      const definitions = project.definitions.get_all_definitions();
+      const handler_def = definitions.find(d => d.name === "handler");
+      process.stdout.write("Handler definition: " + JSON.stringify(handler_def, null, 2) + "\n");
+      const config_def = definitions.find(d => d.name === "CONFIG");
+      process.stdout.write("CONFIG definition: " + JSON.stringify(config_def, null, 2) + "\n");
+
+      expect(handler_call).toBeDefined();
+      expect(handler_call!.resolutions.length).toBe(2);
+
+      const handler1_ids = definitions.filter(d => d.name === "handler1").map(d => d.symbol_id);
+      const handler2_ids = definitions.filter(d => d.name === "handler2").map(d => d.symbol_id);
+
+      const resolved_ids = handler_call!.resolutions.map(r => r.symbol_id);
+      
+      // We accept either variable or function symbol IDs, as arrow functions assigned to variables
+      // can produce both definitions.
+      expect(handler1_ids.some(id => resolved_ids.includes(id))).toBe(true);
+      expect(handler2_ids.some(id => resolved_ids.includes(id))).toBe(true);
+    expect(handler_call!.resolutions.length).toBe(2);
+  });
+});

@@ -11,6 +11,7 @@ export type ParameterName = string & { __brand: "ParameterName" };
 import { SymbolId, SymbolKind } from "./symbol";
 import { SymbolName } from "./symbol";
 import { ModulePath } from "./import_export";
+import { CallbackContext } from "./call_chains";
 
 /**
  * Export metadata for symbols that can be imported
@@ -54,7 +55,7 @@ export interface FunctionDefinition extends Definition {
   readonly return_type?: SymbolName;
   readonly generics?: SymbolName[];
   readonly body_scope_id: ScopeId; // The scope ID of this function's body
-  readonly callback_context?: import("./call_chains").CallbackContext; // For anonymous functions that are callbacks
+  readonly callback_context?: CallbackContext; // For anonymous functions that are callbacks
 }
 
 export interface FunctionSignature {
@@ -170,6 +171,7 @@ export interface FunctionCollection {
   readonly collection_type: "Map" | "Set" | "Array" | "Object";
   readonly location: Location;
   readonly stored_functions: readonly SymbolId[];
+  readonly stored_references?: readonly SymbolName[]; // Names of referenced functions (e.g. "handler" in [handler])
 }
 
 /**
@@ -182,6 +184,7 @@ export interface VariableDefinition extends Definition {
   readonly initial_value?: string;
   readonly docstring?: DocString;
   readonly function_collection?: FunctionCollection;
+  readonly derived_from?: SymbolName; // Name of the variable this was derived from (e.g. "config" in "const handler = config.get(...)")
 }
 
 /**

@@ -31,8 +31,10 @@ import {
   detect_callback_context,
   detect_function_collection,
   consume_documentation,
+  extract_derived_from,
 } from "./javascript_builder";
 import { method_symbol, anonymous_function_symbol } from "@ariadnejs/types";
+
 
 // ============================================================================
 // JavaScript/TypeScript Builder Configuration
@@ -380,7 +382,7 @@ export const JAVASCRIPT_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
 
         // Detect function collections (Task 11.156.3)
         const collection_info = parent
-          ? detect_function_collection(parent, context.file_path)
+          ? detect_function_collection(parent, capture.location.file_path)
           : null;
         const function_collection = collection_info
           ? {
@@ -388,6 +390,8 @@ export const JAVASCRIPT_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
               collection_id: var_id, // Set the collection_id to the variable's symbol_id
             }
           : undefined;
+
+        const derived_from = extract_derived_from(capture.node);
 
         builder.add_variable({
           kind: is_const ? "constant" : "variable",
@@ -400,6 +404,7 @@ export const JAVASCRIPT_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
           initial_value: extract_initial_value(capture.node),
           docstring,
           function_collection,
+          derived_from,
         });
       },
     },

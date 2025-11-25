@@ -34,6 +34,7 @@ import {
   extract_import_from_extern_crate,
   detect_callback_context,
   detect_function_collection,
+  extract_derived_from,
   type ImportInfo,
 } from "./rust_builder_helpers";
 
@@ -770,7 +771,7 @@ export const RUST_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
         // Detect function collections (Task 11.156.3)
         const parent = capture.node.parent;
         const collection_info = parent
-          ? detect_function_collection(parent, context.file_path)
+          ? detect_function_collection(parent, capture.location.file_path)
           : null;
         const function_collection = collection_info
           ? {
@@ -778,6 +779,8 @@ export const RUST_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
               collection_id: var_id,
             }
           : undefined;
+
+        const derived_from = extract_derived_from(capture.node);
 
         builder.add_variable({
           kind: "variable",
@@ -789,6 +792,7 @@ export const RUST_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
           export: export_info.export,
           type: var_type,
           function_collection,
+          derived_from,
         });
       },
     },
@@ -811,7 +815,7 @@ export const RUST_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
         // Detect function collections (Task 11.156.3)
         const parent = capture.node.parent;
         const collection_info = parent
-          ? detect_function_collection(parent, context.file_path)
+          ? detect_function_collection(parent, capture.location.file_path)
           : null;
         const function_collection = collection_info
           ? {
@@ -852,7 +856,7 @@ export const RUST_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
         // Detect function collections (Task 11.156.3)
         const parent = capture.node.parent;
         const collection_info = parent
-          ? detect_function_collection(parent, context.file_path)
+          ? detect_function_collection(parent, capture.location.file_path)
           : null;
         const function_collection = collection_info
           ? {
@@ -860,6 +864,8 @@ export const RUST_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
               collection_id: var_id,
             }
           : undefined;
+
+        const derived_from = extract_derived_from(capture.node);
 
         builder.add_variable({
           kind: "variable",
@@ -871,6 +877,7 @@ export const RUST_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
           export: export_info.export,
           type: var_type,
           function_collection,
+          derived_from,
         });
       },
     },
