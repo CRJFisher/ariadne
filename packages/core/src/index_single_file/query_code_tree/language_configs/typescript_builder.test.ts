@@ -927,7 +927,7 @@ export const NESTED: {
 
     describe("Callback detection - positive cases", () => {
       it("should detect callback in array.forEach()", () => {
-        const code = `items.forEach((item) => { console.log(item); });`;
+        const code = "items.forEach((item) => { console.log(item); });";
         const tree = parser.parse(code);
         const arrow_fn = find_arrow_function(tree.rootNode);
 
@@ -941,7 +941,7 @@ export const NESTED: {
       });
 
       it("should detect callback in array.map()", () => {
-        const code = `numbers.map(x => x * 2);`;
+        const code = "numbers.map(x => x * 2);";
         const tree = parser.parse(code);
         const arrow_fn = find_arrow_function(tree.rootNode);
 
@@ -953,7 +953,7 @@ export const NESTED: {
       });
 
       it("should detect callback in array.filter()", () => {
-        const code = `items.filter(item => item.active);`;
+        const code = "items.filter(item => item.active);";
         const tree = parser.parse(code);
         const arrow_fn = find_arrow_function(tree.rootNode);
 
@@ -964,7 +964,7 @@ export const NESTED: {
       });
 
       it("should detect callback as second argument", () => {
-        const code = `setTimeout(() => console.log("done"), 1000);`;
+        const code = "setTimeout(() => console.log(\"done\"), 1000);";
         const tree = parser.parse(code);
         const arrow_fn = find_arrow_function(tree.rootNode);
 
@@ -975,7 +975,7 @@ export const NESTED: {
       });
 
       it("should detect nested callback (callback inside callback)", () => {
-        const code = `items.map(x => [x].filter(y => y > 0));`;
+        const code = "items.map(x => [x].filter(y => y > 0));";
         const tree = parser.parse(code);
 
         // Find both arrow functions
@@ -1001,7 +1001,7 @@ export const NESTED: {
       });
 
       it("should detect callback in method call", () => {
-        const code = `obj.subscribe(event => handle(event));`;
+        const code = "obj.subscribe(event => handle(event));";
         const tree = parser.parse(code);
         const arrow_fn = find_arrow_function(tree.rootNode);
 
@@ -1014,7 +1014,7 @@ export const NESTED: {
 
     describe("Non-callback detection - negative cases", () => {
       it("should NOT detect callback in variable assignment", () => {
-        const code = `const fn = () => { console.log("test"); };`;
+        const code = "const fn = () => { console.log(\"test\"); };";
         const tree = parser.parse(code);
         const arrow_fn = find_arrow_function(tree.rootNode);
 
@@ -1026,7 +1026,7 @@ export const NESTED: {
       });
 
       it("should NOT detect callback in return statement", () => {
-        const code = `function factory() { return () => {}; }`;
+        const code = "function factory() { return () => {}; }";
         const tree = parser.parse(code);
         const arrow_fn = find_arrow_function(tree.rootNode);
 
@@ -1037,7 +1037,7 @@ export const NESTED: {
       });
 
       it("should NOT detect callback in object literal", () => {
-        const code = `const obj = { handler: () => {} };`;
+        const code = "const obj = { handler: () => {} };";
         const tree = parser.parse(code);
         const arrow_fn = find_arrow_function(tree.rootNode);
 
@@ -1048,7 +1048,7 @@ export const NESTED: {
       });
 
       it("should NOT detect callback in array literal", () => {
-        const code = `const fns = [() => {}];`;
+        const code = "const fns = [() => {}];";
         const tree = parser.parse(code);
         const arrow_fn = find_arrow_function(tree.rootNode);
 
@@ -1061,7 +1061,7 @@ export const NESTED: {
 
     describe("Receiver location capture", () => {
       it("should capture correct receiver location for forEach call", () => {
-        const code = `items.forEach((x) => x * 2);`;
+        const code = "items.forEach((x) => x * 2);";
         const tree = parser.parse(code);
         const arrow_fn = find_arrow_function(tree.rootNode);
 

@@ -594,7 +594,7 @@ describe("Type Bindings - Edge Cases", () => {
   });
 
   it("should handle definitions without type annotations", () => {
-    let parser = new Parser();
+    const parser = new Parser();
     parser.setLanguage(JavaScript);
 
     const code = `

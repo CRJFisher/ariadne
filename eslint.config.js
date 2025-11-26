@@ -2,6 +2,7 @@ import js from "@eslint/js";
 import tseslint from "@typescript-eslint/eslint-plugin";
 import tsparser from "@typescript-eslint/parser";
 import importPlugin from "eslint-plugin-import";
+import unusedImports from "eslint-plugin-unused-imports";
 
 export default [
   js.configs.recommended,
@@ -27,7 +28,8 @@ export default [
     },
     plugins: {
       "@typescript-eslint": tseslint,
-      "import": importPlugin
+      "import": importPlugin,
+      "unused-imports": unusedImports
     },
     settings: {
       "import/resolver": {
@@ -36,14 +38,19 @@ export default [
       }
     },
     rules: {
-      // TypeScript specific rules
-      "@typescript-eslint/no-unused-vars": ["error", { "argsIgnorePattern": "^_" }],
+      // TypeScript specific rules - disable base rule, use unused-imports plugin instead
+      "@typescript-eslint/no-unused-vars": "off",
+      "no-unused-vars": "off",
+
+      // Auto-fixable unused imports detection
+      "unused-imports/no-unused-imports": "error",
+      "unused-imports/no-unused-vars": ["error", { "argsIgnorePattern": "^_" }],
+
       "@typescript-eslint/no-explicit-any": "warn",
       "@typescript-eslint/no-non-null-assertion": "warn",
 
       // General JavaScript rules
       "no-console": "off", // Allow console.log for now
-      "no-unused-vars": "off", // Use TypeScript version instead
       "prefer-const": "error",
       "no-var": "error",
 
@@ -93,8 +100,9 @@ export default [
     rules: {
       // Relax rules for test files
       "@typescript-eslint/no-explicit-any": "off",
-      "@typescript-eslint/no-unused-vars": "off",
       "@typescript-eslint/no-non-null-assertion": "off",
+      "unused-imports/no-unused-imports": "off",
+      "unused-imports/no-unused-vars": "off",
       "no-console": "off",
       // Allow 'as any' in tests, but still prohibit dynamic imports
       "no-restricted-syntax": [
@@ -122,7 +130,8 @@ export default [
     },
     rules: {
       // Test fixtures intentionally have unused variables to simulate real code
-      "@typescript-eslint/no-unused-vars": "off",
+      "unused-imports/no-unused-imports": "off",
+      "unused-imports/no-unused-vars": "off",
       "@typescript-eslint/no-explicit-any": "off",
       // Allow redeclarations in test fixtures (intentional for testing)
       "no-redeclare": "off",

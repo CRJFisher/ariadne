@@ -405,7 +405,7 @@ def expensive_func():
     });
 
     it("should handle single-line class definition", () => {
-      const code = `class Point: pass`;
+      const code = "class Point: pass";
 
       const tree = parser.parse(code);
       const class_node = tree.rootNode.firstChild!;
@@ -423,7 +423,7 @@ def expensive_func():
     });
 
     it("should handle lambda expressions via block boundaries", () => {
-      const code = `lambda_func = lambda x: x * 2`;
+      const code = "lambda_func = lambda x: x * 2";
 
       const tree = parser.parse(code);
       const assignment_node = tree.rootNode.firstChild!;

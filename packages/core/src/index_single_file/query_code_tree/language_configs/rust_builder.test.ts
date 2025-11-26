@@ -1394,7 +1394,7 @@ struct Arrays {
 
     describe("Callback detection - positive cases", () => {
       it("should detect callback in iter().map()", () => {
-        const code = `items.iter().map(|x| x * 2)`;
+        const code = "items.iter().map(|x| x * 2)";
         const tree = parser.parse(code);
         const closure = find_closure(tree.rootNode);
         expect(closure).not.toBeNull();
@@ -1406,7 +1406,7 @@ struct Arrays {
       });
 
       it("should detect callback in iter().filter()", () => {
-        const code = `items.iter().filter(|x| *x > 0)`;
+        const code = "items.iter().filter(|x| *x > 0)";
         const tree = parser.parse(code);
         const closure = find_closure(tree.rootNode);
         expect(closure).not.toBeNull();
@@ -1418,7 +1418,7 @@ struct Arrays {
       });
 
       it("should detect callback in for_each()", () => {
-        const code = `items.iter().for_each(|x| println!("{}", x))`;
+        const code = "items.iter().for_each(|x| println!(\"{}\", x))";
         const tree = parser.parse(code);
         const closure = find_closure(tree.rootNode);
         expect(closure).not.toBeNull();
@@ -1430,7 +1430,7 @@ struct Arrays {
       });
 
       it("should detect callback in sort_by()", () => {
-        const code = `items.sort_by(|a, b| a.cmp(b))`;
+        const code = "items.sort_by(|a, b| a.cmp(b))";
         const tree = parser.parse(code);
         const closure = find_closure(tree.rootNode);
         expect(closure).not.toBeNull();
@@ -1442,7 +1442,7 @@ struct Arrays {
       });
 
       it("should detect callback in nested iterator chains", () => {
-        const code = `items.iter().map(|x| x * 2).filter(|y| *y > 0)`;
+        const code = "items.iter().map(|x| x * 2).filter(|y| *y > 0)";
         const tree = parser.parse(code);
         // Find first closure (the one in map)
         const closure = find_closure(tree.rootNode);
@@ -1455,7 +1455,7 @@ struct Arrays {
       });
 
       it("should detect callback in method call", () => {
-        const code = `obj.process(|x| x.to_string())`;
+        const code = "obj.process(|x| x.to_string())";
         const tree = parser.parse(code);
         const closure = find_closure(tree.rootNode);
         expect(closure).not.toBeNull();
@@ -1469,7 +1469,7 @@ struct Arrays {
 
     describe("Non-callback detection - negative cases", () => {
       it("should NOT detect callback in variable assignment", () => {
-        const code = `let f = |x| x * 2;`;
+        const code = "let f = |x| x * 2;";
         const tree = parser.parse(code);
         const closure = find_closure(tree.rootNode);
         expect(closure).not.toBeNull();
@@ -1480,7 +1480,7 @@ struct Arrays {
       });
 
       it("should NOT detect callback in return statement", () => {
-        const code = `fn foo() -> impl Fn(i32) -> i32 { |x| x * 2 }`;
+        const code = "fn foo() -> impl Fn(i32) -> i32 { |x| x * 2 }";
         const tree = parser.parse(code);
         const closure = find_closure(tree.rootNode);
         expect(closure).not.toBeNull();
@@ -1491,7 +1491,7 @@ struct Arrays {
       });
 
       it("should NOT detect callback in struct initialization", () => {
-        const code = `Handler { func: |x| x * 2 }`;
+        const code = "Handler { func: |x| x * 2 }";
         const tree = parser.parse(code);
         const closure = find_closure(tree.rootNode);
         expect(closure).not.toBeNull();
@@ -1502,7 +1502,7 @@ struct Arrays {
       });
 
       it("should NOT detect callback in array literal", () => {
-        const code = `let funcs = [|x| x * 2, |y| y + 1];`;
+        const code = "let funcs = [|x| x * 2, |y| y + 1];";
         const tree = parser.parse(code);
         const closure = find_closure(tree.rootNode);
         expect(closure).not.toBeNull();
@@ -1515,7 +1515,7 @@ struct Arrays {
 
     describe("Receiver location capture", () => {
       it("should capture correct receiver location for map call", () => {
-        const code = `items.iter().map(|x| x * 2)`;
+        const code = "items.iter().map(|x| x * 2)";
         const tree = parser.parse(code);
         const closure = find_closure(tree.rootNode);
         expect(closure).not.toBeNull();
@@ -1531,7 +1531,7 @@ struct Arrays {
       });
 
       it("should capture correct receiver location for multi-line call", () => {
-        const code = `result = items.sort_by(\n    |a, b| a.cmp(b)\n)`;
+        const code = "result = items.sort_by(\n    |a, b| a.cmp(b)\n)";
         const tree = parser.parse(code);
         const closure = find_closure(tree.rootNode);
         expect(closure).not.toBeNull();

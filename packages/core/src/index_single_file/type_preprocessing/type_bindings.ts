@@ -9,13 +9,11 @@
 
 import type {
   VariableDefinition,
-  ParameterDefinition,
   FunctionDefinition,
   ClassDefinition,
   InterfaceDefinition,
-  MethodDefinition,
 } from "@ariadnejs/types";
-import type { LocationKey, SymbolName, Location } from "@ariadnejs/types";
+import type { LocationKey, SymbolName } from "@ariadnejs/types";
 import { location_key } from "@ariadnejs/types";
 
 /**

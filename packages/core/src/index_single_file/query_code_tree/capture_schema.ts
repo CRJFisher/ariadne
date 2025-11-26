@@ -845,7 +845,7 @@ export function get_capture_errors(capture_name: string): string[] {
   // Check naming rules
   if (!CANONICAL_CAPTURE_SCHEMA.rules.pattern.test(capture_name)) {
     errors.push(
-      `Invalid capture name format. Must follow: @category.entity[.qualifier]`
+      "Invalid capture name format. Must follow: @category.entity[.qualifier]"
     );
   }
 
@@ -868,7 +868,7 @@ export function get_capture_errors(capture_name: string): string[] {
   if (!is_required && !is_optional) {
     errors.push(
       `Capture '${capture_name}' is not in required or optional lists. ` +
-        `All valid captures must be explicitly defined in the schema.`
+        "All valid captures must be explicitly defined in the schema."
     );
   }
 

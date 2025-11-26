@@ -6,11 +6,11 @@
  */
 
 // Main coordinator
-export { Project } from './project'
+export { Project } from "./project";
 
 // Core processing functions
-export { build_semantic_index } from './index_single_file/semantic_index'
-export { detect_call_graph } from './trace_call_graph/detect_call_graph'
+export { build_semantic_index } from "./index_single_file/semantic_index";
+export { detect_call_graph } from "./trace_call_graph/detect_call_graph";
 
 // Project-level registries
 export {
@@ -20,4 +20,4 @@ export {
   ExportRegistry,
   ImportGraph,
   ResolutionRegistry
-} from './project'
+} from "./project";

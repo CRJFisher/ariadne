@@ -25,7 +25,7 @@ describe("Collection Resolution Tests", () => {
       const code = "handlers = [fn1, fn2]";
       const tree = pythonParser.parse(code);
       let assignment = tree.rootNode.child(0)!;
-      if (assignment.type === 'expression_statement') {
+      if (assignment.type === "expression_statement") {
         assignment = assignment.child(0)!;
       }
       
@@ -42,7 +42,7 @@ describe("Collection Resolution Tests", () => {
       const code = "config = {'a': fn1, 'b': fn2}";
       const tree = pythonParser.parse(code);
       let assignment = tree.rootNode.child(0)!;
-      if (assignment.type === 'expression_statement') {
+      if (assignment.type === "expression_statement") {
         assignment = assignment.child(0)!;
       }
       
@@ -57,7 +57,7 @@ describe("Collection Resolution Tests", () => {
       const code = "handlers = (fn1, fn2)";
       const tree = pythonParser.parse(code);
       let assignment = tree.rootNode.child(0)!;
-      if (assignment.type === 'expression_statement') {
+      if (assignment.type === "expression_statement") {
         assignment = assignment.child(0)!;
       }
       
@@ -72,7 +72,7 @@ describe("Collection Resolution Tests", () => {
       const code = "handler = config.get('key')";
       const tree = pythonParser.parse(code);
       let assignment = tree.rootNode.child(0)!;
-      if (assignment.type === 'expression_statement') {
+      if (assignment.type === "expression_statement") {
         assignment = assignment.child(0)!;
       }
       const identifier = assignment.child(0)!; // handler
@@ -85,7 +85,7 @@ describe("Collection Resolution Tests", () => {
       const code = "handler = config['key']";
       const tree = pythonParser.parse(code);
       let assignment = tree.rootNode.child(0)!;
-      if (assignment.type === 'expression_statement') {
+      if (assignment.type === "expression_statement") {
         assignment = assignment.child(0)!;
       }
       const identifier = assignment.child(0)!;

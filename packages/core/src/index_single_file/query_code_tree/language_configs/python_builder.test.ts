@@ -15,7 +15,7 @@ import type {
   SemanticCategory,
   SemanticEntity,
 } from "../../semantic_index";
-import type { Location, ScopeId, SymbolName } from "@ariadnejs/types";
+import type { FilePath, Location, ScopeId, SymbolName } from "@ariadnejs/types";
 import { node_to_location } from "../../node_utils";
 import { extract_import_path, detect_callback_context } from "./python_builder";
 
@@ -1730,7 +1730,7 @@ class Point:
         const lambda_fn = find_lambda(tree.rootNode);
         expect(lambda_fn).not.toBeNull();
 
-        const context = detect_callback_context(lambda_fn!, "test.py");
+        const context = detect_callback_context(lambda_fn!, "test.py" as FilePath);
         expect(context.is_callback).toBe(true);
         expect(context.receiver_is_external).toBeNull();
         expect(context.receiver_location).not.toBeNull();
@@ -1742,7 +1742,7 @@ class Point:
         const lambda_fn = find_lambda(tree.rootNode);
         expect(lambda_fn).not.toBeNull();
 
-        const context = detect_callback_context(lambda_fn!, "test.py");
+        const context = detect_callback_context(lambda_fn!, "test.py" as FilePath);
         expect(context.is_callback).toBe(true);
         expect(context.receiver_is_external).toBeNull();
         expect(context.receiver_location).not.toBeNull();
@@ -1754,7 +1754,7 @@ class Point:
         const lambda_fn = find_lambda(tree.rootNode);
         expect(lambda_fn).not.toBeNull();
 
-        const context = detect_callback_context(lambda_fn!, "test.py");
+        const context = detect_callback_context(lambda_fn!, "test.py" as FilePath);
         expect(context.is_callback).toBe(true);
         expect(context.receiver_is_external).toBeNull();
         expect(context.receiver_location).not.toBeNull();
@@ -1766,7 +1766,7 @@ class Point:
         const lambda_fn = find_lambda(tree.rootNode);
         expect(lambda_fn).not.toBeNull();
 
-        const context = detect_callback_context(lambda_fn!, "test.py");
+        const context = detect_callback_context(lambda_fn!, "test.py" as FilePath);
         expect(context.is_callback).toBe(true);
         expect(context.receiver_is_external).toBeNull();
         expect(context.receiver_location).not.toBeNull();
@@ -1779,7 +1779,7 @@ class Point:
         const lambda_fn = find_lambda(tree.rootNode);
         expect(lambda_fn).not.toBeNull();
 
-        const context = detect_callback_context(lambda_fn!, "test.py");
+        const context = detect_callback_context(lambda_fn!, "test.py" as FilePath);
         expect(context.is_callback).toBe(true);
         expect(context.receiver_is_external).toBeNull();
         expect(context.receiver_location).not.toBeNull();
@@ -1791,7 +1791,7 @@ class Point:
         const lambda_fn = find_lambda(tree.rootNode);
         expect(lambda_fn).not.toBeNull();
 
-        const context = detect_callback_context(lambda_fn!, "test.py");
+        const context = detect_callback_context(lambda_fn!, "test.py" as FilePath);
         expect(context.is_callback).toBe(true);
         expect(context.receiver_is_external).toBeNull();
         expect(context.receiver_location).not.toBeNull();
@@ -1805,7 +1805,7 @@ class Point:
         const lambda_fn = find_lambda(tree.rootNode);
         expect(lambda_fn).not.toBeNull();
 
-        const context = detect_callback_context(lambda_fn!, "test.py");
+        const context = detect_callback_context(lambda_fn!, "test.py" as FilePath);
         expect(context.is_callback).toBe(false);
         expect(context.receiver_location).toBeNull();
       });
@@ -1816,7 +1816,7 @@ class Point:
         const lambda_fn = find_lambda(tree.rootNode);
         expect(lambda_fn).not.toBeNull();
 
-        const context = detect_callback_context(lambda_fn!, "test.py");
+        const context = detect_callback_context(lambda_fn!, "test.py" as FilePath);
         expect(context.is_callback).toBe(false);
         expect(context.receiver_location).toBeNull();
       });
@@ -1827,7 +1827,7 @@ class Point:
         const lambda_fn = find_lambda(tree.rootNode);
         expect(lambda_fn).not.toBeNull();
 
-        const context = detect_callback_context(lambda_fn!, "test.py");
+        const context = detect_callback_context(lambda_fn!, "test.py" as FilePath);
         expect(context.is_callback).toBe(false);
         expect(context.receiver_location).toBeNull();
       });
@@ -1838,7 +1838,7 @@ class Point:
         const lambda_fn = find_lambda(tree.rootNode);
         expect(lambda_fn).not.toBeNull();
 
-        const context = detect_callback_context(lambda_fn!, "test.py");
+        const context = detect_callback_context(lambda_fn!, "test.py" as FilePath);
         expect(context.is_callback).toBe(false);
         expect(context.receiver_location).toBeNull();
       });
@@ -1851,7 +1851,7 @@ class Point:
         const lambda_fn = find_lambda(tree.rootNode);
         expect(lambda_fn).not.toBeNull();
 
-        const context = detect_callback_context(lambda_fn!, "test.py");
+        const context = detect_callback_context(lambda_fn!, "test.py" as FilePath);
         expect(context.receiver_location).toEqual({
           file_path: "test.py",
           start_line: 1,
@@ -1867,9 +1867,9 @@ class Point:
         const lambda_fn = find_lambda(tree.rootNode);
         expect(lambda_fn).not.toBeNull();
 
-        const context = detect_callback_context(lambda_fn!, "test.py");
+        const context = detect_callback_context(lambda_fn!, "test.py" as FilePath);
         expect(context.receiver_location).toEqual({
-          file_path: "test.py",
+          file_path: "test.py" as FilePath,
           start_line: 1,
           start_column: 10,
           end_line: 4,

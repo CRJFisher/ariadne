@@ -161,7 +161,7 @@ function resolve_super_call(
 
   // For class definitions, the body_scope_id is where methods are defined
   // We need to find the body scope for the parent class
-  let parent_body_scope_id: ScopeId | null = null;
+  const parent_body_scope_id: ScopeId | null = null;
 
   if (parent_definition.kind === "class") {
     // For classes, methods are in child scopes. We need to search within the class's scope tree.

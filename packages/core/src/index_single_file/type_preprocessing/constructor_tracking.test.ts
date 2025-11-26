@@ -524,7 +524,7 @@ describe("Constructor Tracking - Edge Cases", () => {
   });
 
   it("should handle references without constructor calls", () => {
-    let parser = new Parser();
+    const parser = new Parser();
     parser.setLanguage(JavaScript);
 
     const code = `
@@ -549,7 +549,7 @@ describe("Constructor Tracking - Edge Cases", () => {
   });
 
   it("should ignore constructor calls without construct_target", () => {
-    let parser = new Parser();
+    const parser = new Parser();
     parser.setLanguage(TypeScript.typescript);
 
     const code = `

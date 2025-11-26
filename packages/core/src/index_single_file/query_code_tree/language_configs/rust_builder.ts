@@ -1,5 +1,5 @@
 // Rust language configuration using builder pattern
-import { enum_member_symbol, anonymous_function_symbol, type SymbolId, type SymbolName, type ModulePath } from "@ariadnejs/types";
+import { enum_member_symbol, anonymous_function_symbol, create_module_path, type SymbolId, type SymbolName } from "@ariadnejs/types";
 import type { DefinitionBuilder } from "../../definitions/definition_builder";
 import type { CaptureNode } from "../../semantic_index";
 import type { ProcessingContext } from "../../semantic_index";
@@ -19,9 +19,6 @@ import {
   extract_return_type,
   extract_parameter_type,
   extract_enum_variants,
-  extract_use_path,
-  extract_use_alias,
-  is_wildcard_import,
   is_associated_function,
   is_mutable_parameter,
   find_containing_impl,
@@ -1073,7 +1070,7 @@ export const RUST_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
             name: import_info.name,
             location: capture.location,
             scope_id: context.get_scope_id(capture.location),
-            import_path: import_info.module_path || (import_info.name as any as ModulePath),
+            import_path: import_info.module_path || create_module_path(import_info.name),
             original_name: import_info.original_name,
             import_kind: import_info.is_wildcard ? "namespace" : "named",
           });

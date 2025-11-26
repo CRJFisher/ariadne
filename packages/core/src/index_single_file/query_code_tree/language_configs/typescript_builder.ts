@@ -21,7 +21,6 @@ import type {
   FilePath,
 } from "@ariadnejs/types";
 import {
-  anonymous_function_symbol,
   class_symbol,
   enum_symbol,
   function_symbol,

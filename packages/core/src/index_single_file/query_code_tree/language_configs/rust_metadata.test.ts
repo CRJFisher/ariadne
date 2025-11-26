@@ -442,9 +442,9 @@ describe("Rust Metadata Extractors", () => {
       const code = "let manager = UserManager::new();";
       const tree = parser.parse(code);
       const callExpr = tree.rootNode.descendantsOfType("call_expression")[0];
-      const scopedId = callExpr.childForFieldName('function');
+      const scopedId = callExpr.childForFieldName("function");
 
-      expect(scopedId?.type).toBe('scoped_identifier');
+      expect(scopedId?.type).toBe("scoped_identifier");
 
       const result = RUST_METADATA_EXTRACTORS.extract_call_receiver(scopedId!, TEST_FILE);
 
