@@ -5,7 +5,8 @@ import type {
   SymbolName,
   ModulePath,
   ExportMetadata,
-  FunctionCollection,
+  FunctionCollectionInfo,
+  FilePath,
 } from "@ariadnejs/types";
 import {
   class_symbol,
@@ -20,6 +21,8 @@ import {
   type_alias_symbol,
   module_symbol,
   anonymous_function_symbol,
+  create_module_path,
+  create_symbol_name,
 } from "@ariadnejs/types";
 import type { CaptureNode } from "../../semantic_index";
 import { node_to_location } from "../../node_utils";
@@ -573,7 +576,7 @@ export function extract_use_path(capture: CaptureNode): ModulePath {
   }
 
   if (!node) {
-    return capture.text as any as ModulePath;
+    return create_module_path(capture.text);
   }
 
   // Handle extern crate declarations
@@ -582,10 +585,10 @@ export function extract_use_path(capture: CaptureNode): ModulePath {
     const children = node.children || [];
     for (const child of children) {
       if (child.type === "identifier") {
-        return child.text as any as ModulePath;
+        return create_module_path(child.text);
       }
     }
-    return capture.text as any as ModulePath;
+    return create_module_path(capture.text);
   }
 
   // Handle use declarations
@@ -594,23 +597,23 @@ export function extract_use_path(capture: CaptureNode): ModulePath {
   if (argument) {
     // Handle different argument types
     if (argument.type === "scoped_identifier") {
-      return argument.text as any as ModulePath;
+      return create_module_path(argument.text);
     } else if (argument.type === "identifier") {
-      return argument.text as any as ModulePath;
+      return create_module_path(argument.text);
     } else if (argument.type === "use_as_clause") {
       // For aliased imports, get the source path
       const source = argument.children?.find(
         (c) => c.type === "scoped_identifier" || c.type === "identifier"
       );
-      return (source?.text || argument.text) as any as ModulePath;
+      return create_module_path(source?.text || argument.text);
     } else if (argument.type === "scoped_use_list") {
       // For use lists, get the path before the list
       const path = argument.childForFieldName?.("path");
-      return (path?.text || "") as any as ModulePath;
+      return create_module_path(path?.text || "");
     }
   }
 
-  return capture.text as any as ModulePath;
+  return create_module_path(capture.text);
 }
 
 export function extract_use_alias(
@@ -841,7 +844,7 @@ export function extract_imports_from_use_declaration(
       const name = argument.text as SymbolName;
       imports.push({
         name,
-        module_path: name as any as ModulePath,
+        module_path: create_module_path(name),
       });
       break;
     }
@@ -853,7 +856,7 @@ export function extract_imports_from_use_declaration(
       if (name) {
         imports.push({
           name: name.text as SymbolName,
-          module_path: full_path as any as ModulePath,
+          module_path: create_module_path(full_path),
         });
       }
       break;
@@ -868,7 +871,7 @@ export function extract_imports_from_use_declaration(
         if (item.type === "identifier") {
           imports.push({
             name: item.text as SymbolName,
-            module_path: item.text as any as ModulePath,
+            module_path: create_module_path(item.text),
           });
         } else if (item.type === "use_as_clause") {
           const original = item.children?.find(
@@ -888,7 +891,7 @@ export function extract_imports_from_use_declaration(
           if (original && alias) {
             imports.push({
               name: alias.text as SymbolName,
-              module_path: original.text as any as ModulePath,
+              module_path: create_module_path(original.text),
               original_name: original.text as SymbolName,
             });
           }
@@ -918,7 +921,7 @@ export function extract_imports_from_use_declaration(
               const full_path = `${prefix}::${item.text}`;
               imports.push({
                 name: item.text as SymbolName,
-                module_path: full_path as any as ModulePath,
+                module_path: create_module_path(full_path),
               });
             } else if (item.type === "scoped_identifier") {
               const item_path = extract_scoped_path(item);
@@ -927,7 +930,7 @@ export function extract_imports_from_use_declaration(
                 const full_path = `${prefix}::${item_path}`;
                 imports.push({
                   name: name.text as SymbolName,
-                  module_path: full_path as any as ModulePath,
+                  module_path: create_module_path(full_path),
                 });
               }
             } else if (item.type === "scoped_use_list") {
@@ -961,13 +964,10 @@ export function extract_imports_from_use_declaration(
                   ? extract_scoped_path(original)
                   : original.text;
                 const full_path = `${prefix}::${original_path}`;
-                const original_name = original.type === "scoped_identifier"
-                  ? (original.childForFieldName?.("name")?.text || original_path)
-                  : original.text;
                 imports.push({
                   name: alias.text as SymbolName,
-                  module_path: full_path as any as ModulePath,
-                  original_name: full_path as any as SymbolName,
+                  module_path: create_module_path(full_path),
+                  original_name: create_symbol_name(full_path),
                 });
               }
             }
@@ -1003,8 +1003,8 @@ export function extract_imports_from_use_declaration(
         // For aliased imports, original_name should be the full path
         imports.push({
           name: alias.text as SymbolName,
-          module_path: module_path as any as ModulePath,
-          original_name: module_path as any as SymbolName,
+          module_path: create_module_path(module_path),
+          original_name: create_symbol_name(module_path),
         });
       }
       break;
@@ -1021,7 +1021,7 @@ export function extract_imports_from_use_declaration(
           : path.text;
         imports.push({
           name: "*" as SymbolName,
-          module_path: module_path as any as ModulePath,
+          module_path: create_module_path(module_path),
           is_wildcard: true,
         });
       }
@@ -1067,7 +1067,7 @@ export function extract_import_from_extern_crate(
 
   return {
     name: (alias || crate_name) as SymbolName,
-    module_path: crate_name as any as ModulePath,
+    module_path: create_module_path(crate_name),
     original_name: alias ? (crate_name as SymbolName) : undefined,
   };
 }
@@ -1088,8 +1088,8 @@ export function extract_import_from_extern_crate(
  */
 export function detect_function_collection(
   node: SyntaxNode,
-  file_path: string
-): FunctionCollection | null {
+  file_path: FilePath
+): FunctionCollectionInfo | null {
   // Get the let_declaration node which contains name and value
   let declaration = node;
   if (node.type === "let_declaration" || node.type === "const_item") {
@@ -1108,9 +1108,8 @@ export function detect_function_collection(
     const { functions, references } = extract_functions_from_array(value_node, file_path);
     if (functions.length > 0 || references.length > 0) {
       return {
-        collection_id: null as any, // Will be set by caller
         collection_type: "Array",
-        location: node_to_location(value_node, file_path as any),
+        location: node_to_location(value_node, file_path),
         stored_functions: functions,
         stored_references: references,
       };
@@ -1128,9 +1127,8 @@ export function detect_function_collection(
       const { functions, references } = extract_functions_from_macro(token_tree, file_path);
       if (functions.length > 0 || references.length > 0) {
         return {
-          collection_id: null as any,
           collection_type: "Array",
-          location: node_to_location(value_node, file_path as any),
+          location: node_to_location(value_node, file_path),
           stored_functions: functions,
           stored_references: references,
         };
@@ -1141,9 +1139,8 @@ export function detect_function_collection(
       const { functions, references } = extract_functions_from_macro(value_node, file_path);
       if (functions.length > 0 || references.length > 0) {
         return {
-          collection_id: null as any,
           collection_type: "Map",
-          location: node_to_location(value_node, file_path as any),
+          location: node_to_location(value_node, file_path),
           stored_functions: functions,
           stored_references: references,
         };
@@ -1159,7 +1156,7 @@ export function detect_function_collection(
  */
 function extract_functions_from_array(
   array_node: SyntaxNode,
-  file_path: string
+  file_path: FilePath
 ): { functions: SymbolId[]; references: SymbolName[] } {
   const function_ids: SymbolId[] = [];
   const references: SymbolName[] = [];
@@ -1169,7 +1166,7 @@ function extract_functions_from_array(
     if (!element) continue;
 
     if (element.type === "closure_expression") {
-      const location = node_to_location(element, file_path as any);
+      const location = node_to_location(element, file_path);
       function_ids.push(anonymous_function_symbol(location));
     } else if (element.type === "identifier") {
       references.push(element.text as SymbolName);
@@ -1185,7 +1182,7 @@ function extract_functions_from_array(
  */
 function extract_functions_from_macro(
   macro_node: SyntaxNode,
-  file_path: string
+  file_path: FilePath
 ): { functions: SymbolId[]; references: SymbolName[] } {
   const function_ids: SymbolId[] = [];
   const references: SymbolName[] = [];
@@ -1193,7 +1190,7 @@ function extract_functions_from_macro(
   // Traverse all descendants looking for closure_expression nodes
   function visit(node: SyntaxNode) {
     if (node.type === "closure_expression") {
-      const location = node_to_location(node, file_path as any);
+      const location = node_to_location(node, file_path);
       function_ids.push(anonymous_function_symbol(location));
     } else if (node.type === "identifier") {
       // Check if parent is part of the collection structure (arg list, etc.)

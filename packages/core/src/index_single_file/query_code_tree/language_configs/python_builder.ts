@@ -7,7 +7,8 @@ import type {
   ModulePath,
   CallbackContext,
   ExportMetadata,
-  FunctionCollection,
+  FunctionCollectionInfo,
+  FilePath,
 } from "@ariadnejs/types";
 import {
   class_symbol,
@@ -630,7 +631,7 @@ export function find_decorator_target(
  */
 export function detect_callback_context(
   node: SyntaxNode,
-  file_path: string
+  file_path: FilePath
 ): CallbackContext {
   let current: SyntaxNode | null = node.parent;
   let depth = 0;
@@ -645,7 +646,7 @@ export function detect_callback_context(
         return {
           is_callback: true,
           receiver_is_external: null,
-          receiver_location: node_to_location(call_node, file_path as any),
+          receiver_location: node_to_location(call_node, file_path),
         };
       }
     }
@@ -671,8 +672,8 @@ export function detect_callback_context(
  */
 export function detect_function_collection(
   node: SyntaxNode,
-  file_path: string
-): FunctionCollection | null {
+  file_path: FilePath
+): FunctionCollectionInfo | null {
   // Get the assignment node
   let assignment = node;
   if (node.type !== "assignment") {
@@ -690,9 +691,8 @@ export function detect_function_collection(
     const { functions, references } = extract_functions_from_list(value_node, file_path);
     if (functions.length > 0 || references.length > 0) {
       return {
-        collection_id: null as any, // Will be set by caller
         collection_type: "Array",
-        location: node_to_location(value_node, file_path as any),
+        location: node_to_location(value_node, file_path),
         stored_functions: functions,
         stored_references: references,
       };
@@ -704,9 +704,8 @@ export function detect_function_collection(
     const { functions, references } = extract_functions_from_dict(value_node, file_path);
     if (functions.length > 0 || references.length > 0) {
       return {
-        collection_id: null as any,
         collection_type: "Object",
-        location: node_to_location(value_node, file_path as any),
+        location: node_to_location(value_node, file_path),
         stored_functions: functions,
         stored_references: references,
       };
@@ -718,9 +717,8 @@ export function detect_function_collection(
     const { functions, references } = extract_functions_from_list(value_node, file_path);
     if (functions.length > 0 || references.length > 0) {
       return {
-        collection_id: null as any,
         collection_type: "Array",
-        location: node_to_location(value_node, file_path as any),
+        location: node_to_location(value_node, file_path),
         stored_functions: functions,
         stored_references: references,
       };
@@ -795,7 +793,7 @@ export function extract_derived_from(node: SyntaxNode): SymbolName | undefined {
  */
 function extract_functions_from_list(
   list_node: SyntaxNode,
-  file_path: string
+  file_path: FilePath
 ): { functions: SymbolId[]; references: SymbolName[] } {
   const function_ids: SymbolId[] = [];
   const references: SymbolName[] = [];
@@ -805,7 +803,7 @@ function extract_functions_from_list(
     if (!element) continue;
 
     if (element.type === "lambda") {
-      const location = node_to_location(element, file_path as any);
+      const location = node_to_location(element, file_path);
       function_ids.push(anonymous_function_symbol(location));
     } else if (element.type === "identifier") {
       references.push(element.text as SymbolName);
@@ -820,7 +818,7 @@ function extract_functions_from_list(
  */
 function extract_functions_from_dict(
   dict_node: SyntaxNode,
-  file_path: string
+  file_path: FilePath
 ): { functions: SymbolId[]; references: SymbolName[] } {
   const function_ids: SymbolId[] = [];
   const references: SymbolName[] = [];
@@ -833,7 +831,7 @@ function extract_functions_from_dict(
     if (!value) continue;
 
     if (value.type === "lambda") {
-      const location = node_to_location(value, file_path as any);
+      const location = node_to_location(value, file_path);
       function_ids.push(anonymous_function_symbol(location));
     } else if (value.type === "identifier") {
       references.push(value.text as SymbolName);

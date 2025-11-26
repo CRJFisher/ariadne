@@ -14,6 +14,11 @@ import { SemanticNode } from "./query";
 /** Module import path (e.g., 'lodash', './utils') */
 export type ModulePath = string & { __brand: "ModulePath" };
 
+/** Create a ModulePath from a string */
+export function create_module_path(path: string): ModulePath {
+  return path as ModulePath;
+}
+
 /** Namespace name */
 export type NamespaceName = string & { __brand: "NamespaceName" };
 

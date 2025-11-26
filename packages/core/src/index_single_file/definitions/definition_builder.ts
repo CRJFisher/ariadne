@@ -939,7 +939,7 @@ export class DefinitionBuilder {
     const parameters = Array.from(state.parameters.values());
 
     // For testing purposes, we allow undefined body_scope_id, but in production it should be set
-    const body_scope_id = state.body_scope_id || ("mock:method:scope" as any);
+    const body_scope_id = state.body_scope_id || ("mock:method:scope" as ScopeId);
 
     return {
       kind: "method" as const,
@@ -957,7 +957,7 @@ export class DefinitionBuilder {
 
     // For testing purposes, we allow undefined body_scope_id, but in production it should be set
     const body_scope_id =
-      state.body_scope_id || ("mock:constructor:scope" as any);
+      state.body_scope_id || ("mock:constructor:scope" as ScopeId);
 
     return {
       kind: "constructor" as const,
@@ -980,7 +980,7 @@ export class DefinitionBuilder {
     const parameters = Array.from(state.signature.parameters.values());
 
     // For testing purposes, we allow undefined body_scope_id, but in production it should be set
-    const body_scope_id = state.body_scope_id || ("mock:function:scope" as any);
+    const body_scope_id = state.body_scope_id || ("mock:function:scope" as ScopeId);
 
     return {
       kind: "function" as const,

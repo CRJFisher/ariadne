@@ -12,7 +12,8 @@ import type {
   ScopeId,
   ModulePath,
   CallbackContext,
-  FunctionCollection,
+  FunctionCollectionInfo,
+  FilePath,
 } from "@ariadnejs/types";
 import {
   anonymous_function_symbol,
@@ -892,7 +893,7 @@ export function consume_documentation(location: Location): string | undefined {
  */
 export function detect_callback_context(
   node: SyntaxNode,
-  file_path: string
+  file_path: FilePath
 ): CallbackContext {
   let current: SyntaxNode | null = node.parent;
   let depth = 0;
@@ -911,7 +912,7 @@ export function detect_callback_context(
         return {
           is_callback: true,
           receiver_is_external: null, // Will be classified during resolution
-          receiver_location: node_to_location(call_node, file_path as any),
+          receiver_location: node_to_location(call_node, file_path),
         };
       }
     }
@@ -938,8 +939,8 @@ export function detect_callback_context(
  */
 export function detect_function_collection(
   node: SyntaxNode,
-  file_path: string
-): FunctionCollection | null {
+  file_path: FilePath
+): FunctionCollectionInfo | null {
   // Get the variable declarator node (contains name and initializer)
   let declarator = node;
   if (node.type === "variable_declaration") {
@@ -963,9 +964,8 @@ export function detect_function_collection(
       if (functions.length > 0 || references.length > 0) {
 
         return {
-          collection_id: null as any, // Will be set by caller
           collection_type: constructor_node.text as "Map" | "Set",
-          location: node_to_location(initializer, file_path as any),
+          location: node_to_location(initializer, file_path),
           stored_functions: functions,
           stored_references: references,
         };
@@ -978,9 +978,8 @@ export function detect_function_collection(
     const { functions, references } = extract_functions_from_array(initializer, file_path);
     if (functions.length > 0 || references.length > 0) {
       return {
-        collection_id: null as any, // Will be set by caller
         collection_type: "Array",
-        location: node_to_location(initializer, file_path as any),
+        location: node_to_location(initializer, file_path),
         stored_functions: functions,
         stored_references: references,
       };
@@ -992,9 +991,8 @@ export function detect_function_collection(
     const { functions, references } = extract_functions_from_object(initializer, file_path);
     if (functions.length > 0 || references.length > 0) {
       return {
-        collection_id: null as any, // Will be set by caller
         collection_type: "Object",
-        location: node_to_location(initializer, file_path as any),
+        location: node_to_location(initializer, file_path),
         stored_functions: functions,
         stored_references: references,
       };
@@ -1011,7 +1009,7 @@ export function detect_function_collection(
  */
 function extract_functions_from_collection_args(
   args: SyntaxNode | null | undefined,
-  file_path: string
+  file_path: FilePath
 ): { functions: SymbolId[]; references: SymbolName[] } {
   if (!args) return { functions: [], references: [] };
 
@@ -1026,7 +1024,7 @@ function extract_functions_from_collection_args(
       node.type === "function_expression" ||
       node.type === "function"
     ) {
-      const location = node_to_location(node, file_path as any);
+      const location = node_to_location(node, file_path);
       function_ids.push(anonymous_function_symbol(location));
     } else if (node.type === "identifier") {
       // Capture variable references (potential functions)
@@ -1051,7 +1049,7 @@ function extract_functions_from_collection_args(
  */
 function extract_functions_from_array(
   array_node: SyntaxNode,
-  file_path: string
+  file_path: FilePath
 ): { functions: SymbolId[]; references: SymbolName[] } {
   const function_ids: SymbolId[] = [];
   const references: SymbolName[] = [];
@@ -1065,7 +1063,7 @@ function extract_functions_from_array(
       element.type === "function_expression" ||
       element.type === "function"
     ) {
-      const location = node_to_location(element, file_path as any);
+      const location = node_to_location(element, file_path);
       function_ids.push(anonymous_function_symbol(location));
     } else if (element.type === "identifier") {
       references.push(element.text as SymbolName);
@@ -1080,7 +1078,7 @@ function extract_functions_from_array(
  */
 function extract_functions_from_object(
   obj_node: SyntaxNode,
-  file_path: string
+  file_path: FilePath
 ): { functions: SymbolId[]; references: SymbolName[] } {
   const function_ids: SymbolId[] = [];
   const references: SymbolName[] = [];
@@ -1097,7 +1095,7 @@ function extract_functions_from_object(
       value.type === "function_expression" ||
       value.type === "function"
     ) {
-      const location = node_to_location(value, file_path as any);
+      const location = node_to_location(value, file_path);
       function_ids.push(anonymous_function_symbol(location));
     } else if (value.type === "identifier") {
       references.push(value.text as SymbolName);

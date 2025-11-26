@@ -1,5 +1,5 @@
 import type { SyntaxNode } from "tree-sitter";
-import type { CallbackContext } from "@ariadnejs/types";
+import type { CallbackContext, FilePath } from "@ariadnejs/types";
 
 /**
  * Detect if a closure is passed as a callback argument.
@@ -7,7 +7,7 @@ import type { CallbackContext } from "@ariadnejs/types";
  */
 export function detect_callback_context(
   node: SyntaxNode,
-  file_path: string
+  file_path: FilePath
 ): CallbackContext {
   let current: SyntaxNode | null = node.parent;
   let depth = 0;
@@ -23,7 +23,7 @@ export function detect_callback_context(
           is_callback: true,
           receiver_is_external: null,
           receiver_location: {
-            file_path: file_path as any,
+            file_path: file_path,
             start_line: call_node.startPosition.row + 1,
             start_column: call_node.startPosition.column + 1,
             end_line: call_node.endPosition.row + 1,

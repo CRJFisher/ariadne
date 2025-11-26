@@ -173,6 +173,11 @@ export interface FunctionCollection {
 }
 
 /**
+ * Partial function collection without collection_id (set by caller)
+ */
+export type FunctionCollectionInfo = Omit<FunctionCollection, "collection_id">;
+
+/**
  * Variable/constant definition
  */
 export interface VariableDefinition extends Definition {

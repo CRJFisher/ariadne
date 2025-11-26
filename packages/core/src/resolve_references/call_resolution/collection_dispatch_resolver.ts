@@ -16,10 +16,9 @@
 
 import type {
   SymbolId,
+  SymbolName,
   SymbolReference,
   MethodCallReference,
-  FunctionCallReference,
-  VariableDefinition,
 } from "@ariadnejs/types";
 import type { DefinitionRegistry } from "../registries/definition_registry";
 import type { ResolutionRegistry } from "../resolution_registry";
@@ -46,8 +45,8 @@ export function resolve_collection_dispatch(
   resolutions: ResolutionRegistry
 ): SymbolId[] {
   // 1. Identify the target variable name
-  let target_name: string | undefined;
-  let scope_id = call_ref.scope_id;
+  let target_name: SymbolName | undefined;
+  const scope_id = call_ref.scope_id;
 
   if (call_ref.kind === "function_call") {
     // For fn(...), target is "fn"
@@ -72,7 +71,7 @@ export function resolve_collection_dispatch(
   }
 
   // 2. Resolve target variable
-  const target_id = resolutions.resolve(scope_id, target_name as any);
+  const target_id = resolutions.resolve(scope_id, target_name);
   if (!target_id) {
     return [];
   }

@@ -4,6 +4,11 @@ export type SymbolId = string & { __brand: "SymbolId" }; // This is the encoded 
 export type SymbolName = string & { __brand: "SymbolName" }; // This is the local identifier of the symbol
 export type ReferenceId = string & { __brand: "ReferenceId" }; // Unique identifier for a reference (reference to a symbol)
 
+/** Create a SymbolName from a string */
+export function create_symbol_name(name: string): SymbolName {
+  return name as SymbolName;
+}
+
 /**
  * Symbol kind - essential for resolution rules
  */
