@@ -8,6 +8,7 @@ import Python from "tree-sitter-python";
 import type { SyntaxNode } from "tree-sitter";
 import { PYTHON_BUILDER_CONFIG } from "./python_builder_config";
 import { DefinitionBuilder } from "../../definitions/definition_builder";
+import { build_semantic_index } from "../../semantic_index";
 import type {
   ProcessingContext,
   CaptureNode,
@@ -1553,7 +1554,6 @@ class Drawable(Protocol):
         tree,
         lang: "python" as const,
       };
-      const { build_semantic_index } = await import("../../semantic_index");
       return build_semantic_index(parsed_file, tree, "python");
     }
 
@@ -1725,7 +1725,7 @@ class Point:
 
     describe("Callback detection - positive cases", () => {
       it("should detect callback in list(map())", () => {
-        const code = `list(map(lambda x: x * 2, items))`;
+        const code = "list(map(lambda x: x * 2, items))";
         const tree = parser.parse(code);
         const lambda_fn = find_lambda(tree.rootNode);
         expect(lambda_fn).not.toBeNull();
@@ -1737,7 +1737,7 @@ class Point:
       });
 
       it("should detect callback in list(filter())", () => {
-        const code = `list(filter(lambda x: x > 0, items))`;
+        const code = "list(filter(lambda x: x > 0, items))";
         const tree = parser.parse(code);
         const lambda_fn = find_lambda(tree.rootNode);
         expect(lambda_fn).not.toBeNull();
@@ -1749,7 +1749,7 @@ class Point:
       });
 
       it("should detect callback in sorted()", () => {
-        const code = `sorted(items, key=lambda x: x.name)`;
+        const code = "sorted(items, key=lambda x: x.name)";
         const tree = parser.parse(code);
         const lambda_fn = find_lambda(tree.rootNode);
         expect(lambda_fn).not.toBeNull();
@@ -1761,7 +1761,7 @@ class Point:
       });
 
       it("should detect callback in functools.reduce()", () => {
-        const code = `reduce(lambda acc, x: acc + x, items, 0)`;
+        const code = "reduce(lambda acc, x: acc + x, items, 0)";
         const tree = parser.parse(code);
         const lambda_fn = find_lambda(tree.rootNode);
         expect(lambda_fn).not.toBeNull();
@@ -1773,7 +1773,7 @@ class Point:
       });
 
       it("should detect callback in nested function calls", () => {
-        const code = `list(map(lambda x: x * 2, filter(lambda y: y > 0, items)))`;
+        const code = "list(map(lambda x: x * 2, filter(lambda y: y > 0, items)))";
         const tree = parser.parse(code);
         // Find first lambda (the one in map)
         const lambda_fn = find_lambda(tree.rootNode);
@@ -1786,7 +1786,7 @@ class Point:
       });
 
       it("should detect callback in method call", () => {
-        const code = `obj.transform(lambda x: x.upper())`;
+        const code = "obj.transform(lambda x: x.upper())";
         const tree = parser.parse(code);
         const lambda_fn = find_lambda(tree.rootNode);
         expect(lambda_fn).not.toBeNull();
@@ -1800,7 +1800,7 @@ class Point:
 
     describe("Non-callback detection - negative cases", () => {
       it("should NOT detect callback in variable assignment", () => {
-        const code = `fn = lambda x: x * 2`;
+        const code = "fn = lambda x: x * 2";
         const tree = parser.parse(code);
         const lambda_fn = find_lambda(tree.rootNode);
         expect(lambda_fn).not.toBeNull();
@@ -1811,7 +1811,7 @@ class Point:
       });
 
       it("should NOT detect callback in return statement", () => {
-        const code = `def foo():\n    return lambda x: x * 2`;
+        const code = "def foo():\n    return lambda x: x * 2";
         const tree = parser.parse(code);
         const lambda_fn = find_lambda(tree.rootNode);
         expect(lambda_fn).not.toBeNull();
@@ -1822,7 +1822,7 @@ class Point:
       });
 
       it("should NOT detect callback in dictionary literal", () => {
-        const code = `{"handler": lambda x: x * 2}`;
+        const code = "{\"handler\": lambda x: x * 2}";
         const tree = parser.parse(code);
         const lambda_fn = find_lambda(tree.rootNode);
         expect(lambda_fn).not.toBeNull();
@@ -1833,7 +1833,7 @@ class Point:
       });
 
       it("should NOT detect callback in list literal", () => {
-        const code = `[lambda x: x * 2, lambda y: y + 1]`;
+        const code = "[lambda x: x * 2, lambda y: y + 1]";
         const tree = parser.parse(code);
         const lambda_fn = find_lambda(tree.rootNode);
         expect(lambda_fn).not.toBeNull();
@@ -1846,7 +1846,7 @@ class Point:
 
     describe("Receiver location capture", () => {
       it("should capture correct receiver location for map call", () => {
-        const code = `list(map(lambda x: x * 2, items))`;
+        const code = "list(map(lambda x: x * 2, items))";
         const tree = parser.parse(code);
         const lambda_fn = find_lambda(tree.rootNode);
         expect(lambda_fn).not.toBeNull();
@@ -1862,7 +1862,7 @@ class Point:
       });
 
       it("should capture correct receiver location for multi-line call", () => {
-        const code = `result = sorted(\n    items,\n    key=lambda x: x.name\n)`;
+        const code = "result = sorted(\n    items,\n    key=lambda x: x.name\n)";
         const tree = parser.parse(code);
         const lambda_fn = find_lambda(tree.rootNode);
         expect(lambda_fn).not.toBeNull();

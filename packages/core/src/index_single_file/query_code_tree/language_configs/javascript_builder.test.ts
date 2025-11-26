@@ -8,6 +8,7 @@ import JavaScript from "tree-sitter-javascript";
 import type { SyntaxNode } from "tree-sitter";
 import { JAVASCRIPT_BUILDER_CONFIG, analyze_export_statement, detect_callback_context } from "./javascript_builder";
 import { DefinitionBuilder } from "../../definitions/definition_builder";
+import { build_semantic_index } from "../../semantic_index";
 import type {
   ProcessingContext,
   CaptureNode,
@@ -1675,8 +1676,6 @@ export const NESTED = {
         lang: "javascript" as const,
       };
 
-      // Dynamic import build_semantic_index
-      const { build_semantic_index } = await import("../../semantic_index");
       return build_semantic_index(parsed_file, tree, "javascript");
     }
 

@@ -197,8 +197,7 @@ describe("Semantic Index - JavaScript", () => {
       });
     }
 
-    it("should correctly parse all export types from imports_exports fixture", async () => {
-      const { build_semantic_index } = await import("./semantic_index");
+    it("should correctly parse all export types from imports_exports fixture", () => {
       const code = readFileSync(
         join(FIXTURES_DIR, "javascript", "imports_exports.js"),
         "utf8",

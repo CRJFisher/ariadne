@@ -5,6 +5,7 @@ import Rust from "tree-sitter-rust";
 import { RUST_BUILDER_CONFIG } from "./rust_builder";
 import { detect_callback_context } from "./rust_callback_detection";
 import { DefinitionBuilder } from "../../definitions/definition_builder";
+import { build_semantic_index } from "../../semantic_index";
 import type {
   ProcessingContext,
   CaptureNode,
@@ -1203,7 +1204,6 @@ describe("rust_builder", () => {
         tree,
         lang: "rust" as const,
       };
-      const { build_semantic_index } = await import("../../semantic_index");
       return build_semantic_index(parsed_file, tree, "rust");
     }
 
