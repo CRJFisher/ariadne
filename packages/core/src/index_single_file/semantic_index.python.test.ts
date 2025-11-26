@@ -2231,4 +2231,44 @@ nested = list(map(lambda n: list(filter(lambda x: x > 2, [n])), numbers))`;
       expect(lambdas[1].callback_context!.receiver_location).not.toBe(null);
     });
   });
+
+  // ============================================================================
+  // FUNCTION COLLECTION RESOLUTION (Task 11.156.3)
+  // ============================================================================
+
+  describe("Function collection resolution", () => {
+    it("should populate function_collection for list of functions", () => {
+      const code = `
+def fn1(): pass
+def fn2(): pass
+handlers = [fn1, fn2]
+`;
+      const tree = parser.parse(code);
+      const file_path = "test.py" as FilePath;
+      const parsed_file = createParsedFile(code, file_path, tree, "python");
+      const index = build_semantic_index(parsed_file, tree, "python");
+
+      const variable = Array.from(index.variables.values()).find(v => v.name === "handlers");
+      expect(variable).toBeDefined();
+      expect(variable?.function_collection).toBeDefined();
+      expect(variable?.function_collection?.collection_type).toBe("Array");
+      expect(variable?.function_collection?.stored_references).toHaveLength(2);
+      expect(variable?.function_collection?.stored_references).toContain("fn1");
+    });
+
+    it("should populate derived_from for subscript access", () => {
+      const code = `
+config = {}
+handler = config['key']
+`;
+      const tree = parser.parse(code);
+      const file_path = "test.py" as FilePath;
+      const parsed_file = createParsedFile(code, file_path, tree, "python");
+      const index = build_semantic_index(parsed_file, tree, "python");
+
+      const variable = Array.from(index.variables.values()).find(v => v.name === "handler");
+      expect(variable).toBeDefined();
+      expect(variable?.derived_from).toBe("config");
+    });
+  });
 });

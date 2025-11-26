@@ -2650,4 +2650,48 @@ trait MyTrait {
       }
     });
   });
+
+  // ============================================================================
+  // FUNCTION COLLECTION RESOLUTION (Task 11.156.3)
+  // ============================================================================
+
+  describe("Function collection resolution", () => {
+    it("should populate function_collection for vec! macro", () => {
+      const code = `
+fn fn1() {}
+fn fn2() {}
+fn main() {
+    let handlers = vec![fn1, fn2];
+}
+`;
+      const tree = parser.parse(code);
+      const file_path = "test.rs" as FilePath;
+      const parsed_file = createParsedFile(code, file_path, tree, "rust");
+      const index = build_semantic_index(parsed_file, tree, "rust");
+
+      const variable = Array.from(index.variables.values()).find(v => v.name === "handlers");
+      expect(variable).toBeDefined();
+      expect(variable?.function_collection).toBeDefined();
+      expect(variable?.function_collection?.collection_type).toBe("Array");
+      expect(variable?.function_collection?.stored_references).toHaveLength(2);
+      expect(variable?.function_collection?.stored_references).toContain("fn1");
+    });
+
+    it("should populate derived_from for index access", () => {
+      const code = `
+fn main() {
+    let config = HashMap::new();
+    let handler = config["key"];
+}
+`;
+      const tree = parser.parse(code);
+      const file_path = "test.rs" as FilePath;
+      const parsed_file = createParsedFile(code, file_path, tree, "rust");
+      const index = build_semantic_index(parsed_file, tree, "rust");
+
+      const variable = Array.from(index.variables.values()).find(v => v.name === "handler");
+      expect(variable).toBeDefined();
+      expect(variable?.derived_from).toBe("config");
+    });
+  });
 });
