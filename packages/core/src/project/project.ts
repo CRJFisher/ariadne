@@ -22,7 +22,7 @@ import RustParser from "tree-sitter-rust";
 import type { FileSystemFolder } from "../resolve_references/file_folders";
 import { readdir, realpath } from "fs/promises";
 import { join } from "path";
-// TODO: make a systematic approach for going through the analysis file errors and seeing if they should actually be top-level functions
+
 /**
  * Detect language from file path extension
  */
@@ -506,13 +506,22 @@ export class Project {
    * @param file_path - File path (optional, uses def.file_path if not provided)
    * @returns Source code string
    */
-  get_source_code(def: any, file_path?: FilePath): string {
+  get_source_code(
+    def: {
+      file_path?: FilePath;
+      range: { start: { row: number; column: number }; end: { row: number; column: number } };
+    },
+    file_path?: FilePath
+  ): string {
     const path = file_path || def.file_path;
-    if (!this.file_contents.has(path)) {
+    if (!path || !this.file_contents.has(path)) {
       throw new Error(`File not found: ${path}`);
     }
 
-    const content = this.file_contents.get(path)!;
+    const content = this.file_contents.get(path);
+    if (!content) {
+      throw new Error(`File content not found: ${path}`);
+    }
     const lines = content.split("\n");
     const start_row = def.range.start.row;
     const end_row = def.range.end.row;

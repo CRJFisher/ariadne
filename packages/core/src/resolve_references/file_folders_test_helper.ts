@@ -8,6 +8,13 @@
 import type { FilePath } from "@ariadnejs/types";
 import type { FileSystemFolder } from "./file_folders";
 
+/** Mutable version of FileSystemFolder for building trees */
+interface MutableFileSystemFolder {
+  path: FilePath;
+  folders: Map<string, MutableFileSystemFolder>;
+  files: Set<string>;
+}
+
 /**
  * Build file system tree from a list of file paths
  *
@@ -38,8 +45,8 @@ import type { FileSystemFolder } from "./file_folders";
  * ```
  */
 export function build_file_tree(file_paths: FilePath[]): FileSystemFolder {
-  // Start with root folder
-  const root: FileSystemFolder = {
+  // Start with root folder (mutable during construction)
+  const root: MutableFileSystemFolder = {
     path: "/" as FilePath,
     folders: new Map(),
     files: new Set(),
@@ -48,7 +55,7 @@ export function build_file_tree(file_paths: FilePath[]): FileSystemFolder {
   for (const file_path of file_paths) {
     // Split path into parts, removing empty strings
     const parts = file_path.split("/").filter((p) => p);
-    let current = root as any; // Need mutable version for building
+    let current: MutableFileSystemFolder = root;
 
     // Navigate/create folders for all parts except the last (which is the file)
     for (let i = 0; i < parts.length - 1; i++) {
@@ -62,7 +69,8 @@ export function build_file_tree(file_paths: FilePath[]): FileSystemFolder {
         };
         current.folders.set(folder_name, new_folder);
       }
-      current = current.folders.get(folder_name);
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion -- We just set it above
+      current = current.folders.get(folder_name)!;
     }
 
     // Add the file to the final folder
