@@ -14,6 +14,15 @@ const path = require("path");
 
 const TS_JS_EXTENSIONS = [".ts", ".tsx", ".js", ".jsx"];
 
+// Logging utility
+const LOG_FILE = path.join(__dirname, "..", "hook_log.txt");
+
+function log(message) {
+  const timestamp = new Date().toISOString();
+  const entry = `[${timestamp}] [post-edit] ${message}\n`;
+  fs.appendFileSync(LOG_FILE, entry);
+}
+
 function read_stdin() {
   return fs.readFileSync(0, "utf8");
 }
@@ -40,14 +49,18 @@ function main() {
     process.exit(0);
   }
 
+  log(`Hook triggered for: ${file_path}`);
+
   // Skip if file doesn't exist (was deleted or failed write)
   if (!fs.existsSync(file_path)) {
+    log(`File does not exist, skipping: ${file_path}`);
     process.exit(0);
   }
 
   const project_dir = process.env.CLAUDE_PROJECT_DIR || process.cwd();
 
   // Step 1: Run ESLint with --fix to auto-fix what it can
+  log(`Running ESLint --fix on ${file_path}...`);
   try {
     execSync(`npx eslint "${file_path}" --fix`, {
       cwd: project_dir,
@@ -55,12 +68,15 @@ function main() {
       stdio: ["pipe", "pipe", "pipe"]
     });
     // All issues were fixable - file is now clean
+    log(`ESLint --fix completed successfully for ${file_path}`);
     process.exit(0);
   } catch (fix_error) {
+    log(`ESLint --fix had issues: ${fix_error.message}`);
     // Some issues couldn't be auto-fixed, continue to check remaining errors
   }
 
   // Step 2: Check for remaining errors after auto-fix
+  log(`Checking remaining ESLint errors for ${file_path}...`);
   try {
     execSync(`npx eslint "${file_path}" --format stylish`, {
       cwd: project_dir,
@@ -68,10 +84,12 @@ function main() {
       stdio: ["pipe", "pipe", "pipe"]
     });
     // No remaining errors after auto-fix
+    log(`ESLint check passed for ${file_path}`);
     process.exit(0);
   } catch (error) {
     // ESLint still has errors that couldn't be auto-fixed
     const output = error.stdout || error.stderr || "ESLint errors found";
+    log(`ESLint errors remain in ${file_path} - blocking`);
 
     // Return JSON to block and prompt Claude to fix manually
     console.log(JSON.stringify({
