@@ -12,6 +12,7 @@ build/
 *.js.map
 *.tsbuildinfo
 !jest.config.js
+!eslint.config.js
 !scripts/*.js
 !scripts/*.sh
 !packages/*/scripts/*.js
