@@ -3,10 +3,10 @@
  * Claude Code Stop hook: Run project-wide lint and type checks before task completion
  *
  * 1. First runs ESLint with --fix to auto-fix what it can
- * 2. Then checks for remaining ESLint errors
+ * 2. Then checks for remaining ESLint errors OR warnings
  * 3. Finally runs TypeScript type checking
  *
- * Returns JSON with decision:"block" if any errors remain.
+ * Returns JSON with decision:"block" if any errors or warnings remain.
  */
 
 const { execSync } = require("child_process");
@@ -54,15 +54,22 @@ function main() {
     // Some issues couldn't be auto-fixed, continue to check remaining errors
   }
 
-  // Step 2: Check for remaining ESLint errors after auto-fix
-  log("Checking remaining ESLint errors...");
+  // Step 2: Check for remaining ESLint errors/warnings after auto-fix
+  log("Checking remaining ESLint issues...");
   try {
-    execSync("npm run lint", {
+    const output = execSync("npm run lint", {
       cwd: project_dir,
       encoding: "utf8",
       stdio: ["pipe", "pipe", "pipe"]
     });
-    log("ESLint check passed");
+
+    // ESLint exits 0 but may still have warnings in output
+    if (output && output.includes("warning")) {
+      log(`ESLint warnings found: ${output.substring(0, 200)}...`);
+      errors.push(`ESLint warnings (after auto-fix):\n${output}`);
+    } else {
+      log("ESLint check passed");
+    }
   } catch (error) {
     const output = error.stdout || error.stderr || "ESLint errors found";
     log(`ESLint errors found: ${output.substring(0, 200)}...`);

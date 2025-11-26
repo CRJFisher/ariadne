@@ -112,7 +112,8 @@ export abstract class JavaScriptTypeScriptScopeBoundaryExtractor
         // Handle interface method signatures which don't have bodies
         // For method signatures, the scope starts after the function keyword
         const params_node = node.childForFieldName("parameters");
-        const symbol_location = node_to_location(name_node!, file_path);
+        // name_node is guaranteed non-null here due to is_named_function_expr check above
+        const symbol_location = node_to_location(name_node, file_path);
         const scope_location = params_node
           ? node_to_location(params_node, file_path)
           : {
@@ -126,7 +127,8 @@ export abstract class JavaScriptTypeScriptScopeBoundaryExtractor
       }
 
       // Symbol: the function name (belongs to function's OWN scope)
-      const symbol_location = node_to_location(name_node!, file_path);
+      // name_node is guaranteed non-null here due to is_named_function_expr check above
+      const symbol_location = node_to_location(name_node, file_path);
 
       // Scope: starts after "function" keyword but before the name
       const scope_location: Location = {

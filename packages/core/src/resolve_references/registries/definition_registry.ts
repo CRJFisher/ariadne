@@ -122,7 +122,10 @@ export class DefinitionRegistry {
         if (!this.by_scope.has(scope_id)) {
           this.by_scope.set(scope_id, new Map());
         }
-        this.by_scope.get(scope_id)!.set(def.name as SymbolName, def.symbol_id);
+        const scope_map = this.by_scope.get(scope_id);
+        if (scope_map) {
+          scope_map.set(def.name as SymbolName, def.symbol_id);
+        }
       }
 
       // Build member index for classes and interfaces
@@ -456,7 +459,10 @@ export class DefinitionRegistry {
         if (!this.type_subtypes.has(parent_id)) {
           this.type_subtypes.set(parent_id, new Set());
         }
-        this.type_subtypes.get(parent_id)!.add(def.symbol_id);
+        const subtypes = this.type_subtypes.get(parent_id);
+        if (subtypes) {
+          subtypes.add(def.symbol_id);
+        }
       }
     }
   }

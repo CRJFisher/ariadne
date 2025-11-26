@@ -245,7 +245,7 @@ export function parse_type_id(type_id: TypeId): ParsedTypeId {
         details: parts[2],
       };
 
-    case TypeCategory.GENERIC:
+    case TypeCategory.GENERIC: {
       // Format: type:generic:<base>:[<args>]
       const base_and_args = type_id.substring("type:generic:".length);
       const args_start = base_and_args.indexOf(":[");
@@ -260,8 +260,9 @@ export function parse_type_id(type_id: TypeId): ParsedTypeId {
         details: base,
         type_args: args,
       };
+    }
 
-    case TypeCategory.UNION:
+    case TypeCategory.UNION: {
       // Format: type:union:[<members>]
       const union_members_str = type_id.substring(
         "type:union:[".length,
@@ -275,8 +276,9 @@ export function parse_type_id(type_id: TypeId): ParsedTypeId {
         details: "union",
         members: union_members,
       };
+    }
 
-    case TypeCategory.INTERSECTION:
+    case TypeCategory.INTERSECTION: {
       // Format: type:intersection:[<members>]
       const inter_members_str = type_id.substring(
         "type:intersection:[".length,
@@ -290,6 +292,7 @@ export function parse_type_id(type_id: TypeId): ParsedTypeId {
         details: "intersection",
         members: inter_members,
       };
+    }
 
     default:
       return {
@@ -341,11 +344,12 @@ export function type_id_to_string(type_id: TypeId): string {
     case TypeCategory.BUILTIN:
       return parsed.details;
 
-    case TypeCategory.GENERIC:
+    case TypeCategory.GENERIC: {
       const base_str = parsed.details;
       const args_str =
         parsed.type_args?.map(type_id_to_string).join(", ") || "";
       return `${base_str}<${args_str}>`;
+    }
 
     case TypeCategory.UNION:
       return parsed.members?.map(type_id_to_string).join(" | ") || "unknown";
@@ -353,17 +357,20 @@ export function type_id_to_string(type_id: TypeId): string {
     case TypeCategory.INTERSECTION:
       return parsed.members?.map(type_id_to_string).join(" & ") || "unknown";
 
-    case TypeCategory.ARRAY:
+    case TypeCategory.ARRAY: {
       const elem_type = parsed.details.substring("type:array:".length);
       return `${type_id_to_string(elem_type as TypeId)}[]`;
+    }
 
-    case TypeCategory.TUPLE:
+    case TypeCategory.TUPLE: {
       const elems = parsed.details.substring(1, parsed.details.length - 1);
       return `[${elems}]`;
+    }
 
-    case TypeCategory.LITERAL:
-      const [kind, ...value_parts] = parsed.details.split(":");
-      return value_parts.join(":");
+    case TypeCategory.LITERAL: {
+      const parts = parsed.details.split(":");
+      return parts.slice(1).join(":");
+    }
 
     case TypeCategory.FUNCTION:
       return parsed.details;

@@ -3,9 +3,9 @@
  * Claude Code PostToolUse hook: Run ESLint on edited file after Write/Edit
  *
  * 1. First runs ESLint with --fix to auto-fix what it can (quotes, semicolons, etc.)
- * 2. Then checks for remaining errors and blocks if any exist
+ * 2. Then checks for remaining errors OR warnings and blocks if any exist
  *
- * Returns JSON with decision:"block" if unfixable lint errors remain.
+ * Returns JSON with decision:"block" if unfixable lint errors or warnings remain.
  */
 
 const { execSync } = require("child_process");
@@ -75,15 +75,26 @@ function main() {
     // Some issues couldn't be auto-fixed, continue to check remaining errors
   }
 
-  // Step 2: Check for remaining errors after auto-fix
-  log(`Checking remaining ESLint errors for ${file_path}...`);
+  // Step 2: Check for remaining errors/warnings after auto-fix
+  log(`Checking remaining ESLint issues for ${file_path}...`);
   try {
-    execSync(`npx eslint "${file_path}" --format stylish`, {
+    const output = execSync(`npx eslint "${file_path}" --format stylish`, {
       cwd: project_dir,
       encoding: "utf8",
       stdio: ["pipe", "pipe", "pipe"]
     });
-    // No remaining errors after auto-fix
+
+    // ESLint exits 0 but may still have warnings in output
+    if (output && output.includes("warning")) {
+      log(`ESLint warnings in ${file_path} - blocking`);
+      console.log(JSON.stringify({
+        decision: "block",
+        reason: `ESLint warnings in ${file_path} (after auto-fix):\n${output}\n\nPlease fix these warnings.`
+      }));
+      process.exit(0);
+    }
+
+    // No remaining issues after auto-fix
     log(`ESLint check passed for ${file_path}`);
     process.exit(0);
   } catch (error) {

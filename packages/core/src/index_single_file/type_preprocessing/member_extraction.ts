@@ -25,10 +25,6 @@ import type {
  * @param symbol_id - The SymbolId to extract from
  * @returns The local name component
  */
-function extract_name_from_symbol_id(symbol_id: SymbolId): SymbolName {
-  const parts = symbol_id.split(":");
-  return parts[parts.length - 1] as SymbolName;
-}
 
 /**
  * Extract type members from class, interface, and enum definitions

@@ -47,7 +47,7 @@ export default [
       "unused-imports/no-unused-vars": ["error", { "argsIgnorePattern": "^_" }],
 
       "@typescript-eslint/no-explicit-any": "warn",
-      "@typescript-eslint/no-non-null-assertion": "warn",
+      "@typescript-eslint/no-non-null-assertion": "error",
 
       // General JavaScript rules
       "no-console": "off", // Allow console.log for now
@@ -94,7 +94,12 @@ export default [
         vi: "readonly",
         jest: "readonly",
         // Performance monitoring in tests
-        performance: "readonly"
+        performance: "readonly",
+        // Timer functions for async tests
+        setTimeout: "readonly",
+        setInterval: "readonly",
+        clearTimeout: "readonly",
+        clearInterval: "readonly"
       }
     },
     rules: {
@@ -125,7 +130,10 @@ export default [
         clearInterval: "readonly",
         performance: "readonly",
         window: "readonly",
-        document: "readonly"
+        document: "readonly",
+        fetch: "readonly",
+        Response: "readonly",
+        Reflect: "readonly"
       }
     },
     rules: {
@@ -133,11 +141,16 @@ export default [
       "unused-imports/no-unused-imports": "off",
       "unused-imports/no-unused-vars": "off",
       "@typescript-eslint/no-explicit-any": "off",
+      "@typescript-eslint/no-non-null-assertion": "off",
       // Allow redeclarations in test fixtures (intentional for testing)
       "no-redeclare": "off",
       // Fixtures demonstrate language features including dynamic imports
       "no-restricted-syntax": "off",
-      "import/first": "off"
+      "import/first": "off",
+      // Allow constant conditions in test fixtures (intentional for testing)
+      "no-constant-condition": "off",
+      // Allow undefined globals that are used for testing purposes
+      "no-undef": "off"
     }
   },
   {

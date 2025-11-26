@@ -64,7 +64,11 @@ function extract_scope_name(
   }
 
   // For function/method/constructor scopes
-  if (scope_type === "function" || scope_type === "method" || scope_type === "constructor") {
+  if (
+    scope_type === "function" ||
+    scope_type === "method" ||
+    scope_type === "constructor"
+  ) {
     // Try to get the name field first
     const name_node = node.childForFieldName("name");
     if (name_node) {
@@ -232,15 +236,19 @@ export function create_processing_context(
           continue;
         }
 
-        const depth = scope_depths.get(scope.id)!;
+        const depth = scope_depths.get(scope.id);
+        if (depth === undefined) {
+          throw new Error(`Internal error: scope ${scope.id} has no precomputed depth`);
+        }
 
         if (depth > best_depth) {
           best_scope_id = scope.id;
           best_depth = depth;
         } else if (depth === best_depth && scope.id !== best_scope_id) {
           throw new Error(
-            `Malformed scope tree: multiple scopes at depth ${depth} contain location ${JSON.stringify(location)}. ` +
-            `Found scopes: ${best_scope_id} and ${scope.id}`
+            `Malformed scope tree: multiple scopes at depth ${depth} contain location ${JSON.stringify(
+              location
+            )}. ` + `Found scopes: ${best_scope_id} and ${scope.id}`
           );
         }
       }
@@ -313,7 +321,14 @@ function find_containing_scope(
   root_scope_id: ScopeId,
   scopes: ReadonlyMap<ScopeId, LexicalScope>
 ): LexicalScope {
-  let best_scope = scopes.get(root_scope_id)!;
+  let best_scope = scopes.get(root_scope_id);
+  if (!best_scope) {
+    throw new Error(
+      `Root scope with id ${root_scope_id} not found at location ${JSON.stringify(
+        location
+      )}`
+    );
+  }
   let smallest_area = Infinity;
 
   for (const scope of scopes.values()) {
@@ -427,4 +442,3 @@ function compute_scope_depth(
   }
   return depth;
 }
-

@@ -73,10 +73,11 @@ export function resolve_self_reference_call(
     case "super":
       return resolve_super_call(call_ref, scopes, definitions, types);
 
-    default:
+    default: {
       // Exhaustiveness check
       const _exhaustive: never = call_ref.keyword;
       throw new Error(`Unhandled self-reference keyword: ${_exhaustive}`);
+    }
   }
 }
 
@@ -160,9 +161,6 @@ function resolve_super_call(
   }
 
   // For class definitions, the body_scope_id is where methods are defined
-  // We need to find the body scope for the parent class
-  const parent_body_scope_id: ScopeId | null = null;
-
   if (parent_definition.kind === "class") {
     // For classes, methods are in child scopes. We need to search within the class's scope tree.
     // The class definition's defining_scope_id is where the class NAME is visible (parent scope).
