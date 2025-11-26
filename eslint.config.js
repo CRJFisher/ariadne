@@ -59,6 +59,14 @@ export default [
         {
           selector: "ImportExpression",
           message: "Dynamic imports (import()) are not allowed. Use static imports: import { x } from \"module\""
+        },
+        {
+          selector: "TSAsExpression[typeAnnotation.typeName.name='any']",
+          message: "'as any' type assertions are not allowed. Use proper typing or a more specific assertion."
+        },
+        {
+          selector: "TSAsExpression > TSAnyKeyword",
+          message: "'as any' type assertions are not allowed. Use proper typing or a more specific assertion."
         }
       ]
     }
@@ -87,7 +95,15 @@ export default [
       "@typescript-eslint/no-explicit-any": "off",
       "@typescript-eslint/no-unused-vars": "off",
       "@typescript-eslint/no-non-null-assertion": "off",
-      "no-console": "off"
+      "no-console": "off",
+      // Allow 'as any' in tests, but still prohibit dynamic imports
+      "no-restricted-syntax": [
+        "error",
+        {
+          selector: "ImportExpression",
+          message: "Dynamic imports (import()) are not allowed. Use static imports: import { x } from \"module\""
+        }
+      ]
     }
   },
   {
