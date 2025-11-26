@@ -4,10 +4,11 @@
  */
 
 import { Project } from "@ariadnejs/core";
+import { FilePath } from "@ariadnejs/types";
 
 async function main() {
   const project = new Project();
-  await project.initialize(".", ["packages/**/*.ts", "!**/*.test.ts", "!**/dist/**", "!**/node_modules/**"]);
+  await project.initialize("." as FilePath, ["packages/**/*.ts", "!**/*.test.ts", "!**/dist/**", "!**/node_modules/**"]);
 
   const call_graph = project.get_call_graph();
 
@@ -28,12 +29,14 @@ async function main() {
   console.log(`Anonymous function entry points: ${anon_entry_points.length}`);
 
   // Get callback invocation stats
-  const resolutions = project.resolutions;
   let total_callback_invocations = 0;
   const definitions = project.definitions;
 
   for (const callable of definitions.get_callable_definitions()) {
-    const callback_context = (callable as any).callback_context;
+    if (callable.kind !== "function") {
+      continue;
+    }
+    const callback_context = callable.callback_context;
     if (callback_context?.is_callback) {
       total_callback_invocations++;
     }

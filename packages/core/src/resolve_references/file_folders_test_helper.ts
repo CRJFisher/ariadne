@@ -62,10 +62,10 @@ export function build_file_tree(file_paths: FilePath[]): FileSystemFolder {
       const folder_name = parts[i];
       if (!current.folders.has(folder_name)) {
         const folder_path = "/" + parts.slice(0, i + 1).join("/");
-        const new_folder = {
+        const new_folder: MutableFileSystemFolder = {
           path: folder_path as FilePath,
-          folders: new Map(),
-          files: new Set(),
+          folders: new Map<string, MutableFileSystemFolder>(),
+          files: new Set<string>(),
         };
         current.folders.set(folder_name, new_folder);
       }

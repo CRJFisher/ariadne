@@ -57,12 +57,14 @@ function count_tree_size(
   let unresolved_count = 0;
 
   for (const call_ref of node.enclosed_calls) {
-    if (call_ref.symbol_id) {
-      // Resolved call - count it and recurse
-      resolved_count += 1;
-      const subtree = count_tree_size(call_ref.symbol_id, call_graph, visited);
-      resolved_count += subtree.resolved;
-      unresolved_count += subtree.unresolved;
+    if (call_ref.resolutions.length > 0) {
+      // Resolved call - count each resolution and recurse
+      for (const resolution of call_ref.resolutions) {
+        resolved_count += 1;
+        const subtree = count_tree_size(resolution.symbol_id, call_graph, visited);
+        resolved_count += subtree.resolved;
+        unresolved_count += subtree.unresolved;
+      }
     } else {
       // Unresolved call (external or couldn't be resolved)
       unresolved_count += 1;

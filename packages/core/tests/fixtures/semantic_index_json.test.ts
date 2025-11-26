@@ -190,7 +190,7 @@ describe("SemanticIndex Serialization", () => {
 
       const json_string = semantic_index_to_json_string(minimal_index);
       expect(typeof json_string).toBe("string");
-      expect(json_string.includes('"file_path"')).toBe(true);
+      expect(json_string.includes("\"file_path\"")).toBe(true);
 
       const deserialized = json_string_to_semantic_index(json_string);
       expect(deserialized.file_path).toBe(minimal_index.file_path);
@@ -332,8 +332,8 @@ describe("SemanticIndex Serialization", () => {
       const json_string = semantic_index_to_json_string(minimal_index);
 
       // Check for 2-space indentation
-      expect(json_string).toContain('  "file_path"');
-      expect(json_string).toContain('  "language"');
+      expect(json_string).toContain("  \"file_path\"");
+      expect(json_string).toContain("  \"language\"");
 
       // Check it's valid JSON
       expect(() => JSON.parse(json_string)).not.toThrow();

@@ -5,14 +5,12 @@
 import { Location } from "./common";
 import { ScopeId } from "./scopes";
 import { DocString } from "./aliases";
-
-export type ParameterName = string & { __brand: "ParameterName" };
-
 import { SymbolId, SymbolKind } from "./symbol";
 import { SymbolName } from "./symbol";
 import { ModulePath } from "./import_export";
 import { CallbackContext } from "./call_chains";
 
+export type ParameterName = string & { __brand: "ParameterName" };
 /**
  * Export metadata for symbols that can be imported
  *

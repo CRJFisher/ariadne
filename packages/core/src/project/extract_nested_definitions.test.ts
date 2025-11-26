@@ -162,7 +162,7 @@ describe("extract_all_parameters", () => {
       const y_param = params.find((p) => p.name === "y");
 
       expect(x_param?.default_value).toBe("42");
-      expect(y_param?.default_value).toBe('"hello"');
+      expect(y_param?.default_value).toBe("\"hello\"");
     });
   });
 

@@ -29,8 +29,27 @@ export * from "./symbol";
 // Export type identification system
 export * from "./type_id";
 
-// Export from query (no conflicts)
-export * from "./query";
+// Export from query (excluding Resolution/ResolutionConfidence which conflict with symbol_references)
+export {
+  ASTNode,
+  SemanticNode,
+  QueryCapture,
+  QueryMetadata,
+  QueryResult,
+  QueryError,
+  QueryErrorKind,
+  QueryResolutionReason,
+  is_ast_node,
+  is_semantic_node,
+  is_query_capture,
+  is_query_result,
+  is_query_error,
+  resolve_high,
+  resolve_medium,
+  resolve_low,
+  resolve_failed,
+  create_query_error,
+} from "./query";
 
 // Export from calls (no conflicts)
 export * from "./calls";

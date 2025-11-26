@@ -8,6 +8,7 @@ import type {
   CallableDefinition,
   ExportableDefinition,
   SymbolKind,
+  FunctionCollection,
 } from "@ariadnejs/types";
 import { is_exportable, location_key } from "@ariadnejs/types";
 
@@ -83,7 +84,7 @@ export class DefinitionRegistry {
    */
   private function_collections: Map<
     SymbolId,
-    import("@ariadnejs/types").FunctionCollection
+    FunctionCollection
   > = new Map();
 
   /**
@@ -519,7 +520,7 @@ export class DefinitionRegistry {
    */
   get_function_collection(
     variable_id: SymbolId
-  ): import("@ariadnejs/types").FunctionCollection | undefined {
+  ): FunctionCollection | undefined {
     return this.function_collections.get(variable_id);
   }
 
@@ -531,7 +532,7 @@ export class DefinitionRegistry {
    */
   get_all_function_collections(): ReadonlyMap<
     SymbolId,
-    import("@ariadnejs/types").FunctionCollection
+    FunctionCollection
   > {
     return this.function_collections;
   }

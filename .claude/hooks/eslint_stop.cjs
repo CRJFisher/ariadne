@@ -50,16 +50,19 @@ function main() {
     errors.push(`ESLint errors (after auto-fix):\n${output}`);
   }
 
-  // Step 3: Run TypeScript type checking
-  try {
-    execSync("npx tsc --noEmit", {
-      cwd: project_dir,
-      encoding: "utf8",
-      stdio: ["pipe", "pipe", "pipe"]
-    });
-  } catch (error) {
-    const output = error.stdout || error.stderr || "TypeScript errors found";
-    errors.push(`TypeScript errors:\n${output}`);
+  // Step 3: Run TypeScript type checking for each package
+  const packages = ["packages/types", "packages/core", "packages/mcp"];
+  for (const pkg of packages) {
+    try {
+      execSync(`npx tsc --noEmit -p ${pkg}`, {
+        cwd: project_dir,
+        encoding: "utf8",
+        stdio: ["pipe", "pipe", "pipe"]
+      });
+    } catch (error) {
+      const output = error.stdout || error.stderr || "TypeScript errors found";
+      errors.push(`TypeScript errors in ${pkg}:\n${output}`);
+    }
   }
 
   // Report all errors if any

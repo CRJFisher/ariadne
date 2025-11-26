@@ -6,7 +6,6 @@ import type {
   ScopeId,
   SymbolName,
   Language,
-  CallbackContext,
 } from "@ariadnejs/types";
 import type { FileSystemFolder } from "./file_folders";
 import type { DefinitionRegistry } from "./registries/definition_registry";
@@ -697,10 +696,13 @@ export class ResolutionRegistry {
         continue;
       }
 
+      // Only FunctionDefinition has callback_context
+      if (callable.kind !== "function") {
+        continue;
+      }
+
       // Get callback context from function definition
-      const callback_context = callable.callback_context as
-        | CallbackContext
-        | undefined;
+      const callback_context = callable.callback_context;
 
       if (!callback_context || !callback_context.is_callback) {
         continue; // Not a callback
