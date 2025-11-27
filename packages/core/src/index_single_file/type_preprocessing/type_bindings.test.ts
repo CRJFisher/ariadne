@@ -24,15 +24,15 @@ import { extract_type_bindings } from "./type_bindings";
 // Test Helpers
 // ============================================================================
 
-function createParsedFile(
+function create_parsed_file(
   code: string,
-  filePath: FilePath,
+  file_path: FilePath,
   tree: Parser.Tree,
   language: Language
 ): ParsedFile {
   const lines = code.split("\n");
   return {
-    file_path: filePath,
+    file_path: file_path,
     file_lines: lines.length,
     file_end_column: lines[lines.length - 1]?.length || 0,
     tree,
@@ -61,13 +61,13 @@ describe("Type Bindings - JavaScript", () => {
     `;
 
     const tree = parser.parse(code);
-    const parsedFile = createParsedFile(
+    const parsed_file = create_parsed_file(
       code,
       "test.js" as FilePath,
       tree,
       "javascript"
     );
-    const index = build_semantic_index(parsedFile, tree, "javascript");
+    const index = build_semantic_index(parsed_file, tree, "javascript");
 
     const bindings = extract_type_bindings({
       variables: index.variables,
@@ -90,13 +90,13 @@ describe("Type Bindings - JavaScript", () => {
     `;
 
     const tree = parser.parse(code);
-    const parsedFile = createParsedFile(
+    const parsed_file = create_parsed_file(
       code,
       "test.js" as FilePath,
       tree,
       "javascript"
     );
-    const index = build_semantic_index(parsedFile, tree, "javascript");
+    const index = build_semantic_index(parsed_file, tree, "javascript");
 
     const bindings = extract_type_bindings({
       variables: index.variables,
@@ -130,13 +130,13 @@ describe("Type Bindings - TypeScript", () => {
     `;
 
     const tree = parser.parse(code);
-    const parsedFile = createParsedFile(
+    const parsed_file = create_parsed_file(
       code,
       "test.ts" as FilePath,
       tree,
       "typescript"
     );
-    const index = build_semantic_index(parsedFile, tree, "typescript");
+    const index = build_semantic_index(parsed_file, tree, "typescript");
 
     const bindings = extract_type_bindings({
       variables: index.variables,
@@ -146,9 +146,9 @@ describe("Type Bindings - TypeScript", () => {
     });
 
     expect(bindings.size).toBeGreaterThan(0);
-    const typeValues = Array.from(bindings.values());
-    expect(typeValues).toContain("string");
-    expect(typeValues).toContain("number");
+    const type_values = Array.from(bindings.values());
+    expect(type_values).toContain("string");
+    expect(type_values).toContain("number");
   });
 
   it("should extract class property type annotations", () => {
@@ -167,13 +167,13 @@ describe("Type Bindings - TypeScript", () => {
     `;
 
     const tree = parser.parse(code);
-    const parsedFile = createParsedFile(
+    const parsed_file = create_parsed_file(
       code,
       "test.ts" as FilePath,
       tree,
       "typescript"
     );
-    const index = build_semantic_index(parsedFile, tree, "typescript");
+    const index = build_semantic_index(parsed_file, tree, "typescript");
 
     const bindings = extract_type_bindings({
       variables: index.variables,
@@ -183,10 +183,10 @@ describe("Type Bindings - TypeScript", () => {
     });
 
     expect(bindings.size).toBeGreaterThan(0);
-    const typeValues = Array.from(bindings.values());
-    expect(typeValues).toContain("string");
-    expect(typeValues).toContain("number");
-    expect(typeValues).toContain("boolean");
+    const type_values = Array.from(bindings.values());
+    expect(type_values).toContain("string");
+    expect(type_values).toContain("number");
+    expect(type_values).toContain("boolean");
   });
 
   it("should extract method return type and parameter annotations", () => {
@@ -203,13 +203,13 @@ describe("Type Bindings - TypeScript", () => {
     `;
 
     const tree = parser.parse(code);
-    const parsedFile = createParsedFile(
+    const parsed_file = create_parsed_file(
       code,
       "test.ts" as FilePath,
       tree,
       "typescript"
     );
-    const index = build_semantic_index(parsedFile, tree, "typescript");
+    const index = build_semantic_index(parsed_file, tree, "typescript");
 
     const bindings = extract_type_bindings({
       variables: index.variables,
@@ -219,8 +219,8 @@ describe("Type Bindings - TypeScript", () => {
     });
 
     expect(bindings.size).toBeGreaterThan(0);
-    const typeValues = Array.from(bindings.values());
-    expect(typeValues.filter((t) => t === "number").length).toBeGreaterThan(0);
+    const type_values = Array.from(bindings.values());
+    expect(type_values.filter((t) => t === "number").length).toBeGreaterThan(0);
   });
 
   it("should extract interface property type annotations", () => {
@@ -234,13 +234,13 @@ describe("Type Bindings - TypeScript", () => {
     `;
 
     const tree = parser.parse(code);
-    const parsedFile = createParsedFile(
+    const parsed_file = create_parsed_file(
       code,
       "test.ts" as FilePath,
       tree,
       "typescript"
     );
-    const index = build_semantic_index(parsedFile, tree, "typescript");
+    const index = build_semantic_index(parsed_file, tree, "typescript");
 
     const bindings = extract_type_bindings({
       variables: index.variables,
@@ -250,10 +250,10 @@ describe("Type Bindings - TypeScript", () => {
     });
 
     expect(bindings.size).toBeGreaterThan(0);
-    const typeValues = Array.from(bindings.values());
-    expect(typeValues).toContain("number");
-    expect(typeValues).toContain("string");
-    expect(typeValues).toContain("boolean");
+    const type_values = Array.from(bindings.values());
+    expect(type_values).toContain("number");
+    expect(type_values).toContain("string");
+    expect(type_values).toContain("boolean");
   });
 
   it("should extract interface method type annotations", () => {
@@ -265,13 +265,13 @@ describe("Type Bindings - TypeScript", () => {
     `;
 
     const tree = parser.parse(code);
-    const parsedFile = createParsedFile(
+    const parsed_file = create_parsed_file(
       code,
       "test.ts" as FilePath,
       tree,
       "typescript"
     );
-    const index = build_semantic_index(parsedFile, tree, "typescript");
+    const index = build_semantic_index(parsed_file, tree, "typescript");
 
     const bindings = extract_type_bindings({
       variables: index.variables,
@@ -281,8 +281,8 @@ describe("Type Bindings - TypeScript", () => {
     });
 
     expect(bindings.size).toBeGreaterThan(0);
-    const typeValues = Array.from(bindings.values());
-    expect(typeValues.filter((t) => t === "number").length).toBeGreaterThan(0);
+    const type_values = Array.from(bindings.values());
+    expect(type_values.filter((t) => t === "number").length).toBeGreaterThan(0);
   });
 
   it("should handle complex nested types", () => {
@@ -294,13 +294,13 @@ describe("Type Bindings - TypeScript", () => {
     `;
 
     const tree = parser.parse(code);
-    const parsedFile = createParsedFile(
+    const parsed_file = create_parsed_file(
       code,
       "test.ts" as FilePath,
       tree,
       "typescript"
     );
-    const index = build_semantic_index(parsedFile, tree, "typescript");
+    const index = build_semantic_index(parsed_file, tree, "typescript");
 
     const bindings = extract_type_bindings({
       variables: index.variables,
@@ -333,13 +333,13 @@ is_active: bool = True
     `;
 
     const tree = parser.parse(code);
-    const parsedFile = createParsedFile(
+    const parsed_file = create_parsed_file(
       code,
       "test.py" as FilePath,
       tree,
       "python"
     );
-    const index = build_semantic_index(parsedFile, tree, "python");
+    const index = build_semantic_index(parsed_file, tree, "python");
 
     const bindings = extract_type_bindings({
       variables: index.variables,
@@ -349,10 +349,10 @@ is_active: bool = True
     });
 
     expect(bindings.size).toBeGreaterThan(0);
-    const typeValues = Array.from(bindings.values());
-    expect(typeValues).toContain("str");
-    expect(typeValues).toContain("int");
-    expect(typeValues).toContain("bool");
+    const type_values = Array.from(bindings.values());
+    expect(type_values).toContain("str");
+    expect(type_values).toContain("int");
+    expect(type_values).toContain("bool");
   });
 
   it("should extract parameter type annotations from functions", () => {
@@ -362,13 +362,13 @@ def greet(name: str, age: int) -> None:
     `;
 
     const tree = parser.parse(code);
-    const parsedFile = createParsedFile(
+    const parsed_file = create_parsed_file(
       code,
       "test.py" as FilePath,
       tree,
       "python"
     );
-    const index = build_semantic_index(parsedFile, tree, "python");
+    const index = build_semantic_index(parsed_file, tree, "python");
 
     const bindings = extract_type_bindings({
       variables: index.variables,
@@ -396,13 +396,13 @@ class User:
     `;
 
     const tree = parser.parse(code);
-    const parsedFile = createParsedFile(
+    const parsed_file = create_parsed_file(
       code,
       "test.py" as FilePath,
       tree,
       "python"
     );
-    const index = build_semantic_index(parsedFile, tree, "python");
+    const index = build_semantic_index(parsed_file, tree, "python");
 
     const bindings = extract_type_bindings({
       variables: index.variables,
@@ -412,9 +412,9 @@ class User:
     });
 
     expect(bindings.size).toBeGreaterThan(0);
-    const typeValues = Array.from(bindings.values());
-    expect(typeValues).toContain("str");
-    expect(typeValues).toContain("int");
+    const type_values = Array.from(bindings.values());
+    expect(type_values).toContain("str");
+    expect(type_values).toContain("int");
   });
 
   it("should extract method parameter type annotations", () => {
@@ -425,13 +425,13 @@ class Calculator:
     `;
 
     const tree = parser.parse(code);
-    const parsedFile = createParsedFile(
+    const parsed_file = create_parsed_file(
       code,
       "test.py" as FilePath,
       tree,
       "python"
     );
-    const index = build_semantic_index(parsedFile, tree, "python");
+    const index = build_semantic_index(parsed_file, tree, "python");
 
     const bindings = extract_type_bindings({
       variables: index.variables,
@@ -466,13 +466,13 @@ describe("Type Bindings - Rust", () => {
     `;
 
     const tree = parser.parse(code);
-    const parsedFile = createParsedFile(
+    const parsed_file = create_parsed_file(
       code,
       "test.rs" as FilePath,
       tree,
       "rust"
     );
-    const index = build_semantic_index(parsedFile, tree, "rust");
+    const index = build_semantic_index(parsed_file, tree, "rust");
 
     const bindings = extract_type_bindings({
       variables: index.variables,
@@ -482,10 +482,10 @@ describe("Type Bindings - Rust", () => {
     });
 
     expect(bindings.size).toBeGreaterThan(0);
-    const typeValues = Array.from(bindings.values());
-    expect(typeValues).toContain("String");
-    expect(typeValues).toContain("i32");
-    expect(typeValues).toContain("bool");
+    const type_values = Array.from(bindings.values());
+    expect(type_values).toContain("String");
+    expect(type_values).toContain("i32");
+    expect(type_values).toContain("bool");
   });
 
   it("should extract parameter type annotations from functions", () => {
@@ -496,13 +496,13 @@ describe("Type Bindings - Rust", () => {
     `;
 
     const tree = parser.parse(code);
-    const parsedFile = createParsedFile(
+    const parsed_file = create_parsed_file(
       code,
       "test.rs" as FilePath,
       tree,
       "rust"
     );
-    const index = build_semantic_index(parsedFile, tree, "rust");
+    const index = build_semantic_index(parsed_file, tree, "rust");
 
     const bindings = extract_type_bindings({
       variables: index.variables,
@@ -526,13 +526,13 @@ describe("Type Bindings - Rust", () => {
     `;
 
     const tree = parser.parse(code);
-    const parsedFile = createParsedFile(
+    const parsed_file = create_parsed_file(
       code,
       "test.rs" as FilePath,
       tree,
       "rust"
     );
-    const index = build_semantic_index(parsedFile, tree, "rust");
+    const index = build_semantic_index(parsed_file, tree, "rust");
 
     const bindings = extract_type_bindings({
       variables: index.variables,
@@ -556,13 +556,13 @@ describe("Type Bindings - Rust", () => {
     `;
 
     const tree = parser.parse(code);
-    const parsedFile = createParsedFile(
+    const parsed_file = create_parsed_file(
       code,
       "test.rs" as FilePath,
       tree,
       "rust"
     );
-    const index = build_semantic_index(parsedFile, tree, "rust");
+    const index = build_semantic_index(parsed_file, tree, "rust");
 
     const bindings = extract_type_bindings({
       variables: index.variables,
@@ -604,13 +604,13 @@ describe("Type Bindings - Edge Cases", () => {
     `;
 
     const tree = parser.parse(code);
-    const parsedFile = createParsedFile(
+    const parsed_file = create_parsed_file(
       code,
       "test.js" as FilePath,
       tree,
       "javascript"
     );
-    const index = build_semantic_index(parsedFile, tree, "javascript");
+    const index = build_semantic_index(parsed_file, tree, "javascript");
 
     const bindings = extract_type_bindings({
       variables: index.variables,

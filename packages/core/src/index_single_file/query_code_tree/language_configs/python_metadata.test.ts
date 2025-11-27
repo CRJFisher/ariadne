@@ -22,9 +22,9 @@ describe("Python Metadata Extractors", () => {
     it("should extract type from function parameter annotation", () => {
       const code = "def f(x: int): pass";
       const tree = parser.parse(code);
-      const typedParam = tree.rootNode.descendantsOfType("typed_parameter")[0];
+      const typed_param = tree.rootNode.descendantsOfType("typed_parameter")[0];
 
-      const result = PYTHON_METADATA_EXTRACTORS.extract_type_from_annotation(typedParam, TEST_FILE);
+      const result = PYTHON_METADATA_EXTRACTORS.extract_type_from_annotation(typed_param, TEST_FILE);
 
       expect(result).toBeDefined();
       expect(result?.type_name).toBe("int");
@@ -35,9 +35,9 @@ describe("Python Metadata Extractors", () => {
     it("should extract type from function return annotation", () => {
       const code = "def f() -> str: pass";
       const tree = parser.parse(code);
-      const funcDef = tree.rootNode.descendantsOfType("function_definition")[0];
+      const func_def = tree.rootNode.descendantsOfType("function_definition")[0];
 
-      const result = PYTHON_METADATA_EXTRACTORS.extract_type_from_annotation(funcDef, TEST_FILE);
+      const result = PYTHON_METADATA_EXTRACTORS.extract_type_from_annotation(func_def, TEST_FILE);
 
       expect(result).toBeDefined();
       expect(result?.type_name).toBe("str");
@@ -91,9 +91,9 @@ describe("Python Metadata Extractors", () => {
     it("should handle Python 3.10+ union syntax", () => {
       const code = "def f(x: str | int): pass";
       const tree = parser.parse(code);
-      const typedParam = tree.rootNode.descendantsOfType("typed_parameter")[0];
+      const typed_param = tree.rootNode.descendantsOfType("typed_parameter")[0];
 
-      const result = PYTHON_METADATA_EXTRACTORS.extract_type_from_annotation(typedParam, TEST_FILE);
+      const result = PYTHON_METADATA_EXTRACTORS.extract_type_from_annotation(typed_param, TEST_FILE);
 
       expect(result).toBeDefined();
       expect(result?.type_name).toContain("|");
@@ -102,18 +102,18 @@ describe("Python Metadata Extractors", () => {
     it("should handle parameters with default values", () => {
       const code = "def f(x: int = 5): pass";
       const tree = parser.parse(code);
-      const typedDefaultParam = tree.rootNode.descendantsOfType("typed_default_parameter")[0];
+      const typed_default_param = tree.rootNode.descendantsOfType("typed_default_parameter")[0];
 
-      if (typedDefaultParam) {
-        const result = PYTHON_METADATA_EXTRACTORS.extract_type_from_annotation(typedDefaultParam, TEST_FILE);
+      if (typed_default_param) {
+        const result = PYTHON_METADATA_EXTRACTORS.extract_type_from_annotation(typed_default_param, TEST_FILE);
 
         expect(result).toBeDefined();
         expect(result?.type_name).toBe("int");
         expect(result?.certainty).toBe("declared");
       } else {
         // Some versions of tree-sitter-python might use typed_parameter even with defaults
-        const typedParam = tree.rootNode.descendantsOfType("typed_parameter")[0];
-        const result = PYTHON_METADATA_EXTRACTORS.extract_type_from_annotation(typedParam, TEST_FILE);
+        const typed_param = tree.rootNode.descendantsOfType("typed_parameter")[0];
+        const result = PYTHON_METADATA_EXTRACTORS.extract_type_from_annotation(typed_param, TEST_FILE);
 
         expect(result).toBeDefined();
         expect(result?.type_name).toBe("int");
@@ -123,9 +123,9 @@ describe("Python Metadata Extractors", () => {
     it("should detect nullable with pipe None syntax", () => {
       const code = "def f(x: str | None): pass";
       const tree = parser.parse(code);
-      const typedParam = tree.rootNode.descendantsOfType("typed_parameter")[0];
+      const typed_param = tree.rootNode.descendantsOfType("typed_parameter")[0];
 
-      const result = PYTHON_METADATA_EXTRACTORS.extract_type_from_annotation(typedParam, TEST_FILE);
+      const result = PYTHON_METADATA_EXTRACTORS.extract_type_from_annotation(typed_param, TEST_FILE);
 
       expect(result).toBeDefined();
       expect(result?.type_name).toContain("None");
@@ -160,9 +160,9 @@ describe("Python Metadata Extractors", () => {
     it("should handle custom type identifiers", () => {
       const code = "def f(x: MyCustomType): pass";
       const tree = parser.parse(code);
-      const typedParam = tree.rootNode.descendantsOfType("typed_parameter")[0];
+      const typed_param = tree.rootNode.descendantsOfType("typed_parameter")[0];
 
-      const result = PYTHON_METADATA_EXTRACTORS.extract_type_from_annotation(typedParam, TEST_FILE);
+      const result = PYTHON_METADATA_EXTRACTORS.extract_type_from_annotation(typed_param, TEST_FILE);
 
       expect(result).toBeDefined();
       expect(result?.type_name).toBe("MyCustomType");
@@ -171,10 +171,10 @@ describe("Python Metadata Extractors", () => {
     it("should extract type from type node directly", () => {
       const code = "x: int = 5";
       const tree = parser.parse(code);
-      const typeNode = tree.rootNode.descendantsOfType("type")[0];
+      const type_node = tree.rootNode.descendantsOfType("type")[0];
 
-      if (typeNode) {
-        const result = PYTHON_METADATA_EXTRACTORS.extract_type_from_annotation(typeNode, TEST_FILE);
+      if (type_node) {
+        const result = PYTHON_METADATA_EXTRACTORS.extract_type_from_annotation(type_node, TEST_FILE);
 
         expect(result).toBeDefined();
         expect(result?.type_name).toBe("int");
@@ -457,9 +457,9 @@ describe("Python Metadata Extractors", () => {
     it("should extract parts from augmented assignment", () => {
       const code = "x += 5";
       const tree = parser.parse(code);
-      const augmentedAssign = tree.rootNode.descendantsOfType("augmented_assignment")[0];
+      const augmented_assign = tree.rootNode.descendantsOfType("augmented_assignment")[0];
 
-      const result = PYTHON_METADATA_EXTRACTORS.extract_assignment_parts(augmentedAssign, TEST_FILE);
+      const result = PYTHON_METADATA_EXTRACTORS.extract_assignment_parts(augmented_assign, TEST_FILE);
 
       expect(result.target).toBeDefined();
       expect(result.source).toBeDefined();
@@ -493,9 +493,9 @@ describe("Python Metadata Extractors", () => {
     it("should handle walrus operator", () => {
       const code = "if (n := len(data)) > 0: pass";
       const tree = parser.parse(code);
-      const namedExpr = tree.rootNode.descendantsOfType("named_expression")[0];
+      const named_expr = tree.rootNode.descendantsOfType("named_expression")[0];
 
-      const result = PYTHON_METADATA_EXTRACTORS.extract_assignment_parts(namedExpr, TEST_FILE);
+      const result = PYTHON_METADATA_EXTRACTORS.extract_assignment_parts(named_expr, TEST_FILE);
 
       expect(result.target).toBeDefined();
       expect(result.source).toBeDefined();
@@ -564,9 +564,9 @@ describe("Python Metadata Extractors", () => {
     it("should extract type arguments from simple generic", () => {
       const code = "x: List[int] = []";
       const tree = parser.parse(code);
-      const genericType = tree.rootNode.descendantsOfType("generic_type")[0];
+      const generic_type = tree.rootNode.descendantsOfType("generic_type")[0];
 
-      const result = PYTHON_METADATA_EXTRACTORS.extract_type_arguments(genericType);
+      const result = PYTHON_METADATA_EXTRACTORS.extract_type_arguments(generic_type);
 
       expect(result).toEqual(["int"]);
     });
@@ -574,9 +574,9 @@ describe("Python Metadata Extractors", () => {
     it("should extract multiple type arguments", () => {
       const code = "d: Dict[str, int] = {}";
       const tree = parser.parse(code);
-      const genericType = tree.rootNode.descendantsOfType("generic_type")[0];
+      const generic_type = tree.rootNode.descendantsOfType("generic_type")[0];
 
-      const result = PYTHON_METADATA_EXTRACTORS.extract_type_arguments(genericType);
+      const result = PYTHON_METADATA_EXTRACTORS.extract_type_arguments(generic_type);
 
       expect(result).toEqual(["str", "int"]);
     });
@@ -584,9 +584,9 @@ describe("Python Metadata Extractors", () => {
     it("should extract nested generic type arguments", () => {
       const code = "x: List[Dict[str, int]] = []";
       const tree = parser.parse(code);
-      const genericType = tree.rootNode.descendantsOfType("generic_type")[0];
+      const generic_type = tree.rootNode.descendantsOfType("generic_type")[0];
 
-      const result = PYTHON_METADATA_EXTRACTORS.extract_type_arguments(genericType);
+      const result = PYTHON_METADATA_EXTRACTORS.extract_type_arguments(generic_type);
 
       expect(result).toEqual(["Dict[str, int]"]);
     });
@@ -594,9 +594,9 @@ describe("Python Metadata Extractors", () => {
     it("should extract Union type arguments", () => {
       const code = "x: Union[str, int, None] = None";
       const tree = parser.parse(code);
-      const genericType = tree.rootNode.descendantsOfType("generic_type")[0];
+      const generic_type = tree.rootNode.descendantsOfType("generic_type")[0];
 
-      const result = PYTHON_METADATA_EXTRACTORS.extract_type_arguments(genericType);
+      const result = PYTHON_METADATA_EXTRACTORS.extract_type_arguments(generic_type);
 
       expect(result).toEqual(["str", "int", "None"]);
     });
@@ -604,9 +604,9 @@ describe("Python Metadata Extractors", () => {
     it("should extract Callable type arguments", () => {
       const code = "f: Callable[[int, str], bool] = lambda x, y: True";
       const tree = parser.parse(code);
-      const genericType = tree.rootNode.descendantsOfType("generic_type")[0];
+      const generic_type = tree.rootNode.descendantsOfType("generic_type")[0];
 
-      const result = PYTHON_METADATA_EXTRACTORS.extract_type_arguments(genericType);
+      const result = PYTHON_METADATA_EXTRACTORS.extract_type_arguments(generic_type);
 
       expect(result).toBeDefined();
       expect(result?.length).toBeGreaterThan(0);
@@ -625,23 +625,23 @@ describe("Python Metadata Extractors", () => {
     it("should extract exact Callable arguments", () => {
       const code = "f: Callable[[int, str], bool] = lambda x, y: True";
       const tree = parser.parse(code);
-      const genericType = tree.rootNode.descendantsOfType("generic_type")[0];
+      const generic_type = tree.rootNode.descendantsOfType("generic_type")[0];
 
-      const result = PYTHON_METADATA_EXTRACTORS.extract_type_arguments(genericType);
+      const result = PYTHON_METADATA_EXTRACTORS.extract_type_arguments(generic_type);
 
       expect(result).toBeDefined();
       // Callable has special format where arguments are in a list
       expect(result).toBeDefined();
-      const resultStr = result?.join(", ");
-      expect(resultStr).toContain("bool");
+      const result_str = result?.join(", ");
+      expect(result_str).toContain("bool");
     });
 
     it("should handle deeply nested generics", () => {
       const code = "x: Dict[str, List[Tuple[int, str]]] = {}";
       const tree = parser.parse(code);
-      const genericType = tree.rootNode.descendantsOfType("generic_type")[0];
+      const generic_type = tree.rootNode.descendantsOfType("generic_type")[0];
 
-      const result = PYTHON_METADATA_EXTRACTORS.extract_type_arguments(genericType);
+      const result = PYTHON_METADATA_EXTRACTORS.extract_type_arguments(generic_type);
 
       expect(result).toBeDefined();
       expect(result?.[0]).toBe("str");
@@ -652,9 +652,9 @@ describe("Python Metadata Extractors", () => {
     it("should handle Optional as special case of Union", () => {
       const code = "x: Optional[str] = None";
       const tree = parser.parse(code);
-      const genericType = tree.rootNode.descendantsOfType("generic_type")[0];
+      const generic_type = tree.rootNode.descendantsOfType("generic_type")[0];
 
-      const result = PYTHON_METADATA_EXTRACTORS.extract_type_arguments(genericType);
+      const result = PYTHON_METADATA_EXTRACTORS.extract_type_arguments(generic_type);
 
       expect(result).toBeDefined();
       expect(result).toEqual(["str"]);
@@ -663,9 +663,9 @@ describe("Python Metadata Extractors", () => {
     it("should handle complex nested Union types", () => {
       const code = "x: Union[int, List[str], Dict[str, Any]] = []";
       const tree = parser.parse(code);
-      const genericType = tree.rootNode.descendantsOfType("generic_type")[0];
+      const generic_type = tree.rootNode.descendantsOfType("generic_type")[0];
 
-      const result = PYTHON_METADATA_EXTRACTORS.extract_type_arguments(genericType);
+      const result = PYTHON_METADATA_EXTRACTORS.extract_type_arguments(generic_type);
 
       expect(result).toBeDefined();
       expect(result?.length).toBe(3);
@@ -677,9 +677,9 @@ describe("Python Metadata Extractors", () => {
     it("should handle Literal type arguments", () => {
       const code = "x: Literal[\"foo\", \"bar\"] = \"foo\"";
       const tree = parser.parse(code);
-      const genericType = tree.rootNode.descendantsOfType("generic_type")[0];
+      const generic_type = tree.rootNode.descendantsOfType("generic_type")[0];
 
-      const result = PYTHON_METADATA_EXTRACTORS.extract_type_arguments(genericType);
+      const result = PYTHON_METADATA_EXTRACTORS.extract_type_arguments(generic_type);
 
       expect(result).toBeDefined();
       // Literal contains string values as type arguments
@@ -800,10 +800,10 @@ def value(self):
     return self._value
 `;
       const tree = parser.parse(code);
-      const funcDef = tree.rootNode.descendantsOfType("function_definition")[0];
+      const func_def = tree.rootNode.descendantsOfType("function_definition")[0];
 
       // Property decorators are handled at definition level, not in metadata extraction
-      expect(funcDef).toBeDefined();
+      expect(func_def).toBeDefined();
     });
   });
 

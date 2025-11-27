@@ -14,6 +14,6 @@ const email = user.getEmail();
 
 // Method call with side effects
 user.updateName("Jane Doe");
-const updatedName = user.getName();
+const updated_name = user.getName();
 
-export { user, name, email, updatedName };
+export { user, name, email, updated_name };

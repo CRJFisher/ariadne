@@ -9,6 +9,7 @@ import { SymbolName } from "./symbol";
 import { SemanticNode } from "./query";
 
 /** Name of the object receiving a method call */
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export type ReceiverName = string & { __brand: "ReceiverName" };
 
 /** Special constant for module-level context */

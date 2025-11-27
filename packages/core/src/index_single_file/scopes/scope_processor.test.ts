@@ -98,7 +98,7 @@ describe("scope_processor", () => {
       },
       endPosition: { row: location.end_line - 1, column: location.end_column },
       // Mock childForFieldName to return appropriate nodes
-      childForFieldName: (field: string) => {
+      child_for_field_name: (field: string) => {
         if (field === "name") {
           return name_node as any;
         }
@@ -845,15 +845,15 @@ describe("scope_processor", () => {
 
   describe("Integration Tests - Body-Based Scope Verification", () => {
     // Helper to create ParsedFile for integration tests
-    function createParsedFile(
+    function create_parsed_file(
       code: string,
-      filePath: FilePath,
+      file_path: FilePath,
       tree: Parser.Tree,
       language: Language
     ): ParsedFile {
       const lines = code.split("\n");
       return {
-        file_path: filePath,
+        file_path: file_path,
         file_lines: lines.length,
         // For 1-indexed positions with inclusive ends: end_column = length
         // (tree-sitter's exclusive 0-indexed becomes inclusive 1-indexed without +1)
@@ -877,14 +877,14 @@ describe("scope_processor", () => {
 }`;
 
         const tree = parser.parse(code);
-        const parsedFile = createParsedFile(
+        const parsed_file = create_parsed_file(
           code,
           "test.ts" as FilePath,
           tree,
           "typescript" as Language
         );
         const index = build_semantic_index(
-          parsedFile,
+          parsed_file,
           tree,
           "typescript" as Language
         );
@@ -900,16 +900,16 @@ describe("scope_processor", () => {
         );
         expect(class_scope).toBeDefined();
 
-        const myClass = Array.from(index.classes.values()).find(
+        const my_class = Array.from(index.classes.values()).find(
           (c) => c.name === "MyClass"
         );
-        expect(myClass).toBeDefined();
+        expect(my_class).toBeDefined();
 
         // Class scope should start at body
         expect(class_scope!.location.start_column).toBeGreaterThan(10);
 
         // Class name should be in module scope
-        expect(myClass!.defining_scope_id).toBe(file_scope_id);
+        expect(my_class!.defining_scope_id).toBe(file_scope_id);
 
         // Class scope parent should be module scope
         const parent_scope = index.scopes.get(class_scope!.parent_id!);
@@ -922,14 +922,14 @@ describe("scope_processor", () => {
 }`;
 
         const tree = parser.parse(code);
-        const parsedFile = createParsedFile(
+        const parsed_file = create_parsed_file(
           code,
           "test.ts" as FilePath,
           tree,
           "typescript" as Language
         );
         const index = build_semantic_index(
-          parsedFile,
+          parsed_file,
           tree,
           "typescript" as Language
         );
@@ -945,16 +945,16 @@ describe("scope_processor", () => {
         );
         expect(interface_scope).toBeDefined();
 
-        const iFoo = Array.from(index.interfaces.values()).find(
+        const i_foo = Array.from(index.interfaces.values()).find(
           (i) => i.name === "IFoo"
         );
-        expect(iFoo).toBeDefined();
+        expect(i_foo).toBeDefined();
 
         // Interface scope should start at body
         expect(interface_scope!.location.start_column).toBeGreaterThan(10);
 
         // Interface name should be in module scope
-        expect(iFoo!.defining_scope_id).toBe(file_scope_id);
+        expect(i_foo!.defining_scope_id).toBe(file_scope_id);
       });
 
       it("should capture only enum body as scope, not entire declaration", () => {
@@ -964,14 +964,14 @@ describe("scope_processor", () => {
 }`;
 
         const tree = parser.parse(code);
-        const parsedFile = createParsedFile(
+        const parsed_file = create_parsed_file(
           code,
           "test.ts" as FilePath,
           tree,
           "typescript" as Language
         );
         const index = build_semantic_index(
-          parsedFile,
+          parsed_file,
           tree,
           "typescript" as Language
         );
@@ -987,16 +987,16 @@ describe("scope_processor", () => {
         );
         expect(enum_scope).toBeDefined();
 
-        const statusEnum = Array.from(index.enums.values()).find(
+        const status_enum = Array.from(index.enums.values()).find(
           (e) => e.name === "Status"
         );
-        expect(statusEnum).toBeDefined();
+        expect(status_enum).toBeDefined();
 
         // Enum scope should start at body
         expect(enum_scope!.location.start_column).toBeGreaterThan(10);
 
         // Enum name should be in module scope
-        expect(statusEnum!.defining_scope_id).toBe(file_scope_id);
+        expect(status_enum!.defining_scope_id).toBe(file_scope_id);
       });
 
       it("should correctly scope class with fields and methods", () => {
@@ -1013,14 +1013,14 @@ describe("scope_processor", () => {
 }`;
 
         const tree = parser.parse(code);
-        const parsedFile = createParsedFile(
+        const parsed_file = create_parsed_file(
           code,
           "test.ts" as FilePath,
           tree,
           "typescript" as Language
         );
         const index = build_semantic_index(
-          parsedFile,
+          parsed_file,
           tree,
           "typescript" as Language
         );
@@ -1036,13 +1036,13 @@ describe("scope_processor", () => {
         );
         expect(class_scope).toBeDefined();
 
-        const calcClass = Array.from(index.classes.values()).find(
+        const calc_class = Array.from(index.classes.values()).find(
           (c) => c.name === "Calculator"
         );
-        expect(calcClass).toBeDefined();
+        expect(calc_class).toBeDefined();
 
         // Class name should be in module scope
-        expect(calcClass!.defining_scope_id).toBe(file_scope_id);
+        expect(calc_class!.defining_scope_id).toBe(file_scope_id);
 
         // Class scope should start at body
         expect(class_scope!.location.start_column).toBeGreaterThan(10);
@@ -1054,11 +1054,11 @@ describe("scope_processor", () => {
     });
 
     describe("JavaScript Class Body-Based Scope", () => {
-      let jsParser: Parser;
+      let js_parser: Parser;
 
       beforeAll(() => {
-        jsParser = new Parser();
-        jsParser.setLanguage(JavaScript);
+        js_parser = new Parser();
+        js_parser.setLanguage(JavaScript);
       });
 
       it("should capture only class body as scope for class declaration", () => {
@@ -1066,15 +1066,15 @@ describe("scope_processor", () => {
   method() {}
 }`;
 
-        const tree = jsParser.parse(code);
-        const parsedFile = createParsedFile(
+        const tree = js_parser.parse(code);
+        const parsed_file = create_parsed_file(
           code,
           "test.js" as FilePath,
           tree,
           "javascript" as Language
         );
         const index = build_semantic_index(
-          parsedFile,
+          parsed_file,
           tree,
           "javascript" as Language
         );
@@ -1090,16 +1090,16 @@ describe("scope_processor", () => {
         );
         expect(class_scope).toBeDefined();
 
-        const myClass = Array.from(index.classes.values()).find(
+        const my_class = Array.from(index.classes.values()).find(
           (c) => c.name === "MyClass"
         );
-        expect(myClass).toBeDefined();
+        expect(my_class).toBeDefined();
 
         // Class scope should start at body
         expect(class_scope!.location.start_column).toBeGreaterThan(10);
 
         // Class name should be in module scope
-        expect(myClass!.defining_scope_id).toBe(file_scope_id);
+        expect(my_class!.defining_scope_id).toBe(file_scope_id);
 
         // Class scope parent should be module scope
         const parent_scope = index.scopes.get(class_scope!.parent_id!);
@@ -1111,15 +1111,15 @@ describe("scope_processor", () => {
   method() {}
 }`;
 
-        const tree = jsParser.parse(code);
-        const parsedFile = createParsedFile(
+        const tree = js_parser.parse(code);
+        const parsed_file = create_parsed_file(
           code,
           "test.js" as FilePath,
           tree,
           "javascript" as Language
         );
         const index = build_semantic_index(
-          parsedFile,
+          parsed_file,
           tree,
           "javascript" as Language
         );
@@ -1140,11 +1140,11 @@ describe("scope_processor", () => {
     });
 
     describe("Python Class Body-Based Scope", () => {
-      let pyParser: Parser;
+      let py_parser: Parser;
 
       beforeAll(() => {
-        pyParser = new Parser();
-        pyParser.setLanguage(Python);
+        py_parser = new Parser();
+        py_parser.setLanguage(Python);
       });
 
       it("should capture only class body as scope, not entire declaration", () => {
@@ -1152,15 +1152,15 @@ describe("scope_processor", () => {
     def method(self):
         pass`;
 
-        const tree = pyParser.parse(code);
-        const parsedFile = createParsedFile(
+        const tree = py_parser.parse(code);
+        const parsed_file = create_parsed_file(
           code,
           "test.py" as FilePath,
           tree,
           "python" as Language
         );
         const index = build_semantic_index(
-          parsedFile,
+          parsed_file,
           tree,
           "python" as Language
         );
@@ -1176,16 +1176,16 @@ describe("scope_processor", () => {
         );
         expect(class_scope).toBeDefined();
 
-        const myClass = Array.from(index.classes.values()).find(
+        const my_class = Array.from(index.classes.values()).find(
           (c) => c.name === "MyClass"
         );
-        expect(myClass).toBeDefined();
+        expect(my_class).toBeDefined();
 
         // Class scope should start after ':'
         expect(class_scope!.location.start_line).toBeGreaterThan(0);
 
         // Class name should be in module scope
-        expect(myClass!.defining_scope_id).toBe(file_scope_id);
+        expect(my_class!.defining_scope_id).toBe(file_scope_id);
 
         // Class scope parent should be module scope
         const parent_scope = index.scopes.get(class_scope!.parent_id!);
@@ -1203,8 +1203,8 @@ describe("scope_processor", () => {
     def subtract(self, x, y):
         return x - y`;
 
-        const tree = pyParser.parse(code);
-        const parsedFile = createParsedFile(
+        const tree = py_parser.parse(code);
+        const parsed_file = create_parsed_file(
           code,
           "test.py" as FilePath,
           tree,
@@ -1213,7 +1213,7 @@ describe("scope_processor", () => {
 
         // Should successfully build semantic index with correct hierarchy
         const index = build_semantic_index(
-          parsedFile,
+          parsed_file,
           tree,
           "python" as Language
         );
@@ -1258,15 +1258,15 @@ describe("scope_processor", () => {
         class Inner:
             def inner_method(self):
                 pass`;
-        const tree = pyParser.parse(code);
-        const parsedFile = createParsedFile(
+        const tree = py_parser.parse(code);
+        const parsed_file = create_parsed_file(
           code,
           "test.py" as FilePath,
           tree,
           "python" as Language
         );
         const index = build_semantic_index(
-          parsedFile,
+          parsed_file,
           tree,
           "python" as Language
         );
@@ -1309,7 +1309,7 @@ describe("scope_processor", () => {
 };`;
 
         const tree = js_parser.parse(code);
-        const parsedFile: ParsedFile = {
+        const parsed_file: ParsedFile = {
           file_path: "test.js" as FilePath,
           file_lines: code.split("\n").length,
           file_end_column: code.split("\n")[2]?.length || 0,
@@ -1317,7 +1317,7 @@ describe("scope_processor", () => {
           lang: "javascript" as Language,
         };
 
-        const index = build_semantic_index(parsedFile, tree, "javascript");
+        const index = build_semantic_index(parsed_file, tree, "javascript");
 
         const scopes = Array.from(index.scopes.values());
         const function_scope = scopes.find((s) => s.type === "function");
@@ -1347,7 +1347,7 @@ describe("scope_processor", () => {
 };`;
 
         const tree = ts_parser.parse(code);
-        const parsedFile: ParsedFile = {
+        const parsed_file: ParsedFile = {
           file_path: "test.ts" as FilePath,
           file_lines: code.split("\n").length,
           file_end_column: code.split("\n")[2]?.length || 0,
@@ -1355,7 +1355,7 @@ describe("scope_processor", () => {
           lang: "typescript" as Language,
         };
 
-        const index = build_semantic_index(parsedFile, tree, "typescript");
+        const index = build_semantic_index(parsed_file, tree, "typescript");
 
         const scopes = Array.from(index.scopes.values());
         const function_scope = scopes.find((s) => s.type === "function");
@@ -1378,7 +1378,7 @@ describe("scope_processor", () => {
 };`;
 
         const tree = js_parser.parse(code);
-        const parsedFile: ParsedFile = {
+        const parsed_file: ParsedFile = {
           file_path: "test.js" as FilePath,
           file_lines: code.split("\n").length,
           file_end_column: code.split("\n")[2]?.length || 0,
@@ -1386,7 +1386,7 @@ describe("scope_processor", () => {
           lang: "javascript" as Language,
         };
 
-        const index = build_semantic_index(parsedFile, tree, "javascript");
+        const index = build_semantic_index(parsed_file, tree, "javascript");
 
         const scopes = Array.from(index.scopes.values());
         const function_scope = scopes.find((s) => s.type === "function");
@@ -1407,7 +1407,7 @@ describe("scope_processor", () => {
 }`;
 
         const tree = js_parser.parse(code);
-        const parsedFile: ParsedFile = {
+        const parsed_file: ParsedFile = {
           file_path: "test.js" as FilePath,
           file_lines: code.split("\n").length,
           file_end_column: code.split("\n")[2]?.length || 0,
@@ -1415,7 +1415,7 @@ describe("scope_processor", () => {
           lang: "javascript" as Language,
         };
 
-        const index = build_semantic_index(parsedFile, tree, "javascript");
+        const index = build_semantic_index(parsed_file, tree, "javascript");
 
         const scopes = Array.from(index.scopes.values());
         const function_scope = scopes.find((s) => s.type === "function");

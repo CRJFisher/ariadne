@@ -12,6 +12,7 @@ import { SemanticNode } from "./query";
 // ============================================================================
 
 /** Module import path (e.g., 'lodash', './utils') */
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export type ModulePath = string & { __brand: "ModulePath" };
 
 /** Create a ModulePath from a string */
@@ -20,6 +21,7 @@ export function create_module_path(path: string): ModulePath {
 }
 
 /** Namespace name */
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export type NamespaceName = string & { __brand: "NamespaceName" };
 
 /** Create a NamespaceName from a string */

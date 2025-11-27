@@ -495,6 +495,7 @@ describe("Project Integration - JavaScript", () => {
       expect(uses_index).toBeDefined();
 
       // Find the getName method call
+      // eslint-disable-next-line @typescript-eslint/naming-convention
       const getName_call = uses_index!.references.find(
         (ref): ref is MethodCallReference => ref.name === ("getName" as SymbolName) && ref.kind === "method_call"
       );

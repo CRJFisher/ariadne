@@ -64,26 +64,26 @@ function extract_python_type(node: SyntaxNode | null | undefined): string | unde
 
   // Look for type annotation in function parameter
   if (node.type === "typed_parameter" || node.type === "typed_default_parameter") {
-    const typeNode = node.childForFieldName("type");
-    if (typeNode) {
-      return typeNode.text;
+    const type_node = node.childForFieldName("type");
+    if (type_node) {
+      return type_node.text;
     }
   }
 
   // Look for return type annotation in function
   if (node.type === "function_definition") {
-    const returnTypeNode = node.childForFieldName("return_type");
-    if (returnTypeNode) {
-      return returnTypeNode.text;
+    const return_type_node = node.childForFieldName("return_type");
+    if (return_type_node) {
+      return return_type_node.text;
     }
   }
 
   // Look for type annotation in assignment (Python uses assignment with type field)
   if (node.type === "assignment" || node.type === "annotated_assignment") {
-    const typeNode = node.childForFieldName("type");
-    if (typeNode) {
+    const type_node = node.childForFieldName("type");
+    if (type_node) {
       // The type field contains a "type" node, we want its text
-      return typeNode.text;
+      return type_node.text;
     }
   }
 
@@ -533,9 +533,9 @@ export const PYTHON_METADATA_EXTRACTORS: MetadataExtractors = {
         if (child && child.type === "type_parameter") {
           // Extract type arguments from within type_parameter
           for (let j = 0; j < child.namedChildCount; j++) {
-            const typeChild = child.namedChild(j);
-            if (typeChild && typeChild.type === "type") {
-              args.push(typeChild.text);
+            const type_child = child.namedChild(j);
+            if (type_child && type_child.type === "type") {
+              args.push(type_child.text);
             }
           }
         }
@@ -544,19 +544,19 @@ export const PYTHON_METADATA_EXTRACTORS: MetadataExtractors = {
 
     // Handle subscript node (for runtime subscripting like obj['key'])
     if (node.type === "subscript") {
-      const subscriptNode = node.childForFieldName("subscript");
-      if (subscriptNode) {
+      const subscript_node = node.childForFieldName("subscript");
+      if (subscript_node) {
         // Handle tuple of types (Dict[str, int])
-        if (subscriptNode.type === "tuple") {
-          for (let i = 0; i < subscriptNode.childCount; i++) {
-            const child = subscriptNode.child(i);
+        if (subscript_node.type === "tuple") {
+          for (let i = 0; i < subscript_node.childCount; i++) {
+            const child = subscript_node.child(i);
             if (child && child.type !== "," && child.type !== "(" && child.type !== ")") {
               args.push(child.text);
             }
           }
         } else {
           // Single type argument
-          args.push(subscriptNode.text);
+          args.push(subscript_node.text);
         }
       }
     }
@@ -567,14 +567,14 @@ export const PYTHON_METADATA_EXTRACTORS: MetadataExtractors = {
       // Match pattern like Type[Args]
       const match = text.match(/\w+\[([^\]]+)\]/);
       if (match) {
-        const typeArgString = match[1];
+        const type_arg_string = match[1];
         // Handle nested brackets for Callable
-        if (typeArgString.includes("[") && typeArgString.includes("]")) {
+        if (type_arg_string.includes("[") && type_arg_string.includes("]")) {
           // For Callable[[int, str], bool], split carefully
           const parts: string[] = [];
           let current = "";
           let depth = 0;
-          for (const char of typeArgString) {
+          for (const char of type_arg_string) {
             if (char === "[") depth++;
             else if (char === "]") depth--;
             else if (char === "," && depth === 0) {
@@ -590,8 +590,8 @@ export const PYTHON_METADATA_EXTRACTORS: MetadataExtractors = {
           args.push(...parts);
         } else {
           // Simple comma-separated types
-          const typeArgs = typeArgString.split(",").map(arg => arg.trim());
-          args.push(...typeArgs);
+          const type_args = type_arg_string.split(",").map(arg => arg.trim());
+          args.push(...type_args);
         }
       }
     }
@@ -621,8 +621,8 @@ export const PYTHON_METADATA_EXTRACTORS: MetadataExtractors = {
    */
   is_method_call(node: SyntaxNode): boolean {
     if (node.type === "call") {
-      const functionNode = node.childForFieldName("function");
-      if (functionNode && functionNode.type === "attribute") {
+      const function_node = node.childForFieldName("function");
+      if (function_node && function_node.type === "attribute") {
         return true;
       }
     }
@@ -640,19 +640,19 @@ export const PYTHON_METADATA_EXTRACTORS: MetadataExtractors = {
    */
   extract_call_name(node: SyntaxNode): SymbolName | undefined {
     if (node.type === "call") {
-      const functionNode = node.childForFieldName("function");
+      const function_node = node.childForFieldName("function");
 
-      if (functionNode) {
+      if (function_node) {
         // Method call: extract attribute name
-        if (functionNode.type === "attribute") {
-          const attributeNode = functionNode.childForFieldName("attribute");
-          if (attributeNode) {
-            return attributeNode.text as SymbolName;
+        if (function_node.type === "attribute") {
+          const attribute_node = function_node.childForFieldName("attribute");
+          if (attribute_node) {
+            return attribute_node.text as SymbolName;
           }
         }
         // Function call: extract identifier
-        else if (functionNode.type === "identifier") {
-          return functionNode.text as SymbolName;
+        else if (function_node.type === "identifier") {
+          return function_node.text as SymbolName;
         }
       }
     }

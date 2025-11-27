@@ -24,15 +24,15 @@ import { build_semantic_index } from "./semantic_index";
 import type { ParsedFile } from "./file_utils";
 
 // Helper to create a ParsedFile from code
-function createParsedFile(
+function create_parsed_file(
   code: string,
-  filePath: FilePath,
+  file_path: FilePath,
   tree: Parser.Tree,
   language: Language,
 ): ParsedFile {
   const lines = code.split("\n");
   return {
-    file_path: filePath,
+    file_path: file_path,
     file_lines: lines.length,
     // For 1-indexed positions with inclusive ends: end_column = length
     // (tree-sitter's exclusive 0-indexed becomes inclusive 1-indexed without +1)
@@ -62,7 +62,7 @@ def greet(name: str, age: int) -> str:
 `;
       const tree = parser.parse(code);
       const file_path = "test.py" as FilePath;
-      const parsed_file = createParsedFile(code, file_path, tree, "python");
+      const parsed_file = create_parsed_file(code, file_path, tree, "python");
 
       const index = build_semantic_index(parsed_file, tree, "python");
 
@@ -91,7 +91,7 @@ items: list[str] = []
 `;
       const tree = parser.parse(code);
       const file_path = "test.py" as FilePath;
-      const parsed_file = createParsedFile(code, file_path, tree, "python");
+      const parsed_file = create_parsed_file(code, file_path, tree, "python");
 
       const index = build_semantic_index(parsed_file, tree, "python");
 
@@ -118,7 +118,7 @@ def process(items: List[str], mapping: Dict[str, int]) -> None:
 `;
       const tree = parser.parse(code);
       const file_path = "test.py" as FilePath;
-      const parsed_file = createParsedFile(code, file_path, tree, "python");
+      const parsed_file = create_parsed_file(code, file_path, tree, "python");
 
       const index = build_semantic_index(parsed_file, tree, "python");
 
@@ -138,7 +138,7 @@ def typed_function(x: int, y: str, z: List[int]) -> Dict[str, Any]:
 `;
       const tree = parser.parse(code);
       const file_path = "test.py" as FilePath;
-      const parsed_file = createParsedFile(code, file_path, tree, "python");
+      const parsed_file = create_parsed_file(code, file_path, tree, "python");
       const result = build_semantic_index(parsed_file, tree, "python");
 
       // Find type references
@@ -169,7 +169,7 @@ data: List[Dict[str, Any]] = []
 `;
       const tree = parser.parse(code);
       const file_path = "test.py" as FilePath;
-      const parsed_file = createParsedFile(code, file_path, tree, "python");
+      const parsed_file = create_parsed_file(code, file_path, tree, "python");
       const result = build_semantic_index(parsed_file, tree, "python");
 
       const type_refs = result.references.filter(
@@ -198,7 +198,7 @@ def get_union() -> Union[int, str]:
 `;
       const tree = parser.parse(code);
       const file_path = "test.py" as FilePath;
-      const parsed_file = createParsedFile(code, file_path, tree, "python");
+      const parsed_file = create_parsed_file(code, file_path, tree, "python");
       const result = build_semantic_index(parsed_file, tree, "python");
 
       const type_refs = result.references.filter(
@@ -229,7 +229,7 @@ func: Callable[[int, str], bool] = lambda x, y: True
 `;
       const tree = parser.parse(code);
       const file_path = "test.py" as FilePath;
-      const parsed_file = createParsedFile(code, file_path, tree, "python");
+      const parsed_file = create_parsed_file(code, file_path, tree, "python");
       const result = build_semantic_index(parsed_file, tree, "python");
 
       const type_refs = result.references.filter(
@@ -260,7 +260,7 @@ self.instance_method()
 `;
       const tree = parser.parse(code);
       const file_path = "test.py" as FilePath;
-      const parsed_file = createParsedFile(code, file_path, tree, "python");
+      const parsed_file = create_parsed_file(code, file_path, tree, "python");
       const result = build_semantic_index(parsed_file, tree, "python");
 
       // Find method call references (obj.method())
@@ -295,7 +295,7 @@ data.transform().validate().save()
 `;
       const tree = parser.parse(code);
       const file_path = "test.py" as FilePath;
-      const parsed_file = createParsedFile(code, file_path, tree, "python");
+      const parsed_file = create_parsed_file(code, file_path, tree, "python");
       const result = build_semantic_index(parsed_file, tree, "python");
 
       const method_calls = result.references.filter(
@@ -325,7 +325,7 @@ result = data['key'].attribute
 `;
       const tree = parser.parse(code);
       const file_path = "test.py" as FilePath;
-      const parsed_file = createParsedFile(code, file_path, tree, "python");
+      const parsed_file = create_parsed_file(code, file_path, tree, "python");
       const result = build_semantic_index(parsed_file, tree, "python");
 
       // Find member access references
@@ -365,7 +365,7 @@ class MyClass:
 `;
       const tree = parser.parse(code);
       const file_path = "test.py" as FilePath;
-      const parsed_file = createParsedFile(code, file_path, tree, "python");
+      const parsed_file = create_parsed_file(code, file_path, tree, "python");
       const result = build_semantic_index(parsed_file, tree, "python");
 
       const member_accesses = result.references.filter(
@@ -410,7 +410,7 @@ class Calculator:
 `;
       const tree = parser.parse(code);
       const file_path = "test.py" as FilePath;
-      const parsed_file = createParsedFile(code, file_path, tree, "python");
+      const parsed_file = create_parsed_file(code, file_path, tree, "python");
 
       const index = build_semantic_index(parsed_file, tree, "python");
 
@@ -434,7 +434,7 @@ person = Person("Alice")
 `;
       const tree = parser.parse(code);
       const file_path = "test.py" as FilePath;
-      const parsed_file = createParsedFile(code, file_path, tree, "python");
+      const parsed_file = create_parsed_file(code, file_path, tree, "python");
 
       const index = build_semantic_index(parsed_file, tree, "python");
 
@@ -459,7 +459,7 @@ typed_obj: MyClass = MyClass()
 `;
       const tree = parser.parse(code);
       const file_path = "test.py" as FilePath;
-      const parsed_file = createParsedFile(code, file_path, tree, "python");
+      const parsed_file = create_parsed_file(code, file_path, tree, "python");
       const result = build_semantic_index(parsed_file, tree, "python");
 
       // Find constructor calls
@@ -489,7 +489,7 @@ result = process(Factory.create())
 `;
       const tree = parser.parse(code);
       const file_path = "test.py" as FilePath;
-      const parsed_file = createParsedFile(code, file_path, tree, "python");
+      const parsed_file = create_parsed_file(code, file_path, tree, "python");
       const result = build_semantic_index(parsed_file, tree, "python");
 
       const constructor_calls = result.references.filter(
@@ -523,7 +523,7 @@ result = calculate(y)
 `;
       const tree = parser.parse(code);
       const file_path = "test.py" as FilePath;
-      const parsed_file = createParsedFile(code, file_path, tree, "python");
+      const parsed_file = create_parsed_file(code, file_path, tree, "python");
 
       const index = build_semantic_index(parsed_file, tree, "python");
 
@@ -541,7 +541,7 @@ name: str = "test"
 `;
       const tree = parser.parse(code);
       const file_path = "test.py" as FilePath;
-      const parsed_file = createParsedFile(code, file_path, tree, "python");
+      const parsed_file = create_parsed_file(code, file_path, tree, "python");
 
       const index = build_semantic_index(parsed_file, tree, "python");
 
@@ -565,7 +565,7 @@ count = 0
 `;
       const tree = parser.parse(code);
       const file_path = "test.py" as FilePath;
-      const parsed_file = createParsedFile(code, file_path, tree, "python");
+      const parsed_file = create_parsed_file(code, file_path, tree, "python");
       const index = build_semantic_index(parsed_file, tree, "python");
 
       // Check write references were created
@@ -594,7 +594,7 @@ value -= 5
 `;
       const tree = parser.parse(code);
       const file_path = "test.py" as FilePath;
-      const parsed_file = createParsedFile(code, file_path, tree, "python");
+      const parsed_file = create_parsed_file(code, file_path, tree, "python");
       const index = build_semantic_index(parsed_file, tree, "python");
 
       const write_refs = index.references.filter(
@@ -617,7 +617,7 @@ x, y = calculate()
 `;
       const tree = parser.parse(code);
       const file_path = "test.py" as FilePath;
-      const parsed_file = createParsedFile(code, file_path, tree, "python");
+      const parsed_file = create_parsed_file(code, file_path, tree, "python");
       const index = build_semantic_index(parsed_file, tree, "python");
 
       const write_refs = index.references.filter(
@@ -652,7 +652,7 @@ def greet(name: str) -> None:
 `;
       const tree = parser.parse(code);
       const file_path = "test.py" as FilePath;
-      const parsed_file = createParsedFile(code, file_path, tree, "python");
+      const parsed_file = create_parsed_file(code, file_path, tree, "python");
 
       const index = build_semantic_index(parsed_file, tree, "python");
 
@@ -683,7 +683,7 @@ import numpy as np
 `;
       const tree = parser.parse(code);
       const file_path = "test.py" as FilePath;
-      const parsed_file = createParsedFile(code, file_path, tree, "python");
+      const parsed_file = create_parsed_file(code, file_path, tree, "python");
       const index = build_semantic_index(parsed_file, tree, "python");
 
       // Check imports were captured
@@ -708,7 +708,7 @@ from collections import defaultdict as dd
 `;
       const tree = parser.parse(code);
       const file_path = "test.py" as FilePath;
-      const parsed_file = createParsedFile(code, file_path, tree, "python");
+      const parsed_file = create_parsed_file(code, file_path, tree, "python");
       const index = build_semantic_index(parsed_file, tree, "python");
 
       // Check aliased imports were captured
@@ -734,7 +734,7 @@ from ..models import User
 `;
       const tree = parser.parse(code);
       const file_path = "test.py" as FilePath;
-      const parsed_file = createParsedFile(code, file_path, tree, "python");
+      const parsed_file = create_parsed_file(code, file_path, tree, "python");
       const index = build_semantic_index(parsed_file, tree, "python");
 
       // Check relative imports were captured
@@ -775,7 +775,7 @@ class DecoratedClass:
 `;
       const tree = parser.parse(code);
       const file_path = "test.py" as FilePath;
-      const parsed_file = createParsedFile(code, file_path, tree, "python");
+      const parsed_file = create_parsed_file(code, file_path, tree, "python");
       const index = build_semantic_index(parsed_file, tree, "python");
 
       // Check class definition exists
@@ -804,7 +804,7 @@ def decorated_function():
 `;
       const tree = parser.parse(code);
       const file_path = "test.py" as FilePath;
-      const parsed_file = createParsedFile(code, file_path, tree, "python");
+      const parsed_file = create_parsed_file(code, file_path, tree, "python");
       const index = build_semantic_index(parsed_file, tree, "python");
 
       // Check function was captured
@@ -842,7 +842,7 @@ y: int | str = 42
 `;
       const tree = parser.parse(code);
       const file_path = "test.py" as FilePath;
-      const parsed_file = createParsedFile(code, file_path, tree, "python");
+      const parsed_file = create_parsed_file(code, file_path, tree, "python");
       const result = build_semantic_index(parsed_file, tree, "python");
 
       const type_refs = result.references.filter(
@@ -871,7 +871,7 @@ def maybe_str() -> str | None:
 `;
       const tree = parser.parse(code);
       const file_path = "test.py" as FilePath;
-      const parsed_file = createParsedFile(code, file_path, tree, "python");
+      const parsed_file = create_parsed_file(code, file_path, tree, "python");
       const result = build_semantic_index(parsed_file, tree, "python");
 
       const type_refs = result.references.filter(
@@ -893,7 +893,7 @@ def handle(data: None) -> str:
 `;
       const tree = parser.parse(code);
       const file_path = "test.py" as FilePath;
-      const parsed_file = createParsedFile(code, file_path, tree, "python");
+      const parsed_file = create_parsed_file(code, file_path, tree, "python");
       const result = build_semantic_index(parsed_file, tree, "python");
 
       const type_refs = result.references.filter(
@@ -914,7 +914,7 @@ result: list[str] | None = []
 `;
       const tree = parser.parse(code);
       const file_path = "test.py" as FilePath;
-      const parsed_file = createParsedFile(code, file_path, tree, "python");
+      const parsed_file = create_parsed_file(code, file_path, tree, "python");
       const result = build_semantic_index(parsed_file, tree, "python");
 
       const type_refs = result.references.filter(
@@ -940,7 +940,7 @@ z = [1, 2, 3]
 `;
       const tree = parser.parse(code);
       const file_path = "test.py" as FilePath;
-      const parsed_file = createParsedFile(code, file_path, tree, "python");
+      const parsed_file = create_parsed_file(code, file_path, tree, "python");
       const result = build_semantic_index(parsed_file, tree, "python");
 
       // Simple variables shouldn't have property chains
@@ -962,7 +962,7 @@ class UntypedClass:
 `;
       const tree = parser.parse(code);
       const file_path = "test.py" as FilePath;
-      const parsed_file = createParsedFile(code, file_path, tree, "python");
+      const parsed_file = create_parsed_file(code, file_path, tree, "python");
       const result = build_semantic_index(parsed_file, tree, "python");
 
       // Should still capture the structure without type metadata
@@ -984,7 +984,7 @@ print(Factory.create())
 `;
       const tree = parser.parse(code);
       const file_path = "test.py" as FilePath;
-      const parsed_file = createParsedFile(code, file_path, tree, "python");
+      const parsed_file = create_parsed_file(code, file_path, tree, "python");
       const result = build_semantic_index(parsed_file, tree, "python");
 
       const constructor_calls = result.references.filter(
@@ -1020,7 +1020,7 @@ service2.get_data()
 `;
       const tree = parser.parse(code);
       const file_path = "test.py" as FilePath;
-      const parsed_file = createParsedFile(code, file_path, tree, "python");
+      const parsed_file = create_parsed_file(code, file_path, tree, "python");
       const result = build_semantic_index(parsed_file, tree, "python");
 
       // Scenario 1: Receiver from type annotation
@@ -1084,7 +1084,7 @@ variable: List[int] = [1, 2, 3]
 `;
       const tree = parser.parse(code);
       const file_path = "test.py" as FilePath;
-      const parsed_file = createParsedFile(code, file_path, tree, "python");
+      const parsed_file = create_parsed_file(code, file_path, tree, "python");
       const result = build_semantic_index(parsed_file, tree, "python");
 
       // Verify core symbols are still captured
@@ -1130,7 +1130,7 @@ class User:
 `;
       const tree = parser.parse(code);
       const file_path = "test.py" as FilePath;
-      const parsed_file = createParsedFile(code, file_path, tree, "python");
+      const parsed_file = create_parsed_file(code, file_path, tree, "python");
       const result = build_semantic_index(parsed_file, tree, "python");
 
       // Verify class exists
@@ -1306,7 +1306,7 @@ class TestClass:
 `;
       const tree = parser.parse(code);
       const file_path = "test.py" as FilePath;
-      const parsed_file = createParsedFile(code, file_path, tree, "python");
+      const parsed_file = create_parsed_file(code, file_path, tree, "python");
       const result = build_semantic_index(parsed_file, tree, "python");
 
       const class_def = Array.from(result.classes.values()).find(
@@ -1325,12 +1325,12 @@ class TestClass:
 
         // Verify constructor has parameters (excluding 'self')
         if (ctor.parameters && ctor.parameters.length > 0) {
-          const paramNames = ctor.parameters
+          const param_names = ctor.parameters
             .map((p) => p.name)
             .filter((n) => n !== "self");
-          expect(paramNames.length).toBeGreaterThanOrEqual(2);
-          expect(paramNames).toContain("param1");
-          expect(paramNames).toContain("param2");
+          expect(param_names.length).toBeGreaterThanOrEqual(2);
+          expect(param_names).toContain("param1");
+          expect(param_names).toContain("param2");
 
           // Verify parameter types
           const param1 = ctor.parameters.find((p) => p.name === "param1");
@@ -1346,9 +1346,9 @@ class TestClass:
 
         // Verify methods array does NOT contain __init__ when constructor field is used
         expect(class_def?.methods).toBeDefined();
-        const methodNames = class_def?.methods.map((m) => m.name) || [];
-        expect(methodNames).not.toContain("__init__");
-        expect(methodNames).toContain("regular_method");
+        const method_names = class_def?.methods.map((m) => m.name) || [];
+        expect(method_names).not.toContain("__init__");
+        expect(method_names).toContain("regular_method");
       } else {
         // If constructor field not populated, __init__ may be in methods or not tracked yet
         // At minimum, verify the class exists
@@ -1357,11 +1357,11 @@ class TestClass:
 
       // Verify regular method has kind "method" (if methods are populated)
       if (class_def?.methods && class_def.methods.length > 0) {
-        const regularMethod = class_def.methods.find(
+        const regular_method = class_def.methods.find(
           (m) => m.name === "regular_method",
         );
-        if (regularMethod) {
-          expect(regularMethod.kind).toBe("method");
+        if (regular_method) {
+          expect(regular_method.kind).toBe("method");
         }
       }
     });
@@ -1382,7 +1382,7 @@ class Priority(IntEnum):
 `;
       const tree = parser.parse(code);
       const file_path = "test.py" as FilePath;
-      const parsed_file = createParsedFile(code, file_path, tree, "python");
+      const parsed_file = create_parsed_file(code, file_path, tree, "python");
       const result = build_semantic_index(parsed_file, tree, "python");
 
       // Verify Status enum exists
@@ -1516,7 +1516,7 @@ class Drawable(Protocol):
 `;
       const tree = parser.parse(code);
       const file_path = "test.py" as FilePath;
-      const parsed_file = createParsedFile(code, file_path, tree, "python");
+      const parsed_file = create_parsed_file(code, file_path, tree, "python");
       const result = build_semantic_index(parsed_file, tree, "python");
 
       // Verify Protocol class exists as interface
@@ -1622,7 +1622,7 @@ def process_items(items: list[str], *args, **kwargs) -> None:
 `;
       const tree = parser.parse(code);
       const file_path = "test.py" as FilePath;
-      const parsed_file = createParsedFile(code, file_path, tree, "python");
+      const parsed_file = create_parsed_file(code, file_path, tree, "python");
       const result = build_semantic_index(parsed_file, tree, "python");
 
       // Verify add function
@@ -1769,7 +1769,7 @@ class Calculator:
 `;
       const tree = parser.parse(code);
       const file_path = "test.py" as FilePath;
-      const parsed_file = createParsedFile(code, file_path, tree, "python");
+      const parsed_file = create_parsed_file(code, file_path, tree, "python");
       const result = build_semantic_index(parsed_file, tree, "python");
 
       // Verify class exists
@@ -1893,46 +1893,46 @@ type Count = int
 `;
       const tree = parser.parse(code);
       const file_path = "test.py" as FilePath;
-      const parsed_file = createParsedFile(code, file_path, tree, "python");
+      const parsed_file = create_parsed_file(code, file_path, tree, "python");
       const result = build_semantic_index(parsed_file, tree, "python");
 
       // Verify type aliases exist
-      const typeNames = Array.from(result.types.values()).map((t) => t.name);
-      expect(typeNames).toContain("Url");
-      expect(typeNames).toContain("StringOrInt");
-      expect(typeNames).toContain("Count");
+      const type_names = Array.from(result.types.values()).map((t) => t.name);
+      expect(type_names).toContain("Url");
+      expect(type_names).toContain("StringOrInt");
+      expect(type_names).toContain("Count");
 
       // Verify Url type alias with complete structure
-      const urlType = Array.from(result.types.values()).find(
+      const url_type = Array.from(result.types.values()).find(
         (t) => t.name === "Url",
       );
 
-      expect(urlType).toBeDefined();
+      expect(url_type).toBeDefined();
 
-      if (urlType) {
-        expect(urlType.kind).toBe("type_alias");
-        expect(urlType.name).toBe("Url");
-        expect(urlType.symbol_id).toMatch(/^type:/);
-        expect(urlType.type_expression).toBe("str");
-        expect(urlType.defining_scope_id).toBeTruthy();
-        expect(urlType.location.file_path).toBe("test.py");
-        expect(typeof urlType.location.start_line).toBe("number");
-        expect(typeof urlType.location.start_column).toBe("number");
-        expect(typeof urlType.location.end_line).toBe("number");
-        expect(typeof urlType.location.end_column).toBe("number");
+      if (url_type) {
+        expect(url_type.kind).toBe("type_alias");
+        expect(url_type.name).toBe("Url");
+        expect(url_type.symbol_id).toMatch(/^type:/);
+        expect(url_type.type_expression).toBe("str");
+        expect(url_type.defining_scope_id).toBeTruthy();
+        expect(url_type.location.file_path).toBe("test.py");
+        expect(typeof url_type.location.start_line).toBe("number");
+        expect(typeof url_type.location.start_column).toBe("number");
+        expect(typeof url_type.location.end_line).toBe("number");
+        expect(typeof url_type.location.end_column).toBe("number");
       }
 
       // Verify StringOrInt type alias
-      const stringOrIntType = Array.from(result.types.values()).find(
+      const string_or_int_type = Array.from(result.types.values()).find(
         (t) => t.name === "StringOrInt",
       );
 
-      expect(stringOrIntType).toBeDefined();
+      expect(string_or_int_type).toBeDefined();
 
-      if (stringOrIntType) {
-        expect(stringOrIntType.kind).toBe("type_alias");
-        expect(stringOrIntType.name).toBe("StringOrInt");
-        expect(stringOrIntType.type_expression).toBe("str | int");
+      if (string_or_int_type) {
+        expect(string_or_int_type.kind).toBe("type_alias");
+        expect(string_or_int_type.name).toBe("StringOrInt");
+        expect(string_or_int_type.type_expression).toBe("str | int");
       }
     });
 
@@ -1944,40 +1944,40 @@ type Result[T, E] = tuple[T, E] | E
 `;
       const tree = parser.parse(code);
       const file_path = "test.py" as FilePath;
-      const parsed_file = createParsedFile(code, file_path, tree, "python");
+      const parsed_file = create_parsed_file(code, file_path, tree, "python");
       const result = build_semantic_index(parsed_file, tree, "python");
 
       // Verify generic type aliases exist
-      const typeNames = Array.from(result.types.values()).map((t) => t.name);
-      expect(typeNames).toContain("Point");
-      expect(typeNames).toContain("GenericList");
-      expect(typeNames).toContain("Result");
+      const type_names = Array.from(result.types.values()).map((t) => t.name);
+      expect(type_names).toContain("Point");
+      expect(type_names).toContain("GenericList");
+      expect(type_names).toContain("Result");
 
       // Verify Point generic type alias
-      const pointType = Array.from(result.types.values()).find(
+      const point_type = Array.from(result.types.values()).find(
         (t) => t.name === "Point",
       );
 
-      expect(pointType).toBeDefined();
+      expect(point_type).toBeDefined();
 
-      if (pointType) {
-        expect(pointType.kind).toBe("type_alias");
-        expect(pointType.name).toBe("Point");
-        expect(pointType.type_expression).toBe("tuple[T, T]");
-        expect(pointType.location.file_path).toBe("test.py");
+      if (point_type) {
+        expect(point_type.kind).toBe("type_alias");
+        expect(point_type.name).toBe("Point");
+        expect(point_type.type_expression).toBe("tuple[T, T]");
+        expect(point_type.location.file_path).toBe("test.py");
       }
 
       // Verify GenericList
-      const genericListType = Array.from(result.types.values()).find(
+      const generic_list_type = Array.from(result.types.values()).find(
         (t) => t.name === "GenericList",
       );
 
-      expect(genericListType).toBeDefined();
+      expect(generic_list_type).toBeDefined();
 
-      if (genericListType) {
-        expect(genericListType.kind).toBe("type_alias");
-        expect(genericListType.name).toBe("GenericList");
-        expect(genericListType.type_expression).toBe("list[T]");
+      if (generic_list_type) {
+        expect(generic_list_type.kind).toBe("type_alias");
+        expect(generic_list_type.name).toBe("GenericList");
+        expect(generic_list_type.type_expression).toBe("list[T]");
       }
     });
 
@@ -1989,20 +1989,20 @@ type Handler = Callable[[str], None]
 `;
       const tree = parser.parse(code);
       const file_path = "test.py" as FilePath;
-      const parsed_file = createParsedFile(code, file_path, tree, "python");
+      const parsed_file = create_parsed_file(code, file_path, tree, "python");
       const result = build_semantic_index(parsed_file, tree, "python");
 
       // Verify complex type aliases exist
-      const typeNames = Array.from(result.types.values()).map((t) => t.name);
-      expect(typeNames).toContain("Callback");
-      expect(typeNames).toContain("JSONValue");
-      expect(typeNames).toContain("Handler");
+      const type_names = Array.from(result.types.values()).map((t) => t.name);
+      expect(type_names).toContain("Callback");
+      expect(type_names).toContain("JSONValue");
+      expect(type_names).toContain("Handler");
 
       // Verify each has a type_expression
-      for (const [id, typeAlias] of result.types) {
-        expect(typeAlias.type_expression).toBeDefined();
-        expect(typeAlias.kind).toBe("type_alias");
-        expect(typeAlias.location.file_path).toBe("test.py");
+      for (const [id, type_alias] of result.types) {
+        expect(type_alias.type_expression).toBeDefined();
+        expect(type_alias.kind).toBe("type_alias");
+        expect(type_alias.location.file_path).toBe("test.py");
       }
     });
   });
@@ -2014,7 +2014,7 @@ type Handler = Callable[[str], None]
         pass`;
 
       const tree = parser.parse(code);
-      const parsed_file = createParsedFile(
+      const parsed_file = create_parsed_file(
         code,
         "test.py" as FilePath,
         tree,
@@ -2037,16 +2037,16 @@ type Handler = Callable[[str], None]
       );
       expect(class_scope).toBeDefined();
 
-      const myClass = Array.from(index.classes.values()).find(
+      const my_class = Array.from(index.classes.values()).find(
         (c) => c.name === "MyClass",
       );
-      expect(myClass).toBeDefined();
+      expect(my_class).toBeDefined();
 
       // Class scope should start after `:` (where block begins)
       expect(class_scope!.location.start_line).toBeGreaterThan(0);
 
       // Class name 'MyClass' should be in module scope, not class scope
-      expect(myClass!.defining_scope_id).toBe(file_scope_id);
+      expect(my_class!.defining_scope_id).toBe(file_scope_id);
 
       // Class scope parent should be module scope
       const parent_scope = index.scopes.get(class_scope!.parent_id!);
@@ -2061,7 +2061,7 @@ type Handler = Callable[[str], None]
                 pass`;
 
       const tree = parser.parse(code);
-      const parsed_file = createParsedFile(
+      const parsed_file = create_parsed_file(
         code,
         "test.py" as FilePath,
         tree,
@@ -2108,26 +2108,26 @@ type Handler = Callable[[str], None]
         pass`;
 
       const tree = parser.parse(code);
-      const parsedFile = createParsedFile(
+      const parsed_file = create_parsed_file(
         code,
         "test.py" as FilePath,
         tree,
         "python" as Language
       );
-      const index = build_semantic_index(parsedFile, tree, "python" as Language);
+      const index = build_semantic_index(parsed_file, tree, "python" as Language);
 
       // Find module scope
-      const moduleScope = Array.from(index.scopes.values()).find(
+      const module_scope = Array.from(index.scopes.values()).find(
         (s) => s.type === "module" && s.parent_id === null
       );
-      expect(moduleScope).toBeDefined();
+      expect(module_scope).toBeDefined();
 
       // Check class
-      const myClass = Array.from(index.classes.values()).find(
+      const my_class = Array.from(index.classes.values()).find(
         (c) => c.name === "MyClass"
       );
-      expect(myClass).toBeDefined();
-      expect(myClass!.defining_scope_id).toBe(moduleScope!.id);
+      expect(my_class).toBeDefined();
+      expect(my_class!.defining_scope_id).toBe(module_scope!.id);
     });
   });
 
@@ -2137,13 +2137,13 @@ type Handler = Callable[[str], None]
 doubled = list(map(lambda x: x * 2, numbers))`;
 
       const tree = parser.parse(code);
-      const parsedFile = createParsedFile(
+      const parsed_file = create_parsed_file(
         code,
         "test.py" as FilePath,
         tree,
         "python" as Language
       );
-      const index = build_semantic_index(parsedFile, tree, "python" as Language);
+      const index = build_semantic_index(parsed_file, tree, "python" as Language);
 
       // Find the lambda function
       const lambdas = Array.from(index.functions.values()).filter(
@@ -2163,13 +2163,13 @@ doubled = list(map(lambda x: x * 2, numbers))`;
 evens = list(filter(lambda x: x % 2 == 0, numbers))`;
 
       const tree = parser.parse(code);
-      const parsedFile = createParsedFile(
+      const parsed_file = create_parsed_file(
         code,
         "test.py" as FilePath,
         tree,
         "python" as Language
       );
-      const index = build_semantic_index(parsedFile, tree, "python" as Language);
+      const index = build_semantic_index(parsed_file, tree, "python" as Language);
 
       const lambdas = Array.from(index.functions.values()).filter(
         (f) => f.name === "<anonymous>"
@@ -2187,13 +2187,13 @@ numbers = [1, 2, 3, 4, 5]
 sum_result = reduce(lambda acc, x: acc + x, numbers, 0)`;
 
       const tree = parser.parse(code);
-      const parsedFile = createParsedFile(
+      const parsed_file = create_parsed_file(
         code,
         "test.py" as FilePath,
         tree,
         "python" as Language
       );
-      const index = build_semantic_index(parsedFile, tree, "python" as Language);
+      const index = build_semantic_index(parsed_file, tree, "python" as Language);
 
       const lambdas = Array.from(index.functions.values()).filter(
         (f) => f.name === "<anonymous>"
@@ -2209,13 +2209,13 @@ sum_result = reduce(lambda acc, x: acc + x, numbers, 0)`;
 nested = list(map(lambda n: list(filter(lambda x: x > 2, [n])), numbers))`;
 
       const tree = parser.parse(code);
-      const parsedFile = createParsedFile(
+      const parsed_file = create_parsed_file(
         code,
         "test.py" as FilePath,
         tree,
         "python" as Language
       );
-      const index = build_semantic_index(parsedFile, tree, "python" as Language);
+      const index = build_semantic_index(parsed_file, tree, "python" as Language);
 
       const lambdas = Array.from(index.functions.values()).filter(
         (f) => f.name === "<anonymous>"
@@ -2245,7 +2245,7 @@ handlers = [fn1, fn2]
 `;
       const tree = parser.parse(code);
       const file_path = "test.py" as FilePath;
-      const parsed_file = createParsedFile(code, file_path, tree, "python");
+      const parsed_file = create_parsed_file(code, file_path, tree, "python");
       const index = build_semantic_index(parsed_file, tree, "python");
 
       const variable = Array.from(index.variables.values()).find(v => v.name === "handlers");
@@ -2263,7 +2263,7 @@ handler = config['key']
 `;
       const tree = parser.parse(code);
       const file_path = "test.py" as FilePath;
-      const parsed_file = createParsedFile(code, file_path, tree, "python");
+      const parsed_file = create_parsed_file(code, file_path, tree, "python");
       const index = build_semantic_index(parsed_file, tree, "python");
 
       const variable = Array.from(index.variables.values()).find(v => v.name === "handler");

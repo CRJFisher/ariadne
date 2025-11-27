@@ -19,7 +19,7 @@ import * as Exports from "./exports";
 import type { RequestMethod } from "./exports";
 
 // Using imported values
-function createApplication(): Application {
+function create_application(): Application {
   const config: Config = {
     apiUrl: API_URL,
     timeout: 5000,
@@ -29,17 +29,17 @@ function createApplication(): Application {
   return new Application(config);
 }
 
-function getCurrentTimestamp(): string {
+function get_current_timestamp(): string {
   return formatDate(new Date());
 }
 
-function makeClient(): HttpClient {
+function make_client(): HttpClient {
   return new HttpClient(API_URL);
 }
 
 // Using namespace import
-function getVersion(): string {
+function get_version(): string {
   return `${Exports.API_URL}/${Exports.API_VERSION}`;
 }
 
-export { createApplication, getCurrentTimestamp, makeClient, getVersion };
+export { create_application, get_current_timestamp, make_client, get_version };

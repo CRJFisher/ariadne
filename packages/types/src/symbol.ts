@@ -1,7 +1,10 @@
 import { Location } from "./common";
 
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export type SymbolId = string & { __brand: "SymbolId" }; // This is the encoded version of the Symbol object
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export type SymbolName = string & { __brand: "SymbolName" }; // This is the local identifier of the symbol
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export type ReferenceId = string & { __brand: "ReferenceId" }; // Unique identifier for a reference (reference to a symbol)
 
 /** Create a SymbolName from a string */

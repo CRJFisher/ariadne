@@ -148,15 +148,15 @@ export function extract_type_parameters(node: SyntaxNode | null): SymbolName[] {
   if (!node) {
     return [];
   }
-  const typeParams = node.childForFieldName?.("type_parameters");
-  if (typeParams) {
+  const type_params = node.childForFieldName?.("type_parameters");
+  if (type_params) {
     // Extract individual type parameter names
     const params: SymbolName[] = [];
-    for (const child of typeParams.children || []) {
+    for (const child of type_params.children || []) {
       if (child.type === "type_parameter") {
-        const nameNode = child.childForFieldName?.("name");
-        if (nameNode) {
-          params.push(nameNode.text as SymbolName);
+        const name_node = child.childForFieldName?.("name");
+        if (name_node) {
+          params.push(name_node.text as SymbolName);
         }
       }
     }
@@ -169,10 +169,10 @@ export function extract_type_parameters(node: SyntaxNode | null): SymbolName[] {
  * Extract interface extends clauses
  */
 export function extract_interface_extends(node: SyntaxNode): SymbolName[] {
-  const extendsNode = node.childForFieldName?.("extends");
-  if (extendsNode) {
+  const extends_node = node.childForFieldName?.("extends");
+  if (extends_node) {
     const interfaces: SymbolName[] = [];
-    for (const child of extendsNode.children || []) {
+    for (const child of extends_node.children || []) {
       if (child.type === "type_identifier") {
         interfaces.push(child.text as SymbolName);
       }
@@ -191,19 +191,19 @@ export function extract_class_extends(node: SyntaxNode): SymbolName[] {
 
   if (heritage) {
     // Find extends_clause within heritage (also not a field)
-    const extendsClause = heritage.namedChildren?.find(
+    const extends_clause = heritage.namedChildren?.find(
       (c) => c.type === "extends_clause"
     );
 
-    if (extendsClause) {
+    if (extends_clause) {
       // The identifier is accessed via the 'value' field
-      const valueNode = extendsClause.childForFieldName?.("value");
+      const value_node = extends_clause.childForFieldName?.("value");
       if (
-        valueNode &&
-        (valueNode.type === "identifier" ||
-          valueNode.type === "type_identifier")
+        value_node &&
+        (value_node.type === "identifier" ||
+          value_node.type === "type_identifier")
       ) {
-        return [valueNode.text as SymbolName];
+        return [value_node.text as SymbolName];
       }
     }
   }
@@ -220,13 +220,13 @@ export function extract_implements(node: SyntaxNode): SymbolName[] {
 
   if (heritage) {
     // Find implements_clause within heritage (also not a field)
-    const implementsClause = heritage.namedChildren?.find(
+    const implements_clause = heritage.namedChildren?.find(
       (c) => c.type === "implements_clause"
     );
 
-    if (implementsClause) {
+    if (implements_clause) {
       const interfaces: SymbolName[] = [];
-      for (const child of implementsClause.namedChildren || []) {
+      for (const child of implements_clause.namedChildren || []) {
         if (child.type === "type_identifier") {
           interfaces.push(child.text as SymbolName);
         }
@@ -340,10 +340,10 @@ export function is_async_method(node: SyntaxNode): boolean {
  * Extract return type from function/method
  */
 export function extract_return_type(node: SyntaxNode): SymbolName | undefined {
-  const returnType = node.parent?.childForFieldName?.("return_type");
-  if (returnType) {
+  const return_type = node.parent?.childForFieldName?.("return_type");
+  if (return_type) {
     // Skip the colon and get the actual type
-    for (const child of returnType.children || []) {
+    for (const child of return_type.children || []) {
       if (child.type !== ":") {
         return child.text as SymbolName;
       }
@@ -375,9 +375,9 @@ export function extract_enum_value(
     const value = parent.childForFieldName?.("value");
     if (value) {
       // Try to parse as number first
-      const numValue = parseFloat(value.text);
-      if (!isNaN(numValue)) {
-        return numValue;
+      const num_value = parseFloat(value.text);
+      if (!isNaN(num_value)) {
+        return num_value;
       }
       return value.text;
     }
@@ -452,11 +452,11 @@ export function find_containing_class(
       node.type === "abstract_class_declaration" ||
       node.type === "class"
     ) {
-      const nameNode = node.childForFieldName?.("name");
-      if (nameNode) {
-        const className = nameNode.text as SymbolName;
-        const location: Location = node_to_location(nameNode, file_path);
-        return class_symbol(className, location);
+      const name_node = node.childForFieldName?.("name");
+      if (name_node) {
+        const class_name = name_node.text as SymbolName;
+        const location: Location = node_to_location(name_node, file_path);
+        return class_symbol(class_name, location);
       }
     }
     node = node.parent;
@@ -475,11 +475,11 @@ export function find_containing_interface(
 
   while (node) {
     if (node.type === "interface_declaration") {
-      const nameNode = node.childForFieldName?.("name");
-      if (nameNode) {
-        const interfaceName = nameNode.text as SymbolName;
-        const location: Location = node_to_location(nameNode, file_path);
-        return interface_symbol(interfaceName, location);
+      const name_node = node.childForFieldName?.("name");
+      if (name_node) {
+        const interface_name = name_node.text as SymbolName;
+        const location: Location = node_to_location(name_node, file_path);
+        return interface_symbol(interface_name, location);
       }
     }
     node = node.parent;
@@ -498,11 +498,11 @@ export function find_containing_enum(
 
   while (node) {
     if (node.type === "enum_declaration") {
-      const nameNode = node.childForFieldName?.("name");
-      if (nameNode) {
-        const enumName = nameNode.text as SymbolName;
-        const location: Location = node_to_location(nameNode, file_path);
-        return enum_symbol(enumName, location);
+      const name_node = node.childForFieldName?.("name");
+      if (name_node) {
+        const enum_name = name_node.text as SymbolName;
+        const location: Location = node_to_location(name_node, file_path);
+        return enum_symbol(enum_name, location);
       }
     }
     node = node.parent;
@@ -551,23 +551,23 @@ export function find_containing_callable(capture: CaptureNode): SymbolId {
       node.type === "method_definition" ||
       node.type === "method_signature"
     ) {
-      const nameNode = node.childForFieldName?.("name");
+      const name_node = node.childForFieldName?.("name");
 
       if (
         node.type === "method_definition" ||
         node.type === "method_signature"
       ) {
-        const methodName = nameNode ? nameNode.text : "anonymous";
+        const method_name = name_node ? name_node.text : "anonymous";
         // Reconstruct location with proper file_path
         const location: Location = node_to_location(
-          nameNode || node,
+          name_node || node,
           file_path
         );
-        return method_symbol(methodName as SymbolName, location);
-      } else if (nameNode) {
+        return method_symbol(method_name as SymbolName, location);
+      } else if (name_node) {
         // Named function
-        const location: Location = node_to_location(nameNode, file_path);
-        return function_symbol(nameNode.text as SymbolName, location);
+        const location: Location = node_to_location(name_node, file_path);
+        return function_symbol(name_node.text as SymbolName, location);
       } else {
         // Anonymous function/arrow function - use the location as ID
         const location: Location = node_to_location(node, file_path);
@@ -586,10 +586,10 @@ export function find_containing_callable(capture: CaptureNode): SymbolId {
 export function extract_property_type(
   node: SyntaxNode
 ): SymbolName | undefined {
-  const typeAnnotation = node.parent?.childForFieldName?.("type");
-  if (typeAnnotation) {
+  const type_annotation = node.parent?.childForFieldName?.("type");
+  if (type_annotation) {
     // Skip the colon and get the actual type
-    for (const child of typeAnnotation.children || []) {
+    for (const child of type_annotation.children || []) {
       if (child.type !== ":") {
         return child.text as SymbolName;
       }
@@ -607,12 +607,12 @@ export function extract_parameter_type(
   // For rest parameters, the type annotation is on the grandparent
   // Structure: required_parameter > rest_pattern > identifier
   if (node.parent?.type === "rest_pattern") {
-    const requiredParam = node.parent.parent;
-    if (requiredParam) {
-      const typeAnnotation = requiredParam.childForFieldName?.("type");
-      if (typeAnnotation) {
+    const required_param = node.parent.parent;
+    if (required_param) {
+      const type_annotation = required_param.childForFieldName?.("type");
+      if (type_annotation) {
         // Skip the colon and get the actual type
-        for (const child of typeAnnotation.children || []) {
+        for (const child of type_annotation.children || []) {
           if (child.type !== ":") {
             return child.text as SymbolName;
           }
@@ -634,22 +634,22 @@ export function extract_parameter_default_value(
   node: SyntaxNode
 ): string | undefined {
   // Navigate up to the parameter node
-  let paramNode = node.parent;
+  let param_node = node.parent;
 
   // Handle rest_pattern case
-  if (paramNode?.type === "rest_pattern") {
-    paramNode = paramNode.parent;
+  if (param_node?.type === "rest_pattern") {
+    param_node = param_node.parent;
   }
 
   // Check for optional_parameter or required_parameter with default
   if (
-    paramNode?.type === "optional_parameter" ||
-    paramNode?.type === "required_parameter"
+    param_node?.type === "optional_parameter" ||
+    param_node?.type === "required_parameter"
   ) {
     // Look for value field (default value)
-    const valueNode = paramNode.childForFieldName?.("value");
-    if (valueNode) {
-      return valueNode.text;
+    const value_node = param_node.childForFieldName?.("value");
+    if (value_node) {
+      return value_node.text;
     }
   }
 
@@ -671,9 +671,9 @@ export function extract_property_initial_value(
     parent?.type === "property_signature"
   ) {
     // Look for value field (initializer)
-    const valueNode = parent.childForFieldName?.("value");
-    if (valueNode) {
-      return valueNode.text;
+    const value_node = parent.childForFieldName?.("value");
+    if (value_node) {
+      return value_node.text;
     }
   }
 
@@ -696,10 +696,10 @@ export function find_decorator_target(
       parent.type === "class_declaration" ||
       parent.type === "abstract_class_declaration"
     ) {
-      const nameNode = parent.childForFieldName?.("name");
-      if (nameNode) {
-        const location: Location = node_to_location(nameNode, file_path);
-        return class_symbol(nameNode.text as SymbolName, location);
+      const name_node = parent.childForFieldName?.("name");
+      if (name_node) {
+        const location: Location = node_to_location(name_node, file_path);
+        return class_symbol(name_node.text as SymbolName, location);
       }
     }
 

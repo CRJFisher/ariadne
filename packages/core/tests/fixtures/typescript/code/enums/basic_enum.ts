@@ -5,54 +5,54 @@
 
 // Numeric enum
 enum Direction {
-  Up,
-  Down,
-  Left,
-  Right,
+  UP,
+  DOWN,
+  LEFT,
+  RIGHT,
 }
 
 // Enum with explicit values
 enum Status {
-  Pending = 0,
-  Active = 1,
-  Completed = 2,
-  Failed = 3,
+  PENDING = 0,
+  ACTIVE = 1,
+  COMPLETED = 2,
+  FAILED = 3,
 }
 
 // Enum with computed members
 enum FileAccess {
-  None = 0,
-  Read = 1 << 0,
-  Write = 1 << 1,
-  Execute = 1 << 2,
-  ReadWrite = Read | Write,
+  NONE = 0,
+  READ = 1 << 0,
+  WRITE = 1 << 1,
+  EXECUTE = 1 << 2,
+  READ_WRITE = READ | WRITE,
 }
 
 // Using enums
 function move(direction: Direction): string {
   switch (direction) {
-    case Direction.Up:
+    case Direction.UP:
       return "Moving up";
-    case Direction.Down:
+    case Direction.DOWN:
       return "Moving down";
-    case Direction.Left:
+    case Direction.LEFT:
       return "Moving left";
-    case Direction.Right:
+    case Direction.RIGHT:
       return "Moving right";
   }
 }
 
-function getStatusMessage(status: Status): string {
+function get_status_message(status: Status): string {
   switch (status) {
-    case Status.Pending:
+    case Status.PENDING:
       return "Waiting to start";
-    case Status.Active:
+    case Status.ACTIVE:
       return "Currently running";
-    case Status.Completed:
+    case Status.COMPLETED:
       return "Successfully completed";
-    case Status.Failed:
+    case Status.FAILED:
       return "Failed with error";
   }
 }
 
-export { Direction, Status, FileAccess, move, getStatusMessage };
+export { Direction, Status, FileAccess, move, get_status_message };

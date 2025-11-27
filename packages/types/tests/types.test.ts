@@ -26,8 +26,8 @@ describe("@ariadnejs/types", () => {
         expect(typeof namespace).toBe("string");
 
         // Should work with special names
-        const starImport = create_namespace_name("STAR_IMPORT");
-        expect(starImport).toBe("STAR_IMPORT");
+        const star_import = create_namespace_name("STAR_IMPORT");
+        expect(star_import).toBe("STAR_IMPORT");
       });
 
       it("should handle empty strings", () => {
@@ -39,15 +39,15 @@ describe("@ariadnejs/types", () => {
         const special = create_namespace_name("namespace-with-dashes");
         expect(special).toBe("namespace-with-dashes");
 
-        const withDots = create_namespace_name("namespace.with.dots");
-        expect(withDots).toBe("namespace.with.dots");
+        const with_dots = create_namespace_name("namespace.with.dots");
+        expect(with_dots).toBe("namespace.with.dots");
       });
     });
   });
 
   describe("Unified LocalMemberInfo Interface", () => {
     it("should support all member kinds including constructor", () => {
-      const methodMember: LocalMemberInfo = {
+      const method_member: LocalMemberInfo = {
         name: "testMethod" as SymbolName,
         kind: "method",
         location: {
@@ -62,7 +62,7 @@ describe("@ariadnejs/types", () => {
         type_annotation: "string",
       };
 
-      const constructorMember: LocalMemberInfo = {
+      const constructor_member: LocalMemberInfo = {
         name: "constructor" as SymbolName,
         kind: "constructor",
         location: {
@@ -81,7 +81,7 @@ describe("@ariadnejs/types", () => {
         ],
       };
 
-      const propertyMember: LocalMemberInfo = {
+      const property_member: LocalMemberInfo = {
         name: "property" as SymbolName,
         kind: "property",
         location: {
@@ -94,7 +94,7 @@ describe("@ariadnejs/types", () => {
         is_static: true,
       };
 
-      const fieldMember: LocalMemberInfo = {
+      const field_member: LocalMemberInfo = {
         name: "field" as SymbolName,
         kind: "field",
         location: {
@@ -106,7 +106,7 @@ describe("@ariadnejs/types", () => {
         },
       };
 
-      const getterMember: LocalMemberInfo = {
+      const getter_member: LocalMemberInfo = {
         name: "getter" as SymbolName,
         kind: "getter",
         location: {
@@ -118,7 +118,7 @@ describe("@ariadnejs/types", () => {
         },
       };
 
-      const setterMember: LocalMemberInfo = {
+      const setter_member: LocalMemberInfo = {
         name: "setter" as SymbolName,
         kind: "setter",
         location: {
@@ -131,52 +131,52 @@ describe("@ariadnejs/types", () => {
       };
 
       // Verify all kinds are accepted
-      expect(methodMember.kind).toBe("method");
-      expect(constructorMember.kind).toBe("constructor");
-      expect(propertyMember.kind).toBe("property");
-      expect(fieldMember.kind).toBe("field");
-      expect(getterMember.kind).toBe("getter");
-      expect(setterMember.kind).toBe("setter");
+      expect(method_member.kind).toBe("method");
+      expect(constructor_member.kind).toBe("constructor");
+      expect(property_member.kind).toBe("property");
+      expect(field_member.kind).toBe("field");
+      expect(getter_member.kind).toBe("getter");
+      expect(setter_member.kind).toBe("setter");
 
       // Verify optional fields work
-      expect(methodMember.symbol_id).toBe("test_symbol" as SymbolId);
-      expect(methodMember.is_static).toBe(false);
-      expect(methodMember.type_annotation).toBe("string");
-      expect(constructorMember.parameters).toHaveLength(1);
-      expect(propertyMember.is_static).toBe(true);
+      expect(method_member.symbol_id).toBe("test_symbol" as SymbolId);
+      expect(method_member.is_static).toBe(false);
+      expect(method_member.type_annotation).toBe("string");
+      expect(constructor_member.parameters).toHaveLength(1);
+      expect(property_member.is_static).toBe(true);
     });
   });
 
   describe("LocalParameterInfo Interface", () => {
     it("should support all parameter features", () => {
-      const basicParam: LocalParameterInfo = {
+      const basic_param: LocalParameterInfo = {
         name: "basicParam" as SymbolName  ,
         type_annotation: "string",
       };
 
-      const optionalParam: LocalParameterInfo = {
+      const optional_param: LocalParameterInfo = {
         name: "optionalParam" as SymbolName,
         type_annotation: "number",
         is_optional: true,
       };
 
-      const restParam: LocalParameterInfo = {
+      const rest_param: LocalParameterInfo = {
         name: "restParam" as SymbolName,
         type_annotation: "string[]",
         is_rest: true,
       };
 
-      const defaultParam: LocalParameterInfo = {
+      const default_param: LocalParameterInfo = {
         name: "defaultParam" as SymbolName,
         type_annotation: "boolean",
         is_optional: true,
         default_value: "true",
       };
 
-      expect(basicParam.name).toBe("basicParam");
-      expect(optionalParam.is_optional).toBe(true);
-      expect(restParam.is_rest).toBe(true);
-      expect(defaultParam.default_value).toBe("true");
+      expect(basic_param.name).toBe("basicParam");
+      expect(optional_param.is_optional).toBe(true);
+      expect(rest_param.is_rest).toBe(true);
+      expect(default_param.default_value).toBe("true");
     });
   });
 

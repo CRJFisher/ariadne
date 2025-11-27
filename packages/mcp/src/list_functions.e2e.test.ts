@@ -16,7 +16,7 @@ import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js"
 import * as path from "path";
 
 describe("MCP Server E2E - list_functions tool", () => {
-  let serverProcess: ChildProcess;
+  let server_process: ChildProcess;
   let client: Client;
   let transport: StdioClientTransport;
 
@@ -28,7 +28,7 @@ describe("MCP Server E2E - list_functions tool", () => {
 
   beforeAll(async () => {
     // Spawn the MCP server as a child process
-    serverProcess = spawn("node", [SERVER_PATH], {
+    server_process = spawn("node", [SERVER_PATH], {
       env: {
         ...process.env,
         PROJECT_PATH: PACKAGES_CORE_PATH,
@@ -37,7 +37,7 @@ describe("MCP Server E2E - list_functions tool", () => {
     });
 
     // Log server stderr for debugging
-    serverProcess.stderr?.on("data", (data) => {
+    server_process.stderr?.on("data", (data) => {
       console.error(`[Server stderr]: ${data}`);
     });
 
@@ -73,14 +73,14 @@ describe("MCP Server E2E - list_functions tool", () => {
     if (client) {
       await client.close();
     }
-    if (serverProcess) {
-      serverProcess.kill();
+    if (server_process) {
+      server_process.kill();
     }
   });
 
   it("should connect to server successfully", () => {
     expect(client).toBeDefined();
-    expect(serverProcess.killed).toBe(false);
+    expect(server_process.killed).toBe(false);
   });
 
   it("should list available tools and find list_functions", async () => {
@@ -141,8 +141,8 @@ describe("MCP Server E2E - list_functions tool", () => {
 
     // Verify format contains function entries
     // Format: "- function_name(...): return_type -- N functions"
-    const functionPattern = /^- \w+\([^)]*\):.*--\s+\d+\s+functions?/m;
-    expect(text).toMatch(functionPattern);
+    const function_pattern = /^- \w+\([^)]*\):.*--\s+\d+\s+functions?/m;
+    expect(text).toMatch(function_pattern);
 
     // Verify contains "Entry point:" with file path
     expect(text).toContain("Entry point:");
@@ -164,28 +164,28 @@ describe("MCP Server E2E - list_functions tool", () => {
     expect(text).toContain("packages/core/");
 
     // Should have multiple entry points (packages/core has many)
-    const totalMatch = text.match(/Total:\s+(\d+)\s+entry points?/);
-    expect(totalMatch).toBeDefined();
+    const total_match = text.match(/Total:\s+(\d+)\s+entry points?/);
+    expect(total_match).toBeDefined();
 
-    if (totalMatch) {
-      const entryPointCount = parseInt(totalMatch[1], 10);
-      expect(entryPointCount).toBeGreaterThan(0);
-      console.log(`\nFound ${entryPointCount} entry points in packages/core`);
+    if (total_match) {
+      const entry_point_count = parseInt(total_match[1], 10);
+      expect(entry_point_count).toBeGreaterThan(0);
+      console.log(`\nFound ${entry_point_count} entry points in packages/core`);
     }
 
     // Parse and verify at least one entry has a valid signature
     const lines = text.split("\n");
-    const functionLines = lines.filter((line) => line.startsWith("- "));
+    const function_lines = lines.filter((line) => line.startsWith("- "));
 
-    expect(functionLines.length).toBeGreaterThan(0);
+    expect(function_lines.length).toBeGreaterThan(0);
 
     // First function should have proper format
-    const firstFunc = functionLines[0];
-    console.log(`\nFirst entry point: ${firstFunc}`);
+    const first_func = function_lines[0];
+    console.log(`\nFirst entry point: ${first_func}`);
 
     // Should have function name, params, return type, and count
-    expect(firstFunc).toMatch(/- \w+\([^)]*\)/); // name and params
-    expect(firstFunc).toMatch(/--\s+\d+/); // separator and count
+    expect(first_func).toMatch(/- \w+\([^)]*\)/); // name and params
+    expect(first_func).toMatch(/--\s+\d+/); // separator and count
   }, 120000);
 
   it("should handle tool call errors gracefully", async () => {

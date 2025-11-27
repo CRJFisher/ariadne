@@ -5,7 +5,7 @@
 
 interface Handler {
   process(): void;
-  getName(): string;
+  get_name(): string;
 }
 
 class HandlerA implements Handler {
@@ -13,7 +13,7 @@ class HandlerA implements Handler {
     console.log("Handler A processing");
   }
 
-  getName(): string {
+  get_name(): string {
     return "Handler A";
   }
 }
@@ -23,7 +23,7 @@ class HandlerB implements Handler {
     console.log("Handler B processing");
   }
 
-  getName(): string {
+  get_name(): string {
     return "Handler B";
   }
 }
@@ -33,16 +33,16 @@ class HandlerC implements Handler {
     console.log("Handler C processing");
   }
 
-  getName(): string {
+  get_name(): string {
     return "Handler C";
   }
 }
 
 // Polymorphic function that calls interface method
-function executeHandler(handler: Handler): void {
+function execute_handler(handler: Handler): void {
   // These calls should resolve to ALL three implementations
   handler.process();
-  const name = handler.getName();
+  const name = handler.get_name();
   console.log(`Executed: ${name}`);
 }
 
@@ -51,8 +51,8 @@ const a = new HandlerA();
 const b = new HandlerB();
 const c = new HandlerC();
 
-executeHandler(a);
-executeHandler(b);
-executeHandler(c);
+execute_handler(a);
+execute_handler(b);
+execute_handler(c);
 
-export { Handler, HandlerA, HandlerB, HandlerC, executeHandler };
+export { Handler, HandlerA, HandlerB, HandlerC, execute_handler };

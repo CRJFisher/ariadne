@@ -10,6 +10,7 @@ import { SymbolName } from "./symbol";
 import { ModulePath } from "./import_export";
 import { CallbackContext } from "./call_chains";
 
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export type ParameterName = string & { __brand: "ParameterName" };
 /**
  * Export metadata for symbols that can be imported

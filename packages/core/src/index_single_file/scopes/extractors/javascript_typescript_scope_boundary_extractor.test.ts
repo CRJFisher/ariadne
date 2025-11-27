@@ -11,20 +11,20 @@ describe("JavaScriptTypeScriptScopeBoundaryExtractor", () => {
   const file_path = "test.ts" as FilePath;
 
   // Helper to create mock nodes
-  function createMockNode(
+  function create_mock_node(
     type: string,
     fields: Record<string, Parser.SyntaxNode | null> = {},
     position = { row: 0, column: 0 },
-    endPosition = { row: 0, column: 10 },
+    end_position = { row: 0, column: 10 },
     parent: Parser.SyntaxNode | null = null
   ): Parser.SyntaxNode {
     return {
       type,
       text: type,
       startPosition: position,
-      endPosition: endPosition,
+      end_position: end_position,
       parent,
-      childForFieldName: (name: string) => fields[name] || null,
+      child_for_field_name: (name: string) => fields[name] || null,
       child: () => null,
       children: [],
       childCount: 0,
@@ -32,27 +32,27 @@ describe("JavaScriptTypeScriptScopeBoundaryExtractor", () => {
       lastChild: null,
       nextSibling: null,
       previousSibling: null,
-      hasChanges: () => false,
-      hasError: () => false,
-      isMissing: () => false,
-      isNamed: () => true,
-      toString: () => type,
+      has_changes: () => false,
+      has_error: () => false,
+      is_missing: () => false,
+      is_named: () => true,
+      to_string: () => type,
       walk: () => ({} as any),
-      descendantForIndex: () => null as any,
-      descendantForPosition: () => null as any,
-      namedDescendantForIndex: () => null as any,
-      namedDescendantForPosition: () => null as any,
+      descendant_for_index: () => null as any,
+      descendant_for_position: () => null as any,
+      named_descendant_for_index: () => null as any,
+      named_descendant_for_position: () => null as any,
     } as unknown as Parser.SyntaxNode;
   }
 
   describe("extract_class_boundaries", () => {
     it("should handle class_body nodes directly", () => {
-      const parentClass = createMockNode("class_declaration", {
-        name: createMockNode("identifier"),
+      const parent_class = create_mock_node("class_declaration", {
+        name: create_mock_node("identifier"),
       });
-      const classBody = createMockNode("class_body", {}, { row: 1, column: 10 }, { row: 3, column: 1 }, parentClass);
+      const class_body = create_mock_node("class_body", {}, { row: 1, column: 10 }, { row: 3, column: 1 }, parent_class);
 
-      const result = extractor.extract_boundaries(classBody, "class", file_path);
+      const result = extractor.extract_boundaries(class_body, "class", file_path);
 
       expect(result.symbol_location.start_line).toBe(1);
       expect(result.scope_location.start_line).toBe(2);
@@ -60,33 +60,33 @@ describe("JavaScriptTypeScriptScopeBoundaryExtractor", () => {
     });
 
     it("should handle anonymous class bodies", () => {
-      const parentClass = createMockNode("class_expression", {}, { row: 0, column: 0 }, { row: 2, column: 1 });
-      const classBody = createMockNode("class_body", {}, { row: 1, column: 10 }, { row: 3, column: 1 }, parentClass);
+      const parent_class = create_mock_node("class_expression", {}, { row: 0, column: 0 }, { row: 2, column: 1 });
+      const class_body = create_mock_node("class_body", {}, { row: 1, column: 10 }, { row: 3, column: 1 }, parent_class);
 
-      const result = extractor.extract_boundaries(classBody, "class", file_path);
+      const result = extractor.extract_boundaries(class_body, "class", file_path);
 
       // For anonymous classes, symbol and scope should be the same
       expect(result.symbol_location).toEqual(result.scope_location);
     });
 
     it("should handle regular class declarations", () => {
-      const nameNode = createMockNode("identifier");
-      const bodyNode = createMockNode("class_body");
-      const classNode = createMockNode("class_declaration", {
-        name: nameNode,
-        body: bodyNode,
+      const name_node = create_mock_node("identifier");
+      const body_node = create_mock_node("class_body");
+      const class_node = create_mock_node("class_declaration", {
+        name: name_node,
+        body: body_node,
       });
 
-      const result = extractor.extract_boundaries(classNode, "class", file_path);
+      const result = extractor.extract_boundaries(class_node, "class", file_path);
 
       expect(result.symbol_location.start_line).toBe(1);
       expect(result.scope_location.start_line).toBe(1);
     });
 
     it("should handle mock nodes without name or body fields", () => {
-      const mockNode = createMockNode("class_declaration");
+      const mock_node = create_mock_node("class_declaration");
 
-      const result = extractor.extract_boundaries(mockNode, "class", file_path);
+      const result = extractor.extract_boundaries(mock_node, "class", file_path);
 
       // Should fall back to using entire node for both symbol and scope
       expect(result.symbol_location).toEqual(result.scope_location);
@@ -95,33 +95,33 @@ describe("JavaScriptTypeScriptScopeBoundaryExtractor", () => {
 
   describe("extract_function_boundaries", () => {
     it("should handle arrow functions", () => {
-      const paramsNode = createMockNode("formal_parameters");
-      const bodyNode = createMockNode("block");
-      const arrowFunction = createMockNode("arrow_function", {
-        parameters: paramsNode,
-        body: bodyNode,
+      const params_node = create_mock_node("formal_parameters");
+      const body_node = create_mock_node("block");
+      const arrow_function = create_mock_node("arrow_function", {
+        parameters: params_node,
+        body: body_node,
       });
 
-      const result = extractor.extract_boundaries(arrowFunction, "function", file_path);
+      const result = extractor.extract_boundaries(arrow_function, "function", file_path);
 
       expect(result.symbol_location.start_line).toBe(1);
       expect(result.scope_location.start_line).toBe(1);
     });
 
     it("should handle named function expressions", () => {
-      const nameNode = createMockNode("identifier");
-      const bodyNode = createMockNode("block", {}, { row: 2, column: 0 }, { row: 4, column: 1 });
-      const functionKeyword = createMockNode("function", {}, { row: 0, column: 0 }, { row: 0, column: 8 });
+      const name_node = create_mock_node("identifier");
+      const body_node = create_mock_node("block", {}, { row: 2, column: 0 }, { row: 4, column: 1 });
+      const function_keyword = create_mock_node("function", {}, { row: 0, column: 0 }, { row: 0, column: 8 });
 
-      const namedFunctionExpr = createMockNode("function_expression", {
-        name: nameNode,
-        body: bodyNode,
+      const named_function_expr = create_mock_node("function_expression", {
+        name: name_node,
+        body: body_node,
       });
 
       // Mock the child method to return the function keyword
-      namedFunctionExpr.child = (index: number) => index === 0 ? functionKeyword : null;
+      named_function_expr.child = (index: number) => index === 0 ? function_keyword : null;
 
-      const result = extractor.extract_boundaries(namedFunctionExpr, "function", file_path);
+      const result = extractor.extract_boundaries(named_function_expr, "function", file_path);
 
       expect(result.symbol_location.start_line).toBe(1);
       // Scope should start after function keyword
@@ -129,51 +129,51 @@ describe("JavaScriptTypeScriptScopeBoundaryExtractor", () => {
     });
 
     it("should handle interface method signatures without bodies", () => {
-      const nameNode = createMockNode("identifier");
-      const paramsNode = createMockNode("formal_parameters");
-      const methodSignature = createMockNode("method_signature", {
-        name: nameNode,
-        parameters: paramsNode,
+      const name_node = create_mock_node("identifier");
+      const params_node = create_mock_node("formal_parameters");
+      const method_signature = create_mock_node("method_signature", {
+        name: name_node,
+        parameters: params_node,
         // No body field
       });
 
-      const result = extractor.extract_boundaries(methodSignature, "method", file_path);
+      const result = extractor.extract_boundaries(method_signature, "method", file_path);
 
       expect(result.symbol_location.start_line).toBe(1);
       expect(result.scope_location.start_line).toBe(1);
     });
 
     it("should handle functions without parameters or body (mock nodes)", () => {
-      const mockFunction = createMockNode("function_declaration");
+      const mock_function = create_mock_node("function_declaration");
 
-      const result = extractor.extract_boundaries(mockFunction, "function", file_path);
+      const result = extractor.extract_boundaries(mock_function, "function", file_path);
 
       // Should fall back to using entire node
       expect(result.symbol_location).toEqual(result.scope_location);
     });
 
     it("should handle functions without parameters but with body", () => {
-      const bodyNode = createMockNode("block");
-      const functionNode = createMockNode("function_declaration", {
-        body: bodyNode,
+      const body_node = create_mock_node("block");
+      const function_node = create_mock_node("function_declaration", {
+        body: body_node,
         // No parameters
       });
 
-      const result = extractor.extract_boundaries(functionNode, "function", file_path);
+      const result = extractor.extract_boundaries(function_node, "function", file_path);
 
       expect(result.symbol_location.start_line).toBe(1);
       expect(result.scope_location.start_line).toBe(1);
     });
 
     it("should handle arrow functions with single parameter", () => {
-      const paramNode = createMockNode("identifier");
-      const bodyNode = createMockNode("block");
-      const arrowFunction = createMockNode("arrow_function", {
-        parameter: paramNode, // Single parameter field
-        body: bodyNode,
+      const param_node = create_mock_node("identifier");
+      const body_node = create_mock_node("block");
+      const arrow_function = create_mock_node("arrow_function", {
+        parameter: param_node, // Single parameter field
+        body: body_node,
       });
 
-      const result = extractor.extract_boundaries(arrowFunction, "function", file_path);
+      const result = extractor.extract_boundaries(arrow_function, "function", file_path);
 
       expect(result.symbol_location.start_line).toBe(1);
       expect(result.scope_location.start_line).toBe(1);
@@ -182,11 +182,11 @@ describe("JavaScriptTypeScriptScopeBoundaryExtractor", () => {
 
   describe("extract_constructor_boundaries", () => {
     it("should delegate to function boundary extraction", () => {
-      const paramsNode = createMockNode("formal_parameters");
-      const bodyNode = createMockNode("block");
-      const constructor = createMockNode("constructor", {
-        parameters: paramsNode,
-        body: bodyNode,
+      const params_node = create_mock_node("formal_parameters");
+      const body_node = create_mock_node("block");
+      const constructor = create_mock_node("constructor", {
+        parameters: params_node,
+        body: body_node,
       });
 
       const result = extractor.extract_boundaries(constructor, "constructor", file_path);
@@ -198,9 +198,9 @@ describe("JavaScriptTypeScriptScopeBoundaryExtractor", () => {
 
   describe("extract_block_boundaries", () => {
     it("should use entire node for block scopes", () => {
-      const blockNode = createMockNode("block", {}, { row: 5, column: 2 }, { row: 10, column: 3 });
+      const block_node = create_mock_node("block", {}, { row: 5, column: 2 }, { row: 10, column: 3 });
 
-      const result = extractor.extract_boundaries(blockNode, "block", file_path);
+      const result = extractor.extract_boundaries(block_node, "block", file_path);
 
       expect(result.symbol_location).toEqual(result.scope_location);
       expect(result.scope_location.start_line).toBe(6); // row + 1
@@ -212,14 +212,14 @@ describe("JavaScriptTypeScriptScopeBoundaryExtractor", () => {
 
   describe("extract_arrow_function_boundaries", () => {
     it("should handle arrow functions with parameters", () => {
-      const paramsNode = createMockNode("formal_parameters", {}, { row: 1, column: 5 }, { row: 1, column: 15 });
-      const bodyNode = createMockNode("block", {}, { row: 1, column: 20 }, { row: 3, column: 1 });
-      const arrowFunction = createMockNode("arrow_function", {
-        parameters: paramsNode,
-        body: bodyNode,
+      const params_node = create_mock_node("formal_parameters", {}, { row: 1, column: 5 }, { row: 1, column: 15 });
+      const body_node = create_mock_node("block", {}, { row: 1, column: 20 }, { row: 3, column: 1 });
+      const arrow_function = create_mock_node("arrow_function", {
+        parameters: params_node,
+        body: body_node,
       });
 
-      const result = (extractor as any).extract_arrow_function_boundaries(arrowFunction, file_path);
+      const result = (extractor as any).extract_arrow_function_boundaries(arrow_function, file_path);
 
       expect(result.symbol_location.start_line).toBe(2); // row + 1
       expect(result.symbol_location.start_column).toBe(6); // column + 1
@@ -230,46 +230,46 @@ describe("JavaScriptTypeScriptScopeBoundaryExtractor", () => {
     });
 
     it("should handle arrow functions without parameters", () => {
-      const bodyNode = createMockNode("block", {}, { row: 1, column: 10 }, { row: 2, column: 1 });
-      const arrowFunction = createMockNode("arrow_function", {
-        body: bodyNode,
+      const body_node = create_mock_node("block", {}, { row: 1, column: 10 }, { row: 2, column: 1 });
+      const arrow_function = create_mock_node("arrow_function", {
+        body: body_node,
         // No parameters
       });
 
-      const result = (extractor as any).extract_arrow_function_boundaries(arrowFunction, file_path);
+      const result = (extractor as any).extract_arrow_function_boundaries(arrow_function, file_path);
 
       expect(result.symbol_location.start_line).toBe(1);
       expect(result.scope_location.start_line).toBe(1);
     });
 
     it("should throw error for arrow function without body", () => {
-      const arrowFunction = createMockNode("arrow_function", {
+      const arrow_function = create_mock_node("arrow_function", {
         // No body
       });
 
       expect(() => {
-        (extractor as any).extract_arrow_function_boundaries(arrowFunction, file_path);
+        (extractor as any).extract_arrow_function_boundaries(arrow_function, file_path);
       }).toThrow("Arrow function missing body");
     });
   });
 
   describe("extract_class_body_boundaries", () => {
     it("should throw error for class_body without proper parent", () => {
-      const classBody = createMockNode("class_body");
+      const class_body = create_mock_node("class_body");
 
       expect(() => {
-        (extractor as any).extract_class_body_boundaries(classBody, file_path);
+        (extractor as any).extract_class_body_boundaries(class_body, file_path);
       }).toThrow("class_body node must have class declaration parent");
     });
 
     it("should handle class_body with class_expression parent", () => {
-      const nameNode = createMockNode("identifier");
-      const parentClass = createMockNode("class_expression", {
-        name: nameNode,
+      const name_node = create_mock_node("identifier");
+      const parent_class = create_mock_node("class_expression", {
+        name: name_node,
       });
-      const classBody = createMockNode("class_body", {}, { row: 1, column: 10 }, { row: 3, column: 1 }, parentClass);
+      const class_body = create_mock_node("class_body", {}, { row: 1, column: 10 }, { row: 3, column: 1 }, parent_class);
 
-      const result = (extractor as any).extract_class_body_boundaries(classBody, file_path);
+      const result = (extractor as any).extract_class_body_boundaries(class_body, file_path);
 
       expect(result.symbol_location.start_line).toBe(1);
       expect(result.scope_location.start_line).toBe(2);

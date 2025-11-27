@@ -21,35 +21,35 @@ import type {
 import type { ParsedFile } from "../file_utils";
 
 describe("Scope Boundary Extractor - All Languages", () => {
-  let pythonParser: Parser;
-  let typescriptParser: Parser;
-  let javascriptParser: Parser;
-  let rustParser: Parser;
+  let python_parser: Parser;
+  let typescript_parser: Parser;
+  let javascript_parser: Parser;
+  let rust_parser: Parser;
 
   beforeAll(() => {
-    pythonParser = new Parser();
-    pythonParser.setLanguage(Python);
+    python_parser = new Parser();
+    python_parser.setLanguage(Python);
 
-    typescriptParser = new Parser();
-    typescriptParser.setLanguage(TypeScript.typescript);
+    typescript_parser = new Parser();
+    typescript_parser.setLanguage(TypeScript.typescript);
 
-    javascriptParser = new Parser();
-    javascriptParser.setLanguage(JavaScript);
+    javascript_parser = new Parser();
+    javascript_parser.setLanguage(JavaScript);
 
-    rustParser = new Parser();
-    rustParser.setLanguage(Rust);
+    rust_parser = new Parser();
+    rust_parser.setLanguage(Rust);
   });
 
   // Helper to create ParsedFile
-  function createParsedFile(
+  function create_parsed_file(
     code: string,
-    filePath: FilePath,
+    file_path: FilePath,
     tree: Parser.Tree,
     language: Language
   ): ParsedFile {
     const lines = code.split("\n");
     return {
-      file_path: filePath,
+      file_path: file_path,
       file_lines: lines.length,
       file_end_column: lines[lines.length - 1]?.length || 0,
       tree,
@@ -57,27 +57,27 @@ describe("Scope Boundary Extractor - All Languages", () => {
     };
   }
 
-  function getParser(language: Language): Parser {
+  function get_parser(language: Language): Parser {
     switch (language) {
     case "python":
-      return pythonParser;
+      return python_parser;
     case "typescript":
-      return typescriptParser;
+      return typescript_parser;
     case "javascript":
-      return javascriptParser;
+      return javascript_parser;
     case "rust":
-      return rustParser;
+      return rust_parser;
     default:
       throw new Error(`Unsupported language: ${language}`);
     }
   }
 
-  function buildIndex(code: string, language: Language) {
-    const parser = getParser(language);
+  function build_index(code: string, language: Language) {
+    const parser = get_parser(language);
     const tree = parser.parse(code);
-    const filePath = `test.${get_extension(language)}` as FilePath;
-    const parsedFile = createParsedFile(code, filePath, tree, language);
-    return build_semantic_index(parsedFile, tree, language);
+    const file_path = `test.${get_extension(language)}` as FilePath;
+    const parsed_file = create_parsed_file(code, file_path, tree, language);
+    return build_semantic_index(parsed_file, tree, language);
   }
 
   const test_cases = [
@@ -123,7 +123,7 @@ impl Foo {
 
   test_cases.forEach(({ language, code, expected_depths }) => {
     it(`should extract correct depths for ${language}`, () => {
-      const index = buildIndex(code, language);
+      const index = build_index(code, language);
       const depths = compute_scope_depths(index.scopes);
 
       const class_scope = find_scope_by_type(index.scopes, "class");
@@ -178,7 +178,7 @@ impl Foo {
 
   function_test_cases.forEach(({ language, code, expected_depths }) => {
     it(`should extract correct function depths for ${language}`, () => {
-      const index = buildIndex(code, language);
+      const index = build_index(code, language);
       const depths = compute_scope_depths(index.scopes);
 
       const function_scopes = Array.from(index.scopes.values()).filter(
@@ -211,7 +211,7 @@ impl Foo {
 
       // This should not throw
       expect(() => {
-        buildIndex(simple_code, language);
+        build_index(simple_code, language);
       }).not.toThrow();
     });
   });
@@ -228,7 +228,7 @@ impl Foo {
 
     minimal_cases.forEach(({ language, code }) => {
       expect(() => {
-        buildIndex(code, language);
+        build_index(code, language);
       }).not.toThrow();
     });
   });

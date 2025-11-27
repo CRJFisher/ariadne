@@ -12,7 +12,7 @@ export function combine<T, U, V>(first: T, second: U, transformer: (a: T, b: U) 
 }
 
 // Generic function with constraints
-export function processLengthwise<T extends { length: number }>(arg: T): T {
+export function process_lengthwise<T extends { length: number }>(arg: T): T {
   console.log(arg.length);
   return arg;
 }
@@ -23,16 +23,16 @@ export function extract<T, K extends keyof T>(obj: T, key: K): T[K] {
 }
 
 // Generic function with default type parameters
-export function createArray<T = string>(length: number, value: T): T[] {
+export function create_array<T = string>(length: number, value: T): T[] {
   return Array(length).fill(value);
 }
 
 // Generic arrow functions
-export const mapArray = <T, U>(items: T[], mapper: (item: T) => U): U[] => {
+export const map_array = <T, U>(items: T[], mapper: (item: T) => U): U[] => {
   return items.map(mapper);
 };
 
-export const filterArray = <T>(items: T[], predicate: (item: T) => boolean): T[] => {
+export const filter_array = <T>(items: T[], predicate: (item: T) => boolean): T[] => {
   return items.filter(predicate);
 };
 
@@ -44,11 +44,11 @@ export class Container<T> {
     this._value = value;
   }
 
-  getValue(): T {
+  get_value(): T {
     return this._value;
   }
 
-  setValue(value: T): void {
+  set_value(value: T): void {
     this._value = value;
   }
 
@@ -78,11 +78,11 @@ export class Repository<T extends { id: string }> {
     this.items.push(item);
   }
 
-  findById(id: string): T | undefined {
+  find_by_id(id: string): T | undefined {
     return this.items.find(item => item.id === id);
   }
 
-  getAll(): readonly T[] {
+  get_all(): readonly T[] {
     return this.items;
   }
 }
@@ -93,26 +93,26 @@ export class ExtendedContainer<T, U> extends Container<T> {
     super(value);
   }
 
-  getMetadata(): U {
+  get_metadata(): U {
     return this.metadata;
   }
 }
 
 // Generic interface implementations
 export interface Comparable<T> {
-  compareTo(other: T): number;
+  compare_to(other: T): number;
 }
 
 export class Version implements Comparable<Version> {
   constructor(public major: number, public minor: number, public patch: number) {}
 
-  compareTo(other: Version): number {
+  compare_to(other: Version): number {
     if (this.major !== other.major) return this.major - other.major;
     if (this.minor !== other.minor) return this.minor - other.minor;
     return this.patch - other.patch;
   }
 
-  toString(): string {
+  to_string(): string {
     return `${this.major}.${this.minor}.${this.patch}`;
   }
 }
@@ -131,12 +131,12 @@ export class ArrayUtils {
     return Array.from(new Set(array));
   }
 
-  static groupBy<T, K extends string | number | symbol>(
+  static group_by<T, K extends string | number | symbol>(
     array: T[],
-    keySelector: (item: T) => K,
+    key_selector: (item: T) => K,
   ): Record<K, T[]> {
     return array.reduce((groups, item) => {
-      const key = keySelector(item);
+      const key = key_selector(item);
       if (!groups[key]) {
         groups[key] = [];
       }
@@ -179,8 +179,8 @@ export class Builder<T> {
 }
 
 // Usage examples
-export const stringContainer = new Container("hello");
-export const numberContainer = new Container<number>(42);
-export const kvPair = new KeyValuePair("key", 123);
-export const userRepo = new Repository<{ id: string; name: string }>();
+export const string_container = new Container("hello");
+export const number_container = new Container<number>(42);
+export const kv_pair = new KeyValuePair("key", 123);
+export const user_repo = new Repository<{ id: string; name: string }>();
 export const version = new Version(1, 2, 3);

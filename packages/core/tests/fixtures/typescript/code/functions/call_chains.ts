@@ -4,23 +4,23 @@
  */
 
 export function main() {
-  const result = processData();
-  logResult(result);
+  const result = process_data();
+  log_result(result);
   return result;
 }
 
-function processData() {
-  const raw = fetchData();
-  const transformed = transformData(raw);
-  const validated = validateData(transformed);
+function process_data() {
+  const raw = fetch_data();
+  const transformed = transform_data(raw);
+  const validated = validate_data(transformed);
   return validated;
 }
 
-function fetchData() {
+function fetch_data() {
   return { value: 42, timestamp: Date.now() };
 }
 
-function transformData(data: any) {
+function transform_data(data: any) {
   return {
     ...data,
     value: data.value * 2,
@@ -28,35 +28,35 @@ function transformData(data: any) {
   };
 }
 
-function validateData(data: any) {
+function validate_data(data: any) {
   if (data.value < 0) {
     throw new Error("Invalid value");
   }
   return data;
 }
 
-function logResult(result: any): void {
+function log_result(result: any): void {
   console.log("Result:", result);
 }
 
 // Branching call chains
-export function conditionalProcess(useCache: boolean) {
-  if (useCache) {
-    return fetchFromCache();
+export function conditional_process(use_cache: boolean) {
+  if (use_cache) {
+    return fetch_from_cache();
   } else {
-    return fetchFromNetwork();
+    return fetch_from_network();
   }
 }
 
-function fetchFromCache() {
+function fetch_from_cache() {
   return { source: "cache", data: [] };
 }
 
-function fetchFromNetwork() {
-  const data = makeRequest();
+function fetch_from_network() {
+  const data = make_request();
   return { source: "network", data };
 }
 
-function makeRequest() {
+function make_request() {
   return [1, 2, 3];
 }

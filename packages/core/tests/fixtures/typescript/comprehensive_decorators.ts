@@ -4,16 +4,16 @@
 // Mock Reflect metadata for testing
 declare global {
   namespace Reflect {
-    function getMetadata(
+    function get_metadata(
       key: string,
       target: any,
-      propertyName?: string | symbol
+      property_name?: string | symbol
     ): any;
-    function defineMetadata(
+    function define_metadata(
       key: string,
       value: any,
       target: any,
-      propertyName?: string | symbol
+      property_name?: string | symbol
     ): void;
   }
 }
@@ -21,58 +21,60 @@ declare global {
 // Simple implementation for testing
 globalThis.Reflect = {
   ...Reflect,
-  getMetadata: (key: string, target: any, propertyName?: string | symbol) =>
+  get_metadata: (key: string, target: any, property_name?: string | symbol) =>
     undefined,
-  defineMetadata: (
+  define_metadata: (
     key: string,
     value: any,
     target: any,
-    propertyName?: string | symbol,
+    property_name?: string | symbol,
   ) => {},
 };
 
 // Class decorators
-export function Entity(tableName: string) {
+export function entity(table_name: string) {
   return function <T extends { new (...args: any[]): {} }>(constructor: T) {
     return class extends constructor {
-      __tableName = tableName;
+      // eslint-disable-next-line @typescript-eslint/naming-convention
+      __tableName = table_name;
+      // eslint-disable-next-line @typescript-eslint/naming-convention
       __isEntity = true;
     };
   };
 }
 
-export function Sealed(constructor: Function) {
+export function sealed(constructor: Function) {
   Object.seal(constructor);
   Object.seal(constructor.prototype);
 }
 
-export function Timestamped<T extends { new (...args: any[]): {} }>(
+export function timestamped<T extends { new (...args: any[]): {} }>(
   constructor: T,
 ) {
   return class extends constructor {
-    createdAt = new Date();
-    updatedAt = new Date();
+    created_at = new Date();
+    updated_at = new Date();
 
     touch() {
-      this.updatedAt = new Date();
+      this.updated_at = new Date();
     }
   };
 }
 
 // Method decorators
-export function Log(
+export function log(
   target: any,
-  propertyName: string,
+  property_name: string,
   descriptor: PropertyDescriptor,
 ) {
-  const originalMethod = descriptor.value;
+  const original_method = descriptor.value;
 
   descriptor.value = function (...args: any[]) {
     console.log(
       `[${new Date().toISOString()}] Calling ${propertyName} with args:`,
       args,
     );
-    const result = originalMethod.apply(this, args);
+    const result = original_method.apply(this, args);
     console.log(
       `[${new Date().toISOString()}] ${propertyName} returned:`,
       result,
@@ -83,16 +85,16 @@ export function Log(
   return descriptor;
 }
 
-export function Benchmark(
+export function benchmark(
   target: any,
-  propertyName: string,
+  property_name: string,
   descriptor: PropertyDescriptor,
 ) {
-  const originalMethod = descriptor.value;
+  const original_method = descriptor.value;
 
   descriptor.value = function (...args: any[]) {
     const start = performance.now();
-    const result = originalMethod.apply(this, args);
+    const result = original_method.apply(this, args);
     const end = performance.now();
     console.log(`${propertyName} took ${end - start} milliseconds`);
     return result;
@@ -101,22 +103,22 @@ export function Benchmark(
   return descriptor;
 }
 
-export function Retry(times: number = 3) {
+export function retry(times: number = 3) {
   return function (
     target: any,
-    propertyName: string,
+    property_name: string,
     descriptor: PropertyDescriptor,
   ) {
-    const originalMethod = descriptor.value;
+    const original_method = descriptor.value;
 
     descriptor.value = async function (...args: any[]) {
-      let lastError: any;
+      let last_error: any;
 
       for (let i = 0; i < times; i++) {
         try {
-          return await originalMethod.apply(this, args);
+          return await original_method.apply(this, args);
         } catch (error) {
-          lastError = error;
+          last_error = error;
           if (i === times - 1) {
             throw error;
           }
@@ -129,15 +131,15 @@ export function Retry(times: number = 3) {
   };
 }
 
-export function Cache(ttl: number = 60000) {
+export function cache(ttl: number = 60000) {
   const cache = new Map<string, { value: any; expiry: number }>();
 
   return function (
     target: any,
-    propertyName: string,
+    property_name: string,
     descriptor: PropertyDescriptor,
   ) {
-    const originalMethod = descriptor.value;
+    const original_method = descriptor.value;
 
     descriptor.value = function (...args: any[]) {
       const key = `${propertyName}_${JSON.stringify(args)}`;
@@ -147,7 +149,7 @@ export function Cache(ttl: number = 60000) {
         return cached.value;
       }
 
-      const result = originalMethod.apply(this, args);
+      const result = original_method.apply(this, args);
       cache.set(key, { value: result, expiry: Date.now() + ttl });
 
       return result;
@@ -158,20 +160,20 @@ export function Cache(ttl: number = 60000) {
 }
 
 // Property decorators
-export function Required(target: any, propertyName: string) {
-  let value = target[propertyName];
+export function required(target: any, property_name: string) {
+  let value = target[property_name];
 
   const getter = () => value;
-  const setter = (newValue: any) => {
-    if (newValue === null || newValue === undefined) {
+  const setter = (new_value: any) => {
+    if (new_value === null || new_value === undefined) {
       throw new Error(
         `Property ${propertyName} is required and cannot be null or undefined`,
       );
     }
-    value = newValue;
+    value = new_value;
   };
 
-  Object.defineProperty(target, propertyName, {
+  Object.defineProperty(target, property_name, {
     get: getter,
     set: setter,
     enumerable: true,
@@ -179,21 +181,21 @@ export function Required(target: any, propertyName: string) {
   });
 }
 
-export function MinLength(min: number) {
-  return function (target: any, propertyName: string) {
-    let value = target[propertyName];
+export function min_length(min: number) {
+  return function (target: any, property_name: string) {
+    let value = target[property_name];
 
     const getter = () => value;
-    const setter = (newValue: any) => {
-      if (typeof newValue === "string" && newValue.length < min) {
+    const setter = (new_value: any) => {
+      if (typeof new_value === "string" && new_value.length < min) {
         throw new Error(
           `Property ${propertyName} must be at least ${min} characters long`,
         );
       }
-      value = newValue;
+      value = new_value;
     };
 
-    Object.defineProperty(target, propertyName, {
+    Object.defineProperty(target, property_name, {
       get: getter,
       set: setter,
       enumerable: true,
@@ -202,21 +204,21 @@ export function MinLength(min: number) {
   };
 }
 
-export function ReadOnly(target: any, propertyName: string) {
-  const initialValue = target[propertyName];
-  let hasBeenSet = false;
+export function read_only(target: any, property_name: string) {
+  const initial_value = target[property_name];
+  let has_been_set = false;
 
-  const getter = () => initialValue;
-  const setter = (newValue: any) => {
-    if (hasBeenSet) {
+  const getter = () => initial_value;
+  const setter = (new_value: any) => {
+    if (has_been_set) {
       throw new Error(
         `Property ${propertyName} is read-only and cannot be modified`,
       );
     }
-    hasBeenSet = true;
+    has_been_set = true;
   };
 
-  Object.defineProperty(target, propertyName, {
+  Object.defineProperty(target, property_name, {
     get: getter,
     set: setter,
     enumerable: true,
@@ -225,53 +227,53 @@ export function ReadOnly(target: any, propertyName: string) {
 }
 
 // Parameter decorators
-export function Inject(token: string) {
+export function inject(token: string) {
   return function (
     target: any,
-    propertyName: string | symbol | undefined,
-    parameterIndex: number,
+    property_name: string | symbol | undefined,
+    parameter_index: number,
   ) {
     // Store metadata about the injection
-    const existingTokens = Reflect.getMetadata("inject:tokens", target) || [];
-    existingTokens[parameterIndex] = token;
-    Reflect.defineMetadata("inject:tokens", existingTokens, target);
+    const existing_tokens = Reflect.get_metadata("inject:tokens", target) || [];
+    existing_tokens[parameter_index] = token;
+    Reflect.define_metadata("inject:tokens", existing_tokens, target);
   };
 }
 
-export function Validate(validator: (value: any) => boolean, message?: string) {
+export function validate(validator: (value: any) => boolean, message?: string) {
   return function (
     target: any,
-    propertyName: string | symbol | undefined,
-    parameterIndex: number,
+    property_name: string | symbol | undefined,
+    parameter_index: number,
   ) {
-    const existingValidators =
-      Reflect.getMetadata("validate:params", target, propertyName!) || [];
-    existingValidators[parameterIndex] = { validator, message };
-    Reflect.defineMetadata(
+    const existing_validators =
+      Reflect.get_metadata("validate:params", target, property_name!) || [];
+    existing_validators[parameter_index] = { validator, message };
+    Reflect.define_metadata(
       "validate:params",
-      existingValidators,
+      existing_validators,
       target,
-      propertyName!,
+      property_name!,
     );
   };
 }
 
 // Accessor decorators
-export function Memoize(
+export function memoize(
   target: any,
-  propertyName: string,
+  property_name: string,
   descriptor: PropertyDescriptor,
 ) {
-  const originalGetter = descriptor.get;
+  const original_getter = descriptor.get;
   const cache = new WeakMap();
 
-  if (originalGetter) {
+  if (original_getter) {
     descriptor.get = function () {
       if (cache.has(this)) {
         return cache.get(this);
       }
 
-      const result = originalGetter.apply(this);
+      const result = original_getter.apply(this);
       cache.set(this, result);
       return result;
     };
@@ -281,68 +283,68 @@ export function Memoize(
 }
 
 // Factory decorators
-export function Column(
+export function column(
   options: { name?: string; type?: string; nullable?: boolean } = {},
 ) {
-  return function (target: any, propertyName: string) {
-    const columns = Reflect.getMetadata("columns", target) || [];
+  return function (target: any, property_name: string) {
+    const columns = Reflect.get_metadata("columns", target) || [];
     columns.push({
-      propertyName,
-      columnName: options.name || propertyName,
+      property_name,
+      columnName: options.name || property_name,
       type: options.type || "varchar",
       nullable: options.nullable || false,
     });
-    Reflect.defineMetadata("columns", columns, target);
+    Reflect.define_metadata("columns", columns, target);
   };
 }
 
-export function Route(
+export function route(
   path: string,
   method: "GET" | "POST" | "PUT" | "DELETE" = "GET",
 ) {
   return function (
     target: any,
-    propertyName: string,
+    property_name: string,
     descriptor: PropertyDescriptor,
   ) {
-    const routes = Reflect.getMetadata("routes", target) || [];
+    const routes = Reflect.get_metadata("routes", target) || [];
     routes.push({
       path,
       method,
-      handler: propertyName,
-      originalMethod: descriptor.value,
+      handler: property_name,
+      original_method: descriptor.value,
     });
-    Reflect.defineMetadata("routes", routes, target);
+    Reflect.define_metadata("routes", routes, target);
   };
 }
 
 // Multiple decorators on single class
-@Entity("users")
-@Sealed
-@Timestamped
+@entity("users")
+@sealed
+@timestamped
 export class User {
-  @Column({ name: "user_id", type: "uuid" })
-  @Required
+  @column({ name: "user_id", type: "uuid" })
+  @required
     id: string;
 
-  @Column({ name: "user_name", type: "varchar" })
-  @Required
-  @MinLength(2)
+  @column({ name: "user_name", type: "varchar" })
+  @required
+  @min_length(2)
     name: string;
 
-  @Column({ name: "email_address", type: "varchar" })
-  @Required
+  @column({ name: "email_address", type: "varchar" })
+  @required
     email: string;
 
-  @Column({ name: "age", type: "integer", nullable: true })
+  @column({ name: "age", type: "integer", nullable: true })
     age?: number;
 
-  @ReadOnly
+  @read_only
   readonly created: Date = new Date();
 
   constructor(
-    @Inject("id_generator") id: string,
-    @Validate(
+    @inject("id_generator") id: string,
+    @validate(
       (value) => typeof value === "string" && value.length > 0,
       "Name is required",
     )
@@ -354,20 +356,20 @@ export class User {
     this.email = email;
   }
 
-  @Log
-  @Benchmark
-  getName(): string {
+  @log
+  @benchmark
+  get_name(): string {
     return this.name;
   }
 
-  @Log
-  @Cache(30000)
-  getDisplayName(): string {
+  @log
+  @cache(30000)
+  get_display_name(): string {
     return `${this.name} (${this.email})`;
   }
 
-  @Retry(3)
-  async saveToDatabase(): Promise<void> {
+  @retry(3)
+  async save_to_database(): Promise<void> {
     // Simulate database operation that might fail
     if (Math.random() < 0.7) {
       throw new Error("Database connection failed");
@@ -375,8 +377,8 @@ export class User {
     console.log("User saved successfully");
   }
 
-  @Memoize
-  get fullInfo(): string {
+  @memoize
+  get full_info(): string {
     // Expensive computation
     return `${this.name} - ${this.email} - ${this.age || "Unknown age"}`;
   }
@@ -384,50 +386,50 @@ export class User {
 
 // Controller with route decorators
 export class UserController {
-  @Route("/users", "GET")
-  @Log
-  @Cache(60000)
-  async getUsers(): Promise<User[]> {
+  @route("/users", "GET")
+  @log
+  @cache(60000)
+  async get_users(): Promise<User[]> {
     // Simulate fetching users
     return [];
   }
 
-  @Route("/users/:id", "GET")
-  @Log
-  @Benchmark
-  async getUserById(
-    @Validate((id) => typeof id === "string" && id.length > 0) id: string,
+  @route("/users/:id", "GET")
+  @log
+  @benchmark
+  async get_user_by_id(
+    @validate((id) => typeof id === "string" && id.length > 0) id: string,
   ): Promise<User | null> {
     // Simulate fetching user by ID
     return null;
   }
 
-  @Route("/users", "POST")
-  @Log
-  @Retry(2)
-  async createUser(
-    @Validate((data) => data && data.name && data.email) userData: any,
+  @route("/users", "POST")
+  @log
+  @retry(2)
+  async create_user(
+    @validate((data) => data && data.name && data.email) user_data: any,
   ): Promise<User> {
     // Simulate user creation
-    return new User("generated-id", userData.name, userData.email);
+    return new User("generated-id", user_data.name, user_data.email);
   }
 
-  @Route("/users/:id", "PUT")
-  @Log
-  @Benchmark
-  async updateUser(
-    @Validate((id) => typeof id === "string" && id.length > 0) id: string,
-    @Validate((data) => data && typeof data === "object") updateData: any,
+  @route("/users/:id", "PUT")
+  @log
+  @benchmark
+  async update_user(
+    @validate((id) => typeof id === "string" && id.length > 0) id: string,
+    @validate((data) => data && typeof data === "object") update_data: any,
   ): Promise<User | null> {
     // Simulate user update
     return null;
   }
 
-  @Route("/users/:id", "DELETE")
-  @Log
-  @Retry(3)
-  async deleteUser(
-    @Validate((id) => typeof id === "string" && id.length > 0) id: string,
+  @route("/users/:id", "DELETE")
+  @log
+  @retry(3)
+  async delete_user(
+    @validate((id) => typeof id === "string" && id.length > 0) id: string,
   ): Promise<boolean> {
     // Simulate user deletion
     return true;
@@ -435,27 +437,27 @@ export class UserController {
 }
 
 // Service with multiple decorators
-@Entity("user_service")
+@entity("user_service")
 export class UserService {
-  @Log
-  @Cache(120000)
-  async findActiveUsers(): Promise<User[]> {
+  @log
+  @cache(120000)
+  async find_active_users(): Promise<User[]> {
     return [];
   }
 
-  @Log
-  @Benchmark
-  @Retry(2)
-  async validateUserEmail(
-    @Validate((email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) email: string,
+  @log
+  @benchmark
+  @retry(2)
+  async validate_user_email(
+    @validate((email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) email: string,
   ): Promise<boolean> {
     // Simulate email validation
     await new Promise((resolve) => setTimeout(resolve, 100));
     return true;
   }
 
-  @Memoize
-  get serviceInfo(): { version: string; uptime: number } {
+  @memoize
+  get service_info(): { version: string; uptime: number } {
     return {
       version: "1.0.0",
       uptime: Date.now(),
@@ -464,67 +466,67 @@ export class UserService {
 }
 
 // Mixed decorator patterns
-export function ApiController(prefix: string) {
+export function api_controller(prefix: string) {
   return function <T extends { new (...args: any[]): {} }>(constructor: T) {
-    Reflect.defineMetadata("api:prefix", prefix, constructor);
+    Reflect.define_metadata("api:prefix", prefix, constructor);
     return constructor;
   };
 }
 
-export function Middleware(middleware: Function) {
+export function middleware(middleware: Function) {
   return function (
     target: any,
-    propertyName: string,
+    property_name: string,
     descriptor: PropertyDescriptor,
   ) {
     const middlewares =
-      Reflect.getMetadata("middlewares", target, propertyName) || [];
+      Reflect.get_metadata("middlewares", target, property_name) || [];
     middlewares.push(middleware);
-    Reflect.defineMetadata("middlewares", middlewares, target, propertyName);
+    Reflect.define_metadata("middlewares", middlewares, target, property_name);
   };
 }
 
-@ApiController("/api/v1")
+@api_controller("/api/v1")
 export class ProductController {
-  @Route("/products", "GET")
-  @Middleware((req: any, res: any, next: any) => {
+  @route("/products", "GET")
+  @middleware((req: any, res: any, next: any) => {
     console.log("Auth middleware");
     next();
   })
-  @Middleware((req: any, res: any, next: any) => {
+  @middleware((req: any, res: any, next: any) => {
     console.log("Logging middleware");
     next();
   })
-  @Log
-  @Cache(30000)
-  async getProducts(): Promise<any[]> {
+  @log
+  @cache(30000)
+  async get_products(): Promise<any[]> {
     return [];
   }
 }
 
 // Decorator composition
-export function Auditable<T extends { new (...args: any[]): {} }>(
+export function auditable<T extends { new (...args: any[]): {} }>(
   constructor: T,
 ) {
   return class extends constructor {
-    auditLog: string[] = [];
+    audit_log: string[] = [];
 
-    addAuditEntry(action: string) {
-      this.auditLog.push(`${new Date().toISOString()}: ${action}`);
+    add_audit_entry(action: string) {
+      this.audit_log.push(`${new Date().toISOString()}: ${action}`);
     }
   };
 }
 
-@Entity("orders")
-@Timestamped
-@Auditable
+@entity("orders")
+@timestamped
+@auditable
 export class Order {
-  @Column({ name: "order_id" })
-  @Required
+  @column({ name: "order_id" })
+  @required
     id: string;
 
-  @Column({ name: "total_amount" })
-  @Required
+  @column({ name: "total_amount" })
+  @required
     total: number;
 
   constructor(id: string, total: number) {
@@ -532,8 +534,8 @@ export class Order {
     this.total = total;
   }
 
-  @Log
-  @Benchmark
+  @log
+  @benchmark
   calculate(): number {
     return this.total * 1.1; // Add tax
   }

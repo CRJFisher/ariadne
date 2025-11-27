@@ -22,7 +22,7 @@ describe("rust_builder", () => {
   });
 
   // Helper to create mock context
-  function createMockContext(with_scopes: boolean = false): ProcessingContext {
+  function create_mock_context(with_scopes: boolean = false): ProcessingContext {
     const root_scope_id = "module:test.rs:1:0:100:0:<module>" as any;
     const scopes = new Map();
 
@@ -84,19 +84,19 @@ describe("rust_builder", () => {
   }
 
   // Helper to process code and test captures
-  function processCapture(
+  function process_capture(
     code: string,
-    captureName: string,
-    nodeType: string,
-    expectedText?: string,
+    capture_name: string,
+    node_type: string,
+    expected_text?: string,
     with_scopes: boolean = false
   ) {
     const tree = parser.parse(code);
-    const node = findNode(tree.rootNode, nodeType, expectedText);
+    const node = find_node(tree.rootNode, node_type, expected_text);
 
     if (!node) {
       throw new Error(
-        `Node of type ${nodeType} with text "${expectedText}" not found`
+        `Node of type ${node_type} with text "${expected_text}" not found`
       );
     }
 
@@ -109,25 +109,25 @@ describe("rust_builder", () => {
     };
 
     // Parse capture name to extract category and entity
-    const parts = captureName.split(".");
+    const parts = capture_name.split(".");
     const category = parts[0] as any;
     const entity = parts[1] as any;
 
     const capture: CaptureNode = {
       category,
       entity,
-      name: captureName,
-      text: (expectedText || node.text) as any,
+      name: capture_name,
+      text: (expected_text || node.text) as any,
       location,
       node,
     };
 
-    const context = createMockContext(with_scopes);
+    const context = create_mock_context(with_scopes);
     const builder = new DefinitionBuilder(context);
-    const processor = RUST_BUILDER_CONFIG.get(captureName);
+    const processor = RUST_BUILDER_CONFIG.get(capture_name);
 
     if (!processor) {
-      throw new Error(`No processor for capture ${captureName}`);
+      throw new Error(`No processor for capture ${capture_name}`);
     }
 
     processor.process(capture, builder, context);
@@ -146,13 +146,13 @@ describe("rust_builder", () => {
   }
 
   // Helper to find node by type and optional text
-  function findNode(root: any, type: string, text?: string): any {
+  function find_node(root: any, type: string, text?: string): any {
     if (root.type === type && (!text || root.text === text)) {
       return root;
     }
 
     for (const child of root.children) {
-      const found = findNode(child, type, text);
+      const found = find_node(child, type, text);
       if (found) return found;
     }
 
@@ -166,7 +166,7 @@ describe("rust_builder", () => {
         field2: i32,
       }`;
 
-      const definitions = processCapture(
+      const definitions = process_capture(
         code,
         "definition.class",
         "type_identifier",
@@ -183,7 +183,7 @@ describe("rust_builder", () => {
         metadata: U,
       }`;
 
-      const definitions = processCapture(
+      const definitions = process_capture(
         code,
         "definition.class.generic",
         "type_identifier",
@@ -198,7 +198,7 @@ describe("rust_builder", () => {
     it("should process tuple struct", () => {
       const code = "pub struct Point(f32, f32);";
 
-      const definitions = processCapture(
+      const definitions = process_capture(
         code,
         "definition.class",
         "type_identifier",
@@ -212,7 +212,7 @@ describe("rust_builder", () => {
     it("should handle pub(crate) visibility", () => {
       const code = "pub(crate) struct InternalStruct {}";
 
-      const definitions = processCapture(
+      const definitions = process_capture(
         code,
         "definition.class",
         "type_identifier",
@@ -232,7 +232,7 @@ describe("rust_builder", () => {
         Pending,
       }`;
 
-      const definitions = processCapture(
+      const definitions = process_capture(
         code,
         "definition.enum",
         "type_identifier",
@@ -242,10 +242,10 @@ describe("rust_builder", () => {
       expect(definitions.enums).toHaveLength(1);
       expect(definitions.enums[0].name).toBe("Status");
       // Members are objects, extract names
-      const memberNames = definitions.enums[0].members.map((m: any) =>
+      const member_names = definitions.enums[0].members.map((m: any) =>
         m.name.split(":").pop()
       );
-      expect(memberNames).toEqual(["Success", "Error", "Pending"]);
+      expect(member_names).toEqual(["Success", "Error", "Pending"]);
     });
 
     it("should process generic enum", () => {
@@ -254,7 +254,7 @@ describe("rust_builder", () => {
         Err(E),
       }`;
 
-      const definitions = processCapture(
+      const definitions = process_capture(
         code,
         "definition.enum.generic",
         "type_identifier",
@@ -265,10 +265,10 @@ describe("rust_builder", () => {
       expect(definitions.enums[0].name).toBe("Result");
       expect(definitions.enums[0].generics).toEqual(["T", "E"]);
       // Members are objects, extract names
-      const memberNames = definitions.enums[0].members.map((m: any) =>
+      const member_names = definitions.enums[0].members.map((m: any) =>
         m.name.split(":").pop()
       );
-      expect(memberNames).toEqual(["Ok", "Err"]);
+      expect(member_names).toEqual(["Ok", "Err"]);
     });
 
     it("should process enum with complex variants", () => {
@@ -278,7 +278,7 @@ describe("rust_builder", () => {
         Write(String),
       }`;
 
-      const definitions = processCapture(
+      const definitions = process_capture(
         code,
         "definition.enum",
         "type_identifier",
@@ -287,10 +287,10 @@ describe("rust_builder", () => {
 
       expect(definitions.enums).toHaveLength(1);
       // Members are objects, extract names
-      const memberNames = definitions.enums[0].members.map((m: any) =>
+      const member_names = definitions.enums[0].members.map((m: any) =>
         m.name.split(":").pop()
       );
-      expect(memberNames).toEqual(["Quit", "Move", "Write"]);
+      expect(member_names).toEqual(["Quit", "Move", "Write"]);
     });
   });
 
@@ -300,7 +300,7 @@ describe("rust_builder", () => {
         fn fmt(&self) -> String;
       }`;
 
-      const definitions = processCapture(
+      const definitions = process_capture(
         code,
         "definition.interface",
         "type_identifier",
@@ -317,7 +317,7 @@ describe("rust_builder", () => {
         fn next(&mut self) -> Option<Item>;
       }`;
 
-      const definitions = processCapture(
+      const definitions = process_capture(
         code,
         "definition.interface.generic",
         "type_identifier",
@@ -336,7 +336,7 @@ describe("rust_builder", () => {
         x + y
       }`;
 
-      const definitions = processCapture(
+      const definitions = process_capture(
         code,
         "definition.function",
         "identifier",
@@ -354,7 +354,7 @@ describe("rust_builder", () => {
         Ok("data".to_string())
       }`;
 
-      const definitions = processCapture(
+      const definitions = process_capture(
         code,
         "definition.function.async",
         "identifier",
@@ -373,7 +373,7 @@ describe("rust_builder", () => {
         42
       }`;
 
-      const definitions = processCapture(
+      const definitions = process_capture(
         code,
         "definition.function.const",
         "identifier",
@@ -391,7 +391,7 @@ describe("rust_builder", () => {
         *ptr
       }`;
 
-      const definitions = processCapture(
+      const definitions = process_capture(
         code,
         "definition.function.unsafe",
         "identifier",
@@ -409,7 +409,7 @@ describe("rust_builder", () => {
         a < b
       }`;
 
-      const definitions = processCapture(
+      const definitions = process_capture(
         code,
         "definition.function.generic",
         "identifier",
@@ -434,21 +434,21 @@ describe("rust_builder", () => {
       // Note: In real usage, this would be called with proper impl context
       // For testing, we're isolating the method processing
       const tree = parser.parse(code);
-      const implNode = findNode(tree.rootNode, "impl_item");
-      const methodNode = findNode(implNode, "identifier", "get_value");
+      const impl_node = find_node(tree.rootNode, "impl_item");
+      const method_node = find_node(impl_node, "identifier", "get_value");
 
       const location: Location = {
         file_path: "test.rs" as any,
-        start_line: methodNode.startPosition.row + 1,
-        start_column: methodNode.startPosition.column,
-        end_line: methodNode.endPosition.row + 1,
-        end_column: methodNode.endPosition.column,
+        start_line: method_node.startPosition.row + 1,
+        start_column: method_node.startPosition.column,
+        end_line: method_node.endPosition.row + 1,
+        end_column: method_node.endPosition.column,
       };
 
       const capture: CaptureNode = {
         category: "definition" as any,
         entity: "method" as any,
-        node: methodNode,
+        node: method_node,
         text: "get_value" as any,
         name: "definition.method",
         location,
@@ -506,21 +506,21 @@ describe("rust_builder", () => {
       }`;
 
       const tree = parser.parse(code);
-      const implNode = findNode(tree.rootNode, "impl_item");
-      const methodNode = findNode(implNode, "identifier", "new");
+      const impl_node = find_node(tree.rootNode, "impl_item");
+      const method_node = find_node(impl_node, "identifier", "new");
 
       const location: Location = {
         file_path: "test.rs" as any,
-        start_line: methodNode.startPosition.row + 1,
-        start_column: methodNode.startPosition.column,
-        end_line: methodNode.endPosition.row + 1,
-        end_column: methodNode.endPosition.column,
+        start_line: method_node.startPosition.row + 1,
+        start_column: method_node.startPosition.column,
+        end_line: method_node.endPosition.row + 1,
+        end_column: method_node.endPosition.column,
       };
 
       const capture: CaptureNode = {
         category: "definition" as any,
         entity: "method" as any,
-        node: methodNode,
+        node: method_node,
         text: "new" as any,
         name: "definition.method.associated",
         location,
@@ -573,7 +573,7 @@ describe("rust_builder", () => {
     it("should process let binding", () => {
       const code = "let mut count: usize = 0;";
 
-      const definitions = processCapture(
+      const definitions = process_capture(
         code,
         "definition.variable",
         "identifier",
@@ -588,7 +588,7 @@ describe("rust_builder", () => {
     it("should process const definition", () => {
       const code = "pub const MAX_SIZE: usize = 1024;";
 
-      const definitions = processCapture(
+      const definitions = process_capture(
         code,
         "definition.constant",
         "identifier",
@@ -603,7 +603,7 @@ describe("rust_builder", () => {
     it("should process static variable", () => {
       const code = "static mut COUNTER: AtomicUsize = AtomicUsize::new(0);";
 
-      const definitions = processCapture(
+      const definitions = process_capture(
         code,
         "definition.variable",
         "identifier",
@@ -620,7 +620,7 @@ describe("rust_builder", () => {
     it("should process function parameter", () => {
       const code = "fn process(data: &str) {}";
 
-      const definitions = processCapture(
+      const definitions = process_capture(
         code,
         "definition.parameter",
         "identifier",
@@ -635,7 +635,7 @@ describe("rust_builder", () => {
     it("should process mutable parameter", () => {
       const code = "fn modify(mut value: Vec<u8>) {}";
 
-      const definitions = processCapture(
+      const definitions = process_capture(
         code,
         "definition.parameter",
         "identifier",
@@ -650,26 +650,26 @@ describe("rust_builder", () => {
       const code = "fn method(&self) {}";
 
       const tree = parser.parse(code);
-      const selfNode = findNode(tree.rootNode, "self");
+      const self_node = find_node(tree.rootNode, "self");
 
       const location: Location = {
         file_path: "test.rs" as any,
-        start_line: selfNode.startPosition.row + 1,
-        start_column: selfNode.startPosition.column,
-        end_line: selfNode.endPosition.row + 1,
-        end_column: selfNode.endPosition.column,
+        start_line: self_node.startPosition.row + 1,
+        start_column: self_node.startPosition.column,
+        end_line: self_node.endPosition.row + 1,
+        end_column: self_node.endPosition.column,
       };
 
       const capture: CaptureNode = {
         category: "definition" as any,
         entity: "parameter" as any,
-        node: selfNode,
+        node: self_node,
         text: "self" as any,
         name: "definition.parameter.self",
         location,
       };
 
-      const context = createMockContext();
+      const context = create_mock_context();
       const builder = new DefinitionBuilder(context);
       const processor = RUST_BUILDER_CONFIG.get("definition.parameter.self");
 
@@ -689,7 +689,7 @@ describe("rust_builder", () => {
     it("should process type alias", () => {
       const code = "pub type Result<T> = std::result::Result<T, Error>;";
 
-      const definitions = processCapture(
+      const definitions = process_capture(
         code,
         "definition.type_alias",
         "type_identifier",
@@ -706,7 +706,7 @@ describe("rust_builder", () => {
         // module content
       }`;
 
-      const definitions = processCapture(
+      const definitions = process_capture(
         code,
         "definition.module",
         "identifier",
@@ -726,7 +726,7 @@ describe("rust_builder", () => {
         };
       }`;
 
-      const definitions = processCapture(
+      const definitions = process_capture(
         code,
         "definition.macro",
         "identifier",
@@ -749,28 +749,28 @@ describe("rust_builder", () => {
 
       // Test field processing
       const tree = parser.parse(code);
-      const structNode = findNode(tree.rootNode, "struct_item");
-      const fieldNode = findNode(structNode, "field_identifier", "name");
+      const struct_node = find_node(tree.rootNode, "struct_item");
+      const field_node = find_node(struct_node, "field_identifier", "name");
 
-      if (fieldNode) {
+      if (field_node) {
         const location: Location = {
           file_path: "test.rs" as any,
-          start_line: fieldNode.startPosition.row + 1,
-          start_column: fieldNode.startPosition.column,
-          end_line: fieldNode.endPosition.row + 1,
-          end_column: fieldNode.endPosition.column,
+          start_line: field_node.startPosition.row + 1,
+          start_column: field_node.startPosition.column,
+          end_line: field_node.endPosition.row + 1,
+          end_column: field_node.endPosition.column,
         };
 
         const capture: CaptureNode = {
           category: "definition" as any,
           entity: "field" as any,
-          node: fieldNode,
+          node: field_node,
           text: "name" as any,
           name: "definition.field",
           location,
         };
 
-        const context = createMockContext();
+        const context = create_mock_context();
         const builder = new DefinitionBuilder(context);
 
         // Add struct first
@@ -816,10 +816,10 @@ describe("rust_builder", () => {
       `;
 
       const tree = parser.parse(code);
-      const structNode = findNode(tree.rootNode, "type_identifier", "Database");
+      const struct_node = find_node(tree.rootNode, "type_identifier", "Database");
 
-      if (structNode) {
-        const definitions = processCapture(
+      if (struct_node) {
+        const definitions = process_capture(
           code,
           "definition.class.generic",
           "type_identifier",
@@ -851,7 +851,7 @@ describe("rust_builder", () => {
         }
       `;
 
-      const definitions = processCapture(
+      const definitions = process_capture(
         code,
         "definition.interface",
         "type_identifier",
@@ -866,7 +866,7 @@ describe("rust_builder", () => {
     it("should set is_exported=true for pub fn", () => {
       const code = "pub fn foo() {}";
 
-      const definitions = processCapture(
+      const definitions = process_capture(
         code,
         "definition.function",
         "identifier",
@@ -883,7 +883,7 @@ describe("rust_builder", () => {
     it("should set is_exported=false for private fn", () => {
       const code = "fn foo() {}";
 
-      const definitions = processCapture(
+      const definitions = process_capture(
         code,
         "definition.function",
         "identifier",
@@ -900,7 +900,7 @@ describe("rust_builder", () => {
     it("should set is_exported=true for pub struct", () => {
       const code = "pub struct Bar {}";
 
-      const definitions = processCapture(
+      const definitions = process_capture(
         code,
         "definition.class",
         "type_identifier",
@@ -916,7 +916,7 @@ describe("rust_builder", () => {
     it("should set is_exported=false for private struct", () => {
       const code = "struct Bar {}";
 
-      const definitions = processCapture(
+      const definitions = process_capture(
         code,
         "definition.class",
         "type_identifier",
@@ -932,7 +932,7 @@ describe("rust_builder", () => {
     it("should set is_exported=true for pub(crate) fn", () => {
       const code = "pub(crate) fn foo() {}";
 
-      const definitions = processCapture(
+      const definitions = process_capture(
         code,
         "definition.function",
         "identifier",
@@ -949,7 +949,7 @@ describe("rust_builder", () => {
     it("should set is_exported=true for pub enum", () => {
       const code = "pub enum Status { Ok, Err }";
 
-      const definitions = processCapture(
+      const definitions = process_capture(
         code,
         "definition.enum",
         "type_identifier",
@@ -965,7 +965,7 @@ describe("rust_builder", () => {
     it("should set is_exported=false for private enum", () => {
       const code = "enum Status { Ok, Err }";
 
-      const definitions = processCapture(
+      const definitions = process_capture(
         code,
         "definition.enum",
         "type_identifier",
@@ -981,7 +981,7 @@ describe("rust_builder", () => {
     it("should set is_exported=true for pub const", () => {
       const code = "pub const X: i32 = 1;";
 
-      const definitions = processCapture(
+      const definitions = process_capture(
         code,
         "definition.constant",
         "identifier",
@@ -997,7 +997,7 @@ describe("rust_builder", () => {
     it("should set is_exported=false for private const", () => {
       const code = "const X: i32 = 1;";
 
-      const definitions = processCapture(
+      const definitions = process_capture(
         code,
         "definition.constant",
         "identifier",
@@ -1013,7 +1013,7 @@ describe("rust_builder", () => {
     it("should set is_exported=true for pub(super) struct", () => {
       const code = "pub(super) struct Internal {}";
 
-      const definitions = processCapture(
+      const definitions = process_capture(
         code,
         "definition.class",
         "type_identifier",
@@ -1029,7 +1029,7 @@ describe("rust_builder", () => {
     it("should set is_exported=true for pub type alias", () => {
       const code = "pub type Result<T> = std::result::Result<T, Error>;";
 
-      const definitions = processCapture(
+      const definitions = process_capture(
         code,
         "definition.type",
         "type_identifier",
@@ -1045,7 +1045,7 @@ describe("rust_builder", () => {
     it("should set is_exported=false for private type alias", () => {
       const code = "type Result<T> = std::result::Result<T, Error>;";
 
-      const definitions = processCapture(
+      const definitions = process_capture(
         code,
         "definition.type",
         "type_identifier",
@@ -1061,7 +1061,7 @@ describe("rust_builder", () => {
     it("should set is_exported=true for pub trait", () => {
       const code = "pub trait Display {}";
 
-      const definitions = processCapture(
+      const definitions = process_capture(
         code,
         "definition.interface",
         "type_identifier",
@@ -1077,7 +1077,7 @@ describe("rust_builder", () => {
     it("should set is_exported=false for private trait", () => {
       const code = "trait Display {}";
 
-      const definitions = processCapture(
+      const definitions = process_capture(
         code,
         "definition.interface",
         "type_identifier",
@@ -1093,7 +1093,7 @@ describe("rust_builder", () => {
     it("should set is_exported=true for pub generic struct", () => {
       const code = "pub struct Vec<T> { data: T }";
 
-      const definitions = processCapture(
+      const definitions = process_capture(
         code,
         "definition.class.generic",
         "type_identifier",
@@ -1109,7 +1109,7 @@ describe("rust_builder", () => {
     it("should set is_exported=false for private generic struct", () => {
       const code = "struct Vec<T> { data: T }";
 
-      const definitions = processCapture(
+      const definitions = process_capture(
         code,
         "definition.class.generic",
         "type_identifier",
@@ -1125,7 +1125,7 @@ describe("rust_builder", () => {
     it("should set is_exported=true for pub async fn", () => {
       const code = "pub async fn fetch() {}";
 
-      const definitions = processCapture(
+      const definitions = process_capture(
         code,
         "definition.function.async",
         "identifier",
@@ -1142,7 +1142,7 @@ describe("rust_builder", () => {
     it("should set is_exported=true for pub unsafe fn", () => {
       const code = "pub unsafe fn raw_ptr() {}";
 
-      const definitions = processCapture(
+      const definitions = process_capture(
         code,
         "definition.function.unsafe",
         "identifier",
@@ -1159,7 +1159,7 @@ describe("rust_builder", () => {
     it("should set is_exported=true for pub mod", () => {
       const code = "pub mod utils;";
 
-      const definitions = processCapture(
+      const definitions = process_capture(
         code,
         "definition.module.public",
         "identifier",
@@ -1175,7 +1175,7 @@ describe("rust_builder", () => {
     it("should set is_exported=false for private mod", () => {
       const code = "mod utils;";
 
-      const definitions = processCapture(
+      const definitions = process_capture(
         code,
         "definition.module",
         "identifier",
@@ -1194,7 +1194,7 @@ describe("rust_builder", () => {
   // export bug only affected JavaScript/TypeScript which use AST traversal. No additional tests needed.
 
   describe("Property Type Extraction", () => {
-    async function buildIndexFromCode(code: string) {
+    async function build_index_from_code(code: string) {
       const tree = parser.parse(code);
       const lines = code.split("\n");
       const parsed_file = {
@@ -1215,7 +1215,7 @@ struct Service {
 }
 `;
 
-      const index = await buildIndexFromCode(code);
+      const index = await build_index_from_code(code);
       const service_struct = Array.from(index.classes.values())[0];
 
       expect(service_struct).toBeDefined();
@@ -1239,7 +1239,7 @@ struct Config {
 }
 `;
 
-      const index = await buildIndexFromCode(code);
+      const index = await build_index_from_code(code);
       const config_struct = Array.from(index.classes.values())[0];
 
       expect(config_struct.properties.length).toBe(2);
@@ -1260,7 +1260,7 @@ struct Container<T> {
 }
 `;
 
-      const index = await buildIndexFromCode(code);
+      const index = await build_index_from_code(code);
       const container_struct = Array.from(index.classes.values())[0];
 
       expect(container_struct.properties.length).toBe(3);
@@ -1283,7 +1283,7 @@ struct Wrapper<'a> {
 }
 `;
 
-      const index = await buildIndexFromCode(code);
+      const index = await build_index_from_code(code);
       const wrapper_struct = Array.from(index.classes.values())[0];
 
       expect(wrapper_struct.properties.length).toBe(2);
@@ -1303,7 +1303,7 @@ struct State {
 }
 `;
 
-      const index = await buildIndexFromCode(code);
+      const index = await build_index_from_code(code);
       const state_struct = Array.from(index.classes.values())[0];
 
       expect(state_struct.properties.length).toBe(2);
@@ -1324,7 +1324,7 @@ struct Refs {
 }
 `;
 
-      const index = await buildIndexFromCode(code);
+      const index = await build_index_from_code(code);
       const refs_struct = Array.from(index.classes.values())[0];
 
       expect(refs_struct.properties.length).toBe(3);
@@ -1347,7 +1347,7 @@ struct Complex {
 }
 `;
 
-      const index = await buildIndexFromCode(code);
+      const index = await build_index_from_code(code);
       const complex_struct = Array.from(index.classes.values())[0];
 
       expect(complex_struct.properties.length).toBe(2);
@@ -1367,7 +1367,7 @@ struct Arrays {
 }
 `;
 
-      const index = await buildIndexFromCode(code);
+      const index = await build_index_from_code(code);
       const arrays_struct = Array.from(index.classes.values())[0];
 
       expect(arrays_struct.properties.length).toBe(2);

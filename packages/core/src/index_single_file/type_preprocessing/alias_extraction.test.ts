@@ -21,15 +21,15 @@ import { extract_type_alias_metadata } from "./alias_extraction";
 // Test Helpers
 // ============================================================================
 
-function createParsedFile(
+function create_parsed_file(
   code: string,
-  filePath: FilePath,
+  file_path: FilePath,
   tree: Parser.Tree,
   language: Language
 ): ParsedFile {
   const lines = code.split("\n");
   return {
-    file_path: filePath,
+    file_path: file_path,
     file_lines: lines.length,
     file_end_column: lines[lines.length - 1]?.length || 0,
     tree,
@@ -56,13 +56,13 @@ describe("Type Alias Extraction - JavaScript", () => {
     `;
 
     const tree = parser.parse(code);
-    const parsedFile = createParsedFile(
+    const parsed_file = create_parsed_file(
       code,
       "test.js" as FilePath,
       tree,
       "javascript"
     );
-    const index = build_semantic_index(parsedFile, tree, "javascript");
+    const index = build_semantic_index(parsed_file, tree, "javascript");
 
     const metadata = extract_type_alias_metadata(index.types);
 
@@ -77,13 +77,13 @@ describe("Type Alias Extraction - JavaScript", () => {
     `;
 
     const tree = parser.parse(code);
-    const parsedFile = createParsedFile(
+    const parsed_file = create_parsed_file(
       code,
       "test.js" as FilePath,
       tree,
       "javascript"
     );
-    const index = build_semantic_index(parsedFile, tree, "javascript");
+    const index = build_semantic_index(parsed_file, tree, "javascript");
 
     const metadata = extract_type_alias_metadata(index.types);
 
@@ -109,13 +109,13 @@ describe("Type Alias Extraction - TypeScript", () => {
     `;
 
     const tree = parser.parse(code);
-    const parsedFile = createParsedFile(
+    const parsed_file = create_parsed_file(
       code,
       "test.ts" as FilePath,
       tree,
       "typescript"
     );
-    const index = build_semantic_index(parsedFile, tree, "typescript");
+    const index = build_semantic_index(parsed_file, tree, "typescript");
 
     const metadata = extract_type_alias_metadata(index.types);
 
@@ -130,13 +130,13 @@ describe("Type Alias Extraction - TypeScript", () => {
     `;
 
     const tree = parser.parse(code);
-    const parsedFile = createParsedFile(
+    const parsed_file = create_parsed_file(
       code,
       "test.ts" as FilePath,
       tree,
       "typescript"
     );
-    const index = build_semantic_index(parsedFile, tree, "typescript");
+    const index = build_semantic_index(parsed_file, tree, "typescript");
 
     const metadata = extract_type_alias_metadata(index.types);
 
@@ -153,13 +153,13 @@ describe("Type Alias Extraction - TypeScript", () => {
     `;
 
     const tree = parser.parse(code);
-    const parsedFile = createParsedFile(
+    const parsed_file = create_parsed_file(
       code,
       "test.ts" as FilePath,
       tree,
       "typescript"
     );
-    const index = build_semantic_index(parsedFile, tree, "typescript");
+    const index = build_semantic_index(parsed_file, tree, "typescript");
 
     const metadata = extract_type_alias_metadata(index.types);
 
@@ -179,13 +179,13 @@ describe("Type Alias Extraction - TypeScript", () => {
     `;
 
     const tree = parser.parse(code);
-    const parsedFile = createParsedFile(
+    const parsed_file = create_parsed_file(
       code,
       "test.ts" as FilePath,
       tree,
       "typescript"
     );
-    const index = build_semantic_index(parsedFile, tree, "typescript");
+    const index = build_semantic_index(parsed_file, tree, "typescript");
 
     const metadata = extract_type_alias_metadata(index.types);
 
@@ -204,13 +204,13 @@ describe("Type Alias Extraction - TypeScript", () => {
     `;
 
     const tree = parser.parse(code);
-    const parsedFile = createParsedFile(
+    const parsed_file = create_parsed_file(
       code,
       "test.ts" as FilePath,
       tree,
       "typescript"
     );
-    const index = build_semantic_index(parsedFile, tree, "typescript");
+    const index = build_semantic_index(parsed_file, tree, "typescript");
 
     const metadata = extract_type_alias_metadata(index.types);
 
@@ -227,13 +227,13 @@ describe("Type Alias Extraction - TypeScript", () => {
     `;
 
     const tree = parser.parse(code);
-    const parsedFile = createParsedFile(
+    const parsed_file = create_parsed_file(
       code,
       "test.ts" as FilePath,
       tree,
       "typescript"
     );
-    const index = build_semantic_index(parsedFile, tree, "typescript");
+    const index = build_semantic_index(parsed_file, tree, "typescript");
 
     const metadata = extract_type_alias_metadata(index.types);
 
@@ -266,13 +266,13 @@ UserId: TypeAlias = str
     `;
 
     const tree = parser.parse(code);
-    const parsedFile = createParsedFile(
+    const parsed_file = create_parsed_file(
       code,
       "test.py" as FilePath,
       tree,
       "python"
     );
-    const index = build_semantic_index(parsedFile, tree, "python");
+    const index = build_semantic_index(parsed_file, tree, "python");
 
     const metadata = extract_type_alias_metadata(index.types);
 
@@ -287,13 +287,13 @@ Vector = list[float]
     `;
 
     const tree = parser.parse(code);
-    const parsedFile = createParsedFile(
+    const parsed_file = create_parsed_file(
       code,
       "test.py" as FilePath,
       tree,
       "python"
     );
-    const index = build_semantic_index(parsedFile, tree, "python");
+    const index = build_semantic_index(parsed_file, tree, "python");
 
     const metadata = extract_type_alias_metadata(index.types);
 
@@ -310,13 +310,13 @@ x = 5
     `;
 
     const tree = parser.parse(code);
-    const parsedFile = createParsedFile(
+    const parsed_file = create_parsed_file(
       code,
       "test.py" as FilePath,
       tree,
       "python"
     );
-    const index = build_semantic_index(parsedFile, tree, "python");
+    const index = build_semantic_index(parsed_file, tree, "python");
 
     const metadata = extract_type_alias_metadata(index.types);
 
@@ -342,13 +342,13 @@ type Kilometers = i32;
     `;
 
     const tree = parser.parse(code);
-    const parsedFile = createParsedFile(
+    const parsed_file = create_parsed_file(
       code,
       "test.rs" as FilePath,
       tree,
       "rust"
     );
-    const index = build_semantic_index(parsedFile, tree, "rust");
+    const index = build_semantic_index(parsed_file, tree, "rust");
 
     const metadata = extract_type_alias_metadata(index.types);
 
@@ -363,13 +363,13 @@ type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
     `;
 
     const tree = parser.parse(code);
-    const parsedFile = createParsedFile(
+    const parsed_file = create_parsed_file(
       code,
       "test.rs" as FilePath,
       tree,
       "rust"
     );
-    const index = build_semantic_index(parsedFile, tree, "rust");
+    const index = build_semantic_index(parsed_file, tree, "rust");
 
     const metadata = extract_type_alias_metadata(index.types);
 
@@ -390,13 +390,13 @@ type Miles = f64;
     `;
 
     const tree = parser.parse(code);
-    const parsedFile = createParsedFile(
+    const parsed_file = create_parsed_file(
       code,
       "test.rs" as FilePath,
       tree,
       "rust"
     );
-    const index = build_semantic_index(parsedFile, tree, "rust");
+    const index = build_semantic_index(parsed_file, tree, "rust");
 
     const metadata = extract_type_alias_metadata(index.types);
 
@@ -412,13 +412,13 @@ pub type BoxedError = Box<dyn std::error::Error>;
     `;
 
     const tree = parser.parse(code);
-    const parsedFile = createParsedFile(
+    const parsed_file = create_parsed_file(
       code,
       "test.rs" as FilePath,
       tree,
       "rust"
     );
-    const index = build_semantic_index(parsedFile, tree, "rust");
+    const index = build_semantic_index(parsed_file, tree, "rust");
 
     const metadata = extract_type_alias_metadata(index.types);
 
@@ -448,13 +448,13 @@ describe("Type Alias Extraction - Edge Cases", () => {
     `;
 
     const tree = parser.parse(code);
-    const parsedFile = createParsedFile(
+    const parsed_file = create_parsed_file(
       code,
       "test.ts" as FilePath,
       tree,
       "typescript"
     );
-    const index = build_semantic_index(parsedFile, tree, "typescript");
+    const index = build_semantic_index(parsed_file, tree, "typescript");
 
     const metadata = extract_type_alias_metadata(index.types);
 
@@ -467,13 +467,13 @@ describe("Type Alias Extraction - Edge Cases", () => {
     `;
 
     const tree = parser.parse(code);
-    const parsedFile = createParsedFile(
+    const parsed_file = create_parsed_file(
       code,
       "test.ts" as FilePath,
       tree,
       "typescript"
     );
-    const index = build_semantic_index(parsedFile, tree, "typescript");
+    const index = build_semantic_index(parsed_file, tree, "typescript");
 
     const metadata = extract_type_alias_metadata(index.types);
 
@@ -493,13 +493,13 @@ describe("Type Alias Extraction - Edge Cases", () => {
     `;
 
     const tree = parser.parse(code);
-    const parsedFile = createParsedFile(
+    const parsed_file = create_parsed_file(
       code,
       "test.ts" as FilePath,
       tree,
       "typescript"
     );
-    const index = build_semantic_index(parsedFile, tree, "typescript");
+    const index = build_semantic_index(parsed_file, tree, "typescript");
 
     const metadata = extract_type_alias_metadata(index.types);
 

@@ -14,8 +14,8 @@ export interface Admin extends User {
 // Generic interface
 export interface Container<T> {
   value: T;
-  getValue(): T;
-  setValue(value: T): void;
+  get_value(): T;
+  set_value(value: T): void;
 }
 
 // Interface with index signature
@@ -37,8 +37,8 @@ export class UserImpl implements User {
 
 // Class implementing multiple interfaces
 export interface Timestamped {
-  createdAt: Date;
-  updatedAt: Date;
+  created_at: Date;
+  updated_at: Date;
 }
 
 export class AdminUser implements Admin, Timestamped {
@@ -47,14 +47,14 @@ export class AdminUser implements Admin, Timestamped {
   email?: string;
   permissions: string[];
   readonly role: "admin" = "admin";
-  createdAt: Date;
-  updatedAt: Date;
+  created_at: Date;
+  updated_at: Date;
 
   constructor(id: number, name: string, permissions: string[]) {
     this.id = id;
     this.name = name;
     this.permissions = permissions;
-    this.createdAt = new Date();
-    this.updatedAt = new Date();
+    this.created_at = new Date();
+    this.updated_at = new Date();
   }
 }

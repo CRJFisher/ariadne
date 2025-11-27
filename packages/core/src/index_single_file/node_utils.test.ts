@@ -8,15 +8,15 @@ import type { FilePath } from "@ariadnejs/types";
 import type { SyntaxNode, Point } from "tree-sitter";
 
 // Mock SyntaxNode for testing
-function createMockNode(
-  startRow: number,
-  startColumn: number,
-  endRow: number,
-  endColumn: number,
+function create_mock_node(
+  start_row: number,
+  start_column: number,
+  end_row: number,
+  end_column: number,
 ): SyntaxNode {
   return {
-    startPosition: { row: startRow, column: startColumn },
-    endPosition: { row: endRow, column: endColumn },
+    startPosition: { row: start_row, column: start_column },
+    endPosition: { row: end_row, column: end_column },
   } as SyntaxNode;
 }
 
@@ -26,7 +26,7 @@ describe("node_utils", () => {
   describe("node_to_location", () => {
     it("should convert tree-sitter node positions to 1-indexed locations", () => {
       // Tree-sitter uses 0-indexed positions
-      const node = createMockNode(0, 0, 2, 10);
+      const node = create_mock_node(0, 0, 2, 10);
 
       const location = node_to_location(node, test_file);
 
@@ -41,7 +41,7 @@ describe("node_utils", () => {
 
     it("should handle multi-line nodes correctly", () => {
       // Node spanning from line 5, column 10 to line 7, column 5
-      const node = createMockNode(4, 9, 6, 4);
+      const node = create_mock_node(4, 9, 6, 4);
 
       const location = node_to_location(node, test_file);
 
@@ -56,7 +56,7 @@ describe("node_utils", () => {
 
     it("should handle single character nodes", () => {
       // Single character at position (0, 5)
-      const node = createMockNode(0, 5, 0, 6);
+      const node = create_mock_node(0, 5, 0, 6);
 
       const location = node_to_location(node, test_file);
 
@@ -71,7 +71,7 @@ describe("node_utils", () => {
 
     it("should preserve file path from parameter", () => {
       const different_file: FilePath = "src/components/Button.tsx" as FilePath;
-      const node = createMockNode(10, 15, 12, 20);
+      const node = create_mock_node(10, 15, 12, 20);
 
       const location = node_to_location(node, different_file);
 
@@ -81,7 +81,7 @@ describe("node_utils", () => {
 
   describe("edge cases", () => {
     it("should handle very large line numbers", () => {
-      const node = createMockNode(999999, 0, 1000000, 50);
+      const node = create_mock_node(999999, 0, 1000000, 50);
 
       const location = node_to_location(node, test_file);
 

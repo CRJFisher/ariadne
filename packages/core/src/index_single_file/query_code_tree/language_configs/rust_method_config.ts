@@ -28,10 +28,10 @@ export const RUST_METHOD_CONFIG: LanguageBuilderConfig = new Map([
       ) => {
         const method_id = create_method_id(capture);
         const impl_info = find_containing_impl(capture);
-        const returnType = extract_return_type(
+        const return_type = extract_return_type(
           capture.node.parent || capture.node
         );
-        const isStatic = is_associated_function(
+        const is_static = is_associated_function(
           capture.node.parent || capture.node
         );
         if (impl_info?.struct_name) {
@@ -45,8 +45,8 @@ export const RUST_METHOD_CONFIG: LanguageBuilderConfig = new Map([
                 name: capture.text,
                 location: capture.location,
                 scope_id: context.get_scope_id(capture.location),
-                return_type: returnType,
-                static: isStatic || undefined,
+                return_type: return_type,
+                static: is_static || undefined,
               },
               capture
             );
@@ -66,7 +66,7 @@ export const RUST_METHOD_CONFIG: LanguageBuilderConfig = new Map([
       ) => {
         const method_id = create_method_id(capture);
         const impl_info = find_containing_impl(capture);
-        const returnType = extract_return_type(
+        const return_type = extract_return_type(
           capture.node.parent || capture.node
         );
         if (impl_info?.struct_name) {
@@ -79,7 +79,7 @@ export const RUST_METHOD_CONFIG: LanguageBuilderConfig = new Map([
                 name: capture.text,
                 location: capture.location,
                 scope_id: context.get_scope_id(capture.location),
-                return_type: returnType,
+                return_type: return_type,
                 static: true,
               },
               capture
@@ -100,7 +100,7 @@ export const RUST_METHOD_CONFIG: LanguageBuilderConfig = new Map([
       ) => {
         const method_id = create_method_id(capture);
         const trait_name = find_containing_trait(capture);
-        const returnType = extract_return_type(
+        const return_type = extract_return_type(
           capture.node.parent || capture.node
         );
 
@@ -115,7 +115,7 @@ export const RUST_METHOD_CONFIG: LanguageBuilderConfig = new Map([
                 name: capture.text,
                 location: capture.location,
                 scope_id: context.get_scope_id(capture.location),
-                return_type: returnType,
+                return_type: return_type,
               },
               capture
             );
@@ -135,7 +135,7 @@ export const RUST_METHOD_CONFIG: LanguageBuilderConfig = new Map([
       ) => {
         const method_id = create_method_id(capture);
         const impl_info = find_containing_impl(capture);
-        const returnType = extract_return_type(
+        const return_type = extract_return_type(
           capture.node.parent || capture.node
         );
 
@@ -149,7 +149,7 @@ export const RUST_METHOD_CONFIG: LanguageBuilderConfig = new Map([
                 name: capture.text,
                 location: capture.location,
                 scope_id: context.get_scope_id(capture.location),
-                return_type: returnType,
+                return_type: return_type,
                 async: true,
               },
               capture
@@ -170,7 +170,7 @@ export const RUST_METHOD_CONFIG: LanguageBuilderConfig = new Map([
       ) => {
         const method_id = create_method_id(capture);
         const impl_info = find_containing_impl(capture);
-        const returnType = extract_return_type(
+        const return_type = extract_return_type(
           capture.node.parent || capture.node
         );
 
@@ -184,7 +184,7 @@ export const RUST_METHOD_CONFIG: LanguageBuilderConfig = new Map([
                 name: capture.text as SymbolName,
                 location: capture.location,
                 scope_id: context.get_scope_id(capture.location),
-                return_type: returnType,
+                return_type: return_type,
                 static: true,
               },
               capture

@@ -8,7 +8,9 @@ import * as path from 'path';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
 
+// eslint-disable-next-line @typescript-eslint/naming-convention
 const __filename_esm = fileURLToPath(import.meta.url);
+// eslint-disable-next-line @typescript-eslint/naming-convention
 const __dirname_esm = dirname(__filename_esm);
 
 export interface CaptureInfo {

@@ -72,27 +72,27 @@ function extract_rust_type(node: SyntaxNode | null | undefined): string | undefi
 
   // For function parameters with types
   if (node.type === "parameter") {
-    const typeNode = node.childForFieldName("type");
-    if (typeNode) {
-      return typeNode.text;
+    const type_node = node.childForFieldName("type");
+    if (type_node) {
+      return type_node.text;
     }
   }
 
   // For function return types - check if this is a function_item being passed
   if (node.type === "function_item" || node.type === "function_signature_item") {
-    const returnTypeNode = node.childForFieldName("return_type");
-    if (returnTypeNode) {
+    const return_type_node = node.childForFieldName("return_type");
+    if (return_type_node) {
       // In Rust tree-sitter, return_type is just the type without "->"
-      return returnTypeNode.text;
+      return return_type_node.text;
     }
   }
 
   // For let bindings with type annotations
   if (node.type === "let_declaration") {
     // Look for type child
-    const typeNode = node.childForFieldName("type");
-    if (typeNode) {
-      return typeNode.text;
+    const type_node = node.childForFieldName("type");
+    if (type_node) {
+      return type_node.text;
     }
   }
 
@@ -101,9 +101,9 @@ function extract_rust_type(node: SyntaxNode | null | undefined): string | undefi
   if (node.type === "identifier" && node.parent) {
     // Check if parent is let_declaration
     if (node.parent.type === "let_declaration") {
-      const typeNode = node.parent.childForFieldName("type");
-      if (typeNode) {
-        return typeNode.text;
+      const type_node = node.parent.childForFieldName("type");
+      if (type_node) {
+        return type_node.text;
       }
     }
   }
@@ -659,12 +659,12 @@ export const RUST_METADATA_EXTRACTORS: MetadataExtractors = {
       // Match pattern like Type<Args> or Type::<Args> (turbofish)
       const match = text.match(/(?:::)?<([^>]+)>/);
       if (match) {
-        const typeArgString = match[1];
+        const type_arg_string = match[1];
         // Handle nested brackets carefully
         const parts: string[] = [];
         let current = "";
         let depth = 0;
-        for (const char of typeArgString) {
+        for (const char of type_arg_string) {
           if (char === "<") depth++;
           else if (char === ">") depth--;
           else if (char === "," && depth === 0) {
@@ -710,26 +710,26 @@ export const RUST_METADATA_EXTRACTORS: MetadataExtractors = {
   is_method_call(node: SyntaxNode): boolean {
     // Direct call_expression check
     if (node.type === "call_expression") {
-      const functionNode = node.childForFieldName("function");
-      if (functionNode && functionNode.type === "field_expression") {
+      const function_node = node.childForFieldName("function");
+      if (function_node && function_node.type === "field_expression") {
         return true;
       }
     }
 
     // field_expression in method call (captured on the field expression itself)
     if (node.type === "field_expression") {
-      const callExpr = node.parent;
-      if (callExpr && callExpr.type === "call_expression") {
+      const call_expr = node.parent;
+      if (call_expr && call_expr.type === "call_expression") {
         return true;
       }
     }
 
     // field_identifier in method call (captured on method name)
     if (node.type === "field_identifier") {
-      const fieldExpr = node.parent;
-      if (fieldExpr && fieldExpr.type === "field_expression") {
-        const callExpr = fieldExpr.parent;
-        if (callExpr && callExpr.type === "call_expression") {
+      const field_expr = node.parent;
+      if (field_expr && field_expr.type === "field_expression") {
+        const call_expr = field_expr.parent;
+        if (call_expr && call_expr.type === "call_expression") {
           return true;
         }
       }
@@ -750,32 +750,32 @@ export const RUST_METADATA_EXTRACTORS: MetadataExtractors = {
   extract_call_name(node: SyntaxNode): SymbolName | undefined {
     // If the node is a field_expression directly (captured from the query)
     if (node.type === "field_expression") {
-      const fieldNode = node.childForFieldName("field");
-      if (fieldNode) {
-        return fieldNode.text as SymbolName;
+      const field_node = node.childForFieldName("field");
+      if (field_node) {
+        return field_node.text as SymbolName;
       }
     }
 
     if (node.type === "call_expression") {
-      const functionNode = node.childForFieldName("function");
+      const function_node = node.childForFieldName("function");
 
-      if (functionNode) {
+      if (function_node) {
         // Method call: extract field name from field_expression
-        if (functionNode.type === "field_expression") {
-          const fieldNode = functionNode.childForFieldName("field");
-          if (fieldNode) {
-            return fieldNode.text as SymbolName;
+        if (function_node.type === "field_expression") {
+          const field_node = function_node.childForFieldName("field");
+          if (field_node) {
+            return field_node.text as SymbolName;
           }
         }
         // Function call: extract identifier or scoped identifier
-        else if (functionNode.type === "identifier") {
-          return functionNode.text as SymbolName;
+        else if (function_node.type === "identifier") {
+          return function_node.text as SymbolName;
         }
         // Handle scoped identifiers like std::println
-        else if (functionNode.type === "scoped_identifier") {
-          const nameNode = functionNode.childForFieldName("name");
-          if (nameNode) {
-            return nameNode.text as SymbolName;
+        else if (function_node.type === "scoped_identifier") {
+          const name_node = function_node.childForFieldName("name");
+          if (name_node) {
+            return name_node.text as SymbolName;
           }
         }
       }

@@ -32,41 +32,41 @@ import { node_to_location } from "../../node_utils";
  */
 function extract_jsdoc_type(node: SyntaxNode): string | undefined {
   // Look for JSDoc comment in multiple locations
-  let statementNode: SyntaxNode | null = null;
+  let statement_node: SyntaxNode | null = null;
 
   // For variable_declarator, get the parent statement
   if (node.type === "variable_declarator") {
     // variable_declarator -> lexical_declaration
-    statementNode = node.parent;
+    statement_node = node.parent;
   } else if (node.type === "function_declaration") {
-    statementNode = node;
+    statement_node = node;
   } else {
-    statementNode = node;
+    statement_node = node;
   }
 
   // Check for preceding comment
-  if (statementNode) {
+  if (statement_node) {
     // Get index of statement in parent
-    const parent = statementNode.parent;
+    const parent = statement_node.parent;
     if (parent) {
       for (let i = 0; i < parent.childCount; i++) {
         const child = parent.child(i);
-        if (child === statementNode && i > 0) {
+        if (child === statement_node && i > 0) {
           // Check previous sibling
-          const prevChild = parent.child(i - 1);
-          if (prevChild && prevChild.type === "comment") {
-            const text = prevChild.text;
+          const prev_child = parent.child(i - 1);
+          if (prev_child && prev_child.type === "comment") {
+            const text = prev_child.text;
 
             // Match @type {TypeName}
-            const typeMatch = text.match(/@type\s*\{([^}]+)\}/);
-            if (typeMatch) {
-              return typeMatch[1].trim();
+            const type_match = text.match(/@type\s*\{([^}]+)\}/);
+            if (type_match) {
+              return type_match[1].trim();
             }
 
             // Match @returns {TypeName}
-            const returnsMatch = text.match(/@returns?\s*\{([^}]+)\}/);
-            if (returnsMatch) {
-              return returnsMatch[1].trim();
+            const returns_match = text.match(/@returns?\s*\{([^}]+)\}/);
+            if (returns_match) {
+              return returns_match[1].trim();
             }
           }
         }
@@ -82,39 +82,39 @@ function extract_jsdoc_type(node: SyntaxNode): string | undefined {
  */
 function extract_typescript_type(node: SyntaxNode): string | undefined {
   // For TypeScript, look for type_annotation child
-  const typeAnnotation = node.childForFieldName("type");
-  if (typeAnnotation) {
+  const type_annotation = node.childForFieldName("type");
+  if (type_annotation) {
     // TypeScript type_annotation nodes include the ':' character
     // We need to extract the actual type part after the ':'
-    if (typeAnnotation.type === "type_annotation") {
+    if (type_annotation.type === "type_annotation") {
       // Skip the ':' and get the actual type node
-      for (let i = 0; i < typeAnnotation.childCount; i++) {
-        const child = typeAnnotation.child(i);
+      for (let i = 0; i < type_annotation.childCount; i++) {
+        const child = type_annotation.child(i);
         if (child && child.type !== ":") {
           return child.text;
         }
       }
       // Fallback: remove leading ':' and whitespace
-      return typeAnnotation.text.replace(/^:\s*/, "");
+      return type_annotation.text.replace(/^:\s*/, "");
     }
 
     // Handle simple type identifiers
-    if (typeAnnotation.type === "type_identifier") {
-      return typeAnnotation.text;
+    if (type_annotation.type === "type_identifier") {
+      return type_annotation.text;
     }
 
     // Handle predefined types (string, number, boolean, etc.)
-    if (typeAnnotation.type === "predefined_type") {
-      return typeAnnotation.text;
+    if (type_annotation.type === "predefined_type") {
+      return type_annotation.text;
     }
 
     // Handle generic types like Array<T>
-    if (typeAnnotation.type === "generic_type") {
-      return typeAnnotation.text;
+    if (type_annotation.type === "generic_type") {
+      return type_annotation.text;
     }
 
     // Handle union types, intersection types, etc.
-    return typeAnnotation.text;
+    return type_annotation.text;
   }
 
   return undefined;
@@ -150,12 +150,12 @@ export const JAVASCRIPT_METADATA_EXTRACTORS: MetadataExtractors = {
     const type_id = type_symbol(type_name, location);
 
     // Check if this is a declared TypeScript type (has type_annotation child)
-    const hasTypeAnnotation = node.childForFieldName("type")?.type === "type_annotation";
+    const has_type_annotation = node.childForFieldName("type")?.type === "type_annotation";
 
     return {
       type_id,
       type_name: type_name as SymbolName,
-      certainty: hasTypeAnnotation ? "declared" : "inferred",
+      certainty: has_type_annotation ? "declared" : "inferred",
       is_nullable: type_name.includes("null") || type_name.includes("undefined"),
     };
   },
@@ -497,11 +497,11 @@ export const JAVASCRIPT_METADATA_EXTRACTORS: MetadataExtractors = {
 
     // Handle TypeScript generic types
     if (node.type === "generic_type" || node.type === "type_identifier") {
-      const typeArgs = node.childForFieldName("type_arguments");
-      if (typeArgs) {
+      const type_args = node.childForFieldName("type_arguments");
+      if (type_args) {
         // Iterate through type argument children
-        for (let i = 0; i < typeArgs.childCount; i++) {
-          const child = typeArgs.child(i);
+        for (let i = 0; i < type_args.childCount; i++) {
+          const child = type_args.child(i);
           if (child && child.type !== "," && child.type !== "<" && child.type !== ">") {
             args.push(child.text);
           }
@@ -511,11 +511,11 @@ export const JAVASCRIPT_METADATA_EXTRACTORS: MetadataExtractors = {
 
     // Handle JSDoc generics (Array.<Type> or Object.<Key, Value>)
     const text = node.text;
-    const jsdocMatch = text.match(/[A-Z]\w*\.<([^>]+)>/);
-    if (jsdocMatch) {
-      const typeArgString = jsdocMatch[1];
-      const typeArgs = typeArgString.split(",").map(arg => arg.trim());
-      args.push(...typeArgs);
+    const jsdoc_match = text.match(/[A-Z]\w*\.<([^>]+)>/);
+    if (jsdoc_match) {
+      const type_arg_string = jsdoc_match[1];
+      const type_args = type_arg_string.split(",").map(arg => arg.trim());
+      args.push(...type_args);
     }
 
     return args.length > 0 ? args : undefined;
@@ -615,8 +615,8 @@ export const JAVASCRIPT_METADATA_EXTRACTORS: MetadataExtractors = {
    */
   is_method_call(node: SyntaxNode): boolean {
     if (node.type === "call_expression") {
-      const functionNode = node.childForFieldName("function");
-      if (functionNode && functionNode.type === "member_expression") {
+      const function_node = node.childForFieldName("function");
+      if (function_node && function_node.type === "member_expression") {
         return true;
       }
     }
@@ -634,19 +634,19 @@ export const JAVASCRIPT_METADATA_EXTRACTORS: MetadataExtractors = {
    */
   extract_call_name(node: SyntaxNode): SymbolName | undefined {
     if (node.type === "call_expression") {
-      const functionNode = node.childForFieldName("function");
+      const function_node = node.childForFieldName("function");
 
-      if (functionNode) {
+      if (function_node) {
         // Method call: extract property name from member_expression
-        if (functionNode.type === "member_expression") {
-          const propertyNode = functionNode.childForFieldName("property");
-          if (propertyNode) {
-            return propertyNode.text as SymbolName;
+        if (function_node.type === "member_expression") {
+          const property_node = function_node.childForFieldName("property");
+          if (property_node) {
+            return property_node.text as SymbolName;
           }
         }
         // Function call: extract identifier
-        else if (functionNode.type === "identifier") {
-          return functionNode.text as SymbolName;
+        else if (function_node.type === "identifier") {
+          return function_node.text as SymbolName;
         }
       }
     }

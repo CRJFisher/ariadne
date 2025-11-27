@@ -15,15 +15,15 @@ class Person {
     this.id = Date.now();
   }
 
-  public getAge(): number {
+  public get_age(): number {
     return this.age;
   }
 
-  private incrementAge(): void {
+  private increment_age(): void {
     this.age++;
   }
 
-  protected getAddress(): string {
+  protected get_address(): string {
     return this.address;
   }
 }
@@ -34,17 +34,17 @@ class SimpleEmployee {
     public name: string,
     private salary: number,
     protected department: string,
-    readonly employeeId: number,
+    readonly employee_id: number,
   ) {}
 
-  getSalary(): number {
+  get_salary(): number {
     return this.salary;
   }
 }
 
 // Abstract class
 abstract class Animal {
-  abstract makeSound(): string;
+  abstract make_sound(): string;
 
   move(distance: number = 0): void {
     console.log(`Moved ${distance} meters`);
@@ -52,15 +52,16 @@ abstract class Animal {
 }
 
 class Dog extends Animal {
-  makeSound(): string {
+  make_sound(): string {
     return "Woof!";
   }
 }
 
 // Class with static members
 class MathUtils {
+  // eslint-disable-next-line @typescript-eslint/naming-convention
   static readonly PI: number = 3.14159;
-  static circleArea(radius: number): number {
+  static circle_area(radius: number): number {
     return this.PI * radius * radius;
   }
 }
@@ -90,6 +91,7 @@ function sealed(constructor: Function) {
   Object.seal(constructor.prototype);
 }
 
+// eslint-disable-next-line @typescript-eslint/naming-convention
 function log(_target: any, _propertyName: string, _descriptor: PropertyDescriptor): void {
   // Simple log decorator for testing
 }

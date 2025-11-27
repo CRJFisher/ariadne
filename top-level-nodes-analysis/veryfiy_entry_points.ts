@@ -16,7 +16,9 @@ import { fileURLToPath } from "url";
 import { dirname } from "path";
 import { run_query } from "./utils.js";
 
+// eslint-disable-next-line @typescript-eslint/naming-convention
 const __filename = fileURLToPath(import.meta.url);
+// eslint-disable-next-line @typescript-eslint/naming-convention
 const __dirname = dirname(__filename);
 
 interface FunctionEntry {

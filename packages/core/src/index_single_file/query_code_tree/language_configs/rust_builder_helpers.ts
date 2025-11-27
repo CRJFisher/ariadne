@@ -164,33 +164,33 @@ export function create_type_alias_id(capture: CaptureNode): SymbolId {
  * Walks up the parent tree for items like fields in structs.
  */
 export function has_pub_modifier(node: SyntaxNode): boolean {
-  let testNode = node;
+  let test_node = node;
 
-  while (testNode) {
+  while (test_node) {
     // Check if this node has a visibility_modifier child
-    const visibilityNode = testNode.children?.find(
+    const visibility_node = test_node.children?.find(
       (child) => child.type === "visibility_modifier"
     );
 
-    if (visibilityNode) {
+    if (visibility_node) {
       // Any form of pub (pub, pub(crate), pub(super), pub(in path)) counts as exported
-      return visibilityNode.text.startsWith("pub");
+      return visibility_node.text.startsWith("pub");
     }
 
     // Walk up the parent chain for fields/methods that might inherit visibility context
     // Only walk up for specific item types to match extract_visibility behavior
     if (
-      testNode.parent &&
-      (testNode.parent.type === "struct_item" ||
-        testNode.parent.type === "enum_item" ||
-        testNode.parent.type === "function_item" ||
-        testNode.parent.type === "const_item" ||
-        testNode.parent.type === "static_item" ||
-        testNode.parent.type === "trait_item" ||
-        testNode.parent.type === "type_item" ||
-        testNode.parent.type === "mod_item")
+      test_node.parent &&
+      (test_node.parent.type === "struct_item" ||
+        test_node.parent.type === "enum_item" ||
+        test_node.parent.type === "function_item" ||
+        test_node.parent.type === "const_item" ||
+        test_node.parent.type === "static_item" ||
+        test_node.parent.type === "trait_item" ||
+        test_node.parent.type === "type_item" ||
+        test_node.parent.type === "mod_item")
     ) {
-      testNode = testNode.parent;
+      test_node = test_node.parent;
     } else {
       break;
     }
@@ -217,10 +217,10 @@ export function extract_export_info(node: SyntaxNode): {
 
 export function extract_generic_parameters(node: SyntaxNode): SymbolName[] {
   const generics: SymbolName[] = [];
-  const typeParams = node.childForFieldName?.("type_parameters");
+  const type_params = node.childForFieldName?.("type_parameters");
 
-  if (typeParams) {
-    for (const child of typeParams.children || []) {
+  if (type_params) {
+    for (const child of type_params.children || []) {
       if (child.type === "type_identifier" || child.type === "lifetime") {
         generics.push(child.text as SymbolName);
       } else if (child.type === "constrained_type_parameter") {
@@ -242,10 +242,10 @@ export function extract_generic_parameters(node: SyntaxNode): SymbolName[] {
 
 export function extract_lifetime_parameters(node: SyntaxNode): SymbolName[] {
   const lifetimes: SymbolName[] = [];
-  const typeParams = node.childForFieldName?.("type_parameters");
+  const type_params = node.childForFieldName?.("type_parameters");
 
-  if (typeParams) {
-    for (const child of typeParams.children || []) {
+  if (type_params) {
+    for (const child of type_params.children || []) {
       if (child.type === "lifetime") {
         lifetimes.push(child.text as SymbolName);
       }
@@ -257,10 +257,10 @@ export function extract_lifetime_parameters(node: SyntaxNode): SymbolName[] {
 
 export function extract_trait_bounds(node: SyntaxNode): SymbolName[] {
   const bounds: SymbolName[] = [];
-  const whereClause = node.childForFieldName?.("where_clause");
+  const where_clause = node.childForFieldName?.("where_clause");
 
-  if (whereClause) {
-    for (const child of whereClause.children || []) {
+  if (where_clause) {
+    for (const child of where_clause.children || []) {
       if (child.type === "where_predicate") {
         const bound = child.childForFieldName?.("bounds");
         if (bound) {
@@ -271,9 +271,9 @@ export function extract_trait_bounds(node: SyntaxNode): SymbolName[] {
   }
 
   // Also check inline bounds in type parameters
-  const typeParams = node.childForFieldName?.("type_parameters");
-  if (typeParams) {
-    for (const child of typeParams.children || []) {
+  const type_params = node.childForFieldName?.("type_parameters");
+  if (type_params) {
+    for (const child of type_params.children || []) {
       if (child.type === "constrained_type_parameter") {
         const bound = child.childForFieldName?.("bounds");
         if (bound) {
@@ -305,9 +305,9 @@ export function extract_impl_type(node: SyntaxNode): SymbolName | undefined {
       // For generic types like "Container<T>", extract just the base name "Container"
       // The type field might be a generic_type with a type_identifier child
       if (type.type === "generic_type") {
-        const typeIdentifier = type.childForFieldName?.("type");
-        if (typeIdentifier) {
-          return typeIdentifier.text as SymbolName;
+        const type_identifier = type.childForFieldName?.("type");
+        if (type_identifier) {
+          return type_identifier.text as SymbolName;
         }
       }
       // For non-generic types, check if it's a type_identifier
@@ -349,10 +349,10 @@ export function is_unsafe_function(node: SyntaxNode): boolean {
 }
 
 export function extract_return_type(node: SyntaxNode): SymbolName | undefined {
-  const returnType = node.childForFieldName?.("return_type");
-  if (returnType) {
+  const return_type = node.childForFieldName?.("return_type");
+  if (return_type) {
     // Return the full return type text, cleaned up
-    return returnType.text?.replace(/^->\s*/, "").trim() as SymbolName;
+    return return_type.text?.replace(/^->\s*/, "").trim() as SymbolName;
   }
   return undefined;
 }
@@ -360,9 +360,9 @@ export function extract_return_type(node: SyntaxNode): SymbolName | undefined {
 export function extract_parameter_type(
   node: SyntaxNode
 ): SymbolName | undefined {
-  const typeNode = node.childForFieldName?.("type");
-  if (typeNode) {
-    return typeNode.text as SymbolName;
+  const type_node = node.childForFieldName?.("type");
+  if (type_node) {
+    return type_node.text as SymbolName;
   }
   return undefined;
 }
@@ -383,8 +383,8 @@ export function extract_type_expression(node: SyntaxNode): string | undefined {
     return undefined;
   }
 
-  const typeNode = parent.childForFieldName?.("type");
-  return typeNode?.text;
+  const type_node = parent.childForFieldName?.("type");
+  return type_node?.text;
 }
 
 /**
@@ -398,8 +398,8 @@ export function extract_type_expression(node: SyntaxNode): string | undefined {
  * struct Bar { }     // Returns false
  */
 export function has_generic_parameters(node: SyntaxNode): boolean {
-  const typeParams = node.childForFieldName?.("type_parameters");
-  return typeParams !== null && typeParams !== undefined;
+  const type_params = node.childForFieldName?.("type_parameters");
+  return type_params !== null && type_params !== undefined;
 }
 
 export function is_mutable_parameter(node: SyntaxNode): boolean {
@@ -434,19 +434,19 @@ export function find_containing_impl(
 
   while (node) {
     if (node.type === "impl_item") {
-      const implType = extract_impl_type(node);
-      const implTrait = extract_impl_trait(node);
+      const impl_type = extract_impl_type(node);
+      const impl_trait = extract_impl_trait(node);
 
-      if (implType) {
+      if (impl_type) {
         const result: { struct_name?: SymbolName; trait_name?: SymbolName } =
           {};
 
         // Return struct name for lookup (not ID with location)
-        result.struct_name = implType as SymbolName;
+        result.struct_name = impl_type as SymbolName;
 
         // If implementing a trait, return trait name
-        if (implTrait) {
-          result.trait_name = implTrait as SymbolName;
+        if (impl_trait) {
+          result.trait_name = impl_trait as SymbolName;
         }
 
         return result;
@@ -469,8 +469,8 @@ export function find_containing_struct(
 
   while (node) {
     if (node.type === "struct_item") {
-      const nameNode = node.childForFieldName?.("name");
-      if (nameNode) {
+      const name_node = node.childForFieldName?.("name");
+      if (name_node) {
         // Use the struct_item node's location, not the name's location
         // This matches how create_struct_id generates IDs
         const location = {
@@ -480,7 +480,7 @@ export function find_containing_struct(
           end_line: node.endPosition.row + 1,
           end_column: node.endPosition.column,
         };
-        return class_symbol(nameNode.text as SymbolName, location);
+        return class_symbol(name_node.text as SymbolName, location);
       }
     }
     if (node.parent) {
@@ -500,10 +500,10 @@ export function find_containing_trait(
 
   while (node) {
     if (node.type === "trait_item") {
-      const nameNode = node.childForFieldName?.("name");
-      if (nameNode) {
+      const name_node = node.childForFieldName?.("name");
+      if (name_node) {
         // Return trait name for lookup (not ID with location)
-        return nameNode.text as SymbolName;
+        return name_node.text as SymbolName;
       }
     }
     if (node.parent) {
@@ -520,26 +520,26 @@ export function extract_enum_variants(node: SyntaxNode): SymbolName[] {
   const variants: SymbolName[] = [];
 
   // Find the enum_item node if we're at a child
-  let enumNode: SyntaxNode | null = node;
-  while (enumNode && enumNode.type !== "enum_item") {
-    enumNode = enumNode.parent;
+  let enum_node: SyntaxNode | null = node;
+  while (enum_node && enum_node.type !== "enum_item") {
+    enum_node = enum_node.parent;
   }
 
-  if (!enumNode) {
+  if (!enum_node) {
     return variants;
   }
 
   // Look for the body field
-  for (const child of enumNode.children || []) {
+  for (const child of enum_node.children || []) {
     if (child.type === "enum_variant_list") {
       for (const variant of child.children || []) {
         if (variant.type === "enum_variant") {
           // Get the variant name - it might be a direct child or in a name field
-          const nameNode = variant.children?.find(
+          const name_node = variant.children?.find(
             (c) => c.type === "identifier"
           );
-          if (nameNode) {
-            variants.push(nameNode.text as SymbolName);
+          if (name_node) {
+            variants.push(name_node.text as SymbolName);
           }
         }
       }
@@ -639,11 +639,11 @@ export function extract_use_alias(
   // For extern crate declarations: extern crate foo as bar;
   if (node.type === "extern_crate_declaration") {
     const children = node.children || [];
-    let foundAs = false;
+    let found_as = false;
     for (const child of children) {
       if (child.text === "as") {
-        foundAs = true;
-      } else if (foundAs && child.type === "identifier") {
+        found_as = true;
+      } else if (found_as && child.type === "identifier") {
         return child.text as SymbolName;
       }
     }
@@ -654,11 +654,11 @@ export function extract_use_alias(
   if (node?.type === "use_as_clause") {
     // Find the identifier after "as"
     const children = node.children || [];
-    let foundAs = false;
+    let found_as = false;
     for (const child of children) {
       if (child.text === "as") {
-        foundAs = true;
-      } else if (foundAs && child.type === "identifier") {
+        found_as = true;
+      } else if (found_as && child.type === "identifier") {
         return child.text as SymbolName;
       }
     }
@@ -690,15 +690,15 @@ export function find_containing_callable(
   while (node) {
     // Function items
     if (node.type === "function_item") {
-      const nameNode = node.childForFieldName?.("name");
-      if (!nameNode) return undefined;
+      const name_node = node.childForFieldName?.("name");
+      if (!name_node) return undefined;
 
       // Check if this function is inside an impl block or trait
       let ancestor = node.parent;
       while (ancestor) {
         if (ancestor.type === "impl_item" || ancestor.type === "trait_item") {
           // This is a method, not a standalone function
-          return method_symbol(nameNode.text as SymbolName, {
+          return method_symbol(name_node.text as SymbolName, {
             file_path,
             start_line: node.startPosition.row + 1,
             start_column: node.startPosition.column + 1,
@@ -710,7 +710,7 @@ export function find_containing_callable(
       }
 
       // It's a standalone function
-      return function_symbol(nameNode.text as SymbolName, {
+      return function_symbol(name_node.text as SymbolName, {
         file_path,
         start_line: node.startPosition.row + 1,
         start_column: node.startPosition.column + 1,
@@ -722,41 +722,41 @@ export function find_containing_callable(
     // Check if this is a method in impl block or trait
     if (node.type === "impl_item" || node.type === "trait_item") {
       // The parameter is directly in a method, look for the function_item sibling
-      let functionNode: SyntaxNode | null = node;
-      while (functionNode && functionNode.type !== "function_item") {
+      let function_node: SyntaxNode | null = node;
+      while (function_node && function_node.type !== "function_item") {
         // Look in children for function_item
-        const funcChild = functionNode.children?.find(
+        const func_child = function_node.children?.find(
           (c) => c.type === "function_item"
         );
-        if (funcChild) {
-          functionNode = funcChild;
+        if (func_child) {
+          function_node = func_child;
           break;
         }
         // Move to parent
-        functionNode = functionNode.parent || null;
+        function_node = function_node.parent || null;
       }
 
-      if (functionNode?.type === "function_item") {
-        const nameNode = functionNode.childForFieldName?.("name");
-        if (!nameNode) return undefined;
+      if (function_node?.type === "function_item") {
+        const name_node = function_node.childForFieldName?.("name");
+        if (!name_node) return undefined;
 
-        return method_symbol(nameNode.text as SymbolName, {
+        return method_symbol(name_node.text as SymbolName, {
           file_path,
-          start_line: functionNode.startPosition.row + 1,
-          start_column: functionNode.startPosition.column + 1,
-          end_line: functionNode.endPosition.row + 1,
-          end_column: functionNode.endPosition.column,
+          start_line: function_node.startPosition.row + 1,
+          start_column: function_node.startPosition.column + 1,
+          end_line: function_node.endPosition.row + 1,
+          end_column: function_node.endPosition.column,
         });
       }
     }
 
     // Trait method signatures (function_signature_item in traits)
     if (node.type === "function_signature_item") {
-      const nameNode = node.childForFieldName?.("name");
-      if (!nameNode) return undefined;
+      const name_node = node.childForFieldName?.("name");
+      if (!name_node) return undefined;
 
       // Use full function_signature_item node location to match create_method_id
-      return method_symbol(nameNode.text as SymbolName, {
+      return method_symbol(name_node.text as SymbolName, {
         file_path,
         start_line: node.startPosition.row + 1,
         start_column: node.startPosition.column + 1,
@@ -936,15 +936,15 @@ export function extract_derived_from(node: SyntaxNode): SymbolName | undefined {
 
   // Handle let_declaration: let x = ...
   if (assignment.type === "let_declaration" || assignment.type === "const_item") {
-    const valueNode = assignment.childForFieldName?.("value");
-    if (!valueNode) return undefined;
+    const value_node = assignment.childForFieldName?.("value");
+    if (!value_node) return undefined;
 
     // Case 1: Method call (config.get(...))
-    if (valueNode.type === "call_expression") {
-      const functionNode = valueNode.childForFieldName?.("function");
-      if (functionNode?.type === "field_expression") {
-        const value = functionNode.childForFieldName?.("value");
-        const field = functionNode.childForFieldName?.("field");
+    if (value_node.type === "call_expression") {
+      const function_node = value_node.childForFieldName?.("function");
+      if (function_node?.type === "field_expression") {
+        const value = function_node.childForFieldName?.("value");
+        const field = function_node.childForFieldName?.("field");
         
         if (value?.type === "identifier" && field?.text === "get") {
           return value.text as SymbolName;
@@ -953,11 +953,11 @@ export function extract_derived_from(node: SyntaxNode): SymbolName | undefined {
     }
 
     // Case 2: Index access (config["key"])
-    if (valueNode.type === "index_expression") {
-      let operand = valueNode.childForFieldName?.("operand");
+    if (value_node.type === "index_expression") {
+      let operand = value_node.childForFieldName?.("operand");
       if (!operand) {
         // Fallback to first child if field name is not available
-        operand = valueNode.child(0) || null;
+        operand = value_node.child(0) || null;
       }
       
       if (operand?.type === "identifier") {

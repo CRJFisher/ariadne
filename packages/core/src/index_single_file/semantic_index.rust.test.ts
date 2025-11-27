@@ -28,15 +28,15 @@ import type { ParsedFile } from "./file_utils";
 const FIXTURES_DIR = join(__dirname, "..", "..", "tests", "fixtures", "rust");
 
 // Helper to create a ParsedFile from code
-function createParsedFile(
+function create_parsed_file(
   code: string,
-  filePath: FilePath,
+  file_path: FilePath,
   tree: Parser.Tree,
   language: Language,
 ): ParsedFile {
   const lines = code.split("\n");
   return {
-    file_path: filePath,
+    file_path: file_path,
     file_lines: lines.length,
     // For 1-indexed positions with exclusive ends: end_column = length + 1
     // (tree-sitter's endPosition is exclusive and we add 1 to convert to 1-indexed)
@@ -66,7 +66,7 @@ describe("Semantic Index - Rust", () => {
       );
       const tree = parser.parse(code);
       const file_path = "basic_structs_and_enums.rs" as FilePath;
-      const parsed_file = createParsedFile(code, file_path, tree, "rust");
+      const parsed_file = create_parsed_file(code, file_path, tree, "rust");
 
       const index = build_semantic_index(parsed_file, tree, "rust");
 
@@ -84,7 +84,7 @@ describe("Semantic Index - Rust", () => {
       );
       const tree = parser.parse(code);
       const file_path = "basic_structs_and_enums.rs" as FilePath;
-      const parsed_file = createParsedFile(code, file_path, tree, "rust");
+      const parsed_file = create_parsed_file(code, file_path, tree, "rust");
 
       const index = build_semantic_index(parsed_file, tree, "rust");
 
@@ -113,7 +113,7 @@ enum Message {
 `;
       const tree = parser.parse(code);
       const file_path = "test.rs" as FilePath;
-      const parsed_file = createParsedFile(code, file_path, tree, "rust");
+      const parsed_file = create_parsed_file(code, file_path, tree, "rust");
 
       const index = build_semantic_index(parsed_file, tree, "rust");
 
@@ -187,7 +187,7 @@ enum Message {
       );
       const tree = parser.parse(code);
       const file_path = "basic_structs_and_enums.rs" as FilePath;
-      const parsed_file = createParsedFile(code, file_path, tree, "rust");
+      const parsed_file = create_parsed_file(code, file_path, tree, "rust");
 
       const index = build_semantic_index(parsed_file, tree, "rust");
 
@@ -224,7 +224,7 @@ struct Color {
 `;
       const tree = parser.parse(code);
       const file_path = "test.rs" as FilePath;
-      const parsed_file = createParsedFile(code, file_path, tree, "rust");
+      const parsed_file = create_parsed_file(code, file_path, tree, "rust");
 
       const index = build_semantic_index(parsed_file, tree, "rust");
 
@@ -258,7 +258,7 @@ struct Color {
       );
       const tree = parser.parse(code);
       const file_path = "traits_and_generics.rs" as FilePath;
-      const parsed_file = createParsedFile(code, file_path, tree, "rust");
+      const parsed_file = create_parsed_file(code, file_path, tree, "rust");
 
       const index = build_semantic_index(parsed_file, tree, "rust");
 
@@ -285,7 +285,7 @@ trait Default {
 `;
       const tree = parser.parse(code);
       const file_path = "test.rs" as FilePath;
-      const parsed_file = createParsedFile(code, file_path, tree, "rust");
+      const parsed_file = create_parsed_file(code, file_path, tree, "rust");
 
       const index = build_semantic_index(parsed_file, tree, "rust");
 
@@ -418,7 +418,7 @@ trait Display {
 `;
       const tree = parser.parse(code);
       const file_path = "test.rs" as FilePath;
-      const parsed_file = createParsedFile(code, file_path, tree, "rust");
+      const parsed_file = create_parsed_file(code, file_path, tree, "rust");
 
       const index = build_semantic_index(parsed_file, tree, "rust");
 
@@ -468,7 +468,7 @@ impl Rectangle {
 `;
       const tree = parser.parse(code);
       const file_path = "test.rs" as FilePath;
-      const parsed_file = createParsedFile(code, file_path, tree, "rust");
+      const parsed_file = create_parsed_file(code, file_path, tree, "rust");
 
       const index = build_semantic_index(parsed_file, tree, "rust");
 
@@ -583,7 +583,7 @@ impl Rectangle {
       );
       const tree = parser.parse(code);
       const file_path = "basic_structs_and_enums.rs" as FilePath;
-      const parsed_file = createParsedFile(code, file_path, tree, "rust");
+      const parsed_file = create_parsed_file(code, file_path, tree, "rust");
 
       const index = build_semantic_index(parsed_file, tree, "rust");
 
@@ -616,7 +616,7 @@ impl Calculator {
 `;
       const tree = parser.parse(code);
       const file_path = "test.rs" as FilePath;
-      const parsed_file = createParsedFile(code, file_path, tree, "rust");
+      const parsed_file = create_parsed_file(code, file_path, tree, "rust");
 
       const index = build_semantic_index(parsed_file, tree, "rust");
 
@@ -649,7 +649,7 @@ impl Display for Point {
 `;
       const tree = parser.parse(code);
       const file_path = "test.rs" as FilePath;
-      const parsed_file = createParsedFile(code, file_path, tree, "rust");
+      const parsed_file = create_parsed_file(code, file_path, tree, "rust");
 
       const index = build_semantic_index(parsed_file, tree, "rust");
 
@@ -682,7 +682,7 @@ impl Display for Point {
       );
       const tree = parser.parse(code);
       const file_path = "functions_and_closures.rs" as FilePath;
-      const parsed_file = createParsedFile(code, file_path, tree, "rust");
+      const parsed_file = create_parsed_file(code, file_path, tree, "rust");
 
       const index = build_semantic_index(parsed_file, tree, "rust");
 
@@ -707,7 +707,7 @@ fn greet(name: &str, times: usize) -> String {
 `;
       const tree = parser.parse(code);
       const file_path = "test.rs" as FilePath;
-      const parsed_file = createParsedFile(code, file_path, tree, "rust");
+      const parsed_file = create_parsed_file(code, file_path, tree, "rust");
 
       const index = build_semantic_index(parsed_file, tree, "rust");
 
@@ -778,7 +778,7 @@ fn greet(name: &str, age: u32) -> String {
 `;
       const tree = parser.parse(code);
       const file_path = "test.rs" as FilePath;
-      const parsed_file = createParsedFile(code, file_path, tree, "rust");
+      const parsed_file = create_parsed_file(code, file_path, tree, "rust");
 
       const index = build_semantic_index(parsed_file, tree, "rust");
 
@@ -808,7 +808,7 @@ fn calculate(x: i32, y: i32) -> i32 {
 `;
       const tree = parser.parse(code);
       const file_path = "test.rs" as FilePath;
-      const parsed_file = createParsedFile(code, file_path, tree, "rust");
+      const parsed_file = create_parsed_file(code, file_path, tree, "rust");
 
       const index = build_semantic_index(parsed_file, tree, "rust");
 
@@ -832,7 +832,7 @@ fn main() {
 `;
       const tree = parser.parse(code);
       const file_path = "test.rs" as FilePath;
-      const parsed_file = createParsedFile(code, file_path, tree, "rust");
+      const parsed_file = create_parsed_file(code, file_path, tree, "rust");
 
       const index = build_semantic_index(parsed_file, tree, "rust");
 
@@ -865,7 +865,7 @@ fn main() {
 `;
       const tree = parser.parse(code);
       const file_path = "test.rs" as FilePath;
-      const parsed_file = createParsedFile(code, file_path, tree, "rust");
+      const parsed_file = create_parsed_file(code, file_path, tree, "rust");
 
       const index = build_semantic_index(parsed_file, tree, "rust");
 
@@ -895,7 +895,7 @@ fn modify_string(s: &mut String) {
 `;
       const tree = parser.parse(code);
       const file_path = "test.rs" as FilePath;
-      const parsed_file = createParsedFile(code, file_path, tree, "rust");
+      const parsed_file = create_parsed_file(code, file_path, tree, "rust");
 
       const index = build_semantic_index(parsed_file, tree, "rust");
 
@@ -914,7 +914,7 @@ fn modify_string(s: &mut String) {
       );
       const tree = parser.parse(code);
       const file_path = "ownership_and_patterns.rs" as FilePath;
-      const parsed_file = createParsedFile(code, file_path, tree, "rust");
+      const parsed_file = create_parsed_file(code, file_path, tree, "rust");
 
       const index = build_semantic_index(parsed_file, tree, "rust");
 
@@ -950,7 +950,7 @@ pub(crate) mod internal {
 `;
       const tree = parser.parse(code);
       const file_path = "test.rs" as FilePath;
-      const parsed_file = createParsedFile(code, file_path, tree, "rust");
+      const parsed_file = create_parsed_file(code, file_path, tree, "rust");
 
       const index = build_semantic_index(parsed_file, tree, "rust");
 
@@ -972,7 +972,7 @@ pub(crate) mod internal {
       );
       const tree = parser.parse(code);
       const file_path = "modules_and_visibility.rs" as FilePath;
-      const parsed_file = createParsedFile(code, file_path, tree, "rust");
+      const parsed_file = create_parsed_file(code, file_path, tree, "rust");
 
       const index = build_semantic_index(parsed_file, tree, "rust");
 
@@ -997,7 +997,7 @@ pub mod outer {
 `;
       const tree = parser.parse(code);
       const file_path = "test.rs" as FilePath;
-      const parsed_file = createParsedFile(code, file_path, tree, "rust");
+      const parsed_file = create_parsed_file(code, file_path, tree, "rust");
 
       const index = build_semantic_index(parsed_file, tree, "rust");
 
@@ -1021,7 +1021,7 @@ mod private_module {
 `;
       const tree = parser.parse(code);
       const file_path = "test.rs" as FilePath;
-      const parsed_file = createParsedFile(code, file_path, tree, "rust");
+      const parsed_file = create_parsed_file(code, file_path, tree, "rust");
 
       const index = build_semantic_index(parsed_file, tree, "rust");
 
@@ -1050,7 +1050,7 @@ use crate::models::User;
 `;
       const tree = parser.parse(code);
       const file_path = "test.rs" as FilePath;
-      const parsed_file = createParsedFile(code, file_path, tree, "rust");
+      const parsed_file = create_parsed_file(code, file_path, tree, "rust");
 
       const index = build_semantic_index(parsed_file, tree, "rust");
 
@@ -1124,7 +1124,7 @@ fn main() {
 `;
       const tree = parser.parse(code);
       const file_path = "test.rs" as FilePath;
-      const parsed_file = createParsedFile(code, file_path, tree, "rust");
+      const parsed_file = create_parsed_file(code, file_path, tree, "rust");
 
       const index = build_semantic_index(parsed_file, tree, "rust");
 
@@ -1145,7 +1145,7 @@ use std::fmt::{Display, Formatter, Result};
 `;
       const tree = parser.parse(code);
       const file_path = "test.rs" as FilePath;
-      const parsed_file = createParsedFile(code, file_path, tree, "rust");
+      const parsed_file = create_parsed_file(code, file_path, tree, "rust");
 
       const index = build_semantic_index(parsed_file, tree, "rust");
 
@@ -1166,7 +1166,7 @@ use std::io::Result as IoResult;
 `;
       const tree = parser.parse(code);
       const file_path = "test.rs" as FilePath;
-      const parsed_file = createParsedFile(code, file_path, tree, "rust");
+      const parsed_file = create_parsed_file(code, file_path, tree, "rust");
 
       const index = build_semantic_index(parsed_file, tree, "rust");
 
@@ -1192,7 +1192,7 @@ use std::collections::*;
 `;
       const tree = parser.parse(code);
       const file_path = "test.rs" as FilePath;
-      const parsed_file = createParsedFile(code, file_path, tree, "rust");
+      const parsed_file = create_parsed_file(code, file_path, tree, "rust");
 
       const index = build_semantic_index(parsed_file, tree, "rust");
 
@@ -1208,7 +1208,7 @@ extern crate tokio;
 `;
       const tree = parser.parse(code);
       const file_path = "test.rs" as FilePath;
-      const parsed_file = createParsedFile(code, file_path, tree, "rust");
+      const parsed_file = create_parsed_file(code, file_path, tree, "rust");
 
       const index = build_semantic_index(parsed_file, tree, "rust");
 
@@ -1220,13 +1220,13 @@ extern crate tokio;
       expect(imported_names).toContain("tokio");
 
       // Verify complete structure
-      const serdeImport = Array.from(index.imported_symbols.values()).find(
+      const serde_import = Array.from(index.imported_symbols.values()).find(
         (imp) => imp.name === "serde",
       );
-      expect(serdeImport).toBeDefined();
-      if (serdeImport) {
-        expect(serdeImport.name).toBe("serde");
-        expect(serdeImport.location.file_path).toBe("test.rs");
+      expect(serde_import).toBeDefined();
+      if (serde_import) {
+        expect(serde_import.name).toBe("serde");
+        expect(serde_import.location.file_path).toBe("test.rs");
       }
     });
 
@@ -1237,7 +1237,7 @@ extern crate tokio_core as tokio;
 `;
       const tree = parser.parse(code);
       const file_path = "test.rs" as FilePath;
-      const parsed_file = createParsedFile(code, file_path, tree, "rust");
+      const parsed_file = create_parsed_file(code, file_path, tree, "rust");
 
       const index = build_semantic_index(parsed_file, tree, "rust");
 
@@ -1249,20 +1249,20 @@ extern crate tokio_core as tokio;
       expect(imported_names).toContain("tokio");
 
       // Verify original names are preserved
-      const jsonImport = Array.from(index.imported_symbols.values()).find(
+      const json_import = Array.from(index.imported_symbols.values()).find(
         (imp) => imp.name === "json",
       );
-      expect(jsonImport).toBeDefined();
-      if (jsonImport) {
-        expect(jsonImport.original_name).toBe("serde_json");
+      expect(json_import).toBeDefined();
+      if (json_import) {
+        expect(json_import.original_name).toBe("serde_json");
       }
 
-      const tokioImport = Array.from(index.imported_symbols.values()).find(
+      const tokio_import = Array.from(index.imported_symbols.values()).find(
         (imp) => imp.name === "tokio",
       );
-      expect(tokioImport).toBeDefined();
-      if (tokioImport) {
-        expect(tokioImport.original_name).toBe("tokio_core");
+      expect(tokio_import).toBeDefined();
+      if (tokio_import) {
+        expect(tokio_import.original_name).toBe("tokio_core");
       }
     });
 
@@ -1275,7 +1275,7 @@ use std::io::Result;
 `;
       const tree = parser.parse(code);
       const file_path = "test.rs" as FilePath;
-      const parsed_file = createParsedFile(code, file_path, tree, "rust");
+      const parsed_file = create_parsed_file(code, file_path, tree, "rust");
 
       const index = build_semantic_index(parsed_file, tree, "rust");
 
@@ -1301,7 +1301,7 @@ use std::{
 `;
       const tree = parser.parse(code);
       const file_path = "test.rs" as FilePath;
-      const parsed_file = createParsedFile(code, file_path, tree, "rust");
+      const parsed_file = create_parsed_file(code, file_path, tree, "rust");
 
       const index = build_semantic_index(parsed_file, tree, "rust");
 
@@ -1328,7 +1328,7 @@ mod math {
 `;
       const tree = parser.parse(code);
       const file_path = "test.rs" as FilePath;
-      const parsed_file = createParsedFile(code, file_path, tree, "rust");
+      const parsed_file = create_parsed_file(code, file_path, tree, "rust");
 
       const index = build_semantic_index(parsed_file, tree, "rust");
 
@@ -1370,7 +1370,7 @@ fn greet(name: &str, age: u32) -> String {
 `;
       const tree = parser.parse(code);
       const file_path = "test.rs" as FilePath;
-      const parsed_file = createParsedFile(code, file_path, tree, "rust");
+      const parsed_file = create_parsed_file(code, file_path, tree, "rust");
 
       const index = build_semantic_index(parsed_file, tree, "rust");
 
@@ -1399,7 +1399,7 @@ fn main() {
 `;
       const tree = parser.parse(code);
       const file_path = "test.rs" as FilePath;
-      const parsed_file = createParsedFile(code, file_path, tree, "rust");
+      const parsed_file = create_parsed_file(code, file_path, tree, "rust");
 
       const index = build_semantic_index(parsed_file, tree, "rust");
 
@@ -1425,7 +1425,7 @@ fn process(items: Vec<String>, mapping: HashMap<String, i32>) -> Option<String> 
 `;
       const tree = parser.parse(code);
       const file_path = "test.rs" as FilePath;
-      const parsed_file = createParsedFile(code, file_path, tree, "rust");
+      const parsed_file = create_parsed_file(code, file_path, tree, "rust");
 
       const index = build_semantic_index(parsed_file, tree, "rust");
 
@@ -1468,7 +1468,7 @@ fn main() {
 `;
       const tree = parser.parse(code);
       const file_path = "test.rs" as FilePath;
-      const parsed_file = createParsedFile(code, file_path, tree, "rust");
+      const parsed_file = create_parsed_file(code, file_path, tree, "rust");
 
       const index = build_semantic_index(parsed_file, tree, "rust");
 
@@ -1497,7 +1497,7 @@ fn main() {
 `;
       const tree = parser.parse(code);
       const file_path = "test.rs" as FilePath;
-      const parsed_file = createParsedFile(code, file_path, tree, "rust");
+      const parsed_file = create_parsed_file(code, file_path, tree, "rust");
 
       const index = build_semantic_index(parsed_file, tree, "rust");
 
@@ -1530,7 +1530,7 @@ fn main() {
 `;
       const tree = parser.parse(code);
       const file_path = "test.rs" as FilePath;
-      const parsed_file = createParsedFile(code, file_path, tree, "rust");
+      const parsed_file = create_parsed_file(code, file_path, tree, "rust");
 
       const index = build_semantic_index(parsed_file, tree, "rust");
 
@@ -1558,7 +1558,7 @@ fn main() {
 `;
       const tree = parser.parse(code);
       const file_path = "test.rs" as FilePath;
-      const parsed_file = createParsedFile(code, file_path, tree, "rust");
+      const parsed_file = create_parsed_file(code, file_path, tree, "rust");
 
       const index = build_semantic_index(parsed_file, tree, "rust");
 
@@ -1606,7 +1606,7 @@ fn main() {
 `;
       const tree = parser.parse(code);
       const file_path = "test.rs" as FilePath;
-      const parsed_file = createParsedFile(code, file_path, tree, "rust");
+      const parsed_file = create_parsed_file(code, file_path, tree, "rust");
       const result = build_semantic_index(parsed_file, tree, "rust");
 
       // Scenario 1: Receiver from type annotation
@@ -1659,7 +1659,7 @@ fn main() {
       );
       const tree = parser.parse(code);
       const file_path = "comprehensive_definitions.rs" as FilePath;
-      const parsed_file = createParsedFile(code, file_path, tree, "rust");
+      const parsed_file = create_parsed_file(code, file_path, tree, "rust");
 
       const index = build_semantic_index(parsed_file, tree, "rust");
 
@@ -1710,7 +1710,7 @@ fn main() {
 `;
       const tree = parser.parse(code);
       const file_path = "config.rs" as FilePath;
-      const parsed_file = createParsedFile(code, file_path, tree, "rust");
+      const parsed_file = create_parsed_file(code, file_path, tree, "rust");
 
       const index = build_semantic_index(parsed_file, tree, "rust");
 
@@ -1767,7 +1767,7 @@ fn pair<T, U>(first: T, second: U) -> (T, U) {
 `;
       const tree = parser.parse(code);
       const file_path = "test.rs" as FilePath;
-      const parsed_file = createParsedFile(code, file_path, tree, "rust");
+      const parsed_file = create_parsed_file(code, file_path, tree, "rust");
 
       const index = build_semantic_index(parsed_file, tree, "rust");
 
@@ -1883,7 +1883,7 @@ impl Point {
 }`;
       const tree = parser.parse(code);
       const file_path = "test.rs" as FilePath;
-      const parsed_file = createParsedFile(code, file_path, tree, "rust");
+      const parsed_file = create_parsed_file(code, file_path, tree, "rust");
 
       const index = build_semantic_index(parsed_file, tree, "rust");
 
@@ -1940,7 +1940,7 @@ impl Point {
 }`;
       const tree = parser.parse(code);
       const file_path = "test.rs" as FilePath;
-      const parsed_file = createParsedFile(code, file_path, tree, "rust");
+      const parsed_file = create_parsed_file(code, file_path, tree, "rust");
 
       const index = build_semantic_index(parsed_file, tree, "rust");
 
@@ -1981,7 +1981,7 @@ impl Point {
 }`;
       const tree = parser.parse(code);
       const file_path = "test.rs" as FilePath;
-      const parsed_file = createParsedFile(code, file_path, tree, "rust");
+      const parsed_file = create_parsed_file(code, file_path, tree, "rust");
 
       const index = build_semantic_index(parsed_file, tree, "rust");
 
@@ -2018,7 +2018,7 @@ impl Point {
 }`;
       const tree = parser.parse(code);
       const file_path = "test.rs" as FilePath;
-      const parsed_file = createParsedFile(code, file_path, tree, "rust");
+      const parsed_file = create_parsed_file(code, file_path, tree, "rust");
 
       const index = build_semantic_index(parsed_file, tree, "rust");
 
@@ -2065,7 +2065,7 @@ impl Point {
 }`;
       const tree = parser.parse(code);
       const file_path = "test.rs" as FilePath;
-      const parsed_file = createParsedFile(code, file_path, tree, "rust");
+      const parsed_file = create_parsed_file(code, file_path, tree, "rust");
 
       const index = build_semantic_index(parsed_file, tree, "rust");
 
@@ -2092,7 +2092,7 @@ impl Point {
 struct Color(u8, u8, u8);`;
       const tree = parser.parse(code);
       const file_path = "test.rs" as FilePath;
-      const parsed_file = createParsedFile(code, file_path, tree, "rust");
+      const parsed_file = create_parsed_file(code, file_path, tree, "rust");
 
       const index = build_semantic_index(parsed_file, tree, "rust");
 
@@ -2134,61 +2134,61 @@ pub type BoxedError = Box<dyn Error>;
 `;
       const tree = parser.parse(code);
       const file_path = "test.rs" as FilePath;
-      const parsed_file = createParsedFile(code, file_path, tree, "rust");
+      const parsed_file = create_parsed_file(code, file_path, tree, "rust");
       const result = build_semantic_index(parsed_file, tree, "rust");
 
       // Verify type aliases exist
-      const typeNames = Array.from(result.types.values()).map((t) => t.name);
-      expect(typeNames).toContain("Kilometers");
-      expect(typeNames).toContain("Result");
-      expect(typeNames).toContain("BoxedError");
+      const type_names = Array.from(result.types.values()).map((t) => t.name);
+      expect(type_names).toContain("Kilometers");
+      expect(type_names).toContain("Result");
+      expect(type_names).toContain("BoxedError");
 
       // Verify Kilometers type alias with complete structure
-      const kilometersType = Array.from(result.types.values()).find(
+      const kilometers_type = Array.from(result.types.values()).find(
         (t) => t.name === "Kilometers",
       );
 
-      expect(kilometersType).toBeDefined();
+      expect(kilometers_type).toBeDefined();
 
-      if (kilometersType) {
-        expect(kilometersType.kind).toBe("type_alias");
-        expect(kilometersType.name).toBe("Kilometers");
-        expect(kilometersType.symbol_id).toMatch(/^type/);
-        expect(kilometersType.type_expression).toBe("i32");
-        expect(kilometersType.defining_scope_id).toBeTruthy();
-        expect(kilometersType.location.file_path).toBe("test.rs");
-        expect(typeof kilometersType.location.start_line).toBe("number");
-        expect(typeof kilometersType.location.start_column).toBe("number");
-        expect(typeof kilometersType.location.end_line).toBe("number");
-        expect(typeof kilometersType.location.end_column).toBe("number");
+      if (kilometers_type) {
+        expect(kilometers_type.kind).toBe("type_alias");
+        expect(kilometers_type.name).toBe("Kilometers");
+        expect(kilometers_type.symbol_id).toMatch(/^type/);
+        expect(kilometers_type.type_expression).toBe("i32");
+        expect(kilometers_type.defining_scope_id).toBeTruthy();
+        expect(kilometers_type.location.file_path).toBe("test.rs");
+        expect(typeof kilometers_type.location.start_line).toBe("number");
+        expect(typeof kilometers_type.location.start_column).toBe("number");
+        expect(typeof kilometers_type.location.end_line).toBe("number");
+        expect(typeof kilometers_type.location.end_column).toBe("number");
       }
 
       // Verify generic Result type alias
-      const resultType = Array.from(result.types.values()).find(
+      const result_type = Array.from(result.types.values()).find(
         (t) => t.name === "Result",
       );
 
-      expect(resultType).toBeDefined();
+      expect(result_type).toBeDefined();
 
-      if (resultType) {
-        expect(resultType.kind).toBe("type_alias");
-        expect(resultType.name).toBe("Result");
-        expect(resultType.type_expression).toBe("std::result::Result<T, Error>");
-        expect(resultType.generics).toEqual(expect.arrayContaining(["T"]));
+      if (result_type) {
+        expect(result_type.kind).toBe("type_alias");
+        expect(result_type.name).toBe("Result");
+        expect(result_type.type_expression).toBe("std::result::Result<T, Error>");
+        expect(result_type.generics).toEqual(expect.arrayContaining(["T"]));
       }
 
       // Verify public BoxedError type alias
-      const boxedErrorType = Array.from(result.types.values()).find(
+      const boxed_error_type = Array.from(result.types.values()).find(
         (t) => t.name === "BoxedError",
       );
 
-      expect(boxedErrorType).toBeDefined();
+      expect(boxed_error_type).toBeDefined();
 
-      if (boxedErrorType) {
-        expect(boxedErrorType.kind).toBe("type_alias");
-        expect(boxedErrorType.name).toBe("BoxedError");
-        expect(boxedErrorType.type_expression).toBe("Box<dyn Error>");
-        expect(boxedErrorType.is_exported).toBe(true);
+      if (boxed_error_type) {
+        expect(boxed_error_type.kind).toBe("type_alias");
+        expect(boxed_error_type.name).toBe("BoxedError");
+        expect(boxed_error_type.type_expression).toBe("Box<dyn Error>");
+        expect(boxed_error_type.is_exported).toBe(true);
       }
     });
 
@@ -2210,25 +2210,25 @@ impl Iterator for MyIterator {
 `;
       const tree = parser.parse(code);
       const file_path = "test.rs" as FilePath;
-      const parsed_file = createParsedFile(code, file_path, tree, "rust");
+      const parsed_file = create_parsed_file(code, file_path, tree, "rust");
       const result = build_semantic_index(parsed_file, tree, "rust");
 
       // Verify associated type aliases exist
-      const typeNames = Array.from(result.types.values()).map((t) => t.name);
-      expect(typeNames).toContain("Item");
+      const type_names = Array.from(result.types.values()).map((t) => t.name);
+      expect(type_names).toContain("Item");
 
       // Should find both the trait associated type and the impl associated type
-      const itemTypes = Array.from(result.types.values()).filter(
+      const item_types = Array.from(result.types.values()).filter(
         (t) => t.name === "Item",
       );
 
-      expect(itemTypes.length).toBeGreaterThanOrEqual(1);
+      expect(item_types.length).toBeGreaterThanOrEqual(1);
 
       // Verify structure of at least one Item type
-      const firstItem = itemTypes[0];
-      expect(firstItem).toBeDefined();
-      expect(firstItem.kind).toBe("type_alias");
-      expect(firstItem.location.file_path).toBe("test.rs");
+      const first_item = item_types[0];
+      expect(first_item).toBeDefined();
+      expect(first_item.kind).toBe("type_alias");
+      expect(first_item.location.file_path).toBe("test.rs");
     });
 
     it("should extract type expressions for all type alias forms", () => {
@@ -2241,7 +2241,7 @@ type FnPtr = fn(i32, i32) -> i32;
 `;
       const tree = parser.parse(code);
       const file_path = "test.rs" as FilePath;
-      const parsed_file = createParsedFile(code, file_path, tree, "rust");
+      const parsed_file = create_parsed_file(code, file_path, tree, "rust");
       const result = build_semantic_index(parsed_file, tree, "rust");
 
       const type_aliases = Array.from(result.types.values()).filter(
@@ -2287,7 +2287,7 @@ type GenericRef<'a, T> = &'a T;
 `;
       const tree = parser.parse(code);
       const file_path = "test.rs" as FilePath;
-      const parsed_file = createParsedFile(code, file_path, tree, "rust");
+      const parsed_file = create_parsed_file(code, file_path, tree, "rust");
       const result = build_semantic_index(parsed_file, tree, "rust");
 
       const type_aliases = Array.from(result.types.values()).filter(
@@ -2297,22 +2297,22 @@ type GenericRef<'a, T> = &'a T;
       expect(type_aliases.length).toBeGreaterThanOrEqual(3);
 
       // Check Ref with single lifetime
-      const refType = type_aliases.find((t) => t.name === "Ref");
-      expect(refType).toBeDefined();
-      expect(refType?.type_expression).toBe("&'a str");
-      expect(refType?.generics).toEqual(["'a"]);
+      const ref_type = type_aliases.find((t) => t.name === "Ref");
+      expect(ref_type).toBeDefined();
+      expect(ref_type?.type_expression).toBe("&'a str");
+      expect(ref_type?.generics).toEqual(["'a"]);
 
       // Check RefPair with multiple lifetimes
-      const refPairType = type_aliases.find((t) => t.name === "RefPair");
-      expect(refPairType).toBeDefined();
-      expect(refPairType?.type_expression).toBe("(&'a str, &'b str)");
-      expect(refPairType?.generics).toEqual(["'a", "'b"]);
+      const ref_pair_type = type_aliases.find((t) => t.name === "RefPair");
+      expect(ref_pair_type).toBeDefined();
+      expect(ref_pair_type?.type_expression).toBe("(&'a str, &'b str)");
+      expect(ref_pair_type?.generics).toEqual(["'a", "'b"]);
 
       // Check GenericRef with lifetime and type parameter
-      const genericRefType = type_aliases.find((t) => t.name === "GenericRef");
-      expect(genericRefType).toBeDefined();
-      expect(genericRefType?.type_expression).toBe("&'a T");
-      expect(genericRefType?.generics).toEqual(["'a", "T"]);
+      const generic_ref_type = type_aliases.find((t) => t.name === "GenericRef");
+      expect(generic_ref_type).toBeDefined();
+      expect(generic_ref_type?.type_expression).toBe("&'a T");
+      expect(generic_ref_type?.generics).toEqual(["'a", "T"]);
     });
 
     it("should extract type aliases with const generics", () => {
@@ -2322,7 +2322,7 @@ type Matrix<const ROWS: usize, const COLS: usize> = [[f64; COLS]; ROWS];
 `;
       const tree = parser.parse(code);
       const file_path = "test.rs" as FilePath;
-      const parsed_file = createParsedFile(code, file_path, tree, "rust");
+      const parsed_file = create_parsed_file(code, file_path, tree, "rust");
       const result = build_semantic_index(parsed_file, tree, "rust");
 
       const type_aliases = Array.from(result.types.values()).filter(
@@ -2332,14 +2332,14 @@ type Matrix<const ROWS: usize, const COLS: usize> = [[f64; COLS]; ROWS];
       expect(type_aliases.length).toBeGreaterThanOrEqual(2);
 
       // Check Arr with const generic
-      const arrType = type_aliases.find((t) => t.name === "Arr");
-      expect(arrType).toBeDefined();
-      expect(arrType?.type_expression).toBe("[T; N]");
+      const arr_type = type_aliases.find((t) => t.name === "Arr");
+      expect(arr_type).toBeDefined();
+      expect(arr_type?.type_expression).toBe("[T; N]");
 
       // Check Matrix with multiple const generics
-      const matrixType = type_aliases.find((t) => t.name === "Matrix");
-      expect(matrixType).toBeDefined();
-      expect(matrixType?.type_expression).toBe("[[f64; COLS]; ROWS]");
+      const matrix_type = type_aliases.find((t) => t.name === "Matrix");
+      expect(matrix_type).toBeDefined();
+      expect(matrix_type?.type_expression).toBe("[[f64; COLS]; ROWS]");
     });
 
     it("should extract complex nested type aliases", () => {
@@ -2350,7 +2350,7 @@ type AsyncFn<'a, T> = Box<dyn Future<Output = Result<T, Box<dyn Error>>> + Send 
 `;
       const tree = parser.parse(code);
       const file_path = "test.rs" as FilePath;
-      const parsed_file = createParsedFile(code, file_path, tree, "rust");
+      const parsed_file = create_parsed_file(code, file_path, tree, "rust");
       const result = build_semantic_index(parsed_file, tree, "rust");
 
       const type_aliases = Array.from(result.types.values()).filter(
@@ -2360,30 +2360,30 @@ type AsyncFn<'a, T> = Box<dyn Future<Output = Result<T, Box<dyn Error>>> + Send 
       expect(type_aliases.length).toBeGreaterThanOrEqual(3);
 
       // Check NestedResult
-      const nestedResult = type_aliases.find((t) => t.name === "NestedResult");
-      expect(nestedResult).toBeDefined();
-      expect(nestedResult?.type_expression).toBe(
+      const nested_result = type_aliases.find((t) => t.name === "NestedResult");
+      expect(nested_result).toBeDefined();
+      expect(nested_result?.type_expression).toBe(
         "Result<Option<T>, Box<dyn std::error::Error>>",
       );
-      expect(nestedResult?.generics).toEqual(["T", "E"]);
+      expect(nested_result?.generics).toEqual(["T", "E"]);
 
       // Check ComplexCallback
-      const complexCallback = type_aliases.find(
+      const complex_callback = type_aliases.find(
         (t) => t.name === "ComplexCallback",
       );
-      expect(complexCallback).toBeDefined();
-      expect(complexCallback?.type_expression).toBe(
+      expect(complex_callback).toBeDefined();
+      expect(complex_callback?.type_expression).toBe(
         "Box<dyn Fn(Result<T, String>) -> Option<T>>",
       );
-      expect(complexCallback?.generics).toEqual(["T"]);
+      expect(complex_callback?.generics).toEqual(["T"]);
 
       // Check AsyncFn
-      const asyncFn = type_aliases.find((t) => t.name === "AsyncFn");
-      expect(asyncFn).toBeDefined();
-      expect(asyncFn?.type_expression).toBe(
+      const async_fn = type_aliases.find((t) => t.name === "AsyncFn");
+      expect(async_fn).toBeDefined();
+      expect(async_fn?.type_expression).toBe(
         "Box<dyn Future<Output = Result<T, Box<dyn Error>>> + Send + 'a>",
       );
-      expect(asyncFn?.generics).toEqual(["'a", "T"]);
+      expect(async_fn?.generics).toEqual(["'a", "T"]);
     });
 
     it("should extract type aliases with trait bounds", () => {
@@ -2394,7 +2394,7 @@ type SerializeFn<T: Serialize + Send + 'static> = Box<dyn Fn(T) -> String>;
 `;
       const tree = parser.parse(code);
       const file_path = "test.rs" as FilePath;
-      const parsed_file = createParsedFile(code, file_path, tree, "rust");
+      const parsed_file = create_parsed_file(code, file_path, tree, "rust");
       const result = build_semantic_index(parsed_file, tree, "rust");
 
       const type_aliases = Array.from(result.types.values()).filter(
@@ -2410,16 +2410,16 @@ type SerializeFn<T: Serialize + Send + 'static> = Box<dyn Fn(T) -> String>;
       expect(handler?.generics).toEqual(["T"]);
 
       // Check CompareFn with multiple bounds
-      const compareFn = type_aliases.find((t) => t.name === "CompareFn");
-      expect(compareFn).toBeDefined();
-      expect(compareFn?.type_expression).toBe("fn(&T, &T) -> bool");
-      expect(compareFn?.generics).toEqual(["T"]);
+      const compare_fn = type_aliases.find((t) => t.name === "CompareFn");
+      expect(compare_fn).toBeDefined();
+      expect(compare_fn?.type_expression).toBe("fn(&T, &T) -> bool");
+      expect(compare_fn?.generics).toEqual(["T"]);
 
       // Check SerializeFn with multiple bounds including lifetime
-      const serializeFn = type_aliases.find((t) => t.name === "SerializeFn");
-      expect(serializeFn).toBeDefined();
-      expect(serializeFn?.type_expression).toBe("Box<dyn Fn(T) -> String>");
-      expect(serializeFn?.generics).toEqual(["T"]);
+      const serialize_fn = type_aliases.find((t) => t.name === "SerializeFn");
+      expect(serialize_fn).toBeDefined();
+      expect(serialize_fn?.type_expression).toBe("Box<dyn Fn(T) -> String>");
+      expect(serialize_fn?.generics).toEqual(["T"]);
     });
   });
 
@@ -2438,40 +2438,40 @@ trait MyTrait {
 }`;
 
       const tree = parser.parse(code);
-      const parsedFile = createParsedFile(
+      const parsed_file = create_parsed_file(
         code,
         "test.rs" as FilePath,
         tree,
         "rust" as Language
       );
-      const index = build_semantic_index(parsedFile, tree, "rust" as Language);
+      const index = build_semantic_index(parsed_file, tree, "rust" as Language);
 
       // Find module scope
-      const moduleScope = Array.from(index.scopes.values()).find(
+      const module_scope = Array.from(index.scopes.values()).find(
         (s) => s.type === "module" && s.parent_id === null
       );
-      expect(moduleScope).toBeDefined();
+      expect(module_scope).toBeDefined();
 
       // Check struct
-      const myStruct = Array.from(index.classes.values()).find(
+      const my_struct = Array.from(index.classes.values()).find(
         (c) => c.name === "MyStruct"
       );
-      expect(myStruct).toBeDefined();
-      expect(myStruct!.defining_scope_id).toBe(moduleScope!.id);
+      expect(my_struct).toBeDefined();
+      expect(my_struct!.defining_scope_id).toBe(module_scope!.id);
 
       // Check enum
-      const myEnum = Array.from(index.enums.values()).find(
+      const my_enum = Array.from(index.enums.values()).find(
         (e) => e.name === "MyEnum"
       );
-      expect(myEnum).toBeDefined();
-      expect(myEnum!.defining_scope_id).toBe(moduleScope!.id);
+      expect(my_enum).toBeDefined();
+      expect(my_enum!.defining_scope_id).toBe(module_scope!.id);
 
       // Check trait
-      const myTrait = Array.from(index.interfaces.values()).find(
+      const my_trait = Array.from(index.interfaces.values()).find(
         (i) => i.name === "MyTrait"
       );
-      expect(myTrait).toBeDefined();
-      expect(myTrait!.defining_scope_id).toBe(moduleScope!.id);
+      expect(my_trait).toBeDefined();
+      expect(my_trait!.defining_scope_id).toBe(module_scope!.id);
     });
   });
 
@@ -2483,13 +2483,13 @@ trait MyTrait {
 }`;
 
       const tree = parser.parse(code);
-      const parsedFile = createParsedFile(
+      const parsed_file = create_parsed_file(
         code,
         "test.rs" as FilePath,
         tree,
         "rust" as Language
       );
-      const index = build_semantic_index(parsedFile, tree, "rust" as Language);
+      const index = build_semantic_index(parsed_file, tree, "rust" as Language);
 
       // Find the closure
       const closures = Array.from(index.functions.values()).filter(
@@ -2510,13 +2510,13 @@ trait MyTrait {
 }`;
 
       const tree = parser.parse(code);
-      const parsedFile = createParsedFile(
+      const parsed_file = create_parsed_file(
         code,
         "test.rs" as FilePath,
         tree,
         "rust" as Language
       );
-      const index = build_semantic_index(parsedFile, tree, "rust" as Language);
+      const index = build_semantic_index(parsed_file, tree, "rust" as Language);
 
       const closures = Array.from(index.functions.values()).filter(
         (f) => f.name === "<anonymous>"
@@ -2534,13 +2534,13 @@ trait MyTrait {
 }`;
 
       const tree = parser.parse(code);
-      const parsedFile = createParsedFile(
+      const parsed_file = create_parsed_file(
         code,
         "test.rs" as FilePath,
         tree,
         "rust" as Language
       );
-      const index = build_semantic_index(parsedFile, tree, "rust" as Language);
+      const index = build_semantic_index(parsed_file, tree, "rust" as Language);
 
       const closures = Array.from(index.functions.values()).filter(
         (f) => f.name === "<anonymous>"
@@ -2560,13 +2560,13 @@ trait MyTrait {
 }`;
 
       const tree = parser.parse(code);
-      const parsedFile = createParsedFile(
+      const parsed_file = create_parsed_file(
         code,
         "test.rs" as FilePath,
         tree,
         "rust" as Language
       );
-      const index = build_semantic_index(parsedFile, tree, "rust" as Language);
+      const index = build_semantic_index(parsed_file, tree, "rust" as Language);
 
       const closures = Array.from(index.functions.values()).filter(
         (f) => f.name === "<anonymous>"
@@ -2588,18 +2588,18 @@ trait MyTrait {
 }`;
 
       const tree = parser.parse(code);
-      const parsedFile = createParsedFile(code, "test.rs" as FilePath, tree, "rust" as Language);
-      const index = build_semantic_index(parsedFile, tree, "rust" as Language);
+      const parsed_file = create_parsed_file(code, "test.rs" as FilePath, tree, "rust" as Language);
+      const index = build_semantic_index(parsed_file, tree, "rust" as Language);
 
       const callbacks = Array.from(index.functions.values()).filter(
         (f) => f.name === "<anonymous>"
       );
       expect(callbacks.length).toBe(1);
 
-      const moveClosure = callbacks[0];
-      expect(moveClosure.callback_context).not.toBe(undefined);
-      expect(moveClosure.callback_context!.is_callback).toBe(true);
-      expect(moveClosure.callback_context!.receiver_location).not.toBe(null);
+      const move_closure = callbacks[0];
+      expect(move_closure.callback_context).not.toBe(undefined);
+      expect(move_closure.callback_context!.is_callback).toBe(true);
+      expect(move_closure.callback_context!.receiver_location).not.toBe(null);
     });
 
     it("should detect closures with type annotations", () => {
@@ -2609,18 +2609,18 @@ trait MyTrait {
 }`;
 
       const tree = parser.parse(code);
-      const parsedFile = createParsedFile(code, "test.rs" as FilePath, tree, "rust" as Language);
-      const index = build_semantic_index(parsedFile, tree, "rust" as Language);
+      const parsed_file = create_parsed_file(code, "test.rs" as FilePath, tree, "rust" as Language);
+      const index = build_semantic_index(parsed_file, tree, "rust" as Language);
 
       const callbacks = Array.from(index.functions.values()).filter(
         (f) => f.name === "<anonymous>"
       );
       expect(callbacks.length).toBe(1);
 
-      const typedClosure = callbacks[0];
-      expect(typedClosure.callback_context).not.toBe(undefined);
-      expect(typedClosure.callback_context!.is_callback).toBe(true);
-      expect(typedClosure.callback_context!.receiver_location).not.toBe(null);
+      const typed_closure = callbacks[0];
+      expect(typed_closure.callback_context).not.toBe(undefined);
+      expect(typed_closure.callback_context!.is_callback).toBe(true);
+      expect(typed_closure.callback_context!.receiver_location).not.toBe(null);
     });
 
     it("should detect callbacks in chained iterator methods", () => {
@@ -2634,8 +2634,8 @@ trait MyTrait {
 }`;
 
       const tree = parser.parse(code);
-      const parsedFile = createParsedFile(code, "test.rs" as FilePath, tree, "rust" as Language);
-      const index = build_semantic_index(parsedFile, tree, "rust" as Language);
+      const parsed_file = create_parsed_file(code, "test.rs" as FilePath, tree, "rust" as Language);
+      const index = build_semantic_index(parsed_file, tree, "rust" as Language);
 
       const callbacks = Array.from(index.functions.values()).filter(
         (f) => f.name === "<anonymous>"
@@ -2666,7 +2666,7 @@ fn main() {
 `;
       const tree = parser.parse(code);
       const file_path = "test.rs" as FilePath;
-      const parsed_file = createParsedFile(code, file_path, tree, "rust");
+      const parsed_file = create_parsed_file(code, file_path, tree, "rust");
       const index = build_semantic_index(parsed_file, tree, "rust");
 
       const variable = Array.from(index.variables.values()).find(v => v.name === "handlers");
@@ -2686,7 +2686,7 @@ fn main() {
 `;
       const tree = parser.parse(code);
       const file_path = "test.rs" as FilePath;
-      const parsed_file = createParsedFile(code, file_path, tree, "rust");
+      const parsed_file = create_parsed_file(code, file_path, tree, "rust");
       const index = build_semantic_index(parsed_file, tree, "rust");
 
       const variable = Array.from(index.variables.values()).find(v => v.name === "handler");

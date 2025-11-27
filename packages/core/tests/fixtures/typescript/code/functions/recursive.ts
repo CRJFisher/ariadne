@@ -17,27 +17,27 @@ function fibonacci(n: number): number {
   return fibonacci(n - 1) + fibonacci(n - 2);
 }
 
-function sumArray(arr: number[]): number {
+function sum_array(arr: number[]): number {
   if (arr.length === 0) {
     return 0;
   }
   const [first, ...rest] = arr;
-  return first + sumArray(rest);
+  return first + sum_array(rest);
 }
 
 // Mutual recursion
-function isEven(n: number): boolean {
+function is_even(n: number): boolean {
   if (n === 0) {
     return true;
   }
-  return isOdd(n - 1);
+  return is_odd(n - 1);
 }
 
-function isOdd(n: number): boolean {
+function is_odd(n: number): boolean {
   if (n === 0) {
     return false;
   }
-  return isEven(n - 1);
+  return is_even(n - 1);
 }
 
 // Tree traversal
@@ -47,11 +47,11 @@ interface TreeNode {
   right?: TreeNode;
 }
 
-function sumTree(node: TreeNode | undefined): number {
+function sum_tree(node: TreeNode | undefined): number {
   if (!node) {
     return 0;
   }
-  return node.value + sumTree(node.left) + sumTree(node.right);
+  return node.value + sum_tree(node.left) + sum_tree(node.right);
 }
 
-export { factorial, fibonacci, sumArray, isEven, isOdd, sumTree };
+export { factorial, fibonacci, sum_array, is_even, is_odd, sum_tree };

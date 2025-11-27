@@ -5,25 +5,25 @@
 
 // String enum
 enum LogLevel {
-  Debug = "DEBUG",
-  Info = "INFO",
-  Warning = "WARNING",
-  Error = "ERROR",
-  Fatal = "FATAL",
+  DEBUG = "DEBUG",
+  INFO = "INFO",
+  WARNING = "WARNING",
+  ERROR = "ERROR",
+  FATAL = "FATAL",
 }
 
 enum HttpMethod {
-  Get = "GET",
-  Post = "POST",
-  Put = "PUT",
-  Delete = "DELETE",
-  Patch = "PATCH",
+  GET = "GET",
+  POST = "POST",
+  PUT = "PUT",
+  DELETE = "DELETE",
+  PATCH = "PATCH",
 }
 
 enum Environment {
-  Development = "dev",
-  Staging = "staging",
-  Production = "prod",
+  DEVELOPMENT = "dev",
+  STAGING = "staging",
+  PRODUCTION = "prod",
 }
 
 // Using string enums
@@ -31,11 +31,11 @@ function log(level: LogLevel, message: string): void {
   console.log(`[${level}] ${message}`);
 }
 
-function makeRequest(method: HttpMethod, url: string): Promise<Response> {
+function make_request(method: HttpMethod, url: string): Promise<Response> {
   return fetch(url, { method });
 }
 
-function getApiUrl(env: Environment): string {
+function get_api_url(env: Environment): string {
   switch (env) {
     case Environment.Development:
       return "http://localhost:3000";
@@ -48,13 +48,13 @@ function getApiUrl(env: Environment): string {
 
 // Const enum (inlined at compile time)
 const enum Color {
-  Red = "#ff0000",
-  Green = "#00ff00",
-  Blue = "#0000ff",
+  RED = "#ff0000",
+  GREEN = "#00ff00",
+  BLUE = "#0000ff",
 }
 
-function getColorCode(color: Color): string {
+function get_color_code(color: Color): string {
   return color;
 }
 
-export { LogLevel, HttpMethod, Environment, Color, log, makeRequest, getApiUrl, getColorCode };
+export { LogLevel, HttpMethod, Environment, Color, log, make_request, get_api_url, get_color_code };

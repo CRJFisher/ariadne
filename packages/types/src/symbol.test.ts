@@ -23,17 +23,17 @@ describe("Symbol Utilities", () => {
           "processData" as SymbolName,
           test_location
         );
-        const expectedFormat = "function:src/test.ts:10:5:15:10:processData";
+        const expected_format = "function:src/test.ts:10:5:15:10:processData";
 
-        expect(func_symbol_result).toBe(expectedFormat);
+        expect(func_symbol_result).toBe(expected_format);
       });
 
       it("should handle qualified symbols correctly", () => {
         const method_symbol_result = method_symbol("getValue", test_location);
         // Format: kind:file_path:line:column:end_line:end_column:name
-        const expectedFormat = "method:src/test.ts:10:5:15:10:getValue";
+        const expected_format = "method:src/test.ts:10:5:15:10:getValue";
 
-        expect(method_symbol_result).toBe(expectedFormat);
+        expect(method_symbol_result).toBe(expected_format);
       });
     });
 

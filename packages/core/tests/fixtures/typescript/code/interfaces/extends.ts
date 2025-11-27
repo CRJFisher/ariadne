@@ -12,8 +12,8 @@ interface Identifiable {
 }
 
 interface Timestamped {
-  createdAt: Date;
-  updatedAt: Date;
+  created_at: Date;
+  updated_at: Date;
 }
 
 // Single inheritance

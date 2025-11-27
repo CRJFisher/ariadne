@@ -3,28 +3,28 @@
  * Tests: async functions, await expressions, Promise handling
  */
 
-async function fetchUser(id: number): Promise<object> {
+async function fetch_user(id: number): Promise<object> {
   await delay(100);
   return { id, name: "User" + id };
 }
 
-async function fetchUsers(ids: number[]): Promise<object[]> {
-  const promises = ids.map((id) => fetchUser(id));
+async function fetch_users(ids: number[]): Promise<object[]> {
+  const promises = ids.map((id) => fetch_user(id));
   return Promise.all(promises);
 }
 
-async function processUserData(userId: number): Promise<string> {
-  const user = await fetchUser(userId);
-  const processed = await transformUser(user);
-  return formatUserData(processed);
+async function process_user_data(user_id: number): Promise<string> {
+  const user = await fetch_user(user_id);
+  const processed = await transform_user(user);
+  return format_user_data(processed);
 }
 
-async function transformUser(user: object): Promise<object> {
+async function transform_user(user: object): Promise<object> {
   await delay(50);
   return { ...user, transformed: true };
 }
 
-function formatUserData(user: any): string {
+function format_user_data(user: any): string {
   return JSON.stringify(user);
 }
 
@@ -33,9 +33,9 @@ function delay(ms: number): Promise<void> {
 }
 
 // Error handling with async
-async function safeFetch(id: number): Promise<object | null> {
+async function safe_fetch(id: number): Promise<object | null> {
   try {
-    const data = await fetchUser(id);
+    const data = await fetch_user(id);
     return data;
   } catch (error) {
     console.error("Fetch failed:", error);
@@ -43,4 +43,4 @@ async function safeFetch(id: number): Promise<object | null> {
   }
 }
 
-export { fetchUser, fetchUsers, processUserData, safeFetch };
+export { fetch_user, fetch_users, process_user_data, safe_fetch };

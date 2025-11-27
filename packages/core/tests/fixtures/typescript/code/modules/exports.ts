@@ -8,13 +8,13 @@ export const API_URL = "https://api.example.com";
 export const API_VERSION = "v1";
 
 // Named export - function
-export function formatDate(date: Date): string {
+export function format_date(date: Date): string {
   return date.toISOString();
 }
 
 // Named export - class
 export class HttpClient {
-  constructor(private baseUrl: string) {}
+  constructor(private base_url: string) {}
 
   async get(path: string): Promise<any> {
     return fetch(`${this.baseUrl}${path}`);
@@ -23,7 +23,7 @@ export class HttpClient {
 
 // Named export - interface
 export interface Config {
-  apiUrl: string;
+  api_url: string;
   timeout: number;
   retries: number;
 }
@@ -35,7 +35,7 @@ export type RequestMethod = "GET" | "POST" | "PUT" | "DELETE";
 const SECRET_KEY = "secret";
 const DEBUG = false;
 
-function validateConfig(config: Config): boolean {
+function validate_config(config: Config): boolean {
   return config.timeout > 0 && config.retries >= 0;
 }
 
@@ -46,7 +46,7 @@ class Logger {
 }
 
 // Export list
-export { SECRET_KEY, DEBUG, validateConfig, Logger };
+export { SECRET_KEY, DEBUG, validate_config, Logger };
 
 // Default export
 export default class Application {

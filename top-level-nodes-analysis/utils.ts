@@ -171,7 +171,9 @@ export async function load_json<T>(file_path: string): Promise<T> {
  * Returns the absolute path to the file
  */
 export async function find_most_recent_analysis(): Promise<string> {
+  // eslint-disable-next-line @typescript-eslint/naming-convention
   const __filename = fileURLToPath(import.meta.url);
+  // eslint-disable-next-line @typescript-eslint/naming-convention
   const __dirname = dirname(__filename);
   const analysis_dir = path.resolve(__dirname, "analysis_output");
 

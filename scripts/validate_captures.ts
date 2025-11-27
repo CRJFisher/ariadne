@@ -14,7 +14,9 @@ import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 import { run_validation, validate_scm_file, format_all_results, format_json_output, format_validation_report } from '../packages/core/src/index_single_file/query_code_tree/validate_captures.js';
 
+// eslint-disable-next-line @typescript-eslint/naming-convention
 const __filename_esm = fileURLToPath(import.meta.url);
+// eslint-disable-next-line @typescript-eslint/naming-convention
 const __dirname_esm = dirname(__filename_esm);
 
 // Parse command line arguments

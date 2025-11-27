@@ -7,24 +7,24 @@
 const double = (x: number): number => x * 2;
 
 // Arrow function with block
-const isEven = (n: number): boolean => {
+const is_even = (n: number): boolean => {
   return n % 2 === 0;
 };
 
 // Arrow function returning object
-const createUser = (name: string, age: number) => ({
+const create_user = (name: string, age: number) => ({
   name,
   age,
   createdAt: Date.now(),
 });
 
 // Arrow function with multiple parameters
-const formatName = (first: string, last: string): string => {
+const format_name = (first: string, last: string): string => {
   return `${last}, ${first}`;
 };
 
 // Closure with arrow function
-const makeCounter = (start: number = 0) => {
+const make_counter = (start: number = 0) => {
   let count = start;
   return () => ++count;
 };
@@ -38,4 +38,4 @@ const map = <T, U>(arr: T[], fn: (item: T) => U): U[] => {
   return result;
 };
 
-export { double, isEven, createUser, formatName, makeCounter, map };
+export { double, is_even, create_user, format_name, make_counter, map };

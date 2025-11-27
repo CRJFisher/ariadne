@@ -28,8 +28,8 @@ export interface ExtendedUser extends BasicInterface {
 
 // Multiple inheritance
 export interface AdminUser extends BasicInterface, ExtendedUser {
-  adminLevel: number;
-  canDelete: boolean;
+  admin_level: number;
+  can_delete: boolean;
 }
 
 // Interface with method signatures

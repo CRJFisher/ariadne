@@ -147,9 +147,9 @@ describe("Query Loader", () => {
     });
 
     it("should not contain unsupported languages", () => {
-      const unsupportedLanguages = ["java", "cpp", "go", "php"];
+      const unsupported_languages = ["java", "cpp", "go", "php"];
 
-      for (const lang of unsupportedLanguages) {
+      for (const lang of unsupported_languages) {
         expect(LANGUAGE_TO_TREESITTER_LANG.has(lang as Language)).toBe(false);
       }
     });
@@ -625,7 +625,7 @@ describe("Query Loader", () => {
 
     it("should handle parser availability check", () => {
       // Temporarily remove a parser to test error handling
-      const originalParser = LANGUAGE_TO_TREESITTER_LANG.get("javascript");
+      const original_parser = LANGUAGE_TO_TREESITTER_LANG.get("javascript");
       LANGUAGE_TO_TREESITTER_LANG.delete("javascript");
 
       try {
@@ -634,8 +634,8 @@ describe("Query Loader", () => {
         }).toThrow("No tree-sitter parser available for language: javascript");
       } finally {
         // Restore the parser
-        if (originalParser) {
-          LANGUAGE_TO_TREESITTER_LANG.set("javascript", originalParser);
+        if (original_parser) {
+          LANGUAGE_TO_TREESITTER_LANG.set("javascript", original_parser);
         }
       }
     });
@@ -811,7 +811,7 @@ describe("Query Loader", () => {
       expect(has_query("javascript")).toBe(true);
       expect(has_query("typescript")).toBe(true);
 
-      const jsQuery = load_query("javascript");
+      const js_query = load_query("javascript");
       expect(get_cache_size()).toBeGreaterThanOrEqual(1);
 
       expect(has_query("javascript")).toBe(true); // Should check cache
@@ -820,8 +820,8 @@ describe("Query Loader", () => {
       expect(get_cache_size()).toBeGreaterThanOrEqual(2);
 
       // Reload should use cache
-      const jsQuery2 = load_query("javascript");
-      expect(jsQuery).toBe(jsQuery2);
+      const js_query2 = load_query("javascript");
+      expect(js_query).toBe(js_query2);
     });
   });
 

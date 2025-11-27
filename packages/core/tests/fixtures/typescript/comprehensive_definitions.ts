@@ -4,36 +4,36 @@
  */
 
 // Basic functions
-function simpleFunction() {
+function simple_function() {
   return "hello";
 }
 
-const arrowFunction = () => {
+const arrow_function = () => {
   return "arrow";
 };
 
-async function asyncFunction(): Promise<string> {
+async function async_function(): Promise<string> {
   return "async";
 }
 
-function* generatorFunction(): Generator<number> {
+function* generator_function(): Generator<number> {
   yield 1;
   yield 2;
 }
 
 // Generic functions
-function genericFunction<T>(param: T): T {
+function generic_function<T>(param: T): T {
   return param;
 }
 
-function constrainedGeneric<T extends string>(param: T): T {
+function constrained_generic<T extends string>(param: T): T {
   return param;
 }
 
 // Variables and constants
-const stringConstant = "hello";
-const numberVariable = 42;
-const hoistedVariable = "hoisted";
+const string_constant = "hello";
+const number_variable = 42;
+const hoisted_variable = "hoisted";
 
 // Basic class
 class SimpleClass {
@@ -49,19 +49,19 @@ class SimpleClass {
     this.id = id;
   }
 
-  public getName(): string {
+  public get_name(): string {
     return this.name;
   }
 
-  private getAge(): number {
+  private get_age(): number {
     return this.age;
   }
 
-  protected getEmail(): string {
+  protected get_email(): string {
     return this.email;
   }
 
-  static createDefault(): SimpleClass {
+  static create_default(): SimpleClass {
     return new SimpleClass("default", 0, "default@example.com", "default");
   }
 }
@@ -76,11 +76,11 @@ class GenericClass<T, U> {
     this.metadata = metadata;
   }
 
-  getData(): T {
+  get_data(): T {
     return this.data;
   }
 
-  getMetadata(): U {
+  get_metadata(): U {
     return this.metadata;
   }
 
@@ -119,7 +119,7 @@ interface GenericInterface<T> {
 
 interface ExtendedInterface extends BasicInterface {
   description: string;
-  getValue(): string;
+  get_value(): string;
 }
 
 // Interface with call signature
@@ -131,7 +131,7 @@ interface CallableInterface {
 // Interface with index signature
 interface IndexableInterface {
   [key: string]: any;
-  knownProperty: string;
+  known_property: string;
 }
 
 // Type aliases
@@ -146,22 +146,22 @@ type MappedType<T> = {
 
 // Enums
 enum BasicEnum {
-  First,
-  Second,
-  Third
+  FIRST,
+  SECOND,
+  THIRD
 }
 
 enum StringEnum {
-  Success = "success",
-  Error = "error",
-  Pending = "pending"
+  SUCCESS = "success",
+  ERROR = "error",
+  PENDING = "pending"
 }
 
 enum ComputedEnum {
-  None = 0,
-  Read = 1 << 1,
-  Write = 1 << 2,
-  ReadWrite = Read | Write
+  NONE = 0,
+  READ = 1 << 1,
+  WRITE = 1 << 2,
+  READ_WRITE = Read | Write
 }
 
 const enum ConstEnum {
@@ -179,15 +179,15 @@ namespace BasicNamespace {
     constructor(public data: string) {}
   }
 
-  export function nestedFunction(): string {
+  export function nested_function(): string {
     return "nested";
   }
 
-  export const nestedConstant = "constant";
+  export const nested_constant = "constant";
 
   export namespace InnerNamespace {
     export type InnerType = string;
-    export const innerValue = 42;
+    export const inner_value = 42;
   }
 }
 
@@ -219,29 +219,29 @@ class OverloadedMethods {
 }
 
 // Decorators (if available)
-function ClassDecorator(target: any) {
+function class_decorator(target: any) {
   return target;
 }
 
-function MethodDecorator(target: any, propertyKey: string, descriptor: PropertyDescriptor) {
+function method_decorator(target: any, property_key: string, descriptor: PropertyDescriptor) {
   return descriptor;
 }
 
-function PropertyDecorator(target: any, propertyKey: string) {
+function property_decorator(target: any, property_key: string) {
   // Property decorator
 }
 
-function ParameterDecorator(target: any, propertyKey: string, parameterIndex: number) {
+function parameter_decorator(target: any, property_key: string, parameter_index: number) {
   // Parameter decorator
 }
 
-@ClassDecorator
+@class_decorator
 class DecoratedClass {
-  @PropertyDecorator
-    decoratedProperty: string = "";
+  @property_decorator
+    decorated_property: string = "";
 
-  @MethodDecorator
-  decoratedMethod(@ParameterDecorator param: string): string {
+  @method_decorator
+  decorated_method(@parameter_decorator param: string): string {
     return param;
   }
 }
@@ -254,23 +254,23 @@ class GetterSetterClass {
     return this._value;
   }
 
-  set value(newValue: string) {
-    this._value = newValue;
+  set value(new_value: string) {
+    this._value = new_value;
   }
 }
 
 // Static blocks (ES2022)
 class StaticBlockClass {
-  static staticProperty: string;
+  static static_property: string;
 
   static {
-    this.staticProperty = "initialized";
+    this.static_property = "initialized";
   }
 }
 
 // Complex nested structures
 class OuterClass {
-  private innerValue: string = "";
+  private inner_value: string = "";
 
   public method(): void {
     // Local class
@@ -283,14 +283,14 @@ class OuterClass {
     }
 
     // Local function
-    function localFunction(): string {
+    function local_function(): string {
       // Local variable
-      const localVar = "local";
-      return localVar;
+      const local_var = "local";
+      return local_var;
     }
 
     const instance = new LocalClass("test");
-    const result = localFunction();
+    const result = local_function();
   }
 }
 

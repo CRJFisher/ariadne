@@ -9,11 +9,11 @@ class User {
     public email: string
   ) {}
 
-  getName(): string {
+  get_name(): string {
     return this.name;
   }
 
-  getEmail(): string {
+  get_email(): string {
     return this.email;
   }
 }
@@ -22,7 +22,7 @@ class User {
 const user = new User("Alice", "alice@example.com");
 
 // Method call on constructed instance
-const userName = user.getName();
-const userEmail = user.getEmail();
+const user_name = user.get_name();
+const user_email = user.get_email();
 
-export { User, user, userName, userEmail };
+export { User, user, user_name, user_email };

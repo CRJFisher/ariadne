@@ -11,12 +11,14 @@ export interface Location {
   readonly end_column: number;
 }
 // File and module identifiers
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export type FilePath = string & { __brand: "FilePath" }; // Absolute or relative file path
 
 /**
  * Branded type for location-based keys used in maps
  * Format: "file_path:line:column:end_line:end_column"
  */
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export type LocationKey = string & { __brand: "LocationKey" };
 
 /**

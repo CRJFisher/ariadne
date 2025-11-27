@@ -38,7 +38,7 @@ describe("JavaScript Builder Configuration", () => {
   const TEST_FILE_PATH = "/test/file.js" as FilePath;
 
   // Helper function to create test context
-  function createTestContext(with_scopes: boolean = false): ProcessingContext {
+  function create_test_context(with_scopes: boolean = false): ProcessingContext {
     const test_scope_id = "module:test.js:1:0:100:0:<module>" as ScopeId;
     const scopes = new Map();
 
@@ -97,21 +97,21 @@ describe("JavaScript Builder Configuration", () => {
   }
 
   // Helper function to create a raw capture from code
-  function createCapture(
+  function create_capture(
     code: string,
-    captureName: string,
-    nodeType: string
+    capture_name: string,
+    node_type: string
   ): CaptureNode {
     const ast = parser.parse(code);
-    const node = findNodeByType(ast.rootNode, nodeType);
+    const node = find_node_by_type(ast.rootNode, node_type);
     if (!node) {
-      throw new Error(`Could not find node of type ${nodeType} in code`);
+      throw new Error(`Could not find node of type ${node_type} in code`);
     }
 
     return {
-      name: captureName,
+      name: capture_name,
       category: "definition" as any, // Default for builder tests
-      entity: nodeType as any,
+      entity: node_type as any,
       node: node as any,
       text: node.text as SymbolName,
       location: node_to_location(node, TEST_FILE_PATH),
@@ -119,11 +119,11 @@ describe("JavaScript Builder Configuration", () => {
   }
 
   // Helper function to find first node of specific type
-  function findNodeByType(node: SyntaxNode, type: string): SyntaxNode | null {
+  function find_node_by_type(node: SyntaxNode, type: string): SyntaxNode | null {
     if (node.type === type) return node;
 
     for (let i = 0; i < node.childCount; i++) {
-      const found = findNodeByType(node.child(i)!, type);
+      const found = find_node_by_type(node.child(i)!, type);
       if (found) return found;
     }
     return null;
@@ -137,7 +137,7 @@ describe("JavaScript Builder Configuration", () => {
     });
 
     it("should contain definition capture mappings with process functions", () => {
-      const definitionMappings = [
+      const definition_mappings = [
         "definition.class",
         "definition.method",
         "definition.constructor",
@@ -150,7 +150,7 @@ describe("JavaScript Builder Configuration", () => {
         "definition.property",
       ];
 
-      for (const mapping of definitionMappings) {
+      for (const mapping of definition_mappings) {
         expect(JAVASCRIPT_BUILDER_CONFIG.has(mapping)).toBe(true);
         const config = JAVASCRIPT_BUILDER_CONFIG.get(mapping);
         expect(config).toBeDefined();
@@ -159,14 +159,14 @@ describe("JavaScript Builder Configuration", () => {
     });
 
     it("should contain import capture mappings with process functions", () => {
-      const importMappings = [
+      const import_mappings = [
         "definition.import",
         "definition.import.named",
         "definition.import.default",
         "definition.import.namespace",
       ];
 
-      for (const mapping of importMappings) {
+      for (const mapping of import_mappings) {
         expect(JAVASCRIPT_BUILDER_CONFIG.has(mapping)).toBe(true);
         const config = JAVASCRIPT_BUILDER_CONFIG.get(mapping);
         expect(config).toBeDefined();
@@ -177,15 +177,15 @@ describe("JavaScript Builder Configuration", () => {
     describe("Process Functions", () => {
       it("should process class definitions", () => {
         const code = "class MyClass { }";
-        const context = createTestContext();
+        const context = create_test_context();
         const builder = new DefinitionBuilder(context);
 
         // Find the class name identifier
         const ast = parser.parse(code);
-        const classNode = findNodeByType(ast.rootNode, "class_declaration");
-        const nameNode = classNode?.childForFieldName("name");
+        const class_node = find_node_by_type(ast.rootNode, "class_declaration");
+        const name_node = class_node?.childForFieldName("name");
 
-        if (!nameNode) {
+        if (!name_node) {
           throw new Error("Could not find class name");
         }
 
@@ -193,9 +193,9 @@ describe("JavaScript Builder Configuration", () => {
           name: "definition.class",
           category: "definition" as SemanticCategory,
           entity: "class" as SemanticEntity,
-          node: nameNode as any,
-          text: nameNode.text as SymbolName,
-          location: node_to_location(nameNode, TEST_FILE_PATH),
+          node: name_node as any,
+          text: name_node.text as SymbolName,
+          location: node_to_location(name_node, TEST_FILE_PATH),
         };
 
         const processor = JAVASCRIPT_BUILDER_CONFIG.get("definition.class");
@@ -211,14 +211,14 @@ describe("JavaScript Builder Configuration", () => {
 
       it("should process function definitions", () => {
         const code = "function myFunction() { }";
-        const context = createTestContext();
+        const context = create_test_context();
         const builder = new DefinitionBuilder(context);
 
         const ast = parser.parse(code);
-        const funcNode = findNodeByType(ast.rootNode, "function_declaration");
-        const nameNode = funcNode?.childForFieldName("name");
+        const func_node = find_node_by_type(ast.rootNode, "function_declaration");
+        const name_node = func_node?.childForFieldName("name");
 
-        if (!nameNode) {
+        if (!name_node) {
           throw new Error("Could not find function name");
         }
 
@@ -226,9 +226,9 @@ describe("JavaScript Builder Configuration", () => {
           name: "definition.function",
           category: "definition" as SemanticCategory,
           entity: "function" as SemanticEntity,
-          node: nameNode as any,
-          text: nameNode.text as SymbolName,
-          location: node_to_location(nameNode, TEST_FILE_PATH),
+          node: name_node as any,
+          text: name_node.text as SymbolName,
+          location: node_to_location(name_node, TEST_FILE_PATH),
         };
 
         const processor = JAVASCRIPT_BUILDER_CONFIG.get("definition.function");
@@ -244,14 +244,14 @@ describe("JavaScript Builder Configuration", () => {
 
       it("should process variable definitions", () => {
         const code = "const myVar = 123;";
-        const context = createTestContext();
+        const context = create_test_context();
         const builder = new DefinitionBuilder(context);
 
         const ast = parser.parse(code);
-        const varNode = findNodeByType(ast.rootNode, "variable_declarator");
-        const nameNode = varNode?.childForFieldName("name");
+        const var_node = find_node_by_type(ast.rootNode, "variable_declarator");
+        const name_node = var_node?.childForFieldName("name");
 
-        if (!nameNode) {
+        if (!name_node) {
           throw new Error("Could not find variable name");
         }
 
@@ -259,9 +259,9 @@ describe("JavaScript Builder Configuration", () => {
           name: "definition.variable",
           category: "definition" as SemanticCategory,
           entity: "variable" as SemanticEntity,
-          node: nameNode as any,
-          text: nameNode.text as SymbolName,
-          location: node_to_location(nameNode, TEST_FILE_PATH),
+          node: name_node as any,
+          text: name_node.text as SymbolName,
+          location: node_to_location(name_node, TEST_FILE_PATH),
         };
 
         const processor = JAVASCRIPT_BUILDER_CONFIG.get("definition.variable");
@@ -281,73 +281,73 @@ describe("JavaScript Builder Configuration", () => {
             myMethod() { }
           }
         `;
-        const context = createTestContext(true); // Need scopes for method bodies
+        const context = create_test_context(true); // Need scopes for method bodies
         const builder = new DefinitionBuilder(context);
 
         const ast = parser.parse(code);
 
         // First add the class
-        const classNode = findNodeByType(ast.rootNode, "class_declaration");
-        const classNameNode = classNode?.childForFieldName("name");
+        const class_node = find_node_by_type(ast.rootNode, "class_declaration");
+        const class_name_node = class_node?.childForFieldName("name");
 
-        if (!classNameNode) {
+        if (!class_name_node) {
           throw new Error("Could not find class name");
         }
 
-        const classCapture: CaptureNode = {
+        const class_capture: CaptureNode = {
           name: "definition.class",
           category: "definition" as SemanticCategory,
           entity: "class" as SemanticEntity,
-          node: classNameNode as any,
-          text: classNameNode.text as SymbolName,
-          location: node_to_location(classNameNode, TEST_FILE_PATH),
+          node: class_name_node as any,
+          text: class_name_node.text as SymbolName,
+          location: node_to_location(class_name_node, TEST_FILE_PATH),
         };
 
-        const classProcessor =
+        const class_processor =
           JAVASCRIPT_BUILDER_CONFIG.get("definition.class");
-        classProcessor?.process(classCapture, builder, context);
+        class_processor?.process(class_capture, builder, context);
 
         // Then add the method
-        const methodNode = findNodeByType(ast.rootNode, "method_definition");
-        const methodNameNode = methodNode?.childForFieldName("name");
+        const method_node = find_node_by_type(ast.rootNode, "method_definition");
+        const method_name_node = method_node?.childForFieldName("name");
 
-        if (!methodNameNode) {
+        if (!method_name_node) {
           throw new Error("Could not find method name");
         }
 
-        const methodCapture: CaptureNode = {
+        const method_capture: CaptureNode = {
           name: "definition.method",
           category: "definition" as SemanticCategory,
           entity: "method" as SemanticEntity,
-          node: methodNameNode as any,
-          text: methodNameNode.text as SymbolName,
-          location: node_to_location(methodNameNode, TEST_FILE_PATH),
+          node: method_name_node as any,
+          text: method_name_node.text as SymbolName,
+          location: node_to_location(method_name_node, TEST_FILE_PATH),
         };
 
-        const methodProcessor =
+        const method_processor =
           JAVASCRIPT_BUILDER_CONFIG.get("definition.method");
-        methodProcessor?.process(methodCapture, builder, context);
+        method_processor?.process(method_capture, builder, context);
 
         const result = builder.build();
         const classes = Array.from(result.classes.values());
         expect(classes).toHaveLength(1);
         expect(classes[0].kind).toBe("class");
 
-        const classDef = classes[0] as any;
-        expect(classDef.methods).toHaveLength(1);
-        expect(classDef.methods[0].name).toBe("myMethod");
+        const class_def = classes[0] as any;
+        expect(class_def.methods).toHaveLength(1);
+        expect(class_def.methods[0].name).toBe("myMethod");
       });
 
       it("should process import statements", () => {
         const code = "import React from 'react';";
-        const context = createTestContext();
+        const context = create_test_context();
         const builder = new DefinitionBuilder(context);
 
         const ast = parser.parse(code);
-        const importClause = findNodeByType(ast.rootNode, "import_clause");
-        const nameNode = importClause?.child(0); // Default import identifier
+        const import_clause = find_node_by_type(ast.rootNode, "import_clause");
+        const name_node = import_clause?.child(0); // Default import identifier
 
-        if (!nameNode) {
+        if (!name_node) {
           throw new Error("Could not find import name");
         }
 
@@ -355,9 +355,9 @@ describe("JavaScript Builder Configuration", () => {
           name: "definition.import.default",
           category: "definition" as SemanticCategory,
           entity: "import" as SemanticEntity,
-          node: nameNode as any,
-          text: nameNode.text as SymbolName,
-          location: node_to_location(nameNode, TEST_FILE_PATH),
+          node: name_node as any,
+          text: name_node.text as SymbolName,
+          location: node_to_location(name_node, TEST_FILE_PATH),
         };
 
         const processor = JAVASCRIPT_BUILDER_CONFIG.get("definition.import.default");
@@ -370,21 +370,21 @@ describe("JavaScript Builder Configuration", () => {
         expect(imports[0].kind).toBe("import");
         expect(imports[0].name).toBe("React");
 
-        const importDef = imports[0] as any;
-        expect(importDef.import_kind).toBe("default");
-        expect(importDef.import_path).toBe("react");
+        const import_def = imports[0] as any;
+        expect(import_def.import_kind).toBe("default");
+        expect(import_def.import_path).toBe("react");
       });
 
       it("should process arrow function assignments", () => {
         const code = "const myFunc = () => {};";
-        const context = createTestContext();
+        const context = create_test_context();
         const builder = new DefinitionBuilder(context);
 
         const ast = parser.parse(code);
-        const varNode = findNodeByType(ast.rootNode, "variable_declarator");
-        const nameNode = varNode?.childForFieldName("name");
+        const var_node = find_node_by_type(ast.rootNode, "variable_declarator");
+        const name_node = var_node?.childForFieldName("name");
 
-        if (!nameNode) {
+        if (!name_node) {
           throw new Error("Could not find arrow function name");
         }
 
@@ -392,9 +392,9 @@ describe("JavaScript Builder Configuration", () => {
           name: "definition.arrow",
           category: "definition" as SemanticCategory,
           entity: "function" as SemanticEntity,
-          node: nameNode as any,
-          text: nameNode.text as SymbolName,
-          location: node_to_location(nameNode, TEST_FILE_PATH),
+          node: name_node as any,
+          text: name_node.text as SymbolName,
+          location: node_to_location(name_node, TEST_FILE_PATH),
         };
 
         const processor = JAVASCRIPT_BUILDER_CONFIG.get("definition.arrow");
@@ -414,100 +414,100 @@ describe("JavaScript Builder Configuration", () => {
             myProperty = 42;
           }
         `;
-        const context = createTestContext(true); // Need scopes for class bodies
+        const context = create_test_context(true); // Need scopes for class bodies
         const builder = new DefinitionBuilder(context);
 
         const ast = parser.parse(code);
 
         // First add the class
-        const classNode = findNodeByType(ast.rootNode, "class_declaration");
-        const classNameNode = classNode?.childForFieldName("name");
+        const class_node = find_node_by_type(ast.rootNode, "class_declaration");
+        const class_name_node = class_node?.childForFieldName("name");
 
-        if (!classNameNode) {
+        if (!class_name_node) {
           throw new Error("Could not find class name");
         }
 
-        const classCapture: CaptureNode = {
+        const class_capture: CaptureNode = {
           name: "definition.class",
           category: "definition" as SemanticCategory,
           entity: "class" as SemanticEntity,
-          node: classNameNode as any,
-          text: classNameNode.text as SymbolName,
-          location: node_to_location(classNameNode, TEST_FILE_PATH),
+          node: class_name_node as any,
+          text: class_name_node.text as SymbolName,
+          location: node_to_location(class_name_node, TEST_FILE_PATH),
         };
 
-        const classProcessor =
+        const class_processor =
           JAVASCRIPT_BUILDER_CONFIG.get("definition.class");
-        classProcessor?.process(classCapture, builder, context);
+        class_processor?.process(class_capture, builder, context);
 
         // Then add the property
-        const fieldNode = findNodeByType(ast.rootNode, "field_definition");
-        const propNode = fieldNode?.childForFieldName("property");
+        const field_node = find_node_by_type(ast.rootNode, "field_definition");
+        const prop_node = field_node?.childForFieldName("property");
 
-        if (!propNode) {
+        if (!prop_node) {
           throw new Error("Could not find property name");
         }
 
-        const propCapture: CaptureNode = {
+        const prop_capture: CaptureNode = {
           name: "definition.field",
           category: "definition" as SemanticCategory,
           entity: "property" as SemanticEntity,
-          node: propNode as any,
-          text: propNode.text as SymbolName,
-          location: node_to_location(propNode, TEST_FILE_PATH),
+          node: prop_node as any,
+          text: prop_node.text as SymbolName,
+          location: node_to_location(prop_node, TEST_FILE_PATH),
         };
 
-        const propProcessor = JAVASCRIPT_BUILDER_CONFIG.get("definition.field");
-        propProcessor?.process(propCapture, builder, context);
+        const prop_processor = JAVASCRIPT_BUILDER_CONFIG.get("definition.field");
+        prop_processor?.process(prop_capture, builder, context);
 
         const result = builder.build();
         const classes = Array.from(result.classes.values());
         expect(classes).toHaveLength(1);
         expect(classes[0].kind).toBe("class");
 
-        const classDef = classes[0] as any;
-        expect(classDef.properties).toHaveLength(1);
-        expect(classDef.properties[0].name).toBe("myProperty");
+        const class_def = classes[0] as any;
+        expect(class_def.properties).toHaveLength(1);
+        expect(class_def.properties[0].name).toBe("myProperty");
       });
 
       it("should process function parameters", () => {
         const code = "function myFunc(param1, param2) { }";
-        const context = createTestContext(true); // Need scopes for function bodies
+        const context = create_test_context(true); // Need scopes for function bodies
         const builder = new DefinitionBuilder(context);
 
         const ast = parser.parse(code);
 
         // First add the function
-        const funcNode = findNodeByType(ast.rootNode, "function_declaration");
-        const funcNameNode = funcNode?.childForFieldName("name");
+        const func_node = find_node_by_type(ast.rootNode, "function_declaration");
+        const func_name_node = func_node?.childForFieldName("name");
 
-        if (!funcNameNode) {
+        if (!func_name_node) {
           throw new Error("Could not find function name");
         }
 
-        const funcCapture: CaptureNode = {
+        const func_capture: CaptureNode = {
           name: "definition.function",
           category: "definition" as SemanticCategory,
           entity: "function" as SemanticEntity,
-          node: funcNameNode as any,
-          text: funcNameNode.text as SymbolName,
-          location: node_to_location(funcNameNode, TEST_FILE_PATH),
+          node: func_name_node as any,
+          text: func_name_node.text as SymbolName,
+          location: node_to_location(func_name_node, TEST_FILE_PATH),
         };
 
-        const funcProcessor = JAVASCRIPT_BUILDER_CONFIG.get(
+        const func_processor = JAVASCRIPT_BUILDER_CONFIG.get(
           "definition.function"
         );
-        funcProcessor?.process(funcCapture, builder, context);
+        func_processor?.process(func_capture, builder, context);
 
         // Then add the parameters
-        const paramsNode = funcNode?.childForFieldName("parameters");
-        if (!paramsNode) {
+        const params_node = func_node?.childForFieldName("parameters");
+        if (!params_node) {
           throw new Error("Could not find parameters");
         }
 
-        for (const child of paramsNode.namedChildren) {
+        for (const child of params_node.namedChildren) {
           if (child.type === "identifier") {
-            const paramCapture: CaptureNode = {
+            const param_capture: CaptureNode = {
               name: "definition.param",
               category: "definition" as SemanticCategory,
               entity: "parameter" as SemanticEntity,
@@ -516,9 +516,9 @@ describe("JavaScript Builder Configuration", () => {
               location: node_to_location(child, TEST_FILE_PATH),
             };
 
-            const paramProcessor =
+            const param_processor =
               JAVASCRIPT_BUILDER_CONFIG.get("definition.param");
-            paramProcessor?.process(paramCapture, builder, context);
+            param_processor?.process(param_capture, builder, context);
           }
         }
 
@@ -527,8 +527,8 @@ describe("JavaScript Builder Configuration", () => {
         expect(functions).toHaveLength(1);
         expect(functions[0].kind).toBe("function");
 
-        const funcDef = functions[0] as any;
-        expect(funcDef.signature.parameters).toHaveLength(2);
+        const func_def = functions[0] as any;
+        expect(func_def.signature.parameters).toHaveLength(2);
       });
     });
 
@@ -544,52 +544,52 @@ describe("JavaScript Builder Configuration", () => {
           }
         `;
 
-        const context = createTestContext();
+        const context = create_test_context();
         const builder = new DefinitionBuilder(context);
         const ast = parser.parse(code);
 
         // Process class definition
-        const classNode = findNodeByType(ast.rootNode, "class_declaration");
-        const classNameNode = classNode?.childForFieldName("name");
+        const class_node = find_node_by_type(ast.rootNode, "class_declaration");
+        const class_name_node = class_node?.childForFieldName("name");
 
-        if (classNameNode) {
-          const classCapture: CaptureNode = {
+        if (class_name_node) {
+          const class_capture: CaptureNode = {
             name: "definition.class",
             category: "definition" as SemanticCategory,
             entity: "class" as SemanticEntity,
-            node: classNameNode as any,
-            text: classNameNode.text as SymbolName,
+            node: class_name_node as any,
+            text: class_name_node.text as SymbolName,
             location: {
               file_path: TEST_FILE_PATH,
-              start_line: classNameNode.startPosition.row + 1,
-              start_column: classNameNode.startPosition.column + 1,
-              end_line: classNameNode.endPosition.row + 1,
-              end_column: classNameNode.endPosition.column + 1,
+              start_line: class_name_node.startPosition.row + 1,
+              start_column: class_name_node.startPosition.column + 1,
+              end_line: class_name_node.endPosition.row + 1,
+              end_column: class_name_node.endPosition.column + 1,
             },
           };
-          const classProcessor =
+          const class_processor =
             JAVASCRIPT_BUILDER_CONFIG.get("definition.class");
-          classProcessor?.process(classCapture, builder, context);
+          class_processor?.process(class_capture, builder, context);
         }
 
         const result = builder.build();
         const classes = Array.from(result.classes.values());
         expect(classes).toHaveLength(1);
 
-        const classDef = classes[0];
+        const class_def = classes[0];
 
         // Check all required fields are populated
-        expect(classDef.kind).toBe("class");
-        expect(classDef.symbol_id).toBeDefined();
-        expect(classDef.name).toBe("MyClass");
-        expect(classDef.location).toBeDefined();
-        expect(classDef.defining_scope_id).toBeDefined();
+        expect(class_def.kind).toBe("class");
+        expect(class_def.symbol_id).toBeDefined();
+        expect(class_def.name).toBe("MyClass");
+        expect(class_def.location).toBeDefined();
+        expect(class_def.defining_scope_id).toBeDefined();
 
         // Check location has all subfields
-        expect(classDef.location.start_line).toBeGreaterThan(0);
-        expect(classDef.location.start_column).toBeGreaterThanOrEqual(0);
-        expect(classDef.location.end_line).toBeGreaterThan(0);
-        expect(classDef.location.end_column).toBeGreaterThanOrEqual(0);
+        expect(class_def.location.start_line).toBeGreaterThan(0);
+        expect(class_def.location.start_column).toBeGreaterThanOrEqual(0);
+        expect(class_def.location.end_line).toBeGreaterThan(0);
+        expect(class_def.location.end_column).toBeGreaterThanOrEqual(0);
 
       });
     });
@@ -605,53 +605,53 @@ describe("JavaScript Builder Configuration", () => {
           obj.method();
         `;
 
-        const context = createTestContext();
+        const context = create_test_context();
         const ast = parser.parse(code);
         const captures: CaptureNode[] = [];
 
         // Find the method call
         // Real query captures the call_expression with member_expression function
-        const callNode = findNodeByType(ast.rootNode, "call_expression");
-        if (callNode) {
-          const memberExpr = callNode.childForFieldName("function");
-          if (memberExpr && memberExpr.type === "member_expression") {
-            const propNode = memberExpr.childForFieldName("property");
-            if (propNode) {
+        const call_node = find_node_by_type(ast.rootNode, "call_expression");
+        if (call_node) {
+          const member_expr = call_node.childForFieldName("function");
+          if (member_expr && member_expr.type === "member_expression") {
+            const prop_node = member_expr.childForFieldName("property");
+            if (prop_node) {
               captures.push({
                 name: "ref.call",
                 category: "reference" as SemanticCategory,
                 entity: "call" as SemanticEntity,
-                node: callNode as any,  // Pass call_expression, not just property
-                text: propNode.text as SymbolName,
-                location: node_to_location(propNode, TEST_FILE_PATH),
+                node: call_node as any,  // Pass call_expression, not just property
+                text: prop_node.text as SymbolName,
+                location: node_to_location(prop_node, TEST_FILE_PATH),
               });
             }
           }
         }
 
-        const processingContext = {
+        const processing_context = {
           ...context,
           captures: captures,
         };
 
         const builder = new ReferenceBuilder(
-          processingContext,
+          processing_context,
           JAVASCRIPT_METADATA_EXTRACTORS,
           TEST_FILE_PATH
         );
 
         builder.process(captures[0]);
 
-        const methodCalls = builder.references.filter(
+        const method_calls = builder.references.filter(
           (r): r is MethodCallReference => r.kind === "method_call"
         );
 
         // Verify method call reference is created with proper detection
-        expect(methodCalls).toHaveLength(1);
-        expect(methodCalls[0].name).toBe("method");
-        expect(methodCalls[0].kind).toBe("method_call");
-        expect(methodCalls[0].receiver_location).toBeDefined();
-        expect(methodCalls[0].property_chain).toEqual(["obj", "method"]);
+        expect(method_calls).toHaveLength(1);
+        expect(method_calls[0].name).toBe("method");
+        expect(method_calls[0].kind).toBe("method_call");
+        expect(method_calls[0].receiver_location).toBeDefined();
+        expect(method_calls[0].property_chain).toEqual(["obj", "method"]);
       });
 
       it("should process property chains with metadata", () => {
@@ -664,53 +664,53 @@ describe("JavaScript Builder Configuration", () => {
           api.users.list();
         `;
 
-        const context = createTestContext();
+        const context = create_test_context();
         const ast = parser.parse(code);
         const captures: CaptureNode[] = [];
 
         // Find the chained method call
         // Real query captures the call_expression with nested member_expression
-        const callNode = findNodeByType(ast.rootNode, "call_expression");
-        if (callNode) {
-          const memberExpr = callNode.childForFieldName("function");
-          if (memberExpr && memberExpr.type === "member_expression") {
-            const propNode = memberExpr.childForFieldName("property");
-            if (propNode) {
+        const call_node = find_node_by_type(ast.rootNode, "call_expression");
+        if (call_node) {
+          const member_expr = call_node.childForFieldName("function");
+          if (member_expr && member_expr.type === "member_expression") {
+            const prop_node = member_expr.childForFieldName("property");
+            if (prop_node) {
               captures.push({
                 name: "ref.call",
                 category: "reference" as SemanticCategory,
                 entity: "call" as SemanticEntity,
-                node: callNode as any,  // Pass call_expression for proper detection
-                text: propNode.text as SymbolName,
-                location: node_to_location(propNode, TEST_FILE_PATH),
+                node: call_node as any,  // Pass call_expression for proper detection
+                text: prop_node.text as SymbolName,
+                location: node_to_location(prop_node, TEST_FILE_PATH),
               });
             }
           }
         }
 
-        const processingContext = {
+        const processing_context = {
           ...context,
           captures: captures,
         };
 
         const builder = new ReferenceBuilder(
-          processingContext,
+          processing_context,
           JAVASCRIPT_METADATA_EXTRACTORS,
           TEST_FILE_PATH
         );
 
         builder.process(captures[0]);
 
-        const methodCalls = builder.references.filter(
+        const method_calls = builder.references.filter(
           (r): r is MethodCallReference => r.kind === "method_call"
         );
 
         // Verify method call with proper property chain extraction
-        expect(methodCalls).toHaveLength(1);
-        expect(methodCalls[0].name).toBe("list");
-        expect(methodCalls[0].kind).toBe("method_call");
-        expect(methodCalls[0].receiver_location).toBeDefined();
-        expect(methodCalls[0].property_chain).toEqual(["api", "users", "list"]);
+        expect(method_calls).toHaveLength(1);
+        expect(method_calls[0].name).toBe("list");
+        expect(method_calls[0].kind).toBe("method_call");
+        expect(method_calls[0].receiver_location).toBeDefined();
+        expect(method_calls[0].property_chain).toEqual(["api", "users", "list"]);
       });
 
       it("should extract type annotations from JSDoc", () => {
@@ -722,33 +722,33 @@ describe("JavaScript Builder Configuration", () => {
           function compute() { return 42; }
         `;
 
-        const context = createTestContext();
+        const context = create_test_context();
         const ast = parser.parse(code);
         const captures: CaptureNode[] = [];
 
         // Find the variable with JSDoc
-        const varNode = findNodeByType(ast.rootNode, "variable_declarator");
-        if (varNode) {
-          const nameNode = varNode.childForFieldName("name");
-          if (nameNode) {
+        const var_node = find_node_by_type(ast.rootNode, "variable_declarator");
+        if (var_node) {
+          const name_node = var_node.childForFieldName("name");
+          if (name_node) {
             captures.push({
               name: "ref.identifier",
               category: "reference" as SemanticCategory,
               entity: "identifier" as SemanticEntity,
-              node: nameNode as any,
-              text: nameNode.text as SymbolName,
-              location: node_to_location(nameNode, TEST_FILE_PATH),
+              node: name_node as any,
+              text: name_node.text as SymbolName,
+              location: node_to_location(name_node, TEST_FILE_PATH),
             });
           }
         }
 
-        const processingContext = {
+        const processing_context = {
           ...context,
           captures: captures,
         };
 
         const builder = new ReferenceBuilder(
-          processingContext,
+          processing_context,
           JAVASCRIPT_METADATA_EXTRACTORS,
           TEST_FILE_PATH
         );
@@ -765,42 +765,42 @@ describe("JavaScript Builder Configuration", () => {
           target = getValue();
         `;
 
-        const context = createTestContext();
+        const context = create_test_context();
         const ast = parser.parse(code);
         const captures: CaptureNode[] = [];
 
         // Find the assignment
-        const assignmentNode = findNodeByType(
+        const assignment_node = find_node_by_type(
           ast.rootNode,
           "assignment_expression"
         );
-        if (assignmentNode) {
-          const leftNode = assignmentNode.childForFieldName("left");
-          if (leftNode) {
+        if (assignment_node) {
+          const left_node = assignment_node.childForFieldName("left");
+          if (left_node) {
             captures.push({
               name: "ref.assignment",
               category: "assignment" as SemanticCategory,
               entity: "assignment" as SemanticEntity,
-              node: assignmentNode as any,
-              text: leftNode.text as SymbolName,
+              node: assignment_node as any,
+              text: left_node.text as SymbolName,
               location: {
                 file_path: TEST_FILE_PATH,
-                start_line: leftNode.startPosition.row + 1,
-                start_column: leftNode.startPosition.column + 1,
-                end_line: leftNode.endPosition.row + 1,
-                end_column: leftNode.endPosition.column + 1,
+                start_line: left_node.startPosition.row + 1,
+                start_column: left_node.startPosition.column + 1,
+                end_line: left_node.endPosition.row + 1,
+                end_column: left_node.endPosition.column + 1,
               },
             });
           }
         }
 
-        const processingContext = {
+        const processing_context = {
           ...context,
           captures: captures,
         };
 
         const builder = new ReferenceBuilder(
-          processingContext,
+          processing_context,
           JAVASCRIPT_METADATA_EXTRACTORS,
           TEST_FILE_PATH
         );
@@ -819,52 +819,52 @@ describe("JavaScript Builder Configuration", () => {
           const instance = new MyClass();
         `;
 
-        const context = createTestContext();
+        const context = create_test_context();
         const ast = parser.parse(code);
         const captures: CaptureNode[] = [];
 
         // Find the new expression
-        const newExpr = findNodeByType(ast.rootNode, "new_expression");
-        if (newExpr) {
-          const constructorNode = newExpr.childForFieldName("constructor");
-          if (constructorNode) {
+        const new_expr = find_node_by_type(ast.rootNode, "new_expression");
+        if (new_expr) {
+          const constructor_node = new_expr.childForFieldName("constructor");
+          if (constructor_node) {
             captures.push({
               name: "ref.constructor",
               category: "reference" as SemanticCategory,
               entity: "constructor" as SemanticEntity,
-              node: constructorNode as any,
-              text: constructorNode.text as SymbolName,
-              location: node_to_location(constructorNode, TEST_FILE_PATH),
+              node: constructor_node as any,
+              text: constructor_node.text as SymbolName,
+              location: node_to_location(constructor_node, TEST_FILE_PATH),
             });
           }
         }
 
-        const processingContext = {
+        const processing_context = {
           ...context,
           captures: captures,
         };
 
         const builder = new ReferenceBuilder(
-          processingContext,
+          processing_context,
           JAVASCRIPT_METADATA_EXTRACTORS,
           TEST_FILE_PATH
         );
 
         builder.process(captures[0]);
-        const constructorCalls = builder.references.filter(
+        const constructor_calls = builder.references.filter(
           (r): r is ConstructorCallReference => r.kind === "constructor_call"
         );
 
-        expect(constructorCalls).toHaveLength(1);
-        expect(constructorCalls[0]?.construct_target).toBeDefined();
+        expect(constructor_calls).toHaveLength(1);
+        expect(constructor_calls[0]?.construct_target).toBeDefined();
       });
     });
 
     describe("Export Detection", () => {
       it("should detect direct exports and set is_exported=true", () => {
         const code = "export function foo() {}";
-        const capture = createCapture(code, "definition.function", "identifier");
-        const context = createTestContext();
+        const capture = create_capture(code, "definition.function", "identifier");
+        const context = create_test_context();
         const builder = new DefinitionBuilder(context);
 
         const config = JAVASCRIPT_BUILDER_CONFIG.get("definition.function");
@@ -884,8 +884,8 @@ describe("JavaScript Builder Configuration", () => {
 function internal() {}
 export { internal as external };
         `;
-        const capture = createCapture(code, "definition.function", "identifier");
-        const context = createTestContext();
+        const capture = create_capture(code, "definition.function", "identifier");
+        const context = create_test_context();
         const builder = new DefinitionBuilder(context);
 
         const config = JAVASCRIPT_BUILDER_CONFIG.get("definition.function");
@@ -903,8 +903,8 @@ export { internal as external };
 
       it("should detect default exports and set export.is_default=true", () => {
         const code = "export default function foo() {}";
-        const capture = createCapture(code, "definition.function", "identifier");
-        const context = createTestContext();
+        const capture = create_capture(code, "definition.function", "identifier");
+        const context = create_test_context();
         const builder = new DefinitionBuilder(context);
 
         const config = JAVASCRIPT_BUILDER_CONFIG.get("definition.function");
@@ -925,10 +925,10 @@ export { internal as external };
         // wouldn't create definitions in the current file
         const code = "export { foo } from './other';";
         const ast = parser.parse(code);
-        const exportNode = findNodeByType(ast.rootNode, "export_statement");
+        const export_node = find_node_by_type(ast.rootNode, "export_statement");
 
-        if (exportNode) {
-          const metadata = analyze_export_statement(exportNode);
+        if (export_node) {
+          const metadata = analyze_export_statement(export_node);
           expect(metadata).toBeDefined();
           expect(metadata?.is_reexport).toBe(true);
         }
@@ -936,8 +936,8 @@ export { internal as external };
 
       it("should not mark non-exported symbols as exported and set is_exported=false", () => {
         const code = "function notExported() {}";
-        const capture = createCapture(code, "definition.function", "identifier");
-        const context = createTestContext();
+        const capture = create_capture(code, "definition.function", "identifier");
+        const context = create_test_context();
         const builder = new DefinitionBuilder(context);
 
         const config = JAVASCRIPT_BUILDER_CONFIG.get("definition.function");
@@ -957,8 +957,8 @@ export { internal as external };
 function foo() {}
 export { foo };
         `;
-        const capture = createCapture(code, "definition.function", "identifier");
-        const context = createTestContext();
+        const capture = create_capture(code, "definition.function", "identifier");
+        const context = create_test_context();
         const builder = new DefinitionBuilder(context);
 
         const config = JAVASCRIPT_BUILDER_CONFIG.get("definition.function");
@@ -976,8 +976,8 @@ export { foo };
 
       it("should handle exported classes with is_exported=true", () => {
         const code = "export class MyClass {}";
-        const capture = createCapture(code, "definition.class", "identifier");
-        const context = createTestContext();
+        const capture = create_capture(code, "definition.class", "identifier");
+        const context = create_test_context();
         const builder = new DefinitionBuilder(context);
 
         const config = JAVASCRIPT_BUILDER_CONFIG.get("definition.class");
@@ -993,8 +993,8 @@ export { foo };
 
       it("should handle exported variables with is_exported=true", () => {
         const code = "export const myVar = 42;";
-        const capture = createCapture(code, "definition.variable", "identifier");
-        const context = createTestContext();
+        const capture = create_capture(code, "definition.variable", "identifier");
+        const context = create_test_context();
         const builder = new DefinitionBuilder(context);
 
         const config = JAVASCRIPT_BUILDER_CONFIG.get("definition.variable");
@@ -1017,7 +1017,7 @@ export const CONFIG = {
   }
 };`;
         const ast = parser.parse(code);
-        const context = createTestContext();
+        const context = create_test_context();
         const builder = new DefinitionBuilder(context);
 
         // Process all variable definitions
@@ -1028,7 +1028,7 @@ export const CONFIG = {
 
         // Find all variable identifiers
         const captures: Array<{ node: SyntaxNode; text: string }> = [];
-        function findVariables(node: SyntaxNode) {
+        function find_variables(node: SyntaxNode) {
           if (node.type === "identifier") {
             const parent = node.parent;
             // Check if this is a variable declarator name
@@ -1038,10 +1038,10 @@ export const CONFIG = {
           }
           for (let i = 0; i < node.childCount; i++) {
             const child = node.child(i);
-            if (child) findVariables(child);
+            if (child) find_variables(child);
           }
         }
-        findVariables(ast.rootNode);
+        find_variables(ast.rootNode);
 
         // Process each variable
         for (const cap of captures) {
@@ -1082,7 +1082,7 @@ export const HANDLERS = [
   }
 ];`;
         const ast = parser.parse(code);
-        const context = createTestContext();
+        const context = create_test_context();
         const builder = new DefinitionBuilder(context);
 
         // Process all variable definitions
@@ -1093,7 +1093,7 @@ export const HANDLERS = [
 
         // Find all variable identifiers
         const captures: Array<{ node: SyntaxNode; text: string }> = [];
-        function findVariables(node: SyntaxNode) {
+        function find_variables(node: SyntaxNode) {
           if (node.type === "identifier") {
             const parent = node.parent;
             if (parent?.type === "variable_declarator" && parent.childForFieldName("name") === node) {
@@ -1102,10 +1102,10 @@ export const HANDLERS = [
           }
           for (let i = 0; i < node.childCount; i++) {
             const child = node.child(i);
-            if (child) findVariables(child);
+            if (child) find_variables(child);
           }
         }
-        findVariables(ast.rootNode);
+        find_variables(ast.rootNode);
 
         // Process each variable
         for (const cap of captures) {
@@ -1148,7 +1148,7 @@ export const NESTED = {
   }
 };`;
         const ast = parser.parse(code);
-        const context = createTestContext();
+        const context = create_test_context();
         const builder = new DefinitionBuilder(context);
 
         // Process all variable definitions
@@ -1159,7 +1159,7 @@ export const NESTED = {
 
         // Find all variable identifiers
         const captures: Array<{ node: SyntaxNode; text: string }> = [];
-        function findVariables(node: SyntaxNode) {
+        function find_variables(node: SyntaxNode) {
           if (node.type === "identifier") {
             const parent = node.parent;
             if (parent?.type === "variable_declarator" && parent.childForFieldName("name") === node) {
@@ -1168,10 +1168,10 @@ export const NESTED = {
           }
           for (let i = 0; i < node.childCount; i++) {
             const child = node.child(i);
-            if (child) findVariables(child);
+            if (child) find_variables(child);
           }
         }
-        findVariables(ast.rootNode);
+        find_variables(ast.rootNode);
 
         // Process each variable
         for (const cap of captures) {
@@ -1206,14 +1206,14 @@ export const NESTED = {
 
     describe("JSDoc Documentation Extraction", () => {
       it("should have documentation capture handlers in config", () => {
-        const documentationMappings = [
+        const documentation_mappings = [
           "definition.function.documentation",
           "definition.class.documentation",
           "definition.method.documentation",
           "definition.variable.documentation",
         ];
 
-        for (const mapping of documentationMappings) {
+        for (const mapping of documentation_mappings) {
           expect(JAVASCRIPT_BUILDER_CONFIG.has(mapping)).toBe(true);
           const config = JAVASCRIPT_BUILDER_CONFIG.get(mapping);
           expect(config).toBeDefined();
@@ -1232,48 +1232,48 @@ export const NESTED = {
             return { name };
           }
         `;
-        const context = createTestContext();
+        const context = create_test_context();
         const builder = new DefinitionBuilder(context);
         const ast = parser.parse(code);
 
         // Find and process the JSDoc comment
-        const commentNode = findNodeByType(ast.rootNode, "comment");
-        expect(commentNode).toBeDefined();
+        const comment_node = find_node_by_type(ast.rootNode, "comment");
+        expect(comment_node).toBeDefined();
 
-        if (commentNode) {
-          const docCapture: CaptureNode = {
+        if (comment_node) {
+          const doc_capture: CaptureNode = {
             name: "definition.function.documentation",
             category: "definition" as SemanticCategory,
             entity: "function" as SemanticEntity,
-            node: commentNode as any,
-            text: commentNode.text as SymbolName,
-            location: node_to_location(commentNode, TEST_FILE_PATH),
+            node: comment_node as any,
+            text: comment_node.text as SymbolName,
+            location: node_to_location(comment_node, TEST_FILE_PATH),
           };
 
-          const docProcessor = JAVASCRIPT_BUILDER_CONFIG.get(
+          const doc_processor = JAVASCRIPT_BUILDER_CONFIG.get(
             "definition.function.documentation"
           );
-          docProcessor?.process(docCapture, builder, context);
+          doc_processor?.process(doc_capture, builder, context);
         }
 
         // Find and process the function
-        const funcNode = findNodeByType(ast.rootNode, "function_declaration");
-        const nameNode = funcNode?.childForFieldName("name");
+        const func_node = find_node_by_type(ast.rootNode, "function_declaration");
+        const name_node = func_node?.childForFieldName("name");
 
-        if (nameNode) {
-          const funcCapture: CaptureNode = {
+        if (name_node) {
+          const func_capture: CaptureNode = {
             name: "definition.function",
             category: "definition" as SemanticCategory,
             entity: "function" as SemanticEntity,
-            node: nameNode as any,
-            text: nameNode.text as SymbolName,
-            location: node_to_location(nameNode, TEST_FILE_PATH),
+            node: name_node as any,
+            text: name_node.text as SymbolName,
+            location: node_to_location(name_node, TEST_FILE_PATH),
           };
 
-          const funcProcessor = JAVASCRIPT_BUILDER_CONFIG.get(
+          const func_processor = JAVASCRIPT_BUILDER_CONFIG.get(
             "definition.function"
           );
-          funcProcessor?.process(funcCapture, builder, context);
+          func_processor?.process(func_capture, builder, context);
         }
 
         const result = builder.build();
@@ -1298,45 +1298,45 @@ export const NESTED = {
             }
           }
         `;
-        const context = createTestContext();
+        const context = create_test_context();
         const builder = new DefinitionBuilder(context);
         const ast = parser.parse(code);
 
         // Process the JSDoc comment
-        const commentNode = findNodeByType(ast.rootNode, "comment");
-        if (commentNode) {
-          const docCapture: CaptureNode = {
+        const comment_node = find_node_by_type(ast.rootNode, "comment");
+        if (comment_node) {
+          const doc_capture: CaptureNode = {
             name: "definition.class.documentation",
             category: "definition" as SemanticCategory,
             entity: "class" as SemanticEntity,
-            node: commentNode as any,
-            text: commentNode.text as SymbolName,
-            location: node_to_location(commentNode, TEST_FILE_PATH),
+            node: comment_node as any,
+            text: comment_node.text as SymbolName,
+            location: node_to_location(comment_node, TEST_FILE_PATH),
           };
 
-          const docProcessor = JAVASCRIPT_BUILDER_CONFIG.get(
+          const doc_processor = JAVASCRIPT_BUILDER_CONFIG.get(
             "definition.class.documentation"
           );
-          docProcessor?.process(docCapture, builder, context);
+          doc_processor?.process(doc_capture, builder, context);
         }
 
         // Process the class
-        const classNode = findNodeByType(ast.rootNode, "class_declaration");
-        const nameNode = classNode?.childForFieldName("name");
+        const class_node = find_node_by_type(ast.rootNode, "class_declaration");
+        const name_node = class_node?.childForFieldName("name");
 
-        if (nameNode) {
-          const classCapture: CaptureNode = {
+        if (name_node) {
+          const class_capture: CaptureNode = {
             name: "definition.class",
             category: "definition" as SemanticCategory,
             entity: "class" as SemanticEntity,
-            node: nameNode as any,
-            text: nameNode.text as SymbolName,
-            location: node_to_location(nameNode, TEST_FILE_PATH),
+            node: name_node as any,
+            text: name_node.text as SymbolName,
+            location: node_to_location(name_node, TEST_FILE_PATH),
           };
 
-          const classProcessor =
+          const class_processor =
             JAVASCRIPT_BUILDER_CONFIG.get("definition.class");
-          classProcessor?.process(classCapture, builder, context);
+          class_processor?.process(class_capture, builder, context);
         }
 
         const result = builder.build();
@@ -1362,64 +1362,64 @@ export const NESTED = {
             }
           }
         `;
-        const context = createTestContext(true); // Need scopes for method bodies
+        const context = create_test_context(true); // Need scopes for method bodies
         const builder = new DefinitionBuilder(context);
         const ast = parser.parse(code);
 
         // First process the class
-        const classNode = findNodeByType(ast.rootNode, "class_declaration");
-        const classNameNode = classNode?.childForFieldName("name");
+        const class_node = find_node_by_type(ast.rootNode, "class_declaration");
+        const class_name_node = class_node?.childForFieldName("name");
 
-        if (classNameNode) {
-          const classCapture: CaptureNode = {
+        if (class_name_node) {
+          const class_capture: CaptureNode = {
             name: "definition.class",
             category: "definition" as SemanticCategory,
             entity: "class" as SemanticEntity,
-            node: classNameNode as any,
-            text: classNameNode.text as SymbolName,
-            location: node_to_location(classNameNode, TEST_FILE_PATH),
+            node: class_name_node as any,
+            text: class_name_node.text as SymbolName,
+            location: node_to_location(class_name_node, TEST_FILE_PATH),
           };
 
-          const classProcessor =
+          const class_processor =
             JAVASCRIPT_BUILDER_CONFIG.get("definition.class");
-          classProcessor?.process(classCapture, builder, context);
+          class_processor?.process(class_capture, builder, context);
         }
 
         // Process the JSDoc comment
-        const commentNode = findNodeByType(ast.rootNode, "comment");
-        if (commentNode) {
-          const docCapture: CaptureNode = {
+        const comment_node = find_node_by_type(ast.rootNode, "comment");
+        if (comment_node) {
+          const doc_capture: CaptureNode = {
             name: "definition.method.documentation",
             category: "definition" as SemanticCategory,
             entity: "method" as SemanticEntity,
-            node: commentNode as any,
-            text: commentNode.text as SymbolName,
-            location: node_to_location(commentNode, TEST_FILE_PATH),
+            node: comment_node as any,
+            text: comment_node.text as SymbolName,
+            location: node_to_location(comment_node, TEST_FILE_PATH),
           };
 
-          const docProcessor = JAVASCRIPT_BUILDER_CONFIG.get(
+          const doc_processor = JAVASCRIPT_BUILDER_CONFIG.get(
             "definition.method.documentation"
           );
-          docProcessor?.process(docCapture, builder, context);
+          doc_processor?.process(doc_capture, builder, context);
         }
 
         // Process the method
-        const methodNode = findNodeByType(ast.rootNode, "method_definition");
-        const methodNameNode = methodNode?.childForFieldName("name");
+        const method_node = find_node_by_type(ast.rootNode, "method_definition");
+        const method_name_node = method_node?.childForFieldName("name");
 
-        if (methodNameNode) {
-          const methodCapture: CaptureNode = {
+        if (method_name_node) {
+          const method_capture: CaptureNode = {
             name: "definition.method",
             category: "definition" as SemanticCategory,
             entity: "method" as SemanticEntity,
-            node: methodNameNode as any,
-            text: methodNameNode.text as SymbolName,
-            location: node_to_location(methodNameNode, TEST_FILE_PATH),
+            node: method_name_node as any,
+            text: method_name_node.text as SymbolName,
+            location: node_to_location(method_name_node, TEST_FILE_PATH),
           };
 
-          const methodProcessor =
+          const method_processor =
             JAVASCRIPT_BUILDER_CONFIG.get("definition.method");
-          methodProcessor?.process(methodCapture, builder, context);
+          method_processor?.process(method_capture, builder, context);
         }
 
         const result = builder.build();
@@ -1427,13 +1427,13 @@ export const NESTED = {
         expect(classes).toHaveLength(1);
         expect(classes[0].name).toBe("Calculator");
 
-        const classDef = classes[0] as any;
-        expect(classDef.methods).toHaveLength(1);
-        expect(classDef.methods[0].name).toBe("add");
-        expect(classDef.methods[0].docstring).toBeDefined();
-        expect(classDef.methods[0].docstring).toContain("Adds two numbers");
-        expect(classDef.methods[0].docstring).toContain("@param {number} a");
-        expect(classDef.methods[0].docstring).toContain("@returns {number}");
+        const class_def = classes[0] as any;
+        expect(class_def.methods).toHaveLength(1);
+        expect(class_def.methods[0].name).toBe("add");
+        expect(class_def.methods[0].docstring).toBeDefined();
+        expect(class_def.methods[0].docstring).toContain("Adds two numbers");
+        expect(class_def.methods[0].docstring).toContain("@param {number} a");
+        expect(class_def.methods[0].docstring).toContain("@returns {number}");
       });
 
       it("should capture and attach JSDoc documentation to variables", () => {
@@ -1441,46 +1441,46 @@ export const NESTED = {
           /** @type {Service} */
           const service = createService();
         `;
-        const context = createTestContext();
+        const context = create_test_context();
         const builder = new DefinitionBuilder(context);
         const ast = parser.parse(code);
 
         // Process the JSDoc comment
-        const commentNode = findNodeByType(ast.rootNode, "comment");
-        if (commentNode) {
-          const docCapture: CaptureNode = {
+        const comment_node = find_node_by_type(ast.rootNode, "comment");
+        if (comment_node) {
+          const doc_capture: CaptureNode = {
             name: "definition.variable.documentation",
             category: "definition" as SemanticCategory,
             entity: "variable" as SemanticEntity,
-            node: commentNode as any,
-            text: commentNode.text as SymbolName,
-            location: node_to_location(commentNode, TEST_FILE_PATH),
+            node: comment_node as any,
+            text: comment_node.text as SymbolName,
+            location: node_to_location(comment_node, TEST_FILE_PATH),
           };
 
-          const docProcessor = JAVASCRIPT_BUILDER_CONFIG.get(
+          const doc_processor = JAVASCRIPT_BUILDER_CONFIG.get(
             "definition.variable.documentation"
           );
-          docProcessor?.process(docCapture, builder, context);
+          doc_processor?.process(doc_capture, builder, context);
         }
 
         // Process the variable
-        const varNode = findNodeByType(ast.rootNode, "variable_declarator");
-        const nameNode = varNode?.childForFieldName("name");
+        const var_node = find_node_by_type(ast.rootNode, "variable_declarator");
+        const name_node = var_node?.childForFieldName("name");
 
-        if (nameNode) {
-          const varCapture: CaptureNode = {
+        if (name_node) {
+          const var_capture: CaptureNode = {
             name: "definition.variable",
             category: "definition" as SemanticCategory,
             entity: "variable" as SemanticEntity,
-            node: nameNode as any,
-            text: nameNode.text as SymbolName,
-            location: node_to_location(nameNode, TEST_FILE_PATH),
+            node: name_node as any,
+            text: name_node.text as SymbolName,
+            location: node_to_location(name_node, TEST_FILE_PATH),
           };
 
-          const varProcessor = JAVASCRIPT_BUILDER_CONFIG.get(
+          const var_processor = JAVASCRIPT_BUILDER_CONFIG.get(
             "definition.variable"
           );
-          varProcessor?.process(varCapture, builder, context);
+          var_processor?.process(var_capture, builder, context);
         }
 
         const result = builder.build();
@@ -1493,28 +1493,28 @@ export const NESTED = {
 
       it("should not attach documentation when there is no comment", () => {
         const code = "function noDoc() { return 42; }";
-        const context = createTestContext();
+        const context = create_test_context();
         const builder = new DefinitionBuilder(context);
         const ast = parser.parse(code);
 
         // Process the function without processing any documentation
-        const funcNode = findNodeByType(ast.rootNode, "function_declaration");
-        const nameNode = funcNode?.childForFieldName("name");
+        const func_node = find_node_by_type(ast.rootNode, "function_declaration");
+        const name_node = func_node?.childForFieldName("name");
 
-        if (nameNode) {
-          const funcCapture: CaptureNode = {
+        if (name_node) {
+          const func_capture: CaptureNode = {
             name: "definition.function",
             category: "definition" as SemanticCategory,
             entity: "function" as SemanticEntity,
-            node: nameNode as any,
-            text: nameNode.text as SymbolName,
-            location: node_to_location(nameNode, TEST_FILE_PATH),
+            node: name_node as any,
+            text: name_node.text as SymbolName,
+            location: node_to_location(name_node, TEST_FILE_PATH),
           };
 
-          const funcProcessor = JAVASCRIPT_BUILDER_CONFIG.get(
+          const func_processor = JAVASCRIPT_BUILDER_CONFIG.get(
             "definition.function"
           );
-          funcProcessor?.process(funcCapture, builder, context);
+          func_processor?.process(func_capture, builder, context);
         }
 
         const result = builder.build();
@@ -1532,7 +1532,7 @@ export const NESTED = {
           /** Second function */
           function second() { }
         `;
-        const context = createTestContext();
+        const context = create_test_context();
         const builder = new DefinitionBuilder(context);
         const ast = parser.parse(code);
 
@@ -1540,7 +1540,7 @@ export const NESTED = {
         const comments: any[] = [];
         const functions: any[] = [];
 
-        function collectNodes(node: any) {
+        function collect_nodes(node: any) {
           if (node.type === "comment") {
             comments.push(node);
           }
@@ -1548,17 +1548,17 @@ export const NESTED = {
             functions.push(node);
           }
           for (let i = 0; i < node.childCount; i++) {
-            collectNodes(node.child(i));
+            collect_nodes(node.child(i));
           }
         }
-        collectNodes(ast.rootNode);
+        collect_nodes(ast.rootNode);
 
         expect(comments).toHaveLength(2);
         expect(functions).toHaveLength(2);
 
         // Process first comment and function
         if (comments[0]) {
-          const docCapture1: CaptureNode = {
+          const doc_capture1: CaptureNode = {
             name: "definition.function.documentation",
             category: "definition" as SemanticCategory,
             entity: "function" as SemanticEntity,
@@ -1573,38 +1573,38 @@ export const NESTED = {
             },
           };
 
-          const docProcessor = JAVASCRIPT_BUILDER_CONFIG.get(
+          const doc_processor = JAVASCRIPT_BUILDER_CONFIG.get(
             "definition.function.documentation"
           );
-          docProcessor?.process(docCapture1, builder, context);
+          doc_processor?.process(doc_capture1, builder, context);
         }
 
         if (functions[0]) {
-          const nameNode1 = functions[0].childForFieldName("name");
-          const funcCapture1: CaptureNode = {
+          const name_node1 = functions[0].childForFieldName("name");
+          const func_capture1: CaptureNode = {
             name: "definition.function",
             category: "definition" as SemanticCategory,
             entity: "function" as SemanticEntity,
-            node: nameNode1 as any,
-            text: nameNode1.text as SymbolName,
+            node: name_node1 as any,
+            text: name_node1.text as SymbolName,
             location: {
               file_path: TEST_FILE_PATH,
-              start_line: nameNode1.startPosition.row + 1,
-              start_column: nameNode1.startPosition.column + 1,
-              end_line: nameNode1.endPosition.row + 1,
-              end_column: nameNode1.endPosition.column + 1,
+              start_line: name_node1.startPosition.row + 1,
+              start_column: name_node1.startPosition.column + 1,
+              end_line: name_node1.endPosition.row + 1,
+              end_column: name_node1.endPosition.column + 1,
             },
           };
 
-          const funcProcessor = JAVASCRIPT_BUILDER_CONFIG.get(
+          const func_processor = JAVASCRIPT_BUILDER_CONFIG.get(
             "definition.function"
           );
-          funcProcessor?.process(funcCapture1, builder, context);
+          func_processor?.process(func_capture1, builder, context);
         }
 
         // Process second comment and function
         if (comments[1]) {
-          const docCapture2: CaptureNode = {
+          const doc_capture2: CaptureNode = {
             name: "definition.function.documentation",
             category: "definition" as SemanticCategory,
             entity: "function" as SemanticEntity,
@@ -1619,53 +1619,53 @@ export const NESTED = {
             },
           };
 
-          const docProcessor = JAVASCRIPT_BUILDER_CONFIG.get(
+          const doc_processor = JAVASCRIPT_BUILDER_CONFIG.get(
             "definition.function.documentation"
           );
-          docProcessor?.process(docCapture2, builder, context);
+          doc_processor?.process(doc_capture2, builder, context);
         }
 
         if (functions[1]) {
-          const nameNode2 = functions[1].childForFieldName("name");
-          const funcCapture2: CaptureNode = {
+          const name_node2 = functions[1].childForFieldName("name");
+          const func_capture2: CaptureNode = {
             name: "definition.function",
             category: "definition" as SemanticCategory,
             entity: "function" as SemanticEntity,
-            node: nameNode2 as any,
-            text: nameNode2.text as SymbolName,
+            node: name_node2 as any,
+            text: name_node2.text as SymbolName,
             location: {
               file_path: TEST_FILE_PATH,
-              start_line: nameNode2.startPosition.row + 1,
-              start_column: nameNode2.startPosition.column + 1,
-              end_line: nameNode2.endPosition.row + 1,
-              end_column: nameNode2.endPosition.column + 1,
+              start_line: name_node2.startPosition.row + 1,
+              start_column: name_node2.startPosition.column + 1,
+              end_line: name_node2.endPosition.row + 1,
+              end_column: name_node2.endPosition.column + 1,
             },
           };
 
-          const funcProcessor = JAVASCRIPT_BUILDER_CONFIG.get(
+          const func_processor = JAVASCRIPT_BUILDER_CONFIG.get(
             "definition.function"
           );
-          funcProcessor?.process(funcCapture2, builder, context);
+          func_processor?.process(func_capture2, builder, context);
         }
 
         const result = builder.build();
-        const builtFunctions = Array.from(result.functions.values());
-        expect(builtFunctions).toHaveLength(2);
+        const built_functions = Array.from(result.functions.values());
+        expect(built_functions).toHaveLength(2);
 
-        const firstFunc = builtFunctions.find((f) => f.name === "first");
-        const secondFunc = builtFunctions.find((f) => f.name === "second");
+        const first_func = built_functions.find((f) => f.name === "first");
+        const second_func = built_functions.find((f) => f.name === "second");
 
-        expect(firstFunc?.docstring).toBeDefined();
-        expect(firstFunc?.docstring).toContain("First function");
-        expect(secondFunc?.docstring).toBeDefined();
-        expect(secondFunc?.docstring).toContain("Second function");
+        expect(first_func?.docstring).toBeDefined();
+        expect(first_func?.docstring).toContain("First function");
+        expect(second_func?.docstring).toBeDefined();
+        expect(second_func?.docstring).toContain("Second function");
       });
     });
   });
 
   describe("Property Type Extraction from JSDoc", () => {
     // Helper to build semantic index from code (for integration tests)
-    async function buildIndexFromCode(code: string) {
+    async function build_index_from_code(code: string) {
       const tree = parser.parse(code);
       const lines = code.split("\n");
       const parsed_file = {
@@ -1687,7 +1687,7 @@ export const NESTED = {
         }
       `;
 
-      const index = await buildIndexFromCode(code);
+      const index = await build_index_from_code(code);
       const classes = Array.from(index.classes.values());
       expect(classes.length).toBe(1);
 
@@ -1711,7 +1711,7 @@ export const NESTED = {
         }
       `;
 
-      const index = await buildIndexFromCode(code);
+      const index = await build_index_from_code(code);
       const classes = Array.from(index.classes.values());
       expect(classes.length).toBe(1);
 
@@ -1733,7 +1733,7 @@ export const NESTED = {
         }
       `;
 
-      const index = await buildIndexFromCode(code);
+      const index = await build_index_from_code(code);
       const classes = Array.from(index.classes.values());
       expect(classes.length).toBe(1);
 
@@ -1754,7 +1754,7 @@ export const NESTED = {
         }
       `;
 
-      const index = await buildIndexFromCode(code);
+      const index = await build_index_from_code(code);
       const classes = Array.from(index.classes.values());
       expect(classes.length).toBe(1);
 
@@ -1775,7 +1775,7 @@ export const NESTED = {
         }
       `;
 
-      const index = await buildIndexFromCode(code);
+      const index = await build_index_from_code(code);
       const classes = Array.from(index.classes.values());
       expect(classes.length).toBe(1);
 
@@ -1793,7 +1793,7 @@ export const NESTED = {
         }
       `;
 
-      const index = await buildIndexFromCode(code);
+      const index = await build_index_from_code(code);
       const classes = Array.from(index.classes.values());
       expect(classes.length).toBe(1);
 
@@ -1810,7 +1810,7 @@ export const NESTED = {
         }
       `;
 
-      const index = await buildIndexFromCode(code);
+      const index = await build_index_from_code(code);
       const classes = Array.from(index.classes.values());
       expect(classes.length).toBe(1);
 
@@ -1826,12 +1826,12 @@ export const NESTED = {
   // ============================================================================
 
   describe("detect_callback_context", () => {
-    function find_arrow_function(node: SyntaxNode): SyntaxNode | null {
+    function find_arrow_func(node: SyntaxNode): SyntaxNode | null {
       if (node.type === "arrow_function") {
         return node;
       }
       for (const child of node.children) {
-        const result = find_arrow_function(child);
+        const result = find_arrow_func(child);
         if (result) return result;
       }
       return null;
@@ -1841,10 +1841,10 @@ export const NESTED = {
       it("should detect callback in array.forEach()", () => {
         const code = "items.forEach((item) => { console.log(item); });";
         const tree = parser.parse(code);
-        const arrow_fn = find_arrow_function(tree.rootNode);
+        const arrow_func = find_arrow_func(tree.rootNode);
 
-        expect(arrow_fn).not.toBeNull();
-        const context = detect_callback_context(arrow_fn!, "test.js");
+        expect(arrow_func).not.toBeNull();
+        const context = detect_callback_context(arrow_func!, "test.js");
 
         expect(context.is_callback).toBe(true);
         expect(context.receiver_is_external).toBeNull();
@@ -1855,10 +1855,10 @@ export const NESTED = {
       it("should detect callback in array.map()", () => {
         const code = "numbers.map(x => x * 2);";
         const tree = parser.parse(code);
-        const arrow_fn = find_arrow_function(tree.rootNode);
+        const arrow_func = find_arrow_func(tree.rootNode);
 
-        expect(arrow_fn).not.toBeNull();
-        const context = detect_callback_context(arrow_fn!, "test.js");
+        expect(arrow_func).not.toBeNull();
+        const context = detect_callback_context(arrow_func!, "test.js");
 
         expect(context.is_callback).toBe(true);
         expect(context.receiver_location).not.toBeNull();
@@ -1867,10 +1867,10 @@ export const NESTED = {
       it("should detect callback in array.filter()", () => {
         const code = "items.filter(item => item.active);";
         const tree = parser.parse(code);
-        const arrow_fn = find_arrow_function(tree.rootNode);
+        const arrow_func = find_arrow_func(tree.rootNode);
 
-        expect(arrow_fn).not.toBeNull();
-        const context = detect_callback_context(arrow_fn!, "test.js");
+        expect(arrow_func).not.toBeNull();
+        const context = detect_callback_context(arrow_func!, "test.js");
 
         expect(context.is_callback).toBe(true);
       });
@@ -1878,10 +1878,10 @@ export const NESTED = {
       it("should detect callback as second argument", () => {
         const code = "setTimeout(() => console.log(\"done\"), 1000);";
         const tree = parser.parse(code);
-        const arrow_fn = find_arrow_function(tree.rootNode);
+        const arrow_func = find_arrow_func(tree.rootNode);
 
-        expect(arrow_fn).not.toBeNull();
-        const context = detect_callback_context(arrow_fn!, "test.js");
+        expect(arrow_func).not.toBeNull();
+        const context = detect_callback_context(arrow_func!, "test.js");
 
         expect(context.is_callback).toBe(true);
       });
@@ -1891,22 +1891,22 @@ export const NESTED = {
         const tree = parser.parse(code);
 
         // Find both arrow functions
-        const arrow_fns: SyntaxNode[] = [];
-        function collect_arrows(node: SyntaxNode) {
+        const arrow_funcs: SyntaxNode[] = [];
+        function collect_arrow_funcs(node: SyntaxNode) {
           if (node.type === "arrow_function") {
-            arrow_fns.push(node);
+            arrow_funcs.push(node);
           }
           for (const child of node.children) {
-            collect_arrows(child);
+            collect_arrow_funcs(child);
           }
         }
-        collect_arrows(tree.rootNode);
+        collect_arrow_funcs(tree.rootNode);
 
-        expect(arrow_fns.length).toBe(2);
+        expect(arrow_funcs.length).toBe(2);
 
         // Both should be detected as callbacks
-        const outer_context = detect_callback_context(arrow_fns[0], "test.js");
-        const inner_context = detect_callback_context(arrow_fns[1], "test.js");
+        const outer_context = detect_callback_context(arrow_funcs[0], "test.js");
+        const inner_context = detect_callback_context(arrow_funcs[1], "test.js");
 
         expect(outer_context.is_callback).toBe(true);
         expect(inner_context.is_callback).toBe(true);
@@ -1915,10 +1915,10 @@ export const NESTED = {
       it("should detect callback in method call", () => {
         const code = "obj.subscribe(event => handle(event));";
         const tree = parser.parse(code);
-        const arrow_fn = find_arrow_function(tree.rootNode);
+        const arrow_func = find_arrow_func(tree.rootNode);
 
-        expect(arrow_fn).not.toBeNull();
-        const context = detect_callback_context(arrow_fn!, "test.js");
+        expect(arrow_func).not.toBeNull();
+        const context = detect_callback_context(arrow_func!, "test.js");
 
         expect(context.is_callback).toBe(true);
       });
@@ -1928,10 +1928,10 @@ export const NESTED = {
       it("should NOT detect callback in variable assignment", () => {
         const code = "const fn = () => { console.log(\"test\"); };";
         const tree = parser.parse(code);
-        const arrow_fn = find_arrow_function(tree.rootNode);
+        const arrow_func = find_arrow_func(tree.rootNode);
 
-        expect(arrow_fn).not.toBeNull();
-        const context = detect_callback_context(arrow_fn!, "test.js");
+        expect(arrow_func).not.toBeNull();
+        const context = detect_callback_context(arrow_func!, "test.js");
 
         expect(context.is_callback).toBe(false);
         expect(context.receiver_location).toBeNull();
@@ -1940,10 +1940,10 @@ export const NESTED = {
       it("should NOT detect callback in return statement", () => {
         const code = "function factory() { return () => {}; }";
         const tree = parser.parse(code);
-        const arrow_fn = find_arrow_function(tree.rootNode);
+        const arrow_func = find_arrow_func(tree.rootNode);
 
-        expect(arrow_fn).not.toBeNull();
-        const context = detect_callback_context(arrow_fn!, "test.js");
+        expect(arrow_func).not.toBeNull();
+        const context = detect_callback_context(arrow_func!, "test.js");
 
         expect(context.is_callback).toBe(false);
       });
@@ -1951,10 +1951,10 @@ export const NESTED = {
       it("should NOT detect callback in object literal", () => {
         const code = "const obj = { handler: () => {} };";
         const tree = parser.parse(code);
-        const arrow_fn = find_arrow_function(tree.rootNode);
+        const arrow_func = find_arrow_func(tree.rootNode);
 
-        expect(arrow_fn).not.toBeNull();
-        const context = detect_callback_context(arrow_fn!, "test.js");
+        expect(arrow_func).not.toBeNull();
+        const context = detect_callback_context(arrow_func!, "test.js");
 
         expect(context.is_callback).toBe(false);
       });
@@ -1962,10 +1962,10 @@ export const NESTED = {
       it("should NOT detect callback in array literal", () => {
         const code = "const fns = [() => {}];";
         const tree = parser.parse(code);
-        const arrow_fn = find_arrow_function(tree.rootNode);
+        const arrow_func = find_arrow_func(tree.rootNode);
 
-        expect(arrow_fn).not.toBeNull();
-        const context = detect_callback_context(arrow_fn!, "test.js");
+        expect(arrow_func).not.toBeNull();
+        const context = detect_callback_context(arrow_func!, "test.js");
 
         expect(context.is_callback).toBe(false);
       });
@@ -1975,10 +1975,10 @@ export const NESTED = {
       it("should capture correct receiver location for forEach call", () => {
         const code = "items.forEach((x) => x * 2);";
         const tree = parser.parse(code);
-        const arrow_fn = find_arrow_function(tree.rootNode);
+        const arrow_func = find_arrow_func(tree.rootNode);
 
-        expect(arrow_fn).not.toBeNull();
-        const context = detect_callback_context(arrow_fn!, "test.js");
+        expect(arrow_func).not.toBeNull();
+        const context = detect_callback_context(arrow_func!, "test.js");
 
         expect(context.receiver_location).toEqual({
           file_path: "test.js",
@@ -1996,10 +1996,10 @@ export const NESTED = {
   }
 );`;
         const tree = parser.parse(code);
-        const arrow_fn = find_arrow_function(tree.rootNode);
+        const arrow_func = find_arrow_func(tree.rootNode);
 
-        expect(arrow_fn).not.toBeNull();
-        const context = detect_callback_context(arrow_fn!, "test.js");
+        expect(arrow_func).not.toBeNull();
+        const context = detect_callback_context(arrow_func!, "test.js");
 
         expect(context.receiver_location).not.toBeNull();
         expect(context.receiver_location?.start_line).toBe(1);
@@ -2012,27 +2012,27 @@ export const NESTED = {
           const CONFIG = new Map([]);
           const handler = CONFIG.get('key');
         `;
-        const context = createTestContext();
+        const context = create_test_context();
         const builder = new DefinitionBuilder(context);
 
         const ast = parser.parse(code);
         
         // Find 'handler' variable
-        const varNodes: SyntaxNode[] = [];
-        function findVars(node: SyntaxNode) {
+        const var_nodes: SyntaxNode[] = [];
+        function find_vars(node: SyntaxNode) {
           if (node.type === "variable_declarator") {
-            varNodes.push(node);
+            var_nodes.push(node);
           }
           for (let i = 0; i < node.childCount; i++) {
-            findVars(node.child(i)!);
+            find_vars(node.child(i)!);
           }
         }
-        findVars(ast.rootNode);
+        find_vars(ast.rootNode);
         
-        const handlerNode = varNodes[1]; // Second one is handler
-        const nameNode = handlerNode?.childForFieldName("name");
+        const handler_node = var_nodes[1]; // Second one is handler
+        const name_node = handler_node?.childForFieldName("name");
 
-        if (!nameNode) {
+        if (!name_node) {
           throw new Error("Could not find handler variable name");
         }
 
@@ -2040,9 +2040,9 @@ export const NESTED = {
           name: "definition.variable",
           category: "definition" as SemanticCategory,
           entity: "variable" as SemanticEntity,
-          node: nameNode as any,
-          text: nameNode.text as SymbolName,
-          location: node_to_location(nameNode, TEST_FILE_PATH),
+          node: name_node as any,
+          text: name_node.text as SymbolName,
+          location: node_to_location(name_node, TEST_FILE_PATH),
         };
 
         const processor = JAVASCRIPT_BUILDER_CONFIG.get("definition.variable");
@@ -2053,9 +2053,9 @@ export const NESTED = {
         const variables = Array.from(result.variables.values());
         expect(variables).toHaveLength(1);
         
-        const handlerVar = variables[0];
-        expect(handlerVar.name).toBe("handler");
-        expect(handlerVar.derived_from).toBe("CONFIG");
+        const handler_var = variables[0];
+        expect(handler_var.name).toBe("handler");
+        expect(handler_var.derived_from).toBe("CONFIG");
       });
     });
   });

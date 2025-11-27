@@ -21,15 +21,15 @@ import { extract_constructor_bindings } from "./constructor_tracking";
 // Test Helpers
 // ============================================================================
 
-function createParsedFile(
+function create_parsed_file(
   code: string,
-  filePath: FilePath,
+  file_path: FilePath,
   tree: Parser.Tree,
   language: Language
 ): ParsedFile {
   const lines = code.split("\n");
   return {
-    file_path: filePath,
+    file_path: file_path,
     file_lines: lines.length,
     file_end_column: lines[lines.length - 1]?.length || 0,
     tree,
@@ -56,19 +56,19 @@ describe("Constructor Tracking - JavaScript", () => {
     `;
 
     const tree = parser.parse(code);
-    const parsedFile = createParsedFile(
+    const parsed_file = create_parsed_file(
       code,
       "test.js" as FilePath,
       tree,
       "javascript"
     );
-    const index = build_semantic_index(parsedFile, tree, "javascript");
+    const index = build_semantic_index(parsed_file, tree, "javascript");
 
     const bindings = extract_constructor_bindings(index.references);
 
     expect(bindings.size).toBeGreaterThan(0);
-    const typeValues = Array.from(bindings.values());
-    expect(typeValues).toContain("User");
+    const type_values = Array.from(bindings.values());
+    expect(type_values).toContain("User");
   });
 
   it("should extract constructor bindings for multiple assignments", () => {
@@ -81,20 +81,20 @@ describe("Constructor Tracking - JavaScript", () => {
     `;
 
     const tree = parser.parse(code);
-    const parsedFile = createParsedFile(
+    const parsed_file = create_parsed_file(
       code,
       "test.js" as FilePath,
       tree,
       "javascript"
     );
-    const index = build_semantic_index(parsedFile, tree, "javascript");
+    const index = build_semantic_index(parsed_file, tree, "javascript");
 
     const bindings = extract_constructor_bindings(index.references);
 
     expect(bindings.size).toBeGreaterThanOrEqual(2);
-    const typeValues = Array.from(bindings.values());
-    expect(typeValues).toContain("Dog");
-    expect(typeValues).toContain("Cat");
+    const type_values = Array.from(bindings.values());
+    expect(type_values).toContain("Dog");
+    expect(type_values).toContain("Cat");
   });
 
   it("should extract constructor binding for property assignment", () => {
@@ -108,19 +108,19 @@ describe("Constructor Tracking - JavaScript", () => {
     `;
 
     const tree = parser.parse(code);
-    const parsedFile = createParsedFile(
+    const parsed_file = create_parsed_file(
       code,
       "test.js" as FilePath,
       tree,
       "javascript"
     );
-    const index = build_semantic_index(parsedFile, tree, "javascript");
+    const index = build_semantic_index(parsed_file, tree, "javascript");
 
     const bindings = extract_constructor_bindings(index.references);
 
     expect(bindings.size).toBeGreaterThan(0);
-    const typeValues = Array.from(bindings.values());
-    expect(typeValues).toContain("Service");
+    const type_values = Array.from(bindings.values());
+    expect(type_values).toContain("Service");
   });
 
   it("should not extract standalone constructor calls without assignment", () => {
@@ -130,13 +130,13 @@ describe("Constructor Tracking - JavaScript", () => {
     `;
 
     const tree = parser.parse(code);
-    const parsedFile = createParsedFile(
+    const parsed_file = create_parsed_file(
       code,
       "test.js" as FilePath,
       tree,
       "javascript"
     );
-    const index = build_semantic_index(parsedFile, tree, "javascript");
+    const index = build_semantic_index(parsed_file, tree, "javascript");
 
     const bindings = extract_constructor_bindings(index.references);
 
@@ -168,19 +168,19 @@ describe("Constructor Tracking - TypeScript", () => {
     `;
 
     const tree = parser.parse(code);
-    const parsedFile = createParsedFile(
+    const parsed_file = create_parsed_file(
       code,
       "test.ts" as FilePath,
       tree,
       "typescript"
     );
-    const index = build_semantic_index(parsedFile, tree, "typescript");
+    const index = build_semantic_index(parsed_file, tree, "typescript");
 
     const bindings = extract_constructor_bindings(index.references);
 
     expect(bindings.size).toBeGreaterThan(0);
-    const typeValues = Array.from(bindings.values());
-    expect(typeValues).toContain("User");
+    const type_values = Array.from(bindings.values());
+    expect(type_values).toContain("User");
   });
 
   it("should extract constructor bindings for multiple typed assignments", () => {
@@ -198,20 +198,20 @@ describe("Constructor Tracking - TypeScript", () => {
     `;
 
     const tree = parser.parse(code);
-    const parsedFile = createParsedFile(
+    const parsed_file = create_parsed_file(
       code,
       "test.ts" as FilePath,
       tree,
       "typescript"
     );
-    const index = build_semantic_index(parsedFile, tree, "typescript");
+    const index = build_semantic_index(parsed_file, tree, "typescript");
 
     const bindings = extract_constructor_bindings(index.references);
 
     expect(bindings.size).toBeGreaterThanOrEqual(2);
-    const typeValues = Array.from(bindings.values());
-    expect(typeValues).toContain("ApiService");
-    expect(typeValues).toContain("DataStore");
+    const type_values = Array.from(bindings.values());
+    expect(type_values).toContain("ApiService");
+    expect(type_values).toContain("DataStore");
   });
 
   it("should extract constructor binding for class field assignment", () => {
@@ -228,19 +228,19 @@ describe("Constructor Tracking - TypeScript", () => {
     `;
 
     const tree = parser.parse(code);
-    const parsedFile = createParsedFile(
+    const parsed_file = create_parsed_file(
       code,
       "test.ts" as FilePath,
       tree,
       "typescript"
     );
-    const index = build_semantic_index(parsedFile, tree, "typescript");
+    const index = build_semantic_index(parsed_file, tree, "typescript");
 
     const bindings = extract_constructor_bindings(index.references);
 
     expect(bindings.size).toBeGreaterThan(0);
-    const typeValues = Array.from(bindings.values());
-    expect(typeValues).toContain("Database");
+    const type_values = Array.from(bindings.values());
+    expect(type_values).toContain("Database");
   });
 
   it("should handle generic class constructors", () => {
@@ -252,13 +252,13 @@ describe("Constructor Tracking - TypeScript", () => {
     `;
 
     const tree = parser.parse(code);
-    const parsedFile = createParsedFile(
+    const parsed_file = create_parsed_file(
       code,
       "test.ts" as FilePath,
       tree,
       "typescript"
     );
-    const index = build_semantic_index(parsedFile, tree, "typescript");
+    const index = build_semantic_index(parsed_file, tree, "typescript");
 
     const bindings = extract_constructor_bindings(index.references);
 
@@ -291,19 +291,19 @@ user = User()
     `;
 
     const tree = parser.parse(code);
-    const parsedFile = createParsedFile(
+    const parsed_file = create_parsed_file(
       code,
       "test.py" as FilePath,
       tree,
       "python"
     );
-    const index = build_semantic_index(parsedFile, tree, "python");
+    const index = build_semantic_index(parsed_file, tree, "python");
 
     const bindings = extract_constructor_bindings(index.references);
 
     expect(bindings.size).toBeGreaterThan(0);
-    const typeValues = Array.from(bindings.values());
-    expect(typeValues).toContain("User");
+    const type_values = Array.from(bindings.values());
+    expect(type_values).toContain("User");
   });
 
   it("should extract constructor bindings for multiple assignments", () => {
@@ -319,20 +319,20 @@ my_cat = Cat()
     `;
 
     const tree = parser.parse(code);
-    const parsedFile = createParsedFile(
+    const parsed_file = create_parsed_file(
       code,
       "test.py" as FilePath,
       tree,
       "python"
     );
-    const index = build_semantic_index(parsedFile, tree, "python");
+    const index = build_semantic_index(parsed_file, tree, "python");
 
     const bindings = extract_constructor_bindings(index.references);
 
     expect(bindings.size).toBeGreaterThanOrEqual(2);
-    const typeValues = Array.from(bindings.values());
-    expect(typeValues).toContain("Dog");
-    expect(typeValues).toContain("Cat");
+    const type_values = Array.from(bindings.values());
+    expect(type_values).toContain("Dog");
+    expect(type_values).toContain("Cat");
   });
 
   it("should extract constructor binding for attribute assignment", () => {
@@ -346,19 +346,19 @@ class App:
     `;
 
     const tree = parser.parse(code);
-    const parsedFile = createParsedFile(
+    const parsed_file = create_parsed_file(
       code,
       "test.py" as FilePath,
       tree,
       "python"
     );
-    const index = build_semantic_index(parsedFile, tree, "python");
+    const index = build_semantic_index(parsed_file, tree, "python");
 
     const bindings = extract_constructor_bindings(index.references);
 
     expect(bindings.size).toBeGreaterThan(0);
-    const typeValues = Array.from(bindings.values());
-    expect(typeValues).toContain("Service");
+    const type_values = Array.from(bindings.values());
+    expect(type_values).toContain("Service");
   });
 
   it("should handle constructor with type annotations", () => {
@@ -370,19 +370,19 @@ db: Database = Database()
     `;
 
     const tree = parser.parse(code);
-    const parsedFile = createParsedFile(
+    const parsed_file = create_parsed_file(
       code,
       "test.py" as FilePath,
       tree,
       "python"
     );
-    const index = build_semantic_index(parsedFile, tree, "python");
+    const index = build_semantic_index(parsed_file, tree, "python");
 
     const bindings = extract_constructor_bindings(index.references);
 
     expect(bindings.size).toBeGreaterThan(0);
-    const typeValues = Array.from(bindings.values());
-    expect(typeValues).toContain("Database");
+    const type_values = Array.from(bindings.values());
+    expect(type_values).toContain("Database");
   });
 });
 
@@ -408,19 +408,19 @@ describe("Constructor Tracking - Rust", () => {
     `;
 
     const tree = parser.parse(code);
-    const parsedFile = createParsedFile(
+    const parsed_file = create_parsed_file(
       code,
       "test.rs" as FilePath,
       tree,
       "rust"
     );
-    const index = build_semantic_index(parsedFile, tree, "rust");
+    const index = build_semantic_index(parsed_file, tree, "rust");
 
     const bindings = extract_constructor_bindings(index.references);
 
     expect(bindings.size).toBeGreaterThan(0);
-    const typeValues = Array.from(bindings.values());
-    expect(typeValues).toContain("User");
+    const type_values = Array.from(bindings.values());
+    expect(type_values).toContain("User");
   });
 
   it("should extract constructor bindings for multiple struct instantiations", () => {
@@ -441,20 +441,20 @@ describe("Constructor Tracking - Rust", () => {
     `;
 
     const tree = parser.parse(code);
-    const parsedFile = createParsedFile(
+    const parsed_file = create_parsed_file(
       code,
       "test.rs" as FilePath,
       tree,
       "rust"
     );
-    const index = build_semantic_index(parsedFile, tree, "rust");
+    const index = build_semantic_index(parsed_file, tree, "rust");
 
     const bindings = extract_constructor_bindings(index.references);
 
     expect(bindings.size).toBeGreaterThanOrEqual(2);
-    const typeValues = Array.from(bindings.values());
-    expect(typeValues).toContain("Point");
-    expect(typeValues).toContain("Color");
+    const type_values = Array.from(bindings.values());
+    expect(type_values).toContain("Point");
+    expect(type_values).toContain("Color");
   });
 
   it("should extract constructor binding for struct field assignment", () => {
@@ -474,13 +474,13 @@ describe("Constructor Tracking - Rust", () => {
     `;
 
     const tree = parser.parse(code);
-    const parsedFile = createParsedFile(
+    const parsed_file = create_parsed_file(
       code,
       "test.rs" as FilePath,
       tree,
       "rust"
     );
-    const index = build_semantic_index(parsedFile, tree, "rust");
+    const index = build_semantic_index(parsed_file, tree, "rust");
 
     const bindings = extract_constructor_bindings(index.references);
 
@@ -496,13 +496,13 @@ describe("Constructor Tracking - Rust", () => {
     `;
 
     const tree = parser.parse(code);
-    const parsedFile = createParsedFile(
+    const parsed_file = create_parsed_file(
       code,
       "test.rs" as FilePath,
       tree,
       "rust"
     );
-    const index = build_semantic_index(parsedFile, tree, "rust");
+    const index = build_semantic_index(parsed_file, tree, "rust");
 
     const bindings = extract_constructor_bindings(index.references);
 
@@ -534,13 +534,13 @@ describe("Constructor Tracking - Edge Cases", () => {
     `;
 
     const tree = parser.parse(code);
-    const parsedFile = createParsedFile(
+    const parsed_file = create_parsed_file(
       code,
       "test.js" as FilePath,
       tree,
       "javascript"
     );
-    const index = build_semantic_index(parsedFile, tree, "javascript");
+    const index = build_semantic_index(parsed_file, tree, "javascript");
 
     const bindings = extract_constructor_bindings(index.references);
 
@@ -559,13 +559,13 @@ describe("Constructor Tracking - Edge Cases", () => {
     `;
 
     const tree = parser.parse(code);
-    const parsedFile = createParsedFile(
+    const parsed_file = create_parsed_file(
       code,
       "test.ts" as FilePath,
       tree,
       "typescript"
     );
-    const index = build_semantic_index(parsedFile, tree, "typescript");
+    const index = build_semantic_index(parsed_file, tree, "typescript");
 
     const bindings = extract_constructor_bindings(index.references);
 

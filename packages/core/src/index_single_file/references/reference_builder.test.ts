@@ -242,7 +242,7 @@ describe("ReferenceBuilder", () => {
     });
 
     it("should process type references", () => {
-      const mockExtractors = create_mock_extractors({
+      const mock_extractors = create_mock_extractors({
         extract_type_from_annotation: vi.fn((node, file_path) => ({
           type_name: "MyType" as SymbolName,
           type_id: "type:MyType:test.ts:1:0" as SymbolId,
@@ -252,7 +252,7 @@ describe("ReferenceBuilder", () => {
 
       const builder = new ReferenceBuilder(
         context,
-        mockExtractors,
+        mock_extractors,
         TEST_FILE_PATH
       );
 
@@ -274,7 +274,7 @@ describe("ReferenceBuilder", () => {
     });
 
     it("should process type references with generics", () => {
-      const mockExtractors = create_mock_extractors({
+      const mock_extractors = create_mock_extractors({
         extract_type_from_annotation: vi.fn((node, file_path) => ({
           type_name: "Array" as SymbolName,
           type_id: "type:Array:test.ts:1:0" as SymbolId,
@@ -285,7 +285,7 @@ describe("ReferenceBuilder", () => {
 
       const builder = new ReferenceBuilder(
         context,
-        mockExtractors,
+        mock_extractors,
         TEST_FILE_PATH
       );
 
@@ -312,14 +312,14 @@ describe("ReferenceBuilder", () => {
         is_self_reference: false,
       };
 
-      const mockExtractors = create_mock_extractors({
+      const mock_extractors = create_mock_extractors({
         extract_receiver_info: vi.fn((node, file_path) => receiver_info),
         extract_is_optional_chain: vi.fn((node) => true),
       });
 
       const builder = new ReferenceBuilder(
         context,
-        mockExtractors,
+        mock_extractors,
         TEST_FILE_PATH
       );
 
@@ -342,7 +342,7 @@ describe("ReferenceBuilder", () => {
     });
 
     it("should process assignments with type flow", () => {
-      const mockExtractors = create_mock_extractors({
+      const mock_extractors = create_mock_extractors({
         extract_type_from_annotation: vi.fn((node, file_path) => ({
           type_name: "number" as SymbolName,
           type_id: "type:number:test.ts:1:0" as SymbolId,
@@ -352,7 +352,7 @@ describe("ReferenceBuilder", () => {
 
       const builder = new ReferenceBuilder(
         context,
-        mockExtractors,
+        mock_extractors,
         TEST_FILE_PATH
       );
 
@@ -713,20 +713,20 @@ describe("ReferenceBuilder", () => {
 
   describe("metadata extractors integration", () => {
     it("should call extract_receiver_info for method calls", () => {
-      const receiverInfo: ReceiverInfo = {
+      const receiver_info: ReceiverInfo = {
         receiver_location: create_test_location(5, 10),
         property_chain: ["obj" as SymbolName, "getValue" as SymbolName],
         is_self_reference: false,
       };
 
-      const mockExtractors = create_mock_extractors({
-        extract_receiver_info: vi.fn((node, file_path) => receiverInfo),
+      const mock_extractors = create_mock_extractors({
+        extract_receiver_info: vi.fn((node, file_path) => receiver_info),
         extract_call_name: vi.fn((node) => "getValue"),
       });
 
       const builder = new ReferenceBuilder(
         context,
-        mockExtractors,
+        mock_extractors,
         TEST_FILE_PATH
       );
       const capture = create_test_capture({
@@ -738,13 +738,13 @@ describe("ReferenceBuilder", () => {
       builder.process(capture);
       const references = builder.references;
 
-      expect(mockExtractors.extract_receiver_info).toHaveBeenCalledWith(
+      expect(mock_extractors.extract_receiver_info).toHaveBeenCalledWith(
         capture.node,
         TEST_FILE_PATH
       );
       expect(references[0].kind).toBe("method_call");
       if (references[0].kind === "method_call") {
-        expect(references[0].receiver_location).toEqual(receiverInfo.receiver_location);
+        expect(references[0].receiver_location).toEqual(receiver_info.receiver_location);
       }
     });
 
@@ -755,14 +755,14 @@ describe("ReferenceBuilder", () => {
         is_self_reference: false,
       };
 
-      const mockExtractors = create_mock_extractors({
+      const mock_extractors = create_mock_extractors({
         extract_receiver_info: vi.fn((node, file_path) => receiver_info),
         extract_is_optional_chain: vi.fn((node) => false),
       });
 
       const builder = new ReferenceBuilder(
         context,
-        mockExtractors,
+        mock_extractors,
         TEST_FILE_PATH
       );
       const capture = create_test_capture({
@@ -774,7 +774,7 @@ describe("ReferenceBuilder", () => {
       builder.process(capture);
       const references = builder.references;
 
-      expect(mockExtractors.extract_receiver_info).toHaveBeenCalledWith(
+      expect(mock_extractors.extract_receiver_info).toHaveBeenCalledWith(
         capture.node,
         TEST_FILE_PATH
       );
@@ -785,14 +785,14 @@ describe("ReferenceBuilder", () => {
     });
 
     it("should call extract_construct_target for constructor calls", () => {
-      const targetLocation = create_test_location(3, 6);
-      const mockExtractors = create_mock_extractors({
-        extract_construct_target: vi.fn((node, file_path) => targetLocation),
+      const target_location = create_test_location(3, 6);
+      const mock_extractors = create_mock_extractors({
+        extract_construct_target: vi.fn((node, file_path) => target_location),
       });
 
       const builder = new ReferenceBuilder(
         context,
-        mockExtractors,
+        mock_extractors,
         TEST_FILE_PATH
       );
       const capture = create_test_capture({
@@ -804,31 +804,31 @@ describe("ReferenceBuilder", () => {
       builder.process(capture);
       const references = builder.references;
 
-      expect(mockExtractors.extract_construct_target).toHaveBeenCalledWith(
+      expect(mock_extractors.extract_construct_target).toHaveBeenCalledWith(
         capture.node,
         TEST_FILE_PATH
       );
       expect(references[0].kind).toBe("constructor_call");
       if (references[0].kind === "constructor_call") {
-        expect(references[0].construct_target).toEqual(targetLocation);
+        expect(references[0].construct_target).toEqual(target_location);
       }
     });
 
     it("should handle complex method calls with receiver info", () => {
-      const receiverInfo: ReceiverInfo = {
+      const receiver_info: ReceiverInfo = {
         receiver_location: create_test_location(1, 0),
         property_chain: ["obj" as SymbolName, "method" as SymbolName],
         is_self_reference: false,
       };
 
-      const mockExtractors = create_mock_extractors({
-        extract_receiver_info: vi.fn((node, file_path) => receiverInfo),
+      const mock_extractors = create_mock_extractors({
+        extract_receiver_info: vi.fn((node, file_path) => receiver_info),
         extract_call_name: vi.fn((node) => "method"),
       });
 
       const builder = new ReferenceBuilder(
         context,
-        mockExtractors,
+        mock_extractors,
         TEST_FILE_PATH
       );
       const capture = create_test_capture({
@@ -841,13 +841,13 @@ describe("ReferenceBuilder", () => {
       const references = builder.references;
 
       // Verify extractor was called
-      expect(mockExtractors.extract_receiver_info).toHaveBeenCalled();
+      expect(mock_extractors.extract_receiver_info).toHaveBeenCalled();
 
       // Verify the reference has extracted metadata
       expect(references[0].kind).toBe("method_call");
       if (references[0].kind === "method_call") {
-        expect(references[0].receiver_location).toEqual(receiverInfo.receiver_location);
-        expect(references[0].property_chain).toEqual(receiverInfo.property_chain);
+        expect(references[0].receiver_location).toEqual(receiver_info.receiver_location);
+        expect(references[0].property_chain).toEqual(receiver_info.property_chain);
       }
     });
 
@@ -871,11 +871,11 @@ describe("ReferenceBuilder", () => {
 
     it("should handle extractors returning undefined", () => {
       // All extractors return undefined
-      const mockExtractors = create_mock_extractors();
+      const mock_extractors = create_mock_extractors();
 
       const builder = new ReferenceBuilder(
         context,
-        mockExtractors,
+        mock_extractors,
         TEST_FILE_PATH
       );
       const capture = create_test_capture({
@@ -900,14 +900,14 @@ describe("ReferenceBuilder", () => {
         is_self_reference: false,
       };
 
-      const mockExtractors = create_mock_extractors({
+      const mock_extractors = create_mock_extractors({
         extract_receiver_info: vi.fn((node, file_path) => receiver_info),
         extract_is_optional_chain: vi.fn((node) => false),
       });
 
       const builder = new ReferenceBuilder(
         context,
-        mockExtractors,
+        mock_extractors,
         TEST_FILE_PATH
       );
       const capture = create_test_capture({
@@ -927,11 +927,11 @@ describe("ReferenceBuilder", () => {
     });
 
     it("should create variable references when no extractors provide data", () => {
-      const mockExtractors = create_mock_extractors();
+      const mock_extractors = create_mock_extractors();
 
       const builder = new ReferenceBuilder(
         context,
-        mockExtractors,
+        mock_extractors,
         TEST_FILE_PATH
       );
       const capture = create_test_capture({
@@ -953,14 +953,14 @@ describe("ReferenceBuilder", () => {
         is_self_reference: false,
       };
 
-      const mockExtractors = create_mock_extractors({
+      const mock_extractors = create_mock_extractors({
         extract_receiver_info: vi.fn((node, file_path) => receiver_info),
         extract_is_optional_chain: vi.fn((node) => false),
       });
 
       const builder = new ReferenceBuilder(
         context,
-        mockExtractors,
+        mock_extractors,
         TEST_FILE_PATH
       );
       const capture = create_test_capture({
@@ -992,14 +992,14 @@ describe("ReferenceBuilder", () => {
         is_self_reference: false,
       };
 
-      const mockExtractors = create_mock_extractors({
+      const mock_extractors = create_mock_extractors({
         extract_receiver_info: vi.fn((node, file_path) => receiver_info),
         extract_call_name: vi.fn((node) => "toString"),
       });
 
       const builder = new ReferenceBuilder(
         context,
-        mockExtractors,
+        mock_extractors,
         TEST_FILE_PATH
       );
 

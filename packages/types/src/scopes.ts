@@ -1,7 +1,9 @@
 import { FilePath } from "./common";
 import { Location } from "./common";
 
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export type ScopeId = string & { __brand: "ScopeId" }; // Unique scope identifier
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export type ScopeName = string & { __brand: "ScopeName" }; // Scope name (if named)
 
 /**

@@ -15,7 +15,7 @@ describe("file_utils", () => {
       parser.setLanguage(JavaScript);
       const tree = parser.parse("const x = 1;");
 
-      const parsedFile: ParsedFile = {
+      const parsed_file: ParsedFile = {
         file_path: "test.js" as FilePath,
         file_lines: 1,
         file_end_column: 12,
@@ -24,11 +24,11 @@ describe("file_utils", () => {
       };
 
       // Verify all required properties exist
-      expect(parsedFile.file_path).toBe("test.js");
-      expect(parsedFile.file_lines).toBe(1);
-      expect(parsedFile.file_end_column).toBe(12);
-      expect(parsedFile.tree).toBe(tree);
-      expect(parsedFile.lang).toBe("javascript");
+      expect(parsed_file.file_path).toBe("test.js");
+      expect(parsed_file.file_lines).toBe(1);
+      expect(parsed_file.file_end_column).toBe(12);
+      expect(parsed_file.tree).toBe(tree);
+      expect(parsed_file.lang).toBe("javascript");
     });
 
     it("should work with different languages", () => {
@@ -39,7 +39,7 @@ describe("file_utils", () => {
       const languages: Language[] = ["javascript", "typescript", "python", "rust"];
 
       languages.forEach(language => {
-        const parsedFile: ParsedFile = {
+        const parsed_file: ParsedFile = {
           file_path: `test.${language === "javascript" ? "js" : language === "typescript" ? "ts" : language === "python" ? "py" : "rs"}` as FilePath,
           file_lines: 1,
           file_end_column: 18,
@@ -47,19 +47,19 @@ describe("file_utils", () => {
           lang: language,
         };
 
-        expect(parsedFile.lang).toBe(language);
+        expect(parsed_file.lang).toBe(language);
       });
     });
 
     it("should handle files with multiple lines", () => {
       const parser = new Parser();
       parser.setLanguage(JavaScript);
-      const multiLineCode = `function test() {
+      const multi_line_code = `function test() {
   return 42;
 }`;
-      const tree = parser.parse(multiLineCode);
+      const tree = parser.parse(multi_line_code);
 
-      const parsedFile: ParsedFile = {
+      const parsed_file: ParsedFile = {
         file_path: "multiline.js" as FilePath,
         file_lines: 3,
         file_end_column: 1, // Last line has just "}"
@@ -67,8 +67,8 @@ describe("file_utils", () => {
         lang: "javascript" as Language,
       };
 
-      expect(parsedFile.file_lines).toBe(3);
-      expect(parsedFile.file_end_column).toBe(1);
+      expect(parsed_file.file_lines).toBe(3);
+      expect(parsed_file.file_end_column).toBe(1);
     });
 
     it("should handle empty files", () => {
@@ -76,7 +76,7 @@ describe("file_utils", () => {
       parser.setLanguage(JavaScript);
       const tree = parser.parse("");
 
-      const parsedFile: ParsedFile = {
+      const parsed_file: ParsedFile = {
         file_path: "empty.js" as FilePath,
         file_lines: 0,
         file_end_column: 0,
@@ -84,25 +84,25 @@ describe("file_utils", () => {
         lang: "javascript" as Language,
       };
 
-      expect(parsedFile.file_lines).toBe(0);
-      expect(parsedFile.file_end_column).toBe(0);
+      expect(parsed_file.file_lines).toBe(0);
+      expect(parsed_file.file_end_column).toBe(0);
     });
 
     it("should handle files with long lines", () => {
       const parser = new Parser();
       parser.setLanguage(JavaScript);
-      const longLine = "const veryLongVariableName = ".repeat(10) + "42;";
-      const tree = parser.parse(longLine);
+      const long_line = "const veryLongVariableName = ".repeat(10) + "42;";
+      const tree = parser.parse(long_line);
 
-      const parsedFile: ParsedFile = {
+      const parsed_file: ParsedFile = {
         file_path: "long.js" as FilePath,
         file_lines: 1,
-        file_end_column: longLine.length,
+        file_end_column: long_line.length,
         tree: tree,
         lang: "javascript" as Language,
       };
 
-      expect(parsedFile.file_end_column).toBe(longLine.length);
+      expect(parsed_file.file_end_column).toBe(long_line.length);
     });
   });
 });

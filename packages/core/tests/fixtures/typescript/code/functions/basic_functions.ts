@@ -11,7 +11,7 @@ function add(a: number, b: number): number {
   return a + b;
 }
 
-function processUser(name: string, age: number, active: boolean = true): object {
+function process_user(name: string, age: number, active: boolean = true): object {
   return {
     name,
     age,
@@ -20,7 +20,7 @@ function processUser(name: string, age: number, active: boolean = true): object 
   };
 }
 
-function multipleReturns(value: number): string {
+function multiple_returns(value: number): string {
   if (value > 0) {
     return "positive";
   } else if (value < 0) {
@@ -30,4 +30,4 @@ function multipleReturns(value: number): string {
   }
 }
 
-export { greet, add, processUser, multipleReturns };
+export { greet, add, process_user, multiple_returns };

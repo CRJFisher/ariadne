@@ -98,9 +98,9 @@ export const PYTHON_IMPORT_HANDLERS: LanguageBuilderConfig = new Map([
     "import.named.alias",
     {
       process: (
-        _: CaptureNode,
-        __: DefinitionBuilder,
-        ___: ProcessingContext
+        _capture: CaptureNode,
+        _builder: DefinitionBuilder,
+        _context: ProcessingContext
       ) => {
         // This is the alias in an aliased import - skip as it's handled by import.named.source
         return;
@@ -185,9 +185,9 @@ export const PYTHON_IMPORT_HANDLERS: LanguageBuilderConfig = new Map([
     "import.module.alias",
     {
       process: (
-        _: CaptureNode,
-        __: DefinitionBuilder,
-        ___: ProcessingContext
+        _capture: CaptureNode,
+        _builder: DefinitionBuilder,
+        _context: ProcessingContext
       ) => {
         // This is the alias in "import X as Y" - skip as it's handled by import.module.source
         return;

@@ -93,12 +93,12 @@ export function find_containing_class(
   // Traverse up until we find a class
   while (node) {
     if (node.type === "class_definition") {
-      const nameNode = node.childForFieldName?.("name");
-      if (nameNode) {
-        const className = nameNode.text as SymbolName;
+      const name_node = node.childForFieldName?.("name");
+      if (name_node) {
+        const class_name = name_node.text as SymbolName;
         return class_symbol(
-          className,
-          node_to_location(nameNode, capture.location.file_path)
+          class_name,
+          node_to_location(name_node, capture.location.file_path)
         );
       }
     }
@@ -122,7 +122,7 @@ export function find_containing_enum(
       // Check if it inherits from Enum
       const superclasses = node.childForFieldName?.("superclasses");
       if (superclasses) {
-        const hasEnumBase = superclasses.children?.some((child) => {
+        const has_enum_base = superclasses.children?.some((child) => {
           if (child.type === "identifier") {
             return /^(Enum|IntEnum|Flag|IntFlag|StrEnum)$/.test(child.text);
           } else if (child.type === "attribute") {
@@ -134,12 +134,12 @@ export function find_containing_enum(
           return false;
         });
 
-        if (hasEnumBase) {
-          const nameNode = node.childForFieldName?.("name");
-          if (nameNode) {
+        if (has_enum_base) {
+          const name_node = node.childForFieldName?.("name");
+          if (name_node) {
             const file_path = capture.location.file_path;
-            const enumName = nameNode.text as SymbolName;
-            return enum_symbol(enumName, node_to_location(nameNode, file_path));
+            const enum_name = name_node.text as SymbolName;
+            return enum_symbol(enum_name, node_to_location(name_node, file_path));
           }
         }
       }
@@ -157,9 +157,9 @@ export function extract_enum_value(node: SyntaxNode): string | undefined {
   // The node is the identifier (left side of assignment), so we need to get the right side
   const assignment = node.parent;
   if (assignment && assignment.type === "assignment") {
-    const valueNode = assignment.childForFieldName?.("right");
-    if (valueNode) {
-      return valueNode.text;
+    const value_node = assignment.childForFieldName?.("right");
+    if (value_node) {
+      return value_node.text;
     }
   }
   return undefined;
@@ -182,7 +182,7 @@ export function find_containing_protocol(
       // Check if it inherits from Protocol
       const superclasses = node.childForFieldName?.("superclasses");
       if (superclasses) {
-        const hasProtocolBase = superclasses.children?.some((child) => {
+        const has_protocol_base = superclasses.children?.some((child) => {
           if (child.type === "identifier") {
             return child.text === "Protocol";
           } else if (child.type === "attribute") {
@@ -192,14 +192,14 @@ export function find_containing_protocol(
           return false;
         });
 
-        if (hasProtocolBase) {
-          const nameNode = node.childForFieldName?.("name");
-          if (nameNode) {
+        if (has_protocol_base) {
+          const name_node = node.childForFieldName?.("name");
+          if (name_node) {
             const file_path = capture.location.file_path;
-            const protocolName = nameNode.text as SymbolName;
+            const protocol_name = name_node.text as SymbolName;
             return interface_symbol(
-              protocolName,
-              node_to_location(nameNode, file_path)
+              protocol_name,
+              node_to_location(name_node, file_path)
             );
           }
         }
@@ -220,9 +220,9 @@ export function extract_property_type(
   // For annotated assignments, extract the type annotation
   const assignment = node.parent;
   if (assignment && assignment.type === "assignment") {
-    const typeNode = assignment.childForFieldName?.("type");
-    if (typeNode) {
-      return typeNode.text as SymbolName;
+    const type_node = assignment.childForFieldName?.("type");
+    if (type_node) {
+      return type_node.text as SymbolName;
     }
   }
 
@@ -239,9 +239,9 @@ export function extract_property_type(
         }
       }
       // Also check for typed_parameter pattern
-      const typeNode = current.childForFieldName?.("type");
-      if (typeNode) {
-        return typeNode.text as SymbolName;
+      const type_node = current.childForFieldName?.("type");
+      if (type_node) {
+        return type_node.text as SymbolName;
       }
       break;
     }
@@ -325,10 +325,10 @@ function extract_decorators(node: SyntaxNode): SymbolName[] {
   // Check if parent is decorated_definition
   const parent = node.parent;
   if (parent && parent.type === "decorated_definition") {
-    const decoratorNodes = parent.children.filter(
+    const decorator_nodes = parent.children.filter(
       (child) => child.type === "decorator"
     );
-    for (const decorator of decoratorNodes) {
+    for (const decorator of decorator_nodes) {
       const identifier = decorator.children.find(
         (child) => child.type === "identifier"
       );
@@ -412,12 +412,12 @@ export function extract_type_expression(node: SyntaxNode): string | undefined {
       for (let i = 0; i < children.length; i++) {
         if (children[i].type === "=" && i + 1 < children.length) {
           // Return the text of the value type node (excluding 'type' wrapper text if any)
-          const valueNode = children[i + 1];
-          if (valueNode.childCount > 0) {
+          const value_node = children[i + 1];
+          if (value_node.childCount > 0) {
             // Return first child's text (the actual type expression)
-            return valueNode.child(0)?.text;
+            return value_node.child(0)?.text;
           }
-          return valueNode.text;
+          return value_node.text;
         }
       }
       break;
@@ -428,13 +428,13 @@ export function extract_type_expression(node: SyntaxNode): string | undefined {
 }
 
 export function extract_return_type(node: SyntaxNode): SymbolName | undefined {
-  const returnType = node.childForFieldName?.("return_type");
-  if (returnType) {
+  const return_type = node.childForFieldName?.("return_type");
+  if (return_type) {
     // Skip the -> arrow if present
-    const typeNode = returnType.children?.find(
+    const type_node = return_type.children?.find(
       (child) => child.type === "type"
     );
-    return (typeNode?.text || returnType.text) as SymbolName;
+    return (type_node?.text || return_type.text) as SymbolName;
   }
   return undefined;
 }
@@ -445,23 +445,23 @@ export function extract_parameter_type(
   // Look for type annotation in parameter node
   // The query captures the identifier inside typed_parameter or typed_default_parameter
   // Python's tree-sitter grammar uses "type" field for both
-  const paramNode =
+  const param_node =
     node.type === "identifier" &&
     (node.parent?.type === "typed_parameter" || node.parent?.type === "typed_default_parameter")
       ? node.parent
       : node;
 
-  const typeNode = paramNode.childForFieldName?.("type");
-  if (typeNode) {
-    return typeNode.text as SymbolName;
+  const type_node = param_node.childForFieldName?.("type");
+  if (type_node) {
+    return type_node.text as SymbolName;
   }
   return undefined;
 }
 
 export function extract_default_value(node: SyntaxNode): string | undefined {
-  const defaultNode = node.childForFieldName?.("default");
-  if (defaultNode) {
-    return defaultNode.text;
+  const default_node = node.childForFieldName?.("default");
+  if (default_node) {
+    return default_node.text;
   }
   return undefined;
 }
@@ -472,9 +472,9 @@ export function extract_type_annotation(
   // Look for type annotation in assignment
   const parent = node.parent;
   if (parent && parent.type === "assignment") {
-    const typeNode = parent.childForFieldName?.("type");
-    if (typeNode) {
-      return typeNode.text as SymbolName;
+    const type_node = parent.childForFieldName?.("type");
+    if (type_node) {
+      return type_node.text as SymbolName;
     }
   }
   return undefined;
@@ -483,9 +483,9 @@ export function extract_type_annotation(
 export function extract_initial_value(node: SyntaxNode): string | undefined {
   const parent = node.parent;
   if (parent && parent.type === "assignment") {
-    const valueNode = parent.childForFieldName?.("right");
-    if (valueNode) {
-      return valueNode.text;
+    const value_node = parent.childForFieldName?.("right");
+    if (value_node) {
+      return value_node.text;
     }
   }
   return undefined;
@@ -512,18 +512,18 @@ export function extract_extends(node: SyntaxNode): SymbolName[] {
 export function extract_import_path(node: SyntaxNode): ModulePath {
   // For "from X import Y" statements, look for module_name field
   // This handles both absolute (dotted_name) and relative (relative_import) imports
-  const moduleNameNode = node.childForFieldName?.("module_name");
-  if (moduleNameNode) {
-    return moduleNameNode.text as ModulePath;
+  const module_name_node = node.childForFieldName?.("module_name");
+  if (module_name_node) {
+    return module_name_node.text as ModulePath;
   }
 
   // Fallback: Look for "module" field or find dotted_name child
   // This handles "import X" statements
-  const moduleNode =
+  const module_node =
     node.childForFieldName?.("module") ||
     node.children?.find((child) => child.type === "dotted_name");
-  if (moduleNode) {
-    return moduleNode.text as ModulePath;
+  if (module_node) {
+    return module_node.text as ModulePath;
   }
 
   return "" as ModulePath;
@@ -569,8 +569,8 @@ export function find_decorator_target(
 
       if (definition) {
         if (definition.type === "function_definition") {
-          const nameNode = definition.childForFieldName?.("name");
-          if (nameNode) {
+          const name_node = definition.childForFieldName?.("name");
+          if (name_node) {
             const file_path = capture.location.file_path;
 
             // Check if this is a method (inside a class)
@@ -583,35 +583,35 @@ export function find_decorator_target(
 
             if (class_node) {
               // It's a method or constructor
-              const method_name = nameNode.text as SymbolName;
+              const method_name = name_node.text as SymbolName;
               return method_symbol(method_name, {
                 file_path,
-                start_line: nameNode.startPosition.row + 1,
-                start_column: nameNode.startPosition.column + 1,
-                end_line: nameNode.endPosition.row + 1,
-                end_column: nameNode.endPosition.column,
+                start_line: name_node.startPosition.row + 1,
+                start_column: name_node.startPosition.column + 1,
+                end_line: name_node.endPosition.row + 1,
+                end_column: name_node.endPosition.column,
               });
             } else {
               // It's a function
-              return function_symbol(nameNode.text as SymbolName, {
+              return function_symbol(name_node.text as SymbolName, {
                 file_path,
-                start_line: nameNode.startPosition.row + 1,
-                start_column: nameNode.startPosition.column + 1,
-                end_line: nameNode.endPosition.row + 1,
-                end_column: nameNode.endPosition.column,
+                start_line: name_node.startPosition.row + 1,
+                start_column: name_node.startPosition.column + 1,
+                end_line: name_node.endPosition.row + 1,
+                end_column: name_node.endPosition.column,
               });
             }
           }
         } else if (definition.type === "class_definition") {
-          const nameNode = definition.childForFieldName?.("name");
-          if (nameNode) {
+          const name_node = definition.childForFieldName?.("name");
+          if (name_node) {
             const file_path = capture.location.file_path;
-            return class_symbol(nameNode.text as SymbolName, {
+            return class_symbol(name_node.text as SymbolName, {
               file_path,
-              start_line: nameNode.startPosition.row + 1,
-              start_column: nameNode.startPosition.column + 1,
-              end_line: nameNode.endPosition.row + 1,
-              end_column: nameNode.endPosition.column,
+              start_line: name_node.startPosition.row + 1,
+              start_column: name_node.startPosition.column + 1,
+              end_line: name_node.endPosition.row + 1,
+              end_column: name_node.endPosition.column,
             });
           }
         }
@@ -759,27 +759,27 @@ export function extract_derived_from(node: SyntaxNode): SymbolName | undefined {
     return undefined;
   }
 
-  const valueNode = assignment.childForFieldName?.("right");
-  if (!valueNode) {
+  const value_node = assignment.childForFieldName?.("right");
+  if (!value_node) {
     return undefined;
   }
 
   // Case 1: Method call (config.get(...))
-  if (valueNode.type === "call") {
-    const functionNode = valueNode.childForFieldName?.("function");
-    if (functionNode?.type === "attribute") {
-      const objectNode = functionNode.childForFieldName?.("object");
-      const attributeNode = functionNode.childForFieldName?.("attribute");
+  if (value_node.type === "call") {
+    const function_node = value_node.childForFieldName?.("function");
+    if (function_node?.type === "attribute") {
+      const object_node = function_node.childForFieldName?.("object");
+      const attribute_node = function_node.childForFieldName?.("attribute");
       
-      if (objectNode?.type === "identifier" && attributeNode?.text === "get") {
-        return objectNode.text as SymbolName;
+      if (object_node?.type === "identifier" && attribute_node?.text === "get") {
+        return object_node.text as SymbolName;
       }
     }
   }
 
   // Case 2: Subscript access (config[...])
-  if (valueNode.type === "subscript") {
-    const value = valueNode.childForFieldName?.("value");
+  if (value_node.type === "subscript") {
+    const value = value_node.childForFieldName?.("value");
     if (value?.type === "identifier") {
       return value.text as SymbolName;
     }

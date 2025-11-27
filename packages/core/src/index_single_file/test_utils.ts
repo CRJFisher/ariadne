@@ -7,35 +7,35 @@ import type { SyntaxNode } from "tree-sitter";
 /**
  * Create a mock SyntaxNode for testing
  *
- * @param nodeType - The type of the node (e.g., "identifier", "function_declaration")
+ * @param node_type - The type of the node (e.g., "identifier", "function_declaration")
  * @param text - The text content of the node
- * @param startRow - Starting row position (default: 0)
- * @param startColumn - Starting column position (default: 0)
- * @param endRow - Ending row position (default: startRow)
- * @param endColumn - Ending column position (default: startColumn + text.length)
- * @param additionalProps - Additional properties to override or add
+ * @param start_row - Starting row position (default: 0)
+ * @param start_column - Starting column position (default: 0)
+ * @param end_row - Ending row position (default: start_row)
+ * @param end_column - Ending column position (default: start_column + text.length)
+ * @param additional_props - Additional properties to override or add
  * @returns A mock SyntaxNode
  */
 export function create_mock_node(
-  nodeType: string = "mock_node",
+  node_type: string = "mock_node",
   text: string = "mock_text",
-  startRow: number = 0,
-  startColumn: number = 0,
-  endRow?: number,
-  endColumn?: number,
-  additionalProps: Partial<SyntaxNode> = {},
+  start_row: number = 0,
+  start_column: number = 0,
+  end_row?: number,
+  end_column?: number,
+  additional_props: Partial<SyntaxNode> = {},
 ): SyntaxNode {
-  const finalEndRow = endRow ?? startRow;
-  const finalEndColumn = endColumn ?? startColumn + text.length;
+  const final_end_row = end_row ?? start_row;
+  const final_end_column = end_column ?? start_column + text.length;
 
   return {
     text,
-    type: nodeType,
-    startPosition: { row: startRow, column: startColumn },
-    endPosition: { row: finalEndRow, column: finalEndColumn },
+    type: node_type,
+    startPosition: { row: start_row, column: start_column },
+    endPosition: { row: final_end_row, column: final_end_column },
     children: [],
     parent: null,
-    ...additionalProps,
+    ...additional_props,
   } as unknown as SyntaxNode;
 }
 
@@ -43,17 +43,17 @@ export function create_mock_node(
  * Create a simple mock node with default positions
  */
 export function create_simple_mock_node(
-  nodeType: string = "mock_node",
+  node_type: string = "mock_node",
   text: string = "mock_text",
-  additionalProps: Partial<SyntaxNode> = {},
+  additional_props: Partial<SyntaxNode> = {},
 ): SyntaxNode {
   return create_mock_node(
-    nodeType,
+    node_type,
     text,
     0,
     0,
     undefined,
     undefined,
-    additionalProps,
+    additional_props,
   );
 }

@@ -2,8 +2,8 @@
  * Stub module for comprehensive_definitions.ts fixture
  * This file exists only to satisfy TypeScript imports in test fixtures
  */
-export const testValue = "test";
-export function testFunction() {
+export const test_value = "test";
+export function test_function() {
   return "test";
 }
 export class TestClass {

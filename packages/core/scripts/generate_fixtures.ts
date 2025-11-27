@@ -211,8 +211,8 @@ function main(): void {
   if (args.includes("--all")) {
     generate_all_fixtures();
   } else if (args.includes("--language")) {
-    const langIndex = args.indexOf("--language");
-    const language = args[langIndex + 1];
+    const lang_index = args.indexOf("--language");
+    const language = args[lang_index + 1];
     if (!language) {
       console.error("Error: --language requires a language argument");
       process.exit(1);
@@ -223,8 +223,8 @@ function main(): void {
     }
     generate_fixtures_for_language(language);
   } else if (args.includes("--file")) {
-    const fileIndex = args.indexOf("--file");
-    const file = args[fileIndex + 1];
+    const file_index = args.indexOf("--file");
+    const file = args[file_index + 1];
     if (!file) {
       console.error("Error: --file requires a file path argument");
       process.exit(1);

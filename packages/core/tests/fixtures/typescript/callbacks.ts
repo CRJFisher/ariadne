@@ -13,11 +13,11 @@ const evens = numbers.filter((n) => n % 2 === 0);
 numbers.forEach((n) => console.log(n));
 
 // Internal callbacks - user-defined higher-order function
-function runCallback(cb: () => void) {
+function run_callback(cb: () => void) {
   cb();
 }
 
-runCallback(() => {
+run_callback(() => {
   console.log("internal callback");
 });
 
@@ -30,10 +30,10 @@ const nested = numbers.map((n) => {
 const pairs = numbers.map((n, i) => ({ value: n, index: i }));
 
 // Non-callback anonymous functions
-const standaloneArrow = () => {
+const standalone_arrow = () => {
   return "not a callback";
 };
 
-const standaloneFunctionExpr = function() {
+const standalone_function_expr = function() {
   return "also not a callback";
 };

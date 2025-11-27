@@ -107,10 +107,10 @@ export const PYTHON_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
         // Regular class method
         const class_id = find_containing_class(capture);
         if (class_id) {
-          const methodType = determine_method_type(
+          const method_type = determine_method_type(
             capture.node.parent || capture.node
           );
-          const isAsync = is_async_function(
+          const is_async = is_async_function(
             capture.node.parent || capture.node
           );
 
@@ -124,8 +124,8 @@ export const PYTHON_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
               return_type: extract_return_type(
                 capture.node.parent || capture.node
               ),
-              ...methodType,
-              async: isAsync,
+              ...method_type,
+              async: is_async,
             },
             capture
           );

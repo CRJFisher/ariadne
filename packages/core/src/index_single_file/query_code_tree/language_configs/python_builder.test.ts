@@ -28,7 +28,7 @@ describe("Python Builder Configuration", () => {
   });
 
   // Helper function to create test context
-  function createTestContext(with_scopes: boolean = false): ProcessingContext {
+  function create_test_context(with_scopes: boolean = false): ProcessingContext {
     const test_scope_id = "module:test.py:1:0:100:0:<module>" as ScopeId;
     const scopes = new Map();
 
@@ -87,24 +87,24 @@ describe("Python Builder Configuration", () => {
   }
 
   // Helper function to create a raw capture from code
-  function createCapture(
+  function create_capture(
     code: string,
-    captureName: string,
-    nodeType: string
+    capture_name: string,
+    node_type: string
   ): CaptureNode {
     const ast = parser.parse(code);
-    const node = findNodeByType(ast.rootNode, nodeType);
+    const node = find_node_by_type(ast.rootNode, node_type);
     if (!node) {
-      throw new Error(`Could not find node of type ${nodeType} in code`);
+      throw new Error(`Could not find node of type ${node_type} in code`);
     }
 
     // Parse capture name to get category and entity
-    const parts = captureName.split(".");
+    const parts = capture_name.split(".");
     const category = parts[0] as any;
     const entity = parts[1] as any;
 
     return {
-      name: captureName,
+      name: capture_name,
       category,
       entity,
       node: node as any,
@@ -120,11 +120,11 @@ describe("Python Builder Configuration", () => {
   }
 
   // Helper function to find first node of specific type
-  function findNodeByType(node: SyntaxNode, type: string): SyntaxNode | null {
+  function find_node_by_type(node: SyntaxNode, type: string): SyntaxNode | null {
     if (node.type === type) return node;
 
     for (let i = 0; i < node.childCount; i++) {
-      const found = findNodeByType(node.child(i)!, type);
+      const found = find_node_by_type(node.child(i)!, type);
       if (found) return found;
     }
     return null;
@@ -138,9 +138,9 @@ describe("Python Builder Configuration", () => {
     });
 
     it("should contain class definition capture mappings", () => {
-      const classMappings = ["definition.class"];
+      const class_mappings = ["definition.class"];
 
-      for (const mapping of classMappings) {
+      for (const mapping of class_mappings) {
         expect(PYTHON_BUILDER_CONFIG.has(mapping)).toBe(true);
         const config = PYTHON_BUILDER_CONFIG.get(mapping);
         expect(config).toBeDefined();
@@ -149,14 +149,14 @@ describe("Python Builder Configuration", () => {
     });
 
     it("should contain method definition capture mappings", () => {
-      const methodMappings = [
+      const method_mappings = [
         "definition.method",
         "definition.method.static",
         "definition.method.class",
         "definition.constructor",
       ];
 
-      for (const mapping of methodMappings) {
+      for (const mapping of method_mappings) {
         expect(PYTHON_BUILDER_CONFIG.has(mapping)).toBe(true);
         const config = PYTHON_BUILDER_CONFIG.get(mapping);
         expect(config).toBeDefined();
@@ -165,13 +165,13 @@ describe("Python Builder Configuration", () => {
     });
 
     it("should contain function definition capture mappings", () => {
-      const functionMappings = [
+      const function_mappings = [
         "definition.function",
         "definition.function.async",
         "definition.lambda",
       ];
 
-      for (const mapping of functionMappings) {
+      for (const mapping of function_mappings) {
         expect(PYTHON_BUILDER_CONFIG.has(mapping)).toBe(true);
         const config = PYTHON_BUILDER_CONFIG.get(mapping);
         expect(config).toBeDefined();
@@ -180,7 +180,7 @@ describe("Python Builder Configuration", () => {
     });
 
     it("should contain parameter definition capture mappings", () => {
-      const paramMappings = [
+      const param_mappings = [
         "definition.parameter",
         "definition.parameter.default",
         "definition.parameter.typed",
@@ -189,7 +189,7 @@ describe("Python Builder Configuration", () => {
         "definition.parameter.kwargs",
       ];
 
-      for (const mapping of paramMappings) {
+      for (const mapping of param_mappings) {
         expect(PYTHON_BUILDER_CONFIG.has(mapping)).toBe(true);
         const config = PYTHON_BUILDER_CONFIG.get(mapping);
         expect(config).toBeDefined();
@@ -198,7 +198,7 @@ describe("Python Builder Configuration", () => {
     });
 
     it("should contain variable definition capture mappings", () => {
-      const variableMappings = [
+      const variable_mappings = [
         "definition.variable",
         "definition.variable.typed",
         "definition.variable.multiple",
@@ -211,7 +211,7 @@ describe("Python Builder Configuration", () => {
         "definition.with_var",
       ];
 
-      for (const mapping of variableMappings) {
+      for (const mapping of variable_mappings) {
         expect(PYTHON_BUILDER_CONFIG.has(mapping)).toBe(true);
         const config = PYTHON_BUILDER_CONFIG.get(mapping);
         expect(config).toBeDefined();
@@ -220,9 +220,9 @@ describe("Python Builder Configuration", () => {
     });
 
     it("should contain property definition capture mappings", () => {
-      const propertyMappings = ["definition.property", "definition.field"];
+      const property_mappings = ["definition.property", "definition.field"];
 
-      for (const mapping of propertyMappings) {
+      for (const mapping of property_mappings) {
         expect(PYTHON_BUILDER_CONFIG.has(mapping)).toBe(true);
         const config = PYTHON_BUILDER_CONFIG.get(mapping);
         expect(config).toBeDefined();
@@ -231,7 +231,7 @@ describe("Python Builder Configuration", () => {
     });
 
     it("should contain import capture mappings", () => {
-      const importMappings = [
+      const import_mappings = [
         "import.named",
         "import.named.source",
         "import.named.alias",
@@ -241,7 +241,7 @@ describe("Python Builder Configuration", () => {
         "import.star",
       ];
 
-      for (const mapping of importMappings) {
+      for (const mapping of import_mappings) {
         expect(PYTHON_BUILDER_CONFIG.has(mapping)).toBe(true);
         const config = PYTHON_BUILDER_CONFIG.get(mapping);
         expect(config).toBeDefined();
@@ -252,12 +252,12 @@ describe("Python Builder Configuration", () => {
     it("should handle a simple class definition", () => {
       const code = `class MyClass:
     pass`;
-      const capture = createCapture(code, "definition.class", "identifier");
-      const builder = new DefinitionBuilder(createTestContext());
+      const capture = create_capture(code, "definition.class", "identifier");
+      const builder = new DefinitionBuilder(create_test_context());
       const config = PYTHON_BUILDER_CONFIG.get("definition.class");
 
       expect(() => {
-        config?.process(capture, builder, createTestContext());
+        config?.process(capture, builder, create_test_context());
       }).not.toThrow();
     });
 
@@ -265,20 +265,20 @@ describe("Python Builder Configuration", () => {
       const code = `class MyClass:
     def my_method(self):
         pass`;
-      const capture = createCapture(code, "definition.method", "identifier");
-      const builder = new DefinitionBuilder(createTestContext());
+      const capture = create_capture(code, "definition.method", "identifier");
+      const builder = new DefinitionBuilder(create_test_context());
       const config = PYTHON_BUILDER_CONFIG.get("definition.method");
 
       expect(() => {
-        config?.process(capture, builder, createTestContext());
+        config?.process(capture, builder, create_test_context());
       }).not.toThrow();
     });
 
     it("should handle a function definition", () => {
       const code = `def my_function():
     pass`;
-      const capture = createCapture(code, "definition.function", "identifier");
-      const context = createTestContext(true); // Need scopes for function bodies
+      const capture = create_capture(code, "definition.function", "identifier");
+      const context = create_test_context(true); // Need scopes for function bodies
       const builder = new DefinitionBuilder(context);
       const config = PYTHON_BUILDER_CONFIG.get("definition.function");
 
@@ -289,31 +289,31 @@ describe("Python Builder Configuration", () => {
 
     it("should handle variable definitions", () => {
       const code = "x = 10";
-      const capture = createCapture(code, "definition.variable", "identifier");
-      const builder = new DefinitionBuilder(createTestContext());
+      const capture = create_capture(code, "definition.variable", "identifier");
+      const builder = new DefinitionBuilder(create_test_context());
       const config = PYTHON_BUILDER_CONFIG.get("definition.variable");
 
       expect(() => {
-        config?.process(capture, builder, createTestContext());
+        config?.process(capture, builder, create_test_context());
       }).not.toThrow();
     });
 
     it("should handle import statements", () => {
       const code = "import os";
-      const capture = createCapture(code, "import.module", "dotted_name");
-      const builder = new DefinitionBuilder(createTestContext());
+      const capture = create_capture(code, "import.module", "dotted_name");
+      const builder = new DefinitionBuilder(create_test_context());
       const config = PYTHON_BUILDER_CONFIG.get("import.module");
 
       expect(() => {
-        config?.process(capture, builder, createTestContext());
+        config?.process(capture, builder, create_test_context());
       }).not.toThrow();
     });
 
     it("should handle async functions", () => {
       const code = `async def async_function():
     pass`;
-      const capture = createCapture(code, "definition.function.async", "identifier");
-      const context = createTestContext(true); // Need scopes for function bodies
+      const capture = create_capture(code, "definition.function.async", "identifier");
+      const context = create_test_context(true); // Need scopes for function bodies
       const builder = new DefinitionBuilder(context);
       const config = PYTHON_BUILDER_CONFIG.get("definition.function.async");
 
@@ -324,8 +324,8 @@ describe("Python Builder Configuration", () => {
 
     it("should handle lambda functions", () => {
       const code = "f = lambda x: x * 2";
-      const capture = createCapture(code, "definition.lambda", "lambda");
-      const context = createTestContext(true); // Need scopes for function bodies
+      const capture = create_capture(code, "definition.lambda", "lambda");
+      const context = create_test_context(true); // Need scopes for function bodies
       const builder = new DefinitionBuilder(context);
       const config = PYTHON_BUILDER_CONFIG.get("definition.lambda");
 
@@ -339,12 +339,12 @@ describe("Python Builder Configuration", () => {
     @staticmethod
     def static_method():
         pass`;
-      const capture = createCapture(code, "definition.method.static", "identifier");
-      const builder = new DefinitionBuilder(createTestContext());
+      const capture = create_capture(code, "definition.method.static", "identifier");
+      const builder = new DefinitionBuilder(create_test_context());
       const config = PYTHON_BUILDER_CONFIG.get("definition.method.static");
 
       expect(() => {
-        config?.process(capture, builder, createTestContext());
+        config?.process(capture, builder, create_test_context());
       }).not.toThrow();
     });
 
@@ -353,12 +353,12 @@ describe("Python Builder Configuration", () => {
     @classmethod
     def class_method(cls):
         pass`;
-      const capture = createCapture(code, "definition.method.class", "identifier");
-      const builder = new DefinitionBuilder(createTestContext());
+      const capture = create_capture(code, "definition.method.class", "identifier");
+      const builder = new DefinitionBuilder(create_test_context());
       const config = PYTHON_BUILDER_CONFIG.get("definition.method.class");
 
       expect(() => {
-        config?.process(capture, builder, createTestContext());
+        config?.process(capture, builder, create_test_context());
       }).not.toThrow();
     });
 
@@ -367,40 +367,40 @@ describe("Python Builder Configuration", () => {
     @property
     def my_property(self):
         return self._value`;
-      const capture = createCapture(code, "definition.property", "identifier");
-      const builder = new DefinitionBuilder(createTestContext());
+      const capture = create_capture(code, "definition.property", "identifier");
+      const builder = new DefinitionBuilder(create_test_context());
       const config = PYTHON_BUILDER_CONFIG.get("definition.property");
 
       expect(() => {
-        config?.process(capture, builder, createTestContext());
+        config?.process(capture, builder, create_test_context());
       }).not.toThrow();
     });
 
     it("should handle class inheritance", () => {
       const code = `class Child(Parent):
     pass`;
-      const capture = createCapture(code, "definition.class", "identifier");
-      const builder = new DefinitionBuilder(createTestContext());
+      const capture = create_capture(code, "definition.class", "identifier");
+      const builder = new DefinitionBuilder(create_test_context());
       const config = PYTHON_BUILDER_CONFIG.get("definition.class");
 
       expect(() => {
-        config?.process(capture, builder, createTestContext());
+        config?.process(capture, builder, create_test_context());
       }).not.toThrow();
     });
 
     it("should handle typed parameters", () => {
       const code = `def func(x: int = 10):
     pass`;
-      const capture = createCapture(
+      const capture = create_capture(
         code,
         "definition.param.typed.default",
         "identifier"
       );
-      const builder = new DefinitionBuilder(createTestContext());
+      const builder = new DefinitionBuilder(create_test_context());
       const config = PYTHON_BUILDER_CONFIG.get("definition.param.typed.default");
 
       expect(() => {
-        config?.process(capture, builder, createTestContext());
+        config?.process(capture, builder, create_test_context());
       }).not.toThrow();
     });
 
@@ -409,55 +409,55 @@ describe("Python Builder Configuration", () => {
     pass`;
 
       // Test *args
-      const argsCapture = createCapture(
+      const args_capture = create_capture(
         code,
         "definition.param.args",
         "list_splat_pattern"
       );
-      const builder1 = new DefinitionBuilder(createTestContext());
-      const argsConfig = PYTHON_BUILDER_CONFIG.get("definition.param.args");
+      const builder1 = new DefinitionBuilder(create_test_context());
+      const args_config = PYTHON_BUILDER_CONFIG.get("definition.param.args");
 
       expect(() => {
-        argsConfig?.process(argsCapture, builder1, createTestContext());
+        args_config?.process(args_capture, builder1, create_test_context());
       }).not.toThrow();
 
       // Test **kwargs
-      const kwargsCapture = createCapture(
+      const kwargs_capture = create_capture(
         code,
         "definition.param.kwargs",
         "dictionary_splat_pattern"
       );
-      const builder2 = new DefinitionBuilder(createTestContext());
-      const kwargsConfig = PYTHON_BUILDER_CONFIG.get("definition.param.kwargs");
+      const builder2 = new DefinitionBuilder(create_test_context());
+      const kwargs_config = PYTHON_BUILDER_CONFIG.get("definition.param.kwargs");
 
       expect(() => {
-        kwargsConfig?.process(kwargsCapture, builder2, createTestContext());
+        kwargs_config?.process(kwargs_capture, builder2, create_test_context());
       }).not.toThrow();
     });
 
     it("should handle from imports", () => {
       const code = "from os import path";
-      const capture = createCapture(code, "import.named", "dotted_name");
-      const builder = new DefinitionBuilder(createTestContext());
+      const capture = create_capture(code, "import.named", "dotted_name");
+      const builder = new DefinitionBuilder(create_test_context());
       const config = PYTHON_BUILDER_CONFIG.get("import.named");
 
       expect(() => {
-        config?.process(capture, builder, createTestContext());
+        config?.process(capture, builder, create_test_context());
       }).not.toThrow();
     });
 
     it("should handle aliased imports", () => {
       const code = "import numpy as np";
-      const capture = createCapture(
+      const capture = create_capture(
         code,
         "import.module.source",
         "dotted_name"
       );
-      const builder = new DefinitionBuilder(createTestContext());
+      const builder = new DefinitionBuilder(create_test_context());
       const config = PYTHON_BUILDER_CONFIG.get("import.module.source");
 
       expect(() => {
-        config?.process(capture, builder, createTestContext());
+        config?.process(capture, builder, create_test_context());
       }).not.toThrow();
     });
 
@@ -466,13 +466,13 @@ describe("Python Builder Configuration", () => {
       const ast = parser.parse(code);
 
       // Find the import_from_statement node
-      const importNode = findNodeByType(ast.rootNode, "import_from_statement");
-      expect(importNode).toBeDefined();
+      const import_node = find_node_by_type(ast.rootNode, "import_from_statement");
+      expect(import_node).toBeDefined();
 
-      if (importNode) {
+      if (import_node) {
         // Extract the import path - should get ".utils" not "helper"
-        const importPath = extract_import_path(importNode);
-        expect(importPath).toBe(".utils");
+        const import_path = extract_import_path(import_node);
+        expect(import_path).toBe(".utils");
       }
     });
 
@@ -481,13 +481,13 @@ describe("Python Builder Configuration", () => {
       const ast = parser.parse(code);
 
       // Find the import_from_statement node
-      const importNode = findNodeByType(ast.rootNode, "import_from_statement");
-      expect(importNode).toBeDefined();
+      const import_node = find_node_by_type(ast.rootNode, "import_from_statement");
+      expect(import_node).toBeDefined();
 
-      if (importNode) {
+      if (import_node) {
         // Extract the import path - should get "os.path"
-        const importPath = extract_import_path(importNode);
-        expect(importPath).toBe("os.path");
+        const import_path = extract_import_path(import_node);
+        expect(import_path).toBe("os.path");
       }
     });
 
@@ -496,13 +496,13 @@ describe("Python Builder Configuration", () => {
       const ast = parser.parse(code);
 
       // Find the import_statement node
-      const importNode = findNodeByType(ast.rootNode, "import_statement");
-      expect(importNode).toBeDefined();
+      const import_node = find_node_by_type(ast.rootNode, "import_statement");
+      expect(import_node).toBeDefined();
 
-      if (importNode) {
+      if (import_node) {
         // Extract the import path - should get "os"
-        const importPath = extract_import_path(importNode);
-        expect(importPath).toBe("os");
+        const import_path = extract_import_path(import_node);
+        expect(import_path).toBe("os");
       }
     });
 
@@ -511,13 +511,13 @@ describe("Python Builder Configuration", () => {
       const ast = parser.parse(code);
 
       // Find the import_from_statement node
-      const importNode = findNodeByType(ast.rootNode, "import_from_statement");
-      expect(importNode).toBeDefined();
+      const import_node = find_node_by_type(ast.rootNode, "import_from_statement");
+      expect(import_node).toBeDefined();
 
-      if (importNode) {
+      if (import_node) {
         // Extract the import path - should get "..utils" not "helper"
-        const importPath = extract_import_path(importNode);
-        expect(importPath).toBe("..utils");
+        const import_path = extract_import_path(import_node);
+        expect(import_path).toBe("..utils");
       }
     });
 
@@ -526,13 +526,13 @@ describe("Python Builder Configuration", () => {
       const ast = parser.parse(code);
 
       // Find the import_from_statement node
-      const importNode = findNodeByType(ast.rootNode, "import_from_statement");
-      expect(importNode).toBeDefined();
+      const import_node = find_node_by_type(ast.rootNode, "import_from_statement");
+      expect(import_node).toBeDefined();
 
-      if (importNode) {
+      if (import_node) {
         // Extract the import path - should get ".." for parent directory
-        const importPath = extract_import_path(importNode);
-        expect(importPath).toBe("..");
+        const import_path = extract_import_path(import_node);
+        expect(import_path).toBe("..");
       }
     });
 
@@ -541,13 +541,13 @@ describe("Python Builder Configuration", () => {
       const ast = parser.parse(code);
 
       // Find the import_from_statement node
-      const importNode = findNodeByType(ast.rootNode, "import_from_statement");
-      expect(importNode).toBeDefined();
+      const import_node = find_node_by_type(ast.rootNode, "import_from_statement");
+      expect(import_node).toBeDefined();
 
-      if (importNode) {
+      if (import_node) {
         // Extract the import path - should get full module path
-        const importPath = extract_import_path(importNode);
-        expect(importPath).toBe("package.subpackage.module");
+        const import_path = extract_import_path(import_node);
+        expect(import_path).toBe("package.subpackage.module");
       }
     });
 
@@ -556,13 +556,13 @@ describe("Python Builder Configuration", () => {
       const ast = parser.parse(code);
 
       // Find the import_statement node
-      const importNode = findNodeByType(ast.rootNode, "import_statement");
-      expect(importNode).toBeDefined();
+      const import_node = find_node_by_type(ast.rootNode, "import_statement");
+      expect(import_node).toBeDefined();
 
-      if (importNode) {
+      if (import_node) {
         // Extract the import path - should get "os.path"
-        const importPath = extract_import_path(importNode);
-        expect(importPath).toBe("os.path");
+        const import_path = extract_import_path(import_node);
+        expect(import_path).toBe("os.path");
       }
     });
 
@@ -572,55 +572,55 @@ describe("Python Builder Configuration", () => {
     def add(self, a, b):
         return a + b`;
 
-        const context = createTestContext();
+        const context = create_test_context();
         const builder = new DefinitionBuilder(context);
 
         // Process class
         const ast = parser.parse(code);
-        const classNode = findNodeByType(ast.rootNode, "class_definition");
-        const className = classNode?.childForFieldName("name");
-        if (className) {
-          const classCapture: CaptureNode = {
+        const class_node = find_node_by_type(ast.rootNode, "class_definition");
+        const class_name = class_node?.childForFieldName("name");
+        if (class_name) {
+          const class_capture: CaptureNode = {
             name: "definition.class",
-            node: className as any,
-            text: className.text as SymbolName,
+            node: class_name as any,
+            text: class_name.text as SymbolName,
             category: "definition" as SemanticCategory,
             entity: "class" as SemanticEntity,
             location: {
               file_path: "test.py" as any,
-              start_line: className.startPosition.row + 1,
-              start_column: className.startPosition.column + 1,
-              end_line: className.endPosition.row + 1,
-              end_column: className.endPosition.column + 1,
+              start_line: class_name.startPosition.row + 1,
+              start_column: class_name.startPosition.column + 1,
+              end_line: class_name.endPosition.row + 1,
+              end_column: class_name.endPosition.column + 1,
             },
           };
           PYTHON_BUILDER_CONFIG.get("definition.class")?.process(
-            classCapture,
+            class_capture,
             builder,
             context
           );
         }
 
         // Process method
-        const funcDefNode = findNodeByType(ast.rootNode, "function_definition");
-        const methodName = funcDefNode?.childForFieldName("name");
-        if (methodName) {
-          const methodCapture: CaptureNode = {
+        const func_def_node = find_node_by_type(ast.rootNode, "function_definition");
+        const method_name = func_def_node?.childForFieldName("name");
+        if (method_name) {
+          const method_capture: CaptureNode = {
             name: "definition.method",
-            node: methodName as any,
-            text: methodName.text as SymbolName,
+            node: method_name as any,
+            text: method_name.text as SymbolName,
             category: "definition" as SemanticCategory,
             entity: "method" as SemanticEntity,
             location: {
               file_path: "test.py" as any,
-              start_line: methodName.startPosition.row + 1,
-              start_column: methodName.startPosition.column + 1,
-              end_line: methodName.endPosition.row + 1,
-              end_column: methodName.endPosition.column + 1,
+              start_line: method_name.startPosition.row + 1,
+              start_column: method_name.startPosition.column + 1,
+              end_line: method_name.endPosition.row + 1,
+              end_column: method_name.endPosition.column + 1,
             },
           };
           PYTHON_BUILDER_CONFIG.get("definition.method")?.process(
-            methodCapture,
+            method_capture,
             builder,
             context
           );
@@ -629,39 +629,39 @@ describe("Python Builder Configuration", () => {
         const definitions = builder.build();
         expect(definitions.classes.size).toBeGreaterThan(0);
 
-        const classDef = definitions.classes.values().next().value;
-        expect(classDef).toBeDefined();
-        expect(classDef?.name).toBe("Calculator");
+        const class_def = definitions.classes.values().next().value;
+        expect(class_def).toBeDefined();
+        expect(class_def?.name).toBe("Calculator");
       });
 
       it("should handle function with typed parameters", () => {
         const code = `def greet(name: str, age: int = 0) -> str:
     return f"Hello {name}"`;
 
-        const context = createTestContext(true); // Need scopes for function bodies
+        const context = create_test_context(true); // Need scopes for function bodies
         const builder = new DefinitionBuilder(context);
 
         const ast = parser.parse(code);
-        const funcNode = findNodeByType(ast.rootNode, "function_definition");
-        const funcName = funcNode?.childForFieldName("name");
+        const func_node = find_node_by_type(ast.rootNode, "function_definition");
+        const func_name = func_node?.childForFieldName("name");
 
-        if (funcName) {
-          const funcCapture: CaptureNode = {
+        if (func_name) {
+          const func_capture: CaptureNode = {
             name: "definition.function",
-            node: funcName as any,
-            text: funcName.text as SymbolName,
+            node: func_name as any,
+            text: func_name.text as SymbolName,
             category: "definition" as SemanticCategory,
             entity: "function" as SemanticEntity,
             location: {
               file_path: "test.py" as any,
-              start_line: funcName.startPosition.row + 1,
-              start_column: funcName.startPosition.column + 1,
-              end_line: funcName.endPosition.row + 1,
-              end_column: funcName.endPosition.column + 1,
+              start_line: func_name.startPosition.row + 1,
+              start_column: func_name.startPosition.column + 1,
+              end_line: func_name.endPosition.row + 1,
+              end_column: func_name.endPosition.column + 1,
             },
           };
           PYTHON_BUILDER_CONFIG.get("definition.function")?.process(
-            funcCapture,
+            func_capture,
             builder,
             context
           );
@@ -670,104 +670,104 @@ describe("Python Builder Configuration", () => {
         const definitions = builder.build();
         expect(definitions.functions.size).toBeGreaterThan(0);
 
-        const funcDef = definitions.functions.values().next().value;
-        expect(funcDef).toBeDefined();
-        expect(funcDef?.name).toBe("greet");
+        const func_def = definitions.functions.values().next().value;
+        expect(func_def).toBeDefined();
+        expect(func_def?.name).toBe("greet");
       });
 
       it("should distinguish between constants and variables by naming convention", () => {
         const code1 = "MAX_SIZE = 100";
         const code2 = "current_size = 10";
 
-        const context = createTestContext();
+        const context = create_test_context();
 
         // Test constant (uppercase)
         const builder1 = new DefinitionBuilder(context);
         const ast1 = parser.parse(code1);
-        const constNode = findNodeByType(ast1.rootNode, "identifier");
-        if (constNode) {
-          const constCapture: CaptureNode = {
+        const const_node = find_node_by_type(ast1.rootNode, "identifier");
+        if (const_node) {
+          const const_capture: CaptureNode = {
             name: "definition.variable",
-            node: constNode as any,
-            text: constNode.text as SymbolName,
+            node: const_node as any,
+            text: const_node.text as SymbolName,
             category: "definition" as SemanticCategory,
             entity: "variable" as SemanticEntity,
             location: {
               file_path: "test.py" as any,
-              start_line: constNode.startPosition.row + 1,
-              start_column: constNode.startPosition.column + 1,
-              end_line: constNode.endPosition.row + 1,
-              end_column: constNode.endPosition.column + 1,
+              start_line: const_node.startPosition.row + 1,
+              start_column: const_node.startPosition.column + 1,
+              end_line: const_node.endPosition.row + 1,
+              end_column: const_node.endPosition.column + 1,
             },
           };
           PYTHON_BUILDER_CONFIG.get("definition.variable")?.process(
-            constCapture,
+            const_capture,
             builder1,
             context
           );
         }
         const defs1 = builder1.build();
-        const constDef = defs1.variables.values().next().value;
-        expect(constDef?.kind).toBe("constant");
+        const const_def = defs1.variables.values().next().value;
+        expect(const_def?.kind).toBe("constant");
 
         // Test variable (lowercase)
         const builder2 = new DefinitionBuilder(context);
         const ast2 = parser.parse(code2);
-        const varNode = findNodeByType(ast2.rootNode, "identifier");
-        if (varNode) {
-          const varCapture: CaptureNode = {
+        const var_node = find_node_by_type(ast2.rootNode, "identifier");
+        if (var_node) {
+          const var_capture: CaptureNode = {
             name: "definition.variable",
-            node: varNode as any,
-            text: varNode.text as SymbolName,
+            node: var_node as any,
+            text: var_node.text as SymbolName,
             category: "definition" as any,
             entity: "variable" as any,
             location: {
               file_path: "test.py" as any,
-              start_line: varNode.startPosition.row + 1,
-              start_column: varNode.startPosition.column + 1,
-              end_line: varNode.endPosition.row + 1,
-              end_column: varNode.endPosition.column + 1,
+              start_line: var_node.startPosition.row + 1,
+              start_column: var_node.startPosition.column + 1,
+              end_line: var_node.endPosition.row + 1,
+              end_column: var_node.endPosition.column + 1,
             },
           };
           PYTHON_BUILDER_CONFIG.get("definition.variable")?.process(
-            varCapture,
+            var_capture,
             builder2,
             context
           );
         }
         const defs2 = builder2.build();
-        const varDef = defs2.variables.values().next().value;
-        expect(varDef?.kind).toBe("variable");
+        const var_def = defs2.variables.values().next().value;
+        expect(var_def?.kind).toBe("variable");
       });
 
       it("should handle complex import patterns", () => {
         const code = "from typing import List, Dict, Optional";
 
-        const context = createTestContext();
+        const context = create_test_context();
         const builder = new DefinitionBuilder(context);
 
         const ast = parser.parse(code);
 
         // Find all imported names
-        const findAllIdentifiers = (node: SyntaxNode): SyntaxNode[] => {
+        const find_all_identifiers = (node: SyntaxNode): SyntaxNode[] => {
           const identifiers: SyntaxNode[] = [];
           if (node.type === "dotted_name") {
             identifiers.push(node);
           }
           for (let i = 0; i < node.childCount; i++) {
-            identifiers.push(...findAllIdentifiers(node.child(i)!));
+            identifiers.push(...find_all_identifiers(node.child(i)!));
           }
           return identifiers;
         };
 
-        const identifiers = findAllIdentifiers(ast.rootNode);
+        const identifiers = find_all_identifiers(ast.rootNode);
         for (const id of identifiers) {
           if (
             id.text === "List" ||
             id.text === "Dict" ||
             id.text === "Optional"
           ) {
-            const importCapture: CaptureNode = {
+            const import_capture: CaptureNode = {
               name: "definition.import",
               node: id as any,
               text: id.text as SymbolName,
@@ -782,7 +782,7 @@ describe("Python Builder Configuration", () => {
               },
             };
             PYTHON_BUILDER_CONFIG.get("definition.import")?.process(
-              importCapture,
+              import_capture,
               builder,
               context
             );
@@ -806,68 +806,68 @@ describe("Python Builder Configuration", () => {
     def public_method(self):
         pass`;
 
-        const context = createTestContext();
+        const context = create_test_context();
         const builder = new DefinitionBuilder(context);
 
         const ast = parser.parse(code);
 
         // Process class first
-        const classNode = findNodeByType(ast.rootNode, "class_definition");
-        const className = classNode?.childForFieldName("name");
-        if (className) {
-          const classCapture: CaptureNode = {
+        const class_node = find_node_by_type(ast.rootNode, "class_definition");
+        const class_name = class_node?.childForFieldName("name");
+        if (class_name) {
+          const class_capture: CaptureNode = {
             name: "definition.class",
-            node: className as any,
-            text: className.text as SymbolName,
+            node: class_name as any,
+            text: class_name.text as SymbolName,
             category: "definition" as SemanticCategory,
             entity: "class" as SemanticEntity,
             location: {
               file_path: "test.py" as any,
-              start_line: className.startPosition.row + 1,
-              start_column: className.startPosition.column + 1,
-              end_line: className.endPosition.row + 1,
-              end_column: className.endPosition.column + 1,
+              start_line: class_name.startPosition.row + 1,
+              start_column: class_name.startPosition.column + 1,
+              end_line: class_name.endPosition.row + 1,
+              end_column: class_name.endPosition.column + 1,
             },
           };
           PYTHON_BUILDER_CONFIG.get("definition.class")?.process(
-            classCapture,
+            class_capture,
             builder,
             context
           );
         }
 
         // Find all function definitions
-        const findAllFunctions = (node: SyntaxNode): SyntaxNode[] => {
+        const find_all_functions = (node: SyntaxNode): SyntaxNode[] => {
           const functions: SyntaxNode[] = [];
           if (node.type === "function_definition") {
             functions.push(node);
           }
           for (let i = 0; i < node.childCount; i++) {
-            functions.push(...findAllFunctions(node.child(i)!));
+            functions.push(...find_all_functions(node.child(i)!));
           }
           return functions;
         };
 
-        const functions = findAllFunctions(ast.rootNode);
+        const functions = find_all_functions(ast.rootNode);
         for (const func of functions) {
-          const funcName = func.childForFieldName("name");
-          if (funcName) {
-            const methodCapture: CaptureNode = {
+          const func_name = func.childForFieldName("name");
+          if (func_name) {
+            const method_capture: CaptureNode = {
               name: "definition.method",
-              node: funcName as any,
-              text: funcName.text as SymbolName,
+              node: func_name as any,
+              text: func_name.text as SymbolName,
               category: "definition" as SemanticCategory,
               entity: "method" as SemanticEntity,
               location: {
                 file_path: "test.py" as any,
-                start_line: funcName.startPosition.row + 1,
-                start_column: funcName.startPosition.column + 1,
-                end_line: funcName.endPosition.row + 1,
-                end_column: funcName.endPosition.column + 1,
+                start_line: func_name.startPosition.row + 1,
+                start_column: func_name.startPosition.column + 1,
+                end_line: func_name.endPosition.row + 1,
+                end_column: func_name.endPosition.column + 1,
               },
             };
             PYTHON_BUILDER_CONFIG.get("definition.method")?.process(
-              methodCapture,
+              method_capture,
               builder,
               context
             );
@@ -875,10 +875,10 @@ describe("Python Builder Configuration", () => {
         }
 
         const definitions = builder.build();
-        const classDef = definitions.classes.values().next().value;
+        const class_def = definitions.classes.values().next().value;
 
         // Verify that both methods exist
-        expect(classDef).toBeDefined();
+        expect(class_def).toBeDefined();
         // The availability is determined by naming convention in the helper
         // _private_method should have file-private scope
         // public_method should have public scope
@@ -887,7 +887,7 @@ describe("Python Builder Configuration", () => {
 
     describe("Export flag verification (is_exported)", () => {
       // Helper to create context with nested scope support
-      function createNestedContext(): ProcessingContext {
+      function create_nested_context(): ProcessingContext {
         const module_scope_id = "module:test.py:1:0:100:0:<module>" as ScopeId;
         const nested_scope_id = "function:test.py:2:0:5:0:outer_func" as ScopeId;
 
@@ -907,9 +907,9 @@ describe("Python Builder Configuration", () => {
         it("should have is_exported=true for module-level public functions", () => {
           const code = `def public_function():
     pass`;
-          const context = createTestContext(true); // Need scopes for function bodies
+          const context = create_test_context(true); // Need scopes for function bodies
           const builder = new DefinitionBuilder(context);
-          const capture = createCapture(code, "definition.function", "identifier");
+          const capture = create_capture(code, "definition.function", "identifier");
 
           PYTHON_BUILDER_CONFIG.get("definition.function")?.process(
             capture,
@@ -928,9 +928,9 @@ describe("Python Builder Configuration", () => {
         it("should have is_exported=false for module-level private functions (single underscore)", () => {
           const code = `def _private_function():
     pass`;
-          const context = createTestContext(true); // Need scopes for function bodies
+          const context = create_test_context(true); // Need scopes for function bodies
           const builder = new DefinitionBuilder(context);
-          const capture = createCapture(code, "definition.function", "identifier");
+          const capture = create_capture(code, "definition.function", "identifier");
 
           PYTHON_BUILDER_CONFIG.get("definition.function")?.process(
             capture,
@@ -949,9 +949,9 @@ describe("Python Builder Configuration", () => {
         it("should have is_exported=false for module-level private functions (double underscore)", () => {
           const code = `def __private_function():
     pass`;
-          const context = createTestContext(true); // Need scopes for function bodies
+          const context = create_test_context(true); // Need scopes for function bodies
           const builder = new DefinitionBuilder(context);
-          const capture = createCapture(code, "definition.function", "identifier");
+          const capture = create_capture(code, "definition.function", "identifier");
 
           PYTHON_BUILDER_CONFIG.get("definition.function")?.process(
             capture,
@@ -970,9 +970,9 @@ describe("Python Builder Configuration", () => {
         it("should have is_exported=true for module-level magic functions (dunder)", () => {
           const code = `def __init__():
     pass`;
-          const context = createTestContext(true); // Need scopes for function bodies
+          const context = create_test_context(true); // Need scopes for function bodies
           const builder = new DefinitionBuilder(context);
-          const capture = createCapture(code, "definition.function", "identifier");
+          const capture = create_capture(code, "definition.function", "identifier");
 
           PYTHON_BUILDER_CONFIG.get("definition.function")?.process(
             capture,
@@ -1021,7 +1021,7 @@ describe("Python Builder Configuration", () => {
           };
 
           const builder = new DefinitionBuilder(context);
-          const capture = createCapture(code, "definition.function", "identifier");
+          const capture = create_capture(code, "definition.function", "identifier");
 
           PYTHON_BUILDER_CONFIG.get("definition.function")?.process(
             capture,
@@ -1040,9 +1040,9 @@ describe("Python Builder Configuration", () => {
         it("should have is_exported=true for module-level async functions", () => {
           const code = `async def async_function():
     pass`;
-          const context = createTestContext(true); // Need scopes for function bodies
+          const context = create_test_context(true); // Need scopes for function bodies
           const builder = new DefinitionBuilder(context);
-          const capture = createCapture(code, "definition.function.async", "identifier");
+          const capture = create_capture(code, "definition.function.async", "identifier");
 
           PYTHON_BUILDER_CONFIG.get("definition.function.async")?.process(
             capture,
@@ -1060,9 +1060,9 @@ describe("Python Builder Configuration", () => {
 
         it("should have is_exported=false for lambda functions", () => {
           const code = "f = lambda x: x * 2";
-          const context = createTestContext(true); // Need scopes for function bodies
+          const context = create_test_context(true); // Need scopes for function bodies
           const builder = new DefinitionBuilder(context);
-          const capture = createCapture(code, "definition.lambda", "lambda");
+          const capture = create_capture(code, "definition.lambda", "lambda");
 
           PYTHON_BUILDER_CONFIG.get("definition.lambda")?.process(
             capture,
@@ -1083,9 +1083,9 @@ describe("Python Builder Configuration", () => {
         it("should have is_exported=true for module-level public classes", () => {
           const code = `class PublicClass:
     pass`;
-          const context = createTestContext();
+          const context = create_test_context();
           const builder = new DefinitionBuilder(context);
-          const capture = createCapture(code, "definition.class", "identifier");
+          const capture = create_capture(code, "definition.class", "identifier");
 
           PYTHON_BUILDER_CONFIG.get("definition.class")?.process(
             capture,
@@ -1104,9 +1104,9 @@ describe("Python Builder Configuration", () => {
         it("should have is_exported=false for module-level private classes (single underscore)", () => {
           const code = `class _PrivateClass:
     pass`;
-          const context = createTestContext();
+          const context = create_test_context();
           const builder = new DefinitionBuilder(context);
-          const capture = createCapture(code, "definition.class", "identifier");
+          const capture = create_capture(code, "definition.class", "identifier");
 
           PYTHON_BUILDER_CONFIG.get("definition.class")?.process(
             capture,
@@ -1125,9 +1125,9 @@ describe("Python Builder Configuration", () => {
         it("should have is_exported=false for module-level private classes (double underscore)", () => {
           const code = `class __PrivateClass:
     pass`;
-          const context = createTestContext();
+          const context = create_test_context();
           const builder = new DefinitionBuilder(context);
-          const capture = createCapture(code, "definition.class", "identifier");
+          const capture = create_capture(code, "definition.class", "identifier");
 
           PYTHON_BUILDER_CONFIG.get("definition.class")?.process(
             capture,
@@ -1160,7 +1160,7 @@ describe("Python Builder Configuration", () => {
           };
 
           const builder = new DefinitionBuilder(context);
-          const capture = createCapture(code, "definition.class", "identifier");
+          const capture = create_capture(code, "definition.class", "identifier");
 
           PYTHON_BUILDER_CONFIG.get("definition.class")?.process(
             capture,
@@ -1180,9 +1180,9 @@ describe("Python Builder Configuration", () => {
       describe("Variables", () => {
         it("should have is_exported=true for module-level public variables", () => {
           const code = "public_var = 10";
-          const context = createTestContext();
+          const context = create_test_context();
           const builder = new DefinitionBuilder(context);
-          const capture = createCapture(code, "definition.variable", "identifier");
+          const capture = create_capture(code, "definition.variable", "identifier");
 
           PYTHON_BUILDER_CONFIG.get("definition.variable")?.process(
             capture,
@@ -1200,9 +1200,9 @@ describe("Python Builder Configuration", () => {
 
         it("should have is_exported=false for module-level private variables", () => {
           const code = "_private_var = 10";
-          const context = createTestContext();
+          const context = create_test_context();
           const builder = new DefinitionBuilder(context);
-          const capture = createCapture(code, "definition.variable", "identifier");
+          const capture = create_capture(code, "definition.variable", "identifier");
 
           PYTHON_BUILDER_CONFIG.get("definition.variable")?.process(
             capture,
@@ -1221,9 +1221,9 @@ describe("Python Builder Configuration", () => {
         it("should have is_exported=false for loop variables", () => {
           const code = `for i in range(10):
     pass`;
-          const context = createTestContext();
+          const context = create_test_context();
           const builder = new DefinitionBuilder(context);
-          const capture = createCapture(code, "definition.loop_var", "identifier");
+          const capture = create_capture(code, "definition.loop_var", "identifier");
 
           PYTHON_BUILDER_CONFIG.get("definition.loop_var")?.process(
             capture,
@@ -1243,9 +1243,9 @@ describe("Python Builder Configuration", () => {
       describe("Imports", () => {
         it("should have is_exported=true for module-level public imports", () => {
           const code = "import os";
-          const context = createTestContext();
+          const context = create_test_context();
           const builder = new DefinitionBuilder(context);
-          const capture = createCapture(code, "import.module", "dotted_name");
+          const capture = create_capture(code, "import.module", "dotted_name");
 
           PYTHON_BUILDER_CONFIG.get("import.module")?.process(
             capture,
@@ -1254,31 +1254,31 @@ describe("Python Builder Configuration", () => {
           );
 
           const definitions = builder.build();
-          const importDef = definitions.imports.values().next().value;
+          const import_def = definitions.imports.values().next().value;
 
-          expect(importDef).toBeDefined();
-          expect(importDef?.name).toBe("os");
+          expect(import_def).toBeDefined();
+          expect(import_def?.name).toBe("os");
         });
 
         it("should have is_exported=false for module-level private imports", () => {
           const code = "from internal import _private_module";
-          const context = createTestContext();
+          const context = create_test_context();
           const builder = new DefinitionBuilder(context);
 
           // Create capture for the imported name
           const ast = parser.parse(code);
           const identifiers: SyntaxNode[] = [];
 
-          const findIdentifiers = (node: SyntaxNode) => {
+          const find_identifiers = (node: SyntaxNode) => {
             if (node.type === "dotted_name" && node.text === "_private_module") {
               identifiers.push(node);
             }
             for (let i = 0; i < node.childCount; i++) {
-              findIdentifiers(node.child(i)!);
+              find_identifiers(node.child(i)!);
             }
           };
 
-          findIdentifiers(ast.rootNode);
+          find_identifiers(ast.rootNode);
 
           if (identifiers[0]) {
             const capture: CaptureNode = {
@@ -1303,10 +1303,10 @@ describe("Python Builder Configuration", () => {
             );
 
             const definitions = builder.build();
-            const importDef = definitions.imports.values().next().value;
+            const import_def = definitions.imports.values().next().value;
 
-            expect(importDef).toBeDefined();
-            expect(importDef?.name).toBe("_private_module");
+            expect(import_def).toBeDefined();
+            expect(import_def?.name).toBe("_private_module");
           }
         });
       });
@@ -1314,12 +1314,12 @@ describe("Python Builder Configuration", () => {
 
     describe("Protocol Support", () => {
       it("should contain protocol definition capture mappings", () => {
-        const protocolMappings = [
+        const protocol_mappings = [
           "definition.interface",
           "definition.property.interface",
         ];
 
-        for (const mapping of protocolMappings) {
+        for (const mapping of protocol_mappings) {
           expect(PYTHON_BUILDER_CONFIG.has(mapping)).toBe(true);
           const config = PYTHON_BUILDER_CONFIG.get(mapping);
           expect(config).toBeDefined();
@@ -1334,10 +1334,10 @@ class Drawable(Protocol):
     pass`;
         // Find the class_definition node first, then get its name
         const ast = parser.parse(code);
-        const classNode = findNodeByType(ast.rootNode, "class_definition");
-        const className = classNode?.childForFieldName("name");
+        const class_node = find_node_by_type(ast.rootNode, "class_definition");
+        const class_name = class_node?.childForFieldName("name");
 
-        if (!className) {
+        if (!class_name) {
           throw new Error("Could not find class name node");
         }
 
@@ -1345,25 +1345,25 @@ class Drawable(Protocol):
           name: "definition.interface",
           category: "definition" as SemanticCategory,
           entity: "interface" as SemanticEntity,
-          node: className as any,
-          text: className.text as SymbolName,
-          location: node_to_location(className, "test.py" as any),
+          node: class_name as any,
+          text: class_name.text as SymbolName,
+          location: node_to_location(class_name, "test.py" as any),
         };
 
-        const builder = new DefinitionBuilder(createTestContext());
+        const builder = new DefinitionBuilder(create_test_context());
         const config = PYTHON_BUILDER_CONFIG.get("definition.interface");
 
         expect(() => {
-          config?.process(capture, builder, createTestContext());
+          config?.process(capture, builder, create_test_context());
         }).not.toThrow();
 
         const definitions = builder.build();
         expect(definitions.interfaces.size).toBeGreaterThan(0);
 
-        const protocolDef = definitions.interfaces.values().next().value;
-        expect(protocolDef).toBeDefined();
-        expect(protocolDef?.name).toBe("Drawable");
-        expect(protocolDef?.kind).toBe("interface");
+        const protocol_def = definitions.interfaces.values().next().value;
+        expect(protocol_def).toBeDefined();
+        expect(protocol_def?.name).toBe("Drawable");
+        expect(protocol_def?.kind).toBe("interface");
       });
 
       it("should have is_exported=true for module-level public Protocol classes", () => {
@@ -1371,15 +1371,15 @@ class Drawable(Protocol):
 
 class PublicProtocol(Protocol):
     pass`;
-        const context = createTestContext();
+        const context = create_test_context();
         const builder = new DefinitionBuilder(context);
 
         // Find the class_definition node first, then get its name
         const ast = parser.parse(code);
-        const classNode = findNodeByType(ast.rootNode, "class_definition");
-        const className = classNode?.childForFieldName("name");
+        const class_node = find_node_by_type(ast.rootNode, "class_definition");
+        const class_name = class_node?.childForFieldName("name");
 
-        if (!className) {
+        if (!class_name) {
           throw new Error("Could not find class name node");
         }
 
@@ -1387,9 +1387,9 @@ class PublicProtocol(Protocol):
           name: "definition.interface",
           category: "definition" as SemanticCategory,
           entity: "interface" as SemanticEntity,
-          node: className as any,
-          text: className.text as SymbolName,
-          location: node_to_location(className, "test.py" as any),
+          node: class_name as any,
+          text: class_name.text as SymbolName,
+          location: node_to_location(class_name, "test.py" as any),
         };
 
         PYTHON_BUILDER_CONFIG.get("definition.interface")?.process(
@@ -1399,11 +1399,11 @@ class PublicProtocol(Protocol):
         );
 
         const definitions = builder.build();
-        const protocolDef = definitions.interfaces.values().next().value;
+        const protocol_def = definitions.interfaces.values().next().value;
 
-        expect(protocolDef).toBeDefined();
-        expect(protocolDef?.name).toBe("PublicProtocol");
-        expect(protocolDef?.is_exported).toBe(true);
+        expect(protocol_def).toBeDefined();
+        expect(protocol_def?.name).toBe("PublicProtocol");
+        expect(protocol_def?.is_exported).toBe(true);
       });
 
       it("should have is_exported=false for module-level private Protocol classes", () => {
@@ -1411,15 +1411,15 @@ class PublicProtocol(Protocol):
 
 class _PrivateProtocol(Protocol):
     pass`;
-        const context = createTestContext();
+        const context = create_test_context();
         const builder = new DefinitionBuilder(context);
 
         // Find the class_definition node first, then get its name
         const ast = parser.parse(code);
-        const classNode = findNodeByType(ast.rootNode, "class_definition");
-        const className = classNode?.childForFieldName("name");
+        const class_node = find_node_by_type(ast.rootNode, "class_definition");
+        const class_name = class_node?.childForFieldName("name");
 
-        if (!className) {
+        if (!class_name) {
           throw new Error("Could not find class name node");
         }
 
@@ -1427,9 +1427,9 @@ class _PrivateProtocol(Protocol):
           name: "definition.interface",
           category: "definition" as SemanticCategory,
           entity: "interface" as SemanticEntity,
-          node: className as any,
-          text: className.text as SymbolName,
-          location: node_to_location(className, "test.py" as any),
+          node: class_name as any,
+          text: class_name.text as SymbolName,
+          location: node_to_location(class_name, "test.py" as any),
         };
 
         PYTHON_BUILDER_CONFIG.get("definition.interface")?.process(
@@ -1439,11 +1439,11 @@ class _PrivateProtocol(Protocol):
         );
 
         const definitions = builder.build();
-        const protocolDef = definitions.interfaces.values().next().value;
+        const protocol_def = definitions.interfaces.values().next().value;
 
-        expect(protocolDef).toBeDefined();
-        expect(protocolDef?.name).toBe("_PrivateProtocol");
-        expect(protocolDef?.is_exported).toBe(false);
+        expect(protocol_def).toBeDefined();
+        expect(protocol_def?.name).toBe("_PrivateProtocol");
+        expect(protocol_def?.is_exported).toBe(false);
       });
 
       it("should handle Protocol property signatures", () => {
@@ -1453,32 +1453,32 @@ class Drawable(Protocol):
     x: int
     y: int`;
 
-        const context = createTestContext();
+        const context = create_test_context();
         const builder = new DefinitionBuilder(context);
 
         // First process the Protocol class
         const ast = parser.parse(code);
-        const classNode = findNodeByType(ast.rootNode, "class_definition");
-        const className = classNode?.childForFieldName("name");
+        const class_node = find_node_by_type(ast.rootNode, "class_definition");
+        const class_name = class_node?.childForFieldName("name");
 
-        if (className) {
-          const classCapture: CaptureNode = {
+        if (class_name) {
+          const class_capture: CaptureNode = {
             name: "definition.interface",
-            node: className as any,
-            text: className.text as SymbolName,
+            node: class_name as any,
+            text: class_name.text as SymbolName,
             category: "definition" as SemanticCategory,
             entity: "interface" as SemanticEntity,
-            location: node_to_location(className, "test.py" as any),
+            location: node_to_location(class_name, "test.py" as any),
           };
           PYTHON_BUILDER_CONFIG.get("definition.interface")?.process(
-            classCapture,
+            class_capture,
             builder,
             context
           );
         }
 
         // Find and process property signatures
-        const findAllIdentifiers = (node: SyntaxNode): SyntaxNode[] => {
+        const find_all_identifiers = (node: SyntaxNode): SyntaxNode[] => {
           const identifiers: SyntaxNode[] = [];
           if (node.type === "identifier" && node.parent?.type === "assignment") {
             const assignment = node.parent;
@@ -1488,24 +1488,24 @@ class Drawable(Protocol):
             }
           }
           for (let i = 0; i < node.childCount; i++) {
-            identifiers.push(...findAllIdentifiers(node.child(i)!));
+            identifiers.push(...find_all_identifiers(node.child(i)!));
           }
           return identifiers;
         };
 
-        const propertyNodes = findAllIdentifiers(ast.rootNode);
-        for (const propNode of propertyNodes) {
-          if (propNode.text === "x" || propNode.text === "y") {
-            const propCapture: CaptureNode = {
+        const property_nodes = find_all_identifiers(ast.rootNode);
+        for (const prop_node of property_nodes) {
+          if (prop_node.text === "x" || prop_node.text === "y") {
+            const prop_capture: CaptureNode = {
               name: "definition.property.interface",
-              node: propNode as any,
-              text: propNode.text as SymbolName,
+              node: prop_node as any,
+              text: prop_node.text as SymbolName,
               category: "definition" as SemanticCategory,
               entity: "property" as SemanticEntity,
-              location: node_to_location(propNode, "test.py" as any),
+              location: node_to_location(prop_node, "test.py" as any),
             };
             PYTHON_BUILDER_CONFIG.get("definition.property.interface")?.process(
-              propCapture,
+              prop_capture,
               builder,
               context
             );
@@ -1513,27 +1513,27 @@ class Drawable(Protocol):
         }
 
         const definitions = builder.build();
-        const protocolDef = definitions.interfaces.values().next().value;
+        const protocol_def = definitions.interfaces.values().next().value;
 
-        expect(protocolDef).toBeDefined();
-        expect(protocolDef?.name).toBe("Drawable");
-        expect(protocolDef?.properties).toBeDefined();
-        expect(Array.isArray(protocolDef?.properties)).toBe(true);
+        expect(protocol_def).toBeDefined();
+        expect(protocol_def?.name).toBe("Drawable");
+        expect(protocol_def?.properties).toBeDefined();
+        expect(Array.isArray(protocol_def?.properties)).toBe(true);
 
         // Verify property names
-        const propertyNames = protocolDef?.properties.map((p) => p.name) || [];
-        expect(propertyNames).toContain("x");
-        expect(propertyNames).toContain("y");
+        const property_names = protocol_def?.properties.map((p) => p.name) || [];
+        expect(property_names).toContain("x");
+        expect(property_names).toContain("y");
 
         // Verify property types
-        const xProp = protocolDef?.properties.find((p) => p.name === "x");
-        if (xProp) {
-          expect(xProp.type).toBe("int");
+        const x_prop = protocol_def?.properties.find((p) => p.name === "x");
+        if (x_prop) {
+          expect(x_prop.type).toBe("int");
         }
 
-        const yProp = protocolDef?.properties.find((p) => p.name === "y");
-        if (yProp) {
-          expect(yProp.type).toBe("int");
+        const y_prop = protocol_def?.properties.find((p) => p.name === "y");
+        if (y_prop) {
+          expect(y_prop.type).toBe("int");
         }
       });
     });
@@ -1544,7 +1544,7 @@ class Drawable(Protocol):
   });
 
   describe("Property Type Extraction", () => {
-    async function buildIndexFromCode(code: string) {
+    async function build_index_from_code(code: string) {
       const tree = parser.parse(code);
       const lines = code.split("\n");
       const parsed_file = {
@@ -1564,7 +1564,7 @@ class Service:
     cache: dict[str, int] = {}
 `;
 
-      const index = await buildIndexFromCode(code);
+      const index = await build_index_from_code(code);
       const service_class = Array.from(index.classes.values())[0];
 
       expect(service_class).toBeDefined();
@@ -1589,7 +1589,7 @@ class Container:
     mapping: Dict[str, int]
 `;
 
-      const index = await buildIndexFromCode(code);
+      const index = await build_index_from_code(code);
       const container_class = Array.from(index.classes.values())[0];
 
       expect(container_class.properties.length).toBe(2);
@@ -1610,7 +1610,7 @@ class Config:
     data: Union[int, str, None]
 `;
 
-      const index = await buildIndexFromCode(code);
+      const index = await build_index_from_code(code);
       const config_class = Array.from(index.classes.values())[0];
 
       expect(config_class.properties.length).toBe(2);
@@ -1630,7 +1630,7 @@ class Modern:
     mixed: int | str | float
 `;
 
-      const index = await buildIndexFromCode(code);
+      const index = await build_index_from_code(code);
       const modern_class = Array.from(index.classes.values())[0];
 
       expect(modern_class.properties.length).toBe(3);
@@ -1652,7 +1652,7 @@ class NoTypes:
     another = "hello"
 `;
 
-      const index = await buildIndexFromCode(code);
+      const index = await build_index_from_code(code);
       const no_types_class = Array.from(index.classes.values())[0];
 
       expect(no_types_class.properties.length).toBe(2);
@@ -1674,7 +1674,7 @@ class Complex:
     nested: Dict[str, List[Optional[Item]]]
 `;
 
-      const index = await buildIndexFromCode(code);
+      const index = await build_index_from_code(code);
       const complex_class = Array.from(index.classes.values())[0];
 
       expect(complex_class.properties.length).toBe(1);
@@ -1695,7 +1695,7 @@ class Point:
     label: str = "origin"
 `;
 
-      const index = await buildIndexFromCode(code);
+      const index = await build_index_from_code(code);
       const point_class = Array.from(index.classes.values())[0];
 
       expect(point_class.properties.length).toBe(3);

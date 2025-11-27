@@ -6,7 +6,7 @@ function identity<T>(value: T): T {
 }
 
 // Generic function with constraint
-function getProperty<T, K extends keyof T>(obj: T, key: K): T[K] {
+function get_property<T, K extends keyof T>(obj: T, key: K): T[K] {
   return obj[key];
 }
 
@@ -18,11 +18,11 @@ class Box<T> {
     this.value = value;
   }
 
-  getValue(): T {
+  get_value(): T {
     return this.value;
   }
 
-  setValue(value: T): void {
+  set_value(value: T): void {
     this.value = value;
   }
 }
@@ -41,7 +41,7 @@ interface Lengthwise {
   length: number;
 }
 
-function loggingIdentity<T extends Lengthwise>(arg: T): T {
+function logging_identity<T extends Lengthwise>(arg: T): T {
   console.log(arg.length);
   return arg;
 }

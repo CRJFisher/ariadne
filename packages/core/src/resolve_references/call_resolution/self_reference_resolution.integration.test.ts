@@ -21,23 +21,23 @@ import * as os from "os";
 
 describe("Self-Reference Resolution Integration", () => {
   let project: Project;
-  let tempDir: string;
+  let temp_dir: string;
 
   beforeAll(() => {
     // Create a unique temporary directory for this test suite
-    tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "ariadne-test-"));
+    temp_dir = fs.mkdtempSync(path.join(os.tmpdir(), "ariadne-test-"));
   });
 
   afterAll(() => {
     // Clean up temporary directory
-    if (fs.existsSync(tempDir)) {
-      fs.rmSync(tempDir, { recursive: true, force: true });
+    if (fs.existsSync(temp_dir)) {
+      fs.rmSync(temp_dir, { recursive: true, force: true });
     }
   });
 
   beforeEach(async () => {
     project = new Project();
-    await project.initialize(tempDir as FilePath);
+    await project.initialize(temp_dir as FilePath);
   });
 
   describe("TypeScript - this.method()", () => {
@@ -60,7 +60,7 @@ describe("Self-Reference Resolution Integration", () => {
         }
       `;
 
-      const file = path.join(tempDir, "user.ts") as FilePath;
+      const file = path.join(temp_dir, "user.ts") as FilePath;
       project.update_file(file, code);
 
       const index = project.get_semantic_index(file);
@@ -109,7 +109,7 @@ describe("Self-Reference Resolution Integration", () => {
         }
       `;
 
-      const file = path.join(tempDir, "counter.ts") as FilePath;
+      const file = path.join(temp_dir, "counter.ts") as FilePath;
       project.update_file(file, code);
 
       const index = project.get_semantic_index(file);
@@ -148,7 +148,7 @@ describe("Self-Reference Resolution Integration", () => {
         }
       `;
 
-      const file = path.join(tempDir, "service.ts") as FilePath;
+      const file = path.join(temp_dir, "service.ts") as FilePath;
       project.update_file(file, code);
 
       const index = project.get_semantic_index(file);
@@ -201,7 +201,7 @@ describe("Self-Reference Resolution Integration", () => {
         }
       `;
 
-      const file = path.join(tempDir, "event_handler.ts") as FilePath;
+      const file = path.join(temp_dir, "event_handler.ts") as FilePath;
       project.update_file(file, code);
 
       const index = project.get_semantic_index(file);
@@ -236,7 +236,7 @@ describe("Self-Reference Resolution Integration", () => {
         }
       `;
 
-      const file = path.join(tempDir, "dog.ts") as FilePath;
+      const file = path.join(temp_dir, "dog.ts") as FilePath;
       project.update_file(file, code);
 
       const index = project.get_semantic_index(file);
@@ -282,7 +282,7 @@ describe("Self-Reference Resolution Integration", () => {
         }
       `;
 
-      const file = path.join(tempDir, "car.ts") as FilePath;
+      const file = path.join(temp_dir, "car.ts") as FilePath;
       project.update_file(file, code);
 
       const index = project.get_semantic_index(file);
@@ -322,7 +322,7 @@ describe("Self-Reference Resolution Integration", () => {
         }
       `;
 
-      const file = path.join(tempDir, "inheritance.ts") as FilePath;
+      const file = path.join(temp_dir, "inheritance.ts") as FilePath;
       project.update_file(file, code);
 
       const index = project.get_semantic_index(file);
@@ -369,7 +369,7 @@ describe("Self-Reference Resolution Integration", () => {
         }
       `;
 
-      const file = path.join(tempDir, "config.ts") as FilePath;
+      const file = path.join(temp_dir, "config.ts") as FilePath;
       project.update_file(file, code);
 
       const index = project.get_semantic_index(file);
@@ -401,7 +401,7 @@ class User:
         return self.name
       `;
 
-      const file = path.join(tempDir, "user.py") as FilePath;
+      const file = path.join(temp_dir, "user.py") as FilePath;
       project.update_file(file, code);
 
       const index = project.get_semantic_index(file);
@@ -441,7 +441,7 @@ class Counter:
         self.count += 1
       `;
 
-      const file = path.join(tempDir, "counter.py") as FilePath;
+      const file = path.join(temp_dir, "counter.py") as FilePath;
       project.update_file(file, code);
 
       const index = project.get_semantic_index(file);
@@ -471,7 +471,7 @@ class Factory:
         return Factory()
       `;
 
-      const file = path.join(tempDir, "factory.py") as FilePath;
+      const file = path.join(temp_dir, "factory.py") as FilePath;
       project.update_file(file, code);
 
       const index = project.get_semantic_index(file);
@@ -509,7 +509,7 @@ class Dog(Animal):
         return super().make_sound() + " woof"
       `;
 
-      const file = path.join(tempDir, "dog.py") as FilePath;
+      const file = path.join(temp_dir, "dog.py") as FilePath;
       project.update_file(file, code);
 
       const index = project.get_semantic_index(file);
@@ -547,7 +547,7 @@ class Service:
         return self.db.query("SELECT * FROM users")
       `;
 
-      const file = path.join(tempDir, "service.py") as FilePath;
+      const file = path.join(temp_dir, "service.py") as FilePath;
       project.update_file(file, code);
 
       const index = project.get_semantic_index(file);
@@ -590,7 +590,7 @@ class Service:
         }
       `;
 
-      const file = path.join(tempDir, "user.js") as FilePath;
+      const file = path.join(temp_dir, "user.js") as FilePath;
       project.update_file(file, code);
 
       const index = project.get_semantic_index(file);
@@ -629,7 +629,7 @@ class Service:
         };
       `;
 
-      const file = path.join(tempDir, "counter.js") as FilePath;
+      const file = path.join(temp_dir, "counter.js") as FilePath;
       project.update_file(file, code);
 
       const index = project.get_semantic_index(file);
@@ -668,7 +668,7 @@ class Service:
         }
       `;
 
-      const file = path.join(tempDir, "counter.rs") as FilePath;
+      const file = path.join(temp_dir, "counter.rs") as FilePath;
       project.update_file(file, code);
 
       const index = project.get_semantic_index(file);
@@ -709,7 +709,7 @@ class Service:
         }
       `;
 
-      const file = path.join(tempDir, "data.rs") as FilePath;
+      const file = path.join(temp_dir, "data.rs") as FilePath;
       project.update_file(file, code);
 
       const index = project.get_semantic_index(file);

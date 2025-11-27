@@ -43,14 +43,14 @@ export const TYPESCRIPT_METADATA_EXTRACTORS: MetadataExtractors = {
     // Note: type_arguments are not currently stored in TypeInfo - they would be
     // part of the type_id encoding if needed
     if (node.type === "generic_type") {
-      const nameNode = node.childForFieldName("name");
+      const name_node = node.childForFieldName("name");
 
-      if (nameNode) {
+      if (name_node) {
         const location: Location = node_to_location(node, file_path);
 
         return {
-          type_id: type_symbol(nameNode.text as SymbolName, location),
-          type_name: nameNode.text as SymbolName,
+          type_id: type_symbol(name_node.text as SymbolName, location),
+          type_name: name_node.text as SymbolName,
           certainty: "declared",
           is_nullable: false,
         };

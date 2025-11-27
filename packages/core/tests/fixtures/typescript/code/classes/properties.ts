@@ -16,15 +16,15 @@ class Person {
     this.id = Date.now();
   }
 
-  public getAge(): number {
+  public get_age(): number {
     return this.age;
   }
 
-  private incrementAge(): void {
+  private increment_age(): void {
     this.age++;
   }
 
-  protected getAddress(): string {
+  protected get_address(): string {
     return this.address;
   }
 }

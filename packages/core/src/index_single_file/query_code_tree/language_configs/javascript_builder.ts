@@ -163,11 +163,11 @@ export function find_containing_class(capture: CaptureNode): SymbolId | undefine
   while (node) {
     if (node.type === "class_declaration" || node.type === "class") {
       // Get the name field node - this should match what the query captured
-      const nameNode = node.childForFieldName("name");
-      if (nameNode) {
-        const className = nameNode.text as SymbolName;
-        const location = node_to_location(nameNode, capture.location.file_path);
-        return class_symbol(className, location);
+      const name_node = node.childForFieldName("name");
+      if (name_node) {
+        const class_name = name_node.text as SymbolName;
+        const location = node_to_location(name_node, capture.location.file_path);
+        return class_symbol(class_name, location);
       }
     }
     if (node.parent) {
@@ -194,18 +194,18 @@ export function find_containing_callable(capture: CaptureNode): SymbolId {
       node.type === "arrow_function" ||
       node.type === "method_definition"
     ) {
-      const nameNode = node.childForFieldName("name");
+      const name_node = node.childForFieldName("name");
 
       if (node.type === "method_definition") {
-        const methodName = nameNode ? nameNode.text : "anonymous";
-        const location = nameNode
-          ? node_to_location(nameNode, capture.location.file_path)
+        const method_name = name_node ? name_node.text : "anonymous";
+        const location = name_node
+          ? node_to_location(name_node, capture.location.file_path)
           : node_to_location(node, capture.location.file_path);
-        return method_symbol(methodName as SymbolName, location);
-      } else if (nameNode) {
+        return method_symbol(method_name as SymbolName, location);
+      } else if (name_node) {
         // Named function
-        const location = node_to_location(nameNode, capture.location.file_path);
-        return function_symbol(nameNode.text as SymbolName, location);
+        const location = node_to_location(name_node, capture.location.file_path);
+        return function_symbol(name_node.text as SymbolName, location);
       } else {
         // Anonymous function/arrow function - use the location as ID
         const location = node_to_location(node, capture.location.file_path);
@@ -226,9 +226,9 @@ export function find_containing_callable(capture: CaptureNode): SymbolId {
  * Extract return type from function/method node
  */
 export function extract_return_type(node: SyntaxNode): SymbolName | undefined {
-  const returnType = node.childForFieldName("return_type");
-  if (returnType) {
-    return returnType.text as SymbolName;
+  const return_type = node.childForFieldName("return_type");
+  if (return_type) {
+    return return_type.text as SymbolName;
   }
   return undefined;
 }
@@ -237,9 +237,9 @@ export function extract_return_type(node: SyntaxNode): SymbolName | undefined {
  * Extract parameter type
  */
 export function extract_parameter_type(node: SyntaxNode): SymbolName | undefined {
-  const typeNode = node.childForFieldName("type");
-  if (typeNode) {
-    return typeNode.text as SymbolName;
+  const type_node = node.childForFieldName("type");
+  if (type_node) {
+    return type_node.text as SymbolName;
   }
   return undefined;
 }
@@ -313,9 +313,9 @@ export function extract_property_type(node: SyntaxNode): SymbolName | undefined 
  * Extract type annotation
  */
 export function extract_type_annotation(node: SyntaxNode): SymbolName | undefined {
-  const typeAnnotation = node.childForFieldName("type");
-  if (typeAnnotation) {
-    return typeAnnotation.text as SymbolName;
+  const type_annotation = node.childForFieldName("type");
+  if (type_annotation) {
+    return type_annotation.text as SymbolName;
   }
   return undefined;
 }
@@ -325,15 +325,15 @@ export function extract_type_annotation(node: SyntaxNode): SymbolName | undefine
  */
 export function extract_initial_value(node: SyntaxNode): string | undefined {
   // If node is an identifier, check parent for value/init field
-  let targetNode = node;
+  let target_node = node;
   if (node.type === "identifier" || node.type === "property_identifier" || node.type === "private_property_identifier") {
-    targetNode = node.parent || node;
+    target_node = node.parent || node;
   }
 
-  const valueNode =
-    targetNode.childForFieldName("value") || targetNode.childForFieldName("init");
-  if (valueNode) {
-    return valueNode.text;
+  const value_node =
+    target_node.childForFieldName("value") || target_node.childForFieldName("init");
+  if (value_node) {
+    return value_node.text;
   }
   return undefined;
 }
@@ -345,9 +345,9 @@ export function extract_initial_value(node: SyntaxNode): string | undefined {
 export function extract_default_value(node: SyntaxNode): string | undefined {
   // Check if parent is assignment_pattern (e.g., param = defaultValue)
   if (node.parent?.type === "assignment_pattern") {
-    const rightSide = node.parent.childForFieldName("right");
-    if (rightSide) {
-      return rightSide.text;
+    const right_side = node.parent.childForFieldName("right");
+    if (right_side) {
+      return right_side.text;
     }
   }
   // Fallback to checking node itself
@@ -396,26 +396,26 @@ export function extract_original_name(
   }
 
   // Find import_clause as a child (not a field in JavaScript grammar)
-  let importClause: SyntaxNode | null = null;
+  let import_clause: SyntaxNode | null = null;
   for (const child of node.children || []) {
     if (child.type === "import_clause") {
-      importClause = child;
+      import_clause = child;
       break;
     }
   }
 
-  if (importClause) {
+  if (import_clause) {
     // Find named_imports as a child (not a field)
-    let namedImports: SyntaxNode | null = null;
-    for (const child of importClause.children || []) {
+    let named_imports: SyntaxNode | null = null;
+    for (const child of import_clause.children || []) {
       if (child.type === "named_imports") {
-        namedImports = child;
+        named_imports = child;
         break;
       }
     }
 
-    if (namedImports) {
-      for (const child of namedImports.children || []) {
+    if (named_imports) {
+      for (const child of named_imports.children || []) {
         if (child.type === "import_specifier") {
           const alias = child.childForFieldName("alias"); // alias IS a field
           if (alias?.text === local_name) {
@@ -436,18 +436,18 @@ export function extract_original_name(
  */
 export function is_default_import(node: SyntaxNode, name: SymbolName): boolean {
   // Find import_clause as a child (not a field in JavaScript grammar)
-  let importClause: SyntaxNode | null = null;
+  let import_clause: SyntaxNode | null = null;
   for (const child of node.children || []) {
     if (child.type === "import_clause") {
-      importClause = child;
+      import_clause = child;
       break;
     }
   }
 
-  if (importClause) {
+  if (import_clause) {
     // Check if import_clause has a direct identifier child (the default import)
     // This identifier is NOT inside named_imports or namespace_import
-    for (const child of importClause.children || []) {
+    for (const child of import_clause.children || []) {
       if (child.type === "identifier" && child.text === name) {
         return true;
       }
@@ -461,11 +461,11 @@ export function is_default_import(node: SyntaxNode, name: SymbolName): boolean {
  */
 export function is_namespace_import(node: SyntaxNode): boolean {
   // Find import_clause child (may not have a field name)
-  const importClause = node.children.find(c => c.type === "import_clause");
-  if (importClause) {
+  const import_clause = node.children.find(c => c.type === "import_clause");
+  if (import_clause) {
     // Check if it contains a namespace_import child
-    const namespaceImport = importClause.children.find(c => c.type === "namespace_import");
-    return namespaceImport !== undefined;
+    const namespace_import = import_clause.children.find(c => c.type === "namespace_import");
+    return namespace_import !== undefined;
   }
   return false;
 }
@@ -506,40 +506,40 @@ const pending_documentation = new Map<number, string>();
  */
 export function extract_derived_from(node: SyntaxNode): SymbolName | undefined {
   // Get initial value node (init or value)
-  let targetNode = node;
+  let target_node = node;
   if (node.type === "identifier" || node.type === "property_identifier") {
-    targetNode = node.parent || node;
+    target_node = node.parent || node;
   }
 
-  const valueNode =
-    targetNode.childForFieldName("value") || targetNode.childForFieldName("init");
+  const value_node =
+    target_node.childForFieldName("value") || target_node.childForFieldName("init");
 
-  if (!valueNode) {
+  if (!value_node) {
     return undefined;
   }
 
-  if (!valueNode) {
+  if (!value_node) {
     return undefined;
   }
 
 
 
   // Case 1: Method call (config.get(...))
-  if (valueNode.type === "call_expression") {
-    const functionNode = valueNode.childForFieldName("function");
-    if (functionNode?.type === "member_expression") {
-      const objectNode = functionNode.childForFieldName("object");
-      if (objectNode?.type === "identifier") {
-        return objectNode.text as SymbolName;
+  if (value_node.type === "call_expression") {
+    const function_node = value_node.childForFieldName("function");
+    if (function_node?.type === "member_expression") {
+      const object_node = function_node.childForFieldName("object");
+      if (object_node?.type === "identifier") {
+        return object_node.text as SymbolName;
       }
     }
   }
 
   // Case 2: Member access (config[...])
-  if (valueNode.type === "member_expression" || valueNode.type === "subscript_expression") {
-    const objectNode = valueNode.childForFieldName("object");
-    if (objectNode?.type === "identifier") {
-      return objectNode.text as SymbolName;
+  if (value_node.type === "member_expression" || value_node.type === "subscript_expression") {
+    const object_node = value_node.childForFieldName("object");
+    if (object_node?.type === "identifier") {
+      return object_node.text as SymbolName;
     }
   }
 

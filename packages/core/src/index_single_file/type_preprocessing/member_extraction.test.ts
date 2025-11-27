@@ -21,15 +21,15 @@ import { extract_type_members } from "./member_extraction";
 // Test Helpers
 // ============================================================================
 
-function createParsedFile(
+function create_parsed_file(
   code: string,
-  filePath: FilePath,
+  file_path: FilePath,
   tree: Parser.Tree,
   language: Language
 ): ParsedFile {
   const lines = code.split("\n");
   return {
-    file_path: filePath,
+    file_path: file_path,
     file_lines: lines.length,
     file_end_column: lines[lines.length - 1]?.length || 0,
     tree,
@@ -58,13 +58,13 @@ describe("Member Extraction - JavaScript", () => {
     `;
 
     const tree = parser.parse(code);
-    const parsedFile = createParsedFile(
+    const parsed_file = create_parsed_file(
       code,
       "test.js" as FilePath,
       tree,
       "javascript"
     );
-    const index = build_semantic_index(parsedFile, tree, "javascript");
+    const index = build_semantic_index(parsed_file, tree, "javascript");
     const members = extract_type_members({
       classes: index.classes,
       interfaces: index.interfaces,
@@ -74,9 +74,9 @@ describe("Member Extraction - JavaScript", () => {
     expect(members.size).toBeGreaterThan(0);
 
     // Find the User class member info
-    const userMembers = Array.from(members.values())[0];
-    expect(userMembers.methods.has("getName")).toBe(true);
-    expect(userMembers.methods.has("getEmail")).toBe(true);
+    const user_members = Array.from(members.values())[0];
+    expect(user_members.methods.has("getName")).toBe(true);
+    expect(user_members.methods.has("getEmail")).toBe(true);
   });
 
   it("should extract class properties", () => {
@@ -90,13 +90,13 @@ describe("Member Extraction - JavaScript", () => {
     `;
 
     const tree = parser.parse(code);
-    const parsedFile = createParsedFile(
+    const parsed_file = create_parsed_file(
       code,
       "test.js" as FilePath,
       tree,
       "javascript"
     );
-    const index = build_semantic_index(parsedFile, tree, "javascript");
+    const index = build_semantic_index(parsed_file, tree, "javascript");
     const members = extract_type_members({
       classes: index.classes,
       interfaces: index.interfaces,
@@ -105,8 +105,8 @@ describe("Member Extraction - JavaScript", () => {
 
     expect(members.size).toBeGreaterThan(0);
 
-    const userMembers = Array.from(members.values())[0];
-    expect(userMembers.constructor).toBeDefined();
+    const user_members = Array.from(members.values())[0];
+    expect(user_members.constructor).toBeDefined();
   });
 
   it("should extract multiple classes", () => {
@@ -120,13 +120,13 @@ describe("Member Extraction - JavaScript", () => {
     `;
 
     const tree = parser.parse(code);
-    const parsedFile = createParsedFile(
+    const parsed_file = create_parsed_file(
       code,
       "test.js" as FilePath,
       tree,
       "javascript"
     );
-    const index = build_semantic_index(parsedFile, tree, "javascript");
+    const index = build_semantic_index(parsed_file, tree, "javascript");
     const members = extract_type_members({
       classes: index.classes,
       interfaces: index.interfaces,
@@ -135,11 +135,11 @@ describe("Member Extraction - JavaScript", () => {
 
     expect(members.size).toBe(2);
 
-    const allMethods = Array.from(members.values()).flatMap((m) =>
+    const all_methods = Array.from(members.values()).flatMap((m) =>
       Array.from(m.methods.keys())
     );
-    expect(allMethods).toContain("bark");
-    expect(allMethods).toContain("meow");
+    expect(all_methods).toContain("bark");
+    expect(all_methods).toContain("meow");
   });
 
   it("should track class inheritance", () => {
@@ -153,13 +153,13 @@ describe("Member Extraction - JavaScript", () => {
     `;
 
     const tree = parser.parse(code);
-    const parsedFile = createParsedFile(
+    const parsed_file = create_parsed_file(
       code,
       "test.js" as FilePath,
       tree,
       "javascript"
     );
-    const index = build_semantic_index(parsedFile, tree, "javascript");
+    const index = build_semantic_index(parsed_file, tree, "javascript");
     const members = extract_type_members({
       classes: index.classes,
       interfaces: index.interfaces,
@@ -170,9 +170,9 @@ describe("Member Extraction - JavaScript", () => {
 
     // NOTE: semantic_index does not currently extract 'extends' for JavaScript classes
     // This test validates that member_extraction preserves the (empty) extends array
-    const membersArray = Array.from(members.values());
-    expect(membersArray.every((m) => m.extends !== undefined)).toBe(true);
-    expect(membersArray.every((m) => Array.isArray(m.extends))).toBe(true);
+    const members_array = Array.from(members.values());
+    expect(members_array.every((m) => m.extends !== undefined)).toBe(true);
+    expect(members_array.every((m) => Array.isArray(m.extends))).toBe(true);
   });
 });
 
@@ -200,13 +200,13 @@ describe("Member Extraction - TypeScript", () => {
     `;
 
     const tree = parser.parse(code);
-    const parsedFile = createParsedFile(
+    const parsed_file = create_parsed_file(
       code,
       "test.ts" as FilePath,
       tree,
       "typescript"
     );
-    const index = build_semantic_index(parsedFile, tree, "typescript");
+    const index = build_semantic_index(parsed_file, tree, "typescript");
     const members = extract_type_members({
       classes: index.classes,
       interfaces: index.interfaces,
@@ -215,13 +215,13 @@ describe("Member Extraction - TypeScript", () => {
 
     expect(members.size).toBeGreaterThan(0);
 
-    const userMembers = Array.from(members.values())[0];
-    expect(userMembers.methods.size).toBeGreaterThan(0);
-    expect(userMembers.methods.has("getName")).toBe(true);
-    expect(userMembers.methods.has("getEmail")).toBe(true);
+    const user_members = Array.from(members.values())[0];
+    expect(user_members.methods.size).toBeGreaterThan(0);
+    expect(user_members.methods.has("getName")).toBe(true);
+    expect(user_members.methods.has("getEmail")).toBe(true);
 
-    expect(userMembers.properties.size).toBeGreaterThan(0);
-    expect(userMembers.properties.size).toBeGreaterThan(0);
+    expect(user_members.properties.size).toBeGreaterThan(0);
+    expect(user_members.properties.size).toBeGreaterThan(0);
     // Property count verified above
   });
 
@@ -235,13 +235,13 @@ describe("Member Extraction - TypeScript", () => {
     `;
 
     const tree = parser.parse(code);
-    const parsedFile = createParsedFile(
+    const parsed_file = create_parsed_file(
       code,
       "test.ts" as FilePath,
       tree,
       "typescript"
     );
-    const index = build_semantic_index(parsedFile, tree, "typescript");
+    const index = build_semantic_index(parsed_file, tree, "typescript");
     const members = extract_type_members({
       classes: index.classes,
       interfaces: index.interfaces,
@@ -250,8 +250,8 @@ describe("Member Extraction - TypeScript", () => {
 
     expect(members.size).toBeGreaterThan(0);
 
-    const userMembers = Array.from(members.values())[0];
-    expect(userMembers.constructor).toBeDefined();
+    const user_members = Array.from(members.values())[0];
+    expect(user_members.constructor).toBeDefined();
   });
 
   it("should extract interface methods and properties", () => {
@@ -265,13 +265,13 @@ describe("Member Extraction - TypeScript", () => {
     `;
 
     const tree = parser.parse(code);
-    const parsedFile = createParsedFile(
+    const parsed_file = create_parsed_file(
       code,
       "test.ts" as FilePath,
       tree,
       "typescript"
     );
-    const index = build_semantic_index(parsedFile, tree, "typescript");
+    const index = build_semantic_index(parsed_file, tree, "typescript");
     const members = extract_type_members({
       classes: index.classes,
       interfaces: index.interfaces,
@@ -282,10 +282,10 @@ describe("Member Extraction - TypeScript", () => {
 
     // NOTE: semantic_index does not currently extract methods/properties for TypeScript interfaces
     // This test validates that member_extraction creates the structure correctly
-    const ifaceMembers = Array.from(members.values())[0];
-    expect(ifaceMembers.methods).toBeDefined();
-    expect(ifaceMembers.properties).toBeDefined();
-    expect(ifaceMembers.constructor).toBeUndefined();
+    const iface_members = Array.from(members.values())[0];
+    expect(iface_members.methods).toBeDefined();
+    expect(iface_members.properties).toBeDefined();
+    expect(iface_members.constructor).toBeUndefined();
   });
 
   it("should track interface extension", () => {
@@ -299,13 +299,13 @@ describe("Member Extraction - TypeScript", () => {
     `;
 
     const tree = parser.parse(code);
-    const parsedFile = createParsedFile(
+    const parsed_file = create_parsed_file(
       code,
       "test.ts" as FilePath,
       tree,
       "typescript"
     );
-    const index = build_semantic_index(parsedFile, tree, "typescript");
+    const index = build_semantic_index(parsed_file, tree, "typescript");
     const members = extract_type_members({
       classes: index.classes,
       interfaces: index.interfaces,
@@ -316,8 +316,8 @@ describe("Member Extraction - TypeScript", () => {
     // This test validates that member_extraction handles multiple interfaces
     expect(members.size).toBeGreaterThan(0);
 
-    const membersArray = Array.from(members.values());
-    expect(membersArray.every((m) => m.extends !== undefined)).toBe(true);
+    const members_array = Array.from(members.values());
+    expect(members_array.every((m) => m.extends !== undefined)).toBe(true);
   });
 
   it("should handle static and instance methods", () => {
@@ -329,13 +329,13 @@ describe("Member Extraction - TypeScript", () => {
     `;
 
     const tree = parser.parse(code);
-    const parsedFile = createParsedFile(
+    const parsed_file = create_parsed_file(
       code,
       "test.ts" as FilePath,
       tree,
       "typescript"
     );
-    const index = build_semantic_index(parsedFile, tree, "typescript");
+    const index = build_semantic_index(parsed_file, tree, "typescript");
     const members = extract_type_members({
       classes: index.classes,
       interfaces: index.interfaces,
@@ -344,10 +344,10 @@ describe("Member Extraction - TypeScript", () => {
 
     expect(members.size).toBeGreaterThan(0);
 
-    const userMembers = Array.from(members.values())[0];
+    const user_members = Array.from(members.values())[0];
     // Both static and instance methods should be indexed
-    expect(userMembers.methods.size).toBeGreaterThanOrEqual(1);
-    expect(userMembers.methods.has("getName")).toBe(true);
+    expect(user_members.methods.size).toBeGreaterThanOrEqual(1);
+    expect(user_members.methods.has("getName")).toBe(true);
   });
 });
 
@@ -374,13 +374,13 @@ class User:
     `;
 
     const tree = parser.parse(code);
-    const parsedFile = createParsedFile(
+    const parsed_file = create_parsed_file(
       code,
       "test.py" as FilePath,
       tree,
       "python"
     );
-    const index = build_semantic_index(parsedFile, tree, "python");
+    const index = build_semantic_index(parsed_file, tree, "python");
     const members = extract_type_members({
       classes: index.classes,
       interfaces: index.interfaces,
@@ -389,10 +389,10 @@ class User:
 
     expect(members.size).toBeGreaterThan(0);
 
-    const userMembers = Array.from(members.values())[0];
-    expect(userMembers.methods.size).toBeGreaterThanOrEqual(2);
-    const methodNames = Array.from(userMembers.methods.keys());
-    expect(methodNames.some((name) => name.includes("get_name"))).toBe(true);
+    const user_members = Array.from(members.values())[0];
+    expect(user_members.methods.size).toBeGreaterThanOrEqual(2);
+    const method_names = Array.from(user_members.methods.keys());
+    expect(method_names.some((name) => name.includes("get_name"))).toBe(true);
   });
 
   it("should extract class with __init__ constructor", () => {
@@ -403,13 +403,13 @@ class User:
     `;
 
     const tree = parser.parse(code);
-    const parsedFile = createParsedFile(
+    const parsed_file = create_parsed_file(
       code,
       "test.py" as FilePath,
       tree,
       "python"
     );
-    const index = build_semantic_index(parsedFile, tree, "python");
+    const index = build_semantic_index(parsed_file, tree, "python");
     const members = extract_type_members({
       classes: index.classes,
       interfaces: index.interfaces,
@@ -418,10 +418,10 @@ class User:
 
     expect(members.size).toBeGreaterThan(0);
 
-    const userMembers = Array.from(members.values())[0];
+    const user_members = Array.from(members.values())[0];
     // __init__ is extracted as a constructor, not a regular method
     // The test succeeds if the class members are extracted
-    expect(userMembers).toBeDefined();
+    expect(user_members).toBeDefined();
   });
 
   it("should track class inheritance", () => {
@@ -436,13 +436,13 @@ class Dog(Animal):
     `;
 
     const tree = parser.parse(code);
-    const parsedFile = createParsedFile(
+    const parsed_file = create_parsed_file(
       code,
       "test.py" as FilePath,
       tree,
       "python"
     );
-    const index = build_semantic_index(parsedFile, tree, "python");
+    const index = build_semantic_index(parsed_file, tree, "python");
     const members = extract_type_members({
       classes: index.classes,
       interfaces: index.interfaces,
@@ -452,15 +452,15 @@ class Dog(Animal):
     expect(members.size).toBe(2);
 
     // Find Dog class (should have extends)
-    const membersArray = Array.from(members.values());
-    const dogMembers = membersArray.find((m) => m.extends.length > 0);
+    const members_array = Array.from(members.values());
+    const dog_members = members_array.find((m) => m.extends.length > 0);
 
-    expect(dogMembers).toBeDefined();
-    expect(dogMembers!.extends).toContain("Animal");
+    expect(dog_members).toBeDefined();
+    expect(dog_members!.extends).toContain("Animal");
 
     // Should only have bark, not move
-    expect(dogMembers!.methods.has("bark")).toBe(true);
-    expect(dogMembers!.methods.has("move")).toBe(false);
+    expect(dog_members!.methods.has("bark")).toBe(true);
+    expect(dog_members!.methods.has("move")).toBe(false);
   });
 
   it("should handle static methods", () => {
@@ -475,13 +475,13 @@ class User:
     `;
 
     const tree = parser.parse(code);
-    const parsedFile = createParsedFile(
+    const parsed_file = create_parsed_file(
       code,
       "test.py" as FilePath,
       tree,
       "python"
     );
-    const index = build_semantic_index(parsedFile, tree, "python");
+    const index = build_semantic_index(parsed_file, tree, "python");
     const members = extract_type_members({
       classes: index.classes,
       interfaces: index.interfaces,
@@ -490,9 +490,9 @@ class User:
 
     expect(members.size).toBeGreaterThan(0);
 
-    const userMembers = Array.from(members.values())[0];
+    const user_members = Array.from(members.values())[0];
     // Both static and instance methods indexed
-    expect(userMembers.methods.size).toBeGreaterThanOrEqual(1);
+    expect(user_members.methods.size).toBeGreaterThanOrEqual(1);
     // Method name check - count-based
   });
 });
@@ -520,13 +520,13 @@ describe("Member Extraction - Rust", () => {
     `;
 
     const tree = parser.parse(code);
-    const parsedFile = createParsedFile(
+    const parsed_file = create_parsed_file(
       code,
       "test.rs" as FilePath,
       tree,
       "rust"
     );
-    const index = build_semantic_index(parsedFile, tree, "rust");
+    const index = build_semantic_index(parsed_file, tree, "rust");
     const members = extract_type_members({
       classes: index.classes,
       interfaces: index.interfaces,
@@ -535,8 +535,8 @@ describe("Member Extraction - Rust", () => {
 
     expect(members.size).toBeGreaterThan(0);
 
-    const userMembers = Array.from(members.values())[0];
-    expect(userMembers.methods.size).toBeGreaterThan(0);
+    const user_members = Array.from(members.values())[0];
+    expect(user_members.methods.size).toBeGreaterThan(0);
     // Method name check - count-based
   });
 
@@ -554,13 +554,13 @@ describe("Member Extraction - Rust", () => {
     `;
 
     const tree = parser.parse(code);
-    const parsedFile = createParsedFile(
+    const parsed_file = create_parsed_file(
       code,
       "test.rs" as FilePath,
       tree,
       "rust"
     );
-    const index = build_semantic_index(parsedFile, tree, "rust");
+    const index = build_semantic_index(parsed_file, tree, "rust");
     const members = extract_type_members({
       classes: index.classes,
       interfaces: index.interfaces,
@@ -570,8 +570,8 @@ describe("Member Extraction - Rust", () => {
     // Extract type members extracts enum variants as members, not impl block methods
     // The test verifies that enum members are extracted
     expect(members.size).toBeGreaterThan(0);
-    const enumMembersArray = Array.from(members.values());
-    expect(enumMembersArray.length).toBeGreaterThan(0);
+    const enum_members_array = Array.from(members.values());
+    expect(enum_members_array.length).toBeGreaterThan(0);
   });
 
   it("should handle struct with fields", () => {
@@ -589,13 +589,13 @@ describe("Member Extraction - Rust", () => {
     `;
 
     const tree = parser.parse(code);
-    const parsedFile = createParsedFile(
+    const parsed_file = create_parsed_file(
       code,
       "test.rs" as FilePath,
       tree,
       "rust"
     );
-    const index = build_semantic_index(parsedFile, tree, "rust");
+    const index = build_semantic_index(parsed_file, tree, "rust");
     const members = extract_type_members({
       classes: index.classes,
       interfaces: index.interfaces,
@@ -604,9 +604,9 @@ describe("Member Extraction - Rust", () => {
 
     expect(members.size).toBeGreaterThan(0);
 
-    const userMembers = Array.from(members.values())[0];
+    const user_members = Array.from(members.values())[0];
     // Rust structs with impl blocks have methods extracted
-    expect(userMembers.methods.size).toBeGreaterThan(0);
+    expect(user_members.methods.size).toBeGreaterThan(0);
     // Note: Struct field extraction as properties may vary by implementation
   });
 
@@ -620,13 +620,13 @@ describe("Member Extraction - Rust", () => {
     `;
 
     const tree = parser.parse(code);
-    const parsedFile = createParsedFile(
+    const parsed_file = create_parsed_file(
       code,
       "test.rs" as FilePath,
       tree,
       "rust"
     );
-    const index = build_semantic_index(parsedFile, tree, "rust");
+    const index = build_semantic_index(parsed_file, tree, "rust");
     const members = extract_type_members({
       classes: index.classes,
       interfaces: index.interfaces,
@@ -635,10 +635,10 @@ describe("Member Extraction - Rust", () => {
 
     expect(members.size).toBeGreaterThan(0);
 
-    const colorMembers = Array.from(members.values())[0];
-    expect(colorMembers.methods.size).toBe(0);
-    expect(colorMembers.properties.size).toBe(0);
-    expect(colorMembers.constructor).toBeUndefined();
+    const color_members = Array.from(members.values())[0];
+    expect(color_members.methods.size).toBe(0);
+    expect(color_members.properties.size).toBe(0);
+    expect(color_members.constructor).toBeUndefined();
   });
 });
 
@@ -647,11 +647,11 @@ describe("Member Extraction - Rust", () => {
 // ============================================================================
 
 describe("Member Extraction - Edge Cases", () => {
-  let jsParser: Parser;
+  let js_parser: Parser;
 
   beforeAll(() => {
-    jsParser = new Parser();
-    jsParser.setLanguage(JavaScript);
+    js_parser = new Parser();
+    js_parser.setLanguage(JavaScript);
   });
 
   it("should handle empty class", () => {
@@ -659,14 +659,14 @@ describe("Member Extraction - Edge Cases", () => {
       class Empty {}
     `;
 
-    const tree = jsParser.parse(code);
-    const parsedFile = createParsedFile(
+    const tree = js_parser.parse(code);
+    const parsed_file = create_parsed_file(
       code,
       "test.js" as FilePath,
       tree,
       "javascript"
     );
-    const index = build_semantic_index(parsedFile, tree, "javascript");
+    const index = build_semantic_index(parsed_file, tree, "javascript");
     const members = extract_type_members({
       classes: index.classes,
       interfaces: index.interfaces,
@@ -675,11 +675,11 @@ describe("Member Extraction - Edge Cases", () => {
 
     expect(members.size).toBeGreaterThan(0);
 
-    const emptyMembers = Array.from(members.values())[0];
-    expect(emptyMembers.methods.size).toBe(0);
-    expect(emptyMembers.properties.size).toBe(0);
-    expect(emptyMembers.constructor).toBeUndefined();
-    expect(emptyMembers.extends.length).toBe(0);
+    const empty_members = Array.from(members.values())[0];
+    expect(empty_members.methods.size).toBe(0);
+    expect(empty_members.properties.size).toBe(0);
+    expect(empty_members.constructor).toBeUndefined();
+    expect(empty_members.extends.length).toBe(0);
   });
 
   it("should handle no definitions", () => {
@@ -688,14 +688,14 @@ describe("Member Extraction - Edge Cases", () => {
       function foo() {}
     `;
 
-    const tree = jsParser.parse(code);
-    const parsedFile = createParsedFile(
+    const tree = js_parser.parse(code);
+    const parsed_file = create_parsed_file(
       code,
       "test.js" as FilePath,
       tree,
       "javascript"
     );
-    const index = build_semantic_index(parsedFile, tree, "javascript");
+    const index = build_semantic_index(parsed_file, tree, "javascript");
     const members = extract_type_members({
       classes: index.classes,
       interfaces: index.interfaces,
@@ -715,14 +715,14 @@ describe("Member Extraction - Edge Cases", () => {
       }
     `;
 
-    const tree = jsParser.parse(code);
-    const parsedFile = createParsedFile(
+    const tree = js_parser.parse(code);
+    const parsed_file = create_parsed_file(
       code,
       "test.js" as FilePath,
       tree,
       "javascript"
     );
-    const index = build_semantic_index(parsedFile, tree, "javascript");
+    const index = build_semantic_index(parsed_file, tree, "javascript");
     const members = extract_type_members({
       classes: index.classes,
       interfaces: index.interfaces,
@@ -731,8 +731,8 @@ describe("Member Extraction - Edge Cases", () => {
 
     expect(members.size).toBeGreaterThan(0);
 
-    const classMembers = Array.from(members.values())[0];
-    expect(classMembers.constructor).toBeDefined();
-    expect(classMembers.methods.size).toBe(0);
+    const class_members = Array.from(members.values())[0];
+    expect(class_members.constructor).toBeDefined();
+    expect(class_members.methods.size).toBe(0);
   });
 });

@@ -34,20 +34,20 @@ interface ValidationOutput {
 function main() {
   
   // Analyze Ariadne's source
-  const srcDir = path.join(__dirname, "../src");
-  const files = getAllFiles(srcDir, ['.ts', '.js']);
+  const src_dir = path.join(__dirname, "../src");
+  const files = get_all_files(src_dir, ['.ts', '.js']);
   
   for (const file of files) {
     const content = fs.readFileSync(file, 'utf-8');
     if (content.length > 32 * 1024) continue; // Skip large files
     
-    const relativePath = path.relative(path.dirname(srcDir), file);
-    project.add_or_update_file(relativePath, content);
+    const relative_path = path.relative(path.dirname(src_dir), file);
+    project.add_or_update_file(relative_path, content);
   }
   
   // Get all definitions from Project class file
-  const projectDefs = project.get_definitions("src/project/project.ts");
-  const callGraph = project.get_call_graph({ include_external: false });
+  const project_defs = project.get_definitions("src/project/project.ts");
+  const call_graph = project.get_call_graph({ include_external: false });
   
   // Build output
   const output: ValidationOutput = {
@@ -55,17 +55,17 @@ function main() {
       timestamp: new Date().toISOString(),
       ariadne_version: JSON.parse(fs.readFileSync(path.join(__dirname, "../package.json"), 'utf-8')).version,
       total_files: project.get_all_scope_graphs().size,
-      total_functions: Array.from(callGraph.nodes.values()).length,
-      total_calls: callGraph.edges.length
+      total_functions: Array.from(call_graph.nodes.values()).length,
+      total_calls: call_graph.edges.length
     },
     api_methods: [],
     sampled_functions: []
   };
   
   // Extract Project class methods
-  for (const def of projectDefs) {
+  for (const def of project_defs) {
     if (def.symbol_kind === 'method' || def.symbol_kind === 'function') {
-      const node = callGraph.nodes.get(def.symbol_id);
+      const node = call_graph.nodes.get(def.symbol_id);
       output.api_methods.push({
         name: def.name,
         file: def.file_path,
@@ -77,15 +77,15 @@ function main() {
   }
   
   // Sample some functions for validation
-  const sampledNodes = Array.from(callGraph.nodes.values()).slice(0, 10);
-  for (const node of sampledNodes) {
+  const sampled_nodes = Array.from(call_graph.nodes.values()).slice(0, 10);
+  for (const node of sampled_nodes) {
     const outgoing = node.calls
       .filter(c => !c.symbol.startsWith('<builtin>#'))
       .map(c => c.resolved_definition?.name || c.symbol);
     
-    const incoming = callGraph.edges
+    const incoming = call_graph.edges
       .filter(e => e.to === node.symbol)
-      .map(e => callGraph.nodes.get(e.from)?.definition.name || e.from);
+      .map(e => call_graph.nodes.get(e.from)?.definition.name || e.from);
     
     output.sampled_functions.push({
       name: node.definition.name,
@@ -104,20 +104,20 @@ function main() {
   }));
 }
 
-function getAllFiles(dir: string, extensions: string[]): string[] {
+function get_all_files(dir: string, extensions: string[]): string[] {
   const files: string[] = [];
   
-  function traverse(currentPath: string) {
-    const entries = fs.readdirSync(currentPath);
+  function traverse(current_path: string) {
+    const entries = fs.readdirSync(current_path);
     
     for (const entry of entries) {
-      const fullPath = path.join(currentPath, entry);
-      const stat = fs.statSync(fullPath);
+      const full_path = path.join(current_path, entry);
+      const stat = fs.statSync(full_path);
       
       if (stat.isDirectory() && !entry.startsWith('.') && entry !== 'node_modules') {
-        traverse(fullPath);
+        traverse(full_path);
       } else if (stat.isFile() && extensions.some(ext => entry.endsWith(ext))) {
-        files.push(fullPath);
+        files.push(full_path);
       }
     }
   }

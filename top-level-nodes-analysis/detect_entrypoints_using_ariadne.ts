@@ -18,7 +18,9 @@ import * as fs from "fs/promises";
 import { fileURLToPath } from "url";
 import { dirname } from "path";
 
+// eslint-disable-next-line @typescript-eslint/naming-convention
 const __filename = fileURLToPath(import.meta.url);
+// eslint-disable-next-line @typescript-eslint/naming-convention
 const __dirname = dirname(__filename);
 
 interface FunctionEntry {

@@ -17,9 +17,9 @@ export function find_export_specifiers(export_node: SyntaxNode): SyntaxNode[] {
   for (const child of export_node.children) {
     if (child.type === "export_clause") {
       // Find all export_specifier children
-      for (const clauseChild of child.children) {
-        if (clauseChild.type === "export_specifier") {
-          specifiers.push(clauseChild);
+      for (const clause_child of child.children) {
+        if (clause_child.type === "export_specifier") {
+          specifiers.push(clause_child);
         }
       }
       break;

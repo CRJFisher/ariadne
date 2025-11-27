@@ -14,12 +14,12 @@ interface Product {
   readonly id: string;
   name: string;
   price: number;
-  inStock: boolean;
+  in_stock: boolean;
 }
 
 interface Repository<T> {
-  findById(id: string): T | null;
-  findAll(): T[];
+  find_by_id(id: string): T | null;
+  find_all(): T[];
   save(item: T): void;
   delete(id: string): boolean;
 }

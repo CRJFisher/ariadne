@@ -26,10 +26,10 @@ describe("JavaScript Metadata Extractors", () => {
         const name = "test";
       `;
       const tree = parser.parse(code);
-      const varDeclarator = tree.rootNode.descendantsOfType("variable_declarator")[0];
+      const var_declarator = tree.rootNode.descendantsOfType("variable_declarator")[0];
 
       // JSDoc type extraction from preceding comment
-      const result = JAVASCRIPT_METADATA_EXTRACTORS.extract_type_from_annotation(varDeclarator, TEST_FILE);
+      const result = JAVASCRIPT_METADATA_EXTRACTORS.extract_type_from_annotation(var_declarator, TEST_FILE);
 
       expect(result).toBeDefined();
       expect(result?.type_name).toBe("string");
@@ -44,9 +44,9 @@ describe("JavaScript Metadata Extractors", () => {
         }
       `;
       const tree = parser.parse(code);
-      const funcDecl = tree.rootNode.descendantsOfType("function_declaration")[0];
+      const func_decl = tree.rootNode.descendantsOfType("function_declaration")[0];
 
-      const result = JAVASCRIPT_METADATA_EXTRACTORS.extract_type_from_annotation(funcDecl, TEST_FILE);
+      const result = JAVASCRIPT_METADATA_EXTRACTORS.extract_type_from_annotation(func_decl, TEST_FILE);
 
       expect(result).toBeDefined();
       expect(result?.type_name).toBe("boolean");
@@ -58,9 +58,9 @@ describe("JavaScript Metadata Extractors", () => {
         const nullable = null;
       `;
       const tree = parser.parse(code);
-      const varDeclarator = tree.rootNode.descendantsOfType("variable_declarator")[0];
+      const var_declarator = tree.rootNode.descendantsOfType("variable_declarator")[0];
 
-      const result = JAVASCRIPT_METADATA_EXTRACTORS.extract_type_from_annotation(varDeclarator, TEST_FILE);
+      const result = JAVASCRIPT_METADATA_EXTRACTORS.extract_type_from_annotation(var_declarator, TEST_FILE);
 
       expect(result).toBeDefined();
       expect(result?.is_nullable).toBe(true);
@@ -71,9 +71,9 @@ describe("JavaScript Metadata Extractors", () => {
     it("should extract receiver from method call", () => {
       const code = "obj.method()";
       const tree = parser.parse(code);
-      const callExpr = tree.rootNode.descendantsOfType("call_expression")[0];
+      const call_expr = tree.rootNode.descendantsOfType("call_expression")[0];
 
-      const result = JAVASCRIPT_METADATA_EXTRACTORS.extract_call_receiver(callExpr, TEST_FILE);
+      const result = JAVASCRIPT_METADATA_EXTRACTORS.extract_call_receiver(call_expr, TEST_FILE);
 
       expect(result).toBeDefined();
       expect(result?.start_line).toBe(1);
@@ -84,9 +84,9 @@ describe("JavaScript Metadata Extractors", () => {
     it("should extract receiver from chained method call", () => {
       const code = "user.profile.getName()";
       const tree = parser.parse(code);
-      const callExpr = tree.rootNode.descendantsOfType("call_expression")[0];
+      const call_expr = tree.rootNode.descendantsOfType("call_expression")[0];
 
-      const result = JAVASCRIPT_METADATA_EXTRACTORS.extract_call_receiver(callExpr, TEST_FILE);
+      const result = JAVASCRIPT_METADATA_EXTRACTORS.extract_call_receiver(call_expr, TEST_FILE);
 
       expect(result).toBeDefined();
       // Should get location of "user.profile"
@@ -97,9 +97,9 @@ describe("JavaScript Metadata Extractors", () => {
     it("should extract 'this' as receiver", () => {
       const code = "this.doSomething()";
       const tree = parser.parse(code);
-      const callExpr = tree.rootNode.descendantsOfType("call_expression")[0];
+      const call_expr = tree.rootNode.descendantsOfType("call_expression")[0];
 
-      const result = JAVASCRIPT_METADATA_EXTRACTORS.extract_call_receiver(callExpr, TEST_FILE);
+      const result = JAVASCRIPT_METADATA_EXTRACTORS.extract_call_receiver(call_expr, TEST_FILE);
 
       expect(result).toBeDefined();
       expect(result?.start_column).toBe(1);
@@ -110,9 +110,9 @@ describe("JavaScript Metadata Extractors", () => {
       // JavaScript static methods: ClassName.method()
       const code = "Math.floor(3.7)";
       const tree = parser.parse(code);
-      const callExpr = tree.rootNode.descendantsOfType("call_expression")[0];
+      const call_expr = tree.rootNode.descendantsOfType("call_expression")[0];
 
-      const result = JAVASCRIPT_METADATA_EXTRACTORS.extract_call_receiver(callExpr, TEST_FILE);
+      const result = JAVASCRIPT_METADATA_EXTRACTORS.extract_call_receiver(call_expr, TEST_FILE);
 
       expect(result).toBeDefined();
       expect(result?.start_column).toBe(1);
@@ -123,10 +123,10 @@ describe("JavaScript Metadata Extractors", () => {
       // Test when the member_expression node is passed directly (as captured by queries)
       const code = "UserManager.create()";
       const tree = parser.parse(code);
-      const callExpr = tree.rootNode.descendantsOfType("call_expression")[0];
+      const call_expr = tree.rootNode.descendantsOfType("call_expression")[0];
 
       // In JS, call_expression has a function field which is the member_expression
-      const func = callExpr.childForFieldName("function");
+      const func = call_expr.childForFieldName("function");
       expect(func?.type).toBe("member_expression");
 
       const result = JAVASCRIPT_METADATA_EXTRACTORS.extract_call_receiver(func!, TEST_FILE);
@@ -141,9 +141,9 @@ describe("JavaScript Metadata Extractors", () => {
     it("should extract simple property chain", () => {
       const code = "a.b.c";
       const tree = parser.parse(code);
-      const memberExpr = tree.rootNode.descendantsOfType("member_expression")[0];
+      const member_expr = tree.rootNode.descendantsOfType("member_expression")[0];
 
-      const result = JAVASCRIPT_METADATA_EXTRACTORS.extract_property_chain(memberExpr);
+      const result = JAVASCRIPT_METADATA_EXTRACTORS.extract_property_chain(member_expr);
 
       expect(result).toEqual(["a", "b", "c"]);
     });
@@ -151,9 +151,9 @@ describe("JavaScript Metadata Extractors", () => {
     it("should extract chain with method call", () => {
       const code = "obj.prop.method()";
       const tree = parser.parse(code);
-      const callExpr = tree.rootNode.descendantsOfType("call_expression")[0];
+      const call_expr = tree.rootNode.descendantsOfType("call_expression")[0];
 
-      const result = JAVASCRIPT_METADATA_EXTRACTORS.extract_property_chain(callExpr);
+      const result = JAVASCRIPT_METADATA_EXTRACTORS.extract_property_chain(call_expr);
 
       expect(result).toEqual(["obj", "prop", "method"]);
     });
@@ -161,9 +161,9 @@ describe("JavaScript Metadata Extractors", () => {
     it("should handle optional chaining", () => {
       const code = "obj?.prop?.method";
       const tree = parser.parse(code);
-      const memberExpr = tree.rootNode.descendantsOfType("member_expression")[0];
+      const member_expr = tree.rootNode.descendantsOfType("member_expression")[0];
 
-      const result = JAVASCRIPT_METADATA_EXTRACTORS.extract_property_chain(memberExpr);
+      const result = JAVASCRIPT_METADATA_EXTRACTORS.extract_property_chain(member_expr);
 
       // Should still extract the chain even with optional chaining
       expect(result).toBeDefined();
@@ -173,9 +173,9 @@ describe("JavaScript Metadata Extractors", () => {
     it("should handle 'this' in property chain", () => {
       const code = "this.data.items";
       const tree = parser.parse(code);
-      const memberExpr = tree.rootNode.descendantsOfType("member_expression")[0];
+      const member_expr = tree.rootNode.descendantsOfType("member_expression")[0];
 
-      const result = JAVASCRIPT_METADATA_EXTRACTORS.extract_property_chain(memberExpr);
+      const result = JAVASCRIPT_METADATA_EXTRACTORS.extract_property_chain(member_expr);
 
       expect(result).toEqual(["this", "data", "items"]);
     });
@@ -183,9 +183,9 @@ describe("JavaScript Metadata Extractors", () => {
     it("should handle computed property with string literal", () => {
       const code = "obj[\"prop\"][\"key\"]";
       const tree = parser.parse(code);
-      const subscriptExpr = tree.rootNode.descendantsOfType("subscript_expression")[0];
+      const subscript_expr = tree.rootNode.descendantsOfType("subscript_expression")[0];
 
-      const result = JAVASCRIPT_METADATA_EXTRACTORS.extract_property_chain(subscriptExpr);
+      const result = JAVASCRIPT_METADATA_EXTRACTORS.extract_property_chain(subscript_expr);
 
       expect(result).toEqual(["obj", "prop", "key"]);
     });
@@ -195,9 +195,9 @@ describe("JavaScript Metadata Extractors", () => {
     it("should extract parts from simple assignment", () => {
       const code = "x = y";
       const tree = parser.parse(code);
-      const assignExpr = tree.rootNode.descendantsOfType("assignment_expression")[0];
+      const assign_expr = tree.rootNode.descendantsOfType("assignment_expression")[0];
 
-      const result = JAVASCRIPT_METADATA_EXTRACTORS.extract_assignment_parts(assignExpr, TEST_FILE);
+      const result = JAVASCRIPT_METADATA_EXTRACTORS.extract_assignment_parts(assign_expr, TEST_FILE);
 
       expect(result.target).toBeDefined();
       expect(result.source).toBeDefined();
@@ -208,9 +208,9 @@ describe("JavaScript Metadata Extractors", () => {
     it("should extract parts from variable declaration", () => {
       const code = "const x = getValue()";
       const tree = parser.parse(code);
-      const varDeclarator = tree.rootNode.descendantsOfType("variable_declarator")[0];
+      const var_declarator = tree.rootNode.descendantsOfType("variable_declarator")[0];
 
-      const result = JAVASCRIPT_METADATA_EXTRACTORS.extract_assignment_parts(varDeclarator, TEST_FILE);
+      const result = JAVASCRIPT_METADATA_EXTRACTORS.extract_assignment_parts(var_declarator, TEST_FILE);
 
       expect(result.target).toBeDefined();
       expect(result.source).toBeDefined();
@@ -221,9 +221,9 @@ describe("JavaScript Metadata Extractors", () => {
     it("should extract parts from property assignment", () => {
       const code = "obj.prop = value";
       const tree = parser.parse(code);
-      const assignExpr = tree.rootNode.descendantsOfType("assignment_expression")[0];
+      const assign_expr = tree.rootNode.descendantsOfType("assignment_expression")[0];
 
-      const result = JAVASCRIPT_METADATA_EXTRACTORS.extract_assignment_parts(assignExpr, TEST_FILE);
+      const result = JAVASCRIPT_METADATA_EXTRACTORS.extract_assignment_parts(assign_expr, TEST_FILE);
 
       expect(result.target).toBeDefined();
       expect(result.source).toBeDefined();
@@ -233,9 +233,9 @@ describe("JavaScript Metadata Extractors", () => {
     it("should handle destructuring assignment", () => {
       const code = "const {a, b} = obj";
       const tree = parser.parse(code);
-      const varDeclarator = tree.rootNode.descendantsOfType("variable_declarator")[0];
+      const var_declarator = tree.rootNode.descendantsOfType("variable_declarator")[0];
 
-      const result = JAVASCRIPT_METADATA_EXTRACTORS.extract_assignment_parts(varDeclarator, TEST_FILE);
+      const result = JAVASCRIPT_METADATA_EXTRACTORS.extract_assignment_parts(var_declarator, TEST_FILE);
 
       expect(result.target).toBeDefined();
       expect(result.source).toBeDefined();
@@ -245,9 +245,9 @@ describe("JavaScript Metadata Extractors", () => {
     it("should handle augmented assignment", () => {
       const code = "x += 5";
       const tree = parser.parse(code);
-      const augmentedAssign = tree.rootNode.descendantsOfType("augmented_assignment_expression")[0];
+      const augmented_assign = tree.rootNode.descendantsOfType("augmented_assignment_expression")[0];
 
-      const result = JAVASCRIPT_METADATA_EXTRACTORS.extract_assignment_parts(augmentedAssign, TEST_FILE);
+      const result = JAVASCRIPT_METADATA_EXTRACTORS.extract_assignment_parts(augmented_assign, TEST_FILE);
 
       expect(result.target).toBeDefined();
       expect(result.source).toBeDefined();
@@ -260,9 +260,9 @@ describe("JavaScript Metadata Extractors", () => {
     it("should extract target from new expression in variable declaration", () => {
       const code = "const obj = new MyClass()";
       const tree = parser.parse(code);
-      const newExpr = tree.rootNode.descendantsOfType("new_expression")[0];
+      const new_expr = tree.rootNode.descendantsOfType("new_expression")[0];
 
-      const result = JAVASCRIPT_METADATA_EXTRACTORS.extract_construct_target(newExpr, TEST_FILE);
+      const result = JAVASCRIPT_METADATA_EXTRACTORS.extract_construct_target(new_expr, TEST_FILE);
 
       expect(result).toBeDefined();
       expect(result?.start_column).toBe(7); // position of 'obj'
@@ -272,9 +272,9 @@ describe("JavaScript Metadata Extractors", () => {
     it("should extract target from new expression in property assignment", () => {
       const code = "this.prop = new Thing()";
       const tree = parser.parse(code);
-      const newExpr = tree.rootNode.descendantsOfType("new_expression")[0];
+      const new_expr = tree.rootNode.descendantsOfType("new_expression")[0];
 
-      const result = JAVASCRIPT_METADATA_EXTRACTORS.extract_construct_target(newExpr, TEST_FILE);
+      const result = JAVASCRIPT_METADATA_EXTRACTORS.extract_construct_target(new_expr, TEST_FILE);
 
       expect(result).toBeDefined();
       expect(result?.start_column).toBe(1); // position of 'this.prop'
@@ -284,9 +284,9 @@ describe("JavaScript Metadata Extractors", () => {
     it("should extract target from let declaration", () => {
       const code = "let x = new Map()";
       const tree = parser.parse(code);
-      const newExpr = tree.rootNode.descendantsOfType("new_expression")[0];
+      const new_expr = tree.rootNode.descendantsOfType("new_expression")[0];
 
-      const result = JAVASCRIPT_METADATA_EXTRACTORS.extract_construct_target(newExpr, TEST_FILE);
+      const result = JAVASCRIPT_METADATA_EXTRACTORS.extract_construct_target(new_expr, TEST_FILE);
 
       expect(result).toBeDefined();
       expect(result?.start_column).toBe(5); // position of 'x'
@@ -330,9 +330,9 @@ describe("JavaScript Metadata Extractors", () => {
     it("should handle deeply nested property chains", () => {
       const code = "app.config.database.connection.host";
       const tree = parser.parse(code);
-      const memberExpr = tree.rootNode.descendantsOfType("member_expression")[0];
+      const member_expr = tree.rootNode.descendantsOfType("member_expression")[0];
 
-      const result = JAVASCRIPT_METADATA_EXTRACTORS.extract_property_chain(memberExpr);
+      const result = JAVASCRIPT_METADATA_EXTRACTORS.extract_property_chain(member_expr);
 
       expect(result).toEqual(["app", "config", "database", "connection", "host"]);
     });
@@ -340,9 +340,9 @@ describe("JavaScript Metadata Extractors", () => {
     it("should handle super method calls", () => {
       const code = "super.method()";
       const tree = parser.parse(code);
-      const callExpr = tree.rootNode.descendantsOfType("call_expression")[0];
+      const call_expr = tree.rootNode.descendantsOfType("call_expression")[0];
 
-      const result = JAVASCRIPT_METADATA_EXTRACTORS.extract_call_receiver(callExpr, TEST_FILE);
+      const result = JAVASCRIPT_METADATA_EXTRACTORS.extract_call_receiver(call_expr, TEST_FILE);
 
       expect(result).toBeDefined();
     });
@@ -350,9 +350,9 @@ describe("JavaScript Metadata Extractors", () => {
     it("should handle arrow function assignments", () => {
       const code = "const fn = () => {}";
       const tree = parser.parse(code);
-      const varDeclarator = tree.rootNode.descendantsOfType("variable_declarator")[0];
+      const var_declarator = tree.rootNode.descendantsOfType("variable_declarator")[0];
 
-      const result = JAVASCRIPT_METADATA_EXTRACTORS.extract_assignment_parts(varDeclarator, TEST_FILE);
+      const result = JAVASCRIPT_METADATA_EXTRACTORS.extract_assignment_parts(var_declarator, TEST_FILE);
 
       expect(result.target).toBeDefined();
       expect(result.source).toBeDefined();
@@ -361,9 +361,9 @@ describe("JavaScript Metadata Extractors", () => {
     it("should return undefined for standalone function calls without receiver", () => {
       const code = "regularFunction()";
       const tree = parser.parse(code);
-      const callExpr = tree.rootNode.descendantsOfType("call_expression")[0];
+      const call_expr = tree.rootNode.descendantsOfType("call_expression")[0];
 
-      const result = JAVASCRIPT_METADATA_EXTRACTORS.extract_call_receiver(callExpr, TEST_FILE);
+      const result = JAVASCRIPT_METADATA_EXTRACTORS.extract_call_receiver(call_expr, TEST_FILE);
 
       expect(result).toBeUndefined();
     });
@@ -371,9 +371,9 @@ describe("JavaScript Metadata Extractors", () => {
     it("should handle member expression without call", () => {
       const code = "obj.prop";
       const tree = parser.parse(code);
-      const memberExpr = tree.rootNode.descendantsOfType("member_expression")[0];
+      const member_expr = tree.rootNode.descendantsOfType("member_expression")[0];
 
-      const result = JAVASCRIPT_METADATA_EXTRACTORS.extract_call_receiver(memberExpr, TEST_FILE);
+      const result = JAVASCRIPT_METADATA_EXTRACTORS.extract_call_receiver(member_expr, TEST_FILE);
 
       expect(result).toBeDefined();
       expect(result?.start_column).toBe(1);
@@ -383,9 +383,9 @@ describe("JavaScript Metadata Extractors", () => {
     it("should handle super in property chains", () => {
       const code = "super.parent.grandparent";
       const tree = parser.parse(code);
-      const memberExpr = tree.rootNode.descendantsOfType("member_expression")[0];
+      const member_expr = tree.rootNode.descendantsOfType("member_expression")[0];
 
-      const result = JAVASCRIPT_METADATA_EXTRACTORS.extract_property_chain(memberExpr);
+      const result = JAVASCRIPT_METADATA_EXTRACTORS.extract_property_chain(member_expr);
 
       expect(result).toEqual(["super", "parent", "grandparent"]);
     });
@@ -393,9 +393,9 @@ describe("JavaScript Metadata Extractors", () => {
     it("should handle nested subscript expressions", () => {
       const code = "obj[\"key1\"][\"key2\"][\"key3\"]";
       const tree = parser.parse(code);
-      const subscriptExpr = tree.rootNode.descendantsOfType("subscript_expression")[0];
+      const subscript_expr = tree.rootNode.descendantsOfType("subscript_expression")[0];
 
-      const result = JAVASCRIPT_METADATA_EXTRACTORS.extract_property_chain(subscriptExpr);
+      const result = JAVASCRIPT_METADATA_EXTRACTORS.extract_property_chain(subscript_expr);
 
       expect(result).toEqual(["obj", "key1", "key2", "key3"]);
     });
@@ -403,9 +403,9 @@ describe("JavaScript Metadata Extractors", () => {
     it("should handle single quotes in bracket notation", () => {
       const code = "obj['singleQuote']";
       const tree = parser.parse(code);
-      const subscriptExpr = tree.rootNode.descendantsOfType("subscript_expression")[0];
+      const subscript_expr = tree.rootNode.descendantsOfType("subscript_expression")[0];
 
-      const result = JAVASCRIPT_METADATA_EXTRACTORS.extract_property_chain(subscriptExpr);
+      const result = JAVASCRIPT_METADATA_EXTRACTORS.extract_property_chain(subscript_expr);
 
       expect(result).toEqual(["obj", "singleQuote"]);
     });
@@ -413,9 +413,9 @@ describe("JavaScript Metadata Extractors", () => {
     it("should ignore non-string bracket indices", () => {
       const code = "obj[123]";
       const tree = parser.parse(code);
-      const subscriptExpr = tree.rootNode.descendantsOfType("subscript_expression")[0];
+      const subscript_expr = tree.rootNode.descendantsOfType("subscript_expression")[0];
 
-      const result = JAVASCRIPT_METADATA_EXTRACTORS.extract_property_chain(subscriptExpr);
+      const result = JAVASCRIPT_METADATA_EXTRACTORS.extract_property_chain(subscript_expr);
 
       expect(result).toEqual(["obj"]);
     });
@@ -423,9 +423,9 @@ describe("JavaScript Metadata Extractors", () => {
     it("should return undefined for empty property chains", () => {
       const code = "42";
       const tree = parser.parse(code);
-      const numberNode = tree.rootNode.descendantsOfType("number")[0];
+      const number_node = tree.rootNode.descendantsOfType("number")[0];
 
-      const result = JAVASCRIPT_METADATA_EXTRACTORS.extract_property_chain(numberNode);
+      const result = JAVASCRIPT_METADATA_EXTRACTORS.extract_property_chain(number_node);
 
       expect(result).toBeUndefined();
     });
@@ -433,9 +433,9 @@ describe("JavaScript Metadata Extractors", () => {
     it("should handle variable declaration without initialization", () => {
       const code = "let x;";
       const tree = parser.parse(code);
-      const varDeclarator = tree.rootNode.descendantsOfType("variable_declarator")[0];
+      const var_declarator = tree.rootNode.descendantsOfType("variable_declarator")[0];
 
-      const result = JAVASCRIPT_METADATA_EXTRACTORS.extract_assignment_parts(varDeclarator, TEST_FILE);
+      const result = JAVASCRIPT_METADATA_EXTRACTORS.extract_assignment_parts(var_declarator, TEST_FILE);
 
       expect(result.target).toBeDefined();
       expect(result.source).toBeUndefined();
@@ -455,9 +455,9 @@ describe("JavaScript Metadata Extractors", () => {
     it("should return undefined for standalone constructor calls", () => {
       const code = "new MyClass()";
       const tree = parser.parse(code);
-      const newExpr = tree.rootNode.descendantsOfType("new_expression")[0];
+      const new_expr = tree.rootNode.descendantsOfType("new_expression")[0];
 
-      const result = JAVASCRIPT_METADATA_EXTRACTORS.extract_construct_target(newExpr, TEST_FILE);
+      const result = JAVASCRIPT_METADATA_EXTRACTORS.extract_construct_target(new_expr, TEST_FILE);
 
       expect(result).toBeUndefined();
     });
@@ -465,9 +465,9 @@ describe("JavaScript Metadata Extractors", () => {
     it("should return undefined when no JSDoc comment exists", () => {
       const code = "const x = 5;";
       const tree = parser.parse(code);
-      const varDeclarator = tree.rootNode.descendantsOfType("variable_declarator")[0];
+      const var_declarator = tree.rootNode.descendantsOfType("variable_declarator")[0];
 
-      const result = JAVASCRIPT_METADATA_EXTRACTORS.extract_type_from_annotation(varDeclarator, TEST_FILE);
+      const result = JAVASCRIPT_METADATA_EXTRACTORS.extract_type_from_annotation(var_declarator, TEST_FILE);
 
       expect(result).toBeUndefined();
     });
@@ -478,9 +478,9 @@ describe("JavaScript Metadata Extractors", () => {
         const x = 5;
       `;
       const tree = parser.parse(code);
-      const varDeclarator = tree.rootNode.descendantsOfType("variable_declarator")[0];
+      const var_declarator = tree.rootNode.descendantsOfType("variable_declarator")[0];
 
-      const result = JAVASCRIPT_METADATA_EXTRACTORS.extract_type_from_annotation(varDeclarator, TEST_FILE);
+      const result = JAVASCRIPT_METADATA_EXTRACTORS.extract_type_from_annotation(var_declarator, TEST_FILE);
 
       expect(result).toBeUndefined();
     });
@@ -493,9 +493,9 @@ describe("JavaScript Metadata Extractors", () => {
         }
       `;
       const tree = parser.parse(code);
-      const funcDecl = tree.rootNode.descendantsOfType("function_declaration")[0];
+      const func_decl = tree.rootNode.descendantsOfType("function_declaration")[0];
 
-      const result = JAVASCRIPT_METADATA_EXTRACTORS.extract_type_from_annotation(funcDecl, TEST_FILE);
+      const result = JAVASCRIPT_METADATA_EXTRACTORS.extract_type_from_annotation(func_decl, TEST_FILE);
 
       expect(result).toBeDefined();
       expect(result?.type_name).toBe("string");
@@ -507,9 +507,9 @@ describe("JavaScript Metadata Extractors", () => {
         const maybeString = undefined;
       `;
       const tree = parser.parse(code);
-      const varDeclarator = tree.rootNode.descendantsOfType("variable_declarator")[0];
+      const var_declarator = tree.rootNode.descendantsOfType("variable_declarator")[0];
 
-      const result = JAVASCRIPT_METADATA_EXTRACTORS.extract_type_from_annotation(varDeclarator, TEST_FILE);
+      const result = JAVASCRIPT_METADATA_EXTRACTORS.extract_type_from_annotation(var_declarator, TEST_FILE);
 
       expect(result).toBeDefined();
       expect(result?.is_nullable).toBe(true);
@@ -519,16 +519,16 @@ describe("JavaScript Metadata Extractors", () => {
       const code = "obj.prop[\"key\"].nested";
       const tree = parser.parse(code);
       // Get the outermost expression which contains the full chain
-      const exprStatement = tree.rootNode.child(0);
-      const memberExpr = exprStatement?.child(0);
+      const expr_statement = tree.rootNode.child(0);
+      const member_expr = expr_statement?.child(0);
 
-      if (memberExpr) {
-        const result = JAVASCRIPT_METADATA_EXTRACTORS.extract_property_chain(memberExpr);
+      if (member_expr) {
+        const result = JAVASCRIPT_METADATA_EXTRACTORS.extract_property_chain(member_expr);
         expect(result).toEqual(["obj", "prop", "key", "nested"]);
       } else {
         // Fallback if AST structure is different
-        const firstMemberExpr = tree.rootNode.descendantsOfType("member_expression")[0];
-        const result = JAVASCRIPT_METADATA_EXTRACTORS.extract_property_chain(firstMemberExpr);
+        const first_member_expr = tree.rootNode.descendantsOfType("member_expression")[0];
+        const result = JAVASCRIPT_METADATA_EXTRACTORS.extract_property_chain(first_member_expr);
         expect(result).toBeDefined();
         expect(result).toContain("nested");
       }
@@ -537,11 +537,11 @@ describe("JavaScript Metadata Extractors", () => {
     it("should handle nested optional chaining with method calls", () => {
       const code = "obj?.method()?.prop?.another()";
       const tree = parser.parse(code);
-      const callExpr = tree.rootNode.descendantsOfType("call_expression")[0];
+      const call_expr = tree.rootNode.descendantsOfType("call_expression")[0];
 
       // Get the outer call expression
-      const outerCall = tree.rootNode.descendantsOfType("call_expression")[1] || callExpr;
-      const result = JAVASCRIPT_METADATA_EXTRACTORS.extract_property_chain(outerCall);
+      const outer_call = tree.rootNode.descendantsOfType("call_expression")[1] || call_expr;
+      const result = JAVASCRIPT_METADATA_EXTRACTORS.extract_property_chain(outer_call);
 
       expect(result).toBeDefined();
       expect(result?.length).toBeGreaterThan(0);
@@ -550,9 +550,9 @@ describe("JavaScript Metadata Extractors", () => {
     it("should handle constructor in return statement", () => {
       const code = "function create() { return new MyClass(); }";
       const tree = parser.parse(code);
-      const newExpr = tree.rootNode.descendantsOfType("new_expression")[0];
+      const new_expr = tree.rootNode.descendantsOfType("new_expression")[0];
 
-      const result = JAVASCRIPT_METADATA_EXTRACTORS.extract_construct_target(newExpr, TEST_FILE);
+      const result = JAVASCRIPT_METADATA_EXTRACTORS.extract_construct_target(new_expr, TEST_FILE);
 
       expect(result).toBeUndefined(); // Not assigned to a variable
     });
@@ -560,9 +560,9 @@ describe("JavaScript Metadata Extractors", () => {
     it("should handle deeply nested constructor", () => {
       const code = "const result = someFn(anotherFn(new MyClass()));";
       const tree = parser.parse(code);
-      const newExpr = tree.rootNode.descendantsOfType("new_expression")[0];
+      const new_expr = tree.rootNode.descendantsOfType("new_expression")[0];
 
-      const result = JAVASCRIPT_METADATA_EXTRACTORS.extract_construct_target(newExpr, TEST_FILE);
+      const result = JAVASCRIPT_METADATA_EXTRACTORS.extract_construct_target(new_expr, TEST_FILE);
 
       expect(result).toBeDefined();
       expect(result?.start_column).toBe(7); // position of 'result'
@@ -573,9 +573,9 @@ describe("JavaScript Metadata Extractors", () => {
   prop: new MyClass()
 };`;
       const tree = parser.parse(code);
-      const newExpr = tree.rootNode.descendantsOfType("new_expression")[0];
+      const new_expr = tree.rootNode.descendantsOfType("new_expression")[0];
 
-      const result = JAVASCRIPT_METADATA_EXTRACTORS.extract_construct_target(newExpr, TEST_FILE);
+      const result = JAVASCRIPT_METADATA_EXTRACTORS.extract_construct_target(new_expr, TEST_FILE);
 
       expect(result).toBeDefined();
       expect(result?.start_line).toBe(1);
@@ -597,9 +597,9 @@ describe("TypeScript Metadata Extractors", () => {
     it("should extract type identifier from TypeScript annotation", () => {
       const code = "const x: MyType = {};";
       const tree = parser.parse(code);
-      const varDeclarator = tree.rootNode.descendantsOfType("variable_declarator")[0];
+      const var_declarator = tree.rootNode.descendantsOfType("variable_declarator")[0];
 
-      const result = JAVASCRIPT_METADATA_EXTRACTORS.extract_type_from_annotation(varDeclarator, TEST_FILE);
+      const result = JAVASCRIPT_METADATA_EXTRACTORS.extract_type_from_annotation(var_declarator, TEST_FILE);
 
       expect(result).toBeDefined();
       expect(result?.type_name).toBe("MyType");
@@ -609,9 +609,9 @@ describe("TypeScript Metadata Extractors", () => {
     it("should extract predefined types", () => {
       const code = "const str: string = \"\";";
       const tree = parser.parse(code);
-      const varDeclarator = tree.rootNode.descendantsOfType("variable_declarator")[0];
+      const var_declarator = tree.rootNode.descendantsOfType("variable_declarator")[0];
 
-      const result = JAVASCRIPT_METADATA_EXTRACTORS.extract_type_from_annotation(varDeclarator, TEST_FILE);
+      const result = JAVASCRIPT_METADATA_EXTRACTORS.extract_type_from_annotation(var_declarator, TEST_FILE);
 
       expect(result).toBeDefined();
       expect(result?.type_name).toBe("string");
@@ -621,9 +621,9 @@ describe("TypeScript Metadata Extractors", () => {
     it("should extract generic types", () => {
       const code = "const arr: Array<string> = [];";
       const tree = parser.parse(code);
-      const varDeclarator = tree.rootNode.descendantsOfType("variable_declarator")[0];
+      const var_declarator = tree.rootNode.descendantsOfType("variable_declarator")[0];
 
-      const result = JAVASCRIPT_METADATA_EXTRACTORS.extract_type_from_annotation(varDeclarator, TEST_FILE);
+      const result = JAVASCRIPT_METADATA_EXTRACTORS.extract_type_from_annotation(var_declarator, TEST_FILE);
 
       expect(result).toBeDefined();
       expect(result?.type_name).toBe("Array<string>");
@@ -633,9 +633,9 @@ describe("TypeScript Metadata Extractors", () => {
     it("should handle union types", () => {
       const code = "const val: string | number = 5;";
       const tree = parser.parse(code);
-      const varDeclarator = tree.rootNode.descendantsOfType("variable_declarator")[0];
+      const var_declarator = tree.rootNode.descendantsOfType("variable_declarator")[0];
 
-      const result = JAVASCRIPT_METADATA_EXTRACTORS.extract_type_from_annotation(varDeclarator, TEST_FILE);
+      const result = JAVASCRIPT_METADATA_EXTRACTORS.extract_type_from_annotation(var_declarator, TEST_FILE);
 
       expect(result).toBeDefined();
       expect(result?.type_name).toBe("string | number");
@@ -644,9 +644,9 @@ describe("TypeScript Metadata Extractors", () => {
     it("should handle intersection types", () => {
       const code = "const val: TypeA & TypeB = {};";
       const tree = parser.parse(code);
-      const varDeclarator = tree.rootNode.descendantsOfType("variable_declarator")[0];
+      const var_declarator = tree.rootNode.descendantsOfType("variable_declarator")[0];
 
-      const result = JAVASCRIPT_METADATA_EXTRACTORS.extract_type_from_annotation(varDeclarator, TEST_FILE);
+      const result = JAVASCRIPT_METADATA_EXTRACTORS.extract_type_from_annotation(var_declarator, TEST_FILE);
 
       expect(result).toBeDefined();
       expect(result?.type_name).toBe("TypeA & TypeB");
@@ -655,9 +655,9 @@ describe("TypeScript Metadata Extractors", () => {
     it("should handle tuple types", () => {
       const code = "const tuple: [string, number] = [\"a\", 1];";
       const tree = parser.parse(code);
-      const varDeclarator = tree.rootNode.descendantsOfType("variable_declarator")[0];
+      const var_declarator = tree.rootNode.descendantsOfType("variable_declarator")[0];
 
-      const result = JAVASCRIPT_METADATA_EXTRACTORS.extract_type_from_annotation(varDeclarator, TEST_FILE);
+      const result = JAVASCRIPT_METADATA_EXTRACTORS.extract_type_from_annotation(var_declarator, TEST_FILE);
 
       expect(result).toBeDefined();
       expect(result?.type_name).toBe("[string, number]");
@@ -666,9 +666,9 @@ describe("TypeScript Metadata Extractors", () => {
     it("should handle function types", () => {
       const code = "const fn: (x: number) => string = (x) => String(x);";
       const tree = parser.parse(code);
-      const varDeclarator = tree.rootNode.descendantsOfType("variable_declarator")[0];
+      const var_declarator = tree.rootNode.descendantsOfType("variable_declarator")[0];
 
-      const result = JAVASCRIPT_METADATA_EXTRACTORS.extract_type_from_annotation(varDeclarator, TEST_FILE);
+      const result = JAVASCRIPT_METADATA_EXTRACTORS.extract_type_from_annotation(var_declarator, TEST_FILE);
 
       expect(result).toBeDefined();
       expect(result?.type_name).toBe("(x: number) => string");
@@ -677,9 +677,9 @@ describe("TypeScript Metadata Extractors", () => {
     it("should handle nullable TypeScript types", () => {
       const code = "const val: string | null = null;";
       const tree = parser.parse(code);
-      const varDeclarator = tree.rootNode.descendantsOfType("variable_declarator")[0];
+      const var_declarator = tree.rootNode.descendantsOfType("variable_declarator")[0];
 
-      const result = JAVASCRIPT_METADATA_EXTRACTORS.extract_type_from_annotation(varDeclarator, TEST_FILE);
+      const result = JAVASCRIPT_METADATA_EXTRACTORS.extract_type_from_annotation(var_declarator, TEST_FILE);
 
       expect(result).toBeDefined();
       expect(result?.is_nullable).toBe(true);
@@ -688,9 +688,9 @@ describe("TypeScript Metadata Extractors", () => {
     it("should handle undefined in TypeScript union", () => {
       const code = "const val: string | undefined = undefined;";
       const tree = parser.parse(code);
-      const varDeclarator = tree.rootNode.descendantsOfType("variable_declarator")[0];
+      const var_declarator = tree.rootNode.descendantsOfType("variable_declarator")[0];
 
-      const result = JAVASCRIPT_METADATA_EXTRACTORS.extract_type_from_annotation(varDeclarator, TEST_FILE);
+      const result = JAVASCRIPT_METADATA_EXTRACTORS.extract_type_from_annotation(var_declarator, TEST_FILE);
 
       expect(result).toBeDefined();
       expect(result?.is_nullable).toBe(true);
@@ -701,10 +701,10 @@ describe("TypeScript Metadata Extractors", () => {
     it("should extract type arguments from TypeScript generics", () => {
       const code = "const map: Map<string, number> = new Map();";
       const tree = parser.parse(code);
-      const genericType = tree.rootNode.descendantsOfType("generic_type")[0];
+      const generic_type = tree.rootNode.descendantsOfType("generic_type")[0];
 
-      if (genericType) {
-        const result = JAVASCRIPT_METADATA_EXTRACTORS.extract_type_arguments(genericType);
+      if (generic_type) {
+        const result = JAVASCRIPT_METADATA_EXTRACTORS.extract_type_arguments(generic_type);
 
         expect(result).toEqual(["string", "number"]);
       }
@@ -713,10 +713,10 @@ describe("TypeScript Metadata Extractors", () => {
     it("should extract single type argument", () => {
       const code = "const arr: Array<string> = [];";
       const tree = parser.parse(code);
-      const genericType = tree.rootNode.descendantsOfType("generic_type")[0];
+      const generic_type = tree.rootNode.descendantsOfType("generic_type")[0];
 
-      if (genericType) {
-        const result = JAVASCRIPT_METADATA_EXTRACTORS.extract_type_arguments(genericType);
+      if (generic_type) {
+        const result = JAVASCRIPT_METADATA_EXTRACTORS.extract_type_arguments(generic_type);
 
         expect(result).toEqual(["string"]);
       }
@@ -725,10 +725,10 @@ describe("TypeScript Metadata Extractors", () => {
     it("should handle nested generic types", () => {
       const code = "const nested: Promise<Array<string>> = Promise.resolve([]);";
       const tree = parser.parse(code);
-      const genericType = tree.rootNode.descendantsOfType("generic_type")[0];
+      const generic_type = tree.rootNode.descendantsOfType("generic_type")[0];
 
-      if (genericType) {
-        const result = JAVASCRIPT_METADATA_EXTRACTORS.extract_type_arguments(genericType);
+      if (generic_type) {
+        const result = JAVASCRIPT_METADATA_EXTRACTORS.extract_type_arguments(generic_type);
 
         expect(result).toBeDefined();
         expect(result?.length).toBeGreaterThan(0);
@@ -738,10 +738,10 @@ describe("TypeScript Metadata Extractors", () => {
     it("should return undefined for non-generic types", () => {
       const code = "const x: string = \"test\";";
       const tree = parser.parse(code);
-      const typeAnnotation = tree.rootNode.descendantsOfType("type_annotation")[0];
+      const type_annotation = tree.rootNode.descendantsOfType("type_annotation")[0];
 
-      if (typeAnnotation) {
-        const result = JAVASCRIPT_METADATA_EXTRACTORS.extract_type_arguments(typeAnnotation);
+      if (type_annotation) {
+        const result = JAVASCRIPT_METADATA_EXTRACTORS.extract_type_arguments(type_annotation);
 
         expect(result).toBeUndefined();
       }
@@ -752,9 +752,9 @@ describe("TypeScript Metadata Extractors", () => {
     it("should return true for method calls", () => {
       const code = "obj.method()";
       const tree = parser.parse(code);
-      const callExpr = tree.rootNode.descendantsOfType("call_expression")[0];
+      const call_expr = tree.rootNode.descendantsOfType("call_expression")[0];
 
-      const result = JAVASCRIPT_METADATA_EXTRACTORS.is_method_call(callExpr);
+      const result = JAVASCRIPT_METADATA_EXTRACTORS.is_method_call(call_expr);
 
       expect(result).toBe(true);
     });
@@ -762,9 +762,9 @@ describe("TypeScript Metadata Extractors", () => {
     it("should return false for function calls", () => {
       const code = "func()";
       const tree = parser.parse(code);
-      const callExpr = tree.rootNode.descendantsOfType("call_expression")[0];
+      const call_expr = tree.rootNode.descendantsOfType("call_expression")[0];
 
-      const result = JAVASCRIPT_METADATA_EXTRACTORS.is_method_call(callExpr);
+      const result = JAVASCRIPT_METADATA_EXTRACTORS.is_method_call(call_expr);
 
       expect(result).toBe(false);
     });
@@ -772,9 +772,9 @@ describe("TypeScript Metadata Extractors", () => {
     it("should return true for chained method calls", () => {
       const code = "obj.nested.method()";
       const tree = parser.parse(code);
-      const callExpr = tree.rootNode.descendantsOfType("call_expression")[0];
+      const call_expr = tree.rootNode.descendantsOfType("call_expression")[0];
 
-      const result = JAVASCRIPT_METADATA_EXTRACTORS.is_method_call(callExpr);
+      const result = JAVASCRIPT_METADATA_EXTRACTORS.is_method_call(call_expr);
 
       expect(result).toBe(true);
     });
@@ -782,9 +782,9 @@ describe("TypeScript Metadata Extractors", () => {
     it("should return true for method calls on 'this'", () => {
       const code = "this.method()";
       const tree = parser.parse(code);
-      const callExpr = tree.rootNode.descendantsOfType("call_expression")[0];
+      const call_expr = tree.rootNode.descendantsOfType("call_expression")[0];
 
-      const result = JAVASCRIPT_METADATA_EXTRACTORS.is_method_call(callExpr);
+      const result = JAVASCRIPT_METADATA_EXTRACTORS.is_method_call(call_expr);
 
       expect(result).toBe(true);
     });
@@ -804,9 +804,9 @@ describe("TypeScript Metadata Extractors", () => {
     it("should extract method name from method call", () => {
       const code = "obj.method()";
       const tree = parser.parse(code);
-      const callExpr = tree.rootNode.descendantsOfType("call_expression")[0];
+      const call_expr = tree.rootNode.descendantsOfType("call_expression")[0];
 
-      const result = JAVASCRIPT_METADATA_EXTRACTORS.extract_call_name(callExpr);
+      const result = JAVASCRIPT_METADATA_EXTRACTORS.extract_call_name(call_expr);
 
       expect(result).toBe("method");
     });
@@ -814,9 +814,9 @@ describe("TypeScript Metadata Extractors", () => {
     it("should extract function name from function call", () => {
       const code = "func()";
       const tree = parser.parse(code);
-      const callExpr = tree.rootNode.descendantsOfType("call_expression")[0];
+      const call_expr = tree.rootNode.descendantsOfType("call_expression")[0];
 
-      const result = JAVASCRIPT_METADATA_EXTRACTORS.extract_call_name(callExpr);
+      const result = JAVASCRIPT_METADATA_EXTRACTORS.extract_call_name(call_expr);
 
       expect(result).toBe("func");
     });
@@ -824,9 +824,9 @@ describe("TypeScript Metadata Extractors", () => {
     it("should extract method name from chained call", () => {
       const code = "obj.nested.method()";
       const tree = parser.parse(code);
-      const callExpr = tree.rootNode.descendantsOfType("call_expression")[0];
+      const call_expr = tree.rootNode.descendantsOfType("call_expression")[0];
 
-      const result = JAVASCRIPT_METADATA_EXTRACTORS.extract_call_name(callExpr);
+      const result = JAVASCRIPT_METADATA_EXTRACTORS.extract_call_name(call_expr);
 
       expect(result).toBe("method");
     });
@@ -834,9 +834,9 @@ describe("TypeScript Metadata Extractors", () => {
     it("should extract method name from 'this' call", () => {
       const code = "this.method()";
       const tree = parser.parse(code);
-      const callExpr = tree.rootNode.descendantsOfType("call_expression")[0];
+      const call_expr = tree.rootNode.descendantsOfType("call_expression")[0];
 
-      const result = JAVASCRIPT_METADATA_EXTRACTORS.extract_call_name(callExpr);
+      const result = JAVASCRIPT_METADATA_EXTRACTORS.extract_call_name(call_expr);
 
       expect(result).toBe("method");
     });
@@ -854,9 +854,9 @@ describe("TypeScript Metadata Extractors", () => {
     it("should extract name from constructor call", () => {
       const code = "new Array()";
       const tree = parser.parse(code);
-      const newExpr = tree.rootNode.descendantsOfType("new_expression")[0];
+      const new_expr = tree.rootNode.descendantsOfType("new_expression")[0];
 
-      const result = JAVASCRIPT_METADATA_EXTRACTORS.extract_call_name(newExpr);
+      const result = JAVASCRIPT_METADATA_EXTRACTORS.extract_call_name(new_expr);
 
       // new_expression is not a call_expression, so should return undefined
       expect(result).toBeUndefined();

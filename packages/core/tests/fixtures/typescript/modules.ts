@@ -14,7 +14,7 @@ export type NumberArray = number[];
 
 // Interface export
 export interface Config {
-  apiUrl: string;
+  api_url: string;
   timeout: number;
   retries?: number;
 }
@@ -28,9 +28,9 @@ export type Result<T> = {
 
 // Enum export
 export enum Status {
-  Active = "ACTIVE",
-  Inactive = "INACTIVE",
-  Pending = "PENDING",
+  ACTIVE = "ACTIVE",
+  INACTIVE = "INACTIVE",
+  PENDING = "PENDING",
 }
 
 // Namespace
@@ -40,7 +40,7 @@ export namespace Utils {
   }
 
   export interface Options {
-    caseSensitive: boolean;
+    case_sensitive: boolean;
   }
 
   export const VERSION = "1.0.0";
@@ -48,7 +48,7 @@ export namespace Utils {
 
 // Module declaration
 declare module "custom-module" {
-  export function customFunction(): void;
+  export function custom_function(): void;
   export interface CustomType {
     prop: string;
   }
@@ -57,7 +57,7 @@ declare module "custom-module" {
 // Global augmentation
 declare global {
   interface Window {
-    customProperty: string;
+    custom_property: string;
   }
 }
 

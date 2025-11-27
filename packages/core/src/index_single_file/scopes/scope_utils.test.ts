@@ -12,15 +12,15 @@ import type { CaptureNode } from "../semantic_index";
 import { find_body_scope_for_definition, find_enclosing_function_scope, find_root_scope } from "./scope_utils";
 
 describe("find_body_scope_for_definition", () => {
-  const mockLocation = (startLine: number, startColumn: number, endLine: number, endColumn: number): Location => ({
+  const mock_location = (start_line: number, start_column: number, end_line: number, end_column: number): Location => ({
     file_path: "test.ts" as any,
-    start_line: startLine,
-    start_column: startColumn,
-    end_line: endLine,
-    end_column: endColumn,
+    start_line: start_line,
+    start_column: start_column,
+    end_line: end_line,
+    end_column: end_column,
   });
 
-  const mockScope = (
+  const mock_scope = (
     type: "function" | "method" | "constructor",
     name: SymbolName,
     location: Location,
@@ -34,7 +34,7 @@ describe("find_body_scope_for_definition", () => {
     child_ids: [],
   });
 
-  const mockCapture = (location: Location): CaptureNode => ({
+  const mock_capture = (location: Location): CaptureNode => ({
     entity: "function",
     category: "definition" as any,
     text: "test_function",
@@ -43,232 +43,232 @@ describe("find_body_scope_for_definition", () => {
   });
 
   it("should find body scope for simple function", () => {
-    const defLocation = mockLocation(10, 0, 10, 20);
-    const scopeLocation = mockLocation(10, 15, 15, 1); // Scope starts after function definition
-    const scopeId = "function:test.ts:10:15:15:1" as ScopeId;
-    const scope = mockScope("function", "test_function" as SymbolName, scopeLocation, scopeId);
+    const def_location = mock_location(10, 0, 10, 20);
+    const scope_location = mock_location(10, 15, 15, 1); // Scope starts after function definition
+    const scope_id = "function:test.ts:10:15:15:1" as ScopeId;
+    const scope = mock_scope("function", "test_function" as SymbolName, scope_location, scope_id);
 
-    const scopes = new Map<ScopeId, LexicalScope>([[scopeId, scope]]);
-    const capture = mockCapture(defLocation);
+    const scopes = new Map<ScopeId, LexicalScope>([[scope_id, scope]]);
+    const capture = mock_capture(def_location);
 
     const result = find_body_scope_for_definition(
       capture,
       scopes,
       "test_function" as SymbolName,
-      defLocation,
+      def_location,
     );
 
-    expect(result).toBe(scopeId);
+    expect(result).toBe(scope_id);
   });
 
   it("should find body scope for method", () => {
-    const defLocation = mockLocation(20, 2, 20, 15);
-    const scopeLocation = mockLocation(20, 10, 25, 3); // Method scope starts after method definition
-    const scopeId = "method:test.ts:20:10:25:3" as ScopeId;
-    const scope = mockScope("method", "test_method" as SymbolName, scopeLocation, scopeId);
+    const def_location = mock_location(20, 2, 20, 15);
+    const scope_location = mock_location(20, 10, 25, 3); // Method scope starts after method definition
+    const scope_id = "method:test.ts:20:10:25:3" as ScopeId;
+    const scope = mock_scope("method", "test_method" as SymbolName, scope_location, scope_id);
 
-    const scopes = new Map<ScopeId, LexicalScope>([[scopeId, scope]]);
-    const capture = mockCapture(defLocation);
+    const scopes = new Map<ScopeId, LexicalScope>([[scope_id, scope]]);
+    const capture = mock_capture(def_location);
 
     const result = find_body_scope_for_definition(
       capture,
       scopes,
       "test_method" as SymbolName,
-      defLocation,
+      def_location,
     );
 
-    expect(result).toBe(scopeId);
+    expect(result).toBe(scope_id);
   });
 
   it("should find body scope for constructor", () => {
-    const defLocation = mockLocation(30, 2, 30, 15);
-    const scopeLocation = mockLocation(30, 12, 35, 3); // Constructor scope starts after constructor definition
-    const scopeId = "constructor:test.ts:30:12:35:3" as ScopeId;
-    const scope = mockScope("constructor", "constructor" as SymbolName, scopeLocation, scopeId);
+    const def_location = mock_location(30, 2, 30, 15);
+    const scope_location = mock_location(30, 12, 35, 3); // Constructor scope starts after constructor definition
+    const scope_id = "constructor:test.ts:30:12:35:3" as ScopeId;
+    const scope = mock_scope("constructor", "constructor" as SymbolName, scope_location, scope_id);
 
-    const scopes = new Map<ScopeId, LexicalScope>([[scopeId, scope]]);
-    const capture = mockCapture(defLocation);
+    const scopes = new Map<ScopeId, LexicalScope>([[scope_id, scope]]);
+    const capture = mock_capture(def_location);
 
     const result = find_body_scope_for_definition(
       capture,
       scopes,
       "constructor" as SymbolName,
-      defLocation,
+      def_location,
     );
 
-    expect(result).toBe(scopeId);
+    expect(result).toBe(scope_id);
   });
 
   it("should find body scope for anonymous function by location", () => {
-    const defLocation = mockLocation(40, 0, 40, 10);
-    const scopeLocation = mockLocation(40, 8, 45, 1); // Anonymous function scope
-    const scopeId = "function:test.ts:40:8:45:1" as ScopeId;
-    const scope = mockScope("function", "" as SymbolName, scopeLocation, scopeId); // Empty name for anonymous
+    const def_location = mock_location(40, 0, 40, 10);
+    const scope_location = mock_location(40, 8, 45, 1); // Anonymous function scope
+    const scope_id = "function:test.ts:40:8:45:1" as ScopeId;
+    const scope = mock_scope("function", "" as SymbolName, scope_location, scope_id); // Empty name for anonymous
 
-    const scopes = new Map<ScopeId, LexicalScope>([[scopeId, scope]]);
-    const capture = mockCapture(defLocation);
+    const scopes = new Map<ScopeId, LexicalScope>([[scope_id, scope]]);
+    const capture = mock_capture(def_location);
 
     const result = find_body_scope_for_definition(
       capture,
       scopes,
       "" as SymbolName, // Anonymous function has empty name
-      defLocation,
+      def_location,
     );
 
-    expect(result).toBe(scopeId);
+    expect(result).toBe(scope_id);
   });
 
   it("should find closest scope when multiple functions have same name", () => {
-    const defLocation = mockLocation(50, 0, 50, 15);
+    const def_location = mock_location(50, 0, 50, 15);
 
     // Two functions with same name at different locations
-    const closerScopeLocation = mockLocation(50, 12, 55, 1); // Closer to definition
-    const fartherScopeLocation = mockLocation(60, 0, 65, 1); // Farther from definition
+    const closer_scope_location = mock_location(50, 12, 55, 1); // Closer to definition
+    const farther_scope_location = mock_location(60, 0, 65, 1); // Farther from definition
 
-    const closerScopeId = "function:test.ts:50:12:55:1" as ScopeId;
-    const fartherScopeId = "function:test.ts:60:0:65:1" as ScopeId;
+    const closer_scope_id = "function:test.ts:50:12:55:1" as ScopeId;
+    const farther_scope_id = "function:test.ts:60:0:65:1" as ScopeId;
 
-    const closerScope = mockScope("function", "helper" as SymbolName, closerScopeLocation, closerScopeId);
-    const fartherScope = mockScope("function", "helper" as SymbolName, fartherScopeLocation, fartherScopeId);
+    const closer_scope = mock_scope("function", "helper" as SymbolName, closer_scope_location, closer_scope_id);
+    const farther_scope = mock_scope("function", "helper" as SymbolName, farther_scope_location, farther_scope_id);
 
     const scopes = new Map<ScopeId, LexicalScope>([
-      [closerScopeId, closerScope],
-      [fartherScopeId, fartherScope],
+      [closer_scope_id, closer_scope],
+      [farther_scope_id, farther_scope],
     ]);
-    const capture = mockCapture(defLocation);
+    const capture = mock_capture(def_location);
 
     const result = find_body_scope_for_definition(
       capture,
       scopes,
       "helper" as SymbolName,
-      defLocation,
+      def_location,
     );
 
-    expect(result).toBe(closerScopeId); // Should pick the closer one
+    expect(result).toBe(closer_scope_id); // Should pick the closer one
   });
 
   it("should throw error when no scope matches", () => {
-    const defLocation = mockLocation(70, 0, 70, 15);
+    const def_location = mock_location(70, 0, 70, 15);
     // Create a scope that starts BEFORE the definition (invalid case)
-    const scopeLocation = mockLocation(60, 0, 65, 1); // Scope starts before definition
-    const scopeId = "function:test.ts:60:0:65:1" as ScopeId;
-    const scope = mockScope("function", "different_function" as SymbolName, scopeLocation, scopeId);
+    const scope_location = mock_location(60, 0, 65, 1); // Scope starts before definition
+    const scope_id = "function:test.ts:60:0:65:1" as ScopeId;
+    const scope = mock_scope("function", "different_function" as SymbolName, scope_location, scope_id);
 
-    const scopes = new Map<ScopeId, LexicalScope>([[scopeId, scope]]);
-    const capture = mockCapture(defLocation);
+    const scopes = new Map<ScopeId, LexicalScope>([[scope_id, scope]]);
+    const capture = mock_capture(def_location);
 
     expect(() => {
       find_body_scope_for_definition(
         capture,
         scopes,
         "missing_function" as SymbolName,
-        defLocation,
+        def_location,
       );
     }).toThrow("No body scope found for missing_function");
   });
 
   it("should ignore non-callable scopes", () => {
-    const defLocation = mockLocation(90, 0, 90, 15);
-    const funcScopeLocation = mockLocation(90, 12, 95, 1);
-    const classScopeLocation = mockLocation(100, 0, 110, 1);
+    const def_location = mock_location(90, 0, 90, 15);
+    const func_scope_location = mock_location(90, 12, 95, 1);
+    const class_scope_location = mock_location(100, 0, 110, 1);
 
-    const funcScopeId = "function:test.ts:90:12:95:1" as ScopeId;
-    const classScopeId = "class:test.ts:100:0:110:1" as ScopeId;
+    const func_scope_id = "function:test.ts:90:12:95:1" as ScopeId;
+    const class_scope_id = "class:test.ts:100:0:110:1" as ScopeId;
 
-    const funcScope = mockScope("function", "test_function" as SymbolName, funcScopeLocation, funcScopeId);
-    const classScope: LexicalScope = {
-      id: classScopeId,
+    const func_scope = mock_scope("function", "test_function" as SymbolName, func_scope_location, func_scope_id);
+    const class_scope: LexicalScope = {
+      id: class_scope_id,
       parent_id: null,
       name: "TestClass" as SymbolName,
       type: "class", // Non-callable scope type
-      location: classScopeLocation,
+      location: class_scope_location,
       child_ids: [],
     };
 
     const scopes = new Map<ScopeId, LexicalScope>([
-      [funcScopeId, funcScope],
-      [classScopeId, classScope],
+      [func_scope_id, func_scope],
+      [class_scope_id, class_scope],
     ]);
-    const capture = mockCapture(defLocation);
+    const capture = mock_capture(def_location);
 
     const result = find_body_scope_for_definition(
       capture,
       scopes,
       "test_function" as SymbolName,
-      defLocation,
+      def_location,
     );
 
-    expect(result).toBe(funcScopeId); // Should only consider function scope, not class scope
+    expect(result).toBe(func_scope_id); // Should only consider function scope, not class scope
   });
 
   it("should handle edge cases with permissive matching", () => {
-    const defLocation = mockLocation(100, 0, 100, 15);
-    const scopeLocation = mockLocation(95, 0, 105, 1); // Scope starts before definition (edge case)
-    const scopeId = "function:test.ts:95:0:105:1" as ScopeId;
-    const scope = mockScope("function", "helper_function" as SymbolName, scopeLocation, scopeId);
+    const def_location = mock_location(100, 0, 100, 15);
+    const scope_location = mock_location(95, 0, 105, 1); // Scope starts before definition (edge case)
+    const scope_id = "function:test.ts:95:0:105:1" as ScopeId;
+    const scope = mock_scope("function", "helper_function" as SymbolName, scope_location, scope_id);
 
-    const scopes = new Map<ScopeId, LexicalScope>([[scopeId, scope]]);
-    const capture = mockCapture(defLocation);
+    const scopes = new Map<ScopeId, LexicalScope>([[scope_id, scope]]);
+    const capture = mock_capture(def_location);
 
     const result = find_body_scope_for_definition(
       capture,
       scopes,
       "helper" as SymbolName, // Partial name match
-      defLocation,
+      def_location,
     );
 
-    expect(result).toBe(scopeId); // Should match with fuzzy name matching
+    expect(result).toBe(scope_id); // Should match with fuzzy name matching
   });
 
   it("should fall back to location-only matching when name incompatible", () => {
-    const defLocation = mockLocation(110, 0, 110, 15);
-    const scopeLocation = mockLocation(110, 10, 115, 1);
-    const scopeId = "function:test.ts:110:10:115:1" as ScopeId;
-    const scope = mockScope("function", "completely_different_name" as SymbolName, scopeLocation, scopeId);
+    const def_location = mock_location(110, 0, 110, 15);
+    const scope_location = mock_location(110, 10, 115, 1);
+    const scope_id = "function:test.ts:110:10:115:1" as ScopeId;
+    const scope = mock_scope("function", "completely_different_name" as SymbolName, scope_location, scope_id);
 
-    const scopes = new Map<ScopeId, LexicalScope>([[scopeId, scope]]);
-    const capture = mockCapture(defLocation);
+    const scopes = new Map<ScopeId, LexicalScope>([[scope_id, scope]]);
+    const capture = mock_capture(def_location);
 
     const result = find_body_scope_for_definition(
       capture,
       scopes,
       "target_function" as SymbolName,
-      defLocation,
+      def_location,
     );
 
-    expect(result).toBe(scopeId); // Should match based on location proximity alone
+    expect(result).toBe(scope_id); // Should match based on location proximity alone
   });
 
   it("should still throw when no reasonable scope found", () => {
-    const defLocation = mockLocation(120, 0, 120, 15);
-    const scopeLocation = mockLocation(200, 0, 205, 1); // Very far away
-    const scopeId = "function:test.ts:200:0:205:1" as ScopeId;
-    const scope = mockScope("function", "far_function" as SymbolName, scopeLocation, scopeId);
+    const def_location = mock_location(120, 0, 120, 15);
+    const scope_location = mock_location(200, 0, 205, 1); // Very far away
+    const scope_id = "function:test.ts:200:0:205:1" as ScopeId;
+    const scope = mock_scope("function", "far_function" as SymbolName, scope_location, scope_id);
 
-    const scopes = new Map<ScopeId, LexicalScope>([[scopeId, scope]]);
-    const capture = mockCapture(defLocation);
+    const scopes = new Map<ScopeId, LexicalScope>([[scope_id, scope]]);
+    const capture = mock_capture(def_location);
 
     expect(() => {
       find_body_scope_for_definition(
         capture,
         scopes,
         "target_function" as SymbolName,
-        defLocation,
+        def_location,
       );
     }).toThrow("No body scope found for target_function");
   });
 });
 
 describe("find_enclosing_function_scope", () => {
-  const mockLocation = (startLine: number, startColumn: number, endLine: number, endColumn: number): Location => ({
+  const mock_location = (start_line: number, start_column: number, end_line: number, end_column: number): Location => ({
     file_path: "test.ts" as any,
-    start_line: startLine,
-    start_column: startColumn,
-    end_line: endLine,
-    end_column: endColumn,
+    start_line: start_line,
+    start_column: start_column,
+    end_line: end_line,
+    end_column: end_column,
   });
 
-  const mockScope = (
+  const mock_scope = (
     type: LexicalScope["type"],
     name: SymbolName,
     location: Location,
@@ -285,183 +285,183 @@ describe("find_enclosing_function_scope", () => {
 
   it("should find enclosing function for call in block scope", () => {
     // Create scope tree: module > function > block
-    const moduleId = "module:test.ts:0:0:100:0" as ScopeId;
-    const functionId = "function:test.ts:10:0:20:0" as ScopeId;
-    const blockId = "block:test.ts:12:0:18:0" as ScopeId;
+    const module_id = "module:test.ts:0:0:100:0" as ScopeId;
+    const function_id = "function:test.ts:10:0:20:0" as ScopeId;
+    const block_id = "block:test.ts:12:0:18:0" as ScopeId;
 
-    const moduleScope = mockScope("module", "" as SymbolName, mockLocation(0, 0, 100, 0), moduleId);
-    const functionScope = mockScope("function", "outer" as SymbolName, mockLocation(10, 0, 20, 0), functionId, moduleId);
-    const blockScope = mockScope("block", "" as SymbolName, mockLocation(12, 0, 18, 0), blockId, functionId);
+    const module_scope = mock_scope("module", "" as SymbolName, mock_location(0, 0, 100, 0), module_id);
+    const function_scope = mock_scope("function", "outer" as SymbolName, mock_location(10, 0, 20, 0), function_id, module_id);
+    const block_scope = mock_scope("block", "" as SymbolName, mock_location(12, 0, 18, 0), block_id, function_id);
 
     const scopes = new Map<ScopeId, LexicalScope>([
-      [moduleId, moduleScope],
-      [functionId, functionScope],
-      [blockId, blockScope],
+      [module_id, module_scope],
+      [function_id, function_scope],
+      [block_id, block_scope],
     ]);
 
-    const result = find_enclosing_function_scope(blockId, scopes);
-    expect(result).toBe(functionId);
+    const result = find_enclosing_function_scope(block_id, scopes);
+    expect(result).toBe(function_id);
   });
 
   it("should return same scope for call directly in function", () => {
     // Call in function scope (not nested deeper)
-    const moduleId = "module:test.ts:0:0:100:0" as ScopeId;
-    const functionId = "function:test.ts:10:0:20:0" as ScopeId;
+    const module_id = "module:test.ts:0:0:100:0" as ScopeId;
+    const function_id = "function:test.ts:10:0:20:0" as ScopeId;
 
-    const moduleScope = mockScope("module", "" as SymbolName, mockLocation(0, 0, 100, 0), moduleId);
-    const functionScope = mockScope("function", "myFunc" as SymbolName, mockLocation(10, 0, 20, 0), functionId, moduleId);
+    const module_scope = mock_scope("module", "" as SymbolName, mock_location(0, 0, 100, 0), module_id);
+    const function_scope = mock_scope("function", "myFunc" as SymbolName, mock_location(10, 0, 20, 0), function_id, module_id);
 
     const scopes = new Map<ScopeId, LexicalScope>([
-      [moduleId, moduleScope],
-      [functionId, functionScope],
+      [module_id, module_scope],
+      [function_id, function_scope],
     ]);
 
-    const result = find_enclosing_function_scope(functionId, scopes);
-    expect(result).toBe(functionId);
+    const result = find_enclosing_function_scope(function_id, scopes);
+    expect(result).toBe(function_id);
   });
 
   it("should return module scope for top-level call", () => {
     // Call in module scope
-    const moduleId = "module:test.ts:0:0:100:0" as ScopeId;
-    const moduleScope = mockScope("module", "" as SymbolName, mockLocation(0, 0, 100, 0), moduleId);
+    const module_id = "module:test.ts:0:0:100:0" as ScopeId;
+    const module_scope = mock_scope("module", "" as SymbolName, mock_location(0, 0, 100, 0), module_id);
 
     const scopes = new Map<ScopeId, LexicalScope>([
-      [moduleId, moduleScope],
+      [module_id, module_scope],
     ]);
 
-    const result = find_enclosing_function_scope(moduleId, scopes);
-    expect(result).toBe(moduleId);
+    const result = find_enclosing_function_scope(module_id, scopes);
+    expect(result).toBe(module_id);
   });
 
   it("should stop at first function scope", () => {
     // Scope tree: module > outer_func > inner_func > block
-    const moduleId = "module:test.ts:0:0:100:0" as ScopeId;
-    const outerFuncId = "function:test.ts:10:0:50:0" as ScopeId;
-    const innerFuncId = "function:test.ts:20:0:30:0" as ScopeId;
-    const blockId = "block:test.ts:22:0:28:0" as ScopeId;
+    const module_id = "module:test.ts:0:0:100:0" as ScopeId;
+    const outer_func_id = "function:test.ts:10:0:50:0" as ScopeId;
+    const inner_func_id = "function:test.ts:20:0:30:0" as ScopeId;
+    const block_id = "block:test.ts:22:0:28:0" as ScopeId;
 
-    const moduleScope = mockScope("module", "" as SymbolName, mockLocation(0, 0, 100, 0), moduleId);
-    const outerFuncScope = mockScope("function", "outer" as SymbolName, mockLocation(10, 0, 50, 0), outerFuncId, moduleId);
-    const innerFuncScope = mockScope("function", "inner" as SymbolName, mockLocation(20, 0, 30, 0), innerFuncId, outerFuncId);
-    const blockScope = mockScope("block", "" as SymbolName, mockLocation(22, 0, 28, 0), blockId, innerFuncId);
+    const module_scope = mock_scope("module", "" as SymbolName, mock_location(0, 0, 100, 0), module_id);
+    const outer_func_scope = mock_scope("function", "outer" as SymbolName, mock_location(10, 0, 50, 0), outer_func_id, module_id);
+    const inner_func_scope = mock_scope("function", "inner" as SymbolName, mock_location(20, 0, 30, 0), inner_func_id, outer_func_id);
+    const block_scope = mock_scope("block", "" as SymbolName, mock_location(22, 0, 28, 0), block_id, inner_func_id);
 
     const scopes = new Map<ScopeId, LexicalScope>([
-      [moduleId, moduleScope],
-      [outerFuncId, outerFuncScope],
-      [innerFuncId, innerFuncScope],
-      [blockId, blockScope],
+      [module_id, module_scope],
+      [outer_func_id, outer_func_scope],
+      [inner_func_id, inner_func_scope],
+      [block_id, block_scope],
     ]);
 
-    const result = find_enclosing_function_scope(blockId, scopes);
-    expect(result).toBe(innerFuncId); // Should return inner_func, NOT outer_func
+    const result = find_enclosing_function_scope(block_id, scopes);
+    expect(result).toBe(inner_func_id); // Should return inner_func, NOT outer_func
   });
 
   it("should handle method scope", () => {
     // Scope tree: module > class > method > block
-    const moduleId = "module:test.ts:0:0:100:0" as ScopeId;
-    const classId = "class:test.ts:10:0:50:0" as ScopeId;
-    const methodId = "method:test.ts:20:0:30:0" as ScopeId;
-    const blockId = "block:test.ts:22:0:28:0" as ScopeId;
+    const module_id = "module:test.ts:0:0:100:0" as ScopeId;
+    const class_id = "class:test.ts:10:0:50:0" as ScopeId;
+    const method_id = "method:test.ts:20:0:30:0" as ScopeId;
+    const block_id = "block:test.ts:22:0:28:0" as ScopeId;
 
-    const moduleScope = mockScope("module", "" as SymbolName, mockLocation(0, 0, 100, 0), moduleId);
-    const classScope = mockScope("class", "MyClass" as SymbolName, mockLocation(10, 0, 50, 0), classId, moduleId);
-    const methodScope = mockScope("method", "myMethod" as SymbolName, mockLocation(20, 0, 30, 0), methodId, classId);
-    const blockScope = mockScope("block", "" as SymbolName, mockLocation(22, 0, 28, 0), blockId, methodId);
+    const module_scope = mock_scope("module", "" as SymbolName, mock_location(0, 0, 100, 0), module_id);
+    const class_scope = mock_scope("class", "MyClass" as SymbolName, mock_location(10, 0, 50, 0), class_id, module_id);
+    const method_scope = mock_scope("method", "myMethod" as SymbolName, mock_location(20, 0, 30, 0), method_id, class_id);
+    const block_scope = mock_scope("block", "" as SymbolName, mock_location(22, 0, 28, 0), block_id, method_id);
 
     const scopes = new Map<ScopeId, LexicalScope>([
-      [moduleId, moduleScope],
-      [classId, classScope],
-      [methodId, methodScope],
-      [blockId, blockScope],
+      [module_id, module_scope],
+      [class_id, class_scope],
+      [method_id, method_scope],
+      [block_id, block_scope],
     ]);
 
-    const result = find_enclosing_function_scope(blockId, scopes);
-    expect(result).toBe(methodId);
+    const result = find_enclosing_function_scope(block_id, scopes);
+    expect(result).toBe(method_id);
   });
 
   it("should handle constructor scope", () => {
     // Scope tree: module > class > constructor > block
-    const moduleId = "module:test.ts:0:0:100:0" as ScopeId;
-    const classId = "class:test.ts:10:0:50:0" as ScopeId;
-    const constructorId = "constructor:test.ts:20:0:30:0" as ScopeId;
-    const blockId = "block:test.ts:22:0:28:0" as ScopeId;
+    const module_id = "module:test.ts:0:0:100:0" as ScopeId;
+    const class_id = "class:test.ts:10:0:50:0" as ScopeId;
+    const constructor_id = "constructor:test.ts:20:0:30:0" as ScopeId;
+    const block_id = "block:test.ts:22:0:28:0" as ScopeId;
 
-    const moduleScope = mockScope("module", "" as SymbolName, mockLocation(0, 0, 100, 0), moduleId);
-    const classScope = mockScope("class", "MyClass" as SymbolName, mockLocation(10, 0, 50, 0), classId, moduleId);
-    const constructorScope = mockScope("constructor", "constructor" as SymbolName, mockLocation(20, 0, 30, 0), constructorId, classId);
-    const blockScope = mockScope("block", "" as SymbolName, mockLocation(22, 0, 28, 0), blockId, constructorId);
+    const module_scope = mock_scope("module", "" as SymbolName, mock_location(0, 0, 100, 0), module_id);
+    const class_scope = mock_scope("class", "MyClass" as SymbolName, mock_location(10, 0, 50, 0), class_id, module_id);
+    const constructor_scope = mock_scope("constructor", "constructor" as SymbolName, mock_location(20, 0, 30, 0), constructor_id, class_id);
+    const block_scope = mock_scope("block", "" as SymbolName, mock_location(22, 0, 28, 0), block_id, constructor_id);
 
     const scopes = new Map<ScopeId, LexicalScope>([
-      [moduleId, moduleScope],
-      [classId, classScope],
-      [constructorId, constructorScope],
-      [blockId, blockScope],
+      [module_id, module_scope],
+      [class_id, class_scope],
+      [constructor_id, constructor_scope],
+      [block_id, block_scope],
     ]);
 
-    const result = find_enclosing_function_scope(blockId, scopes);
-    expect(result).toBe(constructorId);
+    const result = find_enclosing_function_scope(block_id, scopes);
+    expect(result).toBe(constructor_id);
   });
 
   it("should throw error when scope not found", () => {
     const scopes = new Map<ScopeId, LexicalScope>();
-    const nonExistentId = "invalid:scope:id" as ScopeId;
+    const non_existent_id = "invalid:scope:id" as ScopeId;
 
     expect(() => {
-      find_enclosing_function_scope(nonExistentId, scopes);
+      find_enclosing_function_scope(non_existent_id, scopes);
     }).toThrow("Scope invalid:scope:id not found");
   });
 
   it("should throw error when cycle detected in scope tree", () => {
     // Create a malformed scope tree with cycles
-    const scope1Id = "scope1:test.ts:10:0:20:0" as ScopeId;
-    const scope2Id = "scope2:test.ts:20:0:30:0" as ScopeId;
+    const scope1_id = "scope1:test.ts:10:0:20:0" as ScopeId;
+    const scope2_id = "scope2:test.ts:20:0:30:0" as ScopeId;
 
-    const scope1 = mockScope("block", "" as SymbolName, mockLocation(10, 0, 20, 0), scope1Id, scope2Id);
-    const scope2 = mockScope("block", "" as SymbolName, mockLocation(20, 0, 30, 0), scope2Id, scope1Id);
+    const scope1 = mock_scope("block", "" as SymbolName, mock_location(10, 0, 20, 0), scope1_id, scope2_id);
+    const scope2 = mock_scope("block", "" as SymbolName, mock_location(20, 0, 30, 0), scope2_id, scope1_id);
 
     const scopes = new Map<ScopeId, LexicalScope>([
-      [scope1Id, scope1],
-      [scope2Id, scope2],
+      [scope1_id, scope1],
+      [scope2_id, scope2],
     ]);
 
     expect(() => {
-      find_enclosing_function_scope(scope1Id, scopes);
+      find_enclosing_function_scope(scope1_id, scopes);
     }).toThrow("Cycle detected in scope tree");
   });
 
   it("should throw error when no root scope found in malformed tree", () => {
     // Create a scope tree where all scopes have parents (no root)
     // but avoid cycles by making scope1 parent of scope2, and scope2 parent of scope3
-    const scope1Id = "scope1:test.ts:10:0:20:0" as ScopeId;
-    const scope2Id = "scope2:test.ts:20:0:30:0" as ScopeId;
-    const scope3Id = "scope3:test.ts:30:0:40:0" as ScopeId;
+    const scope1_id = "scope1:test.ts:10:0:20:0" as ScopeId;
+    const scope2_id = "scope2:test.ts:20:0:30:0" as ScopeId;
+    const scope3_id = "scope3:test.ts:30:0:40:0" as ScopeId;
 
-    const scope1 = mockScope("block", "" as SymbolName, mockLocation(10, 0, 20, 0), scope1Id, scope2Id);
-    const scope2 = mockScope("block", "" as SymbolName, mockLocation(20, 0, 30, 0), scope2Id, scope3Id);
-    const scope3 = mockScope("block", "" as SymbolName, mockLocation(30, 0, 40, 0), scope3Id, scope1Id); // This creates the issue - no root
+    const scope1 = mock_scope("block", "" as SymbolName, mock_location(10, 0, 20, 0), scope1_id, scope2_id);
+    const scope2 = mock_scope("block", "" as SymbolName, mock_location(20, 0, 30, 0), scope2_id, scope3_id);
+    const scope3 = mock_scope("block", "" as SymbolName, mock_location(30, 0, 40, 0), scope3_id, scope1_id); // This creates the issue - no root
 
     const scopes = new Map<ScopeId, LexicalScope>([
-      [scope1Id, scope1],
-      [scope2Id, scope2],
-      [scope3Id, scope3],
+      [scope1_id, scope1],
+      [scope2_id, scope2],
+      [scope3_id, scope3],
     ]);
 
     expect(() => {
-      find_enclosing_function_scope(scope1Id, scopes);
+      find_enclosing_function_scope(scope1_id, scopes);
     }).toThrow("Cycle detected in scope tree");
   });
 });
 
 describe("find_root_scope", () => {
-  const mockLocation = (startLine: number, startColumn: number, endLine: number, endColumn: number): Location => ({
+  const mock_location = (start_line: number, start_column: number, end_line: number, end_column: number): Location => ({
     file_path: "test.ts" as any,
-    start_line: startLine,
-    start_column: startColumn,
-    end_line: endLine,
-    end_column: endColumn,
+    start_line: start_line,
+    start_column: start_column,
+    end_line: end_line,
+    end_column: end_column,
   });
 
-  const mockScope = (
+  const mock_scope = (
     type: LexicalScope["type"],
     name: SymbolName,
     location: Location,
@@ -477,32 +477,32 @@ describe("find_root_scope", () => {
   });
 
   it("should find and return root scope", () => {
-    const moduleId = "module:test.ts:0:0:100:0" as ScopeId;
-    const functionId = "function:test.ts:10:0:20:0" as ScopeId;
+    const module_id = "module:test.ts:0:0:100:0" as ScopeId;
+    const function_id = "function:test.ts:10:0:20:0" as ScopeId;
 
-    const moduleScope = mockScope("module", "" as SymbolName, mockLocation(0, 0, 100, 0), moduleId);
-    const functionScope = mockScope("function", "test" as SymbolName, mockLocation(10, 0, 20, 0), functionId, moduleId);
+    const module_scope = mock_scope("module", "" as SymbolName, mock_location(0, 0, 100, 0), module_id);
+    const function_scope = mock_scope("function", "test" as SymbolName, mock_location(10, 0, 20, 0), function_id, module_id);
 
     const scopes = new Map<ScopeId, LexicalScope>([
-      [moduleId, moduleScope],
-      [functionId, functionScope],
+      [module_id, module_scope],
+      [function_id, function_scope],
     ]);
 
     const result = find_root_scope(scopes);
-    expect(result).toBe(moduleId);
+    expect(result).toBe(module_id);
   });
 
   it("should throw error when no root scope exists", () => {
     // Create scopes where all have non-null parent_id (malformed scope tree)
-    const scope1Id = "scope1:test.ts:10:0:20:0" as ScopeId;
-    const scope2Id = "scope2:test.ts:20:0:30:0" as ScopeId;
+    const scope1_id = "scope1:test.ts:10:0:20:0" as ScopeId;
+    const scope2_id = "scope2:test.ts:20:0:30:0" as ScopeId;
 
-    const scope1 = mockScope("block", "" as SymbolName, mockLocation(10, 0, 20, 0), scope1Id, scope2Id);
-    const scope2 = mockScope("block", "" as SymbolName, mockLocation(20, 0, 30, 0), scope2Id, scope1Id);
+    const scope1 = mock_scope("block", "" as SymbolName, mock_location(10, 0, 20, 0), scope1_id, scope2_id);
+    const scope2 = mock_scope("block", "" as SymbolName, mock_location(20, 0, 30, 0), scope2_id, scope1_id);
 
     const scopes = new Map<ScopeId, LexicalScope>([
-      [scope1Id, scope1],
-      [scope2Id, scope2],
+      [scope1_id, scope1],
+      [scope2_id, scope2],
     ]);
 
     expect(() => {

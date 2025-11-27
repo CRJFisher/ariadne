@@ -7,11 +7,11 @@
 class Box<T> {
   constructor(private value: T) {}
 
-  getValue(): T {
+  get_value(): T {
     return this.value;
   }
 
-  setValue(value: T): void {
+  set_value(value: T): void {
     this.value = value;
   }
 }
@@ -23,11 +23,11 @@ class Pair<K, V> {
     public value: V
   ) {}
 
-  getKey(): K {
+  get_key(): K {
     return this.key;
   }
 
-  getValue(): V {
+  get_value(): V {
     return this.value;
   }
 }
@@ -40,11 +40,11 @@ class Collection<T extends { id: number }> {
     this.items.push(item);
   }
 
-  findById(id: number): T | undefined {
+  find_by_id(id: number): T | undefined {
     return this.items.find((item) => item.id === id);
   }
 
-  getAll(): T[] {
+  get_all(): T[] {
     return [...this.items];
   }
 }

@@ -27,7 +27,7 @@ type Shape =
   | { kind: "square"; size: number }
   | { kind: "rectangle"; width: number; height: number };
 
-function getArea(shape: Shape): number {
+function get_area(shape: Shape): number {
   switch (shape.kind) {
     case "circle":
       return Math.PI * shape.radius ** 2;
@@ -42,4 +42,4 @@ function getArea(shape: Shape): number {
 type Maybe<T> = T | null | undefined;
 type Optional<T> = T | undefined;
 
-export { StringOrNumber, Status, ID, Result, Shape, Maybe, Optional, getArea };
+export { StringOrNumber, Status, ID, Result, Shape, Maybe, Optional, get_area };

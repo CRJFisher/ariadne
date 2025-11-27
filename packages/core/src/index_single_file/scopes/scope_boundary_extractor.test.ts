@@ -77,7 +77,7 @@ describe("scope_boundary_extractor infrastructure", () => {
     describe("extract_class_boundaries", () => {
       it("should extract class boundaries with name and body fields", () => {
         const mock_node = {
-          childForFieldName: (field: string) => {
+          child_for_field_name: (field: string) => {
             if (field === "name") {
               return {
                 startPosition: { row: 0, column: 6 },
@@ -114,7 +114,7 @@ describe("scope_boundary_extractor infrastructure", () => {
 
       it("should throw error when class has no name field", () => {
         const mock_node = {
-          childForFieldName: () => null,
+          child_for_field_name: () => null,
           type: "class_declaration",
         } as unknown as Parser.SyntaxNode;
 
@@ -125,7 +125,7 @@ describe("scope_boundary_extractor infrastructure", () => {
 
       it("should throw error when class has no body field", () => {
         const mock_node = {
-          childForFieldName: (field: string) => {
+          child_for_field_name: (field: string) => {
             if (field === "name") {
               return {} as Parser.SyntaxNode;
             }
@@ -143,7 +143,7 @@ describe("scope_boundary_extractor infrastructure", () => {
     describe("extract_function_boundaries", () => {
       it("should extract function boundaries with name, parameters, and body", () => {
         const mock_node = {
-          childForFieldName: (field: string) => {
+          child_for_field_name: (field: string) => {
             if (field === "name") {
               return {
                 startPosition: { row: 1, column: 9 },
@@ -186,7 +186,7 @@ describe("scope_boundary_extractor infrastructure", () => {
 
       it("should handle function without name (anonymous function)", () => {
         const mock_node = {
-          childForFieldName: (field: string) => {
+          child_for_field_name: (field: string) => {
             if (field === "name") {
               return null;
             }
@@ -219,7 +219,7 @@ describe("scope_boundary_extractor infrastructure", () => {
 
       it("should throw error when function has no parameters field", () => {
         const mock_node = {
-          childForFieldName: (field: string) => {
+          child_for_field_name: (field: string) => {
             if (field === "name") {
               return {} as Parser.SyntaxNode;
             }
@@ -237,7 +237,7 @@ describe("scope_boundary_extractor infrastructure", () => {
     describe("extract_constructor_boundaries", () => {
       it("should use same logic as function boundaries", () => {
         const mock_node = {
-          childForFieldName: (field: string) => {
+          child_for_field_name: (field: string) => {
             if (field === "name") {
               return {
                 startPosition: { row: 2, column: 2 },
@@ -304,7 +304,7 @@ describe("scope_boundary_extractor infrastructure", () => {
     describe("method boundaries", () => {
       it("should handle method scope type using function logic", () => {
         const mock_node = {
-          childForFieldName: (field: string) => {
+          child_for_field_name: (field: string) => {
             if (field === "name") {
               return {
                 startPosition: { row: 4, column: 2 },

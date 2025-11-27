@@ -6,7 +6,7 @@
 abstract class Animal {
   constructor(public name: string) {}
 
-  abstract makeSound(): string;
+  abstract make_sound(): string;
 
   move(distance: number = 0): void {
     console.log(`${this.name} moved ${distance} meters`);
@@ -18,7 +18,7 @@ class Dog extends Animal {
     super(name);
   }
 
-  makeSound(): string {
+  make_sound(): string {
     return "Woof!";
   }
 
@@ -28,7 +28,7 @@ class Dog extends Animal {
 }
 
 class Cat extends Animal {
-  makeSound(): string {
+  make_sound(): string {
     return "Meow!";
   }
 }

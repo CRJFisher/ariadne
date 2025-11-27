@@ -9,15 +9,15 @@ export class User {
     public email: string
   ) {}
 
-  getName(): string {
+  get_name(): string {
     return this.name;
   }
 
-  getEmail(): string {
+  get_email(): string {
     return this.email;
   }
 
-  updateName(newName: string): void {
-    this.name = newName;
+  update_name(new_name: string): void {
+    this.name = new_name;
   }
 }

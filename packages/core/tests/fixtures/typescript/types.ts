@@ -8,12 +8,12 @@ type ReadonlyUser = Readonly<User>;
 
 // Intersection type
 type Employee = {
-  employeeId: number;
+  employee_id: number;
   department: string;
 };
 
 type Manager = Employee & {
-  teamSize: number;
+  team_size: number;
   reports: Employee[];
 };
 
@@ -36,14 +36,14 @@ interface User {
 }
 
 // Function with type annotations
-function processUser(user: User): void {
+function process_user(user: User): void {
   console.log(user.name);
 }
 
 // Variable with type annotation
-const userName: string = "Alice";
-const userId: number = 123;
-const isActive: boolean = true;
+const user_name: string = "Alice";
+const user_id: number = 123;
+const is_active: boolean = true;
 
 // Array type annotations
 const numbers: number[] = [1, 2, 3];
@@ -63,9 +63,9 @@ const config: { port: number; host: string; secure?: boolean } = {
 const add: (a: number, b: number) => number = (a, b) => a + b;
 
 // Type assertions
-const someValue: unknown = "this is a string";
-const strLength1 = (someValue as string).length;
-const strLength2 = (<string>someValue).length;
+const some_value: unknown = "this is a string";
+const str_length1 = (some_value as string).length;
+const str_length2 = (<string>some_value).length;
 
 // typeof operator
 const original = { x: 10, y: 20 };

@@ -82,11 +82,11 @@ export const TYPESCRIPT_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
         let is_const = false;
         const parent = capture.node.parent; // variable_declarator
         if (parent && parent.parent) {
-          const lexicalDecl = parent.parent; // lexical_declaration
-          if (lexicalDecl.type === "lexical_declaration") {
+          const lexical_decl = parent.parent; // lexical_declaration
+          if (lexical_decl.type === "lexical_declaration") {
             // Check the first token for 'const'
-            const firstChild = lexicalDecl.firstChild;
-            if (firstChild && firstChild.type === "const") {
+            const first_child = lexical_decl.firstChild;
+            if (first_child && first_child.type === "const") {
               is_const = true;
             }
           }

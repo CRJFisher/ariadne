@@ -19,7 +19,7 @@ export type Person = {
 };
 
 export type Employee = {
-  employeeId: string;
+  employee_id: string;
   department: string;
   salary: number;
 };
@@ -28,8 +28,8 @@ export type PersonWithEmployeeInfo = Person & Employee;
 
 // Advanced intersection
 export type Timestamped = {
-  createdAt: Date;
-  updatedAt: Date;
+  created_at: Date;
+  updated_at: Date;
 };
 
 export type Identifiable = {
@@ -38,7 +38,7 @@ export type Identifiable = {
 
 export type AuditableEntity = Identifiable & Timestamped & {
   version: number;
-  lastModifiedBy: string;
+  last_modified_by: string;
 };
 
 // Generic type aliases
@@ -50,8 +50,8 @@ export type ApiResponse<T> = {
 };
 
 export type Repository<T> = {
-  findById(id: string): Promise<T | null>;
-  findAll(): Promise<T[]>;
+  find_by_id(id: string): Promise<T | null>;
+  find_all(): Promise<T[]>;
   create(entity: Omit<T, "id">): Promise<T>;
   update(id: string, updates: Partial<T>): Promise<T>;
   delete(id: string): Promise<boolean>;
@@ -157,29 +157,32 @@ export type EventEmitter<T extends Record<string, any[]>> = {
 
 // Usage example
 export type MyEvents = {
-  userCreated: [UserData];
-  userUpdated: [string, Partial<UserData>];
-  userDeleted: [string];
+  user_created: [UserData];
+  user_updated: [string, Partial<UserData>];
+  user_deleted: [string];
   error: [Error, string];
 };
 
 export type MyEventEmitter = EventEmitter<MyEvents>;
 
 // Brand types (nominal typing)
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export type UserId = string & { readonly __brand: unique symbol };
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export type Email = string & { readonly __brand: unique symbol };
+// eslint-disable-next-line @typescript-eslint/naming-convention
 export type Timestamp = number & { readonly __brand: unique symbol };
 
 // Type guards
-export function isString(value: unknown): value is string {
+export function is_string(value: unknown): value is string {
   return typeof value === "string";
 }
 
-export function isNumber(value: unknown): value is number {
+export function is_number(value: unknown): value is number {
   return typeof value === "number";
 }
 
-export function isUserData(value: unknown): value is UserData {
+export function is_user_data(value: unknown): value is UserData {
   return typeof value === "object" &&
     value !== null &&
     "id" in value &&
@@ -188,14 +191,14 @@ export function isUserData(value: unknown): value is UserData {
 }
 
 // Assertion functions
-export function assertIsString(value: unknown): asserts value is string {
+export function assert_is_string(value: unknown): asserts value is string {
   if (typeof value !== "string") {
     throw new Error("Expected string");
   }
 }
 
-export function assertIsUserData(value: unknown): asserts value is UserData {
-  if (!isUserData(value)) {
+export function assert_is_user_data(value: unknown): asserts value is UserData {
+  if (!is_user_data(value)) {
     throw new Error("Expected UserData");
   }
 }
@@ -203,8 +206,8 @@ export function assertIsUserData(value: unknown): asserts value is UserData {
 // Module augmentation example
 declare global {
   interface Window {
-    customProperty: string;
-    myApi: {
+    custom_property: string;
+    my_api: {
       version: string;
       methods: string[];
     };
@@ -212,7 +215,9 @@ declare global {
 
   namespace NodeJS {
     interface ProcessEnv {
+      // eslint-disable-next-line @typescript-eslint/naming-convention
       CUSTOM_VAR: string;
+      // eslint-disable-next-line @typescript-eslint/naming-convention
       DEBUG_MODE: string;
     }
   }
@@ -221,7 +226,7 @@ declare global {
 // Namespace with types
 export namespace Api {
   export type Config = {
-    baseUrl: string;
+    base_url: string;
     timeout: number;
     retries: number;
   };
@@ -242,8 +247,8 @@ export namespace Api {
 // Complex example combining multiple features
 export type DatabaseEntity = {
   id: string;
-  createdAt: Date;
-  updatedAt: Date;
+  created_at: Date;
+  updated_at: Date;
   version: number;
 };
 
@@ -270,5 +275,5 @@ export type CrudService<T extends DatabaseEntity> = {
 export type AsyncIterableTransformer<T, U> = {
   (source: AsyncIterable<T>): AsyncIterable<U>;
   parallel?: boolean;
-  batchSize?: number;
+  batch_size?: number;
 };

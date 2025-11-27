@@ -4,6 +4,7 @@
  */
 
 class Calculator {
+  // eslint-disable-next-line @typescript-eslint/naming-convention
   static readonly VERSION = "1.0.0";
   private history: number[] = [];
 
@@ -15,7 +16,7 @@ class Calculator {
   }
 
   // Instance method
-  getHistory(): number[] {
+  get_history(): number[] {
     return this.history;
   }
 

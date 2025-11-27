@@ -14,7 +14,7 @@ function pair<A, B>(first: A, second: B): [A, B] {
 }
 
 // Generic function with constraint
-function getProperty<T, K extends keyof T>(obj: T, key: K): T[K] {
+function get_property<T, K extends keyof T>(obj: T, key: K): T[K] {
   return obj[key];
 }
 
@@ -50,4 +50,4 @@ function filter<T>(arr: T[], predicate: (item: T) => boolean): T[] {
   return result;
 }
 
-export { identity, pair, getProperty, merge, first, last, map, filter };
+export { identity, pair, get_property, merge, first, last, map, filter };

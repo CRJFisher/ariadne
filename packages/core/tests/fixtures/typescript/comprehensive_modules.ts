@@ -54,14 +54,14 @@ export type ModuleConfig = {
   name: string;
   version: string;
   dependencies: string[];
-  devDependencies?: string[];
+  dev_dependencies?: string[];
 };
 
 export type ExportedFunction<T, R> = (input: T) => R;
 
 export type ExportedClass<T> = new (data: T) => T & {
   id: string;
-  createdAt: Date;
+  created_at: Date;
 };
 
 // Interface exports
@@ -72,9 +72,9 @@ export interface ModuleInterface {
 }
 
 export interface AsyncModuleInterface {
-  initializeAsync(): Promise<void>;
-  configureAsync(config: ModuleConfig): Promise<void>;
-  destroyAsync(): Promise<void>;
+  initialize_async(): Promise<void>;
+  configure_async(config: ModuleConfig): Promise<void>;
+  destroy_async(): Promise<void>;
 }
 
 // Class exports
@@ -94,11 +94,11 @@ export class ModuleManager implements ModuleInterface {
     console.log("ModuleManager destroyed");
   }
 
-  addModule(name: string, module: ModuleInterface): void {
+  add_module(name: string, module: ModuleInterface): void {
     this.modules.set(name, module);
   }
 
-  getModule(name: string): ModuleInterface | undefined {
+  get_module(name: string): ModuleInterface | undefined {
     return this.modules.get(name);
   }
 }
@@ -115,25 +115,25 @@ export abstract class BaseModule implements ModuleInterface {
 
   abstract destroy(): void;
 
-  protected getConfig(): ModuleConfig | undefined {
+  protected get_config(): ModuleConfig | undefined {
     return this.config;
   }
 }
 
 // Function exports
-export function createModule(config: ModuleConfig): ModuleInterface {
+export function create_module(config: ModuleConfig): ModuleInterface {
   return new ModuleManager();
 }
 
-export async function loadModuleAsync(name: string): Promise<ModuleInterface> {
+export async function load_module_async(name: string): Promise<ModuleInterface> {
   // Simulate async module loading
   await new Promise(resolve => setTimeout(resolve, 100));
-  return createModule({ name, version: "1.0.0", dependencies: [] });
+  return create_module({ name, version: "1.0.0", dependencies: [] });
 }
 
-export const moduleFactory = {
-  create: createModule,
-  loadAsync: loadModuleAsync,
+export const module_factory = {
+  create: create_module,
+  loadAsync: load_module_async,
 };
 
 // Variable exports
@@ -141,7 +141,7 @@ export const DEFAULT_CONFIG: ModuleConfig = {
   name: "default",
   version: "1.0.0",
   dependencies: [],
-  devDependencies: [],
+  dev_dependencies: [],
 };
 
 export const MODULE_CONSTANTS = {
@@ -152,18 +152,18 @@ export const MODULE_CONSTANTS = {
 
 // Enum exports
 export enum ModuleStatus {
-  Uninitialized = "uninitialized",
-  Initializing = "initializing",
-  Ready = "ready",
-  Error = "error",
-  Destroyed = "destroyed"
+  UNINITIALIZED = "uninitialized",
+  INITIALIZING = "initializing",
+  READY = "ready",
+  ERROR = "error",
+  DESTROYED = "destroyed"
 }
 
 export const enum Priority {
-  Low = 0,
-  Medium = 1,
-  High = 2,
-  Critical = 3
+  LOW = 0,
+  MEDIUM = 1,
+  HIGH = 2,
+  CRITICAL = 3
 }
 
 // Namespace exports
@@ -175,16 +175,16 @@ export namespace ModuleUtils {
     priority: Priority;
   }
 
-  export function getModuleInfo(module: ModuleInterface): ModuleInfo {
+  export function get_module_info(module: ModuleInterface): ModuleInfo {
     return {
       name: "unknown",
       version: "0.0.0",
-      status: ModuleStatus.Uninitialized,
-      priority: Priority.Medium,
+      status: ModuleStatus.UNINITIALIZED,
+      priority: Priority.MEDIUM,
     };
   }
 
-  export function validateConfig(config: ModuleConfig): boolean {
+  export function validate_config(config: ModuleConfig): boolean {
     return config.name.length > 0 && config.version.length > 0;
   }
 
@@ -195,11 +195,11 @@ export namespace ModuleUtils {
 
   // Nested namespace
   export namespace Validation {
-    export function isValidName(name: string): boolean {
+    export function is_valid_name(name: string): boolean {
       return /^[a-zA-Z][a-zA-Z0-9-_]*$/.test(name);
     }
 
-    export function isValidVersion(version: string): boolean {
+    export function is_valid_version(version: string): boolean {
       return /^\d+\.\d+\.\d+$/.test(version);
     }
 
@@ -211,13 +211,13 @@ export namespace ModuleUtils {
 }
 
 // Default export
-const defaultModule: ModuleInterface = new ModuleManager();
-export default defaultModule;
+const default_module: ModuleInterface = new ModuleManager();
+export default default_module;
 
 // Complex export patterns
 export type ModuleFactory<T extends ModuleInterface> = {
   create(config: ModuleConfig): T;
-  createAsync(config: ModuleConfig): Promise<T>;
+  create_async(config: ModuleConfig): Promise<T>;
   validate(module: T): boolean;
 };
 
@@ -240,7 +240,7 @@ export class GenericModuleManager<T extends ModuleInterface> {
     return this.modules.get(name);
   }
 
-  getAll(): T[] {
+  get_all(): T[] {
     return Array.from(this.modules.values());
   }
 }
@@ -253,11 +253,11 @@ export type ConditionalExport<T> = T extends string
   : DefaultModule;
 
 interface StringModule {
-  processString(str: string): string;
+  process_string(str: string): string;
 }
 
 interface NumberModule {
-  processNumber(num: number): number;
+  process_number(num: number): number;
 }
 
 interface DefaultModule {
@@ -267,7 +267,7 @@ interface DefaultModule {
 // Module augmentation
 declare module "./comprehensive_interfaces" {
   interface BasicInterface {
-    moduleSpecificProperty?: string;
+    module_specific_property?: string;
   }
 }
 
@@ -275,12 +275,12 @@ declare module "./comprehensive_interfaces" {
 declare global {
   namespace NodeJS {
     interface Global {
-      moduleRegistry: Map<string, ModuleInterface>;
+      module_registry: Map<string, ModuleInterface>;
     }
   }
 
   interface Window {
-    moduleSystem: {
+    module_system: {
       version: string;
       modules: ModuleInterface[];
     };
@@ -311,11 +311,11 @@ export type ModuleMiddleware<T extends ModuleInterface> = (
 
 export interface ModuleWithMiddleware<T extends ModuleInterface> extends ModuleInterface {
   use(middleware: ModuleMiddleware<T>): void;
-  removeMiddleware(middleware: ModuleMiddleware<T>): void;
+  remove_middleware(middleware: ModuleMiddleware<T>): void;
 }
 
 // Utility for creating module exports
-export function createExportBundle<T extends Record<string, any>>(exports: T) {
+export function create_export_bundle<T extends Record<string, any>>(exports: T) {
   return {
     ...exports,
     __moduleType: "bundle" as const,
@@ -324,9 +324,9 @@ export function createExportBundle<T extends Record<string, any>>(exports: T) {
 }
 
 // Export with computed property names
-const dynamicKey = "computedExport";
-export const dynamicExports = {
-  [dynamicKey]: "This is a computed export",
+const dynamic_key = "computedExport";
+export const dynamic_exports = {
+  [dynamic_key]: "This is a computed export",
   [`${dynamicKey}Function`]: () => "This is a computed function export",
 };
 

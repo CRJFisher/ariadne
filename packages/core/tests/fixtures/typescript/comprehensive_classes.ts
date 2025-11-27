@@ -16,24 +16,24 @@ export class Person {
     this.id = Math.random().toString(36);
   }
 
-  public getName(): string {
+  public get_name(): string {
     return this.name;
   }
 
-  private validateAge(age: number): boolean {
+  private validate_age(age: number): boolean {
     return age >= 0 && age <= 150;
   }
 
-  protected getAddress(): string {
+  protected get_address(): string {
     return this.address;
   }
 
-  public getAge(): number {
+  public get_age(): number {
     return this._age;
   }
 
-  public setAge(age: number): void {
-    if (this.validateAge(age)) {
+  public set_age(age: number): void {
+    if (this.validate_age(age)) {
       this._age = age;
     }
   }
@@ -43,23 +43,23 @@ export class Person {
 export class Employee {
   // Parameter properties combine declaration and assignment
   constructor(
-    public readonly employeeId: string,
+    public readonly employee_id: string,
     public name: string,
     private salary: number,
     protected department: string,
   ) {}
 
-  public getSalary(): number {
+  public get_salary(): number {
     return this.salary;
   }
 
-  public setSalary(newSalary: number): void {
-    if (newSalary > 0) {
-      this.salary = newSalary;
+  public set_salary(new_salary: number): void {
+    if (new_salary > 0) {
+      this.salary = new_salary;
     }
   }
 
-  protected getDepartment(): string {
+  protected get_department(): string {
     return this.department;
   }
 }
@@ -73,14 +73,14 @@ export abstract class Animal {
   }
 
   // Abstract method - must be implemented by subclasses
-  abstract makeSound(): string;
+  abstract make_sound(): string;
 
   // Concrete method
   public move(distance: number = 0): void {
     console.log(`${this.name} moved ${distance} meters`);
   }
 
-  protected getName(): string {
+  protected get_name(): string {
     return this.name;
   }
 }
@@ -94,11 +94,11 @@ export class Dog extends Animal {
     this.breed = breed;
   }
 
-  makeSound(): string {
+  make_sound(): string {
     return "Woof! Woof!";
   }
 
-  public getBreed(): string {
+  public get_breed(): string {
     return this.breed;
   }
 
@@ -113,11 +113,11 @@ export class Cat extends Animal {
     super(name);
   }
 
-  makeSound(): string {
+  make_sound(): string {
     return "Meow!";
   }
 
-  public isIndoor(): boolean {
+  public is_indoor(): boolean {
     return this.indoor;
   }
 }
@@ -141,7 +141,7 @@ export class Duck extends Animal implements Flyable, Swimmable {
     super(name);
   }
 
-  makeSound(): string {
+  make_sound(): string {
     return "Quack!";
   }
 
@@ -158,28 +158,29 @@ export class Duck extends Animal implements Flyable, Swimmable {
 
 // Static members
 export class MathUtils {
+  // eslint-disable-next-line @typescript-eslint/naming-convention
   public static readonly PI: number = 3.14159;
   private static instance: MathUtils;
 
   // Private constructor for singleton pattern
   private constructor() {}
 
-  public static getInstance(): MathUtils {
+  public static get_instance(): MathUtils {
     if (!MathUtils.instance) {
       MathUtils.instance = new MathUtils();
     }
     return MathUtils.instance;
   }
 
-  public static circleArea(radius: number): number {
+  public static circle_area(radius: number): number {
     return MathUtils.PI * radius * radius;
   }
 
-  public static circleCircumference(radius: number): number {
+  public static circle_circumference(radius: number): number {
     return 2 * MathUtils.PI * radius;
   }
 
-  public instanceMethod(): string {
+  public instance_method(): string {
     return "Instance method called";
   }
 }
@@ -192,11 +193,11 @@ export class GenericRepository<T extends { id: string }> {
     this.items.set(item.id, item);
   }
 
-  public findById(id: string): T | undefined {
+  public find_by_id(id: string): T | undefined {
     return this.items.get(id);
   }
 
-  public getAll(): T[] {
+  public get_all(): T[] {
     return Array.from(this.items.values());
   }
 
@@ -214,7 +215,7 @@ export class GenericRepository<T extends { id: string }> {
 
   // Generic method
   public transform<U>(transformer: (item: T) => U): U[] {
-    return this.getAll().map(transformer);
+    return this.get_all().map(transformer);
   }
 }
 
@@ -224,28 +225,28 @@ export function sealed(constructor: Function) {
   Object.seal(constructor.prototype);
 }
 
-export function logged(target: any, propertyName: string, descriptor: PropertyDescriptor) {
-  const originalMethod = descriptor.value;
+export function logged(target: any, property_name: string, descriptor: PropertyDescriptor) {
+  const original_method = descriptor.value;
   descriptor.value = function(...args: any[]) {
     console.log(`Calling ${propertyName} with args:`, args);
-    const result = originalMethod.apply(this, args);
+    const result = original_method.apply(this, args);
     console.log(`${propertyName} returned:`, result);
     return result;
   };
 }
 
-export function validate(target: any, propertyName: string) {
-  let value = target[propertyName];
+export function validate(target: any, property_name: string) {
+  let value = target[property_name];
 
   const getter = () => value;
-  const setter = (newValue: any) => {
-    if (newValue == null) {
+  const setter = (new_value: any) => {
+    if (new_value == null) {
       throw new Error(`${propertyName} cannot be null or undefined`);
     }
-    value = newValue;
+    value = new_value;
   };
 
-  Object.defineProperty(target, propertyName, {
+  Object.defineProperty(target, property_name, {
     get: getter,
     set: setter,
     enumerable: true,
@@ -257,19 +258,19 @@ export function validate(target: any, propertyName: string) {
 @sealed
 export class DecoratedClass {
   @validate
-  public validatedProperty: string;
+  public validated_property: string;
 
-  constructor(initialValue: string) {
-    this.validatedProperty = initialValue;
+  constructor(initial_value: string) {
+    this.validated_property = initial_value;
   }
 
   @logged
-  public decoratedMethod(input: string): string {
+  public decorated_method(input: string): string {
     return `Processed: ${input}`;
   }
 
   @logged
-  public async asyncMethod(delay: number): Promise<string> {
+  public async async_method(delay: number): Promise<string> {
     await new Promise(resolve => setTimeout(resolve, delay));
     return `Completed after ${delay}ms`;
   }
@@ -309,7 +310,7 @@ export namespace Geometry {
   export class Point {
     constructor(public x: number, public y: number) {}
 
-    public distanceTo(other: Point): number {
+    public distance_to(other: Point): number {
       const dx = this.x - other.x;
       const dy = this.y - other.y;
       return Math.sqrt(dx * dx + dy * dy);
@@ -332,19 +333,19 @@ export namespace Geometry {
 // Mixin pattern
 type Constructor<T = {}> = new (...args: any[]) => T;
 
-export function Timestamped<TBase extends Constructor>(Base: TBase) {
-  return class extends Base {
-    public createdAt: Date = new Date();
-    public updatedAt: Date = new Date();
+export function timestamped<TBase extends Constructor>(base_constructor: TBase) {
+  return class extends base_constructor {
+    public created_at: Date = new Date();
+    public updated_at: Date = new Date();
 
     public touch(): void {
-      this.updatedAt = new Date();
+      this.updated_at = new Date();
     }
   };
 }
 
-export function Serializable<TBase extends Constructor>(Base: TBase) {
-  return class extends Base {
+export function serializable<TBase extends Constructor>(base_constructor: TBase) {
+  return class extends base_constructor {
     public serialize(): string {
       return JSON.stringify(this);
     }
@@ -360,19 +361,19 @@ export class BaseUser {
   constructor(public name: string) {}
 }
 
-export class TimestampedUser extends Timestamped(BaseUser) {
+export class TimestampedUser extends timestamped(BaseUser) {
   constructor(name: string, public email: string) {
     super(name);
   }
 }
 
-export class SerializableUser extends Serializable(BaseUser) {
+export class SerializableUser extends serializable(BaseUser) {
   constructor(name: string, public age: number) {
     super(name);
   }
 }
 
-export class FullFeaturedUser extends Serializable(Timestamped(BaseUser)) {
+export class FullFeaturedUser extends serializable(timestamped(BaseUser)) {
   constructor(name: string, public role: string) {
     super(name);
   }

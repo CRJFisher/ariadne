@@ -23,7 +23,7 @@ describe("TypeScript Builder Configuration", () => {
   let parser: Parser;
 
   // Mock processing context
-  const mockContext: ProcessingContext = {
+  const mock_context: ProcessingContext = {
     captures: [],
     scopes: new Map(),
     scope_depths: new Map(),
@@ -39,23 +39,23 @@ describe("TypeScript Builder Configuration", () => {
   });
 
   // Helper function to get AST node from code
-  function getAstNode(code: string): SyntaxNode {
+  function get_ast_node(code: string): SyntaxNode {
     return parser.parse(code).rootNode;
   }
 
   // Helper function to find first node of specific type
-  function findNodeByType(node: SyntaxNode, type: string): SyntaxNode | null {
+  function find_node_by_type(node: SyntaxNode, type: string): SyntaxNode | null {
     if (node.type === type) return node;
 
     for (let i = 0; i < node.childCount; i++) {
-      const found = findNodeByType(node.child(i)!, type);
+      const found = find_node_by_type(node.child(i)!, type);
       if (found) return found;
     }
     return null;
   }
 
   // Helper to create a raw capture
-  function createRawCapture(
+  function create_raw_capture(
     name: string,
     node: SyntaxNode,
     text?: string
@@ -77,7 +77,7 @@ describe("TypeScript Builder Configuration", () => {
   }
 
   // Helper to build semantic index from code (for integration tests)
-  function buildIndexFromCode(code: string) {
+  function build_index_from_code(code: string) {
     const tree = parser.parse(code);
     const lines = code.split("\n");
     const parsed_file: ParsedFile = {
@@ -104,14 +104,14 @@ describe("TypeScript Builder Configuration", () => {
       );
 
       // Check that JavaScript mappings are included
-      const jsKeys = Array.from(JAVASCRIPT_BUILDER_CONFIG.keys());
-      for (const key of jsKeys) {
+      const js_keys = Array.from(JAVASCRIPT_BUILDER_CONFIG.keys());
+      for (const key of js_keys) {
         expect(TYPESCRIPT_BUILDER_CONFIG.has(key)).toBe(true);
       }
     });
 
     it("should contain TypeScript-specific capture handlers", () => {
-      const tsSpecificHandlers = [
+      const ts_specific_handlers = [
         "definition.interface",
         "definition.interface.method",
         "definition.interface.property",
@@ -124,7 +124,7 @@ describe("TypeScript Builder Configuration", () => {
         "decorator.property",
       ];
 
-      for (const handler of tsSpecificHandlers) {
+      for (const handler of ts_specific_handlers) {
         expect(TYPESCRIPT_BUILDER_CONFIG.has(handler)).toBe(true);
         const config = TYPESCRIPT_BUILDER_CONFIG.get(handler);
         expect(config).toBeDefined();
@@ -139,19 +139,19 @@ describe("TypeScript Builder Configuration", () => {
         name: string;
         age: number;
       }`;
-      const ast = getAstNode(code);
-      const interfaceNode = findNodeByType(ast, "interface_declaration");
-      const nameNode = interfaceNode?.childForFieldName?.("name");
+      const ast = get_ast_node(code);
+      const interface_node = find_node_by_type(ast, "interface_declaration");
+      const name_node = interface_node?.childForFieldName?.("name");
 
-      expect(interfaceNode).toBeTruthy();
-      expect(nameNode).toBeTruthy();
+      expect(interface_node).toBeTruthy();
+      expect(name_node).toBeTruthy();
 
-      const builder = new DefinitionBuilder(mockContext);
+      const builder = new DefinitionBuilder(mock_context);
       const handler = TYPESCRIPT_BUILDER_CONFIG.get("def.interface");
 
-      if (handler && nameNode) {
-        const capture = createRawCapture("def.interface", nameNode, "IUser");
-        handler.process(capture, builder, mockContext);
+      if (handler && name_node) {
+        const capture = create_raw_capture("def.interface", name_node, "IUser");
+        handler.process(capture, builder, mock_context);
 
         const result = builder.build();
         expect(result.interfaces.size).toBe(1);
@@ -165,12 +165,12 @@ describe("TypeScript Builder Configuration", () => {
       const code = `interface ICalculator {
         add(a: number, b: number): number;
       }`;
-      const ast = getAstNode(code);
-      const methodSigNode = findNodeByType(ast, "method_signature");
-      const methodNameNode = methodSigNode?.childForFieldName?.("name");
+      const ast = get_ast_node(code);
+      const method_sig_node = find_node_by_type(ast, "method_signature");
+      const method_name_node = method_sig_node?.childForFieldName?.("name");
 
-      expect(methodSigNode).toBeTruthy();
-      expect(methodNameNode).toBeTruthy();
+      expect(method_sig_node).toBeTruthy();
+      expect(method_name_node).toBeTruthy();
 
       // Would need to first add interface, then add method to it
       // This is a simplified test - in real usage the interface would already exist
@@ -180,12 +180,12 @@ describe("TypeScript Builder Configuration", () => {
       const code = `interface IConfig {
         readonly debug?: boolean;
       }`;
-      const ast = getAstNode(code);
-      const propSigNode = findNodeByType(ast, "property_signature");
-      const propNameNode = propSigNode?.childForFieldName?.("name");
+      const ast = get_ast_node(code);
+      const prop_sig_node = find_node_by_type(ast, "property_signature");
+      const prop_name_node = prop_sig_node?.childForFieldName?.("name");
 
-      expect(propSigNode).toBeTruthy();
-      expect(propNameNode).toBeTruthy();
+      expect(prop_sig_node).toBeTruthy();
+      expect(prop_name_node).toBeTruthy();
 
       // Would need to first add interface, then add property to it
       // This is a simplified test - in real usage the interface would already exist
@@ -195,49 +195,49 @@ describe("TypeScript Builder Configuration", () => {
   describe("Type alias handling", () => {
     it("should process type alias definitions", () => {
       const code = "type UserID = string | number;";
-      const ast = getAstNode(code);
-      const typeAliasNode = findNodeByType(ast, "type_alias_declaration");
-      const nameNode = typeAliasNode?.childForFieldName?.("name");
+      const ast = get_ast_node(code);
+      const type_alias_node = find_node_by_type(ast, "type_alias_declaration");
+      const name_node = type_alias_node?.childForFieldName?.("name");
 
-      expect(typeAliasNode).toBeTruthy();
-      expect(nameNode).toBeTruthy();
+      expect(type_alias_node).toBeTruthy();
+      expect(name_node).toBeTruthy();
 
-      const builder = new DefinitionBuilder(mockContext);
+      const builder = new DefinitionBuilder(mock_context);
       const handler = TYPESCRIPT_BUILDER_CONFIG.get("def.type_alias");
 
-      if (handler && nameNode) {
-        const capture = createRawCapture("def.type_alias", nameNode, "UserID");
-        handler.process(capture, builder, mockContext);
+      if (handler && name_node) {
+        const capture = create_raw_capture("def.type_alias", name_node, "UserID");
+        handler.process(capture, builder, mock_context);
 
         const result = builder.build();
         expect(result.types.size).toBe(1);
-        const typeAlias = Array.from(result.types.values())[0];
-        expect(typeAlias.kind).toBe("type_alias");
-        expect(typeAlias.name).toBe("UserID");
+        const type_alias = Array.from(result.types.values())[0];
+        expect(type_alias.kind).toBe("type_alias");
+        expect(type_alias.name).toBe("UserID");
       }
     });
 
     it("should process generic type aliases", () => {
       const code = "type Result<T, E> = { ok: T } | { error: E };";
-      const ast = getAstNode(code);
-      const typeAliasNode = findNodeByType(ast, "type_alias_declaration");
-      const nameNode = typeAliasNode?.childForFieldName?.("name");
+      const ast = get_ast_node(code);
+      const type_alias_node = find_node_by_type(ast, "type_alias_declaration");
+      const name_node = type_alias_node?.childForFieldName?.("name");
 
-      expect(typeAliasNode).toBeTruthy();
-      expect(nameNode).toBeTruthy();
+      expect(type_alias_node).toBeTruthy();
+      expect(name_node).toBeTruthy();
 
-      const builder = new DefinitionBuilder(mockContext);
+      const builder = new DefinitionBuilder(mock_context);
       const handler = TYPESCRIPT_BUILDER_CONFIG.get("def.type_alias");
 
-      if (handler && nameNode) {
-        const capture = createRawCapture("def.type_alias", nameNode, "Result");
-        handler.process(capture, builder, mockContext);
+      if (handler && name_node) {
+        const capture = create_raw_capture("def.type_alias", name_node, "Result");
+        handler.process(capture, builder, mock_context);
 
         const result = builder.build();
         expect(result.types.size).toBe(1);
-        const typeAlias = Array.from(result.types.values())[0];
-        expect(typeAlias.kind).toBe("type_alias");
-        expect(typeAlias.name).toBe("Result");
+        const type_alias = Array.from(result.types.values())[0];
+        expect(type_alias.kind).toBe("type_alias");
+        expect(type_alias.name).toBe("Result");
         // Type parameters would be extracted from the parent node
       }
     });
@@ -250,25 +250,25 @@ describe("TypeScript Builder Configuration", () => {
         Green = 1,
         Blue = 2
       }`;
-      const ast = getAstNode(code);
-      const enumNode = findNodeByType(ast, "enum_declaration");
-      const nameNode = enumNode?.childForFieldName?.("name");
+      const ast = get_ast_node(code);
+      const enum_node = find_node_by_type(ast, "enum_declaration");
+      const name_node = enum_node?.childForFieldName?.("name");
 
-      expect(enumNode).toBeTruthy();
-      expect(nameNode).toBeTruthy();
+      expect(enum_node).toBeTruthy();
+      expect(name_node).toBeTruthy();
 
-      const builder = new DefinitionBuilder(mockContext);
+      const builder = new DefinitionBuilder(mock_context);
       const handler = TYPESCRIPT_BUILDER_CONFIG.get("def.enum");
 
-      if (handler && nameNode) {
-        const capture = createRawCapture("def.enum", nameNode, "Color");
-        handler.process(capture, builder, mockContext);
+      if (handler && name_node) {
+        const capture = create_raw_capture("def.enum", name_node, "Color");
+        handler.process(capture, builder, mock_context);
 
         const result = builder.build();
         expect(result.enums.size).toBe(1);
-        const enumDef = Array.from(result.enums.values())[0];
-        expect(enumDef.kind).toBe("enum");
-        expect(enumDef.name).toBe("Color");
+        const enum_def = Array.from(result.enums.values())[0];
+        expect(enum_def.kind).toBe("enum");
+        expect(enum_def.name).toBe("Color");
       }
     });
 
@@ -277,24 +277,24 @@ describe("TypeScript Builder Configuration", () => {
         Active,
         Inactive
       }`;
-      const ast = getAstNode(code);
-      const enumNode = findNodeByType(ast, "enum_declaration");
-      const nameNode = enumNode?.childForFieldName?.("name");
+      const ast = get_ast_node(code);
+      const enum_node = find_node_by_type(ast, "enum_declaration");
+      const name_node = enum_node?.childForFieldName?.("name");
 
-      expect(enumNode).toBeTruthy();
-      expect(nameNode).toBeTruthy();
+      expect(enum_node).toBeTruthy();
+      expect(name_node).toBeTruthy();
 
-      const builder = new DefinitionBuilder(mockContext);
+      const builder = new DefinitionBuilder(mock_context);
       const handler = TYPESCRIPT_BUILDER_CONFIG.get("def.enum");
 
-      if (handler && nameNode) {
-        const capture = createRawCapture("def.enum", nameNode, "Status");
-        handler.process(capture, builder, mockContext);
+      if (handler && name_node) {
+        const capture = create_raw_capture("def.enum", name_node, "Status");
+        handler.process(capture, builder, mock_context);
 
         const result = builder.build();
         expect(result.enums.size).toBe(1);
-        const enumDef = Array.from(result.enums.values())[0];
-        expect(enumDef.kind).toBe("enum");
+        const enum_def = Array.from(result.enums.values())[0];
+        expect(enum_def.kind).toBe("enum");
         // is_const would be determined from parent node
       }
     });
@@ -305,25 +305,25 @@ describe("TypeScript Builder Configuration", () => {
       const code = `namespace Utils {
         export function log(msg: string): void {}
       }`;
-      const ast = getAstNode(code);
-      const namespaceNode = findNodeByType(ast, "internal_module");
-      const nameNode = namespaceNode?.childForFieldName?.("name");
+      const ast = get_ast_node(code);
+      const namespace_node = find_node_by_type(ast, "internal_module");
+      const name_node = namespace_node?.childForFieldName?.("name");
 
-      expect(namespaceNode).toBeTruthy();
-      expect(nameNode).toBeTruthy();
+      expect(namespace_node).toBeTruthy();
+      expect(name_node).toBeTruthy();
 
-      const builder = new DefinitionBuilder(mockContext);
+      const builder = new DefinitionBuilder(mock_context);
       const handler = TYPESCRIPT_BUILDER_CONFIG.get("def.namespace");
 
-      if (handler && nameNode) {
-        const capture = createRawCapture("def.namespace", nameNode, "Utils");
-        handler.process(capture, builder, mockContext);
+      if (handler && name_node) {
+        const capture = create_raw_capture("def.namespace", name_node, "Utils");
+        handler.process(capture, builder, mock_context);
 
         const result = builder.build();
         expect(result.namespaces.size).toBe(1);
-        const namespaceDef = Array.from(result.namespaces.values())[0];
-        expect(namespaceDef.kind).toBe("namespace");
-        expect(namespaceDef.name).toBe("Utils");
+        const namespace_def = Array.from(result.namespaces.values())[0];
+        expect(namespace_def.kind).toBe("namespace");
+        expect(namespace_def.name).toBe("Utils");
       }
     });
   });
@@ -333,25 +333,25 @@ describe("TypeScript Builder Configuration", () => {
       const code = `abstract class Shape {
         abstract area(): number;
       }`;
-      const ast = getAstNode(code);
-      const classNode = findNodeByType(ast, "abstract_class_declaration");
-      const nameNode = classNode?.childForFieldName?.("name");
+      const ast = get_ast_node(code);
+      const class_node = find_node_by_type(ast, "abstract_class_declaration");
+      const name_node = class_node?.childForFieldName?.("name");
 
-      expect(classNode).toBeTruthy();
-      expect(nameNode).toBeTruthy();
+      expect(class_node).toBeTruthy();
+      expect(name_node).toBeTruthy();
 
-      const builder = new DefinitionBuilder(mockContext);
+      const builder = new DefinitionBuilder(mock_context);
       const handler = TYPESCRIPT_BUILDER_CONFIG.get("def.class");
 
-      if (handler && nameNode) {
-        const capture = createRawCapture("def.class", nameNode, "Shape");
-        handler.process(capture, builder, mockContext);
+      if (handler && name_node) {
+        const capture = create_raw_capture("def.class", name_node, "Shape");
+        handler.process(capture, builder, mock_context);
 
         const result = builder.build();
         expect(result.classes.size).toBe(1);
-        const classDef = Array.from(result.classes.values())[0];
-        expect(classDef.kind).toBe("class");
-        expect(classDef.name).toBe("Shape");
+        const class_def = Array.from(result.classes.values())[0];
+        expect(class_def.kind).toBe("class");
+        expect(class_def.name).toBe("Shape");
         // abstract flag would be set based on parent node type
       }
     });
@@ -360,25 +360,25 @@ describe("TypeScript Builder Configuration", () => {
       const code = `class User implements IUser, ISerializable {
         name: string;
       }`;
-      const ast = getAstNode(code);
-      const classNode = findNodeByType(ast, "class_declaration");
-      const nameNode = classNode?.childForFieldName?.("name");
+      const ast = get_ast_node(code);
+      const class_node = find_node_by_type(ast, "class_declaration");
+      const name_node = class_node?.childForFieldName?.("name");
 
-      expect(classNode).toBeTruthy();
-      expect(nameNode).toBeTruthy();
+      expect(class_node).toBeTruthy();
+      expect(name_node).toBeTruthy();
 
-      const builder = new DefinitionBuilder(mockContext);
+      const builder = new DefinitionBuilder(mock_context);
       const handler = TYPESCRIPT_BUILDER_CONFIG.get("def.class");
 
-      if (handler && nameNode) {
-        const capture = createRawCapture("def.class", nameNode, "User");
-        handler.process(capture, builder, mockContext);
+      if (handler && name_node) {
+        const capture = create_raw_capture("def.class", name_node, "User");
+        handler.process(capture, builder, mock_context);
 
         const result = builder.build();
         expect(result.classes.size).toBe(1);
-        const classDef = Array.from(result.classes.values())[0];
-        expect(classDef.kind).toBe("class");
-        expect(classDef.name).toBe("User");
+        const class_def = Array.from(result.classes.values())[0];
+        expect(class_def.kind).toBe("class");
+        expect(class_def.name).toBe("User");
         // implements would be extracted from class heritage
       }
     });
@@ -387,25 +387,25 @@ describe("TypeScript Builder Configuration", () => {
       const code = `class Container<T> {
         private value: T;
       }`;
-      const ast = getAstNode(code);
-      const classNode = findNodeByType(ast, "class_declaration");
-      const nameNode = classNode?.childForFieldName?.("name");
+      const ast = get_ast_node(code);
+      const class_node = find_node_by_type(ast, "class_declaration");
+      const name_node = class_node?.childForFieldName?.("name");
 
-      expect(classNode).toBeTruthy();
-      expect(nameNode).toBeTruthy();
+      expect(class_node).toBeTruthy();
+      expect(name_node).toBeTruthy();
 
-      const builder = new DefinitionBuilder(mockContext);
+      const builder = new DefinitionBuilder(mock_context);
       const handler = TYPESCRIPT_BUILDER_CONFIG.get("def.class");
 
-      if (handler && nameNode) {
-        const capture = createRawCapture("def.class", nameNode, "Container");
-        handler.process(capture, builder, mockContext);
+      if (handler && name_node) {
+        const capture = create_raw_capture("def.class", name_node, "Container");
+        handler.process(capture, builder, mock_context);
 
         const result = builder.build();
         expect(result.classes.size).toBe(1);
-        const classDef = Array.from(result.classes.values())[0];
-        expect(classDef.kind).toBe("class");
-        expect(classDef.name).toBe("Container");
+        const class_def = Array.from(result.classes.values())[0];
+        expect(class_def.kind).toBe("class");
+        expect(class_def.name).toBe("Container");
         // type_parameters would be extracted from parent node
       }
     });
@@ -415,12 +415,12 @@ describe("TypeScript Builder Configuration", () => {
     it("should process class decorators", () => {
       const code = `@Component
       class MyComponent {}`;
-      const ast = getAstNode(code);
-      const decoratorNode = findNodeByType(ast, "decorator");
-      const identifierNode = decoratorNode?.firstChild;
+      const ast = get_ast_node(code);
+      const decorator_node = find_node_by_type(ast, "decorator");
+      const identifier_node = decorator_node?.firstChild;
 
-      expect(decoratorNode).toBeTruthy();
-      expect(identifierNode).toBeTruthy();
+      expect(decorator_node).toBeTruthy();
+      expect(identifier_node).toBeTruthy();
 
       // Decorator processing would add decorator to the target class
       // This requires the class to be processed first
@@ -431,15 +431,15 @@ describe("TypeScript Builder Configuration", () => {
         @Log
         process() {}
       }`;
-      const ast = getAstNode(code);
-      const classBodyNode = findNodeByType(ast, "class_body");
-      const methodNode = findNodeByType(ast, "method_definition");
-      const decoratorNode = classBodyNode?.children?.find(
+      const ast = get_ast_node(code);
+      const class_body_node = find_node_by_type(ast, "class_body");
+      const method_node = find_node_by_type(ast, "method_definition");
+      const decorator_node = class_body_node?.children?.find(
         (c) => c.type === "decorator"
       );
 
-      expect(methodNode).toBeTruthy();
-      expect(decoratorNode).toBeTruthy();
+      expect(method_node).toBeTruthy();
+      expect(decorator_node).toBeTruthy();
 
       // Decorator processing would add decorator to the target method
       // This requires the method to be processed first
@@ -450,14 +450,14 @@ describe("TypeScript Builder Configuration", () => {
         @Required
         name: string;
       }`;
-      const ast = getAstNode(code);
-      const fieldNode = findNodeByType(ast, "public_field_definition");
-      const decoratorNode = fieldNode?.children?.find(
+      const ast = get_ast_node(code);
+      const field_node = find_node_by_type(ast, "public_field_definition");
+      const decorator_node = field_node?.children?.find(
         (c) => c.type === "decorator"
       );
 
-      expect(fieldNode).toBeTruthy();
-      expect(decoratorNode).toBeTruthy();
+      expect(field_node).toBeTruthy();
+      expect(decorator_node).toBeTruthy();
 
       // Decorator processing would add decorator to the target property
       // This requires the property to be processed first
@@ -470,12 +470,12 @@ describe("TypeScript Builder Configuration", () => {
         private balance: number;
         private updateBalance() {}
       }`;
-      const ast = getAstNode(code);
-      const fieldNode = findNodeByType(ast, "public_field_definition");
-      const methodNode = findNodeByType(ast, "method_definition");
+      const ast = get_ast_node(code);
+      const field_node = find_node_by_type(ast, "public_field_definition");
+      const method_node = find_node_by_type(ast, "method_definition");
 
-      expect(fieldNode).toBeTruthy();
-      expect(methodNode).toBeTruthy();
+      expect(field_node).toBeTruthy();
+      expect(method_node).toBeTruthy();
 
       // Access modifiers would be extracted during processing
     });
@@ -485,12 +485,12 @@ describe("TypeScript Builder Configuration", () => {
         protected data: string;
         protected process() {}
       }`;
-      const ast = getAstNode(code);
-      const fieldNode = findNodeByType(ast, "public_field_definition");
-      const methodNode = findNodeByType(ast, "method_definition");
+      const ast = get_ast_node(code);
+      const field_node = find_node_by_type(ast, "public_field_definition");
+      const method_node = find_node_by_type(ast, "method_definition");
 
-      expect(fieldNode).toBeTruthy();
-      expect(methodNode).toBeTruthy();
+      expect(field_node).toBeTruthy();
+      expect(method_node).toBeTruthy();
 
       // Access modifiers would be extracted during processing
     });
@@ -499,10 +499,10 @@ describe("TypeScript Builder Configuration", () => {
       const code = `class Config {
         readonly version = "1.0";
       }`;
-      const ast = getAstNode(code);
-      const fieldNode = findNodeByType(ast, "public_field_definition");
+      const ast = get_ast_node(code);
+      const field_node = find_node_by_type(ast, "public_field_definition");
 
-      expect(fieldNode).toBeTruthy();
+      expect(field_node).toBeTruthy();
 
       // Readonly modifier would be extracted during processing
     });
@@ -513,11 +513,11 @@ describe("TypeScript Builder Configuration", () => {
       const code = `class User {
         constructor(public name: string, private age: number) {}
       }`;
-      const ast = getAstNode(code);
-      const constructorNode = findNodeByType(ast, "method_definition");
-      const params = constructorNode?.childForFieldName?.("parameters");
+      const ast = get_ast_node(code);
+      const constructor_node = find_node_by_type(ast, "method_definition");
+      const params = constructor_node?.childForFieldName?.("parameters");
 
-      expect(constructorNode).toBeTruthy();
+      expect(constructor_node).toBeTruthy();
       expect(params).toBeTruthy();
 
       // Parameter properties would create both parameters and class properties
@@ -527,41 +527,41 @@ describe("TypeScript Builder Configuration", () => {
   describe("Return type extraction", () => {
     it("should extract return type from function declaration", () => {
       const code = "function getValue(): string { return \"test\"; }";
-      const ast = getAstNode(code);
-      const functionNode = findNodeByType(ast, "function_declaration");
-      const identifier = functionNode?.childForFieldName?.("name");
+      const ast = get_ast_node(code);
+      const function_node = find_node_by_type(ast, "function_declaration");
+      const identifier = function_node?.childForFieldName?.("name");
 
       expect(identifier).toBeTruthy();
 
-      const returnType = extract_return_type(identifier!);
+      const return_type = extract_return_type(identifier!);
 
-      expect(returnType).toBe("string");
+      expect(return_type).toBe("string");
     });
 
     it("should extract complex return types", () => {
       const code = "function getUser(): Promise<User> { return Promise.resolve({} as User); }";
-      const ast = getAstNode(code);
-      const functionNode = findNodeByType(ast, "function_declaration");
-      const identifier = functionNode?.childForFieldName?.("name");
+      const ast = get_ast_node(code);
+      const function_node = find_node_by_type(ast, "function_declaration");
+      const identifier = function_node?.childForFieldName?.("name");
 
       expect(identifier).toBeTruthy();
 
-      const returnType = extract_return_type(identifier!);
+      const return_type = extract_return_type(identifier!);
 
-      expect(returnType).toBe("Promise<User>");
+      expect(return_type).toBe("Promise<User>");
     });
 
     it("should return undefined for functions without return type", () => {
       const code = "function doSomething() { console.log(\"test\"); }";
-      const ast = getAstNode(code);
-      const functionNode = findNodeByType(ast, "function_declaration");
-      const identifier = functionNode?.childForFieldName?.("name");
+      const ast = get_ast_node(code);
+      const function_node = find_node_by_type(ast, "function_declaration");
+      const identifier = function_node?.childForFieldName?.("name");
 
       expect(identifier).toBeTruthy();
 
-      const returnType = extract_return_type(identifier!);
+      const return_type = extract_return_type(identifier!);
 
-      expect(returnType).toBeUndefined();
+      expect(return_type).toBeUndefined();
     });
   });
 
@@ -574,39 +574,39 @@ export const CONFIG = {
     return local_var;
   }
 };`;
-      const ast = getAstNode(code);
-      const builder = new DefinitionBuilder(mockContext);
+      const ast = get_ast_node(code);
+      const builder = new DefinitionBuilder(mock_context);
 
       // Find all variable declarators
-      function findAllVariables(node: SyntaxNode): Array<{node: SyntaxNode, name: string}> {
+      function find_all_variables(node: SyntaxNode): Array<{node: SyntaxNode, name: string}> {
         const results: Array<{node: SyntaxNode, name: string}> = [];
 
         if (node.type === "variable_declarator") {
-          const nameNode = node.childForFieldName?.("name");
-          if (nameNode) {
-            results.push({node: nameNode, name: nameNode.text});
+          const name_node = node.childForFieldName?.("name");
+          if (name_node) {
+            results.push({node: name_node, name: name_node.text});
           }
         }
 
         for (let i = 0; i < node.childCount; i++) {
           const child = node.child(i);
           if (child) {
-            results.push(...findAllVariables(child));
+            results.push(...find_all_variables(child));
           }
         }
 
         return results;
       }
 
-      const variables = findAllVariables(ast);
+      const variables = find_all_variables(ast);
 
       // Process each variable using the JavaScript config (TypeScript uses same logic)
-      const varConfig = JAVASCRIPT_BUILDER_CONFIG.get("definition.variable");
-      expect(varConfig).toBeDefined();
+      const var_config = JAVASCRIPT_BUILDER_CONFIG.get("definition.variable");
+      expect(var_config).toBeDefined();
 
       for (const {node, name} of variables) {
-        const capture = createRawCapture("definition.variable", node, name);
-        varConfig!.process(capture, builder, mockContext);
+        const capture = create_raw_capture("definition.variable", node, name);
+        var_config!.process(capture, builder, mock_context);
       }
 
       const result = builder.build();
@@ -635,37 +635,37 @@ export const HANDLERS: Array<Function> = [
     return temp;
   }
 ];`;
-      const ast = getAstNode(code);
-      const builder = new DefinitionBuilder(mockContext);
+      const ast = get_ast_node(code);
+      const builder = new DefinitionBuilder(mock_context);
 
-      function findAllVariables(node: SyntaxNode): Array<{node: SyntaxNode, name: string}> {
+      function find_all_variables(node: SyntaxNode): Array<{node: SyntaxNode, name: string}> {
         const results: Array<{node: SyntaxNode, name: string}> = [];
 
         if (node.type === "variable_declarator") {
-          const nameNode = node.childForFieldName?.("name");
-          if (nameNode) {
-            results.push({node: nameNode, name: nameNode.text});
+          const name_node = node.childForFieldName?.("name");
+          if (name_node) {
+            results.push({node: name_node, name: name_node.text});
           }
         }
 
         for (let i = 0; i < node.childCount; i++) {
           const child = node.child(i);
           if (child) {
-            results.push(...findAllVariables(child));
+            results.push(...find_all_variables(child));
           }
         }
 
         return results;
       }
 
-      const variables = findAllVariables(ast);
+      const variables = find_all_variables(ast);
 
-      const varConfig = JAVASCRIPT_BUILDER_CONFIG.get("definition.variable");
-      expect(varConfig).toBeDefined();
+      const var_config = JAVASCRIPT_BUILDER_CONFIG.get("definition.variable");
+      expect(var_config).toBeDefined();
 
       for (const {node, name} of variables) {
-        const capture = createRawCapture("definition.variable", node, name);
-        varConfig!.process(capture, builder, mockContext);
+        const capture = create_raw_capture("definition.variable", node, name);
+        var_config!.process(capture, builder, mock_context);
       }
 
       const result = builder.build();
@@ -700,37 +700,37 @@ export const NESTED: {
     }
   }
 };`;
-      const ast = getAstNode(code);
-      const builder = new DefinitionBuilder(mockContext);
+      const ast = get_ast_node(code);
+      const builder = new DefinitionBuilder(mock_context);
 
-      function findAllVariables(node: SyntaxNode): Array<{node: SyntaxNode, name: string}> {
+      function find_all_variables(node: SyntaxNode): Array<{node: SyntaxNode, name: string}> {
         const results: Array<{node: SyntaxNode, name: string}> = [];
 
         if (node.type === "variable_declarator") {
-          const nameNode = node.childForFieldName?.("name");
-          if (nameNode) {
-            results.push({node: nameNode, name: nameNode.text});
+          const name_node = node.childForFieldName?.("name");
+          if (name_node) {
+            results.push({node: name_node, name: name_node.text});
           }
         }
 
         for (let i = 0; i < node.childCount; i++) {
           const child = node.child(i);
           if (child) {
-            results.push(...findAllVariables(child));
+            results.push(...find_all_variables(child));
           }
         }
 
         return results;
       }
 
-      const variables = findAllVariables(ast);
+      const variables = find_all_variables(ast);
 
-      const varConfig = JAVASCRIPT_BUILDER_CONFIG.get("definition.variable");
-      expect(varConfig).toBeDefined();
+      const var_config = JAVASCRIPT_BUILDER_CONFIG.get("definition.variable");
+      expect(var_config).toBeDefined();
 
       for (const {node, name} of variables) {
-        const capture = createRawCapture("definition.variable", node, name);
-        varConfig!.process(capture, builder, mockContext);
+        const capture = create_raw_capture("definition.variable", node, name);
+        var_config!.process(capture, builder, mock_context);
       }
 
       const result = builder.build();
@@ -764,17 +764,17 @@ export const NESTED: {
         }
       `;
 
-      const index = buildIndexFromCode(code);
+      const index = build_index_from_code(code);
       const classes = Array.from(index.classes.values());
       expect(classes.length).toBe(1);
 
-      const fooClass = classes[0];
-      expect(fooClass.name).toBe("Foo");
-      expect(fooClass.properties.length).toBeGreaterThan(0);
+      const foo_class = classes[0];
+      expect(foo_class.name).toBe("Foo");
+      expect(foo_class.properties.length).toBeGreaterThan(0);
 
-      const fieldProp = fooClass.properties.find(p => p.name === "field");
-      expect(fieldProp).toBeDefined();
-      expect(fieldProp?.type).toBe("Registry");
+      const field_prop = foo_class.properties.find(p => p.name === "field");
+      expect(field_prop).toBeDefined();
+      expect(field_prop?.type).toBe("Registry");
     });
 
     it("should extract type from private field", () => {
@@ -784,12 +784,12 @@ export const NESTED: {
         }
       `;
 
-      const index = buildIndexFromCode(code);
+      const index = build_index_from_code(code);
       const classes = Array.from(index.classes.values());
-      const fooClass = classes[0];
-      const dataProp = fooClass.properties.find(p => p.name === "data");
-      expect(dataProp).toBeDefined();
-      expect(dataProp?.type).toBe("Map<string, number>");
+      const foo_class = classes[0];
+      const data_prop = foo_class.properties.find(p => p.name === "data");
+      expect(data_prop).toBeDefined();
+      expect(data_prop?.type).toBe("Map<string, number>");
     });
 
     it("should extract type from optional field", () => {
@@ -799,12 +799,12 @@ export const NESTED: {
         }
       `;
 
-      const index = buildIndexFromCode(code);
+      const index = build_index_from_code(code);
       const classes = Array.from(index.classes.values());
-      const fooClass = classes[0];
-      const optionalProp = fooClass.properties.find(p => p.name === "optional");
-      expect(optionalProp).toBeDefined();
-      expect(optionalProp?.type).toBe("string");
+      const foo_class = classes[0];
+      const optional_prop = foo_class.properties.find(p => p.name === "optional");
+      expect(optional_prop).toBeDefined();
+      expect(optional_prop?.type).toBe("string");
       // Note: optional modifier tracking is not yet implemented for PropertyDefinition
     });
 
@@ -815,12 +815,12 @@ export const NESTED: {
         }
       `;
 
-      const index = buildIndexFromCode(code);
+      const index = build_index_from_code(code);
       const classes = Array.from(index.classes.values());
-      const fooClass = classes[0];
-      const configProp = fooClass.properties.find(p => p.name === "config");
-      expect(configProp).toBeDefined();
-      expect(configProp?.type).toBe("Config");
+      const foo_class = classes[0];
+      const config_prop = foo_class.properties.find(p => p.name === "config");
+      expect(config_prop).toBeDefined();
+      expect(config_prop?.type).toBe("Config");
       // Note: readonly modifier tracking is not yet implemented for PropertyDefinition
     });
 
@@ -831,12 +831,12 @@ export const NESTED: {
         }
       `;
 
-      const index = buildIndexFromCode(code);
+      const index = build_index_from_code(code);
       const classes = Array.from(index.classes.values());
-      const fooClass = classes[0];
-      const instanceProp = fooClass.properties.find(p => p.name === "instance");
-      expect(instanceProp).toBeDefined();
-      expect(instanceProp?.type).toBe("Foo");
+      const foo_class = classes[0];
+      const instance_prop = foo_class.properties.find(p => p.name === "instance");
+      expect(instance_prop).toBeDefined();
+      expect(instance_prop?.type).toBe("Foo");
       // Note: static modifier tracking is not yet implemented for PropertyDefinition
     });
 
@@ -847,12 +847,12 @@ export const NESTED: {
         }
       `;
 
-      const index = buildIndexFromCode(code);
+      const index = build_index_from_code(code);
       const classes = Array.from(index.classes.values());
-      const fooClass = classes[0];
-      const itemsProp = fooClass.properties.find(p => p.name === "items");
-      expect(itemsProp).toBeDefined();
-      expect(itemsProp?.type).toBe("Map<string, Item[]>");
+      const foo_class = classes[0];
+      const items_prop = foo_class.properties.find(p => p.name === "items");
+      expect(items_prop).toBeDefined();
+      expect(items_prop?.type).toBe("Map<string, Item[]>");
     });
 
     it("should extract array type annotations", () => {
@@ -863,19 +863,19 @@ export const NESTED: {
         }
       `;
 
-      const index = buildIndexFromCode(code);
+      const index = build_index_from_code(code);
       const classes = Array.from(index.classes.values());
-      const fooClass = classes[0];
-      expect(fooClass.properties.length).toBeGreaterThan(0);
+      const foo_class = classes[0];
+      expect(foo_class.properties.length).toBeGreaterThan(0);
 
-      const numbersProp = fooClass.properties.find(p => p.name === "numbers");
-      const itemsProp = fooClass.properties.find(p => p.name === "items");
+      const numbers_prop = foo_class.properties.find(p => p.name === "numbers");
+      const items_prop = foo_class.properties.find(p => p.name === "items");
 
-      expect(numbersProp).toBeDefined();
-      expect(numbersProp?.type).toBe("number[]");
+      expect(numbers_prop).toBeDefined();
+      expect(numbers_prop?.type).toBe("number[]");
 
-      expect(itemsProp).toBeDefined();
-      expect(itemsProp?.type).toBe("Array<string>");
+      expect(items_prop).toBeDefined();
+      expect(items_prop?.type).toBe("Array<string>");
     });
 
     it("should extract union type annotations", () => {
@@ -885,12 +885,12 @@ export const NESTED: {
         }
       `;
 
-      const index = buildIndexFromCode(code);
+      const index = build_index_from_code(code);
       const classes = Array.from(index.classes.values());
-      const fooClass = classes[0];
-      const valueProp = fooClass.properties.find(p => p.name === "value");
-      expect(valueProp).toBeDefined();
-      expect(valueProp?.type).toBe("string | number | null");
+      const foo_class = classes[0];
+      const value_prop = foo_class.properties.find(p => p.name === "value");
+      expect(value_prop).toBeDefined();
+      expect(value_prop?.type).toBe("string | number | null");
     });
 
     it("should extract function type annotations", () => {
@@ -900,12 +900,12 @@ export const NESTED: {
         }
       `;
 
-      const index = buildIndexFromCode(code);
+      const index = build_index_from_code(code);
       const classes = Array.from(index.classes.values());
-      const fooClass = classes[0];
-      const handlerProp = fooClass.properties.find(p => p.name === "handler");
-      expect(handlerProp).toBeDefined();
-      expect(handlerProp?.type).toBe("(data: string) => void");
+      const foo_class = classes[0];
+      const handler_prop = foo_class.properties.find(p => p.name === "handler");
+      expect(handler_prop).toBeDefined();
+      expect(handler_prop?.type).toBe("(data: string) => void");
     });
   });
 

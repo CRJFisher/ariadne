@@ -12,7 +12,7 @@ import { FilePath } from "@ariadnejs/types";
 import { list_functions } from "./tools/list_functions.js";
 
 export interface AriadneMCPServerOptions {
-  projectPath?: string;
+  project_path?: string;
   transport?: "stdio";
 }
 
@@ -20,8 +20,8 @@ export async function start_server(
   options: AriadneMCPServerOptions = {}
 ): Promise<Server> {
   // Support PROJECT_PATH environment variable
-  const projectPath =
-    options.projectPath || process.env.PROJECT_PATH || process.cwd();
+  const project_path =
+    options.project_path || process.env.PROJECT_PATH || process.cwd();
 
   // Create the MCP server
   const server = new Server(
@@ -38,7 +38,7 @@ export async function start_server(
 
   // Initialize Ariadne project
   const project = new Project();
-  await project.initialize(projectPath as FilePath);
+  await project.initialize(project_path as FilePath);
 
   // Register tools
   server.setRequestHandler(ListToolsRequestSchema, async () => {
@@ -66,7 +66,7 @@ export async function start_server(
       switch (name) {
         case "list_functions": {
           // Load all project files before analysis
-          await load_project_files(project, projectPath);
+          await load_project_files(project, project_path);
 
           const result = await list_functions(project);
 
@@ -110,14 +110,14 @@ export async function start_server(
 // Helper function to load a file if not already in the project
 export async function load_file_if_needed(
   project: Project,
-  filePath: string
+  file_path: string
 ): Promise<void> {
   try {
-    const sourceCode = await fs.readFile(filePath, "utf-8");
-    project.update_file(filePath as FilePath, sourceCode);
+    const source_code = await fs.readFile(file_path, "utf-8");
+    project.update_file(file_path as FilePath, source_code);
   } catch (error) {
     throw new Error(
-      `Failed to read file ${filePath}: ${
+      `Failed to read file ${file_path}: ${
         error instanceof Error ? error.message : String(error)
       }`
     );
@@ -127,16 +127,16 @@ export async function load_file_if_needed(
 // Helper function to load all project files
 export async function load_project_files(
   project: Project,
-  projectPath: string
+  project_path: string
 ): Promise<void> {
-  const loadedFiles = new Set<string>();
-  let gitignorePatterns: string[] = [];
+  const loaded_files = new Set<string>();
+  let gitignore_patterns: string[] = [];
 
   // Try to read .gitignore
   try {
-    const gitignorePath = path.join(projectPath, ".gitignore");
-    const gitignoreContent = await fs.readFile(gitignorePath, "utf-8");
-    gitignorePatterns = gitignoreContent
+    const gitignore_path = path.join(project_path, ".gitignore");
+    const gitignore_content = await fs.readFile(gitignore_path, "utf-8");
+    gitignore_patterns = gitignore_content
       .split("\n")
       .map((line) => line.trim())
       .filter((line) => line && !line.startsWith("#"));
@@ -144,11 +144,11 @@ export async function load_project_files(
     // .gitignore not found or unreadable, continue without it
   }
 
-  function should_ignore(filePath: string): boolean {
-    const relativePath = path.relative(projectPath, filePath);
+  function should_ignore(file_path: string): boolean {
+    const relative_path = path.relative(project_path, file_path);
 
     // Always ignore common directories
-    const commonIgnores = [
+    const common_ignores = [
       "node_modules",
       ".git",
       "dist",
@@ -162,18 +162,18 @@ export async function load_project_files(
       ".DS_Store",
     ];
 
-    for (const ignore of commonIgnores) {
-      if (relativePath.includes(ignore)) return true;
+    for (const ignore of common_ignores) {
+      if (relative_path.includes(ignore)) return true;
     }
 
     // Check gitignore patterns (simple implementation)
-    for (const pattern of gitignorePatterns) {
+    for (const pattern of gitignore_patterns) {
       if (pattern.endsWith("*")) {
         const prefix = pattern.slice(0, -1);
-        if (relativePath.startsWith(prefix)) return true;
+        if (relative_path.startsWith(prefix)) return true;
       } else if (
-        relativePath === pattern ||
-        relativePath.includes("/" + pattern)
+        relative_path === pattern ||
+        relative_path.includes("/" + pattern)
       ) {
         return true;
       }
@@ -182,36 +182,36 @@ export async function load_project_files(
     return false;
   }
 
-  async function load_directory(dirPath: string): Promise<void> {
-    if (should_ignore(dirPath)) return;
+  async function load_directory(dir_path: string): Promise<void> {
+    if (should_ignore(dir_path)) return;
 
     let entries;
     try {
-      entries = await fs.readdir(dirPath, { withFileTypes: true });
+      entries = await fs.readdir(dir_path, { withFileTypes: true });
     } catch (error) {
-      console.warn(`Cannot read directory ${dirPath}: ${error}`);
+      console.warn(`Cannot read directory ${dir_path}: ${error}`);
       return;
     }
 
     for (const entry of entries) {
-      const fullPath = path.join(dirPath, entry.name);
+      const full_path = path.join(dir_path, entry.name);
 
-      if (should_ignore(fullPath)) continue;
+      if (should_ignore(full_path)) continue;
 
       if (entry.isDirectory()) {
-        await load_directory(fullPath);
+        await load_directory(full_path);
       } else if (entry.isFile()) {
         // Load supported source files
         if (
           /\.(ts|tsx|js|jsx|py|rs|go|java|cpp|c|hpp|h)$/.test(entry.name) &&
           !entry.name.endsWith(".d.ts")
         ) {
-          if (!loadedFiles.has(fullPath)) {
+          if (!loaded_files.has(full_path)) {
             try {
-              await load_file_if_needed(project, fullPath);
-              loadedFiles.add(fullPath);
+              await load_file_if_needed(project, full_path);
+              loaded_files.add(full_path);
             } catch (error) {
-              console.warn(`Skipping file ${fullPath}: ${error}`);
+              console.warn(`Skipping file ${full_path}: ${error}`);
             }
           }
         }
@@ -219,9 +219,9 @@ export async function load_project_files(
     }
   }
 
-  console.log(`Loading project files from: ${projectPath}`);
-  const startTime = Date.now();
-  await load_directory(projectPath);
-  const duration = Date.now() - startTime;
-  console.log(`Loaded ${loadedFiles.size} files in ${duration}ms`);
+  console.log(`Loading project files from: ${project_path}`);
+  const start_time = Date.now();
+  await load_directory(project_path);
+  const duration = Date.now() - start_time;
+  console.log(`Loaded ${loaded_files.size} files in ${duration}ms`);
 }

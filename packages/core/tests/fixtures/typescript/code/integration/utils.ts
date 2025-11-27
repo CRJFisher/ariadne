@@ -7,6 +7,6 @@ export function helper(): string {
   return "from utils";
 }
 
-export function otherFunction(): number {
+export function other_function(): number {
   return 42;
 }

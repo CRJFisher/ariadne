@@ -57,7 +57,7 @@ export function find_body_scope_for_definition(
         scope.name === "" || // empty scope name
         scope.name.includes(def_name) || // scope name contains definition name
         def_name.includes(scope.name || "") || // definition name contains scope name
-        (def_name && scope.name && areNamesCompatible(def_name, scope.name)); // fuzzy name match
+        (def_name && scope.name && are_names_compatible(def_name, scope.name)); // fuzzy name match
 
       if (is_name_compatible) {
         smallest_distance = distance;
@@ -81,7 +81,7 @@ export function find_body_scope_for_definition(
 
   if (!best_match) {
     // Create debug information
-    const debugInfo = callable_scopes.map(scope => ({
+    const debug_info = callable_scopes.map(scope => ({
       type: scope.type,
       name: scope.name,
       location: scope.location,
@@ -89,7 +89,7 @@ export function find_body_scope_for_definition(
     }));
 
     console.warn(`Debug: No body scope found for ${def_name} at ${def_location.file_path}:${def_location.start_line}`);
-    console.warn("Available scopes:", debugInfo);
+    console.warn("Available scopes:", debug_info);
 
     throw new Error(
       `No body scope found for ${def_name} at ${def_location.file_path}:${def_location.start_line}`,
@@ -102,7 +102,7 @@ export function find_body_scope_for_definition(
 /**
  * Check if two names are compatible (handles various naming patterns)
  */
-function areNamesCompatible(name1: string, name2: string): boolean {
+function are_names_compatible(name1: string, name2: string): boolean {
   if (!name1 || !name2) return false;
 
   // Exact match

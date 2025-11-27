@@ -8,14 +8,14 @@ import { detect_function_collection as detect_rust_collection, extract_derived_f
 import { node_to_location } from "../../node_utils";
 
 describe("Collection Resolution Tests", () => {
-  let pythonParser: Parser;
-  let rustParser: Parser;
+  let python_parser: Parser;
+  let rust_parser: Parser;
 
   beforeAll(() => {
-    pythonParser = new Parser();
-    pythonParser.setLanguage(Python);
-    rustParser = new Parser();
-    rustParser.setLanguage(Rust);
+    python_parser = new Parser();
+    python_parser.setLanguage(Python);
+    rust_parser = new Parser();
+    rust_parser.setLanguage(Rust);
   });
 
   const TEST_FILE = "/test/file";
@@ -23,7 +23,7 @@ describe("Collection Resolution Tests", () => {
   describe("Python Support", () => {
     it("should detect list of functions", () => {
       const code = "handlers = [fn1, fn2]";
-      const tree = pythonParser.parse(code);
+      const tree = python_parser.parse(code);
       let assignment = tree.rootNode.child(0)!;
       if (assignment.type === "expression_statement") {
         assignment = assignment.child(0)!;
@@ -40,7 +40,7 @@ describe("Collection Resolution Tests", () => {
 
     it("should detect dict of functions", () => {
       const code = "config = {'a': fn1, 'b': fn2}";
-      const tree = pythonParser.parse(code);
+      const tree = python_parser.parse(code);
       let assignment = tree.rootNode.child(0)!;
       if (assignment.type === "expression_statement") {
         assignment = assignment.child(0)!;
@@ -55,7 +55,7 @@ describe("Collection Resolution Tests", () => {
 
     it("should detect tuple of functions", () => {
       const code = "handlers = (fn1, fn2)";
-      const tree = pythonParser.parse(code);
+      const tree = python_parser.parse(code);
       let assignment = tree.rootNode.child(0)!;
       if (assignment.type === "expression_statement") {
         assignment = assignment.child(0)!;
@@ -70,7 +70,7 @@ describe("Collection Resolution Tests", () => {
 
     it("should extract derived variable from method call", () => {
       const code = "handler = config.get('key')";
-      const tree = pythonParser.parse(code);
+      const tree = python_parser.parse(code);
       let assignment = tree.rootNode.child(0)!;
       if (assignment.type === "expression_statement") {
         assignment = assignment.child(0)!;
@@ -83,7 +83,7 @@ describe("Collection Resolution Tests", () => {
 
     it("should extract derived variable from subscript", () => {
       const code = "handler = config['key']";
-      const tree = pythonParser.parse(code);
+      const tree = python_parser.parse(code);
       let assignment = tree.rootNode.child(0)!;
       if (assignment.type === "expression_statement") {
         assignment = assignment.child(0)!;
@@ -98,7 +98,7 @@ describe("Collection Resolution Tests", () => {
   describe("Rust Support", () => {
     it("should detect array of functions", () => {
       const code = "let handlers = [fn1, fn2];";
-      const tree = rustParser.parse(code);
+      const tree = rust_parser.parse(code);
       const declaration = tree.rootNode.child(0)!; // let_declaration
       
       const result = detect_rust_collection(declaration, TEST_FILE);
@@ -111,7 +111,7 @@ describe("Collection Resolution Tests", () => {
 
     it("should detect vec! macro", () => {
       const code = "let handlers = vec![fn1, fn2];";
-      const tree = rustParser.parse(code);
+      const tree = rust_parser.parse(code);
       const declaration = tree.rootNode.child(0)!;
       
       const result = detect_rust_collection(declaration, TEST_FILE);
@@ -127,8 +127,8 @@ describe("Collection Resolution Tests", () => {
       // but let's test the macro case if we support hashmap!
       // If we only support macro_invocation, we should test that.
       // Let's test a hypothetical hashmap! macro
-      const codeMacro = "let config = hashmap!{'k' => fn1};";
-      const tree = rustParser.parse(codeMacro);
+      const code_macro = "let config = hashmap!{'k' => fn1};";
+      const tree = rust_parser.parse(code_macro);
       const declaration = tree.rootNode.child(0)!;
       
       const result = detect_rust_collection(declaration, TEST_FILE);
@@ -140,7 +140,7 @@ describe("Collection Resolution Tests", () => {
 
     it("should extract derived variable from method call", () => {
       const code = "let handler = config.get(\"key\");";
-      const tree = rustParser.parse(code);
+      const tree = rust_parser.parse(code);
       const declaration = tree.rootNode.child(0)!;
       const pattern = declaration.childForFieldName("pattern")!; // identifier
       
@@ -150,7 +150,7 @@ describe("Collection Resolution Tests", () => {
 
     it("should extract derived variable from index expression", () => {
       const code = "let handler = config[\"key\"];";
-      const tree = rustParser.parse(code);
+      const tree = rust_parser.parse(code);
       const declaration = tree.rootNode.child(0)!;
       const pattern = declaration.childForFieldName("pattern")!;
       

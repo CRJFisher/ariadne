@@ -9,7 +9,9 @@ import { fileURLToPath } from 'url';
 import { dirname } from 'path';
 import { extract_all_captures, CaptureInfo } from './extract_captures.js';
 
+// eslint-disable-next-line @typescript-eslint/naming-convention
 const __filename_esm = fileURLToPath(import.meta.url);
+// eslint-disable-next-line @typescript-eslint/naming-convention
 const __dirname_esm = dirname(__filename_esm);
 
 // Compute statistics

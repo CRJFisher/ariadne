@@ -4,25 +4,25 @@
  */
 
 // Top-level function call (module scope)
-const topLevel = helper();
+const top_level = helper();
 
-function outerFunction() {
+function outer_function() {
   // Call in outer function scope
-  const outerCall = helper();
+  const outer_call = helper();
 
   if (true) {
     // Call in block scope (enclosing function: outerFunction)
-    const blockCall = helper();
+    const block_call = helper();
   }
 
-  function innerFunction() {
+  function inner_function() {
     // Call in inner function scope
-    const innerCall = helper();
-    return innerCall;
+    const inner_call = helper();
+    return inner_call;
   }
 
-  const innerResult = innerFunction();
-  return { outerCall, innerResult };
+  const inner_result = inner_function();
+  return { outer_call, inner_result };
 }
 
 function helper(): string {
@@ -30,6 +30,6 @@ function helper(): string {
 }
 
 // Calls from different scopes
-const moduleResult = outerFunction();
+const module_result = outer_function();
 
-export { topLevel, moduleResult, helper };
+export { top_level, module_result, helper };

@@ -12,15 +12,15 @@ import { DefinitionBuilder } from "../../definitions";
 import type { ProcessingContext, CaptureNode } from "../../semantic_index";
 import type { FilePath, SymbolName, ScopeId, Location, LexicalScope } from "@ariadnejs/types";
 
-const jsParser = new Parser();
-jsParser.setLanguage(JavaScript);
+const js_parser = new Parser();
+js_parser.setLanguage(JavaScript);
 
-const tsParser = new Parser();
-tsParser.setLanguage(TypeScript.typescript);
+const ts_parser = new Parser();
+ts_parser.setLanguage(TypeScript.typescript);
 
 const TEST_FILE_PATH: FilePath = "test.js" as FilePath;
 
-function createTestContext(): ProcessingContext {
+function create_test_context(): ProcessingContext {
   return {
     get_scope_id: () => "test-scope" as ScopeId,
     get_child_scope_with_symbol_name: (_scope_id: ScopeId, _name: SymbolName) => "test-scope" as ScopeId,
@@ -31,31 +31,31 @@ function createTestContext(): ProcessingContext {
   };
 }
 
-function findNodeByType(node: any, type: string): any {
+function find_node_by_type(node: any, type: string): any {
   if (node.type === type) return node;
   for (let i = 0; i < node.childCount; i++) {
-    const found = findNodeByType(node.child(i), type);
+    const found = find_node_by_type(node.child(i), type);
     if (found) return found;
   }
   return null;
 }
 
-function createCapture(
+function create_capture(
   code: string,
-  captureName: string,
-  nodeType: string,
-  parser: Parser = jsParser
+  capture_name: string,
+  node_type: string,
+  parser: Parser = js_parser
 ): CaptureNode {
   const ast = parser.parse(code);
-  const node = findNodeByType(ast.rootNode, nodeType);
+  const node = find_node_by_type(ast.rootNode, node_type);
   if (!node) {
-    throw new Error(`Could not find node of type ${nodeType} in code: ${code}`);
+    throw new Error(`Could not find node of type ${node_type} in code: ${code}`);
   }
 
   return {
-    name: captureName,
+    name: capture_name,
     category: "definition" as any,
-    entity: nodeType as any,
+    entity: node_type as any,
     node: node as any,
     text: node.text as SymbolName,
     location: {
@@ -72,8 +72,8 @@ describe("Export Detection - Comprehensive Verification", () => {
   describe("JavaScript - All Definition Types", () => {
     it("should detect exported functions", () => {
       const code = "export function foo() {}";
-      const capture = createCapture(code, "definition.function", "identifier");
-      const context = createTestContext();
+      const capture = create_capture(code, "definition.function", "identifier");
+      const context = create_test_context();
       const builder = new DefinitionBuilder(context);
 
       const config = JAVASCRIPT_BUILDER_CONFIG.get("definition.function");
@@ -88,8 +88,8 @@ describe("Export Detection - Comprehensive Verification", () => {
 
     it("should detect exported classes", () => {
       const code = "export class MyClass {}";
-      const capture = createCapture(code, "definition.class", "identifier");
-      const context = createTestContext();
+      const capture = create_capture(code, "definition.class", "identifier");
+      const context = create_test_context();
       const builder = new DefinitionBuilder(context);
 
       const config = JAVASCRIPT_BUILDER_CONFIG.get("definition.class");
@@ -104,8 +104,8 @@ describe("Export Detection - Comprehensive Verification", () => {
 
     it("should detect exported variables", () => {
       const code = "export const x = 1;";
-      const capture = createCapture(code, "definition.variable", "identifier");
-      const context = createTestContext();
+      const capture = create_capture(code, "definition.variable", "identifier");
+      const context = create_test_context();
       const builder = new DefinitionBuilder(context);
 
       const config = JAVASCRIPT_BUILDER_CONFIG.get("definition.variable");
@@ -120,8 +120,8 @@ describe("Export Detection - Comprehensive Verification", () => {
 
     it("should not mark non-exported definitions as exported", () => {
       const code = "function notExported() {}";
-      const capture = createCapture(code, "definition.function", "identifier");
-      const context = createTestContext();
+      const capture = create_capture(code, "definition.function", "identifier");
+      const context = create_test_context();
       const builder = new DefinitionBuilder(context);
 
       const config = JAVASCRIPT_BUILDER_CONFIG.get("definition.function");
@@ -139,8 +139,8 @@ describe("Export Detection - Comprehensive Verification", () => {
   describe("TypeScript - TypeScript-Specific Definition Types", () => {
     it("should detect exported interfaces", () => {
       const code = "export interface MyInterface { }";
-      const capture = createCapture(code, "definition.interface", "type_identifier", tsParser);
-      const context = createTestContext();
+      const capture = create_capture(code, "definition.interface", "type_identifier", ts_parser);
+      const context = create_test_context();
       const builder = new DefinitionBuilder(context);
 
       const config = TYPESCRIPT_BUILDER_CONFIG.get("definition.interface");
@@ -155,24 +155,24 @@ describe("Export Detection - Comprehensive Verification", () => {
 
     it("should detect exported type aliases", () => {
       const code = "export type MyType = string;";
-      const capture = createCapture(code, "definition.type_alias", "type_identifier", tsParser);
-      const context = createTestContext();
+      const capture = create_capture(code, "definition.type_alias", "type_identifier", ts_parser);
+      const context = create_test_context();
       const builder = new DefinitionBuilder(context);
 
       const config = TYPESCRIPT_BUILDER_CONFIG.get("definition.type_alias");
       config?.process(capture, builder, context);
 
       const result = builder.build();
-      const typeAliases = Array.from(result.types.values());
+      const type_aliases = Array.from(result.types.values());
 
-      expect(typeAliases).toHaveLength(1);
-      expect(typeAliases[0].is_exported).toBe(true);
+      expect(type_aliases).toHaveLength(1);
+      expect(type_aliases[0].is_exported).toBe(true);
     });
 
     it("should detect exported enums", () => {
       const code = "export enum Color { Red, Green }";
-      const capture = createCapture(code, "definition.enum", "identifier", tsParser);
-      const context = createTestContext();
+      const capture = create_capture(code, "definition.enum", "identifier", ts_parser);
+      const context = create_test_context();
       const builder = new DefinitionBuilder(context);
 
       const config = TYPESCRIPT_BUILDER_CONFIG.get("definition.enum");
@@ -187,8 +187,8 @@ describe("Export Detection - Comprehensive Verification", () => {
 
     it("should detect exported namespaces", () => {
       const code = "export namespace MyNamespace { }";
-      const capture = createCapture(code, "definition.namespace", "identifier", tsParser);
-      const context = createTestContext();
+      const capture = create_capture(code, "definition.namespace", "identifier", ts_parser);
+      const context = create_test_context();
       const builder = new DefinitionBuilder(context);
 
       const config = TYPESCRIPT_BUILDER_CONFIG.get("definition.namespace");
@@ -203,8 +203,8 @@ describe("Export Detection - Comprehensive Verification", () => {
 
     it("should detect exported TypeScript classes", () => {
       const code = "export class MyClass { }";
-      const capture = createCapture(code, "definition.class", "type_identifier", tsParser);
-      const context = createTestContext();
+      const capture = create_capture(code, "definition.class", "type_identifier", ts_parser);
+      const context = create_test_context();
       const builder = new DefinitionBuilder(context);
 
       const config = TYPESCRIPT_BUILDER_CONFIG.get("definition.class");
@@ -220,29 +220,29 @@ describe("Export Detection - Comprehensive Verification", () => {
 
   describe("Backward Compatibility", () => {
     it("should preserve availability field for all definition types", () => {
-      const testCases = [
-        { code: "export function foo() {}", type: "definition.function", nodeType: "identifier" },
-        { code: "export class Bar {}", type: "definition.class", nodeType: "identifier" },
-        { code: "export const x = 1;", type: "definition.variable", nodeType: "identifier" },
+      const test_cases = [
+        { code: "export function foo() {}", type: "definition.function", node_type: "identifier" },
+        { code: "export class Bar {}", type: "definition.class", node_type: "identifier" },
+        { code: "export const x = 1;", type: "definition.variable", node_type: "identifier" },
       ];
 
-      for (const testCase of testCases) {
-        const capture = createCapture(testCase.code, testCase.type, testCase.nodeType);
-        const context = createTestContext();
+      for (const test_case of test_cases) {
+        const capture = create_capture(test_case.code, test_case.type, test_case.node_type);
+        const context = create_test_context();
         const builder = new DefinitionBuilder(context);
 
-        const config = JAVASCRIPT_BUILDER_CONFIG.get(testCase.type);
+        const config = JAVASCRIPT_BUILDER_CONFIG.get(test_case.type);
         config?.process(capture, builder, context);
 
         const result = builder.build();
-        const allDefs = [
+        const all_defs = [
           ...Array.from(result.functions.values()),
           ...Array.from(result.classes.values()),
           ...Array.from(result.variables.values()),
         ];
 
-        expect(allDefs.length).toBeGreaterThan(0);
-        for (const def of allDefs) {
+        expect(all_defs.length).toBeGreaterThan(0);
+        for (const def of all_defs) {
           expect(def.is_exported).toBeDefined();
         }
       }
