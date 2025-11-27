@@ -3,7 +3,7 @@
  * Tests: imports class, creates instance, calls methods
  */
 
-import { User } from './types';
+import { User } from "./types";
 
 // Constructor call and type binding
 const user = new User("John Doe", "john@example.com");

@@ -7,6 +7,16 @@ import { SymbolName } from "./symbol";
 import { Location, type LocationKey } from "./common";
 import type { ScopeId } from "./scopes";
 import type { AnyDefinition } from "./symbol_definitions";
+/**
+ * Call reference - Represents a function/method/constructor call
+ *
+ * The resolutions array contains all possible targets:
+ * - Empty array: Resolution failed
+ * - Single element: Concrete resolution
+ * - Multiple elements: Polymorphic/dynamic/ambiguous
+ */
+
+import type { Resolution } from "./symbol_references";
 
 /**
  * Context information for anonymous functions that are callbacks.
@@ -44,16 +54,6 @@ export interface CallGraph {
   readonly nodes: ReadonlyMap<SymbolId, CallableNode>;
   readonly entry_points: readonly SymbolId[];
 }
-/**
- * Call reference - Represents a function/method/constructor call
- *
- * The resolutions array contains all possible targets:
- * - Empty array: Resolution failed
- * - Single element: Concrete resolution
- * - Multiple elements: Polymorphic/dynamic/ambiguous
- */
-
-import type { Resolution } from "./symbol_references";
 
 export interface CallReference {
   /** Reference location */

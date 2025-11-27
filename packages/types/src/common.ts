@@ -1,7 +1,7 @@
 // Language type
-export type Language = "javascript" | "typescript" | "python" | "rust";
-
 import type { SymbolId, SymbolName } from "./symbol";
+
+export type Language = "javascript" | "typescript" | "python" | "rust";
 
 export interface Location {
   readonly file_path: FilePath;
