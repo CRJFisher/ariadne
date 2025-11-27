@@ -140,14 +140,14 @@ async function main() {
     console.log("✅ All files are within size limits!");
     console.log(`   Checked ${results.length} files\n`);
   } else {
-    console.log(`Found ${problemFiles.length} files approaching or exceeding limits:\n`);
+    console.log(`Found ${problem_files.length} files approaching or exceeding limits:\n`);
 
     for (const result of problem_files) {
       const icon = result.status === "error" ? "❌" : "⚠️";
       const label = result.status === "error" ? "ERROR" : "WARNING";
       
       console.log(`${icon} ${label}: ${result.path}`);
-      console.log(`   Size: ${formatSize(result.size)} (limit: ${formatSize(ERROR_THRESHOLD)})`);
+      console.log(`   Size: ${format_size(result.size)} (limit: ${format_size(ERROR_THRESHOLD)})`);
       
       if (result.status === "error") {
         const hint = get_refactoring_hint(result.path);
@@ -162,7 +162,7 @@ async function main() {
   const top5 = results.slice(0, 5);
   for (const result of top5) {
     const percent = ((result.size / ERROR_THRESHOLD) * 100).toFixed(0);
-    console.log(`   ${formatSize(result.size)} (${percent}%) - ${result.path}`);
+    console.log(`   ${format_size(result.size)} (${percent}%) - ${result.path}`);
   }
 
   console.log("\nSummary:");

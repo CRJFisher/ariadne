@@ -233,7 +233,12 @@ export default [
       "build/**",
       "*.js", // Ignore JS files in root
       "packages/*/dist/**",
-      "packages/*/node_modules/**"
+      "packages/*/node_modules/**",
+      "**/tests/fixtures/**/*.js", // Ignore JavaScript fixture files
+      "**/.claude/**", // Ignore Claude hook files
+      "**/.clinic/**", // Ignore clinic profiler output
+      "test_*.ts", // Ignore root-level test/debug scripts
+      "debug_*.ts" // Ignore root-level debug scripts
     ]
   }
 ];

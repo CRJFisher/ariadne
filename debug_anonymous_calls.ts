@@ -1,5 +1,4 @@
 #!/usr/bin/env npx tsx
-/* eslint-disable @typescript-eslint/no-explicit-any, no-undef, no-restricted-syntax, no-unused-vars */
 /**
  * Debug script to understand why anonymous function calls aren't being attributed
  */

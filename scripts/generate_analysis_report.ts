@@ -48,9 +48,10 @@ function find_common(by_language: Map<string, CaptureInfo[]>): string[] {
     names_by_language.set(lang, new Set(captures.map(c => c.name)));
   }
 
-  const common = new Set(names_by_language.get(languages[0])!);
+  const first_lang_names = names_by_language.get(languages[0]);
+  const common = new Set(first_lang_names ?? []);
   for (let i = 1; i < languages.length; i++) {
-    const lang_names = names_by_language.get(languages[i])!;
+    const lang_names = names_by_language.get(languages[i]) ?? new Set<string>();
     for (const name of common) {
       if (!lang_names.has(name)) {
         common.delete(name);
