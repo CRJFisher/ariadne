@@ -10,31 +10,20 @@
  */
 
 const { execSync } = require("child_process");
-const fs = require("fs");
-const path = require("path");
+const {
+  create_logger,
+  parse_stdin,
+  truncate_eslint_output,
+  truncate_tsc_output
+} = require("./utils.cjs");
 
-// Logging utility
-const LOG_FILE = path.join(__dirname, "..", "hook_log.txt");
-
-function log(message) {
-  const timestamp = new Date().toISOString();
-  const entry = `[${timestamp}] [stop] ${message}\n`;
-  fs.appendFileSync(LOG_FILE, entry);
-}
-
-function read_stdin() {
-  return fs.readFileSync(0, "utf8");
-}
+const log = create_logger("stop");
 
 function main() {
   log("Hook started");
 
   // Parse input (not strictly needed for Stop hook, but good practice)
-  try {
-    JSON.parse(read_stdin());
-  } catch {
-    // Continue anyway
-  }
+  parse_stdin();
 
   const project_dir = process.env.CLAUDE_PROJECT_DIR || process.cwd();
   log(`Project dir: ${project_dir}`);
@@ -66,14 +55,16 @@ function main() {
     // ESLint exits 0 but may still have warnings in output
     if (output && output.includes("warning")) {
       log(`ESLint warnings found: ${output.substring(0, 200)}...`);
-      errors.push(`ESLint warnings (after auto-fix):\n${output}`);
+      const truncated = truncate_eslint_output(output);
+      errors.push(`ESLint warnings (after auto-fix):\n${truncated}`);
     } else {
       log("ESLint check passed");
     }
   } catch (error) {
     const output = error.stdout || error.stderr || "ESLint errors found";
     log(`ESLint errors found: ${output.substring(0, 200)}...`);
-    errors.push(`ESLint errors (after auto-fix):\n${output}`);
+    const truncated = truncate_eslint_output(output);
+    errors.push(`ESLint errors (after auto-fix):\n${truncated}`);
   }
 
   // Step 3: Run TypeScript type checking for each package
@@ -90,7 +81,8 @@ function main() {
     } catch (error) {
       const output = error.stdout || error.stderr || "TypeScript errors found";
       log(`${pkg} type errors: ${output.substring(0, 200)}...`);
-      errors.push(`TypeScript errors in ${pkg}:\n${output}`);
+      const truncated = truncate_tsc_output(output);
+      errors.push(`TypeScript errors in ${pkg}:\n${truncated}`);
     }
   }
 

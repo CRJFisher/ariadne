@@ -10,34 +10,18 @@
 
 const { execSync } = require("child_process");
 const fs = require("fs");
-const path = require("path");
+const {
+  create_logger,
+  parse_stdin,
+  is_ts_js_file,
+  truncate_eslint_output
+} = require("./utils.cjs");
 
-const TS_JS_EXTENSIONS = [".ts", ".tsx", ".js", ".jsx"];
-
-// Logging utility
-const LOG_FILE = path.join(__dirname, "..", "hook_log.txt");
-
-function log(message) {
-  const timestamp = new Date().toISOString();
-  const entry = `[${timestamp}] [post-edit] ${message}\n`;
-  fs.appendFileSync(LOG_FILE, entry);
-}
-
-function read_stdin() {
-  return fs.readFileSync(0, "utf8");
-}
-
-function is_ts_js_file(file_path) {
-  if (!file_path) return false;
-  const ext = path.extname(file_path).toLowerCase();
-  return TS_JS_EXTENSIONS.includes(ext);
-}
+const log = create_logger("post-edit");
 
 function main() {
-  let input;
-  try {
-    input = JSON.parse(read_stdin());
-  } catch (e) {
+  const input = parse_stdin();
+  if (!input) {
     process.exit(0);
   }
 
@@ -87,9 +71,10 @@ function main() {
     // ESLint exits 0 but may still have warnings in output
     if (output && output.includes("warning")) {
       log(`ESLint warnings in ${file_path} - blocking`);
+      const truncated = truncate_eslint_output(output);
       console.log(JSON.stringify({
         decision: "block",
-        reason: `ESLint warnings in ${file_path} (after auto-fix):\n${output}\n\nPlease fix these warnings.`
+        reason: `ESLint warnings in ${file_path} (after auto-fix):\n${truncated}\n\nPlease fix these warnings.`
       }));
       process.exit(0);
     }
@@ -102,10 +87,11 @@ function main() {
     const output = error.stdout || error.stderr || "ESLint errors found";
     log(`ESLint errors remain in ${file_path} - blocking`);
 
+    const truncated = truncate_eslint_output(output);
     // Return JSON to block and prompt Claude to fix manually
     console.log(JSON.stringify({
       decision: "block",
-      reason: `ESLint errors in ${file_path} (after auto-fix):\n${output}\n\nThese errors require manual fixes.`
+      reason: `ESLint errors in ${file_path} (after auto-fix):\n${truncated}\n\nThese errors require manual fixes.`
     }));
     process.exit(0);
   }
