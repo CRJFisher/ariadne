@@ -49,6 +49,67 @@ export default [
       "@typescript-eslint/no-explicit-any": "warn",
       "@typescript-eslint/no-non-null-assertion": "error",
 
+      // Naming conventions: snake_case for everything except classes/interfaces/types (PascalCase)
+      // NOTE: Set to "warn" due to 2000+ existing violations. Upgrade to "error" after cleanup.
+      "@typescript-eslint/naming-convention": [
+        "warn",
+        // Default: snake_case for most identifiers
+        {
+          "selector": "default",
+          "format": ["snake_case"],
+          "leadingUnderscore": "allow"
+        },
+        // Variables: snake_case, but allow UPPER_CASE for const
+        {
+          "selector": "variable",
+          "format": ["snake_case", "UPPER_CASE"],
+          "leadingUnderscore": "allow"
+        },
+        // Destructured variables: allow any format (preserve original names from external APIs)
+        {
+          "selector": "variable",
+          "modifiers": ["destructured"],
+          "format": null
+        },
+        // Functions: snake_case
+        {
+          "selector": "function",
+          "format": ["snake_case"]
+        },
+        // Parameters: snake_case, allow leading underscore for unused
+        {
+          "selector": "parameter",
+          "format": ["snake_case"],
+          "leadingUnderscore": "allow"
+        },
+        // Class/interface/typeAlias/enum: PascalCase
+        {
+          "selector": "typeLike",
+          "format": ["PascalCase"]
+        },
+        // Enum members: UPPER_CASE (common convention)
+        {
+          "selector": "enumMember",
+          "format": ["UPPER_CASE"]
+        },
+        // Imports: allow both (external libraries use various conventions)
+        {
+          "selector": "import",
+          "format": null
+        },
+        // Properties that require quotes: ignore (e.g., "Content-Type")
+        {
+          "selector": "property",
+          "modifiers": ["requiresQuotes"],
+          "format": null
+        },
+        // Object literal properties: allow flexibility for external API compatibility
+        {
+          "selector": "objectLiteralProperty",
+          "format": null
+        }
+      ],
+
       // General JavaScript rules
       "no-console": "off", // Allow console.log for now
       "prefer-const": "error",
