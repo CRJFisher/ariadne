@@ -2,6 +2,7 @@
 /**
  * Outputs Ariadne's API methods and call graph in YAML format for validation
  */
+/* eslint-disable no-undef */
 
 import fs from "fs";
 import path from "path";
@@ -35,10 +36,10 @@ function main() {
   
   // Analyze Ariadne's source
   const src_dir = path.join(__dirname, "../src");
-  const files = get_all_files(src_dir, ['.ts', '.js']);
+  const files = get_all_files(src_dir, [".ts", ".js"]);
   
   for (const file of files) {
-    const content = fs.readFileSync(file, 'utf-8');
+    const content = fs.readFileSync(file, "utf-8");
     if (content.length > 32 * 1024) continue; // Skip large files
     
     const relative_path = path.relative(path.dirname(src_dir), file);
@@ -53,7 +54,7 @@ function main() {
   const output: ValidationOutput = {
     meta: {
       timestamp: new Date().toISOString(),
-      ariadne_version: JSON.parse(fs.readFileSync(path.join(__dirname, "../package.json"), 'utf-8')).version,
+      ariadne_version: JSON.parse(fs.readFileSync(path.join(__dirname, "../package.json"), "utf-8")).version,
       total_files: project.get_all_scope_graphs().size,
       total_functions: Array.from(call_graph.nodes.values()).length,
       total_calls: call_graph.edges.length
@@ -64,7 +65,7 @@ function main() {
   
   // Extract Project class methods
   for (const def of project_defs) {
-    if (def.symbol_kind === 'method' || def.symbol_kind === 'function') {
+    if (def.symbol_kind === "method" || def.symbol_kind === "function") {
       const node = call_graph.nodes.get(def.symbol_id);
       output.api_methods.push({
         name: def.name,
@@ -80,7 +81,7 @@ function main() {
   const sampled_nodes = Array.from(call_graph.nodes.values()).slice(0, 10);
   for (const node of sampled_nodes) {
     const outgoing = node.calls
-      .filter(c => !c.symbol.startsWith('<builtin>#'))
+      .filter(c => !c.symbol.startsWith("<builtin>#"))
       .map(c => c.resolved_definition?.name || c.symbol);
     
     const incoming = call_graph.edges
@@ -114,7 +115,7 @@ function get_all_files(dir: string, extensions: string[]): string[] {
       const full_path = path.join(current_path, entry);
       const stat = fs.statSync(full_path);
       
-      if (stat.isDirectory() && !entry.startsWith('.') && entry !== 'node_modules') {
+      if (stat.isDirectory() && !entry.startsWith(".") && entry !== "node_modules") {
         traverse(full_path);
       } else if (stat.isFile() && extensions.some(ext => entry.endsWith(ext))) {
         files.push(full_path);

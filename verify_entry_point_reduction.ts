@@ -1,4 +1,5 @@
 #!/usr/bin/env npx tsx
+/* eslint-disable @typescript-eslint/no-explicit-any, no-restricted-syntax */
 /**
  * Verify entry point reduction from callback invocation detection
  */

@@ -3,10 +3,10 @@
  * Part of Task 11.154.1 - Document Current Capture State
  */
 
-import * as fs from 'fs';
-import * as path from 'path';
-import { fileURLToPath } from 'url';
-import { dirname } from 'path';
+import * as fs from "fs";
+import * as path from "path";
+import { fileURLToPath } from "url";
+import { dirname } from "path";
 
 // eslint-disable-next-line @typescript-eslint/naming-convention
 const __filename_esm = fileURLToPath(import.meta.url);
@@ -27,9 +27,9 @@ export interface CaptureInfo {
  * Extract all captures from a .scm file
  */
 export function extract_captures_from_scm(file_path: string): CaptureInfo[] {
-  const content = fs.readFileSync(file_path, 'utf-8');
+  const content = fs.readFileSync(file_path, "utf-8");
   const captures: CaptureInfo[] = [];
-  const lines = content.split('\n');
+  const lines = content.split("\n");
 
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i];
@@ -40,12 +40,12 @@ export function extract_captures_from_scm(file_path: string): CaptureInfo[] {
     for (const match of matches) {
       const full_capture = match[0]; // @capture.name
       const name_without_at = match[1]; // capture.name
-      const parts = name_without_at.split('.');
+      const parts = name_without_at.split(".");
 
       captures.push({
         name: full_capture,
-        category: parts[0] || '',
-        entity: parts[1] || '',
+        category: parts[0] || "",
+        entity: parts[1] || "",
         qualifiers: parts.slice(2),
         line: i + 1,
         column: match.index || 0,
@@ -61,8 +61,8 @@ export function extract_captures_from_scm(file_path: string): CaptureInfo[] {
  * Extract captures from all language query files
  */
 export function extract_all_captures() {
-  const queries_dir = path.join(__dirname_esm, '../packages/core/src/index_single_file/query_code_tree/queries');
-  const languages = ['typescript', 'javascript', 'python', 'rust'];
+  const queries_dir = path.join(__dirname_esm, "../packages/core/src/index_single_file/query_code_tree/queries");
+  const languages = ["typescript", "javascript", "python", "rust"];
 
   const by_language = new Map<string, CaptureInfo[]>();
 
@@ -82,10 +82,10 @@ export function extract_all_captures() {
 
 // Run if executed directly
 if (process.argv[1] === __filename_esm) {
-  console.log('Extracting captures from query files...\n');
+  console.log("Extracting captures from query files...\n");
   const results = extract_all_captures();
 
-  console.log('\nSummary:');
+  console.log("\nSummary:");
   for (const [lang, captures] of results) {
     const unique = new Set(captures.map(c => c.name)).size;
     console.log(`  ${lang}: ${captures.length} total, ${unique} unique`);

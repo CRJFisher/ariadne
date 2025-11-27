@@ -9,11 +9,6 @@
 
 import path from "path";
 import { fileURLToPath } from "url";
-
-// eslint-disable-next-line @typescript-eslint/naming-convention
-const __filename = fileURLToPath(import.meta.url);
-// eslint-disable-next-line @typescript-eslint/naming-convention
-const __dirname = path.dirname(__filename);
 import type {
   APIMethod,
   AnalysisResult,
@@ -22,6 +17,11 @@ import type {
   FunctionEntry,
 } from "./types.js";
 import { load_json, two_phase_query, find_most_recent_analysis, save_json } from "./utils.js";
+
+// eslint-disable-next-line @typescript-eslint/naming-convention
+const __filename = fileURLToPath(import.meta.url);
+// eslint-disable-next-line @typescript-eslint/naming-convention
+const __dirname = path.dirname(__filename);
 
 /**
  * Analyze why an API method was missed

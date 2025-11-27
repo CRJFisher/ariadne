@@ -8,6 +8,7 @@
  *
  * Returns JSON with decision:"block" if any errors or warnings remain.
  */
+/* eslint-disable no-undef */
 
 const { execSync } = require("child_process");
 const {

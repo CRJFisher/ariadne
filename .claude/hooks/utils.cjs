@@ -2,6 +2,7 @@
 /**
  * Shared utilities for Claude Code hooks
  */
+/* eslint-disable no-undef */
 
 const fs = require("fs");
 const path = require("path");

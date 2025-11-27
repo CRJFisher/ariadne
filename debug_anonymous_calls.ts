@@ -1,4 +1,5 @@
 #!/usr/bin/env npx tsx
+/* eslint-disable @typescript-eslint/no-explicit-any, no-undef, no-restricted-syntax, no-unused-vars */
 /**
  * Debug script to understand why anonymous function calls aren't being attributed
  */
@@ -37,9 +38,9 @@ async function debug_anonymous_functions() {
     console.log(`  Enclosed calls: ${anon.enclosed_calls.length}`);
 
     if (anon.enclosed_calls.length > 0) {
-      console.log(`\n  Calls made by this anonymous function:`);
+      console.log("\n  Calls made by this anonymous function:");
       for (const call of anon.enclosed_calls.slice(0, 5)) {
-        console.log(`    - ${call.name} (${call.symbol_id ? 'resolved' : 'unresolved'})`);
+        console.log(`    - ${call.name} (${call.symbol_id ? "resolved" : "unresolved"})`);
       }
     }
   }
@@ -50,12 +51,12 @@ async function debug_anonymous_functions() {
   );
 
   if (add_class_node) {
-    console.log(`\nadd_class node:`);
+    console.log("\nadd_class node:");
     console.log(`  Callers: ${add_class_node.callers.size}`);
     console.log(`  Is entry point: ${call_graph.entry_points.includes(add_class_node.symbol_id)}`);
 
     if (add_class_node.callers.size > 0) {
-      console.log(`  Called by:`);
+      console.log("  Called by:");
       for (const caller_id of Array.from(add_class_node.callers).slice(0, 3)) {
         const caller = call_graph.nodes.get(caller_id);
         console.log(`    - ${caller?.name} at ${caller?.location.file_path}:${caller?.location.start_line}`);

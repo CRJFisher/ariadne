@@ -7,6 +7,7 @@
  *
  * Returns JSON with decision:"block" if unfixable lint errors or warnings remain.
  */
+/* eslint-disable no-undef */
 
 const { execSync } = require("child_process");
 const fs = require("fs");

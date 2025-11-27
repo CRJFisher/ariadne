@@ -7,6 +7,7 @@
  * 2. Scope tree not creating scopes for arrow function bodies
  * 3. Call resolution not finding enclosing anonymous function scope
  */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { Project } from "@ariadnejs/core";
 import { FilePath } from "@ariadnejs/types";
@@ -45,7 +46,7 @@ async function diagnose_anonymous_scope_attribution() {
   // Find all callable definitions
   const all_callables = definitions.get_callable_definitions();
   const anonymous_functions = Array.from(all_callables).filter(
-    (def: any) => def.name === '<anonymous>'
+    (def: any) => def.name === "<anonymous>"
   );
 
   console.log(`\nFound ${anonymous_functions.length} anonymous functions`);
@@ -59,7 +60,7 @@ async function diagnose_anonymous_scope_attribution() {
     console.log(`\n--- Anonymous function at line ${location.start_line} ---`);
     console.log(`  symbol_id: ${anon.symbol_id}`);
     console.log(`  scope_id (defining scope): ${anon.scope_id}`);
-    console.log(`  body_scope_id: ${anon.body_scope_id || 'MISSING ❌'}`);
+    console.log(`  body_scope_id: ${anon.body_scope_id || "MISSING ❌"}`);
 
     if (anon.body_scope_id) {
       has_body_scope++;
@@ -69,9 +70,9 @@ async function diagnose_anonymous_scope_attribution() {
       console.log(`  Calls from body: ${calls.length}`);
 
       if (calls.length > 0) {
-        console.log(`  First 3 calls:`);
+        console.log("  First 3 calls:");
         for (const call of calls.slice(0, 3)) {
-          console.log(`    - ${call.name} at line ${call.location.start_line} (${call.symbol_id ? 'resolved ✓' : 'unresolved ❌'})`);
+          console.log(`    - ${call.name} at line ${call.location.start_line} (${call.symbol_id ? "resolved ✓" : "unresolved ❌"})`);
         }
       }
     } else {
@@ -79,12 +80,12 @@ async function diagnose_anonymous_scope_attribution() {
     }
   }
 
-  console.log(`\nSummary:`);
+  console.log("\nSummary:");
   console.log(`  ✓ With body_scope_id: ${has_body_scope}`);
   console.log(`  ❌ Missing body_scope_id: ${missing_body_scope}`);
 
   if (missing_body_scope > 0) {
-    console.log(`\n⚠️  HYPOTHESIS 1 CONFIRMED: Anonymous functions missing body_scope_id`);
+    console.log("\n⚠️  HYPOTHESIS 1 CONFIRMED: Anonymous functions missing body_scope_id");
   }
 
   console.log("\n" + "=".repeat(80));
@@ -106,13 +107,13 @@ async function diagnose_anonymous_scope_attribution() {
     scope_types.set(scope.type, count + 1);
   }
 
-  console.log(`\nScope types breakdown:`);
+  console.log("\nScope types breakdown:");
   for (const [type, count] of scope_types.entries()) {
     console.log(`  ${type}: ${count}`);
   }
 
   // Look for scopes near first few anonymous functions
-  console.log(`\nChecking scope proximity to anonymous functions:`);
+  console.log("\nChecking scope proximity to anonymous functions:");
 
   for (const anon of anonymous_functions.slice(0, 3)) {
     const line = anon.location.start_line;
@@ -125,13 +126,13 @@ async function diagnose_anonymous_scope_attribution() {
     ).sort((a: any, b: any) => a.location.start_line - b.location.start_line);
 
     if (nearby_scopes.length === 0) {
-      console.log(`  ❌ No scopes found within ±2 lines`);
+      console.log("  ❌ No scopes found within ±2 lines");
     } else {
       console.log(`  Found ${nearby_scopes.length} nearby scopes:`);
       for (const scope of nearby_scopes) {
         console.log(`    ${scope.type} scope at line ${scope.location.start_line} (id: ${scope.id})`);
-        console.log(`      name: ${scope.name || '(unnamed)'}`);
-        console.log(`      parent: ${scope.parent_id || '(none)'}`);
+        console.log(`      name: ${scope.name || "(unnamed)"}`);
+        console.log(`      parent: ${scope.parent_id || "(none)"}`);
       }
     }
   }
@@ -143,17 +144,17 @@ async function diagnose_anonymous_scope_attribution() {
   // Find calls that should be inside anonymous functions
   const file_refs = references.get_file_references(test_file);
   const function_calls = file_refs.filter(
-    (ref: any) => ref.kind === 'function_call' || ref.kind === 'method_call'
+    (ref: any) => ref.kind === "function_call" || ref.kind === "method_call"
   );
 
   console.log(`\nTotal function/method calls in file: ${function_calls.length}`);
-  console.log(`\nTracing call attribution for calls inside anonymous functions:`);
+  console.log("\nTracing call attribution for calls inside anonymous functions:");
 
   // Check specific known cases
   const test_cases = [
-    { method: 'build_class', expected_line_range: [200, 220] },
-    { method: 'add_class', expected_line_range: [200, 300] },
-    { method: 'add_function', expected_line_range: [200, 300] }
+    { method: "build_class", expected_line_range: [200, 220] },
+    { method: "add_class", expected_line_range: [200, 300] },
+    { method: "add_function", expected_line_range: [200, 300] }
   ];
 
   for (const test_case of test_cases) {
@@ -188,10 +189,10 @@ async function diagnose_anonymous_scope_attribution() {
 
         if (enclosing_def) {
           console.log(`  enclosing definition: ${enclosing_def.name} (${enclosing_def.symbol_id})`);
-          if (enclosing_def.name === '<anonymous>') {
-            console.log(`  ✓ Correctly attributed to anonymous function`);
+          if (enclosing_def.name === "<anonymous>") {
+            console.log("  ✓ Correctly attributed to anonymous function");
           } else {
-            console.log(`  ⚠️  Attributed to named function (might be incorrect)`);
+            console.log("  ⚠️  Attributed to named function (might be incorrect)");
           }
         } else {
           console.log(`  ❌ No definition found for enclosing scope ${enclosing_scope_id}`);
@@ -212,10 +213,10 @@ async function diagnose_anonymous_scope_attribution() {
     console.log(`\nAnalyzing scope tree for anonymous function at line ${example.location.start_line}`);
     console.log(`  symbol_id: ${example.symbol_id}`);
     console.log(`  defining_scope_id: ${example.scope_id}`);
-    console.log(`  body_scope_id: ${example.body_scope_id || 'MISSING'}`);
+    console.log(`  body_scope_id: ${example.body_scope_id || "MISSING"}`);
 
     // Trace up from defining scope
-    console.log(`\nScope tree from defining scope:`);
+    console.log("\nScope tree from defining scope:");
     let current_scope = scopes.get_scope(example.scope_id);
     let depth = 0;
     const visited = new Set();
@@ -228,7 +229,7 @@ async function diagnose_anonymous_scope_attribution() {
       visited.add(current_scope.id);
 
       console.log(`  ${"  ".repeat(depth)}${current_scope.type} scope (${current_scope.id})`);
-      console.log(`  ${"  ".repeat(depth)}  name: ${current_scope.name || '(unnamed)'}`);
+      console.log(`  ${"  ".repeat(depth)}  name: ${current_scope.name || "(unnamed)"}`);
       console.log(`  ${"  ".repeat(depth)}  line: ${current_scope.location.start_line}`);
 
       if (!current_scope.parent_id) {
@@ -242,7 +243,7 @@ async function diagnose_anonymous_scope_attribution() {
 
     // Check if body_scope_id exists and trace its tree
     if (example.body_scope_id) {
-      console.log(`\nScope tree from body scope:`);
+      console.log("\nScope tree from body scope:");
       current_scope = scopes.get_scope(example.body_scope_id);
       depth = 0;
       visited.clear();
@@ -255,7 +256,7 @@ async function diagnose_anonymous_scope_attribution() {
         visited.add(current_scope.id);
 
         console.log(`  ${"  ".repeat(depth)}${current_scope.type} scope (${current_scope.id})`);
-        console.log(`  ${"  ".repeat(depth)}  name: ${current_scope.name || '(unnamed)'}`);
+        console.log(`  ${"  ".repeat(depth)}  name: ${current_scope.name || "(unnamed)"}`);
         console.log(`  ${"  ".repeat(depth)}  line: ${current_scope.location.start_line}`);
 
         if (!current_scope.parent_id) {
@@ -278,15 +279,15 @@ async function diagnose_anonymous_scope_attribution() {
   console.log(`Anonymous functions missing body_scope_id: ${missing_body_scope}/${anonymous_functions.slice(0, 5).length} (sampled)`);
 
   if (missing_body_scope > has_body_scope) {
-    console.log(`\n🔴 PRIMARY ISSUE: Anonymous functions are missing body_scope_id`);
-    console.log(`   → This prevents calls from being attributed to them`);
-    console.log(`   → Action: Fix scope matching in find_body_scope_for_definition()`);
+    console.log("\n🔴 PRIMARY ISSUE: Anonymous functions are missing body_scope_id");
+    console.log("   → This prevents calls from being attributed to them");
+    console.log("   → Action: Fix scope matching in find_body_scope_for_definition()");
   } else if (missing_body_scope > 0) {
-    console.log(`\n🟡 PARTIAL ISSUE: Some anonymous functions missing body_scope_id`);
-    console.log(`   → Action: Investigate why some work and others don't`);
+    console.log("\n🟡 PARTIAL ISSUE: Some anonymous functions missing body_scope_id");
+    console.log("   → Action: Investigate why some work and others don't");
   } else {
-    console.log(`\n🟢 Anonymous functions have body_scope_id set correctly`);
-    console.log(`   → Issue must be elsewhere (scope tree or call resolution)`);
+    console.log("\n🟢 Anonymous functions have body_scope_id set correctly");
+    console.log("   → Issue must be elsewhere (scope tree or call resolution)");
   }
 
   console.log("\n" + "=".repeat(80));

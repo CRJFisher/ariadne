@@ -1,3 +1,4 @@
+/* eslint-disable no-restricted-syntax */
 import * as fs from "node:fs/promises";
 import path from "path";
 import { fileURLToPath } from "url";
@@ -35,12 +36,12 @@ export async function run_query(
   const query_options: Options = {
     model: "sonnet",
     permissionMode: "bypassPermissions",
-    settingSources: ['project'], // Enable CLAUDE.md loading
+    settingSources: ["project"], // Enable CLAUDE.md loading
     env: clean_env,
     executableArgs: [],
     systemPrompt: {
-      type: 'preset',
-      preset: 'claude_code'
+      type: "preset",
+      preset: "claude_code"
     },
     ...options_override,
   };
@@ -57,11 +58,9 @@ export async function run_query(
   let total_cost = 0;
   const tokens_used = { input: 0, output: 0 };
   let error_message = "";
-  let message_count = 0;
 
   try {
     for await (const message of result) {
-      message_count++;
       session_id = message.session_id;
 
       if (message.type === "assistant") {
@@ -127,7 +126,7 @@ export async function two_phase_query<T>(
 
   const investigation = await run_query(investigation_prompt);
 
-  console.error(`   ✓ Investigation complete`);
+  console.error("   ✓ Investigation complete");
   console.error(`   💰 Cost: $${investigation.total_cost.toFixed(6)}`);
 
   // Phase 2: Extraction
@@ -137,7 +136,7 @@ export async function two_phase_query<T>(
     resume: investigation.session_id,
   });
 
-  console.error(`   ✓ Extraction complete`);
+  console.error("   ✓ Extraction complete");
   console.error(`   💰 Cost: $${extraction.total_cost.toFixed(6)}`);
 
   // Extract JSON from response
