@@ -51,3 +51,4 @@ venv
 
 __pycache__/
 .cursorrules
+.claude/hook_log.txt
