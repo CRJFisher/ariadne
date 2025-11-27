@@ -114,7 +114,7 @@ function truncate_eslint_output(output, max_issues_per_file = 10) {
       result.push("");
       result.push(line);
       result.push("");
-      result.push("(Output truncated to first file. Fix these issues, then re-run to see remaining files.)");
+      result.push("(Output truncated to first file. Fix these issues first)");
       break;
     }
 
@@ -132,7 +132,7 @@ function truncate_eslint_output(output, max_issues_per_file = 10) {
     }
     if (!in_first_file && found_first_file) {
       result.push("");
-      result.push("(Output truncated to first file. Fix these issues, then re-run to see remaining files.)");
+      result.push("(Output truncated to first file. Fix these issues first)");
     }
   }
 
@@ -195,7 +195,7 @@ function truncate_tsc_output(output, max_errors_per_file = 10) {
   if (other_files_count > 0) {
     result.push("");
     result.push(`(Output truncated to first file. ${other_files_count} more errors in other files.)`);
-    result.push("Fix these errors, then re-run to see remaining files.");
+    result.push("Fix these errors first");
   }
 
   return result.join("\n");
