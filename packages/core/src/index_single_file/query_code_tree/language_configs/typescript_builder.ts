@@ -34,7 +34,6 @@ import {
 import type { CaptureNode } from "../../semantic_index";
 import { node_to_location } from "../../node_utils";
 
-
 // ============================================================================
 // Helper Functions for TypeScript-specific Features
 // ============================================================================
@@ -91,9 +90,7 @@ export function create_enum_member_id(
 /**
  * Create a method signature symbol ID for interface methods
  */
-export function create_method_signature_id(
-  capture: CaptureNode,
-): SymbolId {
+export function create_method_signature_id(capture: CaptureNode): SymbolId {
   const name = capture.text;
   const location = capture.location;
   return method_symbol(name, location);
@@ -190,16 +187,22 @@ export function extract_interface_extends(node: SyntaxNode): SymbolName[] {
  */
 export function extract_class_extends(node: SyntaxNode): SymbolName[] {
   // Find class_heritage by searching children (it's NOT a field)
-  const heritage = node.namedChildren?.find(c => c.type === "class_heritage");
+  const heritage = node.namedChildren?.find((c) => c.type === "class_heritage");
 
   if (heritage) {
     // Find extends_clause within heritage (also not a field)
-    const extendsClause = heritage.namedChildren?.find(c => c.type === "extends_clause");
+    const extendsClause = heritage.namedChildren?.find(
+      (c) => c.type === "extends_clause"
+    );
 
     if (extendsClause) {
       // The identifier is accessed via the 'value' field
       const valueNode = extendsClause.childForFieldName?.("value");
-      if (valueNode && (valueNode.type === "identifier" || valueNode.type === "type_identifier")) {
+      if (
+        valueNode &&
+        (valueNode.type === "identifier" ||
+          valueNode.type === "type_identifier")
+      ) {
         return [valueNode.text as SymbolName];
       }
     }
@@ -213,11 +216,13 @@ export function extract_class_extends(node: SyntaxNode): SymbolName[] {
  */
 export function extract_implements(node: SyntaxNode): SymbolName[] {
   // Find class_heritage by searching children (it's NOT a field)
-  const heritage = node.namedChildren?.find(c => c.type === "class_heritage");
+  const heritage = node.namedChildren?.find((c) => c.type === "class_heritage");
 
   if (heritage) {
     // Find implements_clause within heritage (also not a field)
-    const implementsClause = heritage.namedChildren?.find(c => c.type === "implements_clause");
+    const implementsClause = heritage.namedChildren?.find(
+      (c) => c.type === "implements_clause"
+    );
 
     if (implementsClause) {
       const interfaces: SymbolName[] = [];
@@ -239,7 +244,10 @@ export function extract_access_modifier(
   node: SyntaxNode
 ): "public" | "private" | "protected" | undefined {
   // Check if this is a private field/method using # syntax
-  if (node.type === "private_property_identifier" || node.text.startsWith("#")) {
+  if (
+    node.type === "private_property_identifier" ||
+    node.text.startsWith("#")
+  ) {
     return "private";
   }
 
@@ -545,10 +553,16 @@ export function find_containing_callable(capture: CaptureNode): SymbolId {
     ) {
       const nameNode = node.childForFieldName?.("name");
 
-      if (node.type === "method_definition" || node.type === "method_signature") {
+      if (
+        node.type === "method_definition" ||
+        node.type === "method_signature"
+      ) {
         const methodName = nameNode ? nameNode.text : "anonymous";
         // Reconstruct location with proper file_path
-        const location: Location = node_to_location(nameNode || node, file_path);
+        const location: Location = node_to_location(
+          nameNode || node,
+          file_path
+        );
         return method_symbol(methodName as SymbolName, location);
       } else if (nameNode) {
         // Named function
@@ -690,28 +704,26 @@ export function find_decorator_target(
     }
 
     // Case 2: Decorator is sibling in class_body (method/property decorators)
-    const decoratorIndex = parent.children?.indexOf(capture.node);
-    if (decoratorIndex !== undefined && decoratorIndex >= 0) {
+    const children = parent.children || [];
+    const decorator_index = children.indexOf(capture.node);
+
+    if (decorator_index >= 0) {
       // Look for the next non-decorator sibling
-      for (
-        let i = decoratorIndex + 1;
-        i < (parent.children?.length || 0);
-        i++
-      ) {
-        const sibling = parent.children![i];
+      for (let i = decorator_index + 1; i < children.length; i++) {
+        const sibling = children[i];
         if (sibling.type !== "decorator") {
           // Found the target - extract its ID based on type
           if (sibling.type === "method_definition") {
-            const nameNode = sibling.childForFieldName?.("name");
-            if (nameNode) {
-              const location: Location = node_to_location(nameNode, file_path);
-              return method_symbol(nameNode.text as SymbolName, location);
+            const name_node = sibling.childForFieldName?.("name");
+            if (name_node) {
+              const location: Location = node_to_location(name_node, file_path);
+              return method_symbol(name_node.text as SymbolName, location);
             }
           } else if (sibling.type === "public_field_definition") {
-            const nameNode = sibling.childForFieldName?.("name");
-            if (nameNode) {
-              const location: Location = node_to_location(nameNode, file_path);
-              return property_symbol(nameNode.text as SymbolName, location);
+            const name_node = sibling.childForFieldName?.("name");
+            if (name_node) {
+              const location: Location = node_to_location(name_node, file_path);
+              return property_symbol(name_node.text as SymbolName, location);
             }
           }
           break;

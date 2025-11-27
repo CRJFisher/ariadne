@@ -19,8 +19,6 @@ import {
   extract_return_type,
   extract_parameter_type,
   extract_enum_variants,
-  is_associated_function,
-  is_mutable_parameter,
   find_containing_impl,
   find_containing_struct,
   find_containing_trait,
@@ -35,6 +33,12 @@ import {
   type ImportInfo,
 } from "./rust_builder_helpers";
 
+// ============================================================================
+// COMBINED RUST CONFIG - Merges base config with method handlers
+// ============================================================================
+
+import { RUST_METHOD_CONFIG } from "./rust_method_config";
+
 export type ProcessFunction = (
   capture: CaptureNode,
   builder: DefinitionBuilder,
@@ -43,7 +47,8 @@ export type ProcessFunction = (
 
 export type LanguageBuilderConfig = Map<string, { process: ProcessFunction }>;
 
-export const RUST_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
+// Base configuration without method handlers
+const RUST_BASE_CONFIG: LanguageBuilderConfig = new Map([
   // Struct Definitions (now using @definition.class)
   [
     "definition.class",
@@ -449,186 +454,6 @@ export const RUST_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
     },
   ],
 
-  // Method Definitions
-  [
-    "definition.method",
-    {
-      process: (
-        capture: CaptureNode,
-        builder: DefinitionBuilder,
-        context: ProcessingContext
-      ) => {
-        const method_id = create_method_id(capture);
-        const impl_info = find_containing_impl(capture);
-        const returnType = extract_return_type(
-          capture.node.parent || capture.node
-        );
-        const isStatic = is_associated_function(
-          capture.node.parent || capture.node
-        );
-        if (impl_info?.struct_name) {
-          // Look up struct by name
-          const struct_id = builder.find_class_by_name(impl_info.struct_name);
-          if (struct_id) {
-            builder.add_method_to_class(
-              struct_id,
-              {
-                symbol_id: method_id,
-                name: capture.text,
-                location: capture.location,
-                scope_id: context.get_scope_id(capture.location),
-                return_type: returnType,
-                static: isStatic || undefined,
-              },
-              capture
-            );
-          } else {
-          }
-        } else {
-        }
-      },
-    },
-  ],
-
-  [
-    "definition.method.associated",
-    {
-      process: (
-        capture: CaptureNode,
-        builder: DefinitionBuilder,
-        context: ProcessingContext
-      ) => {
-        const method_id = create_method_id(capture);
-        const impl_info = find_containing_impl(capture);
-        const returnType = extract_return_type(
-          capture.node.parent || capture.node
-        );
-        if (impl_info?.struct_name) {
-          const struct_id = builder.find_class_by_name(impl_info.struct_name);
-          if (struct_id) {
-            builder.add_method_to_class(
-              struct_id,
-              {
-                symbol_id: method_id,
-                name: capture.text,
-                location: capture.location,
-                scope_id: context.get_scope_id(capture.location),
-                return_type: returnType,
-                static: true,
-              },
-              capture
-            );
-          }
-        }
-      },
-    },
-  ],
-
-  [
-    "definition.method.default",
-    {
-      process: (
-        capture: CaptureNode,
-        builder: DefinitionBuilder,
-        context: ProcessingContext
-      ) => {
-        const method_id = create_method_id(capture);
-        const trait_name = find_containing_trait(capture);
-        const returnType = extract_return_type(
-          capture.node.parent || capture.node
-        );
-
-        if (trait_name) {
-          // Look up trait by name
-          const trait_id = builder.find_interface_by_name(trait_name);
-          if (trait_id) {
-            builder.add_method_to_class(
-              trait_id,
-              {
-                symbol_id: method_id,
-                name: capture.text,
-                location: capture.location,
-                scope_id: context.get_scope_id(capture.location),
-                return_type: returnType,
-              },
-              capture
-            );
-          }
-        }
-      },
-    },
-  ],
-
-  [
-    "definition.method.async",
-    {
-      process: (
-        capture: CaptureNode,
-        builder: DefinitionBuilder,
-        context: ProcessingContext
-      ) => {
-        const method_id = create_method_id(capture);
-        const impl_info = find_containing_impl(capture);
-        const returnType = extract_return_type(
-          capture.node.parent || capture.node
-        );
-
-        if (impl_info?.struct_name) {
-          const struct_id = builder.find_class_by_name(impl_info.struct_name);
-          if (struct_id) {
-            builder.add_method_to_class(
-              struct_id,
-              {
-                symbol_id: method_id,
-                name: capture.text,
-                location: capture.location,
-                scope_id: context.get_scope_id(capture.location),
-                return_type: returnType,
-                async: true,
-              },
-              capture
-            );
-          }
-        }
-      },
-    },
-  ],
-
-  [
-    "definition.constructor",
-    {
-      process: (
-        capture: CaptureNode,
-        builder: DefinitionBuilder,
-        context: ProcessingContext
-      ) => {
-        const method_id = create_method_id(capture);
-        const impl_info = find_containing_impl(capture);
-        const returnType = extract_return_type(
-          capture.node.parent || capture.node
-        );
-
-        if (impl_info?.struct_name && capture.text === "new") {
-          const struct_id = builder.find_class_by_name(impl_info.struct_name);
-          if (struct_id) {
-            builder.add_method_to_class(
-              struct_id,
-              {
-                symbol_id: method_id,
-                name: capture.text as SymbolName,
-                location: capture.location,
-                scope_id: context.get_scope_id(capture.location),
-                return_type: returnType,
-                static: true,
-              },
-              capture
-            );
-          }
-        }
-      },
-    },
-  ],
-
   // Field Definitions
   [
     "definition.field",
@@ -674,9 +499,6 @@ export const RUST_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
         }
 
         const param_type = extract_parameter_type(
-          capture.node.parent || capture.node
-        );
-        const is_mut = is_mutable_parameter(
           capture.node.parent || capture.node
         );
 
@@ -1084,9 +906,9 @@ export const RUST_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
     "import.reexport",
     {
       process: (
-        capture: CaptureNode,
-        builder: DefinitionBuilder,
-        context: ProcessingContext
+        _capture: CaptureNode,
+        _builder: DefinitionBuilder,
+        _context: ProcessingContext
       ) => {
         // Re-exports are pub use statements
         // They are also captured by definition.import, which will add them as imports
@@ -1141,4 +963,9 @@ export const RUST_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
   ["definition.function.returns_impl", { process: () => {} }],
   ["definition.function.accepts_impl", { process: () => {} }],
   ["definition.visibility", { process: () => {} }],
+]);
+
+export const RUST_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
+  ...RUST_BASE_CONFIG,
+  ...RUST_METHOD_CONFIG,
 ]);

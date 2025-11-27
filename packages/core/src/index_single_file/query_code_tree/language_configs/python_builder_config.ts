@@ -1039,7 +1039,7 @@ export const PYTHON_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
       process: (
         capture: CaptureNode,
         builder: DefinitionBuilder,
-        context: ProcessingContext
+        _context: ProcessingContext
       ) => {
         const enum_id = find_containing_enum(capture);
         if (!enum_id) return;
