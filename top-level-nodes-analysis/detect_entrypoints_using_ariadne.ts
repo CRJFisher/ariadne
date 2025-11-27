@@ -164,8 +164,8 @@ async function load_project_files(
 async function analyze_packages_core(): Promise<AnalysisResult> {
   const start_time = Date.now();
 
-  const project_path = path.resolve(__dirname, "../packages/core");
-  console.error(`Analyzing packages/core at: ${project_path}`);
+  const project_path = path.resolve(__dirname, "../packages/core/src");
+  console.error(`Analyzing packages/core/src at: ${project_path}`);
   console.error("Loading files...");
 
   // Initialize project with excluded folders

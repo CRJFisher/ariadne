@@ -29,7 +29,7 @@ export interface FunctionEntry {
 
 export interface AnalysisResult {
   entry_points: FunctionEntry[];
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 // ===== Phase 1 Outputs =====
@@ -68,7 +68,40 @@ export interface APIInternalsExposed {
   };
 }
 
-// ===== Phase 2 Outputs =====
+// ===== Phase 2 Outputs (Grouped by Root Cause) =====
+
+/**
+ * A single false positive entry point detection
+ */
+export interface FalsePositiveEntry {
+  name: string;
+  file_path: string;
+  start_line: number;
+  signature?: string;
+}
+
+/**
+ * A group of false positive detections sharing the same root cause.
+ * Multiple entry points can be grouped together when they share
+ * the same root cause and fix strategy.
+ */
+export interface FalsePositiveGroup {
+  group_id: string;              // kebab-case short identifier (e.g., "builder-method-chain")
+  root_cause: string;            // Full description of the root cause
+  reasoning: string;             // Explanation of why this causes false positives
+  existing_task_fixes: string[]; // Related backlog tasks
+  entries: FalsePositiveEntry[];
+}
+
+/**
+ * The full triage results file structure
+ */
+export interface FalsePositiveTriageResults {
+  groups: Record<string, FalsePositiveGroup>;  // Keyed by group_id for easy lookup
+  last_updated: string;
+}
+
+// ===== Legacy Phase 2 Output (deprecated) =====
 
 export interface InternalMisidentified {
   name: string;

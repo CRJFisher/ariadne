@@ -2,194 +2,144 @@
 
 Self-analysis system to evaluate the accuracy of Ariadne's call graph detection and identify improvements.
 
-## Architecture
+## Workflow Overview
 
-### Two-Phase Analysis
+The analysis consists of three steps that evaluate how accurately Ariadne detects entry points (functions that are never called internally):
 
-#### Phase 1: API Coverage Analysis
-Analyzes **project.ts** (the public API) to determine:
-- ✅ Which public API methods were correctly detected as entry points
-- ❌ Which public API methods were missed (FALSE NEGATIVES)
-- ⚠️ Which private methods were wrongly exposed
+```
+┌─────────────────────────────────────────┐
+│ Step 1: detect_entrypoints_using_ariadne│  Run Ariadne on packages/core
+│                                         │  Output: analysis_output/*.json
+└──────────────────┬──────────────────────┘
+                   │
+       ┌───────────┴───────────┐
+       │                       │
+       ▼                       ▼
+┌──────────────────┐   ┌──────────────────┐
+│ Step 2: Triage   │   │ Step 3: Triage   │
+│ False Negatives  │   │ False Positives  │
+│                  │   │                  │
+│ API methods that │   │ Internal funcs   │
+│ SHOULD be entry  │   │ wrongly detected │
+│ points but were  │   │ as entry points  │
+│ not detected     │   │                  │
+└──────────────────┘   └──────────────────┘
+```
 
-**Script**: `phase1_api_coverage.ts`
+## Scripts
+
+### Step 1: `detect_entrypoints_using_ariadne.ts`
+
+Runs Ariadne's call graph analysis on `packages/core` to detect entry points.
+
+```bash
+npx tsx detect_entrypoints_using_ariadne.ts
+```
+
+**Output**: `analysis_output/packages-core-analysis_<timestamp>.json`
+
+Contains:
+
+- All detected entry points (functions not called by other functions)
+- File paths, line numbers, signatures
+- Tree size (number of functions each entry point calls)
+
+### Step 2: `triage_false_negative_entrypoints.ts`
+
+Analyzes which public API methods were missed (false negatives).
+
+Compares detected entry points against the ground truth API methods in `ground_truth/project_api_methods.json`. For each API method NOT detected as an entry point, uses Claude Agent SDK to investigate why.
+
+```bash
+npx tsx triage_false_negative_entrypoints.ts
+```
 
 **Outputs**:
+
 - `results/api_correctly_detected.json` - TRUE POSITIVES
-- `results/api_missing_from_detection.json` - FALSE NEGATIVES
-- `results/api_internals_exposed.json` - Private methods wrongly detected
+- `results/api_missing_from_detection.json` - FALSE NEGATIVES (with triage analysis)
 
-#### Phase 2: Internal Misidentifications Triage
-Analyzes all detected entry points that are **NOT** in project.ts (all should be misidentifications).
+### Step 3: `triage_false_positive_entrypoints.ts`
 
-For each misidentification:
-1. Classifies the root cause
-2. Performs triage analysis to understand the detection gap
-3. Links to existing backlog tasks
-4. Suggests fixes
+Analyzes internal functions wrongly detected as entry points (false positives).
 
-**Script**: `phase2_internal_triage.ts`
+All entry points NOT in `project.ts` are misidentifications. For each one, uses Claude Agent SDK to classify the root cause and suggest fixes.
 
-**Output**:
-- `results/internal_misidentified.json` - FALSE POSITIVES
+```bash
+npx tsx triage_false_positive_entrypoints.ts
+```
+
+**Output**: `results/internal_misidentified.json` - FALSE POSITIVES (with root cause analysis)
+
+## Supporting Files
+
+| File | Purpose |
+|------|---------|
+| `types.ts` | Shared TypeScript type definitions |
+| `utils.ts` | Claude Agent SDK query helpers, file I/O utilities |
+| `ground_truth/project_api_methods.json` | Manual list of public API methods (source of truth) |
+| `verify_entry_points_legacy.ts` | Deprecated single-phase verification script |
 
 ## Directory Structure
 
 ```
 top-level-nodes-analysis/
-├── README.md                          # This file
+├── README.md
 ├── package.json
-├── types.ts                           # Shared type definitions
+├── tsconfig.json
 │
-├── analyze_self.ts                    # Runs call graph analysis
-├── phase1_api_coverage.ts             # Phase 1: API coverage analysis
-├── phase2_internal_triage.ts          # Phase 2: Internal triage
+├── detect_entrypoints_using_ariadne.ts    # Step 1: Run analysis
+├── triage_false_negative_entrypoints.ts   # Step 2: Find missed API methods
+├── triage_false_positive_entrypoints.ts   # Step 3: Find misidentified internals
+│
+├── types.ts                               # Shared type definitions
+├── utils.ts                               # Query helpers and utilities
+├── verify_entry_points_legacy.ts          # Deprecated
 │
 ├── ground_truth/
-│   └── project_api_methods.json       # Manual list of public API
+│   └── project_api_methods.json           # Manual list of public API
 │
-├── results/
-│   ├── api_correctly_detected.json    # TRUE POSITIVES
-│   ├── api_missing_from_detection.json # FALSE NEGATIVES
-│   ├── api_internals_exposed.json     # Private methods exposed
-│   └── internal_misidentified.json    # FALSE POSITIVES
+├── analysis_output/
+│   └── packages-core-analysis_*.json      # Step 1 outputs (timestamped)
 │
-└── [deprecated]/
-    ├── verify_entry_points.ts         # Old single-phase script
-    ├── correct_entry_points.json      # Old format
-    └── misidentified_entry_points.json # Old format
+└── results/
+    ├── api_correctly_detected.json        # TRUE POSITIVES
+    ├── api_missing_from_detection.json    # FALSE NEGATIVES
+    ├── api_internals_exposed.json         # Private methods in project.ts
+    └── internal_misidentified.json        # FALSE POSITIVES
 ```
 
-## Usage
+## Interpreting Results
 
-### Step 1: Run Call Graph Analysis
+### Goal: Minimize Entry Points
 
-```bash
-npx tsx analyze_self.ts
-```
+The ideal result is that **only the public API methods** are detected as entry points. Everything else should be called by something.
 
-This generates: `../analysis_output/packages-core-analysis_<timestamp>.json`
+- **FALSE NEGATIVES** (API methods not detected): Indicates our API methods ARE being called internally, which may be expected if they delegate to internal implementations.
+- **FALSE POSITIVES** (internal functions detected): Indicates call graph analysis gaps where we fail to track certain call patterns.
 
-### Step 2: Run Phase 1 (API Coverage)
+### Common Root Causes for False Positives
 
-```bash
-npx tsx phase1_api_coverage.ts ../analysis_output/packages-core-analysis_<timestamp>.json
-```
+- "method called by parent class" - Inheritance not tracked
+- "method called through interface" - Interface dispatch not resolved
+- "dynamic/indirect method call" - Computed property access
+- "framework callback method" - External framework calls the method
+- "builder pattern method" - Chained calls not fully tracked
 
-**What it does**:
-- Compares detected entry points against ground truth API
-- Identifies missing API methods (false negatives)
-- Uses Claude Agent SDK to analyze WHY methods were missed
-- Links to related backlog tasks
+## Ground Truth API
 
-**Outputs**:
-- `results/api_correctly_detected.json`
-- `results/api_missing_from_detection.json`
-- `results/api_internals_exposed.json`
+The public API consists of methods on the `Project` class:
 
-### Step 3: Run Phase 2 (Internal Triage)
-
-```bash
-npx tsx phase2_internal_triage.ts ../analysis_output/packages-core-analysis_<timestamp>.json
-```
-
-**What it does**:
-- Analyzes all non-project.ts entry points (should all be misidentified)
-- Uses Claude Agent SDK to classify root cause
-- Performs triage analysis to understand detection gaps
-- Links to related backlog tasks
-- Suggests concrete fixes
-
-**Output**:
-- `results/internal_misidentified.json`
-
-## Output Schemas
-
-### api_missing_from_detection.json (FALSE NEGATIVES)
-
-```typescript
-{
-  "name": "initialize",
-  "file_path": "packages/core/src/project/project.ts",
-  "line": 126,
-  "signature": "async initialize(...): Promise<void>",
-  "triage_analysis": {
-    "why_missed": "Method is async and may be called indirectly through constructor",
-    "related_tasks": ["task-155-type-flow-inference"],
-    "suggested_fix": "Track async method calls and initialization patterns"
-  }
-}
-```
-
-### internal_misidentified.json (FALSE POSITIVES)
-
-```typescript
-{
-  "name": "process_definitions",
-  "file_path": "packages/core/src/resolve_references/definition_processor.ts",
-  "start_line": 42,
-  "signature": "process_definitions(file: ParsedFile): Definition[]",
-  "root_cause": "method called by parent class",
-  "reasoning": "This method is called by SemanticIndexBuilder but the call is through an interface",
-  "triage_analysis": {
-    "detection_gap": "Interface method calls not tracked - only direct function calls detected",
-    "related_tasks": ["task-155-type-flow-inference", "task-147-method-resolution"],
-    "suggested_fix": "Implement interface resolution and track method calls through interfaces"
-  }
-}
-```
-
-## Ground Truth
-
-The ground truth API is manually curated in `ground_truth/project_api_methods.json`.
-
-**Public API Methods** (from Project class):
-- `initialize(root_folder_abs_path?, excluded_folders?)`
-- `update_file(file_id, content)`
-- `remove_file(file_id)`
-- `get_call_graph()`
-- `get_all_scope_graphs()`
-- `get_dependents(file_id)`
-- `get_all_files()`
-- `get_semantic_index(file_id)`
-- `get_source_code(def, file_path?)`
-- `get_definition(symbol_id)`
-- `clear()`
-
-Plus public registries: `definitions`, `types`, `scopes`, `exports`, `references`, `imports`, `resolutions`
-
-## Key Insights
-
-### Common Root Causes (FALSE POSITIVES)
-
-- "method called by parent class"
-- "internal utility function"
-- "framework callback method"
-- "builder pattern method"
-- "test helper function"
-- "private implementation detail"
-- "exported for testing only"
-- "method called through interface"
-- "dynamic/indirect method call"
-
-### Detection Gaps
-
-1. **Interface method calls** - Not tracked by call graph
-2. **Parent class calls** - Inheritance relationships not followed
-3. **Dynamic calls** - Computed method names not resolved
-4. **Async patterns** - Promise chains and async initialization
-5. **Type flow** - Method calls through type aliases
-
-## Backlog Task Integration
-
-Both phases scan `backlog/tasks/` and `backlog/tasks/epics/epic-11-codebase-restructuring/` to:
-- Link misidentifications to existing improvement tasks
-- Identify which tasks would fix specific detection gaps
-- Prioritize backlog work based on impact
-
-## Notes
-
-- Phase 1 and Phase 2 can be run independently
-- Results are incremental - scripts skip already-processed entries
-- Both phases use Claude Agent SDK with debugger prevention
-- All prompts enforce JSON-only output (no tools, no code modification)
+| Method | Description |
+|--------|-------------|
+| `initialize()` | Initialize project with root folder |
+| `update_file()` | Add/update a file |
+| `remove_file()` | Remove a file |
+| `get_call_graph()` | Get the call graph |
+| `get_all_scope_graphs()` | Get all semantic indexes |
+| `get_dependents()` | Get files depending on a file |
+| `get_all_files()` | List all project files |
+| `get_semantic_index()` | Get semantic index for a file |
+| `get_source_code()` | Get source code for a definition |
+| `get_definition()` | Get definition by symbol ID |
+| `clear()` | Clear all project state |
