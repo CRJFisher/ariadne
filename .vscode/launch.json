@@ -36,7 +36,7 @@
       "runtimeExecutable": "npx",
       "runtimeArgs": ["tsx"],
       "args": [
-        "top-level-nodes-analysis/traige_false_positive_entrypoints.ts"
+        "top-level-nodes-analysis/triage_false_positive_entrypoints.ts"
       ],
       "cwd": "${workspaceFolder}",
       "console": "integratedTerminal",
