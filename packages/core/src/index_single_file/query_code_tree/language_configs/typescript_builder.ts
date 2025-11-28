@@ -276,28 +276,6 @@ export function is_readonly_property(node: SyntaxNode): boolean {
 }
 
 /**
- * Check if property/method is optional
- */
-export function is_optional_member(node: SyntaxNode): boolean {
-  const parent = node.parent;
-  if (parent) {
-    // Check for optional token (?)
-    for (const child of parent.children || []) {
-      if (child.type === "?" || child.text === "?") return true;
-    }
-  }
-  return false;
-}
-
-/**
- * Check if class is abstract
- */
-export function is_abstract_class(node: SyntaxNode): boolean {
-  const parent = node.parent;
-  return parent?.type === "abstract_class_declaration";
-}
-
-/**
  * Check if method is abstract
  */
 export function is_abstract_method(node: SyntaxNode): boolean {

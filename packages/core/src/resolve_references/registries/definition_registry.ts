@@ -531,19 +531,6 @@ export class DefinitionRegistry {
   }
 
   /**
-   * Get all function collections in the registry.
-   * Used for debugging and testing.
-   *
-   * @returns ReadonlyMap of all function collections
-   */
-  get_all_function_collections(): ReadonlyMap<
-    SymbolId,
-    FunctionCollection
-  > {
-    return this.function_collections;
-  }
-
-  /**
    * Clear all definitions from the registry.
    */
   clear(): void {

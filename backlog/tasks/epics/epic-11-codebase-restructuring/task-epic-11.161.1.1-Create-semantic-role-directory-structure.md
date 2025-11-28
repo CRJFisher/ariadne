@@ -1,6 +1,6 @@
 # Task 11.161.1.1: Create Semantic Role Directory Structure
 
-## Status: Planning
+## Status: Completed
 
 ## Parent: Task 11.161.1
 

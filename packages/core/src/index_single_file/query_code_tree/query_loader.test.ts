@@ -16,7 +16,6 @@ import { join, dirname } from "path";
 import {
   LANGUAGE_TO_TREESITTER_LANG,
   load_query,
-  has_query,
   query_cache,
   cached_queries_dir_cache,
   get_queries_dir,
@@ -275,90 +274,6 @@ describe("Query Loader", () => {
     });
   });
 
-  describe("has_query", () => {
-    describe("Success Cases", () => {
-      it("should return true for existing queries", () => {
-        const languages: Language[] = [
-          "javascript",
-          "typescript",
-          "python",
-          "rust",
-        ];
-
-        for (const lang of languages) {
-          expect(has_query(lang)).toBe(true);
-        }
-      });
-
-      it("should be consistent with load_query", () => {
-        const languages: Language[] = [
-          "javascript",
-          "typescript",
-          "python",
-          "rust",
-        ];
-
-        for (const lang of languages) {
-          expect(has_query(lang)).toBe(true);
-          expect(() => load_query(lang)).not.toThrow();
-        }
-      });
-    });
-
-    describe("Error Cases", () => {
-      it("should throw error for unsupported language", () => {
-        expect(() => {
-          has_query("unsupported" as Language);
-        }).toThrow(/Unsupported language/);
-      });
-
-      it("should throw error for undefined language", () => {
-        expect(() => {
-          has_query(undefined as unknown as Language);
-        }).toThrow(/Invalid language/);
-      });
-
-      it("should throw error for null language", () => {
-        expect(() => {
-          has_query(null as unknown as Language);
-        }).toThrow(/Invalid language/);
-      });
-
-      it("should throw error for empty string language", () => {
-        expect(() => {
-          has_query("" as Language);
-        }).toThrow(/Invalid language/);
-      });
-    });
-
-    describe("Consistency with load_query", () => {
-      it("should return true when load_query would succeed", () => {
-        for (const lang of SUPPORTED_LANGUAGES) {
-          expect(has_query(lang)).toBe(true);
-          expect(() => load_query(lang)).not.toThrow();
-        }
-      });
-
-      it("should throw when load_query would throw", () => {
-        const invalid_langs = ["java", "go", "cpp"] as unknown as Language[];
-        for (const lang of invalid_langs) {
-          expect(() => has_query(lang)).toThrow();
-          expect(() => load_query(lang)).toThrow();
-        }
-      });
-
-      it("should be consistent across multiple calls", () => {
-        // Test successful case
-        expect(has_query("javascript")).toBe(true);
-        expect(has_query("javascript")).toBe(true);
-
-        // Test error case
-        expect(() => has_query("unsupported" as Language)).toThrow();
-        expect(() => has_query("unsupported" as Language)).toThrow();
-      });
-    });
-  });
-
   describe("Path Resolution", () => {
     it("should find the queries directory", () => {
       const result = test_path_resolution();
@@ -429,7 +344,6 @@ describe("Query Loader", () => {
       ];
 
       for (const lang of languages) {
-        expect(has_query(lang)).toBe(true);
         const query = load_query(lang);
         expect(typeof query).toBe("string");
         expect(query.length).toBeGreaterThan(0);
@@ -438,11 +352,9 @@ describe("Query Loader", () => {
 
     it("should handle mixed success and failure scenarios", () => {
       // Supported languages succeed
-      expect(has_query("javascript")).toBe(true);
       expect(() => load_query("javascript")).not.toThrow();
 
       // Unsupported languages throw
-      expect(() => has_query("java" as Language)).toThrow();
       expect(() => load_query("java" as Language)).toThrow();
     });
 
@@ -455,7 +367,6 @@ describe("Query Loader", () => {
       ];
 
       for (const lang of languages) {
-        expect(has_query(lang)).toBe(true);
         const query = load_query(lang);
         expect(query).toBeTruthy();
         expect(LANGUAGE_TO_TREESITTER_LANG.has(lang)).toBe(true);
@@ -551,15 +462,6 @@ describe("Query Loader", () => {
       expect(get_cache_size()).toBe(0);
     });
 
-    it("has_query should check cache before file system", () => {
-      // Load query to cache it
-      load_query("javascript");
-      expect(get_cache_size()).toBe(1);
-
-      // has_query should return true (checking cache)
-      expect(has_query("javascript")).toBe(true);
-    });
-
     it("should cache queries persistently during execution", () => {
       const start = Date.now();
       load_query("javascript");
@@ -584,17 +486,8 @@ describe("Query Loader", () => {
       );
     });
 
-    it("has_query should throw for unsupported languages", () => {
-      expect(() => has_query("unsupported" as Language)).toThrow(
-        /Unsupported language/
-      );
-      expect(() => has_query("java" as Language)).toThrow(/Unsupported/);
-      expect(() => has_query("go" as Language)).toThrow(/Unsupported/);
-    });
-
     it("should work for all supported languages", () => {
       for (const lang of SUPPORTED_LANGUAGES) {
-        expect(has_query(lang)).toBe(true);
         expect(() => load_query(lang)).not.toThrow();
       }
     });
@@ -689,13 +582,6 @@ describe("Query Loader", () => {
   });
 
   describe("Performance Improvements", () => {
-    it("has_query should be efficient", () => {
-      // has_query should work without loading entire file into cache
-      expect(has_query("javascript")).toBe(true);
-      // Cache may or may not be populated depending on implementation
-      expect(get_cache_size()).toBeGreaterThanOrEqual(0);
-    });
-
     it("should handle repeated access gracefully", () => {
       // Multiple loads of the same language should work
       const results = [];
@@ -769,25 +655,11 @@ describe("Query Loader", () => {
       }
     });
 
-    it("should detect available queries", () => {
-      for (const language of SUPPORTED_LANGUAGES) {
-        expect(has_query(language)).toBe(true);
-      }
-    });
-
-    it("should throw for non-existent languages", () => {
-      expect(() => has_query("nonexistent" as Language)).toThrow(
-        /Unsupported language/
-      );
-    });
-
     it("should work end-to-end for all languages", () => {
       const results = new Map<Language, string>();
 
       // Load all languages
       for (const lang of SUPPORTED_LANGUAGES) {
-        expect(has_query(lang)).toBe(true);
-
         const query = load_query(lang);
         expect(typeof query).toBe("string");
         expect(query.length).toBeGreaterThan(0);
@@ -807,14 +679,8 @@ describe("Query Loader", () => {
     });
 
     it("should maintain cache across multiple operations", () => {
-      // Mix of has_query and load_query calls
-      expect(has_query("javascript")).toBe(true);
-      expect(has_query("typescript")).toBe(true);
-
       const js_query = load_query("javascript");
       expect(get_cache_size()).toBeGreaterThanOrEqual(1);
-
-      expect(has_query("javascript")).toBe(true); // Should check cache
 
       load_query("typescript");
       expect(get_cache_size()).toBeGreaterThanOrEqual(2);
@@ -828,26 +694,17 @@ describe("Query Loader", () => {
   describe("Edge Cases - Extended", () => {
     it("should throw error for undefined language", () => {
       expect(() => {
-        has_query(undefined as any);
-      }).toThrow(/Invalid language/);
-      expect(() => {
         load_query(undefined as any);
       }).toThrow(/Invalid language/);
     });
 
     it("should throw error for null language", () => {
       expect(() => {
-        has_query(null as any);
-      }).toThrow(/Invalid language/);
-      expect(() => {
         load_query(null as any);
       }).toThrow(/Invalid language/);
     });
 
     it("should throw error for empty string language", () => {
-      expect(() => {
-        has_query("" as Language);
-      }).toThrow(/Invalid language/);
       expect(() => {
         load_query("" as Language);
       }).toThrow(/Invalid language/);

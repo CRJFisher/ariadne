@@ -205,22 +205,4 @@ export function load_query(language: Language): string {
   }
 }
 
-/**
- * Check if a query exists for a language (efficient version)
- */
-export function has_query(language: Language): boolean {
-  // Validate language support (this will throw for invalid inputs)
-  validate_language(language);
-
-  // Check cache first
-  if (query_cache.has(language)) {
-    return true;
-  }
-
-  // Check file existence without loading
-  const queries_dir = get_queries_dir();
-  const query_path = join(queries_dir, `${language}.scm`);
-
-  return existsSync(query_path);
-}
 

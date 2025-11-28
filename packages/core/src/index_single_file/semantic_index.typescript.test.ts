@@ -2667,23 +2667,23 @@ describe("Semantic Index - TypeScript", () => {
       );
       expect(class_def).toBeDefined();
 
-      // Check methodA
-      const method_a = class_def!.methods.find((m) => m.name === "methodA");
+      // Check method_a
+      const method_a = class_def!.methods.find((m) => m.name === "method_a");
       expect(method_a).toBeDefined();
       expect(method_a!.body_scope_id).toBeDefined();
 
-      const method_a_body_scope = index.scopes.get(method_a!.body_scope_id);
+      const method_a_body_scope = index.scopes.get(method_a!.body_scope_id!);
       expect(method_a_body_scope?.type).toBe("method");
-      expect(method_a_body_scope?.name).toContain("methodA");
+      expect(method_a_body_scope?.name).toContain("method_a");
 
-      // Check methodB
-      const method_b = class_def!.methods.find((m) => m.name === "methodB");
+      // Check method_b
+      const method_b = class_def!.methods.find((m) => m.name === "method_b");
       expect(method_b).toBeDefined();
       expect(method_b!.body_scope_id).toBeDefined();
 
-      const method_b_body_scope = index.scopes.get(method_b!.body_scope_id);
+      const method_b_body_scope = index.scopes.get(method_b!.body_scope_id!);
       expect(method_b_body_scope?.type).toBe("method");
-      expect(method_b_body_scope?.name).toContain("methodB");
+      expect(method_b_body_scope?.name).toContain("method_b");
     });
 
     it("should set body_scope_id for constructor definitions", () => {

@@ -499,15 +499,6 @@ export class TypeRegistry {
   }
 
   /**
-   * Get the total number of resolved symbols.
-   *
-   * @returns Count of symbols with resolved type information
-   */
-  size(): number {
-    return this.symbol_types.size;
-  }
-
-  /**
    * Clear all type information from the registry.
    */
   clear(): void {

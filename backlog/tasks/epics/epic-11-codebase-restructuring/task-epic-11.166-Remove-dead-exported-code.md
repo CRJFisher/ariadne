@@ -1,6 +1,6 @@
 # Task 11.166: Remove Dead Exported Code
 
-## Status: Planning
+## Status: Completed
 
 ## Parent: epic-11-codebase-restructuring
 

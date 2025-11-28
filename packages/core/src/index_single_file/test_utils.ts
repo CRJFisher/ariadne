@@ -39,21 +39,3 @@ export function create_mock_node(
   } as unknown as SyntaxNode;
 }
 
-/**
- * Create a simple mock node with default positions
- */
-export function create_simple_mock_node(
-  node_type: string = "mock_node",
-  text: string = "mock_text",
-  additional_props: Partial<SyntaxNode> = {},
-): SyntaxNode {
-  return create_mock_node(
-    node_type,
-    text,
-    0,
-    0,
-    undefined,
-    undefined,
-    additional_props,
-  );
-}

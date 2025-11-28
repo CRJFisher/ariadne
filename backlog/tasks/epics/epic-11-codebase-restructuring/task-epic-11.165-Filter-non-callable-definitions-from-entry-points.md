@@ -1,6 +1,6 @@
 # Task 11.165: Filter Non-Callable Definitions from Entry Points
 
-## Status: Planning
+## Status: Completed
 
 ## Parent: epic-11-codebase-restructuring
 

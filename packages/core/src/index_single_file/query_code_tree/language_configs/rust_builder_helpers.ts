@@ -3,7 +3,6 @@ import type { SyntaxNode } from "tree-sitter";
 import type {
   SymbolId,
   SymbolName,
-  ModulePath,
   ExportMetadata,
   FunctionCollectionInfo,
   FilePath,
@@ -21,7 +20,6 @@ import {
   type_alias_symbol,
   module_symbol,
   anonymous_function_symbol,
-  create_module_path,
 } from "@ariadnejs/types";
 import type { CaptureNode } from "../../semantic_index";
 import { node_to_location } from "../../node_utils";
@@ -240,52 +238,6 @@ export function extract_generic_parameters(node: SyntaxNode): SymbolName[] {
   return generics;
 }
 
-export function extract_lifetime_parameters(node: SyntaxNode): SymbolName[] {
-  const lifetimes: SymbolName[] = [];
-  const type_params = node.childForFieldName?.("type_parameters");
-
-  if (type_params) {
-    for (const child of type_params.children || []) {
-      if (child.type === "lifetime") {
-        lifetimes.push(child.text as SymbolName);
-      }
-    }
-  }
-
-  return lifetimes;
-}
-
-export function extract_trait_bounds(node: SyntaxNode): SymbolName[] {
-  const bounds: SymbolName[] = [];
-  const where_clause = node.childForFieldName?.("where_clause");
-
-  if (where_clause) {
-    for (const child of where_clause.children || []) {
-      if (child.type === "where_predicate") {
-        const bound = child.childForFieldName?.("bounds");
-        if (bound) {
-          bounds.push(bound.text as SymbolName);
-        }
-      }
-    }
-  }
-
-  // Also check inline bounds in type parameters
-  const type_params = node.childForFieldName?.("type_parameters");
-  if (type_params) {
-    for (const child of type_params.children || []) {
-      if (child.type === "constrained_type_parameter") {
-        const bound = child.childForFieldName?.("bounds");
-        if (bound) {
-          bounds.push(bound.text as SymbolName);
-        }
-      }
-    }
-  }
-
-  return bounds;
-}
-
 export function extract_impl_trait(node: SyntaxNode): SymbolName | undefined {
   // For impl blocks, extract the trait being implemented
   if (node.type === "impl_item") {
@@ -319,33 +271,6 @@ export function extract_impl_type(node: SyntaxNode): SymbolName | undefined {
     }
   }
   return undefined;
-}
-
-export function is_async_function(node: SyntaxNode): boolean {
-  // Check for async keyword
-  return (
-    node.children?.some(
-      (child) => child.type === "async" || child.text === "async"
-    ) || false
-  );
-}
-
-export function is_const_function(node: SyntaxNode): boolean {
-  // Check for const keyword
-  return (
-    node.children?.some(
-      (child) => child.type === "const" || child.text === "const"
-    ) || false
-  );
-}
-
-export function is_unsafe_function(node: SyntaxNode): boolean {
-  // Check for unsafe keyword
-  return (
-    node.children?.some(
-      (child) => child.type === "unsafe" || child.text === "unsafe"
-    ) || false
-  );
 }
 
 export function extract_return_type(node: SyntaxNode): SymbolName | undefined {
@@ -385,33 +310,6 @@ export function extract_type_expression(node: SyntaxNode): string | undefined {
 
   const type_node = parent.childForFieldName?.("type");
   return type_node?.text;
-}
-
-/**
- * Check if a node has generic type parameters
- *
- * @param node - The node to check (struct_item, enum_item, type_item, function_item, etc.)
- * @returns True if the node has generic parameters
- *
- * @example
- * struct Foo<T> { }  // Returns true
- * struct Bar { }     // Returns false
- */
-export function has_generic_parameters(node: SyntaxNode): boolean {
-  const type_params = node.childForFieldName?.("type_parameters");
-  return type_params !== null && type_params !== undefined;
-}
-
-export function is_mutable_parameter(node: SyntaxNode): boolean {
-  const pattern = node.childForFieldName?.("pattern");
-  if (pattern) {
-    return (
-      pattern.children?.some(
-        (child) => child.type === "mut" || child.text === "mut"
-      ) || false
-    );
-  }
-  return false;
 }
 
 export function is_self_parameter(node: SyntaxNode): boolean {
@@ -564,121 +462,6 @@ export function is_associated_function(node: SyntaxNode): boolean {
 
   // No self parameter means it's an associated function (static)
   return true;
-}
-
-export function extract_use_path(capture: CaptureNode): ModulePath {
-  // For use declarations and extern crate declarations, extract the full path
-  let node: SyntaxNode | null = capture.node;
-
-  // Traverse up to find use_declaration or extern_crate_declaration
-  while (
-    node &&
-    node.type !== "use_declaration" &&
-    node.type !== "extern_crate_declaration"
-  ) {
-    node = node.parent;
-  }
-
-  if (!node) {
-    return create_module_path(capture.text);
-  }
-
-  // Handle extern crate declarations
-  if (node.type === "extern_crate_declaration") {
-    // Find the first identifier (the crate name)
-    const children = node.children || [];
-    for (const child of children) {
-      if (child.type === "identifier") {
-        return create_module_path(child.text);
-      }
-    }
-    return create_module_path(capture.text);
-  }
-
-  // Handle use declarations
-  // Get the argument field which contains the path
-  const argument = node.childForFieldName?.("argument");
-  if (argument) {
-    // Handle different argument types
-    if (argument.type === "scoped_identifier") {
-      return create_module_path(argument.text);
-    } else if (argument.type === "identifier") {
-      return create_module_path(argument.text);
-    } else if (argument.type === "use_as_clause") {
-      // For aliased imports, get the source path
-      const source = argument.children?.find(
-        (c) => c.type === "scoped_identifier" || c.type === "identifier"
-      );
-      return create_module_path(source?.text || argument.text);
-    } else if (argument.type === "scoped_use_list") {
-      // For use lists, get the path before the list
-      const path = argument.childForFieldName?.("path");
-      return create_module_path(path?.text || "");
-    }
-  }
-
-  return create_module_path(capture.text);
-}
-
-export function extract_use_alias(
-  capture: CaptureNode
-): SymbolName | undefined {
-  let node: SyntaxNode | null = capture.node;
-
-  // Traverse up to find use_as_clause or extern_crate_declaration
-  while (
-    node &&
-    node.type !== "use_as_clause" &&
-    node.type !== "extern_crate_declaration"
-  ) {
-    node = node.parent;
-  }
-
-  if (!node) return undefined;
-
-  // For extern crate declarations: extern crate foo as bar;
-  if (node.type === "extern_crate_declaration") {
-    const children = node.children || [];
-    let found_as = false;
-    for (const child of children) {
-      if (child.text === "as") {
-        found_as = true;
-      } else if (found_as && child.type === "identifier") {
-        return child.text as SymbolName;
-      }
-    }
-    return undefined;
-  }
-
-  // For use declarations with aliases
-  if (node?.type === "use_as_clause") {
-    // Find the identifier after "as"
-    const children = node.children || [];
-    let found_as = false;
-    for (const child of children) {
-      if (child.text === "as") {
-        found_as = true;
-      } else if (found_as && child.type === "identifier") {
-        return child.text as SymbolName;
-      }
-    }
-  }
-
-  return undefined;
-}
-
-export function is_wildcard_import(capture: CaptureNode): boolean {
-  let node: SyntaxNode | null = capture.node;
-
-  // Check if parent is use_wildcard
-  while (node) {
-    if (node.type === "use_wildcard") {
-      return true;
-    }
-    node = node.parent;
-  }
-
-  return false;
 }
 
 export function find_containing_callable(
