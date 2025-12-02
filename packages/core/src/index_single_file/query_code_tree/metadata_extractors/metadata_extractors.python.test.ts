@@ -6,7 +6,7 @@ import { describe, it, expect, beforeEach } from "vitest";
 import Parser from "tree-sitter";
 // @ts-ignore - tree-sitter-python is not typed
 import Python from "tree-sitter-python";
-import { PYTHON_METADATA_EXTRACTORS } from "./python_metadata";
+import { PYTHON_METADATA_EXTRACTORS } from "./metadata_extractors.python";
 import type { FilePath } from "@ariadnejs/types";
 
 describe("Python Metadata Extractors", () => {

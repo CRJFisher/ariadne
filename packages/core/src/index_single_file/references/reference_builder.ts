@@ -35,7 +35,7 @@ import {
 
 import type { CaptureNode } from "../semantic_index";
 import type { ProcessingContext } from "../semantic_index";
-import type { MetadataExtractors } from "../query_code_tree/language_configs/metadata_types";
+import type { MetadataExtractors } from "../query_code_tree/metadata_extractors";
 
 // ============================================================================
 // Reference Kind Enum

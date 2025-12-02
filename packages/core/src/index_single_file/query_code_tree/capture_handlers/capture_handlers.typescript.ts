@@ -19,7 +19,7 @@ import {
   extract_initial_value,
   consume_documentation,
   extract_derived_from,
-} from "../language_configs/javascript_builder";
+} from "../symbol_factories/symbol_factories.javascript";
 import {
   create_interface_id,
   extract_interface_extends,
@@ -59,7 +59,7 @@ import {
   extract_implements,
   detect_callback_context,
   detect_function_collection,
-} from "../language_configs/typescript_builder";
+} from "../symbol_factories/symbol_factories.typescript";
 
 // ============================================================================
 // VARIABLE HANDLER (Override JavaScript with function collection detection)

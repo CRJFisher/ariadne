@@ -33,7 +33,7 @@ import type { LanguageBuilderConfig } from "./query_code_tree/language_configs/j
 
 // After
 import { get_handler_registry } from "./query_code_tree/capture_handlers";
-import type { HandlerRegistry } from "./query_code_tree/capture_handlers/types";
+import type { HandlerRegistry } from "./query_code_tree/capture_handlers/capture_handlers.types";
 ```
 
 Update `get_language_config` function:
@@ -73,7 +73,7 @@ import type { MetadataExtractors } from "./query_code_tree/language_configs/meta
 
 // After
 import { get_metadata_extractor } from "./query_code_tree/metadata_extractors";
-import type { MetadataExtractors } from "./query_code_tree/metadata_extractors/types";
+import type { MetadataExtractors } from "./query_code_tree/metadata_extractors/metadata_extractors.types";
 ```
 
 ### 3. Update Test Files
@@ -85,7 +85,7 @@ Update imports in all test files:
 import { JAVASCRIPT_BUILDER_CONFIG } from "../language_configs/javascript_builder_config";
 
 // After
-import { JAVASCRIPT_HANDLERS, handle_definition_class } from "../capture_handlers/javascript";
+import { JAVASCRIPT_HANDLERS, handle_definition_class } from "../capture_handlers/capture_handlers.javascript";
 ```
 
 Tests can now import individual handlers for focused testing:

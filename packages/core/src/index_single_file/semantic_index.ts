@@ -33,16 +33,17 @@ import {
   DefinitionBuilder,
   type BuilderResult,
 } from "./definitions/definition_builder";
-import type { LanguageBuilderConfig } from "./query_code_tree/language_configs/javascript_builder";
-import type { MetadataExtractors } from "./query_code_tree/language_configs/metadata_types";
-import { JAVASCRIPT_BUILDER_CONFIG } from "./query_code_tree/language_configs/javascript_builder";
-import { TYPESCRIPT_BUILDER_CONFIG } from "./query_code_tree/language_configs/typescript_builder_config";
-import { PYTHON_BUILDER_CONFIG } from "./query_code_tree/language_configs/python_builder_config";
-import { RUST_BUILDER_CONFIG } from "./query_code_tree/language_configs/rust_builder";
-import { JAVASCRIPT_METADATA_EXTRACTORS } from "./query_code_tree/language_configs/javascript_metadata";
-import { TYPESCRIPT_METADATA_EXTRACTORS } from "./query_code_tree/language_configs/typescript_metadata";
-import { PYTHON_METADATA_EXTRACTORS } from "./query_code_tree/language_configs/python_metadata";
-import { RUST_METADATA_EXTRACTORS } from "./query_code_tree/language_configs/rust_metadata";
+import type { MetadataExtractors } from "./query_code_tree/metadata_extractors";
+import {
+  get_handler_registry,
+  type HandlerRegistry,
+} from "./query_code_tree/capture_handlers";
+import {
+  JAVASCRIPT_METADATA_EXTRACTORS,
+  TYPESCRIPT_METADATA_EXTRACTORS,
+  PYTHON_METADATA_EXTRACTORS,
+  RUST_METADATA_EXTRACTORS,
+} from "./query_code_tree/metadata_extractors";
 import { ParsedFile } from "./file_utils";
 
 /**
@@ -115,10 +116,10 @@ export function build_semantic_index(
   const scopes = process_scopes(capture_nodes, file);
   const context = create_processing_context(scopes, capture_nodes);
 
-  // PASS 3: Process definitions with language-specific config
+  // PASS 3: Process definitions with language-specific handler registry
   // Returns categorized maps (single-file only)
-  const language_config = get_language_config(language);
-  const builder_result = process_definitions(context, language_config);
+  const handler_registry = get_handler_registry(language);
+  const builder_result = process_definitions(context, handler_registry);
 
   // PASS 4: Process references with language-specific metadata extractors
   const metadata_extractors = get_metadata_extractors(language);
@@ -152,24 +153,6 @@ export function build_semantic_index(
 // ============================================================================
 
 /**
- * Get language-specific builder configuration
- */
-function get_language_config(language: Language): LanguageBuilderConfig {
-  switch (language) {
-    case "javascript":
-      return JAVASCRIPT_BUILDER_CONFIG;
-    case "typescript":
-      return TYPESCRIPT_BUILDER_CONFIG;
-    case "python":
-      return PYTHON_BUILDER_CONFIG;
-    case "rust":
-      return RUST_BUILDER_CONFIG;
-    default:
-      throw new Error(`Unsupported language: ${language}`);
-  }
-}
-
-/**
  * Get language-specific metadata extractors
  *
  * JavaScript extractors work for both JavaScript and TypeScript since
@@ -197,12 +180,12 @@ function get_metadata_extractors(
 // ============================================================================
 
 /**
- * Process captures with language-specific builder config
+ * Process captures with language-specific handler registry
  * Returns categorized definitions (single-file only)
  */
 function process_definitions(
   context: ProcessingContext,
-  config: LanguageBuilderConfig
+  registry: HandlerRegistry
 ): BuilderResult {
   const builder = new DefinitionBuilder(context);
 
@@ -214,9 +197,9 @@ function process_definitions(
       continue;
     }
 
-    const handler = config.get(capture.name);
+    const handler = registry[capture.name];
     if (handler) {
-      handler.process(capture, builder, context);
+      handler(capture, builder, context);
     }
   }
 
@@ -227,9 +210,9 @@ function process_definitions(
       continue;
     }
 
-    const handler = config.get(capture.name);
+    const handler = registry[capture.name];
     if (handler) {
-      handler.process(capture, builder, context);
+      handler(capture, builder, context);
     }
   }
 

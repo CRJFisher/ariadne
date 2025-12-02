@@ -3,7 +3,7 @@ import { describe, it, expect, beforeEach } from "vitest";
 import Parser from "tree-sitter";
 import Rust from "tree-sitter-rust";
 import { RUST_BUILDER_CONFIG } from "./rust_builder";
-import { detect_callback_context } from "./rust_callback_detection";
+import { detect_callback_context } from "../symbol_factories/symbol_factories.rust";
 import { DefinitionBuilder } from "../../definitions/definition_builder";
 import { build_semantic_index } from "../../semantic_index";
 import type {

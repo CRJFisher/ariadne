@@ -42,7 +42,7 @@ import {
   detect_callback_context,
   detect_function_collection,
   extract_derived_from,
-} from "../language_configs/python_builder";
+} from "../symbol_factories/symbol_factories.python";
 // Import handlers from python_imports.ts for local use
 import {
   handle_definition_import,

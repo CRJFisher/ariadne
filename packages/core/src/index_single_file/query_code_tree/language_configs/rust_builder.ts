@@ -1,43 +1,61 @@
-// Rust language configuration using builder pattern
-import { enum_member_symbol, anonymous_function_symbol, create_module_path, type SymbolId, type SymbolName } from "@ariadnejs/types";
+/**
+ * Rust Builder Configuration
+ *
+ * This module provides backward compatibility by wrapping named handler functions
+ * in the Map-based LanguageBuilderConfig format. New code should use
+ * RUST_HANDLERS from capture_handlers/capture_handlers.rust.ts directly.
+ */
+
 import type { DefinitionBuilder } from "../../definitions/definition_builder";
-import type { CaptureNode } from "../../semantic_index";
-import type { ProcessingContext } from "../../semantic_index";
+import type { CaptureNode, ProcessingContext } from "../../semantic_index";
 import {
-  create_struct_id,
-  create_enum_id,
-  create_trait_id,
-  create_function_id,
-  create_method_id,
-  create_field_id,
-  create_variable_id,
-  create_constant_id,
-  create_module_id,
-  create_type_alias_id,
-  create_parameter_id,
-  extract_generic_parameters,
-  extract_return_type,
-  extract_parameter_type,
-  extract_enum_variants,
-  find_containing_impl,
-  find_containing_struct,
-  find_containing_trait,
-  find_containing_callable,
-  extract_type_expression,
-  extract_export_info,
-  extract_imports_from_use_declaration,
-  extract_import_from_extern_crate,
-  detect_callback_context,
-  detect_function_collection,
-  extract_derived_from,
-  type ImportInfo,
-} from "./rust_builder_helpers";
+  RUST_HANDLERS,
+  handle_definition_class,
+  handle_definition_class_generic,
+  handle_definition_enum,
+  handle_definition_enum_generic,
+  handle_definition_enum_member,
+  handle_definition_interface,
+  handle_definition_interface_generic,
+  handle_definition_interface_method,
+  handle_definition_function,
+  handle_definition_function_generic,
+  handle_definition_function_async,
+  handle_definition_function_const,
+  handle_definition_function_unsafe,
+  handle_definition_field,
+  handle_definition_parameter,
+  handle_definition_parameter_self,
+  handle_definition_parameter_closure,
+  handle_definition_variable,
+  handle_definition_constant,
+  handle_definition_variable_mut,
+  handle_definition_module,
+  handle_definition_module_public,
+  handle_definition_type,
+  handle_definition_type_alias,
+  handle_definition_type_alias_impl,
+  handle_definition_macro,
+  handle_definition_type_parameter,
+  handle_definition_type_parameter_constrained,
+  handle_definition_import,
+  handle_import_reexport,
+  handle_definition_anonymous_function,
+  handle_definition_function_closure,
+  handle_definition_function_async_closure,
+  handle_definition_function_async_move_closure,
+  handle_definition_function_returns_impl,
+  handle_definition_function_accepts_impl,
+  handle_definition_visibility,
+  handle_definition_method,
+  handle_definition_method_associated,
+  handle_definition_method_default,
+  handle_definition_method_async,
+  handle_definition_constructor,
+} from "../capture_handlers/capture_handlers.rust";
 
-// ============================================================================
-// COMBINED RUST CONFIG - Merges base config with method handlers
-// ============================================================================
-
-import { RUST_METHOD_CONFIG } from "./rust_method_config";
+// Re-export the handler registry for direct access
+export { RUST_HANDLERS };
 
 export type ProcessFunction = (
   capture: CaptureNode,
@@ -47,925 +65,80 @@ export type ProcessFunction = (
 
 export type LanguageBuilderConfig = Map<string, { process: ProcessFunction }>;
 
-// Base configuration without method handlers
-const RUST_BASE_CONFIG: LanguageBuilderConfig = new Map([
-  // Struct Definitions (now using @definition.class)
-  [
-    "definition.class",
-    {
-      process: (
-        capture: CaptureNode,
-        builder: DefinitionBuilder,
-        context: ProcessingContext
-      ) => {
-        const struct_id = create_struct_id(capture);
-        const generics = extract_generic_parameters(
-          capture.node.parent || capture.node
-        );
-        const export_info = extract_export_info(capture.node.parent || capture.node);
-
-        builder.add_class({
-          symbol_id: struct_id,
-          name: capture.text,
-          location: capture.location,
-          scope_id: context.get_scope_id(capture.location),
-          is_exported: export_info.is_exported,
-          export: export_info.export,
-          generics: generics.length > 0 ? generics : undefined,
-        });
-      },
-    },
-  ],
-
-  [
-    "definition.class.generic",
-    {
-      process: (
-        capture: CaptureNode,
-        builder: DefinitionBuilder,
-        context: ProcessingContext
-      ) => {
-        const struct_id = create_struct_id(capture);
-        const generics = extract_generic_parameters(
-          capture.node.parent || capture.node
-        );
-        const export_info = extract_export_info(capture.node.parent || capture.node);
-
-        builder.add_class({
-          symbol_id: struct_id,
-          name: capture.text,
-          location: capture.location,
-          scope_id: context.get_scope_id(capture.location),
-          is_exported: export_info.is_exported,
-          export: export_info.export,
-          generics: generics,
-        });
-      },
-    },
-  ],
-
-  // Enum Definitions
-  [
-    "definition.enum",
-    {
-      process: (
-        capture: CaptureNode,
-        builder: DefinitionBuilder,
-        context: ProcessingContext
-      ) => {
-        const enum_id = create_enum_id(capture);
-        const variants = extract_enum_variants(
-          capture.node.parent || capture.node
-        );
-        const export_info = extract_export_info(capture.node.parent || capture.node);
-
-        builder.add_enum({
-          symbol_id: enum_id,
-          name: capture.text,
-          location: capture.location,
-          scope_id: context.get_scope_id(capture.location),
-          is_exported: export_info.is_exported,
-          export: export_info.export,
-        });
-
-        // Add members separately
-        variants.forEach((variant) => {
-          builder.add_enum_member(enum_id, {
-            symbol_id: enum_member_symbol(variant, capture.location),
-            name: variant,
-            location: capture.location,
-          });
-        });
-      },
-    },
-  ],
-
-  [
-    "definition.enum.generic",
-    {
-      process: (
-        capture: CaptureNode,
-        builder: DefinitionBuilder,
-        context: ProcessingContext
-      ) => {
-        const enum_id = create_enum_id(capture);
-        const variants = extract_enum_variants(
-          capture.node.parent || capture.node
-        );
-        const generics = extract_generic_parameters(
-          capture.node.parent || capture.node
-        );
-        const export_info = extract_export_info(capture.node.parent || capture.node);
-
-        builder.add_enum({
-          symbol_id: enum_id,
-          name: capture.text,
-          location: capture.location,
-          scope_id: context.get_scope_id(capture.location),
-          is_exported: export_info.is_exported,
-          export: export_info.export,
-          generics: generics,
-        });
-
-        // Add members separately
-        variants.forEach((variant) => {
-          builder.add_enum_member(enum_id, {
-            symbol_id: `${enum_id}::${variant}` as SymbolId,
-            name: variant,
-            location: capture.location,
-          });
-        });
-      },
-    },
-  ],
-
-  [
-    "definition.enum_member",
-    {
-      process: () => {
-        // Enum variants are handled as part of the enum definition
-      },
-    },
-  ],
-
-  // Trait Definitions (traits are now captured as interfaces)
-  // Note: definition.trait no longer exists in rust.scm
-
-  [
-    "definition.interface",
-    {
-      process: (
-        capture: CaptureNode,
-        builder: DefinitionBuilder,
-        context: ProcessingContext
-      ) => {
-        const trait_id = create_trait_id(capture);
-        const export_info = extract_export_info(capture.node.parent || capture.node);
-
-        builder.add_interface({
-          symbol_id: trait_id,
-          name: capture.text,
-          location: capture.location,
-          scope_id: context.get_scope_id(capture.location),
-          is_exported: export_info.is_exported,
-          export: export_info.export,
-        });
-      },
-    },
-  ],
-
-  [
-    "definition.interface.generic",
-    {
-      process: (
-        capture: CaptureNode,
-        builder: DefinitionBuilder,
-        context: ProcessingContext
-      ) => {
-        const trait_id = create_trait_id(capture);
-        const generics = extract_generic_parameters(
-          capture.node.parent || capture.node
-        );
-        const export_info = extract_export_info(capture.node.parent || capture.node);
-
-        builder.add_interface({
-          symbol_id: trait_id,
-          name: capture.text,
-          location: capture.location,
-          scope_id: context.get_scope_id(capture.location),
-          is_exported: export_info.is_exported,
-          export: export_info.export,
-          generics,
-        });
-      },
-    },
-  ],
-
-  // Trait Method Signatures (signatures without implementation)
-  [
-    "definition.interface.method",
-    {
-      process: (
-        capture: CaptureNode,
-        builder: DefinitionBuilder,
-        context: ProcessingContext
-      ) => {
-        const method_id = create_method_id(capture);
-        const trait_name = find_containing_trait(capture);
-        const return_type = extract_return_type(
-          capture.node.parent || capture.node
-        );
-
-        if (trait_name) {
-          // Look up trait by name
-          const trait_id = builder.find_interface_by_name(trait_name);
-          if (trait_id) {
-            builder.add_method_signature_to_interface(trait_id, {
-              symbol_id: method_id,
-              name: capture.text,
-              location: capture.location,
-              scope_id: context.get_scope_id(capture.location),
-              return_type: return_type,
-            });
-          }
-        }
-      },
-    },
-  ],
-
-  // Function Definitions
-  [
-    "definition.function",
-    {
-      process: (
-        capture: CaptureNode,
-        builder: DefinitionBuilder,
-        context: ProcessingContext
-      ) => {
-        // Skip functions inside impl blocks or traits - they're handled by method/constructor handlers
-        const impl_info = find_containing_impl(capture);
-        const trait_name = find_containing_trait(capture);
-        if (impl_info?.struct_name || impl_info?.trait_name || trait_name) {
-          return;
-        }
-
-        // Skip generic functions - they're handled by definition.function.generic
-        const generics = extract_generic_parameters(capture.node.parent || capture.node);
-        if (generics && generics.length > 0) {
-          return;
-        }
-
-        const func_id = create_function_id(capture);
-        const export_info = extract_export_info(capture.node.parent || capture.node);
-
-        builder.add_function(
-          {
-            symbol_id: func_id,
-            name: capture.text,
-            location: capture.location,
-            scope_id: context.get_scope_id(capture.location),
-            is_exported: export_info.is_exported,
-            export: export_info.export,
-            return_type: extract_return_type(capture.node.parent || capture.node),
-          },
-          capture
-        );
-      },
-    },
-  ],
-
-  [
-    "definition.function.generic",
-    {
-      process: (
-        capture: CaptureNode,
-        builder: DefinitionBuilder,
-        context: ProcessingContext
-      ) => {
-        // Skip functions inside impl blocks or traits - they're handled by method/constructor handlers
-        const impl_info = find_containing_impl(capture);
-        const trait_name = find_containing_trait(capture);
-        if (impl_info?.struct_name || impl_info?.trait_name || trait_name) {
-          return;
-        }
-
-        const func_id = create_function_id(capture);
-        const generics = extract_generic_parameters(
-          capture.node.parent || capture.node
-        );
-        const export_info = extract_export_info(capture.node.parent || capture.node);
-
-        builder.add_function(
-          {
-            symbol_id: func_id,
-            name: capture.text,
-            location: capture.location,
-            scope_id: context.get_scope_id(capture.location),
-            is_exported: export_info.is_exported,
-            export: export_info.export,
-            generics,
-            return_type: extract_return_type(capture.node.parent || capture.node),
-          },
-          capture
-        );
-      },
-    },
-  ],
-
-  [
-    "definition.function.async",
-    {
-      process: (
-        capture: CaptureNode,
-        builder: DefinitionBuilder,
-        context: ProcessingContext
-      ) => {
-        // Skip functions inside impl blocks or traits - they're handled by method/constructor handlers
-        const impl_info = find_containing_impl(capture);
-        const trait_name = find_containing_trait(capture);
-        if (impl_info?.struct_name || impl_info?.trait_name || trait_name) {
-          return;
-        }
-
-        const func_id = create_function_id(capture);
-        const export_info = extract_export_info(capture.node.parent || capture.node);
-
-        builder.add_function(
-          {
-            symbol_id: func_id,
-            name: capture.text,
-            location: capture.location,
-            scope_id: context.get_scope_id(capture.location),
-            is_exported: export_info.is_exported,
-            export: export_info.export,
-            return_type: extract_return_type(capture.node.parent || capture.node),
-          },
-          capture
-        );
-      },
-    },
-  ],
-
-  [
-    "definition.function.const",
-    {
-      process: (
-        capture: CaptureNode,
-        builder: DefinitionBuilder,
-        context: ProcessingContext
-      ) => {
-        // Skip functions inside impl blocks or traits - they're handled by method/constructor handlers
-        const impl_info = find_containing_impl(capture);
-        const trait_name = find_containing_trait(capture);
-        if (impl_info?.struct_name || impl_info?.trait_name || trait_name) {
-          return;
-        }
-
-        const func_id = create_function_id(capture);
-        const export_info = extract_export_info(capture.node.parent || capture.node);
-
-        builder.add_function(
-          {
-            symbol_id: func_id,
-            name: capture.text,
-            location: capture.location,
-            scope_id: context.get_scope_id(capture.location),
-            is_exported: export_info.is_exported,
-            export: export_info.export,
-            return_type: extract_return_type(capture.node.parent || capture.node),
-          },
-          capture
-        );
-      },
-    },
-  ],
-
-  [
-    "definition.function.unsafe",
-    {
-      process: (
-        capture: CaptureNode,
-        builder: DefinitionBuilder,
-        context: ProcessingContext
-      ) => {
-        // Skip functions inside impl blocks or traits - they're handled by method/constructor handlers
-        const impl_info = find_containing_impl(capture);
-        const trait_name = find_containing_trait(capture);
-        if (impl_info?.struct_name || impl_info?.trait_name || trait_name) {
-          return;
-        }
-
-        const func_id = create_function_id(capture);
-        const export_info = extract_export_info(capture.node.parent || capture.node);
-
-        builder.add_function(
-          {
-            symbol_id: func_id,
-            name: capture.text,
-            location: capture.location,
-            scope_id: context.get_scope_id(capture.location),
-            is_exported: export_info.is_exported,
-            export: export_info.export,
-            return_type: extract_return_type(capture.node.parent || capture.node),
-          },
-          capture
-        );
-      },
-    },
-  ],
-
-  // Field Definitions
-  [
-    "definition.field",
-    {
-      process: (
-        capture: CaptureNode,
-        builder: DefinitionBuilder,
-        context: ProcessingContext
-      ) => {
-        const field_id = create_field_id(capture);
-        const struct_id = find_containing_struct(capture);
-        const field_type = extract_parameter_type(
-          capture.node.parent || capture.node
-        );
-
-        if (struct_id) {
-          builder.add_property_to_class(struct_id, {
-            symbol_id: field_id,
-            name: capture.text,
-            location: capture.location,
-            scope_id: context.get_scope_id(capture.location),
-            type: field_type,
-          });
-        }
-      },
-    },
-  ],
-
-  // Parameters
-  [
-    "definition.parameter",
-    {
-      process: (
-        capture: CaptureNode,
-        builder: DefinitionBuilder,
-        context: ProcessingContext
-      ) => {
-        const param_id = create_parameter_id(capture);
-        const parent_id = find_containing_callable(capture);
-
-        if (!parent_id) {
-          return;
-        }
-
-        const param_type = extract_parameter_type(
-          capture.node.parent || capture.node
-        );
-
-        builder.add_parameter_to_callable(parent_id, {
-          symbol_id: param_id,
-          name: capture.text,
-          location: capture.location,
-          scope_id: context.get_scope_id(capture.location),
-          type: param_type,
-          optional: false,
-        });
-      },
-    },
-  ],
-
-  [
-    "definition.parameter.self",
-    {
-      process: (
-        capture: CaptureNode,
-        builder: DefinitionBuilder,
-        context: ProcessingContext
-      ) => {
-        const param_id = create_parameter_id(capture);
-        const parent_id = find_containing_callable(capture);
-
-        if (!parent_id) return;
-
-        // Self parameter type is the containing struct/trait name
-        const impl_info = find_containing_impl(capture);
-        const self_type = impl_info?.struct_name || "Self";
-
-        builder.add_parameter_to_callable(parent_id, {
-          symbol_id: param_id,
-          name: "self" as SymbolName,
-          location: capture.location,
-          scope_id: context.get_scope_id(capture.location),
-          type: self_type as SymbolName,
-          optional: false,
-        });
-      },
-    },
-  ],
-
-  [
-    "definition.parameter.closure",
-    {
-      process: (
-        capture: CaptureNode,
-        builder: DefinitionBuilder,
-        context: ProcessingContext
-      ) => {
-        const param_id = create_parameter_id(capture);
-        const parent_id = find_containing_callable(capture);
-
-        if (!parent_id) return;
-
-        const param_type = extract_parameter_type(
-          capture.node.parent || capture.node
-        );
-
-        builder.add_parameter_to_callable(parent_id, {
-          symbol_id: param_id,
-          name: capture.text,
-          location: capture.location,
-          scope_id: context.get_scope_id(capture.location),
-          type: param_type,
-          optional: false,
-        });
-      },
-    },
-  ],
-
-  // Variables and Constants
-  [
-    "definition.variable",
-    {
-      process: (
-        capture: CaptureNode,
-        builder: DefinitionBuilder,
-        context: ProcessingContext
-      ) => {
-        const var_id = create_variable_id(capture);
-        const var_type = extract_parameter_type(
-          capture.node.parent || capture.node
-        );
-        const export_info = extract_export_info(capture.node.parent || capture.node);
-
-        // Detect function collections (Task 11.156.3)
-        const parent = capture.node.parent;
-        const collection_info = parent
-          ? detect_function_collection(parent, capture.location.file_path)
-          : null;
-        const function_collection = collection_info
-          ? {
-              ...collection_info,
-              collection_id: var_id,
-            }
-          : undefined;
-
-        const derived_from = extract_derived_from(capture.node);
-
-        builder.add_variable({
-          kind: "variable",
-          symbol_id: var_id,
-          name: capture.text,
-          location: capture.location,
-          scope_id: context.get_scope_id(capture.location),
-          is_exported: export_info.is_exported,
-          export: export_info.export,
-          type: var_type,
-          function_collection,
-          derived_from,
-        });
-      },
-    },
-  ],
-
-  [
-    "definition.constant",
-    {
-      process: (
-        capture: CaptureNode,
-        builder: DefinitionBuilder,
-        context: ProcessingContext
-      ) => {
-        const const_id = create_constant_id(capture);
-        const const_type = extract_parameter_type(
-          capture.node.parent || capture.node
-        );
-        const export_info = extract_export_info(capture.node.parent || capture.node);
-
-        // Detect function collections (Task 11.156.3)
-        const parent = capture.node.parent;
-        const collection_info = parent
-          ? detect_function_collection(parent, capture.location.file_path)
-          : null;
-        const function_collection = collection_info
-          ? {
-              ...collection_info,
-              collection_id: const_id,
-            }
-          : undefined;
-
-        builder.add_variable({
-          kind: "constant",
-          symbol_id: const_id,
-          name: capture.text,
-          location: capture.location,
-          scope_id: context.get_scope_id(capture.location),
-          is_exported: export_info.is_exported,
-          export: export_info.export,
-          type: const_type,
-          function_collection,
-        });
-      },
-    },
-  ],
-
-  [
-    "definition.variable.mut",
-    {
-      process: (
-        capture: CaptureNode,
-        builder: DefinitionBuilder,
-        context: ProcessingContext
-      ) => {
-        const var_id = create_variable_id(capture);
-        const var_type = extract_parameter_type(
-          capture.node.parent || capture.node
-        );
-        const export_info = extract_export_info(capture.node.parent || capture.node);
-
-        // Detect function collections (Task 11.156.3)
-        const parent = capture.node.parent;
-        const collection_info = parent
-          ? detect_function_collection(parent, capture.location.file_path)
-          : null;
-        const function_collection = collection_info
-          ? {
-              ...collection_info,
-              collection_id: var_id,
-            }
-          : undefined;
-
-        const derived_from = extract_derived_from(capture.node);
-
-        builder.add_variable({
-          kind: "variable",
-          symbol_id: var_id,
-          name: capture.text,
-          location: capture.location,
-          scope_id: context.get_scope_id(capture.location),
-          is_exported: export_info.is_exported,
-          export: export_info.export,
-          type: var_type,
-          function_collection,
-          derived_from,
-        });
-      },
-    },
-  ],
-
-  // Module Definitions
-  [
-    "definition.module",
-    {
-      process: (
-        capture: CaptureNode,
-        builder: DefinitionBuilder,
-        context: ProcessingContext
-      ) => {
-        const module_id = create_module_id(capture);
-        const export_info = extract_export_info(capture.node.parent || capture.node);
-
-        builder.add_namespace({
-          symbol_id: module_id,
-          name: capture.text,
-          location: capture.location,
-          scope_id: context.get_scope_id(capture.location),
-          is_exported: export_info.is_exported,
-          export: export_info.export,
-        });
-      },
-    },
-  ],
-
-  [
-    "definition.module.public",
-    {
-      process: (
-        capture: CaptureNode,
-        builder: DefinitionBuilder,
-        context: ProcessingContext
-      ) => {
-        const module_id = create_module_id(capture);
-
-        builder.add_namespace({
-          symbol_id: module_id,
-          name: capture.text,
-          location: capture.location,
-          scope_id: context.get_scope_id(capture.location),
-          is_exported: true,
-          export: undefined,
-        });
-      },
-    },
-  ],
-
-  // Type Definitions
-  [
-    "definition.type",
-    {
-      process: (
-        capture: CaptureNode,
-        builder: DefinitionBuilder,
-        context: ProcessingContext
-      ) => {
-        const type_id = create_type_alias_id(capture);
-        const generics = extract_generic_parameters(
-          capture.node.parent || capture.node
-        );
-        const export_info = extract_export_info(capture.node.parent || capture.node);
-
-        builder.add_type_alias({
-          kind: "type_alias",
-          symbol_id: type_id,
-          name: capture.text,
-          location: capture.location,
-          scope_id: context.get_scope_id(capture.location),
-          is_exported: export_info.is_exported,
-          export: export_info.export,
-          type_expression: extract_type_expression(capture.node) as SymbolName | undefined,
-          generics: generics.length > 0 ? generics : undefined,
-        });
-      },
-    },
-  ],
-
-  [
-    "definition.type_alias",
-    {
-      process: (
-        capture: CaptureNode,
-        builder: DefinitionBuilder,
-        context: ProcessingContext
-      ) => {
-        const type_id = create_type_alias_id(capture);
-        const generics = extract_generic_parameters(
-          capture.node.parent || capture.node
-        );
-        const export_info = extract_export_info(capture.node.parent || capture.node);
-
-        builder.add_type_alias({
-          kind: "type_alias",
-          symbol_id: type_id,
-          name: capture.text,
-          location: capture.location,
-          scope_id: context.get_scope_id(capture.location),
-          is_exported: export_info.is_exported,
-          export: export_info.export,
-          type_expression: extract_type_expression(capture.node) as SymbolName | undefined,
-          generics: generics.length > 0 ? generics : undefined,
-        });
-      },
-    },
-  ],
-
-  [
-    "definition.type_alias.impl",
-    {
-      process: (
-        capture: CaptureNode,
-        builder: DefinitionBuilder,
-        context: ProcessingContext
-      ) => {
-        const type_id = create_type_alias_id(capture);
-
-        builder.add_type_alias({
-          kind: "type_alias",
-          symbol_id: type_id,
-          name: capture.text,
-          location: capture.location,
-          scope_id: context.get_scope_id(capture.location),
-          is_exported: true,
-          export: undefined,
-          type_expression: extract_type_expression(capture.node) as SymbolName | undefined,
-        });
-      },
-    },
-  ],
-
-  // Macro Definitions
-  [
-    "definition.macro",
-    {
-      process: (
-        capture: CaptureNode,
-        builder: DefinitionBuilder,
-        context: ProcessingContext
-      ) => {
-        const func_id = create_function_id(capture);
-        const export_info = extract_export_info(capture.node.parent || capture.node);
-
-        builder.add_function(
-          {
-            symbol_id: func_id,
-            name: capture.text,
-            location: capture.location,
-            scope_id: context.get_scope_id(capture.location),
-            is_exported: export_info.is_exported,
-            export: export_info.export,
-            return_type: extract_return_type(capture.node.parent || capture.node),
-          },
-          capture
-        );
-      },
-    },
-  ],
-
-  // Type Parameters and Constraints
-  ["definition.type_parameter", { process: () => {} }],
-  ["definition.type_parameter.constrained", { process: () => {} }],
-
-  // Imports - Complete Node Captures
-  [
-    "definition.import",
-    {
-      process: (
-        capture: CaptureNode,
-        builder: DefinitionBuilder,
-        context: ProcessingContext
-      ) => {
-        const node = capture.node;
-        let imports: ImportInfo[] = [];
-
-        // Extract imports based on node type
-        if (node.type === "use_declaration") {
-          imports = extract_imports_from_use_declaration(node);
-        } else if (node.type === "extern_crate_declaration") {
-          const import_info = extract_import_from_extern_crate(node);
-          if (import_info) {
-            imports = [import_info];
-          }
-        }
-
-        // Create import definitions for each extracted import
-        for (const import_info of imports) {
-          builder.add_import({
-            symbol_id: `import:${capture.location.file_path}:${capture.location.start_line}:${import_info.name}` as SymbolId,
-            name: import_info.name,
-            location: capture.location,
-            scope_id: context.get_scope_id(capture.location),
-            import_path: import_info.module_path || create_module_path(import_info.name),
-            original_name: import_info.original_name,
-            import_kind: import_info.is_wildcard ? "namespace" : "named",
-          });
-        }
-      },
-    },
-  ],
-
-  // Re-exports (pub use)
-  [
-    "import.reexport",
-    {
-      process: (
-        _capture: CaptureNode,
-        _builder: DefinitionBuilder,
-        _context: ProcessingContext
-      ) => {
-        // Re-exports are pub use statements
-        // They are also captured by definition.import, which will add them as imports
-        // The presence of visibility_modifier makes them exported
-        // We can mark them as exported imports in definition.import handler
-
-        // For now, we handle re-exports in the definition.import handler
-        // by checking for visibility_modifier on the use_declaration node
-      },
-    },
-  ],
-
-  // ============================================================================
-  // ANONYMOUS FUNCTIONS - Closure expressions used inline
-  // ============================================================================
-  [
-    "definition.anonymous_function",
-    {
-      process: (
-        capture: CaptureNode,
-        builder: DefinitionBuilder,
-        context: ProcessingContext
-      ) => {
-        // Generate location-based symbol ID for anonymous closure
-        const anon_id = anonymous_function_symbol(capture.location);
-        const scope_id = context.get_scope_id(capture.location);
-
-        // Detect if this closure is a callback
-        const callback_context = detect_callback_context(
-          capture.node,
-          capture.location.file_path
-        );
-
-        builder.add_anonymous_function(
-          {
-            symbol_id: anon_id,
-            location: capture.location,
-            scope_id: scope_id,
-            return_type: extract_return_type(capture.node),
-            callback_context: callback_context,
-          },
-          capture
-        );
-      },
-    },
-  ],
-
-  // Other captures
-  ["definition.function.closure", { process: () => {} }],
-  ["definition.function.async_closure", { process: () => {} }],
-  ["definition.function.async_move_closure", { process: () => {} }],
-  ["definition.function.returns_impl", { process: () => {} }],
-  ["definition.function.accepts_impl", { process: () => {} }],
-  ["definition.visibility", { process: () => {} }],
-]);
+// ============================================================================
+// Rust Builder Configuration (Map-based format)
+// ============================================================================
 
 export const RUST_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
-  ...RUST_BASE_CONFIG,
-  ...RUST_METHOD_CONFIG,
+  // Struct/Class definitions
+  ["definition.class", { process: handle_definition_class }],
+  ["definition.class.generic", { process: handle_definition_class_generic }],
+
+  // Enum definitions
+  ["definition.enum", { process: handle_definition_enum }],
+  ["definition.enum.generic", { process: handle_definition_enum_generic }],
+  ["definition.enum_member", { process: handle_definition_enum_member }],
+
+  // Trait/Interface definitions
+  ["definition.interface", { process: handle_definition_interface }],
+  ["definition.interface.generic", { process: handle_definition_interface_generic }],
+  ["definition.interface.method", { process: handle_definition_interface_method }],
+
+  // Function definitions
+  ["definition.function", { process: handle_definition_function }],
+  ["definition.function.generic", { process: handle_definition_function_generic }],
+  ["definition.function.async", { process: handle_definition_function_async }],
+  ["definition.function.const", { process: handle_definition_function_const }],
+  ["definition.function.unsafe", { process: handle_definition_function_unsafe }],
+
+  // Field definitions
+  ["definition.field", { process: handle_definition_field }],
+
+  // Parameters
+  ["definition.parameter", { process: handle_definition_parameter }],
+  ["definition.parameter.self", { process: handle_definition_parameter_self }],
+  ["definition.parameter.closure", { process: handle_definition_parameter_closure }],
+
+  // Variables and constants
+  ["definition.variable", { process: handle_definition_variable }],
+  ["definition.constant", { process: handle_definition_constant }],
+  ["definition.variable.mut", { process: handle_definition_variable_mut }],
+
+  // Module definitions
+  ["definition.module", { process: handle_definition_module }],
+  ["definition.module.public", { process: handle_definition_module_public }],
+
+  // Type definitions
+  ["definition.type", { process: handle_definition_type }],
+  ["definition.type_alias", { process: handle_definition_type_alias }],
+  ["definition.type_alias.impl", { process: handle_definition_type_alias_impl }],
+
+  // Macro definitions
+  ["definition.macro", { process: handle_definition_macro }],
+
+  // Type parameters
+  ["definition.type_parameter", { process: handle_definition_type_parameter }],
+  ["definition.type_parameter.constrained", { process: handle_definition_type_parameter_constrained }],
+
+  // Imports
+  ["definition.import", { process: handle_definition_import }],
+  ["import.reexport", { process: handle_import_reexport }],
+
+  // Anonymous functions
+  ["definition.anonymous_function", { process: handle_definition_anonymous_function }],
+
+  // Other captures (no-op handlers)
+  ["definition.function.closure", { process: handle_definition_function_closure }],
+  ["definition.function.async_closure", { process: handle_definition_function_async_closure }],
+  ["definition.function.async_move_closure", { process: handle_definition_function_async_move_closure }],
+  ["definition.function.returns_impl", { process: handle_definition_function_returns_impl }],
+  ["definition.function.accepts_impl", { process: handle_definition_function_accepts_impl }],
+  ["definition.visibility", { process: handle_definition_visibility }],
+
+  // Method definitions
+  ["definition.method", { process: handle_definition_method }],
+  ["definition.method.associated", { process: handle_definition_method_associated }],
+  ["definition.method.default", { process: handle_definition_method_default }],
+  ["definition.method.async", { process: handle_definition_method_async }],
+  ["definition.constructor", { process: handle_definition_constructor }],
 ]);

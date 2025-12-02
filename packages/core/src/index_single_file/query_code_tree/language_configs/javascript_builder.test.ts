@@ -6,7 +6,8 @@ import { describe, it, expect, beforeAll } from "vitest";
 import Parser from "tree-sitter";
 import JavaScript from "tree-sitter-javascript";
 import type { SyntaxNode } from "tree-sitter";
-import { JAVASCRIPT_BUILDER_CONFIG, analyze_export_statement, detect_callback_context } from "./javascript_builder";
+import { JAVASCRIPT_BUILDER_CONFIG } from "./javascript_builder_config";
+import { analyze_export_statement, detect_callback_context } from "../symbol_factories/symbol_factories.javascript";
 import { DefinitionBuilder } from "../../definitions/definition_builder";
 import { build_semantic_index } from "../../semantic_index";
 import type {
@@ -24,7 +25,7 @@ import type {
   ConstructorCallReference,
 } from "@ariadnejs/types";
 import { ReferenceBuilder } from "../../references/reference_builder";
-import { JAVASCRIPT_METADATA_EXTRACTORS } from "./javascript_metadata";
+import { JAVASCRIPT_METADATA_EXTRACTORS } from "../metadata_extractors";
 import { node_to_location } from "../../node_utils";
 
 describe("JavaScript Builder Configuration", () => {

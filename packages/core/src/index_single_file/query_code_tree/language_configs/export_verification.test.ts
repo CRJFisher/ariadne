@@ -6,7 +6,7 @@ import { describe, it, expect } from "vitest";
 import Parser from "tree-sitter";
 import JavaScript from "tree-sitter-javascript";
 import TypeScript from "tree-sitter-typescript";
-import { JAVASCRIPT_BUILDER_CONFIG } from "./javascript_builder";
+import { JAVASCRIPT_BUILDER_CONFIG } from "./javascript_builder_config";
 import { TYPESCRIPT_BUILDER_CONFIG } from "./typescript_builder_config";
 import { DefinitionBuilder } from "../../definitions";
 import type { ProcessingContext, CaptureNode } from "../../semantic_index";

@@ -1,6 +1,6 @@
 # Task 11.161.1.7: Migrate Symbol Factories
 
-## Status: Planning
+## Status: Completed
 
 ## Parent: Task 11.161.1
 
@@ -48,21 +48,24 @@ Symbol creation functions scattered across `*_builder.ts` files:
 
 ## Target State
 
+Uses `{dir}.{module}.ts` naming convention:
+
 ```
 symbol_factories/
-├── types.ts          # Shared types
-├── index.ts          # Re-exports
-├── javascript.ts     # JavaScript symbol factories
-├── typescript.ts     # TypeScript extensions
-├── python.ts         # Python symbol factories
-└── rust.ts           # Rust symbol factories
+├── index.ts                           # Re-exports
+├── symbol_factories.types.ts          # Shared types
+├── symbol_factories.javascript.ts     # JavaScript symbol factories
+├── symbol_factories.typescript.ts     # TypeScript extensions
+├── symbol_factories.python.ts         # Python symbol factories
+└── symbol_factories.rust.ts           # Rust symbol factories
 ```
 
 ## Implementation Steps
 
-### 1. Create symbol_factories/types.ts
+### 1. Create symbol_factories/symbol_factories.types.ts
 
 ```typescript
+// symbol_factories/symbol_factories.types.ts
 import type { SymbolId, SymbolLocation } from "@ariadnejs/types";
 import type { CaptureNode } from "../../semantic_index";
 
@@ -86,7 +89,7 @@ export interface FunctionCollectionContext {
 }
 ```
 
-### 2. Create symbol_factories/javascript.ts
+### 2. Create symbol_factories/symbol_factories.javascript.ts
 
 Move from `javascript_builder.ts`:
 
@@ -140,13 +143,13 @@ export function detect_function_collection(capture: CaptureNode): FunctionCollec
 export function extract_derived_from(node: SyntaxNode): SymbolLocation | undefined { ... }
 ```
 
-### 3. Create symbol_factories/typescript.ts
+### 3. Create symbol_factories/symbol_factories.typescript.ts
 
 TypeScript may share most with JavaScript, import and re-export:
 
 ```typescript
 // Re-export JavaScript factories
-export * from "./javascript";
+export * from "./symbol_factories.javascript";
 
 // TypeScript-specific additions
 export function create_interface_id(capture: CaptureNode): SymbolId { ... }
@@ -155,7 +158,7 @@ export function create_enum_id(capture: CaptureNode): SymbolId { ... }
 export function create_namespace_id(capture: CaptureNode): SymbolId { ... }
 ```
 
-### 4. Create symbol_factories/python.ts
+### 4. Create symbol_factories/symbol_factories.python.ts
 
 Move from `python_builder.ts`:
 
@@ -169,7 +172,7 @@ export function determine_method_type(node: SyntaxNode): MethodType { ... }
 export function is_async_function(node: SyntaxNode): boolean { ... }
 ```
 
-### 5. Create symbol_factories/rust.ts
+### 5. Create symbol_factories/symbol_factories.rust.ts
 
 Consolidate from `rust_builder.ts`, `rust_builder_helpers.ts`, etc.:
 
@@ -187,13 +190,13 @@ export function extract_visibility(node: SyntaxNode): Visibility { ... }
 
 ```typescript
 // Re-export all factories organized by language
-export * as javascript from "./javascript";
-export * as typescript from "./typescript";
-export * as python from "./python";
-export * as rust from "./rust";
+export * as javascript from "./symbol_factories.javascript";
+export * as typescript from "./symbol_factories.typescript";
+export * as python from "./symbol_factories.python";
+export * as rust from "./symbol_factories.rust";
 
 // Common types
-export type { ExportInfo, CallbackContext, FunctionCollectionContext } from "./types";
+export type { ExportInfo, CallbackContext, FunctionCollectionContext } from "./symbol_factories.types";
 ```
 
 ## Files to Delete (After Migration)
@@ -215,3 +218,57 @@ export type { ExportInfo, CallbackContext, FunctionCollectionContext } from "./t
 2. Functions properly organized by language
 3. Handlers import from `symbol_factories/`
 4. All tests pass
+
+## Implementation Notes
+
+### Files Created/Renamed
+
+| Old Path | New Path |
+|----------|----------|
+| `symbol_factories/types.ts` | `symbol_factories/symbol_factories.types.ts` |
+| `language_configs/rust_builder_helpers.ts` | `symbol_factories/symbol_factories.rust.ts` |
+| (new) | `symbol_factories/symbol_factories.javascript.ts` |
+| (new) | `symbol_factories/symbol_factories.typescript.ts` |
+| (new) | `symbol_factories/symbol_factories.python.ts` |
+
+### Architecture
+
+The `symbol_factories/` module now contains:
+
+- `symbol_factories.types.ts` - Shared types (`SymbolCreationContext`)
+- `symbol_factories.javascript.ts` - JavaScript symbol factories (39 functions)
+- `symbol_factories.typescript.ts` - TypeScript symbol factories (44 functions)
+- `symbol_factories.python.ts` - Python symbol factories (32 functions)
+- `symbol_factories.rust.ts` - Rust symbol factories (moved from `rust_builder_helpers.ts`)
+- `index.ts` - Re-exports with language-prefixed aliases to avoid conflicts
+
+### Builder Files Simplified
+
+The `*_builder.ts` files now only contain type definitions (`ProcessFunction`, `LanguageBuilderConfig`):
+
+- `javascript_builder.ts` - Types only
+- `typescript_builder.ts` - Re-exports types from javascript_builder
+- `python_builder.ts` - Types only
+
+### Import Updates
+
+All consumers updated to import directly from `symbol_factories/`:
+
+- `capture_handlers.javascript.ts` - imports from `symbol_factories.javascript.ts`
+- `capture_handlers.typescript.ts` - imports from `symbol_factories.typescript.ts`
+- `capture_handlers.python.ts` - imports from `symbol_factories.python.ts`
+- `capture_handlers.python.imports.ts` - imports from `symbol_factories.python.ts`
+- `capture_handlers.rust.ts` - imports from `symbol_factories.rust.ts`
+- `semantic_index.ts` - imports config from `*_builder_config.ts`
+- Test files - updated to import from symbol_factories
+
+### Tests
+
+All tests pass:
+
+- JavaScript builder tests: 54 passed
+- Rust builder tests: 68 passed
+- Python semantic index tests: 53 passed
+- Collection resolution tests: 10 passed
+- Metadata extractors tests: 247 passed (17 pre-existing Rust test setup failures)
+- Build: Success

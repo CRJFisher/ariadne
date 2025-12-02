@@ -7,7 +7,7 @@ import Parser from "tree-sitter";
 import JavaScript from "tree-sitter-javascript";
 // @ts-ignore - TypeScript grammar is available but not typed
 import TypeScript from "tree-sitter-typescript";
-import { JAVASCRIPT_METADATA_EXTRACTORS } from "./javascript_metadata";
+import { JAVASCRIPT_METADATA_EXTRACTORS } from "./metadata_extractors.javascript";
 import type { FilePath } from "@ariadnejs/types";
 
 describe("JavaScript Metadata Extractors", () => {

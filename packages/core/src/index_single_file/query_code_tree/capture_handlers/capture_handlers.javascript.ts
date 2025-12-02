@@ -40,7 +40,7 @@ import {
   detect_function_collection,
   consume_documentation,
   extract_derived_from,
-} from "../language_configs/javascript_builder";
+} from "../symbol_factories/symbol_factories.javascript";
 
 // ============================================================================
 // DOCUMENTATION HANDLERS

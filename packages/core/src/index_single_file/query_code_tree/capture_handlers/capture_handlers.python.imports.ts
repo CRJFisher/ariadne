@@ -12,7 +12,7 @@ import {
   create_variable_id,
   extract_export_info,
   extract_import_path,
-} from "../language_configs/python_builder";
+} from "../symbol_factories/symbol_factories.python";
 
 // ============================================================================
 // IMPORT HANDLERS

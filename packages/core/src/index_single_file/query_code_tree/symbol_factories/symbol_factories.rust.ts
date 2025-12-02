@@ -23,12 +23,12 @@ import {
 } from "@ariadnejs/types";
 import type { CaptureNode } from "../../semantic_index";
 import { node_to_location } from "../../node_utils";
-export { detect_callback_context } from "./rust_callback_detection";
+export { detect_callback_context } from "./symbol_factories.rust_callback";
 export {
   type ImportInfo,
   extract_imports_from_use_declaration,
   extract_import_from_extern_crate,
-} from "./rust_import_extraction";
+} from "./symbol_factories.rust_imports";
 
 //
 // Symbol ID Creation

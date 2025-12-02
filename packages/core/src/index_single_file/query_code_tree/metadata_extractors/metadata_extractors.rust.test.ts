@@ -6,7 +6,7 @@ import { describe, it, expect, beforeEach } from "vitest";
 import Parser from "tree-sitter";
 // @ts-ignore - tree-sitter-rust is not typed
 import Rust from "tree-sitter-rust";
-import { RUST_METADATA_EXTRACTORS } from "./rust_metadata";
+import { RUST_METADATA_EXTRACTORS } from "./metadata_extractors.rust";
 import type { FilePath } from "@ariadnejs/types";
 
 describe("Rust Metadata Extractors", () => {
