@@ -1,6 +1,6 @@
 # Task 11.161.1.2: Extract Named Handler Functions (JavaScript)
 
-## Status: Planning
+## Status: Completed
 
 ## Parent: Task 11.161.1
 
@@ -183,3 +183,30 @@ Update `semantic_index.ts` and tests to use new imports.
 2. `JAVASCRIPT_HANDLERS` registry uses named function references
 3. All existing tests pass
 4. Handlers can be imported individually for testing
+
+## Implementation Notes
+
+### Files Created
+
+- `capture_handlers/javascript.ts` - Contains 30 named handler functions and `JAVASCRIPT_HANDLERS` registry
+
+### Files Modified
+
+- `capture_handlers/index.ts` - Added `get_handler_registry()` support for JavaScript/TypeScript
+- `javascript_builder_config.ts` - Refactored to import handlers from new module
+
+### Files Deleted
+
+- `javascript_reexport_config.ts` - Handlers moved to `capture_handlers/javascript.ts`
+
+### Handler Categories
+
+1. **Documentation handlers** (4): function, class, method, variable documentation
+2. **Definition handlers** (11): class, method, constructor, function, arrow, anonymous_function, param, parameter, variable, field, property
+3. **Import handlers** (6): import, import.named, import.default, import.namespace, import.require, import.require.simple
+4. **Re-export handlers** (9): reexport, reexport.named.simple, reexport.named, reexport.named.alias, reexport.default.original, reexport.default.alias, reexport.as_default.alias, reexport.namespace.source, reexport.namespace.alias
+
+### Tests
+
+All JavaScript builder tests pass (125 tests across 2 test files).
+All JavaScript integration tests pass (30 tests).
