@@ -1,6 +1,6 @@
 # Task 11.161.1.3: Extract Named Handler Functions (TypeScript)
 
-## Status: Planning
+## Status: Completed
 
 ## Parent: Task 11.161.1
 
@@ -127,3 +127,37 @@ export const TYPESCRIPT_HANDLERS: HandlerRegistry = {
 1. All TypeScript handlers are named, exported functions
 2. `TYPESCRIPT_HANDLERS` extends `JAVASCRIPT_HANDLERS`
 3. All existing tests pass
+
+## Implementation Notes
+
+### Files Created
+
+- `capture_handlers/typescript.ts` - Contains 23 named handler functions and `TYPESCRIPT_HANDLERS` registry
+
+### Files Modified
+
+- `capture_handlers/index.ts` - Added `get_handler_registry()` support for TypeScript (distinct from JavaScript)
+- `typescript_builder_config.ts` - Refactored to import handlers from new module
+
+### Handler Categories
+
+1. **JavaScript overrides** (7): variable, function, anonymous_function, class, method, field, parameter
+2. **Interface handlers** (3): interface, interface.method, interface.property
+3. **Type alias handlers** (1): type_alias
+4. **Enum handlers** (2): enum, enum.member
+5. **Namespace handlers** (1): namespace
+6. **Decorator handlers** (3): decorator.class, decorator.method, decorator.property
+7. **Method handlers** (2): method.private, method.abstract
+8. **Field handlers** (2): field.private, field.param_property
+9. **Parameter handlers** (2): parameter.optional, parameter.rest
+
+### Architecture
+
+`TYPESCRIPT_HANDLERS` extends `JAVASCRIPT_HANDLERS` via object spread, then overrides
+and adds TypeScript-specific handlers. The handler registry supports distinct handler
+sets for JavaScript vs TypeScript via `get_handler_registry()`.
+
+### Tests
+
+All TypeScript builder tests pass (48 tests).
+All language config tests pass for JavaScript/TypeScript (512 tests).
