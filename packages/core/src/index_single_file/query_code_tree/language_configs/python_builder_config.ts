@@ -1,1183 +1,133 @@
-import type { ModulePath, SymbolName } from "@ariadnejs/types";
-import type { DefinitionBuilder } from "../../definitions";
-import type { CaptureNode, ProcessingContext } from "../../semantic_index";
+/**
+ * Python Builder Configuration
+ *
+ * This module provides backward compatibility by wrapping named handler functions
+ * in the Map-based LanguageBuilderConfig format. New code should use
+ * PYTHON_HANDLERS from capture_handlers/python.ts directly.
+ */
+
+import type { LanguageBuilderConfig } from "./python_builder";
 import {
-  LanguageBuilderConfig,
-  create_class_id,
-  extract_extends,
-  extract_export_info,
-  create_method_id,
-  find_containing_class,
-  determine_method_type,
-  is_async_function,
-  extract_return_type,
-  create_property_id,
-  extract_type_annotation,
-  extract_initial_value,
-  create_function_id,
-  create_parameter_id,
-  find_containing_callable,
-  extract_parameter_type,
-  extract_default_value,
-  create_variable_id,
-  find_decorator_target,
-  create_enum_id,
-  create_enum_member_id,
-  find_containing_enum,
-  extract_enum_value,
-  create_protocol_id,
-  find_containing_protocol,
-  extract_property_type,
-  create_type_alias_id,
-  extract_type_expression,
-  extract_import_path,
-  detect_callback_context,
-  detect_function_collection,
-  extract_derived_from,
-} from "./python_builder";
-import { PYTHON_IMPORT_HANDLERS } from "./python_imports";
-import { anonymous_function_symbol } from "@ariadnejs/types";
+  PYTHON_HANDLERS,
+  handle_definition_class,
+  handle_definition_method,
+  handle_definition_method_static,
+  handle_definition_method_class,
+  handle_definition_constructor,
+  handle_definition_property,
+  handle_definition_field,
+  handle_definition_function,
+  handle_definition_function_async,
+  handle_definition_lambda,
+  handle_definition_anonymous_function,
+  handle_definition_parameter,
+  handle_definition_parameter_default,
+  handle_definition_parameter_typed,
+  handle_definition_parameter_typed_default,
+  handle_definition_parameter_args,
+  handle_definition_parameter_kwargs,
+  handle_definition_variable,
+  handle_definition_variable_typed,
+  handle_definition_variable_multiple,
+  handle_definition_variable_tuple,
+  handle_definition_variable_destructured,
+  handle_definition_loop_var,
+  handle_definition_loop_var_multiple,
+  handle_definition_comprehension_var,
+  handle_definition_except_var,
+  handle_definition_with_var,
+  handle_definition_import,
+  handle_import_named,
+  handle_import_named_source,
+  handle_import_named_alias,
+  handle_import_module,
+  handle_import_module_source,
+  handle_import_module_alias,
+  handle_import_star,
+  handle_definition_interface,
+  handle_definition_property_interface,
+  handle_definition_enum,
+  handle_definition_enum_member,
+  handle_decorator_variable,
+  handle_decorator_function,
+  handle_decorator_property,
+  handle_decorator_method,
+  handle_definition_type_alias,
+} from "../capture_handlers/python";
+
+// Re-export the handler registry for direct access
+export { PYTHON_HANDLERS };
+
+// ============================================================================
+// Python Builder Configuration (Map-based format)
+// ============================================================================
 
 export const PYTHON_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
   // Classes
-  [
-    "definition.class",
-    {
-      process: (
-        capture: CaptureNode,
-        builder: DefinitionBuilder,
-        context: ProcessingContext
-      ) => {
-        const class_id = create_class_id(capture);
-        const base_classes = extract_extends(
-          capture.node.parent || capture.node
-        );
-        const defining_scope_id = context.get_scope_id(capture.location);
-        const export_info = extract_export_info(
-          capture.text,
-          defining_scope_id,
-          context.root_scope_id
-        );
-
-        builder.add_class({
-          symbol_id: class_id,
-          name: capture.text,
-          location: capture.location,
-          scope_id: defining_scope_id,
-          is_exported: export_info.is_exported,
-          export: export_info.export,
-          extends: base_classes,
-        });
-      },
-    },
-  ],
+  ["definition.class", { process: handle_definition_class }],
 
   // Methods
-  [
-    "definition.method",
-    {
-      process: (
-        capture: CaptureNode,
-        builder: DefinitionBuilder,
-        context: ProcessingContext
-      ) => {
-        const method_id = create_method_id(capture);
-        const name = capture.text;
-
-        // Skip __init__ - handled by definition.constructor
-        if (name === "__init__") {
-          return;
-        }
-
-        // Check if this is a Protocol method (should be added to interface)
-        const protocol_id = find_containing_protocol(capture);
-        if (protocol_id) {
-          builder.add_method_signature_to_interface(protocol_id, {
-            symbol_id: method_id,
-            name: name,
-            location: capture.location,
-            scope_id: context.get_scope_id(capture.location),
-            return_type: extract_return_type(
-              capture.node.parent || capture.node
-            ),
-          });
-          return;
-        }
-
-        // Regular class method
-        const class_id = find_containing_class(capture);
-        if (class_id) {
-          const method_type = determine_method_type(
-            capture.node.parent || capture.node
-          );
-          const is_async = is_async_function(
-            capture.node.parent || capture.node
-          );
-
-          builder.add_method_to_class(
-            class_id,
-            {
-              symbol_id: method_id,
-              name: name,
-              location: capture.location,
-              scope_id: context.get_scope_id(capture.location),
-              return_type: extract_return_type(
-                capture.node.parent || capture.node
-              ),
-              ...method_type,
-              async: is_async,
-            },
-            capture
-          );
-        }
-      },
-    },
-  ],
-
-  [
-    "definition.method.static",
-    {
-      process: (
-        capture: CaptureNode,
-        builder: DefinitionBuilder,
-        context: ProcessingContext
-      ) => {
-        const method_id = create_method_id(capture);
-        const class_id = find_containing_class(capture);
-
-        if (class_id) {
-          builder.add_method_to_class(
-            class_id,
-            {
-              symbol_id: method_id,
-              name: capture.text,
-              location: capture.location,
-              scope_id: context.get_scope_id(capture.location),
-              return_type: extract_return_type(
-                capture.node.parent || capture.node
-              ),
-              static: true,
-              async: is_async_function(capture.node.parent || capture.node),
-            },
-            capture
-          );
-        }
-      },
-    },
-  ],
-
-  [
-    "definition.method.class",
-    {
-      process: (
-        capture: CaptureNode,
-        builder: DefinitionBuilder,
-        context: ProcessingContext
-      ) => {
-        const method_id = create_method_id(capture);
-        const class_id = find_containing_class(capture);
-
-        if (class_id) {
-          builder.add_method_to_class(
-            class_id,
-            {
-              symbol_id: method_id,
-              name: capture.text,
-              location: capture.location,
-              scope_id: context.get_scope_id(capture.location),
-              return_type: extract_return_type(
-                capture.node.parent || capture.node
-              ),
-              abstract: true, // Use abstract flag for classmethod
-              async: is_async_function(capture.node.parent || capture.node),
-            },
-            capture
-          );
-        }
-      },
-    },
-  ],
-
-  [
-    "definition.constructor",
-    {
-      process: (
-        capture: CaptureNode,
-        builder: DefinitionBuilder,
-        context: ProcessingContext
-      ) => {
-        // __init__ method - treat as constructor
-        const method_id = create_method_id(capture);
-        const class_id = find_containing_class(capture);
-
-        if (class_id) {
-          builder.add_constructor_to_class(
-            class_id,
-            {
-              symbol_id: method_id,
-              name: "__init__" as SymbolName,
-              location: capture.location,
-              scope_id: context.get_scope_id(capture.location),
-            },
-            capture
-          );
-        }
-      },
-    },
-  ],
+  ["definition.method", { process: handle_definition_method }],
+  ["definition.method.static", { process: handle_definition_method_static }],
+  ["definition.method.class", { process: handle_definition_method_class }],
+  ["definition.constructor", { process: handle_definition_constructor }],
 
   // Properties
-  [
-    "definition.property",
-    {
-      process: (
-        capture: CaptureNode,
-        builder: DefinitionBuilder,
-        context: ProcessingContext
-      ) => {
-        const prop_id = create_property_id(capture);
-        const class_id = find_containing_class(capture);
-
-        if (class_id) {
-          builder.add_property_to_class(class_id, {
-            symbol_id: prop_id,
-            name: capture.text,
-            location: capture.location,
-            scope_id: context.get_scope_id(capture.location),
-            type: extract_type_annotation(capture.node),
-            initial_value: extract_initial_value(capture.node),
-            readonly: true, // Properties decorated with @property are readonly
-          });
-        }
-      },
-    },
-  ],
-
-  [
-    "definition.field",
-    {
-      process: (
-        capture: CaptureNode,
-        builder: DefinitionBuilder,
-        context: ProcessingContext
-      ) => {
-        const prop_id = create_property_id(capture);
-        const class_id = find_containing_class(capture);
-
-        if (class_id) {
-          builder.add_property_to_class(class_id, {
-            symbol_id: prop_id,
-            name: capture.text,
-            location: capture.location,
-            scope_id: context.get_scope_id(capture.location),
-            type: extract_type_annotation(capture.node),
-            initial_value: extract_initial_value(capture.node),
-          });
-        }
-      },
-    },
-  ],
+  ["definition.property", { process: handle_definition_property }],
+  ["definition.field", { process: handle_definition_field }],
 
   // Functions
-  [
-    "definition.function",
-    {
-      process: (
-        capture: CaptureNode,
-        builder: DefinitionBuilder,
-        context: ProcessingContext
-      ) => {
-        const func_id = create_function_id(capture);
-        const defining_scope_id = context.get_scope_id(capture.location);
-        const export_info = extract_export_info(
-          capture.text,
-          defining_scope_id,
-          context.root_scope_id
-        );
-
-        builder.add_function(
-          {
-            symbol_id: func_id,
-            name: capture.text,
-            location: capture.location,
-            scope_id: defining_scope_id,
-            is_exported: export_info.is_exported,
-            export: export_info.export,
-            return_type: extract_return_type(capture.node.parent || capture.node),
-          },
-          capture
-        );
-      },
-    },
-  ],
-
-  [
-    "definition.function.async",
-    {
-      process: (
-        capture: CaptureNode,
-        builder: DefinitionBuilder,
-        context: ProcessingContext
-      ) => {
-        const func_id = create_function_id(capture);
-        const defining_scope_id = context.get_scope_id(capture.location);
-        const export_info = extract_export_info(
-          capture.text,
-          defining_scope_id,
-          context.root_scope_id
-        );
-
-        builder.add_function(
-          {
-            symbol_id: func_id,
-            name: capture.text,
-            location: capture.location,
-            scope_id: defining_scope_id,
-            is_exported: export_info.is_exported,
-            export: export_info.export,
-            return_type: extract_return_type(capture.node.parent || capture.node),
-          },
-          capture
-        );
-      },
-    },
-  ],
-
-  [
-    "definition.lambda",
-    {
-      process: (
-        capture: CaptureNode,
-        builder: DefinitionBuilder,
-        context: ProcessingContext
-      ) => {
-        const func_id = create_function_id(capture);
-
-        builder.add_function(
-          {
-            symbol_id: func_id,
-            name: "lambda" as SymbolName,
-            location: capture.location,
-            scope_id: context.get_scope_id(capture.location),
-            is_exported: false, // Lambda functions are never exported
-          },
-          capture
-        );
-      },
-    },
-  ],
-
-  // ============================================================================
-  // ANONYMOUS FUNCTIONS - Lambda expressions used inline
-  // ============================================================================
-  [
-    "definition.anonymous_function",
-    {
-      process: (
-        capture: CaptureNode,
-        builder: DefinitionBuilder,
-        context: ProcessingContext
-      ) => {
-        // Generate location-based symbol ID for anonymous lambda
-        const anon_id = anonymous_function_symbol(capture.location);
-        const scope_id = context.get_scope_id(capture.location);
-
-        // Detect if this lambda is a callback
-        const callback_context = detect_callback_context(
-          capture.node,
-          capture.location.file_path
-        );
-
-        builder.add_anonymous_function(
-          {
-            symbol_id: anon_id,
-            location: capture.location,
-            scope_id: scope_id,
-            return_type: extract_return_type(capture.node),
-            callback_context: callback_context,
-          },
-          capture
-        );
-      },
-    },
-  ],
+  ["definition.function", { process: handle_definition_function }],
+  ["definition.function.async", { process: handle_definition_function_async }],
+  ["definition.lambda", { process: handle_definition_lambda }],
+  ["definition.anonymous_function", { process: handle_definition_anonymous_function }],
 
   // Parameters
-  [
-    "definition.parameter",
-    {
-      process: (
-        capture: CaptureNode,
-        builder: DefinitionBuilder,
-        context: ProcessingContext
-      ) => {
-        const param_id = create_parameter_id(capture);
-        const parent_id = find_containing_callable(capture);
-
-        builder.add_parameter_to_callable(parent_id, {
-          symbol_id: param_id,
-          name: capture.text,
-          location: capture.location,
-          scope_id: context.get_scope_id(capture.location),
-          type: extract_parameter_type(capture.node),
-          default_value: extract_default_value(capture.node),
-        });
-      },
-    },
-  ],
-
-  [
-    "definition.parameter.default",
-    {
-      process: (
-        capture: CaptureNode,
-        builder: DefinitionBuilder,
-        context: ProcessingContext
-      ) => {
-        const param_id = create_parameter_id(capture);
-        const parent_id = find_containing_callable(capture);
-
-        builder.add_parameter_to_callable(parent_id, {
-          symbol_id: param_id,
-          name: capture.text,
-          location: capture.location,
-          scope_id: context.get_scope_id(capture.location),
-          type: extract_parameter_type(capture.node),
-          default_value: extract_default_value(capture.node),
-          optional: true,
-        });
-      },
-    },
-  ],
-
-  [
-    "definition.parameter.typed",
-    {
-      process: (
-        capture: CaptureNode,
-        builder: DefinitionBuilder,
-        context: ProcessingContext
-      ) => {
-        const param_id = create_parameter_id(capture);
-        const parent_id = find_containing_callable(capture);
-
-        builder.add_parameter_to_callable(parent_id, {
-          symbol_id: param_id,
-          name: capture.text,
-          location: capture.location,
-          scope_id: context.get_scope_id(capture.location),
-          type: extract_parameter_type(capture.node),
-          default_value: extract_default_value(capture.node),
-        });
-      },
-    },
-  ],
-
-  [
-    "definition.parameter.typed.default",
-    {
-      process: (
-        capture: CaptureNode,
-        builder: DefinitionBuilder,
-        context: ProcessingContext
-      ) => {
-        const param_id = create_parameter_id(capture);
-        const parent_id = find_containing_callable(capture);
-
-        builder.add_parameter_to_callable(parent_id, {
-          symbol_id: param_id,
-          name: capture.text,
-          location: capture.location,
-          scope_id: context.get_scope_id(capture.location),
-          type: extract_parameter_type(capture.node),
-          default_value: extract_default_value(capture.node),
-          optional: true,
-        });
-      },
-    },
-  ],
-
-  [
-    "definition.parameter.args",
-    {
-      process: (
-        capture: CaptureNode,
-        builder: DefinitionBuilder,
-        context: ProcessingContext
-      ) => {
-        const param_id = create_parameter_id(capture);
-        const parent_id = find_containing_callable(capture);
-
-        builder.add_parameter_to_callable(parent_id, {
-          symbol_id: param_id,
-          name: capture.text,
-          location: capture.location,
-          scope_id: context.get_scope_id(capture.location),
-          type: "tuple" as SymbolName, // *args is a tuple
-        });
-      },
-    },
-  ],
-
-  [
-    "definition.parameter.kwargs",
-    {
-      process: (
-        capture: CaptureNode,
-        builder: DefinitionBuilder,
-        context: ProcessingContext
-      ) => {
-        const param_id = create_parameter_id(capture);
-        const parent_id = find_containing_callable(capture);
-
-        builder.add_parameter_to_callable(parent_id, {
-          symbol_id: param_id,
-          name: capture.text,
-          location: capture.location,
-          scope_id: context.get_scope_id(capture.location),
-          type: "dict" as SymbolName, // **kwargs is a dict
-        });
-      },
-    },
-  ],
+  ["definition.parameter", { process: handle_definition_parameter }],
+  ["definition.parameter.default", { process: handle_definition_parameter_default }],
+  ["definition.parameter.typed", { process: handle_definition_parameter_typed }],
+  ["definition.parameter.typed.default", { process: handle_definition_parameter_typed_default }],
+  ["definition.parameter.args", { process: handle_definition_parameter_args }],
+  ["definition.parameter.kwargs", { process: handle_definition_parameter_kwargs }],
 
   // Variables
-  [
-    "definition.variable",
-    {
-      process: (
-        capture: CaptureNode,
-        builder: DefinitionBuilder,
-        context: ProcessingContext
-      ) => {
-        const var_id = create_variable_id(capture);
-        const name = capture.text;
-
-        // Check if this is a constant (UPPER_CASE convention)
-        const is_const = name === name.toUpperCase() && name.includes("_");
-
-        const defining_scope_id = context.get_scope_id(capture.location);
-        const export_info = extract_export_info(
-          name,
-          defining_scope_id,
-          context.root_scope_id
-        );
-
-        // Detect function collections (Task 11.156.3)
-        const parent = capture.node.parent;
-        const collection_info = parent
-          ? detect_function_collection(parent, capture.location.file_path)
-          : null;
-        const function_collection = collection_info
-          ? {
-              ...collection_info,
-              collection_id: var_id,
-            }
-          : undefined;
-
-          const derived_from = extract_derived_from(capture.node);
-
-        builder.add_variable({
-          kind: is_const ? "constant" : "variable",
-          symbol_id: var_id,
-          name: name,
-          location: capture.location,
-          scope_id: defining_scope_id,
-          is_exported: export_info.is_exported,
-          export: export_info.export,
-          type: extract_type_annotation(capture.node),
-          initial_value: extract_initial_value(capture.node),
-          function_collection,
-          derived_from,
-        });
-      },
-    },
-  ],
-
-  [
-    "definition.variable.typed",
-    {
-      process: (
-        capture: CaptureNode,
-        builder: DefinitionBuilder,
-        context: ProcessingContext
-      ) => {
-        const var_id = create_variable_id(capture);
-        const name = capture.text;
-
-        const defining_scope_id = context.get_scope_id(capture.location);
-        const export_info = extract_export_info(
-          name,
-          defining_scope_id,
-          context.root_scope_id
-        );
-
-        const derived_from = extract_derived_from(capture.node);
-
-        builder.add_variable({
-          kind: "variable",
-          symbol_id: var_id,
-          name: name,
-          location: capture.location,
-          scope_id: defining_scope_id,
-          is_exported: export_info.is_exported,
-          export: export_info.export,
-          type: extract_type_annotation(capture.node),
-          initial_value: extract_initial_value(capture.node),
-          derived_from,
-        });
-      },
-    },
-  ],
-
-  [
-    "definition.variable.multiple",
-    {
-      process: (
-        capture: CaptureNode,
-        builder: DefinitionBuilder,
-        context: ProcessingContext
-      ) => {
-        // Handle multiple assignment like: a, b = 1, 2
-        const var_id = create_variable_id(capture);
-        const name = capture.text;
-
-        const defining_scope_id = context.get_scope_id(capture.location);
-        const export_info = extract_export_info(
-          name,
-          defining_scope_id,
-          context.root_scope_id
-        );
-
-        builder.add_variable({
-          kind: "variable",
-          symbol_id: var_id,
-          name: name,
-          location: capture.location,
-          scope_id: defining_scope_id,
-          is_exported: export_info.is_exported,
-          export: export_info.export,
-          type: undefined, // Type inference would be complex for unpacking
-          initial_value: undefined, // Value would be partial
-        });
-      },
-    },
-  ],
-
-  [
-    "definition.variable.tuple",
-    {
-      process: (
-        capture: CaptureNode,
-        builder: DefinitionBuilder,
-        context: ProcessingContext
-      ) => {
-        // Handle tuple unpacking like: (a, b) = (1, 2)
-        const var_id = create_variable_id(capture);
-        const name = capture.text;
-
-        const defining_scope_id = context.get_scope_id(capture.location);
-        const export_info = extract_export_info(
-          name,
-          defining_scope_id,
-          context.root_scope_id
-        );
-
-        builder.add_variable({
-          kind: "variable",
-          symbol_id: var_id,
-          name: name,
-          location: capture.location,
-          scope_id: defining_scope_id,
-          is_exported: export_info.is_exported,
-          export: export_info.export,
-          type: undefined,
-          initial_value: undefined,
-        });
-      },
-    },
-  ],
-
-  [
-    "definition.variable.destructured",
-    {
-      process: (
-        capture: CaptureNode,
-        builder: DefinitionBuilder,
-        context: ProcessingContext
-      ) => {
-        // Handle destructuring assignment
-        const var_id = create_variable_id(capture);
-        const name = capture.text;
-
-        const defining_scope_id = context.get_scope_id(capture.location);
-        const export_info = extract_export_info(
-          name,
-          defining_scope_id,
-          context.root_scope_id
-        );
-
-        builder.add_variable({
-          kind: "variable",
-          symbol_id: var_id,
-          name: name,
-          location: capture.location,
-          scope_id: defining_scope_id,
-          is_exported: export_info.is_exported,
-          export: export_info.export,
-          type: undefined,
-          initial_value: undefined,
-        });
-      },
-    },
-  ],
+  ["definition.variable", { process: handle_definition_variable }],
+  ["definition.variable.typed", { process: handle_definition_variable_typed }],
+  ["definition.variable.multiple", { process: handle_definition_variable_multiple }],
+  ["definition.variable.tuple", { process: handle_definition_variable_tuple }],
+  ["definition.variable.destructured", { process: handle_definition_variable_destructured }],
 
   // Loop and comprehension variables
-  [
-    "definition.loop_var",
-    {
-      process: (
-        capture: CaptureNode,
-        builder: DefinitionBuilder,
-        context: ProcessingContext
-      ) => {
-        const var_id = create_variable_id(capture);
-
-        builder.add_variable({
-          kind: "variable",
-          symbol_id: var_id,
-          name: capture.text,
-          location: capture.location,
-          scope_id: context.get_scope_id(capture.location),
-          is_exported: false, // Loop variables are never exported
-          type: undefined,
-          initial_value: undefined,
-        });
-      },
-    },
-  ],
-
-  [
-    "definition.loop_var.multiple",
-    {
-      process: (
-        capture: CaptureNode,
-        builder: DefinitionBuilder,
-        context: ProcessingContext
-      ) => {
-        const var_id = create_variable_id(capture);
-
-        builder.add_variable({
-          kind: "variable",
-          symbol_id: var_id,
-          name: capture.text,
-          location: capture.location,
-          scope_id: context.get_scope_id(capture.location),
-          is_exported: false, // Loop variables are never exported
-          type: undefined,
-          initial_value: undefined,
-        });
-      },
-    },
-  ],
-
-  [
-    "definition.comprehension_var",
-    {
-      process: (
-        capture: CaptureNode,
-        builder: DefinitionBuilder,
-        context: ProcessingContext
-      ) => {
-        const var_id = create_variable_id(capture);
-
-        builder.add_variable({
-          kind: "variable",
-          symbol_id: var_id,
-          name: capture.text,
-          location: capture.location,
-          scope_id: context.get_scope_id(capture.location),
-          is_exported: false, // Comprehension variables are never exported
-          type: undefined,
-          initial_value: undefined,
-        });
-      },
-    },
-  ],
-
-  [
-    "definition.except_var",
-    {
-      process: (
-        capture: CaptureNode,
-        builder: DefinitionBuilder,
-        context: ProcessingContext
-      ) => {
-        const var_id = create_variable_id(capture);
-
-        builder.add_variable({
-          kind: "variable",
-          symbol_id: var_id,
-          name: capture.text,
-          location: capture.location,
-          scope_id: context.get_scope_id(capture.location),
-          is_exported: false, // Exception variables are never exported
-          type: "Exception" as SymbolName,
-          initial_value: undefined,
-        });
-      },
-    },
-  ],
-
-  [
-    "definition.with_var",
-    {
-      process: (
-        capture: CaptureNode,
-        builder: DefinitionBuilder,
-        context: ProcessingContext
-      ) => {
-        const var_id = create_variable_id(capture);
-
-        builder.add_variable({
-          kind: "variable",
-          symbol_id: var_id,
-          name: capture.text,
-          location: capture.location,
-          scope_id: context.get_scope_id(capture.location),
-          is_exported: false, // Context manager variables are never exported
-          type: undefined,
-          initial_value: undefined,
-        });
-      },
-    },
-  ],
+  ["definition.loop_var", { process: handle_definition_loop_var }],
+  ["definition.loop_var.multiple", { process: handle_definition_loop_var_multiple }],
+  ["definition.comprehension_var", { process: handle_definition_comprehension_var }],
+  ["definition.except_var", { process: handle_definition_except_var }],
+  ["definition.with_var", { process: handle_definition_with_var }],
 
   // Imports
-  [
-    "definition.import",
-    {
-      process: (
-        capture: CaptureNode,
-        builder: DefinitionBuilder,
-        context: ProcessingContext
-      ) => {
-        const import_id = create_variable_id(capture);
+  ["definition.import", { process: handle_definition_import }],
+  ["import.named", { process: handle_import_named }],
+  ["import.named.source", { process: handle_import_named_source }],
+  ["import.named.alias", { process: handle_import_named_alias }],
+  ["import.module", { process: handle_import_module }],
+  ["import.module.source", { process: handle_import_module_source }],
+  ["import.module.alias", { process: handle_import_module_alias }],
+  ["import.star", { process: handle_import_star }],
 
-        // Navigate up to find import_statement or import_from_statement
-        let import_stmt = capture.node.parent;
-        while (
-          import_stmt &&
-          import_stmt.type !== "import_statement" &&
-          import_stmt.type !== "import_from_statement"
-        ) {
-          import_stmt = import_stmt.parent;
-        }
-
-        if (!import_stmt) {
-          // Skip if we can't find the import statement
-          return;
-        }
-
-        // Determine import kind
-        let import_kind: "named" | "namespace" = "named";
-        let import_path: ModulePath;
-        let original_name: SymbolName | undefined;
-        let imported_name: SymbolName = capture.text;
-
-        if (import_stmt.type === "import_statement") {
-          // import X or import X as Y
-          import_kind = "namespace";
-          import_path = capture.text as unknown as ModulePath;
-
-          // Check for alias
-          const aliased_import = capture.node.parent;
-          if (aliased_import?.type === "aliased_import") {
-            const alias_node = aliased_import.childForFieldName?.("alias");
-            if (alias_node && alias_node.text !== capture.text) {
-              original_name = capture.text;
-              imported_name = alias_node.text as SymbolName;
-            }
-          }
-        } else {
-          // import_from_statement (from X import Y)
-          import_path = extract_import_path(import_stmt);
-
-          // Check if it's a wildcard import
-          if (capture.node.type === "wildcard_import") {
-            import_kind = "namespace";
-            imported_name = "*" as SymbolName;
-          } else {
-            import_kind = "named";
-
-            // Check for alias in from imports
-            const aliased_import = capture.node.parent;
-            if (aliased_import?.type === "aliased_import") {
-              const name_node = aliased_import.childForFieldName?.("name");
-              const alias_node = aliased_import.childForFieldName?.("alias");
-              if (name_node && alias_node) {
-                original_name = name_node.text as SymbolName;
-                imported_name = alias_node.text as SymbolName;
-              }
-            }
-          }
-        }
-
-        const defining_scope_id = context.get_scope_id(capture.location);
-        const export_info = extract_export_info(
-          imported_name,
-          defining_scope_id,
-          context.root_scope_id
-        );
-
-        builder.add_import({
-          symbol_id: import_id,
-          name: imported_name,
-          location: capture.location,
-          scope_id: defining_scope_id,
-          export: export_info.export,
-          import_path,
-          import_kind,
-          original_name,
-        });
-      },
-    },
-  ],
-
-  // Import handlers (extracted to separate file)
-  ...PYTHON_IMPORT_HANDLERS,
-
-  // Protocols (Python's structural typing, similar to TypeScript interfaces)
-  [
-    "definition.interface",
-    {
-      process: (
-        capture: CaptureNode,
-        builder: DefinitionBuilder,
-        context: ProcessingContext
-      ) => {
-        const protocol_id = create_protocol_id(capture);
-        const defining_scope_id = context.get_scope_id(capture.location);
-        const export_info = extract_export_info(
-          capture.text,
-          defining_scope_id,
-          context.root_scope_id
-        );
-
-        builder.add_interface({
-          symbol_id: protocol_id,
-          name: capture.text,
-          location: capture.location,
-          scope_id: defining_scope_id,
-          is_exported: export_info.is_exported,
-          export: export_info.export,
-        });
-      },
-    },
-  ],
-
-  [
-    "definition.property.interface",
-    {
-      process: (
-        capture: CaptureNode,
-        builder: DefinitionBuilder,
-        context: ProcessingContext
-      ) => {
-        const protocol_id = find_containing_protocol(capture);
-        if (!protocol_id) return;
-
-        // Only process if there's a type annotation (Protocol property signatures)
-        const prop_type = extract_property_type(capture.node);
-        if (!prop_type) return;
-
-        const prop_id = create_property_id(capture);
-
-        builder.add_property_signature_to_interface(protocol_id, {
-          symbol_id: prop_id,
-          name: capture.text,
-          location: capture.location,
-          type: prop_type,
-          scope_id: context.get_scope_id(capture.location),
-        });
-      },
-    },
-  ],
+  // Protocols
+  ["definition.interface", { process: handle_definition_interface }],
+  ["definition.property.interface", { process: handle_definition_property_interface }],
 
   // Enums
-  [
-    "definition.enum",
-    {
-      process: (
-        capture: CaptureNode,
-        builder: DefinitionBuilder,
-        context: ProcessingContext
-      ) => {
-        const enum_id = create_enum_id(capture);
-        const defining_scope_id = context.get_scope_id(capture.location);
-        const export_info = extract_export_info(
-          capture.text,
-          defining_scope_id,
-          context.root_scope_id
-        );
-
-        builder.add_enum({
-          symbol_id: enum_id,
-          name: capture.text,
-          location: capture.location,
-          scope_id: defining_scope_id,
-          is_exported: export_info.is_exported,
-          export: export_info.export,
-        });
-      },
-    },
-  ],
-
-  [
-    "definition.enum_member",
-    {
-      process: (
-        capture: CaptureNode,
-        builder: DefinitionBuilder,
-        _context: ProcessingContext
-      ) => {
-        const enum_id = find_containing_enum(capture);
-        if (!enum_id) return;
-
-        const member_id = create_enum_member_id(capture.text, enum_id);
-        const value = extract_enum_value(capture.node);
-
-        builder.add_enum_member(enum_id, {
-          symbol_id: member_id,
-          name: capture.text,
-          location: capture.location,
-          value,
-        });
-      },
-    },
-  ],
+  ["definition.enum", { process: handle_definition_enum }],
+  ["definition.enum_member", { process: handle_definition_enum_member }],
 
   // Decorators
-  [
-    "decorator.variable",
-    {
-      process: (
-        capture: CaptureNode,
-        builder: DefinitionBuilder,
-        context: ProcessingContext
-      ) => {
-        const target_id = find_decorator_target(capture);
-        if (!target_id) return;
+  ["decorator.variable", { process: handle_decorator_variable }],
+  ["decorator.function", { process: handle_decorator_function }],
+  ["decorator.property", { process: handle_decorator_property }],
+  ["decorator.method", { process: handle_decorator_method }],
 
-        const decorator_name = capture.text;
-
-        builder.add_decorator_to_target(target_id, {
-          name: decorator_name,
-          defining_scope_id: context.get_scope_id(capture.location),
-          location: capture.location,
-        });
-      },
-    },
-  ],
-
-  [
-    "decorator.function",
-    {
-      process: (
-        capture: CaptureNode,
-        builder: DefinitionBuilder,
-        context: ProcessingContext
-      ) => {
-        const target_id = find_decorator_target(capture);
-        if (!target_id) return;
-
-        const decorator_name = capture.text;
-
-        builder.add_decorator_to_target(target_id, {
-          name: decorator_name,
-          defining_scope_id: context.get_scope_id(capture.location),
-          location: capture.location,
-        });
-      },
-    },
-  ],
-
-  [
-    "decorator.property",
-    {
-      process: (
-        capture: CaptureNode,
-        builder: DefinitionBuilder,
-        context: ProcessingContext
-      ) => {
-        const target_id = find_decorator_target(capture);
-        if (!target_id) return;
-
-        const decorator_name = capture.text;
-
-        builder.add_decorator_to_target(target_id, {
-          name: decorator_name,
-          defining_scope_id: context.get_scope_id(capture.location),
-          location: capture.location,
-        });
-      },
-    },
-  ],
-
-  [
-    "decorator.method",
-    {
-      process: (
-        capture: CaptureNode,
-        builder: DefinitionBuilder,
-        context: ProcessingContext
-      ) => {
-        const target_id = find_decorator_target(capture);
-        if (!target_id) return;
-
-        const decorator_name = capture.text;
-
-        builder.add_decorator_to_target(target_id, {
-          name: decorator_name,
-          defining_scope_id: context.get_scope_id(capture.location),
-          location: capture.location,
-        });
-      },
-    },
-  ],
-
-  // ============================================================================
-  // TYPE ALIASES (Python 3.12+)
-  // ============================================================================
-
-  [
-    "definition.type_alias",
-    {
-      process: (
-        capture: CaptureNode,
-        builder: DefinitionBuilder,
-        context: ProcessingContext
-      ) => {
-        const type_id = create_type_alias_id(capture);
-        const type_expression = extract_type_expression(capture.node) as SymbolName | undefined;
-        const defining_scope_id = context.get_scope_id(capture.location);
-        const export_info = extract_export_info(
-          capture.text,
-          defining_scope_id,
-          context.root_scope_id
-        );
-
-        builder.add_type_alias({
-          kind: "type_alias",
-          symbol_id: type_id,
-          name: capture.text,
-          location: capture.location,
-          scope_id: defining_scope_id,
-          is_exported: export_info.is_exported,
-          export: export_info.export,
-          type_expression,
-        });
-      },
-    },
-  ],
+  // Type aliases
+  ["definition.type_alias", { process: handle_definition_type_alias }],
 ]);

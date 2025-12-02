@@ -1,6 +1,6 @@
 # Task 11.161.1.4: Extract Named Handler Functions (Python)
 
-## Status: Planning
+## Status: Completed
 
 ## Parent: Task 11.161.1
 
@@ -145,3 +145,40 @@ export const PYTHON_HANDLERS: HandlerRegistry = {
 1. All Python handlers are named, exported functions
 2. Import handlers merged into main registry
 3. All existing tests pass
+
+## Implementation Notes
+
+### Files Created
+
+- `capture_handlers/python.ts` - Contains 36 named handler functions and `PYTHON_HANDLERS` registry (~29KB)
+- `capture_handlers/python_imports.ts` - Contains 8 import handler functions (~8KB, split due to 32KB file size limit)
+
+### Files Modified
+
+- `capture_handlers/index.ts` - Added `get_handler_registry()` support for Python
+- `python_builder_config.ts` - Refactored to import handlers from new module
+
+### Files Deleted
+
+- `language_configs/python_imports.ts` - Handlers consolidated into `capture_handlers/python_imports.ts`
+
+### Handler Categories
+
+1. **Class handlers** (1): class
+2. **Method handlers** (4): method, method.static, method.class, constructor
+3. **Property handlers** (2): property, field
+4. **Function handlers** (4): function, function.async, lambda, anonymous_function
+5. **Parameter handlers** (6): parameter, parameter.default, parameter.typed, parameter.typed.default, parameter.args, parameter.kwargs
+6. **Variable handlers** (5): variable, variable.typed, variable.multiple, variable.tuple, variable.destructured
+7. **Loop/comprehension handlers** (5): loop_var, loop_var.multiple, comprehension_var, except_var, with_var
+8. **Import handlers** (8): import, import.named, import.named.source, import.named.alias, import.module, import.module.source, import.module.alias, import.star
+9. **Protocol handlers** (2): interface, property.interface
+10. **Enum handlers** (2): enum, enum_member
+11. **Decorator handlers** (4): decorator.variable, decorator.function, decorator.property, decorator.method
+12. **Type alias handlers** (1): type_alias
+
+### Tests
+
+All Python builder tests pass (75 tests).
+All Python semantic index tests pass (53 tests).
+All Python integration tests pass (37 tests).
