@@ -12,17 +12,17 @@ Create the new directory structure for semantic role organization.
 
 ```
 packages/core/src/index_single_file/query_code_tree/
-├── capture_handlers/           # Capture name → handler mappings
-│   ├── types.ts               # HandlerFunction type, HandlerRegistry type
-│   └── index.ts               # Factory: get_handler_registry(language)
+├── capture_handlers/                        # Capture name → handler mappings
+│   ├── capture_handlers.types.ts           # HandlerFunction type, HandlerRegistry type
+│   └── index.ts                            # Factory: get_handler_registry(language)
 │
-├── metadata_extractors/        # AST → semantic info extraction
-│   ├── types.ts               # MetadataExtractors interface (from metadata_types.ts)
-│   └── index.ts               # Factory: get_metadata_extractor(language)
+├── metadata_extractors/                     # AST → semantic info extraction
+│   ├── metadata_extractors.types.ts        # MetadataExtractors interface (from metadata_types.ts)
+│   └── index.ts                            # Factory: get_metadata_extractor(language)
 │
-├── symbol_factories/           # SymbolId creation helpers
-│   ├── types.ts               # Shared types
-│   └── index.ts               # Re-exports
+├── symbol_factories/                        # SymbolId creation helpers
+│   ├── symbol_factories.types.ts           # Shared types
+│   └── index.ts                            # Re-exports
 │
 └── queries/                    # .scm files (unchanged)
 ```
@@ -37,7 +37,7 @@ mkdir -p packages/core/src/index_single_file/query_code_tree/metadata_extractors
 mkdir -p packages/core/src/index_single_file/query_code_tree/symbol_factories
 ```
 
-### 2. Create capture_handlers/types.ts
+### 2. Create capture_handlers/capture_handlers.types.ts
 
 ```typescript
 import type { SyntaxNode } from "tree-sitter";
@@ -64,23 +64,23 @@ export type HandlerRegistry = Readonly<Record<string, HandlerFunction>>;
 
 ```typescript
 import type { Language } from "@ariadnejs/types";
-import type { HandlerRegistry } from "./types";
+import type { HandlerRegistry } from "./capture_handlers.types";
 
 // Import language-specific handlers (to be created in subsequent tasks)
-// import { JAVASCRIPT_HANDLERS } from "./javascript";
-// import { TYPESCRIPT_HANDLERS } from "./typescript";
-// import { PYTHON_HANDLERS } from "./python";
-// import { RUST_HANDLERS } from "./rust";
+// import { JAVASCRIPT_HANDLERS } from "./capture_handlers.javascript";
+// import { TYPESCRIPT_HANDLERS } from "./capture_handlers.typescript";
+// import { PYTHON_HANDLERS } from "./capture_handlers.python";
+// import { RUST_HANDLERS } from "./capture_handlers.rust";
 
 export function get_handler_registry(language: Language): HandlerRegistry {
   // Placeholder - will be implemented as handlers are migrated
   throw new Error(`Handler registry not yet implemented for ${language}`);
 }
 
-export type { HandlerFunction, HandlerRegistry } from "./types";
+export type { HandlerFunction, HandlerRegistry } from "./capture_handlers.types";
 ```
 
-### 4. Create metadata_extractors/types.ts
+### 4. Create metadata_extractors/metadata_extractors.types.ts
 
 Move content from `language_configs/metadata_types.ts`:
 
@@ -92,17 +92,17 @@ Move content from `language_configs/metadata_types.ts`:
 
 ```typescript
 import type { Language } from "@ariadnejs/types";
-import type { MetadataExtractors } from "./types";
+import type { MetadataExtractors } from "./metadata_extractors.types";
 
 export function get_metadata_extractor(language: Language): MetadataExtractors {
   // Placeholder - will be implemented as extractors are migrated
   throw new Error(`Metadata extractor not yet implemented for ${language}`);
 }
 
-export type { MetadataExtractors, ReceiverInfo } from "./types";
+export type { MetadataExtractors, ReceiverInfo } from "./metadata_extractors.types";
 ```
 
-### 6. Create symbol_factories/types.ts
+### 6. Create symbol_factories/symbol_factories.types.ts
 
 ```typescript
 import type { SymbolId, SymbolLocation } from "@ariadnejs/types";
@@ -123,16 +123,16 @@ export interface SymbolCreationContext {
 // Re-exports for symbol factory functions
 // Will be populated as factories are migrated from *_builder.ts files
 
-export type { SymbolCreationContext } from "./types";
+export type { SymbolCreationContext } from "./symbol_factories.types";
 ```
 
 ## Files Created
 
-- `capture_handlers/types.ts`
+- `capture_handlers/capture_handlers.types.ts`
 - `capture_handlers/index.ts`
-- `metadata_extractors/types.ts`
+- `metadata_extractors/metadata_extractors.types.ts`
 - `metadata_extractors/index.ts`
-- `symbol_factories/types.ts`
+- `symbol_factories/symbol_factories.types.ts`
 - `symbol_factories/index.ts`
 
 ## Success Criteria

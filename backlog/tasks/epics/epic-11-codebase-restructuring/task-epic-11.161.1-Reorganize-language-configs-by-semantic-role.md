@@ -31,28 +31,29 @@ Three directories organized by semantic role, with named handler functions:
 ```
 query_code_tree/
 ├── capture_handlers/
-│   ├── types.ts          # HandlerFunction, HandlerRegistry types
-│   ├── index.ts          # get_handler_registry(language)
-│   ├── javascript.ts     # Named handlers + JAVASCRIPT_HANDLERS
-│   ├── typescript.ts
-│   ├── python.ts
-│   └── rust.ts
+│   ├── capture_handlers.types.ts          # HandlerFunction, HandlerRegistry types
+│   ├── index.ts                           # get_handler_registry(language)
+│   ├── capture_handlers.javascript.ts     # Named handlers + JAVASCRIPT_HANDLERS
+│   ├── capture_handlers.typescript.ts
+│   ├── capture_handlers.python.ts
+│   ├── capture_handlers.python.imports.ts # Split for file size
+│   └── capture_handlers.rust.ts
 │
 ├── metadata_extractors/
-│   ├── types.ts          # MetadataExtractors interface
-│   ├── index.ts          # get_metadata_extractor(language)
-│   ├── javascript.ts
-│   ├── typescript.ts
-│   ├── python.ts
-│   └── rust.ts
+│   ├── metadata_extractors.types.ts       # MetadataExtractors interface
+│   ├── index.ts                           # get_metadata_extractor(language)
+│   ├── metadata_extractors.javascript.ts
+│   ├── metadata_extractors.typescript.ts
+│   ├── metadata_extractors.python.ts
+│   └── metadata_extractors.rust.ts
 │
 ├── symbol_factories/
-│   ├── types.ts
+│   ├── symbol_factories.types.ts
 │   ├── index.ts
-│   ├── javascript.ts
-│   ├── typescript.ts
-│   ├── python.ts
-│   └── rust.ts
+│   ├── symbol_factories.javascript.ts
+│   ├── symbol_factories.typescript.ts
+│   ├── symbol_factories.python.ts
+│   └── symbol_factories.rust.ts
 │
 └── queries/              # Unchanged
 ```
@@ -60,7 +61,7 @@ query_code_tree/
 Named handler pattern:
 
 ```typescript
-// capture_handlers/javascript.ts
+// capture_handlers/capture_handlers.javascript.ts
 export function handle_definition_class(
   capture: CaptureNode,
   builder: DefinitionBuilder,
@@ -83,16 +84,16 @@ export const JAVASCRIPT_HANDLERS: HandlerRegistry = {
 
 Create directories and type files:
 
-- `capture_handlers/types.ts` - HandlerFunction, HandlerRegistry
-- `metadata_extractors/types.ts` - MetadataExtractors (from metadata_types.ts)
-- `symbol_factories/types.ts` - Shared types
+- `capture_handlers/capture_handlers.types.ts` - HandlerFunction, HandlerRegistry
+- `metadata_extractors/metadata_extractors.types.ts` - MetadataExtractors (from metadata_types.ts)
+- `symbol_factories/symbol_factories.types.ts` - Shared types
 
 ### 11.161.1.2: Extract Named Handler Functions (JavaScript)
 
 - Extract handlers from `javascript_builder_config.ts`
-- Create named functions in `capture_handlers/javascript.ts`
+- Create named functions in `capture_handlers/capture_handlers.javascript.ts`
 - Create `JAVASCRIPT_HANDLERS` object
-- Move JavaScript symbol helpers to `symbol_factories/javascript.ts`
+- Move JavaScript symbol helpers to `symbol_factories/symbol_factories.javascript.ts`
 
 ### 11.161.1.3: Extract Named Handler Functions (TypeScript)
 
@@ -108,11 +109,11 @@ Same for Rust.
 
 ### 11.161.1.6: Migrate Metadata Extractors
 
-- `javascript_metadata.ts` → `metadata_extractors/javascript.ts`
-- `typescript_metadata.ts` → `metadata_extractors/typescript.ts`
-- `python_metadata.ts` → `metadata_extractors/python.ts`
-- `rust_metadata.ts` → `metadata_extractors/rust.ts`
-- `metadata_types.ts` → `metadata_extractors/types.ts`
+- `javascript_metadata.ts` → `metadata_extractors/metadata_extractors.javascript.ts`
+- `typescript_metadata.ts` → `metadata_extractors/metadata_extractors.typescript.ts`
+- `python_metadata.ts` → `metadata_extractors/metadata_extractors.python.ts`
+- `rust_metadata.ts` → `metadata_extractors/metadata_extractors.rust.ts`
+- `metadata_types.ts` → `metadata_extractors/metadata_extractors.types.ts`
 
 ### 11.161.1.7: Migrate Symbol Factories
 
@@ -138,8 +139,8 @@ Extract symbol creation helpers from `*_builder.ts`:
 
 ### Test Files
 
-- `javascript_builder.test.ts` → `capture_handlers/javascript.test.ts`
-- `javascript_metadata.test.ts` → `metadata_extractors/javascript.test.ts`
+- `javascript_builder.test.ts` → `capture_handlers/capture_handlers.javascript.test.ts`
+- `javascript_metadata.test.ts` → `metadata_extractors/metadata_extractors.javascript.test.ts`
 - Similar for other languages
 
 ## Success Criteria

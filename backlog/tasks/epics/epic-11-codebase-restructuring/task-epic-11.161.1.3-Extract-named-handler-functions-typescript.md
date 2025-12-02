@@ -25,11 +25,11 @@ export const TYPESCRIPT_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
 
 ## Target State
 
-`capture_handlers/typescript.ts`:
+`capture_handlers/capture_handlers.typescript.ts`:
 
 ```typescript
-import type { HandlerRegistry } from "./types";
-import { JAVASCRIPT_HANDLERS } from "./javascript";
+import type { HandlerRegistry } from "./capture_handlers.types";
+import { JAVASCRIPT_HANDLERS } from "./capture_handlers.javascript";
 
 // ============================================================================
 // TYPESCRIPT-SPECIFIC HANDLERS
@@ -112,10 +112,10 @@ export const TYPESCRIPT_HANDLERS: HandlerRegistry = {
 
 ## Implementation Steps
 
-1. Create `capture_handlers/typescript.ts`
+1. Create `capture_handlers/capture_handlers.typescript.ts`
 2. Extract each TypeScript-specific handler as named function
 3. Import `JAVASCRIPT_HANDLERS` and spread into `TYPESCRIPT_HANDLERS`
-4. Move TypeScript-specific helpers to `symbol_factories/typescript.ts`
+4. Move TypeScript-specific helpers to `symbol_factories/symbol_factories.typescript.ts`
 5. Update tests
 
 ## Dependencies
@@ -132,7 +132,7 @@ export const TYPESCRIPT_HANDLERS: HandlerRegistry = {
 
 ### Files Created
 
-- `capture_handlers/typescript.ts` - Contains 23 named handler functions and `TYPESCRIPT_HANDLERS` registry
+- `capture_handlers/capture_handlers.typescript.ts` - Contains 23 named handler functions and `TYPESCRIPT_HANDLERS` registry
 
 ### Files Modified
 

@@ -3,7 +3,7 @@
  *
  * This module provides backward compatibility by wrapping named handler functions
  * in the Map-based LanguageBuilderConfig format. New code should use
- * JAVASCRIPT_HANDLERS from capture_handlers/javascript.ts directly.
+ * JAVASCRIPT_HANDLERS from capture_handlers/capture_handlers.javascript.ts directly.
  */
 
 import type { LanguageBuilderConfig } from "./javascript_builder";
@@ -39,7 +39,7 @@ import {
   handle_import_reexport_as_default_alias,
   handle_import_reexport_namespace_source,
   handle_import_reexport_namespace_alias,
-} from "../capture_handlers/javascript";
+} from "../capture_handlers/capture_handlers.javascript";
 
 // Re-export the handler registry for direct access
 export { JAVASCRIPT_HANDLERS };

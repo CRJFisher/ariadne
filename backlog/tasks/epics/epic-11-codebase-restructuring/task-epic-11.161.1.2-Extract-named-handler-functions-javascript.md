@@ -33,13 +33,13 @@ const JAVASCRIPT_BASE_CONFIG: LanguageBuilderConfig = new Map([
 
 ## Target State
 
-`capture_handlers/javascript.ts` with named functions:
+`capture_handlers/capture_handlers.javascript.ts` with named functions:
 
 ```typescript
 import type { CaptureNode, ProcessingContext } from "../../semantic_index";
 import type { DefinitionBuilder } from "../../definitions/definition_builder";
-import type { HandlerRegistry } from "./types";
-import { create_class_id, create_method_id, ... } from "../symbol_factories/javascript";
+import type { HandlerRegistry } from "./capture_handlers.types";
+import { create_class_id, create_method_id, ... } from "../symbol_factories/symbol_factories.javascript";
 
 // ============================================================================
 // DOCUMENTATION HANDLERS
@@ -166,9 +166,9 @@ Update `semantic_index.ts` and tests to use new imports.
 
 ## Files to Create/Modify
 
-- Create: `capture_handlers/javascript.ts`
-- Create: `capture_handlers/javascript.test.ts`
-- Modify: `symbol_factories/javascript.ts` (add helpers)
+- Create: `capture_handlers/capture_handlers.javascript.ts`
+- Create: `capture_handlers/capture_handlers.javascript.test.ts`
+- Modify: `symbol_factories/symbol_factories.javascript.ts` (add helpers)
 - Modify: `capture_handlers/index.ts` (add JavaScript to factory)
 - Delete (later): `language_configs/javascript_builder_config.ts`
 
@@ -188,7 +188,7 @@ Update `semantic_index.ts` and tests to use new imports.
 
 ### Files Created
 
-- `capture_handlers/javascript.ts` - Contains 30 named handler functions and `JAVASCRIPT_HANDLERS` registry
+- `capture_handlers/capture_handlers.javascript.ts` - Contains 30 named handler functions and `JAVASCRIPT_HANDLERS` registry
 
 ### Files Modified
 
@@ -197,7 +197,7 @@ Update `semantic_index.ts` and tests to use new imports.
 
 ### Files Deleted
 
-- `javascript_reexport_config.ts` - Handlers moved to `capture_handlers/javascript.ts`
+- `javascript_reexport_config.ts` - Handlers moved to `capture_handlers/capture_handlers.javascript.ts`
 
 ### Handler Categories
 

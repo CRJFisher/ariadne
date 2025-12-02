@@ -23,10 +23,10 @@ export const PYTHON_BUILDER_CONFIG: LanguageBuilderConfig = new Map([
 
 ## Target State
 
-`capture_handlers/python.ts`:
+`capture_handlers/capture_handlers.python.ts`:
 
 ```typescript
-import type { HandlerRegistry } from "./types";
+import type { HandlerRegistry } from "./capture_handlers.types";
 
 // ============================================================================
 // PYTHON DEFINITION HANDLERS
@@ -130,10 +130,10 @@ export const PYTHON_HANDLERS: HandlerRegistry = {
 
 ## Implementation Steps
 
-1. Create `capture_handlers/python.ts`
+1. Create `capture_handlers/capture_handlers.python.ts`
 2. Extract each handler as named function
-3. Merge handlers from `python_imports.ts`
-4. Move helpers to `symbol_factories/python.ts`
+3. Create `capture_handlers/capture_handlers.python.imports.ts` for import handlers (split due to file size)
+4. Move helpers to `symbol_factories/symbol_factories.python.ts`
 5. Update tests
 
 ## Dependencies
@@ -150,8 +150,8 @@ export const PYTHON_HANDLERS: HandlerRegistry = {
 
 ### Files Created
 
-- `capture_handlers/python.ts` - Contains 36 named handler functions and `PYTHON_HANDLERS` registry (~29KB)
-- `capture_handlers/python_imports.ts` - Contains 8 import handler functions (~8KB, split due to 32KB file size limit)
+- `capture_handlers/capture_handlers.python.ts` - Contains 36 named handler functions and `PYTHON_HANDLERS` registry (~29KB)
+- `capture_handlers/capture_handlers.python.imports.ts` - Contains 8 import handler functions (~8KB, split due to 32KB file size limit)
 
 ### Files Modified
 
@@ -160,7 +160,7 @@ export const PYTHON_HANDLERS: HandlerRegistry = {
 
 ### Files Deleted
 
-- `language_configs/python_imports.ts` - Handlers consolidated into `capture_handlers/python_imports.ts`
+- `language_configs/python_imports.ts` - Handlers consolidated into `capture_handlers/capture_handlers.python.imports.ts`
 
 ### Handler Categories
 

@@ -3,7 +3,7 @@
  *
  * This module provides backward compatibility by wrapping named handler functions
  * in the Map-based LanguageBuilderConfig format. New code should use
- * PYTHON_HANDLERS from capture_handlers/python.ts directly.
+ * PYTHON_HANDLERS from capture_handlers/capture_handlers.python.ts directly.
  */
 
 import type { LanguageBuilderConfig } from "./python_builder";
@@ -53,7 +53,7 @@ import {
   handle_decorator_property,
   handle_decorator_method,
   handle_definition_type_alias,
-} from "../capture_handlers/python";
+} from "../capture_handlers/capture_handlers.python";
 
 // Re-export the handler registry for direct access
 export { PYTHON_HANDLERS };

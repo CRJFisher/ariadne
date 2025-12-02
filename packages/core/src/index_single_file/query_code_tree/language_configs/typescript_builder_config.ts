@@ -3,7 +3,7 @@
  *
  * This module provides backward compatibility by wrapping named handler functions
  * in the Map-based LanguageBuilderConfig format. New code should use
- * TYPESCRIPT_HANDLERS from capture_handlers/typescript.ts directly.
+ * TYPESCRIPT_HANDLERS from capture_handlers/capture_handlers.typescript.ts directly.
  */
 
 import type { LanguageBuilderConfig } from "./javascript_builder";
@@ -32,7 +32,7 @@ import {
   handle_definition_parameter_optional,
   handle_definition_parameter_rest,
   handle_definition_field_param_property,
-} from "../capture_handlers/typescript";
+} from "../capture_handlers/capture_handlers.typescript";
 import { JAVASCRIPT_BUILDER_CONFIG } from "./javascript_builder_config";
 
 // Re-export the handler registry for direct access

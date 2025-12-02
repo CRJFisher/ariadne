@@ -30,13 +30,35 @@ Update `backlog/docs/file-naming-conventions.md` with:
    | `{module}.{lang}.test.ts` | Language tests | `semantic_index.typescript.test.ts` |
    | `{module}.integration.test.ts` | Integration | `project.integration.test.ts` |
    | `{lang}_{module}.ts` | Distinct impl (in designated dirs) | `extractors/python_scope_boundary_extractor.ts` |
+   | `{dir}.{module}.ts` | Module in semantic role dir | `capture_handlers.javascript.ts` |
+   | `{dir}.{module}.{submodule}.ts` | Split module | `capture_handlers.python.imports.ts` |
 
-3. **Exception Directories**
+3. **Semantic Role Directory Naming Convention**
+
+   In semantic role directories (`capture_handlers/`, `metadata_extractors/`, `symbol_factories/`), files (except `index.ts`) use directory prefix naming:
+
+   ```
+   capture_handlers/
+   ├── index.ts                              # No prefix (barrel file)
+   ├── capture_handlers.types.ts             # {dir}.types.ts
+   ├── capture_handlers.javascript.ts        # {dir}.{language}.ts
+   ├── capture_handlers.typescript.ts
+   ├── capture_handlers.python.ts
+   ├── capture_handlers.python.imports.ts    # {dir}.{language}.{submodule}.ts (split)
+   └── capture_handlers.rust.ts
+   ```
+
+   This pattern:
+   - Makes imports self-documenting: `from "./capture_handlers.javascript"`
+   - Disambiguates files when viewing multiple similar files
+   - Supports submodule splits: `capture_handlers.python.imports.ts`
+
+4. **Exception Directories**
 
    - `scopes/extractors/` - Uses prefix pattern for distinct implementations
    - `.claude/hooks/` - Uses `.cjs` extension for CommonJS
 
-4. **Root Directory Whitelist**
+5. **Root Directory Whitelist**
 
    ```
    package.json, package-lock.json, tsconfig.json, eslint.config.js
@@ -44,7 +66,7 @@ Update `backlog/docs/file-naming-conventions.md` with:
    README.md, CONTRIBUTING.md, CLAUDE.md, AGENTS.md, .cursorrules
    ```
 
-5. **Prohibited Patterns**
+6. **Prohibited Patterns**
 
    ```
    debug_*.ts, test_*.ts, verify_*.ts
@@ -52,7 +74,7 @@ Update `backlog/docs/file-naming-conventions.md` with:
    *_report.md, *_analysis.md, *.log
    ```
 
-6. **Hook Enforcement**
+7. **Hook Enforcement**
 
    - PreToolUse: Blocks prohibited file creation
    - Stop: Audits for violations before task completion
@@ -72,6 +94,7 @@ See `backlog/docs/file-naming-conventions.md` for complete documentation.
 - Test files: `{module}.test.ts` or `{module}.{language}.test.ts`
 - Language variants: `{module}.{language}.ts` (with base module)
 - Distinct implementations: `{language}_{module}.ts` (in designated directories)
+- Semantic role dirs: `{dir}.{module}.ts` (e.g., `capture_handlers.javascript.ts`)
 
 ### Root Directory
 
