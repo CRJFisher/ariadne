@@ -4,16 +4,51 @@ This document defines the file and folder naming conventions for the Ariadne cod
 
 ## Standard Naming Patterns
 
+### Folder-Module Naming Rule
+
+**The folder name defines the main module name.** Every directory containing implementation code has a main module file that matches the folder name.
+
+```text
+{folder}/
+  {folder}.ts                              # Main implementation (required)
+  {folder}.test.ts                         # Unit tests for main module
+  {folder}.{language}.ts                   # Language-specific variant
+  {folder}.{language}.test.ts              # Language-specific tests
+  {folder}.{language}.{submodule}.ts       # Language-specific sub-split
+  {folder}.integration.test.ts             # Integration tests
+  {folder}.{language}.integration.test.ts  # Language-specific integration tests
+  index.ts                                 # Barrel file for re-exports (optional)
+  helper_module.ts                         # Helper modules can have different names
+```
+
+**Examples:**
+
+```text
+project/
+  project.ts                               # Main implementation ✓
+  project.test.ts                          # Unit tests
+  project.typescript.integration.test.ts   # Language-specific integration test
+  import_graph.ts                          # Helper module
+
+capture_handlers/
+  capture_handlers.typescript.ts           # Language-specific variant
+  capture_handlers.rust.ts                 # Language-specific variant
+  capture_handlers.rust.methods.ts         # Language + sub-split
+  capture_handlers.types.ts                # Sub-module for types
+```
+
 ### Source Files
 
 | Category | Pattern | Examples |
 |----------|---------|----------|
-| TypeScript source | `snake_case.ts` | `symbol.ts`, `trace_call_graph.ts`, `import_resolver.ts` |
-| Test files | `{module_name}.test.ts` | `symbol.test.ts`, `type_registry.test.ts` |
-| Integration tests | `{module_name}.integration.test.ts` | `project.integration.test.ts` |
-| Language-specific tests | `{module_name}.{language}.test.ts` | `semantic_index.typescript.test.ts` |
-| Language integration tests | `{module_name}.{language}.integration.test.ts` | `project.python.integration.test.ts` |
-| Benchmark tests | `{module_name}.bench.test.ts` | `project.bench.test.ts` |
+| Main module | `{folder}.ts` | `project.ts` in `project/`, `trace_call_graph.ts` in `trace_call_graph/` |
+| Test files | `{folder}.test.ts` | `project.test.ts`, `trace_call_graph.test.ts` |
+| Integration tests | `{folder}.integration.test.ts` | `project.integration.test.ts` |
+| Language-specific | `{folder}.{language}.ts` | `capture_handlers.typescript.ts` |
+| Language-specific tests | `{folder}.{language}.test.ts` | `project.typescript.test.ts` |
+| Language integration tests | `{folder}.{language}.integration.test.ts` | `project.python.integration.test.ts` |
+| Language + sub-split | `{folder}.{language}.{submodule}.ts` | `capture_handlers.rust.methods.ts` |
+| Benchmark tests | `{folder}.bench.test.ts` | `project.bench.test.ts` |
 
 ### Directories
 
@@ -108,6 +143,21 @@ node_modules/         # Dependencies (gitignored)
 ```
 packages/core/src/index_single_file/query_code_tree/*.scm   # Query files
 ```
+
+### Language-Specific Extractors
+
+Directories containing distinct language-specific implementations use prefix naming (`{language}_{module}.ts`) instead of suffix naming (`{module}.{language}.ts`):
+
+```
+packages/core/src/index_single_file/scopes/extractors/
+  python_scope_boundary_extractor.ts       # Python extractor
+  typescript_scope_boundary_extractor.ts   # TypeScript extractor
+  javascript_scope_boundary_extractor.ts   # JavaScript extractor
+  rust_scope_boundary_extractor.ts         # Rust extractor
+  javascript_typescript_scope_boundary_extractor.ts  # Shared base
+```
+
+**Rationale**: These are distinct implementations sharing a common interface, not variants of a base module. The prefix pattern groups them by language while the directory name (`extractors/`) indicates their role.
 
 ## Current Violations (To Clean Up)
 
