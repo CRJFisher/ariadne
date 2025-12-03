@@ -9,9 +9,6 @@
  *   import { create_interface_id } from "./symbol_factories/symbol_factories.typescript";
  *   import { create_enum_id } from "./symbol_factories/symbol_factories.python";
  *   import { create_struct_id } from "./symbol_factories/symbol_factories.rust";
- *
- * Or use the language-specific builder modules which re-export these:
- *   import { create_class_id } from "./language_configs/javascript_builder";
  */
 
 // ============================================================================
