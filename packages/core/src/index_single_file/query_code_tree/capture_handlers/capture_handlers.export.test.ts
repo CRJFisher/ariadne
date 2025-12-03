@@ -6,11 +6,11 @@ import { describe, it, expect } from "vitest";
 import Parser from "tree-sitter";
 import JavaScript from "tree-sitter-javascript";
 import TypeScript from "tree-sitter-typescript";
-import { JAVASCRIPT_BUILDER_CONFIG } from "./javascript_builder_config";
-import { TYPESCRIPT_BUILDER_CONFIG } from "./typescript_builder_config";
+import { JAVASCRIPT_HANDLERS } from "./capture_handlers.javascript";
+import { TYPESCRIPT_HANDLERS } from "./capture_handlers.typescript";
 import { DefinitionBuilder } from "../../definitions";
 import type { ProcessingContext, CaptureNode } from "../../semantic_index";
-import type { FilePath, SymbolName, ScopeId, Location, LexicalScope } from "@ariadnejs/types";
+import type { FilePath, SymbolName, ScopeId, LexicalScope } from "@ariadnejs/types";
 
 const js_parser = new Parser();
 js_parser.setLanguage(JavaScript);
@@ -76,8 +76,8 @@ describe("Export Detection - Comprehensive Verification", () => {
       const context = create_test_context();
       const builder = new DefinitionBuilder(context);
 
-      const config = JAVASCRIPT_BUILDER_CONFIG.get("definition.function");
-      config?.process(capture, builder, context);
+      const handler = JAVASCRIPT_HANDLERS["definition.function"];
+      handler?.(capture, builder, context);
 
       const result = builder.build();
       const functions = Array.from(result.functions.values());
@@ -92,8 +92,8 @@ describe("Export Detection - Comprehensive Verification", () => {
       const context = create_test_context();
       const builder = new DefinitionBuilder(context);
 
-      const config = JAVASCRIPT_BUILDER_CONFIG.get("definition.class");
-      config?.process(capture, builder, context);
+      const handler = JAVASCRIPT_HANDLERS["definition.class"];
+      handler?.(capture, builder, context);
 
       const result = builder.build();
       const classes = Array.from(result.classes.values());
@@ -108,8 +108,8 @@ describe("Export Detection - Comprehensive Verification", () => {
       const context = create_test_context();
       const builder = new DefinitionBuilder(context);
 
-      const config = JAVASCRIPT_BUILDER_CONFIG.get("definition.variable");
-      config?.process(capture, builder, context);
+      const handler = JAVASCRIPT_HANDLERS["definition.variable"];
+      handler?.(capture, builder, context);
 
       const result = builder.build();
       const variables = Array.from(result.variables.values());
@@ -124,8 +124,8 @@ describe("Export Detection - Comprehensive Verification", () => {
       const context = create_test_context();
       const builder = new DefinitionBuilder(context);
 
-      const config = JAVASCRIPT_BUILDER_CONFIG.get("definition.function");
-      config?.process(capture, builder, context);
+      const handler = JAVASCRIPT_HANDLERS["definition.function"];
+      handler?.(capture, builder, context);
 
       const result = builder.build();
       const functions = Array.from(result.functions.values());
@@ -143,8 +143,8 @@ describe("Export Detection - Comprehensive Verification", () => {
       const context = create_test_context();
       const builder = new DefinitionBuilder(context);
 
-      const config = TYPESCRIPT_BUILDER_CONFIG.get("definition.interface");
-      config?.process(capture, builder, context);
+      const handler = TYPESCRIPT_HANDLERS["definition.interface"];
+      handler?.(capture, builder, context);
 
       const result = builder.build();
       const interfaces = Array.from(result.interfaces.values());
@@ -159,8 +159,8 @@ describe("Export Detection - Comprehensive Verification", () => {
       const context = create_test_context();
       const builder = new DefinitionBuilder(context);
 
-      const config = TYPESCRIPT_BUILDER_CONFIG.get("definition.type_alias");
-      config?.process(capture, builder, context);
+      const handler = TYPESCRIPT_HANDLERS["definition.type_alias"];
+      handler?.(capture, builder, context);
 
       const result = builder.build();
       const type_aliases = Array.from(result.types.values());
@@ -175,8 +175,8 @@ describe("Export Detection - Comprehensive Verification", () => {
       const context = create_test_context();
       const builder = new DefinitionBuilder(context);
 
-      const config = TYPESCRIPT_BUILDER_CONFIG.get("definition.enum");
-      config?.process(capture, builder, context);
+      const handler = TYPESCRIPT_HANDLERS["definition.enum"];
+      handler?.(capture, builder, context);
 
       const result = builder.build();
       const enums = Array.from(result.enums.values());
@@ -191,8 +191,8 @@ describe("Export Detection - Comprehensive Verification", () => {
       const context = create_test_context();
       const builder = new DefinitionBuilder(context);
 
-      const config = TYPESCRIPT_BUILDER_CONFIG.get("definition.namespace");
-      config?.process(capture, builder, context);
+      const handler = TYPESCRIPT_HANDLERS["definition.namespace"];
+      handler?.(capture, builder, context);
 
       const result = builder.build();
       const namespaces = Array.from(result.namespaces.values());
@@ -207,8 +207,8 @@ describe("Export Detection - Comprehensive Verification", () => {
       const context = create_test_context();
       const builder = new DefinitionBuilder(context);
 
-      const config = TYPESCRIPT_BUILDER_CONFIG.get("definition.class");
-      config?.process(capture, builder, context);
+      const handler = TYPESCRIPT_HANDLERS["definition.class"];
+      handler?.(capture, builder, context);
 
       const result = builder.build();
       const classes = Array.from(result.classes.values());
@@ -218,8 +218,8 @@ describe("Export Detection - Comprehensive Verification", () => {
     });
   });
 
-  describe("Backward Compatibility", () => {
-    it("should preserve availability field for all definition types", () => {
+  describe("Handler Registry", () => {
+    it("should preserve is_exported field for all definition types", () => {
       const test_cases = [
         { code: "export function foo() {}", type: "definition.function", node_type: "identifier" },
         { code: "export class Bar {}", type: "definition.class", node_type: "identifier" },
@@ -231,8 +231,8 @@ describe("Export Detection - Comprehensive Verification", () => {
         const context = create_test_context();
         const builder = new DefinitionBuilder(context);
 
-        const config = JAVASCRIPT_BUILDER_CONFIG.get(test_case.type);
-        config?.process(capture, builder, context);
+        const handler = JAVASCRIPT_HANDLERS[test_case.type];
+        handler?.(capture, builder, context);
 
         const result = builder.build();
         const all_defs = [

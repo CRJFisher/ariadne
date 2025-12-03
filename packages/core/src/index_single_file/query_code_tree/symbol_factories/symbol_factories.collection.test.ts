@@ -3,8 +3,8 @@ import { describe, it, expect, beforeAll } from "vitest";
 import Parser from "tree-sitter";
 import Python from "tree-sitter-python";
 import Rust from "tree-sitter-rust";
-import { detect_function_collection as detect_python_collection, extract_derived_from as extract_python_derived } from "../symbol_factories/symbol_factories.python";
-import { detect_function_collection as detect_rust_collection, extract_derived_from as extract_rust_derived } from "../symbol_factories/symbol_factories.rust";
+import { detect_function_collection as detect_python_collection, extract_derived_from as extract_python_derived } from "./symbol_factories.python";
+import { detect_function_collection as detect_rust_collection, extract_derived_from as extract_rust_derived } from "./symbol_factories.rust";
 import { node_to_location } from "../../node_utils";
 
 describe("Collection Resolution Tests", () => {

@@ -6,7 +6,7 @@ import { describe, it, expect, beforeAll } from "vitest";
 import Parser from "tree-sitter";
 import JavaScript from "tree-sitter-javascript";
 import type { SyntaxNode } from "tree-sitter";
-import { JAVASCRIPT_BUILDER_CONFIG } from "./javascript_builder_config";
+import { JAVASCRIPT_HANDLERS } from "./capture_handlers.javascript";
 import { analyze_export_statement, detect_callback_context } from "../symbol_factories/symbol_factories.javascript";
 import { DefinitionBuilder } from "../../definitions/definition_builder";
 import { build_semantic_index } from "../../semantic_index";
@@ -130,11 +130,11 @@ describe("JavaScript Builder Configuration", () => {
     return null;
   }
 
-  describe("JAVASCRIPT_BUILDER_CONFIG", () => {
+  describe("JAVASCRIPT_HANDLERS", () => {
     it("should export a valid LanguageBuilderConfig", () => {
-      expect(JAVASCRIPT_BUILDER_CONFIG).toBeDefined();
-      expect(JAVASCRIPT_BUILDER_CONFIG).toBeInstanceOf(Map);
-      expect(JAVASCRIPT_BUILDER_CONFIG.size).toBeGreaterThan(0);
+      expect(JAVASCRIPT_HANDLERS).toBeDefined();
+      expect(JAVASCRIPT_HANDLERS).toBeDefined();
+      expect(Object.keys(JAVASCRIPT_HANDLERS).length).toBeGreaterThan(0);
     });
 
     it("should contain definition capture mappings with process functions", () => {
@@ -152,10 +152,10 @@ describe("JavaScript Builder Configuration", () => {
       ];
 
       for (const mapping of definition_mappings) {
-        expect(JAVASCRIPT_BUILDER_CONFIG.has(mapping)).toBe(true);
-        const config = JAVASCRIPT_BUILDER_CONFIG.get(mapping);
-        expect(config).toBeDefined();
-        expect(config?.process).toBeInstanceOf(Function);
+        expect(mapping in JAVASCRIPT_HANDLERS).toBe(true);
+        const handler = JAVASCRIPT_HANDLERS[mapping];
+        expect(handler).toBeDefined();
+        expect(handler).toBeInstanceOf(Function);
       }
     });
 
@@ -168,10 +168,10 @@ describe("JavaScript Builder Configuration", () => {
       ];
 
       for (const mapping of import_mappings) {
-        expect(JAVASCRIPT_BUILDER_CONFIG.has(mapping)).toBe(true);
-        const config = JAVASCRIPT_BUILDER_CONFIG.get(mapping);
-        expect(config).toBeDefined();
-        expect(config?.process).toBeInstanceOf(Function);
+        expect(mapping in JAVASCRIPT_HANDLERS).toBe(true);
+        const handler = JAVASCRIPT_HANDLERS[mapping];
+        expect(handler).toBeDefined();
+        expect(handler).toBeInstanceOf(Function);
       }
     });
 
@@ -199,9 +199,9 @@ describe("JavaScript Builder Configuration", () => {
           location: node_to_location(name_node, TEST_FILE_PATH),
         };
 
-        const processor = JAVASCRIPT_BUILDER_CONFIG.get("definition.class");
+        const processor = JAVASCRIPT_HANDLERS["definition.class"];
         expect(processor).toBeDefined();
-        processor?.process(capture, builder, context);
+        processor?.(capture, builder, context);
 
         const result = builder.build();
         const classes = Array.from(result.classes.values());
@@ -232,9 +232,9 @@ describe("JavaScript Builder Configuration", () => {
           location: node_to_location(name_node, TEST_FILE_PATH),
         };
 
-        const processor = JAVASCRIPT_BUILDER_CONFIG.get("definition.function");
+        const processor = JAVASCRIPT_HANDLERS["definition.function"];
         expect(processor).toBeDefined();
-        processor?.process(capture, builder, context);
+        processor?.(capture, builder, context);
 
         const result = builder.build();
         const functions = Array.from(result.functions.values());
@@ -265,9 +265,9 @@ describe("JavaScript Builder Configuration", () => {
           location: node_to_location(name_node, TEST_FILE_PATH),
         };
 
-        const processor = JAVASCRIPT_BUILDER_CONFIG.get("definition.variable");
+        const processor = JAVASCRIPT_HANDLERS["definition.variable"];
         expect(processor).toBeDefined();
-        processor?.process(capture, builder, context);
+        processor?.(capture, builder, context);
 
         const result = builder.build();
         const variables = Array.from(result.variables.values());
@@ -305,8 +305,8 @@ describe("JavaScript Builder Configuration", () => {
         };
 
         const class_processor =
-          JAVASCRIPT_BUILDER_CONFIG.get("definition.class");
-        class_processor?.process(class_capture, builder, context);
+          JAVASCRIPT_HANDLERS["definition.class"];
+        class_processor?.(class_capture, builder, context);
 
         // Then add the method
         const method_node = find_node_by_type(ast.rootNode, "method_definition");
@@ -326,8 +326,8 @@ describe("JavaScript Builder Configuration", () => {
         };
 
         const method_processor =
-          JAVASCRIPT_BUILDER_CONFIG.get("definition.method");
-        method_processor?.process(method_capture, builder, context);
+          JAVASCRIPT_HANDLERS["definition.method"];
+        method_processor?.(method_capture, builder, context);
 
         const result = builder.build();
         const classes = Array.from(result.classes.values());
@@ -361,9 +361,9 @@ describe("JavaScript Builder Configuration", () => {
           location: node_to_location(name_node, TEST_FILE_PATH),
         };
 
-        const processor = JAVASCRIPT_BUILDER_CONFIG.get("definition.import.default");
+        const processor = JAVASCRIPT_HANDLERS["definition.import.default"];
         expect(processor).toBeDefined();
-        processor?.process(capture, builder, context);
+        processor?.(capture, builder, context);
 
         const result = builder.build();
         const imports = Array.from(result.imports.values());
@@ -398,9 +398,9 @@ describe("JavaScript Builder Configuration", () => {
           location: node_to_location(name_node, TEST_FILE_PATH),
         };
 
-        const processor = JAVASCRIPT_BUILDER_CONFIG.get("definition.arrow");
+        const processor = JAVASCRIPT_HANDLERS["definition.arrow"];
         expect(processor).toBeDefined();
-        processor?.process(capture, builder, context);
+        processor?.(capture, builder, context);
 
         const result = builder.build();
         const functions = Array.from(result.functions.values());
@@ -438,8 +438,8 @@ describe("JavaScript Builder Configuration", () => {
         };
 
         const class_processor =
-          JAVASCRIPT_BUILDER_CONFIG.get("definition.class");
-        class_processor?.process(class_capture, builder, context);
+          JAVASCRIPT_HANDLERS["definition.class"];
+        class_processor?.(class_capture, builder, context);
 
         // Then add the property
         const field_node = find_node_by_type(ast.rootNode, "field_definition");
@@ -458,8 +458,8 @@ describe("JavaScript Builder Configuration", () => {
           location: node_to_location(prop_node, TEST_FILE_PATH),
         };
 
-        const prop_processor = JAVASCRIPT_BUILDER_CONFIG.get("definition.field");
-        prop_processor?.process(prop_capture, builder, context);
+        const prop_processor = JAVASCRIPT_HANDLERS["definition.field"];
+        prop_processor?.(prop_capture, builder, context);
 
         const result = builder.build();
         const classes = Array.from(result.classes.values());
@@ -495,10 +495,10 @@ describe("JavaScript Builder Configuration", () => {
           location: node_to_location(func_name_node, TEST_FILE_PATH),
         };
 
-        const func_processor = JAVASCRIPT_BUILDER_CONFIG.get(
+        const func_processor = JAVASCRIPT_HANDLERS[
           "definition.function"
-        );
-        func_processor?.process(func_capture, builder, context);
+        ];
+        func_processor?.(func_capture, builder, context);
 
         // Then add the parameters
         const params_node = func_node?.childForFieldName("parameters");
@@ -518,8 +518,8 @@ describe("JavaScript Builder Configuration", () => {
             };
 
             const param_processor =
-              JAVASCRIPT_BUILDER_CONFIG.get("definition.param");
-            param_processor?.process(param_capture, builder, context);
+              JAVASCRIPT_HANDLERS["definition.param"];
+            param_processor?.(param_capture, builder, context);
           }
         }
 
@@ -569,8 +569,8 @@ describe("JavaScript Builder Configuration", () => {
             },
           };
           const class_processor =
-            JAVASCRIPT_BUILDER_CONFIG.get("definition.class");
-          class_processor?.process(class_capture, builder, context);
+            JAVASCRIPT_HANDLERS["definition.class"];
+          class_processor?.(class_capture, builder, context);
         }
 
         const result = builder.build();
@@ -868,9 +868,9 @@ describe("JavaScript Builder Configuration", () => {
         const context = create_test_context();
         const builder = new DefinitionBuilder(context);
 
-        const config = JAVASCRIPT_BUILDER_CONFIG.get("definition.function");
-        if (config) {
-          config.process(capture, builder, context);
+        const handler = JAVASCRIPT_HANDLERS["definition.function"];
+        if (handler) {
+          handler(capture, builder, context);
         }
 
         const result = builder.build();
@@ -889,9 +889,9 @@ export { internal as external };
         const context = create_test_context();
         const builder = new DefinitionBuilder(context);
 
-        const config = JAVASCRIPT_BUILDER_CONFIG.get("definition.function");
-        if (config) {
-          config.process(capture, builder, context);
+        const handler = JAVASCRIPT_HANDLERS["definition.function"];
+        if (handler) {
+          handler(capture, builder, context);
         }
 
         const result = builder.build();
@@ -908,9 +908,9 @@ export { internal as external };
         const context = create_test_context();
         const builder = new DefinitionBuilder(context);
 
-        const config = JAVASCRIPT_BUILDER_CONFIG.get("definition.function");
-        if (config) {
-          config.process(capture, builder, context);
+        const handler = JAVASCRIPT_HANDLERS["definition.function"];
+        if (handler) {
+          handler(capture, builder, context);
         }
 
         const result = builder.build();
@@ -941,9 +941,9 @@ export { internal as external };
         const context = create_test_context();
         const builder = new DefinitionBuilder(context);
 
-        const config = JAVASCRIPT_BUILDER_CONFIG.get("definition.function");
-        if (config) {
-          config.process(capture, builder, context);
+        const handler = JAVASCRIPT_HANDLERS["definition.function"];
+        if (handler) {
+          handler(capture, builder, context);
         }
 
         const result = builder.build();
@@ -962,9 +962,9 @@ export { foo };
         const context = create_test_context();
         const builder = new DefinitionBuilder(context);
 
-        const config = JAVASCRIPT_BUILDER_CONFIG.get("definition.function");
-        if (config) {
-          config.process(capture, builder, context);
+        const handler = JAVASCRIPT_HANDLERS["definition.function"];
+        if (handler) {
+          handler(capture, builder, context);
         }
 
         const result = builder.build();
@@ -981,9 +981,9 @@ export { foo };
         const context = create_test_context();
         const builder = new DefinitionBuilder(context);
 
-        const config = JAVASCRIPT_BUILDER_CONFIG.get("definition.class");
-        if (config) {
-          config.process(capture, builder, context);
+        const handler = JAVASCRIPT_HANDLERS["definition.class"];
+        if (handler) {
+          handler(capture, builder, context);
         }
 
         const result = builder.build();
@@ -998,9 +998,9 @@ export { foo };
         const context = create_test_context();
         const builder = new DefinitionBuilder(context);
 
-        const config = JAVASCRIPT_BUILDER_CONFIG.get("definition.variable");
-        if (config) {
-          config.process(capture, builder, context);
+        const handler = JAVASCRIPT_HANDLERS["definition.variable"];
+        if (handler) {
+          handler(capture, builder, context);
         }
 
         const result = builder.build();
@@ -1022,8 +1022,8 @@ export const CONFIG = {
         const builder = new DefinitionBuilder(context);
 
         // Process all variable definitions
-        const config = JAVASCRIPT_BUILDER_CONFIG.get("definition.variable");
-        if (!config) {
+        const handler = JAVASCRIPT_HANDLERS["definition.variable"];
+        if (!handler) {
           throw new Error("definition.variable config not found");
         }
 
@@ -1052,7 +1052,7 @@ export const CONFIG = {
             location: node_to_location(cap.node, code),
             type: "definition.variable",
           };
-          config.process(capture, builder, context);
+          handler(capture, builder, context);
         }
 
         const result = builder.build();
@@ -1087,8 +1087,8 @@ export const HANDLERS = [
         const builder = new DefinitionBuilder(context);
 
         // Process all variable definitions
-        const config = JAVASCRIPT_BUILDER_CONFIG.get("definition.variable");
-        if (!config) {
+        const handler = JAVASCRIPT_HANDLERS["definition.variable"];
+        if (!handler) {
           throw new Error("definition.variable config not found");
         }
 
@@ -1116,7 +1116,7 @@ export const HANDLERS = [
             location: node_to_location(cap.node, code),
             type: "definition.variable",
           };
-          config.process(capture, builder, context);
+          handler(capture, builder, context);
         }
 
         const result = builder.build();
@@ -1153,8 +1153,8 @@ export const NESTED = {
         const builder = new DefinitionBuilder(context);
 
         // Process all variable definitions
-        const config = JAVASCRIPT_BUILDER_CONFIG.get("definition.variable");
-        if (!config) {
+        const handler = JAVASCRIPT_HANDLERS["definition.variable"];
+        if (!handler) {
           throw new Error("definition.variable config not found");
         }
 
@@ -1182,7 +1182,7 @@ export const NESTED = {
             location: node_to_location(cap.node, code),
             type: "definition.variable",
           };
-          config.process(capture, builder, context);
+          handler(capture, builder, context);
         }
 
         const result = builder.build();
@@ -1215,10 +1215,10 @@ export const NESTED = {
         ];
 
         for (const mapping of documentation_mappings) {
-          expect(JAVASCRIPT_BUILDER_CONFIG.has(mapping)).toBe(true);
-          const config = JAVASCRIPT_BUILDER_CONFIG.get(mapping);
-          expect(config).toBeDefined();
-          expect(config?.process).toBeInstanceOf(Function);
+          expect(mapping in JAVASCRIPT_HANDLERS).toBe(true);
+          const handler = JAVASCRIPT_HANDLERS[mapping];
+          expect(handler).toBeDefined();
+          expect(handler).toBeInstanceOf(Function);
         }
       });
 
@@ -1251,10 +1251,10 @@ export const NESTED = {
             location: node_to_location(comment_node, TEST_FILE_PATH),
           };
 
-          const doc_processor = JAVASCRIPT_BUILDER_CONFIG.get(
+          const doc_processor = JAVASCRIPT_HANDLERS[
             "definition.function.documentation"
-          );
-          doc_processor?.process(doc_capture, builder, context);
+          ];
+          doc_processor?.(doc_capture, builder, context);
         }
 
         // Find and process the function
@@ -1271,10 +1271,10 @@ export const NESTED = {
             location: node_to_location(name_node, TEST_FILE_PATH),
           };
 
-          const func_processor = JAVASCRIPT_BUILDER_CONFIG.get(
+          const func_processor = JAVASCRIPT_HANDLERS[
             "definition.function"
-          );
-          func_processor?.process(func_capture, builder, context);
+          ];
+          func_processor?.(func_capture, builder, context);
         }
 
         const result = builder.build();
@@ -1315,10 +1315,10 @@ export const NESTED = {
             location: node_to_location(comment_node, TEST_FILE_PATH),
           };
 
-          const doc_processor = JAVASCRIPT_BUILDER_CONFIG.get(
+          const doc_processor = JAVASCRIPT_HANDLERS[
             "definition.class.documentation"
-          );
-          doc_processor?.process(doc_capture, builder, context);
+          ];
+          doc_processor?.(doc_capture, builder, context);
         }
 
         // Process the class
@@ -1336,8 +1336,8 @@ export const NESTED = {
           };
 
           const class_processor =
-            JAVASCRIPT_BUILDER_CONFIG.get("definition.class");
-          class_processor?.process(class_capture, builder, context);
+            JAVASCRIPT_HANDLERS["definition.class"];
+          class_processor?.(class_capture, builder, context);
         }
 
         const result = builder.build();
@@ -1382,8 +1382,8 @@ export const NESTED = {
           };
 
           const class_processor =
-            JAVASCRIPT_BUILDER_CONFIG.get("definition.class");
-          class_processor?.process(class_capture, builder, context);
+            JAVASCRIPT_HANDLERS["definition.class"];
+          class_processor?.(class_capture, builder, context);
         }
 
         // Process the JSDoc comment
@@ -1398,10 +1398,10 @@ export const NESTED = {
             location: node_to_location(comment_node, TEST_FILE_PATH),
           };
 
-          const doc_processor = JAVASCRIPT_BUILDER_CONFIG.get(
+          const doc_processor = JAVASCRIPT_HANDLERS[
             "definition.method.documentation"
-          );
-          doc_processor?.process(doc_capture, builder, context);
+          ];
+          doc_processor?.(doc_capture, builder, context);
         }
 
         // Process the method
@@ -1419,8 +1419,8 @@ export const NESTED = {
           };
 
           const method_processor =
-            JAVASCRIPT_BUILDER_CONFIG.get("definition.method");
-          method_processor?.process(method_capture, builder, context);
+            JAVASCRIPT_HANDLERS["definition.method"];
+          method_processor?.(method_capture, builder, context);
         }
 
         const result = builder.build();
@@ -1458,10 +1458,10 @@ export const NESTED = {
             location: node_to_location(comment_node, TEST_FILE_PATH),
           };
 
-          const doc_processor = JAVASCRIPT_BUILDER_CONFIG.get(
+          const doc_processor = JAVASCRIPT_HANDLERS[
             "definition.variable.documentation"
-          );
-          doc_processor?.process(doc_capture, builder, context);
+          ];
+          doc_processor?.(doc_capture, builder, context);
         }
 
         // Process the variable
@@ -1478,10 +1478,10 @@ export const NESTED = {
             location: node_to_location(name_node, TEST_FILE_PATH),
           };
 
-          const var_processor = JAVASCRIPT_BUILDER_CONFIG.get(
+          const var_processor = JAVASCRIPT_HANDLERS[
             "definition.variable"
-          );
-          var_processor?.process(var_capture, builder, context);
+          ];
+          var_processor?.(var_capture, builder, context);
         }
 
         const result = builder.build();
@@ -1512,10 +1512,10 @@ export const NESTED = {
             location: node_to_location(name_node, TEST_FILE_PATH),
           };
 
-          const func_processor = JAVASCRIPT_BUILDER_CONFIG.get(
+          const func_processor = JAVASCRIPT_HANDLERS[
             "definition.function"
-          );
-          func_processor?.process(func_capture, builder, context);
+          ];
+          func_processor?.(func_capture, builder, context);
         }
 
         const result = builder.build();
@@ -1574,10 +1574,10 @@ export const NESTED = {
             },
           };
 
-          const doc_processor = JAVASCRIPT_BUILDER_CONFIG.get(
+          const doc_processor = JAVASCRIPT_HANDLERS[
             "definition.function.documentation"
-          );
-          doc_processor?.process(doc_capture1, builder, context);
+          ];
+          doc_processor?.(doc_capture1, builder, context);
         }
 
         if (functions[0]) {
@@ -1597,10 +1597,10 @@ export const NESTED = {
             },
           };
 
-          const func_processor = JAVASCRIPT_BUILDER_CONFIG.get(
+          const func_processor = JAVASCRIPT_HANDLERS[
             "definition.function"
-          );
-          func_processor?.process(func_capture1, builder, context);
+          ];
+          func_processor?.(func_capture1, builder, context);
         }
 
         // Process second comment and function
@@ -1620,10 +1620,10 @@ export const NESTED = {
             },
           };
 
-          const doc_processor = JAVASCRIPT_BUILDER_CONFIG.get(
+          const doc_processor = JAVASCRIPT_HANDLERS[
             "definition.function.documentation"
-          );
-          doc_processor?.process(doc_capture2, builder, context);
+          ];
+          doc_processor?.(doc_capture2, builder, context);
         }
 
         if (functions[1]) {
@@ -1643,10 +1643,10 @@ export const NESTED = {
             },
           };
 
-          const func_processor = JAVASCRIPT_BUILDER_CONFIG.get(
+          const func_processor = JAVASCRIPT_HANDLERS[
             "definition.function"
-          );
-          func_processor?.process(func_capture2, builder, context);
+          ];
+          func_processor?.(func_capture2, builder, context);
         }
 
         const result = builder.build();
@@ -2046,9 +2046,9 @@ export const NESTED = {
           location: node_to_location(name_node, TEST_FILE_PATH),
         };
 
-        const processor = JAVASCRIPT_BUILDER_CONFIG.get("definition.variable");
+        const processor = JAVASCRIPT_HANDLERS["definition.variable"];
         expect(processor).toBeDefined();
-        processor?.process(capture, builder, context);
+        processor?.(capture, builder, context);
 
         const result = builder.build();
         const variables = Array.from(result.variables.values());

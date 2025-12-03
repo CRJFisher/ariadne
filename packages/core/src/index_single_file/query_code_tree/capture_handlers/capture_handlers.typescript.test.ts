@@ -6,9 +6,9 @@ import { describe, it, expect, beforeAll } from "vitest";
 import Parser from "tree-sitter";
 import TypeScript from "tree-sitter-typescript";
 import type { SyntaxNode } from "tree-sitter";
-import { TYPESCRIPT_BUILDER_CONFIG } from "./typescript_builder_config";
+import { TYPESCRIPT_HANDLERS } from "./capture_handlers.typescript";
 import { extract_return_type, detect_callback_context } from "../symbol_factories/symbol_factories.typescript";
-import { JAVASCRIPT_BUILDER_CONFIG } from "./javascript_builder_config";
+import { JAVASCRIPT_HANDLERS } from "./capture_handlers.javascript";
 import { DefinitionBuilder } from "../../definitions/definition_builder";
 import { build_semantic_index } from "../../semantic_index";
 import type { ParsedFile } from "../../file_utils";
@@ -91,23 +91,23 @@ describe("TypeScript Builder Configuration", () => {
     return build_semantic_index(parsed_file, tree, "typescript");
   }
 
-  describe("TYPESCRIPT_BUILDER_CONFIG", () => {
+  describe("TYPESCRIPT_HANDLERS", () => {
     it("should export a valid LanguageBuilderConfig", () => {
-      expect(TYPESCRIPT_BUILDER_CONFIG).toBeDefined();
-      expect(TYPESCRIPT_BUILDER_CONFIG).toBeInstanceOf(Map);
-      expect(TYPESCRIPT_BUILDER_CONFIG.size).toBeGreaterThan(0);
+      expect(TYPESCRIPT_HANDLERS).toBeDefined();
+      expect(TYPESCRIPT_HANDLERS).toBeDefined();
+      expect(Object.keys(TYPESCRIPT_HANDLERS).length).toBeGreaterThan(0);
     });
 
     it("should extend JavaScript configuration", () => {
       // Should contain all JavaScript mappings plus TypeScript-specific ones
-      expect(TYPESCRIPT_BUILDER_CONFIG.size).toBeGreaterThan(
-        JAVASCRIPT_BUILDER_CONFIG.size
+      expect(Object.keys(TYPESCRIPT_HANDLERS).length).toBeGreaterThan(
+        Object.keys(JAVASCRIPT_HANDLERS).length
       );
 
       // Check that JavaScript mappings are included
-      const js_keys = Array.from(JAVASCRIPT_BUILDER_CONFIG.keys());
+      const js_keys = Object.keys(JAVASCRIPT_HANDLERS);
       for (const key of js_keys) {
-        expect(TYPESCRIPT_BUILDER_CONFIG.has(key)).toBe(true);
+        expect((key in TYPESCRIPT_HANDLERS)).toBe(true);
       }
     });
 
@@ -125,11 +125,11 @@ describe("TypeScript Builder Configuration", () => {
         "decorator.property",
       ];
 
-      for (const handler of ts_specific_handlers) {
-        expect(TYPESCRIPT_BUILDER_CONFIG.has(handler)).toBe(true);
-        const config = TYPESCRIPT_BUILDER_CONFIG.get(handler);
-        expect(config).toBeDefined();
-        expect(config?.process).toBeInstanceOf(Function);
+      for (const handler_name of ts_specific_handlers) {
+        expect((handler_name in TYPESCRIPT_HANDLERS)).toBe(true);
+        const handler = TYPESCRIPT_HANDLERS[handler_name];
+        expect(handler).toBeDefined();
+        expect(handler).toBeInstanceOf(Function);
       }
     });
   });
@@ -148,7 +148,7 @@ describe("TypeScript Builder Configuration", () => {
       expect(name_node).toBeTruthy();
 
       const builder = new DefinitionBuilder(mock_context);
-      const handler = TYPESCRIPT_BUILDER_CONFIG.get("def.interface");
+      const handler = TYPESCRIPT_HANDLERS["def.interface"];
 
       if (handler && name_node) {
         const capture = create_raw_capture("def.interface", name_node, "IUser");
@@ -204,7 +204,7 @@ describe("TypeScript Builder Configuration", () => {
       expect(name_node).toBeTruthy();
 
       const builder = new DefinitionBuilder(mock_context);
-      const handler = TYPESCRIPT_BUILDER_CONFIG.get("def.type_alias");
+      const handler = TYPESCRIPT_HANDLERS["def.type_alias"];
 
       if (handler && name_node) {
         const capture = create_raw_capture("def.type_alias", name_node, "UserID");
@@ -228,7 +228,7 @@ describe("TypeScript Builder Configuration", () => {
       expect(name_node).toBeTruthy();
 
       const builder = new DefinitionBuilder(mock_context);
-      const handler = TYPESCRIPT_BUILDER_CONFIG.get("def.type_alias");
+      const handler = TYPESCRIPT_HANDLERS["def.type_alias"];
 
       if (handler && name_node) {
         const capture = create_raw_capture("def.type_alias", name_node, "Result");
@@ -259,7 +259,7 @@ describe("TypeScript Builder Configuration", () => {
       expect(name_node).toBeTruthy();
 
       const builder = new DefinitionBuilder(mock_context);
-      const handler = TYPESCRIPT_BUILDER_CONFIG.get("def.enum");
+      const handler = TYPESCRIPT_HANDLERS["def.enum"];
 
       if (handler && name_node) {
         const capture = create_raw_capture("def.enum", name_node, "Color");
@@ -286,7 +286,7 @@ describe("TypeScript Builder Configuration", () => {
       expect(name_node).toBeTruthy();
 
       const builder = new DefinitionBuilder(mock_context);
-      const handler = TYPESCRIPT_BUILDER_CONFIG.get("def.enum");
+      const handler = TYPESCRIPT_HANDLERS["def.enum"];
 
       if (handler && name_node) {
         const capture = create_raw_capture("def.enum", name_node, "Status");
@@ -314,7 +314,7 @@ describe("TypeScript Builder Configuration", () => {
       expect(name_node).toBeTruthy();
 
       const builder = new DefinitionBuilder(mock_context);
-      const handler = TYPESCRIPT_BUILDER_CONFIG.get("def.namespace");
+      const handler = TYPESCRIPT_HANDLERS["def.namespace"];
 
       if (handler && name_node) {
         const capture = create_raw_capture("def.namespace", name_node, "Utils");
@@ -342,7 +342,7 @@ describe("TypeScript Builder Configuration", () => {
       expect(name_node).toBeTruthy();
 
       const builder = new DefinitionBuilder(mock_context);
-      const handler = TYPESCRIPT_BUILDER_CONFIG.get("def.class");
+      const handler = TYPESCRIPT_HANDLERS["def.class"];
 
       if (handler && name_node) {
         const capture = create_raw_capture("def.class", name_node, "Shape");
@@ -369,7 +369,7 @@ describe("TypeScript Builder Configuration", () => {
       expect(name_node).toBeTruthy();
 
       const builder = new DefinitionBuilder(mock_context);
-      const handler = TYPESCRIPT_BUILDER_CONFIG.get("def.class");
+      const handler = TYPESCRIPT_HANDLERS["def.class"];
 
       if (handler && name_node) {
         const capture = create_raw_capture("def.class", name_node, "User");
@@ -396,7 +396,7 @@ describe("TypeScript Builder Configuration", () => {
       expect(name_node).toBeTruthy();
 
       const builder = new DefinitionBuilder(mock_context);
-      const handler = TYPESCRIPT_BUILDER_CONFIG.get("def.class");
+      const handler = TYPESCRIPT_HANDLERS["def.class"];
 
       if (handler && name_node) {
         const capture = create_raw_capture("def.class", name_node, "Container");
@@ -602,12 +602,12 @@ export const CONFIG = {
       const variables = find_all_variables(ast);
 
       // Process each variable using the JavaScript config (TypeScript uses same logic)
-      const var_config = JAVASCRIPT_BUILDER_CONFIG.get("definition.variable");
-      expect(var_config).toBeDefined();
+      const var_handler = JAVASCRIPT_HANDLERS["definition.variable"];
+      expect(var_handler).toBeDefined();
 
       for (const {node, name} of variables) {
         const capture = create_raw_capture("definition.variable", node, name);
-        var_config!.process(capture, builder, mock_context);
+        var_handler!(capture, builder, mock_context);
       }
 
       const result = builder.build();
@@ -661,12 +661,12 @@ export const HANDLERS: Array<Function> = [
 
       const variables = find_all_variables(ast);
 
-      const var_config = JAVASCRIPT_BUILDER_CONFIG.get("definition.variable");
-      expect(var_config).toBeDefined();
+      const var_handler = JAVASCRIPT_HANDLERS["definition.variable"];
+      expect(var_handler).toBeDefined();
 
       for (const {node, name} of variables) {
         const capture = create_raw_capture("definition.variable", node, name);
-        var_config!.process(capture, builder, mock_context);
+        var_handler!(capture, builder, mock_context);
       }
 
       const result = builder.build();
@@ -726,12 +726,12 @@ export const NESTED: {
 
       const variables = find_all_variables(ast);
 
-      const var_config = JAVASCRIPT_BUILDER_CONFIG.get("definition.variable");
-      expect(var_config).toBeDefined();
+      const var_handler = JAVASCRIPT_HANDLERS["definition.variable"];
+      expect(var_handler).toBeDefined();
 
       for (const {node, name} of variables) {
         const capture = create_raw_capture("definition.variable", node, name);
-        var_config!.process(capture, builder, mock_context);
+        var_handler!(capture, builder, mock_context);
       }
 
       const result = builder.build();

@@ -2,7 +2,7 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import Parser from "tree-sitter";
 import Rust from "tree-sitter-rust";
-import { RUST_BUILDER_CONFIG } from "./rust_builder";
+import { RUST_HANDLERS } from "./capture_handlers.rust";
 import { detect_callback_context } from "../symbol_factories/symbol_factories.rust";
 import { DefinitionBuilder } from "../../definitions/definition_builder";
 import { build_semantic_index } from "../../semantic_index";
@@ -124,13 +124,13 @@ describe("rust_builder", () => {
 
     const context = create_mock_context(with_scopes);
     const builder = new DefinitionBuilder(context);
-    const processor = RUST_BUILDER_CONFIG.get(capture_name);
+    const handler = RUST_HANDLERS[capture_name];
 
-    if (!processor) {
-      throw new Error(`No processor for capture ${capture_name}`);
+    if (!handler) {
+      throw new Error(`No handler for capture ${capture_name}`);
     }
 
-    processor.process(capture, builder, context);
+    handler(capture, builder, context);
     const result = builder.build();
 
     // BuilderResult already provides categorized Maps, convert to arrays for tests
@@ -487,9 +487,9 @@ describe("rust_builder", () => {
         scope_id: "test-scope" as any,
       });
 
-      const processor = RUST_BUILDER_CONFIG.get("definition.method");
+      const processor = RUST_HANDLERS["definition.method"];
       if (processor) {
-        processor.process(capture, builder, context);
+        processor(capture, builder, context);
       }
 
       const result = builder.build();
@@ -558,9 +558,9 @@ describe("rust_builder", () => {
         scope_id: "test-scope" as any,
       });
 
-      const processor = RUST_BUILDER_CONFIG.get("definition.method.associated");
+      const processor = RUST_HANDLERS["definition.method.associated"];
       if (processor) {
-        processor.process(capture, builder, context);
+        processor(capture, builder, context);
       }
 
       const result = builder.build();
@@ -671,10 +671,10 @@ describe("rust_builder", () => {
 
       const context = create_mock_context();
       const builder = new DefinitionBuilder(context);
-      const processor = RUST_BUILDER_CONFIG.get("definition.parameter.self");
+      const processor = RUST_HANDLERS["definition.parameter.self"];
 
       if (processor) {
-        processor.process(capture, builder, context);
+        processor(capture, builder, context);
       }
 
       const result = builder.build();
@@ -781,9 +781,9 @@ describe("rust_builder", () => {
           scope_id: "test-scope" as any,
         });
 
-        const processor = RUST_BUILDER_CONFIG.get("definition.field");
+        const processor = RUST_HANDLERS["definition.field"];
         if (processor) {
-          processor.process(capture, builder, context);
+          processor(capture, builder, context);
         }
 
         const result = builder.build();
