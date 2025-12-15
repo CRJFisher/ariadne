@@ -9,11 +9,11 @@ import { User } from "./types";
 const user = new User("John Doe", "john@example.com");
 
 // Method calls on imported class instance
-const name = user.getName();
-const email = user.getEmail();
+const name = user.get_name();
+const email = user.get_email();
 
 // Method call with side effects
-user.updateName("Jane Doe");
-const updated_name = user.getName();
+user.update_name("Jane Doe");
+const updated_name = user.get_name();
 
 export { user, name, email, updated_name };

@@ -664,9 +664,9 @@ describe("Self-Reference Call Resolution", () => {
       // This test demonstrates the API, even though resolution won't work without type info
       const resolved = resolve_self_reference_call(call_ref, scopes, definitions, types);
 
-      // For now, expect null because we haven't linked parent class in TypeRegistry
+      // Returns [] because we haven't linked parent class in TypeRegistry
       // In real usage, TypeRegistry.update_file() would extract inheritance from semantic index
-      expect(resolved).toBeNull();
+      expect(resolved).toEqual([]);
     });
   });
 

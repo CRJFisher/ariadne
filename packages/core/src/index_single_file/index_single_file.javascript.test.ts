@@ -363,7 +363,7 @@ describe("Semantic Index - JavaScript", () => {
         const method_names = test_class.methods.map((m) => m.name);
 
         expect(method_names).toContain("staticMethod");
-        expect(method_names).toContain("regularMethod");
+        expect(method_names).toContain("regular_method");
       }
     });
 
@@ -1921,11 +1921,11 @@ describe("Semantic Index - JavaScript", () => {
       expect(class_def?.methods).toBeDefined();
       const method_names = class_def?.methods.map((m) => m.name) || [];
       expect(method_names).not.toContain("constructor");
-      expect(method_names).toContain("regularMethod");
+      expect(method_names).toContain("regular_method");
 
       // Verify regular method has kind "method"
       const regular_method = class_def?.methods.find(
-        (m) => m.name === "regularMethod",
+        (m) => m.name === "regular_method",
       );
       expect(regular_method?.kind).toBe("method");
     });

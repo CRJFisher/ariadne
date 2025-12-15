@@ -3,7 +3,7 @@
  * Tests: imports helper but local definition shadows the import
  */
 
-import { helper, otherFunction } from "./utils";
+import { helper, other_function } from "./utils";
 
 // Local function with same name as imported function
 function helper(): string {
@@ -14,6 +14,6 @@ function helper(): string {
 const result = helper();
 
 // This call should resolve to imported function (no shadowing)
-const other = otherFunction();
+const other = other_function();
 
 export { result, other };

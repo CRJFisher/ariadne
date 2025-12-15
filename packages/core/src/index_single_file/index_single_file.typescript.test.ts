@@ -1883,30 +1883,30 @@ describe("Semantic Index - TypeScript", () => {
         expect(secure_class.properties).toBeDefined();
         expect(secure_class.properties.length).toBeGreaterThanOrEqual(5);
 
-        // Test #privateField
+        // Test #private_field
         const private_field = secure_class.properties.find(
-          (p: any) => p.name === "#privateField",
+          (p: any) => p.name === "#private_field",
         );
         expect(private_field).toBeDefined();
         if (private_field) {
           expect(private_field).toMatchObject({
             kind: "property",
             symbol_id: expect.stringMatching(/^property:/),
-            name: "#privateField",
+            name: "#private_field",
             type: "number",
             initial_value: "42",
             access_modifier: "private",
           });
         }
 
-        // Test static #staticPrivate (no type annotation, only initial value)
+        // Test static #static_private (no type annotation, only initial value)
         const static_private = secure_class.properties.find(
-          (p: any) => p.name === "#staticPrivate",
+          (p: any) => p.name === "#static_private",
         );
         expect(static_private).toBeDefined();
         if (static_private) {
           expect(static_private).toMatchObject({
-            name: "#staticPrivate",
+            name: "#static_private",
             // Note: type is undefined because no explicit type annotation
             // (we don't do type inference from initial values)
             initial_value: "\"test\"",
@@ -1915,16 +1915,16 @@ describe("Semantic Index - TypeScript", () => {
           });
         }
 
-        // Test #privateMethod
+        // Test #private_method
         const private_method = secure_class.methods.find(
-          (m: any) => m.name === "#privateMethod",
+          (m: any) => m.name === "#private_method",
         );
         expect(private_method).toBeDefined();
         if (private_method) {
           expect(private_method).toMatchObject({
             kind: "method",
             symbol_id: expect.stringMatching(/^method:/),
-            name: "#privateMethod",
+            name: "#private_method",
             return_type: "number",
             access_modifier: "private",
           });
@@ -1932,7 +1932,7 @@ describe("Semantic Index - TypeScript", () => {
 
         // Verify TypeScript private still works
         const ts_private = secure_class.properties.find(
-          (p: any) => p.name === "tsPrivate",
+          (p: any) => p.name === "ts_private",
         );
         expect(ts_private).toBeDefined();
       }
@@ -2497,7 +2497,7 @@ describe("Semantic Index - TypeScript", () => {
 
       // Verify function parameters work
       const regular_func = Array.from(result.functions.values()).find(
-        (f) => f.name === "regularFunc",
+        (f) => f.name === "regular_func",
       );
       expect(regular_func).toBeDefined();
       if (regular_func && regular_func.signature?.parameters) {

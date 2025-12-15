@@ -8,7 +8,7 @@ import * as utils from "./utils";
 export function test_namespace_import() {
   // Call function via namespace
   const result1 = utils.helper();
-  const result2 = utils.otherFunction();
+  const result2 = utils.other_function();
 
   return { result1, result2 };
 }

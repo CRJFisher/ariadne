@@ -108,13 +108,13 @@ describe("Project Integration - TypeScript", () => {
       );
       expect(method_calls.length).toBeGreaterThan(0);
 
-      // Find the "getName" method call
+      // Find the "get_name" method call
       const get_name_call = method_calls.find(
-        (c) => c.name === ("getName" as SymbolName)
+        (c) => c.name === ("get_name" as SymbolName)
       );
       expect(get_name_call).toBeDefined();
 
-      // Get User class to find its getName method
+      // Get User class to find its get_name method
       const user_class = Array.from(index!.classes.values()).find(
         (c) => c.name === ("User" as SymbolName)
       );
@@ -125,8 +125,8 @@ describe("Project Integration - TypeScript", () => {
       expect(type_info).toBeDefined();
       expect(type_info!.methods.size).toBeGreaterThan(0);
 
-      // Verify getName method exists in type info
-      const get_name_method_id = type_info!.methods.get("getName" as SymbolName);
+      // Verify get_name method exists in type info
+      const get_name_method_id = type_info!.methods.get("get_name" as SymbolName);
       expect(get_name_method_id).toBeDefined();
     });
   });
@@ -266,9 +266,9 @@ describe("Project Integration - TypeScript", () => {
       );
       expect(method_calls.length).toBeGreaterThan(0);
 
-      // Find the getName method call
+      // Find the get_name method call
       const get_name_call = method_calls.find(
-        (c) => c.name === ("getName" as SymbolName)
+        (c) => c.name === ("get_name" as SymbolName)
       );
       expect(get_name_call).toBeDefined();
 
@@ -279,13 +279,13 @@ describe("Project Integration - TypeScript", () => {
       );
       expect(user_class).toBeDefined();
 
-      // Verify User class has getName method in type registry
+      // Verify User class has get_name method in type registry
       const type_info = project.get_type_info(user_class!.symbol_id);
       expect(type_info).toBeDefined();
-      expect(type_info!.methods.has("getName" as SymbolName)).toBe(true);
+      expect(type_info!.methods.has("get_name" as SymbolName)).toBe(true);
 
-      // Get the actual getName method symbol ID
-      const get_name_method_id = type_info!.methods.get("getName" as SymbolName);
+      // Get the actual get_name method symbol ID
+      const get_name_method_id = type_info!.methods.get("get_name" as SymbolName);
       expect(get_name_method_id).toBeDefined();
 
       // Verify method definition can be looked up in definition registry
@@ -341,10 +341,10 @@ describe("Project Integration - TypeScript", () => {
       const main = project.get_index_single_file(main_file);
       expect(main).toBeDefined();
 
-      // Find call to "otherFunction" (not shadowed)
+      // Find call to "other_function" (not shadowed)
       const other_call = main!.references.find(
         (r): r is FunctionCallReference =>
-          r.kind === "function_call" && r.name === ("otherFunction" as SymbolName)
+          r.kind === "function_call" && r.name === ("other_function" as SymbolName)
       );
       expect(other_call).toBeDefined();
 
@@ -359,7 +359,7 @@ describe("Project Integration - TypeScript", () => {
       expect(resolved_def).toBeDefined();
       // ImportDefinitions now correctly point to the original file
       expect(resolved_def!.location.file_path).toContain("utils.ts");
-      expect(resolved_def!.name).toBe("otherFunction" as SymbolName);
+      expect(resolved_def!.name).toBe("other_function" as SymbolName);
     });
   });
 
@@ -384,12 +384,12 @@ describe("Project Integration - TypeScript", () => {
         expect(namespace_import.import_kind).toBe("namespace");
       }
 
-      // Find calls to utils.helper() and utils.otherFunction()
+      // Find calls to utils.helper() and utils.other_function()
       const method_calls = main!.references.filter(
         (r): r is MethodCallReference => r.kind === "method_call"
       );
 
-      // Should have at least 2 method calls (helper and otherFunction)
+      // Should have at least 2 method calls (helper and other_function)
       expect(method_calls.length).toBeGreaterThanOrEqual(2);
 
       // Find helper call
@@ -437,12 +437,12 @@ describe("Project Integration - TypeScript", () => {
         (r): r is MethodCallReference => r.kind === "method_call"
       );
 
-      // Find both helper and otherFunction calls
+      // Find both helper and other_function calls
       const helper_call = method_calls.find(
         (c) => c.name === ("helper" as SymbolName)
       );
       const other_call = method_calls.find(
-        (c) => c.name === ("otherFunction" as SymbolName)
+        (c) => c.name === ("other_function" as SymbolName)
       );
 
       expect(helper_call).toBeDefined();
@@ -509,7 +509,7 @@ describe("Project Integration - TypeScript", () => {
       project.update_file(utils_file, utils_source);
       project.update_file(main_file, main_source);
 
-      // Verify initial state - otherFunction call resolves
+      // Verify initial state - other_function call resolves
       const main_v1 = project.get_index_single_file(main_file);
       const other_call_v1 = main_v1!.references.find(
         (r): r is FunctionCallReference | MethodCallReference | SelfReferenceCall | ConstructorCallReference =>
@@ -517,7 +517,7 @@ describe("Project Integration - TypeScript", () => {
             r.kind === "method_call" ||
             r.kind === "self_reference_call" ||
             r.kind === "constructor_call") &&
-          r.name === ("otherFunction" as SymbolName)
+          r.name === ("other_function" as SymbolName)
       );
       expect(other_call_v1).toBeDefined();
 
@@ -530,9 +530,9 @@ describe("Project Integration - TypeScript", () => {
       // ImportDefinitions now correctly point to the original file
       expect(resolved_def_v1!.location.file_path).toContain("utils.ts");
 
-      // Modify utils.ts - rename otherFunction
+      // Modify utils.ts - rename other_function
       const modified_utils = utils_source.replace(
-        "function otherFunction",
+        "function other_function",
         "function renamedFunction"
       );
       project.update_file(utils_file, modified_utils);
@@ -545,7 +545,7 @@ describe("Project Integration - TypeScript", () => {
             r.kind === "method_call" ||
             r.kind === "self_reference_call" ||
             r.kind === "constructor_call") &&
-          r.name === ("otherFunction" as SymbolName)
+          r.name === ("other_function" as SymbolName)
       );
       expect(other_call_v2).toBeDefined();
 
@@ -581,14 +581,14 @@ describe("Project Integration - TypeScript", () => {
       const main = project.get_index_single_file(main_file);
       expect(main).toBeDefined();
 
-      // Call to otherFunction (which was imported) should not resolve after source file removal
+      // Call to other_function (which was imported) should not resolve after source file removal
       const other_call = main!.references.find(
         (r): r is FunctionCallReference | MethodCallReference | SelfReferenceCall | ConstructorCallReference =>
           (r.kind === "function_call" ||
             r.kind === "method_call" ||
             r.kind === "self_reference_call" ||
             r.kind === "constructor_call") &&
-          r.name === ("otherFunction" as SymbolName)
+          r.name === ("other_function" as SymbolName)
       );
       if (other_call) {
         const resolved = project.resolutions.resolve(
