@@ -1,5 +1,5 @@
 import type { FilePath } from "@ariadnejs/types";
-import type { CaptureNode } from "../../semantic_index";
+import type { CaptureNode } from "../../index_single_file";
 
 /**
  * Common parameters for symbol creation

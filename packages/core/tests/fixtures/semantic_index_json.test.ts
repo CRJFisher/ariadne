@@ -4,14 +4,14 @@
 
 import { describe, it, expect } from "vitest";
 import type { FilePath, Language, ScopeId, SymbolId } from "@ariadnejs/types";
-import type { SemanticIndex } from "../../src/index_single_file/semantic_index";
+import type { SemanticIndex } from "../../src/index_single_file/index_single_file";
 import {
-  semantic_index_to_json,
-  json_to_semantic_index,
-  semantic_index_to_json_string,
-  json_string_to_semantic_index,
+  index_single_file_to_json,
+  json_to_index_single_file,
+  index_single_file_to_json_string,
+  json_string_to_index_single_file,
   type SemanticIndexJSON,
-} from "./semantic_index_json";
+} from "./index_single_file_json";
 
 describe("SemanticIndex Serialization", () => {
   describe("Round-trip serialization", () => {
@@ -50,8 +50,8 @@ describe("SemanticIndex Serialization", () => {
         references: [],
       };
 
-      const json = semantic_index_to_json(minimal_index);
-      const deserialized = json_to_semantic_index(json);
+      const json = index_single_file_to_json(minimal_index);
+      const deserialized = json_to_index_single_file(json);
 
       expect(deserialized.file_path).toBe(minimal_index.file_path);
       expect(deserialized.language).toBe(minimal_index.language);
@@ -138,8 +138,8 @@ describe("SemanticIndex Serialization", () => {
         references: [],
       };
 
-      const json = semantic_index_to_json(index_with_function);
-      const deserialized = json_to_semantic_index(json);
+      const json = index_single_file_to_json(index_with_function);
+      const deserialized = json_to_index_single_file(json);
 
       expect(deserialized.functions.size).toBe(1);
       expect(deserialized.scopes.size).toBe(2);
@@ -188,11 +188,11 @@ describe("SemanticIndex Serialization", () => {
         references: [],
       };
 
-      const json_string = semantic_index_to_json_string(minimal_index);
+      const json_string = index_single_file_to_json_string(minimal_index);
       expect(typeof json_string).toBe("string");
       expect(json_string.includes("\"file_path\"")).toBe(true);
 
-      const deserialized = json_string_to_semantic_index(json_string);
+      const deserialized = json_string_to_index_single_file(json_string);
       expect(deserialized.file_path).toBe(minimal_index.file_path);
       expect(deserialized.language).toBe(minimal_index.language);
     });
@@ -234,7 +234,7 @@ describe("SemanticIndex Serialization", () => {
         references: [],
       };
 
-      const json = semantic_index_to_json(minimal_index);
+      const json = index_single_file_to_json(minimal_index);
 
       expect(json.functions).toEqual({});
       expect(json.classes).toEqual({});
@@ -279,7 +279,7 @@ describe("SemanticIndex Serialization", () => {
         references: [],
       };
 
-      const deserialized = json_to_semantic_index(json);
+      const deserialized = json_to_index_single_file(json);
 
       expect(deserialized.functions.size).toBe(0);
       expect(deserialized.classes.size).toBe(0);
@@ -329,7 +329,7 @@ describe("SemanticIndex Serialization", () => {
         references: [],
       };
 
-      const json_string = semantic_index_to_json_string(minimal_index);
+      const json_string = index_single_file_to_json_string(minimal_index);
 
       // Check for 2-space indentation
       expect(json_string).toContain("  \"file_path\"");
@@ -356,7 +356,7 @@ describe("SemanticIndex Serialization", () => {
         references: [],
       };
 
-      const json = semantic_index_to_json(minimal_index);
+      const json = index_single_file_to_json(minimal_index);
 
       // Verify all 13 required fields are present
       expect(json).toHaveProperty("file_path");

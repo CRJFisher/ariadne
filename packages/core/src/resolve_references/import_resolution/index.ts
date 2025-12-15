@@ -6,9 +6,9 @@
 
 export {
   resolve_module_path,
-} from "./import_resolver";
+} from "./import_resolution";
 
-export { resolve_module_path_javascript } from "./import_resolver.javascript";
-export { resolve_module_path_typescript } from "./import_resolver.typescript";
-export { resolve_module_path_python } from "./import_resolver.python";
-export { resolve_module_path_rust } from "./import_resolver.rust";
+export { resolve_module_path_javascript } from "./import_resolution.javascript";
+export { resolve_module_path_typescript } from "./import_resolution.typescript";
+export { resolve_module_path_python } from "./import_resolution.python";
+export { resolve_module_path_rust } from "./import_resolution.rust";

@@ -1,1 +1,1 @@
-export { detect_call_graph } from "./detect_call_graph";
+export { trace_call_graph } from "./trace_call_graph";

@@ -9,8 +9,8 @@
 
 import type { ImportDefinition, AnyDefinition } from "@ariadnejs/types";
 import type { ImportGraph } from "./import_graph";
-import type { ExportRegistry } from "../resolve_references/registries/export_registry";
-import type { DefinitionRegistry } from "../resolve_references/registries/definition_registry";
+import type { ExportRegistry } from "../resolve_references/registries/registries.export";
+import type { DefinitionRegistry } from "../resolve_references/registries/registries.definition";
 
 /**
  * Fix ImportDefinition locations to point to original source files.

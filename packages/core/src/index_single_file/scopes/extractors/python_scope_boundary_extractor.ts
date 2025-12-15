@@ -3,7 +3,7 @@ import type Parser from "tree-sitter";
 import {
   ScopeBoundaryExtractor,
   ScopeBoundaries,
-} from "../scope_boundary_base";
+} from "../scopes.boundary_base";
 import { node_to_location } from "../../node_utils";
 
 export class PythonScopeBoundaryExtractor implements ScopeBoundaryExtractor {

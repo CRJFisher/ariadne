@@ -5,8 +5,8 @@
  */
 
 import path from "path";
-import type { SemanticIndex } from "../../src/index_single_file/semantic_index";
-import { load_semantic_index_fixture } from "./semantic_index_json";
+import type { SemanticIndex } from "../../src/index_single_file/index_single_file";
+import { load_index_single_file_fixture } from "./index_single_file_json";
 
 /**
  * Load a semantic index fixture by relative path
@@ -14,14 +14,14 @@ import { load_semantic_index_fixture } from "./semantic_index_json";
  * The path is relative to the fixtures directory.
  *
  * @example
- * const index = load_fixture("typescript/semantic_index/classes/basic_class.json");
+ * const index = load_fixture("typescript/index_single_file/classes/basic_class.json");
  *
  * @param relative_path - Path relative to fixtures directory
  * @returns The loaded SemanticIndex
  */
 export function load_fixture(relative_path: string): SemanticIndex {
   const fixture_path = path.join(__dirname, relative_path);
-  return load_semantic_index_fixture(fixture_path);
+  return load_index_single_file_fixture(fixture_path);
 }
 
 /**
@@ -31,8 +31,8 @@ export function load_fixture(relative_path: string): SemanticIndex {
  *
  * @example
  * const [index1, index2] = load_fixtures(
- *   "typescript/semantic_index/classes/basic_class.json",
- *   "typescript/semantic_index/functions/simple_function.json"
+ *   "typescript/index_single_file/classes/basic_class.json",
+ *   "typescript/index_single_file/functions/simple_function.json"
  * );
  *
  * @param paths - Paths relative to fixtures directory

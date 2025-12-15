@@ -1,6 +1,6 @@
 import type { Location } from "./common";
 import type { ScopeId } from "./scopes";
-import type { TypeInfo } from "./semantic_index";
+import type { TypeInfo } from "./index_single_file";
 import type { SymbolName, SymbolId } from "./symbol";
 
 /**

@@ -8,14 +8,14 @@ import JavaScript from "tree-sitter-javascript";
 import type { SyntaxNode } from "tree-sitter";
 import { JAVASCRIPT_HANDLERS } from "./capture_handlers.javascript";
 import { analyze_export_statement, detect_callback_context } from "../symbol_factories/symbol_factories.javascript";
-import { DefinitionBuilder } from "../../definitions/definition_builder";
-import { build_semantic_index } from "../../semantic_index";
+import { DefinitionBuilder } from "../../definitions/definitions";
+import { build_index_single_file } from "../../index_single_file";
 import type {
   ProcessingContext,
   CaptureNode,
   SemanticCategory,
   SemanticEntity,
-} from "../../semantic_index";
+} from "../../index_single_file";
 import type {
   Location,
   ScopeId,
@@ -24,7 +24,7 @@ import type {
   MethodCallReference,
   ConstructorCallReference,
 } from "@ariadnejs/types";
-import { ReferenceBuilder } from "../../references/reference_builder";
+import { ReferenceBuilder } from "../../references/references";
 import { JAVASCRIPT_METADATA_EXTRACTORS } from "../metadata_extractors";
 import { node_to_location } from "../../node_utils";
 
@@ -600,7 +600,7 @@ describe("JavaScript Builder Configuration", () => {
         // Note: This test verifies that the builder can process method call captures.
         // Full metadata extraction (receiver_location, property_chain) requires the
         // complete query capture context from the tree-sitter query system.
-        // This is validated in semantic_index tests which use the full pipeline.
+        // This is validated in index_single_file tests which use the full pipeline.
         const code = `
           const obj = { method: () => {} };
           obj.method();
@@ -659,7 +659,7 @@ describe("JavaScript Builder Configuration", () => {
         // Note: This test verifies that the builder can process chained method calls.
         // Full metadata extraction (property_chain) requires the complete query
         // capture context from the tree-sitter query system.
-        // This is validated in semantic_index tests which use the full pipeline.
+        // This is validated in index_single_file tests which use the full pipeline.
         const code = `
           const api = { users: { list: () => {} } };
           api.users.list();
@@ -1677,7 +1677,7 @@ export const NESTED = {
         lang: "javascript" as const,
       };
 
-      return build_semantic_index(parsed_file, tree, "javascript");
+      return build_index_single_file(parsed_file, tree, "javascript");
     }
 
     it("should extract type from JSDoc annotation on class field", async () => {

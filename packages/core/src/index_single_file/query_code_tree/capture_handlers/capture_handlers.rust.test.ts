@@ -4,12 +4,12 @@ import Parser from "tree-sitter";
 import Rust from "tree-sitter-rust";
 import { RUST_HANDLERS } from "./capture_handlers.rust";
 import { detect_callback_context } from "../symbol_factories/symbol_factories.rust";
-import { DefinitionBuilder } from "../../definitions/definition_builder";
-import { build_semantic_index } from "../../semantic_index";
+import { DefinitionBuilder } from "../../definitions/definitions";
+import { build_index_single_file } from "../../index_single_file";
 import type {
   ProcessingContext,
   CaptureNode,
-} from "../../semantic_index";
+} from "../../index_single_file";
 import type { Location, SymbolName, ScopeId } from "@ariadnejs/types";
 import type { SyntaxNode } from "tree-sitter";
 
@@ -1204,7 +1204,7 @@ describe("rust_builder", () => {
         tree,
         lang: "rust" as const,
       };
-      return build_semantic_index(parsed_file, tree, "rust");
+      return build_index_single_file(parsed_file, tree, "rust");
     }
 
     it("should extract type from struct field", async () => {

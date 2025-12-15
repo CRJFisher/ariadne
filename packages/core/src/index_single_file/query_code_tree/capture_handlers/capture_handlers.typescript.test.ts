@@ -9,15 +9,15 @@ import type { SyntaxNode } from "tree-sitter";
 import { TYPESCRIPT_HANDLERS } from "./capture_handlers.typescript";
 import { extract_return_type, detect_callback_context } from "../symbol_factories/symbol_factories.typescript";
 import { JAVASCRIPT_HANDLERS } from "./capture_handlers.javascript";
-import { DefinitionBuilder } from "../../definitions/definition_builder";
-import { build_semantic_index } from "../../semantic_index";
+import { DefinitionBuilder } from "../../definitions/definitions";
+import { build_index_single_file } from "../../index_single_file";
 import type { ParsedFile } from "../../file_utils";
 import type {
   ProcessingContext,
   CaptureNode,
   SemanticEntity,
   SemanticCategory,
-} from "../../semantic_index";
+} from "../../index_single_file";
 import type { FilePath, Location, ScopeId, SymbolName } from "@ariadnejs/types";
 
 describe("TypeScript Builder Configuration", () => {
@@ -88,7 +88,7 @@ describe("TypeScript Builder Configuration", () => {
       tree: tree,
       lang: "typescript",
     };
-    return build_semantic_index(parsed_file, tree, "typescript");
+    return build_index_single_file(parsed_file, tree, "typescript");
   }
 
   describe("TYPESCRIPT_HANDLERS", () => {

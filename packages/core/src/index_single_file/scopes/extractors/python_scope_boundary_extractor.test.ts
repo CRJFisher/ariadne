@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeAll, vi } from "vitest";
 import Parser from "tree-sitter";
 import Python from "tree-sitter-python";
-import { PythonScopeBoundaryExtractor } from "./python_scope_boundary_extractor";
+import { PythonScopeBoundaryExtractor } from "./python_scopes.boundary_extractor";
 import type { FilePath } from "@ariadnejs/types";
 
 describe("PythonScopeBoundaryExtractor", () => {

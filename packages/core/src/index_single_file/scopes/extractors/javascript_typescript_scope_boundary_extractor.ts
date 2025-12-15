@@ -3,14 +3,14 @@ import type Parser from "tree-sitter";
 import {
   CommonScopeBoundaryExtractor,
   type ScopeBoundaries,
-} from "../scope_boundary_base";
+} from "../scopes.boundary_base";
 import { node_to_location } from "../../node_utils";
 
 /**
  * Shared scope boundary extraction for JavaScript and TypeScript.
  * Both languages use braces for scoping and have similar AST structures.
  *
- * This base class contains the special logic that was previously in scope_processor.ts
+ * This base class contains the special logic that was previously in scopes.ts
  * for handling named function expressions and other TypeScript/JavaScript specifics.
  */
 export abstract class JavaScriptTypeScriptScopeBoundaryExtractor

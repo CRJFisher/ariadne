@@ -10,13 +10,13 @@
 import { glob } from "glob";
 import path from "path";
 import fs from "fs";
-import { json_to_semantic_index } from "../tests/fixtures/semantic_index_json";
+import { json_to_index_single_file } from "../tests/fixtures/index_single_file_json";
 
 let errors = 0;
 let warnings = 0;
 
 // Find all generated JSON fixtures
-const pattern = path.join(__dirname, "../tests/fixtures/**/semantic_index/**/*.json");
+const pattern = path.join(__dirname, "../tests/fixtures/**/index_single_file/**/*.json");
 const fixtures = glob.sync(pattern);
 
 console.log(`\n🔍 Verifying ${fixtures.length} fixtures...\n`);
@@ -33,7 +33,7 @@ for (const fixture_path of fixtures) {
     const json = JSON.parse(json_string);
 
     // Try to deserialize
-    const index = json_to_semantic_index(json);
+    const index = json_to_index_single_file(json);
 
     // Basic sanity checks
     const issues: string[] = [];

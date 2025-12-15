@@ -9,7 +9,7 @@ import TypeScript from "tree-sitter-typescript";
 import { JAVASCRIPT_HANDLERS } from "./capture_handlers.javascript";
 import { TYPESCRIPT_HANDLERS } from "./capture_handlers.typescript";
 import { DefinitionBuilder } from "../../definitions";
-import type { ProcessingContext, CaptureNode } from "../../semantic_index";
+import type { ProcessingContext, CaptureNode } from "../../index_single_file";
 import type { FilePath, SymbolName, ScopeId, LexicalScope } from "@ariadnejs/types";
 
 const js_parser = new Parser();

@@ -5,8 +5,8 @@
  */
 
 import type { SymbolName } from "@ariadnejs/types";
-import type { DefinitionBuilder } from "../../definitions/definition_builder";
-import type { CaptureNode, ProcessingContext } from "../../semantic_index";
+import type { DefinitionBuilder } from "../../definitions/definitions";
+import type { CaptureNode, ProcessingContext } from "../../index_single_file";
 import {
   create_method_id,
   extract_return_type,

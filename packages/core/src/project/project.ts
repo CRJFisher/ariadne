@@ -1,17 +1,17 @@
 import type { FilePath, SymbolId, Language } from "@ariadnejs/types";
 import type { ParsedFile } from "../index_single_file/file_utils";
-import { build_semantic_index } from "../index_single_file/semantic_index";
-import type { SemanticIndex } from "../index_single_file/semantic_index";
+import { build_index_single_file } from "../index_single_file/index_single_file";
+import type { SemanticIndex } from "../index_single_file/index_single_file";
 import type { AnyDefinition } from "@ariadnejs/types";
-import { DefinitionRegistry } from "../resolve_references/registries/definition_registry";
-import { TypeRegistry } from "../resolve_references/registries/type_registry";
-import { ScopeRegistry } from "../resolve_references/registries/scope_registry";
-import { ExportRegistry } from "../resolve_references/registries/export_registry";
-import { ReferenceRegistry } from "../resolve_references/registries/reference_registry";
+import { DefinitionRegistry } from "../resolve_references/registries/registries.definition";
+import { TypeRegistry } from "../resolve_references/registries/registries.type";
+import { ScopeRegistry } from "../resolve_references/registries/registries.scope";
+import { ExportRegistry } from "../resolve_references/registries/registries.export";
+import { ReferenceRegistry } from "../resolve_references/registries/registries.reference";
 import { ImportGraph } from "./import_graph";
-import { ResolutionRegistry } from "../resolve_references/resolution_registry";
+import { ResolutionRegistry } from "../resolve_references/resolve_references";
 import { type CallGraph } from "@ariadnejs/types";
-import { detect_call_graph } from "../trace_call_graph/detect_call_graph";
+import { trace_call_graph } from "../trace_call_graph/trace_call_graph";
 import { fix_import_definition_locations } from "./fix_import_locations";
 import { extract_all_parameters } from "./extract_nested_definitions";
 import Parser from "tree-sitter";
@@ -107,7 +107,7 @@ function create_parsed_file(
  */
 export class Project {
   // ===== File-level data (immutable once computed) =====
-  private semantic_indexes: Map<FilePath, SemanticIndex> = new Map();
+  private index_single_filees: Map<FilePath, SemanticIndex> = new Map();
   private file_contents: Map<FilePath, string> = new Map();
 
   // ===== Project-level registries (aggregated, incrementally updated) =====
@@ -166,38 +166,38 @@ export class Project {
     const parser = get_parser(language);
     const tree = parser.parse(content);
     const parsed_file = create_parsed_file(file_id, content, tree, language);
-    const semantic_index = build_semantic_index(parsed_file, tree, language);
+    const index_single_file = build_index_single_file(parsed_file, tree, language);
 
-    this.semantic_indexes.set(file_id, semantic_index);
+    this.index_single_filees.set(file_id, index_single_file);
     this.file_contents.set(file_id, content);
 
     // Phase 2: Update project-level registries
-    // Collect all definitions from semantic_index
+    // Collect all definitions from index_single_file
     const all_definitions: AnyDefinition[] = [
-      ...Array.from(semantic_index.functions.values()),
-      ...Array.from(semantic_index.classes.values()),
-      ...Array.from(semantic_index.variables.values()),
-      ...Array.from(semantic_index.interfaces.values()),
-      ...Array.from(semantic_index.enums.values()),
-      ...Array.from(semantic_index.namespaces.values()),
-      ...Array.from(semantic_index.types.values()),
-      ...Array.from(semantic_index.imported_symbols.values()),
+      ...Array.from(index_single_file.functions.values()),
+      ...Array.from(index_single_file.classes.values()),
+      ...Array.from(index_single_file.variables.values()),
+      ...Array.from(index_single_file.interfaces.values()),
+      ...Array.from(index_single_file.enums.values()),
+      ...Array.from(index_single_file.namespaces.values()),
+      ...Array.from(index_single_file.types.values()),
+      ...Array.from(index_single_file.imported_symbols.values()),
     ];
 
     // Extract nested definitions (methods, properties, parameters)
     // These have their own symbol IDs and need to be registered as first-class definitions
-    for (const class_def of semantic_index.classes.values()) {
+    for (const class_def of index_single_file.classes.values()) {
       all_definitions.push(...class_def.methods);
       all_definitions.push(...class_def.properties);
       if (class_def.constructor) {
         all_definitions.push(...class_def.constructor);
       }
     }
-    for (const interface_def of semantic_index.interfaces.values()) {
+    for (const interface_def of index_single_file.interfaces.values()) {
       all_definitions.push(...interface_def.methods);
       all_definitions.push(...interface_def.properties);
     }
-    for (const enum_def of semantic_index.enums.values()) {
+    for (const enum_def of index_single_file.enums.values()) {
       if (enum_def.methods) {
         all_definitions.push(...enum_def.methods);
       }
@@ -205,20 +205,20 @@ export class Project {
 
     // Extract parameters from all callables (functions, methods, constructors)
     // Parameters need to be in DefinitionRegistry for type binding resolution
-    all_definitions.push(...extract_all_parameters(semantic_index));
+    all_definitions.push(...extract_all_parameters(index_single_file));
 
     this.definitions.update_file(file_id, all_definitions);
-    this.scopes.update_file(file_id, semantic_index.scopes);
+    this.scopes.update_file(file_id, index_single_file.scopes);
 
     // ExportRegistry gets definitions from DefinitionRegistry
     this.exports.update_file(file_id, this.definitions);
 
     // ReferenceRegistry persists references (source of truth for ResolutionRegistry)
-    this.references.update_file(file_id, semantic_index.references);
+    this.references.update_file(file_id, index_single_file.references);
 
     // Pass ImportDefinitions directly to ImportGraph
     const import_definitions = Array.from(
-      semantic_index.imported_symbols.values()
+      index_single_file.imported_symbols.values()
     );
     this.imports.update_file(
       file_id,
@@ -254,7 +254,7 @@ export class Project {
 
     // Create language map from semantic indexes
     const languages = new Map<FilePath, Language>();
-    for (const [file_path, index] of this.semantic_indexes) {
+    for (const [file_path, index] of this.index_single_filees) {
       languages.set(file_path, index.language);
     }
 
@@ -273,7 +273,7 @@ export class Project {
     // Must happen AFTER name resolution BUT BEFORE call resolution.
     // Uses name resolutions to resolve type names to SymbolIds.
     for (const affected_file of affected_files) {
-      const affected_index = this.semantic_indexes.get(affected_file);
+      const affected_index = this.index_single_filees.get(affected_file);
       if (affected_index) {
         this.types.update_file(
           affected_file,
@@ -311,7 +311,7 @@ export class Project {
     const dependents = this.imports.get_dependents(file_id);
 
     // Remove from file-level stores
-    this.semantic_indexes.delete(file_id);
+    this.index_single_filees.delete(file_id);
     this.file_contents.delete(file_id);
 
     // Remove from registries
@@ -329,7 +329,7 @@ export class Project {
     if (dependents.size > 0) {
       // Create language map from semantic indexes
       const languages = new Map<FilePath, Language>();
-      for (const [file_path, index] of this.semantic_indexes) {
+      for (const [file_path, index] of this.index_single_filees) {
         languages.set(file_path, index.language);
       }
 
@@ -346,7 +346,7 @@ export class Project {
 
       // Phase 2: Type registry (uses name resolutions)
       for (const dependent_file of dependents) {
-        const dependent_index = this.semantic_indexes.get(dependent_file);
+        const dependent_index = this.index_single_filees.get(dependent_file);
         if (dependent_index) {
           this.types.update_file(
             dependent_file,
@@ -374,7 +374,7 @@ export class Project {
    */
   get_stats() {
     return {
-      file_count: this.semantic_indexes.size,
+      file_count: this.index_single_filees.size,
       definition_count: this.definitions.size(),
       resolution_count: this.resolutions.size(),
     };
@@ -395,7 +395,7 @@ export class Project {
   get_call_graph(): CallGraph {
     // Build call graph from current state
     // All resolutions are always up-to-date (eager resolution)
-    return detect_call_graph(this.definitions, this.resolutions);
+    return trace_call_graph(this.definitions, this.resolutions);
   }
 
   /**
@@ -444,7 +444,7 @@ export class Project {
    * Returns a Map from file path to semantic index.
    */
   get_all_scope_graphs(): ReadonlyMap<FilePath, SemanticIndex> {
-    return this.semantic_indexes;
+    return this.index_single_filees;
   }
 
   /**
@@ -461,7 +461,7 @@ export class Project {
    * @returns Array of all file paths
    */
   get_all_files(): FilePath[] {
-    return Array.from(this.semantic_indexes.keys());
+    return Array.from(this.index_single_filees.keys());
   }
 
   /**
@@ -469,8 +469,8 @@ export class Project {
    * @param file_id - The file to get semantic index for
    * @returns Semantic index or undefined if file not found
    */
-  get_semantic_index(file_id: FilePath): SemanticIndex | undefined {
-    return this.semantic_indexes.get(file_id);
+  get_index_single_file(file_id: FilePath): SemanticIndex | undefined {
+    return this.index_single_filees.get(file_id);
   }
 
   /**
@@ -490,7 +490,7 @@ export class Project {
   get_derived_data(
     file_id: FilePath
   ): { file_path: FilePath; exported_symbols: Set<SymbolId> } | undefined {
-    if (!this.semantic_indexes.has(file_id)) {
+    if (!this.index_single_filees.has(file_id)) {
       return undefined;
     }
 
@@ -562,7 +562,7 @@ export class Project {
    */
   clear(): void {
     this.file_contents.clear();
-    this.semantic_indexes.clear();
+    this.index_single_filees.clear();
     this.definitions.clear();
     this.types.clear();
     this.scopes.clear();

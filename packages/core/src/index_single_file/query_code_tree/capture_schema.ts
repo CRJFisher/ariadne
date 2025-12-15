@@ -22,7 +22,7 @@
  * rather than trying to enumerate everything that ISN'T allowed.
  */
 
-import { SemanticCategory, SemanticEntity } from "../semantic_index";
+import { SemanticCategory, SemanticEntity } from "../index_single_file";
 
 // ============================================================================
 // Core Types

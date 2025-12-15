@@ -63,7 +63,7 @@ export * from "./import_export";
 export * from "./classes";
 
 // Export from symbols
-export * from "./semantic_index";
+export * from "./index_single_file";
 
 export * from "./symbol_definitions";
 
@@ -75,8 +75,8 @@ export * from "./symbol_definitions";
 export * from "./symbol_references";
 export * from "./errors";
 
-// Export TypeInfo from semantic_index (the new one with TypeId)
-export { type TypeInfo } from "./semantic_index";
+// Export TypeInfo from index_single_file (the new one with TypeId)
+export { type TypeInfo } from "./index_single_file";
 
 // Export type kind enum
 export { TypeKind } from "./type_kind";

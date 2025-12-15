@@ -1,6 +1,6 @@
 import type { FilePath, ScopeType } from "@ariadnejs/types";
 import Parser from "tree-sitter";
-import { CommonScopeBoundaryExtractor, type ScopeBoundaries } from "../scope_boundary_base";
+import { CommonScopeBoundaryExtractor, type ScopeBoundaries } from "../scopes.boundary_base";
 import { node_to_location } from "../../node_utils";
 
 /**

@@ -9,8 +9,8 @@
 export { Project } from "./project";
 
 // Core processing functions
-export { build_semantic_index } from "./index_single_file/semantic_index";
-export { detect_call_graph } from "./trace_call_graph/detect_call_graph";
+export { build_index_single_file } from "./index_single_file/index_single_file";
+export { trace_call_graph } from "./trace_call_graph/trace_call_graph";
 
 // Project-level registries
 export {

@@ -1,5 +1,5 @@
-import type { DefinitionBuilder } from "../../definitions/definition_builder";
-import type { CaptureNode, ProcessingContext } from "../../semantic_index";
+import type { DefinitionBuilder } from "../../definitions/definitions";
+import type { CaptureNode, ProcessingContext } from "../../index_single_file";
 
 /**
  * Handler function signature for processing tree-sitter captures

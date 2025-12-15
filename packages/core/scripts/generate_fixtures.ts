@@ -19,8 +19,8 @@ import JavaScript from "tree-sitter-javascript";
 import Python from "tree-sitter-python";
 import Rust from "tree-sitter-rust";
 import type { Language, FilePath } from "@ariadnejs/types";
-import { build_semantic_index } from "../src/index_single_file/semantic_index";
-import { write_semantic_index_fixture } from "../tests/fixtures/semantic_index_json";
+import { build_index_single_file } from "../src/index_single_file/index_single_file";
+import { write_index_single_file_fixture } from "../tests/fixtures/index_single_file_json";
 import type { ParsedFile } from "../src/index_single_file/file_utils";
 
 // Language parsers
@@ -106,11 +106,11 @@ function generate_fixture_for_file(code_path: string): void {
     );
 
     // Build semantic index
-    const index = build_semantic_index(parsed_file, tree, language);
+    const index = build_index_single_file(parsed_file, tree, language);
 
     // Determine output path
     // Input:  fixtures/typescript/code/classes/basic_class.ts
-    // Output: fixtures/typescript/semantic_index/classes/basic_class.json
+    // Output: fixtures/typescript/index_single_file/classes/basic_class.json
     const fixtures_dir = path.join(__dirname, "../tests/fixtures");
     const relative_path = path.relative(fixtures_dir, code_path);
     const parts = relative_path.split(path.sep);
@@ -127,7 +127,7 @@ function generate_fixture_for_file(code_path: string): void {
     const output_path = path.join(
       fixtures_dir,
       lang,
-      "semantic_index",
+      "index_single_file",
       category,
       filename
     );
@@ -136,7 +136,7 @@ function generate_fixture_for_file(code_path: string): void {
     fs.mkdirSync(path.dirname(output_path), { recursive: true });
 
     // Write JSON fixture
-    write_semantic_index_fixture(index, output_path);
+    write_index_single_file_fixture(index, output_path);
 
     console.log(`  ✓ Written to ${output_path}`);
   } catch (error) {

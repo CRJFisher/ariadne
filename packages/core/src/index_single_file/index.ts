@@ -6,4 +6,4 @@
  * with their proper lexical scope relationships.
  */
 
-export { build_semantic_index } from "./semantic_index";
+export { build_index_single_file } from "./index_single_file";

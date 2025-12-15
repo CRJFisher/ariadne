@@ -8,7 +8,7 @@ import { Export, Import } from "./import_export";
 import { AnalysisError } from "./errors";
 import { SymbolId } from "./symbol";
 import { CallGraph } from "./call_chains";
-import { TypeInfo } from "./semantic_index";
+import { TypeInfo } from "./index_single_file";
 
 export interface FileAnalysis {
   readonly file_path: FilePath;

@@ -21,7 +21,7 @@ import {
   module_symbol,
   anonymous_function_symbol,
 } from "@ariadnejs/types";
-import type { CaptureNode } from "../../semantic_index";
+import type { CaptureNode } from "../../index_single_file";
 import { node_to_location } from "../../node_utils";
 export { detect_callback_context } from "./symbol_factories.rust_callback";
 export {

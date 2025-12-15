@@ -7,14 +7,14 @@ import Parser from "tree-sitter";
 import Python from "tree-sitter-python";
 import type { SyntaxNode } from "tree-sitter";
 import { PYTHON_HANDLERS } from "./capture_handlers.python";
-import { DefinitionBuilder } from "../../definitions/definition_builder";
-import { build_semantic_index } from "../../semantic_index";
+import { DefinitionBuilder } from "../../definitions/definitions";
+import { build_index_single_file } from "../../index_single_file";
 import type {
   ProcessingContext,
   CaptureNode,
   SemanticCategory,
   SemanticEntity,
-} from "../../semantic_index";
+} from "../../index_single_file";
 import type { FilePath, Location, ScopeId, SymbolName } from "@ariadnejs/types";
 import { node_to_location } from "../../node_utils";
 import { extract_import_path, detect_callback_context } from "../symbol_factories/symbol_factories.python";
@@ -1554,7 +1554,7 @@ class Drawable(Protocol):
         tree,
         lang: "python" as const,
       };
-      return build_semantic_index(parsed_file, tree, "python");
+      return build_index_single_file(parsed_file, tree, "python");
     }
 
     it("should extract type from class attribute annotation", async () => {

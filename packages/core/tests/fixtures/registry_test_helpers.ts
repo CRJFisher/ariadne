@@ -14,12 +14,12 @@ import type {
   Location,
   AnyDefinition,
 } from "@ariadnejs/types";
-import type { SemanticIndex } from "../../src/index_single_file/semantic_index";
-import { DefinitionRegistry } from "../../src/resolve_references/registries/definition_registry";
-import { TypeRegistry } from "../../src/resolve_references/registries/type_registry";
-import { ScopeRegistry } from "../../src/resolve_references/registries/scope_registry";
-import { ExportRegistry } from "../../src/resolve_references/registries/export_registry";
-import { ResolutionRegistry } from "../../src/resolve_references/resolution_registry";
+import type { SemanticIndex } from "../../src/index_single_file/index_single_file";
+import { DefinitionRegistry } from "../../src/resolve_references/registries/registries.definition";
+import { TypeRegistry } from "../../src/resolve_references/registries/registries.type";
+import { ScopeRegistry } from "../../src/resolve_references/registries/registries.scope";
+import { ExportRegistry } from "../../src/resolve_references/registries/registries.export";
+import { ResolutionRegistry } from "../../src/resolve_references/resolve_references";
 import { ImportGraph } from "../../src/project/import_graph";
 import { load_fixture } from "./fixture_helpers";
 
