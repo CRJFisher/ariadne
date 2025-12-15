@@ -98,6 +98,7 @@ describe("scopes", () => {
       },
       endPosition: { row: location.end_line - 1, column: location.end_column },
       // Mock childForFieldName to return appropriate nodes
+      // eslint-disable-next-line @typescript-eslint/naming-convention
       childForFieldName: (field: string) => {
         if (field === "name") {
           return name_node as any;

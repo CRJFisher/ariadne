@@ -1036,6 +1036,7 @@ describe("Rust Metadata Extractors", () => {
         text: "SomeType<A, B, C>",
         childCount: 0,
         child: () => null,
+        // eslint-disable-next-line @typescript-eslint/naming-convention
         childForFieldName: () => null,
       } as any;
 
@@ -1053,6 +1054,7 @@ describe("Rust Metadata Extractors", () => {
         text: "collect::<Vec<String>>",
         childCount: 0,
         child: () => null,
+        // eslint-disable-next-line @typescript-eslint/naming-convention
         childForFieldName: () => null,
       } as any;
 

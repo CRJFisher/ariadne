@@ -20,6 +20,7 @@ describe("CommonScopeBoundaryExtractor", () => {
       startPosition: position,
       endPosition: end_position,
       parent: null,
+      // eslint-disable-next-line @typescript-eslint/naming-convention
       childForFieldName: (name: string) => fields[name] || null,
       child: () => null,
       children: [],

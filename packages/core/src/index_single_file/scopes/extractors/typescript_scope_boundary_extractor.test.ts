@@ -21,6 +21,7 @@ describe("TypeScriptScopeBoundaryExtractor", () => {
       startPosition: position,
       endPosition: end_position,
       parent,
+      // eslint-disable-next-line @typescript-eslint/naming-convention
       childForFieldName: (name: string) => fields[name] || null,
       child: () => null,
       children: [],
