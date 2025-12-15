@@ -37,7 +37,7 @@ describe("Project Integration - Rust", () => {
       const file = file_path("structs/user_with_impl.rs");
       project.update_file(file, source);
 
-      const index = project.get_semantic_index(file);
+      const index = project.get_index_single_file(file);
       expect(index).toBeDefined();
 
       // Find struct (structs map to classes in our model)
@@ -66,7 +66,7 @@ describe("Project Integration - Rust", () => {
       const file = file_path("structs/constructor_workflow.rs");
       project.update_file(file, source);
 
-      const index = project.get_semantic_index(file);
+      const index = project.get_index_single_file(file);
       expect(index).toBeDefined();
 
       // Find method call references
@@ -93,7 +93,7 @@ describe("Project Integration - Rust", () => {
       const file = file_path("functions/nested_scopes.rs");
       project.update_file(file, source);
 
-      const index = project.get_semantic_index(file);
+      const index = project.get_index_single_file(file);
       expect(index).toBeDefined();
 
       // Find function definitions
@@ -124,7 +124,7 @@ describe("Project Integration - Rust", () => {
       const file = file_path("functions/variable_shadowing.rs");
       project.update_file(file, source);
 
-      const index = project.get_semantic_index(file);
+      const index = project.get_index_single_file(file);
       expect(index).toBeDefined();
 
       // Find variable definitions
@@ -150,14 +150,14 @@ describe("Project Integration - Rust", () => {
       project.update_file(main_file, main_source);
 
       // Verify main.rs has imports
-      const main_index = project.get_semantic_index(main_file);
+      const main_index = project.get_index_single_file(main_file);
       expect(main_index).toBeDefined();
 
       const imports = Array.from(main_index!.imported_symbols.values());
       expect(imports.length).toBeGreaterThan(0);
 
       // Verify utils.rs has functions that could be exported
-      const utils_index = project.get_semantic_index(utils_file);
+      const utils_index = project.get_index_single_file(utils_file);
       expect(utils_index).toBeDefined();
 
       const functions = Array.from(utils_index!.functions.values());
@@ -173,7 +173,7 @@ describe("Project Integration - Rust", () => {
       project.update_file(utils_file, utils_source);
       project.update_file(main_file, main_source);
 
-      const main_index = project.get_semantic_index(main_file);
+      const main_index = project.get_index_single_file(main_file);
       expect(main_index).toBeDefined();
 
       // main.rs imports: helper, process_data, calculate_total, validate_email
@@ -230,7 +230,7 @@ describe("Project Integration - Rust", () => {
       const file = file_path("modules/inline_modules.rs");
       project.update_file(file, source);
 
-      const index = project.get_semantic_index(file);
+      const index = project.get_index_single_file(file);
       expect(index).toBeDefined();
 
       // Verify that scopes are created for modules
@@ -249,7 +249,7 @@ describe("Project Integration - Rust", () => {
       project.update_file(user_mod_file, user_mod_source);
       project.update_file(uses_user_file, uses_user_source);
 
-      const main_index = project.get_semantic_index(uses_user_file);
+      const main_index = project.get_index_single_file(uses_user_file);
       expect(main_index).toBeDefined();
 
       // Find User import
@@ -260,7 +260,7 @@ describe("Project Integration - Rust", () => {
       expect(user_import).toBeDefined();
 
       // Find User struct in user_mod.rs
-      const user_mod_index = project.get_semantic_index(user_mod_file);
+      const user_mod_index = project.get_index_single_file(user_mod_file);
       const user_struct = Array.from(user_mod_index!.classes.values()).find(
         (c) => c.name === ("User" as SymbolName)
       );
@@ -292,7 +292,7 @@ describe("Project Integration - Rust", () => {
       project.update_file(uses_user_file, uses_user_source);
 
       // Verify user_mod.rs has both User and UserManager structs
-      const user_mod_index = project.get_semantic_index(user_mod_file);
+      const user_mod_index = project.get_index_single_file(user_mod_file);
       expect(user_mod_index).toBeDefined();
 
       if (user_mod_index) {
@@ -304,7 +304,7 @@ describe("Project Integration - Rust", () => {
       }
 
       // Verify both are imported in uses_user.rs
-      const main_index = project.get_semantic_index(uses_user_file);
+      const main_index = project.get_index_single_file(uses_user_file);
       expect(main_index).toBeDefined();
 
       if (main_index) {
@@ -394,7 +394,7 @@ describe("Project Integration - Rust", () => {
       project.update_file(utils_file, utils_source);
       project.update_file(shadowing_file, shadowing_source);
 
-      const main_index = project.get_semantic_index(shadowing_file);
+      const main_index = project.get_index_single_file(shadowing_file);
       expect(main_index).toBeDefined();
 
       // Find function definitions in shadowing.rs
@@ -432,7 +432,7 @@ describe("Project Integration - Rust", () => {
       const file = file_path("structs/constructor_workflow.rs");
       project.update_file(file, source);
 
-      const index = project.get_semantic_index(file);
+      const index = project.get_index_single_file(file);
       expect(index).toBeDefined();
 
       // Find method chain calls
@@ -455,7 +455,7 @@ describe("Project Integration - Rust", () => {
       const file = file_path("structs/basic_struct.rs");
       project.update_file(file, source);
 
-      const index = project.get_semantic_index(file);
+      const index = project.get_index_single_file(file);
       expect(index).toBeDefined();
 
       // Find struct definitions
@@ -638,7 +638,7 @@ fn process() {
       const file = file_path("traits/polymorphic_handler.rs");
       project.update_file(file, source);
 
-      const index = project.get_semantic_index(file);
+      const index = project.get_index_single_file(file);
       expect(index).toBeDefined();
 
       // Find the Handler trait (should be captured as an interface)

@@ -30,7 +30,7 @@ handler()
       const file = path.join(TEMP_ROOT, "test.py") as FilePath;
       project.update_file(file, code);
 
-      const index = project.get_semantic_index(file);
+      const index = project.get_index_single_file(file);
       expect(index).toBeDefined();
 
       // Find the call to handler()
@@ -64,7 +64,7 @@ fn main() {
       const file = path.join(TEMP_ROOT, "test.rs") as FilePath;
       project.update_file(file, code);
 
-      const index = project.get_semantic_index(file);
+      const index = project.get_index_single_file(file);
       expect(index).toBeDefined();
 
       // Find the call to handler()

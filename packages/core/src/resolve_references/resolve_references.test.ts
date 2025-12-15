@@ -135,7 +135,7 @@ export function use_helper(y: number): number {
 
     // TEST 2: Verify the call is resolved
     // Get semantic index and find the helper call
-    const consumer_index = project.get_semantic_index(consumer_file);
+    const consumer_index = project.get_index_single_file(consumer_file);
     expect(consumer_index).toBeDefined();
 
     const helper_calls = consumer_index!.references.filter(
@@ -268,7 +268,7 @@ export function use_deep_helper(y: number): number {
     expect(resolved_helper).toContain("deepHelper");
 
     // Verify the call is detected
-    const consumer_index = project.get_semantic_index(consumer_file);
+    const consumer_index = project.get_index_single_file(consumer_file);
     expect(consumer_index).toBeDefined();
 
     const deep_helper_calls = consumer_index!.references.filter(
@@ -317,7 +317,7 @@ export function resolve_export_chain(source_file: string): string | null {
     project.update_file(consumer_file, consumer_code);
 
     // Verify the call inside the function is detected
-    const consumer_index = project.get_semantic_index(consumer_file);
+    const consumer_index = project.get_index_single_file(consumer_file);
     expect(consumer_index).toBeDefined();
 
     const resolve_calls = consumer_index!.references.filter(
@@ -373,7 +373,7 @@ export function use_aliased(y: number): number {
     expect(resolved).not.toBeNull();
     expect(resolved).toContain("originalName");
 
-    const consumer_index = project.get_semantic_index(consumer_file);
+    const consumer_index = project.get_index_single_file(consumer_file);
     expect(consumer_index).toBeDefined();
 
     const aliased_calls = consumer_index!.references.filter(
@@ -451,7 +451,7 @@ export function resolve_export_chain(source_file: string): string | null {
     expect(resolved).toContain("resolve_module_path");
 
     // Verify the call is detected
-    const registry_index = project.get_semantic_index(export_registry_file);
+    const registry_index = project.get_index_single_file(export_registry_file);
     expect(registry_index).toBeDefined();
 
     const resolve_calls = registry_index!.references.filter(
@@ -504,7 +504,7 @@ describe("ResolutionRegistry - Collection Dispatch Resolution", () => {
     project.update_file(file_path, code);
 
     // Get semantic index
-    const index = project.get_semantic_index(file_path);
+    const index = project.get_index_single_file(file_path);
     expect(index).toBeDefined();
 
     // Find the call to 'handler'

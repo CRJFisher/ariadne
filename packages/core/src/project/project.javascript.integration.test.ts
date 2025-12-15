@@ -42,7 +42,7 @@ describe("Project Integration - JavaScript", () => {
       project.update_file(main_file, main);
 
       // Verify require() creates import definitions
-      const main_index = project.get_semantic_index(main_file);
+      const main_index = project.get_index_single_file(main_file);
       expect(main_index).toBeDefined();
 
       const imports = Array.from(main_index!.imported_symbols.values());
@@ -63,7 +63,7 @@ describe("Project Integration - JavaScript", () => {
       project.update_file(main_file, main);
 
       // Get main index
-      const main_index = project.get_semantic_index(main_file);
+      const main_index = project.get_index_single_file(main_file);
       expect(main_index).toBeDefined();
 
       // Find call to helper
@@ -95,7 +95,7 @@ describe("Project Integration - JavaScript", () => {
 
       project.update_file(utils_file, utils);
 
-      const index = project.get_semantic_index(utils_file);
+      const index = project.get_index_single_file(utils_file);
       expect(index).toBeDefined();
 
       // Verify functions are exported
@@ -128,7 +128,7 @@ describe("Project Integration - JavaScript", () => {
       project.update_file(main_file, main);
 
       // Verify ES6 import creates import definitions
-      const main_index = project.get_semantic_index(main_file);
+      const main_index = project.get_index_single_file(main_file);
       expect(main_index).toBeDefined();
 
       const imports = Array.from(main_index!.imported_symbols.values());
@@ -149,7 +149,7 @@ describe("Project Integration - JavaScript", () => {
       project.update_file(main_file, main);
 
       // Get main index
-      const main_index = project.get_semantic_index(main_file);
+      const main_index = project.get_index_single_file(main_file);
       expect(main_index).toBeDefined();
 
       // Find call to helper
@@ -185,7 +185,7 @@ describe("Project Integration - JavaScript", () => {
       project.update_file(main_file, main);
 
       // Verify default import
-      const main_index = project.get_semantic_index(main_file);
+      const main_index = project.get_index_single_file(main_file);
       expect(main_index).toBeDefined();
 
       const imports = Array.from(main_index!.imported_symbols.values());
@@ -223,7 +223,7 @@ describe("Project Integration - JavaScript", () => {
 
       project.update_file(file, source);
 
-      const index = project.get_semantic_index(file);
+      const index = project.get_index_single_file(file);
       expect(index).toBeDefined();
 
       // Find class
@@ -265,7 +265,7 @@ describe("Project Integration - JavaScript", () => {
 
       project.update_file(file, source);
 
-      const index = project.get_semantic_index(file);
+      const index = project.get_index_single_file(file);
       expect(index).toBeDefined();
 
       // Find the Vehicle class (constructor function)
@@ -303,7 +303,7 @@ describe("Project Integration - JavaScript", () => {
 
       project.update_file(file, source);
 
-      const index = project.get_semantic_index(file);
+      const index = project.get_index_single_file(file);
       expect(index).toBeDefined();
 
       // Find method calls
@@ -331,7 +331,7 @@ describe("Project Integration - JavaScript", () => {
 
       project.update_file(file, source);
 
-      const index = project.get_semantic_index(file);
+      const index = project.get_index_single_file(file);
       expect(index).toBeDefined();
 
       // Verify IIFE scopes are captured
@@ -353,7 +353,7 @@ describe("Project Integration - JavaScript", () => {
 
       project.update_file(file, source);
 
-      const index = project.get_semantic_index(file);
+      const index = project.get_index_single_file(file);
       expect(index).toBeDefined();
 
       // Find closure functions
@@ -404,7 +404,7 @@ describe("Project Integration - JavaScript", () => {
 
       project.update_file(file, source);
 
-      const index = project.get_semantic_index(file);
+      const index = project.get_index_single_file(file);
       expect(index).toBeDefined();
 
       // Verify factory functions exist
@@ -424,7 +424,7 @@ describe("Project Integration - JavaScript", () => {
       project.update_file(uses_file, uses_user);
 
       // Get uses_user index
-      const uses_index = project.get_semantic_index(uses_file);
+      const uses_index = project.get_index_single_file(uses_file);
       expect(uses_index).toBeDefined();
 
       // Find import
@@ -436,7 +436,7 @@ describe("Project Integration - JavaScript", () => {
       expect(user_import).toBeDefined();
 
       // Verify User class is in user_class.js
-      const user_index = project.get_semantic_index(user_file);
+      const user_index = project.get_index_single_file(user_file);
       const user_class_def = Array.from(user_index!.classes.values()).find(
         (c) => c.name === ("User" as SymbolName)
       );
@@ -454,7 +454,7 @@ describe("Project Integration - JavaScript", () => {
       project.update_file(uses_file, uses_user);
 
       // Get uses_user index
-      const uses_index = project.get_semantic_index(uses_file);
+      const uses_index = project.get_index_single_file(uses_file);
       expect(uses_index).toBeDefined();
 
       // Find constructor call
@@ -491,7 +491,7 @@ describe("Project Integration - JavaScript", () => {
       project.update_file(uses_file, load_source("modules/uses_user.js"));
 
       // Get semantic index for uses_user.js
-      const uses_index = project.get_semantic_index(uses_file);
+      const uses_index = project.get_index_single_file(uses_file);
       expect(uses_index).toBeDefined();
 
       // Find the getName method call
@@ -527,7 +527,7 @@ describe("Project Integration - JavaScript", () => {
       project.update_file(main_file, main);
 
       // Get main index
-      const main_index = project.get_semantic_index(main_file);
+      const main_index = project.get_index_single_file(main_file);
       expect(main_index).toBeDefined();
 
       // Find call to coreFunction (imported from middle, re-exported from base)
@@ -562,7 +562,7 @@ describe("Project Integration - JavaScript", () => {
       project.update_file(main_file, main);
 
       // Get main index
-      const main_index = project.get_semantic_index(main_file);
+      const main_index = project.get_index_single_file(main_file);
       expect(main_index).toBeDefined();
 
       // Find imports with aliases
@@ -608,7 +608,7 @@ describe("Project Integration - JavaScript", () => {
       project.update_file(main_file, main);
 
       // Get main index
-      const main_index = project.get_semantic_index(main_file);
+      const main_index = project.get_index_single_file(main_file);
       expect(main_index).toBeDefined();
 
       // Find Manager import (aliased from DataManager)
@@ -652,7 +652,7 @@ describe("Project Integration - JavaScript", () => {
       project.update_file(main_file, main);
 
       // Get semantic index for main.js
-      const main_index = project.get_semantic_index(main_file);
+      const main_index = project.get_index_single_file(main_file);
       expect(main_index).toBeDefined();
 
       // Find the process method call
@@ -682,7 +682,7 @@ describe("Project Integration - JavaScript", () => {
 
       project.update_file(file, source);
 
-      const index = project.get_semantic_index(file);
+      const index = project.get_index_single_file(file);
       expect(index).toBeDefined();
 
       // Verify scopes exist with shadowing
@@ -792,7 +792,7 @@ describe("Project Integration - JavaScript", () => {
       const utils_file = file_path("modules/utils_es6.js");
       project.update_file(utils_file, source_v1);
 
-      let index = project.get_semantic_index(utils_file);
+      let index = project.get_index_single_file(utils_file);
       expect(index).toBeDefined();
       const initial_functions = index!.functions.size;
 
@@ -802,7 +802,7 @@ describe("Project Integration - JavaScript", () => {
       project.update_file(utils_file, source_v2);
 
       // Verify re-indexing occurred
-      index = project.get_semantic_index(utils_file);
+      index = project.get_index_single_file(utils_file);
       expect(index).toBeDefined();
       expect(index!.functions.size).toBeGreaterThan(initial_functions);
 
@@ -823,7 +823,7 @@ describe("Project Integration - JavaScript", () => {
       project.update_file(main_file, main_source);
 
       // Verify initial state - helper call resolves
-      const main_v1 = project.get_semantic_index(main_file);
+      const main_v1 = project.get_index_single_file(main_file);
       const helper_call_v1 = main_v1!.references.find(
         (r): r is FunctionCallReference =>
           r.name === ("helper" as SymbolName) &&
@@ -845,7 +845,7 @@ describe("Project Integration - JavaScript", () => {
       project.update_file(utils_file, modified_utils);
 
       // Verify main.js still has the reference (source unchanged)
-      const main_v2 = project.get_semantic_index(main_file);
+      const main_v2 = project.get_index_single_file(main_file);
       const helper_call_v2 = main_v2!.references.find(
         (r): r is FunctionCallReference =>
           r.name === ("helper" as SymbolName) &&
@@ -878,11 +878,11 @@ describe("Project Integration - JavaScript", () => {
       project.remove_file(utils_file);
 
       // Verify utils.js is removed
-      const utils_index = project.get_semantic_index(utils_file);
+      const utils_index = project.get_index_single_file(utils_file);
       expect(utils_index).toBeUndefined();
 
       // Verify main.js still exists but import can't resolve
-      const main = project.get_semantic_index(main_file);
+      const main = project.get_index_single_file(main_file);
       expect(main).toBeDefined();
 
       // Call to helper (which was imported) should not resolve after source file removal

@@ -2,6 +2,7 @@
  * Tests for scope utility functions
  */
 
+import { describe, it, expect } from "vitest";
 import type {
   LexicalScope,
   ScopeId,

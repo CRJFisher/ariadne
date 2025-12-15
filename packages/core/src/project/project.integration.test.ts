@@ -25,7 +25,7 @@ function helper() { return "local"; }
 const result = helper();
       `);
 
-      const main_index = project.get_semantic_index("main.ts" as FilePath);
+      const main_index = project.get_index_single_file("main.ts" as FilePath);
       const helper_call = main_index?.references.find(
         (r) => r.kind === "function_call" && r.name === ("helper" as SymbolName)
       );
@@ -48,7 +48,7 @@ function helper() { return "local"; }
 const result = helper();
       `);
 
-      const main_index = project.get_semantic_index("main.js" as FilePath);
+      const main_index = project.get_index_single_file("main.js" as FilePath);
       const helper_call = main_index?.references.find(
         (r) => r.kind === "function_call" && r.name === ("helper" as SymbolName)
       );
@@ -71,7 +71,7 @@ def helper():
 result = helper()
       `);
 
-      const main_index = project.get_semantic_index("main.py" as FilePath);
+      const main_index = project.get_index_single_file("main.py" as FilePath);
       const helper_call = main_index?.references.find(
         (r) => r.kind === "function_call" && r.name === ("helper" as SymbolName)
       );
@@ -94,7 +94,7 @@ function outer() {
 }
       `);
 
-      const index = project.get_semantic_index("test.ts" as FilePath);
+      const index = project.get_index_single_file("test.ts" as FilePath);
       const scopes = Array.from(index!.scopes.values());
 
       // Should have module scope, outer scope, inner scope
@@ -112,7 +112,7 @@ def outer():
         return 42
       `);
 
-      const index = project.get_semantic_index("test.py" as FilePath);
+      const index = project.get_index_single_file("test.py" as FilePath);
       const scopes = Array.from(index!.scopes.values());
 
       expect(scopes.length).toBeGreaterThanOrEqual(3);
@@ -130,7 +130,7 @@ fn outer() {
 }
       `);
 
-      const index = project.get_semantic_index("test.rs" as FilePath);
+      const index = project.get_index_single_file("test.rs" as FilePath);
       const scopes = Array.from(index!.scopes.values());
 
       expect(scopes.length).toBeGreaterThanOrEqual(3);
@@ -152,7 +152,7 @@ const user = new User("Alice");
 const name = user.getName();
       `);
 
-      const index = project.get_semantic_index("test.ts" as FilePath);
+      const index = project.get_index_single_file("test.ts" as FilePath);
 
       // Find constructor call
       const constructor_calls = index?.references.filter(
@@ -186,7 +186,7 @@ user = User("Alice")
 name = user.get_name()
       `);
 
-      const index = project.get_semantic_index("test.py" as FilePath);
+      const index = project.get_index_single_file("test.py" as FilePath);
 
       // Find constructor call
       const constructor_calls = index?.references.filter(
@@ -228,7 +228,7 @@ fn main() {
 }
       `);
 
-      const index = project.get_semantic_index("test.rs" as FilePath);
+      const index = project.get_index_single_file("test.rs" as FilePath);
 
       // Find User::new() call (associated function / static method)
       // Note: Rust associated function calls are captured as function_call, not method_call
@@ -260,7 +260,7 @@ import { helper } from "./utils";
 const result = helper();
       `);
 
-      const main_index = project.get_semantic_index("main.ts" as FilePath);
+      const main_index = project.get_index_single_file("main.ts" as FilePath);
 
       // Find import - verifies import capture works
       const imports = Array.from(main_index!.imported_symbols.values());
@@ -297,7 +297,7 @@ const user = new User();
 const name = user.getName();
       `);
 
-      const main_index = project.get_semantic_index("main.ts" as FilePath);
+      const main_index = project.get_index_single_file("main.ts" as FilePath);
 
       // Find class import
       const imports = Array.from(main_index!.imported_symbols.values());
@@ -335,7 +335,7 @@ from utils import helper
 result = helper()
       `);
 
-      const main_index = project.get_semantic_index("main.py" as FilePath);
+      const main_index = project.get_index_single_file("main.py" as FilePath);
       const helper_call = main_index?.references.find(
         (r) => r.kind === "function_call" && r.name === ("helper" as SymbolName)
       );
@@ -368,7 +368,7 @@ fn main() {
 }
       `);
 
-      const main_index = project.get_semantic_index("main.rs" as FilePath);
+      const main_index = project.get_index_single_file("main.rs" as FilePath);
 
       // Find import
       const imports = Array.from(main_index!.imported_symbols.values());
@@ -391,7 +391,7 @@ import * as utils from "./utils";
 const result = utils.helper();
       `);
 
-      const main_index = project.get_semantic_index("main.ts" as FilePath);
+      const main_index = project.get_index_single_file("main.ts" as FilePath);
 
       // Find namespace import
       const imports = Array.from(main_index!.imported_symbols.values());
@@ -435,7 +435,7 @@ const x = utils.a();
 const y = utils.b();
       `);
 
-      const main_index = project.get_semantic_index("main.ts" as FilePath);
+      const main_index = project.get_index_single_file("main.ts" as FilePath);
 
       // Find both calls
       const a_call = main_index?.references.find(
@@ -483,7 +483,7 @@ import * as utils from "./utils";
 const x = utils.missing();
       `);
 
-      const main_index = project.get_semantic_index("main.ts" as FilePath);
+      const main_index = project.get_index_single_file("main.ts" as FilePath);
 
       // Find call to missing function
       const missing_call = main_index?.references.find(
@@ -556,7 +556,7 @@ function foo() { return bar(); }
 function bar() { return 42; }
       `);
 
-      const index = project.get_semantic_index("test.ts" as FilePath);
+      const index = project.get_index_single_file("test.ts" as FilePath);
 
       for (const ref of index!.references) {
         // SymbolReference fields: location, kind, scope_id, name
@@ -586,7 +586,7 @@ function bar() { return 42; }
       }
 
       // Type members should reference valid definitions
-      const index = project.get_semantic_index("test.ts" as FilePath);
+      const index = project.get_index_single_file("test.ts" as FilePath);
       const user_class = Array.from(index!.classes.values())[0];
       if (user_class) {
         const type_members = project.types.get_type_members(user_class.symbol_id);

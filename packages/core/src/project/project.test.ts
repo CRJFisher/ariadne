@@ -4,7 +4,7 @@ import type { FilePath, AnyDefinition } from "@ariadnejs/types";
 
 // Helper function to get all definitions from a file
 function get_file_definitions(project: Project, file_path: FilePath): AnyDefinition[] {
-  const index = project.get_semantic_index(file_path);
+  const index = project.get_index_single_file(file_path);
   if (!index) {
     return [];
   }
@@ -318,7 +318,7 @@ describe("Project", () => {
       const file1 = "file1.ts" as FilePath;
       project.update_file(file1, "function foo() {}");
 
-      const index = project.get_semantic_index(file1);
+      const index = project.get_index_single_file(file1);
       expect(index).toBeDefined();
       expect(index!.file_path).toBe(file1);
     });

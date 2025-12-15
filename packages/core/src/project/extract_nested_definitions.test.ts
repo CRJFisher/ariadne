@@ -20,7 +20,7 @@ describe("extract_all_parameters", () => {
         }
       `;
       project.update_file(file, code);
-      const index = project.get_semantic_index(file)!;
+      const index = project.get_index_single_file(file)!;
       const params = extract_all_parameters(index);
 
       expect(params.length).toBe(2);
@@ -42,7 +42,7 @@ describe("extract_all_parameters", () => {
         }
       `;
       project.update_file(file, code);
-      const index = project.get_semantic_index(file)!;
+      const index = project.get_index_single_file(file)!;
       const params = extract_all_parameters(index);
 
       expect(params.length).toBe(4);
@@ -61,7 +61,7 @@ describe("extract_all_parameters", () => {
         }
       `;
       project.update_file(file, code);
-      const index = project.get_semantic_index(file)!;
+      const index = project.get_index_single_file(file)!;
       const params = extract_all_parameters(index);
 
       expect(params.length).toBe(2);
@@ -79,7 +79,7 @@ describe("extract_all_parameters", () => {
         }
       `;
       project.update_file(file, code);
-      const index = project.get_semantic_index(file)!;
+      const index = project.get_index_single_file(file)!;
       const params = extract_all_parameters(index);
 
       expect(params.length).toBe(2);
@@ -104,7 +104,7 @@ describe("extract_all_parameters", () => {
         }
       `;
       project.update_file(file, code);
-      const index = project.get_semantic_index(file)!;
+      const index = project.get_index_single_file(file)!;
       const params = extract_all_parameters(index);
 
       // 1 from helper, 1 from constructor, 1 from method, 1 from interface
@@ -125,7 +125,7 @@ describe("extract_all_parameters", () => {
         }
       `;
       project.update_file(file, code);
-      const index = project.get_semantic_index(file)!;
+      const index = project.get_index_single_file(file)!;
       const params = extract_all_parameters(index);
 
       expect(params).toEqual([]);
@@ -137,7 +137,7 @@ describe("extract_all_parameters", () => {
         function typed(name: string, count: number): void {}
       `;
       project.update_file(file, code);
-      const index = project.get_semantic_index(file)!;
+      const index = project.get_index_single_file(file)!;
       const params = extract_all_parameters(index);
 
       expect(params.length).toBe(2);
@@ -154,7 +154,7 @@ describe("extract_all_parameters", () => {
         function withDefaults(x: number = 42, y: string = "hello"): void {}
       `;
       project.update_file(file, code);
-      const index = project.get_semantic_index(file)!;
+      const index = project.get_index_single_file(file)!;
       const params = extract_all_parameters(index);
 
       expect(params.length).toBe(2);
@@ -174,7 +174,7 @@ def greet(name: str, age: int) -> None:
     print(name, age)
       `;
       project.update_file(file, code);
-      const index = project.get_semantic_index(file)!;
+      const index = project.get_index_single_file(file)!;
       const params = extract_all_parameters(index);
 
       expect(params.length).toBe(2);
@@ -189,7 +189,7 @@ class Calculator:
         return a + b
       `;
       project.update_file(file, code);
-      const index = project.get_semantic_index(file)!;
+      const index = project.get_index_single_file(file)!;
       const params = extract_all_parameters(index);
 
       // Should have self, a, b
@@ -209,7 +209,7 @@ class Person:
         self.age = age
       `;
       project.update_file(file, code);
-      const index = project.get_semantic_index(file)!;
+      const index = project.get_index_single_file(file)!;
       const params = extract_all_parameters(index);
 
       // Should have self, name, age
@@ -230,7 +230,7 @@ class Person:
         }
       `;
       project.update_file(file, code);
-      const index = project.get_semantic_index(file)!;
+      const index = project.get_index_single_file(file)!;
       const params = extract_all_parameters(index);
 
       expect(params.length).toBe(2);
@@ -247,7 +247,7 @@ class Person:
         }
       `;
       project.update_file(file, code);
-      const index = project.get_semantic_index(file)!;
+      const index = project.get_index_single_file(file)!;
       const params = extract_all_parameters(index);
 
       expect(params.length).toBe(2);
@@ -265,7 +265,7 @@ class Person:
         }
       `;
       project.update_file(file, code);
-      const index = project.get_semantic_index(file)!;
+      const index = project.get_index_single_file(file)!;
       const params = extract_all_parameters(index);
 
       expect(params.length).toBe(2);
@@ -282,7 +282,7 @@ class Person:
         }
       `;
       project.update_file(file, code);
-      const index = project.get_semantic_index(file)!;
+      const index = project.get_index_single_file(file)!;
       const params = extract_all_parameters(index);
 
       expect(params.length).toBe(2);
@@ -301,7 +301,7 @@ class Person:
         }
       `;
       project.update_file(file, code);
-      const index = project.get_semantic_index(file)!;
+      const index = project.get_index_single_file(file)!;
       const params = extract_all_parameters(index);
 
       // Should have self, a, b
@@ -320,7 +320,7 @@ class Person:
         }
       `;
       project.update_file(file, code);
-      const index = project.get_semantic_index(file)!;
+      const index = project.get_index_single_file(file)!;
       const params = extract_all_parameters(index);
 
       expect(params.length).toBe(2);

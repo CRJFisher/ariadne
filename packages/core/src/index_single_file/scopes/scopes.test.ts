@@ -98,7 +98,7 @@ describe("scopes", () => {
       },
       endPosition: { row: location.end_line - 1, column: location.end_column },
       // Mock childForFieldName to return appropriate nodes
-      child_for_field_name: (field: string) => {
+      childForFieldName: (field: string) => {
         if (field === "name") {
           return name_node as any;
         }

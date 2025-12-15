@@ -147,7 +147,7 @@ describe("Rust Metadata Extractors", () => {
       const code = "let f: fn(i32) -> bool = |x| x > 0;";
       const tree = parser.parse(code);
       const let_decl = tree.rootNode.descendantsOfType("let_declaration")[0];
-      const type_node = let_decl.child_for_field_name("type");
+      const type_node = let_decl.childForFieldName("type");
 
       const result = RUST_METADATA_EXTRACTORS.extract_type_from_annotation(type_node!, TEST_FILE);
 
@@ -159,7 +159,7 @@ describe("Rust Metadata Extractors", () => {
       const code = "let iter: Box<dyn Iterator<Item = i32>> = Box::new(vec![1, 2, 3].into_iter());";
       const tree = parser.parse(code);
       const let_decl = tree.rootNode.descendantsOfType("let_declaration")[0];
-      const type_node = let_decl.child_for_field_name("type");
+      const type_node = let_decl.childForFieldName("type");
 
       const result = RUST_METADATA_EXTRACTORS.extract_type_from_annotation(type_node!, TEST_FILE);
 
@@ -171,7 +171,7 @@ describe("Rust Metadata Extractors", () => {
       const code = "fn foo() -> impl Display { 42 }";
       const tree = parser.parse(code);
       const func_item = tree.rootNode.descendantsOfType("function_item")[0];
-      const return_type = func_item.child_for_field_name("return_type");
+      const return_type = func_item.childForFieldName("return_type");
 
       // impl Display is the return type, which should be an impl_trait_type node
       if (return_type) {
@@ -194,7 +194,7 @@ describe("Rust Metadata Extractors", () => {
       const code = "let x: *const i32 = std::ptr::null();";
       const tree = parser.parse(code);
       const let_decl = tree.rootNode.descendantsOfType("let_declaration")[0];
-      const type_node = let_decl.child_for_field_name("type");
+      const type_node = let_decl.childForFieldName("type");
 
       const result = RUST_METADATA_EXTRACTORS.extract_type_from_annotation(type_node!, TEST_FILE);
 
@@ -206,7 +206,7 @@ describe("Rust Metadata Extractors", () => {
       const code = "fn foo<T: Display + Clone>(x: T) {}";
       const tree = parser.parse(code);
       const param = tree.rootNode.descendantsOfType("parameter")[0];
-      const type_node = param.child_for_field_name("type");
+      const type_node = param.childForFieldName("type");
 
       const result = RUST_METADATA_EXTRACTORS.extract_type_from_annotation(type_node!, TEST_FILE);
 
@@ -218,7 +218,7 @@ describe("Rust Metadata Extractors", () => {
       const code = "fn foo(data: &[u8]) {}";
       const tree = parser.parse(code);
       const param = tree.rootNode.descendantsOfType("parameter")[0];
-      const type_node = param.child_for_field_name("type");
+      const type_node = param.childForFieldName("type");
 
       const result = RUST_METADATA_EXTRACTORS.extract_type_from_annotation(type_node!, TEST_FILE);
 
@@ -230,7 +230,7 @@ describe("Rust Metadata Extractors", () => {
       const code = "let x: Option :: <String> = None;";
       const tree = parser.parse(code);
       const let_decl = tree.rootNode.descendantsOfType("let_declaration")[0];
-      const type_node = let_decl.child_for_field_name("type");
+      const type_node = let_decl.childForFieldName("type");
 
       const result = RUST_METADATA_EXTRACTORS.extract_type_from_annotation(type_node!, TEST_FILE);
 
@@ -259,7 +259,7 @@ describe("Rust Metadata Extractors", () => {
       const code = "let x: i32 = 5;";
       const tree = parser.parse(code);
       const let_decl = tree.rootNode.descendantsOfType("let_declaration")[0];
-      const type_node = let_decl.child_for_field_name("type");
+      const type_node = let_decl.childForFieldName("type");
 
       // Create a mock type_annotation node for testing
       if (type_node && type_node.type === "primitive_type") {
@@ -442,7 +442,7 @@ describe("Rust Metadata Extractors", () => {
       const code = "let manager = UserManager::new();";
       const tree = parser.parse(code);
       const call_expr = tree.rootNode.descendantsOfType("call_expression")[0];
-      const scoped_id = call_expr.child_for_field_name("function");
+      const scoped_id = call_expr.childForFieldName("function");
 
       expect(scoped_id?.type).toBe("scoped_identifier");
 
@@ -461,7 +461,7 @@ describe("Rust Metadata Extractors", () => {
       // Find the iter call with turbofish
       let turbofish_call;
       for (const call of calls) {
-        const func = call.child_for_field_name("function");
+        const func = call.childForFieldName("function");
         if (func && func.type === "generic_function") {
           turbofish_call = call;
           break;
@@ -884,7 +884,7 @@ describe("Rust Metadata Extractors", () => {
       const code = "let Some(value) = opt;";
       const tree = parser.parse(code);
       const let_decl = tree.rootNode.descendantsOfType("let_declaration")[0];
-      const pattern = let_decl.child_for_field_name("pattern");
+      const pattern = let_decl.childForFieldName("pattern");
 
       if (pattern) {
         // Test with the pattern directly
@@ -1036,7 +1036,7 @@ describe("Rust Metadata Extractors", () => {
         text: "SomeType<A, B, C>",
         childCount: 0,
         child: () => null,
-        child_for_field_name: () => null,
+        childForFieldName: () => null,
       } as any;
 
       const result = RUST_METADATA_EXTRACTORS.extract_type_arguments(mock_node);
@@ -1053,7 +1053,7 @@ describe("Rust Metadata Extractors", () => {
         text: "collect::<Vec<String>>",
         childCount: 0,
         child: () => null,
-        child_for_field_name: () => null,
+        childForFieldName: () => null,
       } as any;
 
       const result = RUST_METADATA_EXTRACTORS.extract_type_arguments(mock_node);
@@ -1125,7 +1125,7 @@ impl MyStruct {
       const code = "let closure: Box<dyn Fn(i32) -> i32> = Box::new(|x| x * 2);";
       const tree = parser.parse(code);
       const let_decl = tree.rootNode.descendantsOfType("let_declaration")[0];
-      const type_node = let_decl.child_for_field_name("type");
+      const type_node = let_decl.childForFieldName("type");
 
       const result = RUST_METADATA_EXTRACTORS.extract_type_from_annotation(type_node!, TEST_FILE);
 
@@ -1137,7 +1137,7 @@ impl MyStruct {
       const code = "fn foo<T>() -> T where T: Default {}";
       const tree = parser.parse(code);
       const func_item = tree.rootNode.descendantsOfType("function_item")[0];
-      const return_type = func_item.child_for_field_name("return_type");
+      const return_type = func_item.childForFieldName("return_type");
 
       const result = RUST_METADATA_EXTRACTORS.extract_type_from_annotation(return_type!, TEST_FILE);
 
@@ -1149,7 +1149,7 @@ impl MyStruct {
       const code = "async fn fetch() -> Result<String, Error> {}";
       const tree = parser.parse(code);
       const func_item = tree.rootNode.descendantsOfType("function_item")[0];
-      const return_type = func_item.child_for_field_name("return_type");
+      const return_type = func_item.childForFieldName("return_type");
 
       const result = RUST_METADATA_EXTRACTORS.extract_type_from_annotation(return_type!, TEST_FILE);
 
@@ -1161,7 +1161,7 @@ impl MyStruct {
       const code = "let arr: [i32; 10] = [0; 10];";
       const tree = parser.parse(code);
       const let_decl = tree.rootNode.descendantsOfType("let_declaration")[0];
-      const type_node = let_decl.child_for_field_name("type");
+      const type_node = let_decl.childForFieldName("type");
 
       const result = RUST_METADATA_EXTRACTORS.extract_type_from_annotation(type_node!, TEST_FILE);
 
@@ -1173,7 +1173,7 @@ impl MyStruct {
       const code = "let range: std::ops::Range<usize> = 0..10;";
       const tree = parser.parse(code);
       const let_decl = tree.rootNode.descendantsOfType("let_declaration")[0];
-      const type_node = let_decl.child_for_field_name("type");
+      const type_node = let_decl.childForFieldName("type");
 
       const result = RUST_METADATA_EXTRACTORS.extract_type_from_annotation(type_node!, TEST_FILE);
 
@@ -1185,7 +1185,7 @@ impl MyStruct {
       const code = "let x: dyn Debug = &42;";
       const tree = parser.parse(code);
       const let_decl = tree.rootNode.descendantsOfType("let_declaration")[0];
-      const type_node = let_decl.child_for_field_name("type");
+      const type_node = let_decl.childForFieldName("type");
 
       if (type_node) {
         const result = RUST_METADATA_EXTRACTORS.extract_type_from_annotation(type_node, TEST_FILE);

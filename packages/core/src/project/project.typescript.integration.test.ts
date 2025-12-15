@@ -40,7 +40,7 @@ describe("Project Integration - TypeScript", () => {
       project.update_file(file, source);
 
       // Get semantic index
-      const index = project.get_semantic_index(file);
+      const index = project.get_index_single_file(file);
       expect(index).toBeDefined();
 
       // Find function definitions
@@ -79,7 +79,7 @@ describe("Project Integration - TypeScript", () => {
       const file = file_path("constructor_method_chain.ts");
       project.update_file(file, source);
 
-      const index = project.get_semantic_index(file);
+      const index = project.get_index_single_file(file);
       expect(index).toBeDefined();
 
       // Find the User class
@@ -99,7 +99,7 @@ describe("Project Integration - TypeScript", () => {
       const file = file_path("constructor_method_chain.ts");
       project.update_file(file, source);
 
-      const index = project.get_semantic_index(file);
+      const index = project.get_index_single_file(file);
       expect(index).toBeDefined();
 
       // Find method call references
@@ -226,7 +226,7 @@ describe("Project Integration - TypeScript", () => {
       project.update_file(main_file, main_source);
 
       // Get main index
-      const main = project.get_semantic_index(main_file);
+      const main = project.get_index_single_file(main_file);
       expect(main).toBeDefined();
 
       // Find import
@@ -238,7 +238,7 @@ describe("Project Integration - TypeScript", () => {
       expect(user_import).toBeDefined();
 
       // Verify User class is in types.ts
-      const types_index = project.get_semantic_index(types_file);
+      const types_index = project.get_index_single_file(types_file);
       const user_class = Array.from(types_index!.classes.values()).find(
         (c) => c.name === ("User" as SymbolName)
       );
@@ -257,7 +257,7 @@ describe("Project Integration - TypeScript", () => {
       project.update_file(main_file, main_source);
 
       // Get main index
-      const main = project.get_semantic_index(main_file);
+      const main = project.get_index_single_file(main_file);
       expect(main).toBeDefined();
 
       // Find method calls
@@ -273,7 +273,7 @@ describe("Project Integration - TypeScript", () => {
       expect(get_name_call).toBeDefined();
 
       // Get the User class from types.ts
-      const types_index = project.get_semantic_index(types_file);
+      const types_index = project.get_index_single_file(types_file);
       const user_class = Array.from(types_index!.classes.values()).find(
         (c) => c.name === ("User" as SymbolName)
       );
@@ -305,7 +305,7 @@ describe("Project Integration - TypeScript", () => {
       project.update_file(utils_file, utils_source);
       project.update_file(main_file, main_source);
 
-      const main = project.get_semantic_index(main_file);
+      const main = project.get_index_single_file(main_file);
       expect(main).toBeDefined();
 
       // Find call to "helper"
@@ -338,7 +338,7 @@ describe("Project Integration - TypeScript", () => {
       project.update_file(utils_file, utils_source);
       project.update_file(main_file, main_source);
 
-      const main = project.get_semantic_index(main_file);
+      const main = project.get_index_single_file(main_file);
       expect(main).toBeDefined();
 
       // Find call to "otherFunction" (not shadowed)
@@ -373,7 +373,7 @@ describe("Project Integration - TypeScript", () => {
       project.update_file(utils_file, utils_source);
       project.update_file(main_file, main_source);
 
-      const main = project.get_semantic_index(main_file);
+      const main = project.get_index_single_file(main_file);
       expect(main).toBeDefined();
 
       // Verify namespace import exists
@@ -429,7 +429,7 @@ describe("Project Integration - TypeScript", () => {
       project.update_file(utils_file, utils_source);
       project.update_file(main_file, main_source);
 
-      const main = project.get_semantic_index(main_file);
+      const main = project.get_index_single_file(main_file);
       expect(main).toBeDefined();
 
       // Find all method calls
@@ -480,7 +480,7 @@ describe("Project Integration - TypeScript", () => {
       const utils_file = file_path("utils.ts");
       project.update_file(utils_file, source_v1);
 
-      let index = project.get_semantic_index(utils_file);
+      let index = project.get_index_single_file(utils_file);
       expect(index).toBeDefined();
       const initial_functions = index!.functions.size;
 
@@ -489,7 +489,7 @@ describe("Project Integration - TypeScript", () => {
       project.update_file(utils_file, source_v2);
 
       // Verify re-indexing occurred
-      index = project.get_semantic_index(utils_file);
+      index = project.get_index_single_file(utils_file);
       expect(index).toBeDefined();
       expect(index!.functions.size).toBeGreaterThan(initial_functions);
 
@@ -510,7 +510,7 @@ describe("Project Integration - TypeScript", () => {
       project.update_file(main_file, main_source);
 
       // Verify initial state - otherFunction call resolves
-      const main_v1 = project.get_semantic_index(main_file);
+      const main_v1 = project.get_index_single_file(main_file);
       const other_call_v1 = main_v1!.references.find(
         (r): r is FunctionCallReference | MethodCallReference | SelfReferenceCall | ConstructorCallReference =>
           (r.kind === "function_call" ||
@@ -538,7 +538,7 @@ describe("Project Integration - TypeScript", () => {
       project.update_file(utils_file, modified_utils);
 
       // Verify main.ts still has the reference (source unchanged)
-      const main_v2 = project.get_semantic_index(main_file);
+      const main_v2 = project.get_index_single_file(main_file);
       const other_call_v2 = main_v2!.references.find(
         (r): r is FunctionCallReference | MethodCallReference | SelfReferenceCall | ConstructorCallReference =>
           (r.kind === "function_call" ||
@@ -574,11 +574,11 @@ describe("Project Integration - TypeScript", () => {
       project.remove_file(utils_file);
 
       // Verify utils.ts is removed
-      const utils_index = project.get_semantic_index(utils_file);
+      const utils_index = project.get_index_single_file(utils_file);
       expect(utils_index).toBeUndefined();
 
       // Verify main.ts still exists but import can't resolve
-      const main = project.get_semantic_index(main_file);
+      const main = project.get_index_single_file(main_file);
       expect(main).toBeDefined();
 
       // Call to otherFunction (which was imported) should not resolve after source file removal
@@ -756,7 +756,7 @@ export class TypeRegistry {
       const file = file_path("polymorphic_handler.ts");
       project.update_file(file, source);
 
-      const index = project.get_semantic_index(file);
+      const index = project.get_index_single_file(file);
       expect(index).toBeDefined();
 
       // Find the Handler interface

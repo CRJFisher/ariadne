@@ -35,7 +35,7 @@ describe("Project Integration - Python", () => {
       const file = file_path("functions/nested_scopes.py");
       project.update_file(file, source);
 
-      const index = project.get_semantic_index(file);
+      const index = project.get_index_single_file(file);
       expect(index).toBeDefined();
 
       // Find function definitions
@@ -74,7 +74,7 @@ describe("Project Integration - Python", () => {
       const file = file_path("classes/constructor_workflow.py");
       project.update_file(file, source);
 
-      const index = project.get_semantic_index(file);
+      const index = project.get_index_single_file(file);
       expect(index).toBeDefined();
 
       // Find the Product class
@@ -93,7 +93,7 @@ describe("Project Integration - Python", () => {
       const file = file_path("classes/constructor_workflow.py");
       project.update_file(file, source);
 
-      const index = project.get_semantic_index(file);
+      const index = project.get_index_single_file(file);
       expect(index).toBeDefined();
 
       // Find method call references
@@ -137,7 +137,7 @@ describe("Project Integration - Python", () => {
       project.update_file(shadowing_file, shadowing_source);
 
       // Get shadowing.py index
-      const shadowing_index = project.get_semantic_index(shadowing_file);
+      const shadowing_index = project.get_index_single_file(shadowing_file);
       expect(shadowing_index).toBeDefined();
 
       // Verify import definitions created
@@ -187,7 +187,7 @@ describe("Project Integration - Python", () => {
       project.update_file(shadowing_file, shadowing_source);
 
       // Get shadowing.py index
-      const shadowing_index = project.get_semantic_index(shadowing_file);
+      const shadowing_index = project.get_index_single_file(shadowing_file);
       expect(shadowing_index).toBeDefined();
 
       // Find call to process_data (imported function)
@@ -229,7 +229,7 @@ describe("Project Integration - Python", () => {
       project.update_file(uses_user_file, uses_user_source);
 
       // Get uses_user.py index
-      const uses_user_index = project.get_semantic_index(uses_user_file);
+      const uses_user_index = project.get_index_single_file(uses_user_file);
       expect(uses_user_index).toBeDefined();
 
       // Find User constructor call (should be a call with call_type "constructor" or "function")
@@ -283,7 +283,7 @@ describe("Project Integration - Python", () => {
       project.update_file(uses_user_file, uses_user_source);
 
       // Get uses_user.py index
-      const uses_user_index = project.get_semantic_index(uses_user_file);
+      const uses_user_index = project.get_index_single_file(uses_user_file);
       expect(uses_user_index).toBeDefined();
 
       // Find get_name method call
@@ -325,7 +325,7 @@ describe("Project Integration - Python", () => {
       project.update_file(utils_file, utils_source);
       project.update_file(shadowing_file, shadowing_source);
 
-      const shadowing_index = project.get_semantic_index(shadowing_file);
+      const shadowing_index = project.get_index_single_file(shadowing_file);
       expect(shadowing_index).toBeDefined();
       if (!shadowing_index) return;
 
@@ -349,7 +349,7 @@ describe("Project Integration - Python", () => {
       const file = file_path("classes/basic_class.py");
       project.update_file(file, source);
 
-      const index = project.get_semantic_index(file);
+      const index = project.get_index_single_file(file);
       expect(index).toBeDefined();
 
       // Find User class
@@ -396,7 +396,7 @@ describe("Project Integration - Python", () => {
       project.update_file(uses_user_file, uses_user_source);
 
       // Get uses_user.py index
-      const uses_user_index = project.get_semantic_index(uses_user_file);
+      const uses_user_index = project.get_index_single_file(uses_user_file);
       expect(uses_user_index).toBeDefined();
 
       // Find method call references
@@ -419,7 +419,7 @@ describe("Project Integration - Python", () => {
       expect(user_import).toBeDefined();
 
       // Verify User class exists in user_class.py
-      const user_class_index = project.get_semantic_index(user_class_file);
+      const user_class_index = project.get_index_single_file(user_class_file);
       const user_class = Array.from(user_class_index!.classes.values()).find(
         (c) => c.name === ("User" as SymbolName)
       );
@@ -451,7 +451,7 @@ describe("Project Integration - Python", () => {
       project.update_file(utils_file, utils_source);
       project.update_file(shadowing_file, shadowing_source);
 
-      const shadowing_index = project.get_semantic_index(shadowing_file);
+      const shadowing_index = project.get_index_single_file(shadowing_file);
       expect(shadowing_index).toBeDefined();
 
       // Find call to "helper"
@@ -484,7 +484,7 @@ describe("Project Integration - Python", () => {
       project.update_file(utils_file, utils_source);
       project.update_file(shadowing_file, shadowing_source);
 
-      const shadowing_index = project.get_semantic_index(shadowing_file);
+      const shadowing_index = project.get_index_single_file(shadowing_file);
       expect(shadowing_index).toBeDefined();
 
       // Find call to "process_data" (not shadowed)
@@ -516,7 +516,7 @@ describe("Project Integration - Python", () => {
       const file = file_path("classes/constructor_workflow.py");
       project.update_file(file, source);
 
-      const index = project.get_semantic_index(file);
+      const index = project.get_index_single_file(file);
       expect(index).toBeDefined();
 
       // Find the Product class
@@ -557,7 +557,7 @@ describe("Project Integration - Python", () => {
       const file = file_path("classes/constructor_workflow.py");
       project.update_file(file, source);
 
-      const index = project.get_semantic_index(file);
+      const index = project.get_index_single_file(file);
       expect(index).toBeDefined();
 
       // Find apply_discount method call (part of method chain)
@@ -654,7 +654,7 @@ class Service:
       const file = file_path("functions/nested_scopes.py");
       project.update_file(file, source);
 
-      const index = project.get_semantic_index(file);
+      const index = project.get_index_single_file(file);
       expect(index).toBeDefined();
 
       // Find the outer_function
@@ -680,7 +680,7 @@ class Service:
       const file = file_path("classes/basic_class.py");
       project.update_file(file, source);
 
-      const index = project.get_semantic_index(file);
+      const index = project.get_index_single_file(file);
       expect(index).toBeDefined();
 
       const user_class = Array.from(index!.classes.values()).find(
@@ -708,7 +708,7 @@ class Service:
       const utils_file = file_path("modules/utils.py");
       project.update_file(utils_file, source_v1);
 
-      let index = project.get_semantic_index(utils_file);
+      let index = project.get_index_single_file(utils_file);
       expect(index).toBeDefined();
       const initial_functions = index!.functions.size;
 
@@ -718,7 +718,7 @@ class Service:
       project.update_file(utils_file, source_v2);
 
       // Verify re-indexing occurred
-      index = project.get_semantic_index(utils_file);
+      index = project.get_index_single_file(utils_file);
       expect(index).toBeDefined();
       expect(index!.functions.size).toBeGreaterThan(initial_functions);
 
@@ -739,7 +739,7 @@ class Service:
       project.update_file(shadowing_file, shadowing_source);
 
       // Verify initial state - process_data call resolves
-      const shadowing_v1 = project.get_semantic_index(shadowing_file);
+      const shadowing_v1 = project.get_index_single_file(shadowing_file);
       const process_data_call_v1 = shadowing_v1!.references.find(
         (r): r is FunctionCallReference | MethodCallReference | SelfReferenceCall | ConstructorCallReference =>
           (r.kind === "function_call" ||
@@ -769,7 +769,7 @@ class Service:
       project.update_file(utils_file, modified_utils);
 
       // Verify shadowing.py still has the reference (source unchanged)
-      const shadowing_v2 = project.get_semantic_index(shadowing_file);
+      const shadowing_v2 = project.get_index_single_file(shadowing_file);
       const process_data_call_v2 = shadowing_v2!.references.find(
         (r): r is FunctionCallReference | MethodCallReference | SelfReferenceCall | ConstructorCallReference =>
           (r.kind === "function_call" ||
@@ -805,11 +805,11 @@ class Service:
       project.remove_file(utils_file);
 
       // Verify utils.py is removed
-      const utils_index = project.get_semantic_index(utils_file);
+      const utils_index = project.get_index_single_file(utils_file);
       expect(utils_index).toBeUndefined();
 
       // Verify shadowing.py still exists but import can't resolve
-      const shadowing = project.get_semantic_index(shadowing_file);
+      const shadowing = project.get_index_single_file(shadowing_file);
       expect(shadowing).toBeDefined();
 
       // Call to process_data (which was imported) should not resolve after source file removal
@@ -943,7 +943,7 @@ class Service:
       project.update_file(utils_file, utils_source);
       project.update_file(nested_imports_file, nested_imports_source);
 
-      const nested_index = project.get_semantic_index(nested_imports_file);
+      const nested_index = project.get_index_single_file(nested_imports_file);
       expect(nested_index).toBeDefined();
 
       // Find call to helper() which was imported via "from ...modules.utils import helper"
@@ -1007,7 +1007,7 @@ class Service:
       project.update_file(core_file, core_source);
       project.update_file(nested_imports_file, nested_imports_source);
 
-      const nested_index = project.get_semantic_index(nested_imports_file);
+      const nested_index = project.get_index_single_file(nested_imports_file);
       expect(nested_index).toBeDefined();
 
       // Find call to core_function() which was imported via "from .core import core_function"
@@ -1051,7 +1051,7 @@ class Service:
       expect(deps_before.has(utils_file)).toBe(true);
 
       // Verify resolution works before removal
-      const nested_index = project.get_semantic_index(nested_imports_file);
+      const nested_index = project.get_index_single_file(nested_imports_file);
       const helper_call = nested_index?.references.find(
         (r): r is FunctionCallReference | MethodCallReference | SelfReferenceCall | ConstructorCallReference =>
           (r.kind === "function_call" ||
@@ -1093,7 +1093,7 @@ class Service:
 
       project.update_file(nested_imports_file, nested_imports_source);
 
-      const index = project.get_semantic_index(nested_imports_file);
+      const index = project.get_index_single_file(nested_imports_file);
       expect(index).toBeDefined();
 
       if (index) {
@@ -1276,7 +1276,7 @@ def process():
       const file = file_path("classes/polymorphic_protocol.py");
       project.update_file(file, source);
 
-      const index = project.get_semantic_index(file);
+      const index = project.get_index_single_file(file);
       expect(index).toBeDefined();
 
       // Find the Handler Protocol (should be captured as an interface)
@@ -1358,7 +1358,7 @@ def make_sound(animal: Animal) -> None:
       const file = "/test/explicit_protocol.py" as FilePath;
       project.update_file(file, source);
 
-      const index = project.get_semantic_index(file);
+      const index = project.get_index_single_file(file);
       expect(index).toBeDefined();
 
       // Find Animal Protocol

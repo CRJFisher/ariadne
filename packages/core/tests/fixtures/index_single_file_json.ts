@@ -90,7 +90,7 @@ export interface SemanticIndexJSON {
  * @param index - The SemanticIndex to serialize
  * @returns JSON-serializable object
  */
-export function semantic_index_to_json(
+export function index_single_file_to_json(
   index: import("../../../src/index_single_file/semantic_index").SemanticIndex
 ): SemanticIndexJSON {
   return {
@@ -114,12 +114,12 @@ export function semantic_index_to_json(
  * Deserializes a SemanticIndex from JSON format
  *
  * Converts plain objects back to ReadonlyMaps. This is the inverse
- * of semantic_index_to_json().
+ * of index_single_file_to_json().
  *
  * @param json - The JSON object to deserialize
  * @returns A SemanticIndex object
  */
-export function json_to_semantic_index(
+export function json_to_index_single_file(
   json: SemanticIndexJSON
 ): import("../../../src/index_single_file/semantic_index").SemanticIndex {
   return {
@@ -173,24 +173,24 @@ export function json_to_semantic_index(
  * @param index - The SemanticIndex to serialize
  * @returns Formatted JSON string
  */
-export function semantic_index_to_json_string(
+export function index_single_file_to_json_string(
   index: import("../../../src/index_single_file/semantic_index").SemanticIndex
 ): string {
-  return JSON.stringify(semantic_index_to_json(index), null, 2);
+  return JSON.stringify(index_single_file_to_json(index), null, 2);
 }
 
 /**
  * Deserializes a SemanticIndex from JSON string
  *
- * This is the inverse of semantic_index_to_json_string().
+ * This is the inverse of index_single_file_to_json_string().
  *
  * @param json_string - The JSON string to deserialize
  * @returns A SemanticIndex object
  */
-export function json_string_to_semantic_index(
+export function json_string_to_index_single_file(
   json_string: string
 ): import("../../../src/index_single_file/semantic_index").SemanticIndex {
-  return json_to_semantic_index(JSON.parse(json_string));
+  return json_to_index_single_file(JSON.parse(json_string));
 }
 
 /**
@@ -202,11 +202,11 @@ export function json_string_to_semantic_index(
  * @param index - The SemanticIndex to write
  * @param output_path - Absolute path to the output JSON file
  */
-export function write_semantic_index_fixture(
+export function write_index_single_file_fixture(
   index: import("../../../src/index_single_file/semantic_index").SemanticIndex,
   output_path: string
 ): void {
-  const json_string = semantic_index_to_json_string(index);
+  const json_string = index_single_file_to_json_string(index);
   fs.writeFileSync(output_path, json_string + "\n", "utf-8");
 }
 
@@ -216,9 +216,9 @@ export function write_semantic_index_fixture(
  * @param fixture_path - Absolute path to the JSON fixture file
  * @returns The deserialized SemanticIndex
  */
-export function load_semantic_index_fixture(
+export function load_index_single_file_fixture(
   fixture_path: string
 ): import("../../../src/index_single_file/semantic_index").SemanticIndex {
   const json_string = fs.readFileSync(fixture_path, "utf-8");
-  return json_string_to_semantic_index(json_string);
+  return json_string_to_index_single_file(json_string);
 }

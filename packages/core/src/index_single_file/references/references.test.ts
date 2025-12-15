@@ -2,7 +2,7 @@
  * Tests for Reference Builder System
  */
 
-import { describe, it, expect, beforeEach, vi } from "vitest";
+import { describe, it, expect, beforeEach, vi, test } from "vitest";
 import {
   ReferenceBuilder,
   process_references,

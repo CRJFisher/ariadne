@@ -63,7 +63,7 @@ describe("Self-Reference Resolution Integration", () => {
       const file = path.join(temp_dir, "user.ts") as FilePath;
       project.update_file(file, code);
 
-      const index = project.get_semantic_index(file);
+      const index = project.get_index_single_file(file);
       expect(index).toBeDefined();
 
       // Find the User class
@@ -112,7 +112,7 @@ describe("Self-Reference Resolution Integration", () => {
       const file = path.join(temp_dir, "counter.ts") as FilePath;
       project.update_file(file, code);
 
-      const index = project.get_semantic_index(file);
+      const index = project.get_index_single_file(file);
       expect(index).toBeDefined();
 
       // Find the Counter class
@@ -151,7 +151,7 @@ describe("Self-Reference Resolution Integration", () => {
       const file = path.join(temp_dir, "service.ts") as FilePath;
       project.update_file(file, code);
 
-      const index = project.get_semantic_index(file);
+      const index = project.get_index_single_file(file);
       expect(index).toBeDefined();
 
       // Find the Service class
@@ -204,7 +204,7 @@ describe("Self-Reference Resolution Integration", () => {
       const file = path.join(temp_dir, "event_handler.ts") as FilePath;
       project.update_file(file, code);
 
-      const index = project.get_semantic_index(file);
+      const index = project.get_index_single_file(file);
       expect(index).toBeDefined();
 
       // Find the EventHandler class
@@ -239,7 +239,7 @@ describe("Self-Reference Resolution Integration", () => {
       const file = path.join(temp_dir, "dog.ts") as FilePath;
       project.update_file(file, code);
 
-      const index = project.get_semantic_index(file);
+      const index = project.get_index_single_file(file);
       expect(index).toBeDefined();
 
       // Find the Animal class
@@ -285,7 +285,7 @@ describe("Self-Reference Resolution Integration", () => {
       const file = path.join(temp_dir, "car.ts") as FilePath;
       project.update_file(file, code);
 
-      const index = project.get_semantic_index(file);
+      const index = project.get_index_single_file(file);
       expect(index).toBeDefined();
 
       // Find the Vehicle class
@@ -325,7 +325,7 @@ describe("Self-Reference Resolution Integration", () => {
       const file = path.join(temp_dir, "inheritance.ts") as FilePath;
       project.update_file(file, code);
 
-      const index = project.get_semantic_index(file);
+      const index = project.get_index_single_file(file);
       expect(index).toBeDefined();
 
       // Find all classes
@@ -372,7 +372,7 @@ describe("Self-Reference Resolution Integration", () => {
       const file = path.join(temp_dir, "config.ts") as FilePath;
       project.update_file(file, code);
 
-      const index = project.get_semantic_index(file);
+      const index = project.get_index_single_file(file);
       expect(index).toBeDefined();
 
       // Find the Config class
@@ -404,7 +404,7 @@ class User:
       const file = path.join(temp_dir, "user.py") as FilePath;
       project.update_file(file, code);
 
-      const index = project.get_semantic_index(file);
+      const index = project.get_index_single_file(file);
       expect(index).toBeDefined();
 
       // Find the User class
@@ -444,7 +444,7 @@ class Counter:
       const file = path.join(temp_dir, "counter.py") as FilePath;
       project.update_file(file, code);
 
-      const index = project.get_semantic_index(file);
+      const index = project.get_index_single_file(file);
       expect(index).toBeDefined();
 
       // Find the Counter class
@@ -474,7 +474,7 @@ class Factory:
       const file = path.join(temp_dir, "factory.py") as FilePath;
       project.update_file(file, code);
 
-      const index = project.get_semantic_index(file);
+      const index = project.get_index_single_file(file);
       expect(index).toBeDefined();
 
       // Find the Factory class
@@ -512,7 +512,7 @@ class Dog(Animal):
       const file = path.join(temp_dir, "dog.py") as FilePath;
       project.update_file(file, code);
 
-      const index = project.get_semantic_index(file);
+      const index = project.get_index_single_file(file);
       expect(index).toBeDefined();
 
       // Find the Animal class
@@ -550,7 +550,7 @@ class Service:
       const file = path.join(temp_dir, "service.py") as FilePath;
       project.update_file(file, code);
 
-      const index = project.get_semantic_index(file);
+      const index = project.get_index_single_file(file);
       expect(index).toBeDefined();
 
       // Find the Service class
@@ -593,7 +593,7 @@ class Service:
       const file = path.join(temp_dir, "user.js") as FilePath;
       project.update_file(file, code);
 
-      const index = project.get_semantic_index(file);
+      const index = project.get_index_single_file(file);
       expect(index).toBeDefined();
 
       // Find the User class
@@ -632,7 +632,7 @@ class Service:
       const file = path.join(temp_dir, "counter.js") as FilePath;
       project.update_file(file, code);
 
-      const index = project.get_semantic_index(file);
+      const index = project.get_index_single_file(file);
       expect(index).toBeDefined();
 
       // For prototype pattern, verify functions are captured
@@ -671,7 +671,7 @@ class Service:
       const file = path.join(temp_dir, "counter.rs") as FilePath;
       project.update_file(file, code);
 
-      const index = project.get_semantic_index(file);
+      const index = project.get_index_single_file(file);
       expect(index).toBeDefined();
 
       // Verify Counter struct exists
@@ -712,7 +712,7 @@ class Service:
       const file = path.join(temp_dir, "data.rs") as FilePath;
       project.update_file(file, code);
 
-      const index = project.get_semantic_index(file);
+      const index = project.get_index_single_file(file);
       expect(index).toBeDefined();
 
       // Verify Data struct exists

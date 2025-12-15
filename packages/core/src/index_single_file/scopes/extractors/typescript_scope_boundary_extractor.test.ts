@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { TypeScriptScopeBoundaryExtractor } from "./typescript_scopes.boundary_extractor";
+import { TypeScriptScopeBoundaryExtractor } from "./typescript_scope_boundary_extractor";
 import type { FilePath } from "@ariadnejs/types";
 import type Parser from "tree-sitter";
 
@@ -19,9 +19,9 @@ describe("TypeScriptScopeBoundaryExtractor", () => {
       type,
       text: type,
       startPosition: position,
-      end_position: end_position,
+      endPosition: end_position,
       parent,
-      child_for_field_name: (name: string) => fields[name] || null,
+      childForFieldName: (name: string) => fields[name] || null,
       child: () => null,
       children: [],
       childCount: 0,
