@@ -1,6 +1,6 @@
 # Task 11.161.5: Update Documentation
 
-## Status: Planning
+## Status: Completed
 
 ## Parent: Task 11.161
 
@@ -117,3 +117,18 @@ Hook scripts validate file naming on Write/Edit and audit on task completion.
 3. Exception directories clearly listed
 4. Hook behavior documented
 5. CLAUDE.md references full documentation
+
+## Implementation Notes
+
+### Completed 2025-12-18
+
+1. **Rewrote `backlog/docs/file-naming-conventions.md`**
+   - Emphasized the folder-module naming rule (all files prefixed with folder name)
+   - Documented rationale: signaling intentionality and preventing debug script accumulation
+   - Written in canonical style (describes current state, not history)
+   - Includes all patterns, special cases, and hook enforcement details
+
+2. **Updated CLAUDE.md**
+   - Added "File Naming Conventions" section after Code Style Guidelines
+   - Quick reference to folder-module naming rule
+   - Lists special cases and references full documentation

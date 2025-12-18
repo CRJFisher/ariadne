@@ -115,6 +115,37 @@ const methodId = method_symbol('getValue', 'MyClass', 'src/classes.ts', location
 - **Exports**: Only export what is actually used by external modules
 - **Dependencies**: Check existing libraries before adding new ones
 
+## File Naming Conventions
+
+See `backlog/docs/file-naming-conventions.md` for complete documentation.
+
+### Folder-Module Naming Rule
+
+**Every file in a folder must be prefixed with the folder name.** This ensures each file explicitly declares its membership in the module.
+
+```text
+{folder}/
+  {folder}.ts                    # Main implementation
+  {folder}.test.ts               # Unit tests
+  {folder}.{submodule}.ts        # Helper/submodule
+  {folder}.{submodule}.test.ts   # Submodule tests
+  index.ts                       # Barrel file (only exception)
+```
+
+### Why Folder Prefix?
+
+A file named `project.import_graph.ts` is clearly an intentional part of the `project` module. A file named `random_script.ts` would be immediately flagged as not belonging. This prevents debug script accumulation and makes imports self-documenting.
+
+### Special Cases
+
+- **Package `src/` root**: Files directly in `packages/*/src/` use simple `snake_case.ts`
+- **Extractor directories**: Use prefix naming (`python_scope_boundary_extractor.ts`)
+- **Non-TS files**: `.scm` and `.md` files are allowed in `src/`
+
+### Hook Enforcement
+
+File naming is enforced via Claude Code hooks in `.claude/hooks/`. The PreToolUse hook blocks invalid file creation, and the Stop hook audits the codebase before task completion.
+
 ## Backlog Workflow
 
 USE BACKLOG WHENEVER 'TASK's ARE MENTIONED.
