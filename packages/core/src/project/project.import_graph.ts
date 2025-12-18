@@ -5,7 +5,7 @@ import type {
   Language,
   SymbolId,
 } from "@ariadnejs/types";
-import type { FileSystemFolder } from "../resolve_references/file_folders";
+import type { FileSystemFolder } from "../resolve_references/resolve_references.file_folders";
 import { resolve_module_path } from "../resolve_references/import_resolution";
 
 /**

@@ -4,7 +4,7 @@ import {
   ScopeBoundaryExtractor,
   ScopeBoundaries,
 } from "../scopes.boundary_base";
-import { node_to_location } from "../../node_utils";
+import { node_to_location } from "../../index_single_file.node_utils";
 
 export class PythonScopeBoundaryExtractor implements ScopeBoundaryExtractor {
 

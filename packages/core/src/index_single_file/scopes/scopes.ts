@@ -13,7 +13,7 @@ import type {
   Location,
 } from "@ariadnejs/types";
 import { module_scope, scope_string, ScopeType } from "@ariadnejs/types";
-import { ParsedFile } from "../file_utils";
+import { ParsedFile } from "../index_single_file.file_utils";
 import {
   CaptureNode,
   ProcessingContext,

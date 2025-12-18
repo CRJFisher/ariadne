@@ -20,7 +20,7 @@ import type {
 } from "@ariadnejs/types";
 import { build_index_single_file } from "./index_single_file";
 import { query_tree } from "./query_code_tree/query_code_tree";
-import type { ParsedFile } from "./file_utils";
+import type { ParsedFile } from "./index_single_file.file_utils";
 
 const FIXTURES_DIR = join(__dirname, "..", "..", "tests", "fixtures");
 

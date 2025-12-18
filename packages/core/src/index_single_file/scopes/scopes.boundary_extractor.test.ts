@@ -4,7 +4,7 @@ import type { FilePath, Language } from "@ariadnejs/types";
 import {
   CommonScopeBoundaryExtractor,
 } from "./scopes.boundary_base";
-import { node_to_location } from "../node_utils";
+import { node_to_location } from "../index_single_file.node_utils";
 import { get_scope_boundary_extractor } from "./scopes.boundary_extractor";
 
 describe("scopes.boundary_extractor infrastructure", () => {

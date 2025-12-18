@@ -9,8 +9,8 @@ import TypeScript from "tree-sitter-typescript";
 import { resolve_module_path_typescript } from "./import_resolution.typescript";
 import type { FilePath, Language } from "@ariadnejs/types";
 import { build_index_single_file } from "../../index_single_file/index_single_file";
-import type { ParsedFile } from "../../index_single_file/file_utils";
-import { build_file_tree } from "../file_folders_test_helper";
+import type { ParsedFile } from "../../index_single_file/index_single_file.file_utils";
+import { build_file_tree } from "../resolve_references.file_folders_test_helper";
 
 // Helper to create ParsedFile for TypeScript
 function create_parsed_file(

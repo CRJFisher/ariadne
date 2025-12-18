@@ -20,7 +20,7 @@ import {
   cached_queries_dir_cache,
   get_queries_dir,
   SUPPORTED_LANGUAGES,
-} from "./query_loader";
+} from "./query_code_tree.query_loader";
 
 /**
  * Clear the query cache (test helper)

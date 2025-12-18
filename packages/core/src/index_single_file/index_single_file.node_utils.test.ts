@@ -3,7 +3,7 @@
  */
 
 import { describe, it, expect } from "vitest";
-import { node_to_location } from "./node_utils";
+import { node_to_location } from "./index_single_file.node_utils";
 import type { FilePath } from "@ariadnejs/types";
 import type { SyntaxNode, Point } from "tree-sitter";
 

@@ -3,7 +3,7 @@
  */
 
 import { describe, it, expect } from "vitest";
-import type { ParsedFile } from "./file_utils";
+import type { ParsedFile } from "./index_single_file.file_utils";
 import type { FilePath, Language } from "@ariadnejs/types";
 import Parser from "tree-sitter";
 import JavaScript from "tree-sitter-javascript";

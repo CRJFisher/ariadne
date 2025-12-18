@@ -18,7 +18,7 @@ import type { SyntaxNode } from "tree-sitter";
 import type { Location, SymbolName, TypeInfo, FilePath } from "@ariadnejs/types";
 import { type_symbol } from "@ariadnejs/types";
 import type { MetadataExtractors, ReceiverInfo } from "./metadata_extractors.types";
-import { node_to_location } from "../../node_utils";
+import { node_to_location } from "../../index_single_file.node_utils";
 
 /**
  * Extract type from Python type annotation

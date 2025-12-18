@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from "vitest";
-import { extract_all_parameters } from "./extract_nested_definitions";
+import { extract_all_parameters } from "./project.extract_nested_definitions";
 import { Project } from "./project";
 import type { FilePath } from "@ariadnejs/types";
 

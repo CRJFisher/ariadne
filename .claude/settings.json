@@ -1,5 +1,16 @@
 {
   "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node .claude/hooks/file_naming_validator.cjs"
+          }
+        ]
+      }
+    ],
     "PostToolUse": [
       {
         "matcher": "Write|Edit",
@@ -17,6 +28,10 @@
           {
             "type": "command",
             "command": "node .claude/hooks/eslint_stop.cjs"
+          },
+          {
+            "type": "command",
+            "command": "node .claude/hooks/file_naming_validator_stop.cjs"
           }
         ]
       }

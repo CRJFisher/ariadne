@@ -7,7 +7,7 @@
 
 import * as path from "path";
 import type { FilePath } from "@ariadnejs/types";
-import type { FileSystemFolder } from "../file_folders";
+import type { FileSystemFolder } from "../resolve_references.file_folders";
 
 /**
  * Check if a file exists in the FileSystemFolder tree

@@ -7,13 +7,13 @@ import type {
   SymbolName,
   Language,
 } from "@ariadnejs/types";
-import type { FileSystemFolder } from "./file_folders";
+import type { FileSystemFolder } from "./resolve_references.file_folders";
 import type { DefinitionRegistry } from "./registries/registries.definition";
 import type { TypeRegistry } from "./registries/registries.type";
 import type { ScopeRegistry } from "./registries/registries.scope";
 import type { ExportRegistry } from "./registries/registries.export";
 import type { ReferenceRegistry } from "./registries/registries.reference";
-import type { ImportGraph } from "../project/import_graph";
+import type { ImportGraph } from "../project/project.import_graph";
 import { resolve_method_call } from "./call_resolution";
 import { resolve_constructor_call } from "./call_resolution/call_resolution.constructor";
 import { resolve_self_reference_call } from "./call_resolution/call_resolution.self_reference";

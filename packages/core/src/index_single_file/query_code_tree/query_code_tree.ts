@@ -3,7 +3,7 @@ import { type Tree, Query, type QueryCapture } from "tree-sitter";
 import {
   load_query,
   LANGUAGE_TO_TREESITTER_LANG,
-} from "./query_loader";
+} from "./query_code_tree.query_loader";
 
 /**
  * Query tree and get raw captures

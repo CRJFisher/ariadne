@@ -21,7 +21,7 @@ import type {
   FunctionCallReference,
 } from "@ariadnejs/types";
 import { build_index_single_file } from "./index_single_file";
-import type { ParsedFile } from "./file_utils";
+import type { ParsedFile } from "./index_single_file.file_utils";
 
 // Helper to create a ParsedFile from code
 function create_parsed_file(

@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from "vitest";
-import { ImportGraph } from "./import_graph";
+import { ImportGraph } from "./project.import_graph";
 import type {
   FilePath,
   ImportDefinition,
@@ -7,7 +7,7 @@ import type {
   Language,
   ScopeId,
 } from "@ariadnejs/types";
-import type { FileSystemFolder } from "../resolve_references/file_folders";
+import type { FileSystemFolder } from "../resolve_references/resolve_references.file_folders";
 
 // Helper to create a simple ImportDefinition for testing
 function create_import_definition(

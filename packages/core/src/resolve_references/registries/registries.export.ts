@@ -8,7 +8,7 @@ import {
 } from "@ariadnejs/types";
 import type { DefinitionRegistry } from "./registries.definition";
 import { resolve_module_path } from "../import_resolution";
-import { FileSystemFolder } from "../file_folders";
+import { FileSystemFolder } from "../resolve_references.file_folders";
 
 /**
  * Extended export metadata for resolution.

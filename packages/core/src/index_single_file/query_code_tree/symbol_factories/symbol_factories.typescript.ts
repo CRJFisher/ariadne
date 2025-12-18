@@ -26,7 +26,7 @@ import {
   type_symbol,
 } from "@ariadnejs/types";
 import type { CaptureNode } from "../../index_single_file";
-import { node_to_location } from "../../node_utils";
+import { node_to_location } from "../../index_single_file.node_utils";
 
 // Re-export detect_function_collection from JavaScript to avoid duplication
 export { detect_function_collection } from "./symbol_factories.javascript";

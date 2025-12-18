@@ -11,7 +11,7 @@
 import * as fs from "fs";
 import * as path from "path";
 import type { Language } from "@ariadnejs/types";
-import { CANONICAL_CAPTURE_SCHEMA, is_valid_capture, get_capture_errors } from "./capture_schema.js";
+import { CANONICAL_CAPTURE_SCHEMA, is_valid_capture, get_capture_errors } from "./query_code_tree.capture_schema.js";
 
 // ============================================================================
 // Types

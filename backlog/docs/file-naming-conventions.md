@@ -18,7 +18,7 @@ This document defines the file and folder naming conventions for the Ariadne cod
   {folder}.integration.test.ts             # Integration tests
   {folder}.{language}.integration.test.ts  # Language-specific integration tests
   index.ts                                 # Barrel file for re-exports (optional)
-  helper_module.ts                         # Helper modules can have different names
+  {folder}.helper_module.ts                # Helper modules can have different suffixes
 ```
 
 **Examples:**
@@ -28,7 +28,7 @@ project/
   project.ts                               # Main implementation ✓
   project.test.ts                          # Unit tests
   project.typescript.integration.test.ts   # Language-specific integration test
-  import_graph.ts                          # Helper module
+  project.import_graph.ts                  # Helper module
 
 capture_handlers/
   capture_handlers.typescript.ts           # Language-specific variant

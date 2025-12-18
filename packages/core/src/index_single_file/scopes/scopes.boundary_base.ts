@@ -6,7 +6,7 @@
 
 import type { FilePath, Location, ScopeType } from "@ariadnejs/types";
 import type Parser from "tree-sitter";
-import { node_to_location } from "../node_utils";
+import { node_to_location } from "../index_single_file.node_utils";
 
 /**
  * Extracted boundary information for a scope-creating construct.

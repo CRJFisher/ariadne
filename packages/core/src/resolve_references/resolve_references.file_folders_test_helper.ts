@@ -6,7 +6,7 @@
  */
 
 import type { FilePath } from "@ariadnejs/types";
-import type { FileSystemFolder } from "./file_folders";
+import type { FileSystemFolder } from "./resolve_references.file_folders";
 
 /** Mutable version of FileSystemFolder for building trees */
 interface MutableFileSystemFolder {

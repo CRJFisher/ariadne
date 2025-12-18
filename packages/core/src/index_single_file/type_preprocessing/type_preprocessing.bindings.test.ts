@@ -17,7 +17,7 @@ import Python from "tree-sitter-python";
 import Rust from "tree-sitter-rust";
 import type { Language, FilePath } from "@ariadnejs/types";
 import { build_index_single_file } from "../index_single_file";
-import type { ParsedFile } from "../file_utils";
+import type { ParsedFile } from "../index_single_file.file_utils";
 import { extract_type_bindings } from "./type_preprocessing.bindings";
 
 // ============================================================================

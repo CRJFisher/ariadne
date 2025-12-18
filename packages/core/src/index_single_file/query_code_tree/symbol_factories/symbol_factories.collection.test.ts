@@ -5,7 +5,7 @@ import Python from "tree-sitter-python";
 import Rust from "tree-sitter-rust";
 import { detect_function_collection as detect_python_collection, extract_derived_from as extract_python_derived } from "./symbol_factories.python";
 import { detect_function_collection as detect_rust_collection, extract_derived_from as extract_rust_derived } from "./symbol_factories.rust";
-import { node_to_location } from "../../node_utils";
+import { node_to_location } from "../../index_single_file.node_utils";
 
 describe("Collection Resolution Tests", () => {
   let python_parser: Parser;
