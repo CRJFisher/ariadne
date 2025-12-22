@@ -291,6 +291,136 @@ describe("resolve_module_path_typescript", () => {
 
     expect(result).toBe(expected);
   });
+
+  // ESM extension mapping tests (.js -> .ts)
+  // TypeScript's ESM convention uses .js extensions in imports but files are .ts
+
+  it("should resolve .js import to .ts file (ESM convention)", () => {
+    // TypeScript ESM: `import { foo } from "./bar.js"` -> actual file is `./bar.ts`
+    const utils_file = path.join(TEST_DIR, "utils.ts");
+    const main_file = path.join(TEST_DIR, "main.ts") as FilePath;
+    const root_folder = build_file_tree([utils_file as FilePath, main_file]);
+
+    const result = resolve_module_path_typescript(
+      "./utils.js",
+      main_file,
+      root_folder
+    );
+
+    expect(result).toBe(utils_file);
+  });
+
+  it("should resolve .mjs import to .ts file (ESM convention)", () => {
+    const utils_file = path.join(TEST_DIR, "utils.ts");
+    const main_file = path.join(TEST_DIR, "main.ts") as FilePath;
+    const root_folder = build_file_tree([utils_file as FilePath, main_file]);
+
+    const result = resolve_module_path_typescript(
+      "./utils.mjs",
+      main_file,
+      root_folder
+    );
+
+    expect(result).toBe(utils_file);
+  });
+
+  it("should resolve .jsx import to .tsx file (ESM convention)", () => {
+    const component_file = path.join(TEST_DIR, "Component.tsx");
+    const main_file = path.join(TEST_DIR, "main.tsx") as FilePath;
+    const root_folder = build_file_tree([
+      component_file as FilePath,
+      main_file,
+    ]);
+
+    const result = resolve_module_path_typescript(
+      "./Component.jsx",
+      main_file,
+      root_folder
+    );
+
+    expect(result).toBe(component_file);
+  });
+
+  it("should prefer .ts over .js when import has .js extension", () => {
+    // When both .ts and .js exist, should prefer .ts for .js imports
+    const utils_ts = path.join(TEST_DIR, "utils.ts");
+    const utils_js = path.join(TEST_DIR, "utils.js");
+    const main_file = path.join(TEST_DIR, "main.ts") as FilePath;
+    const root_folder = build_file_tree([
+      utils_ts as FilePath,
+      utils_js as FilePath,
+      main_file,
+    ]);
+
+    const result = resolve_module_path_typescript(
+      "./utils.js",
+      main_file,
+      root_folder
+    );
+
+    expect(result).toBe(utils_ts);
+  });
+
+  it("should fall back to .js file when .ts doesn't exist", () => {
+    // If only .js exists, should use it
+    const utils_js = path.join(TEST_DIR, "utils.js");
+    const main_file = path.join(TEST_DIR, "main.ts") as FilePath;
+    const root_folder = build_file_tree([utils_js as FilePath, main_file]);
+
+    const result = resolve_module_path_typescript(
+      "./utils.js",
+      main_file,
+      root_folder
+    );
+
+    expect(result).toBe(utils_js);
+  });
+
+  it("should infer .ts for non-existent .js import (ESM convention fallback)", () => {
+    // When file doesn't exist, should infer .ts for .js imports
+    const main_file = path.join(TEST_DIR, "main.ts") as FilePath;
+    const root_folder = build_file_tree([main_file]);
+    const expected = path.join(TEST_DIR, "utils.ts"); // Should map .js -> .ts
+
+    const result = resolve_module_path_typescript(
+      "./utils.js",
+      main_file,
+      root_folder
+    );
+
+    expect(result).toBe(expected);
+  });
+
+  it("should handle nested path with .js extension", () => {
+    // ESM convention with nested paths
+    const helpers_dir = path.join(TEST_DIR, "helpers");
+    const utils_file = path.join(helpers_dir, "utils.ts");
+    const main_file = path.join(TEST_DIR, "main.ts") as FilePath;
+    const root_folder = build_file_tree([utils_file as FilePath, main_file]);
+
+    const result = resolve_module_path_typescript(
+      "./helpers/utils.js",
+      main_file,
+      root_folder
+    );
+
+    expect(result).toBe(utils_file);
+  });
+
+  it("should handle parent directory import with .js extension", () => {
+    const utils_file = path.join(TEST_DIR, "utils.ts");
+    const sub_dir = path.join(TEST_DIR, "sub");
+    const main_file = path.join(sub_dir, "main.ts") as FilePath;
+    const root_folder = build_file_tree([utils_file as FilePath, main_file]);
+
+    const result = resolve_module_path_typescript(
+      "../utils.js",
+      main_file,
+      root_folder
+    );
+
+    expect(result).toBe(utils_file);
+  });
 });
 
 describe("Body-based scopes - TypeScript", () => {

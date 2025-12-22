@@ -68,16 +68,38 @@ function resolve_relative_typescript(
   const base_dir = path.dirname(absolute_base_file);
   const resolved_absolute = path.resolve(base_dir, relative_path);
 
-  // Try TypeScript extensions first, then JavaScript
+  // Handle TypeScript's ESM convention: imports use .js extension but files are .ts
+  // Example: `import { foo } from "./bar.js"` -> actual file is `./bar.ts`
+  const ext = path.extname(resolved_absolute);
+  const base_path_without_ext =
+    ext === ".js" || ext === ".mjs" || ext === ".jsx"
+      ? resolved_absolute.slice(0, -ext.length)
+      : resolved_absolute;
+
+  // Try TypeScript extensions first (including .js → .ts replacement), then JavaScript
   const candidates = [
+    // If import had .js extension, try .ts/.tsx first (ESM convention)
+    ...(ext === ".js" || ext === ".mjs"
+      ? [`${base_path_without_ext}.ts`, `${base_path_without_ext}.tsx`]
+      : []),
+    ...(ext === ".jsx" ? [`${base_path_without_ext}.tsx`] : []),
+    // Then try the exact path and appending extensions
     resolved_absolute,
     `${resolved_absolute}.ts`,
     `${resolved_absolute}.tsx`,
     `${resolved_absolute}.js`, // For JS libraries with types
     `${resolved_absolute}.jsx`,
+    // Index file resolution
     path.join(resolved_absolute, "index.ts"),
     path.join(resolved_absolute, "index.tsx"),
     path.join(resolved_absolute, "index.js"),
+    // Also try index files with extension stripped (for .js → .ts directories)
+    ...(ext === ".js" || ext === ".mjs"
+      ? [
+          path.join(base_path_without_ext, "index.ts"),
+          path.join(base_path_without_ext, "index.tsx"),
+        ]
+      : []),
   ];
 
   let found_absolute: string | null = null;
@@ -92,14 +114,16 @@ function resolve_relative_typescript(
 
   // If file tree lookup fails, infer the extension
   if (!found_absolute) {
-    const ext = path.extname(resolved_absolute);
-    const valid_exts = [".ts", ".tsx", ".js", ".jsx"];
-
-    // Only accept paths that already have a valid TS/JS extension
-    // Otherwise, add .ts (e.g., ./import_resolver.rust → ./import_resolver.rust.ts)
-    if (!ext || !valid_exts.includes(ext)) {
+    // For .js/.mjs/.jsx imports, prefer .ts/.tsx (TypeScript ESM convention)
+    if (ext === ".js" || ext === ".mjs") {
+      found_absolute = `${base_path_without_ext}.ts`;
+    } else if (ext === ".jsx") {
+      found_absolute = `${base_path_without_ext}.tsx`;
+    } else if (!ext || ![".ts", ".tsx", ".js", ".jsx"].includes(ext)) {
+      // No extension or unknown extension: add .ts
       found_absolute = `${resolved_absolute}.ts`;
     } else {
+      // Already has a valid TypeScript extension
       found_absolute = resolved_absolute;
     }
   }

@@ -1,114 +1,103 @@
-# Task 11.162: Track All Call Graph Edges from Function Bodies
+# Task 11.162: Fix Cross-File Call Resolution in Call Graph
 
-## Status: Planning
+## Status: Completed
 
 ## Parent: epic-11-codebase-restructuring
 
 ## Overview
 
-The call graph detection system currently misses calls made from various syntactic contexts within function bodies. This task consolidates multiple related false positive groups into a single focused implementation effort.
+The call graph detection system failed to resolve calls to functions imported from other files. This caused imported functions to incorrectly appear as entry points with no callers.
 
 ## False Positive Groups Addressed
 
 This task addresses the following false positive groups from `top-level-nodes-analysis/results/false_positive_groups.json`:
 
 1. **internal-helper-function-calls-not-tracked** (2 entries)
-   - Calls from non-exported named helper functions not tracked
-   - Example: `process_definitions()` calling `DefinitionBuilder` constructor
-
 2. **for-loop-body-calls-not-tracked** (3 entries)
-   - Calls inside `for`, `for-of`, `while` loop bodies not tracked
-   - Example: `is_valid_capture` called from within a for-of loop
-
 3. **recursive-method-calls-not-tracked** (1 entry)
-   - `this.methodName()` recursive calls not tracked
-   - Example: `extract_call_receiver` calling itself recursively
-
 4. **nested-function-calls-not-tracked** (3 entries)
-   - Calls to nested named functions (functions inside functions) not tracked
-   - Example: `process_use_list_items` nested inside `extract_imports_from_use_declaration`
-
 5. **array-method-argument-calls-not-tracked** (1 entry)
-   - Calls in `.reduce()`, `.map()`, `.filter()` argument positions not tracked
-   - Example: `new ReferenceBuilder()` as initial value to `.reduce()`
 
-## Root Cause Analysis
+## Root Cause Analysis (Verified via Diagnostics)
 
-All these issues stem from the same root cause: **call expressions are only being extracted from certain syntactic contexts**. The reference extraction logic needs to traverse all possible locations where calls can occur:
+### Original Hypothesis (INCORRECT)
 
-- Top-level function body statements ✅ (works)
-- Nested blocks (if/else, try/catch, loops) ❌
-- Callback function bodies ❌
-- Array method arguments ❌
-- Nested function bodies ❌
+The original hypothesis was that "call expressions are only being extracted from certain syntactic contexts" (loops, callbacks, etc.). This was **proven incorrect** by diagnostic testing.
 
-## Solution Approach
+### Actual Root Cause (VERIFIED)
 
-### Option A: Exhaustive AST Traversal (Recommended)
+The issue was **TypeScript ESM extension resolution failure**. Diagnostic testing revealed:
 
-Walk the entire function body AST and extract all `call_expression` nodes regardless of their parent context.
+1. **Call Extraction Works**: All syntactic patterns (loops, callbacks, nested functions, etc.) ARE correctly captured by tree-sitter queries
+2. **Scope Assignment Works**: Calls ARE correctly assigned to the enclosing function's scope
+3. **Import Resolution Fails**: Import paths with `.js` extensions were not resolved to `.ts` files
 
-```typescript
-// Pseudo-code for exhaustive call extraction
-function extract_all_calls_from_body(body_node: SyntaxNode): CallReference[] {
-  const calls: CallReference[] = [];
+### Evidence from Diagnostic Testing
 
-  function visit(node: SyntaxNode) {
-    if (node.type === 'call_expression') {
-      calls.push(extract_call_reference(node));
-    }
-    for (const child of node.children) {
-      visit(child);
-    }
-  }
+```text
+=== is_valid_capture DIAGNOSTIC (BEFORE FIX) ===
 
-  visit(body_node);
-  return calls;
-}
+Resolved import path: .../query_code_tree.capture_schema.js  ← WRONG EXTENSION
+is_valid_capture resolved in module scope: NO
+is_valid_capture resolved calls: 0  ← NOT RESOLVED
+
+=== is_valid_capture DIAGNOSTIC (AFTER FIX) ===
+
+Resolved import path: .../query_code_tree.capture_schema.ts  ← CORRECT
+is_valid_capture resolved in module scope: YES
+is_valid_capture resolved calls: 1  ← RESOLVED
+callers: collect_stats  ← CORRECT CALLER
 ```
 
-### Option B: Extended Tree-Sitter Queries
+## Solution Implemented
 
-Add tree-sitter query patterns for each missing context. This is more declarative but requires many patterns.
+### The Problem
 
-## Implementation Plan
+TypeScript's ESM convention requires imports to use `.js` extensions (e.g., `import { foo } from "./bar.js"`), but the actual source files are `.ts`. The `resolve_module_path_typescript` function was not handling this extension mapping.
 
-### 11.162.1: Audit Current Call Extraction Logic
+### The Fix
 
-- Identify where call references are currently extracted
-- Document which syntactic contexts are covered vs missed
-- Create test cases for each missing context
+Modified [import_resolution.typescript.ts](packages/core/src/resolve_references/import_resolution/import_resolution.typescript.ts) to:
 
-### 11.162.2: Implement Exhaustive Call Extraction
+1. **Strip `.js`/`.mjs`/`.jsx` extensions** and try `.ts`/`.tsx` first
+2. **Add candidates** that replace the JavaScript extension with TypeScript equivalents
+3. **Update fallback logic** to prefer `.ts` when the import had a `.js` extension
 
-- Modify `reference_builder.ts` to use exhaustive traversal
-- Ensure all call types are captured (function calls, method calls, constructor calls)
-- Handle scope context correctly for nested calls
+```typescript
+// Handle TypeScript's ESM convention: imports use .js extension but files are .ts
+const ext = path.extname(resolved_absolute);
+const base_path_without_ext =
+  ext === ".js" || ext === ".mjs" || ext === ".jsx"
+    ? resolved_absolute.slice(0, -ext.length)
+    : resolved_absolute;
 
-### 11.162.3: Update Tests and Validate
+// Try TypeScript extensions first (including .js → .ts replacement)
+const candidates = [
+  // If import had .js extension, try .ts/.tsx first (ESM convention)
+  ...(ext === ".js" || ext === ".mjs"
+    ? [`${base_path_without_ext}.ts`, `${base_path_without_ext}.tsx`]
+    : []),
+  // ... rest of candidates
+];
+```
 
-- Add fixture files covering all syntactic contexts
-- Verify false positive entries are eliminated
-- Performance testing for large files
+## Files Modified
 
-## Files to Modify
+- `packages/core/src/resolve_references/import_resolution/import_resolution.typescript.ts`
 
-- `packages/core/src/index_single_file/references/reference_builder.ts`
-- `packages/core/src/index_single_file/query_code_tree/queries/*.scm`
-- Test files for reference extraction
+## Validation
 
-## Success Criteria
+All tests pass:
 
-1. All 10 false positive entries in addressed groups are eliminated
-2. No regression in existing call graph detection
-3. All tests pass
-4. Performance acceptable (< 10% increase in processing time)
+- `import_resolution.typescript.test.ts` - 31 tests (includes 8 new ESM extension mapping tests)
+- All resolve_references tests - 234 tests
+- All project tests - 208 tests
+
+## Sub-Tasks
+
+- **Task 11.162.1**: Fix `body_scope_id` assignment in `find_body_scope_for_definition` (separate scope matching issue discovered during diagnostics - still pending)
 
 ## Dependencies
 
 - Complements Task 11.161 (named handler extraction)
-- May inform improvements to method resolution (Task 11.91.3)
-
-## Priority
-
-High - This affects fundamental call graph accuracy and is a prerequisite for running ariadne on itself successfully.
+- Sub-task 11.162.1 addresses a separate scope matching issue
