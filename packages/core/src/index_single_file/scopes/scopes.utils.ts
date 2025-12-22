@@ -13,19 +13,22 @@ import type { CaptureNode } from "../index_single_file";
 /**
  * Find the body scope for a function/method/constructor definition.
  *
- * Matches by:
- * 1. Scope type (function/method/constructor)
- * 2. Scope name matches definition name
- * 3. Scope location contains or closely follows definition location
+ * Uses a multi-strategy approach:
+ * 1. Same-line matching: Scope must start on the same line as definition ends
+ * 2. Multi-line signature fallback: Allow scope to start within 5 lines (for multi-line signatures)
+ * 3. Location-only fallback: Strict proximity matching without name check
  *
- * @param capture - The definition's capture node
+ * The definition location is the function NAME (identifier), not the full declaration.
+ * The scope location starts at the parameters and ends at the closing brace.
+ *
+ * @param _capture - The definition's capture node (unused, kept for API compatibility)
  * @param scopes - All scopes in the file
- * @param def_name - Definition name
- * @param def_location - Definition location
+ * @param def_name - Definition name (empty string or "<anonymous>" for anonymous functions)
+ * @param def_location - Definition location (the function name's span)
  * @returns The matching scope ID
  */
 export function find_body_scope_for_definition(
-  capture: CaptureNode,
+  _capture: CaptureNode,
   scopes: ReadonlyMap<ScopeId, LexicalScope>,
   def_name: SymbolName,
   def_location: Location,
@@ -35,103 +38,95 @@ export function find_body_scope_for_definition(
     scope.type === "function" || scope.type === "method" || scope.type === "constructor",
   );
 
-  // For scope matching, primarily use location-based matching since:
-  // - Scope names often include the entire body text, not just the function name
-  // - Anonymous functions don't have names
-  // - Location is more reliable for matching definition to its body scope
+  const is_anonymous = def_name === "" || def_name === "<anonymous>";
 
-  let best_match: LexicalScope | undefined;
-  let smallest_distance = Infinity;
+  // Strategy 1: Same-line + exact name match
+  // The scope should start on the same line as the definition ends
+  let candidates: { scope: LexicalScope; distance: number }[] = [];
 
   for (const scope of callable_scopes) {
-    // Check if scope location is close to definition location
-    const distance = calculate_location_distance(def_location, scope.location);
+    // Scope must start on same line as definition ends
+    if (scope.location.start_line !== def_location.end_line) continue;
 
-    // More permissive distance check: allow scopes that start at/after the definition
-    // or before (for edge cases in parsing where scope might encompass the definition)
-    if (distance >= -100000 && distance < smallest_distance) {
-      // More lenient name compatibility check
-      const is_name_compatible =
-        def_name === "" || // anonymous function
-        scope.name === null || // no scope name
-        scope.name === "" || // empty scope name
-        scope.name.includes(def_name) || // scope name contains definition name
-        def_name.includes(scope.name || "") || // definition name contains scope name
-        (def_name && scope.name && are_names_compatible(def_name, scope.name)); // fuzzy name match
+    // Scope must start after definition ends (or at same column for edge cases)
+    if (scope.location.start_column < def_location.end_column) continue;
 
-      if (is_name_compatible) {
-        smallest_distance = distance;
-        best_match = scope;
-      }
+    const distance = scope.location.start_column - def_location.end_column;
+
+    // Name matching: exact for named, both-anonymous for anonymous
+    const scope_is_anonymous = scope.name === null || scope.name === "";
+
+    if ((is_anonymous && scope_is_anonymous) ||
+        (!is_anonymous && scope.name === def_name)) {
+      candidates.push({ scope, distance });
     }
   }
 
-  // If no match found with name compatibility, try pure location-based matching
-  if (!best_match) {
-    for (const scope of callable_scopes) {
-      const distance = calculate_location_distance(def_location, scope.location);
+  // Among candidates, pick the one with smallest distance
+  if (candidates.length > 0) {
+    candidates.sort((a, b) => a.distance - b.distance);
+    return candidates[0].scope.id;
+  }
 
-      // Very permissive distance check for location-only matching
-      if (distance >= -50 && distance < 1000 && distance < smallest_distance) {
-        smallest_distance = distance;
-        best_match = scope;
-      }
+  // Strategy 2: Multi-line signature fallback
+  // For functions with multi-line signatures, allow scope to start within 5 lines
+  candidates = [];
+  for (const scope of callable_scopes) {
+    const line_diff = scope.location.start_line - def_location.end_line;
+
+    // Allow up to 5 lines for multi-line signatures
+    if (line_diff < 0 || line_diff > 5) continue;
+
+    // Calculate distance (line-major)
+    const distance = line_diff * 10000 + (scope.location.start_column || 0);
+
+    const scope_is_anonymous = scope.name === null || scope.name === "";
+
+    if ((is_anonymous && scope_is_anonymous) ||
+        (!is_anonymous && scope.name === def_name)) {
+      candidates.push({ scope, distance });
     }
   }
 
-  if (!best_match) {
-    // Create debug information
-    const debug_info = callable_scopes.map(scope => ({
-      type: scope.type,
-      name: scope.name,
-      location: scope.location,
-      distance: calculate_location_distance(def_location, scope.location),
-    }));
-
-    console.warn(`Debug: No body scope found for ${def_name} at ${def_location.file_path}:${def_location.start_line}`);
-    console.warn("Available scopes:", debug_info);
-
-    throw new Error(
-      `No body scope found for ${def_name} at ${def_location.file_path}:${def_location.start_line}`,
-    );
+  if (candidates.length > 0) {
+    candidates.sort((a, b) => a.distance - b.distance);
+    return candidates[0].scope.id;
   }
 
-  return best_match.id;
-}
+  // Strategy 3: Location-only fallback (strict distance + at least one anonymous)
+  // For edge cases where name extraction differs between definition and scope
+  // Only applies when at least one side is anonymous (to avoid false matches)
+  const location_candidates: { scope: LexicalScope; line_diff: number }[] = [];
 
-/**
- * Check if two names are compatible (handles various naming patterns)
- */
-function are_names_compatible(name1: string, name2: string): boolean {
-  if (!name1 || !name2) return false;
+  for (const scope of callable_scopes) {
+    const line_diff = scope.location.start_line - def_location.end_line;
 
-  // Exact match
-  if (name1 === name2) return true;
+    // Must be on same line or within 2 lines
+    if (line_diff < 0 || line_diff > 2) continue;
 
-  // Case insensitive match
-  if (name1.toLowerCase() === name2.toLowerCase()) return true;
+    // Must start after definition ends (if on same line)
+    if (line_diff === 0 && scope.location.start_column < def_location.end_column) continue;
 
-  // One contains the other
-  if (name1.includes(name2) || name2.includes(name1)) return true;
+    // At least one side must be anonymous to avoid false matches
+    // This handles cases where tree-sitter captures name differently
+    const scope_is_anonymous = scope.name === null || scope.name === "";
+    if (!is_anonymous && !scope_is_anonymous) continue;
 
-  // Check if names are similar (allowing for slight variations)
-  const normalized1 = name1.replace(/[^a-zA-Z0-9]/g, "").toLowerCase();
-  const normalized2 = name2.replace(/[^a-zA-Z0-9]/g, "").toLowerCase();
+    location_candidates.push({ scope, line_diff });
+  }
 
-  return normalized1.includes(normalized2) || normalized2.includes(normalized1);
-}
+  if (location_candidates.length > 0) {
+    // Sort by line_diff, then by start_column to get closest match
+    location_candidates.sort((a, b) => {
+      if (a.line_diff !== b.line_diff) return a.line_diff - b.line_diff;
+      return a.scope.location.start_column - b.scope.location.start_column;
+    });
+    return location_candidates[0].scope.id;
+  }
 
-/**
- * Calculate distance between definition location and scope location.
- * Returns:
- * - 0 if scope starts exactly at definition
- * - Positive number if scope starts after definition (typical)
- * - Negative number if scope starts before definition (shouldn't happen)
- */
-function calculate_location_distance(def_loc: Location, scope_loc: Location): number {
-  const def_pos = def_loc.start_line * 10000 + def_loc.start_column;
-  const scope_pos = scope_loc.start_line * 10000 + scope_loc.start_column;
-  return scope_pos - def_pos;
+  throw new Error(
+    `No body scope found for ${def_name} at ${def_location.file_path}:${def_location.start_line}`,
+  );
 }
 
 /**

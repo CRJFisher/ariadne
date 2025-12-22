@@ -290,12 +290,24 @@ export class DefinitionBuilder {
     if (!class_state) return this;
 
     // Compute body_scope_id using the capture parameter
-    const body_scope_id: ScopeId = find_body_scope_for_definition(
-      capture,
-      this.context.scopes,
-      definition.name,
-      definition.location
-    );
+    // Abstract methods don't have bodies, so skip body_scope_id lookup for them
+    let body_scope_id: ScopeId | undefined;
+    if (!definition.abstract) {
+      try {
+        body_scope_id = find_body_scope_for_definition(
+          capture,
+          this.context.scopes,
+          definition.name,
+          definition.location
+        );
+      } catch (error) {
+        // If we can't find the body scope, log a warning but continue
+        // This can happen for interface method signatures or other bodyless methods
+        console.warn(
+          `Could not find body scope for method ${definition.name}: ${error}`
+        );
+      }
+    }
 
     const { scope_id, ...rest } = definition;
     class_state.methods.set(definition.symbol_id, {

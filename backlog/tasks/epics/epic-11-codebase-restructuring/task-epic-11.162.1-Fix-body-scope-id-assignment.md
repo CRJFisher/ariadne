@@ -1,18 +1,16 @@
 # Task 11.162.1: Fix body_scope_id Assignment in find_body_scope_for_definition
 
-## Status: Planning
+## Status: Completed
 
 ## Parent: task-epic-11.162
 
 ## Overview
 
-The `find_body_scope_for_definition` function in `scopes.utils.ts` uses overly permissive matching that causes multiple functions to incorrectly share the same `body_scope_id`. This was discovered during diagnostic testing for Task 11.162.
+The `find_body_scope_for_definition` function uses same-line proximity matching with exact name matching to ensure each function gets a unique `body_scope_id`.
 
-## Problem Description
+## Problem Addressed
 
-### Symptom
-
-Multiple functions are assigned the same `body_scope_id`, causing their enclosed calls to be incorrectly attributed.
+Multiple functions were incorrectly assigned the same `body_scope_id`, causing their enclosed calls to be incorrectly attributed.
 
 ### Evidence from Diagnostic Testing
 
@@ -23,114 +21,53 @@ Functions with body_scope_id:
   <anonymous> (line 21): body_scope_id = function:...16:17:16:30  ← SAME AS inner!
 ```
 
-Three different functions at different lines share the same `body_scope_id`.
+Three different functions at different lines shared the same `body_scope_id`.
 
-### Root Cause
+## Solution
 
-The `find_body_scope_for_definition` function in [scopes.utils.ts:27-100](packages/core/src/index_single_file/scopes/scopes.utils.ts#L27-L100) has:
+The `find_body_scope_for_definition` function uses a 3-strategy approach:
 
-1. **Overly permissive distance check**: `distance >= -100000` allows matching scopes up to 100,000 positions before the definition
-2. **Fuzzy name matching**: Partial and case-insensitive matching can match wrong functions
-3. **Fallback location-only matching**: Pure location-based matching without name validation
+### Strategy 1: Same-Line + Exact Name Match
 
-```typescript
-// Current problematic code (lines 52-80)
-if (distance >= -100000 && distance < smallest_distance) {
-  // This distance check is extremely permissive
-  // Could match wrong function entirely
-}
+The scope must start on the **same line** as the definition ends, with exact name matching:
 
-// Fallback matching (lines 71-79)
-if (distance >= -50 && distance < 1000) {
-  // Pure location-based matching without name validation
-}
-```
+- For named functions: `scope.name === def_name`
+- For anonymous functions: Both definition and scope must be anonymous
 
-## Solution Approach
+### Strategy 2: Multi-Line Signature Fallback
 
-Replace permissive distance/name matching with **containment-based matching**:
+For functions with multi-line signatures, allow scope to start within 5 lines of the definition end, still requiring exact name matching.
 
-1. A function's body scope location must **contain** the function's body
-2. The scope must start at or immediately after the function's declaration
-3. Name matching should be exact, not fuzzy
-4. Fallback to smallest containing scope if exact match fails
+### Strategy 3: Location-Only Fallback
 
-### Proposed Algorithm
+For edge cases where name extraction differs (e.g., tree-sitter captures differently), allow matching within 2 lines if at least one side is anonymous.
 
-```typescript
-function find_body_scope_for_definition(
-  capture: CaptureNode,
-  scopes: ReadonlyMap<ScopeId, LexicalScope>,
-  def_name: SymbolName,
-  def_location: Location,
-): ScopeId {
-  const callable_scopes = Array.from(scopes.values()).filter(scope =>
-    scope.type === "function" || scope.type === "method" || scope.type === "constructor"
-  );
+### Key Constraints
 
-  // Strategy 1: Find scope with exact name match that contains the definition
-  for (const scope of callable_scopes) {
-    if (scope.name === def_name && scope_starts_at_or_after(scope, def_location)) {
-      return scope.id;
-    }
-  }
+1. Scope must start **on or after** the line where the definition ends (no negative distance)
+2. Scope must start **after** the column where the definition ends (positive column distance)
+3. Named definitions require exact name match (no fuzzy matching)
 
-  // Strategy 2: Find smallest containing function scope
-  let best_match: LexicalScope | undefined;
-  let smallest_size = Infinity;
+## Files Modified
 
-  for (const scope of callable_scopes) {
-    if (scope_contains(scope.location, def_location)) {
-      const size = scope_size(scope.location);
-      if (size < smallest_size) {
-        smallest_size = size;
-        best_match = scope;
-      }
-    }
-  }
+| File | Changes |
+|------|---------|
+| [scopes.utils.ts](packages/core/src/index_single_file/scopes/scopes.utils.ts) | Replaced permissive distance matching with same-line proximity matching |
+| [scopes.utils.test.ts](packages/core/src/index_single_file/scopes/scopes.utils.test.ts) | Added 5 new test cases for stricter matching behavior |
+| [definitions.ts](packages/core/src/index_single_file/definitions/definitions.ts) | Added try-catch and abstract method handling in `add_method_to_class` |
 
-  if (best_match) {
-    return best_match.id;
-  }
+## Test Cases Added
 
-  throw new Error(`No body scope found for ${def_name} at ${location_to_string(def_location)}`);
-}
-```
+1. `should NOT share body_scope_id between functions at different lines` - Core bug scenario
+2. `should match by same-line proximity, not just distance` - Prevents scope-before-definition matches
+3. `should require exact name match for named functions` - No fuzzy matching
+4. `should handle multi-line function signatures` - Strategy 2 coverage
+5. `should match anonymous definitions only with anonymous scopes` - Anonymous handling
 
-## Implementation Plan
+## Validation
 
-### Step 1: Add Test Cases
+All 1577 tests pass across the full test suite:
 
-Create test cases that expose the current bug:
-
-- Multiple functions with similar locations
-- Nested functions
-- Anonymous functions at different positions
-
-### Step 2: Implement Containment-Based Matching
-
-Modify `find_body_scope_for_definition` to use containment-based matching instead of distance-based matching.
-
-### Step 3: Validate
-
-- Run existing tests to ensure no regression
-- Run diagnostic tests to verify each function gets unique `body_scope_id`
-
-## Files to Modify
-
-- `packages/core/src/index_single_file/scopes/scopes.utils.ts` - Primary fix location
-
-## Success Criteria
-
-1. Each function gets a unique `body_scope_id`
-2. No regression in existing tests
-3. Scope matching is deterministic and reliable
-
-## Dependencies
-
-- Part of Task 11.162 investigation
-- Independent fix that can be implemented separately
-
-## Priority
-
-Medium - This is a correctness issue but not the primary cause of the false positives (which is import resolution in Task 11.162).
+- 54 test files passed
+- No regressions detected
+- E2E tests pass with 1512 entry points found

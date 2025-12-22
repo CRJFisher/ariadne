@@ -202,42 +202,47 @@ describe("find_body_scope_for_definition", () => {
     expect(result).toBe(func_scope_id); // Should only consider function scope, not class scope
   });
 
-  it("should handle edge cases with permissive matching", () => {
+  it("should NOT match scope that starts BEFORE definition", () => {
+    // This was previously allowed with permissive matching, but caused bugs
+    // where multiple functions shared the same body_scope_id
     const def_location = mock_location(100, 0, 100, 15);
-    const scope_location = mock_location(95, 0, 105, 1); // Scope starts before definition (edge case)
+    const scope_location = mock_location(95, 0, 105, 1); // Scope starts BEFORE definition line
     const scope_id = "function:test.ts:95:0:105:1" as ScopeId;
     const scope = mock_scope("function", "helper_function" as SymbolName, scope_location, scope_id);
 
     const scopes = new Map<ScopeId, LexicalScope>([[scope_id, scope]]);
     const capture = mock_capture(def_location);
 
-    const result = find_body_scope_for_definition(
-      capture,
-      scopes,
-      "helper" as SymbolName, // Partial name match
-      def_location,
-    );
-
-    expect(result).toBe(scope_id); // Should match with fuzzy name matching
+    // Should throw - scope starts on line 95, but definition ends on line 100
+    expect(() => {
+      find_body_scope_for_definition(
+        capture,
+        scopes,
+        "helper" as SymbolName,
+        def_location,
+      );
+    }).toThrow("No body scope found");
   });
 
-  it("should fall back to location-only matching when name incompatible", () => {
+  it("should NOT match scope with different name even if location is close", () => {
+    // This was previously allowed with location-only fallback, but caused bugs
     const def_location = mock_location(110, 0, 110, 15);
-    const scope_location = mock_location(110, 10, 115, 1);
-    const scope_id = "function:test.ts:110:10:115:1" as ScopeId;
+    const scope_location = mock_location(110, 16, 115, 1); // Same line, after definition
+    const scope_id = "function:test.ts:110:16:115:1" as ScopeId;
     const scope = mock_scope("function", "completely_different_name" as SymbolName, scope_location, scope_id);
 
     const scopes = new Map<ScopeId, LexicalScope>([[scope_id, scope]]);
     const capture = mock_capture(def_location);
 
-    const result = find_body_scope_for_definition(
-      capture,
-      scopes,
-      "target_function" as SymbolName,
-      def_location,
-    );
-
-    expect(result).toBe(scope_id); // Should match based on location proximity alone
+    // Should throw - names don't match and this is not an anonymous function case
+    expect(() => {
+      find_body_scope_for_definition(
+        capture,
+        scopes,
+        "target_function" as SymbolName,
+        def_location,
+      );
+    }).toThrow("No body scope found");
   });
 
   it("should still throw when no reasonable scope found", () => {
@@ -257,6 +262,112 @@ describe("find_body_scope_for_definition", () => {
         def_location,
       );
     }).toThrow("No body scope found for target_function");
+  });
+
+  // ============================================================================
+  // Tests for same-line proximity matching (fix for body_scope_id sharing bug)
+  // ============================================================================
+
+  it("should NOT share body_scope_id between functions at different lines", () => {
+    // This test exposes the bug where multiple functions get the same body_scope_id
+    // Three function definitions at different lines
+    const def1_loc = mock_location(16, 10, 16, 15);  // "inner" name ends at line 16, col 15
+    const def2_loc = mock_location(20, 10, 20, 21);  // "with_reduce" name ends at line 20, col 21
+    const def3_loc = mock_location(21, 10, 21, 20);  // anonymous, ends at line 21, col 20
+
+    // Create corresponding scopes (each starts right after its definition on the same line)
+    const scope1_id = "function:test.ts:16:15:18:1" as ScopeId;
+    const scope2_id = "function:test.ts:20:21:22:1" as ScopeId;
+    const scope3_id = "function:test.ts:21:22:23:1" as ScopeId;
+
+    const scope1 = mock_scope("function", "inner" as SymbolName, mock_location(16, 15, 18, 1), scope1_id);
+    const scope2 = mock_scope("function", "with_reduce" as SymbolName, mock_location(20, 21, 22, 1), scope2_id);
+    const scope3 = mock_scope("function", "" as SymbolName, mock_location(21, 22, 23, 1), scope3_id);
+
+    const scopes = new Map<ScopeId, LexicalScope>([
+      [scope1_id, scope1],
+      [scope2_id, scope2],
+      [scope3_id, scope3],
+    ]);
+
+    const capture = mock_capture(def1_loc);
+
+    // Each definition should get its OWN unique scope
+    expect(find_body_scope_for_definition(capture, scopes, "inner" as SymbolName, def1_loc)).toBe(scope1_id);
+    expect(find_body_scope_for_definition(capture, scopes, "with_reduce" as SymbolName, def2_loc)).toBe(scope2_id);
+    expect(find_body_scope_for_definition(capture, scopes, "" as SymbolName, def3_loc)).toBe(scope3_id);
+  });
+
+  it("should match by same-line proximity, not just distance", () => {
+    // Bug scenario: function at line 20 should NOT match scope at line 16
+    const def_at_20 = mock_location(20, 10, 20, 21);  // definition ends at line 20
+
+    // Only one scope available, but it's on line 16 (wrong line)
+    const scope_at_16_id = "function:test.ts:16:15:16:30" as ScopeId;
+    const scope_at_16 = mock_scope("function", "inner" as SymbolName, mock_location(16, 15, 16, 30), scope_at_16_id);
+
+    const scopes = new Map<ScopeId, LexicalScope>([[scope_at_16_id, scope_at_16]]);
+    const capture = mock_capture(def_at_20);
+
+    // Should throw - no valid scope on line 20
+    expect(() => {
+      find_body_scope_for_definition(capture, scopes, "with_reduce" as SymbolName, def_at_20);
+    }).toThrow("No body scope found");
+  });
+
+  it("should require exact name match for named functions", () => {
+    const def_location = mock_location(10, 10, 10, 20);  // definition ends at line 10, col 20
+
+    // Two scopes on the same line but with different names
+    const wrong_scope_id = "function:test.ts:10:21:15:1" as ScopeId;
+    const correct_scope_id = "function:test.ts:10:22:16:1" as ScopeId;
+
+    const wrong_scope = mock_scope("function", "wrong_name" as SymbolName, mock_location(10, 21, 15, 1), wrong_scope_id);
+    const correct_scope = mock_scope("function", "correct_name" as SymbolName, mock_location(10, 22, 16, 1), correct_scope_id);
+
+    const scopes = new Map<ScopeId, LexicalScope>([
+      [wrong_scope_id, wrong_scope],
+      [correct_scope_id, correct_scope],
+    ]);
+    const capture = mock_capture(def_location);
+
+    // Should match the scope with the correct name, even if wrong_scope is closer
+    const result = find_body_scope_for_definition(capture, scopes, "correct_name" as SymbolName, def_location);
+    expect(result).toBe(correct_scope_id);
+  });
+
+  it("should handle multi-line function signatures", () => {
+    // Definition ends at line 10, but scope starts at line 12 (multi-line signature)
+    const def_location = mock_location(10, 10, 10, 20);
+    const scope_id = "function:test.ts:12:5:20:1" as ScopeId;
+    const scope = mock_scope("function", "multi_line_func" as SymbolName, mock_location(12, 5, 20, 1), scope_id);
+
+    const scopes = new Map<ScopeId, LexicalScope>([[scope_id, scope]]);
+    const capture = mock_capture(def_location);
+
+    const result = find_body_scope_for_definition(capture, scopes, "multi_line_func" as SymbolName, def_location);
+    expect(result).toBe(scope_id);
+  });
+
+  it("should match anonymous definitions only with anonymous scopes", () => {
+    const def_location = mock_location(10, 10, 10, 20);
+
+    // One named scope, one anonymous scope
+    const named_scope_id = "function:test.ts:10:21:15:1" as ScopeId;
+    const anon_scope_id = "function:test.ts:10:22:16:1" as ScopeId;
+
+    const named_scope = mock_scope("function", "named_func" as SymbolName, mock_location(10, 21, 15, 1), named_scope_id);
+    const anon_scope = mock_scope("function", "" as SymbolName, mock_location(10, 22, 16, 1), anon_scope_id);
+
+    const scopes = new Map<ScopeId, LexicalScope>([
+      [named_scope_id, named_scope],
+      [anon_scope_id, anon_scope],
+    ]);
+    const capture = mock_capture(def_location);
+
+    // Anonymous definition should match anonymous scope
+    const result = find_body_scope_for_definition(capture, scopes, "" as SymbolName, def_location);
+    expect(result).toBe(anon_scope_id);
   });
 });
 
