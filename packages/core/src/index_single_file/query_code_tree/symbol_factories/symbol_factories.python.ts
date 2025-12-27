@@ -833,6 +833,15 @@ function extract_functions_from_list(
     const element = list_node.namedChild(i);
     if (!element) continue;
 
+    // Handle list splat: [*other_list]
+    if (element.type === "list_splat") {
+      const splat_arg = element.namedChildren[0];
+      if (splat_arg?.type === "identifier") {
+        references.push(splat_arg.text as SymbolName);
+      }
+      continue;
+    }
+
     if (element.type === "lambda") {
       const location = node_to_location(element, file_path);
       function_ids.push(anonymous_function_symbol(location));
@@ -855,10 +864,22 @@ function extract_functions_from_dict(
   const references: SymbolName[] = [];
 
   for (let i = 0; i < dict_node.namedChildCount; i++) {
-    const pair = dict_node.namedChild(i);
-    if (pair?.type !== "pair") continue;
+    const child = dict_node.namedChild(i);
+    if (!child) continue;
 
-    const value = pair.childForFieldName?.("value");
+    // Handle dictionary splat: {**other_dict}
+    if (child.type === "dictionary_splat") {
+      const splat_arg = child.namedChildren[0];
+      if (splat_arg?.type === "identifier") {
+        references.push(splat_arg.text as SymbolName);
+      }
+      continue;
+    }
+
+    // Handle pair nodes: {"key": value}
+    if (child.type !== "pair") continue;
+
+    const value = child.childForFieldName?.("value");
     if (!value) continue;
 
     if (value.type === "lambda") {

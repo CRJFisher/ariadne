@@ -765,6 +765,15 @@ function extract_functions_from_array(
     const element = array_node.namedChild(i);
     if (!element) continue;
 
+    // Handle spread elements: [...OTHER_ARRAY]
+    if (element.type === "spread_element") {
+      const spread_arg = element.namedChildren[0];
+      if (spread_arg?.type === "identifier") {
+        references.push(spread_arg.text as SymbolName);
+      }
+      continue;
+    }
+
     if (
       element.type === "arrow_function" ||
       element.type === "function_expression" ||
@@ -791,10 +800,22 @@ function extract_functions_from_object(
   const references: SymbolName[] = [];
 
   for (let i = 0; i < obj_node.namedChildCount; i++) {
-    const pair = obj_node.namedChild(i);
-    if (pair?.type !== "pair") continue;
+    const child = obj_node.namedChild(i);
+    if (!child) continue;
 
-    const value = pair.childForFieldName?.("value");
+    // Handle spread elements: { ...OTHER_HANDLERS }
+    if (child.type === "spread_element") {
+      const spread_arg = child.namedChildren[0];
+      if (spread_arg?.type === "identifier") {
+        references.push(spread_arg.text as SymbolName);
+      }
+      continue;
+    }
+
+    // Handle pair nodes: { key: value }
+    if (child.type !== "pair") continue;
+
+    const value = child.childForFieldName?.("value");
     if (!value) continue;
 
     if (
