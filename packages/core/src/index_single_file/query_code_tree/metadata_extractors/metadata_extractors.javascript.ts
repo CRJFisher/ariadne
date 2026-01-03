@@ -653,4 +653,41 @@ export const JAVASCRIPT_METADATA_EXTRACTORS: MetadataExtractors = {
 
     return undefined;
   },
+
+  /**
+   * Extract argument locations from a call expression
+   *
+   * JavaScript/TypeScript: Extract locations of arguments from arguments field
+   *
+   * @param node - The SyntaxNode representing a call expression
+   * @param file_path - File path for location creation
+   * @returns Array of Location objects for each argument, or undefined
+   */
+  extract_argument_locations(
+    node: SyntaxNode,
+    file_path: FilePath
+  ): Location[] | undefined {
+    // For function calls, the query captures the identifier, not the call_expression
+    // We need to navigate up to the parent call_expression
+    let call_node = node;
+    if (node.type === "identifier" && node.parent?.type === "call_expression") {
+      call_node = node.parent;
+    }
+
+    if (call_node.type !== "call_expression") {
+      return undefined;
+    }
+
+    const arguments_node = call_node.childForFieldName("arguments");
+    if (!arguments_node) {
+      return undefined;
+    }
+
+    const argument_locations: Location[] = [];
+    for (const arg of arguments_node.namedChildren) {
+      argument_locations.push(node_to_location(arg, file_path));
+    }
+
+    return argument_locations.length > 0 ? argument_locations : undefined;
+  },
 };

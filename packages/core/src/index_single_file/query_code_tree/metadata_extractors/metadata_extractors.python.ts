@@ -659,4 +659,43 @@ export const PYTHON_METADATA_EXTRACTORS: MetadataExtractors = {
 
     return undefined;
   },
+
+  /**
+   * Extract argument locations from a call expression
+   *
+   * Python: Extract locations of arguments from argument_list
+   *
+   * @param node - The SyntaxNode representing a call expression
+   * @param file_path - File path for location creation
+   * @returns Array of Location objects for each argument, or undefined
+   */
+  extract_argument_locations(
+    node: SyntaxNode,
+    file_path: FilePath
+  ): Location[] | undefined {
+    // For function calls, the query might capture the identifier, not the call
+    // We need to navigate up to the parent call node
+    let call_node = node;
+    if (node.type === "identifier" && node.parent?.type === "call") {
+      call_node = node.parent;
+    }
+
+    if (call_node.type !== "call") {
+      return undefined;
+    }
+
+    const argument_list_node = call_node.childForFieldName("arguments");
+    if (!argument_list_node || argument_list_node.type !== "argument_list") {
+      return undefined;
+    }
+
+    const argument_locations: Location[] = [];
+    for (const arg of argument_list_node.namedChildren) {
+      // Skip keyword arguments (they're still arguments, but we want positional ones)
+      // We include all arguments for now
+      argument_locations.push(node_to_location(arg, file_path));
+    }
+
+    return argument_locations.length > 0 ? argument_locations : undefined;
+  },
 };

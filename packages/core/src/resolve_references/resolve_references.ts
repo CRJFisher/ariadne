@@ -18,6 +18,7 @@ import { resolve_method_call } from "./call_resolution";
 import { resolve_constructor_call } from "./call_resolution/call_resolution.constructor";
 import { resolve_self_reference_call } from "./call_resolution/call_resolution.self_reference";
 import { resolve_collection_dispatch } from "./call_resolution/call_resolution.collection_dispatch";
+import { resolve_collection_arguments } from "./call_resolution/call_resolution.collection_argument";
 import { find_enclosing_function_scope } from "../index_single_file/scopes/scopes.utils";
 
 // ... existing imports ...
@@ -187,7 +188,8 @@ export class ResolutionRegistry {
       file_references,
       scopes,
       types,
-      definitions
+      definitions,
+      references
     );
 
     // Resolve callback invocations for anonymous functions
@@ -277,12 +279,13 @@ export class ResolutionRegistry {
     file_references: Map<FilePath, readonly SymbolReference[]>,
     scopes: ScopeRegistry,
     types: TypeRegistry,
-    definitions: DefinitionRegistry
+    definitions: DefinitionRegistry,
+    references: ReferenceRegistry
   ): CallReference[] {
     const resolved_calls: CallReference[] = [];
 
-    for (const references of file_references.values()) {
-      for (const ref of references) {
+    for (const file_refs of file_references.values()) {
+      for (const ref of file_refs) {
         let resolved_symbols: SymbolId[] = [];
 
         // Dispatch on discriminated union kind field
@@ -439,6 +442,18 @@ export class ResolutionRegistry {
                 : ({ type: "direct" as const } as const),
             })),
           });
+        }
+
+        // NEW: Detect collection arguments and create implicit calls
+        // This handles handler registry patterns where collections are passed as arguments
+        if (ref.kind === "function_call" || ref.kind === "method_call") {
+          const collection_arg_calls = resolve_collection_arguments(
+            ref,
+            definitions,
+            this,
+            references
+          );
+          resolved_calls.push(...collection_arg_calls);
         }
       }
     }

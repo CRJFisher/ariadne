@@ -99,6 +99,15 @@ export interface MetadataExtractors {
    * Extract the method or function name from a call node
    */
   extract_call_name(node: SyntaxNode): SymbolName | undefined;
+
+  /**
+   * Extract argument locations from a call expression
+   * Returns array of Location objects for each argument
+   */
+  extract_argument_locations(
+    node: SyntaxNode,
+    file_path: FilePath
+  ): Location[] | undefined;
 }
 
 /**

@@ -7,3 +7,4 @@
 
 export { resolve_method_call } from "./call_resolution.method";
 export { resolve_constructor_call } from "./call_resolution.constructor";
+export { resolve_collection_arguments } from "./call_resolution.collection_argument";

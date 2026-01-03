@@ -221,18 +221,29 @@ function process_method_reference(
       ? extractors.extract_is_optional_chain(capture.node)
       : false;
 
+    // Extract argument locations for collection argument detection
+    const argument_locations = extractors
+      ? extractors.extract_argument_locations(capture.node, file_path)
+      : undefined;
+
     return create_method_call_reference(
       method_name,
       location,
       scope_id,
       receiver_info.receiver_location,
       receiver_info.property_chain,
-      optional_chaining
+      optional_chaining,
+      argument_locations
     );
   }
 
   // Fallback: No receiver info available, treat as function call
-  return create_function_call_reference(method_name, location, scope_id);
+  // Extract argument locations even for fallback case
+  const argument_locations = extractors
+    ? extractors.extract_argument_locations(capture.node, file_path)
+    : undefined;
+
+  return create_function_call_reference(method_name, location, scope_id, argument_locations);
 }
 
 /**
@@ -357,9 +368,14 @@ export class ReferenceBuilder {
     let reference: SymbolReference;
 
     switch (kind) {
-      case ReferenceKind.FUNCTION_CALL:
-        reference = create_function_call_reference(reference_name, location, scope_id);
+      case ReferenceKind.FUNCTION_CALL: {
+        const argument_locations = this.extractors
+          ? this.extractors.extract_argument_locations(capture.node, this.file_path)
+          : undefined;
+
+        reference = create_function_call_reference(reference_name, location, scope_id, argument_locations);
         break;
+      }
 
       case ReferenceKind.CONSTRUCTOR_CALL: {
         const construct_target = this.extractors
