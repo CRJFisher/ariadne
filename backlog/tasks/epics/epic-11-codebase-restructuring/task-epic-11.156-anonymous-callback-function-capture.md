@@ -1,6 +1,6 @@
 # Task Epic-11.156: Collection Dispatch Resolution
 
-**Status**: Partially Implemented
+**Status**: In Progress
 **Priority**: P0 (High Impact)
 **Epic**: epic-11-codebase-restructuring
 **Impact**: Fixes 92+ false positive entry points from handler registry patterns
@@ -44,299 +44,281 @@ function process_captures(captures: Capture[], registry: HandlerRegistry) {
 
 **Total**: 92+ functions incorrectly flagged as entry points
 
-## Implementation Status
+## Root Cause
 
-### Phase 1: Infrastructure (COMPLETED)
+### Two-Layer Problem
 
-The following infrastructure has been implemented:
+**Layer 1: Spread operator detection** (FIXED - December 2024)
 
-#### Type System Extensions
+Collection extraction functions now capture spread/splat operators:
+- `{...OTHER_HANDLERS}` captured in `stored_references`
+- `[*other_list]` captured in `stored_references`
 
-**File**: `packages/types/src/symbol_references.ts`
+**Layer 2: Parameter-based dispatch** (this task)
 
-```typescript
-// Added to FunctionCallReference and MethodCallReference:
-readonly argument_locations?: readonly Location[];
+When a collection is passed as a function argument, the resolution chain breaks:
 
-// Added to ResolutionReason union:
-| { type: "collection_argument"; collection_id: SymbolId; call_site: Location }
+```
+TYPESCRIPT_HANDLERS (collection with stored_references)
+      │
+      ▼
+process_captures(captures, TYPESCRIPT_HANDLERS)  ← Collection info lost here
+      │
+      ▼
+registry (parameter)                              ← Just a name, no metadata
+      │
+      ▼
+handler = registry[key]
+      │
+      ▼
+Resolution: "registry" → parameter               ← No function_collection!
+      │
+      ▼
+DEAD END - handlers appear uncalled
 ```
 
-#### Argument Location Extraction
+**Why parameters don't work**:
+1. Parameters are typed names, not value references
+2. No tracking of which argument was passed at each call site
+3. No propagation of collection metadata through call boundaries
 
-**Files**: `metadata_extractors.javascript.ts`, `.python.ts`, `.rust.ts`, `.typescript.ts`
+## Solution: Argument-Based Collection Consumption
 
-Added `extract_argument_locations()` method to all metadata extractors. Handles the tree-sitter query capture pattern where function calls capture the identifier, not the call_expression:
+### Core Heuristic
+
+**Passing a function collection as an argument implies consuming (calling) its contents.**
+
+When we detect a call expression where an argument resolves to a function collection, we mark all functions in that collection as "called" at that call site.
+
+### Why This Works
+
+1. **Semantic truth**: Passing a handler registry to a function indicates intent to dispatch from it
+2. **No parameter tracking needed**: Detection happens at the call site where the actual collection variable is visible
+3. **Transitive resolution**: If `TYPESCRIPT_HANDLERS` contains `"JAVASCRIPT_HANDLERS"` in `stored_references`, we resolve recursively
+4. **Language-agnostic**: Same pattern works across TypeScript, JavaScript, Python, Rust
+
+### Call Reference Model
+
+For: `process_captures(captures, TYPESCRIPT_HANDLERS)`
+
+We create call references:
+```typescript
+{
+  caller: "<containing_function>",
+  callee: "handle_definition_class",
+  location: { line: 42, column: 0 },  // The process_captures call site
+  via: "TYPESCRIPT_HANDLERS"           // Indicates collection-mediated dispatch
+}
+```
+
+The `via` field distinguishes direct calls from collection-mediated dispatch.
+
+## Implementation
+
+### Phase 1: Detect Collection Arguments in Call Expressions
+
+Location: `packages/core/src/resolve_references/call_resolution/`
 
 ```typescript
-extract_argument_locations(node: SyntaxNode, file_path: FilePath): Location[] | undefined {
-  // Navigate from identifier to parent call_expression
-  let call_node = node;
-  if (node.type === "identifier" && node.parent?.type === "call_expression") {
-    call_node = node.parent;
+function process_call_expression(
+  call_node: SyntaxNode,
+  context: ResolutionContext
+): void {
+  // Existing: resolve the function being called
+  resolve_call_target(call_node, context);
+
+  // NEW: check arguments for function collections
+  const args_node = call_node.childForFieldName("arguments");
+  if (args_node) {
+    process_collection_arguments(args_node, call_node, context);
   }
-  // Extract argument locations from call_expression
-  // ...
+}
+
+function process_collection_arguments(
+  args_node: SyntaxNode,
+  call_node: SyntaxNode,
+  context: ResolutionContext
+): void {
+  for (const arg of args_node.namedChildren) {
+    if (arg.type === "identifier") {
+      const definition = resolve_symbol(arg.text, context);
+
+      if (definition?.function_collection) {
+        // Mark all stored references as called via this collection
+        mark_collection_contents_as_called(
+          definition.function_collection,
+          definition.name,  // via field
+          call_node,        // location source
+          context
+        );
+      }
+    }
+  }
 }
 ```
 
-#### Reference Registry Location Index
-
-**File**: `packages/core/src/resolve_references/registries/registries.reference.ts`
-
-Added O(1) location-based reference lookup:
+### Phase 2: Recursive Collection Resolution
 
 ```typescript
-private location_to_reference: Map<string, SymbolReference> = new Map();
+function mark_collection_contents_as_called(
+  collection: FunctionCollection,
+  via: SymbolName,
+  call_node: SyntaxNode,
+  context: ResolutionContext
+): void {
+  for (const ref_name of collection.stored_references) {
+    const ref_definition = resolve_symbol(ref_name, context);
 
-get_reference_at_location(location: Location): SymbolReference | null {
-  const loc_key = location_key(location);
-  return this.location_to_reference.get(loc_key) ?? null;
+    if (ref_definition?.kind === "function") {
+      // Direct function reference - mark as called
+      add_call_reference({
+        caller: context.current_scope_id,
+        callee: ref_definition.symbol_id,
+        location: extract_location(call_node),
+        via: via,
+      });
+    } else if (ref_definition?.function_collection) {
+      // Nested collection (e.g., spread) - resolve recursively
+      mark_collection_contents_as_called(
+        ref_definition.function_collection,
+        via,
+        call_node,
+        context
+      );
+    }
+  }
 }
 ```
 
-#### Collection Argument Resolution Module
+### Phase 3: Update Call Reference Type
 
-**File**: `packages/core/src/resolve_references/call_resolution/call_resolution.collection_argument.ts`
-
-Core resolver with three functions:
-- `resolve_collection_arguments()` - Main entry point, iterates argument locations
-- `resolve_argument_at_location()` - Resolves argument expression to symbol
-- `resolve_collection_functions_recursive()` - Handles spread operators transitively
-
-#### Pipeline Integration
-
-**File**: `packages/core/src/resolve_references/resolve_references.ts`
-
-Integrated into `resolve_calls()` at line ~447:
+Location: `packages/types/src/`
 
 ```typescript
-// For function/method calls, detect collection arguments
-if (ref.kind === "function_call" || ref.kind === "method_call") {
-  const collection_arg_calls = resolve_collection_arguments(
-    ref, definitions, this, references
+interface CallReference {
+  caller: SymbolId;
+  callee: SymbolId;
+  location: CodeLocation;
+  via?: SymbolName;  // NEW: indicates collection-mediated dispatch
+}
+```
+
+## Testing
+
+### Unit Tests
+
+```typescript
+describe("Collection Dispatch Resolution", () => {
+  test("marks collection contents as called when passed as argument", () => {
+    const code = `
+      const HANDLERS = { key: myHandler };
+      function myHandler() {}
+      function dispatch(registry) { registry.key(); }
+      dispatch(HANDLERS);
+    `;
+
+    const graph = build_call_graph(code, "test.ts");
+
+    // myHandler should NOT be an entry point
+    const entry_points = get_entry_points(graph);
+    expect(entry_points).not.toContain("myHandler");
+
+    // myHandler should have a caller
+    const myHandler_node = graph.nodes.get("myHandler");
+    expect(myHandler_node.callers.size).toBeGreaterThan(0);
+  });
+
+  test("resolves spread references transitively", () => {
+    const code = `
+      const BASE = { a: handlerA };
+      const EXTENDED = { ...BASE, b: handlerB };
+      function handlerA() {}
+      function handlerB() {}
+      function dispatch(registry) {}
+      dispatch(EXTENDED);
+    `;
+
+    const graph = build_call_graph(code, "test.ts");
+
+    // Both handlers should be marked as called
+    expect(get_entry_points(graph)).not.toContain("handlerA");
+    expect(get_entry_points(graph)).not.toContain("handlerB");
+  });
+
+  test("includes via field for collection-mediated calls", () => {
+    const code = `
+      const HANDLERS = { key: myHandler };
+      function myHandler() {}
+      dispatch(HANDLERS);
+    `;
+
+    const references = get_call_references(code, "test.ts");
+    const handler_ref = references.find(r => r.callee === "myHandler");
+
+    expect(handler_ref).toBeDefined();
+    expect(handler_ref.via).toBe("HANDLERS");
+  });
+});
+```
+
+### Integration Test
+
+```typescript
+test("capture_handlers functions are not entry points", () => {
+  const analysis = run_top_level_nodes_analysis();
+
+  const capture_handler_entries = analysis.entry_points.filter(
+    ep => ep.file_path.includes("capture_handlers")
   );
-  resolved_calls.push(...collection_arg_calls);
-}
+
+  // Should be zero or minimal
+  expect(capture_handler_entries.length).toBeLessThan(5);
+});
 ```
 
-### Phase 2: Testing (BLOCKED)
+## Success Criteria
 
-**Current Status**: Implementation works for direct collection passing but does NOT solve the Ariadne codebase pattern.
+- [ ] Handler functions in `capture_handlers.*.ts` no longer appear as entry points
+- [ ] Entry point count returns to ~124 (from current 216)
+- [ ] Call references include `via` field for collection-mediated dispatch
+- [ ] Spread/splat operators resolve transitively
+- [ ] No performance regression (< 5% overhead)
+- [ ] Works across TypeScript, JavaScript, Python, Rust
 
-**Verification**: Debug logging confirmed:
-- ✅ `argument_locations` are correctly extracted (count: 2 for `process_definitions` calls)
-- ✅ Arguments resolve to correct symbol IDs
-- ❌ `handler_registry` variable has NO `function_collection` metadata
+## Verification
 
-## Discovered Limitation: Factory Function Indirection
+1. Run `npm run generate-fixtures` after implementation
+2. Run top-level-nodes analysis
+3. Compare entry point counts: before (216) vs after (target: ~124)
+4. Verify no `capture_handlers` functions in entry points list
 
-### The Actual Pattern in Ariadne
+## Edge Cases
 
-```typescript
-// In index_single_file.ts:
-const handler_registry = get_handler_registry(language);  // ← INDIRECT
-process_definitions(context, handler_registry);
+### Handled
 
-// In capture_handlers/index.ts:
-export function get_handler_registry(language: Language): HandlerRegistry {
-  switch (language) {
-    case "typescript": return TYPESCRIPT_HANDLERS;  // ← Actual collection
-    // ...
-  }
-}
-```
+| Pattern | Resolution |
+|---------|------------|
+| `dispatch(HANDLERS)` | Direct collection argument |
+| `dispatch({...BASE, key: fn})` | Inline spread at call site |
+| `EXTENDED = {...BASE}; dispatch(EXTENDED)` | Transitive through spread |
+| Multiple collection args | Each processed independently |
 
-### Why It Fails
+### Not Handled (acceptable)
 
-The implementation detects collections at the **call site**. When `process_definitions(context, handler_registry)` is called:
+| Pattern | Why Acceptable |
+|---------|---------------|
+| `outer(HANDLERS)` → `inner(x)` → `use(x)` | Multi-layer parameter passing is rare |
+| `const x = HANDLERS; dispatch(x)` | Variable aliasing - could add later if needed |
 
-1. ✅ Argument `handler_registry` is resolved to its VariableDefinition
-2. ❌ That variable has NO `function_collection` because it wasn't declared with a collection literal
-3. ❌ The variable was assigned from a function call return value, not directly
-
-The `function_collection` metadata only exists on `TYPESCRIPT_HANDLERS`, `JAVASCRIPT_HANDLERS`, etc. - not on `handler_registry`.
-
-### The Core Issue: Value Flow vs Type Flow
-
-**What we track**: Types (via TypeRegistry)
-**What we need**: Values (which specific collection instance is assigned)
-
-```
-TYPESCRIPT_HANDLERS (has function_collection)
-        │
-        ▼
-get_handler_registry("typescript")
-        │
-        ▼ (return value - VALUE FLOW LOST)
-        │
-handler_registry (type: HandlerRegistry, NO function_collection)
-        │
-        ▼
-process_definitions(context, handler_registry)
-        │
-        ▼
-Resolution: handler_registry → VariableDefinition → NO COLLECTION
-```
-
-## Alternative Approaches Analysis
-
-### Approach A: Current Implementation (Argument-Based Detection)
-
-**What it handles**:
-- `dispatch(HANDLERS)` - Direct collection passing ✅
-- `dispatch({...BASE, new: fn})` - Inline spread ✅
-- `EXTENDED = {...BASE}; dispatch(EXTENDED)` - Transitive spread ✅
-
-**What it cannot handle**:
-- `const x = get_registry(); dispatch(x)` - Function return ❌
-- `const x = factory.create(); dispatch(x)` - Method return ❌
-
-**Effort**: COMPLETE (~239 lines)
-
-### Approach B: Return Type Flow Tracking
-
-**Concept**: Track that `handler_registry` was assigned from `get_handler_registry()`, then resolve what that function returns.
-
-**Why it's insufficient**: Knowing the return TYPE (`HandlerRegistry`) doesn't tell us the return VALUE. The function returns different collections based on the `language` parameter. We'd need:
-1. Inter-procedural control flow analysis
-2. Constant propagation for the `language` argument
-3. Branch analysis within `get_handler_registry()`
-
-**Effort**: HIGH (inter-procedural analysis)
-
-### Approach C: Return Value Collection Propagation
-
-**Concept**: For functions that ONLY return known collections, propagate that information.
-
-```typescript
-// Detect: get_handler_registry() returns one of [TYPESCRIPT_HANDLERS, JAVASCRIPT_HANDLERS, ...]
-// Mark: handler_registry inherits union of all possible collections
-```
-
-**Implementation**:
-1. Analyze function bodies for return statements
-2. If ALL returns are known collections, mark function as "collection factory"
-3. Variables assigned from collection factories inherit combined function_collection
-
-**Pros**:
-- Works for the actual Ariadne pattern
-- No inter-procedural value tracking needed
-- Conservative (union of all possibilities)
-
-**Cons**:
-- Over-approximates (marks handlers called even if that branch isn't taken)
-- Requires function body analysis
-- May not work for external libraries
-
-**Effort**: MEDIUM (~200-300 lines)
-
-### Approach D: Refactor Ariadne's Code
-
-**Concept**: Change Ariadne to use the direct pattern that our implementation handles.
-
-**Option 1**: Inline the function call
-```typescript
-// Instead of:
-const handler_registry = get_handler_registry(language);
-process_definitions(context, handler_registry);
-
-// Use:
-process_definitions(context, get_handler_registry(language));
-```
-This still doesn't work because the return value isn't a collection variable.
-
-**Option 2**: Pass handlers directly per language
-```typescript
-// Switch-based dispatch at call site
-switch (language) {
-  case "typescript":
-    process_definitions(context, TYPESCRIPT_HANDLERS);
-    break;
-  // ...
-}
-```
-
-**Pros**: Zero additional analysis complexity
-**Cons**: Code duplication, diverges from current architecture
-
-**Effort**: LOW (~20 lines changed)
-
-## Recommendations
-
-### Short-Term (Pragmatic)
-
-**Option 1: Accept Limitation + Document**
-- Current implementation works for direct patterns
-- Document that factory function indirection isn't supported
-- Entry point analysis will include handler functions (known limitation)
-
-**Option 2: Refactor Ariadne's Code**
-- Change `index_single_file.ts` to pass handlers directly
-- Most targeted fix with zero analysis complexity
-
-### Medium-Term (Approach C)
-
-Implement return value collection propagation:
-
-1. **Detect collection factory functions**:
-   - Analyze function return statements
-   - If ALL returns are identifiers that resolve to collections, mark as factory
-
-2. **Propagate to assigned variables**:
-   - When `const x = factory()`, check if factory is collection factory
-   - If yes, create synthetic function_collection with union of all possible returns
-
-3. **Files to modify**:
-   - `resolve_references.ts` - Add factory detection pass
-   - `registries.definition.ts` - Add collection factory tracking
-   - `call_resolution.collection_argument.ts` - Check for factory-derived collections
-
-### Long-Term (Not Recommended)
-
-Full inter-procedural value flow analysis would require:
-- Control flow graphs for function bodies
-- Constant propagation
-- Context-sensitive analysis (different call sites → different results)
-
-This is significantly beyond the current scope and would be a major architectural addition.
-
-## Files Modified (Current Implementation)
+## Files to Modify
 
 | File | Changes |
 |------|---------|
-| `packages/types/src/symbol_references.ts` | +5 lines: argument_locations, collection_argument reason |
-| `packages/core/src/.../metadata_extractors.javascript.ts` | +37 lines: extract_argument_locations |
-| `packages/core/src/.../metadata_extractors.python.ts` | +39 lines: extract_argument_locations |
-| `packages/core/src/.../metadata_extractors.rust.ts` | +37 lines: extract_argument_locations |
-| `packages/core/src/.../metadata_extractors.types.ts` | +9 lines: interface addition |
-| `packages/core/src/.../metadata_extractors.typescript.ts` | +1 line: delegate to JS |
-| `packages/core/src/.../references.factories.ts` | +8 lines: argument_locations param |
-| `packages/core/src/.../references.ts` | +24 lines: extract and pass argument_locations |
-| `packages/core/src/.../call_resolution/index.ts` | +1 line: export |
-| `packages/core/src/.../call_resolution/call_resolution.collection_argument.ts` | +214 lines: NEW FILE |
-| `packages/core/src/.../registries/registries.reference.ts` | +54 lines: location index |
-| `packages/core/src/.../resolve_references.ts` | +23 lines: integration |
-
-**Total**: ~239 lines added across 12 files
-
-## Success Criteria (Updated)
-
-### For Direct Pattern (COMPLETE)
-- [x] Argument locations extracted for all call expressions
-- [x] Location-based reference lookup (O(1))
-- [x] Collection argument detection and resolution
-- [x] Transitive spread operator handling
-- [x] Integration into call resolution pipeline
-
-### For Factory Pattern (NOT STARTED)
-- [ ] Collection factory function detection
-- [ ] Return value collection propagation
-- [ ] Handler functions no longer appear as entry points
-- [ ] Entry point count returns to ~124
+| `packages/core/src/resolve_references/call_resolution/*.ts` | Add collection argument processing |
+| `packages/types/src/call_reference.ts` | Add `via` field |
+| `packages/core/src/resolve_references/call_resolution/*.test.ts` | Add tests |
 
 ## Related Work
 
-- **Spread detection** (completed): `symbol_factories.*.ts` capture spread in `stored_references`
-- **Indirect invocation** (completed): `derived_from` tracks `config.get(type)` patterns
-- **Type registry** (exists): Tracks explicit type annotations and constructor types
+- **Spread detection** (completed): `symbol_factories.*.ts` now capture spread/splat in `stored_references`
+- **Test coverage** (completed): `symbol_factories.collection.test.ts` covers spread patterns

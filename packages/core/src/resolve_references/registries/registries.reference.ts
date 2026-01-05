@@ -1,11 +1,4 @@
-import type { FilePath, SymbolReference, Location } from "@ariadnejs/types";
-
-/**
- * Create a location key for O(1) location-based lookups
- */
-function location_key(location: Location): string {
-  return `${location.file_path}:${location.start_line}:${location.start_column}`;
-}
+import type { FilePath, SymbolReference } from "@ariadnejs/types";
 
 /**
  * Registry for symbol references across the project.
@@ -23,9 +16,6 @@ export class ReferenceRegistry {
   /** File → references in that file */
   private by_file: Map<FilePath, SymbolReference[]> = new Map();
 
-  /** Location key → reference for O(1) lookup by location */
-  private location_to_reference: Map<string, SymbolReference> = new Map();
-
   /**
    * Update references for a file.
    * Replaces any existing references for the file.
@@ -34,24 +24,7 @@ export class ReferenceRegistry {
    * @param references - References from SemanticIndex
    */
   update_file(file_id: FilePath, references: readonly SymbolReference[]): void {
-    // Remove old location index entries for this file
-    const old_references = this.by_file.get(file_id);
-    if (old_references) {
-      for (const ref of old_references) {
-        const loc_key = location_key(ref.location);
-        this.location_to_reference.delete(loc_key);
-      }
-    }
-
-    // Store new references
-    const refs_array = Array.from(references);
-    this.by_file.set(file_id, refs_array);
-
-    // Build location index for new references
-    for (const ref of refs_array) {
-      const loc_key = location_key(ref.location);
-      this.location_to_reference.set(loc_key, ref);
-    }
+    this.by_file.set(file_id, Array.from(references));
   }
 
   /**
@@ -70,15 +43,6 @@ export class ReferenceRegistry {
    * @param file_id - The file to remove
    */
   remove_file(file_id: FilePath): void {
-    // Remove location index entries for this file
-    const old_references = this.by_file.get(file_id);
-    if (old_references) {
-      for (const ref of old_references) {
-        const loc_key = location_key(ref.location);
-        this.location_to_reference.delete(loc_key);
-      }
-    }
-
     this.by_file.delete(file_id);
   }
 
@@ -105,19 +69,5 @@ export class ReferenceRegistry {
    */
   clear(): void {
     this.by_file.clear();
-    this.location_to_reference.clear();
-  }
-
-  /**
-   * Get reference at a specific location.
-   *
-   * Used for resolving argument expressions to symbols in collection argument detection.
-   *
-   * @param location - The location to query
-   * @returns Reference at that location, or null if not found
-   */
-  get_reference_at_location(location: Location): SymbolReference | null {
-    const loc_key = location_key(location);
-    return this.location_to_reference.get(loc_key) ?? null;
   }
 }

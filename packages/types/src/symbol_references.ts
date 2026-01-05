@@ -113,8 +113,6 @@ export interface MethodCallReference extends BaseReference {
   readonly property_chain: readonly SymbolName[];
   /** Whether this uses optional chaining (obj?.method()) */
   readonly optional_chaining?: boolean;
-  /** Locations of call arguments for collection argument detection */
-  readonly argument_locations?: readonly Location[];
 }
 
 /**
@@ -131,8 +129,6 @@ export interface FunctionCallReference extends BaseReference {
   readonly kind: "function_call";
   /** Optional argument type information */
   readonly argument_types?: readonly TypeInfo[];
-  /** Locations of call arguments for collection argument detection */
-  readonly argument_locations?: readonly Location[];
 }
 
 /**
@@ -291,7 +287,6 @@ export type ResolutionReason =
   | { type: "direct" }
   | { type: "interface_implementation"; interface_id: SymbolId }
   | { type: "collection_member"; collection_id: SymbolId; access_pattern?: string }
-  | { type: "collection_argument"; collection_id: SymbolId; call_site: Location }
   | { type: "heuristic_match"; score: number };
 
 /**

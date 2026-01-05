@@ -83,5 +83,4 @@ export const TYPESCRIPT_METADATA_EXTRACTORS: MetadataExtractors = {
   extract_is_optional_chain: JAVASCRIPT_METADATA_EXTRACTORS.extract_is_optional_chain,
   is_method_call: JAVASCRIPT_METADATA_EXTRACTORS.is_method_call,
   extract_call_name: JAVASCRIPT_METADATA_EXTRACTORS.extract_call_name,
-  extract_argument_locations: JAVASCRIPT_METADATA_EXTRACTORS.extract_argument_locations,
 };

@@ -73,8 +73,7 @@ export function create_method_call_reference(
   scope_id: ScopeId,
   receiver_location: Location,
   property_chain: readonly SymbolName[],
-  optional_chaining?: boolean,
-  argument_locations?: readonly Location[]
+  optional_chaining?: boolean
 ): MethodCallReference {
   return {
     kind: "method_call",
@@ -84,7 +83,6 @@ export function create_method_call_reference(
     receiver_location,
     property_chain,
     ...(optional_chaining !== undefined && { optional_chaining }),
-    ...(argument_locations !== undefined && { argument_locations }),
   };
 }
 
@@ -98,15 +96,13 @@ export function create_method_call_reference(
 export function create_function_call_reference(
   name: SymbolName,
   location: Location,
-  scope_id: ScopeId,
-  argument_locations?: readonly Location[]
+  scope_id: ScopeId
 ): FunctionCallReference {
   return {
     kind: "function_call",
     name,
     location,
     scope_id,
-    ...(argument_locations !== undefined && { argument_locations }),
   };
 }
 
