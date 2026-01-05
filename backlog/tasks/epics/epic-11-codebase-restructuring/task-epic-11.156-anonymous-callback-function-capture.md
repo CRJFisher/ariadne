@@ -1,6 +1,6 @@
-# Task Epic-11.156: Collection Dispatch Resolution
+# Task Epic-11.156: Function Collection Reachability
 
-**Status**: In Progress
+**Status**: TODO
 **Priority**: P0 (High Impact)
 **Epic**: epic-11-codebase-restructuring
 **Impact**: Fixes 92+ false positive entry points from handler registry patterns
@@ -12,31 +12,29 @@ Handler functions in registry patterns appear as uncalled entry points despite b
 ### The Pattern
 
 ```typescript
-// 1. Handler registry with named functions
+// Handler registry with named functions
 export const TYPESCRIPT_HANDLERS: HandlerRegistry = {
   ...JAVASCRIPT_HANDLERS,
   "definition.class": handle_definition_class,
   "definition.method": handle_definition_method,
 };
 
-// 2. Registry passed to dispatch function
-process_captures(captures, TYPESCRIPT_HANDLERS);
-
-// 3. Dispatch function retrieves and calls handlers
-function process_captures(captures: Capture[], registry: HandlerRegistry) {
-  for (const capture of captures) {
-    const handler = registry[capture.name];
-    if (handler) handler(capture);
+// Factory function returns the collection
+export function get_handler_registry(language: Language): HandlerRegistry {
+  switch (language) {
+    case "typescript": return TYPESCRIPT_HANDLERS;
+    case "javascript": return JAVASCRIPT_HANDLERS;
+    // ...
   }
 }
 ```
 
-**Result**: `handle_definition_class`, `handle_definition_method`, etc. appear as entry points because the call graph cannot trace through the parameter-based dispatch.
+**Result**: `handle_definition_class`, `handle_definition_method`, etc. appear as entry points.
 
 ### Scale of Impact
 
 | File | Affected Handlers |
-|------|-------------------|
+| ---- | ----------------- |
 | `capture_handlers.typescript.ts` | 30+ |
 | `capture_handlers.javascript.ts` | 30+ |
 | `capture_handlers.python.ts` | 15+ |
@@ -44,281 +42,262 @@ function process_captures(captures: Capture[], registry: HandlerRegistry) {
 
 **Total**: 92+ functions incorrectly flagged as entry points
 
-## Root Cause
-
-### Two-Layer Problem
-
-**Layer 1: Spread operator detection** (FIXED - December 2024)
-
-Collection extraction functions now capture spread/splat operators:
-- `{...OTHER_HANDLERS}` captured in `stored_references`
-- `[*other_list]` captured in `stored_references`
-
-**Layer 2: Parameter-based dispatch** (this task)
-
-When a collection is passed as a function argument, the resolution chain breaks:
-
-```
-TYPESCRIPT_HANDLERS (collection with stored_references)
-      │
-      ▼
-process_captures(captures, TYPESCRIPT_HANDLERS)  ← Collection info lost here
-      │
-      ▼
-registry (parameter)                              ← Just a name, no metadata
-      │
-      ▼
-handler = registry[key]
-      │
-      ▼
-Resolution: "registry" → parameter               ← No function_collection!
-      │
-      ▼
-DEAD END - handlers appear uncalled
-```
-
-**Why parameters don't work**:
-1. Parameters are typed names, not value references
-2. No tracking of which argument was passed at each call site
-3. No propagation of collection metadata through call boundaries
-
-## Solution: Argument-Based Collection Consumption
+## Solution: Read-Based Collection Consumption
 
 ### Core Heuristic
 
-**Passing a function collection as an argument implies consuming (calling) its contents.**
+**If a function collection variable is read, its stored functions are considered reachable.**
 
-When we detect a call expression where an argument resolves to a function collection, we mark all functions in that collection as "called" at that call site.
+This triggers on any read of the collection:
+
+- `return COLLECTION` - collection is read (covers factory pattern)
+- `dispatch(COLLECTION)` - collection is read (argument is a read)
+- `const x = COLLECTION[key]` - collection is read
+- `some_function(COLLECTION)` - collection is read
 
 ### Why This Works
 
-1. **Semantic truth**: Passing a handler registry to a function indicates intent to dispatch from it
-2. **No parameter tracking needed**: Detection happens at the call site where the actual collection variable is visible
-3. **Transitive resolution**: If `TYPESCRIPT_HANDLERS` contains `"JAVASCRIPT_HANDLERS"` in `stored_references`, we resolve recursively
-4. **Language-agnostic**: Same pattern works across TypeScript, JavaScript, Python, Rust
+1. **Handles factory pattern**: `return TYPESCRIPT_HANDLERS` is a read of the collection
+2. **No false call attribution**: We don't create misleading call edges
+3. **Simple implementation**: ~30-50 lines vs previous 239 lines
+4. **Language-agnostic**: Same pattern works across all languages
 
-### Call Reference Model
+### Key Insight: Reachability vs Call Edges
 
-For: `process_captures(captures, TYPESCRIPT_HANDLERS)`
+We distinguish two orthogonal concerns:
 
-We create call references:
+| Concern | Key | Purpose |
+| ------- | --- | ------- |
+| **Reachability** | `SymbolId` | Is this function called somewhere? (entry point detection) |
+| **Call edges** | `CallReference` | WHO calls this function? (call graph visualization) |
+
+For handler registries, we care about **reachability** - ensuring handlers aren't marked as entry points. We don't need accurate call edges for dynamically dispatched patterns.
+
+## Data Model
+
+### IndirectReachability Type
+
 ```typescript
-{
-  caller: "<containing_function>",
-  callee: "handle_definition_class",
-  location: { line: 42, column: 0 },  // The process_captures call site
-  via: "TYPESCRIPT_HANDLERS"           // Indicates collection-mediated dispatch
+// packages/types/src/call_chains.ts
+
+/**
+ * Reasons why a function is reachable without a direct call edge
+ */
+export type IndirectReachabilityReason =
+  | { type: "collection_read"; collection_id: SymbolId; read_location: Location };
+  // Note: callback_external already handled via is_callback_invocation
+
+/**
+ * Function reachability without direct call edge
+ */
+export interface IndirectReachability {
+  readonly function_id: SymbolId;
+  readonly reason: IndirectReachabilityReason;
 }
 ```
 
-The `via` field distinguishes direct calls from collection-mediated dispatch.
+### Extended CallGraph
+
+```typescript
+export interface CallGraph {
+  readonly nodes: ReadonlyMap<SymbolId, CallableNode>;
+  readonly entry_points: readonly SymbolId[];
+
+  /** Functions reachable through indirect mechanisms (not via call edges) */
+  readonly indirect_reachability?: ReadonlyMap<SymbolId, IndirectReachability>;
+}
+```
+
+### Extended ResolutionRegistry
+
+```typescript
+class ResolutionRegistry {
+  // Existing
+  private resolved_calls_by_file: Map<FilePath, CallReference[]>;
+
+  // NEW: Track indirect reachability separately
+  private indirect_reachability: Map<SymbolId, IndirectReachability> = new Map();
+
+  add_indirect_reachability(fn_id: SymbolId, reason: IndirectReachabilityReason): void {
+    this.indirect_reachability.set(fn_id, { function_id: fn_id, reason });
+  }
+
+  get_all_referenced_symbols(): Set<SymbolId> {
+    const direct = /* existing: collect from call resolutions */;
+    // Include indirectly reachable functions
+    return new Set([...direct, ...this.indirect_reachability.keys()]);
+  }
+
+  get_indirect_reachability(): ReadonlyMap<SymbolId, IndirectReachability> {
+    return this.indirect_reachability;
+  }
+}
+```
 
 ## Implementation
 
-### Phase 1: Detect Collection Arguments in Call Expressions
+### Phase 1: Detect Collection Variable Reads
 
-Location: `packages/core/src/resolve_references/call_resolution/`
-
-```typescript
-function process_call_expression(
-  call_node: SyntaxNode,
-  context: ResolutionContext
-): void {
-  // Existing: resolve the function being called
-  resolve_call_target(call_node, context);
-
-  // NEW: check arguments for function collections
-  const args_node = call_node.childForFieldName("arguments");
-  if (args_node) {
-    process_collection_arguments(args_node, call_node, context);
-  }
-}
-
-function process_collection_arguments(
-  args_node: SyntaxNode,
-  call_node: SyntaxNode,
-  context: ResolutionContext
-): void {
-  for (const arg of args_node.namedChildren) {
-    if (arg.type === "identifier") {
-      const definition = resolve_symbol(arg.text, context);
-
-      if (definition?.function_collection) {
-        // Mark all stored references as called via this collection
-        mark_collection_contents_as_called(
-          definition.function_collection,
-          definition.name,  // via field
-          call_node,        // location source
-          context
-        );
-      }
-    }
-  }
-}
-```
-
-### Phase 2: Recursive Collection Resolution
+During reference processing, detect when a function collection is read:
 
 ```typescript
-function mark_collection_contents_as_called(
-  collection: FunctionCollection,
-  via: SymbolName,
-  call_node: SyntaxNode,
-  context: ResolutionContext
-): void {
-  for (const ref_name of collection.stored_references) {
-    const ref_definition = resolve_symbol(ref_name, context);
+// In resolve_references.ts or dedicated module
 
-    if (ref_definition?.kind === "function") {
-      // Direct function reference - mark as called
-      add_call_reference({
-        caller: context.current_scope_id,
-        callee: ref_definition.symbol_id,
-        location: extract_location(call_node),
-        via: via,
-      });
-    } else if (ref_definition?.function_collection) {
-      // Nested collection (e.g., spread) - resolve recursively
-      mark_collection_contents_as_called(
-        ref_definition.function_collection,
-        via,
-        call_node,
-        context
+function process_variable_references(
+  references: SymbolReference[],
+  definitions: DefinitionRegistry,
+  resolutions: ResolutionRegistry
+): void {
+  for (const ref of references) {
+    // Only process variable reads (not writes, not calls)
+    if (ref.kind !== "variable_reference") continue;
+
+    // Resolve the referenced symbol
+    const definition = resolve_symbol(ref.name, ref.scope_id);
+    if (!definition) continue;
+
+    // Check if it has function_collection metadata
+    if (definition.function_collection) {
+      mark_collection_as_consumed(
+        definition,
+        ref.location,
+        definitions,
+        resolutions
       );
     }
   }
 }
 ```
 
-### Phase 3: Update Call Reference Type
-
-Location: `packages/types/src/`
+### Phase 2: Mark Collection Contents as Reachable
 
 ```typescript
-interface CallReference {
-  caller: SymbolId;
-  callee: SymbolId;
-  location: CodeLocation;
-  via?: SymbolName;  // NEW: indicates collection-mediated dispatch
+function mark_collection_as_consumed(
+  collection_def: VariableDefinition,
+  read_location: Location,
+  definitions: DefinitionRegistry,
+  resolutions: ResolutionRegistry,
+  visited: Set<SymbolId> = new Set()
+): void {
+  // Prevent infinite recursion on circular references
+  if (visited.has(collection_def.symbol_id)) return;
+  visited.add(collection_def.symbol_id);
+
+  const collection = collection_def.function_collection!;
+
+  for (const ref_name of collection.stored_references) {
+    const ref_def = definitions.get_by_name(ref_name);
+    if (!ref_def) continue;
+
+    if (ref_def.kind === "function") {
+      // Direct function reference - mark as reachable
+      resolutions.add_indirect_reachability(ref_def.symbol_id, {
+        type: "collection_read",
+        collection_id: collection_def.symbol_id,
+        read_location,
+      });
+    } else if (ref_def.function_collection) {
+      // Nested collection (spread) - resolve recursively
+      mark_collection_as_consumed(
+        ref_def,
+        read_location,
+        definitions,
+        resolutions,
+        visited
+      );
+    }
+  }
 }
 ```
 
-## Testing
-
-### Unit Tests
+### Phase 3: Include in CallGraph Output
 
 ```typescript
-describe("Collection Dispatch Resolution", () => {
-  test("marks collection contents as called when passed as argument", () => {
-    const code = `
-      const HANDLERS = { key: myHandler };
-      function myHandler() {}
-      function dispatch(registry) { registry.key(); }
-      dispatch(HANDLERS);
-    `;
+// In trace_call_graph.ts
 
-    const graph = build_call_graph(code, "test.ts");
+export function detect_call_graph(
+  definitions: DefinitionRegistry,
+  resolutions: ResolutionRegistry
+): CallGraph {
+  const nodes = build_function_nodes(definitions, resolutions);
+  const entry_points = detect_entry_points(nodes, resolutions);
 
-    // myHandler should NOT be an entry point
-    const entry_points = get_entry_points(graph);
-    expect(entry_points).not.toContain("myHandler");
-
-    // myHandler should have a caller
-    const myHandler_node = graph.nodes.get("myHandler");
-    expect(myHandler_node.callers.size).toBeGreaterThan(0);
-  });
-
-  test("resolves spread references transitively", () => {
-    const code = `
-      const BASE = { a: handlerA };
-      const EXTENDED = { ...BASE, b: handlerB };
-      function handlerA() {}
-      function handlerB() {}
-      function dispatch(registry) {}
-      dispatch(EXTENDED);
-    `;
-
-    const graph = build_call_graph(code, "test.ts");
-
-    // Both handlers should be marked as called
-    expect(get_entry_points(graph)).not.toContain("handlerA");
-    expect(get_entry_points(graph)).not.toContain("handlerB");
-  });
-
-  test("includes via field for collection-mediated calls", () => {
-    const code = `
-      const HANDLERS = { key: myHandler };
-      function myHandler() {}
-      dispatch(HANDLERS);
-    `;
-
-    const references = get_call_references(code, "test.ts");
-    const handler_ref = references.find(r => r.callee === "myHandler");
-
-    expect(handler_ref).toBeDefined();
-    expect(handler_ref.via).toBe("HANDLERS");
-  });
-});
+  return {
+    nodes,
+    entry_points,
+    // Include indirect reachability for downstream tools
+    indirect_reachability: resolutions.get_indirect_reachability(),
+  };
+}
 ```
 
-### Integration Test
+## Existing Infrastructure (Keep)
+
+### Spread Detection (d0a26d79)
+
+The spread operator detection is **required** for transitive resolution:
 
 ```typescript
-test("capture_handlers functions are not entry points", () => {
-  const analysis = run_top_level_nodes_analysis();
-
-  const capture_handler_entries = analysis.entry_points.filter(
-    ep => ep.file_path.includes("capture_handlers")
-  );
-
-  // Should be zero or minimal
-  expect(capture_handler_entries.length).toBeLessThan(5);
-});
+const TYPESCRIPT_HANDLERS = { ...JAVASCRIPT_HANDLERS, foo: handler_foo };
+// stored_references: ["JAVASCRIPT_HANDLERS", "handler_foo"]
 ```
+
+When we detect a read of `TYPESCRIPT_HANDLERS`, we recursively resolve `JAVASCRIPT_HANDLERS` to get all handlers.
+
+**Files with spread detection**:
+
+- `symbol_factories.javascript.ts` - `extract_functions_from_object`, `extract_functions_from_array`
+- `symbol_factories.python.ts` - `extract_functions_from_dict`, `extract_functions_from_list`
+- `symbol_factories.collection.test.ts` - Test coverage
 
 ## Success Criteria
 
 - [ ] Handler functions in `capture_handlers.*.ts` no longer appear as entry points
 - [ ] Entry point count returns to ~124 (from current 216)
-- [ ] Call references include `via` field for collection-mediated dispatch
-- [ ] Spread/splat operators resolve transitively
+- [ ] `indirect_reachability` map available on CallGraph for downstream tools
+- [ ] Spread operators resolve transitively
 - [ ] No performance regression (< 5% overhead)
 - [ ] Works across TypeScript, JavaScript, Python, Rust
 
+## Files to Modify
+
+| File | Changes |
+| ---- | ------- |
+| `packages/types/src/call_chains.ts` | Add IndirectReachability types |
+| `packages/core/src/resolve_references/resolve_references.ts` | Add collection read detection |
+| `packages/core/src/trace_call_graph/trace_call_graph.ts` | Include indirect_reachability |
+| `packages/core/src/resolve_references/*.test.ts` | Add tests |
+
 ## Verification
 
-1. Run `npm run generate-fixtures` after implementation
-2. Run top-level-nodes analysis
-3. Compare entry point counts: before (216) vs after (target: ~124)
-4. Verify no `capture_handlers` functions in entry points list
+1. Run top-level-nodes analysis before implementation
+2. Note current entry point count (expected: ~216)
+3. Implement changes
+4. Run analysis again
+5. Verify entry point count drops to ~124
+6. Verify no `capture_handlers` functions in entry points
 
 ## Edge Cases
 
 ### Handled
 
-| Pattern | Resolution |
-|---------|------------|
-| `dispatch(HANDLERS)` | Direct collection argument |
-| `dispatch({...BASE, key: fn})` | Inline spread at call site |
-| `EXTENDED = {...BASE}; dispatch(EXTENDED)` | Transitive through spread |
-| Multiple collection args | Each processed independently |
+| Pattern | Mechanism |
+| ------- | --------- |
+| `return HANDLERS` | Collection is read in return statement |
+| `dispatch(HANDLERS)` | Collection is read as argument |
+| `const x = HANDLERS[k]` | Collection is read in subscript |
+| `{ ...HANDLERS }` | Collection is read in spread |
+| Transitive spreads | Recursive resolution via stored_references |
 
-### Not Handled (acceptable)
+### Not Handled (Acceptable)
 
 | Pattern | Why Acceptable |
-|---------|---------------|
-| `outer(HANDLERS)` → `inner(x)` → `use(x)` | Multi-layer parameter passing is rare |
-| `const x = HANDLERS; dispatch(x)` | Variable aliasing - could add later if needed |
-
-## Files to Modify
-
-| File | Changes |
-|------|---------|
-| `packages/core/src/resolve_references/call_resolution/*.ts` | Add collection argument processing |
-| `packages/types/src/call_reference.ts` | Add `via` field |
-| `packages/core/src/resolve_references/call_resolution/*.test.ts` | Add tests |
+| ------- | -------------- |
+| External library collections | Can't analyze external code |
+| Dynamic collection construction | `const h = {}; h[key] = fn;` - rare pattern |
 
 ## Related Work
 
-- **Spread detection** (completed): `symbol_factories.*.ts` now capture spread/splat in `stored_references`
-- **Test coverage** (completed): `symbol_factories.collection.test.ts` covers spread patterns
+- **task-109**: Call site metadata (orthogonal - call-site-level context)
+- **Callback external**: Already handled via `is_callback_invocation`
+- **Spread detection**: Completed in d0a26d79

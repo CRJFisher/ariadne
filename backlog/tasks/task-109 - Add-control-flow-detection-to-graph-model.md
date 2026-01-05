@@ -1,159 +1,292 @@
 ---
 id: task-109
-title: Add control flow detection to code graph model
+title: Call Site Metadata and Control Flow Context
 status: To Do
 assignee: []
 created_date: "2025-08-26"
 labels: [enhancement, graph, analysis]
-dependencies: [task-epic-11.32]
+dependencies: []
 ---
 
 ## Description
 
-Add control flow analysis capabilities to the code graph model to track conditional branches, loops, and execution paths through code. This will enhance the graph with information about how code executes, not just its static structure.
-This seems to be somewhat supported (at least modelled) by ScopeNode which includes ScopeType where 'block' is supported (for if/switch/for etc)
+Add rich metadata to call sites describing their execution context. This enables downstream tools (visualizers, analyzers) to understand HOW a call is made, not just THAT it's made.
 
-## Context
+## Motivation
 
-The current graph_builder (task-epic-11.32) creates a structural graph showing calls, imports, and inheritance. However, it doesn't capture control flow information like:
+The call graph currently captures call edges but lacks context about:
+- Is this call inside a conditional branch?
+- Is this call inside a loop?
+- Is this call inside exception handling?
+- Does this call have multiple resolution candidates?
 
-- Conditional branches (if/else, switch/case)
-- Loops (for, while, do-while)
-- Try/catch blocks
-- Early returns and breaks
-- Async control flow (await, generators)
+This context is valuable for:
+- **Visualization**: Draw conditional calls differently than unconditional calls
+- **Dead code detection**: Identify calls in unreachable branches
+- **Test coverage**: Understand which branches are exercised
+- **Complexity analysis**: Identify deeply nested call patterns
 
-This information is crucial for:
+## Data Model
 
-- Understanding code complexity
-- Detecting unreachable code
-- Analyzing execution paths
-- Security analysis (taint tracking)
-- Test coverage analysis
-
-## Tasks
-
-### Phase 1: Design
-
-- [ ] Design control flow node and edge types
-- [ ] Define control flow graph structure
-- [ ] Plan integration with existing graph_builder
-
-### Phase 2: Core Implementation
-
-- [ ] Create control_flow feature module in `src/control_flow/`
-- [ ] Implement basic block detection
-- [ ] Implement control flow edge detection
-  - [ ] Conditional edges (true/false branches)
-  - [ ] Loop edges (entry, body, exit)
-  - [ ] Exception edges (try/catch/finally)
-  - [ ] Return/break/continue edges
-
-### Phase 3: Language-Specific Implementation
-
-- [ ] JavaScript/TypeScript control flow
-  - [ ] If/else statements
-  - [ ] Switch statements
-  - [ ] For/while/do-while loops
-  - [ ] Try/catch/finally
-  - [ ] Async/await flow
-- [ ] Python control flow
-  - [ ] If/elif/else statements
-  - [ ] For/while loops
-  - [ ] Try/except/finally
-  - [ ] With statements
-  - [ ] Generator/yield flow
-- [ ] Rust control flow
-  - [ ] If/else expressions
-  - [ ] Match expressions
-  - [ ] Loop/while/for loops
-  - [ ] Result/Option handling
-  - [ ] Async/await flow
-
-### Phase 4: Integration
-
-- [ ] Integrate with graph_builder orchestration
-- [ ] Add control flow edges to ProjectGraph
-- [ ] Update graph queries to support control flow
-- [ ] Add control flow metrics (cyclomatic complexity, etc.)
-
-### Phase 5: Testing
-
-- [ ] Unit tests for control flow detection
-- [ ] Integration tests with graph_builder
-- [ ] Cross-language test cases
-- [ ] Complex control flow scenarios
-
-## Acceptance Criteria
-
-- [ ] Control flow is accurately detected for all supported languages
-- [ ] Control flow edges are added to the project graph
-- [ ] Graph queries can filter/traverse control flow edges
-- [ ] Cyclomatic complexity can be calculated from the graph
-- [ ] Performance impact is acceptable (<10% increase in analysis time)
-- [ ] All tests pass with comprehensive coverage
-
-## Technical Design
-
-### Control Flow Node Types
+### CallSiteMetadata
 
 ```typescript
-type ControlFlowNodeType =
-  | "basic_block" // Sequential statements
-  | "branch" // Decision point
-  | "merge" // Join point
-  | "loop_header" // Loop entry
-  | "loop_exit" // Loop exit
-  | "exception_handler" // Catch block
-  | "finally_block" // Finally block
-  | "return" // Return statement
-  | "throw"; // Exception throw
+// packages/types/src/call_chains.ts
+
+/**
+ * Rich metadata about a specific call site's execution context
+ */
+export interface CallSiteMetadata {
+  /** Control flow context if inside conditional/loop/exception handling */
+  readonly control_flow?: ControlFlowContext;
+
+  /** Resolution ambiguity if multiple candidate targets */
+  readonly resolution_ambiguity?: ResolutionAmbiguity;
+
+  // Future extensions:
+  // readonly async_context?: AsyncContext;
+  // readonly closure_context?: ClosureContext;
+}
+
+/**
+ * Control flow context for a call site
+ */
+export interface ControlFlowContext {
+  /** Type of control flow construct */
+  readonly type: "conditional" | "loop" | "switch" | "try_catch";
+
+  /** Full span of the control flow construct (entire if/elif/else, full loop, etc.) */
+  readonly construct_span: Location;
+
+  /** Span of the specific branch this call is in (just the if-block, specific case, etc.) */
+  readonly branch_span: Location;
+
+  /** Condition/iterator expression text (for display/debugging) */
+  readonly condition_text?: string;
+
+  /** Branch index (0 = if/first case, 1 = elif/second case, etc.) */
+  readonly branch_index?: number;
+
+  /** Nesting depth (1 = top-level conditional, 2 = nested, etc.) */
+  readonly nesting_depth?: number;
+}
+
+/**
+ * Resolution ambiguity metadata
+ */
+export interface ResolutionAmbiguity {
+  /** All candidate targets for this call */
+  readonly candidates: readonly SymbolId[];
+
+  /** Reason for ambiguity */
+  readonly reason: "polymorphic" | "dynamic_dispatch" | "overload";
+}
 ```
 
-### Control Flow Edge Types
+### Extended CallGraph
 
 ```typescript
-type ControlFlowEdgeType =
-  | "sequential" // Normal flow
-  | "conditional_true" // True branch
-  | "conditional_false" // False branch
-  | "loop_entry" // Enter loop
-  | "loop_back" // Loop iteration
-  | "loop_exit" // Exit loop
-  | "exception" // Exception path
-  | "return" // Function return
-  | "break" // Break statement
-  | "continue"; // Continue statement
+export interface CallGraph {
+  readonly nodes: ReadonlyMap<SymbolId, CallableNode>;
+  readonly entry_points: readonly SymbolId[];
+
+  /** Rich metadata about specific call sites (keyed by location) */
+  readonly call_site_metadata?: ReadonlyMap<LocationKey, CallSiteMetadata>;
+}
 ```
 
-### Integration with GraphBuilder
+## Implementation
+
+### Phase 1: Control Flow Context Detection
+
+Detect when a call is inside a control flow construct:
 
 ```typescript
-interface ControlFlowAnalysis {
-  analyze_control_flow(
-    ast: Tree,
-    metadata: { language: Language; file_path: string }
-  ): {
-    nodes: ControlFlowNode[];
-    edges: ControlFlowEdge[];
-    complexity: number;
+// packages/core/src/resolve_references/call_site_metadata/
+
+function detect_control_flow_context(
+  call_node: SyntaxNode,
+  file_path: FilePath
+): ControlFlowContext | undefined {
+  let current = call_node.parent;
+  let nesting_depth = 0;
+
+  while (current) {
+    if (is_conditional(current)) {
+      nesting_depth++;
+      return {
+        type: "conditional",
+        construct_span: extract_construct_span(current),
+        branch_span: extract_branch_span(call_node, current),
+        condition_text: extract_condition_text(current),
+        branch_index: get_branch_index(call_node, current),
+        nesting_depth,
+      };
+    }
+
+    if (is_loop(current)) {
+      nesting_depth++;
+      return {
+        type: "loop",
+        construct_span: extract_construct_span(current),
+        branch_span: extract_construct_span(current), // Loop body
+        condition_text: extract_iterator_text(current),
+        nesting_depth,
+      };
+    }
+
+    // ... switch, try_catch handling
+
+    current = current.parent;
+  }
+
+  return undefined;
+}
+```
+
+### Phase 2: Resolution Ambiguity Tracking
+
+Capture when a call resolves to multiple candidates:
+
+```typescript
+function detect_resolution_ambiguity(
+  resolutions: Resolution[]
+): ResolutionAmbiguity | undefined {
+  if (resolutions.length <= 1) return undefined;
+
+  // Determine ambiguity type based on resolution reasons
+  const reasons = resolutions.map(r => r.reason.type);
+
+  if (reasons.includes("interface_implementation")) {
+    return {
+      candidates: resolutions.map(r => r.symbol_id),
+      reason: "polymorphic",
+    };
+  }
+
+  return {
+    candidates: resolutions.map(r => r.symbol_id),
+    reason: "dynamic_dispatch",
   };
 }
 ```
 
-## Benefits
+### Phase 3: Integration
 
-1. **Code Complexity Analysis**: Calculate cyclomatic complexity and other metrics
-2. **Dead Code Detection**: Find unreachable code paths
-3. **Test Coverage**: Understand which paths are tested
-4. **Security Analysis**: Track data flow through control structures
-5. **Refactoring Support**: Identify complex functions needing simplification
-6. **Documentation**: Generate flow diagrams from code
+Populate metadata during call resolution:
+
+```typescript
+// In resolve_calls()
+for (const call of resolved_calls) {
+  const metadata: CallSiteMetadata = {};
+
+  // Detect control flow context
+  const control_flow = detect_control_flow_context(call.node, file_path);
+  if (control_flow) metadata.control_flow = control_flow;
+
+  // Detect resolution ambiguity
+  const ambiguity = detect_resolution_ambiguity(call.resolutions);
+  if (ambiguity) metadata.resolution_ambiguity = ambiguity;
+
+  if (Object.keys(metadata).length > 0) {
+    call_site_metadata.set(location_key(call.location), metadata);
+  }
+}
+```
+
+## Language-Specific Considerations
+
+### JavaScript/TypeScript
+
+Control flow constructs:
+- `if_statement` → conditional
+- `for_statement`, `while_statement`, `do_statement` → loop
+- `switch_statement` → switch
+- `try_statement` → try_catch
+
+### Python
+
+Control flow constructs:
+- `if_statement` → conditional (includes elif/else)
+- `for_statement`, `while_statement` → loop
+- `match_statement` → switch
+- `try_statement` → try_catch
+
+### Rust
+
+Control flow constructs:
+- `if_expression` → conditional
+- `loop_expression`, `while_expression`, `for_expression` → loop
+- `match_expression` → switch
+- (No try_catch - uses Result/Option)
+
+## Visualization Use Cases
+
+A visualization tool could use this metadata to:
+
+```
+// Example: conditional call rendering
+if (call_site_metadata.control_flow?.type === "conditional") {
+  // Draw with dashed line
+  // Show condition on hover: "if (x > 0)"
+  // Color by branch index
+}
+
+// Example: ambiguous resolution rendering
+if (call_site_metadata.resolution_ambiguity) {
+  // Draw with "?" icon
+  // Show candidates on hover
+  // Use different line style
+}
+```
+
+## Tasks
+
+### Phase 1: Type Definitions
+- [ ] Add CallSiteMetadata, ControlFlowContext, ResolutionAmbiguity to types
+- [ ] Extend CallGraph interface with call_site_metadata field
+
+### Phase 2: Control Flow Detection
+- [ ] Implement control flow context detection for JavaScript/TypeScript
+- [ ] Implement control flow context detection for Python
+- [ ] Implement control flow context detection for Rust
+- [ ] Handle nested control flow (nesting_depth)
+
+### Phase 3: Resolution Ambiguity
+- [ ] Track ambiguous resolutions during call resolution
+- [ ] Classify ambiguity reasons (polymorphic, dynamic, overload)
+
+### Phase 4: Integration
+- [ ] Integrate metadata collection into resolve_references pipeline
+- [ ] Include metadata in CallGraph output
+- [ ] Add tests for each control flow type and language
+
+## Acceptance Criteria
+
+- [ ] Control flow context detected for calls in if/else, loops, switch, try/catch
+- [ ] Resolution ambiguity tracked for polymorphic/dynamic calls
+- [ ] Metadata available on CallGraph.call_site_metadata map
+- [ ] Works across TypeScript, JavaScript, Python, Rust
+- [ ] Performance impact < 5%
+- [ ] Comprehensive tests for each control flow type
+
+## Files to Create/Modify
+
+| File | Changes |
+|------|---------|
+| `packages/types/src/call_chains.ts` | Add CallSiteMetadata types |
+| `packages/core/src/resolve_references/call_site_metadata/` | NEW: Metadata detection module |
+| `packages/core/src/resolve_references/resolve_references.ts` | Integrate metadata collection |
+| `packages/core/src/trace_call_graph/trace_call_graph.ts` | Include metadata in CallGraph |
+
+## Related Tasks
+
+- **task-epic-11.156**: Function reachability via collection reads (orthogonal concern)
 
 ## Notes
 
-- Should follow Architecture.md patterns (functional style, colocated tests)
-- Consider memory efficiency for large codebases
-- May want to make control flow analysis optional for performance
-- Could later extend to data flow analysis
-- Consider visualization requirements early in design
+This is orthogonal to function reachability. A call can be both:
+- Resolved and reachable (function-level)
+- Inside a conditional branch (call-site-level)
+
+The two concerns are independent and should be modeled separately.
