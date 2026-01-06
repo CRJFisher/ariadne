@@ -19,10 +19,7 @@ import { resolve_constructor_call } from "./call_resolution/call_resolution.cons
 import { resolve_self_reference_call } from "./call_resolution/call_resolution.self_reference";
 import { resolve_collection_dispatch } from "./call_resolution/call_resolution.collection_dispatch";
 import { find_enclosing_function_scope } from "../index_single_file/scopes/scopes.utils";
-
-// ... existing imports ...
-
-
+import { process_collection_reads } from "./resolve_references.indirect_reachability";
 
 /**
  * Registry for symbol resolution.
@@ -73,6 +70,28 @@ export class ResolutionRegistry {
 
   /** Caller Scope → calls made from that scope */
   private calls_by_caller_scope: Map<ScopeId, CallReference[]> = new Map();
+
+  /**
+   * Functions reachable through indirect mechanisms (not via call edges).
+   * Used for functions stored in collections that are read but not directly called.
+   */
+  private indirect_reachability: Map<
+    SymbolId,
+    {
+      function_id: SymbolId;
+      reason: {
+        type: "collection_read";
+        collection_id: SymbolId;
+        read_location: {
+          file_path: FilePath;
+          start_line: number;
+          start_column: number;
+          end_line: number;
+          end_column: number;
+        };
+      };
+    }
+  > = new Map();
 
   /**
    * PHASE 1: Resolve all symbol names in scopes for a set of files.
@@ -249,6 +268,16 @@ export class ResolutionRegistry {
     // Store resolved calls by caller scope
     for (const [caller_scope_id, calls] of calls_by_caller) {
       this.calls_by_caller_scope.set(caller_scope_id, calls);
+    }
+
+    // Process collection reads to mark stored functions as indirectly reachable
+    const collection_reachability = process_collection_reads(
+      file_references,
+      definitions,
+      (scope_id, name) => this.resolve(scope_id as ScopeId, name)
+    );
+    for (const [fn_id, entry] of collection_reachability) {
+      this.indirect_reachability.set(fn_id, entry);
     }
   }
 
@@ -470,6 +499,17 @@ export class ResolutionRegistry {
 
     // Remove resolved calls by file
     this.resolved_calls_by_file.delete(file_id);
+
+    // Remove indirect reachability entries where the read happened in this file
+    const entries_to_remove: SymbolId[] = [];
+    for (const [fn_id, entry] of this.indirect_reachability) {
+      if (entry.reason.read_location.file_path === file_id) {
+        entries_to_remove.push(fn_id);
+      }
+    }
+    for (const fn_id of entries_to_remove) {
+      this.indirect_reachability.delete(fn_id);
+    }
   }
 
   /**
@@ -504,6 +544,11 @@ export class ResolutionRegistry {
       }
     }
 
+    // Include indirectly reachable functions (e.g., functions in collections that are read)
+    for (const fn_id of this.indirect_reachability.keys()) {
+      referenced.add(fn_id);
+    }
+
     return referenced;
   }
 
@@ -527,6 +572,56 @@ export class ResolutionRegistry {
    */
   get_file_calls(file_path: FilePath): readonly CallReference[] {
     return this.resolved_calls_by_file.get(file_path) || [];
+  }
+
+  /**
+   * Add a function to the indirect reachability set.
+   * Used when a function is reachable through a mechanism other than a direct call edge.
+   *
+   * @param fn_id - The function that is indirectly reachable
+   * @param reason - The reason for indirect reachability
+   */
+  add_indirect_reachability(
+    fn_id: SymbolId,
+    reason: {
+      type: "collection_read";
+      collection_id: SymbolId;
+      read_location: {
+        file_path: FilePath;
+        start_line: number;
+        start_column: number;
+        end_line: number;
+        end_column: number;
+      };
+    }
+  ): void {
+    this.indirect_reachability.set(fn_id, { function_id: fn_id, reason });
+  }
+
+  /**
+   * Get all indirectly reachable functions.
+   * Used for call graph output.
+   *
+   * @returns Map of function_id to IndirectReachability
+   */
+  get_indirect_reachability(): ReadonlyMap<
+    SymbolId,
+    {
+      function_id: SymbolId;
+      reason: {
+        type: "collection_read";
+        collection_id: SymbolId;
+        read_location: {
+          file_path: FilePath;
+          start_line: number;
+          start_column: number;
+          end_line: number;
+          end_column: number;
+        };
+      };
+    }
+  > {
+    return this.indirect_reachability;
   }
 
   /**
@@ -787,5 +882,6 @@ export class ResolutionRegistry {
     this.scope_to_file.clear();
     this.resolved_calls_by_file.clear();
     this.calls_by_caller_scope.clear();
+    this.indirect_reachability.clear();
   }
 }

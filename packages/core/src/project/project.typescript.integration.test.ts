@@ -888,4 +888,127 @@ function useEmpty(obj: EmptyInterface): void {
       }
     });
   });
+
+  describe("Collection Read Reachability", () => {
+    it("should mark functions in returned collection as non-entry-points", () => {
+      const source = `
+function handle_class() { return "class"; }
+function handle_method() { return "method"; }
+
+const HANDLERS = {
+  "class": handle_class,
+  "method": handle_method,
+};
+
+export function get_handlers() {
+  return HANDLERS;
+}
+      `.trim();
+
+      const file = "/test/ts_handlers.ts" as FilePath;
+      project.update_file(file, source);
+
+      const call_graph = project.get_call_graph();
+
+      // Get handler function IDs
+      const handle_class_id = Array.from(project.definitions.get_all_definitions())
+        .find(def => def.name === "handle_class" && def.kind === "function")?.symbol_id;
+      const handle_method_id = Array.from(project.definitions.get_all_definitions())
+        .find(def => def.name === "handle_method" && def.kind === "function")?.symbol_id;
+
+      expect(handle_class_id).toBeDefined();
+      expect(handle_method_id).toBeDefined();
+
+      // Handlers should NOT be in entry points (indirectly reachable via collection read)
+      const entry_point_ids = new Set(call_graph.entry_points);
+      expect(entry_point_ids.has(handle_class_id!)).toBe(false);
+      expect(entry_point_ids.has(handle_method_id!)).toBe(false);
+
+      // Verify indirect_reachability contains the handlers
+      expect(call_graph.indirect_reachability).toBeDefined();
+      expect(call_graph.indirect_reachability!.has(handle_class_id!)).toBe(true);
+      expect(call_graph.indirect_reachability!.has(handle_method_id!)).toBe(true);
+
+      // Verify the reason is collection_read
+      const reachability = call_graph.indirect_reachability!.get(handle_class_id!);
+      expect(reachability?.reason.type).toBe("collection_read");
+    });
+
+    it("should NOT create call edges for indirectly reachable functions", () => {
+      const source = `
+function handle_class() { return "class"; }
+function handle_method() { return "method"; }
+
+const HANDLERS = {
+  "class": handle_class,
+  "method": handle_method,
+};
+
+export function get_handlers() {
+  return HANDLERS;
+}
+      `.trim();
+
+      const file = "/test/ts_no_edges.ts" as FilePath;
+      project.update_file(file, source);
+
+      const call_graph = project.get_call_graph();
+
+      // Get the get_handlers function node
+      const get_handlers_id = Array.from(project.definitions.get_all_definitions())
+        .find(def => def.name === "get_handlers" && def.kind === "function")?.symbol_id;
+      expect(get_handlers_id).toBeDefined();
+
+      const get_handlers_node = call_graph.nodes.get(get_handlers_id!);
+      expect(get_handlers_node).toBeDefined();
+
+      // get_handlers should NOT have call edges to handle_class or handle_method
+      const enclosed_call_names = get_handlers_node!.enclosed_calls.map(c => c.name);
+      expect(enclosed_call_names).not.toContain("handle_class");
+      expect(enclosed_call_names).not.toContain("handle_method");
+    });
+
+    it("should resolve spread operators transitively", () => {
+      const source = `
+function base_handler() { return "base"; }
+function extra_handler() { return "extra"; }
+
+const BASE_HANDLERS = {
+  "base": base_handler,
+};
+
+const EXTENDED_HANDLERS = {
+  ...BASE_HANDLERS,
+  "extra": extra_handler,
+};
+
+export function get_extended() {
+  return EXTENDED_HANDLERS;
+}
+      `.trim();
+
+      const file = "/test/ts_spread.ts" as FilePath;
+      project.update_file(file, source);
+
+      const call_graph = project.get_call_graph();
+
+      // Get handler function IDs
+      const base_handler_id = Array.from(project.definitions.get_all_definitions())
+        .find(def => def.name === "base_handler" && def.kind === "function")?.symbol_id;
+      const extra_handler_id = Array.from(project.definitions.get_all_definitions())
+        .find(def => def.name === "extra_handler" && def.kind === "function")?.symbol_id;
+
+      expect(base_handler_id).toBeDefined();
+      expect(extra_handler_id).toBeDefined();
+
+      // Both handlers should NOT be in entry points
+      const entry_point_ids = new Set(call_graph.entry_points);
+      expect(entry_point_ids.has(base_handler_id!)).toBe(false);
+      expect(entry_point_ids.has(extra_handler_id!)).toBe(false);
+
+      // Both should be in indirect_reachability
+      expect(call_graph.indirect_reachability!.has(base_handler_id!)).toBe(true);
+      expect(call_graph.indirect_reachability!.has(extra_handler_id!)).toBe(true);
+    });
+  });
 });

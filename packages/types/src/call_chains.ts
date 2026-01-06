@@ -48,11 +48,34 @@ export interface CallableNode {
 }
 
 /**
+ * Reasons why a function is reachable without a direct call edge
+ */
+export type IndirectReachabilityReason = {
+  type: "collection_read";
+  collection_id: SymbolId;
+  read_location: Location;
+};
+
+/**
+ * Function reachability without direct call edge
+ *
+ * Used for functions stored in collections (Maps, Arrays, Objects) that are
+ * read but not directly called. When a collection is read, all stored functions
+ * become indirectly reachable.
+ */
+export interface IndirectReachability {
+  readonly function_id: SymbolId;
+  readonly reason: IndirectReachabilityReason;
+}
+
+/**
  * Complete call graph structure
  */
 export interface CallGraph {
   readonly nodes: ReadonlyMap<SymbolId, CallableNode>;
   readonly entry_points: readonly SymbolId[];
+  /** Functions reachable through indirect mechanisms (not via call edges) */
+  readonly indirect_reachability?: ReadonlyMap<SymbolId, IndirectReachability>;
 }
 
 export interface CallReference {

@@ -1425,4 +1425,146 @@ def make_sound(animal: Animal) -> None:
       expect(process_methods.length).toBeGreaterThan(0);
     });
   });
+
+  describe("Collection Read Reachability", () => {
+    it("should mark functions in returned dict as non-entry-points", () => {
+      const code = `
+def handle_class():
+    return "class"
+
+def handle_method():
+    return "method"
+
+HANDLERS = {
+    "class": handle_class,
+    "method": handle_method,
+}
+
+def get_handlers():
+    return HANDLERS
+      `.trim();
+
+      const file = "/test/py_handlers.py" as FilePath;
+      project.update_file(file, code);
+
+      const call_graph = project.get_call_graph();
+
+      const handle_class_id = Array.from(project.definitions.get_all_definitions())
+        .find(def => def.name === "handle_class" && def.kind === "function")?.symbol_id;
+      const handle_method_id = Array.from(project.definitions.get_all_definitions())
+        .find(def => def.name === "handle_method" && def.kind === "function")?.symbol_id;
+
+      expect(handle_class_id).toBeDefined();
+      expect(handle_method_id).toBeDefined();
+
+      // Handlers should NOT be in entry points
+      const entry_point_ids = new Set(call_graph.entry_points);
+      expect(entry_point_ids.has(handle_class_id!)).toBe(false);
+      expect(entry_point_ids.has(handle_method_id!)).toBe(false);
+    });
+
+    it("should handle list collections", () => {
+      const code = `
+def on_success():
+    return "success"
+
+def on_error():
+    return "error"
+
+CALLBACKS = [on_success, on_error]
+
+def get_callbacks():
+    return CALLBACKS
+      `.trim();
+
+      const file = "/test/py_callbacks.py" as FilePath;
+      project.update_file(file, code);
+
+      const call_graph = project.get_call_graph();
+
+      const on_success_id = Array.from(project.definitions.get_all_definitions())
+        .find(def => def.name === "on_success" && def.kind === "function")?.symbol_id;
+      const on_error_id = Array.from(project.definitions.get_all_definitions())
+        .find(def => def.name === "on_error" && def.kind === "function")?.symbol_id;
+
+      expect(on_success_id).toBeDefined();
+      expect(on_error_id).toBeDefined();
+
+      const entry_point_ids = new Set(call_graph.entry_points);
+      expect(entry_point_ids.has(on_success_id!)).toBe(false);
+      expect(entry_point_ids.has(on_error_id!)).toBe(false);
+    });
+
+    it("should resolve dict splat operator transitively", () => {
+      const code = `
+def base_handler():
+    return "base"
+
+def extra_handler():
+    return "extra"
+
+BASE_HANDLERS = {
+    "base": base_handler,
+}
+
+EXTENDED_HANDLERS = {
+    **BASE_HANDLERS,
+    "extra": extra_handler,
+}
+
+def get_extended():
+    return EXTENDED_HANDLERS
+      `.trim();
+
+      const file = "/test/py_spread.py" as FilePath;
+      project.update_file(file, code);
+
+      const call_graph = project.get_call_graph();
+
+      const base_handler_id = Array.from(project.definitions.get_all_definitions())
+        .find(def => def.name === "base_handler" && def.kind === "function")?.symbol_id;
+      const extra_handler_id = Array.from(project.definitions.get_all_definitions())
+        .find(def => def.name === "extra_handler" && def.kind === "function")?.symbol_id;
+
+      expect(base_handler_id).toBeDefined();
+      expect(extra_handler_id).toBeDefined();
+
+      const entry_point_ids = new Set(call_graph.entry_points);
+      expect(entry_point_ids.has(base_handler_id!)).toBe(false);
+      expect(entry_point_ids.has(extra_handler_id!)).toBe(false);
+    });
+  });
+
+  describe("Collection Resolution", () => {
+    it("should resolve call to derived variable to collection functions", () => {
+      const code = `
+def fn1(): pass
+def fn2(): pass
+handlers = [fn1, fn2]
+handler = handlers[0]
+handler()
+      `.trim();
+
+      const file = "/test/py_collection_dispatch.py" as FilePath;
+      project.update_file(file, code);
+
+      const index = project.get_index_single_file(file);
+      expect(index).toBeDefined();
+
+      // Find the call to handler()
+      const calls = project.resolutions.get_file_calls(file);
+      const handler_call = calls.find(c => c.name === "handler");
+
+      expect(handler_call).toBeDefined();
+      expect(handler_call?.resolutions.length).toBe(2);
+
+      const resolved_names = handler_call?.resolutions.map(r => {
+        const def = project.definitions.get(r.symbol_id);
+        return def?.name;
+      });
+
+      expect(resolved_names).toContain("fn1");
+      expect(resolved_names).toContain("fn2");
+    });
+  });
 });

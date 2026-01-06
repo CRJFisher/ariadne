@@ -989,4 +989,72 @@ function doSomething() {}
       expect(callback_invocations.length).toBe(0);
     });
   });
+
+  describe("Collection Read Reachability", () => {
+    it("should mark functions in returned collection as non-entry-points", () => {
+      const code = `
+function handle_class() { return "class"; }
+function handle_method() { return "method"; }
+
+const HANDLERS = {
+  "class": handle_class,
+  "method": handle_method,
+};
+
+export function get_handlers() {
+  return HANDLERS;
+}
+      `.trim();
+
+      const file = "/test/js_handlers.js" as FilePath;
+      project.update_file(file, code);
+
+      const call_graph = project.get_call_graph();
+
+      // Get handler function IDs
+      const handle_class_id = Array.from(project.definitions.get_all_definitions())
+        .find(def => def.name === "handle_class" && def.kind === "function")?.symbol_id;
+      const handle_method_id = Array.from(project.definitions.get_all_definitions())
+        .find(def => def.name === "handle_method" && def.kind === "function")?.symbol_id;
+
+      expect(handle_class_id).toBeDefined();
+      expect(handle_method_id).toBeDefined();
+
+      // Handlers should NOT be in entry points
+      const entry_point_ids = new Set(call_graph.entry_points);
+      expect(entry_point_ids.has(handle_class_id!)).toBe(false);
+      expect(entry_point_ids.has(handle_method_id!)).toBe(false);
+    });
+
+    it("should handle array collections", () => {
+      const code = `
+function on_success() { return "success"; }
+function on_error() { return "error"; }
+
+const CALLBACKS = [on_success, on_error];
+
+export function get_callbacks() {
+  return CALLBACKS;
+}
+      `.trim();
+
+      const file = "/test/js_callbacks.js" as FilePath;
+      project.update_file(file, code);
+
+      const call_graph = project.get_call_graph();
+
+      const on_success_id = Array.from(project.definitions.get_all_definitions())
+        .find(def => def.name === "on_success" && def.kind === "function")?.symbol_id;
+      const on_error_id = Array.from(project.definitions.get_all_definitions())
+        .find(def => def.name === "on_error" && def.kind === "function")?.symbol_id;
+
+      expect(on_success_id).toBeDefined();
+      expect(on_error_id).toBeDefined();
+
+      // Callbacks should NOT be in entry points
+      const entry_point_ids = new Set(call_graph.entry_points);
+      expect(entry_point_ids.has(on_success_id!)).toBe(false);
+      expect(entry_point_ids.has(on_error_id!)).toBe(false);
+    });
+  });
 });

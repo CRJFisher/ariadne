@@ -744,4 +744,100 @@ pub fn use_empty(obj: &dyn EmptyTrait) {
       }
     });
   });
+
+  describe("Collection Read Reachability", () => {
+    it("should mark functions in returned vec as non-entry-points", () => {
+      const code = `
+fn handle_class() -> &'static str { "class" }
+fn handle_method() -> &'static str { "method" }
+
+fn get_handlers() -> Vec<fn() -> &'static str> {
+    let handlers = vec![handle_class, handle_method];
+    handlers
+}
+      `.trim();
+
+      const file = "/test/rs_handlers.rs" as FilePath;
+      project.update_file(file, code);
+
+      const call_graph = project.get_call_graph();
+
+      const handle_class_id = Array.from(project.definitions.get_all_definitions())
+        .find(def => def.name === "handle_class" && def.kind === "function")?.symbol_id;
+      const handle_method_id = Array.from(project.definitions.get_all_definitions())
+        .find(def => def.name === "handle_method" && def.kind === "function")?.symbol_id;
+
+      expect(handle_class_id).toBeDefined();
+      expect(handle_method_id).toBeDefined();
+
+      // Handlers should NOT be in entry points
+      const entry_point_ids = new Set(call_graph.entry_points);
+      expect(entry_point_ids.has(handle_class_id!)).toBe(false);
+      expect(entry_point_ids.has(handle_method_id!)).toBe(false);
+    });
+
+    it("should handle array literals", () => {
+      const code = `
+fn on_success() {}
+fn on_error() {}
+
+fn get_callbacks() -> [fn(); 2] {
+    let callbacks = [on_success, on_error];
+    callbacks
+}
+      `.trim();
+
+      const file = "/test/rs_callbacks.rs" as FilePath;
+      project.update_file(file, code);
+
+      const call_graph = project.get_call_graph();
+
+      const on_success_id = Array.from(project.definitions.get_all_definitions())
+        .find(def => def.name === "on_success" && def.kind === "function")?.symbol_id;
+      const on_error_id = Array.from(project.definitions.get_all_definitions())
+        .find(def => def.name === "on_error" && def.kind === "function")?.symbol_id;
+
+      expect(on_success_id).toBeDefined();
+      expect(on_error_id).toBeDefined();
+
+      const entry_point_ids = new Set(call_graph.entry_points);
+      expect(entry_point_ids.has(on_success_id!)).toBe(false);
+      expect(entry_point_ids.has(on_error_id!)).toBe(false);
+    });
+  });
+
+  describe("Collection Resolution", () => {
+    it("should resolve call to derived variable to collection functions", () => {
+      const code = `
+fn fn1() {}
+fn fn2() {}
+fn main() {
+    let handlers = vec![fn1, fn2];
+    let handler = handlers[0];
+    handler();
+}
+      `.trim();
+
+      const file = "/test/rs_collection_dispatch.rs" as FilePath;
+      project.update_file(file, code);
+
+      const index = project.get_index_single_file(file);
+      expect(index).toBeDefined();
+
+      // Find the call to handler()
+      const calls = project.resolutions.get_file_calls(file);
+      const handler_call = calls.find(c => c.name === "handler");
+
+      expect(handler_call).toBeDefined();
+      expect(handler_call?.resolutions.length).toBe(2);
+
+      const resolved_names = handler_call?.resolutions.map(r => {
+        const def = project.definitions.get(r.symbol_id);
+        return def?.name;
+      });
+
+      expect(resolved_names).toContain("fn1");
+      expect(resolved_names).toContain("fn2");
+    });
+  });
 });

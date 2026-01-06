@@ -113,5 +113,7 @@ export function trace_call_graph(
   return {
     nodes,
     entry_points,
+    // Include indirect reachability for downstream tools
+    indirect_reachability: resolutions.get_indirect_reachability(),
   };
 }
