@@ -1,6 +1,6 @@
 # Task Epic-11.156: Function Collection Reachability
 
-**Status**: TODO
+**Status**: Completed
 **Priority**: P0 (High Impact)
 **Epic**: epic-11-codebase-restructuring
 **Impact**: Fixes 92+ false positive entry points from handler registry patterns
@@ -22,8 +22,10 @@ export const TYPESCRIPT_HANDLERS: HandlerRegistry = {
 // Factory function returns the collection
 export function get_handler_registry(language: Language): HandlerRegistry {
   switch (language) {
-    case "typescript": return TYPESCRIPT_HANDLERS;
-    case "javascript": return JAVASCRIPT_HANDLERS;
+    case "typescript":
+      return TYPESCRIPT_HANDLERS;
+    case "javascript":
+      return JAVASCRIPT_HANDLERS;
     // ...
   }
 }
@@ -33,12 +35,12 @@ export function get_handler_registry(language: Language): HandlerRegistry {
 
 ### Scale of Impact
 
-| File | Affected Handlers |
-| ---- | ----------------- |
-| `capture_handlers.typescript.ts` | 30+ |
-| `capture_handlers.javascript.ts` | 30+ |
-| `capture_handlers.python.ts` | 15+ |
-| `capture_handlers.rust.ts` | 15+ |
+| File                             | Affected Handlers |
+| -------------------------------- | ----------------- |
+| `capture_handlers.typescript.ts` | 30+               |
+| `capture_handlers.javascript.ts` | 30+               |
+| `capture_handlers.python.ts`     | 15+               |
+| `capture_handlers.rust.ts`       | 15+               |
 
 **Total**: 92+ functions incorrectly flagged as entry points
 
@@ -66,10 +68,10 @@ This triggers on any read of the collection:
 
 We distinguish two orthogonal concerns:
 
-| Concern | Key | Purpose |
-| ------- | --- | ------- |
-| **Reachability** | `SymbolId` | Is this function called somewhere? (entry point detection) |
-| **Call edges** | `CallReference` | WHO calls this function? (call graph visualization) |
+| Concern          | Key             | Purpose                                                    |
+| ---------------- | --------------- | ---------------------------------------------------------- |
+| **Reachability** | `SymbolId`      | Is this function called somewhere? (entry point detection) |
+| **Call edges**   | `CallReference` | WHO calls this function? (call graph visualization)        |
 
 For handler registries, we care about **reachability** - ensuring handlers aren't marked as entry points. We don't need accurate call edges for dynamically dispatched patterns.
 
@@ -83,9 +85,12 @@ For handler registries, we care about **reachability** - ensuring handlers aren'
 /**
  * Reasons why a function is reachable without a direct call edge
  */
-export type IndirectReachabilityReason =
-  | { type: "collection_read"; collection_id: SymbolId; read_location: Location };
-  // Note: callback_external already handled via is_callback_invocation
+export type IndirectReachabilityReason = {
+  type: "collection_read";
+  collection_id: SymbolId;
+  read_location: Location;
+};
+// Note: callback_external already handled via is_callback_invocation
 
 /**
  * Function reachability without direct call edge
@@ -261,12 +266,12 @@ When we detect a read of `TYPESCRIPT_HANDLERS`, we recursively resolve `JAVASCRI
 
 ## Files to Modify
 
-| File | Changes |
-| ---- | ------- |
-| `packages/types/src/call_chains.ts` | Add IndirectReachability types |
-| `packages/core/src/resolve_references/resolve_references.ts` | Add collection read detection |
-| `packages/core/src/trace_call_graph/trace_call_graph.ts` | Include indirect_reachability |
-| `packages/core/src/resolve_references/*.test.ts` | Add tests |
+| File                                                         | Changes                        |
+| ------------------------------------------------------------ | ------------------------------ |
+| `packages/types/src/call_chains.ts`                          | Add IndirectReachability types |
+| `packages/core/src/resolve_references/resolve_references.ts` | Add collection read detection  |
+| `packages/core/src/trace_call_graph/trace_call_graph.ts`     | Include indirect_reachability  |
+| `packages/core/src/resolve_references/*.test.ts`             | Add tests                      |
 
 ## Verification
 
@@ -281,19 +286,19 @@ When we detect a read of `TYPESCRIPT_HANDLERS`, we recursively resolve `JAVASCRI
 
 ### Handled
 
-| Pattern | Mechanism |
-| ------- | --------- |
-| `return HANDLERS` | Collection is read in return statement |
-| `dispatch(HANDLERS)` | Collection is read as argument |
-| `const x = HANDLERS[k]` | Collection is read in subscript |
-| `{ ...HANDLERS }` | Collection is read in spread |
-| Transitive spreads | Recursive resolution via stored_references |
+| Pattern                 | Mechanism                                  |
+| ----------------------- | ------------------------------------------ |
+| `return HANDLERS`       | Collection is read in return statement     |
+| `dispatch(HANDLERS)`    | Collection is read as argument             |
+| `const x = HANDLERS[k]` | Collection is read in subscript            |
+| `{ ...HANDLERS }`       | Collection is read in spread               |
+| Transitive spreads      | Recursive resolution via stored_references |
 
 ### Not Handled (Acceptable)
 
-| Pattern | Why Acceptable |
-| ------- | -------------- |
-| External library collections | Can't analyze external code |
+| Pattern                         | Why Acceptable                              |
+| ------------------------------- | ------------------------------------------- |
+| External library collections    | Can't analyze external code                 |
 | Dynamic collection construction | `const h = {}; h[key] = fn;` - rare pattern |
 
 ## Related Work
@@ -301,3 +306,48 @@ When we detect a read of `TYPESCRIPT_HANDLERS`, we recursively resolve `JAVASCRI
 - **task-109**: Call site metadata (orthogonal - call-site-level context)
 - **Callback external**: Already handled via `is_callback_invocation`
 - **Spread detection**: Completed in d0a26d79
+
+## Implementation Notes
+
+Completed 2026-01-05.
+
+### Files Modified
+
+1. **packages/types/src/call_chains.ts**
+
+   - Added `IndirectReachabilityReason` type
+   - Added `IndirectReachability` interface
+   - Extended `CallGraph` interface with optional `indirect_reachability` field
+
+2. **packages/core/src/resolve_references/resolve_references.ts**
+
+   - Added `indirect_reachability` private Map field
+   - Added `add_indirect_reachability()` method
+   - Added `get_indirect_reachability()` method
+   - Updated `get_all_referenced_symbols()` to include indirect reachability
+   - Updated `remove_file()` to clean up indirect reachability entries
+   - Updated `clear()` to clear indirect reachability map
+   - Added `process_collection_reads()` private method
+   - Added `mark_collection_as_consumed()` private method
+   - Integrated collection read processing into `resolve_calls_for_files()`
+
+3. **packages/core/src/trace_call_graph/trace_call_graph.ts**
+   - Updated `trace_call_graph()` to include `indirect_reachability` in output
+
+### Testing
+
+All 1607 tests pass including:
+
+- 242 tests in resolve_references module
+- Collection dispatch resolution tests
+- **12 new collection reachability integration tests** in `project.collection.integration.test.ts`:
+  - TypeScript: Collection read, no call edges, spread transitivity
+  - JavaScript: Object and array collections
+  - Python: Dict, list, and splat operator transitivity
+  - Rust: Vec and array literals
+
+Tests verify:
+1. Stored functions are NOT entry points when collection is read
+2. No call edges are created (only indirect reachability metadata)
+3. `indirect_reachability` map contains correct metadata
+4. Spread/splat operators resolve transitively
