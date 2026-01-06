@@ -21,11 +21,15 @@ function main() {
   const violations = audit_test_coverage(project_dir);
 
   if (violations.length > 0) {
-    log(`Found ${violations.length} violation(s) (warning only)`);
-    // Warn but don't block - tests may not always be the agent's concern
+    log(`Found ${violations.length} violation(s) - blocking`);
+    const summary = violations.slice(0, 8).map(v => {
+      const match = v.match(/'([^']+)'/);
+      return match ? `  - ${match[1]}` : v.split('\n')[0];
+    }).join('\n');
+    const more = violations.length > 8 ? `\n  ... and ${violations.length - 8} more` : '';
     console.log(JSON.stringify({
-      decision: "warn",
-      reason: `Test coverage gaps found (${violations.length} files):\n\n${violations.slice(0, 5).map(v => v.split('\n')[0]).join('\n')}${violations.length > 5 ? `\n... and ${violations.length - 5} more` : ''}`
+      decision: "block",
+      reason: `Test coverage gaps (${violations.length} files):\n${summary}${more}\n\nAdd tests for these files or update hook exclusions.`
     }));
   } else {
     log("No violations found");

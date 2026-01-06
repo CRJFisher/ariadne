@@ -26,6 +26,37 @@ const NO_TEST_REQUIRED_SUFFIXES = [
 ];
 
 /**
+ * Check if a file contains named functions (not just types/interfaces).
+ * Uses regex to detect function declarations, arrow functions, etc.
+ */
+function file_contains_named_functions(file_path) {
+  const fs = require("fs");
+  try {
+    const content = fs.readFileSync(file_path, "utf8");
+
+    // Patterns that indicate testable code (named functions/methods)
+    const patterns = [
+      // Named function declarations: function name(
+      /^\s*(?:export\s+)?(?:async\s+)?function\s+\w+\s*\(/m,
+      // Arrow functions assigned to const/let: const name = (
+      /^\s*(?:export\s+)?(?:const|let)\s+\w+\s*=\s*(?:async\s+)?(?:\([^)]*\)|[a-zA-Z_]\w*)\s*=>/m,
+      // Function expressions: const name = function(
+      /^\s*(?:export\s+)?(?:const|let)\s+\w+\s*=\s*(?:async\s+)?function\s*\(/m,
+    ];
+
+    for (const pattern of patterns) {
+      if (pattern.test(content)) {
+        return true;
+      }
+    }
+    return false;
+  } catch {
+    // If we can't read the file, assume it might have functions
+    return true;
+  }
+}
+
+/**
  * Check if a file is a test file
  */
 function is_test_file(filename) {
@@ -173,6 +204,12 @@ function validate_impl_has_test(file_path, project_dir) {
 
   // Check if this file requires a test
   if (!requires_test(filename)) {
+    return { valid: true };
+  }
+
+  // Only require tests for files that contain named functions
+  const full_path = path.join(project_dir, file_path);
+  if (!file_contains_named_functions(full_path)) {
     return { valid: true };
   }
 
