@@ -32,6 +32,10 @@
           {
             "type": "command",
             "command": "node .claude/hooks/file_naming_validator_stop.cjs"
+          },
+          {
+            "type": "command",
+            "command": "node .claude/hooks/test_file_enforcement_stop.cjs"
           }
         ]
       }
