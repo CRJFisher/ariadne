@@ -48,9 +48,21 @@ Verify whether recent changes to call graph detection logic improved entry point
 ═══════════════════════════════════════════════════════
            Entry Point Comparison
 ═══════════════════════════════════════════════════════
-Previous: 214 entry points (2025-12-22T20:29:47.070Z)
-Current:  218 entry points (f6c4caf_8f549bb5bf8a8977)
+Target:   11 entry points (from ground truth)
+Current:  216 entry points
+Gap:      205 false positives to eliminate
 
-Change:   +4 (+1.9%) REGRESSED
+Change:   -2 from previous (abc1234_clean)
+
+Status:   📈 IMPROVING
+Progress: 1.0% of gap closed
 ═══════════════════════════════════════════════════════
 ```
+
+## Status Meanings
+
+- **✅ TARGET REACHED**: Entry points at or below expected count
+- **📈 IMPROVING**: Fewer than before, but still above target
+- **⚠️ REGRESSED**: More entry points than before
+- **⏸️ NO CHANGE**: Same as previous run
+- **🎯 N false positives remaining**: No previous run to compare
