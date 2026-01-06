@@ -655,9 +655,15 @@ export function detect_function_collection(
   }
 
   // Get the initializer (value being assigned)
-  const initializer = declarator.childForFieldName?.("value") || declarator.childForFieldName?.("init");
+  let initializer = declarator.childForFieldName?.("value") || declarator.childForFieldName?.("init");
   if (!initializer) return null;
 
+  // Unwrap "as const" assertions (as_expression in tree-sitter TypeScript)
+  // e.g., `const HANDLERS = { ... } as const;`
+  if (initializer.type === "as_expression") {
+    // The first child is the actual value, second is the type
+    initializer = initializer.namedChildren?.[0] ?? initializer;
+  }
 
   // Check for new Map([...]) or new Set([...])
   if (initializer.type === "new_expression") {

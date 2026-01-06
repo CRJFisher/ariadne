@@ -81,6 +81,127 @@ describe("Collection Resolution Tests", () => {
       expect(result?.stored_references).toContain("BASE_HANDLERS");
       expect(result?.stored_references).toContain("fn1");
     });
+
+    it("should detect exported const with type annotation", () => {
+      // This is the pattern used for JAVASCRIPT_HANDLERS
+      const code = `export const HANDLERS: HandlerRegistry = {
+  "key1": fn1,
+  "key2": fn2,
+};`;
+      const tree = ts_parser.parse(code);
+
+      // Find the variable_declarator
+      function find_node(node: Parser.SyntaxNode, type: string): Parser.SyntaxNode | null {
+        if (node.type === type) return node;
+        for (let i = 0; i < node.namedChildCount; i++) {
+          const child = node.namedChild(i);
+          if (child) {
+            const found = find_node(child, type);
+            if (found) return found;
+          }
+        }
+        return null;
+      }
+
+      const declarator = find_node(tree.rootNode, "variable_declarator");
+      expect(declarator).toBeDefined();
+
+      const result = detect_js_collection(declarator!, TEST_FILE);
+
+      expect(result).toBeDefined();
+      expect(result?.collection_type).toBe("Object");
+      expect(result?.stored_references).toContain("fn1");
+      expect(result?.stored_references).toContain("fn2");
+    });
+
+    it("should detect from identifier parent (simulating capture handler)", () => {
+      // This simulates what handle_definition_variable does
+      const code = `export const HANDLERS: HandlerRegistry = {
+  "key1": fn1,
+  "key2": fn2,
+};`;
+      const tree = ts_parser.parse(code);
+
+      // Find the identifier "HANDLERS" (like the capture node)
+      function find_identifier(node: Parser.SyntaxNode, name: string): Parser.SyntaxNode | null {
+        if (node.type === "identifier" && node.text === name) return node;
+        for (let i = 0; i < node.namedChildCount; i++) {
+          const child = node.namedChild(i);
+          if (child) {
+            const found = find_identifier(child, name);
+            if (found) return found;
+          }
+        }
+        return null;
+      }
+
+      const identifier = find_identifier(tree.rootNode, "HANDLERS");
+      expect(identifier).toBeDefined();
+
+      // This is what handle_definition_variable does: capture.node.parent
+      const parent = identifier!.parent;
+      expect(parent).toBeDefined();
+
+      const result = detect_js_collection(parent!, TEST_FILE);
+
+      expect(result).toBeDefined();
+      expect(result?.collection_type).toBe("Object");
+      expect(result?.stored_references).toContain("fn1");
+      expect(result?.stored_references).toContain("fn2");
+    });
+
+    it("should detect object with 'as const' assertion", () => {
+      // This is the pattern used in JAVASCRIPT_HANDLERS
+      const code = `export const HANDLERS = {
+  "key1": fn1,
+  "key2": fn2,
+} as const;`;
+      const tree = ts_parser.parse(code);
+      const declaration = tree.rootNode.child(0)!; // export_statement
+      const lexical = declaration.namedChildren.find(c => c.type === "lexical_declaration");
+      const declarator = lexical?.namedChildren[0];
+
+      expect(declarator).toBeDefined();
+
+      const result = detect_js_collection(declarator!, TEST_FILE);
+
+      expect(result).toBeDefined();
+      expect(result?.collection_type).toBe("Object");
+      expect(result?.stored_references).toContain("fn1");
+      expect(result?.stored_references).toContain("fn2");
+    });
+
+    it("should detect object with type annotation and 'as const'", () => {
+      // This is the exact pattern used in capture_handlers.javascript.ts
+      const code = `export const HANDLERS: HandlerRegistry = {
+  "key1": fn1,
+  "key2": fn2,
+} as const;`;
+      const tree = ts_parser.parse(code);
+
+      // Find the variable_declarator
+      function find_node(node: Parser.SyntaxNode, type: string): Parser.SyntaxNode | null {
+        if (node.type === type) return node;
+        for (let i = 0; i < node.namedChildCount; i++) {
+          const child = node.namedChild(i);
+          if (child) {
+            const found = find_node(child, type);
+            if (found) return found;
+          }
+        }
+        return null;
+      }
+
+      const declarator = find_node(tree.rootNode, "variable_declarator");
+      expect(declarator).toBeDefined();
+
+      const result = detect_js_collection(declarator!, TEST_FILE);
+
+      expect(result).toBeDefined();
+      expect(result?.collection_type).toBe("Object");
+      expect(result?.stored_references).toContain("fn1");
+      expect(result?.stored_references).toContain("fn2");
+    });
   });
 
   describe("Python Support", () => {
