@@ -11,7 +11,7 @@
  * Note: All JSON output is formatted with 2-space indentation for readability.
  */
 
-import { Project } from "@ariadnejs/core";
+import { Project, profiler } from "@ariadnejs/core";
 import { FilePath } from "@ariadnejs/types";
 import * as path from "path";
 import * as fs from "fs/promises";
@@ -465,6 +465,9 @@ async function main() {
   } catch (error) {
     console.error("Error during analysis:", error);
     process.exit(1);
+  } finally {
+    // Output profiler report if profiling is enabled
+    profiler.report();
   }
 }
 

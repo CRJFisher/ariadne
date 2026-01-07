@@ -9,7 +9,9 @@
     "verify": "npx tsx verify_entry_points.ts",
     "profile": "clinic doctor -- node --import tsx detect_entrypoints_using_ariadne.ts",
     "profile:flame": "clinic flame -- node --import tsx detect_entrypoints_using_ariadne.ts",
-    "profile:simple": "NODE_ENV=production node --cpu-prof --cpu-prof-interval=100 --import tsx detect_entrypoints_using_ariadne.ts"
+    "profile:simple": "NODE_ENV=production node --cpu-prof --cpu-prof-interval=100 --import tsx detect_entrypoints_using_ariadne.ts",
+    "profile:detailed": "ARIADNE_PROFILE=1 npx tsx detect_entrypoints_using_ariadne.ts --stdout",
+    "profile:analyze": "npx tsx ../scripts/analyze_profile.ts"
   },
   "dependencies": {
     "@anthropic-ai/claude-agent-sdk": "*",
