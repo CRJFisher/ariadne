@@ -1,6 +1,6 @@
 # Task 11.169.1: Add Tests for query_code_tree Module
 
-## Status: To Do
+## Status: Completed
 
 ## Parent: task-epic-11.169-Add-missing-test-files
 

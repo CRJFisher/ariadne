@@ -29,23 +29,26 @@ describe("is_reexport", () => {
 });
 
 describe("is_exportable", () => {
-  it("should return false for definitions without export property", () => {
+  it("should return false for definitions with non-exportable kind", () => {
     const def = {
+      kind: "parameter" as const,
       symbol_id: "test" as any,
       name: "test" as any,
       location: {} as any,
-      scope_id: "test" as any,
+      defining_scope_id: "test" as any,
     };
     expect(is_exportable(def as any)).toBe(false);
   });
 
-  it("should return true for definitions with export property", () => {
+  it("should return true for definitions with exportable kind", () => {
     const def = {
+      kind: "function" as const,
       symbol_id: "test" as any,
       name: "test" as any,
       location: {} as any,
-      scope_id: "test" as any,
-      export: { is_exported: true, is_reexport: false },
+      defining_scope_id: "test" as any,
+      is_exported: true,
+      signature: { parameters: [] },
     };
     expect(is_exportable(def as any)).toBe(true);
   });

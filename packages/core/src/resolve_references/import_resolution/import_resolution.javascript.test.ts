@@ -9,8 +9,8 @@ import JavaScript from "tree-sitter-javascript";
 import { resolve_module_path_javascript } from "./import_resolution.javascript";
 import type { FilePath, Language } from "@ariadnejs/types";
 import { build_index_single_file } from "../../index_single_file/index_single_file";
-import type { ParsedFile } from "../../index_single_file/index_single_file.file_utils";
-import { build_file_tree } from "../resolve_references.file_folders_test_helper";
+import type { ParsedFile } from "../../index_single_file/file_utils";
+import { build_file_tree } from "../file_folders_test_helper";
 
 // Temporary test directory
 const TEST_DIR = path.join(process.cwd(), ".test-js-modules");

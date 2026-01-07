@@ -66,41 +66,41 @@ describe("Resolution Factories", () => {
   describe("resolve_high", () => {
     it("should create a high confidence resolution", () => {
       const result = resolve_high("test");
-      expect(result.value).toBe("test");
+      expect(result.resolved).toBe("test");
       expect(result.confidence).toBe("high");
     });
   });
 
   describe("resolve_medium", () => {
     it("should create a medium confidence resolution", () => {
-      const result = resolve_medium("test");
-      expect(result.value).toBe("test");
+      const result = resolve_medium("test", "inferred");
+      expect(result.resolved).toBe("test");
       expect(result.confidence).toBe("medium");
     });
   });
 
   describe("resolve_low", () => {
     it("should create a low confidence resolution", () => {
-      const result = resolve_low("test");
-      expect(result.value).toBe("test");
+      const result = resolve_low("test", "partial_match");
+      expect(result.resolved).toBe("test");
       expect(result.confidence).toBe("low");
     });
   });
 
   describe("resolve_failed", () => {
     it("should create a failed resolution", () => {
-      const result = resolve_failed<string>("not found");
-      expect(result.value).toBeUndefined();
-      expect(result.confidence).toBe("none");
-      expect(result.error).toBe("not found");
+      const result = resolve_failed<string>("not_found");
+      expect(result.resolved).toBeUndefined();
+      expect(result.confidence).toBe("low");
+      expect(result.reason).toBe("not_found");
     });
   });
 });
 
 describe("create_query_error", () => {
   it("should create a query error", () => {
-    const error = create_query_error("test error", "INVALID_QUERY");
+    const error = create_query_error("query_syntax", "test error");
     expect(error.message).toBe("test error");
-    expect(error.code).toBe("INVALID_QUERY");
+    expect(error.kind).toBe("query_syntax");
   });
 });

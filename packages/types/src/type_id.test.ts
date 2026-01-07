@@ -3,7 +3,7 @@
  */
 
 import { describe, it, expect } from "vitest";
-import type { TypeId, FilePath, SymbolId } from "./index";
+import type { TypeId, FilePath, SymbolName } from "./index";
 import type { Location } from "./common";
 import {
   defined_type_id,
@@ -21,6 +21,7 @@ import {
   is_defined_type,
   is_composite_type,
   type_id_to_string,
+  TypeCategory,
   ANY_TYPE,
   UNKNOWN_TYPE,
   NEVER_TYPE,
@@ -55,14 +56,17 @@ describe("Type ID Factories", () => {
   };
 
   it("should create a defined type ID", () => {
-    const symbol_id = "symbol:test" as SymbolId;
-    const type_id = defined_type_id(symbol_id, test_location);
-    expect(type_id).toContain("type:");
+    const type_id = defined_type_id(
+      TypeCategory.CLASS,
+      "TestClass" as SymbolName,
+      test_location
+    );
+    expect(type_id).toContain("type:class:TestClass");
   });
 
   it("should create a primitive type ID", () => {
     const type_id = primitive_type_id("string");
-    expect(type_id).toBe("type:string");
+    expect(type_id).toBe("type:primitive:string");
   });
 
   it("should create a builtin type ID", () => {
@@ -106,7 +110,7 @@ describe("Type ID Factories", () => {
   });
 
   it("should create a literal type ID", () => {
-    const type_id = literal_type_id("hello", "string");
+    const type_id = literal_type_id("string", "hello");
     expect(type_id).toContain("literal:");
   });
 

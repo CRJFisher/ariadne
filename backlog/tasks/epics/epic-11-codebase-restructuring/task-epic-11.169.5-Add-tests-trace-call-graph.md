@@ -1,6 +1,6 @@
 # Task 11.169.5: Add Tests for trace_call_graph
 
-## Status: To Do
+## Status: Completed
 
 ## Parent: task-epic-11.169-Add-missing-test-files
 

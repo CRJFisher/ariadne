@@ -4,15 +4,13 @@ import {
   load_query,
   LANGUAGE_TO_TREESITTER_LANG,
 } from "./query_loader";
+import { profiler } from "../../profiling";
 
 /**
  * Query tree and get raw captures
  * Returns raw tree-sitter captures for processing
  */
 export function query_tree(lang: Language, tree: Tree): QueryCapture[] {
-  // Import profiler lazily to avoid circular dependency issues
-  const { profiler } = require("../../profiling");
-
   profiler.start("load_query");
   const query_string = load_query(lang);
   profiler.end("load_query");

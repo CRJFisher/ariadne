@@ -1,6 +1,6 @@
 # Task 11.169.3: Add Tests for symbol_factories
 
-## Status: To Do
+## Status: Completed
 
 ## Parent: task-epic-11.169-Add-missing-test-files
 

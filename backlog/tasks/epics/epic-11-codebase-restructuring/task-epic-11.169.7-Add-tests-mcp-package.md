@@ -1,6 +1,6 @@
 # Task 11.169.7: Add Tests for packages/mcp
 
-## Status: To Do
+## Status: Completed
 
 ## Parent: task-epic-11.169-Add-missing-test-files
 

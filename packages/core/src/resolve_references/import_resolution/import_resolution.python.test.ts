@@ -6,7 +6,7 @@ import { describe, it, expect } from "vitest";
 import * as path from "path";
 import { resolve_module_path_python } from "./import_resolution.python";
 import type { FilePath } from "@ariadnejs/types";
-import { build_file_tree } from "../resolve_references.file_folders_test_helper";
+import { build_file_tree } from "../file_folders_test_helper";
 
 // Temporary test directory
 const TEST_DIR = path.join(process.cwd(), ".test-py-modules");

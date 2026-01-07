@@ -45,6 +45,7 @@ import {
   RUST_METADATA_EXTRACTORS,
 } from "./query_code_tree/metadata_extractors";
 import { ParsedFile } from "./file_utils";
+import { profiler } from "../profiling";
 
 /**
  * Semantic Index - Single-file analysis results
@@ -84,10 +85,6 @@ export function build_index_single_file(
   tree: Tree,
   language: Language
 ): SemanticIndex {
-  // Import profiler lazily to avoid circular dependency issues
-   
-  const { profiler } = require("../profiling");
-
   // PASS 1: Query tree-sitter for captures
   profiler.start("query_captures");
   const captures: QueryCapture[] = query_tree(language, tree);

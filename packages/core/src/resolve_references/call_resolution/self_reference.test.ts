@@ -3,7 +3,7 @@ import { resolve_self_reference_call } from "./self_reference";
 import { ScopeRegistry } from "../registries/scope";
 import { DefinitionRegistry } from "../registries/definition";
 import { TypeRegistry } from "../registries/type";
-import { create_self_reference_call } from "../../index_single_file/references/references.factories";
+import { create_self_reference_call } from "../../index_single_file/references/factories";
 import {
   class_symbol,
   method_symbol,

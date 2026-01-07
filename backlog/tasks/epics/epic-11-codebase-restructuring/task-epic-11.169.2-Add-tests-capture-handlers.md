@@ -1,6 +1,6 @@
 # Task 11.169.2: Add Tests for capture_handlers
 
-## Status: To Do
+## Status: Completed
 
 ## Parent: task-epic-11.169-Add-missing-test-files
 

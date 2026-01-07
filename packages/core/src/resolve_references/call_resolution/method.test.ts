@@ -16,7 +16,7 @@ import { ScopeRegistry } from "../registries/scope";
 import { DefinitionRegistry } from "../registries/definition";
 import { TypeRegistry } from "../registries/type";
 import { ResolutionRegistry } from "../resolve_references";
-import { create_method_call_reference } from "../../index_single_file/references/references.factories";
+import { create_method_call_reference } from "../../index_single_file/references/factories";
 import { method_symbol, class_symbol, function_symbol, variable_symbol } from "@ariadnejs/types";
 import type {
   SymbolId,

@@ -65,18 +65,13 @@ describe("scope_string and scope_from_string", () => {
   it("should roundtrip scope location", () => {
     const scope_loc = {
       type: "function" as const,
-      file_path: test_location.file_path,
-      start_line: test_location.start_line,
-      start_column: test_location.start_column,
-      end_line: test_location.end_line,
-      end_column: test_location.end_column,
-      name: "test_func",
+      location: test_location,
     };
 
     const scope_id = scope_string(scope_loc);
     const parsed = scope_from_string(scope_id);
 
     expect(parsed.type).toBe(scope_loc.type);
-    expect(parsed.file_path).toBe(scope_loc.file_path);
+    expect(parsed.location.file_path).toBe(scope_loc.location.file_path);
   });
 });
