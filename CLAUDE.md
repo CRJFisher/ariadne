@@ -121,20 +121,21 @@ See `backlog/docs/file-naming-conventions.md` for complete documentation.
 
 ### Folder-Module Naming Rule
 
-**Every file in a folder must be prefixed with the folder name.** This ensures each file explicitly declares its membership in the module.
+Each folder represents a module. The folder name provides the namespace, so sub-modules do NOT repeat the folder name.
 
 ```text
 {folder}/
+  index.ts                       # Barrel file for exports
   {folder}.ts                    # Main implementation
-  {folder}.test.ts               # Unit tests
-  {folder}.{submodule}.ts        # Helper/submodule
-  {folder}.{submodule}.test.ts   # Submodule tests
-  index.ts                       # Barrel file (only exception)
+  {folder}.test.ts               # Main tests
+  {folder}.{language}.ts         # Language-specific variant of main
+  {submodule}.ts                 # Helper/submodule (no folder prefix)
+  {submodule}.test.ts            # Submodule tests
 ```
 
-### Why Folder Prefix?
+### Why This Convention?
 
-A file named `project.import_graph.ts` is clearly an intentional part of the `project` module. A file named `random_script.ts` would be immediately flagged as not belonging. This prevents debug script accumulation and makes imports self-documenting.
+The folder already declares module membership. `project/import_graph.ts` is clearer than `project/project.import_graph.ts`. Only the main file has the folder name, making it easy to identify.
 
 ### Special Cases
 
