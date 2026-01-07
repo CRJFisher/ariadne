@@ -4,84 +4,118 @@ This document defines the file and folder naming conventions for the Ariadne cod
 
 ## Folder-Module Naming Rule
 
-**Every file in a folder must be prefixed with the folder name.** This ensures each file explicitly declares its membership in the module, making it immediately clear whether a file is an intentional part of the codebase (not a debug script or temporary file).
+Each folder represents a module. Files in a folder follow this structure:
 
 ```text
 {folder}/
-  {folder}.ts                              # Main implementation
-  {folder}.test.ts                         # Unit tests
-  {folder}.integration.test.ts             # Integration tests
-  {folder}.e2e.test.ts                     # End-to-end tests
-  {folder}.bench.test.ts                   # Benchmark tests
-  {folder}.{submodule}.ts                  # Helper/submodule
-  {folder}.{submodule}.test.ts             # Submodule tests
-  {folder}.{language}.ts                   # Language-specific variant
-  {folder}.{language}.test.ts              # Language-specific tests
-  {folder}.{language}.{submodule}.ts       # Language + submodule
-  index.ts                                 # Barrel file (only exception)
+  index.ts                              # Barrel file for exports
+  {folder}.ts                           # Main implementation
+  {folder}.test.ts                      # Main module tests
+  {folder}.{language}.ts                # Language-specific variant of main
+  {folder}.{language}.test.ts           # Language-specific tests
+  {submodule}.ts                        # Helper/submodule
+  {submodule}.test.ts                   # Submodule tests
+  {submodule}.{language}.ts             # Language-specific variant of submodule
 ```
+
+The folder name provides the namespace. Sub-modules do NOT repeat the folder name.
+
+### Language Suffix Rule
+
+**Language identifiers ALWAYS come as a suffix, never a prefix.**
+
+- `{thing}.{language}.ts` - language variant of `{thing}.ts`
+- `{folder}.{language}.ts` - language variant of main module
+- `{submodule}.{language}.ts` - language variant of submodule
+
+This rule ensures consistent ordering: the thing being modified comes first, followed by the language variant.
+
+**Correct:**
+- `capture_handlers.python.ts` - Python variant of capture_handlers
+- `imports.python.ts` - Python variant of imports submodule
+- `methods.rust.ts` - Rust variant of methods submodule
+
+**Incorrect:**
+- `python.ts` - language as prefix (should be `capture_handlers.python.ts`)
+- `python.imports.ts` - language as prefix (should be `imports.python.ts`)
+- `rust.methods.ts` - language as prefix (should be `methods.rust.ts`)
 
 ### Examples
 
 ```text
 project/
-  project.ts                               # Main implementation
-  project.test.ts                          # Unit tests
-  project.import_graph.ts                  # Helper module
-  project.import_graph.test.ts             # Helper module tests
-  project.typescript.integration.test.ts   # Language-specific integration test
-  index.ts                                 # Re-exports
+  index.ts                                # Re-exports
+  project.ts                              # Main implementation
+  project.test.ts                         # Main tests
+  project.typescript.integration.test.ts  # Language-specific integration test
+  import_graph.ts                         # Helper module
+  import_graph.test.ts                    # Helper tests
+  fix_import_locations.ts                 # Helper module
 
 scopes/
-  scopes.ts                                # Main implementation
-  scopes.test.ts                           # Unit tests
-  scopes.utils.ts                          # Utility submodule
-  scopes.utils.test.ts                     # Utility tests
-  scopes.boundary_extractor.ts             # Submodule
-  scopes.boundary_extractor.test.ts        # Submodule tests
-  scopes.boundary_base.ts                  # Base implementation
-  index.ts                                 # Re-exports
+  index.ts                                # Re-exports
+  scopes.ts                               # Main implementation
+  scopes.test.ts                          # Main tests
+  utils.ts                                # Utility submodule
+  utils.test.ts                           # Utility tests
+  boundary_extractor.ts                   # Submodule
+  boundary_base.ts                        # Base implementation
 
 capture_handlers/
-  capture_handlers.typescript.ts           # Language-specific
-  capture_handlers.javascript.ts           # Language-specific
-  capture_handlers.python.ts               # Language-specific
-  capture_handlers.rust.ts                 # Language-specific
-  capture_handlers.rust.methods.ts         # Language + submodule
-  capture_handlers.types.ts                # Types submodule
-  index.ts                                 # Re-exports
+  index.ts                                # Re-exports
+  types.ts                                # Types submodule
+  capture_handlers.typescript.ts          # TypeScript handler (main variant)
+  capture_handlers.typescript.test.ts     # TypeScript tests
+  capture_handlers.javascript.ts          # JavaScript handler
+  capture_handlers.python.ts              # Python handler
+  capture_handlers.rust.ts                # Rust handler
+  imports.python.ts                       # Python imports submodule
+  imports.python.test.ts                  # Python imports tests
+  methods.rust.ts                         # Rust methods submodule
+  methods.rust.test.ts                    # Rust methods tests
+
+import_resolution/
+  index.ts                                # Re-exports
+  import_resolution.ts                    # Main implementation
+  import_resolution.typescript.ts         # Language-specific variant
+  import_resolution.typescript.test.ts    # Language-specific tests
+  import_resolution.javascript.ts         # Language-specific variant
+  import_resolution.python.ts             # Language-specific variant
+  import_resolution.rust.ts               # Language-specific variant
 ```
 
 ### Rationale
 
-The folder-prefix requirement:
+1. **Folder provides namespace**: The folder already declares module membership. `project/import_graph.ts` is clearly part of the project module.
 
-1. **Signals intentionality**: A file named `project.import_graph.ts` is clearly an intentional part of the `project` module. A file named `random_script.ts` would be immediately flagged as suspicious.
+2. **Less redundancy**: `project/import_graph.ts` is cleaner than `project/project.import_graph.ts`.
 
-2. **Prevents debug script accumulation**: Debug scripts like `test_something.ts` or `debug_issue.ts` are blocked because they don't follow the pattern.
+3. **Clearer file names**: When viewing files, `import_graph.ts` is more readable than `project.import_graph.ts`.
 
-3. **Self-documenting imports**: Import paths become explicit about what module they belong to:
-   ```typescript
-   import { ImportGraph } from "./project.import_graph";
-   ```
+4. **Main file stands out**: Only `{folder}.ts` has the folder name, making the main implementation easy to identify.
 
-4. **Disambiguates when viewing multiple files**: When you have several files open, `project.import_graph.ts` is clearer than `import_graph.ts`.
+5. **Language variants are clear**: `capture_handlers.typescript.ts` clearly indicates it's a TypeScript variant of capture_handlers.
+
+6. **Consistent suffix ordering**: Language always comes last, making it easy to identify what a file is a variant of.
 
 ## Source File Patterns
 
 | Pattern | Use Case | Example |
 |---------|----------|---------|
+| `index.ts` | Barrel file | `index.ts` |
 | `{folder}.ts` | Main module | `project.ts` |
-| `{folder}.test.ts` | Unit tests | `project.test.ts` |
+| `{folder}.test.ts` | Main tests | `project.test.ts` |
 | `{folder}.integration.test.ts` | Integration tests | `project.integration.test.ts` |
+| `{folder}.{aspect}.test.ts` | Aspect-specific tests | `capture_handlers.export.test.ts` |
+| `{folder}.{language}.ts` | Language variant of main | `capture_handlers.python.ts` |
+| `{folder}.{language}.test.ts` | Language variant tests | `capture_handlers.python.test.ts` |
+| `{folder}.{language}.integration.test.ts` | Language integration tests | `project.typescript.integration.test.ts` |
 | `{folder}.e2e.test.ts` | End-to-end tests | `list_functions.e2e.test.ts` |
 | `{folder}.bench.test.ts` | Benchmark tests | `project.bench.test.ts` |
-| `{folder}.{submodule}.ts` | Helper/submodule | `project.import_graph.ts` |
-| `{folder}.{submodule}.test.ts` | Submodule tests | `scopes.utils.test.ts` |
-| `{folder}.{language}.ts` | Language variant | `capture_handlers.typescript.ts` |
-| `{folder}.{language}.test.ts` | Language tests | `capture_handlers.python.test.ts` |
-| `{folder}.{language}.{submodule}.ts` | Language + submodule | `capture_handlers.rust.methods.ts` |
-| `index.ts` | Barrel file | `index.ts` |
+| `{submodule}.ts` | Helper/submodule | `import_graph.ts` |
+| `{submodule}.test.ts` | Submodule tests | `utils.test.ts` |
+| `{submodule}.{language}.ts` | Language variant of submodule | `imports.python.ts` |
+| `{submodule}.{language}.test.ts` | Language submodule tests | `imports.python.test.ts` |
 
 ## Special Cases
 
@@ -107,7 +141,6 @@ scopes/extractors/
   typescript_scope_boundary_extractor.ts
   javascript_scope_boundary_extractor.ts
   rust_scope_boundary_extractor.ts
-  javascript_typescript_scope_boundary_extractor.ts
 ```
 
 These are distinct implementations (not variants of a base), so the language prefix groups them logically.
@@ -188,7 +221,8 @@ File naming is enforced via Claude Code hooks:
 Validates file paths before `Write` and `Edit` operations. Blocks:
 
 - Prohibited patterns in root directory
-- Files in `packages/*/src/*/` that don't start with the folder name
+- Files in `packages/*/src/*/` that violate naming conventions
+- Language-prefixed files (should use language suffix)
 - Non-TypeScript files in src (except `.scm`, `.md`)
 
 ### Stop Hook
@@ -209,10 +243,8 @@ When a file is blocked, the error message explains:
 
 Example:
 ```
-Blocked: 'import_graph.ts' must start with 'project.' per folder-module naming convention.
-Valid patterns: project.ts, project.{submodule}.ts, project.{submodule}.test.ts
-If this is a helper module, rename to: project.import_graph.ts
-If this is a debug/temporary script, it should be removed.
+Blocked: 'python.imports.ts' has language as prefix.
+Rename to: imports.python.ts (language suffix pattern)
 ```
 
 ## Allowed Exceptions

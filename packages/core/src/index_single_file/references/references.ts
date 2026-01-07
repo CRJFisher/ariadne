@@ -31,7 +31,7 @@ import {
   create_property_access_reference,
   create_type_reference,
   create_assignment_reference,
-} from "./references.factories";
+} from "./factories";
 
 import type { CaptureNode } from "../index_single_file";
 import type { ProcessingContext } from "../index_single_file";

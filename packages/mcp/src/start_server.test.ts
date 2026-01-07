@@ -2,6 +2,9 @@
  * Tests for start_server and helper functions
  */
 
+/* eslint-disable @typescript-eslint/naming-convention */
+// Disabled because we mock fs.Dirent which has isFile/isDirectory methods
+
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import * as fs from "fs/promises";
 import * as path from "path";

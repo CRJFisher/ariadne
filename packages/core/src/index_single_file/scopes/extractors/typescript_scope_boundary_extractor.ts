@@ -1,7 +1,7 @@
 import type { FilePath, ScopeType } from "@ariadnejs/types";
 import Parser from "tree-sitter";
-import { type ScopeBoundaries } from "../scopes.boundary_base";
-import { node_to_location } from "../../index_single_file.node_utils";
+import { type ScopeBoundaries } from "../boundary_base";
+import { node_to_location } from "../../node_utils";
 import { JavaScriptTypeScriptScopeBoundaryExtractor } from "./javascript_typescript_scope_boundary_extractor";
 
 /**

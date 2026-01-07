@@ -22,7 +22,7 @@ import {
   SemanticCategory,
   build_index_single_file,
 } from "../index_single_file";
-import { ParsedFile } from "../index_single_file.file_utils";
+import { ParsedFile } from "../file_utils";
 
 describe("scopes", () => {
   const file_path = "test.ts" as FilePath;

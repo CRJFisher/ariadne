@@ -1,27 +1,28 @@
 import type { FilePath, SymbolId, Language } from "@ariadnejs/types";
-import type { ParsedFile } from "../index_single_file/index_single_file.file_utils";
+import type { ParsedFile } from "../index_single_file/file_utils";
 import { build_index_single_file } from "../index_single_file/index_single_file";
 import type { SemanticIndex } from "../index_single_file/index_single_file";
 import type { AnyDefinition } from "@ariadnejs/types";
-import { DefinitionRegistry } from "../resolve_references/registries/registries.definition";
-import { TypeRegistry } from "../resolve_references/registries/registries.type";
-import { ScopeRegistry } from "../resolve_references/registries/registries.scope";
-import { ExportRegistry } from "../resolve_references/registries/registries.export";
-import { ReferenceRegistry } from "../resolve_references/registries/registries.reference";
-import { ImportGraph } from "./project.import_graph";
+import { DefinitionRegistry } from "../resolve_references/registries/definition";
+import { TypeRegistry } from "../resolve_references/registries/type";
+import { ScopeRegistry } from "../resolve_references/registries/scope";
+import { ExportRegistry } from "../resolve_references/registries/export";
+import { ReferenceRegistry } from "../resolve_references/registries/reference";
+import { ImportGraph } from "./import_graph";
 import { ResolutionRegistry } from "../resolve_references/resolve_references";
 import { type CallGraph } from "@ariadnejs/types";
 import { trace_call_graph } from "../trace_call_graph/trace_call_graph";
-import { fix_import_definition_locations } from "./project.fix_import_locations";
-import { extract_all_parameters } from "./project.extract_nested_definitions";
+import { fix_import_definition_locations } from "./fix_import_locations";
+import { extract_all_parameters } from "./extract_nested_definitions";
 import Parser from "tree-sitter";
 import TypeScriptParser from "tree-sitter-typescript";
 import JavaScriptParser from "tree-sitter-javascript";
 import PythonParser from "tree-sitter-python";
 import RustParser from "tree-sitter-rust";
-import type { FileSystemFolder } from "../resolve_references/resolve_references.file_folders";
+import type { FileSystemFolder } from "../resolve_references/file_folders";
 import { readdir, realpath } from "fs/promises";
 import { join } from "path";
+import { profiler } from "../profiling";
 
 /**
  * Detect language from file path extension
@@ -158,20 +159,27 @@ export class Project {
       throw new Error("Project not initialized");
     }
 
+    profiler.start_file(file_id);
+
     // Phase 0: Track who depends on this file (before updating imports)
     const dependents = this.imports.get_dependents(file_id);
 
     // Phase 1: Compute file-local data
     const language = detect_language(file_id);
+    profiler.start("tree_sitter_parse");
     const parser = get_parser(language);
     const tree = parser.parse(content);
+    profiler.end("tree_sitter_parse");
     const parsed_file = create_parsed_file(file_id, content, tree, language);
+    profiler.start("build_index");
     const index_single_file = build_index_single_file(parsed_file, tree, language);
+    profiler.end("build_index");
 
     this.index_single_filees.set(file_id, index_single_file);
     this.file_contents.set(file_id, content);
 
     // Phase 2: Update project-level registries
+    profiler.start("registry_updates");
     // Collect all definitions from index_single_file
     const all_definitions: AnyDefinition[] = [
       ...Array.from(index_single_file.functions.values()),
@@ -248,6 +256,7 @@ export class Project {
 
     // Update the definitions registry with fixed import locations
     this.definitions.update_file(file_id, updated_all_definitions);
+    profiler.end("registry_updates");
 
     // Phase 3: Re-resolve affected files (eager!)
     const affected_files = new Set([file_id, ...dependents]);
@@ -259,6 +268,7 @@ export class Project {
     }
 
     // Phase 3: Name resolution (no calls yet)
+    profiler.start("resolve_names");
     this.resolutions.resolve_names(
       affected_files,
       languages,
@@ -268,10 +278,12 @@ export class Project {
       this.imports,
       this.root_folder
     );
+    profiler.end("resolve_names");
 
     // Phase 4: Type registry
     // Must happen AFTER name resolution BUT BEFORE call resolution.
     // Uses name resolutions to resolve type names to SymbolIds.
+    profiler.start("type_registry");
     for (const affected_file of affected_files) {
       const affected_index = this.index_single_filees.get(affected_file);
       if (affected_index) {
@@ -283,10 +295,12 @@ export class Project {
         );
       }
     }
+    profiler.end("type_registry");
 
     // Phase 5: Call resolution (uses type information)
     // Must happen AFTER type registry is populated.
     // Method resolution needs types.get_symbol_type() to work correctly.
+    profiler.start("resolve_calls");
     this.resolutions.resolve_calls_for_files(
       affected_files,
       this.references,
@@ -294,6 +308,9 @@ export class Project {
       this.types,
       this.definitions
     );
+    profiler.end("resolve_calls");
+
+    profiler.end_file();
   }
 
   /**

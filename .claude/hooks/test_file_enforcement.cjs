@@ -18,6 +18,7 @@ const TEST_SUFFIXES = [".integration.test.ts", ".bench.test.ts", ".e2e.test.ts",
 const NO_TEST_REQUIRED = new Set([
   "index.ts",       // Barrel files
   "types.ts",       // Pure type definitions (no runtime code)
+  "test_utils.ts",  // Test utilities (not production code)
 ]);
 
 // File suffix patterns that don't require tests
@@ -146,8 +147,53 @@ function get_implementation_file_paths(test_file_path) {
 }
 
 /**
+ * Extract the base name from a test file (without test suffix).
+ * e.g., "export.test.ts" -> "export"
+ *       "capture_handlers.python.test.ts" -> "capture_handlers.python"
+ */
+function get_test_base_name(filename) {
+  for (const suffix of TEST_SUFFIXES) {
+    if (filename.endsWith(suffix)) {
+      return filename.slice(0, -suffix.length);
+    }
+  }
+  return null;
+}
+
+/**
+ * Check if a test file is a folder-module test (tests the folder's main module).
+ * A folder-module test is named after the folder itself:
+ * - {folder_name}.test.ts - tests the main module
+ * - {folder_name}.{language}.test.ts - tests language-specific variant
+ * - {folder_name}.{aspect}.test.ts - tests a specific aspect (like export, collection)
+ * - {folder_name}.integration.test.ts - integration tests for the module
+ *
+ * Essentially, any test that starts with {folder_name}. is considered a folder-module test.
+ */
+function is_folder_module_test(filename, folder_name) {
+  const base = get_test_base_name(filename);
+  if (!base) return false;
+
+  // Exact match: {folder_name}
+  if (base === folder_name) return true;
+
+  // Any test that starts with {folder_name}. is a folder module test
+  // This covers: {folder}.{language}, {folder}.{aspect}, {folder}.{aspect}.{language}, etc.
+  if (base.startsWith(`${folder_name}.`)) return true;
+
+  return false;
+}
+
+/**
  * Validate that a test file has a corresponding implementation file.
  * Returns: { valid: boolean, error?: string }
+ *
+ * Rules:
+ * 1. Test file must have a corresponding implementation file
+ * 2. {name}.test.ts requires {name}.ts
+ * 3. {name}.{subpart}.test.ts can test either {name}.{subpart}.ts OR {name}.ts
+ * 4. Folder-module tests ({folder}.test.ts) can test via index.ts
+ * 5. e2e tests in src/ root can test via index.ts (package-level tests)
  */
 function validate_test_has_implementation(file_path, project_dir) {
   const impl_paths = get_implementation_file_paths(file_path);
@@ -164,9 +210,6 @@ function validate_test_has_implementation(file_path, project_dir) {
     }
   }
 
-  // Also check if the test file is in a folder-module with index.ts
-  // e.g., capture_handlers/capture_handlers.export.test.ts can test the folder module
-  // But NOT for files in src/ root (index.ts there is just a barrel file)
   const dir = path.dirname(file_path);
   const dir_name = path.basename(dir);
   const filename = path.basename(file_path);
@@ -179,19 +222,34 @@ function validate_test_has_implementation(file_path, project_dir) {
     }
   }
 
-  // For folder-modules (not src root), allow tests if index.ts exists
-  if (dir_name !== "src") {
+  // For folder-modules (not src root), only allow tests named after the folder
+  // to use index.ts as their implementation target
+  if (dir_name !== "src" && is_folder_module_test(filename, dir_name)) {
     const index_path = path.join(project_dir, dir, "index.ts");
     if (fs.existsSync(index_path)) {
       return { valid: true };
     }
   }
 
+  // Build helpful error message with suggestions
+  const base = get_test_base_name(filename);
+  const suggested_impl = base ? `${base}.ts` : impl_paths[0];
+  const suggested_test_location = dir_name !== "src"
+    ? `${dir_name}.test.ts (to test the folder module)`
+    : null;
+
+  let error_msg = `Blocked: Test file '${file_path}' has no corresponding implementation file.\n` +
+    `Expected: ${impl_paths[0]}`;
+
+  if (suggested_test_location && base !== dir_name) {
+    error_msg += `\n\nOptions:\n` +
+      `1. Create the implementation file: ${suggested_impl}\n` +
+      `2. Move tests to an existing test file (e.g., ${suggested_test_location})`;
+  }
+
   return {
     valid: false,
-    error: `Blocked: Test file '${file_path}' has no corresponding implementation file.\n` +
-      `Expected one of: ${impl_paths.join(" or ")} (or index.ts in same directory)\n` +
-      `Tests must correspond to an existing code file. Create the implementation file first.`
+    error: error_msg
   };
 }
 
@@ -241,6 +299,17 @@ function validate_impl_has_test(file_path, project_dir) {
 
     if (fs.existsSync(folder_main_test) || fs.existsSync(folder_integration_test)) {
       return { valid: true };
+    }
+
+    // Also check for language-specific tests that test the main module
+    // e.g., index_single_file.javascript.test.ts tests index_single_file.ts
+    const languages = ["typescript", "javascript", "python", "rust", "go", "java"];
+    for (const lang of languages) {
+      const lang_test = path.join(project_dir, dir, `${dir_name}.${lang}.test.ts`);
+      const lang_integration_test = path.join(project_dir, dir, `${dir_name}.${lang}.integration.test.ts`);
+      if (fs.existsSync(lang_test) || fs.existsSync(lang_integration_test)) {
+        return { valid: true };
+      }
     }
   }
 
@@ -318,6 +387,8 @@ module.exports = {
   requires_test,
   get_test_file_paths,
   get_implementation_file_paths,
+  get_test_base_name,
+  is_folder_module_test,
   validate_test_has_implementation,
   validate_impl_has_test,
   audit_test_coverage

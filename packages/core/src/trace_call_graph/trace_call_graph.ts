@@ -1,5 +1,5 @@
 import type { CallGraph, SymbolId, CallableNode } from "@ariadnejs/types";
-import type { DefinitionRegistry } from "../resolve_references/registries/registries.definition";
+import type { DefinitionRegistry } from "../resolve_references/registries/definition";
 import type { ResolutionRegistry } from "../resolve_references/resolve_references";
 
 /**

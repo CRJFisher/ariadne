@@ -9,7 +9,7 @@ import * as fs from "fs/promises";
 import { VERSION } from "./version";
 import { Project } from "@ariadnejs/core";
 import { FilePath } from "@ariadnejs/types";
-import { list_functions } from "./tools/tools.list_functions.js";
+import { list_functions } from "./tools/list_functions.js";
 
 export interface AriadneMCPServerOptions {
   project_path?: string;

@@ -28,7 +28,7 @@ import {
   create_processing_context,
 } from "./scopes/scopes";
 import { process_references } from "./references/references";
-import { node_to_location } from "./index_single_file.node_utils";
+import { node_to_location } from "./node_utils";
 import {
   DefinitionBuilder,
   type BuilderResult,
@@ -44,7 +44,7 @@ import {
   PYTHON_METADATA_EXTRACTORS,
   RUST_METADATA_EXTRACTORS,
 } from "./query_code_tree/metadata_extractors";
-import { ParsedFile } from "./index_single_file.file_utils";
+import { ParsedFile } from "./file_utils";
 
 /**
  * Semantic Index - Single-file analysis results
@@ -84,10 +84,17 @@ export function build_index_single_file(
   tree: Tree,
   language: Language
 ): SemanticIndex {
+  // Import profiler lazily to avoid circular dependency issues
+   
+  const { profiler } = require("../profiling");
+
   // PASS 1: Query tree-sitter for captures
+  profiler.start("query_captures");
   const captures: QueryCapture[] = query_tree(language, tree);
+  profiler.end("query_captures");
 
   // Filter out captures starting with underscore (anonymous captures for predicates)
+  profiler.start("capture_processing");
   const filtered_captures = captures.filter((c) => !c.name.startsWith("_"));
 
   // Convert QueryCapture to CaptureNode
@@ -111,23 +118,36 @@ export function build_index_single_file(
       location: node_to_location(c.node, file.file_path),
     };
   });
+  profiler.end("capture_processing");
+
+  // Record capture count for per-file analysis
+  profiler.record_counts({ captures: capture_nodes.length });
 
   // PASS 2: Build scope tree
+  profiler.start("process_scopes");
   const scopes = process_scopes(capture_nodes, file);
   const context = create_processing_context(scopes, capture_nodes);
+  profiler.end("process_scopes");
+
+  // Record scope count
+  profiler.record_counts({ scopes: scopes.size });
 
   // PASS 3: Process definitions with language-specific handler registry
   // Returns categorized maps (single-file only)
+  profiler.start("process_definitions");
   const handler_registry = get_handler_registry(language);
   const builder_result = process_definitions(context, handler_registry);
+  profiler.end("process_definitions");
 
   // PASS 4: Process references with language-specific metadata extractors
+  profiler.start("process_references");
   const metadata_extractors = get_metadata_extractors(language);
   const all_references = process_references(
     context,
     metadata_extractors,
     file.file_path
   );
+  profiler.end("process_references");
 
   // Return complete semantic index (single-file)
   // Note: scope_to_definitions has been moved to DefinitionRegistry

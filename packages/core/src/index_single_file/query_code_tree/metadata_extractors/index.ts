@@ -1,5 +1,5 @@
 import type { Language } from "@ariadnejs/types";
-import type { MetadataExtractors } from "./metadata_extractors.types";
+import type { MetadataExtractors } from "./types";
 import { JAVASCRIPT_METADATA_EXTRACTORS } from "./metadata_extractors.javascript";
 import { TYPESCRIPT_METADATA_EXTRACTORS } from "./metadata_extractors.typescript";
 import { PYTHON_METADATA_EXTRACTORS } from "./metadata_extractors.python";
@@ -20,7 +20,7 @@ export function get_metadata_extractor(language: Language): MetadataExtractors {
   }
 }
 
-export type { MetadataExtractors, ReceiverInfo, ExtractionResult, NodeTraversal, ExtractionContext } from "./metadata_extractors.types";
+export type { MetadataExtractors, ReceiverInfo, ExtractionResult, NodeTraversal, ExtractionContext } from "./types";
 export { JAVASCRIPT_METADATA_EXTRACTORS } from "./metadata_extractors.javascript";
 export { TYPESCRIPT_METADATA_EXTRACTORS } from "./metadata_extractors.typescript";
 export { PYTHON_METADATA_EXTRACTORS } from "./metadata_extractors.python";

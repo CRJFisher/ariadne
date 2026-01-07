@@ -10,7 +10,7 @@ import type { SymbolName } from "@ariadnejs/types";
 import { anonymous_function_symbol } from "@ariadnejs/types";
 import type { DefinitionBuilder } from "../../definitions/definitions";
 import type { CaptureNode, ProcessingContext } from "../../index_single_file";
-import type { HandlerRegistry } from "./capture_handlers.types";
+import type { HandlerRegistry } from "./types";
 import {
   create_class_id,
   extract_extends,
@@ -53,7 +53,7 @@ import {
   handle_import_module_source,
   handle_import_module_alias,
   handle_import_star,
-} from "./capture_handlers.python.imports";
+} from "./imports.python";
 // Re-export import handlers for external use
 export {
   handle_definition_import,

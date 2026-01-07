@@ -15,7 +15,7 @@
 // Types
 // ============================================================================
 
-export type { SymbolCreationContext } from "./symbol_factories.types";
+export type { SymbolCreationContext } from "./types";
 
 // ============================================================================
 // JavaScript Symbol Factories

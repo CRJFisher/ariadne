@@ -29,7 +29,7 @@ import {
   anonymous_function_symbol,
 } from "@ariadnejs/types";
 import type { CaptureNode } from "../../index_single_file";
-import { node_to_location } from "../../index_single_file.node_utils";
+import { node_to_location } from "../../node_utils";
 
 // ============================================================================
 // Symbol ID Creation

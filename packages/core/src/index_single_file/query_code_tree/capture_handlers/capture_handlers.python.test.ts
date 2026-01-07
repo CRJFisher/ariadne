@@ -16,7 +16,7 @@ import type {
   SemanticEntity,
 } from "../../index_single_file";
 import type { FilePath, Location, ScopeId, SymbolName } from "@ariadnejs/types";
-import { node_to_location } from "../../index_single_file.node_utils";
+import { node_to_location } from "../../node_utils";
 import { extract_import_path, detect_callback_context } from "../symbol_factories/symbol_factories.python";
 
 describe("Python Builder Configuration", () => {

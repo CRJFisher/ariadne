@@ -28,7 +28,7 @@ import {
 } from "@ariadnejs/types";
 import type { CaptureNode } from "../../index_single_file";
 import type { ProcessingContext } from "../../index_single_file";
-import { node_to_location } from "../../index_single_file.node_utils";
+import { node_to_location } from "../../node_utils";
 
 // Re-export export analysis functions
 export {
@@ -36,7 +36,7 @@ export {
   extract_export_specifier_info,
   analyze_export_statement,
   extract_export_info,
-} from "./symbol_factories.javascript_exports";
+} from "./exports.javascript";
 
 // ============================================================================
 // Symbol ID Creation

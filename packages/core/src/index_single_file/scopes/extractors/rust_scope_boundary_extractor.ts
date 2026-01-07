@@ -1,7 +1,7 @@
 import type { FilePath, ScopeType } from "@ariadnejs/types";
 import Parser from "tree-sitter";
-import { CommonScopeBoundaryExtractor, type ScopeBoundaries } from "../scopes.boundary_base";
-import { node_to_location } from "../../index_single_file.node_utils";
+import { CommonScopeBoundaryExtractor, type ScopeBoundaries } from "../boundary_base";
+import { node_to_location } from "../../node_utils";
 
 /**
  * Rust-specific scope boundary extractor.

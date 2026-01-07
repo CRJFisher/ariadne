@@ -6,7 +6,7 @@
  */
 
 import type { FilePath, Language } from "@ariadnejs/types";
-import type { FileSystemFolder } from "../resolve_references.file_folders";
+import type { FileSystemFolder } from "../file_folders";
 import { resolve_module_path_javascript } from "./import_resolution.javascript";
 import { resolve_module_path_typescript } from "./import_resolution.typescript";
 import { resolve_module_path_python } from "./import_resolution.python";

@@ -21,3 +21,6 @@ export {
   ImportGraph,
   ResolutionRegistry
 } from "./project";
+
+// Profiling
+export { profiler } from "./profiling";

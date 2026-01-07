@@ -9,7 +9,7 @@ import type { SymbolId, SymbolName } from "@ariadnejs/types";
 import { enum_member_symbol, anonymous_function_symbol, create_module_path } from "@ariadnejs/types";
 import type { DefinitionBuilder } from "../../definitions/definitions";
 import type { CaptureNode, ProcessingContext } from "../../index_single_file";
-import type { HandlerRegistry } from "./capture_handlers.types";
+import type { HandlerRegistry } from "./types";
 import {
   create_struct_id,
   create_enum_id,
@@ -47,7 +47,7 @@ import {
   handle_definition_method_default,
   handle_definition_method_async,
   handle_definition_constructor,
-} from "./capture_handlers.rust.methods";
+} from "./methods.rust";
 
 export {
   handle_definition_method,

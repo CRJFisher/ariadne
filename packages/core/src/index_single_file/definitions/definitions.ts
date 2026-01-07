@@ -33,7 +33,7 @@ import {
 } from "@ariadnejs/types";
 
 import type { ProcessingContext, CaptureNode } from "../index_single_file";
-import { find_body_scope_for_definition } from "../scopes/scopes.utils";
+import { find_body_scope_for_definition } from "../scopes/utils";
 
 // ============================================================================
 // Builder Result Type

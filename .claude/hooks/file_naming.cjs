@@ -183,27 +183,25 @@ function is_snake_case_filename(filename) {
 /**
  * Validate filename against folder-module naming conventions.
  *
- * ALL files must start with {folder_name}. (except index.ts):
- * - {folder}.ts (main module)
- * - {folder}.test.ts
- * - {folder}.integration.test.ts
- * - {folder}.e2e.test.ts
- * - {folder}.bench.test.ts
- * - {folder}.{submodule}.ts (e.g., scopes.utils.ts)
- * - {folder}.{submodule}.test.ts
- * - {folder}.{submodule}.integration.test.ts
- * - {folder}.{submodule}.e2e.test.ts
- * - {folder}.{language}.ts
- * - {folder}.{language}.test.ts
- * - {folder}.{language}.integration.test.ts
- * - {folder}.{language}.{submodule}.ts
- * - {folder}.helper_module.ts (helper modules use folder prefix too)
+ * New convention - folder provides namespace, submodules don't repeat folder name:
  *
- * Only exception:
+ * Main module files (start with {folder}.):
+ * - {folder}.ts (main module)
+ * - {folder}.test.ts, {folder}.integration.test.ts, etc.
+ * - {folder}.{language}.ts (language variant of main)
+ * - {folder}.{language}.test.ts, etc.
+ *
+ * Submodule files (don't start with {folder}.):
+ * - {submodule}.ts (helper module)
+ * - {submodule}.test.ts
+ * - {submodule}.{language}.ts (language variant of submodule)
+ * - {submodule}.{part}.ts (submodule part, e.g., python.imports.ts)
+ *
+ * Exception:
  * - index.ts (barrel file for re-exports)
  */
 function validate_folder_module_naming(filename, folder_name) {
-  // index.ts is the only file allowed without folder prefix
+  // index.ts is always allowed (barrel file)
   if (filename === "index.ts") {
     return { valid: true };
   }
@@ -222,17 +220,22 @@ function validate_folder_module_naming(filename, folder_name) {
     };
   }
 
-  // ALL files must start with {folder_name}.
-  if (!filename.startsWith(`${folder_name}.`)) {
-    return {
-      valid: false,
-      error: `Blocked: '${filename}' must start with '${folder_name}.' per folder-module naming convention.\n` +
-        `Valid patterns: ${folder_name}.ts, ${folder_name}.{submodule}.ts, ${folder_name}.{submodule}.test.ts\n` +
-        `If this is a helper module, rename to: ${folder_name}.${filename}\n` +
-        `If this is a debug/temporary script, it should be removed.`
-    };
+  // Valid test suffixes
+  const test_suffixes = [".test.ts", ".integration.test.ts", ".e2e.test.ts", ".bench.test.ts"];
+
+  // Check if file starts with {folder_name}. (main module file)
+  if (filename.startsWith(`${folder_name}.`)) {
+    return validate_main_module_file(filename, folder_name, test_suffixes);
   }
 
+  // Otherwise it's a submodule file - validate snake_case pattern
+  return validate_submodule_file(filename, test_suffixes, folder_name);
+}
+
+/**
+ * Validate a main module file (starts with {folder_name}.)
+ */
+function validate_main_module_file(filename, folder_name, test_suffixes) {
   // Main module: {folder}.ts
   if (filename === `${folder_name}.ts`) {
     return { valid: true };
@@ -241,9 +244,6 @@ function validate_folder_module_naming(filename, folder_name) {
   // Get the suffix after {folder}.
   const suffix = filename.slice(folder_name.length + 1); // +1 for the dot
 
-  // Valid test suffixes at end of filename
-  const test_suffixes = [".test.ts", ".integration.test.ts", ".e2e.test.ts", ".bench.test.ts"];
-
   // Check if it's a test file for main module
   for (const test_suffix of test_suffixes) {
     if (suffix === test_suffix.slice(1)) { // Remove leading dot
@@ -251,7 +251,7 @@ function validate_folder_module_naming(filename, folder_name) {
     }
   }
 
-  // Check language-specific patterns
+  // Check language-specific patterns for main module
   for (const lang of LANGUAGES) {
     // {folder}.{language}.ts
     if (suffix === `${lang}.ts`) {
@@ -263,30 +263,142 @@ function validate_folder_module_naming(filename, folder_name) {
         return { valid: true };
       }
     }
-    // {folder}.{language}.{submodule}.ts
-    const lang_submodule_pattern = new RegExp(`^${lang}\\.[a-z][a-z0-9_]*\\.ts$`);
-    if (lang_submodule_pattern.test(suffix)) {
-      return { valid: true };
-    }
   }
 
-  // Submodule/helper patterns: {folder}.{submodule}.ts where submodule is snake_case
-  if (/^[a-z][a-z0-9_]*\.ts$/.test(suffix)) {
-    return { valid: true };
-  }
-
-  // Submodule test patterns: {folder}.{submodule}.test.ts, etc.
+  // Check aspect-specific test patterns: {folder}.{aspect}.test.ts
+  // e.g., capture_handlers.export.test.ts, symbol_factories.collection.test.ts
+  // These are tests for specific aspects of the folder module
   for (const test_suffix of test_suffixes) {
-    const pattern = new RegExp(`^[a-z][a-z0-9_]*${escape_regex(test_suffix)}$`);
-    if (pattern.test(suffix)) {
-      return { valid: true };
+    // Match {aspect}{test_suffix} where aspect is snake_case
+    const test_suffix_no_dot = test_suffix.slice(1); // Remove leading dot
+    if (suffix.endsWith(test_suffix_no_dot)) {
+      const aspect = suffix.slice(0, -test_suffix_no_dot.length - 1); // Remove .test.ts and preceding dot
+      // Verify aspect is valid snake_case and not a language
+      if (/^[a-z][a-z0-9_]*$/.test(aspect) && !LANGUAGES.includes(aspect)) {
+        return { valid: true };
+      }
     }
   }
 
-  // Starts with folder. but doesn't match any known pattern
+  // Starts with folder. but doesn't match any known main module pattern
   return {
     valid: false,
     error: `Blocked: '${filename}' has invalid suffix pattern after '${folder_name}.'`
+  };
+}
+
+/**
+ * Check if a filename starts with a language prefix (which is not allowed)
+ * Language should always be a suffix, not a prefix.
+ */
+function has_language_prefix(filename, folder_name) {
+  for (const lang of LANGUAGES) {
+    // Check for {language}.ts or {language}.{something}.ts patterns
+    if (filename === `${lang}.ts` || filename.startsWith(`${lang}.`)) {
+      // Suggest the correct name
+      if (filename === `${lang}.ts`) {
+        return {
+          blocked: true,
+          suggestion: `${folder_name}.${lang}.ts`,
+          error: `Blocked: '${filename}' has language as prefix.\n` +
+            `Language should be a suffix. Rename to: ${folder_name}.${lang}.ts`
+        };
+      }
+      // {language}.{submodule}.ts -> {submodule}.{language}.ts
+      const rest = filename.slice(lang.length + 1); // After "lang."
+      const parts = rest.split(".");
+      if (parts.length >= 2) {
+        // e.g., python.imports.ts -> imports.python.ts
+        // e.g., python.imports.test.ts -> imports.python.test.ts
+        const submodule = parts[0];
+        const suffix = parts.slice(1).join(".");
+        const new_name = `${submodule}.${lang}.${suffix}`;
+        return {
+          blocked: true,
+          suggestion: new_name,
+          error: `Blocked: '${filename}' has language as prefix.\n` +
+            `Language should be a suffix. Rename to: ${new_name}`
+        };
+      }
+    }
+  }
+  return { blocked: false };
+}
+
+/**
+ * Validate a submodule file (doesn't start with {folder_name}.)
+ *
+ * Language suffix rule: language identifiers ALWAYS come as a suffix, never a prefix.
+ * - {submodule}.{language}.ts - language variant of submodule
+ * - NOT {language}.ts or {language}.{submodule}.ts
+ */
+function validate_submodule_file(filename, test_suffixes, folder_name) {
+  // Check for language prefix (not allowed)
+  const lang_prefix_check = has_language_prefix(filename, folder_name);
+  if (lang_prefix_check.blocked) {
+    return {
+      valid: false,
+      error: lang_prefix_check.error
+    };
+  }
+
+  // Simple submodule: {submodule}.ts
+  if (/^[a-z][a-z0-9_]*\.ts$/.test(filename)) {
+    return { valid: true };
+  }
+
+  // Submodule test files: {submodule}.test.ts, etc.
+  for (const test_suffix of test_suffixes) {
+    const pattern = new RegExp(`^[a-z][a-z0-9_]*${escape_regex(test_suffix)}$`);
+    if (pattern.test(filename)) {
+      return { valid: true };
+    }
+  }
+
+  // Language-specific submodule with language as SUFFIX: {submodule}.{language}.ts
+  for (const lang of LANGUAGES) {
+    // {submodule}.{language}.ts (e.g., imports.python.ts, methods.rust.ts)
+    const lang_suffix_pattern = new RegExp(`^[a-z][a-z0-9_]*\\.${lang}\\.ts$`);
+    if (lang_suffix_pattern.test(filename)) {
+      return { valid: true };
+    }
+    // {submodule}.{language}.test.ts, etc.
+    for (const test_suffix of test_suffixes) {
+      const pattern = new RegExp(`^[a-z][a-z0-9_]*\\.${lang}${escape_regex(test_suffix)}$`);
+      if (pattern.test(filename)) {
+        return { valid: true };
+      }
+    }
+  }
+
+  // Submodule with part (non-language): {submodule}.{part}.ts
+  // But make sure {part} is not a language
+  const two_part_match = filename.match(/^([a-z][a-z0-9_]*)\.([a-z][a-z0-9_]*)\.ts$/);
+  if (two_part_match) {
+    const part = two_part_match[2];
+    if (!LANGUAGES.includes(part)) {
+      return { valid: true };
+    }
+    // If part is a language, it was already handled above
+  }
+
+  // Submodule with part test: {submodule}.{part}.test.ts (non-language part)
+  for (const test_suffix of test_suffixes) {
+    const pattern = new RegExp(`^([a-z][a-z0-9_]*)\\.([a-z][a-z0-9_]*)${escape_regex(test_suffix)}$`);
+    const match = filename.match(pattern);
+    if (match) {
+      const part = match[2];
+      if (!LANGUAGES.includes(part)) {
+        return { valid: true };
+      }
+    }
+  }
+
+  // Doesn't match any valid pattern
+  return {
+    valid: false,
+    error: `Blocked: '${filename}' does not match valid submodule naming pattern.\n` +
+      `Valid patterns: {submodule}.ts, {submodule}.test.ts, {submodule}.{language}.ts`
   };
 }
 

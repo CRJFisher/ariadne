@@ -13,13 +13,13 @@ import type {
   Location,
 } from "@ariadnejs/types";
 import { module_scope, scope_string, ScopeType } from "@ariadnejs/types";
-import { ParsedFile } from "../index_single_file.file_utils";
+import { ParsedFile } from "../file_utils";
 import {
   CaptureNode,
   ProcessingContext,
   SemanticCategory,
 } from "../index_single_file";
-import { get_scope_boundary_extractor } from "./scopes.boundary_extractor";
+import { get_scope_boundary_extractor } from "./boundary_extractor";
 import type Parser from "tree-sitter";
 
 /**

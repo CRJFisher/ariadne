@@ -7,8 +7,8 @@
 
 import * as path from "path";
 import type { FilePath } from "@ariadnejs/types";
-import type { FileSystemFolder } from "../resolve_references.file_folders";
-import { has_file_in_tree } from "../resolve_references.file_folders";
+import type { FileSystemFolder } from "../file_folders";
+import { has_file_in_tree } from "../file_folders";
 
 /**
  * Resolve Python module path to absolute file path

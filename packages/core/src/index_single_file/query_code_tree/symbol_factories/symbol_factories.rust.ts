@@ -22,13 +22,13 @@ import {
   anonymous_function_symbol,
 } from "@ariadnejs/types";
 import type { CaptureNode } from "../../index_single_file";
-import { node_to_location } from "../../index_single_file.node_utils";
-export { detect_callback_context } from "./symbol_factories.rust_callback";
+import { node_to_location } from "../../node_utils";
+export { detect_callback_context } from "./callback.rust";
 export {
   type ImportInfo,
   extract_imports_from_use_declaration,
   extract_import_from_extern_crate,
-} from "./symbol_factories.rust_imports";
+} from "./imports.rust";
 
 //
 // Symbol ID Creation

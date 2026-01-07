@@ -5,5 +5,5 @@
  * These are now used internally by ResolutionRegistry.
  */
 
-export { resolve_method_call } from "./call_resolution.method";
-export { resolve_constructor_call } from "./call_resolution.constructor";
+export { resolve_method_call } from "./method";
+export { resolve_constructor_call } from "./constructor";

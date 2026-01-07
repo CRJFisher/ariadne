@@ -26,7 +26,7 @@ import type {
 } from "@ariadnejs/types";
 import { ReferenceBuilder } from "../../references/references";
 import { JAVASCRIPT_METADATA_EXTRACTORS } from "../metadata_extractors";
-import { node_to_location } from "../../index_single_file.node_utils";
+import { node_to_location } from "../../node_utils";
 
 describe("JavaScript Builder Configuration", () => {
   let parser: Parser;
