@@ -216,7 +216,9 @@ function process_definitions(
 
     const handler = registry[capture.name];
     if (handler) {
+      profiler.start(`handler:${capture.name}`);
       handler(capture, builder, context);
+      profiler.end(`handler:${capture.name}`);
     }
   }
 
@@ -229,7 +231,9 @@ function process_definitions(
 
     const handler = registry[capture.name];
     if (handler) {
+      profiler.start(`handler:${capture.name}`);
       handler(capture, builder, context);
+      profiler.end(`handler:${capture.name}`);
     }
   }
 

@@ -2,9 +2,119 @@
  * JavaScript/TypeScript Export Analysis
  *
  * Functions for analyzing export statements and extracting export metadata.
+ * Uses caching to avoid O(n) lookups for each symbol.
  */
 import type { SyntaxNode } from "tree-sitter";
 import type { SymbolName, ExportMetadata } from "@ariadnejs/types";
+
+// ============================================================================
+// Export Cache - Built once per file for O(1) lookups
+// ============================================================================
+
+interface ExportCache {
+  named_exports: Map<SymbolName, ExportMetadata>;
+  commonjs_exports: Map<SymbolName, ExportMetadata>;
+}
+
+/**
+ * Cache for export info, keyed by root node id.
+ * This allows O(1) lookups instead of O(n) tree traversals.
+ */
+let export_cache: ExportCache | null = null;
+let cached_root_id: number | null = null;
+
+/**
+ * Clear the export cache. Call this when starting a new file.
+ */
+export function clear_export_cache(): void {
+  export_cache = null;
+  cached_root_id = null;
+}
+
+/**
+ * Build export cache for a file (called lazily on first lookup)
+ */
+function build_export_cache(root: SyntaxNode): ExportCache {
+  const named_exports = new Map<SymbolName, ExportMetadata>();
+  const commonjs_exports = new Map<SymbolName, ExportMetadata>();
+
+  // Scan all root-level children for export statements
+  for (let i = 0; i < root.childCount; i++) {
+    const child = root.child(i);
+    if (!child) continue;
+
+    // Named exports: export { foo, bar as baz }
+    if (child.type === "export_statement") {
+      const specifiers = find_export_specifiers(child);
+      const is_reexport = child.children.some((c) => c.type === "from");
+
+      for (const spec of specifiers) {
+        const info = extract_export_specifier_info(spec);
+        named_exports.set(info.name, {
+          export_name: info.alias,
+          is_reexport,
+        });
+      }
+    }
+
+    // CommonJS exports: module.exports = { foo, bar }
+    if (child.type === "expression_statement") {
+      const expr = child.child(0);
+      if (expr?.type === "assignment_expression") {
+        const left = expr.childForFieldName("left");
+        const right = expr.childForFieldName("right");
+
+        if (left?.type === "member_expression") {
+          const object = left.childForFieldName("object");
+          const property = left.childForFieldName("property");
+
+          if (object?.text === "module" && property?.text === "exports" && right?.type === "object") {
+            for (let j = 0; j < right.childCount; j++) {
+              const prop = right.child(j);
+
+              if (prop?.type === "shorthand_property_identifier") {
+                commonjs_exports.set(prop.text as SymbolName, {});
+              }
+
+              if (prop?.type === "pair") {
+                const key = prop.childForFieldName("key");
+                const value = prop.childForFieldName("value");
+
+                if (value?.type === "identifier") {
+                  const symbol_name = value.text as SymbolName;
+                  const export_name =
+                    key?.type === "property_identifier" || key?.type === "identifier"
+                      ? (key.text as SymbolName)
+                      : undefined;
+
+                  commonjs_exports.set(
+                    symbol_name,
+                    export_name && export_name !== symbol_name ? { export_name } : {}
+                  );
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  return { named_exports, commonjs_exports };
+}
+
+/**
+ * Get or build export cache for the given root node
+ */
+function get_export_cache(root: SyntaxNode): ExportCache {
+  if (export_cache && cached_root_id === root.id) {
+    return export_cache;
+  }
+
+  export_cache = build_export_cache(root);
+  cached_root_id = root.id;
+  return export_cache;
+}
 
 /**
  * Find all export_specifier nodes in an export_clause
@@ -185,11 +295,14 @@ export function extract_export_info(
     current = parent;
   }
 
-  // Second, check if this symbol is exported via named export: export { foo }
-  // We need to search the entire file for export statements that reference this symbol
+  // Second, check if this symbol is exported via named export or CommonJS
+  // Use cached lookups (O(1)) instead of O(n) tree traversals
   if (symbol_name) {
     const root = get_root_node(node);
-    const named_export = find_named_export_for_symbol(root, symbol_name);
+    const cache = get_export_cache(root);
+
+    // Check named exports cache
+    const named_export = cache.named_exports.get(symbol_name);
     if (named_export) {
       return {
         is_exported: true,
@@ -197,8 +310,8 @@ export function extract_export_info(
       };
     }
 
-    // Third, check if this symbol is exported via CommonJS: module.exports = { foo }
-    const commonjs_export = find_commonjs_export_for_symbol(root, symbol_name);
+    // Check CommonJS exports cache
+    const commonjs_export = cache.commonjs_exports.get(symbol_name);
     if (commonjs_export) {
       return {
         is_exported: true,
@@ -219,101 +332,4 @@ function get_root_node(node: SyntaxNode): SyntaxNode {
     current = current.parent;
   }
   return current;
-}
-
-/**
- * Find named export statement that exports the given symbol
- * Searches for: export { foo } or export { foo as bar }
- */
-function find_named_export_for_symbol(
-  root: SyntaxNode,
-  symbol_name: SymbolName
-): ExportMetadata | undefined {
-  // Search all children of the root for export_statement nodes
-  for (let i = 0; i < root.childCount; i++) {
-    const child = root.child(i);
-    if (child?.type === "export_statement") {
-      // Check if this export statement references our symbol
-      const specifiers = find_export_specifiers(child);
-      for (const spec of specifiers) {
-        const info = extract_export_specifier_info(spec);
-        if (info.name === symbol_name) {
-          // Found it!
-          const is_reexport = has_from_clause(child);
-          return {
-            export_name: info.alias,
-            is_reexport,
-          };
-        }
-      }
-    }
-  }
-
-  return undefined;
-}
-
-/**
- * Find CommonJS export that exports the given symbol
- * Searches for: module.exports = { foo, bar }
- */
-function find_commonjs_export_for_symbol(
-  root: SyntaxNode,
-  symbol_name: SymbolName
-): ExportMetadata | undefined {
-  // Search for assignment_expression nodes: module.exports = { ... }
-  for (let i = 0; i < root.childCount; i++) {
-    const child = root.child(i);
-
-    // Check expression_statement nodes
-    if (child?.type === "expression_statement") {
-      const expr = child.child(0);
-
-      if (expr?.type === "assignment_expression") {
-        const left = expr.childForFieldName("left");
-        const right = expr.childForFieldName("right");
-
-        // Check if left side is module.exports
-        if (left?.type === "member_expression") {
-          const object = left.childForFieldName("object");
-          const property = left.childForFieldName("property");
-
-          if (object?.text === "module" && property?.text === "exports") {
-            // Check if right side is an object containing our symbol
-            if (right?.type === "object") {
-              // Search through object properties
-              for (let j = 0; j < right.childCount; j++) {
-                const prop = right.child(j);
-
-                // Handle shorthand properties: { helper }
-                if (prop?.type === "shorthand_property_identifier") {
-                  if (prop.text === symbol_name) {
-                    return {}; // Found! No alias for CommonJS shorthand
-                  }
-                }
-
-                // Handle full properties: { helper: helper }
-                if (prop?.type === "pair") {
-                  const key = prop.childForFieldName("key");
-                  const value = prop.childForFieldName("value");
-
-                  if (value?.type === "identifier" && value.text === symbol_name) {
-                    // Export name is the key
-                    const export_name = key?.type === "property_identifier" || key?.type === "identifier"
-                      ? (key.text as SymbolName)
-                      : undefined;
-
-                    return export_name && export_name !== symbol_name
-                      ? { export_name }
-                      : {};
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    }
-  }
-
-  return undefined;
 }
