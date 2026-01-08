@@ -1,12 +1,42 @@
 # Task 11.163: Track this.method() and super.method() Calls
 
-## Status: Planning
+## Status: Completed
 
 ## Parent: epic-11-codebase-restructuring
 
 ## Overview
 
 Method calls using `this.methodName()` and `super.methodName()` are not being tracked as references in the call graph. This causes class internal methods and parent class methods to incorrectly appear as entry points.
+
+## Implementation Notes
+
+Completed: 2026-01-08
+
+Investigation revealed the infrastructure for `this.method()` and `super.method()` resolution already existed (Task 152.x series). The issue was two bugs in `self_reference.ts`:
+
+### Bug 1: `find_class_in_scope()` returning null
+
+The function was looking for class definitions IN the class scope, but class definitions have `defining_scope_id` set to the MODULE scope (parent). Fixed by reverse-looking up through `member_index` to find which class owns a method in the scope.
+
+### Bug 2: `resolve_super_call()` only checking immediate parent
+
+The function only looked at the immediate parent's member index, so it couldn't find inherited methods from grandparent classes. Fixed by walking the full inheritance chain using `types.walk_inheritance_chain()`.
+
+### Results
+
+- **Fixed**: `super.extract_class_boundaries()` - was false positive, now resolved correctly
+- **Remaining**: `extract_block_boundaries` - requires polymorphic resolution (Task 11.167)
+
+The `this.method()` calls were already resolving correctly. The remaining false positive requires polymorphic dispatch tracking when base class calls `this.method()` and child classes override it.
+
+### Files Modified
+
+- `packages/core/src/resolve_references/call_resolution/self_reference.ts` - Core fixes
+- `packages/core/src/resolve_references/call_resolution/self_reference.test.ts` - Added regression test
+
+### Commit
+
+`50ddf410` - fix(call-resolution): Fix super.method() inheritance chain walking
 
 ## False Positive Groups Addressed
 
