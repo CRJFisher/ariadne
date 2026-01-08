@@ -121,7 +121,11 @@ function resolve_this_or_self_call(
  * Steps:
  * 1. Find containing class
  * 2. Find parent class from type information
- * 3. Find method definition in parent class
+ * 3. Walk inheritance chain to find method definition
+ *
+ * The method may be defined in the immediate parent or in a grandparent class.
+ * For example, if A extends B extends C, and B doesn't override method(),
+ * super.method() from A should resolve to C.method().
  *
  * @param call_ref - Self-reference call
  * @param scopes - Scope registry
@@ -148,32 +152,21 @@ function resolve_super_call(
     return [];
   }
 
-  // Get parent class from type registry
-  const parent_class_id = types.get_parent_class(class_symbol_id);
-  if (!parent_class_id) {
-    return [];
-  }
+  // Walk the inheritance chain starting from the parent class to find the method
+  // This handles cases where the method is inherited from a grandparent
+  const inheritance_chain = types.walk_inheritance_chain(class_symbol_id);
 
-  // Find parent class definition to get its scope
-  const parent_definition = definitions.get(parent_class_id);
-  if (!parent_definition) {
-    return [];
-  }
+  // Skip the first element (current class) - we want parent classes only
+  for (let i = 1; i < inheritance_chain.length; i++) {
+    const ancestor_class_id = inheritance_chain[i];
+    const ancestor_members = definitions.get_member_index().get(ancestor_class_id);
 
-  // For class definitions, the body_scope_id is where methods are defined
-  if (parent_definition.kind === "class") {
-    // For classes, methods are in child scopes. We need to search within the class's scope tree.
-    // The class definition's defining_scope_id is where the class NAME is visible (parent scope).
-    // We need to find scopes that have the class's scope as parent.
-    // For now, use the class definition's symbol_id to look up members directly
-    const parent_members = definitions.get_member_index().get(parent_class_id);
-    if (parent_members) {
-      const method_id = parent_members.get(call_ref.name);
+    if (ancestor_members) {
+      const method_id = ancestor_members.get(call_ref.name);
       if (method_id) {
         return [method_id];
       }
     }
-    return [];
   }
 
   return [];
@@ -266,12 +259,16 @@ function find_method_in_scope(
 }
 
 /**
- * Find the class definition for a given class scope
+ * Find the class definition that owns a given class scope
  *
- * The class definition is the symbol that defines the class itself,
- * which should be in the class scope.
+ * The class definition's defining_scope_id is the MODULE scope (where the class name is visible),
+ * not the CLASS scope (the class body). So we can't find the class definition by looking
+ * in the class scope's definitions directly.
  *
- * @param class_scope_id - The class scope
+ * Strategy: Find a method in the class scope, then use the member_index to find
+ * which class owns that method.
+ *
+ * @param class_scope_id - The class scope (class body scope)
  * @param definitions - Definition registry
  * @returns Class symbol_id or null
  */
@@ -279,18 +276,34 @@ function find_class_in_scope(
   class_scope_id: ScopeId,
   definitions: DefinitionRegistry
 ): SymbolId | null {
-  // Get all definitions in the class scope
+  // Get all definitions in the class scope (these are methods, properties, etc.)
   const scope_symbols = definitions.get_scope_definitions(class_scope_id);
   if (!scope_symbols) {
     return null;
   }
 
-  // Find the class definition
-  // The class definition should be in its own scope
+  // Find any method in this scope
+  let method_symbol_id: SymbolId | null = null;
   for (const symbol_id of scope_symbols.values()) {
     const definition = definitions.get(symbol_id);
-    if (definition && definition.kind === "class") {
-      return symbol_id;
+    if (definition && definition.kind === "method") {
+      method_symbol_id = symbol_id;
+      break;
+    }
+  }
+
+  if (!method_symbol_id) {
+    return null;
+  }
+
+  // Use the member_index to find which class owns this method
+  // member_index: Map<class_symbol_id, Map<member_name, member_symbol_id>>
+  const member_index = definitions.get_member_index();
+  for (const [class_symbol_id, members] of member_index) {
+    for (const member_symbol_id of members.values()) {
+      if (member_symbol_id === method_symbol_id) {
+        return class_symbol_id;
+      }
     }
   }
 
