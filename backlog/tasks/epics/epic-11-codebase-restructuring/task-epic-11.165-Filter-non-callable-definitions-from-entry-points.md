@@ -112,6 +112,28 @@ interface Definition {
 3. Actual callable methods are still detected as entry points
 4. All tests pass
 
+## Implementation Notes
+
+The filtering is implemented via the `body_scope_id` check in `trace_call_graph.ts`:
+
+```typescript
+const body_scope_id = func_def.body_scope_id;
+if (!body_scope_id) {
+  continue;
+}
+```
+
+Interface method signatures have `body_scope_id: undefined` (per `MethodDefinition` type), so they are automatically excluded from call graph nodes and entry points.
+
+### Tests Added
+
+Comprehensive tests added to `packages/core/src/trace_call_graph/trace_call_graph.test.ts`:
+
+1. **Interface method exclusion** - Verifies methods without `body_scope_id` don't appear in nodes or entry points
+2. **Class method inclusion** - Verifies methods with `body_scope_id` are correctly added as nodes and entry points
+3. **Function inclusion** - Verifies regular functions work correctly
+4. **Mixed interface/class scenarios** - Verifies only class implementations appear when both interface and class define same method name
+
 ## Dependencies
 
 - Standalone task, no dependencies on other call graph tasks
