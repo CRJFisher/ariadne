@@ -24,14 +24,6 @@ let export_cache: ExportCache | null = null;
 let cached_root_id: number | null = null;
 
 /**
- * Clear the export cache. Call this when starting a new file.
- */
-export function clear_export_cache(): void {
-  export_cache = null;
-  cached_root_id = null;
-}
-
-/**
  * Build export cache for a file (called lazily on first lookup)
  */
 function build_export_cache(root: SyntaxNode): ExportCache {

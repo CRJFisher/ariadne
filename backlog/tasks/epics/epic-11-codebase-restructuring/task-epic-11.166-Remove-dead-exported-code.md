@@ -18,84 +18,85 @@ This task addresses the following false positive group from `top-level-nodes-ana
 
 ### rust_builder_helpers.ts (9 functions)
 
-| Function | Line | Action |
-|----------|------|--------|
-| `extract_lifetime_parameters` | 243 | DELETE |
-| `extract_trait_bounds` | 258 | DELETE |
-| `is_async_function` | 324 | DELETE |
-| `is_const_function` | 333 | DELETE |
-| `is_unsafe_function` | 342 | DELETE |
-| `has_generic_parameters` | 400 | DELETE |
-| `is_mutable_parameter` | 405 | DELETE |
-| `extract_use_path` | 569 | DELETE |
-| `extract_use_alias` | 623 | DELETE |
-| `is_wildcard_import` | 670 | DELETE |
+| Function                      | Line | Action |
+| ----------------------------- | ---- | ------ |
+| `extract_lifetime_parameters` | 243  | DELETE |
+| `extract_trait_bounds`        | 258  | DELETE |
+| `is_async_function`           | 324  | DELETE |
+| `is_const_function`           | 333  | DELETE |
+| `is_unsafe_function`          | 342  | DELETE |
+| `has_generic_parameters`      | 400  | DELETE |
+| `is_mutable_parameter`        | 405  | DELETE |
+| `extract_use_path`            | 569  | DELETE |
+| `extract_use_alias`           | 623  | DELETE |
+| `is_wildcard_import`          | 670  | DELETE |
 
 ### typescript_builder.ts (2 functions)
 
-| Function | Line | Action |
-|----------|------|--------|
-| `is_optional_member` | 281 | DELETE |
-| `is_abstract_class` | 295 | DELETE |
+| Function             | Line | Action |
+| -------------------- | ---- | ------ |
+| `is_optional_member` | 281  | DELETE |
+| `is_abstract_class`  | 295  | DELETE |
 
 ### query_loader.ts (1 function)
 
-| Function | Line | Action |
-|----------|------|--------|
-| `has_query` | 211 | DELETE |
+| Function    | Line | Action |
+| ----------- | ---- | ------ |
+| `has_query` | 211  | DELETE |
 
 ### validate_captures.ts (1 function)
 
-| Function | Line | Action |
-|----------|------|--------|
-| `format_all_results` | 393 | DELETE |
+| Function             | Line | Action |
+| -------------------- | ---- | ------ |
+| `format_all_results` | 393  | DELETE |
 
 ### semantic_index.ts (1 function)
 
-| Function | Line | Action |
-|----------|------|--------|
-| `get_child_scope_with_symbol_name` | 254 | DELETE |
+| Function                           | Line | Action |
+| ---------------------------------- | ---- | ------ |
+| `get_child_scope_with_symbol_name` | 254  | DELETE |
 
 ### test_utils.ts (1 function)
 
-| Function | Line | Action |
-|----------|------|--------|
-| `create_simple_mock_node` | 45 | DELETE |
+| Function                  | Line | Action |
+| ------------------------- | ---- | ------ |
+| `create_simple_mock_node` | 45   | DELETE |
 
 ### import_graph.ts (3 functions)
 
-| Function | Line | Action |
-|----------|------|--------|
-| `get_dependencies` | 156 | DELETE |
-| `get_transitive_dependencies` | 180 | DELETE |
-| `has_dependency` | 260 | DELETE |
+| Function                      | Line | Action |
+| ----------------------------- | ---- | ------ |
+| `get_dependencies`            | 156  | DELETE |
+| `get_transitive_dependencies` | 180  | DELETE |
+| `has_dependency`              | 260  | DELETE |
 
 ### export_registry.ts (4 functions)
 
-| Function | Line | Action |
-|----------|------|--------|
-| `exports_symbol` | 208 | DELETE |
-| `get_file_count` | 227 | DELETE |
-| `get_total_export_count` | 236 | DELETE |
-| `find_exporters` | 251 | DELETE |
+| Function                 | Line | Action |
+| ------------------------ | ---- | ------ |
+| `exports_symbol`         | 208  | DELETE |
+| `get_file_count`         | 227  | DELETE |
+| `get_total_export_count` | 236  | DELETE |
+| `find_exporters`         | 251  | DELETE |
 
 ### type_registry.ts (1 function)
 
 | Function | Line | Action |
-|----------|------|--------|
-| `size` | 506 | DELETE |
+| -------- | ---- | ------ |
+| `size`   | 506  | DELETE |
 
 ### definition_registry.ts (1 function)
 
-| Function | Line | Action |
-|----------|------|--------|
-| `get_all_function_collections` | 539 | DELETE |
+| Function                       | Line | Action |
+| ------------------------------ | ---- | ------ |
+| `get_all_function_collections` | 539  | DELETE |
 
 ## Implementation Plan
 
 ### 11.166.1: Verify Dead Code Status
 
 Before deletion, verify each function truly has no callers:
+
 1. Grep for function name across entire codebase
 2. Check for dynamic string-based invocations
 3. Confirm no external package consumers
@@ -103,6 +104,7 @@ Before deletion, verify each function truly has no callers:
 ### 11.166.2: Delete Dead Functions
 
 Remove functions in order of file:
+
 1. `rust_builder_helpers.ts` - 9 functions
 2. `typescript_builder.ts` - 2 functions
 3. Other files - 10 functions
@@ -110,6 +112,7 @@ Remove functions in order of file:
 ### 11.166.3: Clean Up Imports
 
 Remove any imports of deleted functions:
+
 1. Check all import statements
 2. Remove unused imports
 3. Run linter to catch remaining issues
