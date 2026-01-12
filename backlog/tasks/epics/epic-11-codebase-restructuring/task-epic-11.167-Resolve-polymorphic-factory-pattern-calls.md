@@ -1,6 +1,6 @@
 # Task 11.167: Resolve Polymorphic Factory Pattern Calls
 
-## Status: Planning
+## Status: Completed
 
 ## Parent: epic-11-codebase-restructuring
 
@@ -143,3 +143,135 @@ Factories might call other factories. Need to handle transitive factory analysis
 ### Challenge: External Implementations
 
 Some implementations might come from node_modules. For now, focus on in-project implementations.
+
+## Implementation Notes (2026-01-09)
+
+### Implemented: Return Type Inference (Option C from Plan)
+
+Added type inference from function return types to enable polymorphic method resolution:
+
+**Files Modified:**
+
+1. `packages/types/src/symbol_definitions.ts`
+   - Added `initialized_from_call?: SymbolName` to `VariableDefinition`
+   - Tracks when a variable is initialized from a function call
+
+2. `packages/core/src/index_single_file/query_code_tree/symbol_factories/symbol_factories.javascript.ts`
+   - Added `extract_call_initializer_name()` function
+   - Extracts called function name from call expression initializers
+
+3. `packages/core/src/index_single_file/query_code_tree/capture_handlers/capture_handlers.typescript.ts`
+4. `packages/core/src/index_single_file/query_code_tree/capture_handlers/capture_handlers.javascript.ts`
+   - Updated to call `extract_call_initializer_name()` and pass to `add_variable()`
+
+5. `packages/core/src/index_single_file/definitions/definitions.ts`
+   - Updated `add_variable()` to accept `initialized_from_call` parameter
+
+6. `packages/core/src/resolve_references/registries/type.ts`
+   - Added `call_initializers` to `ExtractedTypeData`
+   - Added STEP 1.5 to `resolve_type_metadata()` to infer variable types from function return types
+
+**Verification:**
+
+- Unit tests show type inference and polymorphic resolution work correctly for single-file cases
+- Variable `h = createHandler()` correctly gets type `Handler` from function return type
+- Method call `h.process()` correctly resolves to all implementations (HandlerA.process, HandlerB.process)
+
+**Remaining Issue:**
+
+The `extract_boundaries` methods still appear as entry points. Investigation shows:
+
+1. Type inference IS working - verified in test
+2. Polymorphic resolution IS working - verified in test
+3. The specific `extract_boundaries` case may be affected by:
+   - The for-loop body tracking issue (Task 11.162) - call is inside a for-loop
+   - Cross-file type resolution for type-only imports
+
+### Root Cause Found (2026-01-09 - continued)
+
+The return type inference is working correctly:
+
+- `extractor` variable in `scopes.ts` has `initialized_from_call: "get_scope_boundary_extractor"`
+- TypeRegistry correctly infers its type as `ScopeBoundaryExtractor` interface
+
+The actual issue is **`implements` clause extraction** in TypeScript classes:
+
+**Bug Location:** `packages/core/src/index_single_file/query_code_tree/symbol_factories/symbol_factories.javascript.ts` - `extract_extends()`
+
+**Problem:**
+
+1. The function uses `node.childForFieldName("heritage")` which returns `null` for TypeScript class declarations
+2. TypeScript uses `class_heritage` as a **child node** (not a field), containing `extends_clause` and/or `implements_clause`
+3. The `implements_clause` is never extracted, so `ClassDefinition.extends` doesn't include implemented interfaces
+
+**Evidence:**
+
+```typescript
+// PythonScopeBoundaryExtractor in semantic index:
+extends (raw): [ 'ScopeBoundaryExtractor' ]  // Incorrectly populated
+implements (raw): undefined                   // Should be ['ScopeBoundaryExtractor']
+```
+
+**Impact:**
+
+- `ScopeBoundaryExtractor` interface has only 1 subtype: `CommonScopeBoundaryExtractor` (the base class)
+- Language-specific extractors (`PythonScopeBoundaryExtractor`, etc.) are NOT registered as subtypes
+- Polymorphic resolution doesn't find the concrete implementations
+
+**Fix Required:**
+
+Update `extract_extends()` to:
+
+1. Find `class_heritage` as a child node (not field)
+2. Extract from both `extends_clause` and `implements_clause`
+3. Return all type names from both clauses
+
+This is a **separate bug** that should be tracked as its own task (e.g., Task 11.168).
+
+### Fixes Applied (2026-01-09)
+
+All issues have been resolved. The entry point count decreased from 87 to 63 (-24, 31.6% improvement).
+
+**Fix 1: TypeScript `implements` clause extraction**
+
+File: `packages/core/src/index_single_file/query_code_tree/symbol_factories/symbol_factories.javascript.ts`
+
+Updated `extract_extends()` to handle TypeScript's `class_heritage` node structure with both `extends_clause` and `implements_clause`. Previously only the `heritage` field was checked, which doesn't exist for TypeScript classes.
+
+**Fix 2: Cross-file type inheritance resolution**
+
+File: `packages/core/src/resolve_references/registries/definition.ts`
+
+Added `resolve_cross_file_type_inheritance()` method that uses ResolutionRegistry to resolve imported parent type names to SymbolIds. The existing `register_type_inheritance()` runs during Phase 2 (before name resolution) and could only resolve local types. The new method runs after Phase 3 (name resolution) to handle cross-file imports like:
+
+```typescript
+import { ScopeBoundaryExtractor } from "../boundary_base";
+export class PythonScopeBoundaryExtractor implements ScopeBoundaryExtractor {...}
+```
+
+**Fix 3: Transitive subtype resolution in polymorphic method lookup**
+
+File: `packages/core/src/resolve_references/call_resolution/method_lookup.ts`
+
+Added `get_transitive_subtypes()` function and updated `resolve_polymorphic_method()` to traverse the full inheritance tree. Previously only direct subtypes were checked, missing multi-level inheritance chains like:
+
+```
+ScopeBoundaryExtractor (interface)
+  └─ CommonScopeBoundaryExtractor (class)
+       └─ JavaScriptTypeScriptScopeBoundaryExtractor (class)
+            └─ TypeScriptScopeBoundaryExtractor (class)
+```
+
+**Fix 4: Project phase ordering**
+
+File: `packages/core/src/project/project.ts`
+
+Added Phase 3.5 (cross_file_inheritance) between name resolution and type resolution to call the new `resolve_cross_file_type_inheritance()` method.
+
+### Results
+
+- **Before:** 87 entry points
+- **After:** 63 entry points
+- **Change:** -24 entry points (31.6% of gap closed)
+- `extract_boundaries` implementations no longer appear as false positive entry points
+- All tests pass

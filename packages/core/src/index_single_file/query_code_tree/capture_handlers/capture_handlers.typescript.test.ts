@@ -754,6 +754,70 @@ export const NESTED: {
   });
 
   // ============================================================================
+  // FACTORY PATTERN TYPE INFERENCE TESTS (Task 11.167)
+  // ============================================================================
+
+  describe("Factory pattern type inference", () => {
+    it("should extract initialized_from_call for variables assigned from function calls", () => {
+      const code = `
+function createHandler(): Handler {
+  return new HandlerA();
+}
+
+function use() {
+  const h = createHandler();
+  h.process();
+}`;
+      const index = build_index_from_code(code);
+      const vars = Array.from(index.variables.values());
+
+      const h_var = vars.find(v => v.name === "h");
+      expect(h_var).toBeDefined();
+      expect(h_var?.initialized_from_call).toBe("createHandler");
+    });
+
+    it("should NOT set initialized_from_call for variables with literal initializers", () => {
+      const code = `
+const x = 42;
+const y = "hello";
+const z = { a: 1 };
+`;
+      const index = build_index_from_code(code);
+      const vars = Array.from(index.variables.values());
+
+      for (const v of vars) {
+        expect(v.initialized_from_call).toBeUndefined();
+      }
+    });
+
+    it("should extract initialized_from_call for const declarations", () => {
+      const code = `
+const extractor = get_scope_boundary_extractor(language);
+`;
+      const index = build_index_from_code(code);
+      const vars = Array.from(index.variables.values());
+
+      const extractor_var = vars.find(v => v.name === "extractor");
+      expect(extractor_var).toBeDefined();
+      expect(extractor_var?.initialized_from_call).toBe("get_scope_boundary_extractor");
+    });
+
+    it("should NOT set initialized_from_call for method calls on objects", () => {
+      const code = `
+const result = obj.getSomething();
+`;
+      const index = build_index_from_code(code);
+      const vars = Array.from(index.variables.values());
+
+      const result_var = vars.find(v => v.name === "result");
+      expect(result_var).toBeDefined();
+      // Method calls on objects (property access) should not set initialized_from_call
+      // Only direct function calls should be tracked
+      expect(result_var?.initialized_from_call).toBeUndefined();
+    });
+  });
+
+  // ============================================================================
   // PROPERTY TYPE EXTRACTION TESTS (Task 11.150.1)
   // ============================================================================
 

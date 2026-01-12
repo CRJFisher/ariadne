@@ -189,6 +189,7 @@ export interface VariableDefinition extends Definition {
   readonly docstring?: DocString;
   readonly function_collection?: FunctionCollection;
   readonly derived_from?: SymbolName; // Name of the variable this was derived from (e.g. "config" in "const handler = config.get(...)")
+  readonly initialized_from_call?: SymbolName; // Name of the function called in initializer (e.g. "getHandler" in "const h = getHandler()")
 }
 
 /**

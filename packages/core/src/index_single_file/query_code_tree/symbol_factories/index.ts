@@ -42,6 +42,8 @@ export {
   // Callback detection
   detect_callback_context as detect_js_callback_context,
   detect_function_collection as detect_js_function_collection,
+  // Variable initialization
+  extract_call_initializer_name as extract_js_call_initializer_name,
 } from "./symbol_factories.javascript";
 
 // ============================================================================

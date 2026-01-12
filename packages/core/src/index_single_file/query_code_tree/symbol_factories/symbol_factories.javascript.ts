@@ -484,19 +484,50 @@ export function is_namespace_import(node: SyntaxNode): boolean {
 // ============================================================================
 
 /**
- * Extract extends classes
+ * Extract extends and implements classes/interfaces
+ *
+ * Handles both JavaScript and TypeScript class inheritance:
+ * - JavaScript: `heritage` field with `superclass` or `parent` child
+ * - TypeScript: `class_heritage` child node with `extends_clause` and/or `implements_clause`
+ *
+ * Both extends and implements are returned together since ClassDefinition.extends
+ * stores both (used for subtype tracking).
  */
 export function extract_extends(node: SyntaxNode): SymbolName[] {
+  const results: SymbolName[] = [];
+
+  // JavaScript path: heritage field with superclass/parent
   const heritage = node.childForFieldName("heritage");
   if (heritage) {
     const superclass =
       heritage.childForFieldName("superclass") ||
       heritage.childForFieldName("parent");
     if (superclass) {
-      return [superclass.text as SymbolName];
+      results.push(superclass.text as SymbolName);
     }
   }
-  return [];
+
+  // class_heritage child node (both JavaScript and TypeScript)
+  const class_heritage = node.children?.find(
+    (child) => child.type === "class_heritage"
+  );
+  if (class_heritage) {
+    for (const clause of class_heritage.children || []) {
+      if (clause.type === "extends_clause" || clause.type === "implements_clause") {
+        // TypeScript: extends_clause/implements_clause contain type identifiers
+        for (const child of clause.children || []) {
+          if (child.type === "type_identifier" || child.type === "identifier") {
+            results.push(child.text as SymbolName);
+          }
+        }
+      } else if (clause.type === "identifier") {
+        // JavaScript: class_heritage contains identifier directly
+        results.push(clause.text as SymbolName);
+      }
+    }
+  }
+
+  return results;
 }
 
 // ============================================================================
@@ -578,6 +609,50 @@ export function extract_derived_from(node: SyntaxNode): SymbolName | undefined {
     if (object_node?.type === "identifier") {
       return object_node.text as SymbolName;
     }
+  }
+
+  return undefined;
+}
+
+/**
+ * Extract the name of the function called to initialize this variable.
+ * Used to infer variable types from function return types.
+ *
+ * Patterns detected:
+ * 1. const extractor = get_scope_boundary_extractor();  -> returns "get_scope_boundary_extractor"
+ * 2. const x = foo(arg1, arg2);                         -> returns "foo"
+ *
+ * NOT detected (handled by derived_from instead):
+ * - const handler = config.get("key");  -> method calls, use derived_from
+ */
+export function extract_call_initializer_name(
+  node: SyntaxNode
+): SymbolName | undefined {
+  // Get initial value node (init or value)
+  let target_node = node;
+  if (node.type === "identifier" || node.type === "property_identifier") {
+    target_node = node.parent || node;
+  }
+
+  const value_node =
+    target_node.childForFieldName("value") ||
+    target_node.childForFieldName("init");
+
+  if (!value_node) {
+    return undefined;
+  }
+
+  // Only handle plain function calls (not method calls)
+  if (value_node.type === "call_expression") {
+    const function_node = value_node.childForFieldName("function");
+
+    // Plain function call: foo()
+    if (function_node?.type === "identifier") {
+      return function_node.text as SymbolName;
+    }
+
+    // Skip method calls (config.get()) - handled by derived_from
+    // function_node.type === "member_expression" means it's a method call
   }
 
   return undefined;

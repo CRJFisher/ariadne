@@ -40,6 +40,7 @@ import {
   detect_function_collection,
   consume_documentation,
   extract_derived_from,
+  extract_call_initializer_name,
 } from "../symbol_factories/symbol_factories.javascript";
 
 // ============================================================================
@@ -330,6 +331,7 @@ export function handle_definition_variable(
     : undefined;
 
   const derived_from = extract_derived_from(capture.node);
+  const initialized_from_call = extract_call_initializer_name(capture.node);
 
   builder.add_variable({
     kind: is_const ? "constant" : "variable",
@@ -343,6 +345,7 @@ export function handle_definition_variable(
     docstring,
     function_collection,
     derived_from,
+    initialized_from_call,
   });
 }
 
