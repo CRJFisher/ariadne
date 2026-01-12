@@ -7,6 +7,7 @@ A comprehensive reference for all customization options available in Claude Code
 | Feature            | Auto-Applied    | Context   | Execution     | Primary Strength                      |
 | ------------------ | --------------- | --------- | ------------- | ------------------------------------- |
 | **CLAUDE.md**      | Always          | Injected  | None          | Project context & conventions         |
+| **Rules**          | Conditional     | Injected  | None          | Modular, path-scoped instructions     |
 | **Skills**         | Semantic match  | Shared    | LLM decides   | Complex workflows with auto-discovery |
 | **Subagents**      | Delegated       | Isolated  | LLM delegates | Task isolation & specialization       |
 | **Hooks**          | Event-triggered | Event I/O | Deterministic | Enforcement & validation              |
@@ -38,6 +39,65 @@ A comprehensive reference for all customization options available in Claude Code
 **Limitations**: Informational only — doesn't execute or enforce anything.
 
 **Locations**: `./CLAUDE.md`, `.claude/CLAUDE.md`, `~/.claude/CLAUDE.md`
+
+## Rules — Modular & Conditional Instructions
+
+**What**: Markdown files in `.claude/rules/` that provide modular, topic-specific instructions. Can be scoped to specific files using path patterns.
+
+**Loaded**: At session start. Rules with `paths` frontmatter only load when working with matching files.
+
+**Strengths**:
+
+- Modular organization (separate files per topic)
+- Conditional loading via glob patterns
+- Subdirectory support for grouping
+- Symlink support for sharing across projects
+
+**Use When**:
+
+- Large projects needing organized, topic-specific guidance
+- File-type-specific conventions (e.g., different rules for `.ts` vs `.py`)
+- Path-scoped instructions (e.g., API rules only for `src/api/**`)
+- Sharing common rules across multiple projects via symlinks
+
+**Conditional Paths** (key feature):
+
+```yaml
+---
+paths:
+  - "src/api/**/*.ts"
+  - "src/services/**/*.ts"
+---
+
+# API Development Rules
+
+- All endpoints must include input validation
+- Use standard error response format
+```
+
+Rules without a `paths` field apply unconditionally to all files.
+
+**Glob Patterns**:
+
+| Pattern | Matches |
+| ------- | ------- |
+| `**/*.ts` | All TypeScript files |
+| `src/**/*` | All files under `src/` |
+| `*.{ts,tsx}` | TypeScript and TSX files in root |
+| `{src,lib}/**/*.ts` | TS files in src or lib |
+
+**Memory Hierarchy** (highest to lowest priority):
+
+1. `.claude/CLAUDE.local.md` — personal project notes (not committed)
+2. `.claude/rules/*.md` — project rules
+3. `./CLAUDE.md` or `.claude/CLAUDE.md` — main project memory
+4. `~/.claude/rules/*.md` — user-level rules (all projects)
+5. `~/.claude/CLAUDE.md` — user memory
+
+**Locations**:
+
+- Project: `.claude/rules/*.md` (supports subdirectories)
+- User: `~/.claude/rules/*.md`
 
 ## Skills — Auto-Discovered Capabilities
 
@@ -222,7 +282,8 @@ A comprehensive reference for all customization options available in Claude Code
 Need to...
 │
 ├─ Share project context/standards?
-│  └─ CLAUDE.md
+│  ├─ Single file, always applies? → CLAUDE.md
+│  └─ Modular or path-specific? → Rules
 │
 ├─ Auto-apply specialized knowledge?
 │  ├─ Complex with supporting files? → Skill
@@ -246,25 +307,26 @@ Need to...
 
 ## LLM vs Deterministic Execution
 
-| LLM-Driven (Claude Decides) | Deterministic (Always Executes) |
-| --------------------------- | ------------------------------- |
-| Skills                      | Hooks                           |
-| Subagents                   | Settings/Permissions            |
-| Slash Commands              | CLAUDE.md (always loaded)       |
-| MCP tool usage              |                                 |
+| LLM-Driven (Claude Decides) | Deterministic (Always Executes)  |
+| --------------------------- | -------------------------------- |
+| Skills                      | Hooks                            |
+| Subagents                   | Settings/Permissions             |
+| Slash Commands              | CLAUDE.md (always loaded)        |
+| MCP tool usage              | Rules (loaded when paths match)  |
 
 **Use LLM-driven** for flexible, context-aware behavior.
 **Use deterministic** for enforcement, validation, security.
 
 ## Context Inheritance Summary
 
-| Feature            | Inherits Parent Context                |
-| ------------------ | -------------------------------------- |
-| **CLAUDE.md**      | N/A (always injected)                  |
-| **Skills**         | Yes — loaded into current conversation |
-| **Subagents**      | No — fresh isolated context            |
-| **Hooks**          | No — receives event JSON only          |
-| **Slash Commands** | Yes — runs in main conversation        |
-| **MCP Servers**    | Yes — tools available in main context  |
+| Feature            | Inherits Parent Context                         |
+| ------------------ | ----------------------------------------------- |
+| **CLAUDE.md**      | N/A (always injected)                           |
+| **Rules**          | N/A (conditionally injected based on paths)     |
+| **Skills**         | Yes — loaded into current conversation          |
+| **Subagents**      | No — fresh isolated context                     |
+| **Hooks**          | No — receives event JSON only                   |
+| **Slash Commands** | Yes — runs in main conversation                 |
+| **MCP Servers**    | Yes — tools available in main context           |
 
 The key architectural distinction: **Skills add knowledge to the current conversation**, while **Subagents branch off into isolated contexts** for specialized work.
