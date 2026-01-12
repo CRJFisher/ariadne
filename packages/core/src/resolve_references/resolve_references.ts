@@ -16,7 +16,6 @@ import type { ReferenceRegistry } from "./registries/reference";
 import type { ImportGraph } from "../project/import_graph";
 import { resolve_method_call } from "./call_resolution";
 import { resolve_constructor_call } from "./call_resolution/constructor";
-import { resolve_self_reference_call } from "./call_resolution/self_reference";
 import { resolve_collection_dispatch } from "./call_resolution/collection_dispatch";
 import { find_enclosing_function_scope } from "../index_single_file/scopes/utils";
 import { process_collection_reads } from "./indirect_reachability";
@@ -180,13 +179,15 @@ export class ResolutionRegistry {
    * @param scopes - Scope registry (for caller scope calculation)
    * @param types - Type registry (for method/constructor resolution) - MUST BE POPULATED
    * @param definitions - Definition registry
+   * @param imports - Import graph (for resolving namespace import paths)
    */
   resolve_calls_for_files(
     file_ids: Set<FilePath>,
     references: ReferenceRegistry,
     scopes: ScopeRegistry,
     types: TypeRegistry,
-    definitions: DefinitionRegistry
+    definitions: DefinitionRegistry,
+    imports: ImportGraph
   ): void {
     if (file_ids.size === 0) {
       return;
@@ -206,7 +207,8 @@ export class ResolutionRegistry {
       file_references,
       scopes,
       types,
-      definitions
+      definitions,
+      imports
     );
 
     // Resolve callback invocations for anonymous functions
@@ -300,13 +302,15 @@ export class ResolutionRegistry {
    * @param scopes - Scope registry (for method resolution)
    * @param types - Type registry (provides type information directly)
    * @param definitions - Definition registry (for constructor resolution)
+   * @param imports - Import graph (for resolving namespace import paths)
    * @returns Array of resolved call references
    */
   resolve_calls(
     file_references: Map<FilePath, readonly SymbolReference[]>,
     scopes: ScopeRegistry,
     types: TypeRegistry,
-    definitions: DefinitionRegistry
+    definitions: DefinitionRegistry,
+    imports: ImportGraph
   ): CallReference[] {
     const resolved_calls: CallReference[] = [];
 
@@ -317,25 +321,17 @@ export class ResolutionRegistry {
         // Dispatch on discriminated union kind field
         switch (ref.kind) {
           case "self_reference_call":
-            // Self-reference calls: this.method(), self.method(), super.method()
-            // TypeScript knows ref is SelfReferenceCall here
-            resolved_symbols = resolve_self_reference_call(
-              ref,
-              scopes,
-              definitions,
-              types
-            );
-            break;
-
           case "method_call":
-            // Method calls: obj.method()
-            // TypeScript knows ref is MethodCallReference here
+            // Unified method call resolution for both:
+            // - Self-reference calls: this.method(), self.method(), super.method(), this.property.method()
+            // - Method calls: obj.method(), obj.field.method()
             resolved_symbols = resolve_method_call(
               ref,
               scopes,
               definitions,
               types,
-              this
+              this,
+              (import_id) => imports.get_resolved_import_path(import_id)
             );
 
             // If standard resolution failed, try collection dispatch resolution (Task 11.156.3)

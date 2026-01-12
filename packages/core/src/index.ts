@@ -19,7 +19,8 @@ export {
   ScopeRegistry,
   ExportRegistry,
   ImportGraph,
-  ResolutionRegistry
+  ResolutionRegistry,
+  is_test_file
 } from "./project";
 
 // Profiling

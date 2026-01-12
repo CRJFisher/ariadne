@@ -177,6 +177,65 @@ describe("Self-Reference Resolution Integration", () => {
       expect(db_type_info!.methods.has("query" as SymbolName)).toBe(true);
     });
 
+    it("should actually resolve this.property.method() in call graph", () => {
+      const code = `
+        class Database {
+          query(sql: string): string {
+            return "result";
+          }
+        }
+
+        class Service {
+          db: Database;
+
+          constructor() {
+            this.db = new Database();
+          }
+
+          getData() {
+            return this.db.query("SELECT * FROM users");
+          }
+        }
+      `;
+
+      const file = path.join(temp_dir, "service_resolution.ts") as FilePath;
+      project.update_file(file, code);
+
+      // Get resolved calls for this file
+      const resolved_calls = project.resolutions.get_file_calls(file);
+
+      // Find the query call from getData
+      // The call should resolve to Database.query
+      const query_calls = resolved_calls.filter((call) => {
+        // Find calls with a resolution to "query" method
+        return call.resolutions.some((r) => {
+          const def = project.definitions.get(r.symbol_id);
+          return def?.name === ("query" as SymbolName);
+        });
+      });
+
+      // Verify that this.db.query() was resolved
+      expect(query_calls.length).toBeGreaterThan(0);
+
+      // Find the Database class
+      const index = project.get_index_single_file(file);
+      const db_class = Array.from(index!.classes.values()).find(
+        (c) => c.name === ("Database" as SymbolName)
+      );
+
+      // The resolved call should point to the query method in Database
+      const query_method = db_class!.methods.find(
+        (m) => m.name === ("query" as SymbolName)
+      );
+      expect(query_method).toBeDefined();
+
+      // Verify the resolution points to the correct method
+      const resolved_to_correct_method = query_calls.some((call) =>
+        call.resolutions.some((r) => r.symbol_id === query_method!.symbol_id)
+      );
+      expect(resolved_to_correct_method).toBe(true);
+    });
+
     it("should resolve this in nested arrow functions (lexical this)", () => {
       const code = `
         class EventHandler {

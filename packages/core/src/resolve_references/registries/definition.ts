@@ -531,6 +531,86 @@ export class DefinitionRegistry {
   }
 
   /**
+   * Resolve cross-file type inheritance using ResolutionRegistry.
+   * Called after Phase 3 (name resolution) to register inheritance for imported types.
+   *
+   * Phase 2 (update_file) can only resolve local type names. For cross-file inheritance
+   * like "class PythonScopeBoundaryExtractor implements ScopeBoundaryExtractor"
+   * where ScopeBoundaryExtractor is imported, we need the ResolutionRegistry.
+   *
+   * @param file_id - The file to process
+   * @param resolutions - Object with resolve(scope_id, name) method
+   */
+  resolve_cross_file_type_inheritance(
+    file_id: FilePath,
+    resolutions: {
+      resolve: (scope_id: ScopeId, name: SymbolName) => SymbolId | null;
+    }
+  ): void {
+    const file_symbols = this.by_file.get(file_id);
+    if (!file_symbols) {
+      return;
+    }
+
+    for (const symbol_id of file_symbols) {
+      const def = this.by_symbol.get(symbol_id);
+      if (!def || (def.kind !== "class" && def.kind !== "interface")) {
+        continue;
+      }
+
+      // Skip if no extends/implements
+      if (def.extends.length === 0) {
+        continue;
+      }
+
+      // Try to resolve each parent type using ResolutionRegistry
+      for (const parent_name of def.extends) {
+        // Check if already resolved (from Phase 2)
+        const already_resolved = this.is_subtype_registered(def.symbol_id, parent_name);
+        if (already_resolved) {
+          continue;
+        }
+
+        // Use ResolutionRegistry to resolve the parent type name
+        // Use the class's defining scope for resolution (where imports are visible)
+        const parent_id = resolutions.resolve(def.defining_scope_id, parent_name);
+
+        if (parent_id) {
+          // Register this class/interface as a subtype of the parent
+          if (!this.type_subtypes.has(parent_id)) {
+            this.type_subtypes.set(parent_id, new Set());
+          }
+          const subtypes = this.type_subtypes.get(parent_id);
+          if (subtypes) {
+            subtypes.add(def.symbol_id);
+          }
+        }
+      }
+    }
+  }
+
+  /**
+   * Check if a subtype relationship is already registered.
+   * Used to avoid duplicate registration.
+   */
+  private is_subtype_registered(
+    child_id: SymbolId,
+    parent_name: SymbolName
+  ): boolean {
+    // Check all registered parent types to see if child is already a subtype
+    for (const [parent_id, subtypes] of this.type_subtypes) {
+      if (subtypes.has(child_id)) {
+        // Check if this parent has the same name
+        const parent_def = this.by_symbol.get(parent_id);
+        if (parent_def && parent_def.name === parent_name) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  /**
    * Clear all definitions from the registry.
    */
   clear(): void {

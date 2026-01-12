@@ -11,8 +11,8 @@
  * Note: All JSON output is formatted with 2-space indentation for readability.
  */
 
-import { Project, profiler } from "@ariadnejs/core";
-import { FilePath } from "@ariadnejs/types";
+import { Project, profiler, is_test_file } from "@ariadnejs/core";
+import { FilePath, Language } from "@ariadnejs/types";
 import * as path from "path";
 import * as fs from "fs/promises";
 import { fileURLToPath } from "url";
@@ -261,17 +261,39 @@ function count_tree_size(
 }
 
 /**
+ * Detect language from file extension
+ */
+function detect_language(file_path: string): Language | null {
+  if (file_path.endsWith(".ts") || file_path.endsWith(".tsx")) {
+    return "typescript";
+  }
+  if (file_path.endsWith(".js") || file_path.endsWith(".jsx")) {
+    return "javascript";
+  }
+  if (file_path.endsWith(".py")) {
+    return "python";
+  }
+  if (file_path.endsWith(".rs")) {
+    return "rust";
+  }
+  return null;
+}
+
+/**
  * Check if file should be loaded (skip test files, etc.)
  */
-function should_load_file(file_path: string): boolean {
-  // Skip test files
-  if (file_path.includes(".test.") || file_path.includes(".spec.")) {
+function should_load_file(file_path: string, include_tests: boolean): boolean {
+  // Only load TypeScript source files (for this script)
+  if (!file_path.endsWith(".ts") || file_path.endsWith(".d.ts")) {
     return false;
   }
 
-  // Only load TypeScript source files
-  if (!file_path.endsWith(".ts") || file_path.endsWith(".d.ts")) {
-    return false;
+  // Skip test files unless explicitly included
+  if (!include_tests) {
+    const language = detect_language(file_path);
+    if (language && is_test_file(file_path, language)) {
+      return false;
+    }
   }
 
   return true;
@@ -282,7 +304,8 @@ function should_load_file(file_path: string): boolean {
  */
 async function load_project_files(
   project: Project,
-  project_path: string
+  project_path: string,
+  include_tests: boolean
 ): Promise<number> {
   let loaded_count = 0;
 
@@ -305,7 +328,7 @@ async function load_project_files(
         }
         await load_directory(full_path);
       } else if (entry.isFile()) {
-        if (should_load_file(full_path)) {
+        if (should_load_file(full_path, include_tests)) {
           try {
             const source_code = await fs.readFile(full_path, "utf-8");
             project.update_file(full_path as FilePath, source_code);
@@ -325,12 +348,12 @@ async function load_project_files(
 /**
  * Main analysis function
  */
-async function analyze_packages_core(): Promise<AnalysisResult> {
+async function analyze_packages_core(include_tests: boolean = false): Promise<AnalysisResult> {
   const start_time = Date.now();
 
   const project_path = path.resolve(__dirname, "../packages/core/src");
   console.error(`Analyzing packages/core/src at: ${project_path}`);
-  console.error("Loading files...");
+  console.error(`Loading files... (include_tests: ${include_tests})`);
 
   // Initialize project with excluded folders
   const init_start = Date.now();
@@ -341,7 +364,7 @@ async function analyze_packages_core(): Promise<AnalysisResult> {
 
   // Load all source files
   const load_start = Date.now();
-  const files_loaded = await load_project_files(project, project_path);
+  const files_loaded = await load_project_files(project, project_path, include_tests);
   const load_time = Date.now() - load_start;
   console.error(`Loaded ${files_loaded} files in ${load_time}ms`);
 
@@ -406,6 +429,7 @@ async function analyze_packages_core(): Promise<AnalysisResult> {
 async function main() {
   const args = process.argv.slice(2);
   const stdout_only = args.includes("--stdout");
+  const include_tests = args.includes("--include-tests");
 
   try {
     // Get code version before analysis
@@ -418,7 +442,7 @@ async function main() {
     const previous = await find_previous_analysis(output_dir, code_version.fingerprint);
 
     // Run the analysis
-    const result = await analyze_packages_core();
+    const result = await analyze_packages_core(include_tests);
 
     // Add code version to result
     result.code_version = code_version;

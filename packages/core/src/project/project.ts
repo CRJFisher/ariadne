@@ -280,6 +280,18 @@ export class Project {
     );
     profiler.end("resolve_names");
 
+    // Phase 3.5: Cross-file type inheritance resolution
+    // Must happen AFTER name resolution (which resolves imports)
+    // but BEFORE type/call resolution (which uses type_subtypes)
+    profiler.start("cross_file_inheritance");
+    for (const affected_file of affected_files) {
+      this.definitions.resolve_cross_file_type_inheritance(
+        affected_file,
+        this.resolutions
+      );
+    }
+    profiler.end("cross_file_inheritance");
+
     // Phase 4: Type registry
     // Must happen AFTER name resolution BUT BEFORE call resolution.
     // Uses name resolutions to resolve type names to SymbolIds.
@@ -306,7 +318,8 @@ export class Project {
       this.references,
       this.scopes,
       this.types,
-      this.definitions
+      this.definitions,
+      this.imports
     );
     profiler.end("resolve_calls");
 
@@ -380,7 +393,8 @@ export class Project {
         this.references,
         this.scopes,
         this.types,
-        this.definitions
+        this.definitions,
+        this.imports
       );
     }
   }

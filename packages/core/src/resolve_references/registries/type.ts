@@ -26,6 +26,8 @@ interface ExtractedTypeData {
   type_members: Map<SymbolId, TypeMemberInfo>;
   /** Type alias → expression */
   type_aliases: Map<SymbolId, SymbolName>;
+  /** Variable SymbolId → called function name (for return type inference) */
+  call_initializers: Map<SymbolId, SymbolName>;
 }
 
 /**
@@ -146,10 +148,21 @@ export class TypeRegistry {
     // Extract type aliases
     const type_aliases = extract_type_alias_metadata(index.types);
 
+    // Extract call initializers for return type inference
+    const call_initializers = new Map<SymbolId, SymbolName>();
+    for (const variable of index.variables.values()) {
+      // Only process variables without explicit type annotation
+      // that were initialized from a function call
+      if (!variable.type && variable.initialized_from_call) {
+        call_initializers.set(variable.symbol_id, variable.initialized_from_call);
+      }
+    }
+
     return {
       type_bindings,
       type_members: new Map(type_members),
       type_aliases: new Map(type_aliases),
+      call_initializers,
     };
   }
 
@@ -192,6 +205,39 @@ export class TypeRegistry {
       if (type_id) {
         this.symbol_types.set(symbol_id, type_id);
         resolved_symbols.add(symbol_id);
+      }
+    }
+
+    // STEP 1.5: Infer types from function return types (for factory patterns)
+    // For variables initialized from function calls without explicit type annotations,
+    // infer the type from the function's declared return type.
+    for (const [variable_id, function_name] of extracted.call_initializers) {
+      // Skip if variable already has a type (from explicit annotation in STEP 1)
+      if (this.symbol_types.has(variable_id)) continue;
+
+      // Get the scope where the variable is defined
+      const scope_id = definitions.get_symbol_scope(variable_id);
+      if (!scope_id) continue;
+
+      // Resolve the function name to its SymbolId
+      const function_id = resolutions.resolve(scope_id, function_name);
+      if (!function_id) continue;
+
+      // Get the function definition
+      const function_def = definitions.get(function_id);
+      if (!function_def || function_def.kind !== "function") continue;
+
+      // Get the function's return type (as string)
+      const return_type_name = function_def.return_type;
+      if (!return_type_name) continue;
+
+      // Resolve the return type name to a type SymbolId
+      // Use the function's scope for resolution (return type is declared in function's context)
+      const function_scope_id = definitions.get_symbol_scope(function_id);
+      const type_id = resolutions.resolve(function_scope_id || scope_id, return_type_name);
+      if (type_id) {
+        this.symbol_types.set(variable_id, type_id);
+        resolved_symbols.add(variable_id);
       }
     }
 
