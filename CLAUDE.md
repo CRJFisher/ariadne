@@ -1,5 +1,11 @@
 # Guidelines
 
+## Goals
+
+- When refactoring, always investigate the existing information architecture beforehand. If the refactor will change the information architecture, then the refactor should include tasks to update and improve the information architecture.
+- The information architecture should follow the DDD principles.
+- Folders and file names should be expressive of the main, high-level action of the code within.
+
 ## Project Layout / Intention Tree
 
 - the top of the intention tree (the actual purpose of this codebase) is to detect call graphs and thereby find the entry point to the codebase.
@@ -231,3 +237,7 @@ To add a new language:
 3. Add to factory in `scope_boundary_extractor.ts`
 4. Write tests for boundary extraction
 5. Verify scope depths are correct
+
+## Debugging
+
+- Create debug scripts in a temporary folder, not in this project.
