@@ -80,7 +80,7 @@ export class DefinitionRegistry {
    * - const handlers = [onSuccess, onError, onComplete]
    * - const config = { success: handleSuccess, error: handleError }
    *
-   * Used for collection dispatch resolution (Task 11.156.3).
+   * Used for collection dispatch resolution.
    */
   private function_collections: Map<
     SymbolId,
@@ -174,7 +174,7 @@ export class DefinitionRegistry {
         this.register_type_inheritance(def);
       }
 
-      // Step 5: Build function collection index (Task 11.156.3)
+      // Step 5: Build function collection index
       if ((def.kind === "variable" || def.kind === "constant") && def.function_collection) {
         this.function_collections.set(def.symbol_id, def.function_collection);
       }
@@ -505,7 +505,7 @@ export class DefinitionRegistry {
 
   /**
    * Get function collection metadata for a variable.
-   * Used for collection dispatch resolution (Task 11.156.3).
+   * Used for collection dispatch resolution.
    *
    * Example:
    * - CONFIG variable → FunctionCollection with all handler functions in the Map

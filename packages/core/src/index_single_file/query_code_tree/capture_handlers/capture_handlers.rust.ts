@@ -36,7 +36,7 @@ import {
   extract_import_from_extern_crate,
   detect_callback_context,
   detect_function_collection,
-  extract_derived_from,
+  extract_collection_source,
   type ImportInfo,
 } from "../symbol_factories/symbol_factories.rust";
 
@@ -505,7 +505,7 @@ export function handle_definition_variable(
   const var_type = extract_parameter_type(capture.node.parent || capture.node);
   const export_info = extract_export_info(capture.node.parent || capture.node);
 
-  // Detect function collections (Task 11.156.3)
+  // Detect function collections
   const parent = capture.node.parent;
   const collection_info = parent
     ? detect_function_collection(parent, capture.location.file_path)
@@ -517,7 +517,7 @@ export function handle_definition_variable(
       }
     : undefined;
 
-  const derived_from = extract_derived_from(capture.node);
+  const collection_source = extract_collection_source(capture.node);
 
   builder.add_variable({
     kind: "variable",
@@ -529,7 +529,7 @@ export function handle_definition_variable(
     export: export_info.export,
     type: var_type,
     function_collection,
-    derived_from,
+    collection_source,
   });
 }
 
@@ -542,7 +542,7 @@ export function handle_definition_constant(
   const const_type = extract_parameter_type(capture.node.parent || capture.node);
   const export_info = extract_export_info(capture.node.parent || capture.node);
 
-  // Detect function collections (Task 11.156.3)
+  // Detect function collections
   const parent = capture.node.parent;
   const collection_info = parent
     ? detect_function_collection(parent, capture.location.file_path)
@@ -576,7 +576,7 @@ export function handle_definition_variable_mut(
   const var_type = extract_parameter_type(capture.node.parent || capture.node);
   const export_info = extract_export_info(capture.node.parent || capture.node);
 
-  // Detect function collections (Task 11.156.3)
+  // Detect function collections
   const parent = capture.node.parent;
   const collection_info = parent
     ? detect_function_collection(parent, capture.location.file_path)
@@ -588,7 +588,7 @@ export function handle_definition_variable_mut(
       }
     : undefined;
 
-  const derived_from = extract_derived_from(capture.node);
+  const collection_source = extract_collection_source(capture.node);
 
   builder.add_variable({
     kind: "variable",
@@ -600,7 +600,7 @@ export function handle_definition_variable_mut(
     export: export_info.export,
     type: var_type,
     function_collection,
-    derived_from,
+    collection_source,
   });
 }
 

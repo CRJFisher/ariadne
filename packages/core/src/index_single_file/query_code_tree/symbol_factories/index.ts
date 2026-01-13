@@ -122,7 +122,7 @@ export {
   // Callback detection
   detect_callback_context as detect_py_callback_context,
   detect_function_collection as detect_py_function_collection,
-  extract_derived_from as extract_py_derived_from,
+  extract_collection_source as extract_py_collection_source,
 } from "./symbol_factories.python";
 
 // ============================================================================
@@ -161,6 +161,6 @@ export {
   // Callback detection
   detect_callback_context as detect_rust_callback_context,
   detect_function_collection as detect_rust_function_collection,
-  extract_derived_from as extract_rust_derived_from,
+  extract_collection_source as extract_rust_collection_source,
   is_associated_function,
 } from "./symbol_factories.rust";

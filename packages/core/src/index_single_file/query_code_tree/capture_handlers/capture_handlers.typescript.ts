@@ -18,7 +18,7 @@ import {
   extract_type_annotation,
   extract_initial_value,
   consume_documentation,
-  extract_derived_from,
+  extract_collection_source,
   extract_call_initializer_name,
 } from "../symbol_factories/symbol_factories.javascript";
 import {
@@ -71,13 +71,27 @@ export function handle_ts_definition_variable(
   builder: DefinitionBuilder,
   context: ProcessingContext
 ): void {
+  // Skip if this is an arrow function or function expression assignment.
+  // These are captured as @definition.function by a more specific query pattern,
+  // so we don't need to create a separate variable definition.
+  const parent = capture.node.parent; // variable_declarator
+  if (parent) {
+    const value_node = parent.childForFieldName("value");
+    if (
+      value_node &&
+      (value_node.type === "arrow_function" ||
+        value_node.type === "function_expression")
+    ) {
+      return;
+    }
+  }
+
   const var_id = create_variable_id(capture);
   const export_info = extract_export_info(capture.node, capture.text);
   const docstring = consume_documentation(capture.location);
 
   // Check for const by looking at parent (variable_declarator) and its parent (lexical_declaration)
   let is_const = false;
-  const parent = capture.node.parent; // variable_declarator
   if (parent && parent.parent) {
     const lexical_decl = parent.parent; // lexical_declaration
     if (lexical_decl.type === "lexical_declaration") {
@@ -89,7 +103,7 @@ export function handle_ts_definition_variable(
     }
   }
 
-  // Detect function collections (Task 11.156.3)
+  // Detect function collections
   const collection_info = parent
     ? detect_function_collection(parent, capture.location.file_path)
     : null;
@@ -100,7 +114,7 @@ export function handle_ts_definition_variable(
       }
     : undefined;
 
-  const derived_from = extract_derived_from(capture.node);
+  const collection_source = extract_collection_source(capture.node);
   const initialized_from_call = extract_call_initializer_name(capture.node);
 
   builder.add_variable({
@@ -114,7 +128,7 @@ export function handle_ts_definition_variable(
     initial_value: extract_initial_value(capture.node),
     docstring,
     function_collection,
-    derived_from,
+    collection_source,
     initialized_from_call,
   });
 }

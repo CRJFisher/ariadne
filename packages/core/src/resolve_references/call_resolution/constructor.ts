@@ -40,8 +40,8 @@ import type { ResolutionRegistry } from "../resolve_references";
  * - []: Resolution failed (no class found or not a class)
  * - [symbol]: Concrete constructor call (new User())
  *
- * Future tasks (11.158, 11.156.3) will add multi-candidate logic.
- * This task only changes the return type to array.
+ * Multi-candidate logic can be added in the future for interface method resolution
+ * and collection dispatch scenarios.
  *
  * @param call_ref - Constructor call reference from semantic index
  * @param definitions - Definition registry for class lookup

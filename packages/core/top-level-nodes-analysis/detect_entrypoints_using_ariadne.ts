@@ -11,7 +11,8 @@
  * Note: All JSON output is formatted with 2-space indentation for readability.
  */
 
-import { Project, profiler, is_test_file } from "@ariadnejs/core";
+// Import from source - tsx transpiles TypeScript without build step
+import { Project, profiler, is_test_file } from "../src/index.js";
 import { FilePath, Language } from "@ariadnejs/types";
 import * as path from "path";
 import * as fs from "fs/promises";
@@ -361,7 +362,7 @@ async function load_project_files(
 async function analyze_packages_core(include_tests: boolean = false): Promise<AnalysisResult> {
   const start_time = Date.now();
 
-  const project_path = path.resolve(__dirname, "../packages/core/src");
+  const project_path = path.resolve(__dirname, "../src");
   console.error(`Analyzing packages/core/src at: ${project_path}`);
   console.error(`Loading files... (include_tests: ${include_tests})`);
 

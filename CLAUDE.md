@@ -78,6 +78,7 @@ JSON fixtures represent semantic index outputs only. Registry and call graph out
   - builds references including symbol-names which are unique within a scope
   - builds scopes including lexical scope relationships
   - build type information including type bindings and type members TODO: verify these details
+  - **Arrow Function Handling**: Arrow functions and function expressions assigned to variables are captured as function definitions only, not as both function and variable definitions. This prevents duplicate symbols for the same entity - the function symbol is sufficient for call graph analysis and reference resolution.
 - `packages/core/src/resolve_references`
   - resolves references to symbols, matching symbol-names to symbol-ids
   - resolves symbols by name and scope - start at the bottom of the scope tree and work up i.e. lexical scope resolution
@@ -241,3 +242,7 @@ To add a new language:
 ## Debugging
 
 - Create debug scripts in a temporary folder, not in this project.
+
+## Refactoring
+
+- Use `git mv` to move files and folders so we preserve the history.

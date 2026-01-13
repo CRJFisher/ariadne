@@ -29,7 +29,7 @@ function main() {
   let detection_output;
   try {
     detection_output = execSync(
-      "npx tsx top-level-nodes-analysis/detect_entrypoints_using_ariadne.ts --stdout",
+      "npx tsx packages/core/top-level-nodes-analysis/detect_entrypoints_using_ariadne.ts --stdout",
       { cwd: project_dir, encoding: "utf8", timeout: 120000, stdio: ["pipe", "pipe", "pipe"] }
     );
   } catch (error) {
@@ -70,7 +70,7 @@ function main() {
   }
 
   // 3. Load whitelist (11 public Project API methods)
-  const whitelist_path = path.join(project_dir, "top-level-nodes-analysis/ground_truth/project_api_methods.json");
+  const whitelist_path = path.join(project_dir, "packages/core/top-level-nodes-analysis/ground_truth/project_api_methods.json");
   let whitelist;
   try {
     whitelist = JSON.parse(readFileSync(whitelist_path, "utf8"));

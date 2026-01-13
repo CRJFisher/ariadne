@@ -1,5 +1,5 @@
 /**
- * Collection Dispatch Resolution (Task 11.156.3)
+ * Collection Dispatch Resolution
  *
  * Resolves function calls through collection access patterns by:
  * 1. Detecting when a collection (Map/Array/Object) is accessed
@@ -9,7 +9,7 @@
  * Pattern detected (Indirect invocation):
  * ```typescript
  * const CONFIG = new Map([["class", handler1], ["fn", handler2]]);
- * const handler = CONFIG.get(type); // handler.derived_from = "CONFIG"
+ * const handler = CONFIG.get(type); // handler.collection_source = "CONFIG"
  * handler(capture);  // ← Resolves to [handler1, handler2]
  * ```
  */
@@ -30,7 +30,7 @@ import type { ResolutionRegistry } from "../resolve_references";
  * Steps:
  * 1. Identify the variable being called (function call) or the receiver (method call)
  * 2. Resolve that variable to a definition
- * 3. Check if the variable is derived from a collection (derived_from metadata)
+ * 3. Check if the variable was looked up from a collection (collection_source metadata)
  * 4. If so, resolve the collection variable
  * 5. Return all functions from the collection
  *
@@ -81,20 +81,20 @@ export function resolve_collection_dispatch(
     return [];
   }
 
-  // 3. Check derived_from
-  // Only variables/constants have derived_from
+  // 3. Check collection_source
+  // Only variables/constants have collection_source
   if (
     (target_def.kind !== "variable" && target_def.kind !== "constant") ||
-    !target_def.derived_from
+    !target_def.collection_source
   ) {
     return [];
   }
 
   // 4. Resolve collection variable
-  // derived_from is a name, resolve it in the target's defining scope
+  // collection_source is a name, resolve it in the target's defining scope
   const collection_id = resolutions.resolve(
     target_def.defining_scope_id,
-    target_def.derived_from
+    target_def.collection_source
   );
 
   if (!collection_id) {

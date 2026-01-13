@@ -756,14 +756,14 @@ export function detect_function_collection(
 }
 
 /**
- * Extract the name of the variable this definition is derived from.
- * Used to track variables assigned from collection lookups.
+ * Extract the name of the collection variable this definition was looked up from.
+ * Used for collection dispatch - when a variable is assigned from a Map/Dict lookup.
  *
  * Patterns detected:
  * 1. handler = config.get("key")  -> returns "config"
  * 2. handler = config["key"]      -> returns "config"
  */
-export function extract_derived_from(node: SyntaxNode): SymbolName | undefined {
+export function extract_collection_source(node: SyntaxNode): SymbolName | undefined {
   // Get initial value node (right side of assignment)
   let assignment = node;
   if (node.type === "identifier" || node.type === "attribute") {

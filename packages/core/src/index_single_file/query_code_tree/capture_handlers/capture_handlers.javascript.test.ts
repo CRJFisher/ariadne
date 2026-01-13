@@ -409,6 +409,75 @@ describe("JavaScript Builder Configuration", () => {
         expect(functions[0].name).toBe("myFunc");
       });
 
+      it("should NOT create VariableDefinition for arrow function assignments", () => {
+        // Arrow functions assigned to variables are captured by @definition.function,
+        // so the @definition.variable handler should skip them to avoid dual registration
+        // that causes call resolution to fail.
+        const code = "const myFunc = () => {};";
+        const context = create_test_context();
+        const builder = new DefinitionBuilder(context);
+
+        const ast = parser.parse(code);
+        const var_node = find_node_by_type(ast.rootNode, "variable_declarator");
+        const name_node = var_node?.childForFieldName("name");
+
+        if (!name_node) {
+          throw new Error("Could not find variable name");
+        }
+
+        const capture: CaptureNode = {
+          name: "definition.variable",
+          category: "definition" as SemanticCategory,
+          entity: "variable" as SemanticEntity,
+          node: name_node as any,
+          text: name_node.text as SymbolName,
+          location: node_to_location(name_node, TEST_FILE_PATH),
+        };
+
+        const processor = JAVASCRIPT_HANDLERS["definition.variable"];
+        expect(processor).toBeDefined();
+        processor?.(capture, builder, context);
+
+        const result = builder.build();
+        const variables = Array.from(result.variables.values());
+        // Arrow function assignments should NOT create variable definitions
+        expect(variables).toHaveLength(0);
+      });
+
+      it("should NOT create VariableDefinition for function expression assignments", () => {
+        // Function expressions assigned to variables are also captured by @definition.function,
+        // so the @definition.variable handler should skip them too.
+        const code = "const myFunc = function() {};";
+        const context = create_test_context();
+        const builder = new DefinitionBuilder(context);
+
+        const ast = parser.parse(code);
+        const var_node = find_node_by_type(ast.rootNode, "variable_declarator");
+        const name_node = var_node?.childForFieldName("name");
+
+        if (!name_node) {
+          throw new Error("Could not find variable name");
+        }
+
+        const capture: CaptureNode = {
+          name: "definition.variable",
+          category: "definition" as SemanticCategory,
+          entity: "variable" as SemanticEntity,
+          node: name_node as any,
+          text: name_node.text as SymbolName,
+          location: node_to_location(name_node, TEST_FILE_PATH),
+        };
+
+        const processor = JAVASCRIPT_HANDLERS["definition.variable"];
+        expect(processor).toBeDefined();
+        processor?.(capture, builder, context);
+
+        const result = builder.build();
+        const variables = Array.from(result.variables.values());
+        // Function expression assignments should NOT create variable definitions
+        expect(variables).toHaveLength(0);
+      });
+
       it("should process class properties", () => {
         const code = `
           class MyClass {
@@ -2007,8 +2076,8 @@ export const NESTED = {
         expect(context.receiver_location?.end_line).toBe(5);
       });
     });
-    describe("Derived Variable Detection", () => {
-      it("should detect derived_from for config.get() pattern", () => {
+    describe("Collection Source Detection", () => {
+      it("should detect collection_source for config.get() pattern", () => {
         const code = `
           const CONFIG = new Map([]);
           const handler = CONFIG.get('key');
@@ -2017,7 +2086,7 @@ export const NESTED = {
         const builder = new DefinitionBuilder(context);
 
         const ast = parser.parse(code);
-        
+
         // Find 'handler' variable
         const var_nodes: SyntaxNode[] = [];
         function find_vars(node: SyntaxNode) {
@@ -2029,7 +2098,7 @@ export const NESTED = {
           }
         }
         find_vars(ast.rootNode);
-        
+
         const handler_node = var_nodes[1]; // Second one is handler
         const name_node = handler_node?.childForFieldName("name");
 
@@ -2053,10 +2122,10 @@ export const NESTED = {
         const result = builder.build();
         const variables = Array.from(result.variables.values());
         expect(variables).toHaveLength(1);
-        
+
         const handler_var = variables[0];
         expect(handler_var.name).toBe("handler");
-        expect(handler_var.derived_from).toBe("CONFIG");
+        expect(handler_var.collection_source).toBe("CONFIG");
       });
     });
   });

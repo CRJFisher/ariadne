@@ -2233,7 +2233,7 @@ nested = list(map(lambda n: list(filter(lambda x: x > 2, [n])), numbers))`;
   });
 
   // ============================================================================
-  // FUNCTION COLLECTION RESOLUTION (Task 11.156.3)
+  // FUNCTION COLLECTION RESOLUTION
   // ============================================================================
 
   describe("Function collection resolution", () => {
@@ -2256,7 +2256,7 @@ handlers = [fn1, fn2]
       expect(variable?.function_collection?.stored_references).toContain("fn1");
     });
 
-    it("should populate derived_from for subscript access", () => {
+    it("should populate collection_source for subscript access", () => {
       const code = `
 config = {}
 handler = config['key']
@@ -2268,7 +2268,7 @@ handler = config['key']
 
       const variable = Array.from(index.variables.values()).find(v => v.name === "handler");
       expect(variable).toBeDefined();
-      expect(variable?.derived_from).toBe("config");
+      expect(variable?.collection_source).toBe("config");
     });
   });
 });

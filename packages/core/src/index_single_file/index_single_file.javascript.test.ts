@@ -1453,7 +1453,8 @@ describe("Semantic Index - JavaScript", () => {
       // Note: Variables without initializers (x, y) may not be captured by current queries
       // Only variables with assignments are captured: variable_declarator name: value:
       expect(variable_names).toContain("z");
-      expect(variable_names).toContain("n");
+      // Arrow functions assigned to variables are captured as functions only, not as variables
+      expect(variable_names).not.toContain("n");
 
       // Arrow functions assigned to variables should be captured as functions
       const function_names = Array.from(result.functions.values()).map(

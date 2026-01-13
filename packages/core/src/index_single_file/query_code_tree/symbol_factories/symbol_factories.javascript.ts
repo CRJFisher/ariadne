@@ -567,18 +567,18 @@ export function consume_documentation(location: Location): string | undefined {
 }
 
 // ============================================================================
-// Derived From Extraction
+// Collection Source Extraction
 // ============================================================================
 
 /**
- * Extract the name of the variable this definition is derived from.
- * Used to track variables assigned from collection lookups.
+ * Extract the name of the collection variable this definition was looked up from.
+ * Used for collection dispatch - when a variable is assigned from a Map/Array/Object lookup.
  *
  * Patterns detected:
  * 1. const handler = config.get("key");  -> returns "config"
  * 2. const handler = config["key"];      -> returns "config"
  */
-export function extract_derived_from(node: SyntaxNode): SymbolName | undefined {
+export function extract_collection_source(node: SyntaxNode): SymbolName | undefined {
   // Get initial value node (init or value)
   let target_node = node;
   if (node.type === "identifier" || node.type === "property_identifier") {
@@ -622,8 +622,8 @@ export function extract_derived_from(node: SyntaxNode): SymbolName | undefined {
  * 1. const extractor = get_scope_boundary_extractor();  -> returns "get_scope_boundary_extractor"
  * 2. const x = foo(arg1, arg2);                         -> returns "foo"
  *
- * NOT detected (handled by derived_from instead):
- * - const handler = config.get("key");  -> method calls, use derived_from
+ * NOT detected (handled by collection_source instead):
+ * - const handler = config.get("key");  -> method calls, use collection_source
  */
 export function extract_call_initializer_name(
   node: SyntaxNode
@@ -651,7 +651,7 @@ export function extract_call_initializer_name(
       return function_node.text as SymbolName;
     }
 
-    // Skip method calls (config.get()) - handled by derived_from
+    // Skip method calls (config.get()) - handled by collection_source
     // function_node.type === "member_expression" means it's a method call
   }
 

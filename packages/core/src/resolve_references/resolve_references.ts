@@ -334,7 +334,7 @@ export class ResolutionRegistry {
               (import_id) => imports.get_resolved_import_path(import_id)
             );
 
-            // If standard resolution failed, try collection dispatch resolution (Task 11.156.3)
+            // If standard resolution failed, try collection dispatch resolution
             if (resolved_symbols.length === 0) {
               resolved_symbols = resolve_collection_dispatch(
                 ref,
@@ -351,13 +351,13 @@ export class ResolutionRegistry {
             const func_symbol = this.resolve(ref.scope_id, ref.name);
             resolved_symbols = func_symbol ? [func_symbol] : [];
 
-            // Check for collection dispatch (Task 11.156.3)
+            // Check for collection dispatch
             // Even if we resolved a variable, it might be a dispatcher (e.g. const handler = config.get(...))
             // If so, we want the functions in the collection, not the variable itself.
             let try_dispatch = resolved_symbols.length === 0;
             if (resolved_symbols.length === 1) {
               const def = definitions.get(resolved_symbols[0]);
-              if (def && (def.kind === "variable" || def.kind === "constant") && def.derived_from) {
+              if (def && (def.kind === "variable" || def.kind === "constant") && def.collection_source) {
                 try_dispatch = true;
               }
             }

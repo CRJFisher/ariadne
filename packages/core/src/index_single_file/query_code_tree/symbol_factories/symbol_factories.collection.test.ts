@@ -3,8 +3,8 @@ import Parser from "tree-sitter";
 import Python from "tree-sitter-python";
 import Rust from "tree-sitter-rust";
 import TypeScript from "tree-sitter-typescript";
-import { detect_function_collection as detect_python_collection, extract_derived_from as extract_python_derived } from "./symbol_factories.python";
-import { detect_function_collection as detect_rust_collection, extract_derived_from as extract_rust_derived } from "./symbol_factories.rust";
+import { detect_function_collection as detect_python_collection, extract_collection_source as extract_python_collection_source } from "./symbol_factories.python";
+import { detect_function_collection as detect_rust_collection, extract_collection_source as extract_rust_collection_source } from "./symbol_factories.rust";
 import { detect_function_collection as detect_js_collection } from "./symbol_factories.javascript";
 import type { FilePath } from "@ariadnejs/types";
 
@@ -342,7 +342,7 @@ describe("Collection Resolution Tests", () => {
       }
       const identifier = assignment.child(0)!; // handler
 
-      const derived = extract_python_derived(identifier);
+      const derived = extract_python_collection_source(identifier);
       expect(derived).toBe("config");
     });
 
@@ -355,7 +355,7 @@ describe("Collection Resolution Tests", () => {
       }
       const identifier = assignment.child(0)!;
 
-      const derived = extract_python_derived(identifier);
+      const derived = extract_python_collection_source(identifier);
       expect(derived).toBe("config");
     });
   });
@@ -409,7 +409,7 @@ describe("Collection Resolution Tests", () => {
       const declaration = tree.rootNode.child(0)!;
       const pattern = declaration.childForFieldName("pattern")!; // identifier
       
-      const derived = extract_rust_derived(pattern);
+      const derived = extract_rust_collection_source(pattern);
       expect(derived).toBe("config");
     });
 
@@ -419,7 +419,7 @@ describe("Collection Resolution Tests", () => {
       const declaration = tree.rootNode.child(0)!;
       const pattern = declaration.childForFieldName("pattern")!;
       
-      const derived = extract_rust_derived(pattern);
+      const derived = extract_rust_collection_source(pattern);
       expect(derived).toBe("config");
     });
   });

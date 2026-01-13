@@ -41,7 +41,7 @@ import {
   extract_type_expression,
   detect_callback_context,
   detect_function_collection,
-  extract_derived_from,
+  extract_collection_source,
 } from "../symbol_factories/symbol_factories.python";
 // Import handlers from python_imports.ts for local use
 import {
@@ -503,7 +503,7 @@ export function handle_definition_variable(
     context.root_scope_id
   );
 
-  // Detect function collections (Task 11.156.3)
+  // Detect function collections
   const parent = capture.node.parent;
   const collection_info = parent
     ? detect_function_collection(parent, capture.location.file_path)
@@ -515,7 +515,7 @@ export function handle_definition_variable(
       }
     : undefined;
 
-  const derived_from = extract_derived_from(capture.node);
+  const collection_source = extract_collection_source(capture.node);
 
   builder.add_variable({
     kind: is_const ? "constant" : "variable",
@@ -528,7 +528,7 @@ export function handle_definition_variable(
     type: extract_type_annotation(capture.node),
     initial_value: extract_initial_value(capture.node),
     function_collection,
-    derived_from,
+    collection_source,
   });
 }
 
@@ -547,7 +547,7 @@ export function handle_definition_variable_typed(
     context.root_scope_id
   );
 
-  const derived_from = extract_derived_from(capture.node);
+  const collection_source = extract_collection_source(capture.node);
 
   builder.add_variable({
     kind: "variable",
@@ -559,7 +559,7 @@ export function handle_definition_variable_typed(
     export: export_info.export,
     type: extract_type_annotation(capture.node),
     initial_value: extract_initial_value(capture.node),
-    derived_from,
+    collection_source,
   });
 }
 

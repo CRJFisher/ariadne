@@ -2652,7 +2652,7 @@ trait MyTrait {
   });
 
   // ============================================================================
-  // FUNCTION COLLECTION RESOLUTION (Task 11.156.3)
+  // FUNCTION COLLECTION RESOLUTION
   // ============================================================================
 
   describe("Function collection resolution", () => {
@@ -2677,7 +2677,7 @@ fn main() {
       expect(variable?.function_collection?.stored_references).toContain("fn1");
     });
 
-    it("should populate derived_from for index access", () => {
+    it("should populate collection_source for index access", () => {
       const code = `
 fn main() {
     let config = HashMap::new();
@@ -2691,7 +2691,7 @@ fn main() {
 
       const variable = Array.from(index.variables.values()).find(v => v.name === "handler");
       expect(variable).toBeDefined();
-      expect(variable?.derived_from).toBe("config");
+      expect(variable?.collection_source).toBe("config");
     });
   });
 });

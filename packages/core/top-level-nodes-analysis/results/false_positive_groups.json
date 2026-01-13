@@ -4,7 +4,9 @@
       "group_id": "anonymous-function-body-calls-not-tracked",
       "root_cause": "Calls made from within anonymous function bodies are not being tracked as references. Anonymous functions are captured and processed (via definition.anonymous_function), but the call expressions inside their bodies are not being extracted and recorded as references from the anonymous function to the called function.",
       "reasoning": "The add_class method is called from an anonymous arrow function that serves as a handler in the language builder config (process: (capture, builder, context) => { builder.add_class({...}); }). While the anonymous function itself is tracked via add_anonymous_function, the calls it makes (like builder.add_class) are not captured as references, causing add_class to appear as an entry point with no callers.",
-      "existing_task_fixes": ["task-epic-11.161"],
+      "existing_task_fixes": [
+        "task-epic-11.161"
+      ],
       "entries": [
         {
           "name": "add_class",
@@ -132,7 +134,9 @@
       "group_id": "internal-helper-function-calls-not-tracked",
       "root_cause": "Calls made from within internal (non-exported) named helper functions are not being tracked properly in the call graph. The constructor is called from process_definitions() at semantic_index.ts:207, which is a named helper function (not anonymous) that is called by build_semantic_index() at line 121. The call to process_definitions should be tracked as a reference, but appears not to be, causing both process_definitions and functions it calls (like this constructor) to be incorrectly identified as entry points.",
       "reasoning": "This differs from the existing 'anonymous-function-body-calls-not-tracked' group. That group covers calls inside anonymous arrow functions in config objects (e.g., process: () => { builder.add_class(...) }). This new group covers calls inside named module-level helper functions. The function process_definitions is a regular function_declaration with a name, not an anonymous function, making this a distinct root cause requiring separate investigation.",
-      "existing_task_fixes": ["task-epic-11.162"],
+      "existing_task_fixes": [
+        "task-epic-11.162"
+      ],
       "entries": [
         {
           "name": "constructor",
@@ -152,7 +156,9 @@
       "group_id": "for-loop-body-calls-not-tracked",
       "root_cause": "Calls made from within for-loop bodies are not being tracked as references in the call graph. The function is called at validate_captures.ts:239 inside a for-loop body (for (const capture of captures)), causing the called function to be incorrectly identified as an entry point.",
       "reasoning": "is_valid_capture is called from collect_stats at line 239, which is inside a for-of loop iterating over captures. This represents a new pattern distinct from anonymous functions or general internal helper functions - the specific issue is that calls within loop bodies (for, for-of, while, etc.) are not being tracked.",
-      "existing_task_fixes": ["task-epic-11.162"],
+      "existing_task_fixes": [
+        "task-epic-11.162"
+      ],
       "entries": [
         {
           "name": "is_valid_capture",
@@ -178,7 +184,10 @@
       "group_id": "recursive-method-calls-not-tracked",
       "root_cause": "Recursive method calls (methods calling themselves) are not being tracked as references. When a method calls itself recursively using this.methodName(), the recursive call is not recorded as a reference, causing the method to be incorrectly identified as an entry point.",
       "reasoning": "The function extract_call_receiver is a method defined at metadata_types.ts:61 (as part of the MetadataExtractors interface) and implemented in rust_metadata.ts:186. At rust_metadata.ts:214, it calls itself recursively with this.extract_call_receiver(call_expr, file_path). This recursive call is not being tracked as a reference in the call graph, causing the method to appear as an entry point. This is distinct from the existing groups: not an anonymous function body call, not a helper function calling another helper, and not a for-loop body call. This is a self-recursive method call pattern.",
-      "existing_task_fixes": ["task-epic-11.162", "task-epic-11.163"],
+      "existing_task_fixes": [
+        "task-epic-11.162",
+        "task-epic-11.163"
+      ],
       "entries": [
         {
           "name": "extract_call_receiver",
@@ -192,7 +201,9 @@
       "group_id": "object-literal-internal-method-calls-not-tracked",
       "root_cause": "Calls between methods within the same object literal are not being tracked as references when the calling method uses the object's exported constant name (e.g., OBJECT_NAME.method()). The method extract_receiver_info calls JAVASCRIPT_METADATA_EXTRACTORS.extract_property_chain(target_node) at javascript_metadata.ts:361, where both methods are part of the same JAVASCRIPT_METADATA_EXTRACTORS object literal.",
       "reasoning": "This is a distinct pattern from recursive-method-calls-not-tracked. While recursive calls use this.methodName(), this pattern involves one method calling a sibling method using the fully qualified object name. The call at javascript_metadata.ts:361 shows extract_receiver_info (line 314) calling JAVASCRIPT_METADATA_EXTRACTORS.extract_property_chain, both being methods in the same object literal defined at line 126.",
-      "existing_task_fixes": ["task-epic-11.164"],
+      "existing_task_fixes": [
+        "task-epic-11.164"
+      ],
       "entries": [
         {
           "name": "extract_property_chain",
@@ -212,7 +223,9 @@
       "group_id": "typescript-interface-method-signatures-detected-as-entry-points",
       "root_cause": "TypeScript interface method signatures are being detected as entry points because they are captured as method definitions by the semantic indexer but have no callers (interface methods are type signatures only, not executable implementations).",
       "reasoning": "The function extract_assignment_parts at metadata_types.ts:120 is a method signature in the TypeScript interface MetadataExtractors. Interface method signatures have no implementation bodies and are never directly called - only their concrete implementations in classes or objects are called. Since the interface method signature itself has no callers in the call graph, it is incorrectly identified as an entry point.",
-      "existing_task_fixes": ["task-epic-11.165"],
+      "existing_task_fixes": [
+        "task-epic-11.165"
+      ],
       "entries": [
         {
           "name": "extract_assignment_parts",
@@ -262,7 +275,9 @@
       "group_id": "exported-unused-dead-code-detected-as-entry-points",
       "root_cause": "Exported functions that are never called anywhere in the codebase (dead code) are incorrectly detected as entry points. These functions are exported from their modules but have zero call sites, making them appear to be entry points when they're actually just unused functionality that should be removed.",
       "reasoning": "The function extract_lifetime_parameters is exported from rust_builder_helpers.ts at line 243 but has zero call sites in the codebase. Grep search for 'extract_lifetime_parameters(' returns only the function definition itself, with no imports or calls in any other files. This is dead/unused code that should be removed from the codebase.",
-      "existing_task_fixes": ["task-epic-11.166"],
+      "existing_task_fixes": [
+        "task-epic-11.166"
+      ],
       "entries": [
         {
           "name": "extract_lifetime_parameters",
@@ -419,6 +434,60 @@
           "file_path": "/Users/chuck/workspace/ariadne/packages/core/src/resolve_references/registries/type_registry.ts",
           "start_line": 506,
           "signature": "size(): number"
+        },
+        {
+          "name": "get_metadata_extractor",
+          "file_path": "/Users/chuck/workspace/ariadne/packages/core/src/index_single_file/query_code_tree/metadata_extractors/index.ts",
+          "start_line": 8,
+          "signature": "get_metadata_extractor(language: Language): MetadataExtractors"
+        },
+        {
+          "name": "is_enabled",
+          "file_path": "/Users/chuck/workspace/ariadne/packages/core/src/profiling/profiler.ts",
+          "start_line": 81,
+          "signature": "is_enabled(): boolean"
+        },
+        {
+          "name": "enable",
+          "file_path": "/Users/chuck/workspace/ariadne/packages/core/src/profiling/profiler.ts",
+          "start_line": 88,
+          "signature": "enable(): void"
+        },
+        {
+          "name": "disable",
+          "file_path": "/Users/chuck/workspace/ariadne/packages/core/src/profiling/profiler.ts",
+          "start_line": 95,
+          "signature": "disable(): void"
+        },
+        {
+          "name": "reset",
+          "file_path": "/Users/chuck/workspace/ariadne/packages/core/src/profiling/profiler.ts",
+          "start_line": 218,
+          "signature": "reset(): void"
+        },
+        {
+          "name": "to_json",
+          "file_path": "/Users/chuck/workspace/ariadne/packages/core/src/profiling/profiler.ts",
+          "start_line": 389,
+          "signature": "to_json(): string"
+        },
+        {
+          "name": "resolve_self_reference_call",
+          "file_path": "/Users/chuck/workspace/ariadne/packages/core/src/resolve_references/call_resolution/self_reference.ts",
+          "start_line": 60,
+          "signature": "resolve_self_reference_call(call_ref: SelfReferenceCall, scopes: ScopeRegistry, definitions: DefinitionRegistry, types: TypeRegistry): SymbolId[]"
+        },
+        {
+          "name": "get_all_files",
+          "file_path": "/Users/chuck/workspace/ariadne/packages/core/src/resolve_references/registries/export.ts",
+          "start_line": 206,
+          "signature": "get_all_files(): FilePath[]"
+        },
+        {
+          "name": "add_indirect_reachability",
+          "file_path": "/Users/chuck/workspace/ariadne/packages/core/src/resolve_references/resolve_references.ts",
+          "start_line": 574,
+          "signature": "add_indirect_reachability(fn_id: SymbolId, reason: {\n      type: \"collection_read\";\n      collection_id: SymbolId;\n      read_location: {\n        file_path: FilePath;\n        start_line: number;\n        start_column: number;\n        end_line: number;\n        end_column: number;\n      };\n    }): void"
         }
       ]
     },
@@ -426,7 +495,9 @@
       "group_id": "nested-function-calls-not-tracked",
       "root_cause": "Calls to nested named functions (functions defined inside other functions) are not being tracked as references. The function process_use_list_items is a named arrow function nested inside extract_imports_from_use_declaration at rust_import_extraction.ts:140. It's called from the parent function at line 202 and recursively from itself at line 170, but neither call is tracked as a reference.",
       "reasoning": "This is a distinct issue from existing groups. Unlike 'anonymous-function-body-calls-not-tracked' (which tracks calls FROM anonymous functions), this is about calls TO nested named functions. Unlike 'internal-helper-function-calls-not-tracked' (which tracks top-level non-exported helper functions), this is about functions defined within the scope of another function. The nested function definition is being captured, but references to it are not being tracked.",
-      "existing_task_fixes": ["task-epic-11.162"],
+      "existing_task_fixes": [
+        "task-epic-11.162"
+      ],
       "entries": [
         {
           "name": "process_use_list_items",
@@ -445,6 +516,30 @@
           "file_path": "/Users/chuck/workspace/ariadne/packages/core/src/resolve_references/registries/export_registry.ts",
           "start_line": 77,
           "signature": "add_to_registry(): unknown"
+        },
+        {
+          "name": "process_use_list_items",
+          "file_path": "/Users/chuck/workspace/ariadne/packages/core/src/index_single_file/query_code_tree/symbol_factories/imports.rust.ts",
+          "start_line": 140,
+          "signature": "process_use_list_items(): unknown"
+        },
+        {
+          "name": "find_native_time",
+          "file_path": "/Users/chuck/workspace/ariadne/packages/core/src/profiling/profiler.ts",
+          "start_line": 266,
+          "signature": "find_native_time(): unknown"
+        },
+        {
+          "name": "print_entry",
+          "file_path": "/Users/chuck/workspace/ariadne/packages/core/src/profiling/profiler.ts",
+          "start_line": 345,
+          "signature": "print_entry(): unknown"
+        },
+        {
+          "name": "add_to_registry",
+          "file_path": "/Users/chuck/workspace/ariadne/packages/core/src/resolve_references/registries/export.ts",
+          "start_line": 77,
+          "signature": "add_to_registry(): unknown"
         }
       ]
     },
@@ -452,7 +547,9 @@
       "group_id": "external-caller-outside-analysis-scope",
       "root_cause": "Functions are detected as entry points when they are called only from files outside the analyzed codebase scope. The analysis processes only packages/core/src, but some functions are called from root-level scripts/ directory or other locations outside this scope.",
       "reasoning": "The function format_json_output is exported from packages/core/src/index_single_file/query_code_tree/validate_captures.ts:444 and called from scripts/validate_captures.ts:49. The analysis script (detect_entrypoints_using_ariadne.ts:167) only analyzes packages/core/src, so calls from the root-level scripts/ directory are not tracked as references.",
-      "existing_task_fixes": ["task-epic-11.168"],
+      "existing_task_fixes": [
+        "task-epic-11.168"
+      ],
       "entries": [
         {
           "name": "format_json_output",
@@ -483,6 +580,18 @@
           "file_path": "/Users/chuck/workspace/ariadne/packages/core/src/resolve_references/resolution_registry.ts",
           "start_line": 97,
           "signature": "resolve_names(file_ids: Set<FilePath>, languages: ReadonlyMap<FilePath, Language>, definitions: DefinitionRegistry, scopes: ScopeRegistry, exports: ExportRegistry, imports: ImportGraph, root_folder: FileSystemFolder): void"
+        },
+        {
+          "name": "report",
+          "file_path": "/Users/chuck/workspace/ariadne/packages/core/src/profiling/profiler.ts",
+          "start_line": 318,
+          "signature": "report(): void"
+        },
+        {
+          "name": "is_test_file",
+          "file_path": "/Users/chuck/workspace/ariadne/packages/core/src/project/detect_test_file.ts",
+          "start_line": 21,
+          "signature": "is_test_file(file_path: string, language: Language): boolean"
         }
       ]
     },
@@ -490,11 +599,25 @@
       "group_id": "array-method-argument-calls-not-tracked",
       "root_cause": "Calls made as arguments to array method calls (like .reduce(), .map(), .filter()) are not being tracked as references. When a function or constructor is invoked in the argument position of an array method call (e.g., as the initial value parameter to .reduce()), the call is not recorded as a reference, causing the called function to be incorrectly identified as an entry point.",
       "reasoning": "The ReferenceBuilder constructor is called at reference_builder.ts:490 as the second argument (initial value) to .reduce() inside the process_references function. The call chain is: build_semantic_index (semantic_index.ts:81, exported and called from project.ts:169) → process_references (semantic_index.ts:125) → new ReferenceBuilder(...) (reference_builder.ts:490, as .reduce() argument). This is distinct from anonymous-function-body-calls-not-tracked (calls inside callback bodies) and for-loop-body-calls-not-tracked (calls inside loop bodies) - this pattern involves calls in the argument position of array methods.",
-      "existing_task_fixes": ["task-epic-11.162"],
+      "existing_task_fixes": [
+        "task-epic-11.162"
+      ],
       "entries": [
         {
           "name": "constructor",
           "file_path": "/Users/chuck/workspace/ariadne/packages/core/src/index_single_file/references/reference_builder.ts",
+          "start_line": 269,
+          "signature": "constructor(context: ProcessingContext, extractors: MetadataExtractors | undefined, file_path: FilePath)"
+        },
+        {
+          "name": "process",
+          "file_path": "/Users/chuck/workspace/ariadne/packages/core/src/index_single_file/references/references.ts",
+          "start_line": 279,
+          "signature": "process(capture: CaptureNode): ReferenceBuilder"
+        },
+        {
+          "name": "constructor",
+          "file_path": "/Users/chuck/workspace/ariadne/packages/core/src/index_single_file/references/references.ts",
           "start_line": 269,
           "signature": "constructor(context: ProcessingContext, extractors: MetadataExtractors | undefined, file_path: FilePath)"
         }
@@ -504,7 +627,9 @@
       "group_id": "super-method-calls-not-tracked",
       "root_cause": "Calls to parent class methods using super.methodName() are not being tracked as references in the call graph. When a subclass method calls a parent class method via super, the call is not recorded as a reference, causing the parent method to be incorrectly identified as an entry point.",
       "reasoning": "The method extract_class_boundaries is defined as a protected method in JavaScriptTypeScriptScopeBoundaryExtractor at line 19. It is called from the subclass TypeScriptScopeBoundaryExtractor using super.extract_class_boundaries() at typescript_scope_boundary_extractor.ts:44, 58, and 61. These super calls are not being tracked as references, making the parent method appear to have no callers.",
-      "existing_task_fixes": ["task-epic-11.163"],
+      "existing_task_fixes": [
+        "task-epic-11.163"
+      ],
       "entries": [
         {
           "name": "extract_class_boundaries",
@@ -518,7 +643,9 @@
       "group_id": "class-internal-method-calls-not-tracked",
       "root_cause": "Calls to protected or private class methods from within the same class using this.methodName() are not being tracked as references. When a public method calls a protected/private helper method on the same instance via this., the call is not recorded in the call graph, causing the helper method to be incorrectly identified as an entry point.",
       "reasoning": "The function extract_block_boundaries is a protected method in JavaScriptTypeScriptScopeBoundaryExtractor class at line 204. It is called from the public extract_boundaries method via this.extract_block_boundaries() in a switch statement (scope_boundary_base.ts:82). The public method is called from scope_processor.ts:165, but the internal this. call to the protected method is not tracked as a reference.",
-      "existing_task_fixes": ["task-epic-11.163"],
+      "existing_task_fixes": [
+        "task-epic-11.163"
+      ],
       "entries": [
         {
           "name": "extract_block_boundaries",
@@ -532,7 +659,9 @@
       "group_id": "factory-pattern-polymorphic-calls-not-tracked",
       "root_cause": "Polymorphic method calls through interfaces are not being tracked when the concrete implementation is obtained via a factory function. The call graph doesn't resolve through the factory to connect interface method calls to concrete class implementations. For example, at scope_processor.ts:165, extractor.extract_boundaries() is called where extractor is typed as ScopeBoundaryExtractor interface (obtained from get_scope_boundary_extractor() factory). The call graph needs to: 1) Track the call to the interface method, 2) Resolve through the factory function to determine possible concrete implementations, 3) Connect the call to all concrete implementations (PythonScopeBoundaryExtractor.extract_boundaries, TypeScriptScopeBoundaryExtractor.extract_boundaries, etc.). Without this resolution, the concrete implementations appear to have no callers and are incorrectly identified as entry points.",
       "reasoning": "The function extract_boundaries in PythonScopeBoundaryExtractor is called at scope_processor.ts:165 through a factory-obtained interface reference. The extractor variable is typed as ScopeBoundaryExtractor (interface) and obtained from get_scope_boundary_extractor(file.lang) at line 164. This factory returns different concrete implementations based on the language parameter. The call graph system is not resolving this polymorphic call pattern, causing all concrete implementations to appear as entry points.",
-      "existing_task_fixes": ["task-epic-11.167"],
+      "existing_task_fixes": [
+        "task-epic-11.167"
+      ],
       "entries": [
         {
           "name": "extract_boundaries",
@@ -570,7 +699,9 @@
       "group_id": "class-property-method-calls-not-tracked",
       "root_cause": "Method calls on class properties (e.g., this.property.method()) are not being tracked as references in the call graph. When a class has an instance field of another class type and calls methods on that field, the call is not recorded, causing the called method to be incorrectly identified as an entry point.",
       "reasoning": "The function update_file is a method on the ImportGraph class and is called from Project.update_file() at project.ts:223 using this.imports.update_file(...), where imports is a public property of type ImportGraph declared at project.ts:119. This is distinct from existing patterns: not calling methods on the same class (class-internal-method-calls-not-tracked), not polymorphic factory calls (factory-pattern-polymorphic-calls-not-tracked), but rather calls to methods on instance fields/properties of other classes.",
-      "existing_task_fixes": ["task-epic-11.164"],
+      "existing_task_fixes": [
+        "task-epic-11.164"
+      ],
       "entries": [
         {
           "name": "update_file",
@@ -673,6 +804,12 @@
           "file_path": "/Users/chuck/workspace/ariadne/packages/core/src/resolve_references/resolution_registry.ts",
           "start_line": 785,
           "signature": "clear(): void"
+        },
+        {
+          "name": "record_counts",
+          "file_path": "/Users/chuck/workspace/ariadne/packages/core/src/profiling/profiler.ts",
+          "start_line": 197,
+          "signature": "record_counts(counts: {\n    captures?: number;\n    scopes?: number;\n    definitions?: number;\n  }): void"
         }
       ]
     },
@@ -680,7 +817,9 @@
       "group_id": "test-only-public-methods-detected-as-entry-points",
       "root_cause": "Public methods that are only called from test files (*.test.ts) are detected as entry points because test files are excluded from the call graph analysis scope. These methods are part of the public API for testing purposes but have no callers within the analyzed production codebase.",
       "reasoning": "The clear() method is called from project.clear() at project.ts:566 via this.definitions.clear(). The project.clear() method is only called from test files (project.test.ts:294), so clear() has no callers within the analyzed production codebase.",
-      "existing_task_fixes": ["task-epic-11.168"],
+      "existing_task_fixes": [
+        "task-epic-11.168"
+      ],
       "entries": [
         {
           "name": "detect_cycle",
@@ -777,9 +916,137 @@
           "file_path": "/Users/chuck/workspace/ariadne/packages/core/src/resolve_references/resolution_registry.ts",
           "start_line": 528,
           "signature": "get_file_calls(file_path: FilePath): readonly CallReference[]"
+        },
+        {
+          "name": "clear_query_cache",
+          "file_path": "/Users/chuck/workspace/ariadne/packages/core/src/index_single_file/query_code_tree/query_code_tree.ts",
+          "start_line": 59,
+          "signature": "clear_query_cache(): void"
+        },
+        {
+          "name": "create_mock_node",
+          "file_path": "/Users/chuck/workspace/ariadne/packages/core/src/index_single_file/test_utils.ts",
+          "start_line": 19,
+          "signature": "create_mock_node(node_type: string, text: string, start_row: number, start_column: number, end_row: number, end_column: number, additional_props: Partial<SyntaxNode>): SyntaxNode"
+        },
+        {
+          "name": "has",
+          "file_path": "/Users/chuck/workspace/ariadne/packages/core/src/resolve_references/registries/definition.ts",
+          "start_line": 255,
+          "signature": "has(symbol_id: SymbolId): boolean"
+        },
+        {
+          "name": "get_all_files",
+          "file_path": "/Users/chuck/workspace/ariadne/packages/core/src/resolve_references/registries/definition.ts",
+          "start_line": 264,
+          "signature": "get_all_files(): FilePath[]"
+        },
+        {
+          "name": "get_all_definitions",
+          "file_path": "/Users/chuck/workspace/ariadne/packages/core/src/resolve_references/registries/definition.ts",
+          "start_line": 273,
+          "signature": "get_all_definitions(): AnyDefinition[]"
+        },
+        {
+          "name": "get_all_files",
+          "file_path": "/Users/chuck/workspace/ariadne/packages/core/src/resolve_references/registries/reference.ts",
+          "start_line": 54,
+          "signature": "get_all_files(): FilePath[]"
+        },
+        {
+          "name": "get_all_files",
+          "file_path": "/Users/chuck/workspace/ariadne/packages/core/src/resolve_references/registries/scope.ts",
+          "start_line": 95,
+          "signature": "get_all_files(): FilePath[]"
+        },
+        {
+          "name": "get_parent_class",
+          "file_path": "/Users/chuck/workspace/ariadne/packages/core/src/resolve_references/registries/type.ts",
+          "start_line": 383,
+          "signature": "get_parent_class(class_id: SymbolId): SymbolId | null"
+        },
+        {
+          "name": "get_implemented_interfaces",
+          "file_path": "/Users/chuck/workspace/ariadne/packages/core/src/resolve_references/registries/type.ts",
+          "start_line": 402,
+          "signature": "get_implemented_interfaces(class_id: SymbolId): readonly SymbolId[]"
+        },
+        {
+          "name": "get_namespace_member",
+          "file_path": "/Users/chuck/workspace/ariadne/packages/core/src/resolve_references/registries/type.ts",
+          "start_line": 515,
+          "signature": "get_namespace_member(_namespace_id: SymbolId, _member_name: SymbolName): SymbolId | null"
+        },
+        {
+          "name": "get_file_calls",
+          "file_path": "/Users/chuck/workspace/ariadne/packages/core/src/resolve_references/resolve_references.ts",
+          "start_line": 563,
+          "signature": "get_file_calls(file_path: FilePath): readonly CallReference[]"
+        }
+      ]
+    },
+    "variable-assignment-calls-not-tracked": {
+      "group_id": "variable-assignment-calls-not-tracked",
+      "root_cause": "Calls to functions or constructors where the result is assigned to a variable (const/let/var) are not being tracked as references in the call graph. When a function call or constructor call (via new) appears on the right-hand side of a variable declaration assignment (e.g., const x = functionCall() or const obj = new Constructor()), the call is not recorded as a reference, causing the called function/constructor to appear to have no callers and be incorrectly identified as an entry point.",
+      "reasoning": "The DefinitionBuilder constructor is called at index_single_file.ts:207 as const builder = new DefinitionBuilder(context). This is a variable assignment call pattern. The constructor is invoked from process_definitions() which itself is called at line 136 as const builder_result = process_definitions(...), also a variable assignment. These variable assignment calls are not being tracked as references in the call graph, causing both process_definitions and the DefinitionBuilder constructor to appear to have no callers and be incorrectly identified as entry points.",
+      "existing_task_fixes": [],
+      "entries": [
+        {
+          "name": "constructor",
+          "file_path": "/Users/chuck/workspace/ariadne/packages/core/src/index_single_file/definitions/definitions.ts",
+          "start_line": 188,
+          "signature": "constructor(context: ProcessingContext)"
+        },
+        {
+          "name": "constructor",
+          "file_path": "/Users/chuck/workspace/ariadne/packages/core/src/profiling/profiler.ts",
+          "start_line": 74,
+          "signature": "constructor()"
+        }
+      ]
+    },
+    "callback-function-references-not-tracked": {
+      "group_id": "callback-function-references-not-tracked",
+      "root_cause": "Calls to functions that are passed as callbacks to higher-order functions (like array methods) are not being tracked. When a function is passed by reference to .map(), .filter(), .reduce(), etc., the indirect calls made by these higher-order functions to the callback are not recorded as references in the call graph.",
+      "reasoning": "The function serialize_entry is a nested arrow function defined at profiler.ts:393 inside the to_json() method. It is passed by reference to .map() at line 401 (recursively within serialize_entry itself: .map(serialize_entry)) and at line 407 (from parent: report.entries.map(serialize_entry)). The issue is that when serialize_entry is passed as a callback reference to .map(), the call graph does not track that .map() will invoke serialize_entry. This is distinct from 'array-method-argument-calls-not-tracked' (which is about direct function calls with () as arguments) and 'nested-function-calls-not-tracked' (which is about direct calls TO nested functions using ()). This is specifically about function references passed as callbacks to higher-order functions.",
+      "existing_task_fixes": [
+        "task-epic-11.162"
+      ],
+      "entries": [
+        {
+          "name": "serialize_entry",
+          "file_path": "/Users/chuck/workspace/ariadne/packages/core/src/profiling/profiler.ts",
+          "start_line": 393,
+          "signature": "serialize_entry(): unknown"
+        },
+        {
+          "name": "<anonymous>",
+          "file_path": "/Users/chuck/workspace/ariadne/packages/core/src/resolve_references/resolve_references.ts",
+          "start_line": 276,
+          "signature": "<anonymous>(): unknown"
+        }
+      ]
+    },
+    "polymorphic-method-name-collision-not-resolved": {
+      "group_id": "polymorphic-method-name-collision-not-resolved",
+      "root_cause": "Method calls on class instance properties are not being resolved to the correct concrete class when multiple unrelated classes have methods with the same name and signature. When the call graph encounters calls like this.property.method() where multiple classes in the codebase have methods with the same name, it fails to use type information to determine which concrete class's method is being invoked. This causes methods that are never actually called (like ReferenceRegistry.size()) to appear as entry points while the actually-called methods (like DefinitionRegistry.size()) are not correctly tracked as having callers.",
+      "reasoning": "ReferenceRegistry.size() at reference.ts:63 has zero production callers (grep found no calls to 'this.references.size' or 'references.size()'). However, DefinitionRegistry.size() at definition.ts:430 IS called from project.ts:409 as 'this.definitions.size()', and ResolutionRegistry.size() at resolve_references.ts:516 IS called from project.ts:410 as 'this.resolutions.size()'. All three registry classes have size(): number methods with identical signatures. The call graph is not using the declared types of this.definitions (DefinitionRegistry) and this.resolutions (ResolutionRegistry) to resolve which concrete class method is being called, causing ReferenceRegistry.size() to be incorrectly identified as an entry point.",
+      "existing_task_fixes": [],
+      "entries": [
+        {
+          "name": "size",
+          "file_path": "/Users/chuck/workspace/ariadne/packages/core/src/resolve_references/registries/reference.ts",
+          "start_line": 63,
+          "signature": "size(): number"
+        },
+        {
+          "name": "size",
+          "file_path": "/Users/chuck/workspace/ariadne/packages/core/src/resolve_references/registries/scope.ts",
+          "start_line": 140,
+          "signature": "size(): number"
         }
       ]
     }
   },
-  "last_updated": "2025-11-27T22:22:02.978Z"
+  "last_updated": "2026-01-12T23:05:44.031Z"
 }
