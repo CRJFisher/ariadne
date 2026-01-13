@@ -52,6 +52,28 @@ export function resolve_method_on_type(
     return [];
   }
 
+  // Handle named/default imports - follow to actual exported class/type
+  if (receiver_def?.kind === "import" && (receiver_def.import_kind === "named" || receiver_def.import_kind === "default")) {
+    const source_file = context.resolve_import_path
+      ? context.resolve_import_path(receiver_type)
+      : undefined;
+    if (source_file) {
+      // Find the actual exported symbol in the source file
+      const export_name = receiver_def.original_name || receiver_def.name;
+      const actual_type = resolve_named_import(
+        source_file,
+        export_name,
+        receiver_def.import_kind,
+        definitions
+      );
+      if (actual_type) {
+        // Recursively resolve method on the actual type
+        return resolve_method_on_type(actual_type, method_name, context);
+      }
+    }
+    return [];
+  }
+
   // Handle object literals with FunctionCollection
   const fn_collection = definitions.get_function_collection(receiver_type);
   if (fn_collection) {
@@ -194,6 +216,46 @@ function resolve_namespace_method(
   }
 
   return [];
+}
+
+/**
+ * Resolve a named or default import to its actual exported type
+ *
+ * For `import { ImportGraph } from "./import_graph"`, finds the actual
+ * ImportGraph class exported from import_graph.ts.
+ *
+ * @param source_file - The file path of the source module
+ * @param export_name - Name of the exported symbol to find
+ * @param import_kind - Type of import (named or default)
+ * @param definitions - Definition registry
+ * @returns The actual type SymbolId, or null if not found
+ */
+function resolve_named_import(
+  source_file: FilePath,
+  export_name: SymbolName,
+  import_kind: "named" | "default",
+  definitions: DefinitionRegistry
+): SymbolId | null {
+  const source_defs = definitions.get_exportable_definitions_in_file(source_file);
+
+  for (const def of source_defs) {
+    // Skip imports (re-exports are handled separately)
+    if (def.kind === "import") continue;
+    if (!def.is_exported) continue;
+
+    // For named imports, match by name
+    if (import_kind === "named" && def.name === export_name) {
+      return def.symbol_id;
+    }
+
+    // For default imports, we'd need to check if this is the default export
+    // For now, match by name (common pattern: export default class ClassName)
+    if (import_kind === "default" && def.name === export_name) {
+      return def.symbol_id;
+    }
+  }
+
+  return null;
 }
 
 /**

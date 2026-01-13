@@ -296,6 +296,17 @@ function should_load_file(file_path: string, include_tests: boolean): boolean {
     }
   }
 
+  // Skip infrastructure files not part of core intention tree
+  const infrastructure_patterns = [
+    "/profiling/", // Performance monitoring
+    "_test_helper.ts", // Test helpers
+  ];
+  for (const pattern of infrastructure_patterns) {
+    if (file_path.includes(pattern)) {
+      return false;
+    }
+  }
+
   return true;
 }
 

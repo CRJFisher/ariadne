@@ -893,6 +893,16 @@ function extract_functions_from_object(
       continue;
     }
 
+    // Handle shorthand method definitions: { method() { ... } }
+    if (child.type === "method_definition") {
+      const name_node = child.childForFieldName("name");
+      if (name_node) {
+        const location = node_to_location(child, file_path);
+        function_ids.push(method_symbol(name_node.text, location));
+      }
+      continue;
+    }
+
     // Handle pair nodes: { key: value }
     if (child.type !== "pair") continue;
 

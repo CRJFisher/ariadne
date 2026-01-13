@@ -724,4 +724,134 @@ describe("resolve_method_on_type", () => {
       expect(result).toEqual([method_id_registry]);
     });
   });
+
+  describe("Named import method lookup", () => {
+    const IMPORT_GRAPH_FILE = "/test/import_graph.ts" as FilePath;
+    const IMPORT_GRAPH_SCOPE = "module:import_graph.ts:1:1:100:1" as ScopeId;
+
+    it("should resolve method through named import to actual class", () => {
+      // This tests the pattern:
+      // import { ImportGraph } from "./import_graph";
+      // class Project { imports: ImportGraph; update() { this.imports.update_file(...); } }
+
+      const import_id = "import:test.ts:1:0:1:30:ImportGraph" as SymbolId;
+      const actual_class_id = class_symbol("ImportGraph", IMPORT_GRAPH_FILE, {
+        ...MOCK_LOCATION,
+        file_path: IMPORT_GRAPH_FILE,
+      });
+      const update_method_id = method_symbol("update_file", {
+        ...MOCK_LOCATION,
+        file_path: IMPORT_GRAPH_FILE,
+        start_line: 55,
+      });
+
+      // Setup named import in project.ts
+      const import_def: ImportDefinition = {
+        kind: "import",
+        symbol_id: import_id,
+        name: "ImportGraph" as SymbolName,
+        defining_scope_id: FILE_SCOPE_ID,
+        location: MOCK_LOCATION,
+        import_kind: "named",
+        source_path: "./import_graph",
+        is_exported: false,
+      };
+
+      // Setup actual class in import_graph.ts
+      const update_method_def: MethodDefinition = {
+        kind: "method",
+        symbol_id: update_method_id,
+        name: "update_file" as SymbolName,
+        defining_scope_id: "scope:import_graph.ts:ImportGraph:1:0" as ScopeId,
+        location: { ...MOCK_LOCATION, file_path: IMPORT_GRAPH_FILE, start_line: 55 },
+        parameters: [],
+        body_scope_id: "scope:import_graph.ts:update_file:55:2" as ScopeId,
+        decorators: [],
+      };
+
+      const class_def: ClassDefinition = {
+        kind: "class",
+        symbol_id: actual_class_id,
+        name: "ImportGraph" as SymbolName,
+        defining_scope_id: IMPORT_GRAPH_SCOPE,
+        location: { ...MOCK_LOCATION, file_path: IMPORT_GRAPH_FILE },
+        is_exported: true,
+        extends: [],
+        methods: [update_method_def],
+        properties: [],
+        decorators: [],
+        constructor: [],
+      };
+
+      definitions.update_file(TEST_FILE, [import_def]);
+      definitions.update_file(IMPORT_GRAPH_FILE, [class_def, update_method_def]);
+
+      // Add import path resolver
+      const context_with_resolver: ResolutionContext = {
+        ...context,
+        resolve_import_path: (id) =>
+          id === import_id ? IMPORT_GRAPH_FILE : undefined,
+      };
+
+      const result = resolve_method_on_type(
+        import_id,
+        "update_file" as SymbolName,
+        context_with_resolver
+      );
+
+      expect(result).toEqual([update_method_id]);
+    });
+
+    it("should return empty for non-exported class in source file", () => {
+      const import_id = "import:test.ts:1:0:1:30:PrivateClass" as SymbolId;
+      const private_class_id = class_symbol("PrivateClass", IMPORT_GRAPH_FILE, {
+        ...MOCK_LOCATION,
+        file_path: IMPORT_GRAPH_FILE,
+      });
+
+      // Setup named import
+      const import_def: ImportDefinition = {
+        kind: "import",
+        symbol_id: import_id,
+        name: "PrivateClass" as SymbolName,
+        defining_scope_id: FILE_SCOPE_ID,
+        location: MOCK_LOCATION,
+        import_kind: "named",
+        source_path: "./import_graph",
+        is_exported: false,
+      };
+
+      // Setup non-exported class
+      const class_def: ClassDefinition = {
+        kind: "class",
+        symbol_id: private_class_id,
+        name: "PrivateClass" as SymbolName,
+        defining_scope_id: IMPORT_GRAPH_SCOPE,
+        location: { ...MOCK_LOCATION, file_path: IMPORT_GRAPH_FILE },
+        is_exported: false, // Not exported!
+        extends: [],
+        methods: [],
+        properties: [],
+        decorators: [],
+        constructor: [],
+      };
+
+      definitions.update_file(TEST_FILE, [import_def]);
+      definitions.update_file(IMPORT_GRAPH_FILE, [class_def]);
+
+      const context_with_resolver: ResolutionContext = {
+        ...context,
+        resolve_import_path: (id) =>
+          id === import_id ? IMPORT_GRAPH_FILE : undefined,
+      };
+
+      const result = resolve_method_on_type(
+        import_id,
+        "some_method" as SymbolName,
+        context_with_resolver
+      );
+
+      expect(result).toEqual([]);
+    });
+  });
 });

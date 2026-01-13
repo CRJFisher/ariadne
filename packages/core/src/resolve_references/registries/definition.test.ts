@@ -412,53 +412,6 @@ describe("DefinitionRegistry", () => {
     });
   });
 
-  describe("has", () => {
-    it("should return true for defined symbols", () => {
-      const file1 = "file1.ts" as FilePath;
-      const root_scope = `scope:${file1}:module` as ScopeId;
-      const func_id = function_symbol("foo" as SymbolName, {
-        file_path: file1,
-        start_line: 1,
-        start_column: 0,
-        end_line: 3,
-        end_column: 1,
-      });
-      const func_body_scope = `scope:${file1}:function:foo:1:0` as ScopeId;
-
-      const func: FunctionDefinition = {
-        kind: "function",
-        symbol_id: func_id,
-        name: "foo" as SymbolName,
-        defining_scope_id: root_scope,
-        location: {
-          file_path: file1,
-          start_line: 1,
-          start_column: 0,
-          end_line: 3,
-          end_column: 1,
-        },
-        is_exported: true,
-        signature: { parameters: [] },
-        body_scope_id: func_body_scope,
-      };
-
-      registry.update_file(file1, [func]);
-
-      expect(registry.has(func_id)).toBe(true);
-    });
-
-    it("should return false for undefined symbols", () => {
-      const unknown = function_symbol("unknown" as SymbolName, {
-        file_path: "test.ts" as FilePath,
-        start_line: 1,
-        start_column: 0,
-        end_line: 1,
-        end_column: 0,
-      });
-      expect(registry.has(unknown)).toBe(false);
-    });
-  });
-
   describe("get_all_files", () => {
     it("should return all files with definitions", () => {
       const file1 = "file1.ts" as FilePath;

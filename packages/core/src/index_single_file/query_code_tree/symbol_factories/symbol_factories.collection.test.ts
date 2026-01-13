@@ -202,6 +202,55 @@ describe("Collection Resolution Tests", () => {
       expect(result?.stored_references).toContain("fn1");
       expect(result?.stored_references).toContain("fn2");
     });
+
+    it("should detect object with shorthand method definitions", () => {
+      // This is the pattern used for JAVASCRIPT_METADATA_EXTRACTORS
+      const code = `const MY_OBJECT = {
+  method_a() {
+    return MY_OBJECT.method_b();
+  },
+  method_b() {
+    return 1;
+  }
+};`;
+      const tree = ts_parser.parse(code);
+      const declaration = tree.rootNode.child(0)!; // lexical_declaration
+      const declarator = declaration.namedChildren[0]!; // variable_declarator
+
+      const result = detect_js_collection(declarator, TEST_FILE);
+
+      expect(result).toBeDefined();
+      expect(result?.collection_type).toBe("Object");
+      // Shorthand methods should be stored as functions (not references)
+      expect(result?.stored_functions).toHaveLength(2);
+      // Method symbols include the name in their ID
+      expect(result?.stored_functions?.[0]).toContain("method_a");
+      expect(result?.stored_functions?.[1]).toContain("method_b");
+    });
+
+    it("should detect object with mixed shorthand methods and references", () => {
+      // Mix of shorthand methods and function references
+      const code = `const EXTRACTORS = {
+  extract_type() { return "type"; },
+  extract_name: external_fn,
+  extract_value() { return "value"; }
+};`;
+      const tree = ts_parser.parse(code);
+      const declaration = tree.rootNode.child(0)!;
+      const declarator = declaration.namedChildren[0]!;
+
+      const result = detect_js_collection(declarator, TEST_FILE);
+
+      expect(result).toBeDefined();
+      expect(result?.collection_type).toBe("Object");
+      // 2 shorthand methods
+      expect(result?.stored_functions).toHaveLength(2);
+      expect(result?.stored_functions?.[0]).toContain("extract_type");
+      expect(result?.stored_functions?.[1]).toContain("extract_value");
+      // 1 reference
+      expect(result?.stored_references).toHaveLength(1);
+      expect(result?.stored_references).toContain("external_fn");
+    });
   });
 
   describe("Python Support", () => {

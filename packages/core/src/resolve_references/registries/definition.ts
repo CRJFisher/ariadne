@@ -245,17 +245,7 @@ export class DefinitionRegistry {
     }
     return exportables;
   }
-
-  /**
-   * Check if a symbol is defined in the registry.
-   *
-   * @param symbol_id - The symbol to check
-   * @returns True if the symbol has a definition
-   */
-  has(symbol_id: SymbolId): boolean {
-    return this.by_symbol.has(symbol_id);
-  }
-
+  
   /**
    * Get all files that have definitions.
    *

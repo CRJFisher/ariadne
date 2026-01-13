@@ -486,7 +486,7 @@ export function process_references(
         capture.category === "return"
     )
     .reduce(
-      (builder, capture) => builder.process(capture),
+      (builder: ReferenceBuilder, capture) => builder.process(capture),
       new ReferenceBuilder(context, extractors, file_path)
     )
     .references;
