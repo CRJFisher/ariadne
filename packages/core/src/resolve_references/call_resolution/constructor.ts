@@ -76,10 +76,8 @@ export function resolve_constructor_call(
   }
 
   // Step 3: Return constructor symbol if exists, otherwise class symbol
-  // Classes may have explicit constructor methods
-  const constructor_symbol = class_def.methods.find(
-    (method) => method.name === "constructor"
-  )?.symbol_id;
+  // Constructors are stored in class_def.constructor array, not methods
+  const constructor_symbol = class_def.constructor?.[0]?.symbol_id;
 
   return [constructor_symbol || class_symbol];
 }
