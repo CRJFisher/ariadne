@@ -1,6 +1,28 @@
-import type { CallGraph, SymbolId, CallableNode } from "@ariadnejs/types";
+import type { CallGraph, SymbolId, CallableNode, Language, FilePath } from "@ariadnejs/types";
 import type { DefinitionRegistry } from "../resolve_references/registries/definition";
 import type { ResolutionRegistry } from "../resolve_references/resolve_references";
+import { is_test_file } from "../project/detect_test_file";
+
+/**
+ * Detect language from file extension
+ */
+function detect_language(file_path: FilePath): Language {
+  const ext = file_path.split(".").pop()?.toLowerCase();
+  switch (ext) {
+    case "ts":
+    case "tsx":
+      return "typescript" as Language;
+    case "js":
+    case "jsx":
+      return "javascript" as Language;
+    case "py":
+      return "python" as Language;
+    case "rs":
+      return "rust" as Language;
+    default:
+      return "typescript" as Language; // Default for unknown
+  }
+}
 
 /**
  * Build function nodes with their enclosed calls.
@@ -36,6 +58,11 @@ function build_function_nodes(
     // Get calls made from this function's body scope
     const enclosed_calls = resolutions.get_calls_by_caller_scope(body_scope_id);
 
+    // Determine if this function is in a test file
+    const file_path = func_def.location.file_path;
+    const language = detect_language(file_path);
+    const is_test = is_test_file(file_path, language);
+
     // Create function node
     nodes.set(func_def.symbol_id, {
       symbol_id: func_def.symbol_id,
@@ -43,6 +70,7 @@ function build_function_nodes(
       enclosed_calls,
       location: func_def.location,
       definition: func_def,
+      is_test,
     });
   }
 

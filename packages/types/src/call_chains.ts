@@ -45,6 +45,7 @@ export interface CallableNode {
   readonly enclosed_calls: readonly CallReference[];
   readonly location: Location;
   readonly definition: AnyDefinition;
+  readonly is_test: boolean;
 }
 
 /**

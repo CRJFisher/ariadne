@@ -20,7 +20,6 @@ export {
   ExportRegistry,
   ImportGraph,
   ResolutionRegistry,
-  is_test_file
 } from "./project";
 
 // Profiling

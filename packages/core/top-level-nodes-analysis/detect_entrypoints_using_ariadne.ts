@@ -12,7 +12,8 @@
  */
 
 // Import from source - tsx transpiles TypeScript without build step
-import { Project, profiler, is_test_file } from "../src/index.js";
+import { Project, profiler } from "../src/index.js";
+import { is_test_file } from "../src/project/detect_test_file.js";
 import { FilePath, Language } from "@ariadnejs/types";
 import * as path from "path";
 import * as fs from "fs/promises";

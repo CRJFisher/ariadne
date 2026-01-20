@@ -5,4 +5,3 @@ export { ExportRegistry } from "../resolve_references/registries/export";
 export { ImportGraph } from "./import_graph";
 export { ResolutionRegistry } from "../resolve_references/resolve_references";
 export { Project } from "./project";
-export { is_test_file } from "./detect_test_file";
