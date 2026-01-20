@@ -561,40 +561,6 @@ export class ResolutionRegistry {
   }
 
   /**
-   * Get all resolved calls in a file.
-   *
-   * @param file_path - File to get calls for
-   * @returns Array of calls in that file
-   */
-  get_file_calls(file_path: FilePath): readonly CallReference[] {
-    return this.resolved_calls_by_file.get(file_path) || [];
-  }
-
-  /**
-   * Add a function to the indirect reachability set.
-   * Used when a function is reachable through a mechanism other than a direct call edge.
-   *
-   * @param fn_id - The function that is indirectly reachable
-   * @param reason - The reason for indirect reachability
-   */
-  add_indirect_reachability(
-    fn_id: SymbolId,
-    reason: {
-      type: "collection_read";
-      collection_id: SymbolId;
-      read_location: {
-        file_path: FilePath;
-        start_line: number;
-        start_column: number;
-        end_line: number;
-        end_column: number;
-      };
-    }
-  ): void {
-    this.indirect_reachability.set(fn_id, { function_id: fn_id, reason });
-  }
-
-  /**
    * Get all indirectly reachable functions.
    * Used for call graph output.
    *
@@ -747,17 +713,15 @@ export class ResolutionRegistry {
   }
 
   /**
-   * Resolve callback invocations for anonymous functions passed to external functions.
+   * Resolve callback invocations for anonymous functions passed to higher-order functions.
    *
    * Strategy:
    * 1. Find all anonymous functions with callback_context.is_callback = true
    * 2. For each callback, find the call reference at receiver_location
-   * 3. Try to resolve the receiver function (the function receiving the callback)
-   * 4. If receiver is external (unresolved or type-only), create invocation edge
-   * 5. Mark the edge with is_callback_invocation: true
+   * 3. Create a synthetic invocation edge marking the callback as "invoked"
    *
-   * This marks callbacks to built-in/library functions as "invoked", removing them
-   * from entry points while preserving callbacks to user code as entry points.
+   * This marks callbacks passed to any function (internal or external) as "invoked",
+   * removing them from entry points. Most higher-order functions invoke their callbacks.
    *
    * @param file_ids - Files being processed
    * @param references - Reference registry to find call references
@@ -821,50 +785,22 @@ export class ResolutionRegistry {
         continue; // Couldn't find receiver call (shouldn't happen)
       }
 
-      // Classify: Try to resolve the receiver function
-      // If it resolves to our code → internal (keep as entry point)
-      // If it doesn't resolve or resolves to type-only → external (mark as invoked)
-      const receiver_symbol_id = this.resolve(
-        receiver_call.scope_id,
-        receiver_call.name
-      );
-
-      let is_external = false;
-
-      if (!receiver_symbol_id) {
-        // Can't resolve → likely built-in or library function → external
-        is_external = true;
-      } else {
-        // Check if it resolves to a concrete definition in our code
-        const receiver_def = definitions.get(receiver_symbol_id);
-        if (!receiver_def) {
-          // Resolved but no definition → type definition only → external
-          is_external = true;
-        } else {
-          // Has definition in our code → internal
-          is_external = false;
-        }
-      }
-
-      // Only create invocation edge for external callbacks
-      if (is_external) {
-        // Create synthetic call reference: receiver → callback
-        // This marks the callback as "invoked" by the external function
-        invocations.push({
-          location: callback_context.receiver_location,
-          name: "<anonymous>" as SymbolName,
-          scope_id: callable.defining_scope_id, // Scope where callback is defined
-          call_type: "function",
-          resolutions: [
-            {
-              symbol_id: callable.symbol_id, // The anonymous function being invoked
-              confidence: "certain" as const,
-              reason: { type: "direct" as const },
-            },
-          ],
-          is_callback_invocation: true, // Mark as synthetic callback invocation
-        });
-      }
+      // Create synthetic call reference: receiver → callback
+      // This marks the callback as "invoked" by the receiving function
+      invocations.push({
+        location: callback_context.receiver_location,
+        name: "<anonymous>" as SymbolName,
+        scope_id: callable.defining_scope_id, // Scope where callback is defined
+        call_type: "function",
+        resolutions: [
+          {
+            symbol_id: callable.symbol_id, // The anonymous function being invoked
+            confidence: "certain" as const,
+            reason: { type: "direct" as const },
+          },
+        ],
+        is_callback_invocation: true, // Mark as synthetic callback invocation
+      });
     }
 
     return invocations;
