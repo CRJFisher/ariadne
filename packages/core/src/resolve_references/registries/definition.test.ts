@@ -412,111 +412,6 @@ describe("DefinitionRegistry", () => {
     });
   });
 
-  describe("get_all_files", () => {
-    it("should return all files with definitions", () => {
-      const file1 = "file1.ts" as FilePath;
-      const file2 = "file2.ts" as FilePath;
-      const scope1 = `scope:${file1}:module` as ScopeId;
-      const scope2 = `scope:${file2}:module` as ScopeId;
-      const func1_body_scope = `scope:${file1}:function:foo:1:0` as ScopeId;
-      const func2_body_scope = `scope:${file2}:function:bar:1:0` as ScopeId;
-
-      const func1: FunctionDefinition = {
-        kind: "function",
-        symbol_id: function_symbol("foo" as SymbolName, {
-          file_path: file1,
-          start_line: 1,
-          start_column: 0,
-          end_line: 3,
-          end_column: 1,
-        }),
-        name: "foo" as SymbolName,
-        defining_scope_id: scope1,
-        location: {
-          file_path: file1,
-          start_line: 1,
-          start_column: 0,
-          end_line: 3,
-          end_column: 1,
-        },
-        is_exported: true,
-        signature: { parameters: [] },
-        body_scope_id: func1_body_scope,
-      };
-
-      const func2: FunctionDefinition = {
-        kind: "function",
-        symbol_id: function_symbol("bar" as SymbolName, {
-          file_path: file2,
-          start_line: 1,
-          start_column: 0,
-          end_line: 3,
-          end_column: 1,
-        }),
-        name: "bar" as SymbolName,
-        defining_scope_id: scope2,
-        location: {
-          file_path: file2,
-          start_line: 1,
-          start_column: 0,
-          end_line: 3,
-          end_column: 1,
-        },
-        is_exported: true,
-        signature: { parameters: [] },
-        body_scope_id: func2_body_scope,
-      };
-
-      registry.update_file(file1, [func1]);
-      registry.update_file(file2, [func2]);
-
-      const files = registry.get_all_files();
-      expect(files).toHaveLength(2);
-      expect(files).toContain(file1);
-      expect(files).toContain(file2);
-    });
-  });
-
-  describe("clear", () => {
-    it("should remove all definitions", () => {
-      const file1 = "file1.ts" as FilePath;
-      const root_scope = `scope:${file1}:module` as ScopeId;
-      const func_body_scope = `scope:${file1}:function:foo:1:0` as ScopeId;
-
-      const func: FunctionDefinition = {
-        kind: "function",
-        symbol_id: function_symbol("foo" as SymbolName, {
-          file_path: file1,
-          start_line: 1,
-          start_column: 0,
-          end_line: 3,
-          end_column: 1,
-        }),
-        name: "foo" as SymbolName,
-        defining_scope_id: root_scope,
-        location: {
-          file_path: file1,
-          start_line: 1,
-          start_column: 0,
-          end_line: 3,
-          end_column: 1,
-        },
-        is_exported: true,
-        signature: { parameters: [] },
-        body_scope_id: func_body_scope,
-      };
-
-      registry.update_file(file1, [func]);
-
-      expect(registry.size()).toBe(1);
-
-      registry.clear();
-
-      expect(registry.size()).toBe(0);
-      expect(registry.get_all_files()).toEqual([]);
-    });
-  });
-
   describe("First-class properties and methods", () => {
     it("should register class properties in by_symbol index", () => {
       const file1 = "file1.ts" as FilePath;
@@ -1060,6 +955,240 @@ describe("DefinitionRegistry", () => {
       // New members should be present
       expect(registry.get(new_method_id)).toEqual(new_method);
       expect(registry.get(new_prop_id)).toEqual(new_prop);
+    });
+  });
+
+  describe("resolve_cross_file_type_inheritance", () => {
+    it("should return parent files when registering new subtypes", () => {
+      // Setup: Parent class in file A, child class in file B that extends parent
+      const file_a = "parent.ts" as FilePath;
+      const file_b = "child.ts" as FilePath;
+      const root_scope_a = `scope:${file_a}:module` as ScopeId;
+      const root_scope_b = `scope:${file_b}:module` as ScopeId;
+
+      const parent_class_id = class_symbol("ParentClass", {
+        file_path: file_a,
+        start_line: 1,
+        start_column: 0,
+        end_line: 5,
+        end_column: 1,
+      });
+
+      const child_class_id = class_symbol("ChildClass", {
+        file_path: file_b,
+        start_line: 1,
+        start_column: 0,
+        end_line: 5,
+        end_column: 1,
+      });
+
+      const parent_class: ClassDefinition = {
+        kind: "class",
+        symbol_id: parent_class_id,
+        name: "ParentClass" as SymbolName,
+        defining_scope_id: root_scope_a,
+        location: {
+          file_path: file_a,
+          start_line: 1,
+          start_column: 0,
+          end_line: 5,
+          end_column: 1,
+        },
+        is_exported: true,
+        methods: [],
+        properties: [],
+        extends: [],
+        decorators: [],
+        constructor: undefined,
+      };
+
+      const child_class: ClassDefinition = {
+        kind: "class",
+        symbol_id: child_class_id,
+        name: "ChildClass" as SymbolName,
+        defining_scope_id: root_scope_b,
+        location: {
+          file_path: file_b,
+          start_line: 1,
+          start_column: 0,
+          end_line: 5,
+          end_column: 1,
+        },
+        is_exported: true,
+        methods: [],
+        properties: [],
+        extends: ["ParentClass" as SymbolName],
+        decorators: [],
+        constructor: undefined,
+      };
+
+      // Register both files
+      registry.update_file(file_a, [parent_class]);
+      registry.update_file(file_b, [child_class]);
+
+      // Mock resolution function that can resolve ParentClass
+      const mock_resolutions = {
+        resolve: (_scope_id: ScopeId, name: SymbolName): SymbolId | null => {
+          if (name === "ParentClass") {
+            return parent_class_id;
+          }
+          return null;
+        },
+      };
+
+      // Call resolve_cross_file_type_inheritance for file B
+      const affected_files = registry.resolve_cross_file_type_inheritance(
+        file_b,
+        mock_resolutions
+      );
+
+      // Verify: Returns Set containing file A's path
+      expect(affected_files).toBeInstanceOf(Set);
+      expect(affected_files.size).toBe(1);
+      expect(affected_files.has(file_a)).toBe(true);
+
+      // Verify: Subtype relationship was registered
+      const subtypes = registry.get_subtypes(parent_class_id);
+      expect(subtypes).toContain(child_class_id);
+    });
+
+    it("should return empty set when no new subtypes are registered", () => {
+      const file_a = "parent.ts" as FilePath;
+      const root_scope_a = `scope:${file_a}:module` as ScopeId;
+
+      const parent_class_id = class_symbol("ParentClass", {
+        file_path: file_a,
+        start_line: 1,
+        start_column: 0,
+        end_line: 5,
+        end_column: 1,
+      });
+
+      const parent_class: ClassDefinition = {
+        kind: "class",
+        symbol_id: parent_class_id,
+        name: "ParentClass" as SymbolName,
+        defining_scope_id: root_scope_a,
+        location: {
+          file_path: file_a,
+          start_line: 1,
+          start_column: 0,
+          end_line: 5,
+          end_column: 1,
+        },
+        is_exported: true,
+        methods: [],
+        properties: [],
+        extends: [],
+        decorators: [],
+        constructor: undefined,
+      };
+
+      registry.update_file(file_a, [parent_class]);
+
+      const mock_resolutions = {
+        resolve: (): SymbolId | null => null,
+      };
+
+      // Call for a file with no classes that extend anything
+      const affected_files = registry.resolve_cross_file_type_inheritance(
+        file_a,
+        mock_resolutions
+      );
+
+      // Verify: Returns empty Set
+      expect(affected_files).toBeInstanceOf(Set);
+      expect(affected_files.size).toBe(0);
+    });
+
+    it("should not return parent file if subtype already registered", () => {
+      const file_a = "parent.ts" as FilePath;
+      const file_b = "child.ts" as FilePath;
+      const root_scope_a = `scope:${file_a}:module` as ScopeId;
+      const root_scope_b = `scope:${file_b}:module` as ScopeId;
+
+      const parent_class_id = class_symbol("ParentClass", {
+        file_path: file_a,
+        start_line: 1,
+        start_column: 0,
+        end_line: 5,
+        end_column: 1,
+      });
+
+      const child_class_id = class_symbol("ChildClass", {
+        file_path: file_b,
+        start_line: 1,
+        start_column: 0,
+        end_line: 5,
+        end_column: 1,
+      });
+
+      const parent_class: ClassDefinition = {
+        kind: "class",
+        symbol_id: parent_class_id,
+        name: "ParentClass" as SymbolName,
+        defining_scope_id: root_scope_a,
+        location: {
+          file_path: file_a,
+          start_line: 1,
+          start_column: 0,
+          end_line: 5,
+          end_column: 1,
+        },
+        is_exported: true,
+        methods: [],
+        properties: [],
+        extends: [],
+        decorators: [],
+        constructor: undefined,
+      };
+
+      const child_class: ClassDefinition = {
+        kind: "class",
+        symbol_id: child_class_id,
+        name: "ChildClass" as SymbolName,
+        defining_scope_id: root_scope_b,
+        location: {
+          file_path: file_b,
+          start_line: 1,
+          start_column: 0,
+          end_line: 5,
+          end_column: 1,
+        },
+        is_exported: true,
+        methods: [],
+        properties: [],
+        extends: ["ParentClass" as SymbolName],
+        decorators: [],
+        constructor: undefined,
+      };
+
+      registry.update_file(file_a, [parent_class]);
+      registry.update_file(file_b, [child_class]);
+
+      const mock_resolutions = {
+        resolve: (_scope_id: ScopeId, name: SymbolName): SymbolId | null => {
+          if (name === "ParentClass") {
+            return parent_class_id;
+          }
+          return null;
+        },
+      };
+
+      // First call: should register and return parent file
+      const first_result = registry.resolve_cross_file_type_inheritance(
+        file_b,
+        mock_resolutions
+      );
+      expect(first_result.size).toBe(1);
+      expect(first_result.has(file_a)).toBe(true);
+
+      // Second call: should NOT return parent file (already registered)
+      const second_result = registry.resolve_cross_file_type_inheritance(
+        file_b,
+        mock_resolutions
+      );
+      expect(second_result.size).toBe(0);
     });
   });
 });

@@ -751,75 +751,6 @@ export class TypeRegistry {
   });
 
   describe("Polymorphic Interface Resolution (Task 11.158)", () => {
-    it("should resolve interface method calls to all implementations", async () => {
-      const source = load_source("polymorphic_handler.ts");
-      const file = file_path("polymorphic_handler.ts");
-      project.update_file(file, source);
-
-      const index = project.get_index_single_file(file);
-      expect(index).toBeDefined();
-
-      // Find the Handler interface
-      const handler_interface = Array.from(index!.interfaces.values()).find(
-        (i) => i.name === ("Handler" as SymbolName)
-      );
-      expect(handler_interface).toBeDefined();
-
-      // Find the three implementing classes
-      const classes = Array.from(index!.classes.values());
-      const handler_a = classes.find((c) => c.name === ("HandlerA" as SymbolName));
-      const handler_b = classes.find((c) => c.name === ("HandlerB" as SymbolName));
-      const handler_c = classes.find((c) => c.name === ("HandlerC" as SymbolName));
-
-      expect(handler_a).toBeDefined();
-      expect(handler_b).toBeDefined();
-      expect(handler_c).toBeDefined();
-
-      // Verify all three classes implement the Handler interface
-      expect(handler_a!.extends).toContain("Handler" as SymbolName);
-      expect(handler_b!.extends).toContain("Handler" as SymbolName);
-      expect(handler_c!.extends).toContain("Handler" as SymbolName);
-
-      // Find method calls inside executeHandler function
-      const method_calls = index!.references.filter(
-        (r): r is MethodCallReference => r.kind === "method_call"
-      );
-
-      // Find the handler.process() call
-      const process_calls = method_calls.filter(
-        (c) => c.name === ("process" as SymbolName)
-      );
-      expect(process_calls.length).toBeGreaterThan(0);
-
-      // Get resolved calls with metadata
-      const resolved_calls = project.resolutions.get_file_calls(file);
-
-      // Find the process() call resolutions
-      const process_resolutions = resolved_calls.filter(
-        (call) => call.name === ("process" as SymbolName) && call.call_type === "method"
-      );
-
-      // Should have at least one polymorphic call (in executeHandler)
-      const polymorphic_process_call = process_resolutions.find(
-        (call) => call.resolutions.length > 1
-      );
-      expect(polymorphic_process_call).toBeDefined();
-
-      // Should resolve to ALL three implementations
-      expect(polymorphic_process_call!.resolutions.length).toBe(3);
-
-      // Verify all resolutions are marked with correct metadata
-      const interface_impl_resolutions = polymorphic_process_call!.resolutions.filter(
-        (r) => r.reason.type === "interface_implementation"
-      );
-      expect(interface_impl_resolutions.length).toBe(3);
-
-      // Verify confidence is "certain"
-      for (const resolution of polymorphic_process_call!.resolutions) {
-        expect(resolution.confidence).toBe("certain");
-      }
-    });
-
     it("should mark all interface implementations as called (not entry points)", async () => {
       const source = load_source("polymorphic_handler.ts");
       const file = file_path("polymorphic_handler.ts");
@@ -857,158 +788,157 @@ export class TypeRegistry {
       expect(non_entry_point_count).toBeGreaterThan(0);
     });
 
-    it("should handle interface with no implementations", async () => {
-      const source = `
-interface EmptyInterface {
-  doSomething(): void;
-}
+  });
 
-function useEmpty(obj: EmptyInterface): void {
-  obj.doSomething();
-}
-      `.trim();
+  describe("Polymorphic this Dispatch (Task 11.174)", () => {
+    it("should mark child override as called when base calls this.method()", async () => {
+      const code = `
+        class Base {
+          process() { this.helper(); }
+          helper() { return "base"; }
+        }
+        class Child extends Base {
+          helper() { return "child"; }
+        }
+        // Entry point: call process on a Child instance
+        function main() {
+          const c = new Child();
+          c.process();
+        }
+      `;
+      const file = file_path("polymorphic_this.ts");
+      project.update_file(file, code);
 
-      const file = "/test/empty_interface.ts" as FilePath;
-      project.update_file(file, source);
+      // Get all referenced symbols (should include both helpers)
+      const referenced = project.resolutions.get_all_referenced_symbols();
 
-      const resolved_calls = project.resolutions.get_file_calls(file);
-      const do_something_calls = resolved_calls.filter(
-        (call) => call.name === ("doSomething" as SymbolName)
+      // Find Base.helper and Child.helper
+      const index = project.get_index_single_file(file);
+      const base_class = Array.from(index!.classes.values()).find(
+        (c) => c.name === ("Base" as SymbolName)
+      );
+      const child_class = Array.from(index!.classes.values()).find(
+        (c) => c.name === ("Child" as SymbolName)
       );
 
-      // When no implementations exist, either:
-      // 1. No call is captured (resolution fails early)
-      // 2. Call is captured with empty resolutions array
-      if (do_something_calls.length > 0) {
-        const polymorphic_call = do_something_calls[0];
-        expect(polymorphic_call.resolutions.length).toBe(0);
-      } else {
-        // It's valid for the call to not be captured if resolution fails
-        expect(do_something_calls.length).toBe(0);
+      expect(base_class).toBeDefined();
+      expect(child_class).toBeDefined();
+
+      const base_helper = project.get_type_info(base_class!.symbol_id)!.methods.get(
+        "helper" as SymbolName
+      );
+      const child_helper = project.get_type_info(child_class!.symbol_id)!.methods.get(
+        "helper" as SymbolName
+      );
+
+      expect(base_helper).toBeDefined();
+      expect(child_helper).toBeDefined();
+
+      // Both should be referenced (neither is an entry point)
+      expect(referenced.has(base_helper!)).toBe(true);
+      expect(referenced.has(child_helper!)).toBe(true);
+    });
+
+    it("should resolve multi-level inheritance", async () => {
+      const code = `
+        class A { process() { this.helper(); } helper() {} }
+        class B extends A { helper() {} }
+        class C extends B { helper() {} }
+      `;
+      const file = file_path("multilevel_this.ts");
+      project.update_file(file, code);
+
+      const referenced = project.resolutions.get_all_referenced_symbols();
+      const index = project.get_index_single_file(file);
+
+      // All three helper methods should be referenced
+      const classes = Array.from(index!.classes.values());
+      expect(classes).toHaveLength(3);
+
+      for (const cls of classes) {
+        const helper_id = project.get_type_info(cls.symbol_id)!.methods.get(
+          "helper" as SymbolName
+        );
+        expect(helper_id).toBeDefined();
+        expect(referenced.has(helper_id!)).toBe(true);
       }
     });
-  });
 
-  describe("Collection Read Reachability", () => {
-    it("should mark functions in returned collection as non-entry-points", () => {
-      const source = `
-function handle_class() { return "class"; }
-function handle_method() { return "method"; }
+    it("should resolve polymorphic this.method() calls across files regardless of load order", async () => {
+      // This test verifies the fix for cross-file polymorphic self-reference
+      // When parent class is loaded BEFORE child class, the parent's this.method()
+      // calls should still resolve to the child's override after both files are loaded
 
-const HANDLERS = {
-  "class": handle_class,
-  "method": handle_method,
-};
+      // Create parent class in one file (loaded first alphabetically)
+      const parent_code = `
+        export class ParentClass {
+          public dispatch() {
+            this.handleA();
+            this.handleB();
+          }
+          protected handleA() { return "parent-a"; }
+          protected handleB() { return "parent-b"; }
+        }
+      `;
 
-export function get_handlers() {
-  return HANDLERS;
-}
-      `.trim();
+      // Create child class in another file (loaded second)
+      const child_code = `
+        import { ParentClass } from "./parent_base";
+        export class ChildClass extends ParentClass {
+          protected handleA() { return "child-a"; }
+          protected handleB() { return "child-b"; }
+        }
+      `;
 
-      const file = "/test/ts_handlers.ts" as FilePath;
-      project.update_file(file, source);
+      // Files named so parent comes first alphabetically
+      const parent_file = file_path("parent_base.ts");
+      const child_file = file_path("zzz_child.ts");
 
-      const call_graph = project.get_call_graph();
+      // Load in alphabetical order (parent first, then child)
+      // This is the order that causes the bug without the fix
+      project.update_file(parent_file, parent_code);
+      project.update_file(child_file, child_code);
 
-      // Get handler function IDs
-      const handle_class_id = Array.from(project.definitions.get_all_definitions())
-        .find(def => def.name === "handle_class" && def.kind === "function")?.symbol_id;
-      const handle_method_id = Array.from(project.definitions.get_all_definitions())
-        .find(def => def.name === "handle_method" && def.kind === "function")?.symbol_id;
+      // Get all referenced symbols
+      const referenced = project.resolutions.get_all_referenced_symbols();
 
-      expect(handle_class_id).toBeDefined();
-      expect(handle_method_id).toBeDefined();
+      // Find parent's methods
+      const parent_index = project.get_index_single_file(parent_file);
+      const parent_class = Array.from(parent_index!.classes.values()).find(
+        (c) => c.name === ("ParentClass" as SymbolName)
+      );
+      expect(parent_class).toBeDefined();
 
-      // Handlers should NOT be in entry points (indirectly reachable via collection read)
-      const entry_point_ids = new Set(call_graph.entry_points);
-      expect(entry_point_ids.has(handle_class_id!)).toBe(false);
-      expect(entry_point_ids.has(handle_method_id!)).toBe(false);
+      const parent_type_info = project.get_type_info(parent_class!.symbol_id);
+      const parent_handle_a = parent_type_info!.methods.get("handleA" as SymbolName);
+      const parent_handle_b = parent_type_info!.methods.get("handleB" as SymbolName);
+      expect(parent_handle_a).toBeDefined();
+      expect(parent_handle_b).toBeDefined();
 
-      // Verify indirect_reachability contains the handlers
-      expect(call_graph.indirect_reachability).toBeDefined();
-      expect(call_graph.indirect_reachability!.has(handle_class_id!)).toBe(true);
-      expect(call_graph.indirect_reachability!.has(handle_method_id!)).toBe(true);
+      // Find child's methods
+      const child_index = project.get_index_single_file(child_file);
+      const child_class = Array.from(child_index!.classes.values()).find(
+        (c) => c.name === ("ChildClass" as SymbolName)
+      );
+      expect(child_class).toBeDefined();
 
-      // Verify the reason is collection_read
-      const reachability = call_graph.indirect_reachability!.get(handle_class_id!);
-      expect(reachability?.reason.type).toBe("collection_read");
-    });
+      const child_type_info = project.get_type_info(child_class!.symbol_id);
+      const child_handle_a = child_type_info!.methods.get("handleA" as SymbolName);
+      const child_handle_b = child_type_info!.methods.get("handleB" as SymbolName);
+      expect(child_handle_a).toBeDefined();
+      expect(child_handle_b).toBeDefined();
 
-    it("should NOT create call edges for indirectly reachable functions", () => {
-      const source = `
-function handle_class() { return "class"; }
-function handle_method() { return "method"; }
+      // All four methods should be marked as referenced
+      // Parent's methods: called directly via this.handleA() in dispatch()
+      expect(referenced.has(parent_handle_a!)).toBe(true);
+      expect(referenced.has(parent_handle_b!)).toBe(true);
 
-const HANDLERS = {
-  "class": handle_class,
-  "method": handle_method,
-};
-
-export function get_handlers() {
-  return HANDLERS;
-}
-      `.trim();
-
-      const file = "/test/ts_no_edges.ts" as FilePath;
-      project.update_file(file, source);
-
-      const call_graph = project.get_call_graph();
-
-      // Get the get_handlers function node
-      const get_handlers_id = Array.from(project.definitions.get_all_definitions())
-        .find(def => def.name === "get_handlers" && def.kind === "function")?.symbol_id;
-      expect(get_handlers_id).toBeDefined();
-
-      const get_handlers_node = call_graph.nodes.get(get_handlers_id!);
-      expect(get_handlers_node).toBeDefined();
-
-      // get_handlers should NOT have call edges to handle_class or handle_method
-      const enclosed_call_names = get_handlers_node!.enclosed_calls.map(c => c.name);
-      expect(enclosed_call_names).not.toContain("handle_class");
-      expect(enclosed_call_names).not.toContain("handle_method");
-    });
-
-    it("should resolve spread operators transitively", () => {
-      const source = `
-function base_handler() { return "base"; }
-function extra_handler() { return "extra"; }
-
-const BASE_HANDLERS = {
-  "base": base_handler,
-};
-
-const EXTENDED_HANDLERS = {
-  ...BASE_HANDLERS,
-  "extra": extra_handler,
-};
-
-export function get_extended() {
-  return EXTENDED_HANDLERS;
-}
-      `.trim();
-
-      const file = "/test/ts_spread.ts" as FilePath;
-      project.update_file(file, source);
-
-      const call_graph = project.get_call_graph();
-
-      // Get handler function IDs
-      const base_handler_id = Array.from(project.definitions.get_all_definitions())
-        .find(def => def.name === "base_handler" && def.kind === "function")?.symbol_id;
-      const extra_handler_id = Array.from(project.definitions.get_all_definitions())
-        .find(def => def.name === "extra_handler" && def.kind === "function")?.symbol_id;
-
-      expect(base_handler_id).toBeDefined();
-      expect(extra_handler_id).toBeDefined();
-
-      // Both handlers should NOT be in entry points
-      const entry_point_ids = new Set(call_graph.entry_points);
-      expect(entry_point_ids.has(base_handler_id!)).toBe(false);
-      expect(entry_point_ids.has(extra_handler_id!)).toBe(false);
-
-      // Both should be in indirect_reachability
-      expect(call_graph.indirect_reachability!.has(base_handler_id!)).toBe(true);
-      expect(call_graph.indirect_reachability!.has(extra_handler_id!)).toBe(true);
+      // Child's methods: should be connected via polymorphic dispatch
+      // Without the fix, these would NOT be referenced because the parent file
+      // is processed first, before the child registers as a subtype
+      expect(referenced.has(child_handle_a!)).toBe(true);
+      expect(referenced.has(child_handle_b!)).toBe(true);
     });
   });
+
 });

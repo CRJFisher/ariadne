@@ -283,12 +283,20 @@ export class Project {
     // Phase 3.5: Cross-file type inheritance resolution
     // Must happen AFTER name resolution (which resolves imports)
     // but BEFORE type/call resolution (which uses type_subtypes)
+    // Returns parent files that gained new subtypes - these need call re-resolution
     profiler.start("cross_file_inheritance");
+    const files_needing_call_reresolution = new Set<FilePath>();
     for (const affected_file of affected_files) {
-      this.definitions.resolve_cross_file_type_inheritance(
+      const parent_files = this.definitions.resolve_cross_file_type_inheritance(
         affected_file,
         this.resolutions
       );
+      // Collect parent files that need their calls re-resolved
+      // When a child class registers as a subtype, the parent's polymorphic
+      // this.method() calls need to be re-resolved to include the child
+      for (const parent_file of parent_files) {
+        files_needing_call_reresolution.add(parent_file);
+      }
     }
     profiler.end("cross_file_inheritance");
 
@@ -312,9 +320,15 @@ export class Project {
     // Phase 5: Call resolution (uses type information)
     // Must happen AFTER type registry is populated.
     // Method resolution needs types.get_symbol_type() to work correctly.
+    // Include parent files that gained new subtypes - their polymorphic calls
+    // need re-resolution to connect to newly-registered child class methods
     profiler.start("resolve_calls");
+    const call_resolution_files = new Set([
+      ...affected_files,
+      ...files_needing_call_reresolution,
+    ]);
     this.resolutions.resolve_calls_for_files(
-      affected_files,
+      call_resolution_files,
       this.references,
       this.scopes,
       this.types,

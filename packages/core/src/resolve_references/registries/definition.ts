@@ -246,23 +246,6 @@ export class DefinitionRegistry {
     return exportables;
   }
   
-  /**
-   * Get all files that have definitions.
-   *
-   * @returns Array of file IDs
-   */
-  get_all_files(): FilePath[] {
-    return Array.from(this.by_file.keys());
-  }
-
-  /**
-   * Get all definitions in the registry.
-   *
-   * @returns Array of all definitions
-   */
-  get_all_definitions(): AnyDefinition[] {
-    return Array.from(this.by_symbol.values());
-  }
 
   /**
    * Get the member index for fast member lookup.
@@ -536,10 +519,12 @@ export class DefinitionRegistry {
     resolutions: {
       resolve: (scope_id: ScopeId, name: SymbolName) => SymbolId | null;
     }
-  ): void {
+  ): Set<FilePath> {
+    const affected_parent_files = new Set<FilePath>();
+
     const file_symbols = this.by_file.get(file_id);
     if (!file_symbols) {
-      return;
+      return affected_parent_files;
     }
 
     for (const symbol_id of file_symbols) {
@@ -574,9 +559,19 @@ export class DefinitionRegistry {
           if (subtypes) {
             subtypes.add(def.symbol_id);
           }
+
+          // Track affected parent file for re-resolution
+          // When a new subtype is registered, the parent file's polymorphic
+          // calls need to be re-resolved to include the new subtype
+          const parent_def = this.by_symbol.get(parent_id);
+          if (parent_def) {
+            affected_parent_files.add(parent_def.location.file_path);
+          }
         }
       }
     }
+
+    return affected_parent_files;
   }
 
   /**
