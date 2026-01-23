@@ -18,6 +18,10 @@
 
 - DO NOT SUPPORT BACKWARD COMPATIBILITY - JUST _CHANGE_ THE CODE.
 
+## Language-specific code handling
+
+- When fixing a bug in a language-specific file, always consider whether the fix is applicable to oth languages. If it is, then the fix should be applied to all of the other language-specific files. This sort of fix should be tested with unit and integration tests.
+
 ## Documentation Style: Canonical and Self-Contained
 
 When writing or updating documentation, always write in a **canonical, self-contained** style. Documentation should describe the system as it currently IS, not as it was or how it changed.
@@ -121,6 +125,7 @@ const methodId = method_symbol('getValue', 'MyClass', 'src/classes.ts', location
 - **Functional Style**: Prefer pure functions over stateful classes
 - **Exports**: Only export what is actually used by external modules
 - **Dependencies**: Check existing libraries before adding new ones
+- Variables should almost always be non-nullable. Only make them nullable if you have a good reason to do so and its completely unavoidable.
 
 ## Backlog Workflow
 
