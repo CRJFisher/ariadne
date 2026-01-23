@@ -116,3 +116,26 @@ export interface InternalMisidentified {
     suggested_new_task_fix?: string;
   };
 }
+
+// ===== Dead Code Detection =====
+
+export type CallerPattern = "no-callers" | "test-only" | "has-production-callers";
+
+export interface DeletionRecord {
+  timestamp: string;
+  name: string;
+  file_path: string;
+  start_line: number;
+  reason: "no-callers" | "test-only";
+  test_files_deleted: string[];
+  test_files_modified: string[];
+}
+
+export interface DeadCodeAnalysisResult {
+  deletions: DeletionRecord[];
+  remaining_false_positives: FunctionEntry[];
+  total_analyzed: number;
+  total_deleted: number;
+  last_updated: string;
+  analysis_file: string;
+}

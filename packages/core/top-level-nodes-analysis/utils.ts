@@ -166,10 +166,10 @@ export async function load_json<T>(file_path: string): Promise<T> {
 }
 
 /**
- * Find the most recent analysis file in analysis_output directory
+ * Find the most recent file matching a prefix in analysis_output directory
  * Returns the absolute path to the file
  */
-export async function find_most_recent_analysis(): Promise<string> {
+async function find_most_recent_file(prefix: string, script_hint: string): Promise<string> {
   // eslint-disable-next-line @typescript-eslint/naming-convention
   const __filename = fileURLToPath(import.meta.url);
   // eslint-disable-next-line @typescript-eslint/naming-convention
@@ -179,28 +179,42 @@ export async function find_most_recent_analysis(): Promise<string> {
   try {
     const files = await fs.readdir(analysis_dir);
 
-    // Filter for analysis files matching the pattern
-    const analysis_files = files.filter((file) =>
-      file.startsWith("packages-core-analysis_")
-    );
+    // Filter for files matching the pattern
+    const matching_files = files.filter((file) => file.startsWith(prefix));
 
-    if (analysis_files.length === 0) {
+    if (matching_files.length === 0) {
       throw new Error(
-        `No analysis files found in ${analysis_dir}. Run detect_entrypoints_using_ariadne.ts first.`
+        `No ${prefix}* files found in ${analysis_dir}. Run ${script_hint} first.`
       );
     }
 
     // Sort by filename (timestamp is in the name) - most recent last
-    analysis_files.sort();
-    const most_recent = analysis_files[analysis_files.length - 1];
+    matching_files.sort();
+    const most_recent = matching_files[matching_files.length - 1];
 
     return path.join(analysis_dir, most_recent);
   } catch (error) {
     if ((error as { code?: string }).code === "ENOENT") {
       throw new Error(
-        `Analysis output directory not found: ${analysis_dir}. Run detect_entrypoints_using_ariadne.ts first.`
+        `Analysis output directory not found: ${analysis_dir}. Run ${script_hint} first.`
       );
     }
     throw error;
   }
+}
+
+/**
+ * Find the most recent analysis file in analysis_output directory
+ * Returns the absolute path to the file
+ */
+export async function find_most_recent_analysis(): Promise<string> {
+  return find_most_recent_file("packages-core-analysis_", "detect_entrypoints_using_ariadne.ts");
+}
+
+/**
+ * Find the most recent dead code analysis file in analysis_output directory
+ * Returns the absolute path to the file
+ */
+export async function find_most_recent_dead_code_analysis(): Promise<string> {
+  return find_most_recent_file("dead_code_analysis_", "detect_dead_code.ts");
 }

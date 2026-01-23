@@ -136,41 +136,18 @@ async function find_previous_analysis(
 }
 
 /**
- * Load expected entry point count from ground truth file
- */
-async function get_expected_entry_points(): Promise<number> {
-  try {
-    const ground_truth_path = path.join(__dirname, "ground_truth", "project_api_methods.json");
-    const content = await fs.readFile(ground_truth_path, "utf-8");
-    const api_methods = JSON.parse(content);
-    return Array.isArray(api_methods) ? api_methods.length : 0;
-  } catch {
-    throw Error("Could not get expected entry point count from ground truth file");
-  }
-}
-
-/**
  * Output comparison summary between current and previous analysis
  */
-async function output_comparison(
+function output_comparison(
   current: AnalysisResult,
   previous: AnalysisResult | null
-): Promise<void> {
-  const expected = await get_expected_entry_points();
-  const false_positives = current.total_entry_points - expected;
-
+): void {
   console.error("");
   console.error("═══════════════════════════════════════════════════════");
   console.error("           Entry Point Comparison");
   console.error("═══════════════════════════════════════════════════════");
 
-  // Show target vs current
-  if (expected > 0) {
-    console.error(`Target:   ${expected} entry points (from ground truth)`);
-    console.error(`Current:  ${current.total_entry_points} entry points`);
-    console.error(`Gap:      ${false_positives} false positives to eliminate`);
-    console.error("");
-  }
+  console.error(`Current:  ${current.total_entry_points} entry points`);
 
   // Show delta from previous run
   if (previous) {
@@ -179,31 +156,16 @@ async function output_comparison(
 
     if (delta < 0) {
       console.error(`Change:   ${delta} from previous (${prev_id})`);
+      console.error("Status:   📈 IMPROVING");
     } else if (delta > 0) {
       console.error(`Change:   +${delta} from previous (${prev_id})`);
+      console.error("Status:   ⚠️  REGRESSED");
     } else {
       console.error(`Change:   0 from previous (${prev_id})`);
-    }
-    console.error("");
-  }
-
-  // Overall assessment based on absolute position, not just delta
-  if (false_positives <= 0) {
-    console.error("Status:   ✅ TARGET REACHED");
-    console.error("Entry point count at or below expected!");
-  } else if (previous) {
-    const delta = current.total_entry_points - previous.total_entry_points;
-    if (delta < 0) {
-      console.error("Status:   📈 IMPROVING");
-      console.error(`Progress: ${((1 - false_positives / (previous.total_entry_points - expected)) * 100).toFixed(1)}% of gap closed`);
-    } else if (delta > 0) {
-      console.error("Status:   ⚠️  REGRESSED");
-      console.error("More entry points detected than before.");
-    } else {
       console.error("Status:   ⏸️  NO CHANGE");
     }
   } else {
-    console.error(`Status:   🎯 ${false_positives} false positives remaining`);
+    console.error("Status:   🆕 First analysis (no previous run to compare)");
   }
 
   console.error("═══════════════════════════════════════════════════════");
@@ -465,7 +427,7 @@ async function main() {
     // Always output to stdout if requested
     if (stdout_only) {
       console.log(json_formatted);
-      await output_comparison(result, previous);
+      output_comparison(result, previous);
       return;
     }
 
@@ -493,7 +455,7 @@ async function main() {
     console.error(`📁 Output written to: ${output_file}`);
 
     // Output comparison with previous analysis
-    await output_comparison(result, previous);
+    output_comparison(result, previous);
 
     // Also output to stdout for piping
     console.log(json_formatted);
