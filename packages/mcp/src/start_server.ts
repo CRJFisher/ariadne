@@ -9,7 +9,7 @@ import * as fs from "fs/promises";
 import { VERSION } from "./version";
 import { Project } from "@ariadnejs/core";
 import { FilePath } from "@ariadnejs/types";
-import { list_functions } from "./tools/list_functions.js";
+import { list_functions, list_functions_schema } from "./tools/list_functions.js";
 
 export interface AriadneMCPServerOptions {
   project_path?: string;
@@ -47,10 +47,15 @@ export async function start_server(
         {
           name: "list_functions",
           description:
-            "Lists all top-level (entry point) functions ordered by call tree complexity. Shows function signatures with parameters and return types, along with the total number of functions transitively called. Entry points are functions never called by other functions in the codebase - potential execution starting points.",
+            "Lists all top-level (entry point) functions ordered by call tree complexity. Shows function signatures with parameters and return types, along with the total number of functions transitively called. Entry points are functions never called by other functions in the codebase - potential execution starting points. Test functions are marked with [TEST].",
           inputSchema: {
             type: "object",
-            properties: {},
+            properties: {
+              include_tests: {
+                type: "boolean",
+                description: "Include test functions in output (default: true)",
+              },
+            },
             required: [],
           },
         },
@@ -68,7 +73,9 @@ export async function start_server(
           // Load all project files before analysis
           await load_project_files(project, project_path);
 
-          const result = await list_functions(project);
+          // Parse arguments using schema
+          const args = list_functions_schema.parse(request.params.arguments ?? {});
+          const result = await list_functions(project, args);
 
           return {
             content: [

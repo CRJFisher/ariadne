@@ -83,7 +83,7 @@ describe("MCP Server E2E - list_functions tool", () => {
     expect(server_process.killed).toBe(false);
   });
 
-  it("should list available tools and find list_functions", async () => {
+  it("should list available tools and find list_functions with include_tests parameter", async () => {
     const response = await client.listTools();
 
     expect(response).toBeDefined();
@@ -101,8 +101,15 @@ describe("MCP Server E2E - list_functions tool", () => {
     expect(list_functions_tool).toBeDefined();
     expect(list_functions_tool?.name).toBe("list_functions");
     expect(list_functions_tool?.description).toContain("entry point");
+    expect(list_functions_tool?.description).toContain("[TEST]");
     expect(list_functions_tool?.inputSchema).toBeDefined();
     expect(list_functions_tool?.inputSchema.type).toBe("object");
+
+    // Verify include_tests parameter is in schema
+    const schema = list_functions_tool?.inputSchema as any;
+    expect(schema.properties).toBeDefined();
+    expect(schema.properties.include_tests).toBeDefined();
+    expect(schema.properties.include_tests.type).toBe("boolean");
   });
 
   it("should call list_functions on packages/core and get valid response", async () => {
@@ -186,6 +193,77 @@ describe("MCP Server E2E - list_functions tool", () => {
     // Should have function name, params, return type, and count
     expect(first_func).toMatch(/- \w+\([^)]*\)/); // name and params
     expect(first_func).toMatch(/--\s+\d+/); // separator and count
+  }, 120000);
+
+  it("should mark test functions with [TEST] indicator", async () => {
+    // packages/core has test files, so we should see [TEST] markers
+    const response = await client.callTool({
+      name: "list_functions",
+      arguments: {},
+    });
+
+    const text = (response.content as any[])[0].text as string;
+
+    // Should contain [TEST] indicator for test entry points
+    expect(text).toContain("[TEST]");
+
+    // Count test vs non-test entry points
+    const lines = text.split("\n");
+    const test_entries = lines.filter((line) => line.includes("[TEST]"));
+    const non_test_entries = lines.filter(
+      (line) => line.startsWith("- ") && !line.includes("[TEST]")
+    );
+
+    console.log(`\nTest entry points: ${test_entries.length}`);
+    console.log(`Non-test entry points: ${non_test_entries.length}`);
+
+    // Should have both test and non-test entries
+    expect(test_entries.length).toBeGreaterThan(0);
+    expect(non_test_entries.length).toBeGreaterThan(0);
+  }, 120000);
+
+  it("should filter out test functions when include_tests is false", async () => {
+    // First get results with tests included
+    const with_tests_response = await client.callTool({
+      name: "list_functions",
+      arguments: { include_tests: true },
+    });
+    const with_tests_text = (with_tests_response.content as any[])[0]
+      .text as string;
+
+    // Then get results without tests
+    const without_tests_response = await client.callTool({
+      name: "list_functions",
+      arguments: { include_tests: false },
+    });
+    const without_tests_text = (without_tests_response.content as any[])[0]
+      .text as string;
+
+    // Without tests should not contain [TEST] marker
+    expect(without_tests_text).not.toContain("[TEST]");
+
+    // Extract counts
+    const with_tests_match = with_tests_text.match(
+      /Total:\s+(\d+)\s+entry points?/
+    );
+    const without_tests_match = without_tests_text.match(
+      /Total:\s+(\d+)\s+entry points?/
+    );
+
+    expect(with_tests_match).toBeDefined();
+    expect(without_tests_match).toBeDefined();
+
+    if (with_tests_match && without_tests_match) {
+      const with_tests_count = parseInt(with_tests_match[1], 10);
+      const without_tests_count = parseInt(without_tests_match[1], 10);
+
+      // With tests should have more entry points than without
+      expect(with_tests_count).toBeGreaterThan(without_tests_count);
+
+      console.log(`\nWith tests: ${with_tests_count} entry points`);
+      console.log(`Without tests: ${without_tests_count} entry points`);
+      console.log(`Test entry points filtered: ${with_tests_count - without_tests_count}`);
+    }
   }, 120000);
 
   it("should handle tool call errors gracefully", async () => {

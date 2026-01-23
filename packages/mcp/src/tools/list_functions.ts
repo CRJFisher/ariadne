@@ -12,9 +12,14 @@ import type {
 
 /**
  * Input schema for list_functions tool
- * No parameters - lists all entry points in the loaded project
+ * Optional include_tests parameter to filter test entry points
  */
-export const list_functions_schema = z.object({});
+export const list_functions_schema = z.object({
+  include_tests: z
+    .boolean()
+    .optional()
+    .describe("Include test functions in output (default: true)"),
+});
 
 export type ListFunctionsRequest = z.infer<typeof list_functions_schema>;
 
@@ -165,6 +170,7 @@ function format_output(entries: EntryPointData[]): string {
   for (const entry of entries) {
     const signature = build_signature(entry.node.definition);
     const location = `${entry.node.location.file_path}:${entry.node.location.start_line}`;
+    const test_indicator = entry.node.is_test ? " [TEST]" : "";
 
     const function_word = entry.tree_size === 1 ? "function" : "functions";
     let size_info = `${entry.tree_size} ${function_word}`;
@@ -175,7 +181,7 @@ function format_output(entries: EntryPointData[]): string {
       size_info += ` + ${entry.unresolved_count} ${unresolved_word}`;
     }
 
-    lines.push(`- ${signature} -- ${size_info}`);
+    lines.push(`- ${signature} -- ${size_info}${test_indicator}`);
     lines.push(`  Entry point: ${location}`);
     lines.push("");
   }
@@ -196,9 +202,15 @@ function format_output(entries: EntryPointData[]): string {
  * by the entry point, calculated via depth-first search with cycle detection.
  *
  * @param project - The Ariadne project instance
+ * @param request - Optional request with include_tests filter
  * @returns Formatted ASCII text listing entry points
  */
-export async function list_functions(project: Project): Promise<string> {
+export async function list_functions(
+  project: Project,
+  request: ListFunctionsRequest = {}
+): Promise<string> {
+  const { include_tests = true } = request;
+
   // Get call graph (always up-to-date)
   const call_graph = project.get_call_graph();
 
@@ -208,6 +220,9 @@ export async function list_functions(project: Project): Promise<string> {
   for (const entry_point_id of call_graph.entry_points) {
     const node = call_graph.nodes.get(entry_point_id);
     if (!node) continue;
+
+    // Filter out test entry points if requested
+    if (!include_tests && node.is_test) continue;
 
     // Count tree size with fresh visited set for each entry point
     const counts = count_tree_size(entry_point_id, call_graph, new Set());
