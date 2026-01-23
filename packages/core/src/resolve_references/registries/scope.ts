@@ -88,15 +88,6 @@ export class ScopeRegistry {
   }
 
   /**
-   * Get all files with scope trees.
-   *
-   * @returns Array of file paths
-   */
-  get_all_files(): FilePath[] {
-    return Array.from(this.scope_trees.keys());
-  }
-
-  /**
    * Remove all scopes from a file.
    *
    * @param file_path - The file to remove
@@ -130,15 +121,6 @@ export class ScopeRegistry {
         }
       }
     }
-  }
-
-  /**
-   * Get the total number of scopes indexed.
-   *
-   * @returns Count of scopes
-   */
-  size(): number {
-    return this.by_scope_id.size;
   }
 
   /**

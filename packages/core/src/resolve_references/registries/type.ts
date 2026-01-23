@@ -369,41 +369,6 @@ export class TypeRegistry {
   }
 
   /**
-   * Get the parent class of a class (from extends clause).
-   *
-   * @param class_id - The class to get parent for
-   * @returns SymbolId of parent class, or null if no parent
-   *
-   * @example
-   * ```typescript
-   * class Dog extends Animal { }
-   * get_parent_class(dog_id) → animal_id
-   * ```
-   */
-  get_parent_class(class_id: SymbolId): SymbolId | null {
-    return this.parent_classes.get(class_id) || null;
-  }
-
-  /**
-   * Get implemented interfaces for a class.
-   *
-   * Note: In TypeScript, interfaces in extends clause (after first) are treated as
-   * implemented interfaces.
-   *
-   * @param class_id - The class to get interfaces for
-   * @returns Array of interface SymbolIds
-   *
-   * @example
-   * ```typescript
-   * class Duck implements Flyable, Swimmable { }
-   * get_implemented_interfaces(duck_id) → [flyable_id, swimmable_id]
-   * ```
-   */
-  get_implemented_interfaces(class_id: SymbolId): readonly SymbolId[] {
-    return this.implemented_interfaces.get(class_id) || [];
-  }
-
-  /**
    * Walk the full inheritance chain from most derived to base.
    *
    * Returns array starting with the class itself, followed by parent,
@@ -495,29 +460,6 @@ export class TypeRegistry {
       }
     }
 
-    return null;
-  }
-
-  /**
-   * Get a member of a namespace import by name.
-   *
-   * TODO: Not implemented yet. Requires ImportGraph + ExportRegistry integration.
-   *
-   * This is a complex operation that requires:
-   * 1. Determining the source file for the namespace import
-   * 2. Looking up the exported symbol in that file
-   * 3. Resolving the symbol in the file's scope
-   *
-   * @param _namespace_id - The namespace symbol (from import resolution)
-   * @param _member_name - The member name to find
-   * @returns SymbolId of the member, or null if not found
-   */
-  get_namespace_member(
-    _namespace_id: SymbolId,
-    _member_name: SymbolName
-  ): SymbolId | null {
-    // TODO: Implement namespace member resolution
-    // For now, return null - this is a rare edge case
     return null;
   }
 

@@ -199,15 +199,6 @@ export class ExportRegistry {
   }
 
   /**
-   * Get all files that export at least one symbol.
-   *
-   * @returns Array of file IDs
-   */
-  get_all_files(): FilePath[] {
-    return Array.from(this.exports.keys());
-  }
-
-  /**
    * Get named export metadata for a file.
    *
    * @param file_path - The file to query

@@ -47,24 +47,6 @@ export class ReferenceRegistry {
   }
 
   /**
-   * Get all files with references.
-   *
-   * @returns Array of file paths
-   */
-  get_all_files(): FilePath[] {
-    return Array.from(this.by_file.keys());
-  }
-
-  /**
-   * Get the total number of files with references.
-   *
-   * @returns Count of files
-   */
-  size(): number {
-    return this.by_file.size;
-  }
-
-  /**
    * Clear all references from the registry.
    */
   clear(): void {
