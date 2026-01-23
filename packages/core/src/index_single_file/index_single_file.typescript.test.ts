@@ -1938,6 +1938,80 @@ describe("Semantic Index - TypeScript", () => {
       }
     });
 
+    it("should extract access_modifier for public/private/protected methods and properties", () => {
+      const code = `
+        class AccessModifierTest {
+          public publicField: string = "";
+          private privateField: number = 0;
+          protected protectedField: boolean = false;
+          noModifierField: any;
+
+          public publicMethod(): void {}
+          private privateMethod(): number { return 0; }
+          protected protectedMethod(): string { return ""; }
+          noModifierMethod(): void {}
+
+          public async publicAsyncMethod(): Promise<void> {}
+          private static privateStaticMethod(): void {}
+        }
+      `;
+
+      const tree = parser.parse(code);
+      const parsed_file = create_parsed_file(
+        code,
+        "test.ts" as FilePath,
+        tree,
+        "typescript" as Language,
+      );
+      const index = build_index_single_file(
+        parsed_file,
+        tree,
+        "typescript" as Language,
+      );
+
+      const test_class = Array.from(index.classes.values()).find(
+        (c) => c.name === "AccessModifierTest",
+      );
+      expect(test_class).toBeDefined();
+
+      if (test_class) {
+        // Test property access modifiers
+        const public_field = test_class.properties.find((p) => p.name === "publicField");
+        expect(public_field?.access_modifier).toBe("public");
+
+        const private_field = test_class.properties.find((p) => p.name === "privateField");
+        expect(private_field?.access_modifier).toBe("private");
+
+        const protected_field = test_class.properties.find((p) => p.name === "protectedField");
+        expect(protected_field?.access_modifier).toBe("protected");
+
+        const no_modifier_field = test_class.properties.find((p) => p.name === "noModifierField");
+        expect(no_modifier_field?.access_modifier).toBeUndefined();
+
+        // Test method access modifiers
+        const public_method = test_class.methods.find((m) => m.name === "publicMethod");
+        expect(public_method?.access_modifier).toBe("public");
+
+        const private_method = test_class.methods.find((m) => m.name === "privateMethod");
+        expect(private_method?.access_modifier).toBe("private");
+
+        const protected_method = test_class.methods.find((m) => m.name === "protectedMethod");
+        expect(protected_method?.access_modifier).toBe("protected");
+
+        const no_modifier_method = test_class.methods.find((m) => m.name === "noModifierMethod");
+        expect(no_modifier_method?.access_modifier).toBeUndefined();
+
+        // Test combined modifiers (public async, private static)
+        const public_async = test_class.methods.find((m) => m.name === "publicAsyncMethod");
+        expect(public_async?.access_modifier).toBe("public");
+        expect(public_async?.async).toBe(true);
+
+        const private_static = test_class.methods.find((m) => m.name === "privateStaticMethod");
+        expect(private_static?.access_modifier).toBe("private");
+        expect(private_static?.static).toBe(true);
+      }
+    });
+
     it("should extract initial values and default values correctly", () => {
       const code = `
         class ValueTest {

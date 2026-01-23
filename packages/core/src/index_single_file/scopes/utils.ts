@@ -40,6 +40,45 @@ export function find_body_scope_for_definition(
 
   const is_anonymous = def_name === "" || def_name === "<anonymous>";
 
+  // Strategy 0: Containment matching for anonymous functions (arrow functions)
+  // For arrow functions, the definition location spans the entire arrow function node,
+  // and the scope location also spans from params to body end. The scope CONTAINS
+  // the definition rather than starting AFTER it.
+  if (is_anonymous) {
+    const containment_candidates: { scope: LexicalScope; size: number }[] = [];
+
+    for (const scope of callable_scopes) {
+      const scope_is_anonymous = scope.name === null || scope.name === "";
+      if (!scope_is_anonymous) continue;
+
+      // Check if scope contains or overlaps with definition
+      // Scope must start at or before definition starts AND end at or after definition ends
+      const scope_contains_def =
+        scope.location.start_line <= def_location.start_line &&
+        scope.location.end_line >= def_location.end_line &&
+        // For same start line, scope must start at or before definition
+        (scope.location.start_line < def_location.start_line ||
+          scope.location.start_column <= def_location.start_column) &&
+        // For same end line, scope must end at or after definition
+        (scope.location.end_line > def_location.end_line ||
+          scope.location.end_column >= def_location.end_column);
+
+      if (scope_contains_def) {
+        // Prefer smaller scopes (more precise match)
+        const size =
+          (scope.location.end_line - scope.location.start_line) * 10000 +
+          (scope.location.end_column - scope.location.start_column);
+        containment_candidates.push({ scope, size });
+      }
+    }
+
+    if (containment_candidates.length > 0) {
+      // Pick the smallest containing scope
+      containment_candidates.sort((a, b) => a.size - b.size);
+      return containment_candidates[0].scope.id;
+    }
+  }
+
   // Strategy 1: Same-line + exact name match
   // The scope should start on the same line as the definition ends
   let candidates: { scope: LexicalScope; distance: number }[] = [];
