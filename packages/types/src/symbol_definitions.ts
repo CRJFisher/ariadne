@@ -78,6 +78,9 @@ export interface ClassDefinition extends Definition {
   readonly generics?: SymbolName[];
 }
 
+/** Access modifier for class members */
+export type AccessModifier = "public" | "private" | "protected";
+
 /**
  * Method definition within a class
  */
@@ -90,6 +93,7 @@ export interface MethodDefinition extends Definition {
   readonly generics?: SymbolName[];
   readonly static?: boolean;
   readonly body_scope_id?: ScopeId; // The scope ID of this method's body - undefined in interfaces
+  readonly access_modifier?: AccessModifier;
 }
 
 export interface ConstructorDefinition extends Definition {
@@ -97,6 +101,7 @@ export interface ConstructorDefinition extends Definition {
   readonly parameters: readonly ParameterDefinition[];
   readonly decorators?: readonly DecoratorDefinition[];
   readonly body_scope_id: ScopeId; // The scope ID of this constructor's body
+  readonly access_modifier?: AccessModifier;
 }
 
 /**
@@ -107,6 +112,7 @@ export interface PropertyDefinition extends Definition {
   readonly type?: SymbolName;
   readonly initial_value?: string;
   readonly decorators: readonly DecoratorDefinition[];
+  readonly access_modifier?: AccessModifier;
 }
 
 /**
