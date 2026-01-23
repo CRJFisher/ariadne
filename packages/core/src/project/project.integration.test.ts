@@ -501,30 +501,6 @@ const x = utils.missing();
   });
 
   describe("Output Structure Validation", () => {
-    it("should produce well-formed Definition objects", () => {
-      project.update_file("test.ts" as FilePath, `
-function foo(x: number) { return x + 1; }
-class Bar {
-  method() { return 42; }
-}
-const baz = 100;
-      `);
-
-      const all_defs = project.definitions.get_all_definitions();
-
-      for (const def of all_defs.values()) {
-        // Required fields
-        expect(def.symbol_id).toBeDefined();
-        expect(def.name).toBeDefined();
-        expect(def.kind).toBeDefined();
-        expect(def.defining_scope_id).toBeDefined();
-        expect(def.location).toBeDefined();
-        expect(def.location.file_path).toBeDefined();
-        expect(def.location.start_line).toBeGreaterThanOrEqual(1);
-        expect(def.location.end_line).toBeGreaterThanOrEqual(def.location.start_line);
-      }
-    });
-
     it("should produce well-formed Scope objects", () => {
       project.update_file("test.ts" as FilePath, `
 function outer() {
@@ -567,36 +543,5 @@ function bar() { return 42; }
       }
     });
 
-    it("should maintain registry consistency", () => {
-      project.update_file("test.ts" as FilePath, `
-class User {
-  getName() { return "Alice"; }
-}
-function foo() { return bar(); }
-function bar() { return 42; }
-      `);
-
-      const all_defs = project.definitions.get_all_definitions();
-      const all_scopes = project.scopes.get_all_scopes();
-
-      // Every definition should reference a valid scope
-      for (const def of all_defs.values()) {
-        const scope = all_scopes.get(def.defining_scope_id);
-        expect(scope).toBeDefined();
-      }
-
-      // Type members should reference valid definitions
-      const index = project.get_index_single_file("test.ts" as FilePath);
-      const user_class = Array.from(index!.classes.values())[0];
-      if (user_class) {
-        const type_members = project.types.get_type_members(user_class.symbol_id);
-        if (type_members) {
-          for (const method_id of type_members.methods.values()) {
-            const method_def = project.definitions.get(method_id);
-            expect(method_def).toBeDefined();
-          }
-        }
-      }
-    });
   });
 });

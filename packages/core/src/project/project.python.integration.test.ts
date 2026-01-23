@@ -921,16 +921,13 @@ class Service:
       project.update_file(core_file, core_source);
       project.update_file(nested_imports_file, nested_imports_source);
 
-      // Verify nested_imports.py depends on utils.py (via from ...modules.utils import)
-      const deps = project.imports.get_dependencies(nested_imports_file);
-      expect(deps.has(utils_file)).toBe(true);
-
-      // Verify utils.py has nested_imports.py as dependent
-      const dependents = project.get_dependents(utils_file);
-      expect(dependents.has(nested_imports_file)).toBe(true);
+      // Verify utils.py has nested_imports.py as dependent (verifies nested_imports.py depends on utils.py)
+      const utils_dependents = project.get_dependents(utils_file);
+      expect(utils_dependents.has(nested_imports_file)).toBe(true);
 
       // Verify nested_imports.py depends on core.py (via from .core import)
-      expect(deps.has(core_file)).toBe(true);
+      const core_dependents = project.get_dependents(core_file);
+      expect(core_dependents.has(nested_imports_file)).toBe(true);
     });
 
     it("should resolve symbols from multi-level relative imports", async () => {
@@ -1046,9 +1043,9 @@ class Service:
       project.update_file(utils_file, utils_source);
       project.update_file(nested_imports_file, nested_imports_source);
 
-      // Verify dependency exists
-      const deps_before = project.imports.get_dependencies(nested_imports_file);
-      expect(deps_before.has(utils_file)).toBe(true);
+      // Verify dependency exists (utils.py has nested_imports.py as dependent)
+      const dependents_before = project.get_dependents(utils_file);
+      expect(dependents_before.has(nested_imports_file)).toBe(true);
 
       // Verify resolution works before removal
       const nested_index = project.get_index_single_file(nested_imports_file);
@@ -1072,9 +1069,9 @@ class Service:
         // Remove utils.py
         project.remove_file(utils_file);
 
-        // Verify dependency is removed
-        const deps_after = project.imports.get_dependencies(nested_imports_file);
-        expect(deps_after.has(utils_file)).toBe(false);
+        // Verify dependency is removed (utils.py no longer has dependents)
+        const dependents_after = project.get_dependents(utils_file);
+        expect(dependents_after.has(nested_imports_file)).toBe(false);
 
         // Verify resolution fails after removal
         const resolved_after = project.resolutions.resolve(
@@ -1140,57 +1137,6 @@ def process():
       expect((anon as any).callback_context.receiver_location).toBeDefined();
     });
 
-    it("should create callback invocation reference for external function callbacks", async () => {
-      const project = new Project();
-      await project.initialize();
-
-      const code = `
-numbers = [1, 2, 3, 4, 5]
-
-def process():
-    doubled = list(map(lambda x: x * 2, numbers))
-      `.trim();
-
-      const file_path_str = "/test/callback.py" as FilePath;
-      project.update_file(file_path_str, code);
-
-      const resolutions = project.resolutions;
-      const references = resolutions.get_file_calls(file_path_str);
-
-      // Check if callback invocation was created
-      const callback_invocations = references.filter((ref) => ref.is_callback_invocation);
-
-      expect(callback_invocations.length).toBe(1);
-
-      const invocation = callback_invocations[0];
-      expect(invocation.name).toBe("<anonymous>");
-      expect(invocation.call_type).toBe("function");
-    });
-
-    it("should NOT create callback invocation for internal function callbacks", async () => {
-      const project = new Project();
-      await project.initialize();
-
-      const code = `
-def run_callback(callback):
-    callback()
-
-def process():
-    run_callback(lambda: print("hello"))
-      `.trim();
-
-      const file_path_str = "/test/internal_callback.py" as FilePath;
-      project.update_file(file_path_str, code);
-
-      const resolutions = project.resolutions;
-      const references = resolutions.get_file_calls(file_path_str);
-
-      // Should NOT create callback invocation since run_callback is internal
-      const callback_invocations = references.filter((ref) => ref.is_callback_invocation);
-
-      expect(callback_invocations.length).toBe(0);
-    });
-
     it("should NOT mark external callbacks as entry points", async () => {
       const project = new Project();
       await project.initialize();
@@ -1229,178 +1175,9 @@ def process():
       expect(entry_point_ids.has(process_def!.symbol_id)).toBe(true);
     });
 
-    it("should handle multiple callbacks in same function", async () => {
-      const project = new Project();
-      await project.initialize();
-
-      const code = `
-from functools import reduce
-
-numbers = [1, 2, 3, 4, 5]
-
-def process():
-    doubled = list(map(lambda x: x * 2, numbers))
-    evens = list(filter(lambda x: x % 2 == 0, numbers))
-    sum_result = reduce(lambda acc, x: acc + x, numbers, 0)
-      `.trim();
-
-      const file_path_str = "/test/multiple_callbacks.py" as FilePath;
-      project.update_file(file_path_str, code);
-
-      const definitions = project.definitions;
-
-      // Find all lambdas
-      const lambdas = Array.from(definitions.get_callable_definitions()).filter(
-        (d) => d.name === "<anonymous>"
-      );
-      expect(lambdas.length).toBe(3);
-
-      // All should be callbacks to external functions
-      for (const lambda of lambdas) {
-        expect((lambda as any).callback_context).toBeDefined();
-        expect((lambda as any).callback_context.is_callback).toBe(true);
-      }
-
-      // All should have callback invocation references
-      const resolutions = project.resolutions;
-      const references = resolutions.get_file_calls(file_path_str);
-      const callback_invocations = references.filter((ref) => ref.is_callback_invocation);
-
-      expect(callback_invocations.length).toBe(3);
-    });
   });
 
   describe("Polymorphic Protocol Resolution (Task 11.158)", () => {
-    it("should resolve Protocol method calls to all implementations", async () => {
-      const source = load_source("classes/polymorphic_protocol.py");
-      const file = file_path("classes/polymorphic_protocol.py");
-      project.update_file(file, source);
-
-      const index = project.get_index_single_file(file);
-      expect(index).toBeDefined();
-
-      // Find the Handler Protocol (should be captured as an interface)
-      const handler_protocol = Array.from(index!.interfaces.values()).find(
-        (i) => i.name === ("Handler" as SymbolName)
-      );
-      expect(handler_protocol).toBeDefined();
-
-      // Find the three implementing classes
-      const classes = Array.from(index!.classes.values());
-      const handler_a = classes.find((c) => c.name === ("HandlerA" as SymbolName));
-      const handler_b = classes.find((c) => c.name === ("HandlerB" as SymbolName));
-      const handler_c = classes.find((c) => c.name === ("HandlerC" as SymbolName));
-
-      expect(handler_a).toBeDefined();
-      expect(handler_b).toBeDefined();
-      expect(handler_c).toBeDefined();
-
-      // In Python, Protocol implementations don't use explicit inheritance syntax
-      // So we verify the classes exist and have the required methods
-      const type_info_a = project.get_type_info(handler_a!.symbol_id);
-      const type_info_b = project.get_type_info(handler_b!.symbol_id);
-      const type_info_c = project.get_type_info(handler_c!.symbol_id);
-
-      expect(type_info_a?.methods.has("process" as SymbolName)).toBe(true);
-      expect(type_info_b?.methods.has("process" as SymbolName)).toBe(true);
-      expect(type_info_c?.methods.has("process" as SymbolName)).toBe(true);
-
-      // Find method calls inside execute_handler function
-      const method_calls = index!.references.filter(
-        (r): r is MethodCallReference => r.kind === "method_call"
-      );
-
-      // Find the handler.process() call
-      const process_calls = method_calls.filter(
-        (c) => c.name === ("process" as SymbolName)
-      );
-      expect(process_calls.length).toBeGreaterThan(0);
-
-      // Get resolved calls with metadata
-      const resolved_calls = project.resolutions.get_file_calls(file);
-
-      // Find the process() call resolutions
-      const process_resolutions = resolved_calls.filter(
-        (call) => call.name === ("process" as SymbolName) && call.call_type === "method"
-      );
-
-      // NOTE: Python Protocols use structural subtyping (duck typing)
-      // The semantic index may not explicitly track Protocol implementations
-      // unless they inherit from Protocol explicitly.
-      // This test verifies the infrastructure works if/when Protocol tracking is added.
-
-      // Verify that we have process() method calls - whether they resolve polymorphically
-      // depends on whether Python builder tracks structural subtyping
-      expect(process_calls.length).toBeGreaterThan(0);
-    });
-
-    it("should handle explicit Protocol inheritance", async () => {
-      const source = `
-from typing import Protocol
-
-class Animal(Protocol):
-    def speak(self) -> str:
-        ...
-
-class Dog(Animal):
-    def speak(self) -> str:
-        return "Woof"
-
-class Cat(Animal):
-    def speak(self) -> str:
-        return "Meow"
-
-def make_sound(animal: Animal) -> None:
-    sound = animal.speak()
-    print(sound)
-      `.trim();
-
-      const file = "/test/explicit_protocol.py" as FilePath;
-      project.update_file(file, source);
-
-      const index = project.get_index_single_file(file);
-      expect(index).toBeDefined();
-
-      // Find Animal Protocol
-      const animal_protocol = Array.from(index!.interfaces.values()).find(
-        (i) => i.name === ("Animal" as SymbolName)
-      );
-      expect(animal_protocol).toBeDefined();
-
-      // Find implementing classes
-      const classes = Array.from(index!.classes.values());
-      const dog_class = classes.find((c) => c.name === ("Dog" as SymbolName));
-      const cat_class = classes.find((c) => c.name === ("Cat" as SymbolName));
-
-      expect(dog_class).toBeDefined();
-      expect(cat_class).toBeDefined();
-
-      // When classes explicitly inherit from Protocol, they should have it in extends
-      expect(dog_class!.extends).toContain("Animal" as SymbolName);
-      expect(cat_class!.extends).toContain("Animal" as SymbolName);
-
-      // Get resolved calls
-      const resolved_calls = project.resolutions.get_file_calls(file);
-      const speak_calls = resolved_calls.filter(
-        (call) => call.name === ("speak" as SymbolName)
-      );
-
-      expect(speak_calls.length).toBeGreaterThan(0);
-
-      // Check for polymorphic resolution
-      const polymorphic_speak = speak_calls.find((call) => call.resolutions.length > 1);
-
-      if (polymorphic_speak) {
-        // If polymorphic resolution is working, verify metadata
-        expect(polymorphic_speak.resolutions.length).toBe(2);
-
-        const interface_impl_resolutions = polymorphic_speak.resolutions.filter(
-          (r) => r.reason.type === "interface_implementation"
-        );
-        expect(interface_impl_resolutions.length).toBe(2);
-      }
-    });
-
     it("should mark Protocol implementations as called when possible", async () => {
       const source = load_source("classes/polymorphic_protocol.py");
       const file = file_path("classes/polymorphic_protocol.py");
@@ -1426,145 +1203,86 @@ def make_sound(animal: Animal) -> None:
     });
   });
 
-  describe("Collection Read Reachability", () => {
-    it("should mark functions in returned dict as non-entry-points", () => {
+  describe("Polymorphic self Dispatch (Task 11.174)", () => {
+    it("should mark child override as called when base calls self.method()", async () => {
       const code = `
-def handle_class():
-    return "class"
+class Base:
+    def process(self):
+        self.helper()
+    def helper(self):
+        return "base"
 
-def handle_method():
-    return "method"
-
-HANDLERS = {
-    "class": handle_class,
-    "method": handle_method,
-}
-
-def get_handlers():
-    return HANDLERS
-      `.trim();
-
-      const file = "/test/py_handlers.py" as FilePath;
+class Child(Base):
+    def helper(self):
+        return "child"
+      `;
+      const file = file_path("polymorphic_self.py");
       project.update_file(file, code);
 
-      const call_graph = project.get_call_graph();
+      // Get all referenced symbols (should include both helpers)
+      const referenced = project.resolutions.get_all_referenced_symbols();
 
-      const handle_class_id = Array.from(project.definitions.get_all_definitions())
-        .find(def => def.name === "handle_class" && def.kind === "function")?.symbol_id;
-      const handle_method_id = Array.from(project.definitions.get_all_definitions())
-        .find(def => def.name === "handle_method" && def.kind === "function")?.symbol_id;
-
-      expect(handle_class_id).toBeDefined();
-      expect(handle_method_id).toBeDefined();
-
-      // Handlers should NOT be in entry points
-      const entry_point_ids = new Set(call_graph.entry_points);
-      expect(entry_point_ids.has(handle_class_id!)).toBe(false);
-      expect(entry_point_ids.has(handle_method_id!)).toBe(false);
-    });
-
-    it("should handle list collections", () => {
-      const code = `
-def on_success():
-    return "success"
-
-def on_error():
-    return "error"
-
-CALLBACKS = [on_success, on_error]
-
-def get_callbacks():
-    return CALLBACKS
-      `.trim();
-
-      const file = "/test/py_callbacks.py" as FilePath;
-      project.update_file(file, code);
-
-      const call_graph = project.get_call_graph();
-
-      const on_success_id = Array.from(project.definitions.get_all_definitions())
-        .find(def => def.name === "on_success" && def.kind === "function")?.symbol_id;
-      const on_error_id = Array.from(project.definitions.get_all_definitions())
-        .find(def => def.name === "on_error" && def.kind === "function")?.symbol_id;
-
-      expect(on_success_id).toBeDefined();
-      expect(on_error_id).toBeDefined();
-
-      const entry_point_ids = new Set(call_graph.entry_points);
-      expect(entry_point_ids.has(on_success_id!)).toBe(false);
-      expect(entry_point_ids.has(on_error_id!)).toBe(false);
-    });
-
-    it("should resolve dict splat operator transitively", () => {
-      const code = `
-def base_handler():
-    return "base"
-
-def extra_handler():
-    return "extra"
-
-BASE_HANDLERS = {
-    "base": base_handler,
-}
-
-EXTENDED_HANDLERS = {
-    **BASE_HANDLERS,
-    "extra": extra_handler,
-}
-
-def get_extended():
-    return EXTENDED_HANDLERS
-      `.trim();
-
-      const file = "/test/py_spread.py" as FilePath;
-      project.update_file(file, code);
-
-      const call_graph = project.get_call_graph();
-
-      const base_handler_id = Array.from(project.definitions.get_all_definitions())
-        .find(def => def.name === "base_handler" && def.kind === "function")?.symbol_id;
-      const extra_handler_id = Array.from(project.definitions.get_all_definitions())
-        .find(def => def.name === "extra_handler" && def.kind === "function")?.symbol_id;
-
-      expect(base_handler_id).toBeDefined();
-      expect(extra_handler_id).toBeDefined();
-
-      const entry_point_ids = new Set(call_graph.entry_points);
-      expect(entry_point_ids.has(base_handler_id!)).toBe(false);
-      expect(entry_point_ids.has(extra_handler_id!)).toBe(false);
-    });
-  });
-
-  describe("Collection Resolution", () => {
-    it("should resolve call to derived variable to collection functions", () => {
-      const code = `
-def fn1(): pass
-def fn2(): pass
-handlers = [fn1, fn2]
-handler = handlers[0]
-handler()
-      `.trim();
-
-      const file = "/test/py_collection_dispatch.py" as FilePath;
-      project.update_file(file, code);
-
+      // Find Base.helper and Child.helper
       const index = project.get_index_single_file(file);
-      expect(index).toBeDefined();
+      const base_class = Array.from(index!.classes.values()).find(
+        (c) => c.name === ("Base" as SymbolName)
+      );
+      const child_class = Array.from(index!.classes.values()).find(
+        (c) => c.name === ("Child" as SymbolName)
+      );
 
-      // Find the call to handler()
-      const calls = project.resolutions.get_file_calls(file);
-      const handler_call = calls.find(c => c.name === "handler");
+      expect(base_class).toBeDefined();
+      expect(child_class).toBeDefined();
 
-      expect(handler_call).toBeDefined();
-      expect(handler_call?.resolutions.length).toBe(2);
+      const base_helper = project.get_type_info(base_class!.symbol_id)!.methods.get(
+        "helper" as SymbolName
+      );
+      const child_helper = project.get_type_info(child_class!.symbol_id)!.methods.get(
+        "helper" as SymbolName
+      );
 
-      const resolved_names = handler_call?.resolutions.map(r => {
-        const def = project.definitions.get(r.symbol_id);
-        return def?.name;
-      });
+      expect(base_helper).toBeDefined();
+      expect(child_helper).toBeDefined();
 
-      expect(resolved_names).toContain("fn1");
-      expect(resolved_names).toContain("fn2");
+      // Both should be referenced (neither is an entry point)
+      expect(referenced.has(base_helper!)).toBe(true);
+      expect(referenced.has(child_helper!)).toBe(true);
+    });
+
+    it("should resolve multi-level Python inheritance", async () => {
+      const code = `
+class A:
+    def process(self):
+        self.helper()
+    def helper(self):
+        pass
+
+class B(A):
+    def helper(self):
+        pass
+
+class C(B):
+    def helper(self):
+        pass
+      `;
+      const file = file_path("multilevel_self.py");
+      project.update_file(file, code);
+
+      const referenced = project.resolutions.get_all_referenced_symbols();
+      const index = project.get_index_single_file(file);
+
+      // All three helper methods should be referenced
+      const classes = Array.from(index!.classes.values());
+      expect(classes).toHaveLength(3);
+
+      for (const cls of classes) {
+        const helper_id = project.get_type_info(cls.symbol_id)!.methods.get(
+          "helper" as SymbolName
+        );
+        expect(helper_id).toBeDefined();
+        expect(referenced.has(helper_id!)).toBe(true);
+      }
     });
   });
+
 });

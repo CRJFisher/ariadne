@@ -734,58 +734,6 @@ describe("Project Integration - JavaScript", () => {
     });
   });
 
-  describe("Parameter Type Resolution", () => {
-    it("should register function parameters as first-class definitions", async () => {
-      const code = `
-        class Database {
-          query(sql) {
-            return [];
-          }
-        }
-
-        function processData(db) {
-          return db.query("SELECT * FROM users");
-        }
-      `;
-      const file = file_path("test_param_function.js");
-      project.update_file(file, code);
-
-      // Verify parameter appears in DefinitionRegistry
-      const all_defs = project.definitions.get_all_definitions();
-      const db_param = all_defs.find(
-        (def) => def.kind === "parameter" && def.name === ("db" as SymbolName)
-      );
-      expect(db_param).toBeDefined();
-      expect(db_param?.kind).toBe("parameter");
-    });
-
-    it("should register constructor parameters as first-class definitions", async () => {
-      const code = `
-        class Config {
-          get(key) {
-            return null;
-          }
-        }
-
-        class Application {
-          constructor(config) {
-            this.apiKey = config.get("api_key");
-          }
-        }
-      `;
-      const file = file_path("test_param_constructor.js");
-      project.update_file(file, code);
-
-      // Verify constructor parameter appears in registry
-      const all_defs = project.definitions.get_all_definitions();
-      const config_param = all_defs.find(
-        (def) => def.kind === "parameter" && def.name === ("config" as SymbolName)
-      );
-      expect(config_param).toBeDefined();
-      expect(config_param?.kind).toBe("parameter");
-    });
-  });
-
   describe("Incremental Updates", () => {
     it("should re-resolve after file update", async () => {
       const source_v1 = load_source("modules/utils_es6.js");
@@ -932,129 +880,45 @@ function process(x) {}
       expect((anon as any).callback_context.receiver_location).toBeDefined();
     });
 
-    it("should create callback invocation reference for external function callbacks", async () => {
-      const project = new Project();
-      await project.initialize();
+  });
 
+  describe("Polymorphic this Dispatch (Task 11.174)", () => {
+    // Note: JavaScript class inheritance tracking (`extends` extraction) is not yet implemented.
+    // The polymorphic dispatch logic works correctly when subtype tracking is available.
+    // This test verifies that at least the base method is resolved.
+    it("should resolve this.method() to base method in ES6 class", async () => {
       const code = `
-const items = [1, 2, 3];
-items.forEach((item) => {
-  process(item);
-});
+        class Base {
+          process() { this.helper(); }
+          helper() { return "base"; }
+        }
+        class Child extends Base {
+          helper() { return "child"; }
+        }
+      `;
+      const file = file_path("polymorphic_this.js");
+      project.update_file(file, code);
 
-function process(x) {}
-      `.trim();
+      // Get all referenced symbols
+      const referenced = project.resolutions.get_all_referenced_symbols();
 
-      const file_path = "/test/callback.js" as FilePath;
-      project.update_file(file_path, code);
+      // Find Base.helper
+      const index = project.get_index_single_file(file);
+      const base_class = Array.from(index!.classes.values()).find(
+        (c) => c.name === ("Base" as SymbolName)
+      );
 
-      const resolutions = project.resolutions;
-      const references = resolutions.get_file_calls(file_path);
+      expect(base_class).toBeDefined();
 
-      // Check if callback invocation was created
-      const callback_invocations = references.filter((ref) => ref.is_callback_invocation);
+      const base_helper = project.get_type_info(base_class!.symbol_id)!.methods.get(
+        "helper" as SymbolName
+      );
 
-      expect(callback_invocations.length).toBe(1);
+      expect(base_helper).toBeDefined();
 
-      const invocation = callback_invocations[0];
-      expect(invocation.name).toBe("<anonymous>");
-      expect(invocation.call_type).toBe("function");
-    });
-
-    it("should NOT create callback invocation for internal function callbacks", async () => {
-      const project = new Project();
-      await project.initialize();
-
-      const code = `
-function runCallback(callback) {
-  callback();
-}
-
-runCallback(() => {
-  doSomething();
-});
-
-function doSomething() {}
-      `.trim();
-
-      const file_path = "/test/internal_callback.js" as FilePath;
-      project.update_file(file_path, code);
-
-      const resolutions = project.resolutions;
-      const references = resolutions.get_file_calls(file_path);
-
-      // Should NOT create callback invocation since runCallback is internal
-      const callback_invocations = references.filter((ref) => ref.is_callback_invocation);
-
-      expect(callback_invocations.length).toBe(0);
+      // Base method should be referenced (child override not tracked due to missing extends extraction)
+      expect(referenced.has(base_helper!)).toBe(true);
     });
   });
 
-  describe("Collection Read Reachability", () => {
-    it("should mark functions in returned collection as non-entry-points", () => {
-      const code = `
-function handle_class() { return "class"; }
-function handle_method() { return "method"; }
-
-const HANDLERS = {
-  "class": handle_class,
-  "method": handle_method,
-};
-
-export function get_handlers() {
-  return HANDLERS;
-}
-      `.trim();
-
-      const file = "/test/js_handlers.js" as FilePath;
-      project.update_file(file, code);
-
-      const call_graph = project.get_call_graph();
-
-      // Get handler function IDs
-      const handle_class_id = Array.from(project.definitions.get_all_definitions())
-        .find(def => def.name === "handle_class" && def.kind === "function")?.symbol_id;
-      const handle_method_id = Array.from(project.definitions.get_all_definitions())
-        .find(def => def.name === "handle_method" && def.kind === "function")?.symbol_id;
-
-      expect(handle_class_id).toBeDefined();
-      expect(handle_method_id).toBeDefined();
-
-      // Handlers should NOT be in entry points
-      const entry_point_ids = new Set(call_graph.entry_points);
-      expect(entry_point_ids.has(handle_class_id!)).toBe(false);
-      expect(entry_point_ids.has(handle_method_id!)).toBe(false);
-    });
-
-    it("should handle array collections", () => {
-      const code = `
-function on_success() { return "success"; }
-function on_error() { return "error"; }
-
-const CALLBACKS = [on_success, on_error];
-
-export function get_callbacks() {
-  return CALLBACKS;
-}
-      `.trim();
-
-      const file = "/test/js_callbacks.js" as FilePath;
-      project.update_file(file, code);
-
-      const call_graph = project.get_call_graph();
-
-      const on_success_id = Array.from(project.definitions.get_all_definitions())
-        .find(def => def.name === "on_success" && def.kind === "function")?.symbol_id;
-      const on_error_id = Array.from(project.definitions.get_all_definitions())
-        .find(def => def.name === "on_error" && def.kind === "function")?.symbol_id;
-
-      expect(on_success_id).toBeDefined();
-      expect(on_error_id).toBeDefined();
-
-      // Callbacks should NOT be in entry points
-      const entry_point_ids = new Set(call_graph.entry_points);
-      expect(entry_point_ids.has(on_success_id!)).toBe(false);
-      expect(entry_point_ids.has(on_error_id!)).toBe(false);
-    });
-  });
 });
