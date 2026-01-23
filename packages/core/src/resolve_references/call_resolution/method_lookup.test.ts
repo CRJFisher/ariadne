@@ -354,6 +354,402 @@ describe("resolve_method_on_type", () => {
     });
   });
 
+  describe("Class polymorphic resolution", () => {
+    it("should resolve method to base and all child overrides", () => {
+      const base_class_id = class_symbol("Base", TEST_FILE, MOCK_LOCATION);
+      const child_class_id = class_symbol("Child", TEST_FILE, { ...MOCK_LOCATION, start_line: 10 });
+      const base_method_id = method_symbol("helper", MOCK_LOCATION);
+      const child_method_id = method_symbol("helper", { ...MOCK_LOCATION, start_line: 12 });
+
+      // Setup base class with method
+      const base_method_def: MethodDefinition = {
+        kind: "method",
+        symbol_id: base_method_id,
+        name: "helper" as SymbolName,
+        defining_scope_id: "scope:test.ts:Base:1:0" as ScopeId,
+        location: MOCK_LOCATION,
+        parameters: [],
+        body_scope_id: "scope:test.ts:Base.helper:2:2" as ScopeId,
+        decorators: [],
+      };
+
+      const base_class_def: ClassDefinition = {
+        kind: "class",
+        symbol_id: base_class_id,
+        name: "Base" as SymbolName,
+        defining_scope_id: FILE_SCOPE_ID,
+        location: MOCK_LOCATION,
+        is_exported: false,
+        extends: [],
+        methods: [base_method_def],
+        properties: [],
+        decorators: [],
+        constructor: [],
+      };
+
+      // Setup child class that extends Base and overrides helper
+      const child_method_def: MethodDefinition = {
+        kind: "method",
+        symbol_id: child_method_id,
+        name: "helper" as SymbolName,
+        defining_scope_id: "scope:test.ts:Child:10:0" as ScopeId,
+        location: { ...MOCK_LOCATION, start_line: 12 },
+        parameters: [],
+        body_scope_id: "scope:test.ts:Child.helper:12:2" as ScopeId,
+        decorators: [],
+      };
+
+      const child_class_def: ClassDefinition = {
+        kind: "class",
+        symbol_id: child_class_id,
+        name: "Child" as SymbolName,
+        defining_scope_id: FILE_SCOPE_ID,
+        location: { ...MOCK_LOCATION, start_line: 10 },
+        is_exported: false,
+        extends: ["Base" as SymbolName],
+        methods: [child_method_def],
+        properties: [],
+        decorators: [],
+        constructor: [],
+      };
+
+      definitions.update_file(TEST_FILE, [
+        base_class_def,
+        base_method_def,
+        child_class_def,
+        child_method_def,
+      ]);
+
+      // Set up type subtypes index (Base → Child)
+      definitions["type_subtypes"] = new Map();
+      definitions["type_subtypes"].set(base_class_id, new Set([child_class_id]));
+
+      // Setup TypeRegistry to return the base method
+      types["resolved_type_members"] = new Map();
+      types["resolved_type_members"].set(
+        base_class_id,
+        new Map([[("helper" as SymbolName), base_method_id]])
+      );
+
+      const result = resolve_method_on_type(
+        base_class_id,
+        "helper" as SymbolName,
+        context
+      );
+
+      // Should return both base and child methods
+      expect(result).toHaveLength(2);
+      expect(result).toContain(base_method_id);
+      expect(result).toContain(child_method_id);
+    });
+
+    it("should resolve multi-level inheritance (3 levels)", () => {
+      const class_a_id = class_symbol("A", TEST_FILE, MOCK_LOCATION);
+      const class_b_id = class_symbol("B", TEST_FILE, { ...MOCK_LOCATION, start_line: 10 });
+      const class_c_id = class_symbol("C", TEST_FILE, { ...MOCK_LOCATION, start_line: 20 });
+      const method_a_id = method_symbol("helper", MOCK_LOCATION);
+      const method_b_id = method_symbol("helper", { ...MOCK_LOCATION, start_line: 12 });
+      const method_c_id = method_symbol("helper", { ...MOCK_LOCATION, start_line: 22 });
+
+      // Setup class A
+      const method_a_def: MethodDefinition = {
+        kind: "method",
+        symbol_id: method_a_id,
+        name: "helper" as SymbolName,
+        defining_scope_id: "scope:test.ts:A:1:0" as ScopeId,
+        location: MOCK_LOCATION,
+        parameters: [],
+        body_scope_id: "scope:test.ts:A.helper:2:2" as ScopeId,
+        decorators: [],
+      };
+
+      const class_a_def: ClassDefinition = {
+        kind: "class",
+        symbol_id: class_a_id,
+        name: "A" as SymbolName,
+        defining_scope_id: FILE_SCOPE_ID,
+        location: MOCK_LOCATION,
+        is_exported: false,
+        extends: [],
+        methods: [method_a_def],
+        properties: [],
+        decorators: [],
+        constructor: [],
+      };
+
+      // Setup class B extends A
+      const method_b_def: MethodDefinition = {
+        kind: "method",
+        symbol_id: method_b_id,
+        name: "helper" as SymbolName,
+        defining_scope_id: "scope:test.ts:B:10:0" as ScopeId,
+        location: { ...MOCK_LOCATION, start_line: 12 },
+        parameters: [],
+        body_scope_id: "scope:test.ts:B.helper:12:2" as ScopeId,
+        decorators: [],
+      };
+
+      const class_b_def: ClassDefinition = {
+        kind: "class",
+        symbol_id: class_b_id,
+        name: "B" as SymbolName,
+        defining_scope_id: FILE_SCOPE_ID,
+        location: { ...MOCK_LOCATION, start_line: 10 },
+        is_exported: false,
+        extends: ["A" as SymbolName],
+        methods: [method_b_def],
+        properties: [],
+        decorators: [],
+        constructor: [],
+      };
+
+      // Setup class C extends B
+      const method_c_def: MethodDefinition = {
+        kind: "method",
+        symbol_id: method_c_id,
+        name: "helper" as SymbolName,
+        defining_scope_id: "scope:test.ts:C:20:0" as ScopeId,
+        location: { ...MOCK_LOCATION, start_line: 22 },
+        parameters: [],
+        body_scope_id: "scope:test.ts:C.helper:22:2" as ScopeId,
+        decorators: [],
+      };
+
+      const class_c_def: ClassDefinition = {
+        kind: "class",
+        symbol_id: class_c_id,
+        name: "C" as SymbolName,
+        defining_scope_id: FILE_SCOPE_ID,
+        location: { ...MOCK_LOCATION, start_line: 20 },
+        is_exported: false,
+        extends: ["B" as SymbolName],
+        methods: [method_c_def],
+        properties: [],
+        decorators: [],
+        constructor: [],
+      };
+
+      definitions.update_file(TEST_FILE, [
+        class_a_def, method_a_def,
+        class_b_def, method_b_def,
+        class_c_def, method_c_def,
+      ]);
+
+      // Set up transitive type subtypes index (A → B → C)
+      definitions["type_subtypes"] = new Map();
+      definitions["type_subtypes"].set(class_a_id, new Set([class_b_id]));
+      definitions["type_subtypes"].set(class_b_id, new Set([class_c_id]));
+
+      // Setup TypeRegistry to return A's method
+      types["resolved_type_members"] = new Map();
+      types["resolved_type_members"].set(
+        class_a_id,
+        new Map([[("helper" as SymbolName), method_a_id]])
+      );
+
+      const result = resolve_method_on_type(
+        class_a_id,
+        "helper" as SymbolName,
+        context
+      );
+
+      // Should return all three methods
+      expect(result).toHaveLength(3);
+      expect(result).toContain(method_a_id);
+      expect(result).toContain(method_b_id);
+      expect(result).toContain(method_c_id);
+    });
+
+    it("should return only base method when no overrides exist", () => {
+      const base_class_id = class_symbol("Base", TEST_FILE, MOCK_LOCATION);
+      const child_class_id = class_symbol("Child", TEST_FILE, { ...MOCK_LOCATION, start_line: 10 });
+      const base_method_id = method_symbol("helper", MOCK_LOCATION);
+
+      // Setup base class with method
+      const base_method_def: MethodDefinition = {
+        kind: "method",
+        symbol_id: base_method_id,
+        name: "helper" as SymbolName,
+        defining_scope_id: "scope:test.ts:Base:1:0" as ScopeId,
+        location: MOCK_LOCATION,
+        parameters: [],
+        body_scope_id: "scope:test.ts:Base.helper:2:2" as ScopeId,
+        decorators: [],
+      };
+
+      const base_class_def: ClassDefinition = {
+        kind: "class",
+        symbol_id: base_class_id,
+        name: "Base" as SymbolName,
+        defining_scope_id: FILE_SCOPE_ID,
+        location: MOCK_LOCATION,
+        is_exported: false,
+        extends: [],
+        methods: [base_method_def],
+        properties: [],
+        decorators: [],
+        constructor: [],
+      };
+
+      // Setup child class that extends Base but does NOT override helper
+      const child_class_def: ClassDefinition = {
+        kind: "class",
+        symbol_id: child_class_id,
+        name: "Child" as SymbolName,
+        defining_scope_id: FILE_SCOPE_ID,
+        location: { ...MOCK_LOCATION, start_line: 10 },
+        is_exported: false,
+        extends: ["Base" as SymbolName],
+        methods: [], // No methods - no override
+        properties: [],
+        decorators: [],
+        constructor: [],
+      };
+
+      definitions.update_file(TEST_FILE, [
+        base_class_def,
+        base_method_def,
+        child_class_def,
+      ]);
+
+      // Set up type subtypes index (Base → Child)
+      definitions["type_subtypes"] = new Map();
+      definitions["type_subtypes"].set(base_class_id, new Set([child_class_id]));
+
+      // Setup TypeRegistry
+      types["resolved_type_members"] = new Map();
+      types["resolved_type_members"].set(
+        base_class_id,
+        new Map([[("helper" as SymbolName), base_method_id]])
+      );
+
+      const result = resolve_method_on_type(
+        base_class_id,
+        "helper" as SymbolName,
+        context
+      );
+
+      // Should return only base method
+      expect(result).toEqual([base_method_id]);
+    });
+
+    it("should handle sibling classes both overriding", () => {
+      const base_class_id = class_symbol("Base", TEST_FILE, MOCK_LOCATION);
+      const child1_class_id = class_symbol("Child1", TEST_FILE, { ...MOCK_LOCATION, start_line: 10 });
+      const child2_class_id = class_symbol("Child2", TEST_FILE, { ...MOCK_LOCATION, start_line: 20 });
+      const base_method_id = method_symbol("method", MOCK_LOCATION);
+      const child1_method_id = method_symbol("method", { ...MOCK_LOCATION, start_line: 12 });
+      const child2_method_id = method_symbol("method", { ...MOCK_LOCATION, start_line: 22 });
+
+      // Setup base class
+      const base_method_def: MethodDefinition = {
+        kind: "method",
+        symbol_id: base_method_id,
+        name: "method" as SymbolName,
+        defining_scope_id: "scope:test.ts:Base:1:0" as ScopeId,
+        location: MOCK_LOCATION,
+        parameters: [],
+        body_scope_id: "scope:test.ts:Base.method:2:2" as ScopeId,
+        decorators: [],
+      };
+
+      const base_class_def: ClassDefinition = {
+        kind: "class",
+        symbol_id: base_class_id,
+        name: "Base" as SymbolName,
+        defining_scope_id: FILE_SCOPE_ID,
+        location: MOCK_LOCATION,
+        is_exported: false,
+        extends: [],
+        methods: [base_method_def],
+        properties: [],
+        decorators: [],
+        constructor: [],
+      };
+
+      // Setup Child1 that overrides
+      const child1_method_def: MethodDefinition = {
+        kind: "method",
+        symbol_id: child1_method_id,
+        name: "method" as SymbolName,
+        defining_scope_id: "scope:test.ts:Child1:10:0" as ScopeId,
+        location: { ...MOCK_LOCATION, start_line: 12 },
+        parameters: [],
+        body_scope_id: "scope:test.ts:Child1.method:12:2" as ScopeId,
+        decorators: [],
+      };
+
+      const child1_class_def: ClassDefinition = {
+        kind: "class",
+        symbol_id: child1_class_id,
+        name: "Child1" as SymbolName,
+        defining_scope_id: FILE_SCOPE_ID,
+        location: { ...MOCK_LOCATION, start_line: 10 },
+        is_exported: false,
+        extends: ["Base" as SymbolName],
+        methods: [child1_method_def],
+        properties: [],
+        decorators: [],
+        constructor: [],
+      };
+
+      // Setup Child2 that overrides
+      const child2_method_def: MethodDefinition = {
+        kind: "method",
+        symbol_id: child2_method_id,
+        name: "method" as SymbolName,
+        defining_scope_id: "scope:test.ts:Child2:20:0" as ScopeId,
+        location: { ...MOCK_LOCATION, start_line: 22 },
+        parameters: [],
+        body_scope_id: "scope:test.ts:Child2.method:22:2" as ScopeId,
+        decorators: [],
+      };
+
+      const child2_class_def: ClassDefinition = {
+        kind: "class",
+        symbol_id: child2_class_id,
+        name: "Child2" as SymbolName,
+        defining_scope_id: FILE_SCOPE_ID,
+        location: { ...MOCK_LOCATION, start_line: 20 },
+        is_exported: false,
+        extends: ["Base" as SymbolName],
+        methods: [child2_method_def],
+        properties: [],
+        decorators: [],
+        constructor: [],
+      };
+
+      definitions.update_file(TEST_FILE, [
+        base_class_def, base_method_def,
+        child1_class_def, child1_method_def,
+        child2_class_def, child2_method_def,
+      ]);
+
+      // Set up type subtypes index (Base → Child1, Base → Child2)
+      definitions["type_subtypes"] = new Map();
+      definitions["type_subtypes"].set(base_class_id, new Set([child1_class_id, child2_class_id]));
+
+      // Setup TypeRegistry
+      types["resolved_type_members"] = new Map();
+      types["resolved_type_members"].set(
+        base_class_id,
+        new Map([[("method" as SymbolName), base_method_id]])
+      );
+
+      const result = resolve_method_on_type(
+        base_class_id,
+        "method" as SymbolName,
+        context
+      );
+
+      // Should return all three methods
+      expect(result).toHaveLength(3);
+      expect(result).toContain(base_method_id);
+      expect(result).toContain(child1_method_id);
+      expect(result).toContain(child2_method_id);
+    });
+  });
+
   describe("Namespace import method lookup", () => {
     it("should resolve method from source file exports", () => {
       const namespace_import_id = "import:test.ts:1:0:1:20:utils" as SymbolId;

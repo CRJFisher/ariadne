@@ -101,6 +101,17 @@ export function resolve_method_on_type(
     return resolve_polymorphic_method(receiver_type, method_name, definitions);
   }
 
+  // For classes, check if subtypes override this method
+  // This ensures all possible runtime targets are connected in the call graph
+  if (receiver_def?.kind === "class") {
+    return resolve_polymorphic_class_method(
+      receiver_type,
+      method_name,
+      method_symbol,
+      definitions
+    );
+  }
+
   // Concrete call: single resolution
   return [method_symbol];
 }
@@ -149,6 +160,53 @@ function resolve_polymorphic_method(
   }
 
   return implementations;
+}
+
+/**
+ * Resolve a method call on a class, including all subtype overrides.
+ *
+ * Returns the base method PLUS any overriding methods in subtypes.
+ * This ensures all possible runtime targets are connected in the call graph,
+ * which is essential for accurate entry point detection.
+ *
+ * Unlike interface polymorphism which only returns implementations (since
+ * interfaces are abstract), class polymorphism includes the base method
+ * because it may be called directly.
+ *
+ * @param class_id - SymbolId of the class containing the method
+ * @param method_name - Name of the method being called
+ * @param base_method_id - SymbolId of the method in the base class
+ * @param definitions - Definition registry with type inheritance index
+ * @returns Array of SymbolIds: base method + all overriding methods
+ */
+function resolve_polymorphic_class_method(
+  class_id: SymbolId,
+  method_name: SymbolName,
+  base_method_id: SymbolId,
+  definitions: DefinitionRegistry
+): SymbolId[] {
+  const results: SymbolId[] = [base_method_id];
+
+  const all_subtypes = get_transitive_subtypes(class_id, definitions);
+  if (all_subtypes.size === 0) {
+    return results;
+  }
+
+  const member_index = definitions.get_member_index();
+
+  for (const subtype_id of all_subtypes) {
+    const subtype_members = member_index.get(subtype_id);
+    if (!subtype_members) {
+      continue;
+    }
+
+    const override_method_id = subtype_members.get(method_name);
+    if (override_method_id && override_method_id !== base_method_id) {
+      results.push(override_method_id);
+    }
+  }
+
+  return results;
 }
 
 /**
