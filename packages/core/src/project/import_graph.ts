@@ -148,17 +148,6 @@ export class ImportGraph {
   }
 
   /**
-   * Get files that this file imports from (direct dependencies).
-   *
-   * @param file_path - The file to query
-   * @returns Set of files that this file imports from
-   */
-  get_dependencies(file_path: FilePath): Set<FilePath> {
-    const deps = this.dependencies.get(file_path);
-    return deps ? new Set(deps) : new Set();
-  }
-
-  /**
    * Get files that import from this file (direct dependents).
    * These are the files that need invalidation when this file changes.
    *
@@ -170,161 +159,6 @@ export class ImportGraph {
     return deps ? new Set(deps) : new Set();
   }
 
-  /**
-   * Get all files reachable from this file (transitive dependencies).
-   * Uses depth-first search, detects cycles.
-   *
-   * @param file_path - The file to start from
-   * @returns Set of all transitively reachable files
-   */
-  get_transitive_dependencies(file_path: FilePath): Set<FilePath> {
-    const visited = new Set<FilePath>();
-    const stack = [file_path];
-
-    while (stack.length > 0) {
-      const current = stack.pop();
-      if (!current) {
-        continue;
-      }
-
-      if (visited.has(current)) {
-        continue; // Already visited (cycle or duplicate)
-      }
-
-      visited.add(current);
-
-      // Add direct dependencies to stack
-      const deps = this.dependencies.get(current);
-      if (deps) {
-        for (const dep of deps) {
-          if (!visited.has(dep)) {
-            stack.push(dep);
-          }
-        }
-      }
-    }
-
-    // Remove the starting file from results
-    visited.delete(file_path);
-
-    return visited;
-  }
-
-  /**
-   * Get all files that transitively depend on this file.
-   * If this file changes, all of these may need re-resolution.
-   *
-   * @param file_path - The file to query
-   * @returns Set of all files transitively depending on this file
-   */
-  get_transitive_dependents(file_path: FilePath): Set<FilePath> {
-    const visited = new Set<FilePath>();
-    const stack = [file_path];
-
-    while (stack.length > 0) {
-      const current = stack.pop();
-      if (!current) {
-        continue;
-      }
-
-      if (visited.has(current)) {
-        continue;
-      }
-
-      visited.add(current);
-
-      // Add direct dependents to stack
-      const deps = this.dependents.get(current);
-      if (deps) {
-        for (const dep of deps) {
-          if (!visited.has(dep)) {
-            stack.push(dep);
-          }
-        }
-      }
-    }
-
-    // Remove the starting file from results
-    visited.delete(file_path);
-
-    return visited;
-  }
-
-  /**
-   * Check if file A imports from file B (directly).
-   *
-   * @param importer - The importing file
-   * @param imported - The file being imported
-   * @returns True if importer directly imports from imported
-   */
-  has_dependency(importer: FilePath, imported: FilePath): boolean {
-    const deps = this.dependencies.get(importer);
-    return deps ? deps.has(imported) : false;
-  }
-
-  /**
-   * Detect import cycles involving a file.
-   *
-   * @param file_path - The file to check
-   * @returns Array of files forming a cycle, or empty if no cycle
-   */
-  detect_cycle(file_path: FilePath): FilePath[] {
-    const visited = new Set<FilePath>();
-    const path: FilePath[] = [];
-
-    const has_cycle = (current: FilePath): boolean => {
-      if (path.includes(current)) {
-        // Found cycle - return the cycle portion
-        return true;
-      }
-
-      if (visited.has(current)) {
-        return false; // Already explored, no cycle
-      }
-
-      visited.add(current);
-      path.push(current);
-
-      const deps = this.dependencies.get(current);
-      if (deps) {
-        for (const dep of deps) {
-          if (has_cycle(dep)) {
-            return true;
-          }
-        }
-      }
-
-      path.pop();
-      return false;
-    };
-
-    if (has_cycle(file_path)) {
-      // Extract cycle from path
-      const cycle_start = path.indexOf(path[path.length - 1]);
-      return path.slice(cycle_start);
-    }
-
-    return [];
-  }
-
-  /**
-   * Get all files in the graph.
-   *
-   * @returns Set of all file paths
-   */
-  get_all_files(): Set<FilePath> {
-    const files = new Set<FilePath>();
-
-    for (const file of this.dependencies.keys()) {
-      files.add(file);
-    }
-
-    for (const file of this.dependents.keys()) {
-      files.add(file);
-    }
-
-    return files;
-  }
 
   /**
    * Remove all import relationships for a file.
@@ -393,33 +227,6 @@ export class ImportGraph {
   }
 
   /**
-   * Get statistics about the graph.
-   *
-   * @returns Graph statistics
-   */
-  get_stats(): {
-    file_count: number;
-    edge_count: number;
-    avg_dependencies: number;
-    avg_dependents: number;
-  } {
-    const files = this.get_all_files();
-    const file_count = files.size;
-
-    let edge_count = 0;
-    for (const deps of this.dependencies.values()) {
-      edge_count += deps.size;
-    }
-
-    return {
-      file_count,
-      edge_count,
-      avg_dependencies: file_count > 0 ? edge_count / file_count : 0,
-      avg_dependents: file_count > 0 ? edge_count / file_count : 0,
-    };
-  }
-
-  /**
    * Get all ImportDefinitions for a scope.
    * Used by ResolutionRegistry to resolve imported symbols in a scope.
    *
@@ -428,16 +235,6 @@ export class ImportGraph {
    */
   get_scope_imports(scope_id: ScopeId): readonly ImportDefinition[] {
     return this.imports_by_scope.get(scope_id) ?? [];
-  }
-
-  /**
-   * Get all ImportDefinitions for a file.
-   *
-   * @param file_path - The file to query
-   * @returns Array of ImportDefinitions in that file (empty if none)
-   */
-  get_file_imports(file_path: FilePath): readonly ImportDefinition[] {
-    return this.imports_by_file.get(file_path) ?? [];
   }
 
   /**
