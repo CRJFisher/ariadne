@@ -53,9 +53,3 @@ export function query_tree(lang: Language, tree: Tree): QueryCapture[] {
   return captures;
 }
 
-/**
- * Clear the query cache. Useful for testing or after .scm file changes.
- */
-export function clear_query_cache(): void {
-  COMPILED_QUERY_CACHE.clear();
-}

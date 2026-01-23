@@ -15,12 +15,13 @@ import type {
   FilePath,
 } from "@ariadnejs/types";
 import {
+  anonymous_function_symbol,
   class_symbol,
   enum_symbol,
   function_symbol,
   interface_symbol,
-  namespace_symbol,
   method_symbol,
+  namespace_symbol,
   parameter_symbol,
   property_symbol,
   type_symbol,
@@ -267,9 +268,13 @@ export function extract_access_modifier(
   const parent = node.parent;
   if (parent) {
     for (const child of parent.children || []) {
-      if (child.type === "public") return "public";
-      if (child.type === "private") return "private";
-      if (child.type === "protected") return "protected";
+      // Tree-sitter TypeScript wraps access modifiers in accessibility_modifier node
+      if (child.type === "accessibility_modifier") {
+        const modifier_text = child.text;
+        if (modifier_text === "public") return "public";
+        if (modifier_text === "private") return "private";
+        if (modifier_text === "protected") return "protected";
+      }
     }
   }
   return undefined;
@@ -676,15 +681,15 @@ export function find_containing_callable(capture: CaptureNode): SymbolId {
         const location: Location = node_to_location(name_node, file_path);
         return function_symbol(name_node.text as SymbolName, location);
       } else {
-        // Anonymous function/arrow function - use the location as ID
+        // Anonymous function/arrow function - use location-based anonymous symbol
         const location: Location = node_to_location(node, file_path);
-        return function_symbol("anonymous" as SymbolName, location);
+        return anonymous_function_symbol(location);
       }
     }
     node = node.parent;
   }
-  // Default to unknown function
-  return function_symbol("anonymous" as SymbolName, capture.location);
+  // Default to anonymous function
+  return anonymous_function_symbol(capture.location);
 }
 
 /**

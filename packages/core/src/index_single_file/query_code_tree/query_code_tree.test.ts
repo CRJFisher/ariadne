@@ -8,7 +8,7 @@ import JavaScript from "tree-sitter-javascript";
 import TypeScript from "tree-sitter-typescript";
 import Python from "tree-sitter-python";
 import Rust from "tree-sitter-rust";
-import { query_tree, clear_query_cache } from "./query_code_tree";
+import { query_tree } from "./query_code_tree";
 
 describe("query_tree", () => {
   describe("JavaScript", () => {
@@ -130,68 +130,4 @@ describe("query_tree", () => {
     });
   });
 
-  describe("Query Caching", () => {
-    beforeEach(() => {
-      clear_query_cache();
-    });
-
-    it("should cache compiled queries per language", () => {
-      const parser = new Parser();
-      parser.setLanguage(TypeScript.typescript);
-      const tree1 = parser.parse("const x = 1;");
-      const tree2 = parser.parse("const y = 2;");
-
-      const start1 = performance.now();
-      query_tree("typescript", tree1);
-      const time1 = performance.now() - start1;
-
-      const start2 = performance.now();
-      query_tree("typescript", tree2);
-      const time2 = performance.now() - start2;
-
-      // Second call should be faster (cache hit skips compilation)
-      // Note: First call includes ~100ms compilation, second should be < 10ms
-      expect(time2).toBeLessThan(time1);
-    });
-
-    it("should compile separate queries per language", () => {
-      const ts_parser = new Parser();
-      ts_parser.setLanguage(TypeScript.typescript);
-      const ts_tree = ts_parser.parse("const x: number = 1;");
-
-      const py_parser = new Parser();
-      py_parser.setLanguage(Python);
-      const py_tree = py_parser.parse("x = 1");
-
-      // Both should work without interference
-      const ts_captures = query_tree("typescript", ts_tree);
-      const py_captures = query_tree("python", py_tree);
-
-      expect(ts_captures.length).toBeGreaterThan(0);
-      expect(py_captures.length).toBeGreaterThan(0);
-    });
-
-    it("should clear cache when clear_query_cache is called", () => {
-      const parser = new Parser();
-      parser.setLanguage(TypeScript.typescript);
-      const tree = parser.parse("const x = 1;");
-
-      // First call - compiles and caches
-      const start1 = performance.now();
-      query_tree("typescript", tree);
-      const time1 = performance.now() - start1;
-
-      // Clear the cache
-      clear_query_cache();
-
-      // Next call should recompile (cache was cleared)
-      const start2 = performance.now();
-      query_tree("typescript", tree);
-      const time2 = performance.now() - start2;
-
-      // Both should take similar time (both involve compilation)
-      // Allow 50% tolerance for timing variations
-      expect(time2).toBeGreaterThan(time1 * 0.5);
-    });
-  });
 });

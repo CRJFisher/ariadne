@@ -204,9 +204,9 @@ export function find_containing_callable(capture: CaptureNode): SymbolId {
         const location = node_to_location(name_node, capture.location.file_path);
         return function_symbol(name_node.text as SymbolName, location);
       } else {
-        // Anonymous function/arrow function - use the location as ID
+        // Anonymous function/arrow function - use location-based anonymous symbol
         const location = node_to_location(node, capture.location.file_path);
-        return function_symbol("anonymous" as SymbolName, location);
+        return anonymous_function_symbol(location);
       }
     }
     if (node.parent) {
@@ -215,8 +215,8 @@ export function find_containing_callable(capture: CaptureNode): SymbolId {
       break;
     }
   }
-  // Default to unknown function
-  return function_symbol("anonymous" as SymbolName, capture.location);
+  // Default to anonymous function
+  return anonymous_function_symbol(capture.location);
 }
 
 // ============================================================================

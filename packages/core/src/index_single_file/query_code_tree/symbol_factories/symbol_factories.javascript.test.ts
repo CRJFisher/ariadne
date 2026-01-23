@@ -26,7 +26,11 @@ import {
   extract_call_initializer_name,
   detect_callback_context,
   detect_function_collection,
+  find_containing_callable,
 } from "./symbol_factories.javascript";
+import { anonymous_function_symbol } from "@ariadnejs/types";
+import type { FilePath } from "@ariadnejs/types";
+import { node_to_location } from "../../node_utils";
 
 // Parsers for tree-sitter
 let js_parser: Parser;
@@ -265,5 +269,136 @@ describe("extract_extends", () => {
       const result = extract_extends(class_node!);
       expect(result).toEqual([]);
     });
+  });
+});
+
+// Helper to find a parameter node inside an arrow function
+function find_arrow_function_param(root: SyntaxNode, param_name: string): SyntaxNode | null {
+  function visit(node: SyntaxNode): SyntaxNode | null {
+    if (node.type === "arrow_function") {
+      // Look for the parameter inside the arrow function
+      for (let i = 0; i < node.childCount; i++) {
+        const child = node.child(i);
+        if (child) {
+          const result = find_identifier_in_params(child, param_name);
+          if (result) return result;
+        }
+      }
+    }
+    for (let i = 0; i < node.childCount; i++) {
+      const child = node.child(i);
+      if (child) {
+        const result = visit(child);
+        if (result) return result;
+      }
+    }
+    return null;
+  }
+  return visit(root);
+}
+
+function find_identifier_in_params(node: SyntaxNode, param_name: string): SyntaxNode | null {
+  if (node.type === "identifier" && node.text === param_name) {
+    return node;
+  }
+  for (let i = 0; i < node.childCount; i++) {
+    const child = node.child(i);
+    if (child) {
+      const result = find_identifier_in_params(child, param_name);
+      if (result) return result;
+    }
+  }
+  return null;
+}
+
+// Helper to find the arrow function node itself
+function find_arrow_function(root: SyntaxNode): SyntaxNode | null {
+  function visit(node: SyntaxNode): SyntaxNode | null {
+    if (node.type === "arrow_function") {
+      return node;
+    }
+    for (let i = 0; i < node.childCount; i++) {
+      const child = node.child(i);
+      if (child) {
+        const result = visit(child);
+        if (result) return result;
+      }
+    }
+    return null;
+  }
+  return visit(root);
+}
+
+describe("find_containing_callable with anonymous functions", () => {
+  const file_path = "/test.js" as FilePath;
+
+  it("should return matching SymbolId for arrow function parameters", () => {
+    const code = "const fn = (x) => x * 2;";
+    const root = parse_js(code);
+
+    // Find the parameter 'x' node
+    const param_node = find_arrow_function_param(root, "x");
+    expect(param_node).not.toBeNull();
+
+    // Find the arrow function node
+    const arrow_node = find_arrow_function(root);
+    expect(arrow_node).not.toBeNull();
+
+    // Create capture node for parameter
+    const capture = {
+      node: param_node!,
+      text: "x",
+      name: "definition.parameter",
+      location: {
+        file_path,
+        start_line: param_node!.startPosition.row + 1,
+        start_column: param_node!.startPosition.column + 1,
+        end_line: param_node!.endPosition.row + 1,
+        end_column: param_node!.endPosition.column + 1,
+      },
+    };
+
+    // Get the callable ID
+    const callable_id = find_containing_callable(capture);
+
+    // Expected: anonymous_function_symbol with arrow function's location
+    const expected_id = anonymous_function_symbol(node_to_location(arrow_node!, file_path));
+
+    expect(callable_id).toBe(expected_id);
+  });
+
+  it("should return matching SymbolId for callback arrow function parameters", () => {
+    const code = "items.reduce((acc, item) => acc + item, 0);";
+    const root = parse_js(code);
+
+    // Find the parameter 'acc' node
+    const param_node = find_arrow_function_param(root, "acc");
+    expect(param_node).not.toBeNull();
+
+    // Find the arrow function node
+    const arrow_node = find_arrow_function(root);
+    expect(arrow_node).not.toBeNull();
+
+    // Create capture node for parameter
+    const capture = {
+      node: param_node!,
+      text: "acc",
+      name: "definition.parameter",
+      location: {
+        file_path,
+        start_line: param_node!.startPosition.row + 1,
+        start_column: param_node!.startPosition.column + 1,
+        end_line: param_node!.endPosition.row + 1,
+        end_column: param_node!.endPosition.column + 1,
+      },
+    };
+
+    // Get the callable ID
+    const callable_id = find_containing_callable(capture);
+
+    // Expected: anonymous_function_symbol with arrow function's location
+    const expected_id = anonymous_function_symbol(node_to_location(arrow_node!, file_path));
+
+    expect(callable_id).toBe(expected_id);
   });
 });

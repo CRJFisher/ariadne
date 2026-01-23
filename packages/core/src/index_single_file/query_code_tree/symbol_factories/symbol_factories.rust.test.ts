@@ -3,6 +3,10 @@
  */
 
 import { describe, it, expect } from "vitest";
+import Parser from "tree-sitter";
+// @ts-expect-error - tree-sitter-rust types
+import Rust from "tree-sitter-rust";
+import type { SyntaxNode } from "tree-sitter";
 import {
   create_struct_id,
   create_enum_id,
@@ -31,6 +35,59 @@ import {
   find_containing_callable,
   detect_function_collection,
 } from "./symbol_factories.rust";
+import { anonymous_function_symbol } from "@ariadnejs/types";
+import type { FilePath } from "@ariadnejs/types";
+import { node_to_location } from "../../node_utils";
+
+// Helper to parse Rust code
+function parse_rust(code: string): SyntaxNode {
+  const parser = new Parser();
+  parser.setLanguage(Rust);
+  const tree = parser.parse(code);
+  return tree.rootNode;
+}
+
+// Helper to find function name node
+function find_function_name_node(root: SyntaxNode, fn_name: string): SyntaxNode | null {
+  function visit(node: SyntaxNode): SyntaxNode | null {
+    if (node.type === "function_item") {
+      const name_node = node.childForFieldName?.("name");
+      if (name_node && name_node.text === fn_name) {
+        return name_node;
+      }
+    }
+    for (let i = 0; i < node.childCount; i++) {
+      const child = node.child(i);
+      if (child) {
+        const result = visit(child);
+        if (result) return result;
+      }
+    }
+    return null;
+  }
+  return visit(root);
+}
+
+// Helper to find struct name node
+function find_struct_name_node(root: SyntaxNode, struct_name: string): SyntaxNode | null {
+  function visit(node: SyntaxNode): SyntaxNode | null {
+    if (node.type === "struct_item") {
+      const name_node = node.childForFieldName?.("name");
+      if (name_node && name_node.text === struct_name) {
+        return name_node;
+      }
+    }
+    for (let i = 0; i < node.childCount; i++) {
+      const child = node.child(i);
+      if (child) {
+        const result = visit(child);
+        if (result) return result;
+      }
+    }
+    return null;
+  }
+  return visit(root);
+}
 
 describe("Rust Symbol Factory Exports", () => {
   it("should export create_struct_id", () => {
@@ -141,5 +198,182 @@ describe("Rust Analysis Functions", () => {
 
   it("should export detect_function_collection", () => {
     expect(typeof detect_function_collection).toBe("function");
+  });
+});
+
+describe("has_pub_modifier", () => {
+  it("should detect pub modifier on functions", () => {
+    const code = "pub fn public_function() {}";
+    const root = parse_rust(code);
+    const fn_node = find_function_name_node(root, "public_function");
+    expect(fn_node).not.toBeNull();
+    expect(has_pub_modifier(fn_node!)).toBe(true);
+  });
+
+  it("should return false for private functions", () => {
+    const code = "fn private_function() {}";
+    const root = parse_rust(code);
+    const fn_node = find_function_name_node(root, "private_function");
+    expect(fn_node).not.toBeNull();
+    expect(has_pub_modifier(fn_node!)).toBe(false);
+  });
+
+  it("should detect pub(crate) modifier", () => {
+    const code = "pub(crate) fn crate_visible_function() {}";
+    const root = parse_rust(code);
+    const fn_node = find_function_name_node(root, "crate_visible_function");
+    expect(fn_node).not.toBeNull();
+    expect(has_pub_modifier(fn_node!)).toBe(true);
+  });
+
+  it("should detect pub(super) modifier", () => {
+    const code = "pub(super) fn super_visible_function() {}";
+    const root = parse_rust(code);
+    const fn_node = find_function_name_node(root, "super_visible_function");
+    expect(fn_node).not.toBeNull();
+    expect(has_pub_modifier(fn_node!)).toBe(true);
+  });
+
+  it("should detect pub modifier on structs", () => {
+    const code = "pub struct PublicStruct { field: i32 }";
+    const root = parse_rust(code);
+    const struct_node = find_struct_name_node(root, "PublicStruct");
+    expect(struct_node).not.toBeNull();
+    expect(has_pub_modifier(struct_node!)).toBe(true);
+  });
+
+  it("should return false for private structs", () => {
+    const code = "struct PrivateStruct { field: i32 }";
+    const root = parse_rust(code);
+    const struct_node = find_struct_name_node(root, "PrivateStruct");
+    expect(struct_node).not.toBeNull();
+    expect(has_pub_modifier(struct_node!)).toBe(false);
+  });
+
+  it("should detect pub async fn", () => {
+    const code = "pub async fn async_public_fn() {}";
+    const root = parse_rust(code);
+    const fn_node = find_function_name_node(root, "async_public_fn");
+    expect(fn_node).not.toBeNull();
+    expect(has_pub_modifier(fn_node!)).toBe(true);
+  });
+});
+
+// Helper to find the closure_expression node
+function find_closure(root: SyntaxNode): SyntaxNode | null {
+  function visit(node: SyntaxNode): SyntaxNode | null {
+    if (node.type === "closure_expression") {
+      return node;
+    }
+    for (let i = 0; i < node.childCount; i++) {
+      const child = node.child(i);
+      if (child) {
+        const result = visit(child);
+        if (result) return result;
+      }
+    }
+    return null;
+  }
+  return visit(root);
+}
+
+// Helper to find a parameter inside a closure
+function find_closure_param(root: SyntaxNode, param_name: string): SyntaxNode | null {
+  const closure = find_closure(root);
+  if (!closure) return null;
+
+  function visit(node: SyntaxNode): SyntaxNode | null {
+    if (node.type === "identifier" && node.text === param_name) {
+      return node;
+    }
+    for (let i = 0; i < node.childCount; i++) {
+      const child = node.child(i);
+      if (child) {
+        const result = visit(child);
+        if (result) return result;
+      }
+    }
+    return null;
+  }
+
+  // Look for parameters in the closure's parameters field
+  const params = closure.childForFieldName?.("parameters");
+  if (params) {
+    return visit(params);
+  }
+  return null;
+}
+
+describe("find_containing_callable with closure expressions", () => {
+  const file_path = "/test.rs" as FilePath;
+
+  it("should return matching SymbolId for closure parameters", () => {
+    const code = "let f = |x| x * 2;";
+    const root = parse_rust(code);
+
+    // Find the parameter 'x' node
+    const param_node = find_closure_param(root, "x");
+    expect(param_node).not.toBeNull();
+
+    // Find the closure node
+    const closure_node = find_closure(root);
+    expect(closure_node).not.toBeNull();
+
+    // Create capture node for parameter
+    const capture = {
+      node: param_node!,
+      text: "x",
+      name: "definition.parameter",
+      location: {
+        file_path,
+        start_line: param_node!.startPosition.row + 1,
+        start_column: param_node!.startPosition.column + 1,
+        end_line: param_node!.endPosition.row + 1,
+        end_column: param_node!.endPosition.column + 1,
+      },
+    };
+
+    // Get the callable ID
+    const callable_id = find_containing_callable(capture);
+
+    // Expected: anonymous_function_symbol with closure's location
+    const expected_id = anonymous_function_symbol(node_to_location(closure_node!, file_path));
+
+    expect(callable_id).toBe(expected_id);
+  });
+
+  it("should return matching SymbolId for iterator closure parameters", () => {
+    const code = "let result = items.iter().map(|item| item * 2).collect();";
+    const root = parse_rust(code);
+
+    // Find the parameter 'item' node
+    const param_node = find_closure_param(root, "item");
+    expect(param_node).not.toBeNull();
+
+    // Find the closure node
+    const closure_node = find_closure(root);
+    expect(closure_node).not.toBeNull();
+
+    // Create capture node for parameter
+    const capture = {
+      node: param_node!,
+      text: "item",
+      name: "definition.parameter",
+      location: {
+        file_path,
+        start_line: param_node!.startPosition.row + 1,
+        start_column: param_node!.startPosition.column + 1,
+        end_line: param_node!.endPosition.row + 1,
+        end_column: param_node!.endPosition.column + 1,
+      },
+    };
+
+    // Get the callable ID
+    const callable_id = find_containing_callable(capture);
+
+    // Expected: anonymous_function_symbol with closure's location
+    const expected_id = anonymous_function_symbol(node_to_location(closure_node!, file_path));
+
+    expect(callable_id).toBe(expected_id);
   });
 });

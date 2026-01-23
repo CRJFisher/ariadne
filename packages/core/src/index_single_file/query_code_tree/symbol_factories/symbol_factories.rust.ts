@@ -548,10 +548,9 @@ export function find_containing_callable(
       });
     }
 
-    // Closure expressions
+    // Closure expressions - use location-based anonymous symbol
     if (node.type === "closure_expression") {
-      // Closures don't have names, use location as identifier
-      return function_symbol("<closure>" as SymbolName, {
+      return anonymous_function_symbol({
         file_path,
         start_line: node.startPosition.row + 1,
         start_column: node.startPosition.column + 1,

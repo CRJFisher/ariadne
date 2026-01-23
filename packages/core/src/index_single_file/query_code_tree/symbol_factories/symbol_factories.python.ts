@@ -240,9 +240,8 @@ export function find_containing_callable(capture: CaptureNode): SymbolId {
           );
         }
       } else if (node.type === "lambda") {
-        // Lambda function - use the location as ID
-        return function_symbol(
-          "lambda" as SymbolName,
+        // Lambda function - use location-based anonymous symbol
+        return anonymous_function_symbol(
           node_to_location(node, capture.location.file_path)
         );
       }
@@ -253,8 +252,8 @@ export function find_containing_callable(capture: CaptureNode): SymbolId {
       break;
     }
   }
-  // Default to unknown function
-  return function_symbol("anonymous" as SymbolName, capture.location);
+  // Default to anonymous function
+  return anonymous_function_symbol(capture.location);
 }
 
 export function find_decorator_target(
