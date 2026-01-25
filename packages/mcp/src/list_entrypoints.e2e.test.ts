@@ -1,11 +1,11 @@
 /**
- * End-to-end test for MCP server and list_functions tool
+ * End-to-end test for MCP server and list_entrypoints tool
  *
  * This test:
  * 1. Spawns the actual MCP server as a child process
  * 2. Connects to it as an MCP client via stdio
  * 3. Discovers available tools
- * 4. Calls list_functions tool on packages/core codebase
+ * 4. Calls list_entrypoints tool on packages/core codebase
  * 5. Validates the response format and content
  */
 
@@ -15,7 +15,7 @@ import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
 import * as path from "path";
 
-describe("MCP Server E2E - list_functions tool", () => {
+describe("MCP Server E2E - list_entrypoints tool", () => {
   let server_process: ChildProcess;
   let client: Client;
   let transport: StdioClientTransport;
@@ -83,7 +83,7 @@ describe("MCP Server E2E - list_functions tool", () => {
     expect(server_process.killed).toBe(false);
   });
 
-  it("should list available tools and find list_functions with include_tests parameter", async () => {
+  it("should list available tools and find list_entrypoints with filtering parameters", async () => {
     const response = await client.listTools();
 
     expect(response).toBeDefined();
@@ -93,29 +93,33 @@ describe("MCP Server E2E - list_functions tool", () => {
     // Should have at least one tool
     expect(response.tools.length).toBeGreaterThan(0);
 
-    // Should find list_functions tool
-    const list_functions_tool = response.tools.find(
-      (tool) => tool.name === "list_functions"
+    // Should find list_entrypoints tool
+    const list_entrypoints_tool = response.tools.find(
+      (tool) => tool.name === "list_entrypoints"
     );
 
-    expect(list_functions_tool).toBeDefined();
-    expect(list_functions_tool?.name).toBe("list_functions");
-    expect(list_functions_tool?.description).toContain("entry point");
-    expect(list_functions_tool?.description).toContain("[TEST]");
-    expect(list_functions_tool?.inputSchema).toBeDefined();
-    expect(list_functions_tool?.inputSchema.type).toBe("object");
+    expect(list_entrypoints_tool).toBeDefined();
+    expect(list_entrypoints_tool?.name).toBe("list_entrypoints");
+    expect(list_entrypoints_tool?.description).toContain("entry point");
+    expect(list_entrypoints_tool?.description).toContain("[TEST]");
+    expect(list_entrypoints_tool?.inputSchema).toBeDefined();
+    expect(list_entrypoints_tool?.inputSchema.type).toBe("object");
 
-    // Verify include_tests parameter is in schema
-    const schema = list_functions_tool?.inputSchema as any;
+    // Verify parameters are in schema
+    const schema = list_entrypoints_tool?.inputSchema as any;
     expect(schema.properties).toBeDefined();
     expect(schema.properties.include_tests).toBeDefined();
     expect(schema.properties.include_tests.type).toBe("boolean");
+    expect(schema.properties.files).toBeDefined();
+    expect(schema.properties.files.type).toBe("array");
+    expect(schema.properties.folders).toBeDefined();
+    expect(schema.properties.folders.type).toBe("array");
   });
 
-  it("should call list_functions on packages/core and get valid response", async () => {
+  it("should call list_entrypoints on packages/core and get valid response", async () => {
     // Call the tool (this will load all files in packages/core)
     const response = await client.callTool({
-      name: "list_functions",
+      name: "list_entrypoints",
       arguments: {},
     });
 
@@ -130,30 +134,35 @@ describe("MCP Server E2E - list_functions tool", () => {
     expect(content.text).toBeDefined();
 
     // Log the response for debugging
-    console.log("\n=== list_functions Response ===");
+    console.log("\n=== list_entrypoints Response ===");
     console.log(content.text);
     console.log("=== End Response ===\n");
   }, 120000); // 2 minute timeout (packages/core is large)
 
-  it("should return entry points with correct format", async () => {
+  it("should return entry points with correct format including Ref line", async () => {
     const response = await client.callTool({
-      name: "list_functions",
+      name: "list_entrypoints",
       arguments: {},
     });
 
     const text = (response.content as any[])[0].text as string;
 
     // Verify header
-    expect(text).toContain("Top-Level Functions");
+    expect(text).toContain("Entry Points");
 
     // Verify format contains function entries
     // Format: "- function_name(...): return_type -- N functions"
     const function_pattern = /^- \w+\([^)]*\):.*--\s+\d+\s+functions?/m;
     expect(text).toMatch(function_pattern);
 
-    // Verify contains "Entry point:" with file path
-    expect(text).toContain("Entry point:");
+    // Verify contains "Location:" with file path
+    expect(text).toContain("Location:");
     expect(text).toContain("packages/core/");
+
+    // Verify contains "Ref:" line for companion tool integration
+    expect(text).toContain("Ref:");
+    // Ref format: file_path:line#name
+    expect(text).toMatch(/Ref:\s+\S+:\d+#\w+/);
 
     // Verify contains total count
     expect(text).toMatch(/Total:\s+\d+\s+entry points?/);
@@ -161,7 +170,7 @@ describe("MCP Server E2E - list_functions tool", () => {
 
   it("should return entry points from packages/core codebase", async () => {
     const response = await client.callTool({
-      name: "list_functions",
+      name: "list_entrypoints",
       arguments: {},
     });
 
@@ -198,7 +207,7 @@ describe("MCP Server E2E - list_functions tool", () => {
   it("should mark test functions with [TEST] indicator", async () => {
     // packages/core has test files, so we should see [TEST] markers
     const response = await client.callTool({
-      name: "list_functions",
+      name: "list_entrypoints",
       arguments: {},
     });
 
@@ -225,7 +234,7 @@ describe("MCP Server E2E - list_functions tool", () => {
   it("should filter out test functions when include_tests is false", async () => {
     // First get results with tests included
     const with_tests_response = await client.callTool({
-      name: "list_functions",
+      name: "list_entrypoints",
       arguments: { include_tests: true },
     });
     const with_tests_text = (with_tests_response.content as any[])[0]
@@ -233,7 +242,7 @@ describe("MCP Server E2E - list_functions tool", () => {
 
     // Then get results without tests
     const without_tests_response = await client.callTool({
-      name: "list_functions",
+      name: "list_entrypoints",
       arguments: { include_tests: false },
     });
     const without_tests_text = (without_tests_response.content as any[])[0]
@@ -262,7 +271,9 @@ describe("MCP Server E2E - list_functions tool", () => {
 
       console.log(`\nWith tests: ${with_tests_count} entry points`);
       console.log(`Without tests: ${without_tests_count} entry points`);
-      console.log(`Test entry points filtered: ${with_tests_count - without_tests_count}`);
+      console.log(
+        `Test entry points filtered: ${with_tests_count - without_tests_count}`
+      );
     }
   }, 120000);
 

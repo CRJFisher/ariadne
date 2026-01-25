@@ -1,33 +1,70 @@
 /**
- * Tests for list_functions tool
+ * Tests for list_entrypoints tool
  */
 
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { list_functions, list_functions_schema } from "./list_functions";
+import {
+  list_entrypoints,
+  list_entrypoints_schema,
+  build_signature,
+} from "./list_entrypoints";
 import type { Project } from "@ariadnejs/core";
-import type { CallGraph, CallableNode, SymbolId, FilePath, SymbolName } from "@ariadnejs/types";
+import type {
+  CallGraph,
+  CallableNode,
+  SymbolId,
+  FilePath,
+  SymbolName,
+} from "@ariadnejs/types";
 
-describe("list_functions_schema", () => {
+describe("list_entrypoints_schema", () => {
   it("should validate empty object", () => {
-    const result = list_functions_schema.safeParse({});
+    const result = list_entrypoints_schema.safeParse({});
     expect(result.success).toBe(true);
   });
 
   it("should accept extra properties (ignore them)", () => {
-    const result = list_functions_schema.safeParse({ extra: "value" });
+    const result = list_entrypoints_schema.safeParse({ extra: "value" });
     expect(result.success).toBe(true);
   });
 
   it("should accept include_tests boolean", () => {
-    const result_true = list_functions_schema.safeParse({ include_tests: true });
+    const result_true = list_entrypoints_schema.safeParse({
+      include_tests: true,
+    });
     expect(result_true.success).toBe(true);
 
-    const result_false = list_functions_schema.safeParse({ include_tests: false });
+    const result_false = list_entrypoints_schema.safeParse({
+      include_tests: false,
+    });
     expect(result_false.success).toBe(true);
+  });
+
+  it("should accept files array", () => {
+    const result = list_entrypoints_schema.safeParse({
+      files: ["src/main.ts", "src/utils.ts"],
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it("should accept folders array", () => {
+    const result = list_entrypoints_schema.safeParse({
+      folders: ["src", "lib"],
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it("should accept combined files and folders", () => {
+    const result = list_entrypoints_schema.safeParse({
+      files: ["src/main.ts"],
+      folders: ["lib"],
+      include_tests: false,
+    });
+    expect(result.success).toBe(true);
   });
 });
 
-describe("list_functions", () => {
+describe("list_entrypoints", () => {
   let mock_project: Project;
 
   beforeEach(() => {
@@ -43,7 +80,7 @@ describe("list_functions", () => {
     };
     vi.mocked(mock_project.get_call_graph).mockReturnValue(mock_call_graph);
 
-    const result = await list_functions(mock_project);
+    const result = await list_entrypoints(mock_project);
 
     expect(result).toBe(
       "No entry points found (all functions are called by other functions)"
@@ -89,12 +126,58 @@ describe("list_functions", () => {
     };
     vi.mocked(mock_project.get_call_graph).mockReturnValue(mock_call_graph);
 
-    const result = await list_functions(mock_project);
+    const result = await list_entrypoints(mock_project);
 
-    expect(result).toContain("Top-Level Functions (by call tree size):");
+    expect(result).toContain("Entry Points (by call tree size):");
     expect(result).toContain("test_func(x: number): void");
-    expect(result).toContain("test.ts:10");
+    expect(result).toContain("Location: test.ts:10");
+    expect(result).toContain("Ref: test.ts:10#test_func");
     expect(result).toContain("Total: 1 entry point");
+  });
+
+  it("should include Ref line for companion tool integration", async () => {
+    const node_id = "symbol:handle_request" as SymbolId;
+    const mock_node: CallableNode = {
+      symbol_id: node_id,
+      name: "handle_request" as SymbolName,
+      definition: {
+        symbol_id: node_id,
+        name: "handle_request",
+        kind: "function",
+        location: {
+          file_path: "src/handlers.ts" as FilePath,
+          start_line: 15,
+          start_column: 0,
+          end_line: 42,
+          end_column: 1,
+        },
+        scope_id: "scope:module" as any,
+        signature: {
+          parameters: [{ name: "req", type: "Request" }],
+          return_type: "Promise<void>",
+        },
+      },
+      location: {
+        file_path: "src/handlers.ts" as FilePath,
+        start_line: 15,
+        start_column: 0,
+        end_line: 42,
+        end_column: 1,
+      },
+      enclosed_calls: [],
+      is_test: false,
+    };
+
+    const mock_call_graph: CallGraph = {
+      nodes: new Map([[node_id, mock_node]]),
+      entry_points: [node_id],
+    };
+    vi.mocked(mock_project.get_call_graph).mockReturnValue(mock_call_graph);
+
+    const result = await list_entrypoints(mock_project);
+
+    // Verify the Ref line format: file_path:line#name
+    expect(result).toContain("Ref: src/handlers.ts:15#handle_request");
   });
 
   it("should sort entry points by tree size descending", async () => {
@@ -204,7 +287,7 @@ describe("list_functions", () => {
     };
     vi.mocked(mock_project.get_call_graph).mockReturnValue(mock_call_graph);
 
-    const result = await list_functions(mock_project);
+    const result = await list_entrypoints(mock_project);
 
     // large_func should appear first (has calls)
     const large_index = result.indexOf("large_func");
@@ -252,7 +335,7 @@ describe("list_functions", () => {
     };
     vi.mocked(mock_project.get_call_graph).mockReturnValue(mock_call_graph);
 
-    const result = await list_functions(mock_project);
+    const result = await list_entrypoints(mock_project);
 
     expect(result).toContain("myMethod(self: MyClass, value: string): boolean");
   });
@@ -293,7 +376,7 @@ describe("list_functions", () => {
     };
     vi.mocked(mock_project.get_call_graph).mockReturnValue(mock_call_graph);
 
-    const result = await list_functions(mock_project);
+    const result = await list_entrypoints(mock_project);
 
     expect(result).toContain("constructor(value: number)");
   });
@@ -342,7 +425,7 @@ describe("list_functions", () => {
     };
     vi.mocked(mock_project.get_call_graph).mockReturnValue(mock_call_graph);
 
-    const result = await list_functions(mock_project);
+    const result = await list_entrypoints(mock_project);
 
     expect(result).toContain("+ 1 unresolved");
   });
@@ -383,7 +466,7 @@ describe("list_functions", () => {
     };
     vi.mocked(mock_project.get_call_graph).mockReturnValue(mock_call_graph);
 
-    const result = await list_functions(mock_project);
+    const result = await list_entrypoints(mock_project);
 
     expect(result).toContain("[TEST]");
     expect(result).toContain("test_add(): void");
@@ -459,7 +542,9 @@ describe("list_functions", () => {
     vi.mocked(mock_project.get_call_graph).mockReturnValue(mock_call_graph);
 
     // With include_tests: false, should only show production function
-    const result = await list_functions(mock_project, { include_tests: false });
+    const result = await list_entrypoints(mock_project, {
+      include_tests: false,
+    });
 
     expect(result).toContain("main(): void");
     expect(result).not.toContain("test_main");
@@ -504,9 +589,15 @@ describe("list_functions", () => {
     vi.mocked(mock_project.get_call_graph).mockReturnValue(mock_call_graph);
 
     // Without specifying include_tests, should include tests by default
-    const result = await list_functions(mock_project);
+    const result = await list_entrypoints(mock_project);
 
     expect(result).toContain("test_func(): void");
     expect(result).toContain("[TEST]");
+  });
+});
+
+describe("build_signature", () => {
+  it("should be exported for use by companion tools", () => {
+    expect(typeof build_signature).toBe("function");
   });
 });

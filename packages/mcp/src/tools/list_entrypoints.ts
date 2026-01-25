@@ -11,17 +11,24 @@ import type {
 } from "@ariadnejs/types";
 
 /**
- * Input schema for list_functions tool
- * Optional include_tests parameter to filter test entry points
+ * Input schema for list_entrypoints tool
  */
-export const list_functions_schema = z.object({
+export const list_entrypoints_schema = z.object({
+  files: z
+    .array(z.string())
+    .optional()
+    .describe("Specific file paths to analyze (relative or absolute)"),
+  folders: z
+    .array(z.string())
+    .optional()
+    .describe("Folder paths to include recursively"),
   include_tests: z
     .boolean()
     .optional()
     .describe("Include test functions in output (default: true)"),
 });
 
-export type ListFunctionsRequest = z.infer<typeof list_functions_schema>;
+export type ListEntrypointsRequest = z.infer<typeof list_entrypoints_schema>;
 
 /**
  * Entry data for sorting and formatting
@@ -90,7 +97,7 @@ function count_tree_size(
  * @param definition - Function/method/constructor definition
  * @returns Formatted signature string
  */
-function build_signature(definition: AnyDefinition): string {
+export function build_signature(definition: AnyDefinition): string {
   const name = definition.name;
 
   // Handle different definition types
@@ -145,14 +152,29 @@ function build_signature(definition: AnyDefinition): string {
 }
 
 /**
+ * Build a symbol reference in the format: file_path:line#name
+ * This format is easy for agents to construct ad-hoc.
+ *
+ * @param node - The callable node
+ * @returns Reference string like "src/handlers.ts:15#handle_request"
+ */
+function build_symbol_ref(node: CallableNode): string {
+  const file_path = node.location.file_path;
+  const line = node.location.start_line;
+  const name = node.name;
+  return `${file_path}:${line}#${name}`;
+}
+
+/**
  * Format the output as ASCII text.
  *
  * Example:
  * ```
- * Top-Level Functions (by call tree size):
+ * Entry Points (by call tree size):
  *
  * - handle_request(req: Request): Promise<void> -- 42 functions
- *   Entry point: src/handlers.ts:15
+ *   Location: src/handlers.ts:15
+ *   Ref: src/handlers.ts:15#handle_request
  *
  * Total: 3 entry points
  * ```
@@ -165,11 +187,12 @@ function format_output(entries: EntryPointData[]): string {
     return "No entry points found (all functions are called by other functions)";
   }
 
-  const lines: string[] = ["Top-Level Functions (by call tree size):", ""];
+  const lines: string[] = ["Entry Points (by call tree size):", ""];
 
   for (const entry of entries) {
     const signature = build_signature(entry.node.definition);
     const location = `${entry.node.location.file_path}:${entry.node.location.start_line}`;
+    const symbol_ref = build_symbol_ref(entry.node);
     const test_indicator = entry.node.is_test ? " [TEST]" : "";
 
     const function_word = entry.tree_size === 1 ? "function" : "functions";
@@ -182,7 +205,8 @@ function format_output(entries: EntryPointData[]): string {
     }
 
     lines.push(`- ${signature} -- ${size_info}${test_indicator}`);
-    lines.push(`  Entry point: ${location}`);
+    lines.push(`  Location: ${location}`);
+    lines.push(`  Ref: ${symbol_ref}`);
     lines.push("");
   }
 
@@ -193,21 +217,22 @@ function format_output(entries: EntryPointData[]): string {
 }
 
 /**
- * List all top-level (entry point) functions ordered by call tree size.
+ * List all entry point functions ordered by call tree size.
  *
  * Entry points are functions that are never called by any other function
- * in the codebase. They represent potential starting points for execution.
+ * within the analyzed scope. When filtering by files/folders, entry points
+ * are relative to the filtered set (scoped analysis).
  *
  * The tree size is the total number of unique functions transitively called
  * by the entry point, calculated via depth-first search with cycle detection.
  *
  * @param project - The Ariadne project instance
- * @param request - Optional request with include_tests filter
+ * @param request - Optional request with filtering and include_tests options
  * @returns Formatted ASCII text listing entry points
  */
-export async function list_functions(
+export async function list_entrypoints(
   project: Project,
-  request: ListFunctionsRequest = {}
+  request: ListEntrypointsRequest = {}
 ): Promise<string> {
   const { include_tests = true } = request;
 

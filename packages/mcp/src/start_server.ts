@@ -9,7 +9,131 @@ import * as fs from "fs/promises";
 import { VERSION } from "./version";
 import { Project } from "@ariadnejs/core";
 import { FilePath } from "@ariadnejs/types";
-import { list_functions, list_functions_schema } from "./tools/list_functions.js";
+import {
+  list_entrypoints,
+  list_entrypoints_schema,
+} from "./tools/list_entrypoints.js";
+
+/**
+ * Options for filtered file loading
+ */
+export interface FileLoadOptions {
+  files?: string[];
+  folders?: string[];
+  project_path: string;
+}
+
+/**
+ * Supported source file extensions regex
+ */
+const SUPPORTED_EXTENSIONS = /\.(ts|tsx|js|jsx|py|rs|go|java|cpp|c|hpp|h)$/;
+
+/**
+ * Check if a file has a supported source extension
+ */
+function is_supported_file(file_path: string): boolean {
+  return (
+    SUPPORTED_EXTENSIONS.test(file_path) && !file_path.endsWith(".d.ts")
+  );
+}
+
+/**
+ * Resolve a path to absolute, relative to project_path
+ */
+function resolve_to_absolute(path_input: string, project_path: string): string {
+  if (path.isAbsolute(path_input)) {
+    return path_input;
+  }
+  return path.resolve(project_path, path_input);
+}
+
+/**
+ * Find all supported source files in a folder recursively
+ */
+async function find_source_files_in_folder(
+  folder_path: string
+): Promise<string[]> {
+  const files: string[] = [];
+
+  async function walk(dir_path: string): Promise<void> {
+    let entries;
+    try {
+      entries = await fs.readdir(dir_path, { withFileTypes: true });
+    } catch {
+      return;
+    }
+
+    for (const entry of entries) {
+      const full_path = path.join(dir_path, entry.name);
+
+      // Skip common ignored directories
+      if (
+        entry.isDirectory() &&
+        !["node_modules", ".git", "dist", "build", ".next", "coverage"].includes(
+          entry.name
+        )
+      ) {
+        await walk(full_path);
+      } else if (entry.isFile() && is_supported_file(entry.name)) {
+        files.push(full_path);
+      }
+    }
+  }
+
+  await walk(folder_path);
+  return files;
+}
+
+/**
+ * Load files based on filtering options.
+ * If no files or folders specified, loads all project files.
+ */
+export async function load_filtered_project_files(
+  project: Project,
+  options: FileLoadOptions
+): Promise<void> {
+  const { files = [], folders = [], project_path } = options;
+
+  // If no filters specified, load entire project
+  if (files.length === 0 && folders.length === 0) {
+    await load_project_files(project, project_path);
+    return;
+  }
+
+  const files_to_load = new Set<string>();
+
+  // Add explicitly specified files
+  for (const file_path of files) {
+    const abs_path = resolve_to_absolute(file_path, project_path);
+    if (is_supported_file(abs_path)) {
+      files_to_load.add(abs_path);
+    }
+  }
+
+  // Expand folders to files
+  for (const folder_path of folders) {
+    const abs_folder = resolve_to_absolute(folder_path, project_path);
+    const folder_files = await find_source_files_in_folder(abs_folder);
+    for (const file of folder_files) {
+      files_to_load.add(file);
+    }
+  }
+
+  // Load each file
+  console.log(`Loading ${files_to_load.size} filtered files...`);
+  const start_time = Date.now();
+
+  for (const file_path of files_to_load) {
+    try {
+      await load_file_if_needed(project, file_path);
+    } catch (error) {
+      console.warn(`Skipping file ${file_path}: ${error}`);
+    }
+  }
+
+  const duration = Date.now() - start_time;
+  console.log(`Loaded ${files_to_load.size} files in ${duration}ms`);
+}
 
 export interface AriadneMCPServerOptions {
   project_path?: string;
@@ -45,12 +169,23 @@ export async function start_server(
     return {
       tools: [
         {
-          name: "list_functions",
+          name: "list_entrypoints",
           description:
-            "Lists all top-level (entry point) functions ordered by call tree complexity. Shows function signatures with parameters and return types, along with the total number of functions transitively called. Entry points are functions never called by other functions in the codebase - potential execution starting points. Test functions are marked with [TEST].",
+            "Lists all entry point functions ordered by call tree complexity. Entry points are functions never called by other functions in the analyzed scope. Shows function signatures with parameters and return types, call tree size, and a reference ID (Ref) for use with other tools. Supports filtering by specific files or folders for scoped analysis. Test functions are marked with [TEST].",
           inputSchema: {
             type: "object",
             properties: {
+              files: {
+                type: "array",
+                items: { type: "string" },
+                description:
+                  "Specific file paths to analyze (relative or absolute)",
+              },
+              folders: {
+                type: "array",
+                items: { type: "string" },
+                description: "Folder paths to include recursively",
+              },
               include_tests: {
                 type: "boolean",
                 description: "Include test functions in output (default: true)",
@@ -69,13 +204,24 @@ export async function start_server(
 
     try {
       switch (name) {
-        case "list_functions": {
-          // Load all project files before analysis
-          await load_project_files(project, project_path);
-
+        case "list_entrypoints": {
           // Parse arguments using schema
-          const args = list_functions_schema.parse(request.params.arguments ?? {});
-          const result = await list_functions(project, args);
+          const args = list_entrypoints_schema.parse(
+            request.params.arguments ?? {}
+          );
+
+          // Create fresh project for scoped analysis
+          const scoped_project = new Project();
+          await scoped_project.initialize(project_path as FilePath);
+
+          // Load files based on filtering options
+          await load_filtered_project_files(scoped_project, {
+            files: args.files,
+            folders: args.folders,
+            project_path,
+          });
+
+          const result = await list_entrypoints(scoped_project, args);
 
           return {
             content: [
