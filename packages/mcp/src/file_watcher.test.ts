@@ -1,8 +1,34 @@
-import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
+import { describe, it, expect, beforeEach, afterEach, vi, type Mock } from "vitest";
 import * as fs from "fs/promises";
 import * as path from "path";
 import * as os from "os";
 import { create_file_watcher, FileWatcherCallbacks } from "./file_watcher";
+
+/**
+ * Wait for a mock function to be called, with timeout
+ */
+async function wait_for_call(mock: Mock, timeout_ms: number = 2000): Promise<void> {
+  const start = Date.now();
+  while (mock.mock.calls.length === 0) {
+    if (Date.now() - start > timeout_ms) {
+      throw new Error(`Timed out waiting for mock to be called after ${timeout_ms}ms`);
+    }
+    await new Promise((resolve) => setTimeout(resolve, 50));
+  }
+}
+
+/**
+ * Wait for a mock function to be called N times, with timeout
+ */
+async function wait_for_calls(mock: Mock, count: number, timeout_ms: number = 2000): Promise<void> {
+  const start = Date.now();
+  while (mock.mock.calls.length < count) {
+    if (Date.now() - start > timeout_ms) {
+      throw new Error(`Timed out waiting for ${count} calls (got ${mock.mock.calls.length}) after ${timeout_ms}ms`);
+    }
+    await new Promise((resolve) => setTimeout(resolve, 50));
+  }
+}
 
 describe("file_watcher", () => {
   let temp_dir: string;
@@ -54,8 +80,8 @@ describe("file_watcher", () => {
       const test_file = path.join(temp_dir, "test.ts");
       await fs.writeFile(test_file, "const x = 1;");
 
-      // Wait for debounce + buffer
-      await new Promise((resolve) => setTimeout(resolve, 300));
+      // Wait for callback to be called (with timeout)
+      await wait_for_call(on_add);
 
       expect(on_add).toHaveBeenCalledWith(test_file, "const x = 1;");
 
@@ -83,13 +109,13 @@ describe("file_watcher", () => {
       await fs.writeFile(test_file, "const x = 1;");
 
       // Wait for the add event to complete
-      await new Promise((resolve) => setTimeout(resolve, 300));
+      await wait_for_call(on_add);
       expect(on_add).toHaveBeenCalledWith(test_file, "const x = 1;");
 
       // Now modify the file
       await fs.writeFile(test_file, "const x = 2;");
 
-      await new Promise((resolve) => setTimeout(resolve, 300));
+      await wait_for_call(on_change);
 
       expect(on_change).toHaveBeenCalledWith(test_file, "const x = 2;");
 
@@ -118,7 +144,7 @@ describe("file_watcher", () => {
       // Delete the file
       await fs.unlink(test_file);
 
-      await new Promise((resolve) => setTimeout(resolve, 300));
+      await wait_for_call(on_delete);
 
       expect(on_delete).toHaveBeenCalledWith(test_file);
 
@@ -198,7 +224,7 @@ describe("file_watcher", () => {
         await fs.writeFile(path.join(temp_dir, `file${ext}`), "code");
       }
 
-      await new Promise((resolve) => setTimeout(resolve, 500));
+      await wait_for_calls(on_add, extensions.length);
 
       expect(on_add).toHaveBeenCalledTimes(extensions.length);
 
@@ -229,7 +255,11 @@ describe("file_watcher", () => {
       await fs.writeFile(test_file, "const x = 2;");
       await fs.writeFile(test_file, "const x = 3;");
 
-      await new Promise((resolve) => setTimeout(resolve, 400));
+      // Wait for debounced callback
+      await wait_for_call(on_change);
+
+      // Give a bit more time to ensure no additional calls come through
+      await new Promise((resolve) => setTimeout(resolve, 200));
 
       // Should only be called once with final content due to debouncing
       expect(on_change).toHaveBeenCalledTimes(1);
