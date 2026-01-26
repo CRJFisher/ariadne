@@ -52,6 +52,7 @@ venv
 __pycache__/
 .cursorrules
 .claude/hook_log.txt
+packages/mcp/tests/logs.txt
 
 # Auto Claude data directory
 .auto-claude/

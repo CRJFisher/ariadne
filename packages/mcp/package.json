@@ -48,6 +48,7 @@
     "@ariadnejs/core": "0.7.0",
     "@ariadnejs/types": "0.5.15",
     "@modelcontextprotocol/sdk": "^1.0.0",
+    "chokidar": "^3.6.0",
     "zod": "^3.22.0"
   },
   "devDependencies": {

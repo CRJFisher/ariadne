@@ -21,10 +21,10 @@ describe("MCP Server E2E - list_entrypoints tool", () => {
   let transport: StdioClientTransport;
 
   // Path to packages/core (the codebase we'll analyze)
-  const PACKAGES_CORE_PATH = path.resolve(__dirname, "../../core");
+  const PACKAGES_CORE_PATH = path.resolve(__dirname, "../../../core");
 
   // Path to the built server executable
-  const SERVER_PATH = path.resolve(__dirname, "../dist/server.js");
+  const SERVER_PATH = path.resolve(__dirname, "../../dist/server.js");
 
   beforeAll(async () => {
     // Spawn the MCP server as a child process
