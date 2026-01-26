@@ -49,21 +49,19 @@ describe("load_file_if_needed", () => {
 
 describe("load_project_files", () => {
   let mock_project: Project;
-  let console_warn_spy: ReturnType<typeof vi.spyOn>;
-  let console_log_spy: ReturnType<typeof vi.spyOn>;
+  let console_error_spy: ReturnType<typeof vi.spyOn>;
 
   beforeEach(() => {
     mock_project = {
       update_file: vi.fn(),
     } as unknown as Project;
-    console_warn_spy = vi.spyOn(console, "warn").mockImplementation(() => {});
-    console_log_spy = vi.spyOn(console, "log").mockImplementation(() => {});
+    // Logger writes to stderr via console.error
+    console_error_spy = vi.spyOn(console, "error").mockImplementation(() => {});
     vi.clearAllMocks();
   });
 
   afterEach(() => {
-    console_warn_spy.mockRestore();
-    console_log_spy.mockRestore();
+    console_error_spy.mockRestore();
   });
 
   it("should load supported source files", async () => {
@@ -209,7 +207,7 @@ describe("load_project_files", () => {
 
     // Should skip bad.ts and load good.ts
     expect(mock_project.update_file).toHaveBeenCalledTimes(1);
-    expect(console_warn_spy).toHaveBeenCalledWith(
+    expect(console_error_spy).toHaveBeenCalledWith(
       expect.stringContaining("Skipping file")
     );
   });
@@ -228,10 +226,10 @@ describe("load_project_files", () => {
 
     await load_project_files(mock_project, "/project");
 
-    expect(console_log_spy).toHaveBeenCalledWith(
+    expect(console_error_spy).toHaveBeenCalledWith(
       expect.stringContaining("Loading project files from:")
     );
-    expect(console_log_spy).toHaveBeenCalledWith(
+    expect(console_error_spy).toHaveBeenCalledWith(
       expect.stringMatching(/Loaded \d+ files in \d+ms/)
     );
   });

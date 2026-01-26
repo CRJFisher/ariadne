@@ -12,5 +12,13 @@
   { "name": "get_derived_data", "file": "project/project.ts", "package": "core" },
   { "name": "get_source_code", "file": "project/project.ts", "package": "core" },
   { "name": "get_definition", "file": "project/project.ts", "package": "core" },
-  { "name": "clear", "file": "project/project.ts", "package": "core" }
+  { "name": "clear", "file": "project/project.ts", "package": "core" },
+  { "name": "serialize_entry", "file": "profiling/profiler.ts", "package": "core" },
+  { "name": "is_enabled", "file": "profiling/profiler.ts", "package": "core" },
+  { "name": "enable", "file": "profiling/profiler.ts", "package": "core" },
+  { "name": "disable", "file": "profiling/profiler.ts", "package": "core" },
+  { "name": "record_counts", "file": "profiling/profiler.ts", "package": "core" },
+  { "name": "reset", "file": "profiling/profiler.ts", "package": "core" },
+  { "name": "report", "file": "profiling/profiler.ts", "package": "core" },
+  { "name": "to_json", "file": "profiling/profiler.ts", "package": "core" }
 ]
