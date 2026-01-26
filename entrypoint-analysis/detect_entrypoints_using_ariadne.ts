@@ -1,19 +1,26 @@
 #!/usr/bin/env node
 /**
- * Self-analysis script for packages/core
+ * Self-analysis script for a single package
  *
- * Indexes the packages/core codebase using the Project API and outputs JSON
+ * Indexes a specified package using the Project API and outputs JSON
  * containing all top-level (entry point) functions with their locations.
  *
  * Usage:
- *   npx tsx detect_entrypoints_using_ariadne.ts
+ *   npx tsx detect_entrypoints_using_ariadne.ts --package core
+ *   npx tsx detect_entrypoints_using_ariadne.ts --package=types --stdout
+ *   npx tsx detect_entrypoints_using_ariadne.ts --package mcp --include-tests
+ *
+ * Options:
+ *   --package <name>   Required. Package to analyze (core, mcp, types)
+ *   --stdout           Output JSON to stdout only (skip file write)
+ *   --include-tests    Include test files in analysis
  *
  * Note: All JSON output is formatted with 2-space indentation for readability.
  */
 
 // Import from source - tsx transpiles TypeScript without build step
-import { Project, profiler } from "../src/index.js";
-import { is_test_file } from "../src/project/detect_test_file.js";
+import { Project, profiler } from "../packages/core/src/index.js";
+import { is_test_file } from "../packages/core/src/project/detect_test_file.js";
 import { FilePath, Language } from "@ariadnejs/types";
 import * as path from "path";
 import * as fs from "fs/promises";
@@ -47,6 +54,7 @@ interface FunctionEntry {
 }
 
 interface AnalysisResult {
+  package_name: string;
   project_path: string;
   total_files_analyzed: number;
   total_entry_points: number;
@@ -62,14 +70,14 @@ function get_code_version(): CodeVersion {
   try {
     const commit_hash = execSync("git rev-parse HEAD", {
       encoding: "utf-8",
-      cwd: path.resolve(__dirname, ".."),
+      cwd: __dirname,
     }).trim();
     const commit_hash_short = commit_hash.substring(0, 7);
 
     // Get hash of working tree changes (uncommitted modifications)
     const diff_output = execSync("git diff HEAD", {
       encoding: "utf-8",
-      cwd: path.resolve(__dirname, ".."),
+      cwd: __dirname,
     });
 
     let working_tree_hash: string;
@@ -100,16 +108,18 @@ function get_code_version(): CodeVersion {
 }
 
 /**
- * Find the most recent analysis file with a different code fingerprint
+ * Find the most recent analysis file with a different code fingerprint for the given package
  */
 async function find_previous_analysis(
   output_dir: string,
+  package_name: string,
   current_fingerprint: string
 ): Promise<AnalysisResult | null> {
   try {
     const files = await fs.readdir(output_dir);
+    const prefix = `${package_name}-analysis_`;
     const analysis_files = files
-      .filter((f) => f.startsWith("packages-core-analysis_") && f.endsWith(".json"))
+      .filter((f) => f.startsWith(prefix) && f.endsWith(".json"))
       .sort()
       .reverse(); // Most recent first (timestamps sort lexicographically)
 
@@ -274,71 +284,98 @@ function should_load_file(file_path: string, include_tests: boolean): boolean {
 }
 
 /**
- * Load all TypeScript files in packages/core
+ * Load all TypeScript files from a directory recursively
  */
-async function load_project_files(
+async function load_directory(
   project: Project,
-  project_path: string,
+  dir_path: string,
   include_tests: boolean
 ): Promise<number> {
   let loaded_count = 0;
+  const entries = await fs.readdir(dir_path, { withFileTypes: true });
 
-  async function load_directory(dir_path: string): Promise<void> {
-    const entries = await fs.readdir(dir_path, { withFileTypes: true });
+  for (const entry of entries) {
+    const full_path = path.join(dir_path, entry.name);
 
-    for (const entry of entries) {
-      const full_path = path.join(dir_path, entry.name);
-
-      // Skip common directories
-      if (entry.isDirectory()) {
-        if (
-          entry.name === "node_modules" ||
-          entry.name === "dist" ||
-          entry.name === ".git" ||
-          entry.name === "coverage" ||
-          entry.name === "tests"
-        ) {
-          continue;
-        }
-        await load_directory(full_path);
-      } else if (entry.isFile()) {
-        if (should_load_file(full_path, include_tests)) {
-          try {
-            const source_code = await fs.readFile(full_path, "utf-8");
-            project.update_file(full_path as FilePath, source_code);
-            loaded_count++;
-          } catch (error) {
-            console.error(`Warning: Failed to load ${full_path}: ${error}`);
-          }
+    // Skip common directories
+    if (entry.isDirectory()) {
+      if (
+        entry.name === "node_modules" ||
+        entry.name === "dist" ||
+        entry.name === ".git" ||
+        entry.name === "coverage" ||
+        entry.name === "tests"
+      ) {
+        continue;
+      }
+      loaded_count += await load_directory(project, full_path, include_tests);
+    } else if (entry.isFile()) {
+      if (should_load_file(full_path, include_tests)) {
+        try {
+          const source_code = await fs.readFile(full_path, "utf-8");
+          project.update_file(full_path as FilePath, source_code);
+          loaded_count++;
+        } catch (error) {
+          console.error(`Warning: Failed to load ${full_path}: ${error}`);
         }
       }
     }
   }
 
-  await load_directory(project_path);
   return loaded_count;
+}
+
+/**
+ * Load all TypeScript files from a single package
+ */
+async function load_package(
+  project: Project,
+  packages_root: string,
+  package_name: string,
+  include_tests: boolean
+): Promise<number> {
+  const src_dir = path.join(packages_root, package_name, "src");
+  try {
+    await fs.access(src_dir);
+    console.error(`  Loading ${package_name}/src...`);
+    const count = await load_directory(project, src_dir, include_tests);
+    console.error(`    Loaded ${count} files from ${package_name}`);
+    return count;
+  } catch {
+    throw new Error(`Package "${package_name}" not found or has no src directory at ${src_dir}`);
+  }
 }
 
 /**
  * Main analysis function
  */
-async function analyze_packages_core(include_tests: boolean = false): Promise<AnalysisResult> {
+async function analyze_package(package_name: string, include_tests: boolean = false): Promise<AnalysisResult> {
   const start_time = Date.now();
 
-  const project_path = path.resolve(__dirname, "../src");
-  console.error(`Analyzing packages/core/src at: ${project_path}`);
+  const monorepo_root = path.resolve(__dirname, "..");
+  const packages_root = path.join(monorepo_root, "packages");
+  const package_path = path.join(packages_root, package_name);
+  console.error(`Analyzing package "${package_name}" at: ${package_path}`);
   console.error(`Loading files... (include_tests: ${include_tests})`);
 
-  // Initialize project with excluded folders
+  // Initialize project at the monorepo root
   const init_start = Date.now();
   const project = new Project();
-  await project.initialize(project_path as FilePath, ["tests"]);
+  await project.initialize(monorepo_root as FilePath, [
+    "node_modules",
+    "tests",
+    "dist",
+    "entrypoint-analysis",
+    ".git",
+    ".clinic",
+    "analysis_output",
+  ]);
   const init_time = Date.now() - init_start;
   console.error(`⏱️  Initialization: ${init_time}ms`);
 
-  // Load all source files
+  // Load source files from the specified package
   const load_start = Date.now();
-  const files_loaded = await load_project_files(project, project_path, include_tests);
+  const files_loaded = await load_package(project, packages_root, package_name, include_tests);
   const load_time = Date.now() - load_start;
   console.error(`Loaded ${files_loaded} files in ${load_time}ms`);
 
@@ -389,12 +426,25 @@ async function analyze_packages_core(include_tests: boolean = false): Promise<An
   console.error(`⏱️  Total analysis time: ${total_time}ms (${(total_time / 1000).toFixed(2)}s)`);
 
   return {
-    project_path,
+    package_name,
+    project_path: package_path,
     total_files_analyzed: files_indexed,
     total_entry_points: entry_points.length,
     entry_points,
     generated_at: new Date().toISOString(),
   };
+}
+
+/**
+ * Get list of available packages in the packages directory
+ */
+async function get_available_packages(): Promise<string[]> {
+  const monorepo_root = path.resolve(__dirname, "..");
+  const packages_root = path.join(monorepo_root, "packages");
+  const entries = await fs.readdir(packages_root, { withFileTypes: true });
+  return entries
+    .filter((e) => e.isDirectory())
+    .map((e) => e.name);
 }
 
 /**
@@ -405,6 +455,34 @@ async function main() {
   const stdout_only = args.includes("--stdout");
   const include_tests = args.includes("--include-tests");
 
+  // Parse --package argument (required)
+  const package_arg = args.find((a) => a.startsWith("--package=") || a.startsWith("--package "));
+  let package_name: string | undefined;
+  if (package_arg) {
+    package_name = package_arg.split("=")[1] || package_arg.split(" ")[1];
+  } else {
+    // Check for --package <value> format
+    const package_index = args.indexOf("--package");
+    if (package_index !== -1 && args[package_index + 1]) {
+      package_name = args[package_index + 1];
+    }
+  }
+
+  if (!package_name) {
+    const available = await get_available_packages();
+    console.error("Error: --package=<name> required.");
+    console.error(`Available packages: ${available.join(", ")}`);
+    process.exit(1);
+  }
+
+  // Validate package exists
+  const available_packages = await get_available_packages();
+  if (!available_packages.includes(package_name)) {
+    console.error(`Error: Package "${package_name}" not found.`);
+    console.error(`Available packages: ${available_packages.join(", ")}`);
+    process.exit(1);
+  }
+
   try {
     // Get code version before analysis
     const code_version = get_code_version();
@@ -413,10 +491,10 @@ async function main() {
     const output_dir = path.join(__dirname, "analysis_output");
 
     // Find previous analysis with different fingerprint BEFORE running new analysis
-    const previous = await find_previous_analysis(output_dir, code_version.fingerprint);
+    const previous = await find_previous_analysis(output_dir, package_name, code_version.fingerprint);
 
     // Run the analysis
-    const result = await analyze_packages_core(include_tests);
+    const result = await analyze_package(package_name, include_tests);
 
     // Add code version to result
     result.code_version = code_version;
@@ -440,7 +518,7 @@ async function main() {
 
     const output_file = path.join(
       output_dir,
-      `packages-core-analysis_${timestamp}.json`
+      `${package_name}-analysis_${timestamp}.json`
     );
 
     // Create output directory if it doesn't exist

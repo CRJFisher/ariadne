@@ -12,8 +12,8 @@
 import path from "path";
 import { fileURLToPath } from "url";
 import * as fs from "fs/promises";
-import { Project } from "../src/index.js";
-import { is_test_file } from "../src/project/detect_test_file.js";
+import { Project } from "../packages/core/src/index.js";
+import { is_test_file } from "../packages/core/src/project/detect_test_file.js";
 import type { FilePath, MethodDefinition } from "@ariadnejs/types";
 import type {
   AnalysisResult,

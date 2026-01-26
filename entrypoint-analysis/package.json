@@ -1,9 +1,9 @@
 {
-  "name": "top-level-nodes-analysis",
+  "name": "entrypoint-analysis",
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "description": "Self-analysis tools for identifying entry points in packages/core",
+  "description": "Self-analysis tools for identifying entry points in all packages",
   "scripts": {
     "analyze": "npx tsx analyze_self.ts",
     "verify": "npx tsx verify_entry_points.ts",
@@ -11,12 +11,12 @@
     "profile:flame": "clinic flame -- node --import tsx detect_entrypoints_using_ariadne.ts",
     "profile:simple": "NODE_ENV=production node --cpu-prof --cpu-prof-interval=100 --import tsx detect_entrypoints_using_ariadne.ts",
     "profile:detailed": "ARIADNE_PROFILE=1 npx tsx detect_entrypoints_using_ariadne.ts --stdout",
-    "profile:analyze": "npx tsx ../../scripts/analyze_profile.ts"
+    "profile:analyze": "npx tsx ./scripts/analyze_profile.ts"
   },
   "dependencies": {
     "@anthropic-ai/claude-agent-sdk": "*",
-    "@ariadnejs/core": "file:..",
-    "@ariadnejs/types": "file:../../types"
+    "@ariadnejs/core": "file:./packages/core",
+    "@ariadnejs/types": "file:./packages/types"
   },
   "devDependencies": {
     "@types/node": "^24.0.14",

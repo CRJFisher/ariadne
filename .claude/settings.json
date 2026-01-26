@@ -48,6 +48,10 @@
           {
             "type": "command",
             "command": "node .claude/hooks/run_tests_stop.cjs"
+          },
+          {
+            "type": "command",
+            "command": "npx tsx .claude/hooks/entrypoint_stop.ts"
           }
         ]
       }

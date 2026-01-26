@@ -206,9 +206,50 @@ async function find_most_recent_file(prefix: string, script_hint: string): Promi
 /**
  * Find the most recent analysis file in analysis_output directory
  * Returns the absolute path to the file
+ *
+ * @param package_name - Optional package name to filter by (e.g., "core", "mcp", "types")
+ *                       If provided, looks for {package}-analysis_* files
+ *                       If not provided, looks for any *-analysis_* files
  */
-export async function find_most_recent_analysis(): Promise<string> {
-  return find_most_recent_file("packages-core-analysis_", "detect_entrypoints_using_ariadne.ts");
+export async function find_most_recent_analysis(package_name?: string): Promise<string> {
+  const prefix = package_name ? `${package_name}-analysis_` : "-analysis_";
+  const script_hint = package_name
+    ? `detect_entrypoints_using_ariadne.ts --package ${package_name}`
+    : "detect_entrypoints_using_ariadne.ts --package <name>";
+
+  // eslint-disable-next-line @typescript-eslint/naming-convention
+  const __filename = fileURLToPath(import.meta.url);
+  // eslint-disable-next-line @typescript-eslint/naming-convention
+  const __dirname = dirname(__filename);
+  const analysis_dir = path.resolve(__dirname, "analysis_output");
+
+  try {
+    const files = await fs.readdir(analysis_dir);
+
+    // Filter for files matching the pattern
+    const matching_files = package_name
+      ? files.filter((file) => file.startsWith(prefix))
+      : files.filter((file) => file.includes("-analysis_") && file.endsWith(".json"));
+
+    if (matching_files.length === 0) {
+      throw new Error(
+        `No analysis files found in ${analysis_dir}. Run ${script_hint} first.`
+      );
+    }
+
+    // Sort by filename (timestamp is in the name) - most recent last
+    matching_files.sort();
+    const most_recent = matching_files[matching_files.length - 1];
+
+    return path.join(analysis_dir, most_recent);
+  } catch (error) {
+    if ((error as { code?: string }).code === "ENOENT") {
+      throw new Error(
+        `Analysis output directory not found: ${analysis_dir}. Run ${script_hint} first.`
+      );
+    }
+    throw error;
+  }
 }
 
 /**
