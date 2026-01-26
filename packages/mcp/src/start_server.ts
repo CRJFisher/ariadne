@@ -13,6 +13,12 @@ import {
   list_entrypoints,
   list_entrypoints_schema,
 } from "./tools/list_entrypoints.js";
+import {
+  show_call_graph_neighborhood,
+  show_call_graph_neighborhood_schema,
+} from "./tools/show_call_graph_neighborhood.js";
+import { ProjectManager } from "./project_manager";
+import { find_source_files, is_supported_file } from "./file_loading";
 
 /**
  * Options for filtered file loading
@@ -24,20 +30,6 @@ export interface FileLoadOptions {
 }
 
 /**
- * Supported source file extensions regex
- */
-const SUPPORTED_EXTENSIONS = /\.(ts|tsx|js|jsx|py|rs|go|java|cpp|c|hpp|h)$/;
-
-/**
- * Check if a file has a supported source extension
- */
-function is_supported_file(file_path: string): boolean {
-  return (
-    SUPPORTED_EXTENSIONS.test(file_path) && !file_path.endsWith(".d.ts")
-  );
-}
-
-/**
  * Resolve a path to absolute, relative to project_path
  */
 function resolve_to_absolute(path_input: string, project_path: string): string {
@@ -45,43 +37,6 @@ function resolve_to_absolute(path_input: string, project_path: string): string {
     return path_input;
   }
   return path.resolve(project_path, path_input);
-}
-
-/**
- * Find all supported source files in a folder recursively
- */
-async function find_source_files_in_folder(
-  folder_path: string
-): Promise<string[]> {
-  const files: string[] = [];
-
-  async function walk(dir_path: string): Promise<void> {
-    let entries;
-    try {
-      entries = await fs.readdir(dir_path, { withFileTypes: true });
-    } catch {
-      return;
-    }
-
-    for (const entry of entries) {
-      const full_path = path.join(dir_path, entry.name);
-
-      // Skip common ignored directories
-      if (
-        entry.isDirectory() &&
-        !["node_modules", ".git", "dist", "build", ".next", "coverage"].includes(
-          entry.name
-        )
-      ) {
-        await walk(full_path);
-      } else if (entry.isFile() && is_supported_file(entry.name)) {
-        files.push(full_path);
-      }
-    }
-  }
-
-  await walk(folder_path);
-  return files;
 }
 
 /**
@@ -113,7 +68,7 @@ export async function load_filtered_project_files(
   // Expand folders to files
   for (const folder_path of folders) {
     const abs_folder = resolve_to_absolute(folder_path, project_path);
-    const folder_files = await find_source_files_in_folder(abs_folder);
+    const folder_files = await find_source_files(abs_folder, project_path);
     for (const file of folder_files) {
       files_to_load.add(file);
     }
@@ -138,12 +93,14 @@ export async function load_filtered_project_files(
 export interface AriadneMCPServerOptions {
   project_path?: string;
   transport?: "stdio";
+  watch?: boolean;
 }
 
 export async function start_server(
   options: AriadneMCPServerOptions = {}
 ): Promise<Server> {
   // Support PROJECT_PATH environment variable
+  // Precedence: options.project_path (CLI) > PROJECT_PATH env > cwd
   const project_path =
     options.project_path || process.env.PROJECT_PATH || process.cwd();
 
@@ -160,9 +117,20 @@ export async function start_server(
     }
   );
 
-  // Initialize Ariadne project
-  const project = new Project();
-  await project.initialize(project_path as FilePath);
+  // Initialize persistent project manager with file watching
+  const project_manager = new ProjectManager();
+  await project_manager.initialize({
+    project_path,
+    watch: options.watch ?? true, // Enable file watching by default
+  });
+
+  // Load all project files on startup
+  await project_manager.load_all_files();
+
+  console.log(
+    `Ariadne MCP server initialized for: ${project_path}` +
+      (project_manager.is_watching() ? " (watching for changes)" : "")
+  );
 
   // Register tools
   server.setRequestHandler(ListToolsRequestSchema, async () => {
@@ -194,6 +162,48 @@ export async function start_server(
             required: [],
           },
         },
+        {
+          name: "show_call_graph_neighborhood",
+          description:
+            "Shows the call graph neighborhood around a callable. Displays callers (upstream, who calls this function) and callees (downstream, what this function calls) with configurable depth. Use the Ref output from list_entrypoints as the symbol_ref input, or construct it as file_path:line#name. Supports filtering by specific files or folders for scoped analysis.",
+          inputSchema: {
+            type: "object",
+            properties: {
+              symbol_ref: {
+                type: "string",
+                description:
+                  "Callable reference in format 'file_path:line#name' (e.g., 'src/handlers.ts:15#handle_request')",
+              },
+              callers_depth: {
+                type: ["number", "null"],
+                description:
+                  "Levels of callers to show (null = unlimited, default: 1)",
+              },
+              callees_depth: {
+                type: ["number", "null"],
+                description:
+                  "Levels of callees to show (null = unlimited, default: 1)",
+              },
+              show_full_signature: {
+                type: "boolean",
+                description:
+                  "Show full signature with params/return type (default: true) vs just name",
+              },
+              files: {
+                type: "array",
+                items: { type: "string" },
+                description:
+                  "Specific file paths to analyze (relative or absolute)",
+              },
+              folders: {
+                type: "array",
+                items: { type: "string" },
+                description: "Folder paths to include recursively",
+              },
+            },
+            required: ["symbol_ref"],
+          },
+        },
       ],
     };
   });
@@ -210,18 +220,74 @@ export async function start_server(
             request.params.arguments ?? {}
           );
 
-          // Create fresh project for scoped analysis
-          const scoped_project = new Project();
-          await scoped_project.initialize(project_path as FilePath);
+          const has_filters =
+            (args.files && args.files.length > 0) ||
+            (args.folders && args.folders.length > 0);
 
-          // Load files based on filtering options
-          await load_filtered_project_files(scoped_project, {
-            files: args.files,
-            folders: args.folders,
-            project_path,
-          });
+          let target_project: Project;
 
-          const result = await list_entrypoints(scoped_project, args);
+          if (has_filters) {
+            // For scoped analysis with filters, create a fresh project
+            // with only the specified files. This is semantically different
+            // from full analysis (entry points are relative to the scope).
+            const scoped_project = new Project();
+            await scoped_project.initialize(project_path as FilePath);
+            await load_filtered_project_files(scoped_project, {
+              files: args.files,
+              folders: args.folders,
+              project_path,
+            });
+            target_project = scoped_project;
+          } else {
+            // For unfiltered analysis, use the persistent project
+            // which is kept up-to-date via file watching
+            target_project = project_manager.get_project();
+          }
+
+          const result = await list_entrypoints(target_project, args);
+
+          return {
+            content: [
+              {
+                type: "text",
+                text: result,
+              },
+            ],
+          };
+        }
+
+        case "show_call_graph_neighborhood": {
+          const args = show_call_graph_neighborhood_schema.parse(
+            request.params.arguments ?? {}
+          );
+
+          const has_filters =
+            (args.files && args.files.length > 0) ||
+            (args.folders && args.folders.length > 0);
+
+          let target_project: Project;
+
+          if (has_filters) {
+            // For scoped analysis with filters, create a fresh project
+            // with only the specified files. The neighborhood will be
+            // relative to this filtered scope.
+            const scoped_project = new Project();
+            await scoped_project.initialize(project_path as FilePath);
+            await load_filtered_project_files(scoped_project, {
+              files: args.files,
+              folders: args.folders,
+              project_path,
+            });
+            target_project = scoped_project;
+          } else {
+            // For unfiltered analysis, use the persistent project
+            target_project = project_manager.get_project();
+          }
+
+          const result = await show_call_graph_neighborhood(
+            target_project,
+            args
+          );
 
           return {
             content: [
@@ -282,99 +348,21 @@ export async function load_project_files(
   project: Project,
   project_path: string
 ): Promise<void> {
-  const loaded_files = new Set<string>();
-  let gitignore_patterns: string[] = [];
-
-  // Try to read .gitignore
-  try {
-    const gitignore_path = path.join(project_path, ".gitignore");
-    const gitignore_content = await fs.readFile(gitignore_path, "utf-8");
-    gitignore_patterns = gitignore_content
-      .split("\n")
-      .map((line) => line.trim())
-      .filter((line) => line && !line.startsWith("#"));
-  } catch {
-    // .gitignore not found or unreadable, continue without it
-  }
-
-  function should_ignore(file_path: string): boolean {
-    const relative_path = path.relative(project_path, file_path);
-
-    // Always ignore common directories
-    const common_ignores = [
-      "node_modules",
-      ".git",
-      "dist",
-      "build",
-      ".next",
-      "coverage",
-      ".nyc_output",
-      ".cache",
-      "tmp",
-      "temp",
-      ".DS_Store",
-    ];
-
-    for (const ignore of common_ignores) {
-      if (relative_path.includes(ignore)) return true;
-    }
-
-    // Check gitignore patterns (simple implementation)
-    for (const pattern of gitignore_patterns) {
-      if (pattern.endsWith("*")) {
-        const prefix = pattern.slice(0, -1);
-        if (relative_path.startsWith(prefix)) return true;
-      } else if (
-        relative_path === pattern ||
-        relative_path.includes("/" + pattern)
-      ) {
-        return true;
-      }
-    }
-
-    return false;
-  }
-
-  async function load_directory(dir_path: string): Promise<void> {
-    if (should_ignore(dir_path)) return;
-
-    let entries;
-    try {
-      entries = await fs.readdir(dir_path, { withFileTypes: true });
-    } catch (error) {
-      console.warn(`Cannot read directory ${dir_path}: ${error}`);
-      return;
-    }
-
-    for (const entry of entries) {
-      const full_path = path.join(dir_path, entry.name);
-
-      if (should_ignore(full_path)) continue;
-
-      if (entry.isDirectory()) {
-        await load_directory(full_path);
-      } else if (entry.isFile()) {
-        // Load supported source files
-        if (
-          /\.(ts|tsx|js|jsx|py|rs|go|java|cpp|c|hpp|h)$/.test(entry.name) &&
-          !entry.name.endsWith(".d.ts")
-        ) {
-          if (!loaded_files.has(full_path)) {
-            try {
-              await load_file_if_needed(project, full_path);
-              loaded_files.add(full_path);
-            } catch (error) {
-              console.warn(`Skipping file ${full_path}: ${error}`);
-            }
-          }
-        }
-      }
-    }
-  }
-
   console.log(`Loading project files from: ${project_path}`);
   const start_time = Date.now();
-  await load_directory(project_path);
+
+  const files = await find_source_files(project_path, project_path);
+  let loaded_count = 0;
+
+  for (const file_path of files) {
+    try {
+      await load_file_if_needed(project, file_path);
+      loaded_count++;
+    } catch (error) {
+      console.warn(`Skipping file ${file_path}: ${error}`);
+    }
+  }
+
   const duration = Date.now() - start_time;
-  console.log(`Loaded ${loaded_files.size} files in ${duration}ms`);
+  console.log(`Loaded ${loaded_count} files in ${duration}ms`);
 }

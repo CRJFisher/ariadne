@@ -180,11 +180,11 @@ describe("load_project_files", () => {
 
     vi.mocked(fs.readdir).mockRejectedValue(new Error("Permission denied"));
 
-    await load_project_files(mock_project, "/project");
+    // Should not throw - errors are handled gracefully
+    await expect(load_project_files(mock_project, "/project")).resolves.not.toThrow();
 
-    expect(console_warn_spy).toHaveBeenCalledWith(
-      expect.stringContaining("Cannot read directory")
-    );
+    // No files loaded due to read error
+    expect(mock_project.update_file).not.toHaveBeenCalled();
   });
 
   it("should skip files that fail to load", async () => {
