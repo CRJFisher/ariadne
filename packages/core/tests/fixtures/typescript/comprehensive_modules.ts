@@ -266,7 +266,7 @@ interface DefaultModule {
 
 // Module augmentation
 declare module "./comprehensive_interfaces" {
-  interface BasicInterface {
+  interface AugmentedInterface {
     module_specific_property?: string;
   }
 }
