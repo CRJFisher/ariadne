@@ -1,0 +1,16 @@
+[
+  { "name": "initialize", "file": "project/project.ts", "package": "core" },
+  { "name": "update_file", "file": "project/project.ts", "package": "core" },
+  { "name": "remove_file", "file": "project/project.ts", "package": "core" },
+  { "name": "get_stats", "file": "project/project.ts", "package": "core" },
+  { "name": "get_call_graph", "file": "project/project.ts", "package": "core" },
+  { "name": "get_all_scope_graphs", "file": "project/project.ts", "package": "core" },
+  { "name": "get_dependents", "file": "project/project.ts", "package": "core" },
+  { "name": "get_all_files", "file": "project/project.ts", "package": "core" },
+  { "name": "get_index_single_file", "file": "project/project.ts", "package": "core" },
+  { "name": "get_type_info", "file": "project/project.ts", "package": "core" },
+  { "name": "get_derived_data", "file": "project/project.ts", "package": "core" },
+  { "name": "get_source_code", "file": "project/project.ts", "package": "core" },
+  { "name": "get_definition", "file": "project/project.ts", "package": "core" },
+  { "name": "clear", "file": "project/project.ts", "package": "core" }
+]

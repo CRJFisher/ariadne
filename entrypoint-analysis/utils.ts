@@ -207,15 +207,24 @@ async function find_most_recent_file(prefix: string, script_hint: string): Promi
  * Find the most recent analysis file in analysis_output directory
  * Returns the absolute path to the file
  *
- * @param package_name - Optional package name to filter by (e.g., "core", "mcp", "types")
- *                       If provided, looks for {package}-analysis_* files
- *                       If not provided, looks for any *-analysis_* files
+ * @param analysis_name - Optional name to filter by:
+ *                        - Package name (e.g., "core", "mcp", "types") for single package analysis
+ *                        - Group name with suffix (e.g., "core-group", "mcp-group") for group analysis
+ *                        If not provided, looks for any *-analysis_* files
  */
-export async function find_most_recent_analysis(package_name?: string): Promise<string> {
-  const prefix = package_name ? `${package_name}-analysis_` : "-analysis_";
-  const script_hint = package_name
-    ? `detect_entrypoints_using_ariadne.ts --package ${package_name}`
-    : "detect_entrypoints_using_ariadne.ts --package <name>";
+export async function find_most_recent_analysis(analysis_name?: string): Promise<string> {
+  const prefix = analysis_name ? `${analysis_name}-analysis_` : "-analysis_";
+
+  // Generate appropriate script hint based on whether this is a group or package
+  let script_hint: string;
+  if (!analysis_name) {
+    script_hint = "detect_entrypoints_using_ariadne.ts --package <name>";
+  } else if (analysis_name.endsWith("-group")) {
+    const group_name = analysis_name.replace("-group", "");
+    script_hint = `detect_entrypoints_using_ariadne.ts --group ${group_name}`;
+  } else {
+    script_hint = `detect_entrypoints_using_ariadne.ts --package ${analysis_name}`;
+  }
 
   // eslint-disable-next-line @typescript-eslint/naming-convention
   const __filename = fileURLToPath(import.meta.url);
@@ -227,7 +236,7 @@ export async function find_most_recent_analysis(package_name?: string): Promise<
     const files = await fs.readdir(analysis_dir);
 
     // Filter for files matching the pattern
-    const matching_files = package_name
+    const matching_files = analysis_name
       ? files.filter((file) => file.startsWith(prefix))
       : files.filter((file) => file.includes("-analysis_") && file.endsWith(".json"));
 
