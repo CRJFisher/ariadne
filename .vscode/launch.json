@@ -7,7 +7,7 @@
       "request": "launch",
       "runtimeExecutable": "npx",
       "runtimeArgs": ["tsx"],
-      "args": ["top-level-nodes-analysis/detect_entrypoints_using_ariadne.ts"],
+      "args": ["entrypoint-analysis/src/self_analysis/detect_entrypoints.ts"],
       "cwd": "${workspaceFolder}",
       "console": "integratedTerminal",
       "internalConsoleOptions": "neverOpen",
@@ -21,7 +21,7 @@
       "runtimeExecutable": "npx",
       "runtimeArgs": ["tsx"],
       "args": [
-        "top-level-nodes-analysis/triage_false_negative_entrypoints.ts"
+        "entrypoint-analysis/src/self_analysis/triage_false_negatives.ts"
       ],
       "cwd": "${workspaceFolder}",
       "console": "integratedTerminal",
@@ -36,7 +36,7 @@
       "runtimeExecutable": "npx",
       "runtimeArgs": ["tsx"],
       "args": [
-        "top-level-nodes-analysis/triage_false_positive_entrypoints.ts"
+        "entrypoint-analysis/src/self_analysis/triage_false_positives.ts"
       ],
       "cwd": "${workspaceFolder}",
       "console": "integratedTerminal",
