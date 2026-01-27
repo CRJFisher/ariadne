@@ -119,12 +119,13 @@ export async function run_query(
  */
 export async function two_phase_query<T>(
   investigation_prompt: string,
-  extraction_prompt: string
+  extraction_prompt: string,
+  options_override?: Partial<Options>,
 ): Promise<T> {
   // Phase 1: Investigation
   console.error("   📤 Phase 1: Investigation...");
 
-  const investigation = await run_query(investigation_prompt);
+  const investigation = await run_query(investigation_prompt, options_override);
 
   console.error("   ✓ Investigation complete");
   console.error(`   💰 Cost: $${investigation.total_cost.toFixed(6)}`);
@@ -133,6 +134,7 @@ export async function two_phase_query<T>(
   console.error("   📤 Phase 2: Extracting structured result...");
 
   const extraction = await run_query(extraction_prompt, {
+    ...options_override,
     resume: investigation.session_id,
   });
 
@@ -149,6 +151,81 @@ export async function two_phase_query<T>(
 
   const result = JSON.parse(json_match[0]);
   return result as T;
+}
+
+/**
+ * Execute async operations in parallel with a concurrency limit.
+ *
+ * Processes items using a worker pool pattern. Each worker picks up the
+ * next available item when it finishes. Results maintain original order.
+ */
+export async function parallel_map<T, R>(
+  items: T[],
+  fn: (item: T, index: number) => Promise<R>,
+  concurrency: number = 5,
+): Promise<R[]> {
+  const results: R[] = new Array(items.length);
+  let next_index = 0;
+
+  async function worker(): Promise<void> {
+    while (next_index < items.length) {
+      const index = next_index++;
+      results[index] = await fn(items[index], index);
+    }
+  }
+
+  const workers = Array.from(
+    { length: Math.min(concurrency, items.length) },
+    () => worker(),
+  );
+  await Promise.all(workers);
+  return results;
+}
+
+/**
+ * Two-phase query returning both structured result and investigation text.
+ *
+ * Same as two_phase_query but also returns the raw investigation response,
+ * useful when the investigation text needs to be forwarded to another agent.
+ */
+export async function two_phase_query_detailed<T>(
+  investigation_prompt: string,
+  extraction_prompt: string,
+  options_override?: Partial<Options>,
+): Promise<{ result: T; investigation_text: string; total_cost: number }> {
+  // Phase 1: Investigation
+  console.error("   📤 Phase 1: Investigation...");
+
+  const investigation = await run_query(investigation_prompt, options_override);
+
+  console.error("   ✓ Investigation complete");
+  console.error(`   💰 Cost: $${investigation.total_cost.toFixed(6)}`);
+
+  // Phase 2: Extraction
+  console.error("   📤 Phase 2: Extracting structured result...");
+
+  const extraction = await run_query(extraction_prompt, {
+    ...options_override,
+    resume: investigation.session_id,
+  });
+
+  console.error("   ✓ Extraction complete");
+  console.error(`   💰 Cost: $${extraction.total_cost.toFixed(6)}`);
+
+  // Extract JSON from response
+  const json_match = extraction.response_text.match(/\{[\s\S]*\}/);
+  if (!json_match) {
+    throw new Error(
+      `Failed to extract JSON. Response:\n${extraction.response_text}`
+    );
+  }
+
+  const result = JSON.parse(json_match[0]) as T;
+  return {
+    result,
+    investigation_text: investigation.response_text,
+    total_cost: investigation.total_cost + extraction.total_cost,
+  };
 }
 /**
  * Save JSON file with formatting
@@ -207,24 +284,15 @@ async function find_most_recent_file(prefix: string, script_hint: string): Promi
  * Find the most recent analysis file in analysis_output directory
  * Returns the absolute path to the file
  *
- * @param analysis_name - Optional name to filter by:
- *                        - Package name (e.g., "core", "mcp", "types") for single package analysis
- *                        - Group name with suffix (e.g., "core-group", "mcp-group") for group analysis
- *                        If not provided, looks for any *-analysis_* files
+ * @param analysis_name - Optional package name to filter by (e.g., "core", "mcp", "types").
+ *                        If not provided, looks for any *-analysis_* files.
  */
 export async function find_most_recent_analysis(analysis_name?: string): Promise<string> {
   const prefix = analysis_name ? `${analysis_name}-analysis_` : "-analysis_";
 
-  // Generate appropriate script hint based on whether this is a group or package
-  let script_hint: string;
-  if (!analysis_name) {
-    script_hint = "detect_entrypoints_using_ariadne.ts --package <name>";
-  } else if (analysis_name.endsWith("-group")) {
-    const group_name = analysis_name.replace("-group", "");
-    script_hint = `detect_entrypoints_using_ariadne.ts --group ${group_name}`;
-  } else {
-    script_hint = `detect_entrypoints_using_ariadne.ts --package ${analysis_name}`;
-  }
+  const script_hint = analysis_name
+    ? `detect_entrypoints_using_ariadne.ts --package ${analysis_name}`
+    : "detect_entrypoints_using_ariadne.ts --package <name>";
 
   // eslint-disable-next-line @typescript-eslint/naming-convention
   const __filename = fileURLToPath(import.meta.url);

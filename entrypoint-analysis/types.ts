@@ -21,14 +21,68 @@ export interface FunctionEntry {
   name: string;
   file_path: string;
   start_line: number;
+  start_column: number;
   end_line: number;
-  kind: string;
+  end_column: number;
+  kind: "function" | "method" | "constructor";
   signature?: string;
   tree_size: number;
 }
 
+// ===== Enriched Entry Point (with CallableNode metadata + diagnostics) =====
+
+export interface EnrichedFunctionEntry extends FunctionEntry {
+  // Metadata from CallableNode.definition
+  is_exported: boolean;
+  access_modifier?: "public" | "private" | "protected";
+  is_static?: boolean;
+  is_anonymous: boolean;
+  callback_context?: {
+    is_callback: boolean;
+    receiver_is_external: boolean | null;
+  };
+  call_summary: {
+    total_calls: number;
+    unresolved_count: number;
+    method_calls: number;
+    constructor_calls: number;
+    callback_invocations: number;
+  };
+
+  // Pre-gathered diagnostics
+  diagnostics: EntryPointDiagnostics;
+}
+
+export interface EntryPointDiagnostics {
+  /** Textual grep results for calls to this function across source files */
+  grep_call_sites: GrepHit[];
+  /** CallReferences in the call graph where name matches this entry point */
+  ariadne_call_refs: CallRefDiagnostic[];
+  /** Summary diagnosis of where in Ariadne's pipeline the detection failed */
+  diagnosis:
+    | "no-textual-callers"
+    | "callers-not-in-registry"
+    | "callers-in-registry-unresolved"
+    | "callers-in-registry-wrong-target";
+}
+
+export interface GrepHit {
+  file_path: string;
+  line: number;
+  content: string;
+}
+
+export interface CallRefDiagnostic {
+  caller_function: string;
+  caller_file: string;
+  call_line: number;
+  call_type: "function" | "method" | "constructor";
+  resolution_count: number;
+  resolved_to: string[];
+}
+
 export interface AnalysisResult {
-  entry_points: FunctionEntry[];
+  entry_points: EnrichedFunctionEntry[];
   [key: string]: unknown;
 }
 

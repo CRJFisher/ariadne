@@ -31,8 +31,8 @@ import {
   find_source_files,
   IGNORED_DIRECTORIES,
 } from "../packages/mcp/src/file_loading.js";
+import type { EnrichedFunctionEntry } from "./types.js";
 import {
-  type FunctionEntry,
   detect_language,
   extract_entry_points,
 } from "./extract_entry_points.js";
@@ -56,7 +56,7 @@ interface AnalysisResult {
   source: SourceInfo;
   total_files_analyzed: number;
   total_entry_points: number;
-  entry_points: FunctionEntry[];
+  entry_points: EnrichedFunctionEntry[];
   generated_at: string;
 }
 
@@ -232,7 +232,7 @@ async function analyze_directory(
   }
 ): Promise<{
   files_analyzed: number;
-  entry_points: FunctionEntry[];
+  entry_points: EnrichedFunctionEntry[];
 }> {
   const start_time = Date.now();
 
@@ -284,11 +284,13 @@ async function analyze_directory(
   console.error(`Found ${all_files.length} source files`);
 
   // Load files into project
+  const source_files = new Map<string, string>();
   let loaded_count = 0;
   for (const file_path of all_files) {
     try {
       const source_code = await fs.readFile(file_path, "utf-8");
       project.update_file(file_path as FilePath, source_code);
+      source_files.set(file_path, source_code);
       loaded_count++;
     } catch (error) {
       console.error(`Warning: Failed to load ${file_path}: ${error}`);
@@ -314,7 +316,7 @@ async function analyze_directory(
   );
 
   // Extract entry points
-  const entry_points = extract_entry_points(call_graph);
+  const entry_points = extract_entry_points(call_graph, source_files);
 
   console.error(`Total analysis time: ${Date.now() - start_time}ms`);
 

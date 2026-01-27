@@ -11,7 +11,7 @@
  *   npx tsx detect_entrypoints_using_ariadne.ts --package mcp --include-tests
  *
  * Options:
- *   --package <name>   Required. Package to analyze (core, mcp, types)
+ *   --package <name>   Required. Package to analyze (e.g. core, mcp, types)
  *   --stdout           Output JSON to stdout only (skip file write)
  *   --include-tests    Include test files in analysis
  *
@@ -22,8 +22,8 @@
 import { Project, profiler } from "../packages/core/src/index.js";
 import { is_test_file } from "../packages/core/src/project/detect_test_file.js";
 import { FilePath } from "@ariadnejs/types";
+import type { EnrichedFunctionEntry } from "./types.js";
 import {
-  type FunctionEntry,
   detect_language,
   extract_entry_points,
 } from "./extract_entry_points.js";
@@ -33,26 +33,6 @@ import { fileURLToPath } from "url";
 import { dirname } from "path";
 import { execSync } from "child_process";
 import * as crypto from "crypto";
-
-/**
- * Package groups for cross-package analysis.
- * Each group loads multiple packages together to enable cross-package
- * call detection, reducing false positives from isolated package analysis.
- */
-const PACKAGE_GROUPS: Record<string, string[]> = {
-  core: ["core", "types"],   // Core analysis library with its type dependencies
-  mcp: ["mcp", "types"],     // MCP server with its type dependencies
-};
-
-/**
- * Library packages and their consumers.
- * Library packages exist to serve other packages. When analyzing a library,
- * we verify all its exports are called by at least one consumer package.
- * Any export NOT called by consumers is flagged as dead code.
- */
-const LIBRARY_PACKAGES: Record<string, string[]> = {
-  types: ["core", "mcp"],   // types is consumed by core and mcp
-};
 
 // eslint-disable-next-line @typescript-eslint/naming-convention
 const __filename = fileURLToPath(import.meta.url);
@@ -71,7 +51,7 @@ interface AnalysisResult {
   project_path: string;
   total_files_analyzed: number;
   total_entry_points: number;
-  entry_points: FunctionEntry[];
+  entry_points: EnrichedFunctionEntry[];
   generated_at: string;
   code_version?: CodeVersion;
 }
@@ -230,7 +210,8 @@ function should_load_file(file_path: string, include_tests: boolean): boolean {
 async function load_directory(
   project: Project,
   dir_path: string,
-  include_tests: boolean
+  include_tests: boolean,
+  source_files: Map<string, string>,
 ): Promise<number> {
   let loaded_count = 0;
   const entries = await fs.readdir(dir_path, { withFileTypes: true });
@@ -249,12 +230,13 @@ async function load_directory(
       ) {
         continue;
       }
-      loaded_count += await load_directory(project, full_path, include_tests);
+      loaded_count += await load_directory(project, full_path, include_tests, source_files);
     } else if (entry.isFile()) {
       if (should_load_file(full_path, include_tests)) {
         try {
           const source_code = await fs.readFile(full_path, "utf-8");
           project.update_file(full_path as FilePath, source_code);
+          source_files.set(full_path, source_code);
           loaded_count++;
         } catch (error) {
           console.error(`Warning: Failed to load ${full_path}: ${error}`);
@@ -273,39 +255,19 @@ async function load_package(
   project: Project,
   packages_root: string,
   package_name: string,
-  include_tests: boolean
+  include_tests: boolean,
+  source_files: Map<string, string>,
 ): Promise<number> {
   const src_dir = path.join(packages_root, package_name, "src");
   try {
     await fs.access(src_dir);
     console.error(`  Loading ${package_name}/src...`);
-    const count = await load_directory(project, src_dir, include_tests);
+    const count = await load_directory(project, src_dir, include_tests, source_files);
     console.error(`    Loaded ${count} files from ${package_name}`);
     return count;
   } catch {
     throw new Error(`Package "${package_name}" not found or has no src directory at ${src_dir}`);
   }
-}
-
-/**
- * Load all TypeScript files from multiple packages (for group analysis)
- */
-async function load_package_group(
-  project: Project,
-  packages_root: string,
-  package_names: string[],
-  include_tests: boolean
-): Promise<{ total_files: number; files_by_package: Record<string, number> }> {
-  const files_by_package: Record<string, number> = {};
-  let total_files = 0;
-
-  for (const package_name of package_names) {
-    const count = await load_package(project, packages_root, package_name, include_tests);
-    files_by_package[package_name] = count;
-    total_files += count;
-  }
-
-  return { total_files, files_by_package };
 }
 
 /**
@@ -318,16 +280,7 @@ async function analyze_package(package_name: string, include_tests: boolean = fa
   const packages_root = path.join(monorepo_root, "packages");
   const package_path = path.join(packages_root, package_name);
 
-  // Check if this is a library package with defined consumers
-  const is_library = package_name in LIBRARY_PACKAGES;
-  const consumers = is_library ? LIBRARY_PACKAGES[package_name] : [];
-
-  if (is_library) {
-    console.error(`Analyzing library package "${package_name}" at: ${package_path}`);
-    console.error(`Consumers: ${consumers.join(", ")}`);
-  } else {
-    console.error(`Analyzing package "${package_name}" at: ${package_path}`);
-  }
+  console.error(`Analyzing package "${package_name}" at: ${package_path}`);
   console.error(`Loading files... (include_tests: ${include_tests})`);
 
   // Initialize project at the monorepo root
@@ -347,17 +300,8 @@ async function analyze_package(package_name: string, include_tests: boolean = fa
 
   // Load source files from the specified package
   const load_start = Date.now();
-  let files_loaded = await load_package(project, packages_root, package_name, include_tests);
-
-  // For library packages, also load consumer packages to detect cross-package calls
-  if (is_library) {
-    console.error("Loading consumer packages to validate library usage...");
-    for (const consumer of consumers) {
-      const consumer_count = await load_package(project, packages_root, consumer, include_tests);
-      files_loaded += consumer_count;
-    }
-  }
-
+  const source_files = new Map<string, string>();
+  const files_loaded = await load_package(project, packages_root, package_name, include_tests, source_files);
   const load_time = Date.now() - load_start;
   console.error(`Loaded ${files_loaded} files in ${load_time}ms`);
 
@@ -380,120 +324,14 @@ async function analyze_package(package_name: string, include_tests: boolean = fa
   console.error(`Found ${call_graph.entry_points.length} entry points in ${callgraph_time}ms`);
 
   // Extract entry point information
-  // For library packages, filter to only show entry points from the library itself
-  const library_src_path = path.join(packages_root, package_name, "src");
-  const filter = is_library
-    ? (node: { location: { file_path: string } }) => node.location.file_path.startsWith(library_src_path)
-    : undefined;
-  const entry_points = extract_entry_points(call_graph, filter);
+  const entry_points = extract_entry_points(call_graph, source_files);
 
   const total_time = Date.now() - start_time;
   console.error(`⏱️  Total analysis time: ${total_time}ms (${(total_time / 1000).toFixed(2)}s)`);
-
-  if (is_library) {
-    console.error(`\n📚 Library validation: ${entry_points.length} exports NOT called by consumers`);
-    if (entry_points.length > 0) {
-      console.error("   These may be dead code or need to be added to consumer packages.");
-    } else {
-      console.error("   ✅ All exports are used by consumers!");
-    }
-  }
 
   return {
     package_name,
     project_path: package_path,
-    total_files_analyzed: is_library ? files_indexed : files_indexed, // Report library files only
-    total_entry_points: entry_points.length,
-    entry_points,
-    generated_at: new Date().toISOString(),
-  };
-}
-
-/**
- * Group analysis result type - extends AnalysisResult with group metadata
- */
-interface GroupAnalysisResult extends AnalysisResult {
-  group_name: string;
-  packages_loaded: string[];
-  files_by_package: Record<string, number>;
-}
-
-/**
- * Analyze a package group (multiple packages together)
- */
-async function analyze_group(
-  group_name: string,
-  include_tests: boolean = false
-): Promise<GroupAnalysisResult> {
-  const start_time = Date.now();
-
-  const package_names = PACKAGE_GROUPS[group_name];
-  const monorepo_root = path.resolve(__dirname, "..");
-  const packages_root = path.join(monorepo_root, "packages");
-
-  console.error(`Analyzing group "${group_name}" (packages: ${package_names.join(", ")})`);
-  console.error(`Loading files... (include_tests: ${include_tests})`);
-
-  // Initialize project at the monorepo root
-  const init_start = Date.now();
-  const project = new Project();
-  await project.initialize(monorepo_root as FilePath, [
-    "node_modules",
-    "tests",
-    "dist",
-    "entrypoint-analysis",
-    ".git",
-    ".clinic",
-    "analysis_output",
-  ]);
-  const init_time = Date.now() - init_start;
-  console.error(`⏱️  Initialization: ${init_time}ms`);
-
-  // Load all packages in the group
-  const load_start = Date.now();
-  const { total_files, files_by_package } = await load_package_group(
-    project,
-    packages_root,
-    package_names,
-    include_tests
-  );
-  const load_time = Date.now() - load_start;
-  console.error(`Loaded ${total_files} files across ${package_names.length} packages in ${load_time}ms`);
-
-  // Log per-package breakdown
-  for (const [pkg, count] of Object.entries(files_by_package)) {
-    console.error(`  - ${pkg}: ${count} files`);
-  }
-
-  // Check how many files were actually indexed
-  const stats = project.get_stats();
-  const files_indexed = stats.file_count;
-
-  if (files_indexed !== total_files) {
-    console.error(`⚠️  Warning: ${total_files} files loaded but only ${files_indexed} successfully indexed`);
-  } else {
-    console.error(`✅ All ${files_indexed} files successfully indexed`);
-  }
-
-  // Get call graph
-  console.error("Building call graph...");
-  const callgraph_start = Date.now();
-  const call_graph = project.get_call_graph();
-  const callgraph_time = Date.now() - callgraph_start;
-  console.error(`Found ${call_graph.entry_points.length} entry points in ${callgraph_time}ms`);
-
-  // Extract entry point information
-  const entry_points = extract_entry_points(call_graph);
-
-  const total_time = Date.now() - start_time;
-  console.error(`⏱️  Total analysis time: ${total_time}ms (${(total_time / 1000).toFixed(2)}s)`);
-
-  return {
-    package_name: `${group_name}-group`,  // For backward compatibility with output parsing
-    group_name,
-    packages_loaded: package_names,
-    files_by_package,
-    project_path: packages_root,
     total_files_analyzed: files_indexed,
     total_entry_points: entry_points.length,
     entry_points,
@@ -533,49 +371,19 @@ async function main() {
     }
   }
 
-  // Parse --group argument
-  let group_name: string | undefined;
-  const group_arg = args.find((a) => a.startsWith("--group="));
-  if (group_arg) {
-    group_name = group_arg.split("=")[1];
-  } else {
-    const group_index = args.indexOf("--group");
-    if (group_index !== -1 && args[group_index + 1]) {
-      group_name = args[group_index + 1];
-    }
-  }
-
-  // Validate mutual exclusivity
-  if (package_name && group_name) {
-    console.error("Error: --package and --group are mutually exclusive. Use one or the other.");
-    process.exit(1);
-  }
-
-  // Require at least one
-  if (!package_name && !group_name) {
+  // Require --package
+  if (!package_name) {
     const available_packages = await get_available_packages();
-    const available_groups = Object.keys(PACKAGE_GROUPS);
-    console.error("Error: Either --package=<name> or --group=<name> is required.");
+    console.error("Error: --package=<name> is required.");
     console.error(`Available packages: ${available_packages.join(", ")}`);
-    console.error(`Available groups: ${available_groups.join(", ")}`);
     process.exit(1);
   }
 
-  // Validate package exists if specified
-  if (package_name) {
-    const available_packages = await get_available_packages();
-    if (!available_packages.includes(package_name)) {
-      console.error(`Error: Package "${package_name}" not found.`);
-      console.error(`Available packages: ${available_packages.join(", ")}`);
-      process.exit(1);
-    }
-  }
-
-  // Validate group exists if specified
-  if (group_name && !PACKAGE_GROUPS[group_name]) {
-    const available_groups = Object.keys(PACKAGE_GROUPS);
-    console.error(`Error: Group "${group_name}" not found.`);
-    console.error(`Available groups: ${available_groups.join(", ")}`);
+  // Validate package exists
+  const available_packages = await get_available_packages();
+  if (!available_packages.includes(package_name)) {
+    console.error(`Error: Package "${package_name}" not found.`);
+    console.error(`Available packages: ${available_packages.join(", ")}`);
     process.exit(1);
   }
 
@@ -586,20 +394,8 @@ async function main() {
 
     const output_dir = path.join(__dirname, "analysis_output");
 
-    // Run the appropriate analysis and determine output name
-    let result: AnalysisResult;
-    let output_name: string;
-
-    if (group_name) {
-      output_name = `${group_name}-group`;
-      result = await analyze_group(group_name, include_tests);
-    } else if (package_name) {
-      output_name = package_name;
-      result = await analyze_package(package_name, include_tests);
-    } else {
-      // This should never happen due to earlier validation
-      throw new Error("Either --package or --group must be specified");
-    }
+    const output_name = package_name;
+    const result = await analyze_package(package_name, include_tests);
 
     // Find previous analysis with different fingerprint
     const previous = await find_previous_analysis(output_dir, output_name, code_version.fingerprint);
