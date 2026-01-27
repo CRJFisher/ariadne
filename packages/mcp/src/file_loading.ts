@@ -20,6 +20,7 @@ export const IGNORED_DIRECTORIES = [
   ".cache",
   "tmp",
   "temp",
+  "fixtures",
 ];
 
 /**
