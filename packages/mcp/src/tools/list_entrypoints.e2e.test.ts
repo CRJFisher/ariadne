@@ -10,13 +10,11 @@
  */
 
 import { describe, it, expect, beforeAll, afterAll } from "vitest";
-import { spawn, ChildProcess } from "child_process";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
 import * as path from "path";
 
 describe("MCP Server E2E - list_entrypoints tool", () => {
-  let server_process: ChildProcess;
   let client: Client;
   let transport: StdioClientTransport;
 
@@ -27,21 +25,8 @@ describe("MCP Server E2E - list_entrypoints tool", () => {
   const SERVER_PATH = path.resolve(__dirname, "../../dist/server.js");
 
   beforeAll(async () => {
-    // Spawn the MCP server as a child process
-    server_process = spawn("node", [SERVER_PATH], {
-      env: {
-        ...process.env,
-        PROJECT_PATH: PACKAGES_CORE_PATH,
-      },
-      stdio: ["pipe", "pipe", "pipe"],
-    });
-
-    // Log server stderr for debugging
-    server_process.stderr?.on("data", (data) => {
-      console.error(`[Server stderr]: ${data}`);
-    });
-
     // Create MCP client with stdio transport
+    // This will automatically spawn the server process
     transport = new StdioClientTransport({
       command: "node",
       args: [SERVER_PATH],
@@ -62,25 +47,24 @@ describe("MCP Server E2E - list_entrypoints tool", () => {
     );
 
     // Connect client to server
+    // The StdioClientTransport will spawn the server process automatically
     await client.connect(transport);
 
     // Give server time to initialize
     await new Promise((resolve) => setTimeout(resolve, 1000));
-  }, 30000); // 30s timeout for setup
+  }, 60000); // 60s timeout for setup (packages/core is large)
 
   afterAll(async () => {
-    // Clean shutdown
+    // Clean shutdown - closing the client will also close the server process
+    // that was spawned by StdioClientTransport
     if (client) {
       await client.close();
-    }
-    if (server_process) {
-      server_process.kill();
     }
   });
 
   it("should connect to server successfully", () => {
     expect(client).toBeDefined();
-    expect(server_process.killed).toBe(false);
+    expect(transport).toBeDefined();
   });
 
   it("should list available tools and find list_entrypoints with filtering parameters", async () => {
