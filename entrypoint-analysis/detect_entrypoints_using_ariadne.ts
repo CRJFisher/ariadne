@@ -21,7 +21,12 @@
 // Import from source - tsx transpiles TypeScript without build step
 import { Project, profiler } from "../packages/core/src/index.js";
 import { is_test_file } from "../packages/core/src/project/detect_test_file.js";
-import { FilePath, Language } from "@ariadnejs/types";
+import { FilePath } from "@ariadnejs/types";
+import {
+  type FunctionEntry,
+  detect_language,
+  extract_entry_points,
+} from "./extract_entry_points.js";
 import * as path from "path";
 import * as fs from "fs/promises";
 import { fileURLToPath } from "url";
@@ -59,18 +64,6 @@ interface CodeVersion {
   commit_hash_short: string;
   working_tree_hash: string;
   fingerprint: string;
-}
-
-interface FunctionEntry {
-  name: string;
-  file_path: string;
-  start_line: number;
-  start_column: number;
-  end_line: number;
-  end_column: number;
-  signature?: string;
-  tree_size: number;
-  kind: "function" | "method" | "constructor";
 }
 
 interface AnalysisResult {
@@ -199,78 +192,6 @@ function output_comparison(
   }
 
   console.error("═══════════════════════════════════════════════════════");
-}
-
-/**
- * Build function signature from definition
- */
-function build_signature(definition: any): string | undefined {
-  try {
-    if (definition.kind === "function") {
-      const params = definition.signature?.parameters
-        ?.map((p: any) => `${p.name}: ${p.type || "any"}`)
-        .join(", ") || "";
-      const return_type = definition.signature?.return_type || definition.return_type || "unknown";
-      return `${definition.name}(${params}): ${return_type}`;
-    } else if (definition.kind === "method") {
-      const params = definition.parameters
-        ?.map((p: any) => `${p.name}: ${p.type || "any"}`)
-        .join(", ") || "";
-      const return_type = definition.return_type || "unknown";
-      return `${definition.name}(${params}): ${return_type}`;
-    } else if (definition.kind === "constructor") {
-      const params = definition.parameters
-        ?.map((p: any) => `${p.name}: ${p.type || "any"}`)
-        .join(", ") || "";
-      return `constructor(${params})`;
-    }
-  } catch {
-    // Gracefully handle any errors in signature building
-    return undefined;
-  }
-}
-
-/**
- * Count tree size (total unique functions called) via DFS
- */
-function count_tree_size(
-  node_id: string,
-  call_graph: any,
-  visited: Set<string>
-): number {
-  if (visited.has(node_id)) return 0;
-  visited.add(node_id);
-
-  const node = call_graph.nodes.get(node_id);
-  if (!node) return 0;
-
-  let count = 0;
-  for (const call_ref of node.enclosed_calls) {
-    if (call_ref.symbol_id) {
-      count += 1 + count_tree_size(call_ref.symbol_id, call_graph, visited);
-    }
-  }
-
-  return count;
-}
-
-/**
- * Detect language from file extension
- */
-function detect_language(file_path: string): Language | null {
-  if (file_path.endsWith(".ts") || file_path.endsWith(".tsx")) {
-    return "typescript";
-  }
-  if (file_path.endsWith(".js") || file_path.endsWith(".jsx")) {
-    return "javascript";
-  }
-  if (file_path.endsWith(".py")) {
-    return "python";
-  }
-  if (file_path.endsWith(".rs")) {
-    return "rust";
-  }
-  return null;
 }
 
 /**
@@ -461,34 +382,10 @@ async function analyze_package(package_name: string, include_tests: boolean = fa
   // Extract entry point information
   // For library packages, filter to only show entry points from the library itself
   const library_src_path = path.join(packages_root, package_name, "src");
-  const entry_points: FunctionEntry[] = [];
-
-  for (const entry_point_id of call_graph.entry_points) {
-    const node = call_graph.nodes.get(entry_point_id);
-    if (!node) continue;
-
-    // For library packages, only include entry points from the library package
-    if (is_library && !node.location.file_path.startsWith(library_src_path)) {
-      continue;
-    }
-
-    const tree_size = count_tree_size(entry_point_id, call_graph, new Set());
-
-    entry_points.push({
-      name: node.name,
-      file_path: node.location.file_path,
-      start_line: node.location.start_line,
-      start_column: node.location.start_column,
-      end_line: node.location.end_line,
-      end_column: node.location.end_column,
-      signature: build_signature(node.definition),
-      tree_size,
-      kind: node.definition.kind as "function" | "method" | "constructor",
-    });
-  }
-
-  // Sort by tree_size descending
-  entry_points.sort((a, b) => b.tree_size - a.tree_size);
+  const filter = is_library
+    ? (node: { location: { file_path: string } }) => node.location.file_path.startsWith(library_src_path)
+    : undefined;
+  const entry_points = extract_entry_points(call_graph, filter);
 
   const total_time = Date.now() - start_time;
   console.error(`⏱️  Total analysis time: ${total_time}ms (${(total_time / 1000).toFixed(2)}s)`);
@@ -585,30 +482,8 @@ async function analyze_group(
   const callgraph_time = Date.now() - callgraph_start;
   console.error(`Found ${call_graph.entry_points.length} entry points in ${callgraph_time}ms`);
 
-  // Extract entry point information (same logic as single-package analysis)
-  const entry_points: FunctionEntry[] = [];
-
-  for (const entry_point_id of call_graph.entry_points) {
-    const node = call_graph.nodes.get(entry_point_id);
-    if (!node) continue;
-
-    const tree_size = count_tree_size(entry_point_id, call_graph, new Set());
-
-    entry_points.push({
-      name: node.name,
-      file_path: node.location.file_path,
-      start_line: node.location.start_line,
-      start_column: node.location.start_column,
-      end_line: node.location.end_line,
-      end_column: node.location.end_column,
-      signature: build_signature(node.definition),
-      tree_size,
-      kind: node.definition.kind as "function" | "method" | "constructor",
-    });
-  }
-
-  // Sort by tree_size descending
-  entry_points.sort((a, b) => b.tree_size - a.tree_size);
+  // Extract entry point information
+  const entry_points = extract_entry_points(call_graph);
 
   const total_time = Date.now() - start_time;
   console.error(`⏱️  Total analysis time: ${total_time}ms (${(total_time / 1000).toFixed(2)}s)`);

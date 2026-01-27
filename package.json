@@ -9,10 +9,10 @@
   ],
   "scripts": {
     "build": "npm run build -w @ariadnejs/types && npm run build -w @ariadnejs/core && npm run build -w @ariadnejs/mcp",
-    "typecheck": "npx tsc --noEmit -p packages/types/tsconfig.json && npx tsc --noEmit -p packages/core/tsconfig.json && npx tsc --noEmit -p packages/mcp/tsconfig.json",
+    "typecheck": "npx tsc --noEmit -p packages/types/tsconfig.json && npx tsc --noEmit -p packages/core/tsconfig.json && npx tsc --noEmit -p packages/mcp/tsconfig.json && npx tsc --noEmit -p entrypoint-analysis/tsconfig.json",
     "test": "npm run test --workspaces",
-    "lint": "eslint 'packages/*/src/**/*.ts' 'packages/*/tests/**/*.ts'",
-    "lint:fix": "eslint --fix 'packages/*/src/**/*.ts' 'packages/*/tests/**/*.ts'",
+    "lint": "eslint 'packages/*/src/**/*.ts' 'packages/*/tests/**/*.ts' 'entrypoint-analysis/**/*.ts'",
+    "lint:fix": "eslint --fix 'packages/*/src/**/*.ts' 'packages/*/tests/**/*.ts' 'entrypoint-analysis/**/*.ts'",
     "clean": "npm run clean --workspaces && rm -rf node_modules",
     "changeset": "changeset",
     "version": "changeset version",

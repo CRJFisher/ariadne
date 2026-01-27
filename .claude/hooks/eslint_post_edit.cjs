@@ -29,6 +29,7 @@ function get_package_for_file(file_path) {
   if (file_path.includes("packages/types")) return "packages/types";
   if (file_path.includes("packages/core")) return "packages/core";
   if (file_path.includes("packages/mcp")) return "packages/mcp";
+  if (file_path.includes("entrypoint-analysis")) return "entrypoint-analysis";
   return null;
 }
 
@@ -96,19 +97,14 @@ function main() {
       encoding: "utf8",
       stdio: ["pipe", "pipe", "pipe"]
     });
-    // All issues were fixable - file is now clean, run TypeScript check
     log(`ESLint --fix completed successfully for ${file_path}`);
-    if (run_typescript_check(file_path, project_dir)) {
-      process.exit(0);
-    } else {
-      process.exit(0); // TypeScript check already output block message
-    }
   } catch (fix_error) {
     log(`ESLint --fix had issues: ${fix_error.message}`);
     // Some issues couldn't be auto-fixed, continue to check remaining errors
   }
 
-  // Step 2: Check for remaining errors/warnings after auto-fix
+  // Step 2: Always check for remaining errors/warnings after auto-fix
+  // (ESLint exits 0 when only warnings remain, so we must always run this check)
   log(`Checking remaining ESLint issues for ${file_path}...`);
   try {
     const output = execSync(`npx eslint "${file_path}" --format stylish`, {
@@ -130,11 +126,8 @@ function main() {
 
     // No remaining issues after auto-fix, run TypeScript check
     log(`ESLint check passed for ${file_path}`);
-    if (run_typescript_check(file_path, project_dir)) {
-      process.exit(0);
-    } else {
-      process.exit(0); // TypeScript check already output block message
-    }
+    run_typescript_check(file_path, project_dir);
+    process.exit(0);
   } catch (error) {
     // ESLint still has errors that couldn't be auto-fixed
     const output = error.stdout || error.stderr || "ESLint errors found";

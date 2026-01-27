@@ -46,7 +46,7 @@ export default [
       "unused-imports/no-unused-imports": "error",
       "unused-imports/no-unused-vars": ["error", { "argsIgnorePattern": "^_" }],
 
-      "@typescript-eslint/no-explicit-any": "warn",
+      "@typescript-eslint/no-explicit-any": "error",
       "@typescript-eslint/no-non-null-assertion": "error",
 
       // Naming conventions: snake_case for everything except classes/interfaces/types (PascalCase)
@@ -215,7 +215,7 @@ export default [
     }
   },
   {
-    files: ["top-level-nodes-analysis/**/*.ts"],
+    files: ["entrypoint-analysis/**/*.ts"],
     languageOptions: {
       globals: {
         // Node.js globals for analysis scripts

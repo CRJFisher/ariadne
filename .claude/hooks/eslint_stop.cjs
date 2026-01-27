@@ -69,7 +69,7 @@ function main() {
   }
 
   // Step 3: Run TypeScript type checking for each package
-  const packages = ["packages/types", "packages/core", "packages/mcp"];
+  const packages = ["packages/types", "packages/core", "packages/mcp", "entrypoint-analysis"];
   for (const pkg of packages) {
     log(`Running tsc --noEmit for ${pkg}...`);
     try {
