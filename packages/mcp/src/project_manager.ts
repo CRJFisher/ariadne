@@ -4,6 +4,7 @@ import * as chokidar from "chokidar";
 import * as fs from "fs/promises";
 import { create_file_watcher, FileWatcherOptions } from "./file_watcher";
 import { find_source_files } from "./file_loading";
+import { log_info, log_warn } from "./logger";
 
 export interface ProjectManagerOptions {
   project_path: string;
@@ -57,7 +58,7 @@ export class ProjectManager {
       throw new Error("ProjectManager must be initialized before loading files");
     }
 
-    console.log(`Loading project files from: ${this.project_path}`);
+    log_info(`Loading project files from: ${this.project_path}`);
     const start_time = Date.now();
 
     const files = await find_source_files(this.project_path, this.project_path);
@@ -69,12 +70,12 @@ export class ProjectManager {
         this.project.update_file(file_path as FilePath, content);
         loaded_count++;
       } catch (error) {
-        console.warn(`Skipping file ${file_path}: ${error}`);
+        log_warn(`Skipping file ${file_path}: ${error}`);
       }
     }
 
     const duration = Date.now() - start_time;
-    console.log(`Loaded ${loaded_count} files in ${duration}ms`);
+    log_info(`Loaded ${loaded_count} files in ${duration}ms`);
 
     this.files_loaded = true;
   }
@@ -102,7 +103,7 @@ export class ProjectManager {
    */
   start_watching(options?: FileWatcherOptions): void {
     if (this.watcher) {
-      console.warn("File watcher is already running");
+      log_warn("File watcher is already running");
       return;
     }
 
@@ -111,19 +112,19 @@ export class ProjectManager {
       debounce_ms: options?.debounce_ms,
     };
 
-    console.log(`Starting file watcher for: ${watch_options.project_path}`);
+    log_info(`Starting file watcher for: ${watch_options.project_path}`);
 
     this.watcher = create_file_watcher(watch_options, {
       on_change: (file_path: string, content: string) => {
-        console.log(`File changed: ${file_path}`);
+        log_info(`File changed: ${file_path}`);
         this.project.update_file(file_path as FilePath, content);
       },
       on_add: (file_path: string, content: string) => {
-        console.log(`File added: ${file_path}`);
+        log_info(`File added: ${file_path}`);
         this.project.update_file(file_path as FilePath, content);
       },
       on_delete: (file_path: string) => {
-        console.log(`File deleted: ${file_path}`);
+        log_info(`File deleted: ${file_path}`);
         this.project.remove_file(file_path as FilePath);
       },
     });
@@ -136,7 +137,7 @@ export class ProjectManager {
     if (this.watcher) {
       await this.watcher.close();
       this.watcher = null;
-      console.log("File watcher stopped");
+      log_info("File watcher stopped");
     }
   }
 

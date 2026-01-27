@@ -2,6 +2,7 @@ import * as chokidar from "chokidar";
 import * as fs from "fs/promises";
 import * as path from "path";
 import { IGNORED_GLOBS, is_supported_file } from "./file_loading";
+import { log_error, log_warn } from "./logger";
 
 export interface FileWatcherOptions {
   project_path: string;
@@ -59,7 +60,7 @@ export function create_file_watcher(
         const content = await fs.readFile(file_path, "utf-8");
         callbacks.on_change(file_path, content);
       } catch (error) {
-        console.warn(`Failed to read changed file ${file_path}:`, error);
+        log_warn(`Failed to read changed file ${file_path}: ${error}`);
       }
     },
     debounce_ms
@@ -73,7 +74,7 @@ export function create_file_watcher(
         const content = await fs.readFile(file_path, "utf-8");
         callbacks.on_add(file_path, content);
       } catch (error) {
-        console.warn(`Failed to read added file ${file_path}:`, error);
+        log_warn(`Failed to read added file ${file_path}: ${error}`);
       }
     },
     debounce_ms
@@ -119,7 +120,7 @@ export function create_file_watcher(
       handle_delete(abs_path);
     })
     .on("error", (error: Error) => {
-      console.error("File watcher error:", error);
+      log_error(`File watcher error: ${error}`);
     });
 
   return watcher;

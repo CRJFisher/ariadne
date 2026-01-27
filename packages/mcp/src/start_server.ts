@@ -19,6 +19,7 @@ import {
 } from "./tools/show_call_graph_neighborhood.js";
 import { ProjectManager } from "./project_manager";
 import { find_source_files, is_supported_file } from "./file_loading";
+import { initialize_logger, log_info, log_warn } from "./logger";
 
 /**
  * Options for filtered file loading
@@ -75,19 +76,19 @@ export async function load_filtered_project_files(
   }
 
   // Load each file
-  console.log(`Loading ${files_to_load.size} filtered files...`);
+  log_info(`Loading ${files_to_load.size} filtered files...`);
   const start_time = Date.now();
 
   for (const file_path of files_to_load) {
     try {
       await load_file_if_needed(project, file_path);
     } catch (error) {
-      console.warn(`Skipping file ${file_path}: ${error}`);
+      log_warn(`Skipping file ${file_path}: ${error}`);
     }
   }
 
   const duration = Date.now() - start_time;
-  console.log(`Loaded ${files_to_load.size} files in ${duration}ms`);
+  log_info(`Loaded ${files_to_load.size} files in ${duration}ms`);
 }
 
 export interface AriadneMCPServerOptions {
@@ -99,6 +100,9 @@ export interface AriadneMCPServerOptions {
 export async function start_server(
   options: AriadneMCPServerOptions = {}
 ): Promise<Server> {
+  // Initialize logger first (reads DEBUG_LOG_FILE env var)
+  initialize_logger();
+
   // Support PROJECT_PATH environment variable
   // Precedence: options.project_path (CLI) > PROJECT_PATH env > cwd
   const project_path =
@@ -127,7 +131,7 @@ export async function start_server(
   // Load all project files on startup
   await project_manager.load_all_files();
 
-  console.log(
+  log_info(
     `Ariadne MCP server initialized for: ${project_path}` +
       (project_manager.is_watching() ? " (watching for changes)" : "")
   );
@@ -348,7 +352,7 @@ export async function load_project_files(
   project: Project,
   project_path: string
 ): Promise<void> {
-  console.log(`Loading project files from: ${project_path}`);
+  log_info(`Loading project files from: ${project_path}`);
   const start_time = Date.now();
 
   const files = await find_source_files(project_path, project_path);
@@ -359,10 +363,10 @@ export async function load_project_files(
       await load_file_if_needed(project, file_path);
       loaded_count++;
     } catch (error) {
-      console.warn(`Skipping file ${file_path}: ${error}`);
+      log_warn(`Skipping file ${file_path}: ${error}`);
     }
   }
 
   const duration = Date.now() - start_time;
-  console.log(`Loaded ${loaded_count} files in ${duration}ms`);
+  log_info(`Loaded ${loaded_count} files in ${duration}ms`);
 }
