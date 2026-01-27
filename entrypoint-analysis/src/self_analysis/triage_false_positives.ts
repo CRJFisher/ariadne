@@ -7,43 +7,53 @@
  *    using enriched metadata (exported status, access modifier, callback
  *    context, diagnostic data). Handles 60-80% of entries with no LLM cost.
  *
- * 2. **Parallel haiku investigation**: For unclassified entries, run
- *    per-entry two-phase queries using haiku with pre-loaded diagnostic
- *    data and a structured debugging prompt. Processes up to 5 entries
- *    concurrently.
+ * 2. **Parallel entry investigation**: For unclassified entries, run
+ *    per-entry two-phase queries with pre-loaded diagnostic data and a
+ *    structured debugging prompt. Processes up to 5 entries concurrently.
  *
- * 3. **Opus aggregation**: Single opus call that reviews all individual
- *    haiku analyses and groups entries by shared root cause, providing
+ * 3. **Aggregation**: A single aggregation call reviews all individual
+ *    entry analyses and groups entries by shared root cause, providing
  *    high-level pattern recognition.
  *
  * Filters out functions already deleted by detect_dead_code.ts before triaging.
  *
  * Results are held in memory and written once at the end (or on error)
  * to preserve data integrity.
+ *
+ * Usage:
+ *   npx tsx triage_false_positives.ts --package core
+ *   npx tsx triage_false_positives.ts --package core --limit 10
+ *
+ * Options:
+ *   --package <name>  Required. Package to analyze (loads ground truth for true positive filtering)
+ *   --limit <n>       Max unclassified entries to send to LLM triage (default: all)
  */
 
 import path from "path";
 import { fileURLToPath } from "url";
+import * as fs from "node:fs/promises";
 import type {
   AnalysisResult,
   EnrichedFunctionEntry,
   FalsePositiveTriageResults,
   FalsePositiveEntry,
   DeadCodeAnalysisResult,
-} from "./types.js";
+} from "../types.js";
 import {
   load_json,
   save_json,
+  find_most_recent_analysis,
+  find_most_recent_dead_code_analysis,
+} from "../analysis_io.js";
+import {
   two_phase_query,
   two_phase_query_detailed,
   parallel_map,
-  find_most_recent_analysis,
-  find_most_recent_dead_code_analysis,
-} from "./utils.js";
+} from "../agent_queries.js";
 import {
   classify_entrypoints,
   type ClassifiedEntry,
-} from "./classify_entrypoints.js";
+} from "../classify_entrypoints.js";
 
 // eslint-disable-next-line @typescript-eslint/naming-convention
 const __filename = fileURLToPath(import.meta.url);
@@ -55,30 +65,30 @@ function get_timestamped_results_file(): string {
   const timestamp = now.toISOString()
     .replace(/:/g, "-")
     .replace("T", "_");
-  return path.join(__dirname, "analysis_output", `false_positive_triage_${timestamp}.json`);
+  return path.resolve(__dirname, "../..", "analysis_output", `false_positive_triage_${timestamp}.json`);
 }
 
 const RESULTS_FILE = get_timestamped_results_file();
-const HAIKU_CONCURRENCY = 5;
+const TRIAGE_CONCURRENCY = 5;
 
 // ===== Types =====
 
-/** Per-entry response from haiku two-phase query */
-interface HaikuTriageResponse {
+/** Per-entry response from triage two-phase query */
+interface EntryTriageResponse {
   group_id: string;
   root_cause: string;
   reasoning: string;
 }
 
-/** Per-entry analysis with investigation text (for opus) */
-interface HaikuAnalysis {
+/** Per-entry analysis with investigation text for aggregation */
+interface EntryAnalysis {
   entry: EnrichedFunctionEntry;
-  response: HaikuTriageResponse;
+  response: EntryTriageResponse;
   investigation_text: string;
 }
 
-/** Opus aggregation response */
-interface OpusAggregationResponse {
+/** Aggregation response */
+interface AggregationResponse {
   groups: {
     group_id: string;
     root_cause: string;
@@ -163,7 +173,7 @@ function apply_pre_classification(
   return count;
 }
 
-// ===== Stage 2: Parallel Haiku Investigation =====
+// ===== Stage 2: Parallel Entry Investigation =====
 
 /**
  * Build investigation prompt with pre-loaded diagnostic data.
@@ -276,13 +286,13 @@ const EXTRACTION_PROMPT = `Convert your analysis into this JSON format (no markd
 }`;
 
 /**
- * Analyze a single entry with haiku two-phase query.
+ * Analyze a single entry with two-phase query.
  */
-async function analyze_entry_with_haiku(
+async function analyze_entry(
   entry: EnrichedFunctionEntry,
   index: number,
   total: number,
-): Promise<HaikuAnalysis> {
+): Promise<EntryAnalysis> {
   console.error(
     `\n🔍 [${index + 1}/${total}] Analyzing: ${entry.name} in ${path.basename(entry.file_path)}:${entry.start_line}`
   );
@@ -290,7 +300,7 @@ async function analyze_entry_with_haiku(
   const investigation_prompt = build_investigation_prompt(entry);
 
   const { result, investigation_text, total_cost } =
-    await two_phase_query_detailed<HaikuTriageResponse>(
+    await two_phase_query_detailed<EntryTriageResponse>(
       investigation_prompt,
       EXTRACTION_PROMPT,
       { model: "haiku" },
@@ -305,23 +315,23 @@ async function analyze_entry_with_haiku(
   };
 }
 
-// ===== Stage 3: Opus Aggregation =====
+// ===== Stage 3: Aggregation =====
 
 /**
- * Run a single opus call to review all haiku analyses and group by root cause.
+ * Review all entry analyses and group by root cause.
  */
-async function aggregate_with_opus(
-  analyses: HaikuAnalysis[],
-): Promise<OpusAggregationResponse> {
-  console.error(`\n🧠 Running opus aggregation over ${analyses.length} analyses...`);
+async function aggregate_analyses(
+  analyses: EntryAnalysis[],
+): Promise<AggregationResponse> {
+  console.error(`\n🧠 Running aggregation over ${analyses.length} analyses...`);
 
   const entries_text = analyses
     .map((a) => {
       const e = a.entry;
       return `Entry: ${e.name} (${e.kind}) at ${e.file_path}:${e.start_line}
   Diagnosis: ${e.diagnostics.diagnosis}
-  Haiku group_id: ${a.response.group_id}
-  Haiku root_cause: ${a.response.root_cause}
+  Triage group_id: ${a.response.group_id}
+  Triage root_cause: ${a.response.root_cause}
   Investigation summary: ${a.investigation_text.slice(0, 500)}`;
     })
     .join("\n---\n");
@@ -357,23 +367,23 @@ even if the individual analyses used different group_id names for the same root 
 
 Include ALL entries in exactly one group each. Use the function names from the analyses.`;
 
-  const result = await two_phase_query<OpusAggregationResponse>(
+  const result = await two_phase_query<AggregationResponse>(
     investigation_prompt,
     extraction_prompt,
     { model: "opus" },
   );
 
-  console.error(`   ✓ Opus grouped ${analyses.length} entries into ${result.groups.length} groups`);
+  console.error(`   ✓ Aggregated ${analyses.length} entries into ${result.groups.length} groups`);
 
   return result;
 }
 
 /**
- * Apply opus aggregation results to the triage output.
+ * Apply aggregation results to the triage output.
  */
-function apply_opus_groups(
-  opus_result: OpusAggregationResponse,
-  analyses: HaikuAnalysis[],
+function apply_aggregation_groups(
+  aggregation_result: AggregationResponse,
+  analyses: EntryAnalysis[],
   results: FalsePositiveTriageResults,
 ): void {
   // Build name→entry lookup
@@ -382,7 +392,7 @@ function apply_opus_groups(
     entry_by_name.set(analysis.entry.name, analysis.entry);
   }
 
-  for (const group of opus_result.groups) {
+  for (const group of aggregation_result.groups) {
     const entries: FalsePositiveEntry[] = [];
     for (const name of group.entry_names) {
       const entry = entry_by_name.get(name);
@@ -427,8 +437,8 @@ function print_summary(
     already_processed: number;
     pre_classified: number;
     true_positives: number;
-    haiku_analyzed: number;
-    haiku_errors: number;
+    entries_analyzed: number;
+    analysis_errors: number;
   },
 ): void {
   console.error("\n" + "=".repeat(60));
@@ -440,8 +450,8 @@ function print_summary(
   console.error(`  Already grouped: ${stats.already_processed}`);
   console.error(`  Pre-classified (deterministic): ${stats.pre_classified}`);
   console.error(`  True positives (confirmed): ${stats.true_positives}`);
-  console.error(`  Haiku analyzed: ${stats.haiku_analyzed}`);
-  console.error(`  Haiku errors: ${stats.haiku_errors}`);
+  console.error(`  Entries analyzed: ${stats.entries_analyzed}`);
+  console.error(`  Analysis errors: ${stats.analysis_errors}`);
   console.error(`Total groups: ${Object.keys(results.groups).length}`);
   console.error(`\nResults saved to: ${RESULTS_FILE}`);
 
@@ -457,7 +467,85 @@ function print_summary(
 
 // ===== Main =====
 
+function parse_limit_arg(): number | undefined {
+  const args = process.argv.slice(2);
+  const limit_arg = args.find((a) => a.startsWith("--limit="));
+  if (limit_arg) {
+    return parseInt(limit_arg.split("=")[1], 10);
+  }
+  const limit_index = args.indexOf("--limit");
+  if (limit_index !== -1 && args[limit_index + 1]) {
+    return parseInt(args[limit_index + 1], 10);
+  }
+  return undefined;
+}
+
+function parse_package_arg(): string | undefined {
+  const args = process.argv.slice(2);
+  const package_arg = args.find((a) => a.startsWith("--package="));
+  if (package_arg) {
+    return package_arg.split("=")[1];
+  }
+  const package_index = args.indexOf("--package");
+  if (package_index !== -1 && args[package_index + 1]) {
+    return args[package_index + 1];
+  }
+  return undefined;
+}
+
+interface GroundTruthEntry {
+  name: string;
+  file: string;
+}
+
+/**
+ * Load ground truth file for a package.
+ * Returns entries representing known true entry points (public API).
+ */
+async function load_ground_truth(package_name: string): Promise<GroundTruthEntry[]> {
+  const ground_truth_path = path.resolve(
+    __dirname, "../..",
+    "ground_truth",
+    `${package_name}.json`
+  );
+  try {
+    const content = await fs.readFile(ground_truth_path, "utf-8");
+    return JSON.parse(content) as GroundTruthEntry[];
+  } catch {
+    console.error(`Warning: No ground truth file found at ${ground_truth_path}`);
+    return [];
+  }
+}
+
+/**
+ * Check if an entry matches a ground truth record (known true entry point).
+ */
+function matches_ground_truth(
+  entry: EnrichedFunctionEntry,
+  ground_truth: GroundTruthEntry[]
+): boolean {
+  return ground_truth.some(
+    (gt) => entry.name === gt.name && entry.file_path.endsWith(gt.file)
+  );
+}
+
 async function main() {
+  const limit = parse_limit_arg();
+  if (limit !== undefined) {
+    console.error(`Limit: processing at most ${limit} entries for LLM triage`);
+  }
+
+  const package_name = parse_package_arg();
+  if (!package_name) {
+    console.error("Error: --package <name> is required.");
+    console.error("Usage: npx tsx triage_false_positives.ts --package core");
+    process.exit(1);
+  }
+
+  // Load ground truth for the specified package
+  const ground_truth = await load_ground_truth(package_name);
+  console.error(`Loaded ${ground_truth.length} ground truth entries for "${package_name}"`);
+
   console.error("Finding most recent analysis file...");
   const analysis_file = await find_most_recent_analysis();
   console.error(`Using analysis file: ${analysis_file}`);
@@ -482,10 +570,18 @@ async function main() {
     last_updated: new Date().toISOString(),
   };
 
-  // Filter to false positives (exclude project.ts which is a true entry point)
-  const false_positives = analysis.entry_points.filter(
-    (ep) => !ep.file_path.endsWith("project/project.ts")
+  // Separate true positives (ground truth matches) from false positives
+  const true_positives = analysis.entry_points.filter(
+    (ep) => matches_ground_truth(ep, ground_truth)
   );
+  const false_positives = analysis.entry_points.filter(
+    (ep) => !matches_ground_truth(ep, ground_truth)
+  );
+
+  console.error(`\n   True positives (ground truth): ${true_positives.length}`);
+  for (const tp of true_positives) {
+    console.error(`     ✓ ${tp.name} in ${path.basename(tp.file_path)}`);
+  }
 
   // Filter out functions that were already deleted by dead code analysis
   const after_deleted = dead_code
@@ -500,6 +596,7 @@ async function main() {
   const already_processed = after_deleted.length - to_process.length;
 
   console.error(`\n📊 Total entry points: ${analysis.entry_points.length}`);
+  console.error(`   True positives (ground truth): ${true_positives.length}`);
   console.error(`   False positives: ${false_positives.length}`);
   console.error(`   Already deleted: ${deleted_count}`);
   console.error(`   Already grouped: ${already_processed}`);
@@ -518,34 +615,38 @@ async function main() {
     results,
   );
 
-  // Stage 2: Parallel haiku investigation of unclassified entries
-  const unclassified = classification.unclassified;
-  let haiku_analyzed = 0;
-  let haiku_error_count = 0;
-  const haiku_analyses: HaikuAnalysis[] = [];
+  // Stage 2: Parallel entry investigation of unclassified entries
+  const all_unclassified = classification.unclassified;
+  const unclassified = limit !== undefined ? all_unclassified.slice(0, limit) : all_unclassified;
+  if (limit !== undefined && all_unclassified.length > limit) {
+    console.error(`   Limiting LLM triage to ${limit} of ${all_unclassified.length} unclassified entries`);
+  }
+  let entries_analyzed = 0;
+  let analysis_error_count = 0;
+  const entry_analyses: EntryAnalysis[] = [];
 
   if (unclassified.length > 0) {
-    console.error(`\n🤖 Stage 2: Haiku analysis of ${unclassified.length} entries (${HAIKU_CONCURRENCY} workers)...`);
+    console.error(`\n🤖 Stage 2: Triage analysis of ${unclassified.length} entries (${TRIAGE_CONCURRENCY} workers)...`);
 
     try {
       const raw_results = await parallel_map(
         unclassified,
         async (entry, index) => {
           try {
-            return await analyze_entry_with_haiku(entry, index, unclassified.length);
+            return await analyze_entry(entry, index, unclassified.length);
           } catch (error) {
             console.error(`   ⚠️  Error analyzing ${entry.name}: ${error}`);
-            haiku_error_count++;
+            analysis_error_count++;
             return null;
           }
         },
-        HAIKU_CONCURRENCY,
+        TRIAGE_CONCURRENCY,
       );
 
       for (const result of raw_results) {
         if (result) {
-          haiku_analyses.push(result);
-          haiku_analyzed++;
+          entry_analyses.push(result);
+          entries_analyzed++;
         }
       }
     } catch (error) {
@@ -553,19 +654,19 @@ async function main() {
     }
   }
 
-  // Stage 3: Opus aggregation (only if there are haiku results to aggregate)
-  if (haiku_analyses.length > 0) {
-    console.error(`\n🧠 Stage 3: Opus aggregation of ${haiku_analyses.length} analyses...`);
+  // Stage 3: Aggregation (only if there are entry results to aggregate)
+  if (entry_analyses.length > 0) {
+    console.error(`\n🧠 Stage 3: Aggregation of ${entry_analyses.length} analyses...`);
 
     try {
-      const opus_result = await aggregate_with_opus(haiku_analyses);
-      apply_opus_groups(opus_result, haiku_analyses, results);
+      const aggregation_result = await aggregate_analyses(entry_analyses);
+      apply_aggregation_groups(aggregation_result, entry_analyses, results);
     } catch (error) {
-      console.error(`\n⚠️  Opus aggregation failed: ${error}`);
-      console.error("   Falling back to per-entry haiku groups...");
+      console.error(`\n⚠️  Aggregation failed: ${error}`);
+      console.error("   Falling back to per-entry triage groups...");
 
-      // Fallback: use haiku's per-entry group assignments directly
-      for (const analysis of haiku_analyses) {
+      // Fallback: use per-entry group assignments directly
+      for (const analysis of entry_analyses) {
         const entry_data: FalsePositiveEntry = {
           name: analysis.entry.name,
           file_path: analysis.entry.file_path,
@@ -601,8 +702,8 @@ async function main() {
     already_processed: already_processed,
     pre_classified: pre_classified_count,
     true_positives: classification.true_positives.length,
-    haiku_analyzed,
-    haiku_errors: haiku_error_count,
+    entries_analyzed,
+    analysis_errors: analysis_error_count,
   });
 }
 

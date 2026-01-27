@@ -5,13 +5,11 @@
   "type": "module",
   "description": "Self-analysis tools for identifying entry points in all packages",
   "scripts": {
-    "analyze": "npx tsx analyze_self.ts",
-    "verify": "npx tsx verify_entry_points.ts",
-    "profile": "clinic doctor -- node --import tsx detect_entrypoints_using_ariadne.ts",
-    "profile:flame": "clinic flame -- node --import tsx detect_entrypoints_using_ariadne.ts",
-    "profile:simple": "NODE_ENV=production node --cpu-prof --cpu-prof-interval=100 --import tsx detect_entrypoints_using_ariadne.ts",
-    "profile:detailed": "ARIADNE_PROFILE=1 npx tsx detect_entrypoints_using_ariadne.ts --stdout",
-    "profile:analyze": "npx tsx ./scripts/analyze_profile.ts"
+    "analyze": "npx tsx src/self_analysis/detect_entrypoints.ts",
+    "profile": "clinic doctor -- node --import tsx src/self_analysis/detect_entrypoints.ts",
+    "profile:flame": "clinic flame -- node --import tsx src/self_analysis/detect_entrypoints.ts",
+    "profile:simple": "NODE_ENV=production node --cpu-prof --cpu-prof-interval=100 --import tsx src/self_analysis/detect_entrypoints.ts",
+    "profile:detailed": "ARIADNE_PROFILE=1 npx tsx src/self_analysis/detect_entrypoints.ts --stdout"
   },
   "dependencies": {
     "@anthropic-ai/claude-agent-sdk": "*",

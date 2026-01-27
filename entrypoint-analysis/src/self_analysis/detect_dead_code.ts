@@ -16,13 +16,13 @@ import type {
   CallerPattern,
   DeletionRecord,
   DeadCodeAnalysisResult,
-} from "./types.js";
+} from "../types.js";
 import {
   load_json,
   save_json,
-  two_phase_query,
   find_most_recent_analysis,
-} from "./utils.js";
+} from "../analysis_io.js";
+import { two_phase_query } from "../agent_queries.js";
 
 // eslint-disable-next-line @typescript-eslint/naming-convention
 const __filename = fileURLToPath(import.meta.url);
@@ -32,8 +32,8 @@ const __dirname = path.dirname(__filename);
 function get_timestamped_results_file(): string {
   const now = new Date();
   const timestamp = now.toISOString().replace(/:/g, "-").replace("T", "_");
-  return path.join(
-    __dirname,
+  return path.resolve(
+    __dirname, "../..",
     "analysis_output",
     `dead_code_analysis_${timestamp}.json`
   );

@@ -1,5 +1,5 @@
 ---
-name: entrypoint-self-analysis
+name: self-entrypoint-analysis
 description: Runs the entrypoint self-analysis pipeline on a specific package. Use when asked to run entrypoint detection, self-analysis, dead code detection, or false positive triage. Compares results against previous runs to track improvement.
 allowed-tools: Bash(npx tsx:*), Read
 ---
@@ -12,15 +12,14 @@ Verify whether recent changes to call graph detection logic improved entry point
 
 ## Pipeline Overview
 
-The self-analysis pipeline consists of 5 steps run from `entrypoint-analysis/`:
+The self-analysis pipeline consists of 4 steps. All scripts live under `entrypoint-analysis/src/self_analysis/`:
 
-| Step | Script                                 | Purpose                                                    |
-| ---- | -------------------------------------- | ---------------------------------------------------------- |
-| 1    | `detect_entrypoints_using_ariadne.ts`  | Run detection for a package, compare against previous runs |
-| 2    | `triage_false_negative_entrypoints.ts` | Analyze missed public API methods                          |
-| 3    | `detect_dead_code.ts`                  | Auto-delete dead code (no callers or test-only)            |
-| 4    | `triage_false_positive_entrypoints.ts` | Classify remaining false positives                         |
-| 5    | Performed in claude session            | Run sub-agents to triage each false-positive group         |
+| Step | Script                                           | Purpose                                                    |
+| ---- | ------------------------------------------------ | ---------------------------------------------------------- |
+| 1    | `src/self_analysis/detect_entrypoints.ts`        | Run detection for a package, compare against previous runs |
+| 2    | `src/self_analysis/triage_false_negatives.ts`    | Analyze missed public API methods                          |
+| 3    | `src/self_analysis/detect_dead_code.ts`          | Auto-delete dead code (no callers or test-only)            |
+| 4    | `src/self_analysis/triage_false_positives.ts`    | Classify and triage remaining false positives              |
 
 ## Output Location
 
@@ -49,23 +48,13 @@ Ground truth files are package-specific and located in `entrypoint-analysis/grou
 
 Each file contains an array of legitimate API methods: `[{ "name": "...", "file": "..." }, ...]`
 
-## Prerequisites: Build packages
-
-**IMPORTANT**: Before running the pipeline, rebuild all packages to ensure the analysis uses the latest code changes:
-
-```bash
-npm run build
-```
-
-The detection script imports from compiled JavaScript (`dist/`), not TypeScript source. Without rebuilding, your code changes won't be reflected in the analysis.
-
 ## Step 1: Run Detection
 
 ```bash
 # Analyze a specific package (required)
-npx tsx entrypoint-analysis/detect_entrypoints_using_ariadne.ts --package core
-npx tsx entrypoint-analysis/detect_entrypoints_using_ariadne.ts --package mcp
-npx tsx entrypoint-analysis/detect_entrypoints_using_ariadne.ts --package types
+npx tsx entrypoint-analysis/src/self_analysis/detect_entrypoints.ts --package core
+npx tsx entrypoint-analysis/src/self_analysis/detect_entrypoints.ts --package mcp
+npx tsx entrypoint-analysis/src/self_analysis/detect_entrypoints.ts --package types
 
 # Available options:
 #   --package <name>   Required. Package to analyze (core, mcp, types)
@@ -76,11 +65,21 @@ npx tsx entrypoint-analysis/detect_entrypoints_using_ariadne.ts --package types
 The script automatically:
 
 - Analyzes the specified package for entry points
+- Enriches each entry point with metadata from `CallableNode` (is_exported, access_modifier, callback_context, call_summary)
+- Pre-gathers diagnostics: textual grep for call sites, Ariadne call reference matching, and a diagnosis
 - Captures git version metadata (commit hash + working tree changes hash)
 - Compares against the most recent analysis for the same package with a different code fingerprint
 - Outputs comparison summary showing delta
 
 **Output**: `analysis_output/{package}-analysis_<timestamp>.json`
+
+### Enriched Entry Point Data
+
+Each entry point includes:
+
+- **Metadata**: `is_exported`, `access_modifier`, `is_static`, `is_anonymous`, `callback_context`, `call_summary`
+- **Diagnostics**: `grep_call_sites` (textual matches), `ariadne_call_refs` (call graph matches), `diagnosis`
+- **Diagnosis values**: `no-textual-callers` | `callers-not-in-registry` | `callers-in-registry-unresolved` | `callers-in-registry-wrong-target`
 
 ### Interpret Results
 
@@ -91,7 +90,7 @@ The script automatically:
 ## (Optional) Step 2: Triage False Negatives
 
 ```bash
-npx tsx entrypoint-analysis/triage_false_negative_entrypoints.ts
+npx tsx entrypoint-analysis/src/self_analysis/triage_false_negatives.ts
 ```
 
 Identifies public API methods that SHOULD be entry points but weren't detected.
@@ -107,7 +106,7 @@ The script dynamically determines the public API by:
 ## Step 3: Delete Dead Code
 
 ```bash
-npx tsx entrypoint-analysis/detect_dead_code.ts
+npx tsx entrypoint-analysis/src/self_analysis/detect_dead_code.ts
 ```
 
 For each false positive entry point:
@@ -115,31 +114,59 @@ For each false positive entry point:
 1. Uses AI agent to find all callers via Grep
 2. Classifies as: `no-callers` | `test-only` | `has-production-callers`
 3. Auto-deletes functions with no callers or only test callers (including their tests)
-4. Outputs remaining entries for syntactic triage
+4. Outputs remaining entries for triage
 
 **Output**: `analysis_output/dead_code_analysis_<timestamp>.json`
 
 ## Step 4: Triage False Positives
 
 ```bash
-npx tsx entrypoint-analysis/triage_false_positive_entrypoints.ts
+npx tsx entrypoint-analysis/src/self_analysis/triage_false_positives.ts --package core
+npx tsx entrypoint-analysis/src/self_analysis/triage_false_positives.ts --package core --limit 10
 ```
 
-Classifies remaining false positives by root cause (inheritance, interface dispatch, dynamic calls, etc.) for further investigation.
+Requires `--package <name>` to load ground truth for separating true positives from false positives. Accepts `--limit <n>` to cap how many unclassified entries are sent to LLM triage.
+
+Three-stage pipeline that classifies false positives by root cause:
+
+### Stage 1: Deterministic Pre-Classification
+
+Uses `classify_entrypoints.ts` to apply ordered rules with no LLM cost:
+
+| Rule | Condition | Classification |
+| ---- | --------- | -------------- |
+| 1 | No textual callers + exported | True positive (public API) |
+| 2 | Constructor | False positive: `constructor-resolution-bug` |
+| 3 | Protected/private method | False positive: `method-call-via-this-not-tracked` |
+| 4 | Callback function | False positive: `callback-invocation-not-tracked` |
+
+Entries with `callers-not-in-registry` or `callers-in-registry-unresolved` diagnoses are intentionally left unclassified — knowing there's a bug isn't enough, the LLM needs to identify the specific code pattern.
+
+### Stage 2: Parallel Entry Investigation
+
+Unclassified entries are investigated in parallel (5 concurrent workers) using a fast model with a structured debugging prompt. Each entry's pre-gathered diagnostic data (grep results, call references, diagnosis) is included in the prompt so the LLM can pinpoint the root cause without needing tool access.
+
+### Stage 3: Aggregation
+
+A single aggregation call reviews all entry analyses to:
+
+- Group entries by shared root cause
+- Merge duplicate/overlapping group IDs
+- Provide high-level pattern recognition across entries
 
 **Output**: `analysis_output/false_positive_triage_<timestamp>.json`
 
-## Step 5: Processing Triage Results
+## Architecture: Key Modules
 
-The false-positive triage output groups false positives by syntactic root cause. Each group should be investigated by a sub-agent:
+All modules live under `entrypoint-analysis/src/`:
 
-1. **Spawn one sub-agent per group** - Each agent focuses on a single root cause category
-2. **Validate the classification** - Check if the errors are real and well-defined (not noise or misclassification)
-3. **Check for existing tasks** - Search the backlog to see if any tasks already address the root cause
-4. **Report findings** - Document whether:
-   - The root cause is valid and actionable
-   - An existing task covers it (link the task)
-   - A new task should be created (describe the fix)
+| Module | Purpose |
+| ------ | ------- |
+| `extract_entry_points.ts` | Shared extraction with enriched metadata + diagnostics |
+| `classify_entrypoints.ts` | Deterministic rule-based classification (no LLM) |
+| `types.ts` | Shared type definitions (`EnrichedFunctionEntry`, `EntryPointDiagnostics`, etc.) |
+| `agent_queries.ts` | Claude Agent SDK query helpers, parallel execution |
+| `analysis_io.ts` | Analysis file lookup, JSON I/O |
 
 ## Key Metrics
 

@@ -19,14 +19,14 @@
  */
 
 // Import from source - tsx transpiles TypeScript without build step
-import { Project, profiler } from "../packages/core/src/index.js";
-import { is_test_file } from "../packages/core/src/project/detect_test_file.js";
+import { Project, profiler } from "../../../packages/core/src/index.js";
+import { is_test_file } from "../../../packages/core/src/project/detect_test_file.js";
 import { FilePath } from "@ariadnejs/types";
-import type { EnrichedFunctionEntry } from "./types.js";
+import type { EnrichedFunctionEntry } from "../types.js";
 import {
   detect_language,
   extract_entry_points,
-} from "./extract_entry_points.js";
+} from "../extract_entry_points.js";
 import * as path from "path";
 import * as fs from "fs/promises";
 import { fileURLToPath } from "url";
@@ -276,7 +276,7 @@ async function load_package(
 async function analyze_package(package_name: string, include_tests: boolean = false): Promise<AnalysisResult> {
   const start_time = Date.now();
 
-  const monorepo_root = path.resolve(__dirname, "..");
+  const monorepo_root = path.resolve(__dirname, "../../..");
   const packages_root = path.join(monorepo_root, "packages");
   const package_path = path.join(packages_root, package_name);
 
@@ -343,7 +343,7 @@ async function analyze_package(package_name: string, include_tests: boolean = fa
  * Get list of available packages in the packages directory
  */
 async function get_available_packages(): Promise<string[]> {
-  const monorepo_root = path.resolve(__dirname, "..");
+  const monorepo_root = path.resolve(__dirname, "../../..");
   const packages_root = path.join(monorepo_root, "packages");
   const entries = await fs.readdir(packages_root, { withFileTypes: true });
   return entries
@@ -392,7 +392,7 @@ async function main() {
     const code_version = get_code_version();
     console.error(`🔖 Code version: ${code_version.fingerprint}`);
 
-    const output_dir = path.join(__dirname, "analysis_output");
+    const output_dir = path.resolve(__dirname, "../..", "analysis_output");
 
     const output_name = package_name;
     const result = await analyze_package(package_name, include_tests);

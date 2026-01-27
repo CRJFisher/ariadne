@@ -24,18 +24,18 @@
  *   --exclude <patterns>   Comma-separated exclude patterns
  */
 
-import { Project } from "../packages/core/src/index.js";
-import { is_test_file } from "../packages/core/src/project/detect_test_file.js";
+import { Project } from "../../../packages/core/src/index.js";
+import { is_test_file } from "../../../packages/core/src/project/detect_test_file.js";
 import { FilePath } from "@ariadnejs/types";
 import {
   find_source_files,
   IGNORED_DIRECTORIES,
-} from "../packages/mcp/src/file_loading.js";
-import type { EnrichedFunctionEntry } from "./types.js";
+} from "../../../packages/mcp/src/file_loading.js";
+import type { EnrichedFunctionEntry } from "../types.js";
 import {
   detect_language,
   extract_entry_points,
-} from "./extract_entry_points.js";
+} from "../extract_entry_points.js";
 import * as path from "path";
 import * as fs from "fs/promises";
 import * as os from "os";

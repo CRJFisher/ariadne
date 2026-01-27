@@ -1,4 +1,0 @@
-[
-  { "name": "has_loaded_files", "file": "project_manager.ts", "package": "mcp" },
-  { "name": "stop_watching", "file": "project_manager.ts", "package": "mcp" }
-]

@@ -12,16 +12,17 @@
 import path from "path";
 import { fileURLToPath } from "url";
 import * as fs from "fs/promises";
-import { Project } from "../packages/core/src/index.js";
-import { is_test_file } from "../packages/core/src/project/detect_test_file.js";
+import { Project } from "../../../packages/core/src/index.js";
+import { is_test_file } from "../../../packages/core/src/project/detect_test_file.js";
 import type { FilePath, MethodDefinition } from "@ariadnejs/types";
 import type {
   AnalysisResult,
   APICorrectlyDetected,
   APIMissingFromDetection,
   FunctionEntry,
-} from "./types.js";
-import { load_json, two_phase_query, find_most_recent_analysis, save_json } from "./utils.js";
+} from "../types.js";
+import { load_json, find_most_recent_analysis, save_json } from "../analysis_io.js";
+import { two_phase_query } from "../agent_queries.js";
 
 // eslint-disable-next-line @typescript-eslint/naming-convention
 const __filename = fileURLToPath(import.meta.url);
@@ -46,8 +47,8 @@ interface PublicMethod {
 function get_timestamped_results_file(): string {
   const now = new Date();
   const timestamp = now.toISOString().replace(/:/g, "-").replace("T", "_");
-  return path.join(
-    __dirname,
+  return path.resolve(
+    __dirname, "../..",
     "analysis_output",
     `false_negative_triage_${timestamp}.json`
   );
@@ -107,7 +108,7 @@ async function extract_public_methods(project: Project): Promise<PublicMethod[]>
  * Initialize Project and load packages/core codebase
  */
 async function initialize_project(): Promise<Project> {
-  const core_path = path.resolve(__dirname, "..");
+  const core_path = path.resolve(__dirname, "../../..");
   console.error(`Initializing project at: ${core_path}`);
 
   const project = new Project();
