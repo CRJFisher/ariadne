@@ -1,5 +1,5 @@
 ---
-id: task-163.5
+id: task-epic-11.175.5
 title: Fix Python polymorphic method override resolution
 status: To Do
 assignee: []
@@ -9,7 +9,7 @@ labels:
   - call-graph
   - epic-11
 dependencies:
-  - task-163
+  - task-epic-11.175
 ---
 
 ## Description

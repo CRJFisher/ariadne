@@ -1,5 +1,5 @@
 ---
-id: task-163.4
+id: task-epic-11.175.4
 title: Fix Python module-qualified call resolution
 status: To Do
 assignee: []
@@ -9,7 +9,7 @@ labels:
   - call-graph
   - epic-11
 dependencies:
-  - task-163
+  - task-epic-11.175
 ---
 
 ## Description

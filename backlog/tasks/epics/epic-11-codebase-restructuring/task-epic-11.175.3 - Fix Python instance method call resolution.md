@@ -1,5 +1,5 @@
 ---
-id: task-163.3
+id: task-epic-11.175.3
 title: Fix Python instance method call resolution
 status: To Do
 assignee: []
@@ -9,7 +9,7 @@ labels:
   - call-graph
   - epic-11
 dependencies:
-  - task-163
+  - task-epic-11.175
 ---
 
 ## Description
