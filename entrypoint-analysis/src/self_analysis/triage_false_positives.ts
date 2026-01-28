@@ -30,7 +30,6 @@
  */
 
 import path from "path";
-import { fileURLToPath } from "url";
 import * as fs from "node:fs/promises";
 import type {
   AnalysisResult,
@@ -44,6 +43,8 @@ import {
   save_json,
   find_most_recent_analysis,
   find_most_recent_dead_code_analysis,
+  AnalysisCategory,
+  InternalScriptType,
 } from "../analysis_io.js";
 import {
   two_phase_query,
@@ -55,20 +56,6 @@ import {
   type ClassifiedEntry,
 } from "../classify_entrypoints.js";
 
-// eslint-disable-next-line @typescript-eslint/naming-convention
-const __filename = fileURLToPath(import.meta.url);
-// eslint-disable-next-line @typescript-eslint/naming-convention
-const __dirname = path.dirname(__filename);
-
-function get_timestamped_results_file(): string {
-  const now = new Date();
-  const timestamp = now.toISOString()
-    .replace(/:/g, "-")
-    .replace("T", "_");
-  return path.resolve(__dirname, "../..", "analysis_output", `false_positive_triage_${timestamp}.json`);
-}
-
-const RESULTS_FILE = get_timestamped_results_file();
 const TRIAGE_CONCURRENCY = 5;
 
 // ===== Types =====
@@ -440,6 +427,7 @@ function print_summary(
     entries_analyzed: number;
     analysis_errors: number;
   },
+  output_file: string,
 ): void {
   console.error("\n" + "=".repeat(60));
   console.error("FALSE POSITIVE TRIAGE SUMMARY");
@@ -453,7 +441,7 @@ function print_summary(
   console.error(`  Entries analyzed: ${stats.entries_analyzed}`);
   console.error(`  Analysis errors: ${stats.analysis_errors}`);
   console.error(`Total groups: ${Object.keys(results.groups).length}`);
-  console.error(`\nResults saved to: ${RESULTS_FILE}`);
+  console.error(`\nResults saved to: ${output_file}`);
 
   // Show group breakdown
   console.error("\nGroups by size:");
@@ -693,7 +681,11 @@ async function main() {
 
   // Save results
   results.last_updated = new Date().toISOString();
-  await save_json(RESULTS_FILE, results);
+  const output_file = await save_json(
+    AnalysisCategory.INTERNAL,
+    InternalScriptType.TRIAGE_FALSE_POSITIVES,
+    results
+  );
 
   print_summary(results, {
     total_entry_points: analysis.entry_points.length,
@@ -704,7 +696,7 @@ async function main() {
     true_positives: classification.true_positives.length,
     entries_analyzed,
     analysis_errors: analysis_error_count,
-  });
+  }, output_file);
 }
 
 main().catch((err) => {

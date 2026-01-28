@@ -27,6 +27,7 @@ import {
   detect_language,
   extract_entry_points,
 } from "../extract_entry_points.js";
+import { save_json, AnalysisCategory, InternalScriptType } from "../analysis_io.js";
 import * as path from "path";
 import * as fs from "fs/promises";
 import { fileURLToPath } from "url";
@@ -413,23 +414,12 @@ async function main() {
       return;
     }
 
-    // Write to file with timestamp
-    const timestamp = new Date()
-      .toISOString()
-      .replace(/[:.]/g, "-")
-      .replace("T", "_")
-      .split(".")[0]; // Format: YYYY-MM-DD_HH-MM-SS
-
-    const output_file = path.join(
-      output_dir,
-      `${output_name}-analysis_${timestamp}.json`
+    // Write to structured output directory
+    const output_file = await save_json(
+      AnalysisCategory.INTERNAL,
+      InternalScriptType.DETECT_ENTRYPOINTS,
+      result
     );
-
-    // Create output directory if it doesn't exist
-    await fs.mkdir(output_dir, { recursive: true });
-
-    // Write formatted JSON to file
-    await fs.writeFile(output_file, json_formatted, "utf-8");
 
     console.error("✅ Analysis complete!");
     console.error(`📊 Files analyzed: ${result.total_files_analyzed}`);

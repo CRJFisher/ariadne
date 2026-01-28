@@ -10,7 +10,6 @@
  */
 
 import path from "path";
-import { fileURLToPath } from "url";
 import * as fs from "fs/promises";
 import { Project } from "../../../packages/core/src/index.js";
 import { is_test_file } from "../../../packages/core/src/project/detect_test_file.js";
@@ -21,13 +20,14 @@ import type {
   APIMissingFromDetection,
   FunctionEntry,
 } from "../types.js";
-import { load_json, find_most_recent_analysis, save_json } from "../analysis_io.js";
+import {
+  load_json,
+  find_most_recent_analysis,
+  save_json,
+  AnalysisCategory,
+  InternalScriptType,
+} from "../analysis_io.js";
 import { two_phase_query } from "../agent_queries.js";
-
-// eslint-disable-next-line @typescript-eslint/naming-convention
-const __filename = fileURLToPath(import.meta.url);
-// eslint-disable-next-line @typescript-eslint/naming-convention
-const __dirname = path.dirname(__filename);
 
 /**
  * Files containing the public API (exported classes with public methods)
@@ -43,18 +43,6 @@ interface PublicMethod {
   start_line: number;
   signature: string;
 }
-
-function get_timestamped_results_file(): string {
-  const now = new Date();
-  const timestamp = now.toISOString().replace(/:/g, "-").replace("T", "_");
-  return path.resolve(
-    __dirname, "../..",
-    "analysis_output",
-    `false_negative_triage_${timestamp}.json`
-  );
-}
-
-const RESULTS_FILE = get_timestamped_results_file();
 
 /**
  * Build method signature from MethodDefinition
@@ -230,7 +218,8 @@ ultrathink`;
 function print_summary(
   correctly_detected: APICorrectlyDetected[],
   missing_from_detection: APIMissingFromDetection[],
-  error_count: number
+  error_count: number,
+  output_file: string
 ): void {
   console.error("\n" + "=".repeat(60));
   console.error("FALSE NEGATIVE TRIAGE SUMMARY");
@@ -238,7 +227,7 @@ function print_summary(
   console.error(`Correctly detected: ${correctly_detected.length}`);
   console.error(`Missing from detection: ${missing_from_detection.length}`);
   console.error(`Errors: ${error_count}`);
-  console.error(`\nResults saved to: ${RESULTS_FILE}`);
+  console.error(`\nResults saved to: ${output_file}`);
 }
 
 /**
@@ -311,8 +300,12 @@ async function main() {
       missing_from_detection,
       last_updated: new Date().toISOString(),
     };
-    await save_json(RESULTS_FILE, results);
-    print_summary(correctly_detected, missing_from_detection, error_count);
+    const output_file = await save_json(
+      AnalysisCategory.INTERNAL,
+      InternalScriptType.TRIAGE_FALSE_NEGATIVES,
+      results
+    );
+    print_summary(correctly_detected, missing_from_detection, error_count, output_file);
   }
 }
 

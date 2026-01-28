@@ -36,6 +36,7 @@ import {
   detect_language,
   extract_entry_points,
 } from "../extract_entry_points.js";
+import { save_json, AnalysisCategory, ExternalScriptType } from "../analysis_io.js";
 import * as path from "path";
 import * as fs from "fs/promises";
 import * as os from "os";
@@ -413,13 +414,18 @@ async function main() {
     };
 
     // Output result
-    const json_output = JSON.stringify(result, null, 2);
-
     if (args.output) {
+      const json_output = JSON.stringify(result, null, 2);
       await fs.writeFile(args.output, json_output, "utf-8");
       console.error(`Output written to: ${args.output}`);
     } else {
-      console.log(json_output);
+      // Use structured output
+      const output_file = await save_json(
+        AnalysisCategory.EXTERNAL,
+        ExternalScriptType.DETECT_ENTRYPOINTS,
+        result
+      );
+      console.error(`Output written to: ${output_file}`);
     }
 
     console.error("\nAnalysis complete:");

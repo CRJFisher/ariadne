@@ -9,7 +9,6 @@
  */
 
 import path from "path";
-import { fileURLToPath } from "url";
 import type {
   AnalysisResult,
   FunctionEntry,
@@ -21,23 +20,11 @@ import {
   load_json,
   save_json,
   find_most_recent_analysis,
+  AnalysisCategory,
+  InternalScriptType,
 } from "../analysis_io.js";
 import { two_phase_query } from "../agent_queries.js";
 
-// eslint-disable-next-line @typescript-eslint/naming-convention
-const __filename = fileURLToPath(import.meta.url);
-// eslint-disable-next-line @typescript-eslint/naming-convention
-const __dirname = path.dirname(__filename);
-
-function get_timestamped_results_file(): string {
-  const now = new Date();
-  const timestamp = now.toISOString().replace(/:/g, "-").replace("T", "_");
-  return path.resolve(
-    __dirname, "../..",
-    "analysis_output",
-    `dead_code_analysis_${timestamp}.json`
-  );
-}
 
 // ===== Entry Analysis and Deletion =====
 
@@ -215,8 +202,11 @@ async function main() {
   }
 
   // Save results
-  const output_file = get_timestamped_results_file();
-  await save_json(output_file, results);
+  const output_file = await save_json(
+    AnalysisCategory.INTERNAL,
+    InternalScriptType.DETECT_DEAD_CODE,
+    results
+  );
   console.error(`\nResults saved to: ${output_file}`);
 
   // Print summary

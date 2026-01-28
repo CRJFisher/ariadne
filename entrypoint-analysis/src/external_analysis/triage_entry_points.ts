@@ -29,7 +29,6 @@
  */
 
 import path from "path";
-import { fileURLToPath } from "url";
 import type {
   AnalysisResult,
   EnrichedFunctionEntry,
@@ -39,7 +38,9 @@ import type {
 import {
   load_json,
   save_json,
-  find_most_recent_analysis,
+  find_most_recent_external_analysis,
+  AnalysisCategory,
+  ExternalScriptType,
 } from "../analysis_io.js";
 import {
   two_phase_query,
@@ -51,20 +52,6 @@ import {
   type ClassifiedEntry,
 } from "../classify_entrypoints.js";
 
-// eslint-disable-next-line @typescript-eslint/naming-convention
-const __filename = fileURLToPath(import.meta.url);
-// eslint-disable-next-line @typescript-eslint/naming-convention
-const __dirname = path.dirname(__filename);
-
-function get_timestamped_results_file(): string {
-  const now = new Date();
-  const timestamp = now.toISOString()
-    .replace(/:/g, "-")
-    .replace("T", "_");
-  return path.resolve(__dirname, "../..", "analysis_output", `entry_point_triage_${timestamp}.json`);
-}
-
-const RESULTS_FILE = get_timestamped_results_file();
 const TRIAGE_CONCURRENCY = 5;
 
 // ===== Types =====
@@ -400,6 +387,7 @@ function print_summary(
     llm_false_positives: number;
     analysis_errors: number;
   },
+  output_file: string,
 ): void {
   console.error("\n" + "=".repeat(60));
   console.error("ENTRY POINT TRIAGE SUMMARY");
@@ -413,7 +401,7 @@ function print_summary(
   console.error(`  Analysis errors: ${stats.analysis_errors}`);
   console.error(`Total true positives: ${results.true_positives.length}`);
   console.error(`Total false positive groups: ${Object.keys(results.groups).length}`);
-  console.error(`\nResults saved to: ${RESULTS_FILE}`);
+  console.error(`\nResults saved to: ${output_file}`);
 
   // Show group breakdown
   const sorted_groups = Object.values(results.groups).sort(
@@ -449,7 +437,7 @@ async function main() {
   }
 
   console.error("Finding most recent analysis file...");
-  const analysis_file = await find_most_recent_analysis();
+  const analysis_file = await find_most_recent_external_analysis();
   console.error(`Using analysis file: ${analysis_file}`);
 
   // Load analysis data
@@ -586,7 +574,11 @@ async function main() {
 
   // Save results
   results.last_updated = new Date().toISOString();
-  await save_json(RESULTS_FILE, results);
+  const output_file = await save_json(
+    AnalysisCategory.EXTERNAL,
+    ExternalScriptType.TRIAGE_ENTRY_POINTS,
+    results
+  );
 
   print_summary(results, {
     total_entry_points: analysis.entry_points.length,
@@ -596,7 +588,7 @@ async function main() {
     llm_true_positives: llm_true_positive_count,
     llm_false_positives: entry_analyses.length,
     analysis_errors: analysis_error_count,
-  });
+  }, output_file);
 }
 
 main().catch((err) => {
