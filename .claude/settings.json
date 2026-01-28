@@ -35,6 +35,10 @@
         "hooks": [
           {
             "type": "command",
+            "command": "node .claude/hooks/build_stop.cjs"
+          },
+          {
+            "type": "command",
             "command": "node .claude/hooks/eslint_stop.cjs"
           },
           {
