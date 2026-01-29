@@ -109,7 +109,7 @@ function make_class_with_members(
       methods: method_defs,
       properties: prop_defs,
       decorators: [],
-      constructor: [],
+      constructors: [],
     } as ClassDefinition,
   };
 }
@@ -216,7 +216,7 @@ describe("TypeRegistry", () => {
         methods: [],
         properties: [],
         decorators: [],
-        constructor: [
+        constructors: [
           {
             kind: "constructor",
             symbol_id: constructor_id,
@@ -298,7 +298,7 @@ describe("TypeRegistry", () => {
         ],
         properties: [],
         decorators: [],
-        constructor: [
+        constructors: [
           {
             kind: "constructor",
             symbol_id: init_id,
@@ -350,7 +350,7 @@ describe("TypeRegistry", () => {
           methods: [],
           properties: [],
           decorators: [],
-          constructor: [],
+          constructors: [],
         };
 
         // Create variable with type annotation
@@ -411,7 +411,7 @@ describe("TypeRegistry", () => {
           methods: [],
           properties: [],
           decorators: [],
-          constructor: [],
+          constructors: [],
         };
 
         // Create Mammal extends Animal
@@ -428,7 +428,7 @@ describe("TypeRegistry", () => {
           methods: [],
           properties: [],
           decorators: [],
-          constructor: [],
+          constructors: [],
         };
 
         // Create Dog extends Mammal
@@ -445,7 +445,7 @@ describe("TypeRegistry", () => {
           methods: [],
           properties: [],
           decorators: [],
-          constructor: [],
+          constructors: [],
         };
 
         definitions.update_file(file1, [animal_def, mammal_def, dog_def]);
@@ -492,7 +492,7 @@ describe("TypeRegistry", () => {
           methods: [],
           properties: [],
           decorators: [],
-          constructor: [],
+          constructors: [],
         };
 
         definitions.update_file(file1, [animal_def]);
@@ -588,7 +588,7 @@ describe("TypeRegistry", () => {
           ],
           properties: [],
           decorators: [],
-          constructor: [],
+          constructors: [],
         };
 
         // Create Dog extends Animal (no methods)
@@ -605,7 +605,7 @@ describe("TypeRegistry", () => {
           methods: [],
           properties: [],
           decorators: [],
-          constructor: [],
+          constructors: [],
         };
 
         definitions.update_file(file1, [animal_def, dog_def]);
@@ -689,7 +689,7 @@ describe("TypeRegistry", () => {
           ],
           properties: [],
           decorators: [],
-          constructor: [],
+          constructors: [],
         };
 
         // Create Dog with overridden speak()
@@ -717,7 +717,7 @@ describe("TypeRegistry", () => {
           ],
           properties: [],
           decorators: [],
-          constructor: [],
+          constructors: [],
         };
 
         definitions.update_file(file1, [animal_def, dog_def]);

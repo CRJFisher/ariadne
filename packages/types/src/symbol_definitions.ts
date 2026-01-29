@@ -73,7 +73,7 @@ export interface ClassDefinition extends Definition {
   readonly methods: readonly MethodDefinition[];
   readonly properties: readonly PropertyDefinition[]; // Aka fields
   readonly decorators: readonly DecoratorDefinition[];
-  readonly constructor?: readonly ConstructorDefinition[];
+  readonly constructors?: readonly ConstructorDefinition[];
   readonly docstring?: readonly DocString[];
   readonly generics?: SymbolName[];
 }

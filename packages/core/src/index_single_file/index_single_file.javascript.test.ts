@@ -1511,8 +1511,8 @@ describe("Semantic Index - JavaScript", () => {
       expect(person_class?.constructor).toBeDefined();
       expect(person_class?.constructor?.length).toBe(1);
 
-      if (person_class?.constructor && person_class.constructor.length > 0) {
-        const ctor = person_class.constructor[0];
+      if (person_class?.constructor && person_class.constructors.length > 0) {
+        const ctor = person_class.constructors[0];
         expect(ctor.name).toBe("constructor");
         expect(ctor.parameters).toBeDefined();
         expect(ctor.parameters.length).toBe(2);
@@ -1541,8 +1541,8 @@ describe("Semantic Index - JavaScript", () => {
       expect(animal_class?.constructor).toBeDefined();
       expect(animal_class?.constructor?.length).toBe(1);
 
-      if (animal_class?.constructor && animal_class.constructor.length > 0) {
-        const ctor = animal_class.constructor[0];
+      if (animal_class?.constructor && animal_class.constructors.length > 0) {
+        const ctor = animal_class.constructors[0];
         expect(ctor.parameters).toBeDefined();
         expect(ctor.parameters.length).toBe(1);
         expect(ctor.parameters[0].name).toBe("species");
@@ -1598,12 +1598,12 @@ describe("Semantic Index - JavaScript", () => {
       expect(class_def?.name).toBe("MyClass");
 
       // Verify constructor exists and is tracked as constructor (not method)
-      expect(class_def?.constructor).toBeDefined();
-      expect(Array.isArray(class_def?.constructor)).toBe(true);
-      expect(class_def?.constructor?.length).toBe(1);
+      expect(class_def?.constructors).toBeDefined();
+      expect(Array.isArray(class_def?.constructors)).toBe(true);
+      expect(class_def?.constructors?.length).toBe(1);
 
-      if (class_def?.constructor && class_def.constructor.length > 0) {
-        const ctor = class_def.constructor[0];
+      if (class_def?.constructors && class_def.constructors.length > 0) {
+        const ctor = class_def.constructors[0];
 
         // Verify constructor structure
         expect(ctor.kind).toBe("constructor");
@@ -1898,13 +1898,13 @@ describe("Semantic Index - JavaScript", () => {
 
       expect(class_def).toBeDefined();
 
-      // Verify constructor exists and is in constructor field, NOT in methods
-      expect(class_def?.constructor).toBeDefined();
-      expect(Array.isArray(class_def?.constructor)).toBe(true);
-      expect(class_def?.constructor?.length).toBe(1);
+      // Verify constructor exists and is in constructors field, NOT in methods
+      expect(class_def?.constructors).toBeDefined();
+      expect(Array.isArray(class_def?.constructors)).toBe(true);
+      expect(class_def?.constructors?.length).toBe(1);
 
-      if (class_def?.constructor && class_def.constructor.length > 0) {
-        const ctor = class_def.constructor[0];
+      if (class_def?.constructors && class_def.constructors.length > 0) {
+        const ctor = class_def.constructors[0];
 
         // Verify it has kind "constructor", not "method"
         expect(ctor.kind).toBe("constructor");

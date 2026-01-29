@@ -455,10 +455,10 @@ describe("DefinitionBuilder - Complex Assembly", () => {
     const result = builder.build();
     const class_def = result.classes.get(class_id)!;
 
-    expect(class_def.constructor).toBeDefined();
-    expect(class_def.constructor).toHaveLength(1);
+    expect(class_def.constructors).toBeDefined();
+    expect(class_def.constructors).toHaveLength(1);
 
-    const constructor_def = class_def.constructor![0];
+    const constructor_def = class_def.constructors![0];
     expect(constructor_def.kind).toBe("constructor");
     expect(constructor_def.parameters).toHaveLength(2);
     expect(constructor_def.parameters[0].name).toBe("name");

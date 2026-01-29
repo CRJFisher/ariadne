@@ -1477,11 +1477,11 @@ describe("Semantic Index - TypeScript", () => {
         });
 
         // Verify constructor exists (constructor is an array)
-        expect(user_class.constructor).toBeDefined();
-        expect(Array.isArray(user_class.constructor)).toBe(true);
-        expect(user_class.constructor?.length).toBeGreaterThan(0);
+        expect(user_class.constructors).toBeDefined();
+        expect(Array.isArray(user_class.constructors)).toBe(true);
+        expect(user_class.constructors?.length).toBeGreaterThan(0);
 
-        const ctor = user_class.constructor?.[0];
+        const ctor = user_class.constructors?.[0];
         expect(ctor).toBeDefined();
 
         if (ctor) {
@@ -2460,7 +2460,7 @@ describe("Semantic Index - TypeScript", () => {
         }
 
         // Test constructor parameters with edge case defaults
-        const constructor = edge_class.constructor?.[0];
+        const constructor = edge_class.constructors?.[0];
         expect(constructor).toBeDefined();
 
         if (constructor && constructor.parameters) {
@@ -2793,7 +2793,7 @@ describe("Semantic Index - TypeScript", () => {
       expect(class_def).toBeDefined();
 
       // Check constructor
-      const constructor = class_def!.constructor?.[0];
+      const constructor = class_def!.constructors?.[0];
       expect(constructor).toBeDefined();
       expect(constructor!.body_scope_id).toBeDefined();
 

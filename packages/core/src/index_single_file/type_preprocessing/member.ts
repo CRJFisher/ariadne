@@ -71,7 +71,7 @@ export function extract_type_members(definitions: {
     }
 
     // Get constructor (if any)
-    const constructor_id = class_def.constructor?.[0]?.symbol_id;
+    const constructor_id = class_def.constructors?.[0]?.symbol_id;
 
     // Get extends (store as SymbolName strings, resolved later in 11.109)
     const extends_names = class_def.extends || [];

@@ -38,8 +38,8 @@ export function extract_all_parameters(
     }
 
     // From constructors
-    if (class_def.constructor) {
-      for (const ctor of class_def.constructor) {
+    if (class_def.constructors) {
+      for (const ctor of class_def.constructors) {
         if (ctor.parameters) {
           params.push(...ctor.parameters);
         }

@@ -87,7 +87,7 @@ describe("Constructor Call Resolution", () => {
         methods: [],
         properties: [],
         decorators: [],
-        constructor: [constructor_def], // Constructor in separate array
+        constructors: [constructor_def], // Constructor in separate array
       };
 
       definitions.update_file(TEST_FILE, [class_def, constructor_def]);
@@ -162,7 +162,7 @@ describe("Constructor Call Resolution", () => {
         methods: [],
         properties: [],
         decorators: [],
-        constructor: [constructor_def],
+        constructors: [constructor_def],
       };
 
       definitions.update_file(TEST_FILE, [class_def, constructor_def]);
@@ -255,7 +255,7 @@ describe("Constructor Call Resolution", () => {
         methods: [],
         properties: [],
         decorators: [],
-        constructor: [], // Empty constructor array
+        constructors: [], // Empty constructor array
       };
 
       definitions.update_file(TEST_FILE, [class_def]);

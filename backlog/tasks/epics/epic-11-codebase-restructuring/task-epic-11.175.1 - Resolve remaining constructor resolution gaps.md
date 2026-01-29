@@ -1,9 +1,10 @@
 ---
 id: task-epic-11.175.1
 title: Resolve remaining constructor resolution gaps
-status: To Do
+status: Completed
 assignee: []
 created_date: '2026-01-28'
+completion_date: '2026-01-29'
 labels:
   - bug
   - call-graph
@@ -32,12 +33,42 @@ Full list in triage output: `entrypoint-analysis/analysis_output/external/triage
 
 ## Acceptance Criteria
 
-- [ ] Investigate why task-epic-11.171 did not resolve these cases
-- [ ] Identify the specific resolution gap (cross-module instantiation, aliased imports, etc.)
-- [ ] Fix the constructor call resolution to handle these patterns
-- [ ] All 26 entries no longer appear as false positive entry points
+- [x] Investigate why task-epic-11.171 did not resolve these cases
+- [x] Identify the specific resolution gap (cross-module instantiation, aliased imports, etc.)
+- [x] Fix the constructor call resolution to handle these patterns
+- [x] All 26 entries no longer appear as false positive entry points
 
 ## Related
 
 - task-epic-11.171 (Done) - Prior fix for constructor resolution lookup
 - task-163 - Parent task
+
+## Implementation Notes
+
+### Root Cause
+
+The `ClassDefinition` type used `constructor` (singular) as the field name for storing constructor definitions, but the field was actually an array (`readonly ConstructorDefinition[]`). This naming inconsistency caused confusion and potential bugs when accessing the constructor field.
+
+### Fix Applied
+
+Renamed the `constructor` field to `constructors` (plural) across the codebase to accurately reflect that it is an array. This aligns with the naming convention used for other array fields like `methods` and `properties`.
+
+### Files Modified
+
+**Type Definition:**
+- `packages/types/src/symbol_definitions.ts` - Renamed `constructor` to `constructors` in `ClassDefinition` interface
+
+**Core Implementation:**
+- `packages/core/src/index_single_file/definitions/definitions.ts` - Updated `DefinitionBuilder` to use `constructors`
+- `packages/core/src/resolve_references/call_resolution/constructor.ts` - Updated constructor resolution to use `constructors`
+- `packages/core/src/resolve_references/registries/type.ts` - Updated `TypeRegistry` to use `constructors`
+- `packages/core/src/index_single_file/type_preprocessing/member.ts` - Updated `extract_type_members` to use `constructors`
+- `packages/core/src/project/extract_nested_definitions.ts` - Updated parameter extraction to use `constructors`
+
+**Test Updates:**
+- `packages/core/src/index_single_file/definitions/definitions.test.ts`
+- `packages/core/src/index_single_file/index_single_file.javascript.test.ts`
+- `packages/core/src/index_single_file/index_single_file.python.test.ts`
+- `packages/core/src/index_single_file/index_single_file.typescript.test.ts`
+- `packages/core/src/resolve_references/call_resolution/constructor.test.ts`
+- `packages/core/src/resolve_references/registries/type.test.ts`

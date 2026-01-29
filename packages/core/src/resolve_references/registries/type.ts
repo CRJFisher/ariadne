@@ -306,8 +306,8 @@ export class TypeRegistry {
 
     // Build TypeMemberInfo from definition
     if (def.kind === "class") {
-      // Use the constructor field from ClassDefinition (language-agnostic)
-      const constructor_symbol_id = def.constructor?.[0]?.symbol_id;
+      // Use the constructors field from ClassDefinition (language-agnostic)
+      const constructor_symbol_id = def.constructors?.[0]?.symbol_id;
 
       return {
         methods: new Map(

@@ -943,7 +943,7 @@ export class DefinitionBuilder {
       ...state.base,
       methods: methods,
       properties: properties,
-      constructor: constructors,
+      constructors: constructors,
       decorators: state.decorators,
       extends: state.base.extends || [],
     } as ClassDefinition;
