@@ -600,4 +600,48 @@ describe("build_signature", () => {
   it("should be exported for use by companion tools", () => {
     expect(typeof build_signature).toBe("function");
   });
+
+  it("should include location for anonymous functions", () => {
+    const definition = {
+      symbol_id: "test:id" as any,
+      name: "<anonymous>",
+      kind: "function" as const,
+      location: {} as any,
+      scope_id: "scope:test" as any,
+      signature: {
+        parameters: [],
+        return_type: "void",
+      },
+    };
+    const location = {
+      file_path: "/path/to/test.ts",
+      start_line: 42,
+    };
+
+    const signature = build_signature(definition, location);
+
+    expect(signature).toBe("<anonymous@test.ts:42>(): void");
+  });
+
+  it("should keep regular function names unchanged", () => {
+    const definition = {
+      symbol_id: "test:id" as any,
+      name: "myFunction",
+      kind: "function" as const,
+      location: {} as any,
+      scope_id: "scope:test" as any,
+      signature: {
+        parameters: [{ name: "x", type: "number" }],
+        return_type: "string",
+      },
+    };
+    const location = {
+      file_path: "/path/to/test.ts",
+      start_line: 10,
+    };
+
+    const signature = build_signature(definition, location);
+
+    expect(signature).toBe("myFunction(x: number): string");
+  });
 });

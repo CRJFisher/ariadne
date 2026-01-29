@@ -434,6 +434,106 @@ describe("build_callers_index", () => {
     expect(index.get(callee.symbol_id)?.has(caller1.symbol_id)).toBe(true);
     expect(index.get(callee.symbol_id)?.has(caller2.symbol_id)).toBe(true);
   });
+
+  it("should preserve genuine recursive self-calls", () => {
+    // A function that calls itself (genuine recursion)
+    const recursive_func = create_mock_node(
+      "symbol:factorial",
+      "factorial",
+      "test.ts",
+      1,
+      10,
+      [
+        {
+          name: "factorial" as SymbolName,
+          location: {} as any,
+          scope_id: "scope:factorial" as any,
+          call_type: "function",
+          // NOT a callback invocation - genuine recursive call
+          resolutions: [{ symbol_id: "symbol:factorial" as SymbolId, confidence: "certain" as any, reason: { type: "direct" } }],
+        },
+      ]
+    );
+
+    const call_graph: CallGraph = {
+      nodes: new Map([[recursive_func.symbol_id, recursive_func]]),
+      entry_points: [recursive_func.symbol_id],
+    };
+
+    const index = build_callers_index(call_graph);
+
+    // Genuine recursion should be preserved in the callers index
+    expect(index.has(recursive_func.symbol_id)).toBe(true);
+    expect(index.get(recursive_func.symbol_id)?.has(recursive_func.symbol_id)).toBe(true);
+  });
+
+  it("should filter callback invocation self-calls", () => {
+    // An anonymous callback that appears to call itself due to scope resolution artifacts
+    const callback_func = create_mock_node(
+      "symbol:anonymous_callback",
+      "<anonymous>",
+      "test.ts",
+      5,
+      15,
+      [
+        {
+          name: "<anonymous>" as SymbolName,
+          location: {} as any,
+          scope_id: "scope:callback" as any,
+          call_type: "function",
+          // This IS a callback invocation - should be filtered
+          is_callback_invocation: true,
+          resolutions: [{ symbol_id: "symbol:anonymous_callback" as SymbolId, confidence: "certain" as any, reason: { type: "direct" } }],
+        },
+      ]
+    );
+
+    const call_graph: CallGraph = {
+      nodes: new Map([[callback_func.symbol_id, callback_func]]),
+      entry_points: [callback_func.symbol_id],
+    };
+
+    const index = build_callers_index(call_graph);
+
+    // Callback self-call should be filtered out
+    expect(index.has(callback_func.symbol_id)).toBe(false);
+  });
+
+  it("should preserve non-self callback invocations", () => {
+    // A callback that calls another function (not itself)
+    const target_func = create_mock_node("symbol:target", "target", "test.ts", 1, 5);
+    const callback_func = create_mock_node(
+      "symbol:callback",
+      "<anonymous>",
+      "test.ts",
+      10,
+      20,
+      [
+        {
+          name: "target" as SymbolName,
+          location: {} as any,
+          scope_id: "scope:callback" as any,
+          call_type: "function",
+          is_callback_invocation: true,
+          resolutions: [{ symbol_id: target_func.symbol_id, confidence: "certain" as any, reason: { type: "direct" } }],
+        },
+      ]
+    );
+
+    const call_graph: CallGraph = {
+      nodes: new Map([
+        [target_func.symbol_id, target_func],
+        [callback_func.symbol_id, callback_func],
+      ]),
+      entry_points: [callback_func.symbol_id],
+    };
+
+    const index = build_callers_index(call_graph);
+
+    // Non-self callback invocations should be preserved
+    expect(index.has(target_func.symbol_id)).toBe(true);
+    expect(index.get(target_func.symbol_id)?.has(callback_func.symbol_id)).toBe(true);
+  });
 });
 
 describe("show_call_graph_neighborhood", () => {

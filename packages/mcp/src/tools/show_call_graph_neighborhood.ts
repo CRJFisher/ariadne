@@ -167,6 +167,15 @@ export function build_callers_index(call_graph: CallGraph): CallersIndex {
 
   for (const [caller_id, caller_node] of call_graph.nodes) {
     for (const call_ref of caller_node.enclosed_calls) {
+      // Skip self-calls from callback invocations (artifacts of scope resolution)
+      // but preserve genuine recursive calls
+      if (call_ref.is_callback_invocation) {
+        const is_self_call = call_ref.resolutions.some(
+          (r) => r.symbol_id === caller_id
+        );
+        if (is_self_call) continue;
+      }
+
       for (const resolution of call_ref.resolutions) {
         const callee_id = resolution.symbol_id;
 
@@ -389,7 +398,7 @@ function format_tree_node(
 
   // Build node display
   const display_name = show_full_signature
-    ? build_signature(tree_node.node.definition)
+    ? build_signature(tree_node.node.definition, tree_node.node.location)
     : tree_node.node.name;
 
   const cycle_marker = tree_node.is_cycle ? " [cycle]" : "";
@@ -443,7 +452,7 @@ function format_output(
   const lines: string[] = [];
 
   // Header
-  const signature = build_signature(target_node.definition);
+  const signature = build_signature(target_node.definition, target_node.location);
   const loc = target_node.location;
   lines.push(`Call graph for: ${signature}`);
   lines.push(`Location: ${loc.file_path}:${loc.start_line}-${loc.end_line}`);

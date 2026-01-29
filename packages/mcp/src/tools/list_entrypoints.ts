@@ -87,18 +87,36 @@ function count_tree_size(
 }
 
 /**
+ * Location info for anonymous function display
+ */
+interface SignatureLocation {
+  file_path: string;
+  start_line: number;
+}
+
+/**
  * Build a human-readable function signature from a definition.
  *
  * Examples:
  * - function: `foo(x: number, y: string): boolean`
  * - method: `bar(this, param: string): void`
  * - constructor: `constructor(x: number)`
+ * - anonymous with location: `<anonymous@utils.ts:42>(): unknown`
  *
  * @param definition - Function/method/constructor definition
+ * @param location - Optional location for anonymous function display
  * @returns Formatted signature string
  */
-export function build_signature(definition: AnyDefinition): string {
-  const name = definition.name;
+export function build_signature(
+  definition: AnyDefinition,
+  location?: SignatureLocation
+): string {
+  // For anonymous functions, add location info to make them distinguishable
+  let display_name: string = definition.name;
+  if (definition.name === "<anonymous>" && location) {
+    const basename = location.file_path.split("/").pop() || location.file_path;
+    display_name = `<anonymous@${basename}:${location.start_line}>`;
+  }
 
   // Handle different definition types
   if (
@@ -143,12 +161,12 @@ export function build_signature(definition: AnyDefinition): string {
     if (definition.kind === "constructor") {
       return `constructor(${param_list})`;
     } else {
-      return `${name}(${param_list}): ${return_type}`;
+      return `${display_name}(${param_list}): ${return_type}`;
     }
   }
 
   // Fallback for other definition types (shouldn't happen for callables)
-  return name;
+  return display_name;
 }
 
 /**
@@ -190,7 +208,7 @@ function format_output(entries: EntryPointData[]): string {
   const lines: string[] = ["Entry Points (by call tree size):", ""];
 
   for (const entry of entries) {
-    const signature = build_signature(entry.node.definition);
+    const signature = build_signature(entry.node.definition, entry.node.location);
     const location = `${entry.node.location.file_path}:${entry.node.location.start_line}`;
     const symbol_ref = build_symbol_ref(entry.node);
     const test_indicator = entry.node.is_test ? " [TEST]" : "";
