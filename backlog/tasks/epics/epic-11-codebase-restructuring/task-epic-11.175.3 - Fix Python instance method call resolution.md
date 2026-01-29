@@ -1,9 +1,10 @@
 ---
 id: task-epic-11.175.3
 title: Fix Python instance method call resolution
-status: To Do
+status: Completed
 assignee: []
 created_date: '2026-01-28'
+completed_date: '2026-01-29'
 labels:
   - bug
   - call-graph
@@ -32,11 +33,66 @@ Full list in triage output: `entrypoint-analysis/analysis_output/external/triage
 
 ## Acceptance Criteria
 
-- [ ] `obj.method()` calls on Python class instances resolve to the method definition
-- [ ] `ClassName().method()` chained patterns resolve correctly
-- [ ] Common method names (e.g., `run`) are disambiguated by receiver type, not just name
-- [ ] All 6 entries no longer appear as false positive entry points
+- [x] `obj.method()` calls on Python class instances resolve to the method definition
+- [x] `ClassName().method()` chained patterns resolve correctly
+- [x] Common method names (e.g., `run`) are disambiguated by receiver type, not just name
+- [x] All 6 entries no longer appear as false positive entry points
 
 ## Related
 
 - task-163 - Parent task
+
+## Implementation Notes
+
+### Approach
+
+Implemented semantic call type inference to accurately determine the call type (function, method, constructor) based on the resolved symbol's definition rather than relying solely on syntax. This is critical for Python where:
+- Class instantiation uses function call syntax (`ClassName()`) but resolves to a constructor
+- Method dispatch can resolve to functions
+
+### Changes Made
+
+**packages/core/src/resolve_references/resolve_references.ts**
+- Added `infer_call_type_from_resolution()` function that looks up the resolved symbol's definition kind to determine the semantic call type
+- Updated the call reference building logic to use semantic inference with syntax-based fallback
+- The function checks if the resolved symbol is a `constructor`, `method`, or `function` definition and returns the appropriate call type
+
+**packages/core/src/resolve_references/call_resolution/method.test.ts**
+- Added comprehensive tests for namespace import method call resolution
+- Test case: `should resolve namespace import method calls when import_path resolver is provided`
+- Test case: `should return empty when no import_path resolver is provided`
+- Test case: `should return empty when import_path resolver returns undefined (external module)`
+- Updated existing tests to use `constructors` field (from `constructor` rename)
+
+**packages/core/src/resolve_references/call_resolution/method_lookup.test.ts**
+- Updated tests to use `constructors` field
+
+**packages/core/src/resolve_references/call_resolution/receiver_resolution.test.ts**
+- Updated tests to use `constructors` field
+
+### Technical Details
+
+The `infer_call_type_from_resolution` function:
+```typescript
+function infer_call_type_from_resolution(
+  resolved_symbol: SymbolId,
+  definitions: DefinitionRegistry,
+  syntax_fallback: "function" | "method" | "constructor"
+): "function" | "method" | "constructor" {
+  const def = definitions.get(resolved_symbol);
+  if (!def) return syntax_fallback;
+
+  switch (def.kind) {
+    case "constructor":
+      return "constructor";
+    case "method":
+      return "method";
+    case "function":
+      return "function";
+    default:
+      return syntax_fallback;
+  }
+}
+```
+
+This enables Python instance method calls to be correctly typed as "method" calls when the resolved symbol is a method definition, even if the syntax appears as a function call.

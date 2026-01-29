@@ -553,7 +553,7 @@ describe("resolve_receiver_type", () => {
       methods: [method_def],
       properties: [property_def],
       decorators: [],
-      constructor: [],
+      constructors: [],
     };
 
     const database_def: ClassDefinition = {
@@ -567,7 +567,7 @@ describe("resolve_receiver_type", () => {
       methods: [],
       properties: [],
       decorators: [],
-      constructor: [],
+      constructors: [],
     };
 
     definitions.update_file(TEST_FILE, [class_def, method_def, property_def, database_def]);
@@ -717,7 +717,7 @@ describe("resolve_receiver_type", () => {
         ],
         properties: [property_no_type],
         decorators: [],
-        constructor: [],
+        constructors: [],
       };
 
       definitions.update_file(TEST_FILE, [class_def, property_no_type]);
@@ -771,7 +771,7 @@ describe("resolve_receiver_type", () => {
           methods: [],
           properties: [],
           decorators: [],
-          constructor: [],
+          constructors: [],
         },
       ]);
 

@@ -129,7 +129,7 @@ describe("Method Call Resolution", () => {
         methods: [method_def],
         properties: [],
         decorators: [],
-        constructor: [],
+        constructors: [],
       };
 
       definitions.update_file(TEST_FILE, [var_def, class_def, method_def]);
@@ -451,16 +451,15 @@ describe("Method Call Resolution", () => {
   });
 
   describe("Namespace Import Resolution", () => {
-    it.skip("should resolve namespace import method calls", () => {
-      // TODO: This test needs further investigation. The namespace import resolution
-      // in call_resolution.method.ts uses receiver_def.location.file_path (line 167) to find
-      // the source file, but import definitions should have their location pointing to
-      // the import statement location, not the source file. This is likely a bug in
-      // the implementation that needs to be addressed separately.
+    const UTILS_FILE = "utils.ts" as FilePath;
+    const UTILS_SCOPE_ID = "scope:utils.ts:file:0:0" as ScopeId;
+
+    it("should resolve namespace import method calls when import_path resolver is provided", () => {
       // Scenario: import * as utils from './utils'; utils.helper();
-      const utils_import_id = variable_symbol("utils", MOCK_LOCATION);
-      const helper_id = function_symbol("helper", {
-        file_path: "utils.ts" as FilePath,
+      // This test verifies that namespace imports work when the resolve_import_path callback is provided
+      const utils_import_id = "import:test.ts:1:0:1:30:utils" as SymbolId;
+      const helper_id = function_symbol("helper", UTILS_FILE, {
+        file_path: UTILS_FILE,
         start_line: 1,
         start_column: 0,
         end_line: 5,
@@ -468,14 +467,13 @@ describe("Method Call Resolution", () => {
       });
 
       // Create utils.ts function first
-      const utils_file = "utils.ts" as FilePath;
-      definitions.update_file(utils_file, [{
+      definitions.update_file(UTILS_FILE, [{
         kind: "function",
         symbol_id: helper_id,
         name: "helper" as SymbolName,
-        defining_scope_id: "scope:utils.ts:file:0:0" as ScopeId,
+        defining_scope_id: UTILS_SCOPE_ID,
         location: {
-          file_path: utils_file,
+          file_path: UTILS_FILE,
           start_line: 1,
           start_column: 0,
           end_line: 5,
@@ -484,26 +482,19 @@ describe("Method Call Resolution", () => {
         is_exported: true,
         parameters: [],
         body_scope_id: "scope:utils.ts:helper:1:0" as ScopeId,
+        decorators: [],
       }]);
 
-      // Create import in current file
-      // NOTE: The location.file_path needs to point to utils.ts for namespace resolution to work
-      // This is a workaround for the call_resolution.method.ts code at line 167 which uses location.file_path
+      // Create import in current file with proper import definition
       definitions.update_file(TEST_FILE, [{
         kind: "import",
         symbol_id: utils_import_id,
         name: "utils" as SymbolName,
         defining_scope_id: FILE_SCOPE_ID,
-        location: {
-          file_path: utils_file,  // Points to source file for resolution
-          start_line: MOCK_LOCATION.start_line,
-          start_column: MOCK_LOCATION.start_column,
-          end_line: MOCK_LOCATION.end_line,
-          end_column: MOCK_LOCATION.end_column,
-        },
+        location: MOCK_LOCATION, // Import location is in test.ts (where the import statement is)
         is_exported: false,
         import_kind: "namespace",
-        import_path: "./utils" as any,
+        import_path: "./utils",
       }]);
 
       // Resolve 'utils' in scope
@@ -521,17 +512,147 @@ describe("Method Call Resolution", () => {
         ["utils", "helper"] as SymbolName[]
       );
 
-      // Act
+      // Create a mock import_path resolver that maps the import symbol to the source file
+      const resolve_import_path = (import_id: SymbolId) => {
+        if (import_id === utils_import_id) {
+          return UTILS_FILE;
+        }
+        return undefined;
+      };
+
+      // Act - pass the resolve_import_path callback
+      const resolved = resolve_method_call(
+        call_ref,
+        scopes,
+        definitions,
+        types,
+        resolutions,
+        resolve_import_path
+      );
+
+      // Assert - should resolve to the helper function
+      expect(resolved).toEqual([helper_id]);
+    });
+
+    it("should return empty when no import_path resolver is provided", () => {
+      // This test demonstrates the failure case when resolve_import_path is not provided
+      // This is the bug we need to trap: the full integration flow must provide this resolver
+      const utils_import_id = "import:test.ts:1:0:1:30:utils" as SymbolId;
+      const helper_id = function_symbol("helper", UTILS_FILE, {
+        file_path: UTILS_FILE,
+        start_line: 1,
+        start_column: 0,
+        end_line: 5,
+        end_column: 1,
+      });
+
+      // Create utils.ts function first
+      definitions.update_file(UTILS_FILE, [{
+        kind: "function",
+        symbol_id: helper_id,
+        name: "helper" as SymbolName,
+        defining_scope_id: UTILS_SCOPE_ID,
+        location: {
+          file_path: UTILS_FILE,
+          start_line: 1,
+          start_column: 0,
+          end_line: 5,
+          end_column: 1,
+        },
+        is_exported: true,
+        parameters: [],
+        body_scope_id: "scope:utils.ts:helper:1:0" as ScopeId,
+        decorators: [],
+      }]);
+
+      // Create import in current file
+      definitions.update_file(TEST_FILE, [{
+        kind: "import",
+        symbol_id: utils_import_id,
+        name: "utils" as SymbolName,
+        defining_scope_id: FILE_SCOPE_ID,
+        location: MOCK_LOCATION,
+        is_exported: false,
+        import_kind: "namespace",
+        import_path: "./utils",
+      }]);
+
+      // Resolve 'utils' in scope
+      const scope_resolutions = new Map<SymbolName, SymbolId>();
+      scope_resolutions.set("utils" as SymbolName, utils_import_id);
+      resolutions["resolutions_by_scope"] = new Map();
+      resolutions["resolutions_by_scope"].set(FILE_SCOPE_ID, scope_resolutions);
+
+      // Create method call: utils.helper()
+      const call_ref = create_method_call_reference(
+        "helper" as SymbolName,
+        MOCK_LOCATION,
+        FILE_SCOPE_ID,
+        MOCK_RECEIVER_LOCATION,
+        ["utils", "helper"] as SymbolName[]
+      );
+
+      // Act - WITHOUT resolve_import_path callback
       const resolved = resolve_method_call(
         call_ref,
         scopes,
         definitions,
         types,
         resolutions
+        // No resolve_import_path provided
       );
 
-      // Assert
-      expect(resolved).toBe(helper_id);
+      // Assert - should return empty (cannot resolve without the resolver)
+      expect(resolved).toEqual([]);
+    });
+
+    it("should return empty when import_path resolver returns undefined (external module)", () => {
+      // This test demonstrates behavior for external modules (os, pandas, etc.)
+      // where the resolved path doesn't exist in the project
+      const os_import_id = "import:test.ts:1:0:1:10:os" as SymbolId;
+
+      // Create import for external module
+      definitions.update_file(TEST_FILE, [{
+        kind: "import",
+        symbol_id: os_import_id,
+        name: "os" as SymbolName,
+        defining_scope_id: FILE_SCOPE_ID,
+        location: MOCK_LOCATION,
+        is_exported: false,
+        import_kind: "namespace",
+        import_path: "os",
+      }]);
+
+      // Resolve 'os' in scope
+      const scope_resolutions = new Map<SymbolName, SymbolId>();
+      scope_resolutions.set("os" as SymbolName, os_import_id);
+      resolutions["resolutions_by_scope"] = new Map();
+      resolutions["resolutions_by_scope"].set(FILE_SCOPE_ID, scope_resolutions);
+
+      // Create method call: os.listdir()
+      const call_ref = create_method_call_reference(
+        "listdir" as SymbolName,
+        MOCK_LOCATION,
+        FILE_SCOPE_ID,
+        MOCK_RECEIVER_LOCATION,
+        ["os", "listdir"] as SymbolName[]
+      );
+
+      // Mock resolver that returns undefined for external modules
+      const resolve_import_path = (_import_id: SymbolId) => undefined;
+
+      // Act
+      const resolved = resolve_method_call(
+        call_ref,
+        scopes,
+        definitions,
+        types,
+        resolutions,
+        resolve_import_path
+      );
+
+      // Assert - should return empty (external module not in project)
+      expect(resolved).toEqual([]);
     });
   });
 

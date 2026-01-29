@@ -99,7 +99,7 @@ describe("resolve_method_on_type", () => {
         methods: [method_def],
         properties: [],
         decorators: [],
-        constructor: [],
+        constructors: [],
       };
 
       definitions.update_file(TEST_FILE, [class_def, method_def]);
@@ -146,7 +146,7 @@ describe("resolve_method_on_type", () => {
         methods: [method_def],
         properties: [],
         decorators: [],
-        constructor: [],
+        constructors: [],
       };
 
       definitions.update_file(TEST_FILE, [class_def, method_def]);
@@ -175,7 +175,7 @@ describe("resolve_method_on_type", () => {
         methods: [],
         properties: [],
         decorators: [],
-        constructor: [],
+        constructors: [],
       };
 
       definitions.update_file(TEST_FILE, [class_def]);
@@ -246,7 +246,7 @@ describe("resolve_method_on_type", () => {
         methods: [method_a_def],
         properties: [],
         decorators: [],
-        constructor: [],
+        constructors: [],
       };
 
       // Setup class B that implements Handler
@@ -273,7 +273,7 @@ describe("resolve_method_on_type", () => {
         methods: [method_b_def],
         properties: [],
         decorators: [],
-        constructor: [],
+        constructors: [],
       };
 
       definitions.update_file(TEST_FILE, [
@@ -384,7 +384,7 @@ describe("resolve_method_on_type", () => {
         methods: [base_method_def],
         properties: [],
         decorators: [],
-        constructor: [],
+        constructors: [],
       };
 
       // Setup child class that extends Base and overrides helper
@@ -410,7 +410,7 @@ describe("resolve_method_on_type", () => {
         methods: [child_method_def],
         properties: [],
         decorators: [],
-        constructor: [],
+        constructors: [],
       };
 
       definitions.update_file(TEST_FILE, [
@@ -474,7 +474,7 @@ describe("resolve_method_on_type", () => {
         methods: [method_a_def],
         properties: [],
         decorators: [],
-        constructor: [],
+        constructors: [],
       };
 
       // Setup class B extends A
@@ -500,7 +500,7 @@ describe("resolve_method_on_type", () => {
         methods: [method_b_def],
         properties: [],
         decorators: [],
-        constructor: [],
+        constructors: [],
       };
 
       // Setup class C extends B
@@ -526,7 +526,7 @@ describe("resolve_method_on_type", () => {
         methods: [method_c_def],
         properties: [],
         decorators: [],
-        constructor: [],
+        constructors: [],
       };
 
       definitions.update_file(TEST_FILE, [
@@ -588,7 +588,7 @@ describe("resolve_method_on_type", () => {
         methods: [base_method_def],
         properties: [],
         decorators: [],
-        constructor: [],
+        constructors: [],
       };
 
       // Setup child class that extends Base but does NOT override helper
@@ -603,7 +603,7 @@ describe("resolve_method_on_type", () => {
         methods: [], // No methods - no override
         properties: [],
         decorators: [],
-        constructor: [],
+        constructors: [],
       };
 
       definitions.update_file(TEST_FILE, [
@@ -664,7 +664,7 @@ describe("resolve_method_on_type", () => {
         methods: [base_method_def],
         properties: [],
         decorators: [],
-        constructor: [],
+        constructors: [],
       };
 
       // Setup Child1 that overrides
@@ -690,7 +690,7 @@ describe("resolve_method_on_type", () => {
         methods: [child1_method_def],
         properties: [],
         decorators: [],
-        constructor: [],
+        constructors: [],
       };
 
       // Setup Child2 that overrides
@@ -716,7 +716,7 @@ describe("resolve_method_on_type", () => {
         methods: [child2_method_def],
         properties: [],
         decorators: [],
-        constructor: [],
+        constructors: [],
       };
 
       definitions.update_file(TEST_FILE, [
@@ -1098,7 +1098,7 @@ describe("resolve_method_on_type", () => {
         methods: [method_def_index],
         properties: [],
         decorators: [],
-        constructor: [],
+        constructors: [],
       };
 
       definitions.update_file(TEST_FILE, [class_def, method_def_index]);
@@ -1176,7 +1176,7 @@ describe("resolve_method_on_type", () => {
         methods: [update_method_def],
         properties: [],
         decorators: [],
-        constructor: [],
+        constructors: [],
       };
 
       definitions.update_file(TEST_FILE, [import_def]);
@@ -1229,7 +1229,7 @@ describe("resolve_method_on_type", () => {
         methods: [],
         properties: [],
         decorators: [],
-        constructor: [],
+        constructors: [],
       };
 
       definitions.update_file(TEST_FILE, [import_def]);

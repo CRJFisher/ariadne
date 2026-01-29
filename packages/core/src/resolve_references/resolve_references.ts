@@ -349,7 +349,12 @@ export class ResolutionRegistry {
             // TypeScript knows ref is FunctionCallReference here
             // Resolve using lexical scope
             const func_symbol = this.resolve(ref.scope_id, ref.name);
-            resolved_symbols = func_symbol ? [func_symbol] : [];
+
+            if (func_symbol) {
+              resolved_symbols = [func_symbol];
+            } else {
+              resolved_symbols = [];
+            }
 
             // Check for collection dispatch
             // Even if we resolved a variable, it might be a dispatcher (e.g. const handler = config.get(...))
@@ -357,7 +362,11 @@ export class ResolutionRegistry {
             let try_dispatch = resolved_symbols.length === 0;
             if (resolved_symbols.length === 1) {
               const def = definitions.get(resolved_symbols[0]);
-              if (def && (def.kind === "variable" || def.kind === "constant") && def.collection_source) {
+              if (
+                def &&
+                (def.kind === "variable" || def.kind === "constant") &&
+                def.collection_source
+              ) {
                 try_dispatch = true;
               }
             }
@@ -369,7 +378,7 @@ export class ResolutionRegistry {
                 this
               );
               if (dispatch_ids.length > 0) {
-                 resolved_symbols = dispatch_ids;
+                resolved_symbols = dispatch_ids;
               }
             }
             break;
@@ -405,21 +414,35 @@ export class ResolutionRegistry {
 
         // Build CallReference with Resolution metadata
         if (resolved_symbols.length > 0) {
-          // Determine call_type from discriminated union kind
+          // Determine call_type from resolved symbol (semantic) with syntax as fallback
+          // This is more accurate than relying solely on syntax because:
+          // - Python class instantiation uses function call syntax but resolves to constructor
+          // - Method dispatch can resolve to functions
           let call_type: "function" | "method" | "constructor";
+          const primary_resolved = resolved_symbols[0];
+
           switch (ref.kind) {
             case "self_reference_call":
-              // Self-reference calls are method calls (this.method(), self.method())
-              call_type = "method";
-              break;
             case "method_call":
-              call_type = "method";
+              call_type = infer_call_type_from_resolution(
+                primary_resolved,
+                definitions,
+                "method"
+              );
               break;
             case "function_call":
-              call_type = "function";
+              call_type = infer_call_type_from_resolution(
+                primary_resolved,
+                definitions,
+                "function"
+              );
               break;
             case "constructor_call":
-              call_type = "constructor";
+              call_type = infer_call_type_from_resolution(
+                primary_resolved,
+                definitions,
+                "constructor"
+              );
               break;
             default: {
               // Exhaustiveness check - should never reach here
@@ -815,5 +838,39 @@ export class ResolutionRegistry {
     this.resolved_calls_by_file.clear();
     this.calls_by_caller_scope.clear();
     this.indirect_reachability.clear();
+  }
+}
+
+/**
+ * Infers the semantic call type from the resolved symbol's definition.
+ *
+ * This is more accurate than relying solely on syntax because:
+ * - Python class instantiation uses function call syntax but resolves to constructor
+ * - Method dispatch can resolve to functions
+ * - etc.
+ *
+ * @param resolved_symbol - The symbol the call resolved to
+ * @param definitions - Registry to look up definition kind
+ * @param syntax_fallback - Fallback based on syntax when definition not found
+ * @returns The inferred call type
+ */
+function infer_call_type_from_resolution(
+  resolved_symbol: SymbolId,
+  definitions: DefinitionRegistry,
+  syntax_fallback: "function" | "method" | "constructor"
+): "function" | "method" | "constructor" {
+  const def = definitions.get(resolved_symbol);
+  if (!def) return syntax_fallback;
+
+  switch (def.kind) {
+    case "constructor":
+      return "constructor";
+    case "method":
+      return "method";
+    case "function":
+      return "function";
+    default:
+      // For other kinds (variable, class, etc.), use syntax-based fallback
+      return syntax_fallback;
   }
 }
