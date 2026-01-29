@@ -1,10 +1,14 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, beforeEach, afterEach } from "vitest";
+import * as fs from "fs/promises";
+import * as path from "path";
+import * as os from "os";
 import {
   SUPPORTED_EXTENSIONS,
   IGNORED_DIRECTORIES,
   IGNORED_GLOBS,
   is_supported_file,
   should_ignore_path,
+  find_source_files,
 } from "./file_loading";
 
 describe("file_loading", () => {
@@ -157,6 +161,65 @@ describe("file_loading", () => {
       const gitignore_patterns = ["logs"];
       // Simple implementation matches if path includes the pattern
       expect(should_ignore_path("src/logs/app.log", gitignore_patterns)).toBe(true);
+    });
+  });
+
+  describe("find_source_files", () => {
+    let temp_dir: string;
+
+    beforeEach(async () => {
+      temp_dir = await fs.mkdtemp(path.join(os.tmpdir(), "ariadne-loading-test-"));
+    });
+
+    afterEach(async () => {
+      try {
+        await fs.rm(temp_dir, { recursive: true });
+      } catch {
+        // Ignore cleanup errors
+      }
+    });
+
+    it("should find source files recursively", async () => {
+      const sub_dir = path.join(temp_dir, "src");
+      await fs.mkdir(sub_dir);
+      await fs.writeFile(path.join(temp_dir, "root.ts"), "const x = 1;");
+      await fs.writeFile(path.join(sub_dir, "nested.py"), "x = 1");
+
+      const files = await find_source_files(temp_dir, temp_dir);
+
+      expect(files.sort()).toEqual(
+        [path.join(sub_dir, "nested.py"), path.join(temp_dir, "root.ts")].sort()
+      );
+    });
+
+    it("should handle symlink cycles without infinite recursion", async () => {
+      // Create: temp_dir/subdir/link -> temp_dir (cycle)
+      const sub_dir = path.join(temp_dir, "subdir");
+      await fs.mkdir(sub_dir);
+      await fs.writeFile(path.join(sub_dir, "file.ts"), "const x = 1;");
+      await fs.symlink(temp_dir, path.join(sub_dir, "parent_link"));
+
+      const files = await find_source_files(temp_dir, temp_dir);
+
+      // Should find the file exactly once, not loop infinitely
+      expect(files).toEqual([path.join(sub_dir, "file.ts")]);
+    });
+
+    it("should handle nested symlink cycles without infinite recursion", async () => {
+      // Create: temp_dir/a/b/link -> temp_dir/a (cycle)
+      const dir_a = path.join(temp_dir, "a");
+      const dir_b = path.join(dir_a, "b");
+      await fs.mkdir(dir_a);
+      await fs.mkdir(dir_b);
+      await fs.writeFile(path.join(dir_a, "file_a.ts"), "const a = 1;");
+      await fs.writeFile(path.join(dir_b, "file_b.ts"), "const b = 1;");
+      await fs.symlink(dir_a, path.join(dir_b, "cycle_link"));
+
+      const files = await find_source_files(temp_dir, temp_dir);
+
+      expect(files.sort()).toEqual(
+        [path.join(dir_a, "file_a.ts"), path.join(dir_b, "file_b.ts")].sort()
+      );
     });
   });
 });

@@ -2,7 +2,7 @@ import * as chokidar from "chokidar";
 import * as fs from "fs/promises";
 import * as path from "path";
 import { IGNORED_GLOBS, is_supported_file } from "./file_loading";
-import { log_error, log_warn } from "./logger";
+import { log_debug, log_error, log_warn } from "./logger";
 
 export interface FileWatcherOptions {
   project_path: string;
@@ -41,6 +41,23 @@ function create_debounced_handler<T extends (...args: string[]) => void>(
   }) as T;
 }
 
+function is_enoent(error: unknown): boolean {
+  return error instanceof Error && "code" in error && (error as { code: string }).code === "ENOENT";
+}
+
+/**
+ * Log a file read error at the appropriate level.
+ * ENOENT errors are logged at debug level since they commonly occur
+ * when symlink-traversed paths or race conditions produce stale paths.
+ */
+function log_file_read_error(event_type: string, file_path: string, error: unknown): void {
+  if (is_enoent(error)) {
+    log_debug(`File not found for ${event_type} event (likely symlink or race condition): ${file_path}`);
+  } else {
+    log_warn(`Failed to read ${event_type} file ${file_path}: ${error}`);
+  }
+}
+
 /**
  * Create a file watcher for source files in the project directory.
  * Watches for changes, additions, and deletions of supported source files.
@@ -60,7 +77,7 @@ export function create_file_watcher(
         const content = await fs.readFile(file_path, "utf-8");
         callbacks.on_change(file_path, content);
       } catch (error) {
-        log_warn(`Failed to read changed file ${file_path}: ${error}`);
+        log_file_read_error("changed", file_path, error);
       }
     },
     debounce_ms
@@ -74,7 +91,7 @@ export function create_file_watcher(
         const content = await fs.readFile(file_path, "utf-8");
         callbacks.on_add(file_path, content);
       } catch (error) {
-        log_warn(`Failed to read added file ${file_path}: ${error}`);
+        log_file_read_error("added", file_path, error);
       }
     },
     debounce_ms
@@ -93,6 +110,7 @@ export function create_file_watcher(
     ignored: IGNORED_GLOBS,
     persistent: true,
     ignoreInitial: true, // Don't emit events for existing files on startup
+    followSymlinks: false, // Prevent cyclic symlink traversal
     awaitWriteFinish: {
       stabilityThreshold: 100,
       pollInterval: 50,
@@ -102,18 +120,21 @@ export function create_file_watcher(
   // Set up event handlers
   watcher
     .on("change", (file_path: string) => {
+      log_debug(`Watcher raw change event: ${file_path}`);
       const abs_path = path.isAbsolute(file_path)
         ? file_path
         : path.resolve(project_path, file_path);
       handle_change(abs_path);
     })
     .on("add", (file_path: string) => {
+      log_debug(`Watcher raw add event: ${file_path}`);
       const abs_path = path.isAbsolute(file_path)
         ? file_path
         : path.resolve(project_path, file_path);
       handle_add(abs_path);
     })
     .on("unlink", (file_path: string) => {
+      log_debug(`Watcher raw unlink event: ${file_path}`);
       const abs_path = path.isAbsolute(file_path)
         ? file_path
         : path.resolve(project_path, file_path);

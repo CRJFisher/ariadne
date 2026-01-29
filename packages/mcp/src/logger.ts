@@ -46,3 +46,10 @@ export function log_warn(message: string): void {
 export function log_error(message: string): void {
   write_log("error", message);
 }
+
+export function log_debug(message: string): void {
+  if (log_file_path) {
+    const formatted = format_message("debug", message);
+    fs.appendFileSync(log_file_path, formatted + "\n");
+  }
+}

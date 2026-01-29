@@ -58,6 +58,8 @@ describe("load_project_files", () => {
     // Logger writes to stderr via console.error
     console_error_spy = vi.spyOn(console, "error").mockImplementation(() => {});
     vi.clearAllMocks();
+    // Mock realpath to return the input path (identity) for cycle detection
+    vi.mocked(fs.realpath).mockImplementation(async (p) => String(p));
   });
 
   afterEach(() => {

@@ -4,7 +4,7 @@
 
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import * as fs from "fs";
-import { initialize_logger, log_info, log_warn, log_error } from "./logger";
+import { initialize_logger, log_info, log_warn, log_error, log_debug } from "./logger";
 
 vi.mock("fs");
 
@@ -80,6 +80,37 @@ describe("logger", () => {
 
       expect(console_error_spy).toHaveBeenCalledWith(
         expect.stringMatching(/\[.*\] \[ERROR\] error message/)
+      );
+    });
+  });
+
+  describe("log_debug", () => {
+    it("should not write to stderr", () => {
+      log_debug("debug message");
+
+      expect(console_error_spy).not.toHaveBeenCalled();
+    });
+
+    it("should not write to file when DEBUG_LOG_FILE is not set", () => {
+      // Re-initialize to reset internal log_file_path state
+      initialize_logger();
+      vi.clearAllMocks();
+
+      log_debug("debug message");
+
+      expect(fs.appendFileSync).not.toHaveBeenCalled();
+    });
+
+    it("should write to file when DEBUG_LOG_FILE is set", () => {
+      process.env.DEBUG_LOG_FILE = "/tmp/test.log";
+      initialize_logger();
+      vi.clearAllMocks();
+
+      log_debug("debug message");
+
+      expect(fs.appendFileSync).toHaveBeenCalledWith(
+        "/tmp/test.log",
+        expect.stringMatching(/\[.*\] \[DEBUG\] debug message\n/)
       );
     });
   });

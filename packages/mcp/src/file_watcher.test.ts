@@ -267,5 +267,48 @@ describe("file_watcher", () => {
 
       await watcher.close();
     });
+
+    it("should handle symlink cycles gracefully without crashing", async () => {
+      // Create a subdirectory with a symlink back to the parent (cycle).
+      // On macOS, FSEvents may still report events through symlink paths
+      // even with followSymlinks: false. The watcher should handle this
+      // gracefully — ENOENT from stale symlink paths is logged at debug
+      // level, not warn level.
+      const sub_dir = path.join(temp_dir, "subdir");
+      await fs.mkdir(sub_dir);
+      await fs.symlink(temp_dir, path.join(sub_dir, "parent_link"));
+
+      const on_add = vi.fn();
+      const callbacks: FileWatcherCallbacks = {
+        on_change: vi.fn(),
+        on_add,
+        on_delete: vi.fn(),
+      };
+
+      const watcher = create_file_watcher(
+        { project_path: temp_dir, debounce_ms: 50 },
+        callbacks
+      );
+
+      await new Promise<void>((resolve) => watcher.on("ready", resolve));
+
+      // Create a file in the subdirectory
+      const test_file = path.join(sub_dir, "test.ts");
+      await fs.writeFile(test_file, "const x = 1;");
+
+      await wait_for_call(on_add);
+
+      // The file should be detected with the correct content.
+      // On macOS, FSEvents may report through symlink paths, so we verify
+      // content rather than exact path.
+      expect(on_add).toHaveBeenCalled();
+      const calls = on_add.mock.calls;
+      const content_found = calls.some(
+        ([_path, content]: [string, string]) => content === "const x = 1;"
+      );
+      expect(content_found).toBe(true);
+
+      await watcher.close();
+    });
   });
 });

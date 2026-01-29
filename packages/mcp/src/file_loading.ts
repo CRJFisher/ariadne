@@ -1,5 +1,6 @@
 import * as fs from "fs/promises";
 import * as path from "path";
+import { log_debug } from "./logger";
 
 /**
  * Supported source file extensions regex
@@ -100,6 +101,7 @@ export function should_ignore_path(
 /**
  * Find all supported source files in a directory recursively.
  * Respects ignore patterns and skips unsupported file types.
+ * Detects and breaks symlink cycles using realpath tracking.
  *
  * @param folder_path - Directory to search
  * @param project_path - Project root (for relative path calculation and gitignore)
@@ -116,11 +118,27 @@ export async function find_source_files(
   // Load gitignore if not provided
   const patterns = gitignore_patterns ?? (await parse_gitignore(project_path));
 
+  // Track visited real paths to detect symlink cycles
+  const visited_real_paths = new Set<string>();
+
   async function walk(dir_path: string): Promise<void> {
     const relative_dir = path.relative(project_path, dir_path);
     if (relative_dir && should_ignore_path(relative_dir, patterns)) {
       return;
     }
+
+    // Resolve symlinks to detect cycles
+    let real_path: string;
+    try {
+      real_path = await fs.realpath(dir_path);
+    } catch {
+      return;
+    }
+    if (visited_real_paths.has(real_path)) {
+      log_debug(`Skipping already-visited path (cycle detected): ${dir_path} -> ${real_path}`);
+      return;
+    }
+    visited_real_paths.add(real_path);
 
     let entries;
     try {
