@@ -23,6 +23,32 @@ import { get_scope_boundary_extractor } from "./boundary_extractor";
 import type Parser from "tree-sitter";
 
 /**
+ * Scope type priority for deterministic sorting.
+ * Lower number = processed first (parent types before child types).
+ * When two captures have identical locations, this ensures parent scopes
+ * are created before child scopes.
+ */
+const SCOPE_TYPE_PRIORITY: Record<string, number> = {
+  module: 0,
+  namespace: 0,
+  class: 1,
+  interface: 1,
+  enum: 1,
+  function: 2,
+  method: 3,
+  constructor: 3,
+  closure: 4,
+  block: 5,
+};
+
+/**
+ * Get priority for a capture entity for sorting purposes.
+ */
+function get_capture_priority(entity: string): number {
+  return SCOPE_TYPE_PRIORITY[entity] ?? 10;
+}
+
+/**
  * Extract the proper identifier name for a scope from a tree-sitter node.
  *
  * Different node types require different extraction strategies:
@@ -144,10 +170,24 @@ export function process_scopes(
       if (area_a !== area_b) {
         return area_b - area_a; // Descending order by area
       }
+
+      // Tiebreaker: sort by scope type priority (class before method/constructor before block)
+      // This ensures deterministic ordering when locations are identical
+      const priority_a = get_capture_priority(a.entity);
+      const priority_b = get_capture_priority(b.entity);
+      if (priority_a !== priority_b) {
+        return priority_a - priority_b;
+      }
     }
 
     // For other languages, use original location-based sorting
-    return compare_locations(a.location, b.location);
+    const loc_cmp = compare_locations(a.location, b.location);
+    if (loc_cmp !== 0) {
+      return loc_cmp;
+    }
+
+    // Final tiebreaker: sort by scope type priority for deterministic ordering
+    return get_capture_priority(a.entity) - get_capture_priority(b.entity);
   });
 
   // Process each capture that creates a scope

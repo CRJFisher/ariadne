@@ -1298,6 +1298,84 @@ describe("scopes", () => {
         expect(outer_class!.defining_scope_id).toBe(file_scope!.id);
         expect(inner_class!.defining_scope_id).toBe(method_scope!.id);
       });
+
+      it("should correctly handle Python constructor with nested block scopes", () => {
+        // This test verifies that constructors containing if/try/with blocks
+        // have correct scope hierarchy: block scopes are children of constructor scope
+        // (Some blocks like except may be nested inside other blocks like try)
+        const code = `class TimesFMAdapter:
+    def __init__(self):
+        if True:
+            self.value = 1
+        try:
+            self.data = load()
+        except:
+            self.data = None`;
+
+        const tree = py_parser.parse(code);
+        const parsed_file = create_parsed_file(
+          code,
+          "test.py" as FilePath,
+          tree,
+          "python" as Language
+        );
+
+        // Should successfully build semantic index without "Malformed scope tree" error
+        const index = build_index_single_file(
+          parsed_file,
+          tree,
+          "python" as Language
+        );
+
+        // Find scopes
+        const class_scope = Array.from(index.scopes.values()).find(s => s.type === "class");
+        const constructor_scope = Array.from(index.scopes.values()).find(s => s.type === "constructor");
+        const block_scopes = Array.from(index.scopes.values()).filter(s => s.type === "block");
+
+        expect(class_scope).toBeDefined();
+        expect(constructor_scope).toBeDefined();
+        expect(block_scopes.length).toBeGreaterThanOrEqual(1); // At least the if block
+
+        // Constructor should be child of class
+        expect(constructor_scope!.parent_id).toBe(class_scope!.id);
+
+        // All block scopes should be descendants of constructor (not siblings of constructor)
+        // Some blocks may be direct children, others may be nested (e.g., except inside try)
+        const is_descendant_of = (scope: LexicalScope, ancestor_id: ScopeId): boolean => {
+          let current_id = scope.parent_id;
+          while (current_id) {
+            if (current_id === ancestor_id) return true;
+            const parent = index.scopes.get(current_id);
+            if (!parent) break;
+            current_id = parent.parent_id;
+          }
+          return false;
+        };
+
+        for (const block_scope of block_scopes) {
+          expect(is_descendant_of(block_scope, constructor_scope!.id)).toBe(true);
+        }
+
+        // Verify depths: class=1, constructor=2, blocks>=3
+        const compute_depth = (scope: LexicalScope): number => {
+          let depth = 0;
+          let current_id = scope.parent_id;
+          while (current_id) {
+            depth++;
+            const parent = index.scopes.get(current_id);
+            if (!parent) break;
+            current_id = parent.parent_id;
+          }
+          return depth;
+        };
+
+        expect(compute_depth(class_scope!)).toBe(1);
+        expect(compute_depth(constructor_scope!)).toBe(2);
+        for (const block_scope of block_scopes) {
+          // Blocks should be at depth 3 or deeper (some may be nested inside other blocks)
+          expect(compute_depth(block_scope)).toBeGreaterThanOrEqual(3);
+        }
+      });
     });
 
     describe("Named function expression scope boundaries", () => {

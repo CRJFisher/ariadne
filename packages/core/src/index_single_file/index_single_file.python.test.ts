@@ -1154,8 +1154,8 @@ class User:
 
         // Verify constructor handling
         // Python may track __init__ in constructor field or methods array
-        if (user_class.constructor && user_class.constructor.length > 0) {
-          const ctor = user_class.constructor[0];
+        if (user_class.constructors && user_class.constructors.length > 0) {
+          const ctor = user_class.constructors[0];
           expect(ctor.kind).toBe("constructor");
           expect(ctor.name).toBe("__init__");
 
@@ -1190,7 +1190,7 @@ class User:
           const method_names = user_class.methods.map((m) => m.name);
 
           // __init__ should NOT be in methods (when constructor field is used)
-          if (user_class.constructor && user_class.constructor.length > 0) {
+          if (user_class.constructors && user_class.constructors.length > 0) {
             expect(method_names).not.toContain("__init__");
           }
 
@@ -1316,8 +1316,8 @@ class TestClass:
       expect(class_def).toBeDefined();
 
       // Verify constructor handling
-      if (class_def?.constructor && class_def.constructor.length > 0) {
-        const ctor = class_def.constructor[0];
+      if (class_def?.constructor && class_def.constructors.length > 0) {
+        const ctor = class_def.constructors[0];
 
         // Verify it has kind "constructor", not "method"
         expect(ctor.kind).toBe("constructor");
@@ -1791,8 +1791,8 @@ class Calculator:
         expect(typeof calc_class.location.end_column).toBe("number");
 
         // Verify constructor (if populated)
-        if (calc_class.constructor && calc_class.constructor.length > 0) {
-          const ctor = calc_class.constructor[0];
+        if (calc_class.constructors && calc_class.constructors.length > 0) {
+          const ctor = calc_class.constructors[0];
           expect(ctor.kind).toBe("constructor");
           expect(ctor.name).toBe("__init__");
 
@@ -2128,6 +2128,198 @@ type Handler = Callable[[str], None]
       );
       expect(my_class).toBeDefined();
       expect(my_class!.defining_scope_id).toBe(module_scope!.id);
+    });
+  });
+
+  // ============================================================================
+  // CONSTRUCTOR SCOPE HIERARCHY TESTS
+  // ============================================================================
+
+  describe("Constructor scope hierarchy", () => {
+    /**
+     * Helper to check if a scope is a descendant of another scope
+     */
+    function is_descendant_of(
+      potential_descendant_id: string,
+      ancestor_id: string,
+      scopes: Map<string, { id: string; parent_id: string | null }>
+    ): boolean {
+      let current_id = potential_descendant_id;
+      const visited = new Set<string>();
+
+      while (current_id && !visited.has(current_id)) {
+        visited.add(current_id);
+        if (current_id === ancestor_id) {
+          return true;
+        }
+        const current = scopes.get(current_id);
+        if (!current || !current.parent_id) {
+          return false;
+        }
+        current_id = current.parent_id;
+      }
+      return false;
+    }
+
+    it("should place if_statement blocks inside constructor scope", () => {
+      const code = `class Config:
+    def __init__(self, debug=False):
+        if debug:
+            self.log_level = "DEBUG"
+        else:
+            self.log_level = "INFO"`;
+
+      const tree = parser.parse(code);
+      const parsed_file = create_parsed_file(
+        code,
+        "test.py" as FilePath,
+        tree,
+        "python" as Language
+      );
+      const index = build_index_single_file(parsed_file, tree, "python" as Language);
+
+      // Find constructor scope
+      const constructor_scope = Array.from(index.scopes.values()).find(
+        (s) => s.type === "constructor"
+      );
+      expect(constructor_scope).toBeDefined();
+
+      // Find block scopes (if/else blocks)
+      const block_scopes = Array.from(index.scopes.values()).filter(
+        (s) => s.type === "block"
+      );
+
+      // All block scopes should be descendants of constructor
+      for (const block of block_scopes) {
+        expect(
+          is_descendant_of(block.id, constructor_scope!.id, index.scopes as Map<string, { id: string; parent_id: string | null }>)
+        ).toBe(true);
+      }
+    });
+
+    it("should place try/except blocks inside constructor scope", () => {
+      const code = `class SafeLoader:
+    def __init__(self, path):
+        try:
+            self.data = load(path)
+        except FileNotFoundError:
+            self.data = None
+        except Exception as e:
+            raise LoadError(e)`;
+
+      const tree = parser.parse(code);
+      const parsed_file = create_parsed_file(
+        code,
+        "test.py" as FilePath,
+        tree,
+        "python" as Language
+      );
+      const index = build_index_single_file(parsed_file, tree, "python" as Language);
+
+      // Find constructor scope
+      const constructor_scope = Array.from(index.scopes.values()).find(
+        (s) => s.type === "constructor"
+      );
+      expect(constructor_scope).toBeDefined();
+
+      // Find block scopes
+      const block_scopes = Array.from(index.scopes.values()).filter(
+        (s) => s.type === "block"
+      );
+
+      // Should have at least try block and except clauses
+      expect(block_scopes.length).toBeGreaterThan(0);
+
+      // All block scopes should be descendants of constructor
+      for (const block of block_scopes) {
+        expect(
+          is_descendant_of(block.id, constructor_scope!.id, index.scopes as Map<string, { id: string; parent_id: string | null }>)
+        ).toBe(true);
+      }
+    });
+
+    it("should place with_statement inside constructor scope", () => {
+      const code = `class FileHandler:
+    def __init__(self, path):
+        with open(path) as f:
+            self.content = f.read()`;
+
+      const tree = parser.parse(code);
+      const parsed_file = create_parsed_file(
+        code,
+        "test.py" as FilePath,
+        tree,
+        "python" as Language
+      );
+      const index = build_index_single_file(parsed_file, tree, "python" as Language);
+
+      // Find constructor scope
+      const constructor_scope = Array.from(index.scopes.values()).find(
+        (s) => s.type === "constructor"
+      );
+      expect(constructor_scope).toBeDefined();
+
+      // Find block scopes
+      const block_scopes = Array.from(index.scopes.values()).filter(
+        (s) => s.type === "block"
+      );
+
+      // All block scopes should be descendants of constructor
+      for (const block of block_scopes) {
+        expect(
+          is_descendant_of(block.id, constructor_scope!.id, index.scopes as Map<string, { id: string; parent_id: string | null }>)
+        ).toBe(true);
+      }
+    });
+
+    it("should maintain correct depth hierarchy for nested blocks in constructor", () => {
+      const code = `class DataProcessor:
+    def __init__(self, config):
+        if config.enabled:
+            try:
+                with open(config.path) as f:
+                    self.data = f.read()
+            except:
+                self.data = None`;
+
+      const tree = parser.parse(code);
+      const parsed_file = create_parsed_file(
+        code,
+        "test.py" as FilePath,
+        tree,
+        "python" as Language
+      );
+      const index = build_index_single_file(parsed_file, tree, "python" as Language);
+
+      // Find all scope types
+      const module_scope = Array.from(index.scopes.values()).find(
+        (s) => s.type === "module"
+      );
+      const class_scope = Array.from(index.scopes.values()).find(
+        (s) => s.type === "class"
+      );
+      const constructor_scope = Array.from(index.scopes.values()).find(
+        (s) => s.type === "constructor"
+      );
+
+      expect(module_scope).toBeDefined();
+      expect(class_scope).toBeDefined();
+      expect(constructor_scope).toBeDefined();
+
+      // Verify hierarchy: module -> class -> constructor
+      expect(class_scope!.parent_id).toBe(module_scope!.id);
+      expect(constructor_scope!.parent_id).toBe(class_scope!.id);
+
+      // Verify all block scopes are descendants of constructor
+      const block_scopes = Array.from(index.scopes.values()).filter(
+        (s) => s.type === "block"
+      );
+
+      for (const block of block_scopes) {
+        expect(
+          is_descendant_of(block.id, constructor_scope!.id, index.scopes as Map<string, { id: string; parent_id: string | null }>)
+        ).toBe(true);
+      }
     });
   });
 
