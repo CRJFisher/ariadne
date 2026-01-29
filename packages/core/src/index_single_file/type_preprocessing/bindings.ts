@@ -100,8 +100,8 @@ export function extract_type_bindings(definitions: {
     }
 
     // Extract from constructor parameters
-    if (class_def.constructor) {
-      for (const ctor of class_def.constructor) {
+    if (class_def.constructors) {
+      for (const ctor of class_def.constructors) {
         for (const param of ctor.parameters) {
           if (param.type) {
             const key = location_key(param.location);
