@@ -5,9 +5,11 @@
  * Split from python.ts to keep file sizes manageable.
  */
 
-import type { ModulePath, SymbolName } from "@ariadnejs/types";
+import type { ModulePath, SymbolId, SymbolName } from "@ariadnejs/types";
+import { variable_symbol } from "@ariadnejs/types";
 import type { DefinitionBuilder } from "../../definitions/definitions";
 import type { CaptureNode, ProcessingContext } from "../../index_single_file";
+import { node_to_location } from "../../node_utils";
 import {
   create_variable_id,
   extract_export_info,
@@ -23,7 +25,34 @@ export function handle_definition_import(
   builder: DefinitionBuilder,
   context: ProcessingContext
 ): void {
-  const import_id = create_variable_id(capture);
+  // For aliased imports (import X as Y / from X import Y as Z), both the module/name
+  // and the alias get captured. Skip processing the alias capture since the
+  // module/name capture already handles everything correctly.
+  const aliased_parent = capture.node.parent;
+  if (aliased_parent?.type === "aliased_import") {
+    const alias_node = aliased_parent.childForFieldName?.("alias");
+    // If capture IS the alias node, skip it (module name capture handles it)
+    if (alias_node === capture.node) {
+      return;
+    }
+  }
+
+  // Check for aliased import - use alias location for symbol_id
+  // This ensures the symbol_id matches what scope resolution returns
+  let import_id: SymbolId;
+  let definition_location = capture.location;
+  if (aliased_parent?.type === "aliased_import") {
+    const alias_node = aliased_parent.childForFieldName?.("alias");
+    if (alias_node) {
+      const alias_location = node_to_location(alias_node, capture.location.file_path);
+      import_id = variable_symbol(alias_node.text, alias_location);
+      definition_location = alias_location;
+    } else {
+      import_id = create_variable_id(capture);
+    }
+  } else {
+    import_id = create_variable_id(capture);
+  }
 
   // Navigate up to find import_statement or import_from_statement
   let import_stmt = capture.node.parent;
@@ -94,7 +123,7 @@ export function handle_definition_import(
   builder.add_import({
     symbol_id: import_id,
     name: imported_name,
-    location: capture.location,
+    location: definition_location,
     scope_id: defining_scope_id,
     export: export_info.export,
     import_path,
@@ -210,16 +239,26 @@ export function handle_import_module_source(
   context: ProcessingContext
 ): void {
   // This is the source module in "import X as Y"
-  const import_id = create_variable_id(capture);
   const import_statement = capture.node.parent || capture.node;
 
-  // Look for alias
+  // Look for alias - use alias location for symbol_id if present
+  // This ensures the symbol_id matches what scope resolution returns
   let alias_name: SymbolName | undefined;
+  let import_id: SymbolId;
+  let location = capture.location;
   if (import_statement.type === "aliased_import") {
     const alias_node = import_statement.childForFieldName?.("alias");
     if (alias_node) {
       alias_name = alias_node.text as SymbolName;
+      // Use alias location for symbol_id (matches what resolutions.resolve() returns)
+      const alias_location = node_to_location(alias_node, capture.location.file_path);
+      import_id = variable_symbol(alias_name, alias_location);
+      location = alias_location;
+    } else {
+      import_id = create_variable_id(capture);
     }
+  } else {
+    import_id = create_variable_id(capture);
   }
 
   const imported_name = alias_name || capture.text;
@@ -233,7 +272,7 @@ export function handle_import_module_source(
   builder.add_import({
     symbol_id: import_id,
     name: imported_name,
-    location: capture.location,
+    location,
     scope_id: defining_scope_id,
     export: export_info.export,
     import_path: capture.text as unknown as ModulePath,

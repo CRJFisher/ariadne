@@ -10,6 +10,7 @@ import { ExportRegistry } from "../resolve_references/registries/export";
 import { ReferenceRegistry } from "../resolve_references/registries/reference";
 import { ImportGraph } from "./import_graph";
 import { ResolutionRegistry } from "../resolve_references/resolve_references";
+import { preprocess_references } from "../resolve_references/preprocess_references";
 import { type CallGraph } from "@ariadnejs/types";
 import { trace_call_graph } from "../trace_call_graph/trace_call_graph";
 import { fix_import_definition_locations } from "./fix_import_locations";
@@ -197,8 +198,8 @@ export class Project {
     for (const class_def of index_single_file.classes.values()) {
       all_definitions.push(...class_def.methods);
       all_definitions.push(...class_def.properties);
-      if (class_def.constructor) {
-        all_definitions.push(...class_def.constructor);
+      if (class_def.constructors) {
+        all_definitions.push(...class_def.constructors);
       }
     }
     for (const interface_def of index_single_file.interfaces.values()) {
@@ -299,6 +300,25 @@ export class Project {
       }
     }
     profiler.end("cross_file_inheritance");
+
+    // Phase 3.6: Reference preprocessing (language-specific)
+    // Must happen AFTER name resolution (to resolve callee names)
+    // but BEFORE type resolution (which uses extract_constructor_bindings).
+    // For Python: converts class instantiation function_call to constructor_call
+    profiler.start("preprocess_references");
+    for (const affected_file of affected_files) {
+      const affected_index = this.index_single_filees.get(affected_file);
+      if (affected_index) {
+        preprocess_references(
+          affected_file,
+          affected_index.language,
+          this.references,
+          this.definitions,
+          this.resolutions
+        );
+      }
+    }
+    profiler.end("preprocess_references");
 
     // Phase 4: Type registry
     // Must happen AFTER name resolution BUT BEFORE call resolution.

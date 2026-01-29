@@ -357,9 +357,22 @@ export class ReferenceBuilder {
     let reference: SymbolReference;
 
     switch (kind) {
-      case ReferenceKind.FUNCTION_CALL:
-        reference = create_function_call_reference(reference_name, location, scope_id);
+      case ReferenceKind.FUNCTION_CALL: {
+        // For Python: extract potential constructor target (if call is in assignment context)
+        // This enables call resolution to convert class instantiation calls to
+        // ConstructorCallReference with proper construct_target
+        const potential_construct_target = this.extractors
+          ? this.extractors.extract_construct_target(capture.node, this.file_path)
+          : undefined;
+
+        reference = create_function_call_reference(
+          reference_name,
+          location,
+          scope_id,
+          potential_construct_target
+        );
         break;
+      }
 
       case ReferenceKind.CONSTRUCTOR_CALL: {
         const construct_target = this.extractors

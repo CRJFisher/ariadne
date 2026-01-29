@@ -89,20 +89,26 @@ export function create_method_call_reference(
 /**
  * Factory for function calls: foo(), myFunction()
  *
- * @example
+ * @example Basic function call
  * // processData(value)
  * create_function_call_reference('processData', location, scope_id)
+ *
+ * @example Python call with potential constructor target
+ * // obj = MyClass()  -- captured as function_call, may be class instantiation
+ * create_function_call_reference('MyClass', location, scope_id, obj_location)
  */
 export function create_function_call_reference(
   name: SymbolName,
   location: Location,
-  scope_id: ScopeId
+  scope_id: ScopeId,
+  potential_construct_target?: Location
 ): FunctionCallReference {
   return {
     kind: "function_call",
     name,
     location,
     scope_id,
+    ...(potential_construct_target !== undefined && { potential_construct_target }),
   };
 }
 

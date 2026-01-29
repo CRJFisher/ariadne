@@ -124,11 +124,22 @@ export interface MethodCallReference extends BaseReference {
  * function processData(x) { }
  * processData(value);  // FunctionCallReference
  * // → { name: 'processData' }
+ *
+ * @example Python class instantiation
+ * obj = MyClass()  // Initially captured as FunctionCallReference
+ * // → { name: 'MyClass', potential_construct_target: <loc of 'obj'> }
+ * // Call resolution converts this to ConstructorCallReference if MyClass is a class
  */
 export interface FunctionCallReference extends BaseReference {
   readonly kind: "function_call";
   /** Optional argument type information */
   readonly argument_types?: readonly TypeInfo[];
+  /**
+   * For Python: Location of the variable being assigned (if this call is an assignment RHS).
+   * Used by call resolution to convert class instantiation calls to
+   * ConstructorCallReference with proper construct_target.
+   */
+  readonly potential_construct_target?: Location;
 }
 
 /**

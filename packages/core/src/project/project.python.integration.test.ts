@@ -1285,4 +1285,88 @@ class C(B):
     });
   });
 
+  describe("Module-Qualified Call Resolution (Bug Trap)", () => {
+    it("should resolve calls via aliased module imports (import X as Y; Y.func())", async () => {
+      const utils_source = load_source("modules/utils.py");
+      const import_patterns_source = load_source("modules/import_patterns.py");
+      const utils_file = file_path("modules/utils.py");
+      const import_patterns_file = file_path("modules/import_patterns.py");
+
+      project.update_file(utils_file, utils_source);
+      project.update_file(import_patterns_file, import_patterns_source);
+
+      const call_graph = project.get_call_graph();
+      const entry_point_ids = new Set(call_graph.entry_points);
+
+      // Find helper() function in utils.py
+      const helper_def = Array.from(project.definitions.get_callable_definitions()).find(
+        (d) => d.name === ("helper" as SymbolName) && d.location.file_path === utils_file
+      );
+      expect(helper_def).toBeDefined();
+
+      // helper() should NOT be an entry point - it's called via utils_mod.helper()
+      expect(entry_point_ids.has(helper_def!.symbol_id)).toBe(false);
+    });
+
+    it("should resolve multiple calls via aliased module imports", async () => {
+      const utils_source = load_source("modules/utils.py");
+      const import_patterns_source = load_source("modules/import_patterns.py");
+      const utils_file = file_path("modules/utils.py");
+      const import_patterns_file = file_path("modules/import_patterns.py");
+
+      project.update_file(utils_file, utils_source);
+      project.update_file(import_patterns_file, import_patterns_source);
+
+      const call_graph = project.get_call_graph();
+      const entry_point_ids = new Set(call_graph.entry_points);
+
+      // Find all utils.py functions
+      const utils_functions = Array.from(project.definitions.get_callable_definitions()).filter(
+        (d) => d.location.file_path === utils_file
+      );
+
+      // helper, process_data, and calculate_total are all called via utils_mod.X()
+      // They should NOT be entry points
+      const called_functions = ["helper", "process_data", "calculate_total"];
+      for (const fn_name of called_functions) {
+        const fn_def = utils_functions.find((d) => d.name === (fn_name as SymbolName));
+        expect(fn_def).toBeDefined();
+        expect(entry_point_ids.has(fn_def!.symbol_id)).toBe(false);
+      }
+
+      // validate_user_data is NOT called anywhere - it SHOULD be an entry point
+      const validate_def = utils_functions.find(
+        (d) => d.name === ("validate_user_data" as SymbolName)
+      );
+      expect(validate_def).toBeDefined();
+      expect(entry_point_ids.has(validate_def!.symbol_id)).toBe(true);
+    });
+
+    it("should handle aliased named imports (from X import Y as Z; Z())", async () => {
+      const utils_source = load_source("modules/utils.py");
+      const import_patterns_source = load_source("modules/import_patterns.py");
+      const utils_file = file_path("modules/utils.py");
+      const import_patterns_file = file_path("modules/import_patterns.py");
+
+      project.update_file(utils_file, utils_source);
+      project.update_file(import_patterns_file, import_patterns_source);
+
+      // import_patterns.py has: from modules.utils import helper as util_helper
+      // Then calls: util_result = util_helper()
+      // So helper() should be resolved via this path too
+
+      const call_graph = project.get_call_graph();
+      const entry_point_ids = new Set(call_graph.entry_points);
+
+      // Find helper() function in utils.py
+      const helper_def = Array.from(project.definitions.get_callable_definitions()).find(
+        (d) => d.name === ("helper" as SymbolName) && d.location.file_path === utils_file
+      );
+      expect(helper_def).toBeDefined();
+
+      // helper() should NOT be an entry point (called via both utils_mod.helper() and util_helper())
+      expect(entry_point_ids.has(helper_def!.symbol_id)).toBe(false);
+    });
+  });
+
 });
