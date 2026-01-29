@@ -8,7 +8,11 @@ import {
 } from "@ariadnejs/types";
 import type { DefinitionRegistry } from "./definition";
 import { resolve_module_path } from "../import_resolution";
-import { FileSystemFolder } from "../file_folders";
+import { FileSystemFolder, is_python_file } from "../file_folders";
+import {
+  should_replace_python_variable,
+  is_variable_or_constant_symbol,
+} from "./export.python";
 
 /**
  * Extended export metadata for resolution.
@@ -124,6 +128,35 @@ export class ExportRegistry {
             return;
           }
           // If current def is function and existing is variable/constant, keep the existing (do nothing)
+          return;
+        }
+
+        // Special case: Variable/constant reassignment (Python-specific)
+        // Python allows: `x = 1; x = 2` at module level - both create definitions,
+        // but only the last one should be exported
+        if (
+          is_python_file(file_id) &&
+          is_variable_or_constant_symbol(existing.symbol_id) &&
+          (def.kind === "variable" || def.kind === "constant")
+        ) {
+          if (
+            should_replace_python_variable(
+              existing.symbol_id,
+              def.location.start_line
+            )
+          ) {
+            // Current definition is later - replace existing
+            metadata_map.set(export_name, {
+              symbol_id: def.symbol_id,
+              export_name,
+              is_default,
+              is_reexport,
+              import_def,
+            });
+            symbol_ids.add(def.symbol_id);
+            symbol_ids.delete(existing.symbol_id);
+          }
+          // If existing is later, keep it (do nothing)
           return;
         }
 

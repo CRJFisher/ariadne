@@ -155,6 +155,15 @@ export class DefinitionRegistry {
           this.location_to_symbol.set(prop_loc_key, prop.symbol_id);
         }
 
+        // Register class constructors for call_type inference
+        if (def.kind === "class" && def.constructors) {
+          for (const ctor of def.constructors) {
+            this.by_symbol.set(ctor.symbol_id, ctor);
+            const ctor_loc_key = location_key(ctor.location);
+            this.location_to_symbol.set(ctor_loc_key, ctor.symbol_id);
+          }
+        }
+
         this.member_index.set(def.symbol_id, flat_members);
       }
     }

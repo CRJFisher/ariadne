@@ -69,3 +69,13 @@ export function has_file_in_tree(
   const filename = parts[parts.length - 1];
   return current?.files.has(filename) || false;
 }
+
+/**
+ * Check if a file is a Python file by extension.
+ *
+ * @param file_path - File path to check
+ * @returns true if file has .py or .pyw extension
+ */
+export function is_python_file(file_path: FilePath): boolean {
+  return file_path.endsWith(".py") || file_path.endsWith(".pyw");
+}
