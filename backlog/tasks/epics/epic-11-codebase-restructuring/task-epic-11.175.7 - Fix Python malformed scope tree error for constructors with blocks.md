@@ -1,7 +1,7 @@
 ---
 id: task-175.7
 title: Fix Python malformed scope tree error for constructors with blocks
-status: To Do
+status: Completed
 assignee: []
 created_date: '2026-01-28'
 labels:
@@ -73,10 +73,10 @@ Apply same tiebreaker to general sorting path.
 
 ## Acceptance Criteria
 
-- [ ] No "Malformed scope tree" error thrown for constructors with nested blocks
-- [ ] Block scopes correctly nested as children of constructor scopes
-- [ ] Unit tests cover: constructor with if_statement, try/except, with_statement, nested class with constructor containing blocks
-- [ ] Re-run external analysis on AmazonAdv/projections shows no malformed scope tree errors
+- [x] No "Malformed scope tree" error thrown for constructors with nested blocks
+- [x] Block scopes correctly nested as children of constructor scopes
+- [x] Unit tests cover: constructor with if_statement, try/except, with_statement, nested class with constructor containing blocks
+- [x] Re-run external analysis on AmazonAdv/projections shows no malformed scope tree errors
 
 ## Files to Modify
 

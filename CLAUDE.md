@@ -18,9 +18,57 @@
 
 - DO NOT SUPPORT BACKWARD COMPATIBILITY - JUST _CHANGE_ THE CODE.
 
-## Language-specific code handling
+## Language-specific Code Handling
 
-- When fixing a bug in a language-specific file, always consider whether the fix is applicable to oth languages. If it is, then the fix should be applied to all of the other language-specific files. This sort of fix should be tested with unit and integration tests.
+### File Naming Convention
+
+Language-specific code follows the pattern `{module}.{language}.ts`:
+
+```text
+module_name/
+├── module_name.ts              # Language-agnostic logic with dispatch
+├── module_name.python.ts       # Python-specific implementation
+├── module_name.typescript.ts   # TypeScript-specific implementation
+├── module_name.javascript.ts   # JavaScript-specific implementation
+├── module_name.python.test.ts  # Python-specific tests
+└── module_name.test.ts         # Integration tests
+```
+
+### When to Create Language-Specific Files
+
+Create a language-specific file (`module.{language}.ts`) when:
+
+1. **The fix handles language-specific semantics** - e.g., Python's variable reassignment at module level creates multiple definitions, which differs from JS/TS behavior
+2. **Tree-sitter query patterns differ by language** - Different AST structures require different handling
+3. **The behavior is triggered by file extension** - e.g., `.py` files need Python-specific export handling
+
+### Implementation Pattern
+
+The main module dispatches to language-specific implementations:
+
+```typescript
+// module_name.ts (main entry point)
+import { handle_python } from "./module_name.python";
+import { handle_typescript } from "./module_name.typescript";
+
+function process(file_path: FilePath): void {
+  if (file_path.endsWith(".py")) {
+    return handle_python(file_path);
+  }
+  if (file_path.endsWith(".ts")) {
+    return handle_typescript(file_path);
+  }
+  // ... default handling
+}
+```
+
+### Cross-Language Considerations
+
+When fixing a bug in a language-specific file:
+
+1. **Consider applicability** - Does the fix apply to other languages?
+2. **Apply consistently** - If applicable, apply the fix to all relevant language files
+3. **Test thoroughly** - Include both unit tests for the language-specific module and integration tests that verify end-to-end behavior
 
 ## Documentation Style: Canonical and Self-Contained
 
