@@ -1,12 +1,15 @@
 # Dependencies
 node_modules/
+node_modules
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
 # Build output
 dist/
+dist
 build/
+build
 *.js
 *.d.ts
 *.js.map
