@@ -341,3 +341,184 @@ describe("find_containing_callable with lambda functions", () => {
     expect(callable_id).toBe(expected_id);
   });
 });
+
+describe("detect_callback_context", () => {
+  const file_path = "/test.py" as FilePath;
+
+  describe("direct function call patterns", () => {
+    it("should detect callback in map(lambda x: ...)", () => {
+      const code = "result = list(map(lambda x: x * 2, items))";
+      const root = parse_python(code);
+      const lambda_node = find_lambda(root);
+      expect(lambda_node).not.toBeNull();
+
+      const result = detect_callback_context(lambda_node!, file_path);
+
+      expect(result.is_callback).toBe(true);
+      expect(result.receiver_location).not.toBeNull();
+      expect(result.receiver_location?.start_line).toBe(1);
+    });
+
+    it("should detect callback in filter(lambda x: ...)", () => {
+      const code = "result = list(filter(lambda x: x > 0, items))";
+      const root = parse_python(code);
+      const lambda_node = find_lambda(root);
+      expect(lambda_node).not.toBeNull();
+
+      const result = detect_callback_context(lambda_node!, file_path);
+
+      expect(result.is_callback).toBe(true);
+      expect(result.receiver_location).not.toBeNull();
+    });
+
+    it("should detect callback in sorted(key=lambda x: ...)", () => {
+      const code = "result = sorted(items, key=lambda x: x.value)";
+      const root = parse_python(code);
+      const lambda_node = find_lambda(root);
+      expect(lambda_node).not.toBeNull();
+
+      const result = detect_callback_context(lambda_node!, file_path);
+
+      expect(result.is_callback).toBe(true);
+      expect(result.receiver_location).not.toBeNull();
+    });
+
+    it("should detect callback in reduce(lambda acc, x: ..., items, init)", () => {
+      const code = "result = reduce(lambda acc, x: acc + x, items, 0)";
+      const root = parse_python(code);
+      const lambda_node = find_lambda(root);
+      expect(lambda_node).not.toBeNull();
+
+      const result = detect_callback_context(lambda_node!, file_path);
+
+      expect(result.is_callback).toBe(true);
+      expect(result.receiver_location).not.toBeNull();
+    });
+  });
+
+  describe("method chaining patterns", () => {
+    it("should detect callback in df.apply(lambda x: ...)", () => {
+      const code = "result = df.apply(lambda x: x * 2)";
+      const root = parse_python(code);
+      const lambda_node = find_lambda(root);
+      expect(lambda_node).not.toBeNull();
+
+      const result = detect_callback_context(lambda_node!, file_path);
+
+      expect(result.is_callback).toBe(true);
+      expect(result.receiver_location).not.toBeNull();
+    });
+
+    it("should detect callback in df.groupby().apply(lambda...)", () => {
+      const code = "result = df.groupby('col').apply(lambda rows: list(rows))";
+      const root = parse_python(code);
+      const lambda_node = find_lambda(root);
+      expect(lambda_node).not.toBeNull();
+
+      const result = detect_callback_context(lambda_node!, file_path);
+
+      expect(result.is_callback).toBe(true);
+      expect(result.receiver_location).not.toBeNull();
+    });
+  });
+
+  describe("dictionary unpacking pattern (key false positive pattern)", () => {
+    it("should detect callback in df.assign(**{key: lambda...})", () => {
+      const code = "result = df.assign(**{_COL: lambda df: df[_COL].apply(str)})";
+      const root = parse_python(code);
+      const lambda_node = find_lambda(root);
+      expect(lambda_node).not.toBeNull();
+
+      const result = detect_callback_context(lambda_node!, file_path);
+
+      expect(result.is_callback).toBe(true);
+      expect(result.receiver_location).not.toBeNull();
+      // receiver_location should point to df.assign(...) call
+      expect(result.receiver_location?.start_column).toBe(10); // 'df.assign' starts at column 10
+    });
+
+    it("should detect callback in func(**{key: lambda...}) with variable key", () => {
+      const code = "_END_DATE_COL = 'end_date'\nresult = df.assign(**{_END_DATE_COL: lambda df: df.apply(str)})";
+      const root = parse_python(code);
+      const lambda_node = find_lambda(root);
+      expect(lambda_node).not.toBeNull();
+
+      const result = detect_callback_context(lambda_node!, file_path);
+
+      expect(result.is_callback).toBe(true);
+      expect(result.receiver_location).not.toBeNull();
+    });
+  });
+
+  describe("factory function pattern", () => {
+    it("should detect callback in defaultdict(lambda: ...)", () => {
+      const code = "dd = defaultdict(lambda: defaultdict(int))";
+      const root = parse_python(code);
+      const lambda_node = find_lambda(root);
+      expect(lambda_node).not.toBeNull();
+
+      const result = detect_callback_context(lambda_node!, file_path);
+
+      expect(result.is_callback).toBe(true);
+      expect(result.receiver_location).not.toBeNull();
+    });
+
+    it("should detect callback in Counter with lambda factory", () => {
+      const code = "result = defaultdict(lambda: [])";
+      const root = parse_python(code);
+      const lambda_node = find_lambda(root);
+      expect(lambda_node).not.toBeNull();
+
+      const result = detect_callback_context(lambda_node!, file_path);
+
+      expect(result.is_callback).toBe(true);
+    });
+  });
+
+  describe("negative cases", () => {
+    it("should NOT detect callback for standalone lambda assignment", () => {
+      const code = "fn = lambda x: x * 2";
+      const root = parse_python(code);
+      const lambda_node = find_lambda(root);
+      expect(lambda_node).not.toBeNull();
+
+      const result = detect_callback_context(lambda_node!, file_path);
+
+      expect(result.is_callback).toBe(false);
+      expect(result.receiver_location).toBeNull();
+    });
+
+    it("should NOT detect callback for lambda in list literal (not in call)", () => {
+      const code = "handlers = [lambda x: x, lambda y: y * 2]";
+      const root = parse_python(code);
+      const lambda_node = find_lambda(root);
+      expect(lambda_node).not.toBeNull();
+
+      const result = detect_callback_context(lambda_node!, file_path);
+
+      expect(result.is_callback).toBe(false);
+    });
+
+    it("should NOT detect callback for lambda in dict literal (not in call)", () => {
+      const code = "config = {'handler': lambda x: x}";
+      const root = parse_python(code);
+      const lambda_node = find_lambda(root);
+      expect(lambda_node).not.toBeNull();
+
+      const result = detect_callback_context(lambda_node!, file_path);
+
+      expect(result.is_callback).toBe(false);
+    });
+
+    it("should NOT detect callback for lambda in tuple literal", () => {
+      const code = "pair = (lambda x: x, lambda y: y)";
+      const root = parse_python(code);
+      const lambda_node = find_lambda(root);
+      expect(lambda_node).not.toBeNull();
+
+      const result = detect_callback_context(lambda_node!, file_path);
+
+      expect(result.is_callback).toBe(false);
+    });
+  });
+});

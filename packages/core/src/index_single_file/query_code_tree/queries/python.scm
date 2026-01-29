@@ -27,10 +27,13 @@
   body: (block) @scope.class
 )
 
-; Method scopes (functions within classes)
+; Method scopes (functions within classes, excluding __init__ which is captured as constructor)
 (class_definition
   body: (block
-    (function_definition) @scope.method
+    (function_definition
+      name: (identifier) @_scope_method_name
+      (#not-eq? @_scope_method_name "__init__")
+    ) @scope.method
   )
 )
 
@@ -67,15 +70,80 @@
 ;; DEFINITIONS - Symbols that introduce new names
 ;; ==============================================================================
 
-; Function definitions
-(function_definition
-  name: (identifier) @definition.function
+; Module-level function definitions (not class methods)
+(module
+  (function_definition
+    name: (identifier) @definition.function
+  )
 )
 
-; Async function definitions
+; Module-level decorated function definitions (not class methods)
+(module
+  (decorated_definition
+    definition: (function_definition
+      name: (identifier) @definition.function
+    )
+  )
+)
+
+; Nested function definitions inside other functions (not class methods)
 (function_definition
-  "async" @modifier.visibility
-  name: (identifier) @definition.function.async
+  body: (block
+    (function_definition
+      name: (identifier) @definition.function
+    )
+  )
+)
+
+; Nested decorated function definitions
+(function_definition
+  body: (block
+    (decorated_definition
+      definition: (function_definition
+        name: (identifier) @definition.function
+      )
+    )
+  )
+)
+
+; Async function definitions at module level
+(module
+  (function_definition
+    "async" @modifier.visibility
+    name: (identifier) @definition.function.async
+  )
+)
+
+; Module-level decorated async function definitions
+(module
+  (decorated_definition
+    definition: (function_definition
+      "async" @modifier.visibility
+      name: (identifier) @definition.function.async
+    )
+  )
+)
+
+; Async nested function definitions
+(function_definition
+  body: (block
+    (function_definition
+      "async" @modifier.visibility
+      name: (identifier) @definition.function.async
+    )
+  )
+)
+
+; Nested decorated async function definitions
+(function_definition
+  body: (block
+    (decorated_definition
+      definition: (function_definition
+        "async" @modifier.visibility
+        name: (identifier) @definition.function.async
+      )
+    )
+  )
 )
 
 ; Lambda functions assigned to variables
@@ -86,9 +154,14 @@
 
 ; === Anonymous lambda functions (inline callbacks, config objects, etc.) ===
 
-; Inline lambda in function call arguments (map, filter, sorted key=, etc.)
+; Inline lambda in function call arguments (map, filter, etc.)
 (argument_list
   (lambda) @definition.anonymous_function
+)
+
+; Lambda in keyword arguments (sorted key=, pandas axis=, etc.)
+(keyword_argument
+  value: (lambda) @definition.anonymous_function
 )
 
 ; Lambda in dictionary values (config objects)
@@ -602,6 +675,25 @@
 ; ============================================================================
 ; FUNCTION AND METHOD CALLS
 ; ============================================================================
+;
+; NOTE: Python Class Instantiation Limitation
+; -------------------------------------------
+; In Python, class instantiation (e.g., `obj = MyClass()`) uses identical syntax
+; to function calls (e.g., `result = my_function()`). Both are represented as
+; `call` nodes with an `identifier` function field in tree-sitter.
+;
+; Unlike TypeScript/JavaScript (`new ClassName()`) or Rust (`StructName { ... }`),
+; there is NO syntactic distinction at the AST level.
+;
+; Capture Strategy:
+; - Calls WITH argument lists are captured as @reference.constructor (heuristic)
+;   This provides construct_target metadata for type binding extraction
+; - At resolution time, if the identifier resolves to a class symbol,
+;   the call is resolved to __init__. Otherwise, it's treated as a function call.
+; - The call_type in CallReference is inferred from the resolved symbol, not syntax
+; - See: resolve_references/call_resolution/call_resolution.python.ts
+;
+; ============================================================================
 
 ; Function calls
 (call
@@ -616,7 +708,9 @@
   )
 ) @reference.call
 
-; Constructor calls (class instantiation)
+; Constructor calls (class instantiation) - heuristic capture for construct_target extraction
+; This captures ALL calls with argument lists as potential constructors.
+; Actual call type is determined at resolution time based on what the identifier resolves to.
 (call
   function: (identifier) @reference.constructor
   arguments: (argument_list)

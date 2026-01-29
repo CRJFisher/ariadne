@@ -1,7 +1,7 @@
 ---
 id: task-epic-11.175.2
 title: Resolve remaining callback invocation tracking gaps
-status: To Do
+status: Done
 assignee: []
 created_date: '2026-01-28'
 labels:
@@ -35,10 +35,10 @@ Full list in triage output: `entrypoint-analysis/analysis_output/external/triage
 
 ## Acceptance Criteria
 
-- [ ] Investigate why task-epic-11.172 did not resolve these cases
-- [ ] Identify the specific callback pattern not tracked (Python lambdas, `sorted()` key args, etc.)
-- [ ] Fix callback invocation tracking to handle these patterns
-- [ ] All 12 entries no longer appear as false positive entry points
+- [x] Investigate why task-epic-11.172 did not resolve these cases
+- [x] Identify the specific callback pattern not tracked (Python lambdas, `sorted()` key args, etc.)
+- [x] Fix callback invocation tracking to handle these patterns
+- [x] All 12 entries no longer appear as false positive entry points
 
 ## Related
 
@@ -46,3 +46,50 @@ Full list in triage output: `entrypoint-analysis/analysis_output/external/triage
 - task-epic-11.173 (Done) - Track calls from anonymous function bodies
 - task-epic-11.156 - Anonymous callback function capture
 - task-163 - Parent task
+
+## Implementation Notes (Jan 29, 2026)
+
+### Root Cause Analysis
+
+The triage output showing 12 false positives was **stale** - generated with dist/ that didn't include the fix from task-epic-11.172:
+
+- **Jan 20, 15:27**: Fix committed (6f2950d1 - "Track callback invocations for internal functions")
+- **Jan 28, 10:37**: Triage run with stale dist/ (72 minutes before build hook added)
+- **Jan 28, 11:49**: Build hook added (255a06c3) to prevent stale dist/ issues
+
+### Verified Fix for Python
+
+Tested all three false positive patterns with current dist/:
+
+1. **Dictionary unpacking** (`df.assign(**{key: lambda...})`): Not entry point
+2. **DataFrame apply** (`df.groupby().apply(lambda...)`): Not entry point
+3. **defaultdict factory** (`defaultdict(lambda: ...)`): Not entry point
+
+### Additional Fix: Keyword Argument Lambda Capture
+
+Added tree-sitter query to capture lambdas in keyword arguments:
+
+```scm
+; Lambda in keyword arguments (sorted key=, pandas axis=, etc.)
+(keyword_argument
+  value: (lambda) @definition.anonymous_function
+)
+```
+
+This handles patterns like `sorted(items, key=lambda x: x.value)`.
+
+### Test Coverage Added
+
+**Unit tests** (symbol_factories.python.test.ts):
+- 15 new tests for `detect_callback_context` covering all callback patterns
+- Tests for map, filter, sorted, reduce, df.apply, dictionary unpacking, defaultdict
+- Negative tests for standalone lambda, list literal, dict literal
+
+### Files Changed
+
+- `packages/core/src/index_single_file/query_code_tree/queries/python.scm` - Added keyword argument lambda capture query
+- `packages/core/src/index_single_file/query_code_tree/symbol_factories/symbol_factories.python.test.ts` - Added detect_callback_context tests
+
+### Completion Date
+
+2026-01-29
