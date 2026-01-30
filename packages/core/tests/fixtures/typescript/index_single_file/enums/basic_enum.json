@@ -1,0 +1,1820 @@
+{
+  "file_path": "<fixtures>/typescript/code/enums/basic_enum.ts",
+  "language": "typescript",
+  "root_scope_id": "module:<fixtures>/typescript/code/enums/basic_enum.ts:1:1:59:0",
+  "scopes": {
+    "module:<fixtures>/typescript/code/enums/basic_enum.ts:1:1:59:0": {
+      "id": "module:<fixtures>/typescript/code/enums/basic_enum.ts:1:1:59:0",
+      "parent_id": null,
+      "name": null,
+      "type": "module",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/enums/basic_enum.ts",
+        "start_line": 1,
+        "start_column": 1,
+        "end_line": 59,
+        "end_column": 0
+      },
+      "child_ids": [
+        "class:<fixtures>/typescript/code/enums/basic_enum.ts:7:16:12:1",
+        "class:<fixtures>/typescript/code/enums/basic_enum.ts:15:13:20:1",
+        "class:<fixtures>/typescript/code/enums/basic_enum.ts:23:17:29:1",
+        "function:<fixtures>/typescript/code/enums/basic_enum.ts:32:14:43:1",
+        "function:<fixtures>/typescript/code/enums/basic_enum.ts:45:28:56:1"
+      ]
+    },
+    "class:<fixtures>/typescript/code/enums/basic_enum.ts:7:16:12:1": {
+      "id": "class:<fixtures>/typescript/code/enums/basic_enum.ts:7:16:12:1",
+      "parent_id": "module:<fixtures>/typescript/code/enums/basic_enum.ts:1:1:59:0",
+      "name": "Direction",
+      "type": "class",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/enums/basic_enum.ts",
+        "start_line": 7,
+        "start_column": 16,
+        "end_line": 12,
+        "end_column": 1
+      },
+      "child_ids": []
+    },
+    "class:<fixtures>/typescript/code/enums/basic_enum.ts:15:13:20:1": {
+      "id": "class:<fixtures>/typescript/code/enums/basic_enum.ts:15:13:20:1",
+      "parent_id": "module:<fixtures>/typescript/code/enums/basic_enum.ts:1:1:59:0",
+      "name": "Status",
+      "type": "class",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/enums/basic_enum.ts",
+        "start_line": 15,
+        "start_column": 13,
+        "end_line": 20,
+        "end_column": 1
+      },
+      "child_ids": []
+    },
+    "class:<fixtures>/typescript/code/enums/basic_enum.ts:23:17:29:1": {
+      "id": "class:<fixtures>/typescript/code/enums/basic_enum.ts:23:17:29:1",
+      "parent_id": "module:<fixtures>/typescript/code/enums/basic_enum.ts:1:1:59:0",
+      "name": "FileAccess",
+      "type": "class",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/enums/basic_enum.ts",
+        "start_line": 23,
+        "start_column": 17,
+        "end_line": 29,
+        "end_column": 1
+      },
+      "child_ids": []
+    },
+    "function:<fixtures>/typescript/code/enums/basic_enum.ts:32:14:43:1": {
+      "id": "function:<fixtures>/typescript/code/enums/basic_enum.ts:32:14:43:1",
+      "parent_id": "module:<fixtures>/typescript/code/enums/basic_enum.ts:1:1:59:0",
+      "name": "move",
+      "type": "function",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/enums/basic_enum.ts",
+        "start_line": 32,
+        "start_column": 14,
+        "end_line": 43,
+        "end_column": 1
+      },
+      "child_ids": [
+        "block:<fixtures>/typescript/code/enums/basic_enum.ts:33:3:42:3"
+      ]
+    },
+    "block:<fixtures>/typescript/code/enums/basic_enum.ts:33:3:42:3": {
+      "id": "block:<fixtures>/typescript/code/enums/basic_enum.ts:33:3:42:3",
+      "parent_id": "function:<fixtures>/typescript/code/enums/basic_enum.ts:32:14:43:1",
+      "name": null,
+      "type": "block",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/enums/basic_enum.ts",
+        "start_line": 33,
+        "start_column": 3,
+        "end_line": 42,
+        "end_column": 3
+      },
+      "child_ids": [
+        "block:<fixtures>/typescript/code/enums/basic_enum.ts:34:5:35:25",
+        "block:<fixtures>/typescript/code/enums/basic_enum.ts:36:5:37:27",
+        "block:<fixtures>/typescript/code/enums/basic_enum.ts:38:5:39:27",
+        "block:<fixtures>/typescript/code/enums/basic_enum.ts:40:5:41:28"
+      ]
+    },
+    "block:<fixtures>/typescript/code/enums/basic_enum.ts:34:5:35:25": {
+      "id": "block:<fixtures>/typescript/code/enums/basic_enum.ts:34:5:35:25",
+      "parent_id": "block:<fixtures>/typescript/code/enums/basic_enum.ts:33:3:42:3",
+      "name": null,
+      "type": "block",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/enums/basic_enum.ts",
+        "start_line": 34,
+        "start_column": 5,
+        "end_line": 35,
+        "end_column": 25
+      },
+      "child_ids": []
+    },
+    "block:<fixtures>/typescript/code/enums/basic_enum.ts:36:5:37:27": {
+      "id": "block:<fixtures>/typescript/code/enums/basic_enum.ts:36:5:37:27",
+      "parent_id": "block:<fixtures>/typescript/code/enums/basic_enum.ts:33:3:42:3",
+      "name": null,
+      "type": "block",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/enums/basic_enum.ts",
+        "start_line": 36,
+        "start_column": 5,
+        "end_line": 37,
+        "end_column": 27
+      },
+      "child_ids": []
+    },
+    "block:<fixtures>/typescript/code/enums/basic_enum.ts:38:5:39:27": {
+      "id": "block:<fixtures>/typescript/code/enums/basic_enum.ts:38:5:39:27",
+      "parent_id": "block:<fixtures>/typescript/code/enums/basic_enum.ts:33:3:42:3",
+      "name": null,
+      "type": "block",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/enums/basic_enum.ts",
+        "start_line": 38,
+        "start_column": 5,
+        "end_line": 39,
+        "end_column": 27
+      },
+      "child_ids": []
+    },
+    "block:<fixtures>/typescript/code/enums/basic_enum.ts:40:5:41:28": {
+      "id": "block:<fixtures>/typescript/code/enums/basic_enum.ts:40:5:41:28",
+      "parent_id": "block:<fixtures>/typescript/code/enums/basic_enum.ts:33:3:42:3",
+      "name": null,
+      "type": "block",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/enums/basic_enum.ts",
+        "start_line": 40,
+        "start_column": 5,
+        "end_line": 41,
+        "end_column": 28
+      },
+      "child_ids": []
+    },
+    "function:<fixtures>/typescript/code/enums/basic_enum.ts:45:28:56:1": {
+      "id": "function:<fixtures>/typescript/code/enums/basic_enum.ts:45:28:56:1",
+      "parent_id": "module:<fixtures>/typescript/code/enums/basic_enum.ts:1:1:59:0",
+      "name": "get_status_message",
+      "type": "function",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/enums/basic_enum.ts",
+        "start_line": 45,
+        "start_column": 28,
+        "end_line": 56,
+        "end_column": 1
+      },
+      "child_ids": [
+        "block:<fixtures>/typescript/code/enums/basic_enum.ts:46:3:55:3"
+      ]
+    },
+    "block:<fixtures>/typescript/code/enums/basic_enum.ts:46:3:55:3": {
+      "id": "block:<fixtures>/typescript/code/enums/basic_enum.ts:46:3:55:3",
+      "parent_id": "function:<fixtures>/typescript/code/enums/basic_enum.ts:45:28:56:1",
+      "name": null,
+      "type": "block",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/enums/basic_enum.ts",
+        "start_line": 46,
+        "start_column": 3,
+        "end_line": 55,
+        "end_column": 3
+      },
+      "child_ids": [
+        "block:<fixtures>/typescript/code/enums/basic_enum.ts:47:5:48:32",
+        "block:<fixtures>/typescript/code/enums/basic_enum.ts:49:5:50:33",
+        "block:<fixtures>/typescript/code/enums/basic_enum.ts:51:5:52:38",
+        "block:<fixtures>/typescript/code/enums/basic_enum.ts:53:5:54:33"
+      ]
+    },
+    "block:<fixtures>/typescript/code/enums/basic_enum.ts:47:5:48:32": {
+      "id": "block:<fixtures>/typescript/code/enums/basic_enum.ts:47:5:48:32",
+      "parent_id": "block:<fixtures>/typescript/code/enums/basic_enum.ts:46:3:55:3",
+      "name": null,
+      "type": "block",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/enums/basic_enum.ts",
+        "start_line": 47,
+        "start_column": 5,
+        "end_line": 48,
+        "end_column": 32
+      },
+      "child_ids": []
+    },
+    "block:<fixtures>/typescript/code/enums/basic_enum.ts:49:5:50:33": {
+      "id": "block:<fixtures>/typescript/code/enums/basic_enum.ts:49:5:50:33",
+      "parent_id": "block:<fixtures>/typescript/code/enums/basic_enum.ts:46:3:55:3",
+      "name": null,
+      "type": "block",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/enums/basic_enum.ts",
+        "start_line": 49,
+        "start_column": 5,
+        "end_line": 50,
+        "end_column": 33
+      },
+      "child_ids": []
+    },
+    "block:<fixtures>/typescript/code/enums/basic_enum.ts:51:5:52:38": {
+      "id": "block:<fixtures>/typescript/code/enums/basic_enum.ts:51:5:52:38",
+      "parent_id": "block:<fixtures>/typescript/code/enums/basic_enum.ts:46:3:55:3",
+      "name": null,
+      "type": "block",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/enums/basic_enum.ts",
+        "start_line": 51,
+        "start_column": 5,
+        "end_line": 52,
+        "end_column": 38
+      },
+      "child_ids": []
+    },
+    "block:<fixtures>/typescript/code/enums/basic_enum.ts:53:5:54:33": {
+      "id": "block:<fixtures>/typescript/code/enums/basic_enum.ts:53:5:54:33",
+      "parent_id": "block:<fixtures>/typescript/code/enums/basic_enum.ts:46:3:55:3",
+      "name": null,
+      "type": "block",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/enums/basic_enum.ts",
+        "start_line": 53,
+        "start_column": 5,
+        "end_line": 54,
+        "end_column": 33
+      },
+      "child_ids": []
+    }
+  },
+  "functions": {
+    "function:<fixtures>/typescript/code/enums/basic_enum.ts:32:10:32:13:move": {
+      "kind": "function",
+      "symbol_id": "function:<fixtures>/typescript/code/enums/basic_enum.ts:32:10:32:13:move",
+      "name": "move",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/enums/basic_enum.ts",
+        "start_line": 32,
+        "start_column": 10,
+        "end_line": 32,
+        "end_column": 13
+      },
+      "defining_scope_id": "module:<fixtures>/typescript/code/enums/basic_enum.ts:1:1:59:0",
+      "is_exported": true,
+      "export": {
+        "is_reexport": false
+      },
+      "signature": {
+        "parameters": [
+          {
+            "kind": "parameter",
+            "defining_scope_id": "function:<fixtures>/typescript/code/enums/basic_enum.ts:32:14:43:1",
+            "symbol_id": "parameter:<fixtures>/typescript/code/enums/basic_enum.ts:32:15:32:23:direction",
+            "name": "direction",
+            "location": {
+              "file_path": "<fixtures>/typescript/code/enums/basic_enum.ts",
+              "start_line": 32,
+              "start_column": 15,
+              "end_line": 32,
+              "end_column": 23
+            },
+            "type": "Direction",
+            "optional": false
+          }
+        ],
+        "return_type": "string"
+      },
+      "return_type": "string",
+      "body_scope_id": "function:<fixtures>/typescript/code/enums/basic_enum.ts:32:14:43:1"
+    },
+    "function:<fixtures>/typescript/code/enums/basic_enum.ts:45:10:45:27:get_status_message": {
+      "kind": "function",
+      "symbol_id": "function:<fixtures>/typescript/code/enums/basic_enum.ts:45:10:45:27:get_status_message",
+      "name": "get_status_message",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/enums/basic_enum.ts",
+        "start_line": 45,
+        "start_column": 10,
+        "end_line": 45,
+        "end_column": 27
+      },
+      "defining_scope_id": "module:<fixtures>/typescript/code/enums/basic_enum.ts:1:1:59:0",
+      "is_exported": true,
+      "export": {
+        "is_reexport": false
+      },
+      "signature": {
+        "parameters": [
+          {
+            "kind": "parameter",
+            "defining_scope_id": "function:<fixtures>/typescript/code/enums/basic_enum.ts:45:28:56:1",
+            "symbol_id": "parameter:<fixtures>/typescript/code/enums/basic_enum.ts:45:29:45:34:status",
+            "name": "status",
+            "location": {
+              "file_path": "<fixtures>/typescript/code/enums/basic_enum.ts",
+              "start_line": 45,
+              "start_column": 29,
+              "end_line": 45,
+              "end_column": 34
+            },
+            "type": "Status",
+            "optional": false
+          }
+        ],
+        "return_type": "string"
+      },
+      "return_type": "string",
+      "body_scope_id": "function:<fixtures>/typescript/code/enums/basic_enum.ts:45:28:56:1"
+    }
+  },
+  "classes": {},
+  "variables": {},
+  "interfaces": {},
+  "enums": {
+    "enum:<fixtures>/typescript/code/enums/basic_enum.ts:7:1:12:1:enum Direction {\n  UP,\n  DOWN,\n  LEFT,\n  RIGHT,\n}": {
+      "kind": "enum",
+      "symbol_id": "enum:<fixtures>/typescript/code/enums/basic_enum.ts:7:1:12:1:enum Direction {\n  UP,\n  DOWN,\n  LEFT,\n  RIGHT,\n}",
+      "name": "enum Direction {\n  UP,\n  DOWN,\n  LEFT,\n  RIGHT,\n}",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/enums/basic_enum.ts",
+        "start_line": 7,
+        "start_column": 1,
+        "end_line": 12,
+        "end_column": 1
+      },
+      "defining_scope_id": "module:<fixtures>/typescript/code/enums/basic_enum.ts:1:1:59:0",
+      "is_exported": false,
+      "is_const": false,
+      "members": []
+    },
+    "enum:<fixtures>/typescript/code/enums/basic_enum.ts:7:6:7:14:Direction": {
+      "kind": "enum",
+      "symbol_id": "enum:<fixtures>/typescript/code/enums/basic_enum.ts:7:6:7:14:Direction",
+      "name": "Direction",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/enums/basic_enum.ts",
+        "start_line": 7,
+        "start_column": 6,
+        "end_line": 7,
+        "end_column": 14
+      },
+      "defining_scope_id": "module:<fixtures>/typescript/code/enums/basic_enum.ts:1:1:59:0",
+      "is_exported": true,
+      "export": {
+        "is_reexport": false
+      },
+      "is_const": false,
+      "members": []
+    },
+    "enum:<fixtures>/typescript/code/enums/basic_enum.ts:15:1:20:1:enum Status {\n  PENDING = 0,\n  ACTIVE = 1,\n  COMPLETED = 2,\n  FAILED = 3,\n}": {
+      "kind": "enum",
+      "symbol_id": "enum:<fixtures>/typescript/code/enums/basic_enum.ts:15:1:20:1:enum Status {\n  PENDING = 0,\n  ACTIVE = 1,\n  COMPLETED = 2,\n  FAILED = 3,\n}",
+      "name": "enum Status {\n  PENDING = 0,\n  ACTIVE = 1,\n  COMPLETED = 2,\n  FAILED = 3,\n}",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/enums/basic_enum.ts",
+        "start_line": 15,
+        "start_column": 1,
+        "end_line": 20,
+        "end_column": 1
+      },
+      "defining_scope_id": "module:<fixtures>/typescript/code/enums/basic_enum.ts:1:1:59:0",
+      "is_exported": false,
+      "is_const": false,
+      "members": []
+    },
+    "enum:<fixtures>/typescript/code/enums/basic_enum.ts:15:6:15:11:Status": {
+      "kind": "enum",
+      "symbol_id": "enum:<fixtures>/typescript/code/enums/basic_enum.ts:15:6:15:11:Status",
+      "name": "Status",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/enums/basic_enum.ts",
+        "start_line": 15,
+        "start_column": 6,
+        "end_line": 15,
+        "end_column": 11
+      },
+      "defining_scope_id": "module:<fixtures>/typescript/code/enums/basic_enum.ts:1:1:59:0",
+      "is_exported": true,
+      "export": {
+        "is_reexport": false
+      },
+      "is_const": false,
+      "members": []
+    },
+    "enum:<fixtures>/typescript/code/enums/basic_enum.ts:23:1:29:1:enum FileAccess {\n  NONE = 0,\n  READ = 1 << 0,\n  WRITE = 1 << 1,\n  EXECUTE = 1 << 2,\n  READ_WRITE = READ | WRITE,\n}": {
+      "kind": "enum",
+      "symbol_id": "enum:<fixtures>/typescript/code/enums/basic_enum.ts:23:1:29:1:enum FileAccess {\n  NONE = 0,\n  READ = 1 << 0,\n  WRITE = 1 << 1,\n  EXECUTE = 1 << 2,\n  READ_WRITE = READ | WRITE,\n}",
+      "name": "enum FileAccess {\n  NONE = 0,\n  READ = 1 << 0,\n  WRITE = 1 << 1,\n  EXECUTE = 1 << 2,\n  READ_WRITE = READ | WRITE,\n}",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/enums/basic_enum.ts",
+        "start_line": 23,
+        "start_column": 1,
+        "end_line": 29,
+        "end_column": 1
+      },
+      "defining_scope_id": "module:<fixtures>/typescript/code/enums/basic_enum.ts:1:1:59:0",
+      "is_exported": false,
+      "is_const": false,
+      "members": []
+    },
+    "enum:<fixtures>/typescript/code/enums/basic_enum.ts:23:6:23:15:FileAccess": {
+      "kind": "enum",
+      "symbol_id": "enum:<fixtures>/typescript/code/enums/basic_enum.ts:23:6:23:15:FileAccess",
+      "name": "FileAccess",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/enums/basic_enum.ts",
+        "start_line": 23,
+        "start_column": 6,
+        "end_line": 23,
+        "end_column": 15
+      },
+      "defining_scope_id": "module:<fixtures>/typescript/code/enums/basic_enum.ts:1:1:59:0",
+      "is_exported": true,
+      "export": {
+        "is_reexport": false
+      },
+      "is_const": false,
+      "members": []
+    }
+  },
+  "namespaces": {},
+  "types": {},
+  "imported_symbols": {},
+  "references": [
+    {
+      "kind": "variable_reference",
+      "name": "Direction",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/enums/basic_enum.ts",
+        "start_line": 7,
+        "start_column": 6,
+        "end_line": 7,
+        "end_column": 14
+      },
+      "scope_id": "module:<fixtures>/typescript/code/enums/basic_enum.ts:1:1:59:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "Status",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/enums/basic_enum.ts",
+        "start_line": 15,
+        "start_column": 6,
+        "end_line": 15,
+        "end_column": 11
+      },
+      "scope_id": "module:<fixtures>/typescript/code/enums/basic_enum.ts:1:1:59:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "FileAccess",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/enums/basic_enum.ts",
+        "start_line": 23,
+        "start_column": 6,
+        "end_line": 23,
+        "end_column": 15
+      },
+      "scope_id": "module:<fixtures>/typescript/code/enums/basic_enum.ts:1:1:59:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "READ",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/enums/basic_enum.ts",
+        "start_line": 28,
+        "start_column": 16,
+        "end_line": 28,
+        "end_column": 19
+      },
+      "scope_id": "class:<fixtures>/typescript/code/enums/basic_enum.ts:23:17:29:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "WRITE",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/enums/basic_enum.ts",
+        "start_line": 28,
+        "start_column": 23,
+        "end_line": 28,
+        "end_column": 27
+      },
+      "scope_id": "class:<fixtures>/typescript/code/enums/basic_enum.ts:23:17:29:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "move",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/enums/basic_enum.ts",
+        "start_line": 32,
+        "start_column": 10,
+        "end_line": 32,
+        "end_column": 13
+      },
+      "scope_id": "module:<fixtures>/typescript/code/enums/basic_enum.ts:1:1:59:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "direction",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/enums/basic_enum.ts",
+        "start_line": 32,
+        "start_column": 15,
+        "end_line": 32,
+        "end_column": 23
+      },
+      "scope_id": "function:<fixtures>/typescript/code/enums/basic_enum.ts:32:14:43:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "type_reference",
+      "name": "Direction",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/enums/basic_enum.ts",
+        "start_line": 32,
+        "start_column": 26,
+        "end_line": 32,
+        "end_column": 34
+      },
+      "scope_id": "function:<fixtures>/typescript/code/enums/basic_enum.ts:32:14:43:1",
+      "type_context": "annotation",
+      "type_info": {
+        "type_id": "type:<fixtures>/typescript/code/enums/basic_enum.ts:32:26:32:34:Direction",
+        "type_name": "Direction",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "direction",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/enums/basic_enum.ts",
+        "start_line": 33,
+        "start_column": 11,
+        "end_line": 33,
+        "end_column": 19
+      },
+      "scope_id": "block:<fixtures>/typescript/code/enums/basic_enum.ts:33:3:42:3",
+      "access_type": "read"
+    },
+    {
+      "kind": "property_access",
+      "name": "UP",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/enums/basic_enum.ts",
+        "start_line": 34,
+        "start_column": 10,
+        "end_line": 34,
+        "end_column": 21
+      },
+      "scope_id": "block:<fixtures>/typescript/code/enums/basic_enum.ts:34:5:35:25",
+      "receiver_location": {
+        "file_path": "<fixtures>/typescript/code/enums/basic_enum.ts",
+        "start_line": 34,
+        "start_column": 10,
+        "end_line": 34,
+        "end_column": 18
+      },
+      "property_chain": [
+        "Direction",
+        "UP"
+      ],
+      "access_type": "property",
+      "is_optional_chain": false
+    },
+    {
+      "kind": "variable_reference",
+      "name": "Direction",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/enums/basic_enum.ts",
+        "start_line": 34,
+        "start_column": 10,
+        "end_line": 34,
+        "end_column": 18
+      },
+      "scope_id": "block:<fixtures>/typescript/code/enums/basic_enum.ts:34:5:35:25",
+      "access_type": "read"
+    },
+    {
+      "kind": "property_access",
+      "name": "UP",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/enums/basic_enum.ts",
+        "start_line": 34,
+        "start_column": 10,
+        "end_line": 34,
+        "end_column": 21
+      },
+      "scope_id": "block:<fixtures>/typescript/code/enums/basic_enum.ts:34:5:35:25",
+      "receiver_location": {
+        "file_path": "<fixtures>/typescript/code/enums/basic_enum.ts",
+        "start_line": 34,
+        "start_column": 10,
+        "end_line": 34,
+        "end_column": 18
+      },
+      "property_chain": [
+        "Direction",
+        "UP"
+      ],
+      "access_type": "property",
+      "is_optional_chain": false
+    },
+    {
+      "kind": "variable_reference",
+      "name": "Direction",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/enums/basic_enum.ts",
+        "start_line": 34,
+        "start_column": 10,
+        "end_line": 34,
+        "end_column": 18
+      },
+      "scope_id": "block:<fixtures>/typescript/code/enums/basic_enum.ts:34:5:35:25",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "Direction",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/enums/basic_enum.ts",
+        "start_line": 34,
+        "start_column": 10,
+        "end_line": 34,
+        "end_column": 18
+      },
+      "scope_id": "block:<fixtures>/typescript/code/enums/basic_enum.ts:34:5:35:25",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "UP",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/enums/basic_enum.ts",
+        "start_line": 34,
+        "start_column": 20,
+        "end_line": 34,
+        "end_column": 21
+      },
+      "scope_id": "block:<fixtures>/typescript/code/enums/basic_enum.ts:34:5:35:25",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "UP",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/enums/basic_enum.ts",
+        "start_line": 34,
+        "start_column": 20,
+        "end_line": 34,
+        "end_column": 21
+      },
+      "scope_id": "block:<fixtures>/typescript/code/enums/basic_enum.ts:34:5:35:25",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "return \"Moving up\";",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/enums/basic_enum.ts",
+        "start_line": 35,
+        "start_column": 7,
+        "end_line": 35,
+        "end_column": 25
+      },
+      "scope_id": "block:<fixtures>/typescript/code/enums/basic_enum.ts:34:5:35:25",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "\"Moving up\"",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/enums/basic_enum.ts",
+        "start_line": 35,
+        "start_column": 14,
+        "end_line": 35,
+        "end_column": 24
+      },
+      "scope_id": "block:<fixtures>/typescript/code/enums/basic_enum.ts:34:5:35:25",
+      "access_type": "read"
+    },
+    {
+      "kind": "property_access",
+      "name": "DOWN",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/enums/basic_enum.ts",
+        "start_line": 36,
+        "start_column": 10,
+        "end_line": 36,
+        "end_column": 23
+      },
+      "scope_id": "block:<fixtures>/typescript/code/enums/basic_enum.ts:36:5:37:27",
+      "receiver_location": {
+        "file_path": "<fixtures>/typescript/code/enums/basic_enum.ts",
+        "start_line": 36,
+        "start_column": 10,
+        "end_line": 36,
+        "end_column": 18
+      },
+      "property_chain": [
+        "Direction",
+        "DOWN"
+      ],
+      "access_type": "property",
+      "is_optional_chain": false
+    },
+    {
+      "kind": "variable_reference",
+      "name": "Direction",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/enums/basic_enum.ts",
+        "start_line": 36,
+        "start_column": 10,
+        "end_line": 36,
+        "end_column": 18
+      },
+      "scope_id": "block:<fixtures>/typescript/code/enums/basic_enum.ts:36:5:37:27",
+      "access_type": "read"
+    },
+    {
+      "kind": "property_access",
+      "name": "DOWN",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/enums/basic_enum.ts",
+        "start_line": 36,
+        "start_column": 10,
+        "end_line": 36,
+        "end_column": 23
+      },
+      "scope_id": "block:<fixtures>/typescript/code/enums/basic_enum.ts:36:5:37:27",
+      "receiver_location": {
+        "file_path": "<fixtures>/typescript/code/enums/basic_enum.ts",
+        "start_line": 36,
+        "start_column": 10,
+        "end_line": 36,
+        "end_column": 18
+      },
+      "property_chain": [
+        "Direction",
+        "DOWN"
+      ],
+      "access_type": "property",
+      "is_optional_chain": false
+    },
+    {
+      "kind": "variable_reference",
+      "name": "Direction",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/enums/basic_enum.ts",
+        "start_line": 36,
+        "start_column": 10,
+        "end_line": 36,
+        "end_column": 18
+      },
+      "scope_id": "block:<fixtures>/typescript/code/enums/basic_enum.ts:36:5:37:27",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "Direction",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/enums/basic_enum.ts",
+        "start_line": 36,
+        "start_column": 10,
+        "end_line": 36,
+        "end_column": 18
+      },
+      "scope_id": "block:<fixtures>/typescript/code/enums/basic_enum.ts:36:5:37:27",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "DOWN",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/enums/basic_enum.ts",
+        "start_line": 36,
+        "start_column": 20,
+        "end_line": 36,
+        "end_column": 23
+      },
+      "scope_id": "block:<fixtures>/typescript/code/enums/basic_enum.ts:36:5:37:27",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "DOWN",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/enums/basic_enum.ts",
+        "start_line": 36,
+        "start_column": 20,
+        "end_line": 36,
+        "end_column": 23
+      },
+      "scope_id": "block:<fixtures>/typescript/code/enums/basic_enum.ts:36:5:37:27",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "return \"Moving down\";",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/enums/basic_enum.ts",
+        "start_line": 37,
+        "start_column": 7,
+        "end_line": 37,
+        "end_column": 27
+      },
+      "scope_id": "block:<fixtures>/typescript/code/enums/basic_enum.ts:36:5:37:27",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "\"Moving down\"",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/enums/basic_enum.ts",
+        "start_line": 37,
+        "start_column": 14,
+        "end_line": 37,
+        "end_column": 26
+      },
+      "scope_id": "block:<fixtures>/typescript/code/enums/basic_enum.ts:36:5:37:27",
+      "access_type": "read"
+    },
+    {
+      "kind": "property_access",
+      "name": "LEFT",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/enums/basic_enum.ts",
+        "start_line": 38,
+        "start_column": 10,
+        "end_line": 38,
+        "end_column": 23
+      },
+      "scope_id": "block:<fixtures>/typescript/code/enums/basic_enum.ts:38:5:39:27",
+      "receiver_location": {
+        "file_path": "<fixtures>/typescript/code/enums/basic_enum.ts",
+        "start_line": 38,
+        "start_column": 10,
+        "end_line": 38,
+        "end_column": 18
+      },
+      "property_chain": [
+        "Direction",
+        "LEFT"
+      ],
+      "access_type": "property",
+      "is_optional_chain": false
+    },
+    {
+      "kind": "variable_reference",
+      "name": "Direction",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/enums/basic_enum.ts",
+        "start_line": 38,
+        "start_column": 10,
+        "end_line": 38,
+        "end_column": 18
+      },
+      "scope_id": "block:<fixtures>/typescript/code/enums/basic_enum.ts:38:5:39:27",
+      "access_type": "read"
+    },
+    {
+      "kind": "property_access",
+      "name": "LEFT",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/enums/basic_enum.ts",
+        "start_line": 38,
+        "start_column": 10,
+        "end_line": 38,
+        "end_column": 23
+      },
+      "scope_id": "block:<fixtures>/typescript/code/enums/basic_enum.ts:38:5:39:27",
+      "receiver_location": {
+        "file_path": "<fixtures>/typescript/code/enums/basic_enum.ts",
+        "start_line": 38,
+        "start_column": 10,
+        "end_line": 38,
+        "end_column": 18
+      },
+      "property_chain": [
+        "Direction",
+        "LEFT"
+      ],
+      "access_type": "property",
+      "is_optional_chain": false
+    },
+    {
+      "kind": "variable_reference",
+      "name": "Direction",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/enums/basic_enum.ts",
+        "start_line": 38,
+        "start_column": 10,
+        "end_line": 38,
+        "end_column": 18
+      },
+      "scope_id": "block:<fixtures>/typescript/code/enums/basic_enum.ts:38:5:39:27",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "Direction",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/enums/basic_enum.ts",
+        "start_line": 38,
+        "start_column": 10,
+        "end_line": 38,
+        "end_column": 18
+      },
+      "scope_id": "block:<fixtures>/typescript/code/enums/basic_enum.ts:38:5:39:27",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "LEFT",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/enums/basic_enum.ts",
+        "start_line": 38,
+        "start_column": 20,
+        "end_line": 38,
+        "end_column": 23
+      },
+      "scope_id": "block:<fixtures>/typescript/code/enums/basic_enum.ts:38:5:39:27",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "LEFT",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/enums/basic_enum.ts",
+        "start_line": 38,
+        "start_column": 20,
+        "end_line": 38,
+        "end_column": 23
+      },
+      "scope_id": "block:<fixtures>/typescript/code/enums/basic_enum.ts:38:5:39:27",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "return \"Moving left\";",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/enums/basic_enum.ts",
+        "start_line": 39,
+        "start_column": 7,
+        "end_line": 39,
+        "end_column": 27
+      },
+      "scope_id": "block:<fixtures>/typescript/code/enums/basic_enum.ts:38:5:39:27",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "\"Moving left\"",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/enums/basic_enum.ts",
+        "start_line": 39,
+        "start_column": 14,
+        "end_line": 39,
+        "end_column": 26
+      },
+      "scope_id": "block:<fixtures>/typescript/code/enums/basic_enum.ts:38:5:39:27",
+      "access_type": "read"
+    },
+    {
+      "kind": "property_access",
+      "name": "RIGHT",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/enums/basic_enum.ts",
+        "start_line": 40,
+        "start_column": 10,
+        "end_line": 40,
+        "end_column": 24
+      },
+      "scope_id": "block:<fixtures>/typescript/code/enums/basic_enum.ts:40:5:41:28",
+      "receiver_location": {
+        "file_path": "<fixtures>/typescript/code/enums/basic_enum.ts",
+        "start_line": 40,
+        "start_column": 10,
+        "end_line": 40,
+        "end_column": 18
+      },
+      "property_chain": [
+        "Direction",
+        "RIGHT"
+      ],
+      "access_type": "property",
+      "is_optional_chain": false
+    },
+    {
+      "kind": "variable_reference",
+      "name": "Direction",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/enums/basic_enum.ts",
+        "start_line": 40,
+        "start_column": 10,
+        "end_line": 40,
+        "end_column": 18
+      },
+      "scope_id": "block:<fixtures>/typescript/code/enums/basic_enum.ts:40:5:41:28",
+      "access_type": "read"
+    },
+    {
+      "kind": "property_access",
+      "name": "RIGHT",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/enums/basic_enum.ts",
+        "start_line": 40,
+        "start_column": 10,
+        "end_line": 40,
+        "end_column": 24
+      },
+      "scope_id": "block:<fixtures>/typescript/code/enums/basic_enum.ts:40:5:41:28",
+      "receiver_location": {
+        "file_path": "<fixtures>/typescript/code/enums/basic_enum.ts",
+        "start_line": 40,
+        "start_column": 10,
+        "end_line": 40,
+        "end_column": 18
+      },
+      "property_chain": [
+        "Direction",
+        "RIGHT"
+      ],
+      "access_type": "property",
+      "is_optional_chain": false
+    },
+    {
+      "kind": "variable_reference",
+      "name": "Direction",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/enums/basic_enum.ts",
+        "start_line": 40,
+        "start_column": 10,
+        "end_line": 40,
+        "end_column": 18
+      },
+      "scope_id": "block:<fixtures>/typescript/code/enums/basic_enum.ts:40:5:41:28",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "Direction",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/enums/basic_enum.ts",
+        "start_line": 40,
+        "start_column": 10,
+        "end_line": 40,
+        "end_column": 18
+      },
+      "scope_id": "block:<fixtures>/typescript/code/enums/basic_enum.ts:40:5:41:28",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "RIGHT",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/enums/basic_enum.ts",
+        "start_line": 40,
+        "start_column": 20,
+        "end_line": 40,
+        "end_column": 24
+      },
+      "scope_id": "block:<fixtures>/typescript/code/enums/basic_enum.ts:40:5:41:28",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "RIGHT",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/enums/basic_enum.ts",
+        "start_line": 40,
+        "start_column": 20,
+        "end_line": 40,
+        "end_column": 24
+      },
+      "scope_id": "block:<fixtures>/typescript/code/enums/basic_enum.ts:40:5:41:28",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "return \"Moving right\";",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/enums/basic_enum.ts",
+        "start_line": 41,
+        "start_column": 7,
+        "end_line": 41,
+        "end_column": 28
+      },
+      "scope_id": "block:<fixtures>/typescript/code/enums/basic_enum.ts:40:5:41:28",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "\"Moving right\"",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/enums/basic_enum.ts",
+        "start_line": 41,
+        "start_column": 14,
+        "end_line": 41,
+        "end_column": 27
+      },
+      "scope_id": "block:<fixtures>/typescript/code/enums/basic_enum.ts:40:5:41:28",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "get_status_message",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/enums/basic_enum.ts",
+        "start_line": 45,
+        "start_column": 10,
+        "end_line": 45,
+        "end_column": 27
+      },
+      "scope_id": "module:<fixtures>/typescript/code/enums/basic_enum.ts:1:1:59:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "status",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/enums/basic_enum.ts",
+        "start_line": 45,
+        "start_column": 29,
+        "end_line": 45,
+        "end_column": 34
+      },
+      "scope_id": "function:<fixtures>/typescript/code/enums/basic_enum.ts:45:28:56:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "type_reference",
+      "name": "Status",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/enums/basic_enum.ts",
+        "start_line": 45,
+        "start_column": 37,
+        "end_line": 45,
+        "end_column": 42
+      },
+      "scope_id": "function:<fixtures>/typescript/code/enums/basic_enum.ts:45:28:56:1",
+      "type_context": "annotation",
+      "type_info": {
+        "type_id": "type:<fixtures>/typescript/code/enums/basic_enum.ts:45:37:45:42:Status",
+        "type_name": "Status",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "status",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/enums/basic_enum.ts",
+        "start_line": 46,
+        "start_column": 11,
+        "end_line": 46,
+        "end_column": 16
+      },
+      "scope_id": "block:<fixtures>/typescript/code/enums/basic_enum.ts:46:3:55:3",
+      "access_type": "read"
+    },
+    {
+      "kind": "property_access",
+      "name": "PENDING",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/enums/basic_enum.ts",
+        "start_line": 47,
+        "start_column": 10,
+        "end_line": 47,
+        "end_column": 23
+      },
+      "scope_id": "block:<fixtures>/typescript/code/enums/basic_enum.ts:47:5:48:32",
+      "receiver_location": {
+        "file_path": "<fixtures>/typescript/code/enums/basic_enum.ts",
+        "start_line": 47,
+        "start_column": 10,
+        "end_line": 47,
+        "end_column": 15
+      },
+      "property_chain": [
+        "Status",
+        "PENDING"
+      ],
+      "access_type": "property",
+      "is_optional_chain": false
+    },
+    {
+      "kind": "variable_reference",
+      "name": "Status",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/enums/basic_enum.ts",
+        "start_line": 47,
+        "start_column": 10,
+        "end_line": 47,
+        "end_column": 15
+      },
+      "scope_id": "block:<fixtures>/typescript/code/enums/basic_enum.ts:47:5:48:32",
+      "access_type": "read"
+    },
+    {
+      "kind": "property_access",
+      "name": "PENDING",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/enums/basic_enum.ts",
+        "start_line": 47,
+        "start_column": 10,
+        "end_line": 47,
+        "end_column": 23
+      },
+      "scope_id": "block:<fixtures>/typescript/code/enums/basic_enum.ts:47:5:48:32",
+      "receiver_location": {
+        "file_path": "<fixtures>/typescript/code/enums/basic_enum.ts",
+        "start_line": 47,
+        "start_column": 10,
+        "end_line": 47,
+        "end_column": 15
+      },
+      "property_chain": [
+        "Status",
+        "PENDING"
+      ],
+      "access_type": "property",
+      "is_optional_chain": false
+    },
+    {
+      "kind": "variable_reference",
+      "name": "Status",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/enums/basic_enum.ts",
+        "start_line": 47,
+        "start_column": 10,
+        "end_line": 47,
+        "end_column": 15
+      },
+      "scope_id": "block:<fixtures>/typescript/code/enums/basic_enum.ts:47:5:48:32",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "Status",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/enums/basic_enum.ts",
+        "start_line": 47,
+        "start_column": 10,
+        "end_line": 47,
+        "end_column": 15
+      },
+      "scope_id": "block:<fixtures>/typescript/code/enums/basic_enum.ts:47:5:48:32",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "PENDING",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/enums/basic_enum.ts",
+        "start_line": 47,
+        "start_column": 17,
+        "end_line": 47,
+        "end_column": 23
+      },
+      "scope_id": "block:<fixtures>/typescript/code/enums/basic_enum.ts:47:5:48:32",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "PENDING",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/enums/basic_enum.ts",
+        "start_line": 47,
+        "start_column": 17,
+        "end_line": 47,
+        "end_column": 23
+      },
+      "scope_id": "block:<fixtures>/typescript/code/enums/basic_enum.ts:47:5:48:32",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "return \"Waiting to start\";",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/enums/basic_enum.ts",
+        "start_line": 48,
+        "start_column": 7,
+        "end_line": 48,
+        "end_column": 32
+      },
+      "scope_id": "block:<fixtures>/typescript/code/enums/basic_enum.ts:47:5:48:32",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "\"Waiting to start\"",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/enums/basic_enum.ts",
+        "start_line": 48,
+        "start_column": 14,
+        "end_line": 48,
+        "end_column": 31
+      },
+      "scope_id": "block:<fixtures>/typescript/code/enums/basic_enum.ts:47:5:48:32",
+      "access_type": "read"
+    },
+    {
+      "kind": "property_access",
+      "name": "ACTIVE",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/enums/basic_enum.ts",
+        "start_line": 49,
+        "start_column": 10,
+        "end_line": 49,
+        "end_column": 22
+      },
+      "scope_id": "block:<fixtures>/typescript/code/enums/basic_enum.ts:49:5:50:33",
+      "receiver_location": {
+        "file_path": "<fixtures>/typescript/code/enums/basic_enum.ts",
+        "start_line": 49,
+        "start_column": 10,
+        "end_line": 49,
+        "end_column": 15
+      },
+      "property_chain": [
+        "Status",
+        "ACTIVE"
+      ],
+      "access_type": "property",
+      "is_optional_chain": false
+    },
+    {
+      "kind": "variable_reference",
+      "name": "Status",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/enums/basic_enum.ts",
+        "start_line": 49,
+        "start_column": 10,
+        "end_line": 49,
+        "end_column": 15
+      },
+      "scope_id": "block:<fixtures>/typescript/code/enums/basic_enum.ts:49:5:50:33",
+      "access_type": "read"
+    },
+    {
+      "kind": "property_access",
+      "name": "ACTIVE",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/enums/basic_enum.ts",
+        "start_line": 49,
+        "start_column": 10,
+        "end_line": 49,
+        "end_column": 22
+      },
+      "scope_id": "block:<fixtures>/typescript/code/enums/basic_enum.ts:49:5:50:33",
+      "receiver_location": {
+        "file_path": "<fixtures>/typescript/code/enums/basic_enum.ts",
+        "start_line": 49,
+        "start_column": 10,
+        "end_line": 49,
+        "end_column": 15
+      },
+      "property_chain": [
+        "Status",
+        "ACTIVE"
+      ],
+      "access_type": "property",
+      "is_optional_chain": false
+    },
+    {
+      "kind": "variable_reference",
+      "name": "Status",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/enums/basic_enum.ts",
+        "start_line": 49,
+        "start_column": 10,
+        "end_line": 49,
+        "end_column": 15
+      },
+      "scope_id": "block:<fixtures>/typescript/code/enums/basic_enum.ts:49:5:50:33",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "Status",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/enums/basic_enum.ts",
+        "start_line": 49,
+        "start_column": 10,
+        "end_line": 49,
+        "end_column": 15
+      },
+      "scope_id": "block:<fixtures>/typescript/code/enums/basic_enum.ts:49:5:50:33",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "ACTIVE",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/enums/basic_enum.ts",
+        "start_line": 49,
+        "start_column": 17,
+        "end_line": 49,
+        "end_column": 22
+      },
+      "scope_id": "block:<fixtures>/typescript/code/enums/basic_enum.ts:49:5:50:33",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "ACTIVE",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/enums/basic_enum.ts",
+        "start_line": 49,
+        "start_column": 17,
+        "end_line": 49,
+        "end_column": 22
+      },
+      "scope_id": "block:<fixtures>/typescript/code/enums/basic_enum.ts:49:5:50:33",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "return \"Currently running\";",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/enums/basic_enum.ts",
+        "start_line": 50,
+        "start_column": 7,
+        "end_line": 50,
+        "end_column": 33
+      },
+      "scope_id": "block:<fixtures>/typescript/code/enums/basic_enum.ts:49:5:50:33",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "\"Currently running\"",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/enums/basic_enum.ts",
+        "start_line": 50,
+        "start_column": 14,
+        "end_line": 50,
+        "end_column": 32
+      },
+      "scope_id": "block:<fixtures>/typescript/code/enums/basic_enum.ts:49:5:50:33",
+      "access_type": "read"
+    },
+    {
+      "kind": "property_access",
+      "name": "COMPLETED",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/enums/basic_enum.ts",
+        "start_line": 51,
+        "start_column": 10,
+        "end_line": 51,
+        "end_column": 25
+      },
+      "scope_id": "block:<fixtures>/typescript/code/enums/basic_enum.ts:51:5:52:38",
+      "receiver_location": {
+        "file_path": "<fixtures>/typescript/code/enums/basic_enum.ts",
+        "start_line": 51,
+        "start_column": 10,
+        "end_line": 51,
+        "end_column": 15
+      },
+      "property_chain": [
+        "Status",
+        "COMPLETED"
+      ],
+      "access_type": "property",
+      "is_optional_chain": false
+    },
+    {
+      "kind": "variable_reference",
+      "name": "Status",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/enums/basic_enum.ts",
+        "start_line": 51,
+        "start_column": 10,
+        "end_line": 51,
+        "end_column": 15
+      },
+      "scope_id": "block:<fixtures>/typescript/code/enums/basic_enum.ts:51:5:52:38",
+      "access_type": "read"
+    },
+    {
+      "kind": "property_access",
+      "name": "COMPLETED",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/enums/basic_enum.ts",
+        "start_line": 51,
+        "start_column": 10,
+        "end_line": 51,
+        "end_column": 25
+      },
+      "scope_id": "block:<fixtures>/typescript/code/enums/basic_enum.ts:51:5:52:38",
+      "receiver_location": {
+        "file_path": "<fixtures>/typescript/code/enums/basic_enum.ts",
+        "start_line": 51,
+        "start_column": 10,
+        "end_line": 51,
+        "end_column": 15
+      },
+      "property_chain": [
+        "Status",
+        "COMPLETED"
+      ],
+      "access_type": "property",
+      "is_optional_chain": false
+    },
+    {
+      "kind": "variable_reference",
+      "name": "Status",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/enums/basic_enum.ts",
+        "start_line": 51,
+        "start_column": 10,
+        "end_line": 51,
+        "end_column": 15
+      },
+      "scope_id": "block:<fixtures>/typescript/code/enums/basic_enum.ts:51:5:52:38",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "Status",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/enums/basic_enum.ts",
+        "start_line": 51,
+        "start_column": 10,
+        "end_line": 51,
+        "end_column": 15
+      },
+      "scope_id": "block:<fixtures>/typescript/code/enums/basic_enum.ts:51:5:52:38",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "COMPLETED",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/enums/basic_enum.ts",
+        "start_line": 51,
+        "start_column": 17,
+        "end_line": 51,
+        "end_column": 25
+      },
+      "scope_id": "block:<fixtures>/typescript/code/enums/basic_enum.ts:51:5:52:38",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "COMPLETED",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/enums/basic_enum.ts",
+        "start_line": 51,
+        "start_column": 17,
+        "end_line": 51,
+        "end_column": 25
+      },
+      "scope_id": "block:<fixtures>/typescript/code/enums/basic_enum.ts:51:5:52:38",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "return \"Successfully completed\";",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/enums/basic_enum.ts",
+        "start_line": 52,
+        "start_column": 7,
+        "end_line": 52,
+        "end_column": 38
+      },
+      "scope_id": "block:<fixtures>/typescript/code/enums/basic_enum.ts:51:5:52:38",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "\"Successfully completed\"",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/enums/basic_enum.ts",
+        "start_line": 52,
+        "start_column": 14,
+        "end_line": 52,
+        "end_column": 37
+      },
+      "scope_id": "block:<fixtures>/typescript/code/enums/basic_enum.ts:51:5:52:38",
+      "access_type": "read"
+    },
+    {
+      "kind": "property_access",
+      "name": "FAILED",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/enums/basic_enum.ts",
+        "start_line": 53,
+        "start_column": 10,
+        "end_line": 53,
+        "end_column": 22
+      },
+      "scope_id": "block:<fixtures>/typescript/code/enums/basic_enum.ts:53:5:54:33",
+      "receiver_location": {
+        "file_path": "<fixtures>/typescript/code/enums/basic_enum.ts",
+        "start_line": 53,
+        "start_column": 10,
+        "end_line": 53,
+        "end_column": 15
+      },
+      "property_chain": [
+        "Status",
+        "FAILED"
+      ],
+      "access_type": "property",
+      "is_optional_chain": false
+    },
+    {
+      "kind": "variable_reference",
+      "name": "Status",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/enums/basic_enum.ts",
+        "start_line": 53,
+        "start_column": 10,
+        "end_line": 53,
+        "end_column": 15
+      },
+      "scope_id": "block:<fixtures>/typescript/code/enums/basic_enum.ts:53:5:54:33",
+      "access_type": "read"
+    },
+    {
+      "kind": "property_access",
+      "name": "FAILED",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/enums/basic_enum.ts",
+        "start_line": 53,
+        "start_column": 10,
+        "end_line": 53,
+        "end_column": 22
+      },
+      "scope_id": "block:<fixtures>/typescript/code/enums/basic_enum.ts:53:5:54:33",
+      "receiver_location": {
+        "file_path": "<fixtures>/typescript/code/enums/basic_enum.ts",
+        "start_line": 53,
+        "start_column": 10,
+        "end_line": 53,
+        "end_column": 15
+      },
+      "property_chain": [
+        "Status",
+        "FAILED"
+      ],
+      "access_type": "property",
+      "is_optional_chain": false
+    },
+    {
+      "kind": "variable_reference",
+      "name": "Status",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/enums/basic_enum.ts",
+        "start_line": 53,
+        "start_column": 10,
+        "end_line": 53,
+        "end_column": 15
+      },
+      "scope_id": "block:<fixtures>/typescript/code/enums/basic_enum.ts:53:5:54:33",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "Status",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/enums/basic_enum.ts",
+        "start_line": 53,
+        "start_column": 10,
+        "end_line": 53,
+        "end_column": 15
+      },
+      "scope_id": "block:<fixtures>/typescript/code/enums/basic_enum.ts:53:5:54:33",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "FAILED",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/enums/basic_enum.ts",
+        "start_line": 53,
+        "start_column": 17,
+        "end_line": 53,
+        "end_column": 22
+      },
+      "scope_id": "block:<fixtures>/typescript/code/enums/basic_enum.ts:53:5:54:33",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "FAILED",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/enums/basic_enum.ts",
+        "start_line": 53,
+        "start_column": 17,
+        "end_line": 53,
+        "end_column": 22
+      },
+      "scope_id": "block:<fixtures>/typescript/code/enums/basic_enum.ts:53:5:54:33",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "return \"Failed with error\";",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/enums/basic_enum.ts",
+        "start_line": 54,
+        "start_column": 7,
+        "end_line": 54,
+        "end_column": 33
+      },
+      "scope_id": "block:<fixtures>/typescript/code/enums/basic_enum.ts:53:5:54:33",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "\"Failed with error\"",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/enums/basic_enum.ts",
+        "start_line": 54,
+        "start_column": 14,
+        "end_line": 54,
+        "end_column": 32
+      },
+      "scope_id": "block:<fixtures>/typescript/code/enums/basic_enum.ts:53:5:54:33",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "Direction",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/enums/basic_enum.ts",
+        "start_line": 58,
+        "start_column": 10,
+        "end_line": 58,
+        "end_column": 18
+      },
+      "scope_id": "module:<fixtures>/typescript/code/enums/basic_enum.ts:1:1:59:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "Status",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/enums/basic_enum.ts",
+        "start_line": 58,
+        "start_column": 21,
+        "end_line": 58,
+        "end_column": 26
+      },
+      "scope_id": "module:<fixtures>/typescript/code/enums/basic_enum.ts:1:1:59:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "FileAccess",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/enums/basic_enum.ts",
+        "start_line": 58,
+        "start_column": 29,
+        "end_line": 58,
+        "end_column": 38
+      },
+      "scope_id": "module:<fixtures>/typescript/code/enums/basic_enum.ts:1:1:59:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "move",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/enums/basic_enum.ts",
+        "start_line": 58,
+        "start_column": 41,
+        "end_line": 58,
+        "end_column": 44
+      },
+      "scope_id": "module:<fixtures>/typescript/code/enums/basic_enum.ts:1:1:59:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "get_status_message",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/enums/basic_enum.ts",
+        "start_line": 58,
+        "start_column": 47,
+        "end_line": 58,
+        "end_column": 64
+      },
+      "scope_id": "module:<fixtures>/typescript/code/enums/basic_enum.ts:1:1:59:0",
+      "access_type": "read"
+    }
+  ]
+}

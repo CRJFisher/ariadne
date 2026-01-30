@@ -1,0 +1,912 @@
+{
+  "file_path": "<fixtures>/typescript/code/classes/methods.ts",
+  "language": "typescript",
+  "root_scope_id": "module:<fixtures>/typescript/code/classes/methods.ts:1:1:38:0",
+  "scopes": {
+    "module:<fixtures>/typescript/code/classes/methods.ts:1:1:38:0": {
+      "id": "module:<fixtures>/typescript/code/classes/methods.ts:1:1:38:0",
+      "parent_id": null,
+      "name": null,
+      "type": "module",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/classes/methods.ts",
+        "start_line": 1,
+        "start_column": 1,
+        "end_line": 38,
+        "end_column": 0
+      },
+      "child_ids": [
+        "class:<fixtures>/typescript/code/classes/methods.ts:6:18:35:1"
+      ]
+    },
+    "class:<fixtures>/typescript/code/classes/methods.ts:6:18:35:1": {
+      "id": "class:<fixtures>/typescript/code/classes/methods.ts:6:18:35:1",
+      "parent_id": "module:<fixtures>/typescript/code/classes/methods.ts:1:1:38:0",
+      "name": "Calculator",
+      "type": "class",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/classes/methods.ts",
+        "start_line": 6,
+        "start_column": 18,
+        "end_line": 35,
+        "end_column": 1
+      },
+      "child_ids": [
+        "method:<fixtures>/typescript/code/classes/methods.ts:12:6:16:3",
+        "method:<fixtures>/typescript/code/classes/methods.ts:19:14:21:3",
+        "method:<fixtures>/typescript/code/classes/methods.ts:24:18:26:3",
+        "method:<fixtures>/typescript/code/classes/methods.ts:29:16:34:3"
+      ]
+    },
+    "method:<fixtures>/typescript/code/classes/methods.ts:12:6:16:3": {
+      "id": "method:<fixtures>/typescript/code/classes/methods.ts:12:6:16:3",
+      "parent_id": "class:<fixtures>/typescript/code/classes/methods.ts:6:18:35:1",
+      "name": "add",
+      "type": "method",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/classes/methods.ts",
+        "start_line": 12,
+        "start_column": 6,
+        "end_line": 16,
+        "end_column": 3
+      },
+      "child_ids": []
+    },
+    "method:<fixtures>/typescript/code/classes/methods.ts:19:14:21:3": {
+      "id": "method:<fixtures>/typescript/code/classes/methods.ts:19:14:21:3",
+      "parent_id": "class:<fixtures>/typescript/code/classes/methods.ts:6:18:35:1",
+      "name": "get_history",
+      "type": "method",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/classes/methods.ts",
+        "start_line": 19,
+        "start_column": 14,
+        "end_line": 21,
+        "end_column": 3
+      },
+      "child_ids": []
+    },
+    "method:<fixtures>/typescript/code/classes/methods.ts:24:18:26:3": {
+      "id": "method:<fixtures>/typescript/code/classes/methods.ts:24:18:26:3",
+      "parent_id": "class:<fixtures>/typescript/code/classes/methods.ts:6:18:35:1",
+      "name": "multiply",
+      "type": "method",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/classes/methods.ts",
+        "start_line": 24,
+        "start_column": 18,
+        "end_line": 26,
+        "end_column": 3
+      },
+      "child_ids": []
+    },
+    "method:<fixtures>/typescript/code/classes/methods.ts:29:16:34:3": {
+      "id": "method:<fixtures>/typescript/code/classes/methods.ts:29:16:34:3",
+      "parent_id": "class:<fixtures>/typescript/code/classes/methods.ts:6:18:35:1",
+      "name": "divide",
+      "type": "method",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/classes/methods.ts",
+        "start_line": 29,
+        "start_column": 16,
+        "end_line": 34,
+        "end_column": 3
+      },
+      "child_ids": [
+        "block:<fixtures>/typescript/code/classes/methods.ts:30:5:32:5"
+      ]
+    },
+    "block:<fixtures>/typescript/code/classes/methods.ts:30:5:32:5": {
+      "id": "block:<fixtures>/typescript/code/classes/methods.ts:30:5:32:5",
+      "parent_id": "method:<fixtures>/typescript/code/classes/methods.ts:29:16:34:3",
+      "name": null,
+      "type": "block",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/classes/methods.ts",
+        "start_line": 30,
+        "start_column": 5,
+        "end_line": 32,
+        "end_column": 5
+      },
+      "child_ids": []
+    }
+  },
+  "functions": {},
+  "classes": {
+    "class:<fixtures>/typescript/code/classes/methods.ts:6:7:6:16:Calculator": {
+      "kind": "class",
+      "symbol_id": "class:<fixtures>/typescript/code/classes/methods.ts:6:7:6:16:Calculator",
+      "name": "Calculator",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/classes/methods.ts",
+        "start_line": 6,
+        "start_column": 7,
+        "end_line": 6,
+        "end_column": 16
+      },
+      "defining_scope_id": "module:<fixtures>/typescript/code/classes/methods.ts:1:1:38:0",
+      "generics": [],
+      "extends": [],
+      "is_exported": true,
+      "export": {
+        "is_reexport": false
+      },
+      "methods": [
+        {
+          "kind": "method",
+          "defining_scope_id": "class:<fixtures>/typescript/code/classes/methods.ts:6:18:35:1",
+          "symbol_id": "method:<fixtures>/typescript/code/classes/methods.ts:12:3:12:5:add",
+          "name": "add",
+          "location": {
+            "file_path": "<fixtures>/typescript/code/classes/methods.ts",
+            "start_line": 12,
+            "start_column": 3,
+            "end_line": 12,
+            "end_column": 5
+          },
+          "abstract": false,
+          "static": false,
+          "async": false,
+          "return_type": "number",
+          "generics": [],
+          "parameters": [
+            {
+              "kind": "parameter",
+              "defining_scope_id": "method:<fixtures>/typescript/code/classes/methods.ts:12:6:16:3",
+              "symbol_id": "parameter:<fixtures>/typescript/code/classes/methods.ts:12:7:12:7:a",
+              "name": "a",
+              "location": {
+                "file_path": "<fixtures>/typescript/code/classes/methods.ts",
+                "start_line": 12,
+                "start_column": 7,
+                "end_line": 12,
+                "end_column": 7
+              },
+              "type": "number",
+              "optional": false
+            },
+            {
+              "kind": "parameter",
+              "defining_scope_id": "method:<fixtures>/typescript/code/classes/methods.ts:12:6:16:3",
+              "symbol_id": "parameter:<fixtures>/typescript/code/classes/methods.ts:12:18:12:18:b",
+              "name": "b",
+              "location": {
+                "file_path": "<fixtures>/typescript/code/classes/methods.ts",
+                "start_line": 12,
+                "start_column": 18,
+                "end_line": 12,
+                "end_column": 18
+              },
+              "type": "number",
+              "optional": false
+            }
+          ],
+          "body_scope_id": "method:<fixtures>/typescript/code/classes/methods.ts:12:6:16:3"
+        },
+        {
+          "kind": "method",
+          "defining_scope_id": "class:<fixtures>/typescript/code/classes/methods.ts:6:18:35:1",
+          "symbol_id": "method:<fixtures>/typescript/code/classes/methods.ts:19:3:19:13:get_history",
+          "name": "get_history",
+          "location": {
+            "file_path": "<fixtures>/typescript/code/classes/methods.ts",
+            "start_line": 19,
+            "start_column": 3,
+            "end_line": 19,
+            "end_column": 13
+          },
+          "abstract": false,
+          "static": false,
+          "async": false,
+          "return_type": "number[]",
+          "generics": [],
+          "parameters": [],
+          "body_scope_id": "method:<fixtures>/typescript/code/classes/methods.ts:19:14:21:3"
+        },
+        {
+          "kind": "method",
+          "defining_scope_id": "class:<fixtures>/typescript/code/classes/methods.ts:6:18:35:1",
+          "symbol_id": "method:<fixtures>/typescript/code/classes/methods.ts:24:10:24:17:multiply",
+          "name": "multiply",
+          "location": {
+            "file_path": "<fixtures>/typescript/code/classes/methods.ts",
+            "start_line": 24,
+            "start_column": 10,
+            "end_line": 24,
+            "end_column": 17
+          },
+          "abstract": false,
+          "static": true,
+          "async": false,
+          "return_type": "number",
+          "generics": [],
+          "parameters": [
+            {
+              "kind": "parameter",
+              "defining_scope_id": "method:<fixtures>/typescript/code/classes/methods.ts:24:18:26:3",
+              "symbol_id": "parameter:<fixtures>/typescript/code/classes/methods.ts:24:19:24:19:a",
+              "name": "a",
+              "location": {
+                "file_path": "<fixtures>/typescript/code/classes/methods.ts",
+                "start_line": 24,
+                "start_column": 19,
+                "end_line": 24,
+                "end_column": 19
+              },
+              "type": "number",
+              "optional": false
+            },
+            {
+              "kind": "parameter",
+              "defining_scope_id": "method:<fixtures>/typescript/code/classes/methods.ts:24:18:26:3",
+              "symbol_id": "parameter:<fixtures>/typescript/code/classes/methods.ts:24:30:24:30:b",
+              "name": "b",
+              "location": {
+                "file_path": "<fixtures>/typescript/code/classes/methods.ts",
+                "start_line": 24,
+                "start_column": 30,
+                "end_line": 24,
+                "end_column": 30
+              },
+              "type": "number",
+              "optional": false
+            }
+          ],
+          "body_scope_id": "method:<fixtures>/typescript/code/classes/methods.ts:24:18:26:3"
+        },
+        {
+          "kind": "method",
+          "defining_scope_id": "class:<fixtures>/typescript/code/classes/methods.ts:6:18:35:1",
+          "symbol_id": "method:<fixtures>/typescript/code/classes/methods.ts:29:10:29:15:divide",
+          "name": "divide",
+          "location": {
+            "file_path": "<fixtures>/typescript/code/classes/methods.ts",
+            "start_line": 29,
+            "start_column": 10,
+            "end_line": 29,
+            "end_column": 15
+          },
+          "abstract": false,
+          "static": true,
+          "async": false,
+          "return_type": "number",
+          "generics": [],
+          "parameters": [
+            {
+              "kind": "parameter",
+              "defining_scope_id": "method:<fixtures>/typescript/code/classes/methods.ts:29:16:34:3",
+              "symbol_id": "parameter:<fixtures>/typescript/code/classes/methods.ts:29:17:29:17:a",
+              "name": "a",
+              "location": {
+                "file_path": "<fixtures>/typescript/code/classes/methods.ts",
+                "start_line": 29,
+                "start_column": 17,
+                "end_line": 29,
+                "end_column": 17
+              },
+              "type": "number",
+              "optional": false
+            },
+            {
+              "kind": "parameter",
+              "defining_scope_id": "method:<fixtures>/typescript/code/classes/methods.ts:29:16:34:3",
+              "symbol_id": "parameter:<fixtures>/typescript/code/classes/methods.ts:29:28:29:28:b",
+              "name": "b",
+              "location": {
+                "file_path": "<fixtures>/typescript/code/classes/methods.ts",
+                "start_line": 29,
+                "start_column": 28,
+                "end_line": 29,
+                "end_column": 28
+              },
+              "type": "number",
+              "optional": false
+            }
+          ],
+          "body_scope_id": "method:<fixtures>/typescript/code/classes/methods.ts:29:16:34:3"
+        }
+      ],
+      "properties": [
+        {
+          "kind": "property",
+          "defining_scope_id": "class:<fixtures>/typescript/code/classes/methods.ts:6:18:35:1",
+          "symbol_id": "property:<fixtures>/typescript/code/classes/methods.ts:8:3:8:35:static readonly VERSION = \"1.0.0\"",
+          "name": "static readonly VERSION = \"1.0.0\"",
+          "location": {
+            "file_path": "<fixtures>/typescript/code/classes/methods.ts",
+            "start_line": 8,
+            "start_column": 3,
+            "end_line": 8,
+            "end_column": 35
+          },
+          "static": false,
+          "readonly": false,
+          "abstract": false,
+          "decorators": []
+        },
+        {
+          "kind": "property",
+          "defining_scope_id": "class:<fixtures>/typescript/code/classes/methods.ts:6:18:35:1",
+          "symbol_id": "property:<fixtures>/typescript/code/classes/methods.ts:8:19:8:25:VERSION",
+          "name": "VERSION",
+          "location": {
+            "file_path": "<fixtures>/typescript/code/classes/methods.ts",
+            "start_line": 8,
+            "start_column": 19,
+            "end_line": 8,
+            "end_column": 25
+          },
+          "static": true,
+          "readonly": true,
+          "abstract": false,
+          "initial_value": "\"1.0.0\"",
+          "decorators": []
+        },
+        {
+          "kind": "property",
+          "defining_scope_id": "class:<fixtures>/typescript/code/classes/methods.ts:6:18:35:1",
+          "symbol_id": "property:<fixtures>/typescript/code/classes/methods.ts:9:3:9:32:private history: number[] = []",
+          "name": "private history: number[] = []",
+          "location": {
+            "file_path": "<fixtures>/typescript/code/classes/methods.ts",
+            "start_line": 9,
+            "start_column": 3,
+            "end_line": 9,
+            "end_column": 32
+          },
+          "static": false,
+          "readonly": false,
+          "abstract": false,
+          "decorators": []
+        },
+        {
+          "kind": "property",
+          "defining_scope_id": "class:<fixtures>/typescript/code/classes/methods.ts:6:18:35:1",
+          "symbol_id": "property:<fixtures>/typescript/code/classes/methods.ts:9:11:9:17:history",
+          "name": "history",
+          "location": {
+            "file_path": "<fixtures>/typescript/code/classes/methods.ts",
+            "start_line": 9,
+            "start_column": 11,
+            "end_line": 9,
+            "end_column": 17
+          },
+          "access_modifier": "private",
+          "static": false,
+          "readonly": false,
+          "abstract": false,
+          "type": "number[]",
+          "initial_value": "[]",
+          "decorators": []
+        }
+      ],
+      "decorators": []
+    }
+  },
+  "variables": {
+    "variable:<fixtures>/typescript/code/classes/methods.ts:13:11:13:16:result": {
+      "kind": "constant",
+      "symbol_id": "variable:<fixtures>/typescript/code/classes/methods.ts:13:11:13:16:result",
+      "name": "result",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/classes/methods.ts",
+        "start_line": 13,
+        "start_column": 11,
+        "end_line": 13,
+        "end_column": 16
+      },
+      "defining_scope_id": "method:<fixtures>/typescript/code/classes/methods.ts:12:6:16:3",
+      "is_exported": false,
+      "initial_value": "a + b"
+    }
+  },
+  "interfaces": {},
+  "enums": {},
+  "namespaces": {},
+  "types": {},
+  "imported_symbols": {},
+  "references": [
+    {
+      "kind": "type_reference",
+      "name": "Calculator",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/classes/methods.ts",
+        "start_line": 6,
+        "start_column": 7,
+        "end_line": 6,
+        "end_column": 16
+      },
+      "scope_id": "module:<fixtures>/typescript/code/classes/methods.ts:1:1:38:0",
+      "type_context": "annotation",
+      "type_info": {
+        "type_id": "type:<fixtures>/typescript/code/classes/methods.ts:6:7:6:16:Calculator",
+        "type_name": "Calculator",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "a",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/classes/methods.ts",
+        "start_line": 12,
+        "start_column": 7,
+        "end_line": 12,
+        "end_column": 7
+      },
+      "scope_id": "method:<fixtures>/typescript/code/classes/methods.ts:12:6:16:3",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "b",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/classes/methods.ts",
+        "start_line": 12,
+        "start_column": 18,
+        "end_line": 12,
+        "end_column": 18
+      },
+      "scope_id": "method:<fixtures>/typescript/code/classes/methods.ts:12:6:16:3",
+      "access_type": "read"
+    },
+    {
+      "kind": "assignment",
+      "name": "result = a + b",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/classes/methods.ts",
+        "start_line": 13,
+        "start_column": 11,
+        "end_line": 13,
+        "end_column": 24
+      },
+      "scope_id": "method:<fixtures>/typescript/code/classes/methods.ts:12:6:16:3",
+      "target_location": {
+        "file_path": "<fixtures>/typescript/code/classes/methods.ts",
+        "start_line": 13,
+        "start_column": 11,
+        "end_line": 13,
+        "end_column": 24
+      }
+    },
+    {
+      "kind": "assignment",
+      "name": "result",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/classes/methods.ts",
+        "start_line": 13,
+        "start_column": 11,
+        "end_line": 13,
+        "end_column": 16
+      },
+      "scope_id": "method:<fixtures>/typescript/code/classes/methods.ts:12:6:16:3",
+      "target_location": {
+        "file_path": "<fixtures>/typescript/code/classes/methods.ts",
+        "start_line": 13,
+        "start_column": 11,
+        "end_line": 13,
+        "end_column": 16
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "result",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/classes/methods.ts",
+        "start_line": 13,
+        "start_column": 11,
+        "end_line": 13,
+        "end_column": 16
+      },
+      "scope_id": "method:<fixtures>/typescript/code/classes/methods.ts:12:6:16:3",
+      "access_type": "read"
+    },
+    {
+      "kind": "assignment",
+      "name": "a + b",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/classes/methods.ts",
+        "start_line": 13,
+        "start_column": 20,
+        "end_line": 13,
+        "end_column": 24
+      },
+      "scope_id": "method:<fixtures>/typescript/code/classes/methods.ts:12:6:16:3",
+      "target_location": {
+        "file_path": "<fixtures>/typescript/code/classes/methods.ts",
+        "start_line": 13,
+        "start_column": 11,
+        "end_line": 13,
+        "end_column": 16
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "a",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/classes/methods.ts",
+        "start_line": 13,
+        "start_column": 20,
+        "end_line": 13,
+        "end_column": 20
+      },
+      "scope_id": "method:<fixtures>/typescript/code/classes/methods.ts:12:6:16:3",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "b",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/classes/methods.ts",
+        "start_line": 13,
+        "start_column": 24,
+        "end_line": 13,
+        "end_column": 24
+      },
+      "scope_id": "method:<fixtures>/typescript/code/classes/methods.ts:12:6:16:3",
+      "access_type": "read"
+    },
+    {
+      "kind": "method_call",
+      "name": "push",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/classes/methods.ts",
+        "start_line": 14,
+        "start_column": 5,
+        "end_line": 14,
+        "end_column": 29
+      },
+      "scope_id": "method:<fixtures>/typescript/code/classes/methods.ts:12:6:16:3",
+      "receiver_location": {
+        "file_path": "<fixtures>/typescript/code/classes/methods.ts",
+        "start_line": 14,
+        "start_column": 5,
+        "end_line": 14,
+        "end_column": 16
+      },
+      "property_chain": [
+        "this",
+        "history",
+        "push"
+      ],
+      "optional_chaining": false
+    },
+    {
+      "kind": "variable_reference",
+      "name": "this.history",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/classes/methods.ts",
+        "start_line": 14,
+        "start_column": 5,
+        "end_line": 14,
+        "end_column": 16
+      },
+      "scope_id": "method:<fixtures>/typescript/code/classes/methods.ts:12:6:16:3",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "this",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/classes/methods.ts",
+        "start_line": 14,
+        "start_column": 5,
+        "end_line": 14,
+        "end_column": 8
+      },
+      "scope_id": "method:<fixtures>/typescript/code/classes/methods.ts:12:6:16:3",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "result",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/classes/methods.ts",
+        "start_line": 14,
+        "start_column": 23,
+        "end_line": 14,
+        "end_column": 28
+      },
+      "scope_id": "method:<fixtures>/typescript/code/classes/methods.ts:12:6:16:3",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "return result;",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/classes/methods.ts",
+        "start_line": 15,
+        "start_column": 5,
+        "end_line": 15,
+        "end_column": 18
+      },
+      "scope_id": "method:<fixtures>/typescript/code/classes/methods.ts:12:6:16:3",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "result",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/classes/methods.ts",
+        "start_line": 15,
+        "start_column": 12,
+        "end_line": 15,
+        "end_column": 17
+      },
+      "scope_id": "method:<fixtures>/typescript/code/classes/methods.ts:12:6:16:3",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "result",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/classes/methods.ts",
+        "start_line": 15,
+        "start_column": 12,
+        "end_line": 15,
+        "end_column": 17
+      },
+      "scope_id": "method:<fixtures>/typescript/code/classes/methods.ts:12:6:16:3",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "return this.history;",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/classes/methods.ts",
+        "start_line": 20,
+        "start_column": 5,
+        "end_line": 20,
+        "end_column": 24
+      },
+      "scope_id": "method:<fixtures>/typescript/code/classes/methods.ts:19:14:21:3",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "this.history",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/classes/methods.ts",
+        "start_line": 20,
+        "start_column": 12,
+        "end_line": 20,
+        "end_column": 23
+      },
+      "scope_id": "method:<fixtures>/typescript/code/classes/methods.ts:19:14:21:3",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "this",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/classes/methods.ts",
+        "start_line": 20,
+        "start_column": 12,
+        "end_line": 20,
+        "end_column": 15
+      },
+      "scope_id": "method:<fixtures>/typescript/code/classes/methods.ts:19:14:21:3",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "a",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/classes/methods.ts",
+        "start_line": 24,
+        "start_column": 19,
+        "end_line": 24,
+        "end_column": 19
+      },
+      "scope_id": "method:<fixtures>/typescript/code/classes/methods.ts:24:18:26:3",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "b",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/classes/methods.ts",
+        "start_line": 24,
+        "start_column": 30,
+        "end_line": 24,
+        "end_column": 30
+      },
+      "scope_id": "method:<fixtures>/typescript/code/classes/methods.ts:24:18:26:3",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "return a * b;",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/classes/methods.ts",
+        "start_line": 25,
+        "start_column": 5,
+        "end_line": 25,
+        "end_column": 17
+      },
+      "scope_id": "method:<fixtures>/typescript/code/classes/methods.ts:24:18:26:3",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "a * b",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/classes/methods.ts",
+        "start_line": 25,
+        "start_column": 12,
+        "end_line": 25,
+        "end_column": 16
+      },
+      "scope_id": "method:<fixtures>/typescript/code/classes/methods.ts:24:18:26:3",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "a",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/classes/methods.ts",
+        "start_line": 25,
+        "start_column": 12,
+        "end_line": 25,
+        "end_column": 12
+      },
+      "scope_id": "method:<fixtures>/typescript/code/classes/methods.ts:24:18:26:3",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "b",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/classes/methods.ts",
+        "start_line": 25,
+        "start_column": 16,
+        "end_line": 25,
+        "end_column": 16
+      },
+      "scope_id": "method:<fixtures>/typescript/code/classes/methods.ts:24:18:26:3",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "a",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/classes/methods.ts",
+        "start_line": 29,
+        "start_column": 17,
+        "end_line": 29,
+        "end_column": 17
+      },
+      "scope_id": "method:<fixtures>/typescript/code/classes/methods.ts:29:16:34:3",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "b",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/classes/methods.ts",
+        "start_line": 29,
+        "start_column": 28,
+        "end_line": 29,
+        "end_column": 28
+      },
+      "scope_id": "method:<fixtures>/typescript/code/classes/methods.ts:29:16:34:3",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "b",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/classes/methods.ts",
+        "start_line": 30,
+        "start_column": 9,
+        "end_line": 30,
+        "end_column": 9
+      },
+      "scope_id": "block:<fixtures>/typescript/code/classes/methods.ts:30:5:32:5",
+      "access_type": "read"
+    },
+    {
+      "kind": "function_call",
+      "name": "Error",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/classes/methods.ts",
+        "start_line": 31,
+        "start_column": 13,
+        "end_line": 31,
+        "end_column": 41
+      },
+      "scope_id": "block:<fixtures>/typescript/code/classes/methods.ts:30:5:32:5"
+    },
+    {
+      "kind": "constructor_call",
+      "name": "Error",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/classes/methods.ts",
+        "start_line": 31,
+        "start_column": 17,
+        "end_line": 31,
+        "end_column": 21
+      },
+      "scope_id": "block:<fixtures>/typescript/code/classes/methods.ts:30:5:32:5"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "Error",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/classes/methods.ts",
+        "start_line": 31,
+        "start_column": 17,
+        "end_line": 31,
+        "end_column": 21
+      },
+      "scope_id": "block:<fixtures>/typescript/code/classes/methods.ts:30:5:32:5",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "return a / b;",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/classes/methods.ts",
+        "start_line": 33,
+        "start_column": 5,
+        "end_line": 33,
+        "end_column": 17
+      },
+      "scope_id": "method:<fixtures>/typescript/code/classes/methods.ts:29:16:34:3",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "a / b",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/classes/methods.ts",
+        "start_line": 33,
+        "start_column": 12,
+        "end_line": 33,
+        "end_column": 16
+      },
+      "scope_id": "method:<fixtures>/typescript/code/classes/methods.ts:29:16:34:3",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "a",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/classes/methods.ts",
+        "start_line": 33,
+        "start_column": 12,
+        "end_line": 33,
+        "end_column": 12
+      },
+      "scope_id": "method:<fixtures>/typescript/code/classes/methods.ts:29:16:34:3",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "b",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/classes/methods.ts",
+        "start_line": 33,
+        "start_column": 16,
+        "end_line": 33,
+        "end_column": 16
+      },
+      "scope_id": "method:<fixtures>/typescript/code/classes/methods.ts:29:16:34:3",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "Calculator",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/classes/methods.ts",
+        "start_line": 37,
+        "start_column": 10,
+        "end_line": 37,
+        "end_column": 19
+      },
+      "scope_id": "module:<fixtures>/typescript/code/classes/methods.ts:1:1:38:0",
+      "access_type": "read"
+    }
+  ]
+}

@@ -10,10 +10,11 @@
  * - Branded types (SymbolId, ScopeId, etc.) remain as strings in JSON
  * - All SemanticIndex fields are preserved without information loss
  * - Empty collections serialize as {} or [] to make schema clear
+ * - File paths are stored as relative paths (relative to fixtures directory)
+ *   to support git worktrees and portability across machines
  */
 
 import fs from "fs";
-import path from "path";
 import type {
   FilePath,
   Language,
@@ -30,6 +31,43 @@ import type {
   ImportDefinition,
   SymbolReference,
 } from "@ariadnejs/types";
+
+/**
+ * Placeholder used in JSON fixtures to represent paths relative to fixtures directory.
+ * When writing: absolute paths are converted to <fixtures>/relative/path
+ * When loading: <fixtures>/relative/path is converted back to absolute paths
+ */
+const FIXTURES_PLACEHOLDER = "<fixtures>/";
+
+/**
+ * Get the fixtures directory path
+ */
+function get_fixtures_dir(): string {
+  return __dirname;
+}
+
+/**
+ * Convert absolute paths to relative paths with placeholder
+ *
+ * Replaces absolute paths under the fixtures directory with <fixtures>/relative/path
+ */
+function absolute_to_relative_paths(json_string: string): string {
+  const fixtures_dir = get_fixtures_dir();
+  // Escape special regex characters in the path and replace
+  const escaped_path = fixtures_dir.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const regex = new RegExp(escaped_path + "/", "g");
+  return json_string.replace(regex, FIXTURES_PLACEHOLDER);
+}
+
+/**
+ * Convert relative paths with placeholder back to absolute paths
+ *
+ * Replaces <fixtures>/relative/path with absolute paths for the current machine
+ */
+function relative_to_absolute_paths(json_string: string): string {
+  const fixtures_dir = get_fixtures_dir();
+  return json_string.replaceAll(FIXTURES_PLACEHOLDER, fixtures_dir + "/");
+}
 
 /**
  * JSON representation of SemanticIndex
@@ -197,7 +235,8 @@ export function json_string_to_index_single_file(
  * Writes a SemanticIndex to a JSON fixture file
  *
  * The file is written with 2-space indentation and a trailing newline
- * for clean git diffs.
+ * for clean git diffs. Absolute paths are converted to relative paths
+ * using the <fixtures>/ placeholder for portability.
  *
  * @param index - The SemanticIndex to write
  * @param output_path - Absolute path to the output JSON file
@@ -207,11 +246,15 @@ export function write_index_single_file_fixture(
   output_path: string
 ): void {
   const json_string = index_single_file_to_json_string(index);
-  fs.writeFileSync(output_path, json_string + "\n", "utf-8");
+  const relative_json_string = absolute_to_relative_paths(json_string);
+  fs.writeFileSync(output_path, relative_json_string + "\n", "utf-8");
 }
 
 /**
  * Loads a SemanticIndex from a JSON fixture file
+ *
+ * Relative paths using the <fixtures>/ placeholder are converted back
+ * to absolute paths for the current machine/worktree.
  *
  * @param fixture_path - Absolute path to the JSON fixture file
  * @returns The deserialized SemanticIndex
@@ -220,5 +263,6 @@ export function load_index_single_file_fixture(
   fixture_path: string
 ): import("../../../src/index_single_file/semantic_index").SemanticIndex {
   const json_string = fs.readFileSync(fixture_path, "utf-8");
-  return json_string_to_index_single_file(json_string);
+  const absolute_json_string = relative_to_absolute_paths(json_string);
+  return json_string_to_index_single_file(absolute_json_string);
 }

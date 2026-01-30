@@ -1,0 +1,1715 @@
+{
+  "file_path": "<fixtures>/typescript/code/enums/string_enum.ts",
+  "language": "typescript",
+  "root_scope_id": "module:<fixtures>/typescript/code/enums/string_enum.ts:1:1:61:0",
+  "scopes": {
+    "module:<fixtures>/typescript/code/enums/string_enum.ts:1:1:61:0": {
+      "id": "module:<fixtures>/typescript/code/enums/string_enum.ts:1:1:61:0",
+      "parent_id": null,
+      "name": null,
+      "type": "module",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/enums/string_enum.ts",
+        "start_line": 1,
+        "start_column": 1,
+        "end_line": 61,
+        "end_column": 0
+      },
+      "child_ids": [
+        "class:<fixtures>/typescript/code/enums/string_enum.ts:7:15:13:1",
+        "class:<fixtures>/typescript/code/enums/string_enum.ts:15:17:21:1",
+        "class:<fixtures>/typescript/code/enums/string_enum.ts:23:18:27:1",
+        "function:<fixtures>/typescript/code/enums/string_enum.ts:30:13:32:1",
+        "function:<fixtures>/typescript/code/enums/string_enum.ts:34:22:36:1",
+        "function:<fixtures>/typescript/code/enums/string_enum.ts:38:21:47:1",
+        "class:<fixtures>/typescript/code/enums/string_enum.ts:50:18:54:1",
+        "function:<fixtures>/typescript/code/enums/string_enum.ts:56:24:58:1"
+      ]
+    },
+    "class:<fixtures>/typescript/code/enums/string_enum.ts:7:15:13:1": {
+      "id": "class:<fixtures>/typescript/code/enums/string_enum.ts:7:15:13:1",
+      "parent_id": "module:<fixtures>/typescript/code/enums/string_enum.ts:1:1:61:0",
+      "name": "LogLevel",
+      "type": "class",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/enums/string_enum.ts",
+        "start_line": 7,
+        "start_column": 15,
+        "end_line": 13,
+        "end_column": 1
+      },
+      "child_ids": []
+    },
+    "class:<fixtures>/typescript/code/enums/string_enum.ts:15:17:21:1": {
+      "id": "class:<fixtures>/typescript/code/enums/string_enum.ts:15:17:21:1",
+      "parent_id": "module:<fixtures>/typescript/code/enums/string_enum.ts:1:1:61:0",
+      "name": "HttpMethod",
+      "type": "class",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/enums/string_enum.ts",
+        "start_line": 15,
+        "start_column": 17,
+        "end_line": 21,
+        "end_column": 1
+      },
+      "child_ids": []
+    },
+    "class:<fixtures>/typescript/code/enums/string_enum.ts:23:18:27:1": {
+      "id": "class:<fixtures>/typescript/code/enums/string_enum.ts:23:18:27:1",
+      "parent_id": "module:<fixtures>/typescript/code/enums/string_enum.ts:1:1:61:0",
+      "name": "Environment",
+      "type": "class",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/enums/string_enum.ts",
+        "start_line": 23,
+        "start_column": 18,
+        "end_line": 27,
+        "end_column": 1
+      },
+      "child_ids": []
+    },
+    "function:<fixtures>/typescript/code/enums/string_enum.ts:30:13:32:1": {
+      "id": "function:<fixtures>/typescript/code/enums/string_enum.ts:30:13:32:1",
+      "parent_id": "module:<fixtures>/typescript/code/enums/string_enum.ts:1:1:61:0",
+      "name": "log",
+      "type": "function",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/enums/string_enum.ts",
+        "start_line": 30,
+        "start_column": 13,
+        "end_line": 32,
+        "end_column": 1
+      },
+      "child_ids": []
+    },
+    "function:<fixtures>/typescript/code/enums/string_enum.ts:34:22:36:1": {
+      "id": "function:<fixtures>/typescript/code/enums/string_enum.ts:34:22:36:1",
+      "parent_id": "module:<fixtures>/typescript/code/enums/string_enum.ts:1:1:61:0",
+      "name": "make_request",
+      "type": "function",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/enums/string_enum.ts",
+        "start_line": 34,
+        "start_column": 22,
+        "end_line": 36,
+        "end_column": 1
+      },
+      "child_ids": []
+    },
+    "function:<fixtures>/typescript/code/enums/string_enum.ts:38:21:47:1": {
+      "id": "function:<fixtures>/typescript/code/enums/string_enum.ts:38:21:47:1",
+      "parent_id": "module:<fixtures>/typescript/code/enums/string_enum.ts:1:1:61:0",
+      "name": "get_api_url",
+      "type": "function",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/enums/string_enum.ts",
+        "start_line": 38,
+        "start_column": 21,
+        "end_line": 47,
+        "end_column": 1
+      },
+      "child_ids": [
+        "block:<fixtures>/typescript/code/enums/string_enum.ts:39:3:46:3"
+      ]
+    },
+    "block:<fixtures>/typescript/code/enums/string_enum.ts:39:3:46:3": {
+      "id": "block:<fixtures>/typescript/code/enums/string_enum.ts:39:3:46:3",
+      "parent_id": "function:<fixtures>/typescript/code/enums/string_enum.ts:38:21:47:1",
+      "name": null,
+      "type": "block",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/enums/string_enum.ts",
+        "start_line": 39,
+        "start_column": 3,
+        "end_line": 46,
+        "end_column": 3
+      },
+      "child_ids": [
+        "block:<fixtures>/typescript/code/enums/string_enum.ts:40:5:41:37",
+        "block:<fixtures>/typescript/code/enums/string_enum.ts:42:5:43:43",
+        "block:<fixtures>/typescript/code/enums/string_enum.ts:44:5:45:39"
+      ]
+    },
+    "block:<fixtures>/typescript/code/enums/string_enum.ts:40:5:41:37": {
+      "id": "block:<fixtures>/typescript/code/enums/string_enum.ts:40:5:41:37",
+      "parent_id": "block:<fixtures>/typescript/code/enums/string_enum.ts:39:3:46:3",
+      "name": null,
+      "type": "block",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/enums/string_enum.ts",
+        "start_line": 40,
+        "start_column": 5,
+        "end_line": 41,
+        "end_column": 37
+      },
+      "child_ids": []
+    },
+    "block:<fixtures>/typescript/code/enums/string_enum.ts:42:5:43:43": {
+      "id": "block:<fixtures>/typescript/code/enums/string_enum.ts:42:5:43:43",
+      "parent_id": "block:<fixtures>/typescript/code/enums/string_enum.ts:39:3:46:3",
+      "name": null,
+      "type": "block",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/enums/string_enum.ts",
+        "start_line": 42,
+        "start_column": 5,
+        "end_line": 43,
+        "end_column": 43
+      },
+      "child_ids": []
+    },
+    "block:<fixtures>/typescript/code/enums/string_enum.ts:44:5:45:39": {
+      "id": "block:<fixtures>/typescript/code/enums/string_enum.ts:44:5:45:39",
+      "parent_id": "block:<fixtures>/typescript/code/enums/string_enum.ts:39:3:46:3",
+      "name": null,
+      "type": "block",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/enums/string_enum.ts",
+        "start_line": 44,
+        "start_column": 5,
+        "end_line": 45,
+        "end_column": 39
+      },
+      "child_ids": []
+    },
+    "class:<fixtures>/typescript/code/enums/string_enum.ts:50:18:54:1": {
+      "id": "class:<fixtures>/typescript/code/enums/string_enum.ts:50:18:54:1",
+      "parent_id": "module:<fixtures>/typescript/code/enums/string_enum.ts:1:1:61:0",
+      "name": "Color",
+      "type": "class",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/enums/string_enum.ts",
+        "start_line": 50,
+        "start_column": 18,
+        "end_line": 54,
+        "end_column": 1
+      },
+      "child_ids": []
+    },
+    "function:<fixtures>/typescript/code/enums/string_enum.ts:56:24:58:1": {
+      "id": "function:<fixtures>/typescript/code/enums/string_enum.ts:56:24:58:1",
+      "parent_id": "module:<fixtures>/typescript/code/enums/string_enum.ts:1:1:61:0",
+      "name": "get_color_code",
+      "type": "function",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/enums/string_enum.ts",
+        "start_line": 56,
+        "start_column": 24,
+        "end_line": 58,
+        "end_column": 1
+      },
+      "child_ids": []
+    }
+  },
+  "functions": {
+    "function:<fixtures>/typescript/code/enums/string_enum.ts:30:10:30:12:log": {
+      "kind": "function",
+      "symbol_id": "function:<fixtures>/typescript/code/enums/string_enum.ts:30:10:30:12:log",
+      "name": "log",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/enums/string_enum.ts",
+        "start_line": 30,
+        "start_column": 10,
+        "end_line": 30,
+        "end_column": 12
+      },
+      "defining_scope_id": "module:<fixtures>/typescript/code/enums/string_enum.ts:1:1:61:0",
+      "is_exported": true,
+      "export": {
+        "is_reexport": false
+      },
+      "signature": {
+        "parameters": [
+          {
+            "kind": "parameter",
+            "defining_scope_id": "function:<fixtures>/typescript/code/enums/string_enum.ts:30:13:32:1",
+            "symbol_id": "parameter:<fixtures>/typescript/code/enums/string_enum.ts:30:14:30:18:level",
+            "name": "level",
+            "location": {
+              "file_path": "<fixtures>/typescript/code/enums/string_enum.ts",
+              "start_line": 30,
+              "start_column": 14,
+              "end_line": 30,
+              "end_column": 18
+            },
+            "type": "LogLevel",
+            "optional": false
+          },
+          {
+            "kind": "parameter",
+            "defining_scope_id": "function:<fixtures>/typescript/code/enums/string_enum.ts:30:13:32:1",
+            "symbol_id": "parameter:<fixtures>/typescript/code/enums/string_enum.ts:30:31:30:37:message",
+            "name": "message",
+            "location": {
+              "file_path": "<fixtures>/typescript/code/enums/string_enum.ts",
+              "start_line": 30,
+              "start_column": 31,
+              "end_line": 30,
+              "end_column": 37
+            },
+            "type": "string",
+            "optional": false
+          }
+        ],
+        "return_type": "void"
+      },
+      "return_type": "void",
+      "body_scope_id": "function:<fixtures>/typescript/code/enums/string_enum.ts:30:13:32:1"
+    },
+    "function:<fixtures>/typescript/code/enums/string_enum.ts:34:10:34:21:make_request": {
+      "kind": "function",
+      "symbol_id": "function:<fixtures>/typescript/code/enums/string_enum.ts:34:10:34:21:make_request",
+      "name": "make_request",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/enums/string_enum.ts",
+        "start_line": 34,
+        "start_column": 10,
+        "end_line": 34,
+        "end_column": 21
+      },
+      "defining_scope_id": "module:<fixtures>/typescript/code/enums/string_enum.ts:1:1:61:0",
+      "is_exported": true,
+      "export": {
+        "is_reexport": false
+      },
+      "signature": {
+        "parameters": [
+          {
+            "kind": "parameter",
+            "defining_scope_id": "function:<fixtures>/typescript/code/enums/string_enum.ts:34:22:36:1",
+            "symbol_id": "parameter:<fixtures>/typescript/code/enums/string_enum.ts:34:23:34:28:method",
+            "name": "method",
+            "location": {
+              "file_path": "<fixtures>/typescript/code/enums/string_enum.ts",
+              "start_line": 34,
+              "start_column": 23,
+              "end_line": 34,
+              "end_column": 28
+            },
+            "type": "HttpMethod",
+            "optional": false
+          },
+          {
+            "kind": "parameter",
+            "defining_scope_id": "function:<fixtures>/typescript/code/enums/string_enum.ts:34:22:36:1",
+            "symbol_id": "parameter:<fixtures>/typescript/code/enums/string_enum.ts:34:43:34:45:url",
+            "name": "url",
+            "location": {
+              "file_path": "<fixtures>/typescript/code/enums/string_enum.ts",
+              "start_line": 34,
+              "start_column": 43,
+              "end_line": 34,
+              "end_column": 45
+            },
+            "type": "string",
+            "optional": false
+          }
+        ],
+        "return_type": "Promise<Response>"
+      },
+      "return_type": "Promise<Response>",
+      "body_scope_id": "function:<fixtures>/typescript/code/enums/string_enum.ts:34:22:36:1"
+    },
+    "function:<fixtures>/typescript/code/enums/string_enum.ts:38:10:38:20:get_api_url": {
+      "kind": "function",
+      "symbol_id": "function:<fixtures>/typescript/code/enums/string_enum.ts:38:10:38:20:get_api_url",
+      "name": "get_api_url",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/enums/string_enum.ts",
+        "start_line": 38,
+        "start_column": 10,
+        "end_line": 38,
+        "end_column": 20
+      },
+      "defining_scope_id": "module:<fixtures>/typescript/code/enums/string_enum.ts:1:1:61:0",
+      "is_exported": true,
+      "export": {
+        "is_reexport": false
+      },
+      "signature": {
+        "parameters": [
+          {
+            "kind": "parameter",
+            "defining_scope_id": "function:<fixtures>/typescript/code/enums/string_enum.ts:38:21:47:1",
+            "symbol_id": "parameter:<fixtures>/typescript/code/enums/string_enum.ts:38:22:38:24:env",
+            "name": "env",
+            "location": {
+              "file_path": "<fixtures>/typescript/code/enums/string_enum.ts",
+              "start_line": 38,
+              "start_column": 22,
+              "end_line": 38,
+              "end_column": 24
+            },
+            "type": "Environment",
+            "optional": false
+          }
+        ],
+        "return_type": "string"
+      },
+      "return_type": "string",
+      "body_scope_id": "function:<fixtures>/typescript/code/enums/string_enum.ts:38:21:47:1"
+    },
+    "function:<fixtures>/typescript/code/enums/string_enum.ts:56:10:56:23:get_color_code": {
+      "kind": "function",
+      "symbol_id": "function:<fixtures>/typescript/code/enums/string_enum.ts:56:10:56:23:get_color_code",
+      "name": "get_color_code",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/enums/string_enum.ts",
+        "start_line": 56,
+        "start_column": 10,
+        "end_line": 56,
+        "end_column": 23
+      },
+      "defining_scope_id": "module:<fixtures>/typescript/code/enums/string_enum.ts:1:1:61:0",
+      "is_exported": true,
+      "export": {
+        "is_reexport": false
+      },
+      "signature": {
+        "parameters": [
+          {
+            "kind": "parameter",
+            "defining_scope_id": "function:<fixtures>/typescript/code/enums/string_enum.ts:56:24:58:1",
+            "symbol_id": "parameter:<fixtures>/typescript/code/enums/string_enum.ts:56:25:56:29:color",
+            "name": "color",
+            "location": {
+              "file_path": "<fixtures>/typescript/code/enums/string_enum.ts",
+              "start_line": 56,
+              "start_column": 25,
+              "end_line": 56,
+              "end_column": 29
+            },
+            "type": "Color",
+            "optional": false
+          }
+        ],
+        "return_type": "string"
+      },
+      "return_type": "string",
+      "body_scope_id": "function:<fixtures>/typescript/code/enums/string_enum.ts:56:24:58:1"
+    }
+  },
+  "classes": {},
+  "variables": {},
+  "interfaces": {},
+  "enums": {
+    "enum:<fixtures>/typescript/code/enums/string_enum.ts:7:1:13:1:enum LogLevel {\n  DEBUG = \"DEBUG\",\n  INFO = \"INFO\",\n  WARNING = \"WARNING\",\n  ERROR = \"ERROR\",\n  FATAL = \"FATAL\",\n}": {
+      "kind": "enum",
+      "symbol_id": "enum:<fixtures>/typescript/code/enums/string_enum.ts:7:1:13:1:enum LogLevel {\n  DEBUG = \"DEBUG\",\n  INFO = \"INFO\",\n  WARNING = \"WARNING\",\n  ERROR = \"ERROR\",\n  FATAL = \"FATAL\",\n}",
+      "name": "enum LogLevel {\n  DEBUG = \"DEBUG\",\n  INFO = \"INFO\",\n  WARNING = \"WARNING\",\n  ERROR = \"ERROR\",\n  FATAL = \"FATAL\",\n}",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/enums/string_enum.ts",
+        "start_line": 7,
+        "start_column": 1,
+        "end_line": 13,
+        "end_column": 1
+      },
+      "defining_scope_id": "module:<fixtures>/typescript/code/enums/string_enum.ts:1:1:61:0",
+      "is_exported": false,
+      "is_const": false,
+      "members": []
+    },
+    "enum:<fixtures>/typescript/code/enums/string_enum.ts:7:6:7:13:LogLevel": {
+      "kind": "enum",
+      "symbol_id": "enum:<fixtures>/typescript/code/enums/string_enum.ts:7:6:7:13:LogLevel",
+      "name": "LogLevel",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/enums/string_enum.ts",
+        "start_line": 7,
+        "start_column": 6,
+        "end_line": 7,
+        "end_column": 13
+      },
+      "defining_scope_id": "module:<fixtures>/typescript/code/enums/string_enum.ts:1:1:61:0",
+      "is_exported": true,
+      "export": {
+        "is_reexport": false
+      },
+      "is_const": false,
+      "members": []
+    },
+    "enum:<fixtures>/typescript/code/enums/string_enum.ts:15:1:21:1:enum HttpMethod {\n  GET = \"GET\",\n  POST = \"POST\",\n  PUT = \"PUT\",\n  DELETE = \"DELETE\",\n  PATCH = \"PATCH\",\n}": {
+      "kind": "enum",
+      "symbol_id": "enum:<fixtures>/typescript/code/enums/string_enum.ts:15:1:21:1:enum HttpMethod {\n  GET = \"GET\",\n  POST = \"POST\",\n  PUT = \"PUT\",\n  DELETE = \"DELETE\",\n  PATCH = \"PATCH\",\n}",
+      "name": "enum HttpMethod {\n  GET = \"GET\",\n  POST = \"POST\",\n  PUT = \"PUT\",\n  DELETE = \"DELETE\",\n  PATCH = \"PATCH\",\n}",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/enums/string_enum.ts",
+        "start_line": 15,
+        "start_column": 1,
+        "end_line": 21,
+        "end_column": 1
+      },
+      "defining_scope_id": "module:<fixtures>/typescript/code/enums/string_enum.ts:1:1:61:0",
+      "is_exported": false,
+      "is_const": false,
+      "members": []
+    },
+    "enum:<fixtures>/typescript/code/enums/string_enum.ts:15:6:15:15:HttpMethod": {
+      "kind": "enum",
+      "symbol_id": "enum:<fixtures>/typescript/code/enums/string_enum.ts:15:6:15:15:HttpMethod",
+      "name": "HttpMethod",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/enums/string_enum.ts",
+        "start_line": 15,
+        "start_column": 6,
+        "end_line": 15,
+        "end_column": 15
+      },
+      "defining_scope_id": "module:<fixtures>/typescript/code/enums/string_enum.ts:1:1:61:0",
+      "is_exported": true,
+      "export": {
+        "is_reexport": false
+      },
+      "is_const": false,
+      "members": []
+    },
+    "enum:<fixtures>/typescript/code/enums/string_enum.ts:23:1:27:1:enum Environment {\n  DEVELOPMENT = \"dev\",\n  STAGING = \"staging\",\n  PRODUCTION = \"prod\",\n}": {
+      "kind": "enum",
+      "symbol_id": "enum:<fixtures>/typescript/code/enums/string_enum.ts:23:1:27:1:enum Environment {\n  DEVELOPMENT = \"dev\",\n  STAGING = \"staging\",\n  PRODUCTION = \"prod\",\n}",
+      "name": "enum Environment {\n  DEVELOPMENT = \"dev\",\n  STAGING = \"staging\",\n  PRODUCTION = \"prod\",\n}",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/enums/string_enum.ts",
+        "start_line": 23,
+        "start_column": 1,
+        "end_line": 27,
+        "end_column": 1
+      },
+      "defining_scope_id": "module:<fixtures>/typescript/code/enums/string_enum.ts:1:1:61:0",
+      "is_exported": false,
+      "is_const": false,
+      "members": []
+    },
+    "enum:<fixtures>/typescript/code/enums/string_enum.ts:23:6:23:16:Environment": {
+      "kind": "enum",
+      "symbol_id": "enum:<fixtures>/typescript/code/enums/string_enum.ts:23:6:23:16:Environment",
+      "name": "Environment",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/enums/string_enum.ts",
+        "start_line": 23,
+        "start_column": 6,
+        "end_line": 23,
+        "end_column": 16
+      },
+      "defining_scope_id": "module:<fixtures>/typescript/code/enums/string_enum.ts:1:1:61:0",
+      "is_exported": true,
+      "export": {
+        "is_reexport": false
+      },
+      "is_const": false,
+      "members": []
+    },
+    "enum:<fixtures>/typescript/code/enums/string_enum.ts:50:1:54:1:const enum Color {\n  RED = \"#ff0000\",\n  GREEN = \"#00ff00\",\n  BLUE = \"#0000ff\",\n}": {
+      "kind": "enum",
+      "symbol_id": "enum:<fixtures>/typescript/code/enums/string_enum.ts:50:1:54:1:const enum Color {\n  RED = \"#ff0000\",\n  GREEN = \"#00ff00\",\n  BLUE = \"#0000ff\",\n}",
+      "name": "const enum Color {\n  RED = \"#ff0000\",\n  GREEN = \"#00ff00\",\n  BLUE = \"#0000ff\",\n}",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/enums/string_enum.ts",
+        "start_line": 50,
+        "start_column": 1,
+        "end_line": 54,
+        "end_column": 1
+      },
+      "defining_scope_id": "module:<fixtures>/typescript/code/enums/string_enum.ts:1:1:61:0",
+      "is_exported": false,
+      "is_const": false,
+      "members": []
+    },
+    "enum:<fixtures>/typescript/code/enums/string_enum.ts:50:12:50:16:Color": {
+      "kind": "enum",
+      "symbol_id": "enum:<fixtures>/typescript/code/enums/string_enum.ts:50:12:50:16:Color",
+      "name": "Color",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/enums/string_enum.ts",
+        "start_line": 50,
+        "start_column": 12,
+        "end_line": 50,
+        "end_column": 16
+      },
+      "defining_scope_id": "module:<fixtures>/typescript/code/enums/string_enum.ts:1:1:61:0",
+      "is_exported": true,
+      "export": {
+        "is_reexport": false
+      },
+      "is_const": true,
+      "members": []
+    }
+  },
+  "namespaces": {},
+  "types": {},
+  "imported_symbols": {},
+  "references": [
+    {
+      "kind": "variable_reference",
+      "name": "LogLevel",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/enums/string_enum.ts",
+        "start_line": 7,
+        "start_column": 6,
+        "end_line": 7,
+        "end_column": 13
+      },
+      "scope_id": "module:<fixtures>/typescript/code/enums/string_enum.ts:1:1:61:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "HttpMethod",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/enums/string_enum.ts",
+        "start_line": 15,
+        "start_column": 6,
+        "end_line": 15,
+        "end_column": 15
+      },
+      "scope_id": "module:<fixtures>/typescript/code/enums/string_enum.ts:1:1:61:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "Environment",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/enums/string_enum.ts",
+        "start_line": 23,
+        "start_column": 6,
+        "end_line": 23,
+        "end_column": 16
+      },
+      "scope_id": "module:<fixtures>/typescript/code/enums/string_enum.ts:1:1:61:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "log",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/enums/string_enum.ts",
+        "start_line": 30,
+        "start_column": 10,
+        "end_line": 30,
+        "end_column": 12
+      },
+      "scope_id": "module:<fixtures>/typescript/code/enums/string_enum.ts:1:1:61:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "level",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/enums/string_enum.ts",
+        "start_line": 30,
+        "start_column": 14,
+        "end_line": 30,
+        "end_column": 18
+      },
+      "scope_id": "function:<fixtures>/typescript/code/enums/string_enum.ts:30:13:32:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "type_reference",
+      "name": "LogLevel",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/enums/string_enum.ts",
+        "start_line": 30,
+        "start_column": 21,
+        "end_line": 30,
+        "end_column": 28
+      },
+      "scope_id": "function:<fixtures>/typescript/code/enums/string_enum.ts:30:13:32:1",
+      "type_context": "annotation",
+      "type_info": {
+        "type_id": "type:<fixtures>/typescript/code/enums/string_enum.ts:30:21:30:28:LogLevel",
+        "type_name": "LogLevel",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "message",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/enums/string_enum.ts",
+        "start_line": 30,
+        "start_column": 31,
+        "end_line": 30,
+        "end_column": 37
+      },
+      "scope_id": "function:<fixtures>/typescript/code/enums/string_enum.ts:30:13:32:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "method_call",
+      "name": "log",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/enums/string_enum.ts",
+        "start_line": 31,
+        "start_column": 3,
+        "end_line": 31,
+        "end_column": 38
+      },
+      "scope_id": "function:<fixtures>/typescript/code/enums/string_enum.ts:30:13:32:1",
+      "receiver_location": {
+        "file_path": "<fixtures>/typescript/code/enums/string_enum.ts",
+        "start_line": 31,
+        "start_column": 3,
+        "end_line": 31,
+        "end_column": 9
+      },
+      "property_chain": [
+        "console",
+        "log"
+      ],
+      "optional_chaining": false
+    },
+    {
+      "kind": "variable_reference",
+      "name": "console",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/enums/string_enum.ts",
+        "start_line": 31,
+        "start_column": 3,
+        "end_line": 31,
+        "end_column": 9
+      },
+      "scope_id": "function:<fixtures>/typescript/code/enums/string_enum.ts:30:13:32:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "property_access",
+      "name": "log",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/enums/string_enum.ts",
+        "start_line": 31,
+        "start_column": 3,
+        "end_line": 31,
+        "end_column": 13
+      },
+      "scope_id": "function:<fixtures>/typescript/code/enums/string_enum.ts:30:13:32:1",
+      "receiver_location": {
+        "file_path": "<fixtures>/typescript/code/enums/string_enum.ts",
+        "start_line": 31,
+        "start_column": 3,
+        "end_line": 31,
+        "end_column": 9
+      },
+      "property_chain": [
+        "console",
+        "log"
+      ],
+      "access_type": "property",
+      "is_optional_chain": false
+    },
+    {
+      "kind": "variable_reference",
+      "name": "console",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/enums/string_enum.ts",
+        "start_line": 31,
+        "start_column": 3,
+        "end_line": 31,
+        "end_column": 9
+      },
+      "scope_id": "function:<fixtures>/typescript/code/enums/string_enum.ts:30:13:32:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "property_access",
+      "name": "log",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/enums/string_enum.ts",
+        "start_line": 31,
+        "start_column": 3,
+        "end_line": 31,
+        "end_column": 13
+      },
+      "scope_id": "function:<fixtures>/typescript/code/enums/string_enum.ts:30:13:32:1",
+      "receiver_location": {
+        "file_path": "<fixtures>/typescript/code/enums/string_enum.ts",
+        "start_line": 31,
+        "start_column": 3,
+        "end_line": 31,
+        "end_column": 9
+      },
+      "property_chain": [
+        "console",
+        "log"
+      ],
+      "access_type": "property",
+      "is_optional_chain": false
+    },
+    {
+      "kind": "variable_reference",
+      "name": "console",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/enums/string_enum.ts",
+        "start_line": 31,
+        "start_column": 3,
+        "end_line": 31,
+        "end_column": 9
+      },
+      "scope_id": "function:<fixtures>/typescript/code/enums/string_enum.ts:30:13:32:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "method_call",
+      "name": "log",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/enums/string_enum.ts",
+        "start_line": 31,
+        "start_column": 3,
+        "end_line": 31,
+        "end_column": 38
+      },
+      "scope_id": "function:<fixtures>/typescript/code/enums/string_enum.ts:30:13:32:1",
+      "receiver_location": {
+        "file_path": "<fixtures>/typescript/code/enums/string_enum.ts",
+        "start_line": 31,
+        "start_column": 3,
+        "end_line": 31,
+        "end_column": 9
+      },
+      "property_chain": [
+        "console",
+        "log"
+      ],
+      "optional_chaining": false
+    },
+    {
+      "kind": "variable_reference",
+      "name": "console",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/enums/string_enum.ts",
+        "start_line": 31,
+        "start_column": 3,
+        "end_line": 31,
+        "end_column": 9
+      },
+      "scope_id": "function:<fixtures>/typescript/code/enums/string_enum.ts:30:13:32:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "console",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/enums/string_enum.ts",
+        "start_line": 31,
+        "start_column": 3,
+        "end_line": 31,
+        "end_column": 9
+      },
+      "scope_id": "function:<fixtures>/typescript/code/enums/string_enum.ts:30:13:32:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "log",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/enums/string_enum.ts",
+        "start_line": 31,
+        "start_column": 11,
+        "end_line": 31,
+        "end_column": 13
+      },
+      "scope_id": "function:<fixtures>/typescript/code/enums/string_enum.ts:30:13:32:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "log",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/enums/string_enum.ts",
+        "start_line": 31,
+        "start_column": 11,
+        "end_line": 31,
+        "end_column": 13
+      },
+      "scope_id": "function:<fixtures>/typescript/code/enums/string_enum.ts:30:13:32:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "level",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/enums/string_enum.ts",
+        "start_line": 31,
+        "start_column": 19,
+        "end_line": 31,
+        "end_column": 23
+      },
+      "scope_id": "function:<fixtures>/typescript/code/enums/string_enum.ts:30:13:32:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "message",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/enums/string_enum.ts",
+        "start_line": 31,
+        "start_column": 29,
+        "end_line": 31,
+        "end_column": 35
+      },
+      "scope_id": "function:<fixtures>/typescript/code/enums/string_enum.ts:30:13:32:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "make_request",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/enums/string_enum.ts",
+        "start_line": 34,
+        "start_column": 10,
+        "end_line": 34,
+        "end_column": 21
+      },
+      "scope_id": "module:<fixtures>/typescript/code/enums/string_enum.ts:1:1:61:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "method",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/enums/string_enum.ts",
+        "start_line": 34,
+        "start_column": 23,
+        "end_line": 34,
+        "end_column": 28
+      },
+      "scope_id": "function:<fixtures>/typescript/code/enums/string_enum.ts:34:22:36:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "type_reference",
+      "name": "HttpMethod",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/enums/string_enum.ts",
+        "start_line": 34,
+        "start_column": 31,
+        "end_line": 34,
+        "end_column": 40
+      },
+      "scope_id": "function:<fixtures>/typescript/code/enums/string_enum.ts:34:22:36:1",
+      "type_context": "annotation",
+      "type_info": {
+        "type_id": "type:<fixtures>/typescript/code/enums/string_enum.ts:34:31:34:40:HttpMethod",
+        "type_name": "HttpMethod",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "url",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/enums/string_enum.ts",
+        "start_line": 34,
+        "start_column": 43,
+        "end_line": 34,
+        "end_column": 45
+      },
+      "scope_id": "function:<fixtures>/typescript/code/enums/string_enum.ts:34:22:36:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "type_reference",
+      "name": "Promise",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/enums/string_enum.ts",
+        "start_line": 34,
+        "start_column": 57,
+        "end_line": 34,
+        "end_column": 63
+      },
+      "scope_id": "function:<fixtures>/typescript/code/enums/string_enum.ts:34:22:36:1",
+      "type_context": "annotation",
+      "type_info": {
+        "type_id": "type:<fixtures>/typescript/code/enums/string_enum.ts:34:57:34:63:Promise",
+        "type_name": "Promise",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "kind": "type_reference",
+      "name": "Promise",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/enums/string_enum.ts",
+        "start_line": 34,
+        "start_column": 57,
+        "end_line": 34,
+        "end_column": 63
+      },
+      "scope_id": "function:<fixtures>/typescript/code/enums/string_enum.ts:34:22:36:1",
+      "type_context": "annotation",
+      "type_info": {
+        "type_id": "type:<fixtures>/typescript/code/enums/string_enum.ts:34:57:34:63:Promise",
+        "type_name": "Promise",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "kind": "type_reference",
+      "name": "Response",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/enums/string_enum.ts",
+        "start_line": 34,
+        "start_column": 65,
+        "end_line": 34,
+        "end_column": 72
+      },
+      "scope_id": "function:<fixtures>/typescript/code/enums/string_enum.ts:34:22:36:1",
+      "type_context": "annotation",
+      "type_info": {
+        "type_id": "type:<fixtures>/typescript/code/enums/string_enum.ts:34:65:34:72:Response",
+        "type_name": "Response",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "return fetch(url, { method });",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/enums/string_enum.ts",
+        "start_line": 35,
+        "start_column": 3,
+        "end_line": 35,
+        "end_column": 32
+      },
+      "scope_id": "function:<fixtures>/typescript/code/enums/string_enum.ts:34:22:36:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "function_call",
+      "name": "fetch",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/enums/string_enum.ts",
+        "start_line": 35,
+        "start_column": 10,
+        "end_line": 35,
+        "end_column": 14
+      },
+      "scope_id": "function:<fixtures>/typescript/code/enums/string_enum.ts:34:22:36:1"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "fetch",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/enums/string_enum.ts",
+        "start_line": 35,
+        "start_column": 10,
+        "end_line": 35,
+        "end_column": 31
+      },
+      "scope_id": "function:<fixtures>/typescript/code/enums/string_enum.ts:34:22:36:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "fetch",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/enums/string_enum.ts",
+        "start_line": 35,
+        "start_column": 10,
+        "end_line": 35,
+        "end_column": 14
+      },
+      "scope_id": "function:<fixtures>/typescript/code/enums/string_enum.ts:34:22:36:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "url",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/enums/string_enum.ts",
+        "start_line": 35,
+        "start_column": 16,
+        "end_line": 35,
+        "end_column": 18
+      },
+      "scope_id": "function:<fixtures>/typescript/code/enums/string_enum.ts:34:22:36:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "get_api_url",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/enums/string_enum.ts",
+        "start_line": 38,
+        "start_column": 10,
+        "end_line": 38,
+        "end_column": 20
+      },
+      "scope_id": "module:<fixtures>/typescript/code/enums/string_enum.ts:1:1:61:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "env",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/enums/string_enum.ts",
+        "start_line": 38,
+        "start_column": 22,
+        "end_line": 38,
+        "end_column": 24
+      },
+      "scope_id": "function:<fixtures>/typescript/code/enums/string_enum.ts:38:21:47:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "type_reference",
+      "name": "Environment",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/enums/string_enum.ts",
+        "start_line": 38,
+        "start_column": 27,
+        "end_line": 38,
+        "end_column": 37
+      },
+      "scope_id": "function:<fixtures>/typescript/code/enums/string_enum.ts:38:21:47:1",
+      "type_context": "annotation",
+      "type_info": {
+        "type_id": "type:<fixtures>/typescript/code/enums/string_enum.ts:38:27:38:37:Environment",
+        "type_name": "Environment",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "env",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/enums/string_enum.ts",
+        "start_line": 39,
+        "start_column": 11,
+        "end_line": 39,
+        "end_column": 13
+      },
+      "scope_id": "block:<fixtures>/typescript/code/enums/string_enum.ts:39:3:46:3",
+      "access_type": "read"
+    },
+    {
+      "kind": "property_access",
+      "name": "Development",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/enums/string_enum.ts",
+        "start_line": 40,
+        "start_column": 10,
+        "end_line": 40,
+        "end_column": 32
+      },
+      "scope_id": "block:<fixtures>/typescript/code/enums/string_enum.ts:40:5:41:37",
+      "receiver_location": {
+        "file_path": "<fixtures>/typescript/code/enums/string_enum.ts",
+        "start_line": 40,
+        "start_column": 10,
+        "end_line": 40,
+        "end_column": 20
+      },
+      "property_chain": [
+        "Environment",
+        "Development"
+      ],
+      "access_type": "property",
+      "is_optional_chain": false
+    },
+    {
+      "kind": "variable_reference",
+      "name": "Environment",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/enums/string_enum.ts",
+        "start_line": 40,
+        "start_column": 10,
+        "end_line": 40,
+        "end_column": 20
+      },
+      "scope_id": "block:<fixtures>/typescript/code/enums/string_enum.ts:40:5:41:37",
+      "access_type": "read"
+    },
+    {
+      "kind": "property_access",
+      "name": "Development",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/enums/string_enum.ts",
+        "start_line": 40,
+        "start_column": 10,
+        "end_line": 40,
+        "end_column": 32
+      },
+      "scope_id": "block:<fixtures>/typescript/code/enums/string_enum.ts:40:5:41:37",
+      "receiver_location": {
+        "file_path": "<fixtures>/typescript/code/enums/string_enum.ts",
+        "start_line": 40,
+        "start_column": 10,
+        "end_line": 40,
+        "end_column": 20
+      },
+      "property_chain": [
+        "Environment",
+        "Development"
+      ],
+      "access_type": "property",
+      "is_optional_chain": false
+    },
+    {
+      "kind": "variable_reference",
+      "name": "Environment",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/enums/string_enum.ts",
+        "start_line": 40,
+        "start_column": 10,
+        "end_line": 40,
+        "end_column": 20
+      },
+      "scope_id": "block:<fixtures>/typescript/code/enums/string_enum.ts:40:5:41:37",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "Environment",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/enums/string_enum.ts",
+        "start_line": 40,
+        "start_column": 10,
+        "end_line": 40,
+        "end_column": 20
+      },
+      "scope_id": "block:<fixtures>/typescript/code/enums/string_enum.ts:40:5:41:37",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "Development",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/enums/string_enum.ts",
+        "start_line": 40,
+        "start_column": 22,
+        "end_line": 40,
+        "end_column": 32
+      },
+      "scope_id": "block:<fixtures>/typescript/code/enums/string_enum.ts:40:5:41:37",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "Development",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/enums/string_enum.ts",
+        "start_line": 40,
+        "start_column": 22,
+        "end_line": 40,
+        "end_column": 32
+      },
+      "scope_id": "block:<fixtures>/typescript/code/enums/string_enum.ts:40:5:41:37",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "return \"http://localhost:3000\";",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/enums/string_enum.ts",
+        "start_line": 41,
+        "start_column": 7,
+        "end_line": 41,
+        "end_column": 37
+      },
+      "scope_id": "block:<fixtures>/typescript/code/enums/string_enum.ts:40:5:41:37",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "\"http://localhost:3000\"",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/enums/string_enum.ts",
+        "start_line": 41,
+        "start_column": 14,
+        "end_line": 41,
+        "end_column": 36
+      },
+      "scope_id": "block:<fixtures>/typescript/code/enums/string_enum.ts:40:5:41:37",
+      "access_type": "read"
+    },
+    {
+      "kind": "property_access",
+      "name": "Staging",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/enums/string_enum.ts",
+        "start_line": 42,
+        "start_column": 10,
+        "end_line": 42,
+        "end_column": 28
+      },
+      "scope_id": "block:<fixtures>/typescript/code/enums/string_enum.ts:42:5:43:43",
+      "receiver_location": {
+        "file_path": "<fixtures>/typescript/code/enums/string_enum.ts",
+        "start_line": 42,
+        "start_column": 10,
+        "end_line": 42,
+        "end_column": 20
+      },
+      "property_chain": [
+        "Environment",
+        "Staging"
+      ],
+      "access_type": "property",
+      "is_optional_chain": false
+    },
+    {
+      "kind": "variable_reference",
+      "name": "Environment",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/enums/string_enum.ts",
+        "start_line": 42,
+        "start_column": 10,
+        "end_line": 42,
+        "end_column": 20
+      },
+      "scope_id": "block:<fixtures>/typescript/code/enums/string_enum.ts:42:5:43:43",
+      "access_type": "read"
+    },
+    {
+      "kind": "property_access",
+      "name": "Staging",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/enums/string_enum.ts",
+        "start_line": 42,
+        "start_column": 10,
+        "end_line": 42,
+        "end_column": 28
+      },
+      "scope_id": "block:<fixtures>/typescript/code/enums/string_enum.ts:42:5:43:43",
+      "receiver_location": {
+        "file_path": "<fixtures>/typescript/code/enums/string_enum.ts",
+        "start_line": 42,
+        "start_column": 10,
+        "end_line": 42,
+        "end_column": 20
+      },
+      "property_chain": [
+        "Environment",
+        "Staging"
+      ],
+      "access_type": "property",
+      "is_optional_chain": false
+    },
+    {
+      "kind": "variable_reference",
+      "name": "Environment",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/enums/string_enum.ts",
+        "start_line": 42,
+        "start_column": 10,
+        "end_line": 42,
+        "end_column": 20
+      },
+      "scope_id": "block:<fixtures>/typescript/code/enums/string_enum.ts:42:5:43:43",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "Environment",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/enums/string_enum.ts",
+        "start_line": 42,
+        "start_column": 10,
+        "end_line": 42,
+        "end_column": 20
+      },
+      "scope_id": "block:<fixtures>/typescript/code/enums/string_enum.ts:42:5:43:43",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "Staging",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/enums/string_enum.ts",
+        "start_line": 42,
+        "start_column": 22,
+        "end_line": 42,
+        "end_column": 28
+      },
+      "scope_id": "block:<fixtures>/typescript/code/enums/string_enum.ts:42:5:43:43",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "Staging",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/enums/string_enum.ts",
+        "start_line": 42,
+        "start_column": 22,
+        "end_line": 42,
+        "end_column": 28
+      },
+      "scope_id": "block:<fixtures>/typescript/code/enums/string_enum.ts:42:5:43:43",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "return \"https://staging.example.com\";",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/enums/string_enum.ts",
+        "start_line": 43,
+        "start_column": 7,
+        "end_line": 43,
+        "end_column": 43
+      },
+      "scope_id": "block:<fixtures>/typescript/code/enums/string_enum.ts:42:5:43:43",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "\"https://staging.example.com\"",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/enums/string_enum.ts",
+        "start_line": 43,
+        "start_column": 14,
+        "end_line": 43,
+        "end_column": 42
+      },
+      "scope_id": "block:<fixtures>/typescript/code/enums/string_enum.ts:42:5:43:43",
+      "access_type": "read"
+    },
+    {
+      "kind": "property_access",
+      "name": "Production",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/enums/string_enum.ts",
+        "start_line": 44,
+        "start_column": 10,
+        "end_line": 44,
+        "end_column": 31
+      },
+      "scope_id": "block:<fixtures>/typescript/code/enums/string_enum.ts:44:5:45:39",
+      "receiver_location": {
+        "file_path": "<fixtures>/typescript/code/enums/string_enum.ts",
+        "start_line": 44,
+        "start_column": 10,
+        "end_line": 44,
+        "end_column": 20
+      },
+      "property_chain": [
+        "Environment",
+        "Production"
+      ],
+      "access_type": "property",
+      "is_optional_chain": false
+    },
+    {
+      "kind": "variable_reference",
+      "name": "Environment",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/enums/string_enum.ts",
+        "start_line": 44,
+        "start_column": 10,
+        "end_line": 44,
+        "end_column": 20
+      },
+      "scope_id": "block:<fixtures>/typescript/code/enums/string_enum.ts:44:5:45:39",
+      "access_type": "read"
+    },
+    {
+      "kind": "property_access",
+      "name": "Production",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/enums/string_enum.ts",
+        "start_line": 44,
+        "start_column": 10,
+        "end_line": 44,
+        "end_column": 31
+      },
+      "scope_id": "block:<fixtures>/typescript/code/enums/string_enum.ts:44:5:45:39",
+      "receiver_location": {
+        "file_path": "<fixtures>/typescript/code/enums/string_enum.ts",
+        "start_line": 44,
+        "start_column": 10,
+        "end_line": 44,
+        "end_column": 20
+      },
+      "property_chain": [
+        "Environment",
+        "Production"
+      ],
+      "access_type": "property",
+      "is_optional_chain": false
+    },
+    {
+      "kind": "variable_reference",
+      "name": "Environment",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/enums/string_enum.ts",
+        "start_line": 44,
+        "start_column": 10,
+        "end_line": 44,
+        "end_column": 20
+      },
+      "scope_id": "block:<fixtures>/typescript/code/enums/string_enum.ts:44:5:45:39",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "Environment",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/enums/string_enum.ts",
+        "start_line": 44,
+        "start_column": 10,
+        "end_line": 44,
+        "end_column": 20
+      },
+      "scope_id": "block:<fixtures>/typescript/code/enums/string_enum.ts:44:5:45:39",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "Production",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/enums/string_enum.ts",
+        "start_line": 44,
+        "start_column": 22,
+        "end_line": 44,
+        "end_column": 31
+      },
+      "scope_id": "block:<fixtures>/typescript/code/enums/string_enum.ts:44:5:45:39",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "Production",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/enums/string_enum.ts",
+        "start_line": 44,
+        "start_column": 22,
+        "end_line": 44,
+        "end_column": 31
+      },
+      "scope_id": "block:<fixtures>/typescript/code/enums/string_enum.ts:44:5:45:39",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "return \"https://api.example.com\";",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/enums/string_enum.ts",
+        "start_line": 45,
+        "start_column": 7,
+        "end_line": 45,
+        "end_column": 39
+      },
+      "scope_id": "block:<fixtures>/typescript/code/enums/string_enum.ts:44:5:45:39",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "\"https://api.example.com\"",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/enums/string_enum.ts",
+        "start_line": 45,
+        "start_column": 14,
+        "end_line": 45,
+        "end_column": 38
+      },
+      "scope_id": "block:<fixtures>/typescript/code/enums/string_enum.ts:44:5:45:39",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "Color",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/enums/string_enum.ts",
+        "start_line": 50,
+        "start_column": 12,
+        "end_line": 50,
+        "end_column": 16
+      },
+      "scope_id": "module:<fixtures>/typescript/code/enums/string_enum.ts:1:1:61:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "get_color_code",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/enums/string_enum.ts",
+        "start_line": 56,
+        "start_column": 10,
+        "end_line": 56,
+        "end_column": 23
+      },
+      "scope_id": "module:<fixtures>/typescript/code/enums/string_enum.ts:1:1:61:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "color",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/enums/string_enum.ts",
+        "start_line": 56,
+        "start_column": 25,
+        "end_line": 56,
+        "end_column": 29
+      },
+      "scope_id": "function:<fixtures>/typescript/code/enums/string_enum.ts:56:24:58:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "type_reference",
+      "name": "Color",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/enums/string_enum.ts",
+        "start_line": 56,
+        "start_column": 32,
+        "end_line": 56,
+        "end_column": 36
+      },
+      "scope_id": "function:<fixtures>/typescript/code/enums/string_enum.ts:56:24:58:1",
+      "type_context": "annotation",
+      "type_info": {
+        "type_id": "type:<fixtures>/typescript/code/enums/string_enum.ts:56:32:56:36:Color",
+        "type_name": "Color",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "return color;",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/enums/string_enum.ts",
+        "start_line": 57,
+        "start_column": 3,
+        "end_line": 57,
+        "end_column": 15
+      },
+      "scope_id": "function:<fixtures>/typescript/code/enums/string_enum.ts:56:24:58:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "color",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/enums/string_enum.ts",
+        "start_line": 57,
+        "start_column": 10,
+        "end_line": 57,
+        "end_column": 14
+      },
+      "scope_id": "function:<fixtures>/typescript/code/enums/string_enum.ts:56:24:58:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "color",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/enums/string_enum.ts",
+        "start_line": 57,
+        "start_column": 10,
+        "end_line": 57,
+        "end_column": 14
+      },
+      "scope_id": "function:<fixtures>/typescript/code/enums/string_enum.ts:56:24:58:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "LogLevel",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/enums/string_enum.ts",
+        "start_line": 60,
+        "start_column": 10,
+        "end_line": 60,
+        "end_column": 17
+      },
+      "scope_id": "module:<fixtures>/typescript/code/enums/string_enum.ts:1:1:61:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "HttpMethod",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/enums/string_enum.ts",
+        "start_line": 60,
+        "start_column": 20,
+        "end_line": 60,
+        "end_column": 29
+      },
+      "scope_id": "module:<fixtures>/typescript/code/enums/string_enum.ts:1:1:61:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "Environment",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/enums/string_enum.ts",
+        "start_line": 60,
+        "start_column": 32,
+        "end_line": 60,
+        "end_column": 42
+      },
+      "scope_id": "module:<fixtures>/typescript/code/enums/string_enum.ts:1:1:61:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "Color",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/enums/string_enum.ts",
+        "start_line": 60,
+        "start_column": 45,
+        "end_line": 60,
+        "end_column": 49
+      },
+      "scope_id": "module:<fixtures>/typescript/code/enums/string_enum.ts:1:1:61:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "log",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/enums/string_enum.ts",
+        "start_line": 60,
+        "start_column": 52,
+        "end_line": 60,
+        "end_column": 54
+      },
+      "scope_id": "module:<fixtures>/typescript/code/enums/string_enum.ts:1:1:61:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "make_request",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/enums/string_enum.ts",
+        "start_line": 60,
+        "start_column": 57,
+        "end_line": 60,
+        "end_column": 68
+      },
+      "scope_id": "module:<fixtures>/typescript/code/enums/string_enum.ts:1:1:61:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "get_api_url",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/enums/string_enum.ts",
+        "start_line": 60,
+        "start_column": 71,
+        "end_line": 60,
+        "end_column": 81
+      },
+      "scope_id": "module:<fixtures>/typescript/code/enums/string_enum.ts:1:1:61:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "get_color_code",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/enums/string_enum.ts",
+        "start_line": 60,
+        "start_column": 84,
+        "end_line": 60,
+        "end_column": 97
+      },
+      "scope_id": "module:<fixtures>/typescript/code/enums/string_enum.ts:1:1:61:0",
+      "access_type": "read"
+    }
+  ]
+}

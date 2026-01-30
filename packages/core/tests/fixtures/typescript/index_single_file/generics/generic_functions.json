@@ -1,0 +1,3036 @@
+{
+  "file_path": "<fixtures>/typescript/code/generics/generic_functions.ts",
+  "language": "typescript",
+  "root_scope_id": "module:<fixtures>/typescript/code/generics/generic_functions.ts:1:1:54:0",
+  "scopes": {
+    "module:<fixtures>/typescript/code/generics/generic_functions.ts:1:1:54:0": {
+      "id": "module:<fixtures>/typescript/code/generics/generic_functions.ts:1:1:54:0",
+      "parent_id": null,
+      "name": null,
+      "type": "module",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/generics/generic_functions.ts",
+        "start_line": 1,
+        "start_column": 1,
+        "end_line": 54,
+        "end_column": 0
+      },
+      "child_ids": [
+        "function:<fixtures>/typescript/code/generics/generic_functions.ts:7:21:9:1",
+        "function:<fixtures>/typescript/code/generics/generic_functions.ts:12:20:14:1",
+        "function:<fixtures>/typescript/code/generics/generic_functions.ts:17:44:19:1",
+        "function:<fixtures>/typescript/code/generics/generic_functions.ts:22:51:24:1",
+        "function:<fixtures>/typescript/code/generics/generic_functions.ts:27:18:29:1",
+        "function:<fixtures>/typescript/code/generics/generic_functions.ts:31:17:33:1",
+        "function:<fixtures>/typescript/code/generics/generic_functions.ts:35:19:41:1",
+        "function:<fixtures>/typescript/code/generics/generic_functions.ts:43:19:51:1"
+      ]
+    },
+    "function:<fixtures>/typescript/code/generics/generic_functions.ts:7:21:9:1": {
+      "id": "function:<fixtures>/typescript/code/generics/generic_functions.ts:7:21:9:1",
+      "parent_id": "module:<fixtures>/typescript/code/generics/generic_functions.ts:1:1:54:0",
+      "name": "identity",
+      "type": "function",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/generics/generic_functions.ts",
+        "start_line": 7,
+        "start_column": 21,
+        "end_line": 9,
+        "end_column": 1
+      },
+      "child_ids": []
+    },
+    "function:<fixtures>/typescript/code/generics/generic_functions.ts:12:20:14:1": {
+      "id": "function:<fixtures>/typescript/code/generics/generic_functions.ts:12:20:14:1",
+      "parent_id": "module:<fixtures>/typescript/code/generics/generic_functions.ts:1:1:54:0",
+      "name": "pair",
+      "type": "function",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/generics/generic_functions.ts",
+        "start_line": 12,
+        "start_column": 20,
+        "end_line": 14,
+        "end_column": 1
+      },
+      "child_ids": []
+    },
+    "function:<fixtures>/typescript/code/generics/generic_functions.ts:17:44:19:1": {
+      "id": "function:<fixtures>/typescript/code/generics/generic_functions.ts:17:44:19:1",
+      "parent_id": "module:<fixtures>/typescript/code/generics/generic_functions.ts:1:1:54:0",
+      "name": "get_property",
+      "type": "function",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/generics/generic_functions.ts",
+        "start_line": 17,
+        "start_column": 44,
+        "end_line": 19,
+        "end_column": 1
+      },
+      "child_ids": []
+    },
+    "function:<fixtures>/typescript/code/generics/generic_functions.ts:22:51:24:1": {
+      "id": "function:<fixtures>/typescript/code/generics/generic_functions.ts:22:51:24:1",
+      "parent_id": "module:<fixtures>/typescript/code/generics/generic_functions.ts:1:1:54:0",
+      "name": "merge",
+      "type": "function",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/generics/generic_functions.ts",
+        "start_line": 22,
+        "start_column": 51,
+        "end_line": 24,
+        "end_column": 1
+      },
+      "child_ids": []
+    },
+    "function:<fixtures>/typescript/code/generics/generic_functions.ts:27:18:29:1": {
+      "id": "function:<fixtures>/typescript/code/generics/generic_functions.ts:27:18:29:1",
+      "parent_id": "module:<fixtures>/typescript/code/generics/generic_functions.ts:1:1:54:0",
+      "name": "first",
+      "type": "function",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/generics/generic_functions.ts",
+        "start_line": 27,
+        "start_column": 18,
+        "end_line": 29,
+        "end_column": 1
+      },
+      "child_ids": []
+    },
+    "function:<fixtures>/typescript/code/generics/generic_functions.ts:31:17:33:1": {
+      "id": "function:<fixtures>/typescript/code/generics/generic_functions.ts:31:17:33:1",
+      "parent_id": "module:<fixtures>/typescript/code/generics/generic_functions.ts:1:1:54:0",
+      "name": "last",
+      "type": "function",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/generics/generic_functions.ts",
+        "start_line": 31,
+        "start_column": 17,
+        "end_line": 33,
+        "end_column": 1
+      },
+      "child_ids": []
+    },
+    "function:<fixtures>/typescript/code/generics/generic_functions.ts:35:19:41:1": {
+      "id": "function:<fixtures>/typescript/code/generics/generic_functions.ts:35:19:41:1",
+      "parent_id": "module:<fixtures>/typescript/code/generics/generic_functions.ts:1:1:54:0",
+      "name": "map",
+      "type": "function",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/generics/generic_functions.ts",
+        "start_line": 35,
+        "start_column": 19,
+        "end_line": 41,
+        "end_column": 1
+      },
+      "child_ids": [
+        "block:<fixtures>/typescript/code/generics/generic_functions.ts:37:3:39:3"
+      ]
+    },
+    "block:<fixtures>/typescript/code/generics/generic_functions.ts:37:3:39:3": {
+      "id": "block:<fixtures>/typescript/code/generics/generic_functions.ts:37:3:39:3",
+      "parent_id": "function:<fixtures>/typescript/code/generics/generic_functions.ts:35:19:41:1",
+      "name": null,
+      "type": "block",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/generics/generic_functions.ts",
+        "start_line": 37,
+        "start_column": 3,
+        "end_line": 39,
+        "end_column": 3
+      },
+      "child_ids": []
+    },
+    "function:<fixtures>/typescript/code/generics/generic_functions.ts:43:19:51:1": {
+      "id": "function:<fixtures>/typescript/code/generics/generic_functions.ts:43:19:51:1",
+      "parent_id": "module:<fixtures>/typescript/code/generics/generic_functions.ts:1:1:54:0",
+      "name": "filter",
+      "type": "function",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/generics/generic_functions.ts",
+        "start_line": 43,
+        "start_column": 19,
+        "end_line": 51,
+        "end_column": 1
+      },
+      "child_ids": [
+        "block:<fixtures>/typescript/code/generics/generic_functions.ts:45:3:49:3"
+      ]
+    },
+    "block:<fixtures>/typescript/code/generics/generic_functions.ts:45:3:49:3": {
+      "id": "block:<fixtures>/typescript/code/generics/generic_functions.ts:45:3:49:3",
+      "parent_id": "function:<fixtures>/typescript/code/generics/generic_functions.ts:43:19:51:1",
+      "name": null,
+      "type": "block",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/generics/generic_functions.ts",
+        "start_line": 45,
+        "start_column": 3,
+        "end_line": 49,
+        "end_column": 3
+      },
+      "child_ids": [
+        "block:<fixtures>/typescript/code/generics/generic_functions.ts:46:5:48:5"
+      ]
+    },
+    "block:<fixtures>/typescript/code/generics/generic_functions.ts:46:5:48:5": {
+      "id": "block:<fixtures>/typescript/code/generics/generic_functions.ts:46:5:48:5",
+      "parent_id": "block:<fixtures>/typescript/code/generics/generic_functions.ts:45:3:49:3",
+      "name": null,
+      "type": "block",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/generics/generic_functions.ts",
+        "start_line": 46,
+        "start_column": 5,
+        "end_line": 48,
+        "end_column": 5
+      },
+      "child_ids": []
+    }
+  },
+  "functions": {
+    "function:<fixtures>/typescript/code/generics/generic_functions.ts:7:10:7:17:identity": {
+      "kind": "function",
+      "symbol_id": "function:<fixtures>/typescript/code/generics/generic_functions.ts:7:10:7:17:identity",
+      "name": "identity",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/generics/generic_functions.ts",
+        "start_line": 7,
+        "start_column": 10,
+        "end_line": 7,
+        "end_column": 17
+      },
+      "defining_scope_id": "module:<fixtures>/typescript/code/generics/generic_functions.ts:1:1:54:0",
+      "is_exported": true,
+      "export": {
+        "is_reexport": false
+      },
+      "signature": {
+        "parameters": [
+          {
+            "kind": "parameter",
+            "defining_scope_id": "function:<fixtures>/typescript/code/generics/generic_functions.ts:7:21:9:1",
+            "symbol_id": "parameter:<fixtures>/typescript/code/generics/generic_functions.ts:7:22:7:26:value",
+            "name": "value",
+            "location": {
+              "file_path": "<fixtures>/typescript/code/generics/generic_functions.ts",
+              "start_line": 7,
+              "start_column": 22,
+              "end_line": 7,
+              "end_column": 26
+            },
+            "type": "T",
+            "optional": false
+          }
+        ],
+        "return_type": "T"
+      },
+      "return_type": "T",
+      "body_scope_id": "function:<fixtures>/typescript/code/generics/generic_functions.ts:7:21:9:1"
+    },
+    "function:<fixtures>/typescript/code/generics/generic_functions.ts:12:10:12:13:pair": {
+      "kind": "function",
+      "symbol_id": "function:<fixtures>/typescript/code/generics/generic_functions.ts:12:10:12:13:pair",
+      "name": "pair",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/generics/generic_functions.ts",
+        "start_line": 12,
+        "start_column": 10,
+        "end_line": 12,
+        "end_column": 13
+      },
+      "defining_scope_id": "module:<fixtures>/typescript/code/generics/generic_functions.ts:1:1:54:0",
+      "is_exported": true,
+      "export": {
+        "is_reexport": false
+      },
+      "signature": {
+        "parameters": [
+          {
+            "kind": "parameter",
+            "defining_scope_id": "function:<fixtures>/typescript/code/generics/generic_functions.ts:12:20:14:1",
+            "symbol_id": "parameter:<fixtures>/typescript/code/generics/generic_functions.ts:12:21:12:25:first",
+            "name": "first",
+            "location": {
+              "file_path": "<fixtures>/typescript/code/generics/generic_functions.ts",
+              "start_line": 12,
+              "start_column": 21,
+              "end_line": 12,
+              "end_column": 25
+            },
+            "type": "A",
+            "optional": false
+          },
+          {
+            "kind": "parameter",
+            "defining_scope_id": "function:<fixtures>/typescript/code/generics/generic_functions.ts:12:20:14:1",
+            "symbol_id": "parameter:<fixtures>/typescript/code/generics/generic_functions.ts:12:31:12:36:second",
+            "name": "second",
+            "location": {
+              "file_path": "<fixtures>/typescript/code/generics/generic_functions.ts",
+              "start_line": 12,
+              "start_column": 31,
+              "end_line": 12,
+              "end_column": 36
+            },
+            "type": "B",
+            "optional": false
+          }
+        ],
+        "return_type": "[A, B]"
+      },
+      "return_type": "[A, B]",
+      "body_scope_id": "function:<fixtures>/typescript/code/generics/generic_functions.ts:12:20:14:1"
+    },
+    "function:<fixtures>/typescript/code/generics/generic_functions.ts:17:10:17:21:get_property": {
+      "kind": "function",
+      "symbol_id": "function:<fixtures>/typescript/code/generics/generic_functions.ts:17:10:17:21:get_property",
+      "name": "get_property",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/generics/generic_functions.ts",
+        "start_line": 17,
+        "start_column": 10,
+        "end_line": 17,
+        "end_column": 21
+      },
+      "defining_scope_id": "module:<fixtures>/typescript/code/generics/generic_functions.ts:1:1:54:0",
+      "is_exported": true,
+      "export": {
+        "is_reexport": false
+      },
+      "signature": {
+        "parameters": [
+          {
+            "kind": "parameter",
+            "defining_scope_id": "function:<fixtures>/typescript/code/generics/generic_functions.ts:17:44:19:1",
+            "symbol_id": "parameter:<fixtures>/typescript/code/generics/generic_functions.ts:17:45:17:47:obj",
+            "name": "obj",
+            "location": {
+              "file_path": "<fixtures>/typescript/code/generics/generic_functions.ts",
+              "start_line": 17,
+              "start_column": 45,
+              "end_line": 17,
+              "end_column": 47
+            },
+            "type": "T",
+            "optional": false
+          },
+          {
+            "kind": "parameter",
+            "defining_scope_id": "function:<fixtures>/typescript/code/generics/generic_functions.ts:17:44:19:1",
+            "symbol_id": "parameter:<fixtures>/typescript/code/generics/generic_functions.ts:17:53:17:55:key",
+            "name": "key",
+            "location": {
+              "file_path": "<fixtures>/typescript/code/generics/generic_functions.ts",
+              "start_line": 17,
+              "start_column": 53,
+              "end_line": 17,
+              "end_column": 55
+            },
+            "type": "K",
+            "optional": false
+          }
+        ],
+        "return_type": "T[K]"
+      },
+      "return_type": "T[K]",
+      "body_scope_id": "function:<fixtures>/typescript/code/generics/generic_functions.ts:17:44:19:1"
+    },
+    "function:<fixtures>/typescript/code/generics/generic_functions.ts:22:10:22:14:merge": {
+      "kind": "function",
+      "symbol_id": "function:<fixtures>/typescript/code/generics/generic_functions.ts:22:10:22:14:merge",
+      "name": "merge",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/generics/generic_functions.ts",
+        "start_line": 22,
+        "start_column": 10,
+        "end_line": 22,
+        "end_column": 14
+      },
+      "defining_scope_id": "module:<fixtures>/typescript/code/generics/generic_functions.ts:1:1:54:0",
+      "is_exported": true,
+      "export": {
+        "is_reexport": false
+      },
+      "signature": {
+        "parameters": [
+          {
+            "kind": "parameter",
+            "defining_scope_id": "function:<fixtures>/typescript/code/generics/generic_functions.ts:22:51:24:1",
+            "symbol_id": "parameter:<fixtures>/typescript/code/generics/generic_functions.ts:22:52:22:55:obj1",
+            "name": "obj1",
+            "location": {
+              "file_path": "<fixtures>/typescript/code/generics/generic_functions.ts",
+              "start_line": 22,
+              "start_column": 52,
+              "end_line": 22,
+              "end_column": 55
+            },
+            "type": "T",
+            "optional": false
+          },
+          {
+            "kind": "parameter",
+            "defining_scope_id": "function:<fixtures>/typescript/code/generics/generic_functions.ts:22:51:24:1",
+            "symbol_id": "parameter:<fixtures>/typescript/code/generics/generic_functions.ts:22:61:22:64:obj2",
+            "name": "obj2",
+            "location": {
+              "file_path": "<fixtures>/typescript/code/generics/generic_functions.ts",
+              "start_line": 22,
+              "start_column": 61,
+              "end_line": 22,
+              "end_column": 64
+            },
+            "type": "U",
+            "optional": false
+          }
+        ],
+        "return_type": "T & U"
+      },
+      "return_type": "T & U",
+      "body_scope_id": "function:<fixtures>/typescript/code/generics/generic_functions.ts:22:51:24:1"
+    },
+    "function:<fixtures>/typescript/code/generics/generic_functions.ts:27:10:27:14:first": {
+      "kind": "function",
+      "symbol_id": "function:<fixtures>/typescript/code/generics/generic_functions.ts:27:10:27:14:first",
+      "name": "first",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/generics/generic_functions.ts",
+        "start_line": 27,
+        "start_column": 10,
+        "end_line": 27,
+        "end_column": 14
+      },
+      "defining_scope_id": "module:<fixtures>/typescript/code/generics/generic_functions.ts:1:1:54:0",
+      "is_exported": true,
+      "export": {
+        "is_reexport": false
+      },
+      "signature": {
+        "parameters": [
+          {
+            "kind": "parameter",
+            "defining_scope_id": "function:<fixtures>/typescript/code/generics/generic_functions.ts:27:18:29:1",
+            "symbol_id": "parameter:<fixtures>/typescript/code/generics/generic_functions.ts:27:19:27:21:arr",
+            "name": "arr",
+            "location": {
+              "file_path": "<fixtures>/typescript/code/generics/generic_functions.ts",
+              "start_line": 27,
+              "start_column": 19,
+              "end_line": 27,
+              "end_column": 21
+            },
+            "type": "T[]",
+            "optional": false
+          }
+        ],
+        "return_type": "T | undefined"
+      },
+      "return_type": "T | undefined",
+      "body_scope_id": "function:<fixtures>/typescript/code/generics/generic_functions.ts:27:18:29:1"
+    },
+    "function:<fixtures>/typescript/code/generics/generic_functions.ts:31:10:31:13:last": {
+      "kind": "function",
+      "symbol_id": "function:<fixtures>/typescript/code/generics/generic_functions.ts:31:10:31:13:last",
+      "name": "last",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/generics/generic_functions.ts",
+        "start_line": 31,
+        "start_column": 10,
+        "end_line": 31,
+        "end_column": 13
+      },
+      "defining_scope_id": "module:<fixtures>/typescript/code/generics/generic_functions.ts:1:1:54:0",
+      "is_exported": true,
+      "export": {
+        "is_reexport": false
+      },
+      "signature": {
+        "parameters": [
+          {
+            "kind": "parameter",
+            "defining_scope_id": "function:<fixtures>/typescript/code/generics/generic_functions.ts:31:17:33:1",
+            "symbol_id": "parameter:<fixtures>/typescript/code/generics/generic_functions.ts:31:18:31:20:arr",
+            "name": "arr",
+            "location": {
+              "file_path": "<fixtures>/typescript/code/generics/generic_functions.ts",
+              "start_line": 31,
+              "start_column": 18,
+              "end_line": 31,
+              "end_column": 20
+            },
+            "type": "T[]",
+            "optional": false
+          }
+        ],
+        "return_type": "T | undefined"
+      },
+      "return_type": "T | undefined",
+      "body_scope_id": "function:<fixtures>/typescript/code/generics/generic_functions.ts:31:17:33:1"
+    },
+    "function:<fixtures>/typescript/code/generics/generic_functions.ts:35:10:35:12:map": {
+      "kind": "function",
+      "symbol_id": "function:<fixtures>/typescript/code/generics/generic_functions.ts:35:10:35:12:map",
+      "name": "map",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/generics/generic_functions.ts",
+        "start_line": 35,
+        "start_column": 10,
+        "end_line": 35,
+        "end_column": 12
+      },
+      "defining_scope_id": "module:<fixtures>/typescript/code/generics/generic_functions.ts:1:1:54:0",
+      "is_exported": true,
+      "export": {
+        "is_reexport": false
+      },
+      "signature": {
+        "parameters": [
+          {
+            "kind": "parameter",
+            "defining_scope_id": "function:<fixtures>/typescript/code/generics/generic_functions.ts:35:19:41:1",
+            "symbol_id": "parameter:<fixtures>/typescript/code/generics/generic_functions.ts:35:20:35:22:arr",
+            "name": "arr",
+            "location": {
+              "file_path": "<fixtures>/typescript/code/generics/generic_functions.ts",
+              "start_line": 35,
+              "start_column": 20,
+              "end_line": 35,
+              "end_column": 22
+            },
+            "type": "T[]",
+            "optional": false
+          },
+          {
+            "kind": "parameter",
+            "defining_scope_id": "function:<fixtures>/typescript/code/generics/generic_functions.ts:35:19:41:1",
+            "symbol_id": "parameter:<fixtures>/typescript/code/generics/generic_functions.ts:35:30:35:31:fn",
+            "name": "fn",
+            "location": {
+              "file_path": "<fixtures>/typescript/code/generics/generic_functions.ts",
+              "start_line": 35,
+              "start_column": 30,
+              "end_line": 35,
+              "end_column": 31
+            },
+            "type": "(item: T) => U",
+            "optional": false
+          }
+        ],
+        "return_type": "U[]"
+      },
+      "return_type": "U[]",
+      "body_scope_id": "function:<fixtures>/typescript/code/generics/generic_functions.ts:35:19:41:1"
+    },
+    "function:<fixtures>/typescript/code/generics/generic_functions.ts:43:10:43:15:filter": {
+      "kind": "function",
+      "symbol_id": "function:<fixtures>/typescript/code/generics/generic_functions.ts:43:10:43:15:filter",
+      "name": "filter",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/generics/generic_functions.ts",
+        "start_line": 43,
+        "start_column": 10,
+        "end_line": 43,
+        "end_column": 15
+      },
+      "defining_scope_id": "module:<fixtures>/typescript/code/generics/generic_functions.ts:1:1:54:0",
+      "is_exported": true,
+      "export": {
+        "is_reexport": false
+      },
+      "signature": {
+        "parameters": [
+          {
+            "kind": "parameter",
+            "defining_scope_id": "function:<fixtures>/typescript/code/generics/generic_functions.ts:43:19:51:1",
+            "symbol_id": "parameter:<fixtures>/typescript/code/generics/generic_functions.ts:43:20:43:22:arr",
+            "name": "arr",
+            "location": {
+              "file_path": "<fixtures>/typescript/code/generics/generic_functions.ts",
+              "start_line": 43,
+              "start_column": 20,
+              "end_line": 43,
+              "end_column": 22
+            },
+            "type": "T[]",
+            "optional": false
+          },
+          {
+            "kind": "parameter",
+            "defining_scope_id": "function:<fixtures>/typescript/code/generics/generic_functions.ts:43:19:51:1",
+            "symbol_id": "parameter:<fixtures>/typescript/code/generics/generic_functions.ts:43:30:43:38:predicate",
+            "name": "predicate",
+            "location": {
+              "file_path": "<fixtures>/typescript/code/generics/generic_functions.ts",
+              "start_line": 43,
+              "start_column": 30,
+              "end_line": 43,
+              "end_column": 38
+            },
+            "type": "(item: T) => boolean",
+            "optional": false
+          }
+        ],
+        "return_type": "T[]"
+      },
+      "return_type": "T[]",
+      "body_scope_id": "function:<fixtures>/typescript/code/generics/generic_functions.ts:43:19:51:1"
+    }
+  },
+  "classes": {},
+  "variables": {
+    "variable:<fixtures>/typescript/code/generics/generic_functions.ts:36:9:36:14:result": {
+      "kind": "constant",
+      "symbol_id": "variable:<fixtures>/typescript/code/generics/generic_functions.ts:36:9:36:14:result",
+      "name": "result",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/generics/generic_functions.ts",
+        "start_line": 36,
+        "start_column": 9,
+        "end_line": 36,
+        "end_column": 14
+      },
+      "defining_scope_id": "function:<fixtures>/typescript/code/generics/generic_functions.ts:35:19:41:1",
+      "is_exported": false,
+      "initial_value": "[]"
+    },
+    "variable:<fixtures>/typescript/code/generics/generic_functions.ts:44:9:44:14:result": {
+      "kind": "constant",
+      "symbol_id": "variable:<fixtures>/typescript/code/generics/generic_functions.ts:44:9:44:14:result",
+      "name": "result",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/generics/generic_functions.ts",
+        "start_line": 44,
+        "start_column": 9,
+        "end_line": 44,
+        "end_column": 14
+      },
+      "defining_scope_id": "function:<fixtures>/typescript/code/generics/generic_functions.ts:43:19:51:1",
+      "is_exported": false,
+      "initial_value": "[]"
+    }
+  },
+  "interfaces": {},
+  "enums": {},
+  "namespaces": {},
+  "types": {},
+  "imported_symbols": {},
+  "references": [
+    {
+      "kind": "variable_reference",
+      "name": "identity",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/generics/generic_functions.ts",
+        "start_line": 7,
+        "start_column": 10,
+        "end_line": 7,
+        "end_column": 17
+      },
+      "scope_id": "module:<fixtures>/typescript/code/generics/generic_functions.ts:1:1:54:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "type_reference",
+      "name": "T",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/generics/generic_functions.ts",
+        "start_line": 7,
+        "start_column": 19,
+        "end_line": 7,
+        "end_column": 19
+      },
+      "scope_id": "module:<fixtures>/typescript/code/generics/generic_functions.ts:1:1:54:0",
+      "type_context": "annotation",
+      "type_info": {
+        "type_id": "type:<fixtures>/typescript/code/generics/generic_functions.ts:7:19:7:19:T",
+        "type_name": "T",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "value",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/generics/generic_functions.ts",
+        "start_line": 7,
+        "start_column": 22,
+        "end_line": 7,
+        "end_column": 26
+      },
+      "scope_id": "function:<fixtures>/typescript/code/generics/generic_functions.ts:7:21:9:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "type_reference",
+      "name": "T",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/generics/generic_functions.ts",
+        "start_line": 7,
+        "start_column": 29,
+        "end_line": 7,
+        "end_column": 29
+      },
+      "scope_id": "function:<fixtures>/typescript/code/generics/generic_functions.ts:7:21:9:1",
+      "type_context": "annotation",
+      "type_info": {
+        "type_id": "type:<fixtures>/typescript/code/generics/generic_functions.ts:7:29:7:29:T",
+        "type_name": "T",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "kind": "type_reference",
+      "name": "T",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/generics/generic_functions.ts",
+        "start_line": 7,
+        "start_column": 33,
+        "end_line": 7,
+        "end_column": 33
+      },
+      "scope_id": "function:<fixtures>/typescript/code/generics/generic_functions.ts:7:21:9:1",
+      "type_context": "annotation",
+      "type_info": {
+        "type_id": "type:<fixtures>/typescript/code/generics/generic_functions.ts:7:33:7:33:T",
+        "type_name": "T",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "return value;",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/generics/generic_functions.ts",
+        "start_line": 8,
+        "start_column": 3,
+        "end_line": 8,
+        "end_column": 15
+      },
+      "scope_id": "function:<fixtures>/typescript/code/generics/generic_functions.ts:7:21:9:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "value",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/generics/generic_functions.ts",
+        "start_line": 8,
+        "start_column": 10,
+        "end_line": 8,
+        "end_column": 14
+      },
+      "scope_id": "function:<fixtures>/typescript/code/generics/generic_functions.ts:7:21:9:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "value",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/generics/generic_functions.ts",
+        "start_line": 8,
+        "start_column": 10,
+        "end_line": 8,
+        "end_column": 14
+      },
+      "scope_id": "function:<fixtures>/typescript/code/generics/generic_functions.ts:7:21:9:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "pair",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/generics/generic_functions.ts",
+        "start_line": 12,
+        "start_column": 10,
+        "end_line": 12,
+        "end_column": 13
+      },
+      "scope_id": "module:<fixtures>/typescript/code/generics/generic_functions.ts:1:1:54:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "type_reference",
+      "name": "A",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/generics/generic_functions.ts",
+        "start_line": 12,
+        "start_column": 15,
+        "end_line": 12,
+        "end_column": 15
+      },
+      "scope_id": "module:<fixtures>/typescript/code/generics/generic_functions.ts:1:1:54:0",
+      "type_context": "annotation",
+      "type_info": {
+        "type_id": "type:<fixtures>/typescript/code/generics/generic_functions.ts:12:15:12:15:A",
+        "type_name": "A",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "kind": "type_reference",
+      "name": "B",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/generics/generic_functions.ts",
+        "start_line": 12,
+        "start_column": 18,
+        "end_line": 12,
+        "end_column": 18
+      },
+      "scope_id": "module:<fixtures>/typescript/code/generics/generic_functions.ts:1:1:54:0",
+      "type_context": "annotation",
+      "type_info": {
+        "type_id": "type:<fixtures>/typescript/code/generics/generic_functions.ts:12:18:12:18:B",
+        "type_name": "B",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "first",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/generics/generic_functions.ts",
+        "start_line": 12,
+        "start_column": 21,
+        "end_line": 12,
+        "end_column": 25
+      },
+      "scope_id": "function:<fixtures>/typescript/code/generics/generic_functions.ts:12:20:14:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "type_reference",
+      "name": "A",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/generics/generic_functions.ts",
+        "start_line": 12,
+        "start_column": 28,
+        "end_line": 12,
+        "end_column": 28
+      },
+      "scope_id": "function:<fixtures>/typescript/code/generics/generic_functions.ts:12:20:14:1",
+      "type_context": "annotation",
+      "type_info": {
+        "type_id": "type:<fixtures>/typescript/code/generics/generic_functions.ts:12:28:12:28:A",
+        "type_name": "A",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "second",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/generics/generic_functions.ts",
+        "start_line": 12,
+        "start_column": 31,
+        "end_line": 12,
+        "end_column": 36
+      },
+      "scope_id": "function:<fixtures>/typescript/code/generics/generic_functions.ts:12:20:14:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "type_reference",
+      "name": "B",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/generics/generic_functions.ts",
+        "start_line": 12,
+        "start_column": 39,
+        "end_line": 12,
+        "end_column": 39
+      },
+      "scope_id": "function:<fixtures>/typescript/code/generics/generic_functions.ts:12:20:14:1",
+      "type_context": "annotation",
+      "type_info": {
+        "type_id": "type:<fixtures>/typescript/code/generics/generic_functions.ts:12:39:12:39:B",
+        "type_name": "B",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "kind": "type_reference",
+      "name": "A",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/generics/generic_functions.ts",
+        "start_line": 12,
+        "start_column": 44,
+        "end_line": 12,
+        "end_column": 44
+      },
+      "scope_id": "function:<fixtures>/typescript/code/generics/generic_functions.ts:12:20:14:1",
+      "type_context": "annotation",
+      "type_info": {
+        "type_id": "type:<fixtures>/typescript/code/generics/generic_functions.ts:12:44:12:44:A",
+        "type_name": "A",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "kind": "type_reference",
+      "name": "B",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/generics/generic_functions.ts",
+        "start_line": 12,
+        "start_column": 47,
+        "end_line": 12,
+        "end_column": 47
+      },
+      "scope_id": "function:<fixtures>/typescript/code/generics/generic_functions.ts:12:20:14:1",
+      "type_context": "annotation",
+      "type_info": {
+        "type_id": "type:<fixtures>/typescript/code/generics/generic_functions.ts:12:47:12:47:B",
+        "type_name": "B",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "return [first, second];",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/generics/generic_functions.ts",
+        "start_line": 13,
+        "start_column": 3,
+        "end_line": 13,
+        "end_column": 25
+      },
+      "scope_id": "function:<fixtures>/typescript/code/generics/generic_functions.ts:12:20:14:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "[first, second]",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/generics/generic_functions.ts",
+        "start_line": 13,
+        "start_column": 10,
+        "end_line": 13,
+        "end_column": 24
+      },
+      "scope_id": "function:<fixtures>/typescript/code/generics/generic_functions.ts:12:20:14:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "first",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/generics/generic_functions.ts",
+        "start_line": 13,
+        "start_column": 11,
+        "end_line": 13,
+        "end_column": 15
+      },
+      "scope_id": "function:<fixtures>/typescript/code/generics/generic_functions.ts:12:20:14:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "second",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/generics/generic_functions.ts",
+        "start_line": 13,
+        "start_column": 18,
+        "end_line": 13,
+        "end_column": 23
+      },
+      "scope_id": "function:<fixtures>/typescript/code/generics/generic_functions.ts:12:20:14:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "get_property",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/generics/generic_functions.ts",
+        "start_line": 17,
+        "start_column": 10,
+        "end_line": 17,
+        "end_column": 21
+      },
+      "scope_id": "module:<fixtures>/typescript/code/generics/generic_functions.ts:1:1:54:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "type_reference",
+      "name": "T",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/generics/generic_functions.ts",
+        "start_line": 17,
+        "start_column": 23,
+        "end_line": 17,
+        "end_column": 23
+      },
+      "scope_id": "module:<fixtures>/typescript/code/generics/generic_functions.ts:1:1:54:0",
+      "type_context": "annotation",
+      "type_info": {
+        "type_id": "type:<fixtures>/typescript/code/generics/generic_functions.ts:17:23:17:23:T",
+        "type_name": "T",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "kind": "type_reference",
+      "name": "K",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/generics/generic_functions.ts",
+        "start_line": 17,
+        "start_column": 26,
+        "end_line": 17,
+        "end_column": 26
+      },
+      "scope_id": "module:<fixtures>/typescript/code/generics/generic_functions.ts:1:1:54:0",
+      "type_context": "annotation",
+      "type_info": {
+        "type_id": "type:<fixtures>/typescript/code/generics/generic_functions.ts:17:26:17:26:K",
+        "type_name": "K",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "kind": "type_reference",
+      "name": "T",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/generics/generic_functions.ts",
+        "start_line": 17,
+        "start_column": 42,
+        "end_line": 17,
+        "end_column": 42
+      },
+      "scope_id": "module:<fixtures>/typescript/code/generics/generic_functions.ts:1:1:54:0",
+      "type_context": "annotation",
+      "type_info": {
+        "type_id": "type:<fixtures>/typescript/code/generics/generic_functions.ts:17:42:17:42:T",
+        "type_name": "T",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "obj",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/generics/generic_functions.ts",
+        "start_line": 17,
+        "start_column": 45,
+        "end_line": 17,
+        "end_column": 47
+      },
+      "scope_id": "function:<fixtures>/typescript/code/generics/generic_functions.ts:17:44:19:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "type_reference",
+      "name": "T",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/generics/generic_functions.ts",
+        "start_line": 17,
+        "start_column": 50,
+        "end_line": 17,
+        "end_column": 50
+      },
+      "scope_id": "function:<fixtures>/typescript/code/generics/generic_functions.ts:17:44:19:1",
+      "type_context": "annotation",
+      "type_info": {
+        "type_id": "type:<fixtures>/typescript/code/generics/generic_functions.ts:17:50:17:50:T",
+        "type_name": "T",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "key",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/generics/generic_functions.ts",
+        "start_line": 17,
+        "start_column": 53,
+        "end_line": 17,
+        "end_column": 55
+      },
+      "scope_id": "function:<fixtures>/typescript/code/generics/generic_functions.ts:17:44:19:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "type_reference",
+      "name": "K",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/generics/generic_functions.ts",
+        "start_line": 17,
+        "start_column": 58,
+        "end_line": 17,
+        "end_column": 58
+      },
+      "scope_id": "function:<fixtures>/typescript/code/generics/generic_functions.ts:17:44:19:1",
+      "type_context": "annotation",
+      "type_info": {
+        "type_id": "type:<fixtures>/typescript/code/generics/generic_functions.ts:17:58:17:58:K",
+        "type_name": "K",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "kind": "type_reference",
+      "name": "T",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/generics/generic_functions.ts",
+        "start_line": 17,
+        "start_column": 62,
+        "end_line": 17,
+        "end_column": 62
+      },
+      "scope_id": "function:<fixtures>/typescript/code/generics/generic_functions.ts:17:44:19:1",
+      "type_context": "annotation",
+      "type_info": {
+        "type_id": "type:<fixtures>/typescript/code/generics/generic_functions.ts:17:62:17:62:T",
+        "type_name": "T",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "kind": "type_reference",
+      "name": "K",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/generics/generic_functions.ts",
+        "start_line": 17,
+        "start_column": 64,
+        "end_line": 17,
+        "end_column": 64
+      },
+      "scope_id": "function:<fixtures>/typescript/code/generics/generic_functions.ts:17:44:19:1",
+      "type_context": "annotation",
+      "type_info": {
+        "type_id": "type:<fixtures>/typescript/code/generics/generic_functions.ts:17:64:17:64:K",
+        "type_name": "K",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "return obj[key];",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/generics/generic_functions.ts",
+        "start_line": 18,
+        "start_column": 3,
+        "end_line": 18,
+        "end_column": 18
+      },
+      "scope_id": "function:<fixtures>/typescript/code/generics/generic_functions.ts:17:44:19:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "obj[key]",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/generics/generic_functions.ts",
+        "start_line": 18,
+        "start_column": 10,
+        "end_line": 18,
+        "end_column": 17
+      },
+      "scope_id": "function:<fixtures>/typescript/code/generics/generic_functions.ts:17:44:19:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "obj",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/generics/generic_functions.ts",
+        "start_line": 18,
+        "start_column": 10,
+        "end_line": 18,
+        "end_column": 12
+      },
+      "scope_id": "function:<fixtures>/typescript/code/generics/generic_functions.ts:17:44:19:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "obj[key]",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/generics/generic_functions.ts",
+        "start_line": 18,
+        "start_column": 10,
+        "end_line": 18,
+        "end_column": 17
+      },
+      "scope_id": "function:<fixtures>/typescript/code/generics/generic_functions.ts:17:44:19:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "obj",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/generics/generic_functions.ts",
+        "start_line": 18,
+        "start_column": 10,
+        "end_line": 18,
+        "end_column": 12
+      },
+      "scope_id": "function:<fixtures>/typescript/code/generics/generic_functions.ts:17:44:19:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "key",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/generics/generic_functions.ts",
+        "start_line": 18,
+        "start_column": 14,
+        "end_line": 18,
+        "end_column": 16
+      },
+      "scope_id": "function:<fixtures>/typescript/code/generics/generic_functions.ts:17:44:19:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "key",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/generics/generic_functions.ts",
+        "start_line": 18,
+        "start_column": 14,
+        "end_line": 18,
+        "end_column": 16
+      },
+      "scope_id": "function:<fixtures>/typescript/code/generics/generic_functions.ts:17:44:19:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "merge",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/generics/generic_functions.ts",
+        "start_line": 22,
+        "start_column": 10,
+        "end_line": 22,
+        "end_column": 14
+      },
+      "scope_id": "module:<fixtures>/typescript/code/generics/generic_functions.ts:1:1:54:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "type_reference",
+      "name": "T",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/generics/generic_functions.ts",
+        "start_line": 22,
+        "start_column": 16,
+        "end_line": 22,
+        "end_column": 16
+      },
+      "scope_id": "module:<fixtures>/typescript/code/generics/generic_functions.ts:1:1:54:0",
+      "type_context": "annotation",
+      "type_info": {
+        "type_id": "type:<fixtures>/typescript/code/generics/generic_functions.ts:22:16:22:16:T",
+        "type_name": "T",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "kind": "type_reference",
+      "name": "U",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/generics/generic_functions.ts",
+        "start_line": 22,
+        "start_column": 34,
+        "end_line": 22,
+        "end_column": 34
+      },
+      "scope_id": "module:<fixtures>/typescript/code/generics/generic_functions.ts:1:1:54:0",
+      "type_context": "annotation",
+      "type_info": {
+        "type_id": "type:<fixtures>/typescript/code/generics/generic_functions.ts:22:34:22:34:U",
+        "type_name": "U",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "obj1",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/generics/generic_functions.ts",
+        "start_line": 22,
+        "start_column": 52,
+        "end_line": 22,
+        "end_column": 55
+      },
+      "scope_id": "function:<fixtures>/typescript/code/generics/generic_functions.ts:22:51:24:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "type_reference",
+      "name": "T",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/generics/generic_functions.ts",
+        "start_line": 22,
+        "start_column": 58,
+        "end_line": 22,
+        "end_column": 58
+      },
+      "scope_id": "function:<fixtures>/typescript/code/generics/generic_functions.ts:22:51:24:1",
+      "type_context": "annotation",
+      "type_info": {
+        "type_id": "type:<fixtures>/typescript/code/generics/generic_functions.ts:22:58:22:58:T",
+        "type_name": "T",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "obj2",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/generics/generic_functions.ts",
+        "start_line": 22,
+        "start_column": 61,
+        "end_line": 22,
+        "end_column": 64
+      },
+      "scope_id": "function:<fixtures>/typescript/code/generics/generic_functions.ts:22:51:24:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "type_reference",
+      "name": "U",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/generics/generic_functions.ts",
+        "start_line": 22,
+        "start_column": 67,
+        "end_line": 22,
+        "end_column": 67
+      },
+      "scope_id": "function:<fixtures>/typescript/code/generics/generic_functions.ts:22:51:24:1",
+      "type_context": "annotation",
+      "type_info": {
+        "type_id": "type:<fixtures>/typescript/code/generics/generic_functions.ts:22:67:22:67:U",
+        "type_name": "U",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "kind": "type_reference",
+      "name": "T",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/generics/generic_functions.ts",
+        "start_line": 22,
+        "start_column": 71,
+        "end_line": 22,
+        "end_column": 71
+      },
+      "scope_id": "function:<fixtures>/typescript/code/generics/generic_functions.ts:22:51:24:1",
+      "type_context": "annotation",
+      "type_info": {
+        "type_id": "type:<fixtures>/typescript/code/generics/generic_functions.ts:22:71:22:71:T",
+        "type_name": "T",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "kind": "type_reference",
+      "name": "U",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/generics/generic_functions.ts",
+        "start_line": 22,
+        "start_column": 75,
+        "end_line": 22,
+        "end_column": 75
+      },
+      "scope_id": "function:<fixtures>/typescript/code/generics/generic_functions.ts:22:51:24:1",
+      "type_context": "annotation",
+      "type_info": {
+        "type_id": "type:<fixtures>/typescript/code/generics/generic_functions.ts:22:75:22:75:U",
+        "type_name": "U",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "return { ...obj1, ...obj2 };",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/generics/generic_functions.ts",
+        "start_line": 23,
+        "start_column": 3,
+        "end_line": 23,
+        "end_column": 30
+      },
+      "scope_id": "function:<fixtures>/typescript/code/generics/generic_functions.ts:22:51:24:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "{ ...obj1, ...obj2 }",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/generics/generic_functions.ts",
+        "start_line": 23,
+        "start_column": 10,
+        "end_line": 23,
+        "end_column": 29
+      },
+      "scope_id": "function:<fixtures>/typescript/code/generics/generic_functions.ts:22:51:24:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "obj1",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/generics/generic_functions.ts",
+        "start_line": 23,
+        "start_column": 15,
+        "end_line": 23,
+        "end_column": 18
+      },
+      "scope_id": "function:<fixtures>/typescript/code/generics/generic_functions.ts:22:51:24:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "obj2",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/generics/generic_functions.ts",
+        "start_line": 23,
+        "start_column": 24,
+        "end_line": 23,
+        "end_column": 27
+      },
+      "scope_id": "function:<fixtures>/typescript/code/generics/generic_functions.ts:22:51:24:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "first",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/generics/generic_functions.ts",
+        "start_line": 27,
+        "start_column": 10,
+        "end_line": 27,
+        "end_column": 14
+      },
+      "scope_id": "module:<fixtures>/typescript/code/generics/generic_functions.ts:1:1:54:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "type_reference",
+      "name": "T",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/generics/generic_functions.ts",
+        "start_line": 27,
+        "start_column": 16,
+        "end_line": 27,
+        "end_column": 16
+      },
+      "scope_id": "module:<fixtures>/typescript/code/generics/generic_functions.ts:1:1:54:0",
+      "type_context": "annotation",
+      "type_info": {
+        "type_id": "type:<fixtures>/typescript/code/generics/generic_functions.ts:27:16:27:16:T",
+        "type_name": "T",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "arr",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/generics/generic_functions.ts",
+        "start_line": 27,
+        "start_column": 19,
+        "end_line": 27,
+        "end_column": 21
+      },
+      "scope_id": "function:<fixtures>/typescript/code/generics/generic_functions.ts:27:18:29:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "type_reference",
+      "name": "T",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/generics/generic_functions.ts",
+        "start_line": 27,
+        "start_column": 24,
+        "end_line": 27,
+        "end_column": 24
+      },
+      "scope_id": "function:<fixtures>/typescript/code/generics/generic_functions.ts:27:18:29:1",
+      "type_context": "annotation",
+      "type_info": {
+        "type_id": "type:<fixtures>/typescript/code/generics/generic_functions.ts:27:24:27:24:T",
+        "type_name": "T",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "kind": "type_reference",
+      "name": "T",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/generics/generic_functions.ts",
+        "start_line": 27,
+        "start_column": 30,
+        "end_line": 27,
+        "end_column": 30
+      },
+      "scope_id": "function:<fixtures>/typescript/code/generics/generic_functions.ts:27:18:29:1",
+      "type_context": "annotation",
+      "type_info": {
+        "type_id": "type:<fixtures>/typescript/code/generics/generic_functions.ts:27:30:27:30:T",
+        "type_name": "T",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "return arr[0];",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/generics/generic_functions.ts",
+        "start_line": 28,
+        "start_column": 3,
+        "end_line": 28,
+        "end_column": 16
+      },
+      "scope_id": "function:<fixtures>/typescript/code/generics/generic_functions.ts:27:18:29:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "arr[0]",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/generics/generic_functions.ts",
+        "start_line": 28,
+        "start_column": 10,
+        "end_line": 28,
+        "end_column": 15
+      },
+      "scope_id": "function:<fixtures>/typescript/code/generics/generic_functions.ts:27:18:29:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "arr",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/generics/generic_functions.ts",
+        "start_line": 28,
+        "start_column": 10,
+        "end_line": 28,
+        "end_column": 12
+      },
+      "scope_id": "function:<fixtures>/typescript/code/generics/generic_functions.ts:27:18:29:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "arr[0]",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/generics/generic_functions.ts",
+        "start_line": 28,
+        "start_column": 10,
+        "end_line": 28,
+        "end_column": 15
+      },
+      "scope_id": "function:<fixtures>/typescript/code/generics/generic_functions.ts:27:18:29:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "arr",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/generics/generic_functions.ts",
+        "start_line": 28,
+        "start_column": 10,
+        "end_line": 28,
+        "end_column": 12
+      },
+      "scope_id": "function:<fixtures>/typescript/code/generics/generic_functions.ts:27:18:29:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "0",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/generics/generic_functions.ts",
+        "start_line": 28,
+        "start_column": 14,
+        "end_line": 28,
+        "end_column": 14
+      },
+      "scope_id": "function:<fixtures>/typescript/code/generics/generic_functions.ts:27:18:29:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "last",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/generics/generic_functions.ts",
+        "start_line": 31,
+        "start_column": 10,
+        "end_line": 31,
+        "end_column": 13
+      },
+      "scope_id": "module:<fixtures>/typescript/code/generics/generic_functions.ts:1:1:54:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "type_reference",
+      "name": "T",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/generics/generic_functions.ts",
+        "start_line": 31,
+        "start_column": 15,
+        "end_line": 31,
+        "end_column": 15
+      },
+      "scope_id": "module:<fixtures>/typescript/code/generics/generic_functions.ts:1:1:54:0",
+      "type_context": "annotation",
+      "type_info": {
+        "type_id": "type:<fixtures>/typescript/code/generics/generic_functions.ts:31:15:31:15:T",
+        "type_name": "T",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "arr",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/generics/generic_functions.ts",
+        "start_line": 31,
+        "start_column": 18,
+        "end_line": 31,
+        "end_column": 20
+      },
+      "scope_id": "function:<fixtures>/typescript/code/generics/generic_functions.ts:31:17:33:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "type_reference",
+      "name": "T",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/generics/generic_functions.ts",
+        "start_line": 31,
+        "start_column": 23,
+        "end_line": 31,
+        "end_column": 23
+      },
+      "scope_id": "function:<fixtures>/typescript/code/generics/generic_functions.ts:31:17:33:1",
+      "type_context": "annotation",
+      "type_info": {
+        "type_id": "type:<fixtures>/typescript/code/generics/generic_functions.ts:31:23:31:23:T",
+        "type_name": "T",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "kind": "type_reference",
+      "name": "T",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/generics/generic_functions.ts",
+        "start_line": 31,
+        "start_column": 29,
+        "end_line": 31,
+        "end_column": 29
+      },
+      "scope_id": "function:<fixtures>/typescript/code/generics/generic_functions.ts:31:17:33:1",
+      "type_context": "annotation",
+      "type_info": {
+        "type_id": "type:<fixtures>/typescript/code/generics/generic_functions.ts:31:29:31:29:T",
+        "type_name": "T",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "return arr[arr.length - 1];",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/generics/generic_functions.ts",
+        "start_line": 32,
+        "start_column": 3,
+        "end_line": 32,
+        "end_column": 29
+      },
+      "scope_id": "function:<fixtures>/typescript/code/generics/generic_functions.ts:31:17:33:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "arr[arr.length - 1]",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/generics/generic_functions.ts",
+        "start_line": 32,
+        "start_column": 10,
+        "end_line": 32,
+        "end_column": 28
+      },
+      "scope_id": "function:<fixtures>/typescript/code/generics/generic_functions.ts:31:17:33:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "arr",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/generics/generic_functions.ts",
+        "start_line": 32,
+        "start_column": 10,
+        "end_line": 32,
+        "end_column": 12
+      },
+      "scope_id": "function:<fixtures>/typescript/code/generics/generic_functions.ts:31:17:33:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "arr[arr.length - 1]",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/generics/generic_functions.ts",
+        "start_line": 32,
+        "start_column": 10,
+        "end_line": 32,
+        "end_column": 28
+      },
+      "scope_id": "function:<fixtures>/typescript/code/generics/generic_functions.ts:31:17:33:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "arr",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/generics/generic_functions.ts",
+        "start_line": 32,
+        "start_column": 10,
+        "end_line": 32,
+        "end_column": 12
+      },
+      "scope_id": "function:<fixtures>/typescript/code/generics/generic_functions.ts:31:17:33:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "property_access",
+      "name": "length",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/generics/generic_functions.ts",
+        "start_line": 32,
+        "start_column": 14,
+        "end_line": 32,
+        "end_column": 23
+      },
+      "scope_id": "function:<fixtures>/typescript/code/generics/generic_functions.ts:31:17:33:1",
+      "receiver_location": {
+        "file_path": "<fixtures>/typescript/code/generics/generic_functions.ts",
+        "start_line": 32,
+        "start_column": 14,
+        "end_line": 32,
+        "end_column": 16
+      },
+      "property_chain": [
+        "arr",
+        "length"
+      ],
+      "access_type": "property",
+      "is_optional_chain": false
+    },
+    {
+      "kind": "variable_reference",
+      "name": "arr",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/generics/generic_functions.ts",
+        "start_line": 32,
+        "start_column": 14,
+        "end_line": 32,
+        "end_column": 16
+      },
+      "scope_id": "function:<fixtures>/typescript/code/generics/generic_functions.ts:31:17:33:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "arr.length - 1",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/generics/generic_functions.ts",
+        "start_line": 32,
+        "start_column": 14,
+        "end_line": 32,
+        "end_column": 27
+      },
+      "scope_id": "function:<fixtures>/typescript/code/generics/generic_functions.ts:31:17:33:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "property_access",
+      "name": "length",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/generics/generic_functions.ts",
+        "start_line": 32,
+        "start_column": 14,
+        "end_line": 32,
+        "end_column": 23
+      },
+      "scope_id": "function:<fixtures>/typescript/code/generics/generic_functions.ts:31:17:33:1",
+      "receiver_location": {
+        "file_path": "<fixtures>/typescript/code/generics/generic_functions.ts",
+        "start_line": 32,
+        "start_column": 14,
+        "end_line": 32,
+        "end_column": 16
+      },
+      "property_chain": [
+        "arr",
+        "length"
+      ],
+      "access_type": "property",
+      "is_optional_chain": false
+    },
+    {
+      "kind": "variable_reference",
+      "name": "arr",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/generics/generic_functions.ts",
+        "start_line": 32,
+        "start_column": 14,
+        "end_line": 32,
+        "end_column": 16
+      },
+      "scope_id": "function:<fixtures>/typescript/code/generics/generic_functions.ts:31:17:33:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "arr",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/generics/generic_functions.ts",
+        "start_line": 32,
+        "start_column": 14,
+        "end_line": 32,
+        "end_column": 16
+      },
+      "scope_id": "function:<fixtures>/typescript/code/generics/generic_functions.ts:31:17:33:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "length",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/generics/generic_functions.ts",
+        "start_line": 32,
+        "start_column": 18,
+        "end_line": 32,
+        "end_column": 23
+      },
+      "scope_id": "function:<fixtures>/typescript/code/generics/generic_functions.ts:31:17:33:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "length",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/generics/generic_functions.ts",
+        "start_line": 32,
+        "start_column": 18,
+        "end_line": 32,
+        "end_column": 23
+      },
+      "scope_id": "function:<fixtures>/typescript/code/generics/generic_functions.ts:31:17:33:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "map",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/generics/generic_functions.ts",
+        "start_line": 35,
+        "start_column": 10,
+        "end_line": 35,
+        "end_column": 12
+      },
+      "scope_id": "module:<fixtures>/typescript/code/generics/generic_functions.ts:1:1:54:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "type_reference",
+      "name": "T",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/generics/generic_functions.ts",
+        "start_line": 35,
+        "start_column": 14,
+        "end_line": 35,
+        "end_column": 14
+      },
+      "scope_id": "module:<fixtures>/typescript/code/generics/generic_functions.ts:1:1:54:0",
+      "type_context": "annotation",
+      "type_info": {
+        "type_id": "type:<fixtures>/typescript/code/generics/generic_functions.ts:35:14:35:14:T",
+        "type_name": "T",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "kind": "type_reference",
+      "name": "U",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/generics/generic_functions.ts",
+        "start_line": 35,
+        "start_column": 17,
+        "end_line": 35,
+        "end_column": 17
+      },
+      "scope_id": "module:<fixtures>/typescript/code/generics/generic_functions.ts:1:1:54:0",
+      "type_context": "annotation",
+      "type_info": {
+        "type_id": "type:<fixtures>/typescript/code/generics/generic_functions.ts:35:17:35:17:U",
+        "type_name": "U",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "arr",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/generics/generic_functions.ts",
+        "start_line": 35,
+        "start_column": 20,
+        "end_line": 35,
+        "end_column": 22
+      },
+      "scope_id": "function:<fixtures>/typescript/code/generics/generic_functions.ts:35:19:41:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "type_reference",
+      "name": "T",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/generics/generic_functions.ts",
+        "start_line": 35,
+        "start_column": 25,
+        "end_line": 35,
+        "end_column": 25
+      },
+      "scope_id": "function:<fixtures>/typescript/code/generics/generic_functions.ts:35:19:41:1",
+      "type_context": "annotation",
+      "type_info": {
+        "type_id": "type:<fixtures>/typescript/code/generics/generic_functions.ts:35:25:35:25:T",
+        "type_name": "T",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "fn",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/generics/generic_functions.ts",
+        "start_line": 35,
+        "start_column": 30,
+        "end_line": 35,
+        "end_column": 31
+      },
+      "scope_id": "function:<fixtures>/typescript/code/generics/generic_functions.ts:35:19:41:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "item",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/generics/generic_functions.ts",
+        "start_line": 35,
+        "start_column": 35,
+        "end_line": 35,
+        "end_column": 38
+      },
+      "scope_id": "function:<fixtures>/typescript/code/generics/generic_functions.ts:35:19:41:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "type_reference",
+      "name": "T",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/generics/generic_functions.ts",
+        "start_line": 35,
+        "start_column": 41,
+        "end_line": 35,
+        "end_column": 41
+      },
+      "scope_id": "function:<fixtures>/typescript/code/generics/generic_functions.ts:35:19:41:1",
+      "type_context": "annotation",
+      "type_info": {
+        "type_id": "type:<fixtures>/typescript/code/generics/generic_functions.ts:35:41:35:41:T",
+        "type_name": "T",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "kind": "type_reference",
+      "name": "U",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/generics/generic_functions.ts",
+        "start_line": 35,
+        "start_column": 47,
+        "end_line": 35,
+        "end_column": 47
+      },
+      "scope_id": "function:<fixtures>/typescript/code/generics/generic_functions.ts:35:19:41:1",
+      "type_context": "annotation",
+      "type_info": {
+        "type_id": "type:<fixtures>/typescript/code/generics/generic_functions.ts:35:47:35:47:U",
+        "type_name": "U",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "kind": "type_reference",
+      "name": "U",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/generics/generic_functions.ts",
+        "start_line": 35,
+        "start_column": 51,
+        "end_line": 35,
+        "end_column": 51
+      },
+      "scope_id": "function:<fixtures>/typescript/code/generics/generic_functions.ts:35:19:41:1",
+      "type_context": "annotation",
+      "type_info": {
+        "type_id": "type:<fixtures>/typescript/code/generics/generic_functions.ts:35:51:35:51:U",
+        "type_name": "U",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "kind": "assignment",
+      "name": "result: U[] = []",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/generics/generic_functions.ts",
+        "start_line": 36,
+        "start_column": 9,
+        "end_line": 36,
+        "end_column": 24
+      },
+      "scope_id": "function:<fixtures>/typescript/code/generics/generic_functions.ts:35:19:41:1",
+      "target_location": {
+        "file_path": "<fixtures>/typescript/code/generics/generic_functions.ts",
+        "start_line": 36,
+        "start_column": 9,
+        "end_line": 36,
+        "end_column": 24
+      },
+      "assignment_type": {
+        "type_id": "type:<fixtures>/typescript/code/generics/generic_functions.ts:36:9:36:24:U[]",
+        "type_name": "U[]",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "kind": "assignment",
+      "name": "result",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/generics/generic_functions.ts",
+        "start_line": 36,
+        "start_column": 9,
+        "end_line": 36,
+        "end_column": 14
+      },
+      "scope_id": "function:<fixtures>/typescript/code/generics/generic_functions.ts:35:19:41:1",
+      "target_location": {
+        "file_path": "<fixtures>/typescript/code/generics/generic_functions.ts",
+        "start_line": 36,
+        "start_column": 9,
+        "end_line": 36,
+        "end_column": 14
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "result",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/generics/generic_functions.ts",
+        "start_line": 36,
+        "start_column": 9,
+        "end_line": 36,
+        "end_column": 14
+      },
+      "scope_id": "function:<fixtures>/typescript/code/generics/generic_functions.ts:35:19:41:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "type_reference",
+      "name": "U",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/generics/generic_functions.ts",
+        "start_line": 36,
+        "start_column": 17,
+        "end_line": 36,
+        "end_column": 17
+      },
+      "scope_id": "function:<fixtures>/typescript/code/generics/generic_functions.ts:35:19:41:1",
+      "type_context": "annotation",
+      "type_info": {
+        "type_id": "type:<fixtures>/typescript/code/generics/generic_functions.ts:36:17:36:17:U",
+        "type_name": "U",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "kind": "assignment",
+      "name": "[]",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/generics/generic_functions.ts",
+        "start_line": 36,
+        "start_column": 23,
+        "end_line": 36,
+        "end_column": 24
+      },
+      "scope_id": "function:<fixtures>/typescript/code/generics/generic_functions.ts:35:19:41:1",
+      "target_location": {
+        "file_path": "<fixtures>/typescript/code/generics/generic_functions.ts",
+        "start_line": 36,
+        "start_column": 9,
+        "end_line": 36,
+        "end_column": 14
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "item",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/generics/generic_functions.ts",
+        "start_line": 37,
+        "start_column": 14,
+        "end_line": 37,
+        "end_column": 17
+      },
+      "scope_id": "block:<fixtures>/typescript/code/generics/generic_functions.ts:37:3:39:3",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "arr",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/generics/generic_functions.ts",
+        "start_line": 37,
+        "start_column": 22,
+        "end_line": 37,
+        "end_column": 24
+      },
+      "scope_id": "block:<fixtures>/typescript/code/generics/generic_functions.ts:37:3:39:3",
+      "access_type": "read"
+    },
+    {
+      "kind": "method_call",
+      "name": "push",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/generics/generic_functions.ts",
+        "start_line": 38,
+        "start_column": 5,
+        "end_line": 38,
+        "end_column": 25
+      },
+      "scope_id": "block:<fixtures>/typescript/code/generics/generic_functions.ts:37:3:39:3",
+      "receiver_location": {
+        "file_path": "<fixtures>/typescript/code/generics/generic_functions.ts",
+        "start_line": 38,
+        "start_column": 5,
+        "end_line": 38,
+        "end_column": 10
+      },
+      "property_chain": [
+        "result",
+        "push"
+      ],
+      "optional_chaining": false
+    },
+    {
+      "kind": "variable_reference",
+      "name": "result",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/generics/generic_functions.ts",
+        "start_line": 38,
+        "start_column": 5,
+        "end_line": 38,
+        "end_column": 10
+      },
+      "scope_id": "block:<fixtures>/typescript/code/generics/generic_functions.ts:37:3:39:3",
+      "access_type": "read"
+    },
+    {
+      "kind": "property_access",
+      "name": "push",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/generics/generic_functions.ts",
+        "start_line": 38,
+        "start_column": 5,
+        "end_line": 38,
+        "end_column": 15
+      },
+      "scope_id": "block:<fixtures>/typescript/code/generics/generic_functions.ts:37:3:39:3",
+      "receiver_location": {
+        "file_path": "<fixtures>/typescript/code/generics/generic_functions.ts",
+        "start_line": 38,
+        "start_column": 5,
+        "end_line": 38,
+        "end_column": 10
+      },
+      "property_chain": [
+        "result",
+        "push"
+      ],
+      "access_type": "property",
+      "is_optional_chain": false
+    },
+    {
+      "kind": "variable_reference",
+      "name": "result",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/generics/generic_functions.ts",
+        "start_line": 38,
+        "start_column": 5,
+        "end_line": 38,
+        "end_column": 10
+      },
+      "scope_id": "block:<fixtures>/typescript/code/generics/generic_functions.ts:37:3:39:3",
+      "access_type": "read"
+    },
+    {
+      "kind": "property_access",
+      "name": "push",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/generics/generic_functions.ts",
+        "start_line": 38,
+        "start_column": 5,
+        "end_line": 38,
+        "end_column": 15
+      },
+      "scope_id": "block:<fixtures>/typescript/code/generics/generic_functions.ts:37:3:39:3",
+      "receiver_location": {
+        "file_path": "<fixtures>/typescript/code/generics/generic_functions.ts",
+        "start_line": 38,
+        "start_column": 5,
+        "end_line": 38,
+        "end_column": 10
+      },
+      "property_chain": [
+        "result",
+        "push"
+      ],
+      "access_type": "property",
+      "is_optional_chain": false
+    },
+    {
+      "kind": "variable_reference",
+      "name": "result",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/generics/generic_functions.ts",
+        "start_line": 38,
+        "start_column": 5,
+        "end_line": 38,
+        "end_column": 10
+      },
+      "scope_id": "block:<fixtures>/typescript/code/generics/generic_functions.ts:37:3:39:3",
+      "access_type": "read"
+    },
+    {
+      "kind": "method_call",
+      "name": "push",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/generics/generic_functions.ts",
+        "start_line": 38,
+        "start_column": 5,
+        "end_line": 38,
+        "end_column": 25
+      },
+      "scope_id": "block:<fixtures>/typescript/code/generics/generic_functions.ts:37:3:39:3",
+      "receiver_location": {
+        "file_path": "<fixtures>/typescript/code/generics/generic_functions.ts",
+        "start_line": 38,
+        "start_column": 5,
+        "end_line": 38,
+        "end_column": 10
+      },
+      "property_chain": [
+        "result",
+        "push"
+      ],
+      "optional_chaining": false
+    },
+    {
+      "kind": "variable_reference",
+      "name": "result",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/generics/generic_functions.ts",
+        "start_line": 38,
+        "start_column": 5,
+        "end_line": 38,
+        "end_column": 10
+      },
+      "scope_id": "block:<fixtures>/typescript/code/generics/generic_functions.ts:37:3:39:3",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "result",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/generics/generic_functions.ts",
+        "start_line": 38,
+        "start_column": 5,
+        "end_line": 38,
+        "end_column": 10
+      },
+      "scope_id": "block:<fixtures>/typescript/code/generics/generic_functions.ts:37:3:39:3",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "push",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/generics/generic_functions.ts",
+        "start_line": 38,
+        "start_column": 12,
+        "end_line": 38,
+        "end_column": 15
+      },
+      "scope_id": "block:<fixtures>/typescript/code/generics/generic_functions.ts:37:3:39:3",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "push",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/generics/generic_functions.ts",
+        "start_line": 38,
+        "start_column": 12,
+        "end_line": 38,
+        "end_column": 15
+      },
+      "scope_id": "block:<fixtures>/typescript/code/generics/generic_functions.ts:37:3:39:3",
+      "access_type": "read"
+    },
+    {
+      "kind": "function_call",
+      "name": "fn",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/generics/generic_functions.ts",
+        "start_line": 38,
+        "start_column": 17,
+        "end_line": 38,
+        "end_column": 18
+      },
+      "scope_id": "block:<fixtures>/typescript/code/generics/generic_functions.ts:37:3:39:3"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "fn",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/generics/generic_functions.ts",
+        "start_line": 38,
+        "start_column": 17,
+        "end_line": 38,
+        "end_column": 18
+      },
+      "scope_id": "block:<fixtures>/typescript/code/generics/generic_functions.ts:37:3:39:3",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "item",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/generics/generic_functions.ts",
+        "start_line": 38,
+        "start_column": 20,
+        "end_line": 38,
+        "end_column": 23
+      },
+      "scope_id": "block:<fixtures>/typescript/code/generics/generic_functions.ts:37:3:39:3",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "return result;",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/generics/generic_functions.ts",
+        "start_line": 40,
+        "start_column": 3,
+        "end_line": 40,
+        "end_column": 16
+      },
+      "scope_id": "function:<fixtures>/typescript/code/generics/generic_functions.ts:35:19:41:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "result",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/generics/generic_functions.ts",
+        "start_line": 40,
+        "start_column": 10,
+        "end_line": 40,
+        "end_column": 15
+      },
+      "scope_id": "function:<fixtures>/typescript/code/generics/generic_functions.ts:35:19:41:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "result",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/generics/generic_functions.ts",
+        "start_line": 40,
+        "start_column": 10,
+        "end_line": 40,
+        "end_column": 15
+      },
+      "scope_id": "function:<fixtures>/typescript/code/generics/generic_functions.ts:35:19:41:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "filter",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/generics/generic_functions.ts",
+        "start_line": 43,
+        "start_column": 10,
+        "end_line": 43,
+        "end_column": 15
+      },
+      "scope_id": "module:<fixtures>/typescript/code/generics/generic_functions.ts:1:1:54:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "type_reference",
+      "name": "T",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/generics/generic_functions.ts",
+        "start_line": 43,
+        "start_column": 17,
+        "end_line": 43,
+        "end_column": 17
+      },
+      "scope_id": "module:<fixtures>/typescript/code/generics/generic_functions.ts:1:1:54:0",
+      "type_context": "annotation",
+      "type_info": {
+        "type_id": "type:<fixtures>/typescript/code/generics/generic_functions.ts:43:17:43:17:T",
+        "type_name": "T",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "arr",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/generics/generic_functions.ts",
+        "start_line": 43,
+        "start_column": 20,
+        "end_line": 43,
+        "end_column": 22
+      },
+      "scope_id": "function:<fixtures>/typescript/code/generics/generic_functions.ts:43:19:51:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "type_reference",
+      "name": "T",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/generics/generic_functions.ts",
+        "start_line": 43,
+        "start_column": 25,
+        "end_line": 43,
+        "end_column": 25
+      },
+      "scope_id": "function:<fixtures>/typescript/code/generics/generic_functions.ts:43:19:51:1",
+      "type_context": "annotation",
+      "type_info": {
+        "type_id": "type:<fixtures>/typescript/code/generics/generic_functions.ts:43:25:43:25:T",
+        "type_name": "T",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "predicate",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/generics/generic_functions.ts",
+        "start_line": 43,
+        "start_column": 30,
+        "end_line": 43,
+        "end_column": 38
+      },
+      "scope_id": "function:<fixtures>/typescript/code/generics/generic_functions.ts:43:19:51:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "item",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/generics/generic_functions.ts",
+        "start_line": 43,
+        "start_column": 42,
+        "end_line": 43,
+        "end_column": 45
+      },
+      "scope_id": "function:<fixtures>/typescript/code/generics/generic_functions.ts:43:19:51:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "type_reference",
+      "name": "T",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/generics/generic_functions.ts",
+        "start_line": 43,
+        "start_column": 48,
+        "end_line": 43,
+        "end_column": 48
+      },
+      "scope_id": "function:<fixtures>/typescript/code/generics/generic_functions.ts:43:19:51:1",
+      "type_context": "annotation",
+      "type_info": {
+        "type_id": "type:<fixtures>/typescript/code/generics/generic_functions.ts:43:48:43:48:T",
+        "type_name": "T",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "kind": "type_reference",
+      "name": "T",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/generics/generic_functions.ts",
+        "start_line": 43,
+        "start_column": 64,
+        "end_line": 43,
+        "end_column": 64
+      },
+      "scope_id": "function:<fixtures>/typescript/code/generics/generic_functions.ts:43:19:51:1",
+      "type_context": "annotation",
+      "type_info": {
+        "type_id": "type:<fixtures>/typescript/code/generics/generic_functions.ts:43:64:43:64:T",
+        "type_name": "T",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "kind": "assignment",
+      "name": "result: T[] = []",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/generics/generic_functions.ts",
+        "start_line": 44,
+        "start_column": 9,
+        "end_line": 44,
+        "end_column": 24
+      },
+      "scope_id": "function:<fixtures>/typescript/code/generics/generic_functions.ts:43:19:51:1",
+      "target_location": {
+        "file_path": "<fixtures>/typescript/code/generics/generic_functions.ts",
+        "start_line": 44,
+        "start_column": 9,
+        "end_line": 44,
+        "end_column": 24
+      },
+      "assignment_type": {
+        "type_id": "type:<fixtures>/typescript/code/generics/generic_functions.ts:44:9:44:24:T[]",
+        "type_name": "T[]",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "kind": "assignment",
+      "name": "result",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/generics/generic_functions.ts",
+        "start_line": 44,
+        "start_column": 9,
+        "end_line": 44,
+        "end_column": 14
+      },
+      "scope_id": "function:<fixtures>/typescript/code/generics/generic_functions.ts:43:19:51:1",
+      "target_location": {
+        "file_path": "<fixtures>/typescript/code/generics/generic_functions.ts",
+        "start_line": 44,
+        "start_column": 9,
+        "end_line": 44,
+        "end_column": 14
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "result",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/generics/generic_functions.ts",
+        "start_line": 44,
+        "start_column": 9,
+        "end_line": 44,
+        "end_column": 14
+      },
+      "scope_id": "function:<fixtures>/typescript/code/generics/generic_functions.ts:43:19:51:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "type_reference",
+      "name": "T",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/generics/generic_functions.ts",
+        "start_line": 44,
+        "start_column": 17,
+        "end_line": 44,
+        "end_column": 17
+      },
+      "scope_id": "function:<fixtures>/typescript/code/generics/generic_functions.ts:43:19:51:1",
+      "type_context": "annotation",
+      "type_info": {
+        "type_id": "type:<fixtures>/typescript/code/generics/generic_functions.ts:44:17:44:17:T",
+        "type_name": "T",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "kind": "assignment",
+      "name": "[]",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/generics/generic_functions.ts",
+        "start_line": 44,
+        "start_column": 23,
+        "end_line": 44,
+        "end_column": 24
+      },
+      "scope_id": "function:<fixtures>/typescript/code/generics/generic_functions.ts:43:19:51:1",
+      "target_location": {
+        "file_path": "<fixtures>/typescript/code/generics/generic_functions.ts",
+        "start_line": 44,
+        "start_column": 9,
+        "end_line": 44,
+        "end_column": 14
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "item",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/generics/generic_functions.ts",
+        "start_line": 45,
+        "start_column": 14,
+        "end_line": 45,
+        "end_column": 17
+      },
+      "scope_id": "block:<fixtures>/typescript/code/generics/generic_functions.ts:45:3:49:3",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "arr",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/generics/generic_functions.ts",
+        "start_line": 45,
+        "start_column": 22,
+        "end_line": 45,
+        "end_column": 24
+      },
+      "scope_id": "block:<fixtures>/typescript/code/generics/generic_functions.ts:45:3:49:3",
+      "access_type": "read"
+    },
+    {
+      "kind": "function_call",
+      "name": "predicate",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/generics/generic_functions.ts",
+        "start_line": 46,
+        "start_column": 9,
+        "end_line": 46,
+        "end_column": 17
+      },
+      "scope_id": "block:<fixtures>/typescript/code/generics/generic_functions.ts:46:5:48:5"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "predicate",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/generics/generic_functions.ts",
+        "start_line": 46,
+        "start_column": 9,
+        "end_line": 46,
+        "end_column": 17
+      },
+      "scope_id": "block:<fixtures>/typescript/code/generics/generic_functions.ts:46:5:48:5",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "item",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/generics/generic_functions.ts",
+        "start_line": 46,
+        "start_column": 19,
+        "end_line": 46,
+        "end_column": 22
+      },
+      "scope_id": "block:<fixtures>/typescript/code/generics/generic_functions.ts:46:5:48:5",
+      "access_type": "read"
+    },
+    {
+      "kind": "method_call",
+      "name": "push",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/generics/generic_functions.ts",
+        "start_line": 47,
+        "start_column": 7,
+        "end_line": 47,
+        "end_column": 23
+      },
+      "scope_id": "block:<fixtures>/typescript/code/generics/generic_functions.ts:46:5:48:5",
+      "receiver_location": {
+        "file_path": "<fixtures>/typescript/code/generics/generic_functions.ts",
+        "start_line": 47,
+        "start_column": 7,
+        "end_line": 47,
+        "end_column": 12
+      },
+      "property_chain": [
+        "result",
+        "push"
+      ],
+      "optional_chaining": false
+    },
+    {
+      "kind": "variable_reference",
+      "name": "result",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/generics/generic_functions.ts",
+        "start_line": 47,
+        "start_column": 7,
+        "end_line": 47,
+        "end_column": 12
+      },
+      "scope_id": "block:<fixtures>/typescript/code/generics/generic_functions.ts:46:5:48:5",
+      "access_type": "read"
+    },
+    {
+      "kind": "property_access",
+      "name": "push",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/generics/generic_functions.ts",
+        "start_line": 47,
+        "start_column": 7,
+        "end_line": 47,
+        "end_column": 17
+      },
+      "scope_id": "block:<fixtures>/typescript/code/generics/generic_functions.ts:46:5:48:5",
+      "receiver_location": {
+        "file_path": "<fixtures>/typescript/code/generics/generic_functions.ts",
+        "start_line": 47,
+        "start_column": 7,
+        "end_line": 47,
+        "end_column": 12
+      },
+      "property_chain": [
+        "result",
+        "push"
+      ],
+      "access_type": "property",
+      "is_optional_chain": false
+    },
+    {
+      "kind": "variable_reference",
+      "name": "result",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/generics/generic_functions.ts",
+        "start_line": 47,
+        "start_column": 7,
+        "end_line": 47,
+        "end_column": 12
+      },
+      "scope_id": "block:<fixtures>/typescript/code/generics/generic_functions.ts:46:5:48:5",
+      "access_type": "read"
+    },
+    {
+      "kind": "property_access",
+      "name": "push",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/generics/generic_functions.ts",
+        "start_line": 47,
+        "start_column": 7,
+        "end_line": 47,
+        "end_column": 17
+      },
+      "scope_id": "block:<fixtures>/typescript/code/generics/generic_functions.ts:46:5:48:5",
+      "receiver_location": {
+        "file_path": "<fixtures>/typescript/code/generics/generic_functions.ts",
+        "start_line": 47,
+        "start_column": 7,
+        "end_line": 47,
+        "end_column": 12
+      },
+      "property_chain": [
+        "result",
+        "push"
+      ],
+      "access_type": "property",
+      "is_optional_chain": false
+    },
+    {
+      "kind": "variable_reference",
+      "name": "result",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/generics/generic_functions.ts",
+        "start_line": 47,
+        "start_column": 7,
+        "end_line": 47,
+        "end_column": 12
+      },
+      "scope_id": "block:<fixtures>/typescript/code/generics/generic_functions.ts:46:5:48:5",
+      "access_type": "read"
+    },
+    {
+      "kind": "method_call",
+      "name": "push",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/generics/generic_functions.ts",
+        "start_line": 47,
+        "start_column": 7,
+        "end_line": 47,
+        "end_column": 23
+      },
+      "scope_id": "block:<fixtures>/typescript/code/generics/generic_functions.ts:46:5:48:5",
+      "receiver_location": {
+        "file_path": "<fixtures>/typescript/code/generics/generic_functions.ts",
+        "start_line": 47,
+        "start_column": 7,
+        "end_line": 47,
+        "end_column": 12
+      },
+      "property_chain": [
+        "result",
+        "push"
+      ],
+      "optional_chaining": false
+    },
+    {
+      "kind": "variable_reference",
+      "name": "result",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/generics/generic_functions.ts",
+        "start_line": 47,
+        "start_column": 7,
+        "end_line": 47,
+        "end_column": 12
+      },
+      "scope_id": "block:<fixtures>/typescript/code/generics/generic_functions.ts:46:5:48:5",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "result",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/generics/generic_functions.ts",
+        "start_line": 47,
+        "start_column": 7,
+        "end_line": 47,
+        "end_column": 12
+      },
+      "scope_id": "block:<fixtures>/typescript/code/generics/generic_functions.ts:46:5:48:5",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "push",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/generics/generic_functions.ts",
+        "start_line": 47,
+        "start_column": 14,
+        "end_line": 47,
+        "end_column": 17
+      },
+      "scope_id": "block:<fixtures>/typescript/code/generics/generic_functions.ts:46:5:48:5",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "push",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/generics/generic_functions.ts",
+        "start_line": 47,
+        "start_column": 14,
+        "end_line": 47,
+        "end_column": 17
+      },
+      "scope_id": "block:<fixtures>/typescript/code/generics/generic_functions.ts:46:5:48:5",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "item",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/generics/generic_functions.ts",
+        "start_line": 47,
+        "start_column": 19,
+        "end_line": 47,
+        "end_column": 22
+      },
+      "scope_id": "block:<fixtures>/typescript/code/generics/generic_functions.ts:46:5:48:5",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "return result;",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/generics/generic_functions.ts",
+        "start_line": 50,
+        "start_column": 3,
+        "end_line": 50,
+        "end_column": 16
+      },
+      "scope_id": "function:<fixtures>/typescript/code/generics/generic_functions.ts:43:19:51:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "result",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/generics/generic_functions.ts",
+        "start_line": 50,
+        "start_column": 10,
+        "end_line": 50,
+        "end_column": 15
+      },
+      "scope_id": "function:<fixtures>/typescript/code/generics/generic_functions.ts:43:19:51:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "result",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/generics/generic_functions.ts",
+        "start_line": 50,
+        "start_column": 10,
+        "end_line": 50,
+        "end_column": 15
+      },
+      "scope_id": "function:<fixtures>/typescript/code/generics/generic_functions.ts:43:19:51:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "identity",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/generics/generic_functions.ts",
+        "start_line": 53,
+        "start_column": 10,
+        "end_line": 53,
+        "end_column": 17
+      },
+      "scope_id": "module:<fixtures>/typescript/code/generics/generic_functions.ts:1:1:54:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "pair",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/generics/generic_functions.ts",
+        "start_line": 53,
+        "start_column": 20,
+        "end_line": 53,
+        "end_column": 23
+      },
+      "scope_id": "module:<fixtures>/typescript/code/generics/generic_functions.ts:1:1:54:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "get_property",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/generics/generic_functions.ts",
+        "start_line": 53,
+        "start_column": 26,
+        "end_line": 53,
+        "end_column": 37
+      },
+      "scope_id": "module:<fixtures>/typescript/code/generics/generic_functions.ts:1:1:54:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "merge",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/generics/generic_functions.ts",
+        "start_line": 53,
+        "start_column": 40,
+        "end_line": 53,
+        "end_column": 44
+      },
+      "scope_id": "module:<fixtures>/typescript/code/generics/generic_functions.ts:1:1:54:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "first",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/generics/generic_functions.ts",
+        "start_line": 53,
+        "start_column": 47,
+        "end_line": 53,
+        "end_column": 51
+      },
+      "scope_id": "module:<fixtures>/typescript/code/generics/generic_functions.ts:1:1:54:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "last",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/generics/generic_functions.ts",
+        "start_line": 53,
+        "start_column": 54,
+        "end_line": 53,
+        "end_column": 57
+      },
+      "scope_id": "module:<fixtures>/typescript/code/generics/generic_functions.ts:1:1:54:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "map",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/generics/generic_functions.ts",
+        "start_line": 53,
+        "start_column": 60,
+        "end_line": 53,
+        "end_column": 62
+      },
+      "scope_id": "module:<fixtures>/typescript/code/generics/generic_functions.ts:1:1:54:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "filter",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/generics/generic_functions.ts",
+        "start_line": 53,
+        "start_column": 65,
+        "end_line": 53,
+        "end_column": 70
+      },
+      "scope_id": "module:<fixtures>/typescript/code/generics/generic_functions.ts:1:1:54:0",
+      "access_type": "read"
+    }
+  ]
+}

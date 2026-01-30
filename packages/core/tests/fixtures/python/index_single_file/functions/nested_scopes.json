@@ -1,0 +1,4609 @@
+{
+  "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+  "language": "python",
+  "root_scope_id": "module:<fixtures>/python/code/functions/nested_scopes.py:1:1:61:1",
+  "scopes": {
+    "module:<fixtures>/python/code/functions/nested_scopes.py:1:1:61:1": {
+      "id": "module:<fixtures>/python/code/functions/nested_scopes.py:1:1:61:1",
+      "parent_id": null,
+      "name": null,
+      "type": "module",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 1,
+        "start_column": 1,
+        "end_line": 61,
+        "end_column": 1
+      },
+      "child_ids": [
+        "function:<fixtures>/python/code/functions/nested_scopes.py:18:19:41:93",
+        "function:<fixtures>/python/code/functions/nested_scopes.py:48:20:51:24",
+        "function:<fixtures>/python/code/functions/nested_scopes.py:9:11:11:26"
+      ]
+    },
+    "function:<fixtures>/python/code/functions/nested_scopes.py:18:19:41:93": {
+      "id": "function:<fixtures>/python/code/functions/nested_scopes.py:18:19:41:93",
+      "parent_id": "module:<fixtures>/python/code/functions/nested_scopes.py:1:1:61:1",
+      "name": "outer_function",
+      "type": "function",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 18,
+        "start_column": 19,
+        "end_line": 41,
+        "end_column": 93
+      },
+      "child_ids": [
+        "function:<fixtures>/python/code/functions/nested_scopes.py:27:23:38:69",
+        "block:<fixtures>/python/code/functions/nested_scopes.py:24:5:25:29"
+      ]
+    },
+    "function:<fixtures>/python/code/functions/nested_scopes.py:27:23:38:69": {
+      "id": "function:<fixtures>/python/code/functions/nested_scopes.py:27:23:38:69",
+      "parent_id": "function:<fixtures>/python/code/functions/nested_scopes.py:18:19:41:93",
+      "name": "inner_function",
+      "type": "function",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 27,
+        "start_column": 23,
+        "end_line": 38,
+        "end_column": 69
+      },
+      "child_ids": [
+        "function:<fixtures>/python/code/functions/nested_scopes.py:32:28:35:28"
+      ]
+    },
+    "function:<fixtures>/python/code/functions/nested_scopes.py:48:20:51:24": {
+      "id": "function:<fixtures>/python/code/functions/nested_scopes.py:48:20:51:24",
+      "parent_id": "module:<fixtures>/python/code/functions/nested_scopes.py:1:1:61:1",
+      "name": "lambda_function",
+      "type": "function",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 48,
+        "start_column": 20,
+        "end_line": 51,
+        "end_column": 24
+      },
+      "child_ids": [
+        "function:<fixtures>/python/code/functions/nested_scopes.py:50:19:50:34"
+      ]
+    },
+    "function:<fixtures>/python/code/functions/nested_scopes.py:32:28:35:28": {
+      "id": "function:<fixtures>/python/code/functions/nested_scopes.py:32:28:35:28",
+      "parent_id": "function:<fixtures>/python/code/functions/nested_scopes.py:27:23:38:69",
+      "name": "deeper_function",
+      "type": "function",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 32,
+        "start_column": 28,
+        "end_line": 35,
+        "end_column": 28
+      },
+      "child_ids": []
+    },
+    "function:<fixtures>/python/code/functions/nested_scopes.py:9:11:11:26": {
+      "id": "function:<fixtures>/python/code/functions/nested_scopes.py:9:11:11:26",
+      "parent_id": "module:<fixtures>/python/code/functions/nested_scopes.py:1:1:61:1",
+      "name": "helper",
+      "type": "function",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 9,
+        "start_column": 11,
+        "end_line": 11,
+        "end_column": 26
+      },
+      "child_ids": []
+    },
+    "block:<fixtures>/python/code/functions/nested_scopes.py:24:5:25:29": {
+      "id": "block:<fixtures>/python/code/functions/nested_scopes.py:24:5:25:29",
+      "parent_id": "function:<fixtures>/python/code/functions/nested_scopes.py:18:19:41:93",
+      "name": null,
+      "type": "block",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 24,
+        "start_column": 5,
+        "end_line": 25,
+        "end_column": 29
+      },
+      "child_ids": []
+    },
+    "function:<fixtures>/python/code/functions/nested_scopes.py:50:19:50:34": {
+      "id": "function:<fixtures>/python/code/functions/nested_scopes.py:50:19:50:34",
+      "parent_id": "function:<fixtures>/python/code/functions/nested_scopes.py:48:20:51:24",
+      "name": null,
+      "type": "function",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 50,
+        "start_column": 19,
+        "end_line": 50,
+        "end_column": 34
+      },
+      "child_ids": []
+    }
+  },
+  "functions": {
+    "function:<fixtures>/python/code/functions/nested_scopes.py:9:5:9:10:helper": {
+      "kind": "function",
+      "symbol_id": "function:<fixtures>/python/code/functions/nested_scopes.py:9:5:9:10:helper",
+      "name": "helper",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 9,
+        "start_column": 5,
+        "end_line": 9,
+        "end_column": 10
+      },
+      "defining_scope_id": "module:<fixtures>/python/code/functions/nested_scopes.py:1:1:61:1",
+      "is_exported": true,
+      "signature": {
+        "parameters": [],
+        "return_type": "str"
+      },
+      "return_type": "str",
+      "body_scope_id": "function:<fixtures>/python/code/functions/nested_scopes.py:9:11:11:26"
+    },
+    "function:<fixtures>/python/code/functions/nested_scopes.py:18:5:18:18:outer_function": {
+      "kind": "function",
+      "symbol_id": "function:<fixtures>/python/code/functions/nested_scopes.py:18:5:18:18:outer_function",
+      "name": "outer_function",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 18,
+        "start_column": 5,
+        "end_line": 18,
+        "end_column": 18
+      },
+      "defining_scope_id": "module:<fixtures>/python/code/functions/nested_scopes.py:1:1:61:1",
+      "is_exported": true,
+      "signature": {
+        "parameters": [],
+        "return_type": "Dict[str, Any]"
+      },
+      "return_type": "Dict[str, Any]",
+      "body_scope_id": "function:<fixtures>/python/code/functions/nested_scopes.py:18:19:41:93"
+    },
+    "function:<fixtures>/python/code/functions/nested_scopes.py:27:9:27:22:inner_function": {
+      "kind": "function",
+      "symbol_id": "function:<fixtures>/python/code/functions/nested_scopes.py:27:9:27:22:inner_function",
+      "name": "inner_function",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 27,
+        "start_column": 9,
+        "end_line": 27,
+        "end_column": 22
+      },
+      "defining_scope_id": "function:<fixtures>/python/code/functions/nested_scopes.py:18:19:41:93",
+      "is_exported": false,
+      "signature": {
+        "parameters": [],
+        "return_type": "Dict[str, Any]"
+      },
+      "return_type": "Dict[str, Any]",
+      "body_scope_id": "function:<fixtures>/python/code/functions/nested_scopes.py:27:23:38:69"
+    },
+    "function:<fixtures>/python/code/functions/nested_scopes.py:32:13:32:27:deeper_function": {
+      "kind": "function",
+      "symbol_id": "function:<fixtures>/python/code/functions/nested_scopes.py:32:13:32:27:deeper_function",
+      "name": "deeper_function",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 32,
+        "start_column": 13,
+        "end_line": 32,
+        "end_column": 27
+      },
+      "defining_scope_id": "function:<fixtures>/python/code/functions/nested_scopes.py:27:23:38:69",
+      "is_exported": false,
+      "signature": {
+        "parameters": [],
+        "return_type": "str"
+      },
+      "return_type": "str",
+      "body_scope_id": "function:<fixtures>/python/code/functions/nested_scopes.py:32:28:35:28"
+    },
+    "function:<fixtures>/python/code/functions/nested_scopes.py:48:5:48:19:lambda_function": {
+      "kind": "function",
+      "symbol_id": "function:<fixtures>/python/code/functions/nested_scopes.py:48:5:48:19:lambda_function",
+      "name": "lambda_function",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 48,
+        "start_column": 5,
+        "end_line": 48,
+        "end_column": 19
+      },
+      "defining_scope_id": "module:<fixtures>/python/code/functions/nested_scopes.py:1:1:61:1",
+      "is_exported": true,
+      "signature": {
+        "parameters": [],
+        "return_type": "str"
+      },
+      "return_type": "str",
+      "body_scope_id": "function:<fixtures>/python/code/functions/nested_scopes.py:48:20:51:24"
+    }
+  },
+  "classes": {},
+  "variables": {
+    "variable:<fixtures>/python/code/functions/nested_scopes.py:15:1:15:9:top_level": {
+      "kind": "variable",
+      "symbol_id": "variable:<fixtures>/python/code/functions/nested_scopes.py:15:1:15:9:top_level",
+      "name": "top_level",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 15,
+        "start_column": 1,
+        "end_line": 15,
+        "end_column": 9
+      },
+      "defining_scope_id": "module:<fixtures>/python/code/functions/nested_scopes.py:1:1:61:1",
+      "is_exported": true,
+      "initial_value": "helper()"
+    },
+    "variable:<fixtures>/python/code/functions/nested_scopes.py:21:5:21:14:outer_call": {
+      "kind": "variable",
+      "symbol_id": "variable:<fixtures>/python/code/functions/nested_scopes.py:21:5:21:14:outer_call",
+      "name": "outer_call",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 21,
+        "start_column": 5,
+        "end_line": 21,
+        "end_column": 14
+      },
+      "defining_scope_id": "function:<fixtures>/python/code/functions/nested_scopes.py:18:19:41:93",
+      "is_exported": false,
+      "initial_value": "helper()"
+    },
+    "variable:<fixtures>/python/code/functions/nested_scopes.py:25:9:25:18:block_call": {
+      "kind": "variable",
+      "symbol_id": "variable:<fixtures>/python/code/functions/nested_scopes.py:25:9:25:18:block_call",
+      "name": "block_call",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 25,
+        "start_column": 9,
+        "end_line": 25,
+        "end_column": 18
+      },
+      "defining_scope_id": "block:<fixtures>/python/code/functions/nested_scopes.py:24:5:25:29",
+      "is_exported": false,
+      "initial_value": "helper()"
+    },
+    "variable:<fixtures>/python/code/functions/nested_scopes.py:30:9:30:18:inner_call": {
+      "kind": "variable",
+      "symbol_id": "variable:<fixtures>/python/code/functions/nested_scopes.py:30:9:30:18:inner_call",
+      "name": "inner_call",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 30,
+        "start_column": 9,
+        "end_line": 30,
+        "end_column": 18
+      },
+      "defining_scope_id": "function:<fixtures>/python/code/functions/nested_scopes.py:27:23:38:69",
+      "is_exported": false,
+      "initial_value": "helper()"
+    },
+    "variable:<fixtures>/python/code/functions/nested_scopes.py:34:13:34:21:deep_call": {
+      "kind": "variable",
+      "symbol_id": "variable:<fixtures>/python/code/functions/nested_scopes.py:34:13:34:21:deep_call",
+      "name": "deep_call",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 34,
+        "start_column": 13,
+        "end_line": 34,
+        "end_column": 21
+      },
+      "defining_scope_id": "function:<fixtures>/python/code/functions/nested_scopes.py:32:28:35:28",
+      "is_exported": false,
+      "initial_value": "helper()"
+    },
+    "variable:<fixtures>/python/code/functions/nested_scopes.py:37:9:37:19:deep_result": {
+      "kind": "variable",
+      "symbol_id": "variable:<fixtures>/python/code/functions/nested_scopes.py:37:9:37:19:deep_result",
+      "name": "deep_result",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 37,
+        "start_column": 9,
+        "end_line": 37,
+        "end_column": 19
+      },
+      "defining_scope_id": "function:<fixtures>/python/code/functions/nested_scopes.py:27:23:38:69",
+      "is_exported": false,
+      "initial_value": "deeper_function()"
+    },
+    "variable:<fixtures>/python/code/functions/nested_scopes.py:40:5:40:16:inner_result": {
+      "kind": "variable",
+      "symbol_id": "variable:<fixtures>/python/code/functions/nested_scopes.py:40:5:40:16:inner_result",
+      "name": "inner_result",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 40,
+        "start_column": 5,
+        "end_line": 40,
+        "end_column": 16
+      },
+      "defining_scope_id": "function:<fixtures>/python/code/functions/nested_scopes.py:18:19:41:93",
+      "is_exported": false,
+      "initial_value": "inner_function()"
+    },
+    "variable:<fixtures>/python/code/functions/nested_scopes.py:45:1:45:13:module_result": {
+      "kind": "variable",
+      "symbol_id": "variable:<fixtures>/python/code/functions/nested_scopes.py:45:1:45:13:module_result",
+      "name": "module_result",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 45,
+        "start_column": 1,
+        "end_line": 45,
+        "end_column": 13
+      },
+      "defining_scope_id": "module:<fixtures>/python/code/functions/nested_scopes.py:1:1:61:1",
+      "is_exported": true,
+      "initial_value": "outer_function()"
+    },
+    "variable:<fixtures>/python/code/functions/nested_scopes.py:50:5:50:15:lambda_func": {
+      "kind": "variable",
+      "symbol_id": "variable:<fixtures>/python/code/functions/nested_scopes.py:50:5:50:15:lambda_func",
+      "name": "lambda_func",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 50,
+        "start_column": 5,
+        "end_line": 50,
+        "end_column": 15
+      },
+      "defining_scope_id": "function:<fixtures>/python/code/functions/nested_scopes.py:48:20:51:24",
+      "is_exported": false,
+      "initial_value": "lambda: helper()"
+    },
+    "variable:<fixtures>/python/code/functions/nested_scopes.py:54:1:54:13:lambda_result": {
+      "kind": "variable",
+      "symbol_id": "variable:<fixtures>/python/code/functions/nested_scopes.py:54:1:54:13:lambda_result",
+      "name": "lambda_result",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 54,
+        "start_column": 1,
+        "end_line": 54,
+        "end_column": 13
+      },
+      "defining_scope_id": "module:<fixtures>/python/code/functions/nested_scopes.py:1:1:61:1",
+      "is_exported": true,
+      "initial_value": "lambda_function()"
+    },
+    "variable:<fixtures>/python/code/functions/nested_scopes.py:57:1:57:7:results": {
+      "kind": "variable",
+      "symbol_id": "variable:<fixtures>/python/code/functions/nested_scopes.py:57:1:57:7:results",
+      "name": "results",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 57,
+        "start_column": 1,
+        "end_line": 57,
+        "end_column": 7
+      },
+      "defining_scope_id": "module:<fixtures>/python/code/functions/nested_scopes.py:1:1:61:1",
+      "is_exported": true,
+      "initial_value": "{\n    \"top_level\": top_level,\n    \"module_result\": module_result,\n    \"lambda_result\": lambda_result,\n}",
+      "function_collection": {
+        "collection_type": "Object",
+        "location": {
+          "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+          "start_line": 57,
+          "start_column": 11,
+          "end_line": 61,
+          "end_column": 1
+        },
+        "stored_functions": [],
+        "stored_references": [
+          "top_level",
+          "module_result",
+          "lambda_result"
+        ],
+        "collection_id": "variable:<fixtures>/python/code/functions/nested_scopes.py:57:1:57:7:results"
+      }
+    }
+  },
+  "interfaces": {},
+  "enums": {},
+  "namespaces": {},
+  "types": {},
+  "imported_symbols": {
+    "variable:<fixtures>/python/code/functions/nested_scopes.py:6:20:6:23:Dict": {
+      "kind": "import",
+      "symbol_id": "variable:<fixtures>/python/code/functions/nested_scopes.py:6:20:6:23:Dict",
+      "name": "Dict",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 6,
+        "start_column": 20,
+        "end_line": 6,
+        "end_column": 23
+      },
+      "defining_scope_id": "module:<fixtures>/python/code/functions/nested_scopes.py:1:1:61:1",
+      "import_path": "typing",
+      "import_kind": "named"
+    },
+    "variable:<fixtures>/python/code/functions/nested_scopes.py:6:26:6:28:Any": {
+      "kind": "import",
+      "symbol_id": "variable:<fixtures>/python/code/functions/nested_scopes.py:6:26:6:28:Any",
+      "name": "Any",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 6,
+        "start_column": 26,
+        "end_line": 6,
+        "end_column": 28
+      },
+      "defining_scope_id": "module:<fixtures>/python/code/functions/nested_scopes.py:1:1:61:1",
+      "import_path": "typing",
+      "import_kind": "named"
+    }
+  },
+  "references": [
+    {
+      "kind": "variable_reference",
+      "name": "typing",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 6,
+        "start_column": 6,
+        "end_line": 6,
+        "end_column": 11
+      },
+      "scope_id": "module:<fixtures>/python/code/functions/nested_scopes.py:1:1:61:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "typing",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 6,
+        "start_column": 6,
+        "end_line": 6,
+        "end_column": 11
+      },
+      "scope_id": "module:<fixtures>/python/code/functions/nested_scopes.py:1:1:61:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "typing",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 6,
+        "start_column": 6,
+        "end_line": 6,
+        "end_column": 11
+      },
+      "scope_id": "module:<fixtures>/python/code/functions/nested_scopes.py:1:1:61:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "Dict",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 6,
+        "start_column": 20,
+        "end_line": 6,
+        "end_column": 23
+      },
+      "scope_id": "module:<fixtures>/python/code/functions/nested_scopes.py:1:1:61:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "Dict",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 6,
+        "start_column": 20,
+        "end_line": 6,
+        "end_column": 23
+      },
+      "scope_id": "module:<fixtures>/python/code/functions/nested_scopes.py:1:1:61:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "Dict",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 6,
+        "start_column": 20,
+        "end_line": 6,
+        "end_column": 23
+      },
+      "scope_id": "module:<fixtures>/python/code/functions/nested_scopes.py:1:1:61:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "Any",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 6,
+        "start_column": 26,
+        "end_line": 6,
+        "end_column": 28
+      },
+      "scope_id": "module:<fixtures>/python/code/functions/nested_scopes.py:1:1:61:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "Any",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 6,
+        "start_column": 26,
+        "end_line": 6,
+        "end_column": 28
+      },
+      "scope_id": "module:<fixtures>/python/code/functions/nested_scopes.py:1:1:61:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "Any",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 6,
+        "start_column": 26,
+        "end_line": 6,
+        "end_column": 28
+      },
+      "scope_id": "module:<fixtures>/python/code/functions/nested_scopes.py:1:1:61:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "helper",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 9,
+        "start_column": 5,
+        "end_line": 9,
+        "end_column": 10
+      },
+      "scope_id": "module:<fixtures>/python/code/functions/nested_scopes.py:1:1:61:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "helper",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 9,
+        "start_column": 5,
+        "end_line": 9,
+        "end_column": 10
+      },
+      "scope_id": "module:<fixtures>/python/code/functions/nested_scopes.py:1:1:61:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "helper",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 9,
+        "start_column": 5,
+        "end_line": 9,
+        "end_column": 10
+      },
+      "scope_id": "module:<fixtures>/python/code/functions/nested_scopes.py:1:1:61:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "str",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 9,
+        "start_column": 17,
+        "end_line": 9,
+        "end_column": 19
+      },
+      "scope_id": "function:<fixtures>/python/code/functions/nested_scopes.py:9:11:11:26",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "str",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 9,
+        "start_column": 17,
+        "end_line": 9,
+        "end_column": 19
+      },
+      "scope_id": "function:<fixtures>/python/code/functions/nested_scopes.py:9:11:11:26",
+      "access_type": "read"
+    },
+    {
+      "kind": "type_reference",
+      "name": "str",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 9,
+        "start_column": 17,
+        "end_line": 9,
+        "end_column": 19
+      },
+      "scope_id": "function:<fixtures>/python/code/functions/nested_scopes.py:9:11:11:26",
+      "type_context": "annotation",
+      "type_info": {
+        "type_id": "type:<fixtures>/python/code/functions/nested_scopes.py:9:17:9:19:str",
+        "type_name": "str",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "str",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 9,
+        "start_column": 17,
+        "end_line": 9,
+        "end_column": 19
+      },
+      "scope_id": "function:<fixtures>/python/code/functions/nested_scopes.py:9:11:11:26",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "return \"helper result\"",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 11,
+        "start_column": 5,
+        "end_line": 11,
+        "end_column": 26
+      },
+      "scope_id": "function:<fixtures>/python/code/functions/nested_scopes.py:9:11:11:26",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "\"helper result\"",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 11,
+        "start_column": 12,
+        "end_line": 11,
+        "end_column": 26
+      },
+      "scope_id": "function:<fixtures>/python/code/functions/nested_scopes.py:9:11:11:26",
+      "access_type": "read"
+    },
+    {
+      "kind": "assignment",
+      "name": "top_level = helper()",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 15,
+        "start_column": 1,
+        "end_line": 15,
+        "end_column": 20
+      },
+      "scope_id": "module:<fixtures>/python/code/functions/nested_scopes.py:1:1:61:1",
+      "target_location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 15,
+        "start_column": 1,
+        "end_line": 15,
+        "end_column": 20
+      }
+    },
+    {
+      "kind": "assignment",
+      "name": "top_level",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 15,
+        "start_column": 1,
+        "end_line": 15,
+        "end_column": 9
+      },
+      "scope_id": "module:<fixtures>/python/code/functions/nested_scopes.py:1:1:61:1",
+      "target_location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 15,
+        "start_column": 1,
+        "end_line": 15,
+        "end_column": 9
+      },
+      "assignment_type": {
+        "type_id": "type:<fixtures>/python/code/functions/nested_scopes.py:15:1:15:9:top_level",
+        "type_name": "top_level",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "top_level",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 15,
+        "start_column": 1,
+        "end_line": 15,
+        "end_column": 9
+      },
+      "scope_id": "module:<fixtures>/python/code/functions/nested_scopes.py:1:1:61:1",
+      "access_type": "write"
+    },
+    {
+      "kind": "assignment",
+      "name": "top_level = helper()",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 15,
+        "start_column": 1,
+        "end_line": 15,
+        "end_column": 20
+      },
+      "scope_id": "module:<fixtures>/python/code/functions/nested_scopes.py:1:1:61:1",
+      "target_location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 15,
+        "start_column": 1,
+        "end_line": 15,
+        "end_column": 20
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "top_level",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 15,
+        "start_column": 1,
+        "end_line": 15,
+        "end_column": 9
+      },
+      "scope_id": "module:<fixtures>/python/code/functions/nested_scopes.py:1:1:61:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "top_level",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 15,
+        "start_column": 1,
+        "end_line": 15,
+        "end_column": 9
+      },
+      "scope_id": "module:<fixtures>/python/code/functions/nested_scopes.py:1:1:61:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "top_level",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 15,
+        "start_column": 1,
+        "end_line": 15,
+        "end_column": 9
+      },
+      "scope_id": "module:<fixtures>/python/code/functions/nested_scopes.py:1:1:61:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "top_level",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 15,
+        "start_column": 1,
+        "end_line": 15,
+        "end_column": 9
+      },
+      "scope_id": "module:<fixtures>/python/code/functions/nested_scopes.py:1:1:61:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "assignment",
+      "name": "helper()",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 15,
+        "start_column": 13,
+        "end_line": 15,
+        "end_column": 20
+      },
+      "scope_id": "module:<fixtures>/python/code/functions/nested_scopes.py:1:1:61:1",
+      "target_location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 15,
+        "start_column": 1,
+        "end_line": 15,
+        "end_column": 9
+      }
+    },
+    {
+      "kind": "function_call",
+      "name": "helper",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 15,
+        "start_column": 13,
+        "end_line": 15,
+        "end_column": 18
+      },
+      "scope_id": "module:<fixtures>/python/code/functions/nested_scopes.py:1:1:61:1",
+      "potential_construct_target": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 15,
+        "start_column": 1,
+        "end_line": 15,
+        "end_column": 9
+      }
+    },
+    {
+      "kind": "function_call",
+      "name": "helper",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 15,
+        "start_column": 13,
+        "end_line": 15,
+        "end_column": 20
+      },
+      "scope_id": "module:<fixtures>/python/code/functions/nested_scopes.py:1:1:61:1",
+      "potential_construct_target": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 15,
+        "start_column": 1,
+        "end_line": 15,
+        "end_column": 9
+      }
+    },
+    {
+      "kind": "constructor_call",
+      "name": "helper",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 15,
+        "start_column": 13,
+        "end_line": 15,
+        "end_column": 18
+      },
+      "scope_id": "module:<fixtures>/python/code/functions/nested_scopes.py:1:1:61:1",
+      "construct_target": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 15,
+        "start_column": 1,
+        "end_line": 15,
+        "end_column": 9
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "helper()",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 15,
+        "start_column": 13,
+        "end_line": 15,
+        "end_column": 20
+      },
+      "scope_id": "module:<fixtures>/python/code/functions/nested_scopes.py:1:1:61:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "helper",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 15,
+        "start_column": 13,
+        "end_line": 15,
+        "end_column": 18
+      },
+      "scope_id": "module:<fixtures>/python/code/functions/nested_scopes.py:1:1:61:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "helper",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 15,
+        "start_column": 13,
+        "end_line": 15,
+        "end_column": 18
+      },
+      "scope_id": "module:<fixtures>/python/code/functions/nested_scopes.py:1:1:61:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "helper",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 15,
+        "start_column": 13,
+        "end_line": 15,
+        "end_column": 18
+      },
+      "scope_id": "module:<fixtures>/python/code/functions/nested_scopes.py:1:1:61:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "outer_function",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 18,
+        "start_column": 5,
+        "end_line": 18,
+        "end_column": 18
+      },
+      "scope_id": "module:<fixtures>/python/code/functions/nested_scopes.py:1:1:61:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "outer_function",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 18,
+        "start_column": 5,
+        "end_line": 18,
+        "end_column": 18
+      },
+      "scope_id": "module:<fixtures>/python/code/functions/nested_scopes.py:1:1:61:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "outer_function",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 18,
+        "start_column": 5,
+        "end_line": 18,
+        "end_column": 18
+      },
+      "scope_id": "module:<fixtures>/python/code/functions/nested_scopes.py:1:1:61:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "Dict",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 18,
+        "start_column": 25,
+        "end_line": 18,
+        "end_column": 28
+      },
+      "scope_id": "function:<fixtures>/python/code/functions/nested_scopes.py:18:19:41:93",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "Dict",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 18,
+        "start_column": 25,
+        "end_line": 18,
+        "end_column": 28
+      },
+      "scope_id": "function:<fixtures>/python/code/functions/nested_scopes.py:18:19:41:93",
+      "access_type": "read"
+    },
+    {
+      "kind": "type_reference",
+      "name": "Dict",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 18,
+        "start_column": 25,
+        "end_line": 18,
+        "end_column": 28
+      },
+      "scope_id": "function:<fixtures>/python/code/functions/nested_scopes.py:18:19:41:93",
+      "type_context": "annotation",
+      "type_info": {
+        "type_id": "type:<fixtures>/python/code/functions/nested_scopes.py:18:25:18:28:Dict",
+        "type_name": "Dict",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "Dict",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 18,
+        "start_column": 25,
+        "end_line": 18,
+        "end_column": 28
+      },
+      "scope_id": "function:<fixtures>/python/code/functions/nested_scopes.py:18:19:41:93",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "str",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 18,
+        "start_column": 30,
+        "end_line": 18,
+        "end_column": 32
+      },
+      "scope_id": "function:<fixtures>/python/code/functions/nested_scopes.py:18:19:41:93",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "str",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 18,
+        "start_column": 30,
+        "end_line": 18,
+        "end_column": 32
+      },
+      "scope_id": "function:<fixtures>/python/code/functions/nested_scopes.py:18:19:41:93",
+      "access_type": "read"
+    },
+    {
+      "kind": "type_reference",
+      "name": "str",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 18,
+        "start_column": 30,
+        "end_line": 18,
+        "end_column": 32
+      },
+      "scope_id": "function:<fixtures>/python/code/functions/nested_scopes.py:18:19:41:93",
+      "type_context": "annotation",
+      "type_info": {
+        "type_id": "type:<fixtures>/python/code/functions/nested_scopes.py:18:30:18:32:str",
+        "type_name": "str",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "str",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 18,
+        "start_column": 30,
+        "end_line": 18,
+        "end_column": 32
+      },
+      "scope_id": "function:<fixtures>/python/code/functions/nested_scopes.py:18:19:41:93",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "Any",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 18,
+        "start_column": 35,
+        "end_line": 18,
+        "end_column": 37
+      },
+      "scope_id": "function:<fixtures>/python/code/functions/nested_scopes.py:18:19:41:93",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "Any",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 18,
+        "start_column": 35,
+        "end_line": 18,
+        "end_column": 37
+      },
+      "scope_id": "function:<fixtures>/python/code/functions/nested_scopes.py:18:19:41:93",
+      "access_type": "read"
+    },
+    {
+      "kind": "type_reference",
+      "name": "Any",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 18,
+        "start_column": 35,
+        "end_line": 18,
+        "end_column": 37
+      },
+      "scope_id": "function:<fixtures>/python/code/functions/nested_scopes.py:18:19:41:93",
+      "type_context": "annotation",
+      "type_info": {
+        "type_id": "type:<fixtures>/python/code/functions/nested_scopes.py:18:35:18:37:Any",
+        "type_name": "Any",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "Any",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 18,
+        "start_column": 35,
+        "end_line": 18,
+        "end_column": 37
+      },
+      "scope_id": "function:<fixtures>/python/code/functions/nested_scopes.py:18:19:41:93",
+      "access_type": "read"
+    },
+    {
+      "kind": "assignment",
+      "name": "outer_call = helper()",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 21,
+        "start_column": 5,
+        "end_line": 21,
+        "end_column": 25
+      },
+      "scope_id": "function:<fixtures>/python/code/functions/nested_scopes.py:18:19:41:93",
+      "target_location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 21,
+        "start_column": 5,
+        "end_line": 21,
+        "end_column": 25
+      }
+    },
+    {
+      "kind": "assignment",
+      "name": "outer_call",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 21,
+        "start_column": 5,
+        "end_line": 21,
+        "end_column": 14
+      },
+      "scope_id": "function:<fixtures>/python/code/functions/nested_scopes.py:18:19:41:93",
+      "target_location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 21,
+        "start_column": 5,
+        "end_line": 21,
+        "end_column": 14
+      },
+      "assignment_type": {
+        "type_id": "type:<fixtures>/python/code/functions/nested_scopes.py:21:5:21:14:outer_call",
+        "type_name": "outer_call",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "outer_call",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 21,
+        "start_column": 5,
+        "end_line": 21,
+        "end_column": 14
+      },
+      "scope_id": "function:<fixtures>/python/code/functions/nested_scopes.py:18:19:41:93",
+      "access_type": "write"
+    },
+    {
+      "kind": "assignment",
+      "name": "outer_call = helper()",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 21,
+        "start_column": 5,
+        "end_line": 21,
+        "end_column": 25
+      },
+      "scope_id": "function:<fixtures>/python/code/functions/nested_scopes.py:18:19:41:93",
+      "target_location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 21,
+        "start_column": 5,
+        "end_line": 21,
+        "end_column": 25
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "outer_call",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 21,
+        "start_column": 5,
+        "end_line": 21,
+        "end_column": 14
+      },
+      "scope_id": "function:<fixtures>/python/code/functions/nested_scopes.py:18:19:41:93",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "outer_call",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 21,
+        "start_column": 5,
+        "end_line": 21,
+        "end_column": 14
+      },
+      "scope_id": "function:<fixtures>/python/code/functions/nested_scopes.py:18:19:41:93",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "outer_call",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 21,
+        "start_column": 5,
+        "end_line": 21,
+        "end_column": 14
+      },
+      "scope_id": "function:<fixtures>/python/code/functions/nested_scopes.py:18:19:41:93",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "outer_call",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 21,
+        "start_column": 5,
+        "end_line": 21,
+        "end_column": 14
+      },
+      "scope_id": "function:<fixtures>/python/code/functions/nested_scopes.py:18:19:41:93",
+      "access_type": "read"
+    },
+    {
+      "kind": "assignment",
+      "name": "helper()",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 21,
+        "start_column": 18,
+        "end_line": 21,
+        "end_column": 25
+      },
+      "scope_id": "function:<fixtures>/python/code/functions/nested_scopes.py:18:19:41:93",
+      "target_location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 21,
+        "start_column": 5,
+        "end_line": 21,
+        "end_column": 14
+      }
+    },
+    {
+      "kind": "function_call",
+      "name": "helper",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 21,
+        "start_column": 18,
+        "end_line": 21,
+        "end_column": 23
+      },
+      "scope_id": "function:<fixtures>/python/code/functions/nested_scopes.py:18:19:41:93",
+      "potential_construct_target": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 21,
+        "start_column": 5,
+        "end_line": 21,
+        "end_column": 14
+      }
+    },
+    {
+      "kind": "function_call",
+      "name": "helper",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 21,
+        "start_column": 18,
+        "end_line": 21,
+        "end_column": 25
+      },
+      "scope_id": "function:<fixtures>/python/code/functions/nested_scopes.py:18:19:41:93",
+      "potential_construct_target": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 21,
+        "start_column": 5,
+        "end_line": 21,
+        "end_column": 14
+      }
+    },
+    {
+      "kind": "constructor_call",
+      "name": "helper",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 21,
+        "start_column": 18,
+        "end_line": 21,
+        "end_column": 23
+      },
+      "scope_id": "function:<fixtures>/python/code/functions/nested_scopes.py:18:19:41:93",
+      "construct_target": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 21,
+        "start_column": 5,
+        "end_line": 21,
+        "end_column": 14
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "helper()",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 21,
+        "start_column": 18,
+        "end_line": 21,
+        "end_column": 25
+      },
+      "scope_id": "function:<fixtures>/python/code/functions/nested_scopes.py:18:19:41:93",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "helper",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 21,
+        "start_column": 18,
+        "end_line": 21,
+        "end_column": 23
+      },
+      "scope_id": "function:<fixtures>/python/code/functions/nested_scopes.py:18:19:41:93",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "helper",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 21,
+        "start_column": 18,
+        "end_line": 21,
+        "end_column": 23
+      },
+      "scope_id": "function:<fixtures>/python/code/functions/nested_scopes.py:18:19:41:93",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "helper",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 21,
+        "start_column": 18,
+        "end_line": 21,
+        "end_column": 23
+      },
+      "scope_id": "function:<fixtures>/python/code/functions/nested_scopes.py:18:19:41:93",
+      "access_type": "read"
+    },
+    {
+      "kind": "assignment",
+      "name": "block_call = helper()",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 25,
+        "start_column": 9,
+        "end_line": 25,
+        "end_column": 29
+      },
+      "scope_id": "block:<fixtures>/python/code/functions/nested_scopes.py:24:5:25:29",
+      "target_location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 25,
+        "start_column": 9,
+        "end_line": 25,
+        "end_column": 29
+      }
+    },
+    {
+      "kind": "assignment",
+      "name": "block_call",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 25,
+        "start_column": 9,
+        "end_line": 25,
+        "end_column": 18
+      },
+      "scope_id": "block:<fixtures>/python/code/functions/nested_scopes.py:24:5:25:29",
+      "target_location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 25,
+        "start_column": 9,
+        "end_line": 25,
+        "end_column": 18
+      },
+      "assignment_type": {
+        "type_id": "type:<fixtures>/python/code/functions/nested_scopes.py:25:9:25:18:block_call",
+        "type_name": "block_call",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "block_call",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 25,
+        "start_column": 9,
+        "end_line": 25,
+        "end_column": 18
+      },
+      "scope_id": "block:<fixtures>/python/code/functions/nested_scopes.py:24:5:25:29",
+      "access_type": "write"
+    },
+    {
+      "kind": "assignment",
+      "name": "block_call = helper()",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 25,
+        "start_column": 9,
+        "end_line": 25,
+        "end_column": 29
+      },
+      "scope_id": "block:<fixtures>/python/code/functions/nested_scopes.py:24:5:25:29",
+      "target_location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 25,
+        "start_column": 9,
+        "end_line": 25,
+        "end_column": 29
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "block_call",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 25,
+        "start_column": 9,
+        "end_line": 25,
+        "end_column": 18
+      },
+      "scope_id": "block:<fixtures>/python/code/functions/nested_scopes.py:24:5:25:29",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "block_call",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 25,
+        "start_column": 9,
+        "end_line": 25,
+        "end_column": 18
+      },
+      "scope_id": "block:<fixtures>/python/code/functions/nested_scopes.py:24:5:25:29",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "block_call",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 25,
+        "start_column": 9,
+        "end_line": 25,
+        "end_column": 18
+      },
+      "scope_id": "block:<fixtures>/python/code/functions/nested_scopes.py:24:5:25:29",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "block_call",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 25,
+        "start_column": 9,
+        "end_line": 25,
+        "end_column": 18
+      },
+      "scope_id": "block:<fixtures>/python/code/functions/nested_scopes.py:24:5:25:29",
+      "access_type": "read"
+    },
+    {
+      "kind": "assignment",
+      "name": "helper()",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 25,
+        "start_column": 22,
+        "end_line": 25,
+        "end_column": 29
+      },
+      "scope_id": "block:<fixtures>/python/code/functions/nested_scopes.py:24:5:25:29",
+      "target_location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 25,
+        "start_column": 9,
+        "end_line": 25,
+        "end_column": 18
+      }
+    },
+    {
+      "kind": "function_call",
+      "name": "helper",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 25,
+        "start_column": 22,
+        "end_line": 25,
+        "end_column": 27
+      },
+      "scope_id": "block:<fixtures>/python/code/functions/nested_scopes.py:24:5:25:29",
+      "potential_construct_target": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 25,
+        "start_column": 9,
+        "end_line": 25,
+        "end_column": 18
+      }
+    },
+    {
+      "kind": "function_call",
+      "name": "helper",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 25,
+        "start_column": 22,
+        "end_line": 25,
+        "end_column": 29
+      },
+      "scope_id": "block:<fixtures>/python/code/functions/nested_scopes.py:24:5:25:29",
+      "potential_construct_target": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 25,
+        "start_column": 9,
+        "end_line": 25,
+        "end_column": 18
+      }
+    },
+    {
+      "kind": "constructor_call",
+      "name": "helper",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 25,
+        "start_column": 22,
+        "end_line": 25,
+        "end_column": 27
+      },
+      "scope_id": "block:<fixtures>/python/code/functions/nested_scopes.py:24:5:25:29",
+      "construct_target": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 25,
+        "start_column": 9,
+        "end_line": 25,
+        "end_column": 18
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "helper()",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 25,
+        "start_column": 22,
+        "end_line": 25,
+        "end_column": 29
+      },
+      "scope_id": "block:<fixtures>/python/code/functions/nested_scopes.py:24:5:25:29",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "helper",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 25,
+        "start_column": 22,
+        "end_line": 25,
+        "end_column": 27
+      },
+      "scope_id": "block:<fixtures>/python/code/functions/nested_scopes.py:24:5:25:29",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "helper",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 25,
+        "start_column": 22,
+        "end_line": 25,
+        "end_column": 27
+      },
+      "scope_id": "block:<fixtures>/python/code/functions/nested_scopes.py:24:5:25:29",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "helper",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 25,
+        "start_column": 22,
+        "end_line": 25,
+        "end_column": 27
+      },
+      "scope_id": "block:<fixtures>/python/code/functions/nested_scopes.py:24:5:25:29",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "inner_function",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 27,
+        "start_column": 9,
+        "end_line": 27,
+        "end_column": 22
+      },
+      "scope_id": "function:<fixtures>/python/code/functions/nested_scopes.py:18:19:41:93",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "inner_function",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 27,
+        "start_column": 9,
+        "end_line": 27,
+        "end_column": 22
+      },
+      "scope_id": "function:<fixtures>/python/code/functions/nested_scopes.py:18:19:41:93",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "inner_function",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 27,
+        "start_column": 9,
+        "end_line": 27,
+        "end_column": 22
+      },
+      "scope_id": "function:<fixtures>/python/code/functions/nested_scopes.py:18:19:41:93",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "Dict",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 27,
+        "start_column": 29,
+        "end_line": 27,
+        "end_column": 32
+      },
+      "scope_id": "function:<fixtures>/python/code/functions/nested_scopes.py:27:23:38:69",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "Dict",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 27,
+        "start_column": 29,
+        "end_line": 27,
+        "end_column": 32
+      },
+      "scope_id": "function:<fixtures>/python/code/functions/nested_scopes.py:27:23:38:69",
+      "access_type": "read"
+    },
+    {
+      "kind": "type_reference",
+      "name": "Dict",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 27,
+        "start_column": 29,
+        "end_line": 27,
+        "end_column": 32
+      },
+      "scope_id": "function:<fixtures>/python/code/functions/nested_scopes.py:27:23:38:69",
+      "type_context": "annotation",
+      "type_info": {
+        "type_id": "type:<fixtures>/python/code/functions/nested_scopes.py:27:29:27:32:Dict",
+        "type_name": "Dict",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "Dict",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 27,
+        "start_column": 29,
+        "end_line": 27,
+        "end_column": 32
+      },
+      "scope_id": "function:<fixtures>/python/code/functions/nested_scopes.py:27:23:38:69",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "str",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 27,
+        "start_column": 34,
+        "end_line": 27,
+        "end_column": 36
+      },
+      "scope_id": "function:<fixtures>/python/code/functions/nested_scopes.py:27:23:38:69",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "str",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 27,
+        "start_column": 34,
+        "end_line": 27,
+        "end_column": 36
+      },
+      "scope_id": "function:<fixtures>/python/code/functions/nested_scopes.py:27:23:38:69",
+      "access_type": "read"
+    },
+    {
+      "kind": "type_reference",
+      "name": "str",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 27,
+        "start_column": 34,
+        "end_line": 27,
+        "end_column": 36
+      },
+      "scope_id": "function:<fixtures>/python/code/functions/nested_scopes.py:27:23:38:69",
+      "type_context": "annotation",
+      "type_info": {
+        "type_id": "type:<fixtures>/python/code/functions/nested_scopes.py:27:34:27:36:str",
+        "type_name": "str",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "str",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 27,
+        "start_column": 34,
+        "end_line": 27,
+        "end_column": 36
+      },
+      "scope_id": "function:<fixtures>/python/code/functions/nested_scopes.py:27:23:38:69",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "Any",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 27,
+        "start_column": 39,
+        "end_line": 27,
+        "end_column": 41
+      },
+      "scope_id": "function:<fixtures>/python/code/functions/nested_scopes.py:27:23:38:69",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "Any",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 27,
+        "start_column": 39,
+        "end_line": 27,
+        "end_column": 41
+      },
+      "scope_id": "function:<fixtures>/python/code/functions/nested_scopes.py:27:23:38:69",
+      "access_type": "read"
+    },
+    {
+      "kind": "type_reference",
+      "name": "Any",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 27,
+        "start_column": 39,
+        "end_line": 27,
+        "end_column": 41
+      },
+      "scope_id": "function:<fixtures>/python/code/functions/nested_scopes.py:27:23:38:69",
+      "type_context": "annotation",
+      "type_info": {
+        "type_id": "type:<fixtures>/python/code/functions/nested_scopes.py:27:39:27:41:Any",
+        "type_name": "Any",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "Any",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 27,
+        "start_column": 39,
+        "end_line": 27,
+        "end_column": 41
+      },
+      "scope_id": "function:<fixtures>/python/code/functions/nested_scopes.py:27:23:38:69",
+      "access_type": "read"
+    },
+    {
+      "kind": "assignment",
+      "name": "inner_call = helper()",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 30,
+        "start_column": 9,
+        "end_line": 30,
+        "end_column": 29
+      },
+      "scope_id": "function:<fixtures>/python/code/functions/nested_scopes.py:27:23:38:69",
+      "target_location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 30,
+        "start_column": 9,
+        "end_line": 30,
+        "end_column": 29
+      }
+    },
+    {
+      "kind": "assignment",
+      "name": "inner_call",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 30,
+        "start_column": 9,
+        "end_line": 30,
+        "end_column": 18
+      },
+      "scope_id": "function:<fixtures>/python/code/functions/nested_scopes.py:27:23:38:69",
+      "target_location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 30,
+        "start_column": 9,
+        "end_line": 30,
+        "end_column": 18
+      },
+      "assignment_type": {
+        "type_id": "type:<fixtures>/python/code/functions/nested_scopes.py:30:9:30:18:inner_call",
+        "type_name": "inner_call",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "inner_call",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 30,
+        "start_column": 9,
+        "end_line": 30,
+        "end_column": 18
+      },
+      "scope_id": "function:<fixtures>/python/code/functions/nested_scopes.py:27:23:38:69",
+      "access_type": "write"
+    },
+    {
+      "kind": "assignment",
+      "name": "inner_call = helper()",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 30,
+        "start_column": 9,
+        "end_line": 30,
+        "end_column": 29
+      },
+      "scope_id": "function:<fixtures>/python/code/functions/nested_scopes.py:27:23:38:69",
+      "target_location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 30,
+        "start_column": 9,
+        "end_line": 30,
+        "end_column": 29
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "inner_call",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 30,
+        "start_column": 9,
+        "end_line": 30,
+        "end_column": 18
+      },
+      "scope_id": "function:<fixtures>/python/code/functions/nested_scopes.py:27:23:38:69",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "inner_call",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 30,
+        "start_column": 9,
+        "end_line": 30,
+        "end_column": 18
+      },
+      "scope_id": "function:<fixtures>/python/code/functions/nested_scopes.py:27:23:38:69",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "inner_call",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 30,
+        "start_column": 9,
+        "end_line": 30,
+        "end_column": 18
+      },
+      "scope_id": "function:<fixtures>/python/code/functions/nested_scopes.py:27:23:38:69",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "inner_call",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 30,
+        "start_column": 9,
+        "end_line": 30,
+        "end_column": 18
+      },
+      "scope_id": "function:<fixtures>/python/code/functions/nested_scopes.py:27:23:38:69",
+      "access_type": "read"
+    },
+    {
+      "kind": "assignment",
+      "name": "helper()",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 30,
+        "start_column": 22,
+        "end_line": 30,
+        "end_column": 29
+      },
+      "scope_id": "function:<fixtures>/python/code/functions/nested_scopes.py:27:23:38:69",
+      "target_location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 30,
+        "start_column": 9,
+        "end_line": 30,
+        "end_column": 18
+      }
+    },
+    {
+      "kind": "function_call",
+      "name": "helper",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 30,
+        "start_column": 22,
+        "end_line": 30,
+        "end_column": 27
+      },
+      "scope_id": "function:<fixtures>/python/code/functions/nested_scopes.py:27:23:38:69",
+      "potential_construct_target": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 30,
+        "start_column": 9,
+        "end_line": 30,
+        "end_column": 18
+      }
+    },
+    {
+      "kind": "function_call",
+      "name": "helper",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 30,
+        "start_column": 22,
+        "end_line": 30,
+        "end_column": 29
+      },
+      "scope_id": "function:<fixtures>/python/code/functions/nested_scopes.py:27:23:38:69",
+      "potential_construct_target": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 30,
+        "start_column": 9,
+        "end_line": 30,
+        "end_column": 18
+      }
+    },
+    {
+      "kind": "constructor_call",
+      "name": "helper",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 30,
+        "start_column": 22,
+        "end_line": 30,
+        "end_column": 27
+      },
+      "scope_id": "function:<fixtures>/python/code/functions/nested_scopes.py:27:23:38:69",
+      "construct_target": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 30,
+        "start_column": 9,
+        "end_line": 30,
+        "end_column": 18
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "helper()",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 30,
+        "start_column": 22,
+        "end_line": 30,
+        "end_column": 29
+      },
+      "scope_id": "function:<fixtures>/python/code/functions/nested_scopes.py:27:23:38:69",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "helper",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 30,
+        "start_column": 22,
+        "end_line": 30,
+        "end_column": 27
+      },
+      "scope_id": "function:<fixtures>/python/code/functions/nested_scopes.py:27:23:38:69",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "helper",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 30,
+        "start_column": 22,
+        "end_line": 30,
+        "end_column": 27
+      },
+      "scope_id": "function:<fixtures>/python/code/functions/nested_scopes.py:27:23:38:69",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "helper",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 30,
+        "start_column": 22,
+        "end_line": 30,
+        "end_column": 27
+      },
+      "scope_id": "function:<fixtures>/python/code/functions/nested_scopes.py:27:23:38:69",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "deeper_function",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 32,
+        "start_column": 13,
+        "end_line": 32,
+        "end_column": 27
+      },
+      "scope_id": "function:<fixtures>/python/code/functions/nested_scopes.py:27:23:38:69",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "deeper_function",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 32,
+        "start_column": 13,
+        "end_line": 32,
+        "end_column": 27
+      },
+      "scope_id": "function:<fixtures>/python/code/functions/nested_scopes.py:27:23:38:69",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "deeper_function",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 32,
+        "start_column": 13,
+        "end_line": 32,
+        "end_column": 27
+      },
+      "scope_id": "function:<fixtures>/python/code/functions/nested_scopes.py:27:23:38:69",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "str",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 32,
+        "start_column": 34,
+        "end_line": 32,
+        "end_column": 36
+      },
+      "scope_id": "function:<fixtures>/python/code/functions/nested_scopes.py:32:28:35:28",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "str",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 32,
+        "start_column": 34,
+        "end_line": 32,
+        "end_column": 36
+      },
+      "scope_id": "function:<fixtures>/python/code/functions/nested_scopes.py:32:28:35:28",
+      "access_type": "read"
+    },
+    {
+      "kind": "type_reference",
+      "name": "str",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 32,
+        "start_column": 34,
+        "end_line": 32,
+        "end_column": 36
+      },
+      "scope_id": "function:<fixtures>/python/code/functions/nested_scopes.py:32:28:35:28",
+      "type_context": "annotation",
+      "type_info": {
+        "type_id": "type:<fixtures>/python/code/functions/nested_scopes.py:32:34:32:36:str",
+        "type_name": "str",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "str",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 32,
+        "start_column": 34,
+        "end_line": 32,
+        "end_column": 36
+      },
+      "scope_id": "function:<fixtures>/python/code/functions/nested_scopes.py:32:28:35:28",
+      "access_type": "read"
+    },
+    {
+      "kind": "assignment",
+      "name": "deep_call = helper()",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 34,
+        "start_column": 13,
+        "end_line": 34,
+        "end_column": 32
+      },
+      "scope_id": "function:<fixtures>/python/code/functions/nested_scopes.py:32:28:35:28",
+      "target_location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 34,
+        "start_column": 13,
+        "end_line": 34,
+        "end_column": 32
+      }
+    },
+    {
+      "kind": "assignment",
+      "name": "deep_call",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 34,
+        "start_column": 13,
+        "end_line": 34,
+        "end_column": 21
+      },
+      "scope_id": "function:<fixtures>/python/code/functions/nested_scopes.py:32:28:35:28",
+      "target_location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 34,
+        "start_column": 13,
+        "end_line": 34,
+        "end_column": 21
+      },
+      "assignment_type": {
+        "type_id": "type:<fixtures>/python/code/functions/nested_scopes.py:34:13:34:21:deep_call",
+        "type_name": "deep_call",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "deep_call",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 34,
+        "start_column": 13,
+        "end_line": 34,
+        "end_column": 21
+      },
+      "scope_id": "function:<fixtures>/python/code/functions/nested_scopes.py:32:28:35:28",
+      "access_type": "write"
+    },
+    {
+      "kind": "assignment",
+      "name": "deep_call = helper()",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 34,
+        "start_column": 13,
+        "end_line": 34,
+        "end_column": 32
+      },
+      "scope_id": "function:<fixtures>/python/code/functions/nested_scopes.py:32:28:35:28",
+      "target_location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 34,
+        "start_column": 13,
+        "end_line": 34,
+        "end_column": 32
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "deep_call",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 34,
+        "start_column": 13,
+        "end_line": 34,
+        "end_column": 21
+      },
+      "scope_id": "function:<fixtures>/python/code/functions/nested_scopes.py:32:28:35:28",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "deep_call",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 34,
+        "start_column": 13,
+        "end_line": 34,
+        "end_column": 21
+      },
+      "scope_id": "function:<fixtures>/python/code/functions/nested_scopes.py:32:28:35:28",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "deep_call",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 34,
+        "start_column": 13,
+        "end_line": 34,
+        "end_column": 21
+      },
+      "scope_id": "function:<fixtures>/python/code/functions/nested_scopes.py:32:28:35:28",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "deep_call",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 34,
+        "start_column": 13,
+        "end_line": 34,
+        "end_column": 21
+      },
+      "scope_id": "function:<fixtures>/python/code/functions/nested_scopes.py:32:28:35:28",
+      "access_type": "read"
+    },
+    {
+      "kind": "assignment",
+      "name": "helper()",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 34,
+        "start_column": 25,
+        "end_line": 34,
+        "end_column": 32
+      },
+      "scope_id": "function:<fixtures>/python/code/functions/nested_scopes.py:32:28:35:28",
+      "target_location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 34,
+        "start_column": 13,
+        "end_line": 34,
+        "end_column": 21
+      }
+    },
+    {
+      "kind": "function_call",
+      "name": "helper",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 34,
+        "start_column": 25,
+        "end_line": 34,
+        "end_column": 30
+      },
+      "scope_id": "function:<fixtures>/python/code/functions/nested_scopes.py:32:28:35:28",
+      "potential_construct_target": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 34,
+        "start_column": 13,
+        "end_line": 34,
+        "end_column": 21
+      }
+    },
+    {
+      "kind": "function_call",
+      "name": "helper",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 34,
+        "start_column": 25,
+        "end_line": 34,
+        "end_column": 32
+      },
+      "scope_id": "function:<fixtures>/python/code/functions/nested_scopes.py:32:28:35:28",
+      "potential_construct_target": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 34,
+        "start_column": 13,
+        "end_line": 34,
+        "end_column": 21
+      }
+    },
+    {
+      "kind": "constructor_call",
+      "name": "helper",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 34,
+        "start_column": 25,
+        "end_line": 34,
+        "end_column": 30
+      },
+      "scope_id": "function:<fixtures>/python/code/functions/nested_scopes.py:32:28:35:28",
+      "construct_target": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 34,
+        "start_column": 13,
+        "end_line": 34,
+        "end_column": 21
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "helper()",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 34,
+        "start_column": 25,
+        "end_line": 34,
+        "end_column": 32
+      },
+      "scope_id": "function:<fixtures>/python/code/functions/nested_scopes.py:32:28:35:28",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "helper",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 34,
+        "start_column": 25,
+        "end_line": 34,
+        "end_column": 30
+      },
+      "scope_id": "function:<fixtures>/python/code/functions/nested_scopes.py:32:28:35:28",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "helper",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 34,
+        "start_column": 25,
+        "end_line": 34,
+        "end_column": 30
+      },
+      "scope_id": "function:<fixtures>/python/code/functions/nested_scopes.py:32:28:35:28",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "helper",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 34,
+        "start_column": 25,
+        "end_line": 34,
+        "end_column": 30
+      },
+      "scope_id": "function:<fixtures>/python/code/functions/nested_scopes.py:32:28:35:28",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "return deep_call",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 35,
+        "start_column": 13,
+        "end_line": 35,
+        "end_column": 28
+      },
+      "scope_id": "function:<fixtures>/python/code/functions/nested_scopes.py:32:28:35:28",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "deep_call",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 35,
+        "start_column": 20,
+        "end_line": 35,
+        "end_column": 28
+      },
+      "scope_id": "function:<fixtures>/python/code/functions/nested_scopes.py:32:28:35:28",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "deep_call",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 35,
+        "start_column": 20,
+        "end_line": 35,
+        "end_column": 28
+      },
+      "scope_id": "function:<fixtures>/python/code/functions/nested_scopes.py:32:28:35:28",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "deep_call",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 35,
+        "start_column": 20,
+        "end_line": 35,
+        "end_column": 28
+      },
+      "scope_id": "function:<fixtures>/python/code/functions/nested_scopes.py:32:28:35:28",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "deep_call",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 35,
+        "start_column": 20,
+        "end_line": 35,
+        "end_column": 28
+      },
+      "scope_id": "function:<fixtures>/python/code/functions/nested_scopes.py:32:28:35:28",
+      "access_type": "read"
+    },
+    {
+      "kind": "assignment",
+      "name": "deep_result = deeper_function()",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 37,
+        "start_column": 9,
+        "end_line": 37,
+        "end_column": 39
+      },
+      "scope_id": "function:<fixtures>/python/code/functions/nested_scopes.py:27:23:38:69",
+      "target_location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 37,
+        "start_column": 9,
+        "end_line": 37,
+        "end_column": 39
+      }
+    },
+    {
+      "kind": "assignment",
+      "name": "deep_result",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 37,
+        "start_column": 9,
+        "end_line": 37,
+        "end_column": 19
+      },
+      "scope_id": "function:<fixtures>/python/code/functions/nested_scopes.py:27:23:38:69",
+      "target_location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 37,
+        "start_column": 9,
+        "end_line": 37,
+        "end_column": 19
+      },
+      "assignment_type": {
+        "type_id": "type:<fixtures>/python/code/functions/nested_scopes.py:37:9:37:19:deep_result",
+        "type_name": "deep_result",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "deep_result",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 37,
+        "start_column": 9,
+        "end_line": 37,
+        "end_column": 19
+      },
+      "scope_id": "function:<fixtures>/python/code/functions/nested_scopes.py:27:23:38:69",
+      "access_type": "write"
+    },
+    {
+      "kind": "assignment",
+      "name": "deep_result = deeper_function()",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 37,
+        "start_column": 9,
+        "end_line": 37,
+        "end_column": 39
+      },
+      "scope_id": "function:<fixtures>/python/code/functions/nested_scopes.py:27:23:38:69",
+      "target_location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 37,
+        "start_column": 9,
+        "end_line": 37,
+        "end_column": 39
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "deep_result",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 37,
+        "start_column": 9,
+        "end_line": 37,
+        "end_column": 19
+      },
+      "scope_id": "function:<fixtures>/python/code/functions/nested_scopes.py:27:23:38:69",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "deep_result",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 37,
+        "start_column": 9,
+        "end_line": 37,
+        "end_column": 19
+      },
+      "scope_id": "function:<fixtures>/python/code/functions/nested_scopes.py:27:23:38:69",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "deep_result",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 37,
+        "start_column": 9,
+        "end_line": 37,
+        "end_column": 19
+      },
+      "scope_id": "function:<fixtures>/python/code/functions/nested_scopes.py:27:23:38:69",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "deep_result",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 37,
+        "start_column": 9,
+        "end_line": 37,
+        "end_column": 19
+      },
+      "scope_id": "function:<fixtures>/python/code/functions/nested_scopes.py:27:23:38:69",
+      "access_type": "read"
+    },
+    {
+      "kind": "assignment",
+      "name": "deeper_function()",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 37,
+        "start_column": 23,
+        "end_line": 37,
+        "end_column": 39
+      },
+      "scope_id": "function:<fixtures>/python/code/functions/nested_scopes.py:27:23:38:69",
+      "target_location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 37,
+        "start_column": 9,
+        "end_line": 37,
+        "end_column": 19
+      }
+    },
+    {
+      "kind": "function_call",
+      "name": "deeper_function",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 37,
+        "start_column": 23,
+        "end_line": 37,
+        "end_column": 37
+      },
+      "scope_id": "function:<fixtures>/python/code/functions/nested_scopes.py:27:23:38:69",
+      "potential_construct_target": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 37,
+        "start_column": 9,
+        "end_line": 37,
+        "end_column": 19
+      }
+    },
+    {
+      "kind": "function_call",
+      "name": "deeper_function",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 37,
+        "start_column": 23,
+        "end_line": 37,
+        "end_column": 39
+      },
+      "scope_id": "function:<fixtures>/python/code/functions/nested_scopes.py:27:23:38:69",
+      "potential_construct_target": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 37,
+        "start_column": 9,
+        "end_line": 37,
+        "end_column": 19
+      }
+    },
+    {
+      "kind": "constructor_call",
+      "name": "deeper_function",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 37,
+        "start_column": 23,
+        "end_line": 37,
+        "end_column": 37
+      },
+      "scope_id": "function:<fixtures>/python/code/functions/nested_scopes.py:27:23:38:69",
+      "construct_target": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 37,
+        "start_column": 9,
+        "end_line": 37,
+        "end_column": 19
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "deeper_function()",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 37,
+        "start_column": 23,
+        "end_line": 37,
+        "end_column": 39
+      },
+      "scope_id": "function:<fixtures>/python/code/functions/nested_scopes.py:27:23:38:69",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "deeper_function",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 37,
+        "start_column": 23,
+        "end_line": 37,
+        "end_column": 37
+      },
+      "scope_id": "function:<fixtures>/python/code/functions/nested_scopes.py:27:23:38:69",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "deeper_function",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 37,
+        "start_column": 23,
+        "end_line": 37,
+        "end_column": 37
+      },
+      "scope_id": "function:<fixtures>/python/code/functions/nested_scopes.py:27:23:38:69",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "deeper_function",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 37,
+        "start_column": 23,
+        "end_line": 37,
+        "end_column": 37
+      },
+      "scope_id": "function:<fixtures>/python/code/functions/nested_scopes.py:27:23:38:69",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "return {\"inner_call\": inner_call, \"deep_result\": deep_result}",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 38,
+        "start_column": 9,
+        "end_line": 38,
+        "end_column": 69
+      },
+      "scope_id": "function:<fixtures>/python/code/functions/nested_scopes.py:27:23:38:69",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "{\"inner_call\": inner_call, \"deep_result\": deep_result}",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 38,
+        "start_column": 16,
+        "end_line": 38,
+        "end_column": 69
+      },
+      "scope_id": "function:<fixtures>/python/code/functions/nested_scopes.py:27:23:38:69",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "inner_call",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 38,
+        "start_column": 31,
+        "end_line": 38,
+        "end_column": 40
+      },
+      "scope_id": "function:<fixtures>/python/code/functions/nested_scopes.py:27:23:38:69",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "inner_call",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 38,
+        "start_column": 31,
+        "end_line": 38,
+        "end_column": 40
+      },
+      "scope_id": "function:<fixtures>/python/code/functions/nested_scopes.py:27:23:38:69",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "inner_call",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 38,
+        "start_column": 31,
+        "end_line": 38,
+        "end_column": 40
+      },
+      "scope_id": "function:<fixtures>/python/code/functions/nested_scopes.py:27:23:38:69",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "deep_result",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 38,
+        "start_column": 58,
+        "end_line": 38,
+        "end_column": 68
+      },
+      "scope_id": "function:<fixtures>/python/code/functions/nested_scopes.py:27:23:38:69",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "deep_result",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 38,
+        "start_column": 58,
+        "end_line": 38,
+        "end_column": 68
+      },
+      "scope_id": "function:<fixtures>/python/code/functions/nested_scopes.py:27:23:38:69",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "deep_result",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 38,
+        "start_column": 58,
+        "end_line": 38,
+        "end_column": 68
+      },
+      "scope_id": "function:<fixtures>/python/code/functions/nested_scopes.py:27:23:38:69",
+      "access_type": "read"
+    },
+    {
+      "kind": "assignment",
+      "name": "inner_result = inner_function()",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 40,
+        "start_column": 5,
+        "end_line": 40,
+        "end_column": 35
+      },
+      "scope_id": "function:<fixtures>/python/code/functions/nested_scopes.py:18:19:41:93",
+      "target_location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 40,
+        "start_column": 5,
+        "end_line": 40,
+        "end_column": 35
+      }
+    },
+    {
+      "kind": "assignment",
+      "name": "inner_result",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 40,
+        "start_column": 5,
+        "end_line": 40,
+        "end_column": 16
+      },
+      "scope_id": "function:<fixtures>/python/code/functions/nested_scopes.py:18:19:41:93",
+      "target_location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 40,
+        "start_column": 5,
+        "end_line": 40,
+        "end_column": 16
+      },
+      "assignment_type": {
+        "type_id": "type:<fixtures>/python/code/functions/nested_scopes.py:40:5:40:16:inner_result",
+        "type_name": "inner_result",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "inner_result",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 40,
+        "start_column": 5,
+        "end_line": 40,
+        "end_column": 16
+      },
+      "scope_id": "function:<fixtures>/python/code/functions/nested_scopes.py:18:19:41:93",
+      "access_type": "write"
+    },
+    {
+      "kind": "assignment",
+      "name": "inner_result = inner_function()",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 40,
+        "start_column": 5,
+        "end_line": 40,
+        "end_column": 35
+      },
+      "scope_id": "function:<fixtures>/python/code/functions/nested_scopes.py:18:19:41:93",
+      "target_location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 40,
+        "start_column": 5,
+        "end_line": 40,
+        "end_column": 35
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "inner_result",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 40,
+        "start_column": 5,
+        "end_line": 40,
+        "end_column": 16
+      },
+      "scope_id": "function:<fixtures>/python/code/functions/nested_scopes.py:18:19:41:93",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "inner_result",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 40,
+        "start_column": 5,
+        "end_line": 40,
+        "end_column": 16
+      },
+      "scope_id": "function:<fixtures>/python/code/functions/nested_scopes.py:18:19:41:93",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "inner_result",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 40,
+        "start_column": 5,
+        "end_line": 40,
+        "end_column": 16
+      },
+      "scope_id": "function:<fixtures>/python/code/functions/nested_scopes.py:18:19:41:93",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "inner_result",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 40,
+        "start_column": 5,
+        "end_line": 40,
+        "end_column": 16
+      },
+      "scope_id": "function:<fixtures>/python/code/functions/nested_scopes.py:18:19:41:93",
+      "access_type": "read"
+    },
+    {
+      "kind": "assignment",
+      "name": "inner_function()",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 40,
+        "start_column": 20,
+        "end_line": 40,
+        "end_column": 35
+      },
+      "scope_id": "function:<fixtures>/python/code/functions/nested_scopes.py:18:19:41:93",
+      "target_location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 40,
+        "start_column": 5,
+        "end_line": 40,
+        "end_column": 16
+      }
+    },
+    {
+      "kind": "function_call",
+      "name": "inner_function",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 40,
+        "start_column": 20,
+        "end_line": 40,
+        "end_column": 33
+      },
+      "scope_id": "function:<fixtures>/python/code/functions/nested_scopes.py:18:19:41:93",
+      "potential_construct_target": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 40,
+        "start_column": 5,
+        "end_line": 40,
+        "end_column": 16
+      }
+    },
+    {
+      "kind": "function_call",
+      "name": "inner_function",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 40,
+        "start_column": 20,
+        "end_line": 40,
+        "end_column": 35
+      },
+      "scope_id": "function:<fixtures>/python/code/functions/nested_scopes.py:18:19:41:93",
+      "potential_construct_target": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 40,
+        "start_column": 5,
+        "end_line": 40,
+        "end_column": 16
+      }
+    },
+    {
+      "kind": "constructor_call",
+      "name": "inner_function",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 40,
+        "start_column": 20,
+        "end_line": 40,
+        "end_column": 33
+      },
+      "scope_id": "function:<fixtures>/python/code/functions/nested_scopes.py:18:19:41:93",
+      "construct_target": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 40,
+        "start_column": 5,
+        "end_line": 40,
+        "end_column": 16
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "inner_function()",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 40,
+        "start_column": 20,
+        "end_line": 40,
+        "end_column": 35
+      },
+      "scope_id": "function:<fixtures>/python/code/functions/nested_scopes.py:18:19:41:93",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "inner_function",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 40,
+        "start_column": 20,
+        "end_line": 40,
+        "end_column": 33
+      },
+      "scope_id": "function:<fixtures>/python/code/functions/nested_scopes.py:18:19:41:93",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "inner_function",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 40,
+        "start_column": 20,
+        "end_line": 40,
+        "end_column": 33
+      },
+      "scope_id": "function:<fixtures>/python/code/functions/nested_scopes.py:18:19:41:93",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "inner_function",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 40,
+        "start_column": 20,
+        "end_line": 40,
+        "end_column": 33
+      },
+      "scope_id": "function:<fixtures>/python/code/functions/nested_scopes.py:18:19:41:93",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "return {\"outer_call\": outer_call, \"block_call\": block_call, \"inner_result\": inner_result}",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 41,
+        "start_column": 5,
+        "end_line": 41,
+        "end_column": 93
+      },
+      "scope_id": "function:<fixtures>/python/code/functions/nested_scopes.py:18:19:41:93",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "{\"outer_call\": outer_call, \"block_call\": block_call, \"inner_result\": inner_result}",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 41,
+        "start_column": 12,
+        "end_line": 41,
+        "end_column": 93
+      },
+      "scope_id": "function:<fixtures>/python/code/functions/nested_scopes.py:18:19:41:93",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "outer_call",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 41,
+        "start_column": 27,
+        "end_line": 41,
+        "end_column": 36
+      },
+      "scope_id": "function:<fixtures>/python/code/functions/nested_scopes.py:18:19:41:93",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "outer_call",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 41,
+        "start_column": 27,
+        "end_line": 41,
+        "end_column": 36
+      },
+      "scope_id": "function:<fixtures>/python/code/functions/nested_scopes.py:18:19:41:93",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "outer_call",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 41,
+        "start_column": 27,
+        "end_line": 41,
+        "end_column": 36
+      },
+      "scope_id": "function:<fixtures>/python/code/functions/nested_scopes.py:18:19:41:93",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "block_call",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 41,
+        "start_column": 53,
+        "end_line": 41,
+        "end_column": 62
+      },
+      "scope_id": "function:<fixtures>/python/code/functions/nested_scopes.py:18:19:41:93",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "block_call",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 41,
+        "start_column": 53,
+        "end_line": 41,
+        "end_column": 62
+      },
+      "scope_id": "function:<fixtures>/python/code/functions/nested_scopes.py:18:19:41:93",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "block_call",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 41,
+        "start_column": 53,
+        "end_line": 41,
+        "end_column": 62
+      },
+      "scope_id": "function:<fixtures>/python/code/functions/nested_scopes.py:18:19:41:93",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "inner_result",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 41,
+        "start_column": 81,
+        "end_line": 41,
+        "end_column": 92
+      },
+      "scope_id": "function:<fixtures>/python/code/functions/nested_scopes.py:18:19:41:93",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "inner_result",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 41,
+        "start_column": 81,
+        "end_line": 41,
+        "end_column": 92
+      },
+      "scope_id": "function:<fixtures>/python/code/functions/nested_scopes.py:18:19:41:93",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "inner_result",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 41,
+        "start_column": 81,
+        "end_line": 41,
+        "end_column": 92
+      },
+      "scope_id": "function:<fixtures>/python/code/functions/nested_scopes.py:18:19:41:93",
+      "access_type": "read"
+    },
+    {
+      "kind": "assignment",
+      "name": "module_result = outer_function()",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 45,
+        "start_column": 1,
+        "end_line": 45,
+        "end_column": 32
+      },
+      "scope_id": "module:<fixtures>/python/code/functions/nested_scopes.py:1:1:61:1",
+      "target_location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 45,
+        "start_column": 1,
+        "end_line": 45,
+        "end_column": 32
+      }
+    },
+    {
+      "kind": "assignment",
+      "name": "module_result",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 45,
+        "start_column": 1,
+        "end_line": 45,
+        "end_column": 13
+      },
+      "scope_id": "module:<fixtures>/python/code/functions/nested_scopes.py:1:1:61:1",
+      "target_location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 45,
+        "start_column": 1,
+        "end_line": 45,
+        "end_column": 13
+      },
+      "assignment_type": {
+        "type_id": "type:<fixtures>/python/code/functions/nested_scopes.py:45:1:45:13:module_result",
+        "type_name": "module_result",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "module_result",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 45,
+        "start_column": 1,
+        "end_line": 45,
+        "end_column": 13
+      },
+      "scope_id": "module:<fixtures>/python/code/functions/nested_scopes.py:1:1:61:1",
+      "access_type": "write"
+    },
+    {
+      "kind": "assignment",
+      "name": "module_result = outer_function()",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 45,
+        "start_column": 1,
+        "end_line": 45,
+        "end_column": 32
+      },
+      "scope_id": "module:<fixtures>/python/code/functions/nested_scopes.py:1:1:61:1",
+      "target_location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 45,
+        "start_column": 1,
+        "end_line": 45,
+        "end_column": 32
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "module_result",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 45,
+        "start_column": 1,
+        "end_line": 45,
+        "end_column": 13
+      },
+      "scope_id": "module:<fixtures>/python/code/functions/nested_scopes.py:1:1:61:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "module_result",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 45,
+        "start_column": 1,
+        "end_line": 45,
+        "end_column": 13
+      },
+      "scope_id": "module:<fixtures>/python/code/functions/nested_scopes.py:1:1:61:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "module_result",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 45,
+        "start_column": 1,
+        "end_line": 45,
+        "end_column": 13
+      },
+      "scope_id": "module:<fixtures>/python/code/functions/nested_scopes.py:1:1:61:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "module_result",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 45,
+        "start_column": 1,
+        "end_line": 45,
+        "end_column": 13
+      },
+      "scope_id": "module:<fixtures>/python/code/functions/nested_scopes.py:1:1:61:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "assignment",
+      "name": "outer_function()",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 45,
+        "start_column": 17,
+        "end_line": 45,
+        "end_column": 32
+      },
+      "scope_id": "module:<fixtures>/python/code/functions/nested_scopes.py:1:1:61:1",
+      "target_location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 45,
+        "start_column": 1,
+        "end_line": 45,
+        "end_column": 13
+      }
+    },
+    {
+      "kind": "function_call",
+      "name": "outer_function",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 45,
+        "start_column": 17,
+        "end_line": 45,
+        "end_column": 30
+      },
+      "scope_id": "module:<fixtures>/python/code/functions/nested_scopes.py:1:1:61:1",
+      "potential_construct_target": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 45,
+        "start_column": 1,
+        "end_line": 45,
+        "end_column": 13
+      }
+    },
+    {
+      "kind": "function_call",
+      "name": "outer_function",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 45,
+        "start_column": 17,
+        "end_line": 45,
+        "end_column": 32
+      },
+      "scope_id": "module:<fixtures>/python/code/functions/nested_scopes.py:1:1:61:1",
+      "potential_construct_target": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 45,
+        "start_column": 1,
+        "end_line": 45,
+        "end_column": 13
+      }
+    },
+    {
+      "kind": "constructor_call",
+      "name": "outer_function",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 45,
+        "start_column": 17,
+        "end_line": 45,
+        "end_column": 30
+      },
+      "scope_id": "module:<fixtures>/python/code/functions/nested_scopes.py:1:1:61:1",
+      "construct_target": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 45,
+        "start_column": 1,
+        "end_line": 45,
+        "end_column": 13
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "outer_function()",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 45,
+        "start_column": 17,
+        "end_line": 45,
+        "end_column": 32
+      },
+      "scope_id": "module:<fixtures>/python/code/functions/nested_scopes.py:1:1:61:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "outer_function",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 45,
+        "start_column": 17,
+        "end_line": 45,
+        "end_column": 30
+      },
+      "scope_id": "module:<fixtures>/python/code/functions/nested_scopes.py:1:1:61:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "outer_function",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 45,
+        "start_column": 17,
+        "end_line": 45,
+        "end_column": 30
+      },
+      "scope_id": "module:<fixtures>/python/code/functions/nested_scopes.py:1:1:61:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "outer_function",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 45,
+        "start_column": 17,
+        "end_line": 45,
+        "end_column": 30
+      },
+      "scope_id": "module:<fixtures>/python/code/functions/nested_scopes.py:1:1:61:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "lambda_function",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 48,
+        "start_column": 5,
+        "end_line": 48,
+        "end_column": 19
+      },
+      "scope_id": "module:<fixtures>/python/code/functions/nested_scopes.py:1:1:61:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "lambda_function",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 48,
+        "start_column": 5,
+        "end_line": 48,
+        "end_column": 19
+      },
+      "scope_id": "module:<fixtures>/python/code/functions/nested_scopes.py:1:1:61:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "lambda_function",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 48,
+        "start_column": 5,
+        "end_line": 48,
+        "end_column": 19
+      },
+      "scope_id": "module:<fixtures>/python/code/functions/nested_scopes.py:1:1:61:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "str",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 48,
+        "start_column": 26,
+        "end_line": 48,
+        "end_column": 28
+      },
+      "scope_id": "function:<fixtures>/python/code/functions/nested_scopes.py:48:20:51:24",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "str",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 48,
+        "start_column": 26,
+        "end_line": 48,
+        "end_column": 28
+      },
+      "scope_id": "function:<fixtures>/python/code/functions/nested_scopes.py:48:20:51:24",
+      "access_type": "read"
+    },
+    {
+      "kind": "type_reference",
+      "name": "str",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 48,
+        "start_column": 26,
+        "end_line": 48,
+        "end_column": 28
+      },
+      "scope_id": "function:<fixtures>/python/code/functions/nested_scopes.py:48:20:51:24",
+      "type_context": "annotation",
+      "type_info": {
+        "type_id": "type:<fixtures>/python/code/functions/nested_scopes.py:48:26:48:28:str",
+        "type_name": "str",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "str",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 48,
+        "start_column": 26,
+        "end_line": 48,
+        "end_column": 28
+      },
+      "scope_id": "function:<fixtures>/python/code/functions/nested_scopes.py:48:20:51:24",
+      "access_type": "read"
+    },
+    {
+      "kind": "assignment",
+      "name": "lambda_func = lambda: helper()",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 50,
+        "start_column": 5,
+        "end_line": 50,
+        "end_column": 34
+      },
+      "scope_id": "function:<fixtures>/python/code/functions/nested_scopes.py:48:20:51:24",
+      "target_location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 50,
+        "start_column": 5,
+        "end_line": 50,
+        "end_column": 34
+      }
+    },
+    {
+      "kind": "assignment",
+      "name": "lambda_func",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 50,
+        "start_column": 5,
+        "end_line": 50,
+        "end_column": 15
+      },
+      "scope_id": "function:<fixtures>/python/code/functions/nested_scopes.py:48:20:51:24",
+      "target_location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 50,
+        "start_column": 5,
+        "end_line": 50,
+        "end_column": 15
+      },
+      "assignment_type": {
+        "type_id": "type:<fixtures>/python/code/functions/nested_scopes.py:50:5:50:15:lambda_func",
+        "type_name": "lambda_func",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "kind": "assignment",
+      "name": "lambda_func = lambda: helper()",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 50,
+        "start_column": 5,
+        "end_line": 50,
+        "end_column": 34
+      },
+      "scope_id": "function:<fixtures>/python/code/functions/nested_scopes.py:48:20:51:24",
+      "target_location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 50,
+        "start_column": 5,
+        "end_line": 50,
+        "end_column": 34
+      }
+    },
+    {
+      "kind": "assignment",
+      "name": "lambda_func",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 50,
+        "start_column": 5,
+        "end_line": 50,
+        "end_column": 15
+      },
+      "scope_id": "function:<fixtures>/python/code/functions/nested_scopes.py:48:20:51:24",
+      "target_location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 50,
+        "start_column": 5,
+        "end_line": 50,
+        "end_column": 15
+      },
+      "assignment_type": {
+        "type_id": "type:<fixtures>/python/code/functions/nested_scopes.py:50:5:50:15:lambda_func",
+        "type_name": "lambda_func",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "lambda_func",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 50,
+        "start_column": 5,
+        "end_line": 50,
+        "end_column": 15
+      },
+      "scope_id": "function:<fixtures>/python/code/functions/nested_scopes.py:48:20:51:24",
+      "access_type": "write"
+    },
+    {
+      "kind": "assignment",
+      "name": "lambda_func = lambda: helper()",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 50,
+        "start_column": 5,
+        "end_line": 50,
+        "end_column": 34
+      },
+      "scope_id": "function:<fixtures>/python/code/functions/nested_scopes.py:48:20:51:24",
+      "target_location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 50,
+        "start_column": 5,
+        "end_line": 50,
+        "end_column": 34
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "lambda_func",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 50,
+        "start_column": 5,
+        "end_line": 50,
+        "end_column": 15
+      },
+      "scope_id": "function:<fixtures>/python/code/functions/nested_scopes.py:48:20:51:24",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "lambda_func",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 50,
+        "start_column": 5,
+        "end_line": 50,
+        "end_column": 15
+      },
+      "scope_id": "function:<fixtures>/python/code/functions/nested_scopes.py:48:20:51:24",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "lambda_func",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 50,
+        "start_column": 5,
+        "end_line": 50,
+        "end_column": 15
+      },
+      "scope_id": "function:<fixtures>/python/code/functions/nested_scopes.py:48:20:51:24",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "lambda_func",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 50,
+        "start_column": 5,
+        "end_line": 50,
+        "end_column": 15
+      },
+      "scope_id": "function:<fixtures>/python/code/functions/nested_scopes.py:48:20:51:24",
+      "access_type": "read"
+    },
+    {
+      "kind": "assignment",
+      "name": "lambda: helper()",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 50,
+        "start_column": 19,
+        "end_line": 50,
+        "end_column": 34
+      },
+      "scope_id": "function:<fixtures>/python/code/functions/nested_scopes.py:50:19:50:34",
+      "target_location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 50,
+        "start_column": 5,
+        "end_line": 50,
+        "end_column": 15
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "lambda: helper()",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 50,
+        "start_column": 19,
+        "end_line": 50,
+        "end_column": 34
+      },
+      "scope_id": "function:<fixtures>/python/code/functions/nested_scopes.py:50:19:50:34",
+      "access_type": "read"
+    },
+    {
+      "kind": "function_call",
+      "name": "helper",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 50,
+        "start_column": 27,
+        "end_line": 50,
+        "end_column": 32
+      },
+      "scope_id": "function:<fixtures>/python/code/functions/nested_scopes.py:50:19:50:34",
+      "potential_construct_target": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 50,
+        "start_column": 5,
+        "end_line": 50,
+        "end_column": 15
+      }
+    },
+    {
+      "kind": "function_call",
+      "name": "helper",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 50,
+        "start_column": 27,
+        "end_line": 50,
+        "end_column": 34
+      },
+      "scope_id": "function:<fixtures>/python/code/functions/nested_scopes.py:50:19:50:34",
+      "potential_construct_target": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 50,
+        "start_column": 5,
+        "end_line": 50,
+        "end_column": 15
+      }
+    },
+    {
+      "kind": "constructor_call",
+      "name": "helper",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 50,
+        "start_column": 27,
+        "end_line": 50,
+        "end_column": 32
+      },
+      "scope_id": "function:<fixtures>/python/code/functions/nested_scopes.py:50:19:50:34",
+      "construct_target": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 50,
+        "start_column": 5,
+        "end_line": 50,
+        "end_column": 15
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "helper",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 50,
+        "start_column": 27,
+        "end_line": 50,
+        "end_column": 32
+      },
+      "scope_id": "function:<fixtures>/python/code/functions/nested_scopes.py:50:19:50:34",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "helper",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 50,
+        "start_column": 27,
+        "end_line": 50,
+        "end_column": 32
+      },
+      "scope_id": "function:<fixtures>/python/code/functions/nested_scopes.py:50:19:50:34",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "helper",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 50,
+        "start_column": 27,
+        "end_line": 50,
+        "end_column": 32
+      },
+      "scope_id": "function:<fixtures>/python/code/functions/nested_scopes.py:50:19:50:34",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "return lambda_func()",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 51,
+        "start_column": 5,
+        "end_line": 51,
+        "end_column": 24
+      },
+      "scope_id": "function:<fixtures>/python/code/functions/nested_scopes.py:48:20:51:24",
+      "access_type": "read"
+    },
+    {
+      "kind": "function_call",
+      "name": "lambda_func",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 51,
+        "start_column": 12,
+        "end_line": 51,
+        "end_column": 22
+      },
+      "scope_id": "function:<fixtures>/python/code/functions/nested_scopes.py:48:20:51:24"
+    },
+    {
+      "kind": "function_call",
+      "name": "lambda_func",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 51,
+        "start_column": 12,
+        "end_line": 51,
+        "end_column": 24
+      },
+      "scope_id": "function:<fixtures>/python/code/functions/nested_scopes.py:48:20:51:24"
+    },
+    {
+      "kind": "constructor_call",
+      "name": "lambda_func",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 51,
+        "start_column": 12,
+        "end_line": 51,
+        "end_column": 22
+      },
+      "scope_id": "function:<fixtures>/python/code/functions/nested_scopes.py:48:20:51:24"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "lambda_func()",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 51,
+        "start_column": 12,
+        "end_line": 51,
+        "end_column": 24
+      },
+      "scope_id": "function:<fixtures>/python/code/functions/nested_scopes.py:48:20:51:24",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "lambda_func",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 51,
+        "start_column": 12,
+        "end_line": 51,
+        "end_column": 22
+      },
+      "scope_id": "function:<fixtures>/python/code/functions/nested_scopes.py:48:20:51:24",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "lambda_func",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 51,
+        "start_column": 12,
+        "end_line": 51,
+        "end_column": 22
+      },
+      "scope_id": "function:<fixtures>/python/code/functions/nested_scopes.py:48:20:51:24",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "lambda_func",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 51,
+        "start_column": 12,
+        "end_line": 51,
+        "end_column": 22
+      },
+      "scope_id": "function:<fixtures>/python/code/functions/nested_scopes.py:48:20:51:24",
+      "access_type": "read"
+    },
+    {
+      "kind": "assignment",
+      "name": "lambda_result = lambda_function()",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 54,
+        "start_column": 1,
+        "end_line": 54,
+        "end_column": 33
+      },
+      "scope_id": "module:<fixtures>/python/code/functions/nested_scopes.py:1:1:61:1",
+      "target_location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 54,
+        "start_column": 1,
+        "end_line": 54,
+        "end_column": 33
+      }
+    },
+    {
+      "kind": "assignment",
+      "name": "lambda_result",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 54,
+        "start_column": 1,
+        "end_line": 54,
+        "end_column": 13
+      },
+      "scope_id": "module:<fixtures>/python/code/functions/nested_scopes.py:1:1:61:1",
+      "target_location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 54,
+        "start_column": 1,
+        "end_line": 54,
+        "end_column": 13
+      },
+      "assignment_type": {
+        "type_id": "type:<fixtures>/python/code/functions/nested_scopes.py:54:1:54:13:lambda_result",
+        "type_name": "lambda_result",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "lambda_result",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 54,
+        "start_column": 1,
+        "end_line": 54,
+        "end_column": 13
+      },
+      "scope_id": "module:<fixtures>/python/code/functions/nested_scopes.py:1:1:61:1",
+      "access_type": "write"
+    },
+    {
+      "kind": "assignment",
+      "name": "lambda_result = lambda_function()",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 54,
+        "start_column": 1,
+        "end_line": 54,
+        "end_column": 33
+      },
+      "scope_id": "module:<fixtures>/python/code/functions/nested_scopes.py:1:1:61:1",
+      "target_location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 54,
+        "start_column": 1,
+        "end_line": 54,
+        "end_column": 33
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "lambda_result",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 54,
+        "start_column": 1,
+        "end_line": 54,
+        "end_column": 13
+      },
+      "scope_id": "module:<fixtures>/python/code/functions/nested_scopes.py:1:1:61:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "lambda_result",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 54,
+        "start_column": 1,
+        "end_line": 54,
+        "end_column": 13
+      },
+      "scope_id": "module:<fixtures>/python/code/functions/nested_scopes.py:1:1:61:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "lambda_result",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 54,
+        "start_column": 1,
+        "end_line": 54,
+        "end_column": 13
+      },
+      "scope_id": "module:<fixtures>/python/code/functions/nested_scopes.py:1:1:61:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "lambda_result",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 54,
+        "start_column": 1,
+        "end_line": 54,
+        "end_column": 13
+      },
+      "scope_id": "module:<fixtures>/python/code/functions/nested_scopes.py:1:1:61:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "assignment",
+      "name": "lambda_function()",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 54,
+        "start_column": 17,
+        "end_line": 54,
+        "end_column": 33
+      },
+      "scope_id": "module:<fixtures>/python/code/functions/nested_scopes.py:1:1:61:1",
+      "target_location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 54,
+        "start_column": 1,
+        "end_line": 54,
+        "end_column": 13
+      }
+    },
+    {
+      "kind": "function_call",
+      "name": "lambda_function",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 54,
+        "start_column": 17,
+        "end_line": 54,
+        "end_column": 31
+      },
+      "scope_id": "module:<fixtures>/python/code/functions/nested_scopes.py:1:1:61:1",
+      "potential_construct_target": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 54,
+        "start_column": 1,
+        "end_line": 54,
+        "end_column": 13
+      }
+    },
+    {
+      "kind": "function_call",
+      "name": "lambda_function",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 54,
+        "start_column": 17,
+        "end_line": 54,
+        "end_column": 33
+      },
+      "scope_id": "module:<fixtures>/python/code/functions/nested_scopes.py:1:1:61:1",
+      "potential_construct_target": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 54,
+        "start_column": 1,
+        "end_line": 54,
+        "end_column": 13
+      }
+    },
+    {
+      "kind": "constructor_call",
+      "name": "lambda_function",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 54,
+        "start_column": 17,
+        "end_line": 54,
+        "end_column": 31
+      },
+      "scope_id": "module:<fixtures>/python/code/functions/nested_scopes.py:1:1:61:1",
+      "construct_target": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 54,
+        "start_column": 1,
+        "end_line": 54,
+        "end_column": 13
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "lambda_function()",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 54,
+        "start_column": 17,
+        "end_line": 54,
+        "end_column": 33
+      },
+      "scope_id": "module:<fixtures>/python/code/functions/nested_scopes.py:1:1:61:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "lambda_function",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 54,
+        "start_column": 17,
+        "end_line": 54,
+        "end_column": 31
+      },
+      "scope_id": "module:<fixtures>/python/code/functions/nested_scopes.py:1:1:61:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "lambda_function",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 54,
+        "start_column": 17,
+        "end_line": 54,
+        "end_column": 31
+      },
+      "scope_id": "module:<fixtures>/python/code/functions/nested_scopes.py:1:1:61:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "lambda_function",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 54,
+        "start_column": 17,
+        "end_line": 54,
+        "end_column": 31
+      },
+      "scope_id": "module:<fixtures>/python/code/functions/nested_scopes.py:1:1:61:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "assignment",
+      "name": "results = {\n    \"top_level\": top_level,\n    \"module_result\": module_result,\n    \"lambda_result\": lambda_result,\n}",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 57,
+        "start_column": 1,
+        "end_line": 61,
+        "end_column": 1
+      },
+      "scope_id": "module:<fixtures>/python/code/functions/nested_scopes.py:1:1:61:1",
+      "target_location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 57,
+        "start_column": 1,
+        "end_line": 61,
+        "end_column": 1
+      }
+    },
+    {
+      "kind": "assignment",
+      "name": "results",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 57,
+        "start_column": 1,
+        "end_line": 57,
+        "end_column": 7
+      },
+      "scope_id": "module:<fixtures>/python/code/functions/nested_scopes.py:1:1:61:1",
+      "target_location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 57,
+        "start_column": 1,
+        "end_line": 57,
+        "end_column": 7
+      },
+      "assignment_type": {
+        "type_id": "type:<fixtures>/python/code/functions/nested_scopes.py:57:1:57:7:results",
+        "type_name": "results",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "results",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 57,
+        "start_column": 1,
+        "end_line": 57,
+        "end_column": 7
+      },
+      "scope_id": "module:<fixtures>/python/code/functions/nested_scopes.py:1:1:61:1",
+      "access_type": "write"
+    },
+    {
+      "kind": "assignment",
+      "name": "results = {\n    \"top_level\": top_level,\n    \"module_result\": module_result,\n    \"lambda_result\": lambda_result,\n}",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 57,
+        "start_column": 1,
+        "end_line": 61,
+        "end_column": 1
+      },
+      "scope_id": "module:<fixtures>/python/code/functions/nested_scopes.py:1:1:61:1",
+      "target_location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 57,
+        "start_column": 1,
+        "end_line": 61,
+        "end_column": 1
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "results",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 57,
+        "start_column": 1,
+        "end_line": 57,
+        "end_column": 7
+      },
+      "scope_id": "module:<fixtures>/python/code/functions/nested_scopes.py:1:1:61:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "results",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 57,
+        "start_column": 1,
+        "end_line": 57,
+        "end_column": 7
+      },
+      "scope_id": "module:<fixtures>/python/code/functions/nested_scopes.py:1:1:61:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "results",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 57,
+        "start_column": 1,
+        "end_line": 57,
+        "end_column": 7
+      },
+      "scope_id": "module:<fixtures>/python/code/functions/nested_scopes.py:1:1:61:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "results",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 57,
+        "start_column": 1,
+        "end_line": 57,
+        "end_column": 7
+      },
+      "scope_id": "module:<fixtures>/python/code/functions/nested_scopes.py:1:1:61:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "assignment",
+      "name": "{\n    \"top_level\": top_level,\n    \"module_result\": module_result,\n    \"lambda_result\": lambda_result,\n}",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 57,
+        "start_column": 11,
+        "end_line": 61,
+        "end_column": 1
+      },
+      "scope_id": "module:<fixtures>/python/code/functions/nested_scopes.py:1:1:61:1",
+      "target_location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 57,
+        "start_column": 1,
+        "end_line": 57,
+        "end_column": 7
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "{\n    \"top_level\": top_level,\n    \"module_result\": module_result,\n    \"lambda_result\": lambda_result,\n}",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 57,
+        "start_column": 11,
+        "end_line": 61,
+        "end_column": 1
+      },
+      "scope_id": "module:<fixtures>/python/code/functions/nested_scopes.py:1:1:61:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "top_level",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 58,
+        "start_column": 18,
+        "end_line": 58,
+        "end_column": 26
+      },
+      "scope_id": "module:<fixtures>/python/code/functions/nested_scopes.py:1:1:61:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "top_level",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 58,
+        "start_column": 18,
+        "end_line": 58,
+        "end_column": 26
+      },
+      "scope_id": "module:<fixtures>/python/code/functions/nested_scopes.py:1:1:61:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "top_level",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 58,
+        "start_column": 18,
+        "end_line": 58,
+        "end_column": 26
+      },
+      "scope_id": "module:<fixtures>/python/code/functions/nested_scopes.py:1:1:61:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "module_result",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 59,
+        "start_column": 22,
+        "end_line": 59,
+        "end_column": 34
+      },
+      "scope_id": "module:<fixtures>/python/code/functions/nested_scopes.py:1:1:61:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "module_result",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 59,
+        "start_column": 22,
+        "end_line": 59,
+        "end_column": 34
+      },
+      "scope_id": "module:<fixtures>/python/code/functions/nested_scopes.py:1:1:61:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "module_result",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 59,
+        "start_column": 22,
+        "end_line": 59,
+        "end_column": 34
+      },
+      "scope_id": "module:<fixtures>/python/code/functions/nested_scopes.py:1:1:61:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "lambda_result",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 60,
+        "start_column": 22,
+        "end_line": 60,
+        "end_column": 34
+      },
+      "scope_id": "module:<fixtures>/python/code/functions/nested_scopes.py:1:1:61:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "lambda_result",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 60,
+        "start_column": 22,
+        "end_line": 60,
+        "end_column": 34
+      },
+      "scope_id": "module:<fixtures>/python/code/functions/nested_scopes.py:1:1:61:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "lambda_result",
+      "location": {
+        "file_path": "<fixtures>/python/code/functions/nested_scopes.py",
+        "start_line": 60,
+        "start_column": 22,
+        "end_line": 60,
+        "end_column": 34
+      },
+      "scope_id": "module:<fixtures>/python/code/functions/nested_scopes.py:1:1:61:1",
+      "access_type": "read"
+    }
+  ]
+}

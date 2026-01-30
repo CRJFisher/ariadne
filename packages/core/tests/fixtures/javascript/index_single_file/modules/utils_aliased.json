@@ -1,0 +1,282 @@
+{
+  "file_path": "<fixtures>/javascript/code/modules/utils_aliased.js",
+  "language": "javascript",
+  "root_scope_id": "module:<fixtures>/javascript/code/modules/utils_aliased.js:1:1:19:0",
+  "scopes": {
+    "module:<fixtures>/javascript/code/modules/utils_aliased.js:1:1:19:0": {
+      "id": "module:<fixtures>/javascript/code/modules/utils_aliased.js:1:1:19:0",
+      "parent_id": null,
+      "name": null,
+      "type": "module",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/utils_aliased.js",
+        "start_line": 1,
+        "start_column": 1,
+        "end_line": 19,
+        "end_column": 0
+      },
+      "child_ids": [
+        "function:<fixtures>/javascript/code/modules/utils_aliased.js:6:23:8:1",
+        "function:<fixtures>/javascript/code/modules/utils_aliased.js:10:26:12:1",
+        "class:<fixtures>/javascript/code/modules/utils_aliased.js:14:26:18:1"
+      ]
+    },
+    "function:<fixtures>/javascript/code/modules/utils_aliased.js:6:23:8:1": {
+      "id": "function:<fixtures>/javascript/code/modules/utils_aliased.js:6:23:8:1",
+      "parent_id": "module:<fixtures>/javascript/code/modules/utils_aliased.js:1:1:19:0",
+      "name": "helper",
+      "type": "function",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/utils_aliased.js",
+        "start_line": 6,
+        "start_column": 23,
+        "end_line": 8,
+        "end_column": 1
+      },
+      "child_ids": []
+    },
+    "function:<fixtures>/javascript/code/modules/utils_aliased.js:10:26:12:1": {
+      "id": "function:<fixtures>/javascript/code/modules/utils_aliased.js:10:26:12:1",
+      "parent_id": "module:<fixtures>/javascript/code/modules/utils_aliased.js:1:1:19:0",
+      "name": "processor",
+      "type": "function",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/utils_aliased.js",
+        "start_line": 10,
+        "start_column": 26,
+        "end_line": 12,
+        "end_column": 1
+      },
+      "child_ids": []
+    },
+    "class:<fixtures>/javascript/code/modules/utils_aliased.js:14:26:18:1": {
+      "id": "class:<fixtures>/javascript/code/modules/utils_aliased.js:14:26:18:1",
+      "parent_id": "module:<fixtures>/javascript/code/modules/utils_aliased.js:1:1:19:0",
+      "name": "DataManager",
+      "type": "class",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/utils_aliased.js",
+        "start_line": 14,
+        "start_column": 26,
+        "end_line": 18,
+        "end_column": 1
+      },
+      "child_ids": [
+        "method:<fixtures>/javascript/code/modules/utils_aliased.js:15:10:17:3"
+      ]
+    },
+    "method:<fixtures>/javascript/code/modules/utils_aliased.js:15:10:17:3": {
+      "id": "method:<fixtures>/javascript/code/modules/utils_aliased.js:15:10:17:3",
+      "parent_id": "class:<fixtures>/javascript/code/modules/utils_aliased.js:14:26:18:1",
+      "name": "process",
+      "type": "method",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/utils_aliased.js",
+        "start_line": 15,
+        "start_column": 10,
+        "end_line": 17,
+        "end_column": 3
+      },
+      "child_ids": []
+    }
+  },
+  "functions": {
+    "function:<fixtures>/javascript/code/modules/utils_aliased.js:6:17:6:22:helper": {
+      "kind": "function",
+      "symbol_id": "function:<fixtures>/javascript/code/modules/utils_aliased.js:6:17:6:22:helper",
+      "name": "helper",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/utils_aliased.js",
+        "start_line": 6,
+        "start_column": 17,
+        "end_line": 6,
+        "end_column": 22
+      },
+      "defining_scope_id": "module:<fixtures>/javascript/code/modules/utils_aliased.js:1:1:19:0",
+      "is_exported": true,
+      "signature": {
+        "parameters": []
+      },
+      "body_scope_id": "function:<fixtures>/javascript/code/modules/utils_aliased.js:6:23:8:1"
+    },
+    "function:<fixtures>/javascript/code/modules/utils_aliased.js:10:17:10:25:processor": {
+      "kind": "function",
+      "symbol_id": "function:<fixtures>/javascript/code/modules/utils_aliased.js:10:17:10:25:processor",
+      "name": "processor",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/utils_aliased.js",
+        "start_line": 10,
+        "start_column": 17,
+        "end_line": 10,
+        "end_column": 25
+      },
+      "defining_scope_id": "module:<fixtures>/javascript/code/modules/utils_aliased.js:1:1:19:0",
+      "is_exported": true,
+      "signature": {
+        "parameters": []
+      },
+      "body_scope_id": "function:<fixtures>/javascript/code/modules/utils_aliased.js:10:26:12:1"
+    }
+  },
+  "classes": {
+    "class:<fixtures>/javascript/code/modules/utils_aliased.js:14:14:14:24:DataManager": {
+      "kind": "class",
+      "symbol_id": "class:<fixtures>/javascript/code/modules/utils_aliased.js:14:14:14:24:DataManager",
+      "name": "DataManager",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/utils_aliased.js",
+        "start_line": 14,
+        "start_column": 14,
+        "end_line": 14,
+        "end_column": 24
+      },
+      "defining_scope_id": "module:<fixtures>/javascript/code/modules/utils_aliased.js:1:1:19:0",
+      "extends": [],
+      "is_exported": true,
+      "methods": [
+        {
+          "kind": "method",
+          "defining_scope_id": "class:<fixtures>/javascript/code/modules/utils_aliased.js:14:26:18:1",
+          "symbol_id": "method:<fixtures>/javascript/code/modules/utils_aliased.js:15:3:15:9:process",
+          "name": "process",
+          "location": {
+            "file_path": "<fixtures>/javascript/code/modules/utils_aliased.js",
+            "start_line": 15,
+            "start_column": 3,
+            "end_line": 15,
+            "end_column": 9
+          },
+          "parameters": [],
+          "body_scope_id": "method:<fixtures>/javascript/code/modules/utils_aliased.js:15:10:17:3"
+        }
+      ],
+      "properties": [],
+      "decorators": []
+    }
+  },
+  "variables": {},
+  "interfaces": {},
+  "enums": {},
+  "namespaces": {},
+  "types": {},
+  "imported_symbols": {},
+  "references": [
+    {
+      "kind": "variable_reference",
+      "name": "helper",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/utils_aliased.js",
+        "start_line": 6,
+        "start_column": 17,
+        "end_line": 6,
+        "end_column": 22
+      },
+      "scope_id": "module:<fixtures>/javascript/code/modules/utils_aliased.js:1:1:19:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "return \"original helper\";",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/utils_aliased.js",
+        "start_line": 7,
+        "start_column": 3,
+        "end_line": 7,
+        "end_column": 27
+      },
+      "scope_id": "function:<fixtures>/javascript/code/modules/utils_aliased.js:6:23:8:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "\"original helper\"",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/utils_aliased.js",
+        "start_line": 7,
+        "start_column": 10,
+        "end_line": 7,
+        "end_column": 26
+      },
+      "scope_id": "function:<fixtures>/javascript/code/modules/utils_aliased.js:6:23:8:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "processor",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/utils_aliased.js",
+        "start_line": 10,
+        "start_column": 17,
+        "end_line": 10,
+        "end_column": 25
+      },
+      "scope_id": "module:<fixtures>/javascript/code/modules/utils_aliased.js:1:1:19:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "return \"original processor\";",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/utils_aliased.js",
+        "start_line": 11,
+        "start_column": 3,
+        "end_line": 11,
+        "end_column": 30
+      },
+      "scope_id": "function:<fixtures>/javascript/code/modules/utils_aliased.js:10:26:12:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "\"original processor\"",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/utils_aliased.js",
+        "start_line": 11,
+        "start_column": 10,
+        "end_line": 11,
+        "end_column": 29
+      },
+      "scope_id": "function:<fixtures>/javascript/code/modules/utils_aliased.js:10:26:12:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "DataManager",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/utils_aliased.js",
+        "start_line": 14,
+        "start_column": 14,
+        "end_line": 14,
+        "end_column": 24
+      },
+      "scope_id": "module:<fixtures>/javascript/code/modules/utils_aliased.js:1:1:19:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "return \"processing data\";",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/utils_aliased.js",
+        "start_line": 16,
+        "start_column": 5,
+        "end_line": 16,
+        "end_column": 29
+      },
+      "scope_id": "method:<fixtures>/javascript/code/modules/utils_aliased.js:15:10:17:3",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "\"processing data\"",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/utils_aliased.js",
+        "start_line": 16,
+        "start_column": 12,
+        "end_line": 16,
+        "end_column": 28
+      },
+      "scope_id": "method:<fixtures>/javascript/code/modules/utils_aliased.js:15:10:17:3",
+      "access_type": "read"
+    }
+  ]
+}

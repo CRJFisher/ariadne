@@ -8,7 +8,7 @@ import { load_fixture, load_fixtures } from "./fixture_helpers";
 describe("Fixture Helpers", () => {
   it("should load a fixture by relative path", () => {
     const index = load_fixture(
-      "typescript/semantic_index/classes/basic_class.json"
+      "typescript/index_single_file/classes/basic_class.json"
     );
 
     expect(index).toBeDefined();
@@ -19,7 +19,7 @@ describe("Fixture Helpers", () => {
 
   it("should load multiple fixtures", () => {
     const [index1] = load_fixtures(
-      "typescript/semantic_index/classes/basic_class.json"
+      "typescript/index_single_file/classes/basic_class.json"
     );
 
     expect(index1).toBeDefined();
@@ -28,7 +28,7 @@ describe("Fixture Helpers", () => {
 
   it("should preserve semantic index structure after loading", () => {
     const index = load_fixture(
-      "typescript/semantic_index/classes/basic_class.json"
+      "typescript/index_single_file/classes/basic_class.json"
     );
 
     // Verify Maps are reconstructed

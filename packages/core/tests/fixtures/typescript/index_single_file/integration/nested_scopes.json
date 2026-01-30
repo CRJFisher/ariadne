@@ -1,0 +1,1031 @@
+{
+  "file_path": "<fixtures>/typescript/code/integration/nested_scopes.ts",
+  "language": "typescript",
+  "root_scope_id": "module:<fixtures>/typescript/code/integration/nested_scopes.ts:1:1:35:44",
+  "scopes": {
+    "module:<fixtures>/typescript/code/integration/nested_scopes.ts:1:1:35:44": {
+      "id": "module:<fixtures>/typescript/code/integration/nested_scopes.ts:1:1:35:44",
+      "parent_id": null,
+      "name": null,
+      "type": "module",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/nested_scopes.ts",
+        "start_line": 1,
+        "start_column": 1,
+        "end_line": 35,
+        "end_column": 44
+      },
+      "child_ids": [
+        "function:<fixtures>/typescript/code/integration/nested_scopes.ts:9:24:26:1",
+        "function:<fixtures>/typescript/code/integration/nested_scopes.ts:28:16:30:1"
+      ]
+    },
+    "function:<fixtures>/typescript/code/integration/nested_scopes.ts:9:24:26:1": {
+      "id": "function:<fixtures>/typescript/code/integration/nested_scopes.ts:9:24:26:1",
+      "parent_id": "module:<fixtures>/typescript/code/integration/nested_scopes.ts:1:1:35:44",
+      "name": "outer_function",
+      "type": "function",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/nested_scopes.ts",
+        "start_line": 9,
+        "start_column": 24,
+        "end_line": 26,
+        "end_column": 1
+      },
+      "child_ids": [
+        "block:<fixtures>/typescript/code/integration/nested_scopes.ts:13:3:16:3",
+        "function:<fixtures>/typescript/code/integration/nested_scopes.ts:18:26:22:3"
+      ]
+    },
+    "block:<fixtures>/typescript/code/integration/nested_scopes.ts:13:3:16:3": {
+      "id": "block:<fixtures>/typescript/code/integration/nested_scopes.ts:13:3:16:3",
+      "parent_id": "function:<fixtures>/typescript/code/integration/nested_scopes.ts:9:24:26:1",
+      "name": null,
+      "type": "block",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/nested_scopes.ts",
+        "start_line": 13,
+        "start_column": 3,
+        "end_line": 16,
+        "end_column": 3
+      },
+      "child_ids": []
+    },
+    "function:<fixtures>/typescript/code/integration/nested_scopes.ts:18:26:22:3": {
+      "id": "function:<fixtures>/typescript/code/integration/nested_scopes.ts:18:26:22:3",
+      "parent_id": "function:<fixtures>/typescript/code/integration/nested_scopes.ts:9:24:26:1",
+      "name": "inner_function",
+      "type": "function",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/nested_scopes.ts",
+        "start_line": 18,
+        "start_column": 26,
+        "end_line": 22,
+        "end_column": 3
+      },
+      "child_ids": []
+    },
+    "function:<fixtures>/typescript/code/integration/nested_scopes.ts:28:16:30:1": {
+      "id": "function:<fixtures>/typescript/code/integration/nested_scopes.ts:28:16:30:1",
+      "parent_id": "module:<fixtures>/typescript/code/integration/nested_scopes.ts:1:1:35:44",
+      "name": "helper",
+      "type": "function",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/nested_scopes.ts",
+        "start_line": 28,
+        "start_column": 16,
+        "end_line": 30,
+        "end_column": 1
+      },
+      "child_ids": []
+    }
+  },
+  "functions": {
+    "function:<fixtures>/typescript/code/integration/nested_scopes.ts:9:10:9:23:outer_function": {
+      "kind": "function",
+      "symbol_id": "function:<fixtures>/typescript/code/integration/nested_scopes.ts:9:10:9:23:outer_function",
+      "name": "outer_function",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/nested_scopes.ts",
+        "start_line": 9,
+        "start_column": 10,
+        "end_line": 9,
+        "end_column": 23
+      },
+      "defining_scope_id": "module:<fixtures>/typescript/code/integration/nested_scopes.ts:1:1:35:44",
+      "is_exported": false,
+      "signature": {
+        "parameters": []
+      },
+      "body_scope_id": "function:<fixtures>/typescript/code/integration/nested_scopes.ts:9:24:26:1"
+    },
+    "function:<fixtures>/typescript/code/integration/nested_scopes.ts:18:12:18:25:inner_function": {
+      "kind": "function",
+      "symbol_id": "function:<fixtures>/typescript/code/integration/nested_scopes.ts:18:12:18:25:inner_function",
+      "name": "inner_function",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/nested_scopes.ts",
+        "start_line": 18,
+        "start_column": 12,
+        "end_line": 18,
+        "end_column": 25
+      },
+      "defining_scope_id": "function:<fixtures>/typescript/code/integration/nested_scopes.ts:9:24:26:1",
+      "is_exported": false,
+      "signature": {
+        "parameters": []
+      },
+      "body_scope_id": "function:<fixtures>/typescript/code/integration/nested_scopes.ts:18:26:22:3"
+    },
+    "function:<fixtures>/typescript/code/integration/nested_scopes.ts:28:10:28:15:helper": {
+      "kind": "function",
+      "symbol_id": "function:<fixtures>/typescript/code/integration/nested_scopes.ts:28:10:28:15:helper",
+      "name": "helper",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/nested_scopes.ts",
+        "start_line": 28,
+        "start_column": 10,
+        "end_line": 28,
+        "end_column": 15
+      },
+      "defining_scope_id": "module:<fixtures>/typescript/code/integration/nested_scopes.ts:1:1:35:44",
+      "is_exported": true,
+      "export": {
+        "is_reexport": false
+      },
+      "signature": {
+        "parameters": [],
+        "return_type": "string"
+      },
+      "return_type": "string",
+      "body_scope_id": "function:<fixtures>/typescript/code/integration/nested_scopes.ts:28:16:30:1"
+    }
+  },
+  "classes": {},
+  "variables": {
+    "variable:<fixtures>/typescript/code/integration/nested_scopes.ts:7:7:7:15:top_level": {
+      "kind": "constant",
+      "symbol_id": "variable:<fixtures>/typescript/code/integration/nested_scopes.ts:7:7:7:15:top_level",
+      "name": "top_level",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/nested_scopes.ts",
+        "start_line": 7,
+        "start_column": 7,
+        "end_line": 7,
+        "end_column": 15
+      },
+      "defining_scope_id": "module:<fixtures>/typescript/code/integration/nested_scopes.ts:1:1:35:44",
+      "is_exported": true,
+      "initial_value": "helper()",
+      "initialized_from_call": "helper"
+    },
+    "variable:<fixtures>/typescript/code/integration/nested_scopes.ts:11:9:11:18:outer_call": {
+      "kind": "constant",
+      "symbol_id": "variable:<fixtures>/typescript/code/integration/nested_scopes.ts:11:9:11:18:outer_call",
+      "name": "outer_call",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/nested_scopes.ts",
+        "start_line": 11,
+        "start_column": 9,
+        "end_line": 11,
+        "end_column": 18
+      },
+      "defining_scope_id": "function:<fixtures>/typescript/code/integration/nested_scopes.ts:9:24:26:1",
+      "is_exported": false,
+      "initial_value": "helper()",
+      "initialized_from_call": "helper"
+    },
+    "variable:<fixtures>/typescript/code/integration/nested_scopes.ts:15:11:15:20:block_call": {
+      "kind": "constant",
+      "symbol_id": "variable:<fixtures>/typescript/code/integration/nested_scopes.ts:15:11:15:20:block_call",
+      "name": "block_call",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/nested_scopes.ts",
+        "start_line": 15,
+        "start_column": 11,
+        "end_line": 15,
+        "end_column": 20
+      },
+      "defining_scope_id": "block:<fixtures>/typescript/code/integration/nested_scopes.ts:13:3:16:3",
+      "is_exported": false,
+      "initial_value": "helper()",
+      "initialized_from_call": "helper"
+    },
+    "variable:<fixtures>/typescript/code/integration/nested_scopes.ts:20:11:20:20:inner_call": {
+      "kind": "constant",
+      "symbol_id": "variable:<fixtures>/typescript/code/integration/nested_scopes.ts:20:11:20:20:inner_call",
+      "name": "inner_call",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/nested_scopes.ts",
+        "start_line": 20,
+        "start_column": 11,
+        "end_line": 20,
+        "end_column": 20
+      },
+      "defining_scope_id": "function:<fixtures>/typescript/code/integration/nested_scopes.ts:18:26:22:3",
+      "is_exported": false,
+      "initial_value": "helper()",
+      "initialized_from_call": "helper"
+    },
+    "variable:<fixtures>/typescript/code/integration/nested_scopes.ts:24:9:24:20:inner_result": {
+      "kind": "constant",
+      "symbol_id": "variable:<fixtures>/typescript/code/integration/nested_scopes.ts:24:9:24:20:inner_result",
+      "name": "inner_result",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/nested_scopes.ts",
+        "start_line": 24,
+        "start_column": 9,
+        "end_line": 24,
+        "end_column": 20
+      },
+      "defining_scope_id": "function:<fixtures>/typescript/code/integration/nested_scopes.ts:9:24:26:1",
+      "is_exported": false,
+      "initial_value": "inner_function()",
+      "initialized_from_call": "inner_function"
+    },
+    "variable:<fixtures>/typescript/code/integration/nested_scopes.ts:33:7:33:19:module_result": {
+      "kind": "constant",
+      "symbol_id": "variable:<fixtures>/typescript/code/integration/nested_scopes.ts:33:7:33:19:module_result",
+      "name": "module_result",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/nested_scopes.ts",
+        "start_line": 33,
+        "start_column": 7,
+        "end_line": 33,
+        "end_column": 19
+      },
+      "defining_scope_id": "module:<fixtures>/typescript/code/integration/nested_scopes.ts:1:1:35:44",
+      "is_exported": true,
+      "initial_value": "outer_function()",
+      "initialized_from_call": "outer_function"
+    }
+  },
+  "interfaces": {},
+  "enums": {},
+  "namespaces": {},
+  "types": {},
+  "imported_symbols": {},
+  "references": [
+    {
+      "kind": "assignment",
+      "name": "top_level = helper()",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/nested_scopes.ts",
+        "start_line": 7,
+        "start_column": 7,
+        "end_line": 7,
+        "end_column": 26
+      },
+      "scope_id": "module:<fixtures>/typescript/code/integration/nested_scopes.ts:1:1:35:44",
+      "target_location": {
+        "file_path": "<fixtures>/typescript/code/integration/nested_scopes.ts",
+        "start_line": 7,
+        "start_column": 7,
+        "end_line": 7,
+        "end_column": 26
+      }
+    },
+    {
+      "kind": "assignment",
+      "name": "top_level",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/nested_scopes.ts",
+        "start_line": 7,
+        "start_column": 7,
+        "end_line": 7,
+        "end_column": 15
+      },
+      "scope_id": "module:<fixtures>/typescript/code/integration/nested_scopes.ts:1:1:35:44",
+      "target_location": {
+        "file_path": "<fixtures>/typescript/code/integration/nested_scopes.ts",
+        "start_line": 7,
+        "start_column": 7,
+        "end_line": 7,
+        "end_column": 15
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "top_level",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/nested_scopes.ts",
+        "start_line": 7,
+        "start_column": 7,
+        "end_line": 7,
+        "end_column": 15
+      },
+      "scope_id": "module:<fixtures>/typescript/code/integration/nested_scopes.ts:1:1:35:44",
+      "access_type": "read"
+    },
+    {
+      "kind": "assignment",
+      "name": "helper",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/nested_scopes.ts",
+        "start_line": 7,
+        "start_column": 19,
+        "end_line": 7,
+        "end_column": 26
+      },
+      "scope_id": "module:<fixtures>/typescript/code/integration/nested_scopes.ts:1:1:35:44",
+      "target_location": {
+        "file_path": "<fixtures>/typescript/code/integration/nested_scopes.ts",
+        "start_line": 7,
+        "start_column": 7,
+        "end_line": 7,
+        "end_column": 15
+      }
+    },
+    {
+      "kind": "function_call",
+      "name": "helper",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/nested_scopes.ts",
+        "start_line": 7,
+        "start_column": 19,
+        "end_line": 7,
+        "end_column": 24
+      },
+      "scope_id": "module:<fixtures>/typescript/code/integration/nested_scopes.ts:1:1:35:44",
+      "potential_construct_target": {
+        "file_path": "<fixtures>/typescript/code/integration/nested_scopes.ts",
+        "start_line": 7,
+        "start_column": 7,
+        "end_line": 7,
+        "end_column": 15
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "helper",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/nested_scopes.ts",
+        "start_line": 7,
+        "start_column": 19,
+        "end_line": 7,
+        "end_column": 24
+      },
+      "scope_id": "module:<fixtures>/typescript/code/integration/nested_scopes.ts:1:1:35:44",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "outer_function",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/nested_scopes.ts",
+        "start_line": 9,
+        "start_column": 10,
+        "end_line": 9,
+        "end_column": 23
+      },
+      "scope_id": "module:<fixtures>/typescript/code/integration/nested_scopes.ts:1:1:35:44",
+      "access_type": "read"
+    },
+    {
+      "kind": "assignment",
+      "name": "outer_call = helper()",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/nested_scopes.ts",
+        "start_line": 11,
+        "start_column": 9,
+        "end_line": 11,
+        "end_column": 29
+      },
+      "scope_id": "function:<fixtures>/typescript/code/integration/nested_scopes.ts:9:24:26:1",
+      "target_location": {
+        "file_path": "<fixtures>/typescript/code/integration/nested_scopes.ts",
+        "start_line": 11,
+        "start_column": 9,
+        "end_line": 11,
+        "end_column": 29
+      }
+    },
+    {
+      "kind": "assignment",
+      "name": "outer_call",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/nested_scopes.ts",
+        "start_line": 11,
+        "start_column": 9,
+        "end_line": 11,
+        "end_column": 18
+      },
+      "scope_id": "function:<fixtures>/typescript/code/integration/nested_scopes.ts:9:24:26:1",
+      "target_location": {
+        "file_path": "<fixtures>/typescript/code/integration/nested_scopes.ts",
+        "start_line": 11,
+        "start_column": 9,
+        "end_line": 11,
+        "end_column": 18
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "outer_call",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/nested_scopes.ts",
+        "start_line": 11,
+        "start_column": 9,
+        "end_line": 11,
+        "end_column": 18
+      },
+      "scope_id": "function:<fixtures>/typescript/code/integration/nested_scopes.ts:9:24:26:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "assignment",
+      "name": "helper",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/nested_scopes.ts",
+        "start_line": 11,
+        "start_column": 22,
+        "end_line": 11,
+        "end_column": 29
+      },
+      "scope_id": "function:<fixtures>/typescript/code/integration/nested_scopes.ts:9:24:26:1",
+      "target_location": {
+        "file_path": "<fixtures>/typescript/code/integration/nested_scopes.ts",
+        "start_line": 11,
+        "start_column": 9,
+        "end_line": 11,
+        "end_column": 18
+      }
+    },
+    {
+      "kind": "function_call",
+      "name": "helper",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/nested_scopes.ts",
+        "start_line": 11,
+        "start_column": 22,
+        "end_line": 11,
+        "end_column": 27
+      },
+      "scope_id": "function:<fixtures>/typescript/code/integration/nested_scopes.ts:9:24:26:1",
+      "potential_construct_target": {
+        "file_path": "<fixtures>/typescript/code/integration/nested_scopes.ts",
+        "start_line": 11,
+        "start_column": 9,
+        "end_line": 11,
+        "end_column": 18
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "helper",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/nested_scopes.ts",
+        "start_line": 11,
+        "start_column": 22,
+        "end_line": 11,
+        "end_column": 27
+      },
+      "scope_id": "function:<fixtures>/typescript/code/integration/nested_scopes.ts:9:24:26:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "assignment",
+      "name": "block_call = helper()",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/nested_scopes.ts",
+        "start_line": 15,
+        "start_column": 11,
+        "end_line": 15,
+        "end_column": 31
+      },
+      "scope_id": "block:<fixtures>/typescript/code/integration/nested_scopes.ts:13:3:16:3",
+      "target_location": {
+        "file_path": "<fixtures>/typescript/code/integration/nested_scopes.ts",
+        "start_line": 15,
+        "start_column": 11,
+        "end_line": 15,
+        "end_column": 31
+      }
+    },
+    {
+      "kind": "assignment",
+      "name": "block_call",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/nested_scopes.ts",
+        "start_line": 15,
+        "start_column": 11,
+        "end_line": 15,
+        "end_column": 20
+      },
+      "scope_id": "block:<fixtures>/typescript/code/integration/nested_scopes.ts:13:3:16:3",
+      "target_location": {
+        "file_path": "<fixtures>/typescript/code/integration/nested_scopes.ts",
+        "start_line": 15,
+        "start_column": 11,
+        "end_line": 15,
+        "end_column": 20
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "block_call",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/nested_scopes.ts",
+        "start_line": 15,
+        "start_column": 11,
+        "end_line": 15,
+        "end_column": 20
+      },
+      "scope_id": "block:<fixtures>/typescript/code/integration/nested_scopes.ts:13:3:16:3",
+      "access_type": "read"
+    },
+    {
+      "kind": "assignment",
+      "name": "helper",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/nested_scopes.ts",
+        "start_line": 15,
+        "start_column": 24,
+        "end_line": 15,
+        "end_column": 31
+      },
+      "scope_id": "block:<fixtures>/typescript/code/integration/nested_scopes.ts:13:3:16:3",
+      "target_location": {
+        "file_path": "<fixtures>/typescript/code/integration/nested_scopes.ts",
+        "start_line": 15,
+        "start_column": 11,
+        "end_line": 15,
+        "end_column": 20
+      }
+    },
+    {
+      "kind": "function_call",
+      "name": "helper",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/nested_scopes.ts",
+        "start_line": 15,
+        "start_column": 24,
+        "end_line": 15,
+        "end_column": 29
+      },
+      "scope_id": "block:<fixtures>/typescript/code/integration/nested_scopes.ts:13:3:16:3",
+      "potential_construct_target": {
+        "file_path": "<fixtures>/typescript/code/integration/nested_scopes.ts",
+        "start_line": 15,
+        "start_column": 11,
+        "end_line": 15,
+        "end_column": 20
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "helper",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/nested_scopes.ts",
+        "start_line": 15,
+        "start_column": 24,
+        "end_line": 15,
+        "end_column": 29
+      },
+      "scope_id": "block:<fixtures>/typescript/code/integration/nested_scopes.ts:13:3:16:3",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "inner_function",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/nested_scopes.ts",
+        "start_line": 18,
+        "start_column": 12,
+        "end_line": 18,
+        "end_column": 25
+      },
+      "scope_id": "function:<fixtures>/typescript/code/integration/nested_scopes.ts:9:24:26:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "assignment",
+      "name": "inner_call = helper()",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/nested_scopes.ts",
+        "start_line": 20,
+        "start_column": 11,
+        "end_line": 20,
+        "end_column": 31
+      },
+      "scope_id": "function:<fixtures>/typescript/code/integration/nested_scopes.ts:18:26:22:3",
+      "target_location": {
+        "file_path": "<fixtures>/typescript/code/integration/nested_scopes.ts",
+        "start_line": 20,
+        "start_column": 11,
+        "end_line": 20,
+        "end_column": 31
+      }
+    },
+    {
+      "kind": "assignment",
+      "name": "inner_call",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/nested_scopes.ts",
+        "start_line": 20,
+        "start_column": 11,
+        "end_line": 20,
+        "end_column": 20
+      },
+      "scope_id": "function:<fixtures>/typescript/code/integration/nested_scopes.ts:18:26:22:3",
+      "target_location": {
+        "file_path": "<fixtures>/typescript/code/integration/nested_scopes.ts",
+        "start_line": 20,
+        "start_column": 11,
+        "end_line": 20,
+        "end_column": 20
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "inner_call",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/nested_scopes.ts",
+        "start_line": 20,
+        "start_column": 11,
+        "end_line": 20,
+        "end_column": 20
+      },
+      "scope_id": "function:<fixtures>/typescript/code/integration/nested_scopes.ts:18:26:22:3",
+      "access_type": "read"
+    },
+    {
+      "kind": "assignment",
+      "name": "helper",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/nested_scopes.ts",
+        "start_line": 20,
+        "start_column": 24,
+        "end_line": 20,
+        "end_column": 31
+      },
+      "scope_id": "function:<fixtures>/typescript/code/integration/nested_scopes.ts:18:26:22:3",
+      "target_location": {
+        "file_path": "<fixtures>/typescript/code/integration/nested_scopes.ts",
+        "start_line": 20,
+        "start_column": 11,
+        "end_line": 20,
+        "end_column": 20
+      }
+    },
+    {
+      "kind": "function_call",
+      "name": "helper",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/nested_scopes.ts",
+        "start_line": 20,
+        "start_column": 24,
+        "end_line": 20,
+        "end_column": 29
+      },
+      "scope_id": "function:<fixtures>/typescript/code/integration/nested_scopes.ts:18:26:22:3",
+      "potential_construct_target": {
+        "file_path": "<fixtures>/typescript/code/integration/nested_scopes.ts",
+        "start_line": 20,
+        "start_column": 11,
+        "end_line": 20,
+        "end_column": 20
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "helper",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/nested_scopes.ts",
+        "start_line": 20,
+        "start_column": 24,
+        "end_line": 20,
+        "end_column": 29
+      },
+      "scope_id": "function:<fixtures>/typescript/code/integration/nested_scopes.ts:18:26:22:3",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "return inner_call;",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/nested_scopes.ts",
+        "start_line": 21,
+        "start_column": 5,
+        "end_line": 21,
+        "end_column": 22
+      },
+      "scope_id": "function:<fixtures>/typescript/code/integration/nested_scopes.ts:18:26:22:3",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "inner_call",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/nested_scopes.ts",
+        "start_line": 21,
+        "start_column": 12,
+        "end_line": 21,
+        "end_column": 21
+      },
+      "scope_id": "function:<fixtures>/typescript/code/integration/nested_scopes.ts:18:26:22:3",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "inner_call",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/nested_scopes.ts",
+        "start_line": 21,
+        "start_column": 12,
+        "end_line": 21,
+        "end_column": 21
+      },
+      "scope_id": "function:<fixtures>/typescript/code/integration/nested_scopes.ts:18:26:22:3",
+      "access_type": "read"
+    },
+    {
+      "kind": "assignment",
+      "name": "inner_result = inner_function()",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/nested_scopes.ts",
+        "start_line": 24,
+        "start_column": 9,
+        "end_line": 24,
+        "end_column": 39
+      },
+      "scope_id": "function:<fixtures>/typescript/code/integration/nested_scopes.ts:9:24:26:1",
+      "target_location": {
+        "file_path": "<fixtures>/typescript/code/integration/nested_scopes.ts",
+        "start_line": 24,
+        "start_column": 9,
+        "end_line": 24,
+        "end_column": 39
+      }
+    },
+    {
+      "kind": "assignment",
+      "name": "inner_result",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/nested_scopes.ts",
+        "start_line": 24,
+        "start_column": 9,
+        "end_line": 24,
+        "end_column": 20
+      },
+      "scope_id": "function:<fixtures>/typescript/code/integration/nested_scopes.ts:9:24:26:1",
+      "target_location": {
+        "file_path": "<fixtures>/typescript/code/integration/nested_scopes.ts",
+        "start_line": 24,
+        "start_column": 9,
+        "end_line": 24,
+        "end_column": 20
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "inner_result",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/nested_scopes.ts",
+        "start_line": 24,
+        "start_column": 9,
+        "end_line": 24,
+        "end_column": 20
+      },
+      "scope_id": "function:<fixtures>/typescript/code/integration/nested_scopes.ts:9:24:26:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "assignment",
+      "name": "inner_function",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/nested_scopes.ts",
+        "start_line": 24,
+        "start_column": 24,
+        "end_line": 24,
+        "end_column": 39
+      },
+      "scope_id": "function:<fixtures>/typescript/code/integration/nested_scopes.ts:9:24:26:1",
+      "target_location": {
+        "file_path": "<fixtures>/typescript/code/integration/nested_scopes.ts",
+        "start_line": 24,
+        "start_column": 9,
+        "end_line": 24,
+        "end_column": 20
+      }
+    },
+    {
+      "kind": "function_call",
+      "name": "inner_function",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/nested_scopes.ts",
+        "start_line": 24,
+        "start_column": 24,
+        "end_line": 24,
+        "end_column": 37
+      },
+      "scope_id": "function:<fixtures>/typescript/code/integration/nested_scopes.ts:9:24:26:1",
+      "potential_construct_target": {
+        "file_path": "<fixtures>/typescript/code/integration/nested_scopes.ts",
+        "start_line": 24,
+        "start_column": 9,
+        "end_line": 24,
+        "end_column": 20
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "inner_function",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/nested_scopes.ts",
+        "start_line": 24,
+        "start_column": 24,
+        "end_line": 24,
+        "end_column": 37
+      },
+      "scope_id": "function:<fixtures>/typescript/code/integration/nested_scopes.ts:9:24:26:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "return { outer_call, inner_result };",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/nested_scopes.ts",
+        "start_line": 25,
+        "start_column": 3,
+        "end_line": 25,
+        "end_column": 38
+      },
+      "scope_id": "function:<fixtures>/typescript/code/integration/nested_scopes.ts:9:24:26:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "{ outer_call, inner_result }",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/nested_scopes.ts",
+        "start_line": 25,
+        "start_column": 10,
+        "end_line": 25,
+        "end_column": 37
+      },
+      "scope_id": "function:<fixtures>/typescript/code/integration/nested_scopes.ts:9:24:26:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "helper",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/nested_scopes.ts",
+        "start_line": 28,
+        "start_column": 10,
+        "end_line": 28,
+        "end_column": 15
+      },
+      "scope_id": "module:<fixtures>/typescript/code/integration/nested_scopes.ts:1:1:35:44",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "return \"helper result\";",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/nested_scopes.ts",
+        "start_line": 29,
+        "start_column": 3,
+        "end_line": 29,
+        "end_column": 25
+      },
+      "scope_id": "function:<fixtures>/typescript/code/integration/nested_scopes.ts:28:16:30:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "\"helper result\"",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/nested_scopes.ts",
+        "start_line": 29,
+        "start_column": 10,
+        "end_line": 29,
+        "end_column": 24
+      },
+      "scope_id": "function:<fixtures>/typescript/code/integration/nested_scopes.ts:28:16:30:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "assignment",
+      "name": "module_result = outer_function()",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/nested_scopes.ts",
+        "start_line": 33,
+        "start_column": 7,
+        "end_line": 33,
+        "end_column": 38
+      },
+      "scope_id": "module:<fixtures>/typescript/code/integration/nested_scopes.ts:1:1:35:44",
+      "target_location": {
+        "file_path": "<fixtures>/typescript/code/integration/nested_scopes.ts",
+        "start_line": 33,
+        "start_column": 7,
+        "end_line": 33,
+        "end_column": 38
+      }
+    },
+    {
+      "kind": "assignment",
+      "name": "module_result",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/nested_scopes.ts",
+        "start_line": 33,
+        "start_column": 7,
+        "end_line": 33,
+        "end_column": 19
+      },
+      "scope_id": "module:<fixtures>/typescript/code/integration/nested_scopes.ts:1:1:35:44",
+      "target_location": {
+        "file_path": "<fixtures>/typescript/code/integration/nested_scopes.ts",
+        "start_line": 33,
+        "start_column": 7,
+        "end_line": 33,
+        "end_column": 19
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "module_result",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/nested_scopes.ts",
+        "start_line": 33,
+        "start_column": 7,
+        "end_line": 33,
+        "end_column": 19
+      },
+      "scope_id": "module:<fixtures>/typescript/code/integration/nested_scopes.ts:1:1:35:44",
+      "access_type": "read"
+    },
+    {
+      "kind": "assignment",
+      "name": "outer_function",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/nested_scopes.ts",
+        "start_line": 33,
+        "start_column": 23,
+        "end_line": 33,
+        "end_column": 38
+      },
+      "scope_id": "module:<fixtures>/typescript/code/integration/nested_scopes.ts:1:1:35:44",
+      "target_location": {
+        "file_path": "<fixtures>/typescript/code/integration/nested_scopes.ts",
+        "start_line": 33,
+        "start_column": 7,
+        "end_line": 33,
+        "end_column": 19
+      }
+    },
+    {
+      "kind": "function_call",
+      "name": "outer_function",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/nested_scopes.ts",
+        "start_line": 33,
+        "start_column": 23,
+        "end_line": 33,
+        "end_column": 36
+      },
+      "scope_id": "module:<fixtures>/typescript/code/integration/nested_scopes.ts:1:1:35:44",
+      "potential_construct_target": {
+        "file_path": "<fixtures>/typescript/code/integration/nested_scopes.ts",
+        "start_line": 33,
+        "start_column": 7,
+        "end_line": 33,
+        "end_column": 19
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "outer_function",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/nested_scopes.ts",
+        "start_line": 33,
+        "start_column": 23,
+        "end_line": 33,
+        "end_column": 36
+      },
+      "scope_id": "module:<fixtures>/typescript/code/integration/nested_scopes.ts:1:1:35:44",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "top_level",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/nested_scopes.ts",
+        "start_line": 35,
+        "start_column": 10,
+        "end_line": 35,
+        "end_column": 18
+      },
+      "scope_id": "module:<fixtures>/typescript/code/integration/nested_scopes.ts:1:1:35:44",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "module_result",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/nested_scopes.ts",
+        "start_line": 35,
+        "start_column": 21,
+        "end_line": 35,
+        "end_column": 33
+      },
+      "scope_id": "module:<fixtures>/typescript/code/integration/nested_scopes.ts:1:1:35:44",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "helper",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/nested_scopes.ts",
+        "start_line": 35,
+        "start_column": 36,
+        "end_line": 35,
+        "end_column": 41
+      },
+      "scope_id": "module:<fixtures>/typescript/code/integration/nested_scopes.ts:1:1:35:44",
+      "access_type": "read"
+    }
+  ]
+}

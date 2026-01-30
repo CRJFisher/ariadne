@@ -1,0 +1,1320 @@
+{
+  "file_path": "<fixtures>/typescript/code/integration/main_uses_types.ts",
+  "language": "typescript",
+  "root_scope_id": "module:<fixtures>/typescript/code/integration/main_uses_types.ts:1:1:19:43",
+  "scopes": {
+    "module:<fixtures>/typescript/code/integration/main_uses_types.ts:1:1:19:43": {
+      "id": "module:<fixtures>/typescript/code/integration/main_uses_types.ts:1:1:19:43",
+      "parent_id": null,
+      "name": null,
+      "type": "module",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/main_uses_types.ts",
+        "start_line": 1,
+        "start_column": 1,
+        "end_line": 19,
+        "end_column": 43
+      },
+      "child_ids": []
+    }
+  },
+  "functions": {},
+  "classes": {},
+  "variables": {
+    "variable:<fixtures>/typescript/code/integration/main_uses_types.ts:9:7:9:10:user": {
+      "kind": "constant",
+      "symbol_id": "variable:<fixtures>/typescript/code/integration/main_uses_types.ts:9:7:9:10:user",
+      "name": "user",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/main_uses_types.ts",
+        "start_line": 9,
+        "start_column": 7,
+        "end_line": 9,
+        "end_column": 10
+      },
+      "defining_scope_id": "module:<fixtures>/typescript/code/integration/main_uses_types.ts:1:1:19:43",
+      "is_exported": true,
+      "initial_value": "new User(\"John Doe\", \"john@example.com\")"
+    },
+    "variable:<fixtures>/typescript/code/integration/main_uses_types.ts:12:7:12:10:name": {
+      "kind": "constant",
+      "symbol_id": "variable:<fixtures>/typescript/code/integration/main_uses_types.ts:12:7:12:10:name",
+      "name": "name",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/main_uses_types.ts",
+        "start_line": 12,
+        "start_column": 7,
+        "end_line": 12,
+        "end_column": 10
+      },
+      "defining_scope_id": "module:<fixtures>/typescript/code/integration/main_uses_types.ts:1:1:19:43",
+      "is_exported": true,
+      "initial_value": "user.get_name()",
+      "collection_source": "user"
+    },
+    "variable:<fixtures>/typescript/code/integration/main_uses_types.ts:13:7:13:11:email": {
+      "kind": "constant",
+      "symbol_id": "variable:<fixtures>/typescript/code/integration/main_uses_types.ts:13:7:13:11:email",
+      "name": "email",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/main_uses_types.ts",
+        "start_line": 13,
+        "start_column": 7,
+        "end_line": 13,
+        "end_column": 11
+      },
+      "defining_scope_id": "module:<fixtures>/typescript/code/integration/main_uses_types.ts:1:1:19:43",
+      "is_exported": true,
+      "initial_value": "user.get_email()",
+      "collection_source": "user"
+    },
+    "variable:<fixtures>/typescript/code/integration/main_uses_types.ts:17:7:17:18:updated_name": {
+      "kind": "constant",
+      "symbol_id": "variable:<fixtures>/typescript/code/integration/main_uses_types.ts:17:7:17:18:updated_name",
+      "name": "updated_name",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/main_uses_types.ts",
+        "start_line": 17,
+        "start_column": 7,
+        "end_line": 17,
+        "end_column": 18
+      },
+      "defining_scope_id": "module:<fixtures>/typescript/code/integration/main_uses_types.ts:1:1:19:43",
+      "is_exported": true,
+      "initial_value": "user.get_name()",
+      "collection_source": "user"
+    }
+  },
+  "interfaces": {},
+  "enums": {},
+  "namespaces": {},
+  "types": {},
+  "imported_symbols": {
+    "variable:<fixtures>/typescript/code/integration/main_uses_types.ts:6:10:6:13:User": {
+      "kind": "import",
+      "symbol_id": "variable:<fixtures>/typescript/code/integration/main_uses_types.ts:6:10:6:13:User",
+      "name": "User",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/main_uses_types.ts",
+        "start_line": 6,
+        "start_column": 10,
+        "end_line": 6,
+        "end_column": 13
+      },
+      "defining_scope_id": "module:<fixtures>/typescript/code/integration/main_uses_types.ts:1:1:19:43",
+      "import_path": "./types",
+      "import_kind": "named"
+    }
+  },
+  "references": [
+    {
+      "kind": "variable_reference",
+      "name": "User",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/main_uses_types.ts",
+        "start_line": 6,
+        "start_column": 10,
+        "end_line": 6,
+        "end_column": 13
+      },
+      "scope_id": "module:<fixtures>/typescript/code/integration/main_uses_types.ts:1:1:19:43",
+      "access_type": "read"
+    },
+    {
+      "kind": "assignment",
+      "name": "user = new User(\"John Doe\", \"john@example.com\")",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/main_uses_types.ts",
+        "start_line": 9,
+        "start_column": 7,
+        "end_line": 9,
+        "end_column": 53
+      },
+      "scope_id": "module:<fixtures>/typescript/code/integration/main_uses_types.ts:1:1:19:43",
+      "target_location": {
+        "file_path": "<fixtures>/typescript/code/integration/main_uses_types.ts",
+        "start_line": 9,
+        "start_column": 7,
+        "end_line": 9,
+        "end_column": 53
+      }
+    },
+    {
+      "kind": "assignment",
+      "name": "user",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/main_uses_types.ts",
+        "start_line": 9,
+        "start_column": 7,
+        "end_line": 9,
+        "end_column": 10
+      },
+      "scope_id": "module:<fixtures>/typescript/code/integration/main_uses_types.ts:1:1:19:43",
+      "target_location": {
+        "file_path": "<fixtures>/typescript/code/integration/main_uses_types.ts",
+        "start_line": 9,
+        "start_column": 7,
+        "end_line": 9,
+        "end_column": 10
+      }
+    },
+    {
+      "kind": "assignment",
+      "name": "user = new User(\"John Doe\", \"john@example.com\")",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/main_uses_types.ts",
+        "start_line": 9,
+        "start_column": 7,
+        "end_line": 9,
+        "end_column": 53
+      },
+      "scope_id": "module:<fixtures>/typescript/code/integration/main_uses_types.ts:1:1:19:43",
+      "target_location": {
+        "file_path": "<fixtures>/typescript/code/integration/main_uses_types.ts",
+        "start_line": 9,
+        "start_column": 7,
+        "end_line": 9,
+        "end_column": 53
+      }
+    },
+    {
+      "kind": "assignment",
+      "name": "user",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/main_uses_types.ts",
+        "start_line": 9,
+        "start_column": 7,
+        "end_line": 9,
+        "end_column": 10
+      },
+      "scope_id": "module:<fixtures>/typescript/code/integration/main_uses_types.ts:1:1:19:43",
+      "target_location": {
+        "file_path": "<fixtures>/typescript/code/integration/main_uses_types.ts",
+        "start_line": 9,
+        "start_column": 7,
+        "end_line": 9,
+        "end_column": 10
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "user",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/main_uses_types.ts",
+        "start_line": 9,
+        "start_column": 7,
+        "end_line": 9,
+        "end_column": 10
+      },
+      "scope_id": "module:<fixtures>/typescript/code/integration/main_uses_types.ts:1:1:19:43",
+      "access_type": "read"
+    },
+    {
+      "kind": "assignment",
+      "name": "User",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/main_uses_types.ts",
+        "start_line": 9,
+        "start_column": 14,
+        "end_line": 9,
+        "end_column": 53
+      },
+      "scope_id": "module:<fixtures>/typescript/code/integration/main_uses_types.ts:1:1:19:43",
+      "target_location": {
+        "file_path": "<fixtures>/typescript/code/integration/main_uses_types.ts",
+        "start_line": 9,
+        "start_column": 7,
+        "end_line": 9,
+        "end_column": 10
+      }
+    },
+    {
+      "kind": "function_call",
+      "name": "User",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/main_uses_types.ts",
+        "start_line": 9,
+        "start_column": 14,
+        "end_line": 9,
+        "end_column": 53
+      },
+      "scope_id": "module:<fixtures>/typescript/code/integration/main_uses_types.ts:1:1:19:43",
+      "potential_construct_target": {
+        "file_path": "<fixtures>/typescript/code/integration/main_uses_types.ts",
+        "start_line": 9,
+        "start_column": 7,
+        "end_line": 9,
+        "end_column": 10
+      }
+    },
+    {
+      "kind": "assignment",
+      "name": "User",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/main_uses_types.ts",
+        "start_line": 9,
+        "start_column": 18,
+        "end_line": 9,
+        "end_column": 21
+      },
+      "scope_id": "module:<fixtures>/typescript/code/integration/main_uses_types.ts:1:1:19:43",
+      "target_location": {
+        "file_path": "<fixtures>/typescript/code/integration/main_uses_types.ts",
+        "start_line": 9,
+        "start_column": 7,
+        "end_line": 9,
+        "end_column": 10
+      }
+    },
+    {
+      "kind": "constructor_call",
+      "name": "User",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/main_uses_types.ts",
+        "start_line": 9,
+        "start_column": 18,
+        "end_line": 9,
+        "end_column": 21
+      },
+      "scope_id": "module:<fixtures>/typescript/code/integration/main_uses_types.ts:1:1:19:43",
+      "construct_target": {
+        "file_path": "<fixtures>/typescript/code/integration/main_uses_types.ts",
+        "start_line": 9,
+        "start_column": 7,
+        "end_line": 9,
+        "end_column": 10
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "User",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/main_uses_types.ts",
+        "start_line": 9,
+        "start_column": 18,
+        "end_line": 9,
+        "end_column": 21
+      },
+      "scope_id": "module:<fixtures>/typescript/code/integration/main_uses_types.ts:1:1:19:43",
+      "access_type": "read"
+    },
+    {
+      "kind": "assignment",
+      "name": "name = user.get_name()",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/main_uses_types.ts",
+        "start_line": 12,
+        "start_column": 7,
+        "end_line": 12,
+        "end_column": 28
+      },
+      "scope_id": "module:<fixtures>/typescript/code/integration/main_uses_types.ts:1:1:19:43",
+      "target_location": {
+        "file_path": "<fixtures>/typescript/code/integration/main_uses_types.ts",
+        "start_line": 12,
+        "start_column": 7,
+        "end_line": 12,
+        "end_column": 28
+      }
+    },
+    {
+      "kind": "assignment",
+      "name": "name",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/main_uses_types.ts",
+        "start_line": 12,
+        "start_column": 7,
+        "end_line": 12,
+        "end_column": 10
+      },
+      "scope_id": "module:<fixtures>/typescript/code/integration/main_uses_types.ts:1:1:19:43",
+      "target_location": {
+        "file_path": "<fixtures>/typescript/code/integration/main_uses_types.ts",
+        "start_line": 12,
+        "start_column": 7,
+        "end_line": 12,
+        "end_column": 10
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "name",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/main_uses_types.ts",
+        "start_line": 12,
+        "start_column": 7,
+        "end_line": 12,
+        "end_column": 10
+      },
+      "scope_id": "module:<fixtures>/typescript/code/integration/main_uses_types.ts:1:1:19:43",
+      "access_type": "read"
+    },
+    {
+      "kind": "assignment",
+      "name": "user.get_name()",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/main_uses_types.ts",
+        "start_line": 12,
+        "start_column": 14,
+        "end_line": 12,
+        "end_column": 28
+      },
+      "scope_id": "module:<fixtures>/typescript/code/integration/main_uses_types.ts:1:1:19:43",
+      "target_location": {
+        "file_path": "<fixtures>/typescript/code/integration/main_uses_types.ts",
+        "start_line": 12,
+        "start_column": 7,
+        "end_line": 12,
+        "end_column": 10
+      }
+    },
+    {
+      "kind": "method_call",
+      "name": "get_name",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/main_uses_types.ts",
+        "start_line": 12,
+        "start_column": 14,
+        "end_line": 12,
+        "end_column": 28
+      },
+      "scope_id": "module:<fixtures>/typescript/code/integration/main_uses_types.ts:1:1:19:43",
+      "receiver_location": {
+        "file_path": "<fixtures>/typescript/code/integration/main_uses_types.ts",
+        "start_line": 12,
+        "start_column": 14,
+        "end_line": 12,
+        "end_column": 17
+      },
+      "property_chain": [
+        "user",
+        "get_name"
+      ],
+      "optional_chaining": false
+    },
+    {
+      "kind": "variable_reference",
+      "name": "user",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/main_uses_types.ts",
+        "start_line": 12,
+        "start_column": 14,
+        "end_line": 12,
+        "end_column": 17
+      },
+      "scope_id": "module:<fixtures>/typescript/code/integration/main_uses_types.ts:1:1:19:43",
+      "access_type": "read"
+    },
+    {
+      "kind": "property_access",
+      "name": "get_name",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/main_uses_types.ts",
+        "start_line": 12,
+        "start_column": 14,
+        "end_line": 12,
+        "end_column": 26
+      },
+      "scope_id": "module:<fixtures>/typescript/code/integration/main_uses_types.ts:1:1:19:43",
+      "receiver_location": {
+        "file_path": "<fixtures>/typescript/code/integration/main_uses_types.ts",
+        "start_line": 12,
+        "start_column": 14,
+        "end_line": 12,
+        "end_column": 17
+      },
+      "property_chain": [
+        "user",
+        "get_name"
+      ],
+      "access_type": "property",
+      "is_optional_chain": false
+    },
+    {
+      "kind": "variable_reference",
+      "name": "user",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/main_uses_types.ts",
+        "start_line": 12,
+        "start_column": 14,
+        "end_line": 12,
+        "end_column": 17
+      },
+      "scope_id": "module:<fixtures>/typescript/code/integration/main_uses_types.ts:1:1:19:43",
+      "access_type": "read"
+    },
+    {
+      "kind": "property_access",
+      "name": "get_name",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/main_uses_types.ts",
+        "start_line": 12,
+        "start_column": 14,
+        "end_line": 12,
+        "end_column": 26
+      },
+      "scope_id": "module:<fixtures>/typescript/code/integration/main_uses_types.ts:1:1:19:43",
+      "receiver_location": {
+        "file_path": "<fixtures>/typescript/code/integration/main_uses_types.ts",
+        "start_line": 12,
+        "start_column": 14,
+        "end_line": 12,
+        "end_column": 17
+      },
+      "property_chain": [
+        "user",
+        "get_name"
+      ],
+      "access_type": "property",
+      "is_optional_chain": false
+    },
+    {
+      "kind": "variable_reference",
+      "name": "user",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/main_uses_types.ts",
+        "start_line": 12,
+        "start_column": 14,
+        "end_line": 12,
+        "end_column": 17
+      },
+      "scope_id": "module:<fixtures>/typescript/code/integration/main_uses_types.ts:1:1:19:43",
+      "access_type": "read"
+    },
+    {
+      "kind": "method_call",
+      "name": "get_name",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/main_uses_types.ts",
+        "start_line": 12,
+        "start_column": 14,
+        "end_line": 12,
+        "end_column": 28
+      },
+      "scope_id": "module:<fixtures>/typescript/code/integration/main_uses_types.ts:1:1:19:43",
+      "receiver_location": {
+        "file_path": "<fixtures>/typescript/code/integration/main_uses_types.ts",
+        "start_line": 12,
+        "start_column": 14,
+        "end_line": 12,
+        "end_column": 17
+      },
+      "property_chain": [
+        "user",
+        "get_name"
+      ],
+      "optional_chaining": false
+    },
+    {
+      "kind": "variable_reference",
+      "name": "user",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/main_uses_types.ts",
+        "start_line": 12,
+        "start_column": 14,
+        "end_line": 12,
+        "end_column": 17
+      },
+      "scope_id": "module:<fixtures>/typescript/code/integration/main_uses_types.ts:1:1:19:43",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "user",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/main_uses_types.ts",
+        "start_line": 12,
+        "start_column": 14,
+        "end_line": 12,
+        "end_column": 17
+      },
+      "scope_id": "module:<fixtures>/typescript/code/integration/main_uses_types.ts:1:1:19:43",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "get_name",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/main_uses_types.ts",
+        "start_line": 12,
+        "start_column": 19,
+        "end_line": 12,
+        "end_column": 26
+      },
+      "scope_id": "module:<fixtures>/typescript/code/integration/main_uses_types.ts:1:1:19:43",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "get_name",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/main_uses_types.ts",
+        "start_line": 12,
+        "start_column": 19,
+        "end_line": 12,
+        "end_column": 26
+      },
+      "scope_id": "module:<fixtures>/typescript/code/integration/main_uses_types.ts:1:1:19:43",
+      "access_type": "read"
+    },
+    {
+      "kind": "assignment",
+      "name": "email = user.get_email()",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/main_uses_types.ts",
+        "start_line": 13,
+        "start_column": 7,
+        "end_line": 13,
+        "end_column": 30
+      },
+      "scope_id": "module:<fixtures>/typescript/code/integration/main_uses_types.ts:1:1:19:43",
+      "target_location": {
+        "file_path": "<fixtures>/typescript/code/integration/main_uses_types.ts",
+        "start_line": 13,
+        "start_column": 7,
+        "end_line": 13,
+        "end_column": 30
+      }
+    },
+    {
+      "kind": "assignment",
+      "name": "email",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/main_uses_types.ts",
+        "start_line": 13,
+        "start_column": 7,
+        "end_line": 13,
+        "end_column": 11
+      },
+      "scope_id": "module:<fixtures>/typescript/code/integration/main_uses_types.ts:1:1:19:43",
+      "target_location": {
+        "file_path": "<fixtures>/typescript/code/integration/main_uses_types.ts",
+        "start_line": 13,
+        "start_column": 7,
+        "end_line": 13,
+        "end_column": 11
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "email",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/main_uses_types.ts",
+        "start_line": 13,
+        "start_column": 7,
+        "end_line": 13,
+        "end_column": 11
+      },
+      "scope_id": "module:<fixtures>/typescript/code/integration/main_uses_types.ts:1:1:19:43",
+      "access_type": "read"
+    },
+    {
+      "kind": "assignment",
+      "name": "user.get_email()",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/main_uses_types.ts",
+        "start_line": 13,
+        "start_column": 15,
+        "end_line": 13,
+        "end_column": 30
+      },
+      "scope_id": "module:<fixtures>/typescript/code/integration/main_uses_types.ts:1:1:19:43",
+      "target_location": {
+        "file_path": "<fixtures>/typescript/code/integration/main_uses_types.ts",
+        "start_line": 13,
+        "start_column": 7,
+        "end_line": 13,
+        "end_column": 11
+      }
+    },
+    {
+      "kind": "method_call",
+      "name": "get_email",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/main_uses_types.ts",
+        "start_line": 13,
+        "start_column": 15,
+        "end_line": 13,
+        "end_column": 30
+      },
+      "scope_id": "module:<fixtures>/typescript/code/integration/main_uses_types.ts:1:1:19:43",
+      "receiver_location": {
+        "file_path": "<fixtures>/typescript/code/integration/main_uses_types.ts",
+        "start_line": 13,
+        "start_column": 15,
+        "end_line": 13,
+        "end_column": 18
+      },
+      "property_chain": [
+        "user",
+        "get_email"
+      ],
+      "optional_chaining": false
+    },
+    {
+      "kind": "variable_reference",
+      "name": "user",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/main_uses_types.ts",
+        "start_line": 13,
+        "start_column": 15,
+        "end_line": 13,
+        "end_column": 18
+      },
+      "scope_id": "module:<fixtures>/typescript/code/integration/main_uses_types.ts:1:1:19:43",
+      "access_type": "read"
+    },
+    {
+      "kind": "property_access",
+      "name": "get_email",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/main_uses_types.ts",
+        "start_line": 13,
+        "start_column": 15,
+        "end_line": 13,
+        "end_column": 28
+      },
+      "scope_id": "module:<fixtures>/typescript/code/integration/main_uses_types.ts:1:1:19:43",
+      "receiver_location": {
+        "file_path": "<fixtures>/typescript/code/integration/main_uses_types.ts",
+        "start_line": 13,
+        "start_column": 15,
+        "end_line": 13,
+        "end_column": 18
+      },
+      "property_chain": [
+        "user",
+        "get_email"
+      ],
+      "access_type": "property",
+      "is_optional_chain": false
+    },
+    {
+      "kind": "variable_reference",
+      "name": "user",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/main_uses_types.ts",
+        "start_line": 13,
+        "start_column": 15,
+        "end_line": 13,
+        "end_column": 18
+      },
+      "scope_id": "module:<fixtures>/typescript/code/integration/main_uses_types.ts:1:1:19:43",
+      "access_type": "read"
+    },
+    {
+      "kind": "property_access",
+      "name": "get_email",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/main_uses_types.ts",
+        "start_line": 13,
+        "start_column": 15,
+        "end_line": 13,
+        "end_column": 28
+      },
+      "scope_id": "module:<fixtures>/typescript/code/integration/main_uses_types.ts:1:1:19:43",
+      "receiver_location": {
+        "file_path": "<fixtures>/typescript/code/integration/main_uses_types.ts",
+        "start_line": 13,
+        "start_column": 15,
+        "end_line": 13,
+        "end_column": 18
+      },
+      "property_chain": [
+        "user",
+        "get_email"
+      ],
+      "access_type": "property",
+      "is_optional_chain": false
+    },
+    {
+      "kind": "variable_reference",
+      "name": "user",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/main_uses_types.ts",
+        "start_line": 13,
+        "start_column": 15,
+        "end_line": 13,
+        "end_column": 18
+      },
+      "scope_id": "module:<fixtures>/typescript/code/integration/main_uses_types.ts:1:1:19:43",
+      "access_type": "read"
+    },
+    {
+      "kind": "method_call",
+      "name": "get_email",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/main_uses_types.ts",
+        "start_line": 13,
+        "start_column": 15,
+        "end_line": 13,
+        "end_column": 30
+      },
+      "scope_id": "module:<fixtures>/typescript/code/integration/main_uses_types.ts:1:1:19:43",
+      "receiver_location": {
+        "file_path": "<fixtures>/typescript/code/integration/main_uses_types.ts",
+        "start_line": 13,
+        "start_column": 15,
+        "end_line": 13,
+        "end_column": 18
+      },
+      "property_chain": [
+        "user",
+        "get_email"
+      ],
+      "optional_chaining": false
+    },
+    {
+      "kind": "variable_reference",
+      "name": "user",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/main_uses_types.ts",
+        "start_line": 13,
+        "start_column": 15,
+        "end_line": 13,
+        "end_column": 18
+      },
+      "scope_id": "module:<fixtures>/typescript/code/integration/main_uses_types.ts:1:1:19:43",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "user",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/main_uses_types.ts",
+        "start_line": 13,
+        "start_column": 15,
+        "end_line": 13,
+        "end_column": 18
+      },
+      "scope_id": "module:<fixtures>/typescript/code/integration/main_uses_types.ts:1:1:19:43",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "get_email",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/main_uses_types.ts",
+        "start_line": 13,
+        "start_column": 20,
+        "end_line": 13,
+        "end_column": 28
+      },
+      "scope_id": "module:<fixtures>/typescript/code/integration/main_uses_types.ts:1:1:19:43",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "get_email",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/main_uses_types.ts",
+        "start_line": 13,
+        "start_column": 20,
+        "end_line": 13,
+        "end_column": 28
+      },
+      "scope_id": "module:<fixtures>/typescript/code/integration/main_uses_types.ts:1:1:19:43",
+      "access_type": "read"
+    },
+    {
+      "kind": "method_call",
+      "name": "update_name",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/main_uses_types.ts",
+        "start_line": 16,
+        "start_column": 1,
+        "end_line": 16,
+        "end_column": 28
+      },
+      "scope_id": "module:<fixtures>/typescript/code/integration/main_uses_types.ts:1:1:19:43",
+      "receiver_location": {
+        "file_path": "<fixtures>/typescript/code/integration/main_uses_types.ts",
+        "start_line": 16,
+        "start_column": 1,
+        "end_line": 16,
+        "end_column": 4
+      },
+      "property_chain": [
+        "user",
+        "update_name"
+      ],
+      "optional_chaining": false
+    },
+    {
+      "kind": "variable_reference",
+      "name": "user",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/main_uses_types.ts",
+        "start_line": 16,
+        "start_column": 1,
+        "end_line": 16,
+        "end_column": 4
+      },
+      "scope_id": "module:<fixtures>/typescript/code/integration/main_uses_types.ts:1:1:19:43",
+      "access_type": "read"
+    },
+    {
+      "kind": "property_access",
+      "name": "update_name",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/main_uses_types.ts",
+        "start_line": 16,
+        "start_column": 1,
+        "end_line": 16,
+        "end_column": 16
+      },
+      "scope_id": "module:<fixtures>/typescript/code/integration/main_uses_types.ts:1:1:19:43",
+      "receiver_location": {
+        "file_path": "<fixtures>/typescript/code/integration/main_uses_types.ts",
+        "start_line": 16,
+        "start_column": 1,
+        "end_line": 16,
+        "end_column": 4
+      },
+      "property_chain": [
+        "user",
+        "update_name"
+      ],
+      "access_type": "property",
+      "is_optional_chain": false
+    },
+    {
+      "kind": "variable_reference",
+      "name": "user",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/main_uses_types.ts",
+        "start_line": 16,
+        "start_column": 1,
+        "end_line": 16,
+        "end_column": 4
+      },
+      "scope_id": "module:<fixtures>/typescript/code/integration/main_uses_types.ts:1:1:19:43",
+      "access_type": "read"
+    },
+    {
+      "kind": "property_access",
+      "name": "update_name",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/main_uses_types.ts",
+        "start_line": 16,
+        "start_column": 1,
+        "end_line": 16,
+        "end_column": 16
+      },
+      "scope_id": "module:<fixtures>/typescript/code/integration/main_uses_types.ts:1:1:19:43",
+      "receiver_location": {
+        "file_path": "<fixtures>/typescript/code/integration/main_uses_types.ts",
+        "start_line": 16,
+        "start_column": 1,
+        "end_line": 16,
+        "end_column": 4
+      },
+      "property_chain": [
+        "user",
+        "update_name"
+      ],
+      "access_type": "property",
+      "is_optional_chain": false
+    },
+    {
+      "kind": "variable_reference",
+      "name": "user",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/main_uses_types.ts",
+        "start_line": 16,
+        "start_column": 1,
+        "end_line": 16,
+        "end_column": 4
+      },
+      "scope_id": "module:<fixtures>/typescript/code/integration/main_uses_types.ts:1:1:19:43",
+      "access_type": "read"
+    },
+    {
+      "kind": "method_call",
+      "name": "update_name",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/main_uses_types.ts",
+        "start_line": 16,
+        "start_column": 1,
+        "end_line": 16,
+        "end_column": 28
+      },
+      "scope_id": "module:<fixtures>/typescript/code/integration/main_uses_types.ts:1:1:19:43",
+      "receiver_location": {
+        "file_path": "<fixtures>/typescript/code/integration/main_uses_types.ts",
+        "start_line": 16,
+        "start_column": 1,
+        "end_line": 16,
+        "end_column": 4
+      },
+      "property_chain": [
+        "user",
+        "update_name"
+      ],
+      "optional_chaining": false
+    },
+    {
+      "kind": "variable_reference",
+      "name": "user",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/main_uses_types.ts",
+        "start_line": 16,
+        "start_column": 1,
+        "end_line": 16,
+        "end_column": 4
+      },
+      "scope_id": "module:<fixtures>/typescript/code/integration/main_uses_types.ts:1:1:19:43",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "user",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/main_uses_types.ts",
+        "start_line": 16,
+        "start_column": 1,
+        "end_line": 16,
+        "end_column": 4
+      },
+      "scope_id": "module:<fixtures>/typescript/code/integration/main_uses_types.ts:1:1:19:43",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "update_name",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/main_uses_types.ts",
+        "start_line": 16,
+        "start_column": 6,
+        "end_line": 16,
+        "end_column": 16
+      },
+      "scope_id": "module:<fixtures>/typescript/code/integration/main_uses_types.ts:1:1:19:43",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "update_name",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/main_uses_types.ts",
+        "start_line": 16,
+        "start_column": 6,
+        "end_line": 16,
+        "end_column": 16
+      },
+      "scope_id": "module:<fixtures>/typescript/code/integration/main_uses_types.ts:1:1:19:43",
+      "access_type": "read"
+    },
+    {
+      "kind": "assignment",
+      "name": "updated_name = user.get_name()",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/main_uses_types.ts",
+        "start_line": 17,
+        "start_column": 7,
+        "end_line": 17,
+        "end_column": 36
+      },
+      "scope_id": "module:<fixtures>/typescript/code/integration/main_uses_types.ts:1:1:19:43",
+      "target_location": {
+        "file_path": "<fixtures>/typescript/code/integration/main_uses_types.ts",
+        "start_line": 17,
+        "start_column": 7,
+        "end_line": 17,
+        "end_column": 36
+      }
+    },
+    {
+      "kind": "assignment",
+      "name": "updated_name",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/main_uses_types.ts",
+        "start_line": 17,
+        "start_column": 7,
+        "end_line": 17,
+        "end_column": 18
+      },
+      "scope_id": "module:<fixtures>/typescript/code/integration/main_uses_types.ts:1:1:19:43",
+      "target_location": {
+        "file_path": "<fixtures>/typescript/code/integration/main_uses_types.ts",
+        "start_line": 17,
+        "start_column": 7,
+        "end_line": 17,
+        "end_column": 18
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "updated_name",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/main_uses_types.ts",
+        "start_line": 17,
+        "start_column": 7,
+        "end_line": 17,
+        "end_column": 18
+      },
+      "scope_id": "module:<fixtures>/typescript/code/integration/main_uses_types.ts:1:1:19:43",
+      "access_type": "read"
+    },
+    {
+      "kind": "assignment",
+      "name": "user.get_name()",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/main_uses_types.ts",
+        "start_line": 17,
+        "start_column": 22,
+        "end_line": 17,
+        "end_column": 36
+      },
+      "scope_id": "module:<fixtures>/typescript/code/integration/main_uses_types.ts:1:1:19:43",
+      "target_location": {
+        "file_path": "<fixtures>/typescript/code/integration/main_uses_types.ts",
+        "start_line": 17,
+        "start_column": 7,
+        "end_line": 17,
+        "end_column": 18
+      }
+    },
+    {
+      "kind": "method_call",
+      "name": "get_name",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/main_uses_types.ts",
+        "start_line": 17,
+        "start_column": 22,
+        "end_line": 17,
+        "end_column": 36
+      },
+      "scope_id": "module:<fixtures>/typescript/code/integration/main_uses_types.ts:1:1:19:43",
+      "receiver_location": {
+        "file_path": "<fixtures>/typescript/code/integration/main_uses_types.ts",
+        "start_line": 17,
+        "start_column": 22,
+        "end_line": 17,
+        "end_column": 25
+      },
+      "property_chain": [
+        "user",
+        "get_name"
+      ],
+      "optional_chaining": false
+    },
+    {
+      "kind": "variable_reference",
+      "name": "user",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/main_uses_types.ts",
+        "start_line": 17,
+        "start_column": 22,
+        "end_line": 17,
+        "end_column": 25
+      },
+      "scope_id": "module:<fixtures>/typescript/code/integration/main_uses_types.ts:1:1:19:43",
+      "access_type": "read"
+    },
+    {
+      "kind": "property_access",
+      "name": "get_name",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/main_uses_types.ts",
+        "start_line": 17,
+        "start_column": 22,
+        "end_line": 17,
+        "end_column": 34
+      },
+      "scope_id": "module:<fixtures>/typescript/code/integration/main_uses_types.ts:1:1:19:43",
+      "receiver_location": {
+        "file_path": "<fixtures>/typescript/code/integration/main_uses_types.ts",
+        "start_line": 17,
+        "start_column": 22,
+        "end_line": 17,
+        "end_column": 25
+      },
+      "property_chain": [
+        "user",
+        "get_name"
+      ],
+      "access_type": "property",
+      "is_optional_chain": false
+    },
+    {
+      "kind": "variable_reference",
+      "name": "user",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/main_uses_types.ts",
+        "start_line": 17,
+        "start_column": 22,
+        "end_line": 17,
+        "end_column": 25
+      },
+      "scope_id": "module:<fixtures>/typescript/code/integration/main_uses_types.ts:1:1:19:43",
+      "access_type": "read"
+    },
+    {
+      "kind": "property_access",
+      "name": "get_name",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/main_uses_types.ts",
+        "start_line": 17,
+        "start_column": 22,
+        "end_line": 17,
+        "end_column": 34
+      },
+      "scope_id": "module:<fixtures>/typescript/code/integration/main_uses_types.ts:1:1:19:43",
+      "receiver_location": {
+        "file_path": "<fixtures>/typescript/code/integration/main_uses_types.ts",
+        "start_line": 17,
+        "start_column": 22,
+        "end_line": 17,
+        "end_column": 25
+      },
+      "property_chain": [
+        "user",
+        "get_name"
+      ],
+      "access_type": "property",
+      "is_optional_chain": false
+    },
+    {
+      "kind": "variable_reference",
+      "name": "user",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/main_uses_types.ts",
+        "start_line": 17,
+        "start_column": 22,
+        "end_line": 17,
+        "end_column": 25
+      },
+      "scope_id": "module:<fixtures>/typescript/code/integration/main_uses_types.ts:1:1:19:43",
+      "access_type": "read"
+    },
+    {
+      "kind": "method_call",
+      "name": "get_name",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/main_uses_types.ts",
+        "start_line": 17,
+        "start_column": 22,
+        "end_line": 17,
+        "end_column": 36
+      },
+      "scope_id": "module:<fixtures>/typescript/code/integration/main_uses_types.ts:1:1:19:43",
+      "receiver_location": {
+        "file_path": "<fixtures>/typescript/code/integration/main_uses_types.ts",
+        "start_line": 17,
+        "start_column": 22,
+        "end_line": 17,
+        "end_column": 25
+      },
+      "property_chain": [
+        "user",
+        "get_name"
+      ],
+      "optional_chaining": false
+    },
+    {
+      "kind": "variable_reference",
+      "name": "user",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/main_uses_types.ts",
+        "start_line": 17,
+        "start_column": 22,
+        "end_line": 17,
+        "end_column": 25
+      },
+      "scope_id": "module:<fixtures>/typescript/code/integration/main_uses_types.ts:1:1:19:43",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "user",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/main_uses_types.ts",
+        "start_line": 17,
+        "start_column": 22,
+        "end_line": 17,
+        "end_column": 25
+      },
+      "scope_id": "module:<fixtures>/typescript/code/integration/main_uses_types.ts:1:1:19:43",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "get_name",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/main_uses_types.ts",
+        "start_line": 17,
+        "start_column": 27,
+        "end_line": 17,
+        "end_column": 34
+      },
+      "scope_id": "module:<fixtures>/typescript/code/integration/main_uses_types.ts:1:1:19:43",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "get_name",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/main_uses_types.ts",
+        "start_line": 17,
+        "start_column": 27,
+        "end_line": 17,
+        "end_column": 34
+      },
+      "scope_id": "module:<fixtures>/typescript/code/integration/main_uses_types.ts:1:1:19:43",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "user",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/main_uses_types.ts",
+        "start_line": 19,
+        "start_column": 10,
+        "end_line": 19,
+        "end_column": 13
+      },
+      "scope_id": "module:<fixtures>/typescript/code/integration/main_uses_types.ts:1:1:19:43",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "name",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/main_uses_types.ts",
+        "start_line": 19,
+        "start_column": 16,
+        "end_line": 19,
+        "end_column": 19
+      },
+      "scope_id": "module:<fixtures>/typescript/code/integration/main_uses_types.ts:1:1:19:43",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "email",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/main_uses_types.ts",
+        "start_line": 19,
+        "start_column": 22,
+        "end_line": 19,
+        "end_column": 26
+      },
+      "scope_id": "module:<fixtures>/typescript/code/integration/main_uses_types.ts:1:1:19:43",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "updated_name",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/main_uses_types.ts",
+        "start_line": 19,
+        "start_column": 29,
+        "end_line": 19,
+        "end_column": 40
+      },
+      "scope_id": "module:<fixtures>/typescript/code/integration/main_uses_types.ts:1:1:19:43",
+      "access_type": "read"
+    }
+  ]
+}

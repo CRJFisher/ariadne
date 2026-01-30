@@ -1,0 +1,427 @@
+{
+  "file_path": "<fixtures>/typescript/code/integration/main_shadowing.ts",
+  "language": "typescript",
+  "root_scope_id": "module:<fixtures>/typescript/code/integration/main_shadowing.ts:1:1:19:25",
+  "scopes": {
+    "module:<fixtures>/typescript/code/integration/main_shadowing.ts:1:1:19:25": {
+      "id": "module:<fixtures>/typescript/code/integration/main_shadowing.ts:1:1:19:25",
+      "parent_id": null,
+      "name": null,
+      "type": "module",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/main_shadowing.ts",
+        "start_line": 1,
+        "start_column": 1,
+        "end_line": 19,
+        "end_column": 25
+      },
+      "child_ids": [
+        "function:<fixtures>/typescript/code/integration/main_shadowing.ts:9:16:11:1"
+      ]
+    },
+    "function:<fixtures>/typescript/code/integration/main_shadowing.ts:9:16:11:1": {
+      "id": "function:<fixtures>/typescript/code/integration/main_shadowing.ts:9:16:11:1",
+      "parent_id": "module:<fixtures>/typescript/code/integration/main_shadowing.ts:1:1:19:25",
+      "name": "helper",
+      "type": "function",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/main_shadowing.ts",
+        "start_line": 9,
+        "start_column": 16,
+        "end_line": 11,
+        "end_column": 1
+      },
+      "child_ids": []
+    }
+  },
+  "functions": {
+    "function:<fixtures>/typescript/code/integration/main_shadowing.ts:9:10:9:15:helper": {
+      "kind": "function",
+      "symbol_id": "function:<fixtures>/typescript/code/integration/main_shadowing.ts:9:10:9:15:helper",
+      "name": "helper",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/main_shadowing.ts",
+        "start_line": 9,
+        "start_column": 10,
+        "end_line": 9,
+        "end_column": 15
+      },
+      "defining_scope_id": "module:<fixtures>/typescript/code/integration/main_shadowing.ts:1:1:19:25",
+      "is_exported": false,
+      "signature": {
+        "parameters": [],
+        "return_type": "string"
+      },
+      "return_type": "string",
+      "body_scope_id": "function:<fixtures>/typescript/code/integration/main_shadowing.ts:9:16:11:1"
+    }
+  },
+  "classes": {},
+  "variables": {
+    "variable:<fixtures>/typescript/code/integration/main_shadowing.ts:14:7:14:12:result": {
+      "kind": "constant",
+      "symbol_id": "variable:<fixtures>/typescript/code/integration/main_shadowing.ts:14:7:14:12:result",
+      "name": "result",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/main_shadowing.ts",
+        "start_line": 14,
+        "start_column": 7,
+        "end_line": 14,
+        "end_column": 12
+      },
+      "defining_scope_id": "module:<fixtures>/typescript/code/integration/main_shadowing.ts:1:1:19:25",
+      "is_exported": true,
+      "initial_value": "helper()",
+      "initialized_from_call": "helper"
+    },
+    "variable:<fixtures>/typescript/code/integration/main_shadowing.ts:17:7:17:11:other": {
+      "kind": "constant",
+      "symbol_id": "variable:<fixtures>/typescript/code/integration/main_shadowing.ts:17:7:17:11:other",
+      "name": "other",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/main_shadowing.ts",
+        "start_line": 17,
+        "start_column": 7,
+        "end_line": 17,
+        "end_column": 11
+      },
+      "defining_scope_id": "module:<fixtures>/typescript/code/integration/main_shadowing.ts:1:1:19:25",
+      "is_exported": true,
+      "initial_value": "other_function()",
+      "initialized_from_call": "other_function"
+    }
+  },
+  "interfaces": {},
+  "enums": {},
+  "namespaces": {},
+  "types": {},
+  "imported_symbols": {
+    "variable:<fixtures>/typescript/code/integration/main_shadowing.ts:6:10:6:15:helper": {
+      "kind": "import",
+      "symbol_id": "variable:<fixtures>/typescript/code/integration/main_shadowing.ts:6:10:6:15:helper",
+      "name": "helper",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/main_shadowing.ts",
+        "start_line": 6,
+        "start_column": 10,
+        "end_line": 6,
+        "end_column": 15
+      },
+      "defining_scope_id": "module:<fixtures>/typescript/code/integration/main_shadowing.ts:1:1:19:25",
+      "import_path": "./utils",
+      "import_kind": "named"
+    },
+    "variable:<fixtures>/typescript/code/integration/main_shadowing.ts:6:18:6:31:other_function": {
+      "kind": "import",
+      "symbol_id": "variable:<fixtures>/typescript/code/integration/main_shadowing.ts:6:18:6:31:other_function",
+      "name": "other_function",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/main_shadowing.ts",
+        "start_line": 6,
+        "start_column": 18,
+        "end_line": 6,
+        "end_column": 31
+      },
+      "defining_scope_id": "module:<fixtures>/typescript/code/integration/main_shadowing.ts:1:1:19:25",
+      "import_path": "./utils",
+      "import_kind": "named"
+    }
+  },
+  "references": [
+    {
+      "kind": "variable_reference",
+      "name": "helper",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/main_shadowing.ts",
+        "start_line": 6,
+        "start_column": 10,
+        "end_line": 6,
+        "end_column": 15
+      },
+      "scope_id": "module:<fixtures>/typescript/code/integration/main_shadowing.ts:1:1:19:25",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "other_function",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/main_shadowing.ts",
+        "start_line": 6,
+        "start_column": 18,
+        "end_line": 6,
+        "end_column": 31
+      },
+      "scope_id": "module:<fixtures>/typescript/code/integration/main_shadowing.ts:1:1:19:25",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "helper",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/main_shadowing.ts",
+        "start_line": 9,
+        "start_column": 10,
+        "end_line": 9,
+        "end_column": 15
+      },
+      "scope_id": "module:<fixtures>/typescript/code/integration/main_shadowing.ts:1:1:19:25",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "return \"local helper\";",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/main_shadowing.ts",
+        "start_line": 10,
+        "start_column": 3,
+        "end_line": 10,
+        "end_column": 24
+      },
+      "scope_id": "function:<fixtures>/typescript/code/integration/main_shadowing.ts:9:16:11:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "\"local helper\"",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/main_shadowing.ts",
+        "start_line": 10,
+        "start_column": 10,
+        "end_line": 10,
+        "end_column": 23
+      },
+      "scope_id": "function:<fixtures>/typescript/code/integration/main_shadowing.ts:9:16:11:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "assignment",
+      "name": "result = helper()",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/main_shadowing.ts",
+        "start_line": 14,
+        "start_column": 7,
+        "end_line": 14,
+        "end_column": 23
+      },
+      "scope_id": "module:<fixtures>/typescript/code/integration/main_shadowing.ts:1:1:19:25",
+      "target_location": {
+        "file_path": "<fixtures>/typescript/code/integration/main_shadowing.ts",
+        "start_line": 14,
+        "start_column": 7,
+        "end_line": 14,
+        "end_column": 23
+      }
+    },
+    {
+      "kind": "assignment",
+      "name": "result",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/main_shadowing.ts",
+        "start_line": 14,
+        "start_column": 7,
+        "end_line": 14,
+        "end_column": 12
+      },
+      "scope_id": "module:<fixtures>/typescript/code/integration/main_shadowing.ts:1:1:19:25",
+      "target_location": {
+        "file_path": "<fixtures>/typescript/code/integration/main_shadowing.ts",
+        "start_line": 14,
+        "start_column": 7,
+        "end_line": 14,
+        "end_column": 12
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "result",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/main_shadowing.ts",
+        "start_line": 14,
+        "start_column": 7,
+        "end_line": 14,
+        "end_column": 12
+      },
+      "scope_id": "module:<fixtures>/typescript/code/integration/main_shadowing.ts:1:1:19:25",
+      "access_type": "read"
+    },
+    {
+      "kind": "assignment",
+      "name": "helper",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/main_shadowing.ts",
+        "start_line": 14,
+        "start_column": 16,
+        "end_line": 14,
+        "end_column": 23
+      },
+      "scope_id": "module:<fixtures>/typescript/code/integration/main_shadowing.ts:1:1:19:25",
+      "target_location": {
+        "file_path": "<fixtures>/typescript/code/integration/main_shadowing.ts",
+        "start_line": 14,
+        "start_column": 7,
+        "end_line": 14,
+        "end_column": 12
+      }
+    },
+    {
+      "kind": "function_call",
+      "name": "helper",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/main_shadowing.ts",
+        "start_line": 14,
+        "start_column": 16,
+        "end_line": 14,
+        "end_column": 21
+      },
+      "scope_id": "module:<fixtures>/typescript/code/integration/main_shadowing.ts:1:1:19:25",
+      "potential_construct_target": {
+        "file_path": "<fixtures>/typescript/code/integration/main_shadowing.ts",
+        "start_line": 14,
+        "start_column": 7,
+        "end_line": 14,
+        "end_column": 12
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "helper",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/main_shadowing.ts",
+        "start_line": 14,
+        "start_column": 16,
+        "end_line": 14,
+        "end_column": 21
+      },
+      "scope_id": "module:<fixtures>/typescript/code/integration/main_shadowing.ts:1:1:19:25",
+      "access_type": "read"
+    },
+    {
+      "kind": "assignment",
+      "name": "other = other_function()",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/main_shadowing.ts",
+        "start_line": 17,
+        "start_column": 7,
+        "end_line": 17,
+        "end_column": 30
+      },
+      "scope_id": "module:<fixtures>/typescript/code/integration/main_shadowing.ts:1:1:19:25",
+      "target_location": {
+        "file_path": "<fixtures>/typescript/code/integration/main_shadowing.ts",
+        "start_line": 17,
+        "start_column": 7,
+        "end_line": 17,
+        "end_column": 30
+      }
+    },
+    {
+      "kind": "assignment",
+      "name": "other",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/main_shadowing.ts",
+        "start_line": 17,
+        "start_column": 7,
+        "end_line": 17,
+        "end_column": 11
+      },
+      "scope_id": "module:<fixtures>/typescript/code/integration/main_shadowing.ts:1:1:19:25",
+      "target_location": {
+        "file_path": "<fixtures>/typescript/code/integration/main_shadowing.ts",
+        "start_line": 17,
+        "start_column": 7,
+        "end_line": 17,
+        "end_column": 11
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "other",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/main_shadowing.ts",
+        "start_line": 17,
+        "start_column": 7,
+        "end_line": 17,
+        "end_column": 11
+      },
+      "scope_id": "module:<fixtures>/typescript/code/integration/main_shadowing.ts:1:1:19:25",
+      "access_type": "read"
+    },
+    {
+      "kind": "assignment",
+      "name": "other_function",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/main_shadowing.ts",
+        "start_line": 17,
+        "start_column": 15,
+        "end_line": 17,
+        "end_column": 30
+      },
+      "scope_id": "module:<fixtures>/typescript/code/integration/main_shadowing.ts:1:1:19:25",
+      "target_location": {
+        "file_path": "<fixtures>/typescript/code/integration/main_shadowing.ts",
+        "start_line": 17,
+        "start_column": 7,
+        "end_line": 17,
+        "end_column": 11
+      }
+    },
+    {
+      "kind": "function_call",
+      "name": "other_function",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/main_shadowing.ts",
+        "start_line": 17,
+        "start_column": 15,
+        "end_line": 17,
+        "end_column": 28
+      },
+      "scope_id": "module:<fixtures>/typescript/code/integration/main_shadowing.ts:1:1:19:25",
+      "potential_construct_target": {
+        "file_path": "<fixtures>/typescript/code/integration/main_shadowing.ts",
+        "start_line": 17,
+        "start_column": 7,
+        "end_line": 17,
+        "end_column": 11
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "other_function",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/main_shadowing.ts",
+        "start_line": 17,
+        "start_column": 15,
+        "end_line": 17,
+        "end_column": 28
+      },
+      "scope_id": "module:<fixtures>/typescript/code/integration/main_shadowing.ts:1:1:19:25",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "result",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/main_shadowing.ts",
+        "start_line": 19,
+        "start_column": 10,
+        "end_line": 19,
+        "end_column": 15
+      },
+      "scope_id": "module:<fixtures>/typescript/code/integration/main_shadowing.ts:1:1:19:25",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "other",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/main_shadowing.ts",
+        "start_line": 19,
+        "start_column": 18,
+        "end_line": 19,
+        "end_column": 22
+      },
+      "scope_id": "module:<fixtures>/typescript/code/integration/main_shadowing.ts:1:1:19:25",
+      "access_type": "read"
+    }
+  ]
+}

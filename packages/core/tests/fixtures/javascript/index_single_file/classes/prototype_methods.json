@@ -1,0 +1,4427 @@
+{
+  "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+  "language": "javascript",
+  "root_scope_id": "module:<fixtures>/javascript/code/classes/prototype_methods.js:1:1:79:0",
+  "scopes": {
+    "module:<fixtures>/javascript/code/classes/prototype_methods.js:1:1:79:0": {
+      "id": "module:<fixtures>/javascript/code/classes/prototype_methods.js:1:1:79:0",
+      "parent_id": null,
+      "name": null,
+      "type": "module",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 1,
+        "start_column": 1,
+        "end_line": 79,
+        "end_column": 0
+      },
+      "child_ids": [
+        "function:<fixtures>/javascript/code/classes/prototype_methods.js:7:17:11:1",
+        "function:<fixtures>/javascript/code/classes/prototype_methods.js:14:35:17:1",
+        "function:<fixtures>/javascript/code/classes/prototype_methods.js:19:34:22:1",
+        "function:<fixtures>/javascript/code/classes/prototype_methods.js:24:37:26:1",
+        "function:<fixtures>/javascript/code/classes/prototype_methods.js:29:13:32:1",
+        "function:<fixtures>/javascript/code/classes/prototype_methods.js:39:30:41:1",
+        "function:<fixtures>/javascript/code/classes/prototype_methods.js:43:34:45:1",
+        "function:<fixtures>/javascript/code/classes/prototype_methods.js:58:21:62:1"
+      ]
+    },
+    "function:<fixtures>/javascript/code/classes/prototype_methods.js:7:17:11:1": {
+      "id": "function:<fixtures>/javascript/code/classes/prototype_methods.js:7:17:11:1",
+      "parent_id": "module:<fixtures>/javascript/code/classes/prototype_methods.js:1:1:79:0",
+      "name": "Vehicle",
+      "type": "function",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 7,
+        "start_column": 17,
+        "end_line": 11,
+        "end_column": 1
+      },
+      "child_ids": []
+    },
+    "function:<fixtures>/javascript/code/classes/prototype_methods.js:14:35:17:1": {
+      "id": "function:<fixtures>/javascript/code/classes/prototype_methods.js:14:35:17:1",
+      "parent_id": "module:<fixtures>/javascript/code/classes/prototype_methods.js:1:1:79:0",
+      "name": null,
+      "type": "function",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 14,
+        "start_column": 35,
+        "end_line": 17,
+        "end_column": 1
+      },
+      "child_ids": []
+    },
+    "function:<fixtures>/javascript/code/classes/prototype_methods.js:19:34:22:1": {
+      "id": "function:<fixtures>/javascript/code/classes/prototype_methods.js:19:34:22:1",
+      "parent_id": "module:<fixtures>/javascript/code/classes/prototype_methods.js:1:1:79:0",
+      "name": null,
+      "type": "function",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 19,
+        "start_column": 34,
+        "end_line": 22,
+        "end_column": 1
+      },
+      "child_ids": []
+    },
+    "function:<fixtures>/javascript/code/classes/prototype_methods.js:24:37:26:1": {
+      "id": "function:<fixtures>/javascript/code/classes/prototype_methods.js:24:37:26:1",
+      "parent_id": "module:<fixtures>/javascript/code/classes/prototype_methods.js:1:1:79:0",
+      "name": null,
+      "type": "function",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 24,
+        "start_column": 37,
+        "end_line": 26,
+        "end_column": 1
+      },
+      "child_ids": []
+    },
+    "function:<fixtures>/javascript/code/classes/prototype_methods.js:29:13:32:1": {
+      "id": "function:<fixtures>/javascript/code/classes/prototype_methods.js:29:13:32:1",
+      "parent_id": "module:<fixtures>/javascript/code/classes/prototype_methods.js:1:1:79:0",
+      "name": "Car",
+      "type": "function",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 29,
+        "start_column": 13,
+        "end_line": 32,
+        "end_column": 1
+      },
+      "child_ids": []
+    },
+    "function:<fixtures>/javascript/code/classes/prototype_methods.js:39:30:41:1": {
+      "id": "function:<fixtures>/javascript/code/classes/prototype_methods.js:39:30:41:1",
+      "parent_id": "module:<fixtures>/javascript/code/classes/prototype_methods.js:1:1:79:0",
+      "name": null,
+      "type": "function",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 39,
+        "start_column": 30,
+        "end_line": 41,
+        "end_column": 1
+      },
+      "child_ids": []
+    },
+    "function:<fixtures>/javascript/code/classes/prototype_methods.js:43:34:45:1": {
+      "id": "function:<fixtures>/javascript/code/classes/prototype_methods.js:43:34:45:1",
+      "parent_id": "module:<fixtures>/javascript/code/classes/prototype_methods.js:1:1:79:0",
+      "name": null,
+      "type": "function",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 43,
+        "start_column": 34,
+        "end_line": 45,
+        "end_column": 1
+      },
+      "child_ids": []
+    },
+    "function:<fixtures>/javascript/code/classes/prototype_methods.js:58:21:62:1": {
+      "id": "function:<fixtures>/javascript/code/classes/prototype_methods.js:58:21:62:1",
+      "parent_id": "module:<fixtures>/javascript/code/classes/prototype_methods.js:1:1:79:0",
+      "name": "testVehicle",
+      "type": "function",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 58,
+        "start_column": 21,
+        "end_line": 62,
+        "end_column": 1
+      },
+      "child_ids": []
+    }
+  },
+  "functions": {
+    "function:<fixtures>/javascript/code/classes/prototype_methods.js:7:10:7:16:Vehicle": {
+      "kind": "function",
+      "symbol_id": "function:<fixtures>/javascript/code/classes/prototype_methods.js:7:10:7:16:Vehicle",
+      "name": "Vehicle",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 7,
+        "start_column": 10,
+        "end_line": 7,
+        "end_column": 16
+      },
+      "defining_scope_id": "module:<fixtures>/javascript/code/classes/prototype_methods.js:1:1:79:0",
+      "is_exported": true,
+      "export": {},
+      "signature": {
+        "parameters": [
+          {
+            "kind": "parameter",
+            "defining_scope_id": "function:<fixtures>/javascript/code/classes/prototype_methods.js:7:17:11:1",
+            "symbol_id": "parameter:<fixtures>/javascript/code/classes/prototype_methods.js:7:18:7:21:make",
+            "name": "make",
+            "location": {
+              "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+              "start_line": 7,
+              "start_column": 18,
+              "end_line": 7,
+              "end_column": 21
+            }
+          },
+          {
+            "kind": "parameter",
+            "defining_scope_id": "function:<fixtures>/javascript/code/classes/prototype_methods.js:7:17:11:1",
+            "symbol_id": "parameter:<fixtures>/javascript/code/classes/prototype_methods.js:7:24:7:28:model",
+            "name": "model",
+            "location": {
+              "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+              "start_line": 7,
+              "start_column": 24,
+              "end_line": 7,
+              "end_column": 28
+            }
+          }
+        ]
+      },
+      "body_scope_id": "function:<fixtures>/javascript/code/classes/prototype_methods.js:7:17:11:1"
+    },
+    "function:<fixtures>/javascript/code/classes/prototype_methods.js:29:10:29:12:Car": {
+      "kind": "function",
+      "symbol_id": "function:<fixtures>/javascript/code/classes/prototype_methods.js:29:10:29:12:Car",
+      "name": "Car",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 29,
+        "start_column": 10,
+        "end_line": 29,
+        "end_column": 12
+      },
+      "defining_scope_id": "module:<fixtures>/javascript/code/classes/prototype_methods.js:1:1:79:0",
+      "is_exported": true,
+      "export": {},
+      "signature": {
+        "parameters": [
+          {
+            "kind": "parameter",
+            "defining_scope_id": "function:<fixtures>/javascript/code/classes/prototype_methods.js:29:13:32:1",
+            "symbol_id": "parameter:<fixtures>/javascript/code/classes/prototype_methods.js:29:14:29:17:make",
+            "name": "make",
+            "location": {
+              "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+              "start_line": 29,
+              "start_column": 14,
+              "end_line": 29,
+              "end_column": 17
+            }
+          },
+          {
+            "kind": "parameter",
+            "defining_scope_id": "function:<fixtures>/javascript/code/classes/prototype_methods.js:29:13:32:1",
+            "symbol_id": "parameter:<fixtures>/javascript/code/classes/prototype_methods.js:29:20:29:24:model",
+            "name": "model",
+            "location": {
+              "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+              "start_line": 29,
+              "start_column": 20,
+              "end_line": 29,
+              "end_column": 24
+            }
+          },
+          {
+            "kind": "parameter",
+            "defining_scope_id": "function:<fixtures>/javascript/code/classes/prototype_methods.js:29:13:32:1",
+            "symbol_id": "parameter:<fixtures>/javascript/code/classes/prototype_methods.js:29:27:29:31:doors",
+            "name": "doors",
+            "location": {
+              "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+              "start_line": 29,
+              "start_column": 27,
+              "end_line": 29,
+              "end_column": 31
+            }
+          }
+        ]
+      },
+      "body_scope_id": "function:<fixtures>/javascript/code/classes/prototype_methods.js:29:13:32:1"
+    },
+    "function:<fixtures>/javascript/code/classes/prototype_methods.js:58:10:58:20:testVehicle": {
+      "kind": "function",
+      "symbol_id": "function:<fixtures>/javascript/code/classes/prototype_methods.js:58:10:58:20:testVehicle",
+      "name": "testVehicle",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 58,
+        "start_column": 10,
+        "end_line": 58,
+        "end_column": 20
+      },
+      "defining_scope_id": "module:<fixtures>/javascript/code/classes/prototype_methods.js:1:1:79:0",
+      "is_exported": true,
+      "export": {},
+      "signature": {
+        "parameters": [
+          {
+            "kind": "parameter",
+            "defining_scope_id": "function:<fixtures>/javascript/code/classes/prototype_methods.js:58:21:62:1",
+            "symbol_id": "parameter:<fixtures>/javascript/code/classes/prototype_methods.js:58:22:58:22:v",
+            "name": "v",
+            "location": {
+              "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+              "start_line": 58,
+              "start_column": 22,
+              "end_line": 58,
+              "end_column": 22
+            }
+          }
+        ]
+      },
+      "body_scope_id": "function:<fixtures>/javascript/code/classes/prototype_methods.js:58:21:62:1"
+    }
+  },
+  "classes": {},
+  "variables": {
+    "variable:<fixtures>/javascript/code/classes/prototype_methods.js:48:7:48:13:vehicle": {
+      "kind": "constant",
+      "symbol_id": "variable:<fixtures>/javascript/code/classes/prototype_methods.js:48:7:48:13:vehicle",
+      "name": "vehicle",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 48,
+        "start_column": 7,
+        "end_line": 48,
+        "end_column": 13
+      },
+      "defining_scope_id": "module:<fixtures>/javascript/code/classes/prototype_methods.js:1:1:79:0",
+      "is_exported": true,
+      "initial_value": "new Vehicle(\"Toyota\", \"Camry\")"
+    },
+    "variable:<fixtures>/javascript/code/classes/prototype_methods.js:49:7:49:17:startResult": {
+      "kind": "constant",
+      "symbol_id": "variable:<fixtures>/javascript/code/classes/prototype_methods.js:49:7:49:17:startResult",
+      "name": "startResult",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 49,
+        "start_column": 7,
+        "end_line": 49,
+        "end_column": 17
+      },
+      "defining_scope_id": "module:<fixtures>/javascript/code/classes/prototype_methods.js:1:1:79:0",
+      "is_exported": true,
+      "initial_value": "vehicle.start()",
+      "collection_source": "vehicle"
+    },
+    "variable:<fixtures>/javascript/code/classes/prototype_methods.js:50:7:50:17:vehicleInfo": {
+      "kind": "constant",
+      "symbol_id": "variable:<fixtures>/javascript/code/classes/prototype_methods.js:50:7:50:17:vehicleInfo",
+      "name": "vehicleInfo",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 50,
+        "start_column": 7,
+        "end_line": 50,
+        "end_column": 17
+      },
+      "defining_scope_id": "module:<fixtures>/javascript/code/classes/prototype_methods.js:1:1:79:0",
+      "is_exported": true,
+      "initial_value": "vehicle.getInfo()",
+      "collection_source": "vehicle"
+    },
+    "variable:<fixtures>/javascript/code/classes/prototype_methods.js:52:7:52:9:car": {
+      "kind": "constant",
+      "symbol_id": "variable:<fixtures>/javascript/code/classes/prototype_methods.js:52:7:52:9:car",
+      "name": "car",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 52,
+        "start_column": 7,
+        "end_line": 52,
+        "end_column": 9
+      },
+      "defining_scope_id": "module:<fixtures>/javascript/code/classes/prototype_methods.js:1:1:79:0",
+      "is_exported": true,
+      "initial_value": "new Car(\"Honda\", \"Civic\", 4)"
+    },
+    "variable:<fixtures>/javascript/code/classes/prototype_methods.js:53:7:53:13:carInfo": {
+      "kind": "constant",
+      "symbol_id": "variable:<fixtures>/javascript/code/classes/prototype_methods.js:53:7:53:13:carInfo",
+      "name": "carInfo",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 53,
+        "start_column": 7,
+        "end_line": 53,
+        "end_column": 13
+      },
+      "defining_scope_id": "module:<fixtures>/javascript/code/classes/prototype_methods.js:1:1:79:0",
+      "is_exported": true,
+      "initial_value": "car.getInfo()",
+      "collection_source": "car"
+    },
+    "variable:<fixtures>/javascript/code/classes/prototype_methods.js:54:7:54:16:honkResult": {
+      "kind": "constant",
+      "symbol_id": "variable:<fixtures>/javascript/code/classes/prototype_methods.js:54:7:54:16:honkResult",
+      "name": "honkResult",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 54,
+        "start_column": 7,
+        "end_line": 54,
+        "end_column": 16
+      },
+      "defining_scope_id": "module:<fixtures>/javascript/code/classes/prototype_methods.js:1:1:79:0",
+      "is_exported": true,
+      "initial_value": "car.honk()",
+      "collection_source": "car"
+    },
+    "variable:<fixtures>/javascript/code/classes/prototype_methods.js:55:7:55:15:doorCount": {
+      "kind": "constant",
+      "symbol_id": "variable:<fixtures>/javascript/code/classes/prototype_methods.js:55:7:55:15:doorCount",
+      "name": "doorCount",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 55,
+        "start_column": 7,
+        "end_line": 55,
+        "end_column": 15
+      },
+      "defining_scope_id": "module:<fixtures>/javascript/code/classes/prototype_methods.js:1:1:79:0",
+      "is_exported": true,
+      "initial_value": "car.getDoors()",
+      "collection_source": "car"
+    },
+    "variable:<fixtures>/javascript/code/classes/prototype_methods.js:59:9:59:12:info": {
+      "kind": "constant",
+      "symbol_id": "variable:<fixtures>/javascript/code/classes/prototype_methods.js:59:9:59:12:info",
+      "name": "info",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 59,
+        "start_column": 9,
+        "end_line": 59,
+        "end_column": 12
+      },
+      "defining_scope_id": "function:<fixtures>/javascript/code/classes/prototype_methods.js:58:21:62:1",
+      "is_exported": false,
+      "initial_value": "v.getInfo()",
+      "collection_source": "v"
+    },
+    "variable:<fixtures>/javascript/code/classes/prototype_methods.js:60:9:60:15:started": {
+      "kind": "constant",
+      "symbol_id": "variable:<fixtures>/javascript/code/classes/prototype_methods.js:60:9:60:15:started",
+      "name": "started",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 60,
+        "start_column": 9,
+        "end_line": 60,
+        "end_column": 15
+      },
+      "defining_scope_id": "function:<fixtures>/javascript/code/classes/prototype_methods.js:58:21:62:1",
+      "is_exported": false,
+      "initial_value": "v.start()",
+      "collection_source": "v"
+    },
+    "variable:<fixtures>/javascript/code/classes/prototype_methods.js:64:7:64:16:testResult": {
+      "kind": "constant",
+      "symbol_id": "variable:<fixtures>/javascript/code/classes/prototype_methods.js:64:7:64:16:testResult",
+      "name": "testResult",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 64,
+        "start_column": 7,
+        "end_line": 64,
+        "end_column": 16
+      },
+      "defining_scope_id": "module:<fixtures>/javascript/code/classes/prototype_methods.js:1:1:79:0",
+      "is_exported": true,
+      "initial_value": "testVehicle(car)",
+      "initialized_from_call": "testVehicle"
+    }
+  },
+  "interfaces": {},
+  "enums": {},
+  "namespaces": {},
+  "types": {},
+  "imported_symbols": {},
+  "references": [
+    {
+      "kind": "variable_reference",
+      "name": "Vehicle",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 7,
+        "start_column": 10,
+        "end_line": 7,
+        "end_column": 16
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/prototype_methods.js:1:1:79:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "make",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 7,
+        "start_column": 18,
+        "end_line": 7,
+        "end_column": 21
+      },
+      "scope_id": "function:<fixtures>/javascript/code/classes/prototype_methods.js:7:17:11:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "model",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 7,
+        "start_column": 24,
+        "end_line": 7,
+        "end_column": 28
+      },
+      "scope_id": "function:<fixtures>/javascript/code/classes/prototype_methods.js:7:17:11:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "this",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 8,
+        "start_column": 3,
+        "end_line": 8,
+        "end_column": 6
+      },
+      "scope_id": "function:<fixtures>/javascript/code/classes/prototype_methods.js:7:17:11:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "make",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 8,
+        "start_column": 15,
+        "end_line": 8,
+        "end_column": 18
+      },
+      "scope_id": "function:<fixtures>/javascript/code/classes/prototype_methods.js:7:17:11:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "this",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 9,
+        "start_column": 3,
+        "end_line": 9,
+        "end_column": 6
+      },
+      "scope_id": "function:<fixtures>/javascript/code/classes/prototype_methods.js:7:17:11:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "model",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 9,
+        "start_column": 16,
+        "end_line": 9,
+        "end_column": 20
+      },
+      "scope_id": "function:<fixtures>/javascript/code/classes/prototype_methods.js:7:17:11:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "this",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 10,
+        "start_column": 3,
+        "end_line": 10,
+        "end_column": 6
+      },
+      "scope_id": "function:<fixtures>/javascript/code/classes/prototype_methods.js:7:17:11:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "property_access",
+      "name": "prototype",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 14,
+        "start_column": 1,
+        "end_line": 14,
+        "end_column": 17
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/prototype_methods.js:1:1:79:0",
+      "receiver_location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 14,
+        "start_column": 1,
+        "end_line": 14,
+        "end_column": 7
+      },
+      "property_chain": [
+        "Vehicle",
+        "prototype"
+      ],
+      "access_type": "property",
+      "is_optional_chain": false
+    },
+    {
+      "kind": "variable_reference",
+      "name": "Vehicle",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 14,
+        "start_column": 1,
+        "end_line": 14,
+        "end_column": 7
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/prototype_methods.js:1:1:79:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "property_access",
+      "name": "prototype",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 14,
+        "start_column": 1,
+        "end_line": 14,
+        "end_column": 17
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/prototype_methods.js:1:1:79:0",
+      "receiver_location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 14,
+        "start_column": 1,
+        "end_line": 14,
+        "end_column": 7
+      },
+      "property_chain": [
+        "Vehicle",
+        "prototype"
+      ],
+      "access_type": "property",
+      "is_optional_chain": false
+    },
+    {
+      "kind": "variable_reference",
+      "name": "Vehicle",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 14,
+        "start_column": 1,
+        "end_line": 14,
+        "end_column": 7
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/prototype_methods.js:1:1:79:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "Vehicle",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 14,
+        "start_column": 1,
+        "end_line": 14,
+        "end_column": 7
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/prototype_methods.js:1:1:79:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "prototype",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 14,
+        "start_column": 9,
+        "end_line": 14,
+        "end_column": 17
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/prototype_methods.js:1:1:79:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "prototype",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 14,
+        "start_column": 9,
+        "end_line": 14,
+        "end_column": 17
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/prototype_methods.js:1:1:79:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "this",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 15,
+        "start_column": 3,
+        "end_line": 15,
+        "end_column": 6
+      },
+      "scope_id": "function:<fixtures>/javascript/code/classes/prototype_methods.js:14:35:17:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "return \"Engine started\";",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 16,
+        "start_column": 3,
+        "end_line": 16,
+        "end_column": 26
+      },
+      "scope_id": "function:<fixtures>/javascript/code/classes/prototype_methods.js:14:35:17:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "\"Engine started\"",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 16,
+        "start_column": 10,
+        "end_line": 16,
+        "end_column": 25
+      },
+      "scope_id": "function:<fixtures>/javascript/code/classes/prototype_methods.js:14:35:17:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "property_access",
+      "name": "prototype",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 19,
+        "start_column": 1,
+        "end_line": 19,
+        "end_column": 17
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/prototype_methods.js:1:1:79:0",
+      "receiver_location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 19,
+        "start_column": 1,
+        "end_line": 19,
+        "end_column": 7
+      },
+      "property_chain": [
+        "Vehicle",
+        "prototype"
+      ],
+      "access_type": "property",
+      "is_optional_chain": false
+    },
+    {
+      "kind": "variable_reference",
+      "name": "Vehicle",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 19,
+        "start_column": 1,
+        "end_line": 19,
+        "end_column": 7
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/prototype_methods.js:1:1:79:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "property_access",
+      "name": "prototype",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 19,
+        "start_column": 1,
+        "end_line": 19,
+        "end_column": 17
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/prototype_methods.js:1:1:79:0",
+      "receiver_location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 19,
+        "start_column": 1,
+        "end_line": 19,
+        "end_column": 7
+      },
+      "property_chain": [
+        "Vehicle",
+        "prototype"
+      ],
+      "access_type": "property",
+      "is_optional_chain": false
+    },
+    {
+      "kind": "variable_reference",
+      "name": "Vehicle",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 19,
+        "start_column": 1,
+        "end_line": 19,
+        "end_column": 7
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/prototype_methods.js:1:1:79:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "Vehicle",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 19,
+        "start_column": 1,
+        "end_line": 19,
+        "end_column": 7
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/prototype_methods.js:1:1:79:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "prototype",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 19,
+        "start_column": 9,
+        "end_line": 19,
+        "end_column": 17
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/prototype_methods.js:1:1:79:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "prototype",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 19,
+        "start_column": 9,
+        "end_line": 19,
+        "end_column": 17
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/prototype_methods.js:1:1:79:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "this",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 20,
+        "start_column": 3,
+        "end_line": 20,
+        "end_column": 6
+      },
+      "scope_id": "function:<fixtures>/javascript/code/classes/prototype_methods.js:19:34:22:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "return \"Engine stopped\";",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 21,
+        "start_column": 3,
+        "end_line": 21,
+        "end_column": 26
+      },
+      "scope_id": "function:<fixtures>/javascript/code/classes/prototype_methods.js:19:34:22:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "\"Engine stopped\"",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 21,
+        "start_column": 10,
+        "end_line": 21,
+        "end_column": 25
+      },
+      "scope_id": "function:<fixtures>/javascript/code/classes/prototype_methods.js:19:34:22:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "property_access",
+      "name": "prototype",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 24,
+        "start_column": 1,
+        "end_line": 24,
+        "end_column": 17
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/prototype_methods.js:1:1:79:0",
+      "receiver_location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 24,
+        "start_column": 1,
+        "end_line": 24,
+        "end_column": 7
+      },
+      "property_chain": [
+        "Vehicle",
+        "prototype"
+      ],
+      "access_type": "property",
+      "is_optional_chain": false
+    },
+    {
+      "kind": "variable_reference",
+      "name": "Vehicle",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 24,
+        "start_column": 1,
+        "end_line": 24,
+        "end_column": 7
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/prototype_methods.js:1:1:79:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "property_access",
+      "name": "prototype",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 24,
+        "start_column": 1,
+        "end_line": 24,
+        "end_column": 17
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/prototype_methods.js:1:1:79:0",
+      "receiver_location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 24,
+        "start_column": 1,
+        "end_line": 24,
+        "end_column": 7
+      },
+      "property_chain": [
+        "Vehicle",
+        "prototype"
+      ],
+      "access_type": "property",
+      "is_optional_chain": false
+    },
+    {
+      "kind": "variable_reference",
+      "name": "Vehicle",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 24,
+        "start_column": 1,
+        "end_line": 24,
+        "end_column": 7
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/prototype_methods.js:1:1:79:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "Vehicle",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 24,
+        "start_column": 1,
+        "end_line": 24,
+        "end_column": 7
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/prototype_methods.js:1:1:79:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "prototype",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 24,
+        "start_column": 9,
+        "end_line": 24,
+        "end_column": 17
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/prototype_methods.js:1:1:79:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "prototype",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 24,
+        "start_column": 9,
+        "end_line": 24,
+        "end_column": 17
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/prototype_methods.js:1:1:79:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "return `${this.make} ${this.model}`;",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 25,
+        "start_column": 3,
+        "end_line": 25,
+        "end_column": 38
+      },
+      "scope_id": "function:<fixtures>/javascript/code/classes/prototype_methods.js:24:37:26:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "`${this.make} ${this.model}`",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 25,
+        "start_column": 10,
+        "end_line": 25,
+        "end_column": 37
+      },
+      "scope_id": "function:<fixtures>/javascript/code/classes/prototype_methods.js:24:37:26:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "this",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 25,
+        "start_column": 13,
+        "end_line": 25,
+        "end_column": 16
+      },
+      "scope_id": "function:<fixtures>/javascript/code/classes/prototype_methods.js:24:37:26:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "this",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 25,
+        "start_column": 26,
+        "end_line": 25,
+        "end_column": 29
+      },
+      "scope_id": "function:<fixtures>/javascript/code/classes/prototype_methods.js:24:37:26:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "Car",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 29,
+        "start_column": 10,
+        "end_line": 29,
+        "end_column": 12
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/prototype_methods.js:1:1:79:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "make",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 29,
+        "start_column": 14,
+        "end_line": 29,
+        "end_column": 17
+      },
+      "scope_id": "function:<fixtures>/javascript/code/classes/prototype_methods.js:29:13:32:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "model",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 29,
+        "start_column": 20,
+        "end_line": 29,
+        "end_column": 24
+      },
+      "scope_id": "function:<fixtures>/javascript/code/classes/prototype_methods.js:29:13:32:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "doors",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 29,
+        "start_column": 27,
+        "end_line": 29,
+        "end_column": 31
+      },
+      "scope_id": "function:<fixtures>/javascript/code/classes/prototype_methods.js:29:13:32:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "method_call",
+      "name": "call",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 30,
+        "start_column": 3,
+        "end_line": 30,
+        "end_column": 33
+      },
+      "scope_id": "function:<fixtures>/javascript/code/classes/prototype_methods.js:29:13:32:1",
+      "receiver_location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 30,
+        "start_column": 3,
+        "end_line": 30,
+        "end_column": 9
+      },
+      "property_chain": [
+        "Vehicle",
+        "call"
+      ],
+      "optional_chaining": false
+    },
+    {
+      "kind": "variable_reference",
+      "name": "Vehicle",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 30,
+        "start_column": 3,
+        "end_line": 30,
+        "end_column": 9
+      },
+      "scope_id": "function:<fixtures>/javascript/code/classes/prototype_methods.js:29:13:32:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "property_access",
+      "name": "call",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 30,
+        "start_column": 3,
+        "end_line": 30,
+        "end_column": 14
+      },
+      "scope_id": "function:<fixtures>/javascript/code/classes/prototype_methods.js:29:13:32:1",
+      "receiver_location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 30,
+        "start_column": 3,
+        "end_line": 30,
+        "end_column": 9
+      },
+      "property_chain": [
+        "Vehicle",
+        "call"
+      ],
+      "access_type": "property",
+      "is_optional_chain": false
+    },
+    {
+      "kind": "variable_reference",
+      "name": "Vehicle",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 30,
+        "start_column": 3,
+        "end_line": 30,
+        "end_column": 9
+      },
+      "scope_id": "function:<fixtures>/javascript/code/classes/prototype_methods.js:29:13:32:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "property_access",
+      "name": "call",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 30,
+        "start_column": 3,
+        "end_line": 30,
+        "end_column": 14
+      },
+      "scope_id": "function:<fixtures>/javascript/code/classes/prototype_methods.js:29:13:32:1",
+      "receiver_location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 30,
+        "start_column": 3,
+        "end_line": 30,
+        "end_column": 9
+      },
+      "property_chain": [
+        "Vehicle",
+        "call"
+      ],
+      "access_type": "property",
+      "is_optional_chain": false
+    },
+    {
+      "kind": "variable_reference",
+      "name": "Vehicle",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 30,
+        "start_column": 3,
+        "end_line": 30,
+        "end_column": 9
+      },
+      "scope_id": "function:<fixtures>/javascript/code/classes/prototype_methods.js:29:13:32:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "Vehicle",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 30,
+        "start_column": 3,
+        "end_line": 30,
+        "end_column": 9
+      },
+      "scope_id": "function:<fixtures>/javascript/code/classes/prototype_methods.js:29:13:32:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "call",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 30,
+        "start_column": 11,
+        "end_line": 30,
+        "end_column": 14
+      },
+      "scope_id": "function:<fixtures>/javascript/code/classes/prototype_methods.js:29:13:32:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "call",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 30,
+        "start_column": 11,
+        "end_line": 30,
+        "end_column": 14
+      },
+      "scope_id": "function:<fixtures>/javascript/code/classes/prototype_methods.js:29:13:32:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "this",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 30,
+        "start_column": 16,
+        "end_line": 30,
+        "end_column": 19
+      },
+      "scope_id": "function:<fixtures>/javascript/code/classes/prototype_methods.js:29:13:32:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "make",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 30,
+        "start_column": 22,
+        "end_line": 30,
+        "end_column": 25
+      },
+      "scope_id": "function:<fixtures>/javascript/code/classes/prototype_methods.js:29:13:32:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "model",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 30,
+        "start_column": 28,
+        "end_line": 30,
+        "end_column": 32
+      },
+      "scope_id": "function:<fixtures>/javascript/code/classes/prototype_methods.js:29:13:32:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "this",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 31,
+        "start_column": 3,
+        "end_line": 31,
+        "end_column": 6
+      },
+      "scope_id": "function:<fixtures>/javascript/code/classes/prototype_methods.js:29:13:32:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "doors",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 31,
+        "start_column": 16,
+        "end_line": 31,
+        "end_column": 20
+      },
+      "scope_id": "function:<fixtures>/javascript/code/classes/prototype_methods.js:29:13:32:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "property_access",
+      "name": "prototype",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 35,
+        "start_column": 1,
+        "end_line": 35,
+        "end_column": 13
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/prototype_methods.js:1:1:79:0",
+      "receiver_location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 35,
+        "start_column": 1,
+        "end_line": 35,
+        "end_column": 3
+      },
+      "property_chain": [
+        "Car",
+        "prototype"
+      ],
+      "access_type": "property",
+      "is_optional_chain": false
+    },
+    {
+      "kind": "variable_reference",
+      "name": "Car",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 35,
+        "start_column": 1,
+        "end_line": 35,
+        "end_column": 3
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/prototype_methods.js:1:1:79:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "property_access",
+      "name": "prototype",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 35,
+        "start_column": 1,
+        "end_line": 35,
+        "end_column": 13
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/prototype_methods.js:1:1:79:0",
+      "receiver_location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 35,
+        "start_column": 1,
+        "end_line": 35,
+        "end_column": 3
+      },
+      "property_chain": [
+        "Car",
+        "prototype"
+      ],
+      "access_type": "property",
+      "is_optional_chain": false
+    },
+    {
+      "kind": "variable_reference",
+      "name": "Car",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 35,
+        "start_column": 1,
+        "end_line": 35,
+        "end_column": 3
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/prototype_methods.js:1:1:79:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "assignment",
+      "name": "Car.prototype = Object.create(Vehicle.prototype)",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 35,
+        "start_column": 1,
+        "end_line": 35,
+        "end_column": 48
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/prototype_methods.js:1:1:79:0",
+      "target_location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 35,
+        "start_column": 1,
+        "end_line": 35,
+        "end_column": 48
+      }
+    },
+    {
+      "kind": "property_access",
+      "name": "prototype",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 35,
+        "start_column": 1,
+        "end_line": 35,
+        "end_column": 13
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/prototype_methods.js:1:1:79:0",
+      "receiver_location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 35,
+        "start_column": 1,
+        "end_line": 35,
+        "end_column": 3
+      },
+      "property_chain": [
+        "Car",
+        "prototype"
+      ],
+      "access_type": "property",
+      "is_optional_chain": false
+    },
+    {
+      "kind": "variable_reference",
+      "name": "Car",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 35,
+        "start_column": 1,
+        "end_line": 35,
+        "end_column": 3
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/prototype_methods.js:1:1:79:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "Car",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 35,
+        "start_column": 1,
+        "end_line": 35,
+        "end_column": 3
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/prototype_methods.js:1:1:79:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "prototype",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 35,
+        "start_column": 5,
+        "end_line": 35,
+        "end_column": 13
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/prototype_methods.js:1:1:79:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "prototype",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 35,
+        "start_column": 5,
+        "end_line": 35,
+        "end_column": 13
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/prototype_methods.js:1:1:79:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "prototype",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 35,
+        "start_column": 5,
+        "end_line": 35,
+        "end_column": 13
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/prototype_methods.js:1:1:79:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "method_call",
+      "name": "create",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 35,
+        "start_column": 17,
+        "end_line": 35,
+        "end_column": 48
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/prototype_methods.js:1:1:79:0",
+      "receiver_location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 35,
+        "start_column": 17,
+        "end_line": 35,
+        "end_column": 22
+      },
+      "property_chain": [
+        "Object",
+        "create"
+      ],
+      "optional_chaining": false
+    },
+    {
+      "kind": "variable_reference",
+      "name": "Object",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 35,
+        "start_column": 17,
+        "end_line": 35,
+        "end_column": 22
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/prototype_methods.js:1:1:79:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "property_access",
+      "name": "create",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 35,
+        "start_column": 17,
+        "end_line": 35,
+        "end_column": 29
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/prototype_methods.js:1:1:79:0",
+      "receiver_location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 35,
+        "start_column": 17,
+        "end_line": 35,
+        "end_column": 22
+      },
+      "property_chain": [
+        "Object",
+        "create"
+      ],
+      "access_type": "property",
+      "is_optional_chain": false
+    },
+    {
+      "kind": "variable_reference",
+      "name": "Object",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 35,
+        "start_column": 17,
+        "end_line": 35,
+        "end_column": 22
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/prototype_methods.js:1:1:79:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "property_access",
+      "name": "create",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 35,
+        "start_column": 17,
+        "end_line": 35,
+        "end_column": 29
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/prototype_methods.js:1:1:79:0",
+      "receiver_location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 35,
+        "start_column": 17,
+        "end_line": 35,
+        "end_column": 22
+      },
+      "property_chain": [
+        "Object",
+        "create"
+      ],
+      "access_type": "property",
+      "is_optional_chain": false
+    },
+    {
+      "kind": "variable_reference",
+      "name": "Object",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 35,
+        "start_column": 17,
+        "end_line": 35,
+        "end_column": 22
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/prototype_methods.js:1:1:79:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "Object.create(Vehicle.prototype)",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 35,
+        "start_column": 17,
+        "end_line": 35,
+        "end_column": 48
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/prototype_methods.js:1:1:79:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "Object",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 35,
+        "start_column": 17,
+        "end_line": 35,
+        "end_column": 22
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/prototype_methods.js:1:1:79:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "create",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 35,
+        "start_column": 24,
+        "end_line": 35,
+        "end_column": 29
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/prototype_methods.js:1:1:79:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "create",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 35,
+        "start_column": 24,
+        "end_line": 35,
+        "end_column": 29
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/prototype_methods.js:1:1:79:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "property_access",
+      "name": "prototype",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 35,
+        "start_column": 31,
+        "end_line": 35,
+        "end_column": 47
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/prototype_methods.js:1:1:79:0",
+      "receiver_location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 35,
+        "start_column": 31,
+        "end_line": 35,
+        "end_column": 37
+      },
+      "property_chain": [
+        "Vehicle",
+        "prototype"
+      ],
+      "access_type": "property",
+      "is_optional_chain": false
+    },
+    {
+      "kind": "variable_reference",
+      "name": "Vehicle",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 35,
+        "start_column": 31,
+        "end_line": 35,
+        "end_column": 37
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/prototype_methods.js:1:1:79:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "property_access",
+      "name": "prototype",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 35,
+        "start_column": 31,
+        "end_line": 35,
+        "end_column": 47
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/prototype_methods.js:1:1:79:0",
+      "receiver_location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 35,
+        "start_column": 31,
+        "end_line": 35,
+        "end_column": 37
+      },
+      "property_chain": [
+        "Vehicle",
+        "prototype"
+      ],
+      "access_type": "property",
+      "is_optional_chain": false
+    },
+    {
+      "kind": "variable_reference",
+      "name": "Vehicle",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 35,
+        "start_column": 31,
+        "end_line": 35,
+        "end_column": 37
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/prototype_methods.js:1:1:79:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "Vehicle",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 35,
+        "start_column": 31,
+        "end_line": 35,
+        "end_column": 37
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/prototype_methods.js:1:1:79:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "prototype",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 35,
+        "start_column": 39,
+        "end_line": 35,
+        "end_column": 47
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/prototype_methods.js:1:1:79:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "prototype",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 35,
+        "start_column": 39,
+        "end_line": 35,
+        "end_column": 47
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/prototype_methods.js:1:1:79:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "property_access",
+      "name": "prototype",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 36,
+        "start_column": 1,
+        "end_line": 36,
+        "end_column": 13
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/prototype_methods.js:1:1:79:0",
+      "receiver_location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 36,
+        "start_column": 1,
+        "end_line": 36,
+        "end_column": 3
+      },
+      "property_chain": [
+        "Car",
+        "prototype"
+      ],
+      "access_type": "property",
+      "is_optional_chain": false
+    },
+    {
+      "kind": "variable_reference",
+      "name": "Car",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 36,
+        "start_column": 1,
+        "end_line": 36,
+        "end_column": 3
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/prototype_methods.js:1:1:79:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "property_access",
+      "name": "prototype",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 36,
+        "start_column": 1,
+        "end_line": 36,
+        "end_column": 13
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/prototype_methods.js:1:1:79:0",
+      "receiver_location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 36,
+        "start_column": 1,
+        "end_line": 36,
+        "end_column": 3
+      },
+      "property_chain": [
+        "Car",
+        "prototype"
+      ],
+      "access_type": "property",
+      "is_optional_chain": false
+    },
+    {
+      "kind": "variable_reference",
+      "name": "Car",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 36,
+        "start_column": 1,
+        "end_line": 36,
+        "end_column": 3
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/prototype_methods.js:1:1:79:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "Car",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 36,
+        "start_column": 1,
+        "end_line": 36,
+        "end_column": 3
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/prototype_methods.js:1:1:79:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "prototype",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 36,
+        "start_column": 5,
+        "end_line": 36,
+        "end_column": 13
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/prototype_methods.js:1:1:79:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "prototype",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 36,
+        "start_column": 5,
+        "end_line": 36,
+        "end_column": 13
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/prototype_methods.js:1:1:79:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "Car",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 36,
+        "start_column": 29,
+        "end_line": 36,
+        "end_column": 31
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/prototype_methods.js:1:1:79:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "property_access",
+      "name": "prototype",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 39,
+        "start_column": 1,
+        "end_line": 39,
+        "end_column": 13
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/prototype_methods.js:1:1:79:0",
+      "receiver_location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 39,
+        "start_column": 1,
+        "end_line": 39,
+        "end_column": 3
+      },
+      "property_chain": [
+        "Car",
+        "prototype"
+      ],
+      "access_type": "property",
+      "is_optional_chain": false
+    },
+    {
+      "kind": "variable_reference",
+      "name": "Car",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 39,
+        "start_column": 1,
+        "end_line": 39,
+        "end_column": 3
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/prototype_methods.js:1:1:79:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "property_access",
+      "name": "prototype",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 39,
+        "start_column": 1,
+        "end_line": 39,
+        "end_column": 13
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/prototype_methods.js:1:1:79:0",
+      "receiver_location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 39,
+        "start_column": 1,
+        "end_line": 39,
+        "end_column": 3
+      },
+      "property_chain": [
+        "Car",
+        "prototype"
+      ],
+      "access_type": "property",
+      "is_optional_chain": false
+    },
+    {
+      "kind": "variable_reference",
+      "name": "Car",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 39,
+        "start_column": 1,
+        "end_line": 39,
+        "end_column": 3
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/prototype_methods.js:1:1:79:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "Car",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 39,
+        "start_column": 1,
+        "end_line": 39,
+        "end_column": 3
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/prototype_methods.js:1:1:79:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "prototype",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 39,
+        "start_column": 5,
+        "end_line": 39,
+        "end_column": 13
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/prototype_methods.js:1:1:79:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "prototype",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 39,
+        "start_column": 5,
+        "end_line": 39,
+        "end_column": 13
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/prototype_methods.js:1:1:79:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "return \"Beep beep!\";",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 40,
+        "start_column": 3,
+        "end_line": 40,
+        "end_column": 22
+      },
+      "scope_id": "function:<fixtures>/javascript/code/classes/prototype_methods.js:39:30:41:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "\"Beep beep!\"",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 40,
+        "start_column": 10,
+        "end_line": 40,
+        "end_column": 21
+      },
+      "scope_id": "function:<fixtures>/javascript/code/classes/prototype_methods.js:39:30:41:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "property_access",
+      "name": "prototype",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 43,
+        "start_column": 1,
+        "end_line": 43,
+        "end_column": 13
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/prototype_methods.js:1:1:79:0",
+      "receiver_location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 43,
+        "start_column": 1,
+        "end_line": 43,
+        "end_column": 3
+      },
+      "property_chain": [
+        "Car",
+        "prototype"
+      ],
+      "access_type": "property",
+      "is_optional_chain": false
+    },
+    {
+      "kind": "variable_reference",
+      "name": "Car",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 43,
+        "start_column": 1,
+        "end_line": 43,
+        "end_column": 3
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/prototype_methods.js:1:1:79:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "property_access",
+      "name": "prototype",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 43,
+        "start_column": 1,
+        "end_line": 43,
+        "end_column": 13
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/prototype_methods.js:1:1:79:0",
+      "receiver_location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 43,
+        "start_column": 1,
+        "end_line": 43,
+        "end_column": 3
+      },
+      "property_chain": [
+        "Car",
+        "prototype"
+      ],
+      "access_type": "property",
+      "is_optional_chain": false
+    },
+    {
+      "kind": "variable_reference",
+      "name": "Car",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 43,
+        "start_column": 1,
+        "end_line": 43,
+        "end_column": 3
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/prototype_methods.js:1:1:79:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "Car",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 43,
+        "start_column": 1,
+        "end_line": 43,
+        "end_column": 3
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/prototype_methods.js:1:1:79:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "prototype",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 43,
+        "start_column": 5,
+        "end_line": 43,
+        "end_column": 13
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/prototype_methods.js:1:1:79:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "prototype",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 43,
+        "start_column": 5,
+        "end_line": 43,
+        "end_column": 13
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/prototype_methods.js:1:1:79:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "return this.doors;",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 44,
+        "start_column": 3,
+        "end_line": 44,
+        "end_column": 20
+      },
+      "scope_id": "function:<fixtures>/javascript/code/classes/prototype_methods.js:43:34:45:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "this.doors",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 44,
+        "start_column": 10,
+        "end_line": 44,
+        "end_column": 19
+      },
+      "scope_id": "function:<fixtures>/javascript/code/classes/prototype_methods.js:43:34:45:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "this",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 44,
+        "start_column": 10,
+        "end_line": 44,
+        "end_column": 13
+      },
+      "scope_id": "function:<fixtures>/javascript/code/classes/prototype_methods.js:43:34:45:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "assignment",
+      "name": "vehicle = new Vehicle(\"Toyota\", \"Camry\")",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 48,
+        "start_column": 7,
+        "end_line": 48,
+        "end_column": 46
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/prototype_methods.js:1:1:79:0",
+      "target_location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 48,
+        "start_column": 7,
+        "end_line": 48,
+        "end_column": 46
+      }
+    },
+    {
+      "kind": "assignment",
+      "name": "vehicle",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 48,
+        "start_column": 7,
+        "end_line": 48,
+        "end_column": 13
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/prototype_methods.js:1:1:79:0",
+      "target_location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 48,
+        "start_column": 7,
+        "end_line": 48,
+        "end_column": 13
+      }
+    },
+    {
+      "kind": "assignment",
+      "name": "vehicle = new Vehicle(\"Toyota\", \"Camry\")",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 48,
+        "start_column": 7,
+        "end_line": 48,
+        "end_column": 46
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/prototype_methods.js:1:1:79:0",
+      "target_location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 48,
+        "start_column": 7,
+        "end_line": 48,
+        "end_column": 46
+      }
+    },
+    {
+      "kind": "assignment",
+      "name": "vehicle",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 48,
+        "start_column": 7,
+        "end_line": 48,
+        "end_column": 13
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/prototype_methods.js:1:1:79:0",
+      "target_location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 48,
+        "start_column": 7,
+        "end_line": 48,
+        "end_column": 13
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "vehicle",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 48,
+        "start_column": 7,
+        "end_line": 48,
+        "end_column": 13
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/prototype_methods.js:1:1:79:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "Vehicle",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 48,
+        "start_column": 17,
+        "end_line": 48,
+        "end_column": 46
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/prototype_methods.js:1:1:79:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "Vehicle",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 48,
+        "start_column": 17,
+        "end_line": 48,
+        "end_column": 46
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/prototype_methods.js:1:1:79:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "function_call",
+      "name": "Vehicle",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 48,
+        "start_column": 17,
+        "end_line": 48,
+        "end_column": 46
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/prototype_methods.js:1:1:79:0",
+      "potential_construct_target": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 48,
+        "start_column": 7,
+        "end_line": 48,
+        "end_column": 13
+      }
+    },
+    {
+      "kind": "function_call",
+      "name": "Vehicle",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 48,
+        "start_column": 21,
+        "end_line": 48,
+        "end_column": 27
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/prototype_methods.js:1:1:79:0",
+      "potential_construct_target": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 48,
+        "start_column": 7,
+        "end_line": 48,
+        "end_column": 13
+      }
+    },
+    {
+      "kind": "constructor_call",
+      "name": "Vehicle",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 48,
+        "start_column": 21,
+        "end_line": 48,
+        "end_column": 27
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/prototype_methods.js:1:1:79:0",
+      "construct_target": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 48,
+        "start_column": 7,
+        "end_line": 48,
+        "end_column": 13
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "Vehicle",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 48,
+        "start_column": 21,
+        "end_line": 48,
+        "end_column": 27
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/prototype_methods.js:1:1:79:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "assignment",
+      "name": "startResult = vehicle.start()",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 49,
+        "start_column": 7,
+        "end_line": 49,
+        "end_column": 35
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/prototype_methods.js:1:1:79:0",
+      "target_location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 49,
+        "start_column": 7,
+        "end_line": 49,
+        "end_column": 35
+      }
+    },
+    {
+      "kind": "assignment",
+      "name": "startResult",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 49,
+        "start_column": 7,
+        "end_line": 49,
+        "end_column": 17
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/prototype_methods.js:1:1:79:0",
+      "target_location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 49,
+        "start_column": 7,
+        "end_line": 49,
+        "end_column": 17
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "startResult",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 49,
+        "start_column": 7,
+        "end_line": 49,
+        "end_column": 17
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/prototype_methods.js:1:1:79:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "vehicle.start()",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 49,
+        "start_column": 21,
+        "end_line": 49,
+        "end_column": 35
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/prototype_methods.js:1:1:79:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "method_call",
+      "name": "start",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 49,
+        "start_column": 21,
+        "end_line": 49,
+        "end_column": 35
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/prototype_methods.js:1:1:79:0",
+      "receiver_location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 49,
+        "start_column": 21,
+        "end_line": 49,
+        "end_column": 27
+      },
+      "property_chain": [
+        "vehicle",
+        "start"
+      ],
+      "optional_chaining": false
+    },
+    {
+      "kind": "variable_reference",
+      "name": "vehicle",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 49,
+        "start_column": 21,
+        "end_line": 49,
+        "end_column": 27
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/prototype_methods.js:1:1:79:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "property_access",
+      "name": "start",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 49,
+        "start_column": 21,
+        "end_line": 49,
+        "end_column": 33
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/prototype_methods.js:1:1:79:0",
+      "receiver_location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 49,
+        "start_column": 21,
+        "end_line": 49,
+        "end_column": 27
+      },
+      "property_chain": [
+        "vehicle",
+        "start"
+      ],
+      "access_type": "property",
+      "is_optional_chain": false
+    },
+    {
+      "kind": "variable_reference",
+      "name": "vehicle",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 49,
+        "start_column": 21,
+        "end_line": 49,
+        "end_column": 27
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/prototype_methods.js:1:1:79:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "property_access",
+      "name": "start",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 49,
+        "start_column": 21,
+        "end_line": 49,
+        "end_column": 33
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/prototype_methods.js:1:1:79:0",
+      "receiver_location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 49,
+        "start_column": 21,
+        "end_line": 49,
+        "end_column": 27
+      },
+      "property_chain": [
+        "vehicle",
+        "start"
+      ],
+      "access_type": "property",
+      "is_optional_chain": false
+    },
+    {
+      "kind": "variable_reference",
+      "name": "vehicle",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 49,
+        "start_column": 21,
+        "end_line": 49,
+        "end_column": 27
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/prototype_methods.js:1:1:79:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "vehicle",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 49,
+        "start_column": 21,
+        "end_line": 49,
+        "end_column": 27
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/prototype_methods.js:1:1:79:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "start",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 49,
+        "start_column": 29,
+        "end_line": 49,
+        "end_column": 33
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/prototype_methods.js:1:1:79:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "start",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 49,
+        "start_column": 29,
+        "end_line": 49,
+        "end_column": 33
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/prototype_methods.js:1:1:79:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "assignment",
+      "name": "vehicleInfo = vehicle.getInfo()",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 50,
+        "start_column": 7,
+        "end_line": 50,
+        "end_column": 37
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/prototype_methods.js:1:1:79:0",
+      "target_location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 50,
+        "start_column": 7,
+        "end_line": 50,
+        "end_column": 37
+      }
+    },
+    {
+      "kind": "assignment",
+      "name": "vehicleInfo",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 50,
+        "start_column": 7,
+        "end_line": 50,
+        "end_column": 17
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/prototype_methods.js:1:1:79:0",
+      "target_location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 50,
+        "start_column": 7,
+        "end_line": 50,
+        "end_column": 17
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "vehicleInfo",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 50,
+        "start_column": 7,
+        "end_line": 50,
+        "end_column": 17
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/prototype_methods.js:1:1:79:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "vehicle.getInfo()",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 50,
+        "start_column": 21,
+        "end_line": 50,
+        "end_column": 37
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/prototype_methods.js:1:1:79:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "method_call",
+      "name": "getInfo",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 50,
+        "start_column": 21,
+        "end_line": 50,
+        "end_column": 37
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/prototype_methods.js:1:1:79:0",
+      "receiver_location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 50,
+        "start_column": 21,
+        "end_line": 50,
+        "end_column": 27
+      },
+      "property_chain": [
+        "vehicle",
+        "getInfo"
+      ],
+      "optional_chaining": false
+    },
+    {
+      "kind": "variable_reference",
+      "name": "vehicle",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 50,
+        "start_column": 21,
+        "end_line": 50,
+        "end_column": 27
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/prototype_methods.js:1:1:79:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "property_access",
+      "name": "getInfo",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 50,
+        "start_column": 21,
+        "end_line": 50,
+        "end_column": 35
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/prototype_methods.js:1:1:79:0",
+      "receiver_location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 50,
+        "start_column": 21,
+        "end_line": 50,
+        "end_column": 27
+      },
+      "property_chain": [
+        "vehicle",
+        "getInfo"
+      ],
+      "access_type": "property",
+      "is_optional_chain": false
+    },
+    {
+      "kind": "variable_reference",
+      "name": "vehicle",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 50,
+        "start_column": 21,
+        "end_line": 50,
+        "end_column": 27
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/prototype_methods.js:1:1:79:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "property_access",
+      "name": "getInfo",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 50,
+        "start_column": 21,
+        "end_line": 50,
+        "end_column": 35
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/prototype_methods.js:1:1:79:0",
+      "receiver_location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 50,
+        "start_column": 21,
+        "end_line": 50,
+        "end_column": 27
+      },
+      "property_chain": [
+        "vehicle",
+        "getInfo"
+      ],
+      "access_type": "property",
+      "is_optional_chain": false
+    },
+    {
+      "kind": "variable_reference",
+      "name": "vehicle",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 50,
+        "start_column": 21,
+        "end_line": 50,
+        "end_column": 27
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/prototype_methods.js:1:1:79:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "vehicle",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 50,
+        "start_column": 21,
+        "end_line": 50,
+        "end_column": 27
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/prototype_methods.js:1:1:79:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "getInfo",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 50,
+        "start_column": 29,
+        "end_line": 50,
+        "end_column": 35
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/prototype_methods.js:1:1:79:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "getInfo",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 50,
+        "start_column": 29,
+        "end_line": 50,
+        "end_column": 35
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/prototype_methods.js:1:1:79:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "assignment",
+      "name": "car = new Car(\"Honda\", \"Civic\", 4)",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 52,
+        "start_column": 7,
+        "end_line": 52,
+        "end_column": 40
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/prototype_methods.js:1:1:79:0",
+      "target_location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 52,
+        "start_column": 7,
+        "end_line": 52,
+        "end_column": 40
+      }
+    },
+    {
+      "kind": "assignment",
+      "name": "car",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 52,
+        "start_column": 7,
+        "end_line": 52,
+        "end_column": 9
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/prototype_methods.js:1:1:79:0",
+      "target_location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 52,
+        "start_column": 7,
+        "end_line": 52,
+        "end_column": 9
+      }
+    },
+    {
+      "kind": "assignment",
+      "name": "car = new Car(\"Honda\", \"Civic\", 4)",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 52,
+        "start_column": 7,
+        "end_line": 52,
+        "end_column": 40
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/prototype_methods.js:1:1:79:0",
+      "target_location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 52,
+        "start_column": 7,
+        "end_line": 52,
+        "end_column": 40
+      }
+    },
+    {
+      "kind": "assignment",
+      "name": "car",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 52,
+        "start_column": 7,
+        "end_line": 52,
+        "end_column": 9
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/prototype_methods.js:1:1:79:0",
+      "target_location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 52,
+        "start_column": 7,
+        "end_line": 52,
+        "end_column": 9
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "car",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 52,
+        "start_column": 7,
+        "end_line": 52,
+        "end_column": 9
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/prototype_methods.js:1:1:79:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "Car",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 52,
+        "start_column": 13,
+        "end_line": 52,
+        "end_column": 40
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/prototype_methods.js:1:1:79:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "Car",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 52,
+        "start_column": 13,
+        "end_line": 52,
+        "end_column": 40
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/prototype_methods.js:1:1:79:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "function_call",
+      "name": "Car",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 52,
+        "start_column": 13,
+        "end_line": 52,
+        "end_column": 40
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/prototype_methods.js:1:1:79:0",
+      "potential_construct_target": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 52,
+        "start_column": 7,
+        "end_line": 52,
+        "end_column": 9
+      }
+    },
+    {
+      "kind": "function_call",
+      "name": "Car",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 52,
+        "start_column": 17,
+        "end_line": 52,
+        "end_column": 19
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/prototype_methods.js:1:1:79:0",
+      "potential_construct_target": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 52,
+        "start_column": 7,
+        "end_line": 52,
+        "end_column": 9
+      }
+    },
+    {
+      "kind": "constructor_call",
+      "name": "Car",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 52,
+        "start_column": 17,
+        "end_line": 52,
+        "end_column": 19
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/prototype_methods.js:1:1:79:0",
+      "construct_target": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 52,
+        "start_column": 7,
+        "end_line": 52,
+        "end_column": 9
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "Car",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 52,
+        "start_column": 17,
+        "end_line": 52,
+        "end_column": 19
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/prototype_methods.js:1:1:79:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "assignment",
+      "name": "carInfo = car.getInfo()",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 53,
+        "start_column": 7,
+        "end_line": 53,
+        "end_column": 29
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/prototype_methods.js:1:1:79:0",
+      "target_location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 53,
+        "start_column": 7,
+        "end_line": 53,
+        "end_column": 29
+      }
+    },
+    {
+      "kind": "assignment",
+      "name": "carInfo",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 53,
+        "start_column": 7,
+        "end_line": 53,
+        "end_column": 13
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/prototype_methods.js:1:1:79:0",
+      "target_location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 53,
+        "start_column": 7,
+        "end_line": 53,
+        "end_column": 13
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "carInfo",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 53,
+        "start_column": 7,
+        "end_line": 53,
+        "end_column": 13
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/prototype_methods.js:1:1:79:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "car.getInfo()",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 53,
+        "start_column": 17,
+        "end_line": 53,
+        "end_column": 29
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/prototype_methods.js:1:1:79:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "method_call",
+      "name": "getInfo",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 53,
+        "start_column": 17,
+        "end_line": 53,
+        "end_column": 29
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/prototype_methods.js:1:1:79:0",
+      "receiver_location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 53,
+        "start_column": 17,
+        "end_line": 53,
+        "end_column": 19
+      },
+      "property_chain": [
+        "car",
+        "getInfo"
+      ],
+      "optional_chaining": false
+    },
+    {
+      "kind": "variable_reference",
+      "name": "car",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 53,
+        "start_column": 17,
+        "end_line": 53,
+        "end_column": 19
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/prototype_methods.js:1:1:79:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "property_access",
+      "name": "getInfo",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 53,
+        "start_column": 17,
+        "end_line": 53,
+        "end_column": 27
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/prototype_methods.js:1:1:79:0",
+      "receiver_location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 53,
+        "start_column": 17,
+        "end_line": 53,
+        "end_column": 19
+      },
+      "property_chain": [
+        "car",
+        "getInfo"
+      ],
+      "access_type": "property",
+      "is_optional_chain": false
+    },
+    {
+      "kind": "variable_reference",
+      "name": "car",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 53,
+        "start_column": 17,
+        "end_line": 53,
+        "end_column": 19
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/prototype_methods.js:1:1:79:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "property_access",
+      "name": "getInfo",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 53,
+        "start_column": 17,
+        "end_line": 53,
+        "end_column": 27
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/prototype_methods.js:1:1:79:0",
+      "receiver_location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 53,
+        "start_column": 17,
+        "end_line": 53,
+        "end_column": 19
+      },
+      "property_chain": [
+        "car",
+        "getInfo"
+      ],
+      "access_type": "property",
+      "is_optional_chain": false
+    },
+    {
+      "kind": "variable_reference",
+      "name": "car",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 53,
+        "start_column": 17,
+        "end_line": 53,
+        "end_column": 19
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/prototype_methods.js:1:1:79:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "car",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 53,
+        "start_column": 17,
+        "end_line": 53,
+        "end_column": 19
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/prototype_methods.js:1:1:79:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "getInfo",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 53,
+        "start_column": 21,
+        "end_line": 53,
+        "end_column": 27
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/prototype_methods.js:1:1:79:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "getInfo",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 53,
+        "start_column": 21,
+        "end_line": 53,
+        "end_column": 27
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/prototype_methods.js:1:1:79:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "assignment",
+      "name": "honkResult = car.honk()",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 54,
+        "start_column": 7,
+        "end_line": 54,
+        "end_column": 29
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/prototype_methods.js:1:1:79:0",
+      "target_location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 54,
+        "start_column": 7,
+        "end_line": 54,
+        "end_column": 29
+      }
+    },
+    {
+      "kind": "assignment",
+      "name": "honkResult",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 54,
+        "start_column": 7,
+        "end_line": 54,
+        "end_column": 16
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/prototype_methods.js:1:1:79:0",
+      "target_location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 54,
+        "start_column": 7,
+        "end_line": 54,
+        "end_column": 16
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "honkResult",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 54,
+        "start_column": 7,
+        "end_line": 54,
+        "end_column": 16
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/prototype_methods.js:1:1:79:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "car.honk()",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 54,
+        "start_column": 20,
+        "end_line": 54,
+        "end_column": 29
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/prototype_methods.js:1:1:79:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "method_call",
+      "name": "honk",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 54,
+        "start_column": 20,
+        "end_line": 54,
+        "end_column": 29
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/prototype_methods.js:1:1:79:0",
+      "receiver_location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 54,
+        "start_column": 20,
+        "end_line": 54,
+        "end_column": 22
+      },
+      "property_chain": [
+        "car",
+        "honk"
+      ],
+      "optional_chaining": false
+    },
+    {
+      "kind": "variable_reference",
+      "name": "car",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 54,
+        "start_column": 20,
+        "end_line": 54,
+        "end_column": 22
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/prototype_methods.js:1:1:79:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "property_access",
+      "name": "honk",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 54,
+        "start_column": 20,
+        "end_line": 54,
+        "end_column": 27
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/prototype_methods.js:1:1:79:0",
+      "receiver_location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 54,
+        "start_column": 20,
+        "end_line": 54,
+        "end_column": 22
+      },
+      "property_chain": [
+        "car",
+        "honk"
+      ],
+      "access_type": "property",
+      "is_optional_chain": false
+    },
+    {
+      "kind": "variable_reference",
+      "name": "car",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 54,
+        "start_column": 20,
+        "end_line": 54,
+        "end_column": 22
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/prototype_methods.js:1:1:79:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "property_access",
+      "name": "honk",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 54,
+        "start_column": 20,
+        "end_line": 54,
+        "end_column": 27
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/prototype_methods.js:1:1:79:0",
+      "receiver_location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 54,
+        "start_column": 20,
+        "end_line": 54,
+        "end_column": 22
+      },
+      "property_chain": [
+        "car",
+        "honk"
+      ],
+      "access_type": "property",
+      "is_optional_chain": false
+    },
+    {
+      "kind": "variable_reference",
+      "name": "car",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 54,
+        "start_column": 20,
+        "end_line": 54,
+        "end_column": 22
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/prototype_methods.js:1:1:79:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "car",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 54,
+        "start_column": 20,
+        "end_line": 54,
+        "end_column": 22
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/prototype_methods.js:1:1:79:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "honk",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 54,
+        "start_column": 24,
+        "end_line": 54,
+        "end_column": 27
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/prototype_methods.js:1:1:79:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "honk",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 54,
+        "start_column": 24,
+        "end_line": 54,
+        "end_column": 27
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/prototype_methods.js:1:1:79:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "assignment",
+      "name": "doorCount = car.getDoors()",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 55,
+        "start_column": 7,
+        "end_line": 55,
+        "end_column": 32
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/prototype_methods.js:1:1:79:0",
+      "target_location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 55,
+        "start_column": 7,
+        "end_line": 55,
+        "end_column": 32
+      }
+    },
+    {
+      "kind": "assignment",
+      "name": "doorCount",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 55,
+        "start_column": 7,
+        "end_line": 55,
+        "end_column": 15
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/prototype_methods.js:1:1:79:0",
+      "target_location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 55,
+        "start_column": 7,
+        "end_line": 55,
+        "end_column": 15
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "doorCount",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 55,
+        "start_column": 7,
+        "end_line": 55,
+        "end_column": 15
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/prototype_methods.js:1:1:79:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "car.getDoors()",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 55,
+        "start_column": 19,
+        "end_line": 55,
+        "end_column": 32
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/prototype_methods.js:1:1:79:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "method_call",
+      "name": "getDoors",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 55,
+        "start_column": 19,
+        "end_line": 55,
+        "end_column": 32
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/prototype_methods.js:1:1:79:0",
+      "receiver_location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 55,
+        "start_column": 19,
+        "end_line": 55,
+        "end_column": 21
+      },
+      "property_chain": [
+        "car",
+        "getDoors"
+      ],
+      "optional_chaining": false
+    },
+    {
+      "kind": "variable_reference",
+      "name": "car",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 55,
+        "start_column": 19,
+        "end_line": 55,
+        "end_column": 21
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/prototype_methods.js:1:1:79:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "property_access",
+      "name": "getDoors",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 55,
+        "start_column": 19,
+        "end_line": 55,
+        "end_column": 30
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/prototype_methods.js:1:1:79:0",
+      "receiver_location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 55,
+        "start_column": 19,
+        "end_line": 55,
+        "end_column": 21
+      },
+      "property_chain": [
+        "car",
+        "getDoors"
+      ],
+      "access_type": "property",
+      "is_optional_chain": false
+    },
+    {
+      "kind": "variable_reference",
+      "name": "car",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 55,
+        "start_column": 19,
+        "end_line": 55,
+        "end_column": 21
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/prototype_methods.js:1:1:79:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "property_access",
+      "name": "getDoors",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 55,
+        "start_column": 19,
+        "end_line": 55,
+        "end_column": 30
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/prototype_methods.js:1:1:79:0",
+      "receiver_location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 55,
+        "start_column": 19,
+        "end_line": 55,
+        "end_column": 21
+      },
+      "property_chain": [
+        "car",
+        "getDoors"
+      ],
+      "access_type": "property",
+      "is_optional_chain": false
+    },
+    {
+      "kind": "variable_reference",
+      "name": "car",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 55,
+        "start_column": 19,
+        "end_line": 55,
+        "end_column": 21
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/prototype_methods.js:1:1:79:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "car",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 55,
+        "start_column": 19,
+        "end_line": 55,
+        "end_column": 21
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/prototype_methods.js:1:1:79:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "getDoors",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 55,
+        "start_column": 23,
+        "end_line": 55,
+        "end_column": 30
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/prototype_methods.js:1:1:79:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "getDoors",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 55,
+        "start_column": 23,
+        "end_line": 55,
+        "end_column": 30
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/prototype_methods.js:1:1:79:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "testVehicle",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 58,
+        "start_column": 10,
+        "end_line": 58,
+        "end_column": 20
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/prototype_methods.js:1:1:79:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "v",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 58,
+        "start_column": 22,
+        "end_line": 58,
+        "end_column": 22
+      },
+      "scope_id": "function:<fixtures>/javascript/code/classes/prototype_methods.js:58:21:62:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "assignment",
+      "name": "info = v.getInfo()",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 59,
+        "start_column": 9,
+        "end_line": 59,
+        "end_column": 26
+      },
+      "scope_id": "function:<fixtures>/javascript/code/classes/prototype_methods.js:58:21:62:1",
+      "target_location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 59,
+        "start_column": 9,
+        "end_line": 59,
+        "end_column": 26
+      }
+    },
+    {
+      "kind": "assignment",
+      "name": "info",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 59,
+        "start_column": 9,
+        "end_line": 59,
+        "end_column": 12
+      },
+      "scope_id": "function:<fixtures>/javascript/code/classes/prototype_methods.js:58:21:62:1",
+      "target_location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 59,
+        "start_column": 9,
+        "end_line": 59,
+        "end_column": 12
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "info",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 59,
+        "start_column": 9,
+        "end_line": 59,
+        "end_column": 12
+      },
+      "scope_id": "function:<fixtures>/javascript/code/classes/prototype_methods.js:58:21:62:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "v.getInfo()",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 59,
+        "start_column": 16,
+        "end_line": 59,
+        "end_column": 26
+      },
+      "scope_id": "function:<fixtures>/javascript/code/classes/prototype_methods.js:58:21:62:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "method_call",
+      "name": "getInfo",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 59,
+        "start_column": 16,
+        "end_line": 59,
+        "end_column": 26
+      },
+      "scope_id": "function:<fixtures>/javascript/code/classes/prototype_methods.js:58:21:62:1",
+      "receiver_location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 59,
+        "start_column": 16,
+        "end_line": 59,
+        "end_column": 16
+      },
+      "property_chain": [
+        "v",
+        "getInfo"
+      ],
+      "optional_chaining": false
+    },
+    {
+      "kind": "variable_reference",
+      "name": "v",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 59,
+        "start_column": 16,
+        "end_line": 59,
+        "end_column": 16
+      },
+      "scope_id": "function:<fixtures>/javascript/code/classes/prototype_methods.js:58:21:62:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "property_access",
+      "name": "getInfo",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 59,
+        "start_column": 16,
+        "end_line": 59,
+        "end_column": 24
+      },
+      "scope_id": "function:<fixtures>/javascript/code/classes/prototype_methods.js:58:21:62:1",
+      "receiver_location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 59,
+        "start_column": 16,
+        "end_line": 59,
+        "end_column": 16
+      },
+      "property_chain": [
+        "v",
+        "getInfo"
+      ],
+      "access_type": "property",
+      "is_optional_chain": false
+    },
+    {
+      "kind": "variable_reference",
+      "name": "v",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 59,
+        "start_column": 16,
+        "end_line": 59,
+        "end_column": 16
+      },
+      "scope_id": "function:<fixtures>/javascript/code/classes/prototype_methods.js:58:21:62:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "property_access",
+      "name": "getInfo",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 59,
+        "start_column": 16,
+        "end_line": 59,
+        "end_column": 24
+      },
+      "scope_id": "function:<fixtures>/javascript/code/classes/prototype_methods.js:58:21:62:1",
+      "receiver_location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 59,
+        "start_column": 16,
+        "end_line": 59,
+        "end_column": 16
+      },
+      "property_chain": [
+        "v",
+        "getInfo"
+      ],
+      "access_type": "property",
+      "is_optional_chain": false
+    },
+    {
+      "kind": "variable_reference",
+      "name": "v",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 59,
+        "start_column": 16,
+        "end_line": 59,
+        "end_column": 16
+      },
+      "scope_id": "function:<fixtures>/javascript/code/classes/prototype_methods.js:58:21:62:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "v",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 59,
+        "start_column": 16,
+        "end_line": 59,
+        "end_column": 16
+      },
+      "scope_id": "function:<fixtures>/javascript/code/classes/prototype_methods.js:58:21:62:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "getInfo",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 59,
+        "start_column": 18,
+        "end_line": 59,
+        "end_column": 24
+      },
+      "scope_id": "function:<fixtures>/javascript/code/classes/prototype_methods.js:58:21:62:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "getInfo",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 59,
+        "start_column": 18,
+        "end_line": 59,
+        "end_column": 24
+      },
+      "scope_id": "function:<fixtures>/javascript/code/classes/prototype_methods.js:58:21:62:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "assignment",
+      "name": "started = v.start()",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 60,
+        "start_column": 9,
+        "end_line": 60,
+        "end_column": 27
+      },
+      "scope_id": "function:<fixtures>/javascript/code/classes/prototype_methods.js:58:21:62:1",
+      "target_location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 60,
+        "start_column": 9,
+        "end_line": 60,
+        "end_column": 27
+      }
+    },
+    {
+      "kind": "assignment",
+      "name": "started",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 60,
+        "start_column": 9,
+        "end_line": 60,
+        "end_column": 15
+      },
+      "scope_id": "function:<fixtures>/javascript/code/classes/prototype_methods.js:58:21:62:1",
+      "target_location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 60,
+        "start_column": 9,
+        "end_line": 60,
+        "end_column": 15
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "started",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 60,
+        "start_column": 9,
+        "end_line": 60,
+        "end_column": 15
+      },
+      "scope_id": "function:<fixtures>/javascript/code/classes/prototype_methods.js:58:21:62:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "v.start()",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 60,
+        "start_column": 19,
+        "end_line": 60,
+        "end_column": 27
+      },
+      "scope_id": "function:<fixtures>/javascript/code/classes/prototype_methods.js:58:21:62:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "method_call",
+      "name": "start",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 60,
+        "start_column": 19,
+        "end_line": 60,
+        "end_column": 27
+      },
+      "scope_id": "function:<fixtures>/javascript/code/classes/prototype_methods.js:58:21:62:1",
+      "receiver_location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 60,
+        "start_column": 19,
+        "end_line": 60,
+        "end_column": 19
+      },
+      "property_chain": [
+        "v",
+        "start"
+      ],
+      "optional_chaining": false
+    },
+    {
+      "kind": "variable_reference",
+      "name": "v",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 60,
+        "start_column": 19,
+        "end_line": 60,
+        "end_column": 19
+      },
+      "scope_id": "function:<fixtures>/javascript/code/classes/prototype_methods.js:58:21:62:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "property_access",
+      "name": "start",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 60,
+        "start_column": 19,
+        "end_line": 60,
+        "end_column": 25
+      },
+      "scope_id": "function:<fixtures>/javascript/code/classes/prototype_methods.js:58:21:62:1",
+      "receiver_location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 60,
+        "start_column": 19,
+        "end_line": 60,
+        "end_column": 19
+      },
+      "property_chain": [
+        "v",
+        "start"
+      ],
+      "access_type": "property",
+      "is_optional_chain": false
+    },
+    {
+      "kind": "variable_reference",
+      "name": "v",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 60,
+        "start_column": 19,
+        "end_line": 60,
+        "end_column": 19
+      },
+      "scope_id": "function:<fixtures>/javascript/code/classes/prototype_methods.js:58:21:62:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "property_access",
+      "name": "start",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 60,
+        "start_column": 19,
+        "end_line": 60,
+        "end_column": 25
+      },
+      "scope_id": "function:<fixtures>/javascript/code/classes/prototype_methods.js:58:21:62:1",
+      "receiver_location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 60,
+        "start_column": 19,
+        "end_line": 60,
+        "end_column": 19
+      },
+      "property_chain": [
+        "v",
+        "start"
+      ],
+      "access_type": "property",
+      "is_optional_chain": false
+    },
+    {
+      "kind": "variable_reference",
+      "name": "v",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 60,
+        "start_column": 19,
+        "end_line": 60,
+        "end_column": 19
+      },
+      "scope_id": "function:<fixtures>/javascript/code/classes/prototype_methods.js:58:21:62:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "v",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 60,
+        "start_column": 19,
+        "end_line": 60,
+        "end_column": 19
+      },
+      "scope_id": "function:<fixtures>/javascript/code/classes/prototype_methods.js:58:21:62:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "start",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 60,
+        "start_column": 21,
+        "end_line": 60,
+        "end_column": 25
+      },
+      "scope_id": "function:<fixtures>/javascript/code/classes/prototype_methods.js:58:21:62:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "start",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 60,
+        "start_column": 21,
+        "end_line": 60,
+        "end_column": 25
+      },
+      "scope_id": "function:<fixtures>/javascript/code/classes/prototype_methods.js:58:21:62:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "return { info, started };",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 61,
+        "start_column": 3,
+        "end_line": 61,
+        "end_column": 27
+      },
+      "scope_id": "function:<fixtures>/javascript/code/classes/prototype_methods.js:58:21:62:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "{ info, started }",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 61,
+        "start_column": 10,
+        "end_line": 61,
+        "end_column": 26
+      },
+      "scope_id": "function:<fixtures>/javascript/code/classes/prototype_methods.js:58:21:62:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "assignment",
+      "name": "testResult = testVehicle(car)",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 64,
+        "start_column": 7,
+        "end_line": 64,
+        "end_column": 35
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/prototype_methods.js:1:1:79:0",
+      "target_location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 64,
+        "start_column": 7,
+        "end_line": 64,
+        "end_column": 35
+      }
+    },
+    {
+      "kind": "assignment",
+      "name": "testResult",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 64,
+        "start_column": 7,
+        "end_line": 64,
+        "end_column": 16
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/prototype_methods.js:1:1:79:0",
+      "target_location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 64,
+        "start_column": 7,
+        "end_line": 64,
+        "end_column": 16
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "testResult",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 64,
+        "start_column": 7,
+        "end_line": 64,
+        "end_column": 16
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/prototype_methods.js:1:1:79:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "testVehicle",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 64,
+        "start_column": 20,
+        "end_line": 64,
+        "end_column": 35
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/prototype_methods.js:1:1:79:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "function_call",
+      "name": "testVehicle",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 64,
+        "start_column": 20,
+        "end_line": 64,
+        "end_column": 30
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/prototype_methods.js:1:1:79:0",
+      "potential_construct_target": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 64,
+        "start_column": 7,
+        "end_line": 64,
+        "end_column": 16
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "testVehicle",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 64,
+        "start_column": 20,
+        "end_line": 64,
+        "end_column": 30
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/prototype_methods.js:1:1:79:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "car",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 64,
+        "start_column": 32,
+        "end_line": 64,
+        "end_column": 34
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/prototype_methods.js:1:1:79:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "property_access",
+      "name": "exports",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 66,
+        "start_column": 1,
+        "end_line": 66,
+        "end_column": 14
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/prototype_methods.js:1:1:79:0",
+      "receiver_location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 66,
+        "start_column": 1,
+        "end_line": 66,
+        "end_column": 6
+      },
+      "property_chain": [
+        "module",
+        "exports"
+      ],
+      "access_type": "property",
+      "is_optional_chain": false
+    },
+    {
+      "kind": "variable_reference",
+      "name": "module",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 66,
+        "start_column": 1,
+        "end_line": 66,
+        "end_column": 6
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/prototype_methods.js:1:1:79:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "property_access",
+      "name": "exports",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 66,
+        "start_column": 1,
+        "end_line": 66,
+        "end_column": 14
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/prototype_methods.js:1:1:79:0",
+      "receiver_location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 66,
+        "start_column": 1,
+        "end_line": 66,
+        "end_column": 6
+      },
+      "property_chain": [
+        "module",
+        "exports"
+      ],
+      "access_type": "property",
+      "is_optional_chain": false
+    },
+    {
+      "kind": "variable_reference",
+      "name": "module",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 66,
+        "start_column": 1,
+        "end_line": 66,
+        "end_column": 6
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/prototype_methods.js:1:1:79:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "assignment",
+      "name": "module.exports = {\n  Vehicle,\n  Car,\n  vehicle,\n  car,\n  startResult,\n  vehicleInfo,\n  carInfo,\n  honkResult,\n  doorCount,\n  testResult,\n  testVehicle,\n}",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 66,
+        "start_column": 1,
+        "end_line": 78,
+        "end_column": 1
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/prototype_methods.js:1:1:79:0",
+      "target_location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 66,
+        "start_column": 1,
+        "end_line": 78,
+        "end_column": 1
+      }
+    },
+    {
+      "kind": "property_access",
+      "name": "exports",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 66,
+        "start_column": 1,
+        "end_line": 66,
+        "end_column": 14
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/prototype_methods.js:1:1:79:0",
+      "receiver_location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 66,
+        "start_column": 1,
+        "end_line": 66,
+        "end_column": 6
+      },
+      "property_chain": [
+        "module",
+        "exports"
+      ],
+      "access_type": "property",
+      "is_optional_chain": false
+    },
+    {
+      "kind": "variable_reference",
+      "name": "module",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 66,
+        "start_column": 1,
+        "end_line": 66,
+        "end_column": 6
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/prototype_methods.js:1:1:79:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "module",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 66,
+        "start_column": 1,
+        "end_line": 66,
+        "end_column": 6
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/prototype_methods.js:1:1:79:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "exports",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 66,
+        "start_column": 8,
+        "end_line": 66,
+        "end_column": 14
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/prototype_methods.js:1:1:79:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "exports",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 66,
+        "start_column": 8,
+        "end_line": 66,
+        "end_column": 14
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/prototype_methods.js:1:1:79:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "exports",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 66,
+        "start_column": 8,
+        "end_line": 66,
+        "end_column": 14
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/prototype_methods.js:1:1:79:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "{\n  Vehicle,\n  Car,\n  vehicle,\n  car,\n  startResult,\n  vehicleInfo,\n  carInfo,\n  honkResult,\n  doorCount,\n  testResult,\n  testVehicle,\n}",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/prototype_methods.js",
+        "start_line": 66,
+        "start_column": 18,
+        "end_line": 78,
+        "end_column": 1
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/prototype_methods.js:1:1:79:0",
+      "access_type": "read"
+    }
+  ]
+}

@@ -1,0 +1,413 @@
+{
+  "file_path": "<fixtures>/javascript/code/modules/shadowing.js",
+  "language": "javascript",
+  "root_scope_id": "module:<fixtures>/javascript/code/modules/shadowing.js:1:1:23:2",
+  "scopes": {
+    "module:<fixtures>/javascript/code/modules/shadowing.js:1:1:23:2": {
+      "id": "module:<fixtures>/javascript/code/modules/shadowing.js:1:1:23:2",
+      "parent_id": null,
+      "name": null,
+      "type": "module",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/shadowing.js",
+        "start_line": 1,
+        "start_column": 1,
+        "end_line": 23,
+        "end_column": 2
+      },
+      "child_ids": [
+        "function:<fixtures>/javascript/code/modules/shadowing.js:9:16:11:1"
+      ]
+    },
+    "function:<fixtures>/javascript/code/modules/shadowing.js:9:16:11:1": {
+      "id": "function:<fixtures>/javascript/code/modules/shadowing.js:9:16:11:1",
+      "parent_id": "module:<fixtures>/javascript/code/modules/shadowing.js:1:1:23:2",
+      "name": "helper",
+      "type": "function",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/shadowing.js",
+        "start_line": 9,
+        "start_column": 16,
+        "end_line": 11,
+        "end_column": 1
+      },
+      "child_ids": []
+    }
+  },
+  "functions": {
+    "function:<fixtures>/javascript/code/modules/shadowing.js:9:10:9:15:helper": {
+      "kind": "function",
+      "symbol_id": "function:<fixtures>/javascript/code/modules/shadowing.js:9:10:9:15:helper",
+      "name": "helper",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/shadowing.js",
+        "start_line": 9,
+        "start_column": 10,
+        "end_line": 9,
+        "end_column": 15
+      },
+      "defining_scope_id": "module:<fixtures>/javascript/code/modules/shadowing.js:1:1:23:2",
+      "is_exported": false,
+      "signature": {
+        "parameters": []
+      },
+      "body_scope_id": "function:<fixtures>/javascript/code/modules/shadowing.js:9:16:11:1"
+    }
+  },
+  "classes": {},
+  "variables": {
+    "variable:<fixtures>/javascript/code/modules/shadowing.js:14:7:14:12:result": {
+      "kind": "constant",
+      "symbol_id": "variable:<fixtures>/javascript/code/modules/shadowing.js:14:7:14:12:result",
+      "name": "result",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/shadowing.js",
+        "start_line": 14,
+        "start_column": 7,
+        "end_line": 14,
+        "end_column": 12
+      },
+      "defining_scope_id": "module:<fixtures>/javascript/code/modules/shadowing.js:1:1:23:2",
+      "is_exported": true,
+      "initial_value": "helper()",
+      "initialized_from_call": "helper"
+    },
+    "variable:<fixtures>/javascript/code/modules/shadowing.js:18:7:18:15:processed": {
+      "kind": "constant",
+      "symbol_id": "variable:<fixtures>/javascript/code/modules/shadowing.js:18:7:18:15:processed",
+      "name": "processed",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/shadowing.js",
+        "start_line": 18,
+        "start_column": 7,
+        "end_line": 18,
+        "end_column": 15
+      },
+      "defining_scope_id": "module:<fixtures>/javascript/code/modules/shadowing.js:1:1:23:2",
+      "is_exported": true,
+      "initial_value": "processData(\"TEST\")",
+      "initialized_from_call": "processData"
+    }
+  },
+  "interfaces": {},
+  "enums": {},
+  "namespaces": {},
+  "types": {},
+  "imported_symbols": {
+    "variable:<fixtures>/javascript/code/modules/shadowing.js:6:10:6:15:helper": {
+      "kind": "import",
+      "symbol_id": "variable:<fixtures>/javascript/code/modules/shadowing.js:6:10:6:15:helper",
+      "name": "helper",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/shadowing.js",
+        "start_line": 6,
+        "start_column": 10,
+        "end_line": 6,
+        "end_column": 15
+      },
+      "defining_scope_id": "module:<fixtures>/javascript/code/modules/shadowing.js:1:1:23:2",
+      "import_path": "./utils_es6.js",
+      "import_kind": "named"
+    },
+    "variable:<fixtures>/javascript/code/modules/shadowing.js:17:10:17:20:processData": {
+      "kind": "import",
+      "symbol_id": "variable:<fixtures>/javascript/code/modules/shadowing.js:17:10:17:20:processData",
+      "name": "processData",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/shadowing.js",
+        "start_line": 17,
+        "start_column": 10,
+        "end_line": 17,
+        "end_column": 20
+      },
+      "defining_scope_id": "module:<fixtures>/javascript/code/modules/shadowing.js:1:1:23:2",
+      "import_path": "./utils_es6.js",
+      "import_kind": "named"
+    }
+  },
+  "references": [
+    {
+      "kind": "variable_reference",
+      "name": "helper",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/shadowing.js",
+        "start_line": 6,
+        "start_column": 10,
+        "end_line": 6,
+        "end_column": 15
+      },
+      "scope_id": "module:<fixtures>/javascript/code/modules/shadowing.js:1:1:23:2",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "helper",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/shadowing.js",
+        "start_line": 9,
+        "start_column": 10,
+        "end_line": 9,
+        "end_column": 15
+      },
+      "scope_id": "module:<fixtures>/javascript/code/modules/shadowing.js:1:1:23:2",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "return \"local helper\";",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/shadowing.js",
+        "start_line": 10,
+        "start_column": 3,
+        "end_line": 10,
+        "end_column": 24
+      },
+      "scope_id": "function:<fixtures>/javascript/code/modules/shadowing.js:9:16:11:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "\"local helper\"",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/shadowing.js",
+        "start_line": 10,
+        "start_column": 10,
+        "end_line": 10,
+        "end_column": 23
+      },
+      "scope_id": "function:<fixtures>/javascript/code/modules/shadowing.js:9:16:11:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "assignment",
+      "name": "result = helper()",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/shadowing.js",
+        "start_line": 14,
+        "start_column": 7,
+        "end_line": 14,
+        "end_column": 23
+      },
+      "scope_id": "module:<fixtures>/javascript/code/modules/shadowing.js:1:1:23:2",
+      "target_location": {
+        "file_path": "<fixtures>/javascript/code/modules/shadowing.js",
+        "start_line": 14,
+        "start_column": 7,
+        "end_line": 14,
+        "end_column": 23
+      }
+    },
+    {
+      "kind": "assignment",
+      "name": "result",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/shadowing.js",
+        "start_line": 14,
+        "start_column": 7,
+        "end_line": 14,
+        "end_column": 12
+      },
+      "scope_id": "module:<fixtures>/javascript/code/modules/shadowing.js:1:1:23:2",
+      "target_location": {
+        "file_path": "<fixtures>/javascript/code/modules/shadowing.js",
+        "start_line": 14,
+        "start_column": 7,
+        "end_line": 14,
+        "end_column": 12
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "result",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/shadowing.js",
+        "start_line": 14,
+        "start_column": 7,
+        "end_line": 14,
+        "end_column": 12
+      },
+      "scope_id": "module:<fixtures>/javascript/code/modules/shadowing.js:1:1:23:2",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "helper",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/shadowing.js",
+        "start_line": 14,
+        "start_column": 16,
+        "end_line": 14,
+        "end_column": 23
+      },
+      "scope_id": "module:<fixtures>/javascript/code/modules/shadowing.js:1:1:23:2",
+      "access_type": "read"
+    },
+    {
+      "kind": "function_call",
+      "name": "helper",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/shadowing.js",
+        "start_line": 14,
+        "start_column": 16,
+        "end_line": 14,
+        "end_column": 21
+      },
+      "scope_id": "module:<fixtures>/javascript/code/modules/shadowing.js:1:1:23:2",
+      "potential_construct_target": {
+        "file_path": "<fixtures>/javascript/code/modules/shadowing.js",
+        "start_line": 14,
+        "start_column": 7,
+        "end_line": 14,
+        "end_column": 12
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "helper",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/shadowing.js",
+        "start_line": 14,
+        "start_column": 16,
+        "end_line": 14,
+        "end_column": 21
+      },
+      "scope_id": "module:<fixtures>/javascript/code/modules/shadowing.js:1:1:23:2",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "processData",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/shadowing.js",
+        "start_line": 17,
+        "start_column": 10,
+        "end_line": 17,
+        "end_column": 20
+      },
+      "scope_id": "module:<fixtures>/javascript/code/modules/shadowing.js:1:1:23:2",
+      "access_type": "read"
+    },
+    {
+      "kind": "assignment",
+      "name": "processed = processData(\"TEST\")",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/shadowing.js",
+        "start_line": 18,
+        "start_column": 7,
+        "end_line": 18,
+        "end_column": 37
+      },
+      "scope_id": "module:<fixtures>/javascript/code/modules/shadowing.js:1:1:23:2",
+      "target_location": {
+        "file_path": "<fixtures>/javascript/code/modules/shadowing.js",
+        "start_line": 18,
+        "start_column": 7,
+        "end_line": 18,
+        "end_column": 37
+      }
+    },
+    {
+      "kind": "assignment",
+      "name": "processed",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/shadowing.js",
+        "start_line": 18,
+        "start_column": 7,
+        "end_line": 18,
+        "end_column": 15
+      },
+      "scope_id": "module:<fixtures>/javascript/code/modules/shadowing.js:1:1:23:2",
+      "target_location": {
+        "file_path": "<fixtures>/javascript/code/modules/shadowing.js",
+        "start_line": 18,
+        "start_column": 7,
+        "end_line": 18,
+        "end_column": 15
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "processed",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/shadowing.js",
+        "start_line": 18,
+        "start_column": 7,
+        "end_line": 18,
+        "end_column": 15
+      },
+      "scope_id": "module:<fixtures>/javascript/code/modules/shadowing.js:1:1:23:2",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "processData",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/shadowing.js",
+        "start_line": 18,
+        "start_column": 19,
+        "end_line": 18,
+        "end_column": 37
+      },
+      "scope_id": "module:<fixtures>/javascript/code/modules/shadowing.js:1:1:23:2",
+      "access_type": "read"
+    },
+    {
+      "kind": "function_call",
+      "name": "processData",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/shadowing.js",
+        "start_line": 18,
+        "start_column": 19,
+        "end_line": 18,
+        "end_column": 29
+      },
+      "scope_id": "module:<fixtures>/javascript/code/modules/shadowing.js:1:1:23:2",
+      "potential_construct_target": {
+        "file_path": "<fixtures>/javascript/code/modules/shadowing.js",
+        "start_line": 18,
+        "start_column": 7,
+        "end_line": 18,
+        "end_column": 15
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "processData",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/shadowing.js",
+        "start_line": 18,
+        "start_column": 19,
+        "end_line": 18,
+        "end_column": 29
+      },
+      "scope_id": "module:<fixtures>/javascript/code/modules/shadowing.js:1:1:23:2",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "result",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/shadowing.js",
+        "start_line": 21,
+        "start_column": 3,
+        "end_line": 21,
+        "end_column": 8
+      },
+      "scope_id": "module:<fixtures>/javascript/code/modules/shadowing.js:1:1:23:2",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "processed",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/shadowing.js",
+        "start_line": 22,
+        "start_column": 3,
+        "end_line": 22,
+        "end_column": 11
+      },
+      "scope_id": "module:<fixtures>/javascript/code/modules/shadowing.js:1:1:23:2",
+      "access_type": "read"
+    }
+  ]
+}

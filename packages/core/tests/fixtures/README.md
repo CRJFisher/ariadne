@@ -8,16 +8,16 @@ This directory contains code fixtures and their corresponding semantic index JSO
 fixtures/
 ├── typescript/
 │   ├── code/              # Source TypeScript files
-│   └── semantic_index/    # Generated JSON fixtures
+│   └── index_single_file/    # Generated JSON fixtures
 ├── python/
 │   ├── code/              # Source Python files
-│   └── semantic_index/    # Generated JSON fixtures
+│   └── index_single_file/    # Generated JSON fixtures
 ├── rust/
 │   ├── code/              # Source Rust files
-│   └── semantic_index/    # Generated JSON fixtures
+│   └── index_single_file/    # Generated JSON fixtures
 └── javascript/
     ├── code/              # Source JavaScript files
-    └── semantic_index/    # Generated JSON fixtures
+    └── index_single_file/    # Generated JSON fixtures
 ```
 
 ## Organization Principles
@@ -36,13 +36,14 @@ Code fixtures are organized by **language feature** into category directories:
 - **structs/** - Struct definitions (Rust)
 - **traits/** - Trait definitions (Rust)
 
-### Semantic Index Fixtures (`semantic_index/` directories)
+### Semantic Index Fixtures (`index_single_file/` directories)
 
-JSON files in `semantic_index/` directories mirror the structure of `code/` directories. Each JSON file contains the semantic index generated from the corresponding source file.
+JSON files in `index_single_file/` directories mirror the structure of `code/` directories. Each JSON file contains the semantic index generated from the corresponding source file.
 
 **Naming convention:**
+
 - Source: `code/classes/basic_class.ts`
-- JSON: `semantic_index/classes/basic_class.json`
+- JSON: `index_single_file/classes/basic_class.json`
 
 ## TypeScript Fixtures
 
@@ -160,6 +161,7 @@ npm run verify-fixtures
 ```
 
 The verification script checks:
+
 - JSON is valid and parseable
 - All required fields are present (file_path, root_scope_id, language)
 - Root scope exists in scopes map
@@ -188,7 +190,7 @@ npm run generate-fixtures:all
 npm run verify-fixtures
 
 # 4. Review changes
-git diff tests/fixtures/**/semantic_index/
+git diff tests/fixtures/**/index_single_file/
 
 # 5. Commit if everything looks good
 git add tests/fixtures/
@@ -210,12 +212,12 @@ git commit -m "feat: regenerate fixtures after [your change]"
 import { load_fixture, load_fixtures } from "./fixtures/fixture_helpers";
 
 // Load single fixture
-const index = load_fixture("typescript/semantic_index/classes/basic_class.json");
+const index = load_fixture("typescript/index_single_file/classes/basic_class.json");
 
 // Load multiple fixtures
 const [index1, index2] = load_fixtures(
-  "typescript/semantic_index/classes/properties.json",
-  "typescript/semantic_index/functions/call_chains.json"
+  "typescript/index_single_file/classes/properties.json",
+  "typescript/index_single_file/functions/call_chains.json"
 );
 ```
 
@@ -224,7 +226,7 @@ const [index1, index2] = load_fixtures(
 ```typescript
 describe("Feature tests", () => {
   it("should detect class definitions", () => {
-    const index = load_fixture("typescript/semantic_index/classes/basic_class.json");
+    const index = load_fixture("typescript/index_single_file/classes/basic_class.json");
 
     expect(index.classes.size).toBeGreaterThan(0);
     const classNames = Array.from(index.classes.values()).map(c => c.name);
@@ -249,15 +251,18 @@ When adding new fixtures:
 The following files exist at language root level (not in `code/` directories):
 
 ### TypeScript
+
 - `classes.ts`, `generics.ts`, `interfaces.ts`, `modules.ts`, `types.ts` - Original smaller fixtures
 - `comprehensive_*.ts` - Large comprehensive test files (100-500 lines)
 - `other-module.ts`, `specific-module.ts` - Module test helpers
 
 ### Python
+
 - `classes.py`, `functions.py`, `imports.py`, etc. - Original fixtures
 - `comprehensive_*.py` - Large comprehensive test files
 
 ### Rust
+
 - Various `*.rs` files - Original comprehensive fixtures
 
 These legacy files are kept for backward compatibility with existing tests but are being phased out in favor of the organized `code/` structure.

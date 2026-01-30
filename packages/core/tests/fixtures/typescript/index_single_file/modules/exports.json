@@ -1,0 +1,2314 @@
+{
+  "file_path": "<fixtures>/typescript/code/modules/exports.ts",
+  "language": "typescript",
+  "root_scope_id": "module:<fixtures>/typescript/code/modules/exports.ts:1:1:59:0",
+  "scopes": {
+    "module:<fixtures>/typescript/code/modules/exports.ts:1:1:59:0": {
+      "id": "module:<fixtures>/typescript/code/modules/exports.ts:1:1:59:0",
+      "parent_id": null,
+      "name": null,
+      "type": "module",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/modules/exports.ts",
+        "start_line": 1,
+        "start_column": 1,
+        "end_line": 59,
+        "end_column": 0
+      },
+      "child_ids": [
+        "function:<fixtures>/typescript/code/modules/exports.ts:11:28:13:1",
+        "class:<fixtures>/typescript/code/modules/exports.ts:16:25:22:1",
+        "class:<fixtures>/typescript/code/modules/exports.ts:25:25:29:1",
+        "function:<fixtures>/typescript/code/modules/exports.ts:38:25:40:1",
+        "class:<fixtures>/typescript/code/modules/exports.ts:42:14:46:1",
+        "class:<fixtures>/typescript/code/modules/exports.ts:52:34:58:1"
+      ]
+    },
+    "function:<fixtures>/typescript/code/modules/exports.ts:11:28:13:1": {
+      "id": "function:<fixtures>/typescript/code/modules/exports.ts:11:28:13:1",
+      "parent_id": "module:<fixtures>/typescript/code/modules/exports.ts:1:1:59:0",
+      "name": "format_date",
+      "type": "function",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/modules/exports.ts",
+        "start_line": 11,
+        "start_column": 28,
+        "end_line": 13,
+        "end_column": 1
+      },
+      "child_ids": []
+    },
+    "class:<fixtures>/typescript/code/modules/exports.ts:16:25:22:1": {
+      "id": "class:<fixtures>/typescript/code/modules/exports.ts:16:25:22:1",
+      "parent_id": "module:<fixtures>/typescript/code/modules/exports.ts:1:1:59:0",
+      "name": "HttpClient",
+      "type": "class",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/modules/exports.ts",
+        "start_line": 16,
+        "start_column": 25,
+        "end_line": 22,
+        "end_column": 1
+      },
+      "child_ids": [
+        "method:<fixtures>/typescript/code/modules/exports.ts:17:14:17:42",
+        "method:<fixtures>/typescript/code/modules/exports.ts:19:12:21:3"
+      ]
+    },
+    "method:<fixtures>/typescript/code/modules/exports.ts:17:14:17:42": {
+      "id": "method:<fixtures>/typescript/code/modules/exports.ts:17:14:17:42",
+      "parent_id": "class:<fixtures>/typescript/code/modules/exports.ts:16:25:22:1",
+      "name": "constructor",
+      "type": "method",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/modules/exports.ts",
+        "start_line": 17,
+        "start_column": 14,
+        "end_line": 17,
+        "end_column": 42
+      },
+      "child_ids": [
+        "constructor:<fixtures>/typescript/code/modules/exports.ts:17:14:17:42"
+      ]
+    },
+    "constructor:<fixtures>/typescript/code/modules/exports.ts:17:14:17:42": {
+      "id": "constructor:<fixtures>/typescript/code/modules/exports.ts:17:14:17:42",
+      "parent_id": "method:<fixtures>/typescript/code/modules/exports.ts:17:14:17:42",
+      "name": "constructor",
+      "type": "constructor",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/modules/exports.ts",
+        "start_line": 17,
+        "start_column": 14,
+        "end_line": 17,
+        "end_column": 42
+      },
+      "child_ids": []
+    },
+    "method:<fixtures>/typescript/code/modules/exports.ts:19:12:21:3": {
+      "id": "method:<fixtures>/typescript/code/modules/exports.ts:19:12:21:3",
+      "parent_id": "class:<fixtures>/typescript/code/modules/exports.ts:16:25:22:1",
+      "name": "get",
+      "type": "method",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/modules/exports.ts",
+        "start_line": 19,
+        "start_column": 12,
+        "end_line": 21,
+        "end_column": 3
+      },
+      "child_ids": []
+    },
+    "class:<fixtures>/typescript/code/modules/exports.ts:25:25:29:1": {
+      "id": "class:<fixtures>/typescript/code/modules/exports.ts:25:25:29:1",
+      "parent_id": "module:<fixtures>/typescript/code/modules/exports.ts:1:1:59:0",
+      "name": "Config",
+      "type": "class",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/modules/exports.ts",
+        "start_line": 25,
+        "start_column": 25,
+        "end_line": 29,
+        "end_column": 1
+      },
+      "child_ids": []
+    },
+    "function:<fixtures>/typescript/code/modules/exports.ts:38:25:40:1": {
+      "id": "function:<fixtures>/typescript/code/modules/exports.ts:38:25:40:1",
+      "parent_id": "module:<fixtures>/typescript/code/modules/exports.ts:1:1:59:0",
+      "name": "validate_config",
+      "type": "function",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/modules/exports.ts",
+        "start_line": 38,
+        "start_column": 25,
+        "end_line": 40,
+        "end_column": 1
+      },
+      "child_ids": []
+    },
+    "class:<fixtures>/typescript/code/modules/exports.ts:42:14:46:1": {
+      "id": "class:<fixtures>/typescript/code/modules/exports.ts:42:14:46:1",
+      "parent_id": "module:<fixtures>/typescript/code/modules/exports.ts:1:1:59:0",
+      "name": "Logger",
+      "type": "class",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/modules/exports.ts",
+        "start_line": 42,
+        "start_column": 14,
+        "end_line": 46,
+        "end_column": 1
+      },
+      "child_ids": [
+        "method:<fixtures>/typescript/code/modules/exports.ts:43:6:45:3"
+      ]
+    },
+    "method:<fixtures>/typescript/code/modules/exports.ts:43:6:45:3": {
+      "id": "method:<fixtures>/typescript/code/modules/exports.ts:43:6:45:3",
+      "parent_id": "class:<fixtures>/typescript/code/modules/exports.ts:42:14:46:1",
+      "name": "log",
+      "type": "method",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/modules/exports.ts",
+        "start_line": 43,
+        "start_column": 6,
+        "end_line": 45,
+        "end_column": 3
+      },
+      "child_ids": []
+    },
+    "class:<fixtures>/typescript/code/modules/exports.ts:52:34:58:1": {
+      "id": "class:<fixtures>/typescript/code/modules/exports.ts:52:34:58:1",
+      "parent_id": "module:<fixtures>/typescript/code/modules/exports.ts:1:1:59:0",
+      "name": "Application",
+      "type": "class",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/modules/exports.ts",
+        "start_line": 52,
+        "start_column": 34,
+        "end_line": 58,
+        "end_column": 1
+      },
+      "child_ids": [
+        "method:<fixtures>/typescript/code/modules/exports.ts:53:14:53:40",
+        "method:<fixtures>/typescript/code/modules/exports.ts:55:8:57:3"
+      ]
+    },
+    "method:<fixtures>/typescript/code/modules/exports.ts:53:14:53:40": {
+      "id": "method:<fixtures>/typescript/code/modules/exports.ts:53:14:53:40",
+      "parent_id": "class:<fixtures>/typescript/code/modules/exports.ts:52:34:58:1",
+      "name": "constructor",
+      "type": "method",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/modules/exports.ts",
+        "start_line": 53,
+        "start_column": 14,
+        "end_line": 53,
+        "end_column": 40
+      },
+      "child_ids": [
+        "constructor:<fixtures>/typescript/code/modules/exports.ts:53:14:53:40"
+      ]
+    },
+    "constructor:<fixtures>/typescript/code/modules/exports.ts:53:14:53:40": {
+      "id": "constructor:<fixtures>/typescript/code/modules/exports.ts:53:14:53:40",
+      "parent_id": "method:<fixtures>/typescript/code/modules/exports.ts:53:14:53:40",
+      "name": "constructor",
+      "type": "constructor",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/modules/exports.ts",
+        "start_line": 53,
+        "start_column": 14,
+        "end_line": 53,
+        "end_column": 40
+      },
+      "child_ids": []
+    },
+    "method:<fixtures>/typescript/code/modules/exports.ts:55:8:57:3": {
+      "id": "method:<fixtures>/typescript/code/modules/exports.ts:55:8:57:3",
+      "parent_id": "class:<fixtures>/typescript/code/modules/exports.ts:52:34:58:1",
+      "name": "start",
+      "type": "method",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/modules/exports.ts",
+        "start_line": 55,
+        "start_column": 8,
+        "end_line": 57,
+        "end_column": 3
+      },
+      "child_ids": []
+    }
+  },
+  "functions": {
+    "function:<fixtures>/typescript/code/modules/exports.ts:11:17:11:27:format_date": {
+      "kind": "function",
+      "symbol_id": "function:<fixtures>/typescript/code/modules/exports.ts:11:17:11:27:format_date",
+      "name": "format_date",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/modules/exports.ts",
+        "start_line": 11,
+        "start_column": 17,
+        "end_line": 11,
+        "end_column": 27
+      },
+      "defining_scope_id": "module:<fixtures>/typescript/code/modules/exports.ts:1:1:59:0",
+      "is_exported": true,
+      "signature": {
+        "parameters": [
+          {
+            "kind": "parameter",
+            "defining_scope_id": "function:<fixtures>/typescript/code/modules/exports.ts:11:28:13:1",
+            "symbol_id": "parameter:<fixtures>/typescript/code/modules/exports.ts:11:29:11:32:date",
+            "name": "date",
+            "location": {
+              "file_path": "<fixtures>/typescript/code/modules/exports.ts",
+              "start_line": 11,
+              "start_column": 29,
+              "end_line": 11,
+              "end_column": 32
+            },
+            "type": "Date",
+            "optional": false
+          }
+        ],
+        "return_type": "string"
+      },
+      "return_type": "string",
+      "body_scope_id": "function:<fixtures>/typescript/code/modules/exports.ts:11:28:13:1"
+    },
+    "function:<fixtures>/typescript/code/modules/exports.ts:38:10:38:24:validate_config": {
+      "kind": "function",
+      "symbol_id": "function:<fixtures>/typescript/code/modules/exports.ts:38:10:38:24:validate_config",
+      "name": "validate_config",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/modules/exports.ts",
+        "start_line": 38,
+        "start_column": 10,
+        "end_line": 38,
+        "end_column": 24
+      },
+      "defining_scope_id": "module:<fixtures>/typescript/code/modules/exports.ts:1:1:59:0",
+      "is_exported": true,
+      "export": {
+        "is_reexport": false
+      },
+      "signature": {
+        "parameters": [
+          {
+            "kind": "parameter",
+            "defining_scope_id": "function:<fixtures>/typescript/code/modules/exports.ts:38:25:40:1",
+            "symbol_id": "parameter:<fixtures>/typescript/code/modules/exports.ts:38:26:38:31:config",
+            "name": "config",
+            "location": {
+              "file_path": "<fixtures>/typescript/code/modules/exports.ts",
+              "start_line": 38,
+              "start_column": 26,
+              "end_line": 38,
+              "end_column": 31
+            },
+            "type": "Config",
+            "optional": false
+          }
+        ],
+        "return_type": "boolean"
+      },
+      "return_type": "boolean",
+      "body_scope_id": "function:<fixtures>/typescript/code/modules/exports.ts:38:25:40:1"
+    }
+  },
+  "classes": {
+    "class:<fixtures>/typescript/code/modules/exports.ts:16:14:16:23:HttpClient": {
+      "kind": "class",
+      "symbol_id": "class:<fixtures>/typescript/code/modules/exports.ts:16:14:16:23:HttpClient",
+      "name": "HttpClient",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/modules/exports.ts",
+        "start_line": 16,
+        "start_column": 14,
+        "end_line": 16,
+        "end_column": 23
+      },
+      "defining_scope_id": "module:<fixtures>/typescript/code/modules/exports.ts:1:1:59:0",
+      "generics": [],
+      "extends": [],
+      "is_exported": true,
+      "methods": [
+        {
+          "kind": "method",
+          "defining_scope_id": "class:<fixtures>/typescript/code/modules/exports.ts:16:25:22:1",
+          "symbol_id": "method:<fixtures>/typescript/code/modules/exports.ts:19:9:19:11:get",
+          "name": "get",
+          "location": {
+            "file_path": "<fixtures>/typescript/code/modules/exports.ts",
+            "start_line": 19,
+            "start_column": 9,
+            "end_line": 19,
+            "end_column": 11
+          },
+          "abstract": false,
+          "static": false,
+          "async": true,
+          "return_type": "Promise<any>",
+          "generics": [],
+          "parameters": [
+            {
+              "kind": "parameter",
+              "defining_scope_id": "method:<fixtures>/typescript/code/modules/exports.ts:19:12:21:3",
+              "symbol_id": "parameter:<fixtures>/typescript/code/modules/exports.ts:19:13:19:16:path",
+              "name": "path",
+              "location": {
+                "file_path": "<fixtures>/typescript/code/modules/exports.ts",
+                "start_line": 19,
+                "start_column": 13,
+                "end_line": 19,
+                "end_column": 16
+              },
+              "type": "string",
+              "optional": false
+            }
+          ],
+          "body_scope_id": "method:<fixtures>/typescript/code/modules/exports.ts:19:12:21:3"
+        }
+      ],
+      "properties": [
+        {
+          "kind": "property",
+          "defining_scope_id": "constructor:<fixtures>/typescript/code/modules/exports.ts:17:14:17:42",
+          "symbol_id": "property:<fixtures>/typescript/code/modules/exports.ts:17:23:17:30:base_url",
+          "name": "base_url",
+          "location": {
+            "file_path": "<fixtures>/typescript/code/modules/exports.ts",
+            "start_line": 17,
+            "start_column": 23,
+            "end_line": 17,
+            "end_column": 30
+          },
+          "access_modifier": "private",
+          "static": false,
+          "readonly": false,
+          "abstract": false,
+          "type": "string",
+          "decorators": []
+        }
+      ],
+      "constructors": [
+        {
+          "kind": "constructor",
+          "defining_scope_id": "class:<fixtures>/typescript/code/modules/exports.ts:16:25:22:1",
+          "symbol_id": "method:<fixtures>/typescript/code/modules/exports.ts:17:3:17:13:constructor",
+          "name": "constructor",
+          "location": {
+            "file_path": "<fixtures>/typescript/code/modules/exports.ts",
+            "start_line": 17,
+            "start_column": 3,
+            "end_line": 17,
+            "end_column": 13
+          },
+          "parameters": [
+            {
+              "kind": "parameter",
+              "defining_scope_id": "constructor:<fixtures>/typescript/code/modules/exports.ts:17:14:17:42",
+              "symbol_id": "parameter:<fixtures>/typescript/code/modules/exports.ts:17:23:17:30:base_url",
+              "name": "base_url",
+              "location": {
+                "file_path": "<fixtures>/typescript/code/modules/exports.ts",
+                "start_line": 17,
+                "start_column": 23,
+                "end_line": 17,
+                "end_column": 30
+              },
+              "type": "string",
+              "optional": false
+            }
+          ],
+          "body_scope_id": "method:<fixtures>/typescript/code/modules/exports.ts:17:14:17:42"
+        }
+      ],
+      "decorators": []
+    },
+    "class:<fixtures>/typescript/code/modules/exports.ts:42:7:42:12:Logger": {
+      "kind": "class",
+      "symbol_id": "class:<fixtures>/typescript/code/modules/exports.ts:42:7:42:12:Logger",
+      "name": "Logger",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/modules/exports.ts",
+        "start_line": 42,
+        "start_column": 7,
+        "end_line": 42,
+        "end_column": 12
+      },
+      "defining_scope_id": "module:<fixtures>/typescript/code/modules/exports.ts:1:1:59:0",
+      "generics": [],
+      "extends": [],
+      "is_exported": true,
+      "export": {
+        "is_reexport": false
+      },
+      "methods": [
+        {
+          "kind": "method",
+          "defining_scope_id": "class:<fixtures>/typescript/code/modules/exports.ts:42:14:46:1",
+          "symbol_id": "method:<fixtures>/typescript/code/modules/exports.ts:43:3:43:5:log",
+          "name": "log",
+          "location": {
+            "file_path": "<fixtures>/typescript/code/modules/exports.ts",
+            "start_line": 43,
+            "start_column": 3,
+            "end_line": 43,
+            "end_column": 5
+          },
+          "abstract": false,
+          "static": false,
+          "async": false,
+          "return_type": "void",
+          "generics": [],
+          "parameters": [
+            {
+              "kind": "parameter",
+              "defining_scope_id": "method:<fixtures>/typescript/code/modules/exports.ts:43:6:45:3",
+              "symbol_id": "parameter:<fixtures>/typescript/code/modules/exports.ts:43:7:43:13:message",
+              "name": "message",
+              "location": {
+                "file_path": "<fixtures>/typescript/code/modules/exports.ts",
+                "start_line": 43,
+                "start_column": 7,
+                "end_line": 43,
+                "end_column": 13
+              },
+              "type": "string",
+              "optional": false
+            }
+          ],
+          "body_scope_id": "method:<fixtures>/typescript/code/modules/exports.ts:43:6:45:3"
+        }
+      ],
+      "properties": [],
+      "decorators": []
+    },
+    "class:<fixtures>/typescript/code/modules/exports.ts:52:22:52:32:Application": {
+      "kind": "class",
+      "symbol_id": "class:<fixtures>/typescript/code/modules/exports.ts:52:22:52:32:Application",
+      "name": "Application",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/modules/exports.ts",
+        "start_line": 52,
+        "start_column": 22,
+        "end_line": 52,
+        "end_column": 32
+      },
+      "defining_scope_id": "module:<fixtures>/typescript/code/modules/exports.ts:1:1:59:0",
+      "generics": [],
+      "extends": [],
+      "is_exported": true,
+      "export": {
+        "is_default": true
+      },
+      "methods": [
+        {
+          "kind": "method",
+          "defining_scope_id": "class:<fixtures>/typescript/code/modules/exports.ts:52:34:58:1",
+          "symbol_id": "method:<fixtures>/typescript/code/modules/exports.ts:55:3:55:7:start",
+          "name": "start",
+          "location": {
+            "file_path": "<fixtures>/typescript/code/modules/exports.ts",
+            "start_line": 55,
+            "start_column": 3,
+            "end_line": 55,
+            "end_column": 7
+          },
+          "abstract": false,
+          "static": false,
+          "async": false,
+          "return_type": "void",
+          "generics": [],
+          "parameters": [],
+          "body_scope_id": "method:<fixtures>/typescript/code/modules/exports.ts:55:8:57:3"
+        }
+      ],
+      "properties": [
+        {
+          "kind": "property",
+          "defining_scope_id": "constructor:<fixtures>/typescript/code/modules/exports.ts:53:14:53:40",
+          "symbol_id": "property:<fixtures>/typescript/code/modules/exports.ts:53:23:53:28:config",
+          "name": "config",
+          "location": {
+            "file_path": "<fixtures>/typescript/code/modules/exports.ts",
+            "start_line": 53,
+            "start_column": 23,
+            "end_line": 53,
+            "end_column": 28
+          },
+          "access_modifier": "private",
+          "static": false,
+          "readonly": false,
+          "abstract": false,
+          "type": "Config",
+          "decorators": []
+        }
+      ],
+      "constructors": [
+        {
+          "kind": "constructor",
+          "defining_scope_id": "class:<fixtures>/typescript/code/modules/exports.ts:52:34:58:1",
+          "symbol_id": "method:<fixtures>/typescript/code/modules/exports.ts:53:3:53:13:constructor",
+          "name": "constructor",
+          "location": {
+            "file_path": "<fixtures>/typescript/code/modules/exports.ts",
+            "start_line": 53,
+            "start_column": 3,
+            "end_line": 53,
+            "end_column": 13
+          },
+          "parameters": [
+            {
+              "kind": "parameter",
+              "defining_scope_id": "constructor:<fixtures>/typescript/code/modules/exports.ts:53:14:53:40",
+              "symbol_id": "parameter:<fixtures>/typescript/code/modules/exports.ts:53:23:53:28:config",
+              "name": "config",
+              "location": {
+                "file_path": "<fixtures>/typescript/code/modules/exports.ts",
+                "start_line": 53,
+                "start_column": 23,
+                "end_line": 53,
+                "end_column": 28
+              },
+              "type": "Config",
+              "optional": false
+            }
+          ],
+          "body_scope_id": "method:<fixtures>/typescript/code/modules/exports.ts:53:14:53:40"
+        }
+      ],
+      "decorators": []
+    }
+  },
+  "variables": {
+    "variable:<fixtures>/typescript/code/modules/exports.ts:7:14:7:20:API_URL": {
+      "kind": "constant",
+      "symbol_id": "variable:<fixtures>/typescript/code/modules/exports.ts:7:14:7:20:API_URL",
+      "name": "API_URL",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/modules/exports.ts",
+        "start_line": 7,
+        "start_column": 14,
+        "end_line": 7,
+        "end_column": 20
+      },
+      "defining_scope_id": "module:<fixtures>/typescript/code/modules/exports.ts:1:1:59:0",
+      "is_exported": true,
+      "initial_value": "\"https://api.example.com\""
+    },
+    "variable:<fixtures>/typescript/code/modules/exports.ts:8:14:8:24:API_VERSION": {
+      "kind": "constant",
+      "symbol_id": "variable:<fixtures>/typescript/code/modules/exports.ts:8:14:8:24:API_VERSION",
+      "name": "API_VERSION",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/modules/exports.ts",
+        "start_line": 8,
+        "start_column": 14,
+        "end_line": 8,
+        "end_column": 24
+      },
+      "defining_scope_id": "module:<fixtures>/typescript/code/modules/exports.ts:1:1:59:0",
+      "is_exported": true,
+      "initial_value": "\"v1\""
+    },
+    "variable:<fixtures>/typescript/code/modules/exports.ts:35:7:35:16:SECRET_KEY": {
+      "kind": "constant",
+      "symbol_id": "variable:<fixtures>/typescript/code/modules/exports.ts:35:7:35:16:SECRET_KEY",
+      "name": "SECRET_KEY",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/modules/exports.ts",
+        "start_line": 35,
+        "start_column": 7,
+        "end_line": 35,
+        "end_column": 16
+      },
+      "defining_scope_id": "module:<fixtures>/typescript/code/modules/exports.ts:1:1:59:0",
+      "is_exported": true,
+      "initial_value": "\"secret\""
+    },
+    "variable:<fixtures>/typescript/code/modules/exports.ts:36:7:36:11:DEBUG": {
+      "kind": "constant",
+      "symbol_id": "variable:<fixtures>/typescript/code/modules/exports.ts:36:7:36:11:DEBUG",
+      "name": "DEBUG",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/modules/exports.ts",
+        "start_line": 36,
+        "start_column": 7,
+        "end_line": 36,
+        "end_column": 11
+      },
+      "defining_scope_id": "module:<fixtures>/typescript/code/modules/exports.ts:1:1:59:0",
+      "is_exported": true,
+      "initial_value": "false"
+    }
+  },
+  "interfaces": {
+    "interface:<fixtures>/typescript/code/modules/exports.ts:25:8:29:1:interface Config {\n  api_url: string;\n  timeout: number;\n  retries: number;\n}": {
+      "kind": "interface",
+      "symbol_id": "interface:<fixtures>/typescript/code/modules/exports.ts:25:8:29:1:interface Config {\n  api_url: string;\n  timeout: number;\n  retries: number;\n}",
+      "name": "interface Config {\n  api_url: string;\n  timeout: number;\n  retries: number;\n}",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/modules/exports.ts",
+        "start_line": 25,
+        "start_column": 8,
+        "end_line": 29,
+        "end_column": 1
+      },
+      "defining_scope_id": "module:<fixtures>/typescript/code/modules/exports.ts:1:1:59:0",
+      "is_exported": true,
+      "extends": [],
+      "methods": [],
+      "properties": []
+    },
+    "interface:<fixtures>/typescript/code/modules/exports.ts:25:18:25:23:Config": {
+      "kind": "interface",
+      "symbol_id": "interface:<fixtures>/typescript/code/modules/exports.ts:25:18:25:23:Config",
+      "name": "Config",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/modules/exports.ts",
+        "start_line": 25,
+        "start_column": 18,
+        "end_line": 25,
+        "end_column": 23
+      },
+      "defining_scope_id": "module:<fixtures>/typescript/code/modules/exports.ts:1:1:59:0",
+      "is_exported": true,
+      "extends": [],
+      "methods": [],
+      "properties": [
+        {
+          "kind": "property",
+          "symbol_id": "property:<fixtures>/typescript/code/modules/exports.ts:26:3:26:9:api_url",
+          "name": "api_url",
+          "type": "string",
+          "defining_scope_id": "class:<fixtures>/typescript/code/modules/exports.ts:25:25:29:1",
+          "location": {
+            "file_path": "<fixtures>/typescript/code/modules/exports.ts",
+            "start_line": 26,
+            "start_column": 3,
+            "end_line": 26,
+            "end_column": 9
+          },
+          "decorators": []
+        },
+        {
+          "kind": "property",
+          "symbol_id": "property:<fixtures>/typescript/code/modules/exports.ts:27:3:27:9:timeout",
+          "name": "timeout",
+          "type": "number",
+          "defining_scope_id": "class:<fixtures>/typescript/code/modules/exports.ts:25:25:29:1",
+          "location": {
+            "file_path": "<fixtures>/typescript/code/modules/exports.ts",
+            "start_line": 27,
+            "start_column": 3,
+            "end_line": 27,
+            "end_column": 9
+          },
+          "decorators": []
+        },
+        {
+          "kind": "property",
+          "symbol_id": "property:<fixtures>/typescript/code/modules/exports.ts:28:3:28:9:retries",
+          "name": "retries",
+          "type": "number",
+          "defining_scope_id": "class:<fixtures>/typescript/code/modules/exports.ts:25:25:29:1",
+          "location": {
+            "file_path": "<fixtures>/typescript/code/modules/exports.ts",
+            "start_line": 28,
+            "start_column": 3,
+            "end_line": 28,
+            "end_column": 9
+          },
+          "decorators": []
+        }
+      ]
+    }
+  },
+  "enums": {},
+  "namespaces": {},
+  "types": {
+    "type:<fixtures>/typescript/code/modules/exports.ts:32:8:32:62:type RequestMethod = \"GET\" | \"POST\" | \"PUT\" | \"DELETE\";": {
+      "kind": "type_alias",
+      "symbol_id": "type:<fixtures>/typescript/code/modules/exports.ts:32:8:32:62:type RequestMethod = \"GET\" | \"POST\" | \"PUT\" | \"DELETE\";",
+      "name": "type RequestMethod = \"GET\" | \"POST\" | \"PUT\" | \"DELETE\";",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/modules/exports.ts",
+        "start_line": 32,
+        "start_column": 8,
+        "end_line": 32,
+        "end_column": 62
+      },
+      "scope_id": "module:<fixtures>/typescript/code/modules/exports.ts:1:1:59:0",
+      "is_exported": true,
+      "generics": [],
+      "defining_scope_id": "module:<fixtures>/typescript/code/modules/exports.ts:1:1:59:0"
+    },
+    "type:<fixtures>/typescript/code/modules/exports.ts:32:13:32:25:RequestMethod": {
+      "kind": "type_alias",
+      "symbol_id": "type:<fixtures>/typescript/code/modules/exports.ts:32:13:32:25:RequestMethod",
+      "name": "RequestMethod",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/modules/exports.ts",
+        "start_line": 32,
+        "start_column": 13,
+        "end_line": 32,
+        "end_column": 25
+      },
+      "scope_id": "module:<fixtures>/typescript/code/modules/exports.ts:1:1:59:0",
+      "is_exported": true,
+      "type_expression": "\"GET\" | \"POST\" | \"PUT\" | \"DELETE\"",
+      "generics": [],
+      "defining_scope_id": "module:<fixtures>/typescript/code/modules/exports.ts:1:1:59:0"
+    }
+  },
+  "imported_symbols": {},
+  "references": [
+    {
+      "kind": "assignment",
+      "name": "API_URL = \"https://api.example.com\"",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/modules/exports.ts",
+        "start_line": 7,
+        "start_column": 14,
+        "end_line": 7,
+        "end_column": 48
+      },
+      "scope_id": "module:<fixtures>/typescript/code/modules/exports.ts:1:1:59:0",
+      "target_location": {
+        "file_path": "<fixtures>/typescript/code/modules/exports.ts",
+        "start_line": 7,
+        "start_column": 14,
+        "end_line": 7,
+        "end_column": 48
+      }
+    },
+    {
+      "kind": "assignment",
+      "name": "API_URL",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/modules/exports.ts",
+        "start_line": 7,
+        "start_column": 14,
+        "end_line": 7,
+        "end_column": 20
+      },
+      "scope_id": "module:<fixtures>/typescript/code/modules/exports.ts:1:1:59:0",
+      "target_location": {
+        "file_path": "<fixtures>/typescript/code/modules/exports.ts",
+        "start_line": 7,
+        "start_column": 14,
+        "end_line": 7,
+        "end_column": 20
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "API_URL",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/modules/exports.ts",
+        "start_line": 7,
+        "start_column": 14,
+        "end_line": 7,
+        "end_column": 20
+      },
+      "scope_id": "module:<fixtures>/typescript/code/modules/exports.ts:1:1:59:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "assignment",
+      "name": "\"https://api.example.com\"",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/modules/exports.ts",
+        "start_line": 7,
+        "start_column": 24,
+        "end_line": 7,
+        "end_column": 48
+      },
+      "scope_id": "module:<fixtures>/typescript/code/modules/exports.ts:1:1:59:0",
+      "target_location": {
+        "file_path": "<fixtures>/typescript/code/modules/exports.ts",
+        "start_line": 7,
+        "start_column": 14,
+        "end_line": 7,
+        "end_column": 20
+      }
+    },
+    {
+      "kind": "assignment",
+      "name": "API_VERSION = \"v1\"",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/modules/exports.ts",
+        "start_line": 8,
+        "start_column": 14,
+        "end_line": 8,
+        "end_column": 31
+      },
+      "scope_id": "module:<fixtures>/typescript/code/modules/exports.ts:1:1:59:0",
+      "target_location": {
+        "file_path": "<fixtures>/typescript/code/modules/exports.ts",
+        "start_line": 8,
+        "start_column": 14,
+        "end_line": 8,
+        "end_column": 31
+      }
+    },
+    {
+      "kind": "assignment",
+      "name": "API_VERSION",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/modules/exports.ts",
+        "start_line": 8,
+        "start_column": 14,
+        "end_line": 8,
+        "end_column": 24
+      },
+      "scope_id": "module:<fixtures>/typescript/code/modules/exports.ts:1:1:59:0",
+      "target_location": {
+        "file_path": "<fixtures>/typescript/code/modules/exports.ts",
+        "start_line": 8,
+        "start_column": 14,
+        "end_line": 8,
+        "end_column": 24
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "API_VERSION",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/modules/exports.ts",
+        "start_line": 8,
+        "start_column": 14,
+        "end_line": 8,
+        "end_column": 24
+      },
+      "scope_id": "module:<fixtures>/typescript/code/modules/exports.ts:1:1:59:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "assignment",
+      "name": "\"v1\"",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/modules/exports.ts",
+        "start_line": 8,
+        "start_column": 28,
+        "end_line": 8,
+        "end_column": 31
+      },
+      "scope_id": "module:<fixtures>/typescript/code/modules/exports.ts:1:1:59:0",
+      "target_location": {
+        "file_path": "<fixtures>/typescript/code/modules/exports.ts",
+        "start_line": 8,
+        "start_column": 14,
+        "end_line": 8,
+        "end_column": 24
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "format_date",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/modules/exports.ts",
+        "start_line": 11,
+        "start_column": 17,
+        "end_line": 11,
+        "end_column": 27
+      },
+      "scope_id": "module:<fixtures>/typescript/code/modules/exports.ts:1:1:59:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "date",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/modules/exports.ts",
+        "start_line": 11,
+        "start_column": 29,
+        "end_line": 11,
+        "end_column": 32
+      },
+      "scope_id": "function:<fixtures>/typescript/code/modules/exports.ts:11:28:13:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "type_reference",
+      "name": "Date",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/modules/exports.ts",
+        "start_line": 11,
+        "start_column": 35,
+        "end_line": 11,
+        "end_column": 38
+      },
+      "scope_id": "function:<fixtures>/typescript/code/modules/exports.ts:11:28:13:1",
+      "type_context": "annotation",
+      "type_info": {
+        "type_id": "type:<fixtures>/typescript/code/modules/exports.ts:11:35:11:38:Date",
+        "type_name": "Date",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "return date.toISOString();",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/modules/exports.ts",
+        "start_line": 12,
+        "start_column": 3,
+        "end_line": 12,
+        "end_column": 28
+      },
+      "scope_id": "function:<fixtures>/typescript/code/modules/exports.ts:11:28:13:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "method_call",
+      "name": "toISOString",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/modules/exports.ts",
+        "start_line": 12,
+        "start_column": 10,
+        "end_line": 12,
+        "end_column": 27
+      },
+      "scope_id": "function:<fixtures>/typescript/code/modules/exports.ts:11:28:13:1",
+      "receiver_location": {
+        "file_path": "<fixtures>/typescript/code/modules/exports.ts",
+        "start_line": 12,
+        "start_column": 10,
+        "end_line": 12,
+        "end_column": 13
+      },
+      "property_chain": [
+        "date",
+        "toISOString"
+      ],
+      "optional_chaining": false
+    },
+    {
+      "kind": "variable_reference",
+      "name": "date",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/modules/exports.ts",
+        "start_line": 12,
+        "start_column": 10,
+        "end_line": 12,
+        "end_column": 13
+      },
+      "scope_id": "function:<fixtures>/typescript/code/modules/exports.ts:11:28:13:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "property_access",
+      "name": "toISOString",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/modules/exports.ts",
+        "start_line": 12,
+        "start_column": 10,
+        "end_line": 12,
+        "end_column": 25
+      },
+      "scope_id": "function:<fixtures>/typescript/code/modules/exports.ts:11:28:13:1",
+      "receiver_location": {
+        "file_path": "<fixtures>/typescript/code/modules/exports.ts",
+        "start_line": 12,
+        "start_column": 10,
+        "end_line": 12,
+        "end_column": 13
+      },
+      "property_chain": [
+        "date",
+        "toISOString"
+      ],
+      "access_type": "property",
+      "is_optional_chain": false
+    },
+    {
+      "kind": "variable_reference",
+      "name": "date",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/modules/exports.ts",
+        "start_line": 12,
+        "start_column": 10,
+        "end_line": 12,
+        "end_column": 13
+      },
+      "scope_id": "function:<fixtures>/typescript/code/modules/exports.ts:11:28:13:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "property_access",
+      "name": "toISOString",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/modules/exports.ts",
+        "start_line": 12,
+        "start_column": 10,
+        "end_line": 12,
+        "end_column": 25
+      },
+      "scope_id": "function:<fixtures>/typescript/code/modules/exports.ts:11:28:13:1",
+      "receiver_location": {
+        "file_path": "<fixtures>/typescript/code/modules/exports.ts",
+        "start_line": 12,
+        "start_column": 10,
+        "end_line": 12,
+        "end_column": 13
+      },
+      "property_chain": [
+        "date",
+        "toISOString"
+      ],
+      "access_type": "property",
+      "is_optional_chain": false
+    },
+    {
+      "kind": "variable_reference",
+      "name": "date",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/modules/exports.ts",
+        "start_line": 12,
+        "start_column": 10,
+        "end_line": 12,
+        "end_column": 13
+      },
+      "scope_id": "function:<fixtures>/typescript/code/modules/exports.ts:11:28:13:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "method_call",
+      "name": "toISOString",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/modules/exports.ts",
+        "start_line": 12,
+        "start_column": 10,
+        "end_line": 12,
+        "end_column": 27
+      },
+      "scope_id": "function:<fixtures>/typescript/code/modules/exports.ts:11:28:13:1",
+      "receiver_location": {
+        "file_path": "<fixtures>/typescript/code/modules/exports.ts",
+        "start_line": 12,
+        "start_column": 10,
+        "end_line": 12,
+        "end_column": 13
+      },
+      "property_chain": [
+        "date",
+        "toISOString"
+      ],
+      "optional_chaining": false
+    },
+    {
+      "kind": "variable_reference",
+      "name": "date",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/modules/exports.ts",
+        "start_line": 12,
+        "start_column": 10,
+        "end_line": 12,
+        "end_column": 13
+      },
+      "scope_id": "function:<fixtures>/typescript/code/modules/exports.ts:11:28:13:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "date.toISOString()",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/modules/exports.ts",
+        "start_line": 12,
+        "start_column": 10,
+        "end_line": 12,
+        "end_column": 27
+      },
+      "scope_id": "function:<fixtures>/typescript/code/modules/exports.ts:11:28:13:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "date",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/modules/exports.ts",
+        "start_line": 12,
+        "start_column": 10,
+        "end_line": 12,
+        "end_column": 13
+      },
+      "scope_id": "function:<fixtures>/typescript/code/modules/exports.ts:11:28:13:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "toISOString",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/modules/exports.ts",
+        "start_line": 12,
+        "start_column": 15,
+        "end_line": 12,
+        "end_column": 25
+      },
+      "scope_id": "function:<fixtures>/typescript/code/modules/exports.ts:11:28:13:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "toISOString",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/modules/exports.ts",
+        "start_line": 12,
+        "start_column": 15,
+        "end_line": 12,
+        "end_column": 25
+      },
+      "scope_id": "function:<fixtures>/typescript/code/modules/exports.ts:11:28:13:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "type_reference",
+      "name": "HttpClient",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/modules/exports.ts",
+        "start_line": 16,
+        "start_column": 14,
+        "end_line": 16,
+        "end_column": 23
+      },
+      "scope_id": "module:<fixtures>/typescript/code/modules/exports.ts:1:1:59:0",
+      "type_context": "annotation",
+      "type_info": {
+        "type_id": "type:<fixtures>/typescript/code/modules/exports.ts:16:14:16:23:HttpClient",
+        "type_name": "HttpClient",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "base_url",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/modules/exports.ts",
+        "start_line": 17,
+        "start_column": 23,
+        "end_line": 17,
+        "end_column": 30
+      },
+      "scope_id": "constructor:<fixtures>/typescript/code/modules/exports.ts:17:14:17:42",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "path",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/modules/exports.ts",
+        "start_line": 19,
+        "start_column": 13,
+        "end_line": 19,
+        "end_column": 16
+      },
+      "scope_id": "method:<fixtures>/typescript/code/modules/exports.ts:19:12:21:3",
+      "access_type": "read"
+    },
+    {
+      "kind": "type_reference",
+      "name": "Promise",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/modules/exports.ts",
+        "start_line": 19,
+        "start_column": 28,
+        "end_line": 19,
+        "end_column": 34
+      },
+      "scope_id": "method:<fixtures>/typescript/code/modules/exports.ts:19:12:21:3",
+      "type_context": "annotation",
+      "type_info": {
+        "type_id": "type:<fixtures>/typescript/code/modules/exports.ts:19:28:19:34:Promise",
+        "type_name": "Promise",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "kind": "type_reference",
+      "name": "Promise",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/modules/exports.ts",
+        "start_line": 19,
+        "start_column": 28,
+        "end_line": 19,
+        "end_column": 34
+      },
+      "scope_id": "method:<fixtures>/typescript/code/modules/exports.ts:19:12:21:3",
+      "type_context": "annotation",
+      "type_info": {
+        "type_id": "type:<fixtures>/typescript/code/modules/exports.ts:19:28:19:34:Promise",
+        "type_name": "Promise",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "return fetch(`${this.baseUrl}${path}`);",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/modules/exports.ts",
+        "start_line": 20,
+        "start_column": 5,
+        "end_line": 20,
+        "end_column": 43
+      },
+      "scope_id": "method:<fixtures>/typescript/code/modules/exports.ts:19:12:21:3",
+      "access_type": "read"
+    },
+    {
+      "kind": "function_call",
+      "name": "fetch",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/modules/exports.ts",
+        "start_line": 20,
+        "start_column": 12,
+        "end_line": 20,
+        "end_column": 16
+      },
+      "scope_id": "method:<fixtures>/typescript/code/modules/exports.ts:19:12:21:3"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "fetch",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/modules/exports.ts",
+        "start_line": 20,
+        "start_column": 12,
+        "end_line": 20,
+        "end_column": 42
+      },
+      "scope_id": "method:<fixtures>/typescript/code/modules/exports.ts:19:12:21:3",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "fetch",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/modules/exports.ts",
+        "start_line": 20,
+        "start_column": 12,
+        "end_line": 20,
+        "end_column": 16
+      },
+      "scope_id": "method:<fixtures>/typescript/code/modules/exports.ts:19:12:21:3",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "this",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/modules/exports.ts",
+        "start_line": 20,
+        "start_column": 21,
+        "end_line": 20,
+        "end_column": 24
+      },
+      "scope_id": "method:<fixtures>/typescript/code/modules/exports.ts:19:12:21:3",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "path",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/modules/exports.ts",
+        "start_line": 20,
+        "start_column": 36,
+        "end_line": 20,
+        "end_column": 39
+      },
+      "scope_id": "method:<fixtures>/typescript/code/modules/exports.ts:19:12:21:3",
+      "access_type": "read"
+    },
+    {
+      "kind": "type_reference",
+      "name": "Config",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/modules/exports.ts",
+        "start_line": 25,
+        "start_column": 18,
+        "end_line": 25,
+        "end_column": 23
+      },
+      "scope_id": "module:<fixtures>/typescript/code/modules/exports.ts:1:1:59:0",
+      "type_context": "annotation",
+      "type_info": {
+        "type_id": "type:<fixtures>/typescript/code/modules/exports.ts:25:18:25:23:Config",
+        "type_name": "Config",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "kind": "type_reference",
+      "name": "RequestMethod",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/modules/exports.ts",
+        "start_line": 32,
+        "start_column": 13,
+        "end_line": 32,
+        "end_column": 25
+      },
+      "scope_id": "module:<fixtures>/typescript/code/modules/exports.ts:1:1:59:0",
+      "type_context": "annotation",
+      "type_info": {
+        "type_id": "type:<fixtures>/typescript/code/modules/exports.ts:32:13:32:25:RequestMethod",
+        "type_name": "RequestMethod",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "kind": "assignment",
+      "name": "SECRET_KEY = \"secret\"",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/modules/exports.ts",
+        "start_line": 35,
+        "start_column": 7,
+        "end_line": 35,
+        "end_column": 27
+      },
+      "scope_id": "module:<fixtures>/typescript/code/modules/exports.ts:1:1:59:0",
+      "target_location": {
+        "file_path": "<fixtures>/typescript/code/modules/exports.ts",
+        "start_line": 35,
+        "start_column": 7,
+        "end_line": 35,
+        "end_column": 27
+      }
+    },
+    {
+      "kind": "assignment",
+      "name": "SECRET_KEY",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/modules/exports.ts",
+        "start_line": 35,
+        "start_column": 7,
+        "end_line": 35,
+        "end_column": 16
+      },
+      "scope_id": "module:<fixtures>/typescript/code/modules/exports.ts:1:1:59:0",
+      "target_location": {
+        "file_path": "<fixtures>/typescript/code/modules/exports.ts",
+        "start_line": 35,
+        "start_column": 7,
+        "end_line": 35,
+        "end_column": 16
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "SECRET_KEY",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/modules/exports.ts",
+        "start_line": 35,
+        "start_column": 7,
+        "end_line": 35,
+        "end_column": 16
+      },
+      "scope_id": "module:<fixtures>/typescript/code/modules/exports.ts:1:1:59:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "assignment",
+      "name": "\"secret\"",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/modules/exports.ts",
+        "start_line": 35,
+        "start_column": 20,
+        "end_line": 35,
+        "end_column": 27
+      },
+      "scope_id": "module:<fixtures>/typescript/code/modules/exports.ts:1:1:59:0",
+      "target_location": {
+        "file_path": "<fixtures>/typescript/code/modules/exports.ts",
+        "start_line": 35,
+        "start_column": 7,
+        "end_line": 35,
+        "end_column": 16
+      }
+    },
+    {
+      "kind": "assignment",
+      "name": "DEBUG = false",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/modules/exports.ts",
+        "start_line": 36,
+        "start_column": 7,
+        "end_line": 36,
+        "end_column": 19
+      },
+      "scope_id": "module:<fixtures>/typescript/code/modules/exports.ts:1:1:59:0",
+      "target_location": {
+        "file_path": "<fixtures>/typescript/code/modules/exports.ts",
+        "start_line": 36,
+        "start_column": 7,
+        "end_line": 36,
+        "end_column": 19
+      }
+    },
+    {
+      "kind": "assignment",
+      "name": "DEBUG",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/modules/exports.ts",
+        "start_line": 36,
+        "start_column": 7,
+        "end_line": 36,
+        "end_column": 11
+      },
+      "scope_id": "module:<fixtures>/typescript/code/modules/exports.ts:1:1:59:0",
+      "target_location": {
+        "file_path": "<fixtures>/typescript/code/modules/exports.ts",
+        "start_line": 36,
+        "start_column": 7,
+        "end_line": 36,
+        "end_column": 11
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "DEBUG",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/modules/exports.ts",
+        "start_line": 36,
+        "start_column": 7,
+        "end_line": 36,
+        "end_column": 11
+      },
+      "scope_id": "module:<fixtures>/typescript/code/modules/exports.ts:1:1:59:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "assignment",
+      "name": "false",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/modules/exports.ts",
+        "start_line": 36,
+        "start_column": 15,
+        "end_line": 36,
+        "end_column": 19
+      },
+      "scope_id": "module:<fixtures>/typescript/code/modules/exports.ts:1:1:59:0",
+      "target_location": {
+        "file_path": "<fixtures>/typescript/code/modules/exports.ts",
+        "start_line": 36,
+        "start_column": 7,
+        "end_line": 36,
+        "end_column": 11
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "validate_config",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/modules/exports.ts",
+        "start_line": 38,
+        "start_column": 10,
+        "end_line": 38,
+        "end_column": 24
+      },
+      "scope_id": "module:<fixtures>/typescript/code/modules/exports.ts:1:1:59:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "config",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/modules/exports.ts",
+        "start_line": 38,
+        "start_column": 26,
+        "end_line": 38,
+        "end_column": 31
+      },
+      "scope_id": "function:<fixtures>/typescript/code/modules/exports.ts:38:25:40:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "type_reference",
+      "name": "Config",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/modules/exports.ts",
+        "start_line": 38,
+        "start_column": 34,
+        "end_line": 38,
+        "end_column": 39
+      },
+      "scope_id": "function:<fixtures>/typescript/code/modules/exports.ts:38:25:40:1",
+      "type_context": "annotation",
+      "type_info": {
+        "type_id": "type:<fixtures>/typescript/code/modules/exports.ts:38:34:38:39:Config",
+        "type_name": "Config",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "return config.timeout > 0 && config.retries >= 0;",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/modules/exports.ts",
+        "start_line": 39,
+        "start_column": 3,
+        "end_line": 39,
+        "end_column": 51
+      },
+      "scope_id": "function:<fixtures>/typescript/code/modules/exports.ts:38:25:40:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "property_access",
+      "name": "timeout",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/modules/exports.ts",
+        "start_line": 39,
+        "start_column": 10,
+        "end_line": 39,
+        "end_column": 23
+      },
+      "scope_id": "function:<fixtures>/typescript/code/modules/exports.ts:38:25:40:1",
+      "receiver_location": {
+        "file_path": "<fixtures>/typescript/code/modules/exports.ts",
+        "start_line": 39,
+        "start_column": 10,
+        "end_line": 39,
+        "end_column": 15
+      },
+      "property_chain": [
+        "config",
+        "timeout"
+      ],
+      "access_type": "property",
+      "is_optional_chain": false
+    },
+    {
+      "kind": "variable_reference",
+      "name": "config",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/modules/exports.ts",
+        "start_line": 39,
+        "start_column": 10,
+        "end_line": 39,
+        "end_column": 15
+      },
+      "scope_id": "function:<fixtures>/typescript/code/modules/exports.ts:38:25:40:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "property_access",
+      "name": "timeout",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/modules/exports.ts",
+        "start_line": 39,
+        "start_column": 10,
+        "end_line": 39,
+        "end_column": 23
+      },
+      "scope_id": "function:<fixtures>/typescript/code/modules/exports.ts:38:25:40:1",
+      "receiver_location": {
+        "file_path": "<fixtures>/typescript/code/modules/exports.ts",
+        "start_line": 39,
+        "start_column": 10,
+        "end_line": 39,
+        "end_column": 15
+      },
+      "property_chain": [
+        "config",
+        "timeout"
+      ],
+      "access_type": "property",
+      "is_optional_chain": false
+    },
+    {
+      "kind": "variable_reference",
+      "name": "config",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/modules/exports.ts",
+        "start_line": 39,
+        "start_column": 10,
+        "end_line": 39,
+        "end_column": 15
+      },
+      "scope_id": "function:<fixtures>/typescript/code/modules/exports.ts:38:25:40:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "config.timeout > 0 && config.retries >= 0",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/modules/exports.ts",
+        "start_line": 39,
+        "start_column": 10,
+        "end_line": 39,
+        "end_column": 50
+      },
+      "scope_id": "function:<fixtures>/typescript/code/modules/exports.ts:38:25:40:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "config",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/modules/exports.ts",
+        "start_line": 39,
+        "start_column": 10,
+        "end_line": 39,
+        "end_column": 15
+      },
+      "scope_id": "function:<fixtures>/typescript/code/modules/exports.ts:38:25:40:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "timeout",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/modules/exports.ts",
+        "start_line": 39,
+        "start_column": 17,
+        "end_line": 39,
+        "end_column": 23
+      },
+      "scope_id": "function:<fixtures>/typescript/code/modules/exports.ts:38:25:40:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "timeout",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/modules/exports.ts",
+        "start_line": 39,
+        "start_column": 17,
+        "end_line": 39,
+        "end_column": 23
+      },
+      "scope_id": "function:<fixtures>/typescript/code/modules/exports.ts:38:25:40:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "property_access",
+      "name": "retries",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/modules/exports.ts",
+        "start_line": 39,
+        "start_column": 32,
+        "end_line": 39,
+        "end_column": 45
+      },
+      "scope_id": "function:<fixtures>/typescript/code/modules/exports.ts:38:25:40:1",
+      "receiver_location": {
+        "file_path": "<fixtures>/typescript/code/modules/exports.ts",
+        "start_line": 39,
+        "start_column": 32,
+        "end_line": 39,
+        "end_column": 37
+      },
+      "property_chain": [
+        "config",
+        "retries"
+      ],
+      "access_type": "property",
+      "is_optional_chain": false
+    },
+    {
+      "kind": "variable_reference",
+      "name": "config",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/modules/exports.ts",
+        "start_line": 39,
+        "start_column": 32,
+        "end_line": 39,
+        "end_column": 37
+      },
+      "scope_id": "function:<fixtures>/typescript/code/modules/exports.ts:38:25:40:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "property_access",
+      "name": "retries",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/modules/exports.ts",
+        "start_line": 39,
+        "start_column": 32,
+        "end_line": 39,
+        "end_column": 45
+      },
+      "scope_id": "function:<fixtures>/typescript/code/modules/exports.ts:38:25:40:1",
+      "receiver_location": {
+        "file_path": "<fixtures>/typescript/code/modules/exports.ts",
+        "start_line": 39,
+        "start_column": 32,
+        "end_line": 39,
+        "end_column": 37
+      },
+      "property_chain": [
+        "config",
+        "retries"
+      ],
+      "access_type": "property",
+      "is_optional_chain": false
+    },
+    {
+      "kind": "variable_reference",
+      "name": "config",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/modules/exports.ts",
+        "start_line": 39,
+        "start_column": 32,
+        "end_line": 39,
+        "end_column": 37
+      },
+      "scope_id": "function:<fixtures>/typescript/code/modules/exports.ts:38:25:40:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "config",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/modules/exports.ts",
+        "start_line": 39,
+        "start_column": 32,
+        "end_line": 39,
+        "end_column": 37
+      },
+      "scope_id": "function:<fixtures>/typescript/code/modules/exports.ts:38:25:40:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "retries",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/modules/exports.ts",
+        "start_line": 39,
+        "start_column": 39,
+        "end_line": 39,
+        "end_column": 45
+      },
+      "scope_id": "function:<fixtures>/typescript/code/modules/exports.ts:38:25:40:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "retries",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/modules/exports.ts",
+        "start_line": 39,
+        "start_column": 39,
+        "end_line": 39,
+        "end_column": 45
+      },
+      "scope_id": "function:<fixtures>/typescript/code/modules/exports.ts:38:25:40:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "type_reference",
+      "name": "Logger",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/modules/exports.ts",
+        "start_line": 42,
+        "start_column": 7,
+        "end_line": 42,
+        "end_column": 12
+      },
+      "scope_id": "module:<fixtures>/typescript/code/modules/exports.ts:1:1:59:0",
+      "type_context": "annotation",
+      "type_info": {
+        "type_id": "type:<fixtures>/typescript/code/modules/exports.ts:42:7:42:12:Logger",
+        "type_name": "Logger",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "message",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/modules/exports.ts",
+        "start_line": 43,
+        "start_column": 7,
+        "end_line": 43,
+        "end_column": 13
+      },
+      "scope_id": "method:<fixtures>/typescript/code/modules/exports.ts:43:6:45:3",
+      "access_type": "read"
+    },
+    {
+      "kind": "method_call",
+      "name": "log",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/modules/exports.ts",
+        "start_line": 44,
+        "start_column": 5,
+        "end_line": 44,
+        "end_column": 24
+      },
+      "scope_id": "method:<fixtures>/typescript/code/modules/exports.ts:43:6:45:3",
+      "receiver_location": {
+        "file_path": "<fixtures>/typescript/code/modules/exports.ts",
+        "start_line": 44,
+        "start_column": 5,
+        "end_line": 44,
+        "end_column": 11
+      },
+      "property_chain": [
+        "console",
+        "log"
+      ],
+      "optional_chaining": false
+    },
+    {
+      "kind": "variable_reference",
+      "name": "console",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/modules/exports.ts",
+        "start_line": 44,
+        "start_column": 5,
+        "end_line": 44,
+        "end_column": 11
+      },
+      "scope_id": "method:<fixtures>/typescript/code/modules/exports.ts:43:6:45:3",
+      "access_type": "read"
+    },
+    {
+      "kind": "property_access",
+      "name": "log",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/modules/exports.ts",
+        "start_line": 44,
+        "start_column": 5,
+        "end_line": 44,
+        "end_column": 15
+      },
+      "scope_id": "method:<fixtures>/typescript/code/modules/exports.ts:43:6:45:3",
+      "receiver_location": {
+        "file_path": "<fixtures>/typescript/code/modules/exports.ts",
+        "start_line": 44,
+        "start_column": 5,
+        "end_line": 44,
+        "end_column": 11
+      },
+      "property_chain": [
+        "console",
+        "log"
+      ],
+      "access_type": "property",
+      "is_optional_chain": false
+    },
+    {
+      "kind": "variable_reference",
+      "name": "console",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/modules/exports.ts",
+        "start_line": 44,
+        "start_column": 5,
+        "end_line": 44,
+        "end_column": 11
+      },
+      "scope_id": "method:<fixtures>/typescript/code/modules/exports.ts:43:6:45:3",
+      "access_type": "read"
+    },
+    {
+      "kind": "property_access",
+      "name": "log",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/modules/exports.ts",
+        "start_line": 44,
+        "start_column": 5,
+        "end_line": 44,
+        "end_column": 15
+      },
+      "scope_id": "method:<fixtures>/typescript/code/modules/exports.ts:43:6:45:3",
+      "receiver_location": {
+        "file_path": "<fixtures>/typescript/code/modules/exports.ts",
+        "start_line": 44,
+        "start_column": 5,
+        "end_line": 44,
+        "end_column": 11
+      },
+      "property_chain": [
+        "console",
+        "log"
+      ],
+      "access_type": "property",
+      "is_optional_chain": false
+    },
+    {
+      "kind": "variable_reference",
+      "name": "console",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/modules/exports.ts",
+        "start_line": 44,
+        "start_column": 5,
+        "end_line": 44,
+        "end_column": 11
+      },
+      "scope_id": "method:<fixtures>/typescript/code/modules/exports.ts:43:6:45:3",
+      "access_type": "read"
+    },
+    {
+      "kind": "method_call",
+      "name": "log",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/modules/exports.ts",
+        "start_line": 44,
+        "start_column": 5,
+        "end_line": 44,
+        "end_column": 24
+      },
+      "scope_id": "method:<fixtures>/typescript/code/modules/exports.ts:43:6:45:3",
+      "receiver_location": {
+        "file_path": "<fixtures>/typescript/code/modules/exports.ts",
+        "start_line": 44,
+        "start_column": 5,
+        "end_line": 44,
+        "end_column": 11
+      },
+      "property_chain": [
+        "console",
+        "log"
+      ],
+      "optional_chaining": false
+    },
+    {
+      "kind": "variable_reference",
+      "name": "console",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/modules/exports.ts",
+        "start_line": 44,
+        "start_column": 5,
+        "end_line": 44,
+        "end_column": 11
+      },
+      "scope_id": "method:<fixtures>/typescript/code/modules/exports.ts:43:6:45:3",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "console",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/modules/exports.ts",
+        "start_line": 44,
+        "start_column": 5,
+        "end_line": 44,
+        "end_column": 11
+      },
+      "scope_id": "method:<fixtures>/typescript/code/modules/exports.ts:43:6:45:3",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "log",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/modules/exports.ts",
+        "start_line": 44,
+        "start_column": 13,
+        "end_line": 44,
+        "end_column": 15
+      },
+      "scope_id": "method:<fixtures>/typescript/code/modules/exports.ts:43:6:45:3",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "log",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/modules/exports.ts",
+        "start_line": 44,
+        "start_column": 13,
+        "end_line": 44,
+        "end_column": 15
+      },
+      "scope_id": "method:<fixtures>/typescript/code/modules/exports.ts:43:6:45:3",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "message",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/modules/exports.ts",
+        "start_line": 44,
+        "start_column": 17,
+        "end_line": 44,
+        "end_column": 23
+      },
+      "scope_id": "method:<fixtures>/typescript/code/modules/exports.ts:43:6:45:3",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "SECRET_KEY",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/modules/exports.ts",
+        "start_line": 49,
+        "start_column": 10,
+        "end_line": 49,
+        "end_column": 19
+      },
+      "scope_id": "module:<fixtures>/typescript/code/modules/exports.ts:1:1:59:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "DEBUG",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/modules/exports.ts",
+        "start_line": 49,
+        "start_column": 22,
+        "end_line": 49,
+        "end_column": 26
+      },
+      "scope_id": "module:<fixtures>/typescript/code/modules/exports.ts:1:1:59:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "validate_config",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/modules/exports.ts",
+        "start_line": 49,
+        "start_column": 29,
+        "end_line": 49,
+        "end_column": 43
+      },
+      "scope_id": "module:<fixtures>/typescript/code/modules/exports.ts:1:1:59:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "Logger",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/modules/exports.ts",
+        "start_line": 49,
+        "start_column": 46,
+        "end_line": 49,
+        "end_column": 51
+      },
+      "scope_id": "module:<fixtures>/typescript/code/modules/exports.ts:1:1:59:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "type_reference",
+      "name": "Application",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/modules/exports.ts",
+        "start_line": 52,
+        "start_column": 22,
+        "end_line": 52,
+        "end_column": 32
+      },
+      "scope_id": "module:<fixtures>/typescript/code/modules/exports.ts:1:1:59:0",
+      "type_context": "annotation",
+      "type_info": {
+        "type_id": "type:<fixtures>/typescript/code/modules/exports.ts:52:22:52:32:Application",
+        "type_name": "Application",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "config",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/modules/exports.ts",
+        "start_line": 53,
+        "start_column": 23,
+        "end_line": 53,
+        "end_column": 28
+      },
+      "scope_id": "constructor:<fixtures>/typescript/code/modules/exports.ts:53:14:53:40",
+      "access_type": "read"
+    },
+    {
+      "kind": "type_reference",
+      "name": "Config",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/modules/exports.ts",
+        "start_line": 53,
+        "start_column": 31,
+        "end_line": 53,
+        "end_column": 36
+      },
+      "scope_id": "constructor:<fixtures>/typescript/code/modules/exports.ts:53:14:53:40",
+      "type_context": "annotation",
+      "type_info": {
+        "type_id": "type:<fixtures>/typescript/code/modules/exports.ts:53:31:53:36:Config",
+        "type_name": "Config",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "kind": "method_call",
+      "name": "log",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/modules/exports.ts",
+        "start_line": 56,
+        "start_column": 5,
+        "end_line": 56,
+        "end_column": 38
+      },
+      "scope_id": "method:<fixtures>/typescript/code/modules/exports.ts:55:8:57:3",
+      "receiver_location": {
+        "file_path": "<fixtures>/typescript/code/modules/exports.ts",
+        "start_line": 56,
+        "start_column": 5,
+        "end_line": 56,
+        "end_column": 11
+      },
+      "property_chain": [
+        "console",
+        "log"
+      ],
+      "optional_chaining": false
+    },
+    {
+      "kind": "variable_reference",
+      "name": "console",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/modules/exports.ts",
+        "start_line": 56,
+        "start_column": 5,
+        "end_line": 56,
+        "end_column": 11
+      },
+      "scope_id": "method:<fixtures>/typescript/code/modules/exports.ts:55:8:57:3",
+      "access_type": "read"
+    },
+    {
+      "kind": "property_access",
+      "name": "log",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/modules/exports.ts",
+        "start_line": 56,
+        "start_column": 5,
+        "end_line": 56,
+        "end_column": 15
+      },
+      "scope_id": "method:<fixtures>/typescript/code/modules/exports.ts:55:8:57:3",
+      "receiver_location": {
+        "file_path": "<fixtures>/typescript/code/modules/exports.ts",
+        "start_line": 56,
+        "start_column": 5,
+        "end_line": 56,
+        "end_column": 11
+      },
+      "property_chain": [
+        "console",
+        "log"
+      ],
+      "access_type": "property",
+      "is_optional_chain": false
+    },
+    {
+      "kind": "variable_reference",
+      "name": "console",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/modules/exports.ts",
+        "start_line": 56,
+        "start_column": 5,
+        "end_line": 56,
+        "end_column": 11
+      },
+      "scope_id": "method:<fixtures>/typescript/code/modules/exports.ts:55:8:57:3",
+      "access_type": "read"
+    },
+    {
+      "kind": "property_access",
+      "name": "log",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/modules/exports.ts",
+        "start_line": 56,
+        "start_column": 5,
+        "end_line": 56,
+        "end_column": 15
+      },
+      "scope_id": "method:<fixtures>/typescript/code/modules/exports.ts:55:8:57:3",
+      "receiver_location": {
+        "file_path": "<fixtures>/typescript/code/modules/exports.ts",
+        "start_line": 56,
+        "start_column": 5,
+        "end_line": 56,
+        "end_column": 11
+      },
+      "property_chain": [
+        "console",
+        "log"
+      ],
+      "access_type": "property",
+      "is_optional_chain": false
+    },
+    {
+      "kind": "variable_reference",
+      "name": "console",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/modules/exports.ts",
+        "start_line": 56,
+        "start_column": 5,
+        "end_line": 56,
+        "end_column": 11
+      },
+      "scope_id": "method:<fixtures>/typescript/code/modules/exports.ts:55:8:57:3",
+      "access_type": "read"
+    },
+    {
+      "kind": "method_call",
+      "name": "log",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/modules/exports.ts",
+        "start_line": 56,
+        "start_column": 5,
+        "end_line": 56,
+        "end_column": 38
+      },
+      "scope_id": "method:<fixtures>/typescript/code/modules/exports.ts:55:8:57:3",
+      "receiver_location": {
+        "file_path": "<fixtures>/typescript/code/modules/exports.ts",
+        "start_line": 56,
+        "start_column": 5,
+        "end_line": 56,
+        "end_column": 11
+      },
+      "property_chain": [
+        "console",
+        "log"
+      ],
+      "optional_chaining": false
+    },
+    {
+      "kind": "variable_reference",
+      "name": "console",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/modules/exports.ts",
+        "start_line": 56,
+        "start_column": 5,
+        "end_line": 56,
+        "end_column": 11
+      },
+      "scope_id": "method:<fixtures>/typescript/code/modules/exports.ts:55:8:57:3",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "console",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/modules/exports.ts",
+        "start_line": 56,
+        "start_column": 5,
+        "end_line": 56,
+        "end_column": 11
+      },
+      "scope_id": "method:<fixtures>/typescript/code/modules/exports.ts:55:8:57:3",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "log",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/modules/exports.ts",
+        "start_line": 56,
+        "start_column": 13,
+        "end_line": 56,
+        "end_column": 15
+      },
+      "scope_id": "method:<fixtures>/typescript/code/modules/exports.ts:55:8:57:3",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "log",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/modules/exports.ts",
+        "start_line": 56,
+        "start_column": 13,
+        "end_line": 56,
+        "end_column": 15
+      },
+      "scope_id": "method:<fixtures>/typescript/code/modules/exports.ts:55:8:57:3",
+      "access_type": "read"
+    }
+  ]
+}
