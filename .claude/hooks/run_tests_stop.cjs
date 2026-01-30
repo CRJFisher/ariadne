@@ -2,7 +2,7 @@
 /**
  * Stop hook: Run all tests before allowing Claude to stop
  *
- * Runs `npm run test` and blocks Claude from stopping if tests fail.
+ * Runs `pnpm test` and blocks Claude from stopping if tests fail.
  * Skips if already running from a previous stop hook (prevents infinite loops).
  */
 /* eslint-disable no-undef */
@@ -25,8 +25,8 @@ function main() {
   const project_dir = process.env.CLAUDE_PROJECT_DIR || process.cwd();
 
   try {
-    log("Running npm run test...");
-    execSync("npm run test", {
+    log("Running pnpm test...");
+    execSync("pnpm test", {
       cwd: project_dir,
       stdio: ["ignore", "pipe", "pipe"],
       encoding: "utf8",

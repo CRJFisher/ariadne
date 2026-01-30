@@ -33,7 +33,7 @@ function main() {
   // Step 1: Run ESLint with --fix to auto-fix what it can
   log("Running ESLint --fix...");
   try {
-    execSync("npm run lint:fix", {
+    execSync("pnpm lint:fix", {
       cwd: project_dir,
       encoding: "utf8",
       stdio: ["pipe", "pipe", "pipe"]
@@ -47,7 +47,7 @@ function main() {
   // Step 2: Check for remaining ESLint errors/warnings after auto-fix
   log("Checking remaining ESLint issues...");
   try {
-    const output = execSync("npm run lint", {
+    const output = execSync("pnpm lint", {
       cwd: project_dir,
       encoding: "utf8",
       stdio: ["pipe", "pipe", "pipe"]
@@ -73,7 +73,7 @@ function main() {
   for (const pkg of packages) {
     log(`Running tsc --noEmit for ${pkg}...`);
     try {
-      execSync(`npx tsc --noEmit -p ${pkg}`, {
+      execSync(`pnpm exec tsc --noEmit -p ${pkg}`, {
         cwd: project_dir,
         encoding: "utf8",
         stdio: ["pipe", "pipe", "pipe"]

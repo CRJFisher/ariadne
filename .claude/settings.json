@@ -6,11 +6,11 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node .claude/hooks/file_naming_validator.cjs"
+            "command": "node \"$CLAUDE_PROJECT_DIR/.claude/hooks/file_naming_validator.cjs\""
           },
           {
             "type": "command",
-            "command": "node .claude/hooks/backlog_validator.cjs"
+            "command": "node \"$CLAUDE_PROJECT_DIR/.claude/hooks/backlog_validator.cjs\""
           }
         ]
       }
@@ -21,11 +21,11 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node .claude/hooks/eslint_post_edit.cjs"
+            "command": "node \"$CLAUDE_PROJECT_DIR/.claude/hooks/eslint_post_edit.cjs\""
           },
           {
             "type": "command",
-            "command": "node .claude/hooks/markdown_lint.cjs"
+            "command": "node \"$CLAUDE_PROJECT_DIR/.claude/hooks/markdown_lint.cjs\""
           }
         ]
       }
@@ -35,27 +35,27 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node .claude/hooks/build_stop.cjs"
+            "command": "node \"$CLAUDE_PROJECT_DIR/.claude/hooks/build_stop.cjs\""
           },
           {
             "type": "command",
-            "command": "node .claude/hooks/eslint_stop.cjs"
+            "command": "node \"$CLAUDE_PROJECT_DIR/.claude/hooks/eslint_stop.cjs\""
           },
           {
             "type": "command",
-            "command": "node .claude/hooks/file_naming_validator_stop.cjs"
+            "command": "node \"$CLAUDE_PROJECT_DIR/.claude/hooks/file_naming_validator_stop.cjs\""
           },
           {
             "type": "command",
-            "command": "node .claude/hooks/test_file_enforcement_stop.cjs"
+            "command": "node \"$CLAUDE_PROJECT_DIR/.claude/hooks/test_file_enforcement_stop.cjs\""
           },
           {
             "type": "command",
-            "command": "node .claude/hooks/run_tests_stop.cjs"
+            "command": "node \"$CLAUDE_PROJECT_DIR/.claude/hooks/run_tests_stop.cjs\""
           },
           {
             "type": "command",
-            "command": "npx tsx .claude/hooks/entrypoint_stop.ts"
+            "command": "pnpm exec tsx \"$CLAUDE_PROJECT_DIR/.claude/hooks/entrypoint_stop.ts\""
           }
         ]
       }

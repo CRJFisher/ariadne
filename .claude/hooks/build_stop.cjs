@@ -111,7 +111,7 @@ function main() {
   for (const pkg of build_list) {
     log(`Building ${pkg.dir}...`);
     try {
-      execSync(`npm run build -w ${pkg.workspace}`, {
+      execSync(`pnpm --filter ${pkg.workspace} build`, {
         cwd: project_dir,
         encoding: "utf8",
         stdio: ["pipe", "pipe", "pipe"],

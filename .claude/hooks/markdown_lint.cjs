@@ -29,7 +29,7 @@ function main() {
 
   try {
     // Run markdownlint on just this file
-    execSync(`npx markdownlint "${file_path}" --fix`, {
+    execSync(`pnpm exec markdownlint "${file_path}" --fix`, {
       cwd: project_dir,
       encoding: "utf8",
       timeout: 10000,

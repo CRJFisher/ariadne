@@ -13,8 +13,8 @@
   },
   "dependencies": {
     "@anthropic-ai/claude-agent-sdk": "*",
-    "@ariadnejs/core": "file:./packages/core",
-    "@ariadnejs/types": "file:./packages/types"
+    "@ariadnejs/core": "workspace:*",
+    "@ariadnejs/types": "workspace:*"
   },
   "devDependencies": {
     "@types/node": "^24.0.14",

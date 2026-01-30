@@ -8,19 +8,19 @@
     "packages/*"
   ],
   "scripts": {
-    "build": "npm run build -w @ariadnejs/types && npm run build -w @ariadnejs/core && npm run build -w @ariadnejs/mcp",
-    "typecheck": "npx tsc --noEmit -p packages/types/tsconfig.json && npx tsc --noEmit -p packages/core/tsconfig.json && npx tsc --noEmit -p packages/mcp/tsconfig.json && npx tsc --noEmit -p entrypoint-analysis/tsconfig.json",
-    "test": "npm run test --workspaces",
+    "build": "pnpm --filter @ariadnejs/types build && pnpm --filter @ariadnejs/core build && pnpm --filter @ariadnejs/mcp build",
+    "typecheck": "pnpm exec tsc --noEmit -p packages/types/tsconfig.json && pnpm exec tsc --noEmit -p packages/core/tsconfig.json && pnpm exec tsc --noEmit -p packages/mcp/tsconfig.json && pnpm exec tsc --noEmit -p entrypoint-analysis/tsconfig.json",
+    "test": "pnpm --filter './packages/*' test",
     "lint": "eslint 'packages/*/src/**/*.ts' 'packages/*/tests/**/*.ts' 'entrypoint-analysis/**/*.ts'",
     "lint:fix": "eslint --fix 'packages/*/src/**/*.ts' 'packages/*/tests/**/*.ts' 'entrypoint-analysis/**/*.ts'",
-    "clean": "npm run clean --workspaces && rm -rf node_modules",
+    "clean": "pnpm --filter './packages/*' clean && rm -rf node_modules",
     "changeset": "changeset",
     "version": "changeset version",
-    "release": "npm run build && changeset publish",
-    "prepublishOnly": "npm run build",
-    "check:size": "npx tsx scripts/check-file-sizes.ts",
-    "check:size:warn": "npx tsx scripts/check-file-sizes.ts || true",
-    "validate:captures": "npx tsx scripts/validate_captures.ts"
+    "release": "pnpm build && changeset publish",
+    "prepublishOnly": "pnpm build",
+    "check:size": "pnpm exec tsx scripts/check-file-sizes.ts",
+    "check:size:warn": "pnpm exec tsx scripts/check-file-sizes.ts || true",
+    "validate:captures": "pnpm exec tsx scripts/validate_captures.ts"
   },
   "devDependencies": {
     "@changesets/cli": "^2.27.1",

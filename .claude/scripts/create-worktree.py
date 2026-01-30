@@ -29,10 +29,6 @@ STATE_FILES: list[str] = [
 
 # Directories to symlink (shared across worktrees for speed)
 SHARED_ASSETS: list[str] = [
-    "node_modules",
-    "packages/types/node_modules",
-    "packages/core/node_modules",
-    "packages/mcp/node_modules",
     "dist",
     "coverage",
     ".cache",
@@ -147,6 +143,14 @@ def create_worktree(task_name: str, base_branch: str | None = None) -> Path:
             rel_src = os.path.relpath(src, dst.parent)
             dst.symlink_to(rel_src)
             print(f"  Symlinked: {shared_dir}")
+
+    # Install dependencies with pnpm (includes entrypoint-analysis via workspace)
+    print("  Installing dependencies with pnpm...")
+    subprocess.run(
+        ["pnpm", "install"],
+        check=True,
+        cwd=worktree_path
+    )
 
     # Handle port configuration
     if PORT_CONFIG["enabled"]:

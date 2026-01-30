@@ -22,28 +22,33 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node-version }}
-          
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
       - name: Install dependencies
-        run: npm ci
-        
+        run: pnpm install --frozen-lockfile
+
       - name: Build
-        run: npm run build
-        
+        run: pnpm build
+
       - name: Check file sizes
-        run: npm run check:size
-        
+        run: pnpm run check:size
+
       - name: Run tests
-        run: npm test
-        
+        run: pnpm test
+
       - name: Check packages
         run: |
-          npm pack --dry-run -w @ariadnejs/types
-          npm pack --dry-run -w @ariadnejs/core
-          npm pack --dry-run -w @ariadnejs/mcp
-          
+          pnpm --filter @ariadnejs/types pack --pack-destination /tmp
+          pnpm --filter @ariadnejs/core pack --pack-destination /tmp
+          pnpm --filter @ariadnejs/mcp pack --pack-destination /tmp
+
       - name: Self-analysis validation
         # Run validation but don't fail the build yet (accuracy improvements in progress)
         continue-on-error: true
         run: |
           echo "🔍 Running Ariadne self-analysis validation..."
-          npx tsx packages/core/agent-validation/ci-validation.ts || echo "⚠️ Validation thresholds not met (expected during development)"
+          pnpm exec tsx packages/core/agent-validation/ci-validation.ts || echo "⚠️ Validation thresholds not met (expected during development)"

@@ -46,7 +46,7 @@ function run_typescript_check(file_path, project_dir) {
 
   log(`Running tsc --noEmit for ${pkg}...`);
   try {
-    execSync(`npx tsc --noEmit -p ${pkg}`, {
+    execSync(`pnpm exec tsc --noEmit -p ${pkg}`, {
       cwd: project_dir,
       encoding: "utf8",
       stdio: ["pipe", "pipe", "pipe"]
@@ -92,7 +92,7 @@ function main() {
   // Step 1: Run ESLint with --fix to auto-fix what it can
   log(`Running ESLint --fix on ${file_path}...`);
   try {
-    execSync(`npx eslint "${file_path}" --fix`, {
+    execSync(`pnpm exec eslint "${file_path}" --fix`, {
       cwd: project_dir,
       encoding: "utf8",
       stdio: ["pipe", "pipe", "pipe"]
@@ -107,7 +107,7 @@ function main() {
   // (ESLint exits 0 when only warnings remain, so we must always run this check)
   log(`Checking remaining ESLint issues for ${file_path}...`);
   try {
-    const output = execSync(`npx eslint "${file_path}" --format stylish`, {
+    const output = execSync(`pnpm exec eslint "${file_path}" --format stylish`, {
       cwd: project_dir,
       encoding: "utf8",
       stdio: ["pipe", "pipe", "pipe"]
