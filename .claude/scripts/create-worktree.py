@@ -29,7 +29,6 @@ STATE_FILES: list[str] = [
 
 # Directories to symlink (shared across worktrees for speed)
 SHARED_ASSETS: list[str] = [
-    "dist",
     "coverage",
     ".cache",
 ]
@@ -148,6 +147,14 @@ def create_worktree(task_name: str, base_branch: str | None = None) -> Path:
     print("  Installing dependencies with pnpm...")
     subprocess.run(
         ["pnpm", "install"],
+        check=True,
+        cwd=worktree_path
+    )
+
+    # Build the project
+    print("  Building project with pnpm...")
+    subprocess.run(
+        ["pnpm", "build"],
         check=True,
         cwd=worktree_path
     )
