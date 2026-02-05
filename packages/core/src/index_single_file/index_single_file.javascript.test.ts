@@ -51,9 +51,9 @@ describe("Semantic Index - JavaScript", () => {
 
   describe("JavaScript fixtures", () => {
     const javascript_fixtures = [
-      "basic_function.js",
-      "class_and_methods.js",
-      "imports_exports.js",
+      "code/functions/basic_functions.js",
+      "code/classes/basic_class.js",
+      "code/modules/main_es6.js",
     ];
 
     for (const fixture of javascript_fixtures) {
@@ -72,7 +72,7 @@ describe("Semantic Index - JavaScript", () => {
         expect(captures.length).toBeGreaterThan(0);
         expect(captures.some((c) => c.name.includes("module"))).toBe(true);
 
-        if (fixture === "basic_function.js") {
+        if (fixture === "code/functions/basic_functions.js") {
           // Test with semantic index instead of raw captures
           const parsed_file = create_parsed_file(
             code,
@@ -108,7 +108,7 @@ describe("Semantic Index - JavaScript", () => {
           // receiver_location doesn't exist on FunctionCallReference
         }
 
-        if (fixture === "class_and_methods.js") {
+        if (fixture === "code/classes/basic_class.js") {
           // Test metadata population with semantic index
           const parsed_file = create_parsed_file(
             code,
@@ -157,7 +157,7 @@ describe("Semantic Index - JavaScript", () => {
           expect(get_species_call?.receiver_location).toBeDefined();
         }
 
-        if (fixture === "imports_exports.js") {
+        if (fixture === "code/modules/main_es6.js") {
           // Test with semantic index - imports and exports are handled through semantic index
           const parsed_file = create_parsed_file(
             code,
@@ -197,15 +197,15 @@ describe("Semantic Index - JavaScript", () => {
       });
     }
 
-    it("should correctly parse all export types from imports_exports fixture", () => {
+    it("should correctly parse all export types from main_es6 fixture", () => {
       const code = readFileSync(
-        join(FIXTURES_DIR, "javascript", "imports_exports.js"),
+        join(FIXTURES_DIR, "javascript", "code/modules/main_es6.js"),
         "utf8",
       );
       const tree = parser.parse(code);
       const parsed_file = create_parsed_file(
         code,
-        "imports_exports.js" as FilePath,
+        "code/modules/main_es6.js" as FilePath,
         tree,
         "javascript" as Language,
       );

@@ -11,17 +11,10 @@ dist/
 dist
 build/
 build
-*.js
-*.d.ts
-*.js.map
 *.tsbuildinfo
-!jest.config.js
-!eslint.config.js
-!scripts/*.js
-!scripts/*.sh
-!packages/*/scripts/*.js
+*.js.map
+*.d.ts
 !packages/types/**/*.d.ts
-!packages/types/**/*.js
 
 # IDE and editor files
 .vscode/*
@@ -48,6 +41,7 @@ coverage/
 
 # Claude AI specific
 .claude/settings.local.json
+.claude/worktrees.local.md
 CLAUDE.local.md
 .cursorrules
 
