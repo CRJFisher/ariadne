@@ -1878,4 +1878,79 @@ class Point:
       });
     });
   });
+
+  describe("Aliased Relative Import Handling", () => {
+    async function build_index_from_code(code: string) {
+      const tree = parser.parse(code);
+      const lines = code.split("\n");
+      const parsed_file = {
+        file_path: "test.py" as any,
+        file_lines: lines.length,
+        file_end_column: lines[lines.length - 1]?.length || 0,
+        tree,
+        lang: "python" as const,
+      };
+      return build_index_single_file(parsed_file, tree, "python");
+    }
+
+    it("should capture aliased relative import", async () => {
+      // Tests the fix for: from .module import foo as bar
+      const code = "from .module import foo as bar";
+      const index = await build_index_from_code(code);
+
+      const imports = Array.from(index.imported_symbols.values());
+      expect(imports).toHaveLength(1);
+
+      const import_def = imports[0];
+      expect(import_def.name).toBe("bar"); // Local name is the alias
+      expect(import_def.original_name).toBe("foo"); // Original name tracked
+      expect(import_def.import_path).toBe(".module");
+    });
+
+    it("should capture multiple aliased relative imports", async () => {
+      // Multiple aliased imports from relative module
+      const code = "from .module import foo as bar, baz as qux";
+      const index = await build_index_from_code(code);
+
+      const imports = Array.from(index.imported_symbols.values());
+      expect(imports).toHaveLength(2);
+
+      const bar_import = imports.find(i => i.name === "bar");
+      const qux_import = imports.find(i => i.name === "qux");
+
+      expect(bar_import).toBeDefined();
+      expect(bar_import?.original_name).toBe("foo");
+      expect(bar_import?.import_path).toBe(".module");
+
+      expect(qux_import).toBeDefined();
+      expect(qux_import?.original_name).toBe("baz");
+      expect(qux_import?.import_path).toBe(".module");
+    });
+
+    it("should handle non-aliased relative import (existing behavior)", async () => {
+      const code = "from .module import foo";
+      const index = await build_index_from_code(code);
+
+      const imports = Array.from(index.imported_symbols.values());
+      expect(imports).toHaveLength(1);
+
+      const import_def = imports[0];
+      expect(import_def.name).toBe("foo");
+      expect(import_def.original_name).toBeUndefined();
+      expect(import_def.import_path).toBe(".module");
+    });
+
+    it("should handle parent directory aliased relative import", async () => {
+      const code = "from ..utils import helper as h";
+      const index = await build_index_from_code(code);
+
+      const imports = Array.from(index.imported_symbols.values());
+      expect(imports).toHaveLength(1);
+
+      const import_def = imports[0];
+      expect(import_def.name).toBe("h");
+      expect(import_def.original_name).toBe("helper");
+      expect(import_def.import_path).toBe("..utils");
+    });
+  });
 });

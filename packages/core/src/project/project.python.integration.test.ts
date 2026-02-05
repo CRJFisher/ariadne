@@ -1285,6 +1285,169 @@ class C(B):
     });
   });
 
+  describe("Python Re-export Resolution", () => {
+    it("should resolve calls through single-level Python re-export", async () => {
+      // Load the re-export chain:
+      // original.py defines get_retail_months
+      // middle.py re-exports it: from .reexport_original import get_retail_months
+      // consumer.py imports from middle and calls: get_retail_months()
+      const original_source = load_source("modules/reexport_original.py");
+      const middle_source = load_source("modules/reexport_middle.py");
+      const consumer_source = load_source("modules/reexport_consumer.py");
+
+      const original_file = file_path("modules/reexport_original.py");
+      const middle_file = file_path("modules/reexport_middle.py");
+      const consumer_file = file_path("modules/reexport_consumer.py");
+
+      project.update_file(original_file, original_source);
+      project.update_file(middle_file, middle_source);
+      project.update_file(consumer_file, consumer_source);
+
+      // Get consumer index
+      const consumer_index = project.get_index_single_file(consumer_file);
+      expect(consumer_index).toBeDefined();
+
+      // Find call to get_retail_months()
+      const call = consumer_index!.references.find(
+        (r): r is FunctionCallReference | MethodCallReference | SelfReferenceCall | ConstructorCallReference =>
+          (r.kind === "function_call" ||
+            r.kind === "method_call" ||
+            r.kind === "self_reference_call" ||
+            r.kind === "constructor_call") &&
+          r.name === ("get_retail_months" as SymbolName)
+      );
+      expect(call).toBeDefined();
+
+      // Resolve the call - should resolve to original.py's definition
+      const resolved = project.resolutions.resolve(call!.scope_id, call!.name);
+      expect(resolved).toBeDefined();
+      expect(resolved).not.toBeNull();
+
+      // Verify it resolves to the original definition in reexport_original.py
+      const resolved_def = project.definitions.get(resolved!);
+      expect(resolved_def).toBeDefined();
+      expect(resolved_def!.location.file_path).toContain("reexport_original.py");
+      expect(resolved_def!.name).toBe("get_retail_months" as SymbolName);
+    });
+
+    it("should resolve calls through multi-level Python re-export chain", async () => {
+      // Load the full chain:
+      // original.py -> middle.py -> top.py -> multilevel_consumer.py
+      const original_source = load_source("modules/reexport_original.py");
+      const middle_source = load_source("modules/reexport_middle.py");
+      const top_source = load_source("modules/reexport_top.py");
+      const consumer_source = load_source("modules/reexport_multilevel_consumer.py");
+
+      const original_file = file_path("modules/reexport_original.py");
+      const middle_file = file_path("modules/reexport_middle.py");
+      const top_file = file_path("modules/reexport_top.py");
+      const consumer_file = file_path("modules/reexport_multilevel_consumer.py");
+
+      project.update_file(original_file, original_source);
+      project.update_file(middle_file, middle_source);
+      project.update_file(top_file, top_source);
+      project.update_file(consumer_file, consumer_source);
+
+      // Get consumer index
+      const consumer_index = project.get_index_single_file(consumer_file);
+      expect(consumer_index).toBeDefined();
+
+      // Find call to get_retail_months()
+      const call = consumer_index!.references.find(
+        (r): r is FunctionCallReference | MethodCallReference | SelfReferenceCall | ConstructorCallReference =>
+          (r.kind === "function_call" ||
+            r.kind === "method_call" ||
+            r.kind === "self_reference_call" ||
+            r.kind === "constructor_call") &&
+          r.name === ("get_retail_months" as SymbolName)
+      );
+      expect(call).toBeDefined();
+
+      // Resolve - should trace through top -> middle -> original
+      const resolved = project.resolutions.resolve(call!.scope_id, call!.name);
+      expect(resolved).toBeDefined();
+      expect(resolved).not.toBeNull();
+
+      // Verify it resolves to the original definition
+      const resolved_def = project.definitions.get(resolved!);
+      expect(resolved_def).toBeDefined();
+      expect(resolved_def!.location.file_path).toContain("reexport_original.py");
+      expect(resolved_def!.name).toBe("get_retail_months" as SymbolName);
+    });
+
+    it("should resolve calls through aliased Python re-export", async () => {
+      // Fixed: aliased re-export resolution now works
+      // middle.py re-exports with alias: from .original import calculate_forecast as aliased_forecast
+      // consumer.py imports and calls: aliased_forecast()
+      const original_source = load_source("modules/reexport_original.py");
+      const middle_source = load_source("modules/reexport_middle.py");
+      const consumer_source = load_source("modules/reexport_consumer.py");
+
+      const original_file = file_path("modules/reexport_original.py");
+      const middle_file = file_path("modules/reexport_middle.py");
+      const consumer_file = file_path("modules/reexport_consumer.py");
+
+      project.update_file(original_file, original_source);
+      project.update_file(middle_file, middle_source);
+      project.update_file(consumer_file, consumer_source);
+
+      // Get consumer index
+      const consumer_index = project.get_index_single_file(consumer_file);
+      expect(consumer_index).toBeDefined();
+
+      // Find call to aliased_forecast()
+      const call = consumer_index!.references.find(
+        (r): r is FunctionCallReference | MethodCallReference | SelfReferenceCall | ConstructorCallReference =>
+          (r.kind === "function_call" ||
+            r.kind === "method_call" ||
+            r.kind === "self_reference_call" ||
+            r.kind === "constructor_call") &&
+          r.name === ("aliased_forecast" as SymbolName)
+      );
+      expect(call).toBeDefined();
+
+      // Resolve - should resolve to original calculate_forecast
+      const resolved = project.resolutions.resolve(call!.scope_id, call!.name);
+      expect(resolved).toBeDefined();
+      expect(resolved).not.toBeNull();
+
+      // Verify it resolves to the original definition
+      const resolved_def = project.definitions.get(resolved!);
+      expect(resolved_def).toBeDefined();
+      expect(resolved_def!.location.file_path).toContain("reexport_original.py");
+      expect(resolved_def!.name).toBe("calculate_forecast" as SymbolName);
+    });
+
+    it("should not mark re-exported functions as entry points when called through re-export", async () => {
+      // If re-export resolution works, get_retail_months should NOT be an entry point
+      // because it's called from consumer.py
+      const original_source = load_source("modules/reexport_original.py");
+      const middle_source = load_source("modules/reexport_middle.py");
+      const consumer_source = load_source("modules/reexport_consumer.py");
+
+      const original_file = file_path("modules/reexport_original.py");
+      const middle_file = file_path("modules/reexport_middle.py");
+      const consumer_file = file_path("modules/reexport_consumer.py");
+
+      project.update_file(original_file, original_source);
+      project.update_file(middle_file, middle_source);
+      project.update_file(consumer_file, consumer_source);
+
+      const call_graph = project.get_call_graph();
+      const entry_point_ids = new Set(call_graph.entry_points);
+
+      // Find get_retail_months definition in original.py
+      const original_index = project.get_index_single_file(original_file);
+      const get_retail_months_def = Array.from(original_index!.functions.values()).find(
+        (f) => f.name === ("get_retail_months" as SymbolName)
+      );
+      expect(get_retail_months_def).toBeDefined();
+
+      // get_retail_months should NOT be an entry point (it's called from consumer)
+      expect(entry_point_ids.has(get_retail_months_def!.symbol_id)).toBe(false);
+    });
+  });
+
   describe("Module-Qualified Call Resolution (Bug Trap)", () => {
     it("should resolve calls via aliased module imports (import X as Y; Y.func())", async () => {
       const utils_source = load_source("modules/utils.py");

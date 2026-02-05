@@ -160,6 +160,30 @@ export class ExportRegistry {
           return;
         }
 
+        // Special case: Local definition shadows imported re-export
+        // When `from x import foo` is followed by `def foo():`, the local
+        // definition shadows the import. The local definition should be exported.
+        if (existing.is_reexport && !is_reexport) {
+          // Current def is a local definition, existing is a re-exported import
+          // Replace with the local definition (shadows the import)
+          metadata_map.set(export_name, {
+            symbol_id: def.symbol_id,
+            export_name,
+            is_default,
+            is_reexport,
+            import_def,
+          });
+          symbol_ids.add(def.symbol_id);
+          symbol_ids.delete(existing.symbol_id);
+          return;
+        }
+
+        // Reverse case: if current def is a re-export but existing is local, keep existing
+        if (is_reexport && !existing.is_reexport) {
+          // Local definition shadows the import - keep the local definition
+          return;
+        }
+
         // For all other duplicates, this is an error
         throw new Error(
           `Duplicate export name "${export_name}" in file ${file_id}.\n` +

@@ -5,7 +5,11 @@
  * Split from python.ts to keep file sizes manageable.
  */
 
-import type { ModulePath, SymbolId, SymbolName } from "@ariadnejs/types";
+import type {
+  ModulePath,
+  SymbolId,
+  SymbolName,
+} from "@ariadnejs/types";
 import { variable_symbol } from "@ariadnejs/types";
 import type { DefinitionBuilder } from "../../definitions/definitions";
 import type { CaptureNode, ProcessingContext } from "../../index_single_file";
@@ -120,12 +124,15 @@ export function handle_definition_import(
     context.root_scope_id
   );
 
+  // Python imports at module-level are re-exports (can be imported by other modules)
+  const export_metadata = export_info.is_exported ? { is_reexport: true } : undefined;
+
   builder.add_import({
     symbol_id: import_id,
     name: imported_name,
     location: definition_location,
     scope_id: defining_scope_id,
-    export: export_info.export,
+    export: export_metadata,
     import_path,
     import_kind,
     original_name,
@@ -147,12 +154,15 @@ export function handle_import_named(
     context.root_scope_id
   );
 
+  // Python imports at module-level are re-exports (can be imported by other modules)
+  const export_metadata = export_info.is_exported ? { is_reexport: true } : undefined;
+
   builder.add_import({
     symbol_id: import_id,
     name: capture.text,
     location: capture.location,
     scope_id: defining_scope_id,
-    export: export_info.export,
+    export: export_metadata,
     import_path: import_path,
     import_kind: "named",
     original_name: undefined,
@@ -187,12 +197,15 @@ export function handle_import_named_source(
     context.root_scope_id
   );
 
+  // Python imports at module-level are re-exports (can be imported by other modules)
+  const export_metadata = export_info.is_exported ? { is_reexport: true } : undefined;
+
   builder.add_import({
     symbol_id: import_id,
     name: imported_name,
     location: capture.location,
     scope_id: defining_scope_id,
-    export: export_info.export,
+    export: export_metadata,
     import_path: import_path,
     import_kind: "named",
     original_name: capture.text,
@@ -221,12 +234,15 @@ export function handle_import_module(
     context.root_scope_id
   );
 
+  // Python imports at module-level are re-exports (can be imported by other modules)
+  const export_metadata = export_info.is_exported ? { is_reexport: true } : undefined;
+
   builder.add_import({
     symbol_id: import_id,
     name: capture.text,
     location: capture.location,
     scope_id: defining_scope_id,
-    export: export_info.export,
+    export: export_metadata,
     import_path: capture.text as unknown as ModulePath,
     import_kind: "namespace",
     original_name: undefined,
@@ -269,12 +285,15 @@ export function handle_import_module_source(
     context.root_scope_id
   );
 
+  // Python imports at module-level are re-exports (can be imported by other modules)
+  const export_metadata = export_info.is_exported ? { is_reexport: true } : undefined;
+
   builder.add_import({
     symbol_id: import_id,
     name: imported_name,
     location,
     scope_id: defining_scope_id,
-    export: export_info.export,
+    export: export_metadata,
     import_path: capture.text as unknown as ModulePath,
     import_kind: "namespace",
     original_name: alias_name ? capture.text : undefined,

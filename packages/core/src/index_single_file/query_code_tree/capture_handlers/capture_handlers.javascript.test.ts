@@ -2129,4 +2129,87 @@ export const NESTED = {
       });
     });
   });
+
+  describe("Aliased Re-export Handling", () => {
+    it("should create ImportDefinition with correct export metadata for aliased re-exports", async () => {
+      // Tests the fix for aliased re-exports: export { originalName as aliasedName } from './module'
+      // The key fix is passing the original name (not the alias) to extract_export_info
+      const code = "export { originalName as aliasedName } from './original';";
+      const tree = parser.parse(code);
+      const lines = code.split("\n");
+      const parsed_file = {
+        file_path: TEST_FILE_PATH,
+        file_lines: lines.length,
+        file_end_column: lines[lines.length - 1].length + 1,
+        tree: tree,
+        lang: "javascript" as const,
+      };
+
+      const index = await build_index_single_file(parsed_file, tree, "javascript");
+
+      // Should have one import (the re-export)
+      const imports = Array.from(index.imported_symbols.values());
+      expect(imports).toHaveLength(1);
+
+      const reexport = imports[0];
+      expect(reexport.name).toBe("aliasedName"); // Local name is the alias
+      expect(reexport.original_name).toBe("originalName"); // Original name tracked
+      expect(reexport.export).toBeDefined();
+      expect(reexport.export?.is_reexport).toBe(true);
+      expect(reexport.import_path).toBe("./original");
+    });
+
+    it("should create ImportDefinition with correct metadata for non-aliased re-exports", async () => {
+      const code = "export { foo } from './module';";
+      const tree = parser.parse(code);
+      const lines = code.split("\n");
+      const parsed_file = {
+        file_path: TEST_FILE_PATH,
+        file_lines: lines.length,
+        file_end_column: lines[lines.length - 1].length + 1,
+        tree: tree,
+        lang: "javascript" as const,
+      };
+
+      const index = await build_index_single_file(parsed_file, tree, "javascript");
+
+      const imports = Array.from(index.imported_symbols.values());
+      expect(imports).toHaveLength(1);
+
+      const reexport = imports[0];
+      expect(reexport.name).toBe("foo");
+      expect(reexport.original_name).toBeUndefined(); // No alias
+      expect(reexport.export).toBeDefined();
+      expect(reexport.export?.is_reexport).toBe(true);
+    });
+
+    it("should handle multiple aliased re-exports in same statement", async () => {
+      const code = "export { foo as bar, baz as qux } from './module';";
+      const tree = parser.parse(code);
+      const lines = code.split("\n");
+      const parsed_file = {
+        file_path: TEST_FILE_PATH,
+        file_lines: lines.length,
+        file_end_column: lines[lines.length - 1].length + 1,
+        tree: tree,
+        lang: "javascript" as const,
+      };
+
+      const index = await build_index_single_file(parsed_file, tree, "javascript");
+
+      const imports = Array.from(index.imported_symbols.values());
+      expect(imports).toHaveLength(2);
+
+      const bar_import = imports.find(i => i.name === "bar");
+      const qux_import = imports.find(i => i.name === "qux");
+
+      expect(bar_import).toBeDefined();
+      expect(bar_import?.original_name).toBe("foo");
+      expect(bar_import?.export?.is_reexport).toBe(true);
+
+      expect(qux_import).toBeDefined();
+      expect(qux_import?.original_name).toBe("baz");
+      expect(qux_import?.export?.is_reexport).toBe(true);
+    });
+  });
 });

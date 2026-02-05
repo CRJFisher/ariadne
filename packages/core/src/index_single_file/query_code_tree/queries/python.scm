@@ -553,6 +553,15 @@
   name: (dotted_name) @definition.import
 )
 
+; Aliased from relative imports (from .module import Y as Z)
+(import_from_statement
+  module_name: (relative_import)
+  name: (aliased_import
+    name: (dotted_name) @definition.import
+    alias: (identifier) @definition.import
+  )
+)
+
 ;; ==============================================================================
 ;; EXPORTS (Python's implicit export model)
 ;; ==============================================================================
