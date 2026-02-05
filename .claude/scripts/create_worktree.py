@@ -34,7 +34,7 @@ from worktree_wezterm import ensure_wezterm_running, create_tab
 #   __BUILD_COMMAND__ → build command (e.g., "pnpm install")
 
 PROJECT_NAME = "ariadne"
-STATE_FILES = [".auto-claude/.env"]
+STATE_FILES = []
 BUILD_COMMAND = "pnpm install && pnpm run build"
 
 # === IMPLEMENTATION ===
@@ -56,6 +56,12 @@ Examples:
     parser.add_argument(
         "-t", "--task",
         help="Task description to pass to Claude agent",
+    )
+    parser.add_argument(
+        "--permission-mode",
+        default="plan",
+        choices=["acceptEdits", "bypassPermissions", "default", "dontAsk", "plan"],
+        help="Permission mode for Claude session (default: plan)",
     )
     args = parser.parse_args()
 
@@ -113,7 +119,7 @@ Examples:
         subprocess.run(BUILD_COMMAND, shell=True, cwd=worktree_path, check=True)
 
     # Build claude command (pass task as positional arg if provided)
-    exec_cmd = get_claude_command(task=args.task)
+    exec_cmd = get_claude_command(task=args.task, permission_mode=args.permission_mode)
     tab_title = f"wt: {safe_name}"
 
     # Create WezTerm tab in project-specific workspace

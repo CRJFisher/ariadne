@@ -26,7 +26,7 @@ def claude_available() -> bool:
     return shutil.which("claude") is not None
 
 
-def get_claude_command(task: Optional[str] = None, sandbox: bool = True) -> list[str]:
+def get_claude_command(task: Optional[str] = None, sandbox: bool = True, permission_mode: str = "plan") -> list[str]:
     """
     Get claude command for interactive session.
 
@@ -36,6 +36,7 @@ def get_claude_command(task: Optional[str] = None, sandbox: bool = True) -> list
     Args:
         task: Optional task description to pass to Claude
         sandbox: Enable sandbox mode (default: True)
+        permission_mode: Permission mode for Claude session (default: plan)
 
     Returns:
         Claude command as list of arguments
@@ -51,7 +52,8 @@ def get_claude_command(task: Optional[str] = None, sandbox: bool = True) -> list
         }
         cmd.extend(["--settings", json.dumps(settings)])
 
-    cmd.append("--dangerously-skip-permissions")
+    if permission_mode:
+        cmd.extend(["--permission-mode", permission_mode])
 
     if task:
         cmd.append(task)
@@ -63,4 +65,5 @@ if __name__ == "__main__":
     print("Claude Code Sandbox Configuration for Worktrees")
     print("=" * 50)
     print(f"Claude CLI available: {claude_available()}")
-    print(f"\nClaude command: {' '.join(get_claude_command())}")
+    print(f"\nClaude command (default): {' '.join(get_claude_command())}")
+    print(f"Claude command (bypassPermissions): {' '.join(get_claude_command(permission_mode='bypassPermissions'))}")
