@@ -167,9 +167,13 @@ After triage completes, the agent can investigate each aggregation group and cre
    - Verifies the detection bug exists with concrete code examples
    - Identifies the root cause in the call graph detection logic
    - Locates potential fix locations in the codebase
-   - Documents reproduction steps
+   - Returns all findindings, including reproduction steps
 3. **Collect investigation results** - Aggregate findings from all sub-agents
-4. **Discover task management system** - Investigate the repo structure and Claude memories to identify any existing task management system (backlog CLI, GitHub issues, markdown docs, etc.) and default to that format
+4. **Discover task management system** - Check for local task management patterns:
+   - Run `backlog task list --plain` to check for backlog CLI
+   - Look in `/backlog/` directory for existing task file structure
+   - Review 2-3 existing task files to understand format conventions
+   - Default to the discovered pattern (backlog CLI if available)
 5. **Confirm with user** - Ask the user how they'd like tasks written up, presenting the discovered default
 6. **Create task documents** - Generate tasks in the confirmed format
 
@@ -181,6 +185,48 @@ Each sub-agent should receive:
 - List of affected entries with file paths and signatures
 - Pre-gathered diagnostic data (grep results, call references)
 - Instructions to explore the codebase and verify the bug
+
+### Task Documentation Requirements
+
+Every task document must include **reproducible code samples** that demonstrate the detection bug:
+
+1. **Minimal reproducible example** - The exact code syntax that triggers the false positive
+2. **Expected behavior** - What the call graph detection should find
+3. **Actual behavior** - What the detection currently produces
+4. **File path and line references** - Where the bug manifests in the detection logic
+
+### Example Task Content
+
+```markdown
+## Problem
+
+Arrow functions assigned to variables are detected as entry points even when called.
+
+## Reproduction
+
+```typescript
+// src/utils.ts
+export const processData = (input: string) => {
+  return input.toUpperCase();
+};
+
+// src/main.ts
+import { processData } from './utils';
+processData('hello');  // This call is not tracked
+```
+
+**Expected**: `processData` is NOT an entry point (it has a caller in main.ts)
+**Actual**: `processData` is detected as entry point
+
+## Root Cause
+
+`packages/core/src/trace_call_graph/trace_call_graph.ts:245` - arrow function call expressions are not matched because the callee is an Identifier, not a MemberExpression.
+
+## Fix Location
+
+`packages/core/src/trace_call_graph/trace_call_graph.ts` - add pattern matching for direct identifier calls.
+
+```
 
 ## Architecture: Key Modules
 

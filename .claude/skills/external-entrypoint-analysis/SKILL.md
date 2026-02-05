@@ -111,6 +111,87 @@ The triage output separates true and false positives:
 }
 ```
 
+## (Optional) Step 3: Investigate and Document Issues
+
+After triage identifies false positives with detection bugs, the agent can investigate each aggregation group and create task documentation. This step is agent-driven (not a script).
+
+### When to Use
+
+Use this step when triage results show false positive groups that indicate bugs in Ariadne's call graph detection logic (not just noise in the analyzed codebase).
+
+### Workflow
+
+1. **Load triage results** - Read the most recent `entry_point_triage_*.json`
+2. **Spawn investigation sub-agents** - For each false positive group, use the Task tool to spawn an Explore sub-agent that:
+   - Verifies the detection bug exists with concrete code examples from the analyzed codebase
+   - Identifies the root cause in Ariadne's call graph detection logic
+   - Locates potential fix locations in the Ariadne codebase
+   - Documents reproduction steps
+3. **Collect investigation results** - Aggregate findings from all sub-agents
+4. **Discover task management system** - Check for local task management patterns:
+   - Run `backlog task list --plain` to check for backlog CLI
+   - Look in `/backlog/` directory for existing task file structure
+   - Review 2-3 existing task files to understand format conventions
+   - Default to the discovered pattern (backlog CLI if available)
+5. **Confirm with user** - Ask the user how they'd like tasks written up, presenting the discovered default
+6. **Create task documents** - Generate tasks in the confirmed format
+
+### Investigation Sub-Agent Prompt
+
+Each sub-agent should receive:
+
+- Group ID and root cause description from triage
+- List of affected entries with file paths and signatures
+- Pre-gathered diagnostic data (grep results, call references)
+- Instructions to explore the Ariadne codebase and verify the bug
+
+### Task Documentation Requirements
+
+Every task document must include **reproducible code samples** that demonstrate the detection bug:
+
+1. **Minimal reproducible example** - The exact code syntax that triggers the false positive
+2. **Expected behavior** - What the call graph detection should find
+3. **Actual behavior** - What the detection currently produces
+4. **File path and line references** - Where the bug manifests in Ariadne's detection logic
+
+### Example Task Content
+
+```markdown
+## Problem
+
+Method calls via `this` in derived classes are not tracked when the method is defined in a parent class.
+
+## Reproduction
+
+```typescript
+// external-repo/src/base.ts
+export class BaseService {
+  protected handleRequest(req: Request) {
+    // implementation
+  }
+}
+
+// external-repo/src/derived.ts
+export class DerivedService extends BaseService {
+  process(req: Request) {
+    this.handleRequest(req);  // This call is not tracked
+  }
+}
+```
+
+**Expected**: `handleRequest` is NOT an entry point (called via `this` in DerivedService)
+**Actual**: `handleRequest` is detected as entry point
+
+## Root Cause
+
+`packages/core/src/resolve_references/resolve_references.ts:312` - `this` member access resolution does not traverse the inheritance chain.
+
+## Fix Location
+
+`packages/core/src/resolve_references/resolve_references.ts` - add parent class traversal when resolving `this.method()` calls.
+
+```
+
 ## Architecture: Key Modules
 
 All modules live under `entrypoint-analysis/src/`:
