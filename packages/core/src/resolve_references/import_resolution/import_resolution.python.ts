@@ -87,6 +87,10 @@ function resolve_relative_python(
 /**
  * Resolve absolute Python import
  *
+ * Python's import system checks sys.path[0] (the directory containing the script)
+ * FIRST before other paths. This function mirrors that behavior by checking the
+ * importing file's directory first for all imports.
+ *
  * @param absolute_path - Dotted absolute import path
  * @param base_file - File containing the import
  * @param root_folder - Root of the file system tree
@@ -97,9 +101,28 @@ function resolve_absolute_python(
   base_file: FilePath,
   root_folder: FileSystemFolder
 ): FilePath {
-  // For project-local imports, search from project root
-  // Find project root by looking for __init__.py
   const base_dir = path.dirname(base_file);
+  const parts = absolute_path.split(".");
+
+  // Check local directory first (matches Python's sys.path[0] behavior)
+  // For `import utils` or `from utils.helper import func`, first check
+  // if the module exists relative to the importing file's directory
+  const local_file_path = path.join(base_dir, ...parts);
+  const local_candidates = [
+    `${local_file_path}.py`,
+    path.join(local_file_path, "__init__.py"),
+  ];
+
+  for (const candidate of local_candidates) {
+    const relative_candidate = path.isAbsolute(candidate)
+      ? path.relative(root_folder.path, candidate)
+      : candidate;
+    if (has_file_in_tree(relative_candidate as FilePath, root_folder)) {
+      return candidate as FilePath;
+    }
+  }
+
+  // Fall through to project root resolution
   const project_root = find_python_project_root(
     base_dir,
     absolute_path,
@@ -107,7 +130,6 @@ function resolve_absolute_python(
   );
 
   // Convert dotted path to file path
-  const parts = absolute_path.split(".");
   let file_path = path.join(project_root, ...parts);
 
   const candidates = [`${file_path}.py`, path.join(file_path, "__init__.py")];
