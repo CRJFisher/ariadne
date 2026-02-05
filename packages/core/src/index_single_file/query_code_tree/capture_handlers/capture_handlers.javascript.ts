@@ -689,7 +689,7 @@ export function handle_import_reexport(
       location,
     });
 
-    const export_info = extract_export_info(export_stmt, local_name);
+    const export_info = extract_export_info(export_stmt, name_node.text as SymbolName);
 
     builder.add_import({
       symbol_id: import_id,

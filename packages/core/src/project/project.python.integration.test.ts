@@ -1375,8 +1375,8 @@ class C(B):
       expect(resolved_def!.name).toBe("get_retail_months" as SymbolName);
     });
 
-    it.skip("should resolve calls through aliased Python re-export", async () => {
-      // TODO: Fix aliased re-export resolution - same issue as TypeScript (see resolve_references.test.ts)
+    it("should resolve calls through aliased Python re-export", async () => {
+      // Fixed: aliased re-export resolution now works
       // middle.py re-exports with alias: from .original import calculate_forecast as aliased_forecast
       // consumer.py imports and calls: aliased_forecast()
       const original_source = load_source("modules/reexport_original.py");

@@ -274,9 +274,8 @@ export function resolve_export_chain(source_file: string): string | null {
     expect(resolved_symbol_id).toContain("original.ts");
   });
 
-  it.skip("should handle re-exports with aliases", () => {
-    // TODO: Fix aliased re-export resolution
-    // Currently fails - aliased re-exports don't properly resolve
+  it("should handle re-exports with aliases", () => {
+    // Fixed: aliased re-exports now properly resolve
     const original_file = path.join(temp_dir, "original.ts") as FilePath;
     const original_code = `
 export function originalName(x: number): number {
