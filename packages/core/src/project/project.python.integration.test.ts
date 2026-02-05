@@ -1367,6 +1367,28 @@ class C(B):
       // helper() should NOT be an entry point (called via both utils_mod.helper() and util_helper())
       expect(entry_point_ids.has(helper_def!.symbol_id)).toBe(false);
     });
+
+    it("should resolve calls via simple module imports (import X; X.func())", async () => {
+      const utils_source = load_source("modules/utils.py");
+      const simple_import_source = load_source("modules/simple_module_import.py");
+      const utils_file = file_path("modules/utils.py");
+      const simple_import_file = file_path("modules/simple_module_import.py");
+
+      project.update_file(utils_file, utils_source);
+      project.update_file(simple_import_file, simple_import_source);
+
+      const call_graph = project.get_call_graph();
+      const entry_point_ids = new Set(call_graph.entry_points);
+
+      // Find helper() function in utils.py
+      const helper_def = Array.from(project.definitions.get_callable_definitions()).find(
+        (d) => d.name === ("helper" as SymbolName) && d.location.file_path === utils_file
+      );
+      expect(helper_def).toBeDefined();
+
+      // helper() should NOT be an entry point - it's called via utils.helper()
+      expect(entry_point_ids.has(helper_def!.symbol_id)).toBe(false);
+    });
   });
 
 });
