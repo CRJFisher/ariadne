@@ -78,7 +78,7 @@ Uses `classify_entrypoints.ts` to apply ordered rules with no LLM cost. Determin
 
 ### Stage 2: Parallel Entry Investigation
 
-Unclassified entries are investigated in parallel (5 concurrent workers). Unlike self-analysis (which assumes all entries are false positives), external triage asks: "Is this a legitimate public API entry point, or a detection artifact?"
+Unclassified entries are investigated in parallel (5 concurrent workers). External triage asks: "Is this a legitimate public API entry point, or a detection artifact?"
 
 Each entry produces:
 

@@ -156,6 +156,32 @@ A single aggregation call reviews all entry analyses to:
 
 **Output**: `analysis_output/false_positive_triage_<timestamp>.json`
 
+## (Optional) Step 5: Investigate Groups and Create Tasks
+
+After triage completes, the agent can investigate each aggregation group and create task documentation. This step is agent-driven (not a script).
+
+### Workflow
+
+1. **Load triage results** - Read the most recent `false_positive_triage_*.json`
+2. **Spawn investigation sub-agents** - For each aggregation group, use the Task tool to spawn an Explore sub-agent that:
+   - Verifies the detection bug exists with concrete code examples
+   - Identifies the root cause in the call graph detection logic
+   - Locates potential fix locations in the codebase
+   - Documents reproduction steps
+3. **Collect investigation results** - Aggregate findings from all sub-agents
+4. **Discover task management system** - Investigate the repo structure and Claude memories to identify any existing task management system (backlog CLI, GitHub issues, markdown docs, etc.) and default to that format
+5. **Confirm with user** - Ask the user how they'd like tasks written up, presenting the discovered default
+6. **Create task documents** - Generate tasks in the confirmed format
+
+### Investigation Sub-Agent Prompt
+
+Each sub-agent should receive:
+
+- Group ID and root cause description from triage
+- List of affected entries with file paths and signatures
+- Pre-gathered diagnostic data (grep results, call references)
+- Instructions to explore the codebase and verify the bug
+
 ## Architecture: Key Modules
 
 All modules live under `entrypoint-analysis/src/`:

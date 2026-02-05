@@ -252,7 +252,7 @@ async function analyze_entry(
     await two_phase_query_detailed<EntryTriageResponse>(
       investigation_prompt,
       EXTRACTION_PROMPT,
-      { model: "haiku" },
+      { model: "sonnet" },
     );
 
   const label = result.is_true_positive ? "✅ true positive" : `❌ false positive → "${result.group_id}"`;
