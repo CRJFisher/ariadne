@@ -1369,4 +1369,154 @@ class C(B):
     });
   });
 
+  describe("Aliased Import Resolution (Sibling Modules)", () => {
+    const ALIASED_FIXTURE_ROOT = path.join(FIXTURE_ROOT, "aliased_imports");
+
+    function aliased_file_path(relative_path: string): FilePath {
+      return path.join(ALIASED_FIXTURE_ROOT, relative_path) as FilePath;
+    }
+
+    function load_aliased_source(relative_path: string): string {
+      return fs.readFileSync(aliased_file_path(relative_path), "utf-8");
+    }
+
+    it("should resolve calls via simple module alias (import X as Y)", async () => {
+      const project = new Project();
+      await project.initialize(ALIASED_FIXTURE_ROOT as FilePath);
+
+      const generate_source = load_aliased_source("generate.py");
+      const forecast_source = load_aliased_source("forecast.py");
+      const generate_file = aliased_file_path("generate.py");
+      const forecast_file = aliased_file_path("forecast.py");
+
+      project.update_file(generate_file, generate_source);
+      project.update_file(forecast_file, forecast_source);
+
+      const call_graph = project.get_call_graph();
+      const entry_point_ids = new Set(call_graph.entry_points);
+
+      // Find generate_batched_predictions() in generate.py
+      const batched_def = Array.from(project.definitions.get_callable_definitions()).find(
+        (d) =>
+          d.name === ("generate_batched_predictions" as SymbolName) &&
+          d.location.file_path === generate_file
+      );
+      expect(batched_def).toBeDefined();
+
+      // generate_batched_predictions() should NOT be an entry point
+      // It's called via predict_generate.generate_batched_predictions()
+      expect(entry_point_ids.has(batched_def!.symbol_id)).toBe(false);
+    });
+
+    it("should resolve multiple calls via simple module alias", async () => {
+      const project = new Project();
+      await project.initialize(ALIASED_FIXTURE_ROOT as FilePath);
+
+      const generate_source = load_aliased_source("generate.py");
+      const forecast_source = load_aliased_source("forecast.py");
+      const generate_file = aliased_file_path("generate.py");
+      const forecast_file = aliased_file_path("forecast.py");
+
+      project.update_file(generate_file, generate_source);
+      project.update_file(forecast_file, forecast_source);
+
+      const call_graph = project.get_call_graph();
+      const entry_point_ids = new Set(call_graph.entry_points);
+
+      // Both generate_batched_predictions and prepare_data are called via aliased import
+      const called_functions = ["generate_batched_predictions", "prepare_data"];
+      for (const fn_name of called_functions) {
+        const fn_def = Array.from(project.definitions.get_callable_definitions()).find(
+          (d) =>
+            d.name === (fn_name as SymbolName) &&
+            d.location.file_path === generate_file
+        );
+        expect(fn_def).toBeDefined();
+        expect(entry_point_ids.has(fn_def!.symbol_id)).toBe(false);
+      }
+    });
+
+    it("should resolve calls via dotted module alias (import pkg.mod as Y)", async () => {
+      const project = new Project();
+      await project.initialize(ALIASED_FIXTURE_ROOT as FilePath);
+
+      const processor_source = load_aliased_source("subpkg/processor.py");
+      const main_source = load_aliased_source("main.py");
+      const processor_file = aliased_file_path("subpkg/processor.py");
+      const main_file = aliased_file_path("main.py");
+
+      project.update_file(processor_file, processor_source);
+      project.update_file(main_file, main_source);
+
+      const call_graph = project.get_call_graph();
+      const entry_point_ids = new Set(call_graph.entry_points);
+
+      // Find process_batch() in processor.py
+      const process_batch_def = Array.from(project.definitions.get_callable_definitions()).find(
+        (d) =>
+          d.name === ("process_batch" as SymbolName) &&
+          d.location.file_path === processor_file
+      );
+      expect(process_batch_def).toBeDefined();
+
+      // process_batch() should NOT be an entry point - it's called via proc.process_batch()
+      expect(entry_point_ids.has(process_batch_def!.symbol_id)).toBe(false);
+    });
+
+    it("should resolve calls via deeply nested dotted alias", async () => {
+      const project = new Project();
+      await project.initialize(ALIASED_FIXTURE_ROOT as FilePath);
+
+      const deep_source = load_aliased_source("subpkg/nested/deep.py");
+      const main_source = load_aliased_source("main.py");
+      const deep_file = aliased_file_path("subpkg/nested/deep.py");
+      const main_file = aliased_file_path("main.py");
+
+      project.update_file(deep_file, deep_source);
+      project.update_file(main_file, main_source);
+
+      const call_graph = project.get_call_graph();
+      const entry_point_ids = new Set(call_graph.entry_points);
+
+      // Find deep_analysis() in deep.py
+      const deep_analysis_def = Array.from(project.definitions.get_callable_definitions()).find(
+        (d) =>
+          d.name === ("deep_analysis" as SymbolName) &&
+          d.location.file_path === deep_file
+      );
+      expect(deep_analysis_def).toBeDefined();
+
+      // deep_analysis() should NOT be an entry point - it's called via deep_mod.deep_analysis()
+      expect(entry_point_ids.has(deep_analysis_def!.symbol_id)).toBe(false);
+    });
+
+    it("should resolve multiple functions through same aliased import", async () => {
+      const project = new Project();
+      await project.initialize(ALIASED_FIXTURE_ROOT as FilePath);
+
+      const processor_source = load_aliased_source("subpkg/processor.py");
+      const main_source = load_aliased_source("main.py");
+      const processor_file = aliased_file_path("subpkg/processor.py");
+      const main_file = aliased_file_path("main.py");
+
+      project.update_file(processor_file, processor_source);
+      project.update_file(main_file, main_source);
+
+      const call_graph = project.get_call_graph();
+      const entry_point_ids = new Set(call_graph.entry_points);
+
+      // Both process_batch and validate_input are called via proc.X()
+      const called_functions = ["process_batch", "validate_input"];
+      for (const fn_name of called_functions) {
+        const fn_def = Array.from(project.definitions.get_callable_definitions()).find(
+          (d) =>
+            d.name === (fn_name as SymbolName) &&
+            d.location.file_path === processor_file
+        );
+        expect(fn_def).toBeDefined();
+        expect(entry_point_ids.has(fn_def!.symbol_id)).toBe(false);
+      }
+    });
+  });
+
 });
