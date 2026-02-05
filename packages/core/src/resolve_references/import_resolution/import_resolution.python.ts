@@ -87,6 +87,15 @@ function resolve_relative_python(
 /**
  * Resolve absolute Python import
  *
+ * Python's import resolution order:
+ * 1. Same directory as the importing file (for simple module names)
+ * 2. PYTHONPATH directories (not implemented)
+ * 3. Site-packages (not implemented)
+ *
+ * For project-local imports, we search:
+ * 1. Sibling modules/packages (same directory as importing file)
+ * 2. Project root and parent directories
+ *
  * @param absolute_path - Dotted absolute import path
  * @param base_file - File containing the import
  * @param root_folder - Root of the file system tree
@@ -97,9 +106,48 @@ function resolve_absolute_python(
   base_file: FilePath,
   root_folder: FileSystemFolder
 ): FilePath {
-  // For project-local imports, search from project root
-  // Find project root by looking for __init__.py
   const base_dir = path.dirname(base_file);
+  const parts = absolute_path.split(".");
+
+  // For simple module names (no dots), check sibling directory first
+  // This matches Python's behavior where `import X` finds X.py in same directory
+  if (parts.length === 1) {
+    const sibling_candidates = [
+      path.join(base_dir, `${parts[0]}.py`),
+      path.join(base_dir, parts[0], "__init__.py"),
+    ];
+
+    for (const candidate of sibling_candidates) {
+      const relative_candidate = path.isAbsolute(candidate)
+        ? path.relative(root_folder.path, candidate)
+        : candidate;
+      if (has_file_in_tree(relative_candidate as FilePath, root_folder)) {
+        return candidate as FilePath;
+      }
+    }
+  }
+
+  // For dotted imports, also check sibling packages
+  // e.g., `import subpkg.module` from `pkg/main.py` should find `pkg/subpkg/module.py`
+  if (parts.length > 1) {
+    const sibling_path = path.join(base_dir, ...parts);
+    const sibling_candidates = [
+      `${sibling_path}.py`,
+      path.join(sibling_path, "__init__.py"),
+    ];
+
+    for (const candidate of sibling_candidates) {
+      const relative_candidate = path.isAbsolute(candidate)
+        ? path.relative(root_folder.path, candidate)
+        : candidate;
+      if (has_file_in_tree(relative_candidate as FilePath, root_folder)) {
+        return candidate as FilePath;
+      }
+    }
+  }
+
+  // Fall through to existing project root resolution
+  // Find project root by looking for __init__.py
   const project_root = find_python_project_root(
     base_dir,
     absolute_path,
@@ -107,7 +155,6 @@ function resolve_absolute_python(
   );
 
   // Convert dotted path to file path
-  const parts = absolute_path.split(".");
   let file_path = path.join(project_root, ...parts);
 
   const candidates = [`${file_path}.py`, path.join(file_path, "__init__.py")];
