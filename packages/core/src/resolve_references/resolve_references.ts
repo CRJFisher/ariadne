@@ -17,6 +17,7 @@ import type { ImportGraph } from "../project/import_graph";
 import { resolve_method_call } from "./call_resolution";
 import { resolve_constructor_call } from "./call_resolution/constructor";
 import { resolve_collection_dispatch } from "./call_resolution/collection_dispatch";
+import { resolve_callable_instance } from "./call_resolution/callable_instance.python";
 import { find_enclosing_function_scope } from "../index_single_file/scopes/utils";
 import { process_collection_reads } from "./indirect_reachability";
 
@@ -379,6 +380,22 @@ export class ResolutionRegistry {
               );
               if (dispatch_ids.length > 0) {
                 resolved_symbols = dispatch_ids;
+              }
+            }
+
+            // Python-specific: Check for callable instance (__call__ method)
+            // When a variable of a class type is called like func(), resolve to __call__
+            if (
+              resolved_symbols.length === 1 &&
+              ref.location.file_path.endsWith(".py")
+            ) {
+              const call_method = resolve_callable_instance(
+                resolved_symbols[0],
+                definitions,
+                types
+              );
+              if (call_method) {
+                resolved_symbols = [call_method];
               }
             }
             break;

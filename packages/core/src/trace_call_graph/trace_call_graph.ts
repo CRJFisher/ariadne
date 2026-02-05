@@ -2,6 +2,7 @@ import type { CallGraph, SymbolId, CallableNode, Language, FilePath } from "@ari
 import type { DefinitionRegistry } from "../resolve_references/registries/definition";
 import type { ResolutionRegistry } from "../resolve_references/resolve_references";
 import { is_test_file } from "../project/detect_test_file";
+import { should_filter_entry_point } from "./filter_entry_points";
 
 /**
  * Detect language from file extension
@@ -87,6 +88,7 @@ function build_function_nodes(
  *    - Polymorphic calls mark all implementations as called
  *    - Collection dispatch marks all stored functions as called
  * 2. Find function nodes whose SymbolId is NOT in that set
+ * 3. Filter out framework-invoked methods (e.g., Python dunder methods)
  *
  * @param nodes - All function nodes in the call graph
  * @param resolutions - Resolution registry (get_all_referenced_symbols iterates all resolutions)
@@ -103,10 +105,18 @@ function detect_entry_points(
   // Entry points are functions NOT in the called set
   const entry_points: SymbolId[] = [];
 
-  for (const symbol_id of nodes.keys()) {
-    if (!called_symbols.has(symbol_id)) {
-      entry_points.push(symbol_id);
+  for (const [symbol_id, node] of nodes) {
+    // Skip if this symbol is called
+    if (called_symbols.has(symbol_id)) {
+      continue;
     }
+
+    // Filter framework-invoked methods (e.g., Python dunder methods)
+    if (should_filter_entry_point(node.name, node.location.file_path)) {
+      continue;
+    }
+
+    entry_points.push(symbol_id);
   }
 
   return entry_points;
