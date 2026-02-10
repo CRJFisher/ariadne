@@ -10,6 +10,7 @@ import type {
   Location,
 } from "@ariadnejs/types";
 import type { CaptureNode } from "../index_single_file";
+import { SemanticEntity } from "../index_single_file";
 import { find_body_scope_for_definition, find_enclosing_function_scope, find_root_scope } from "./utils";
 
 describe("find_body_scope_for_definition", () => {
@@ -36,9 +37,10 @@ describe("find_body_scope_for_definition", () => {
   });
 
   const mock_capture = (location: Location): CaptureNode => ({
-    entity: "function",
+    entity: SemanticEntity.FUNCTION,
     category: "definition" as any,
-    text: "test_function",
+    name: "definition.function",
+    text: "test_function" as SymbolName,
     node: {} as any,
     location,
   });

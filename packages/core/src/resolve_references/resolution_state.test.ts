@@ -115,7 +115,7 @@ describe("get_calls_by_caller_scope", () => {
       call_type: "function",
       name: "helper" as SymbolName,
       location: MOCK_LOCATION,
-      caller_scope_id: SCOPE_A,
+      scope_id: SCOPE_A,
       resolutions: [{ symbol_id, confidence: "certain", reason: { type: "direct" } }],
     };
     const state: ResolutionState = {
@@ -155,14 +155,14 @@ describe("get_all_referenced_symbols", () => {
         call_type: "function",
         name: "funcA" as SymbolName,
         location: MOCK_LOCATION,
-        caller_scope_id: SCOPE_A,
+        scope_id: SCOPE_A,
         resolutions: [{ symbol_id: symbol_a, confidence: "certain", reason: { type: "direct" } }],
       },
       {
         call_type: "function",
         name: "funcB" as SymbolName,
         location: MOCK_LOCATION,
-        caller_scope_id: SCOPE_A,
+        scope_id: SCOPE_A,
         resolutions: [{ symbol_id: symbol_b, confidence: "certain", reason: { type: "direct" } }],
       },
     ];
@@ -198,7 +198,7 @@ describe("get_all_referenced_symbols", () => {
         call_type: "function",
         name: "overloaded" as SymbolName,
         location: MOCK_LOCATION,
-        caller_scope_id: SCOPE_A,
+        scope_id: SCOPE_A,
         resolutions: [
           { symbol_id: symbol_a, confidence: "certain", reason: { type: "direct" } },
           { symbol_id: symbol_b, confidence: "certain", reason: { type: "direct" } },
@@ -347,7 +347,7 @@ describe("remove_file", () => {
       call_type: "function",
       name: "funcA" as SymbolName,
       location: MOCK_LOCATION_A,
-      caller_scope_id: SCOPE_A,
+      scope_id: SCOPE_A,
       resolutions: [{ symbol_id: symbol_a, confidence: "certain", reason: { type: "direct" } }],
     };
 
@@ -369,7 +369,7 @@ describe("remove_file", () => {
       call_type: "function",
       name: "helper" as SymbolName,
       location: MOCK_LOCATION_A,
-      caller_scope_id: SCOPE_A,
+      scope_id: SCOPE_A,
       resolutions: [{ symbol_id: symbol_a, confidence: "certain", reason: { type: "direct" } }],
     };
 
@@ -524,7 +524,7 @@ describe("apply_call_resolution", () => {
       call_type: "function",
       name: "funcA" as SymbolName,
       location: MOCK_LOCATION_A,
-      caller_scope_id: SCOPE_A,
+      scope_id: SCOPE_A,
       resolutions: [{ symbol_id: symbol_a, confidence: "certain", reason: { type: "direct" } }],
     };
 
@@ -574,7 +574,7 @@ describe("apply_call_resolution", () => {
       call_type: "function",
       name: "funcA" as SymbolName,
       location: MOCK_LOCATION_A,
-      caller_scope_id: SCOPE_A,
+      scope_id: SCOPE_A,
       resolutions: [{ symbol_id: symbol_a, confidence: "certain", reason: { type: "direct" } }],
     };
 

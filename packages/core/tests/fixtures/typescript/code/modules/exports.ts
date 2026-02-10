@@ -17,7 +17,7 @@ export class HttpClient {
   constructor(private base_url: string) {}
 
   async get(path: string): Promise<any> {
-    return fetch(`${this.baseUrl}${path}`);
+    return fetch(`${this.base_url}${path}`);
   }
 }
 

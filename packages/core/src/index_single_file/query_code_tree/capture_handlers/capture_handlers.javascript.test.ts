@@ -1115,11 +1115,13 @@ export const CONFIG = {
 
         // Process each variable
         for (const cap of captures) {
-          const capture = {
-            node: cap.node,
+          const capture: CaptureNode = {
+            name: "definition.variable",
+            category: "definition" as SemanticCategory,
+            entity: "variable" as SemanticEntity,
+            node: cap.node as any,
             text: cap.text as SymbolName,
-            location: node_to_location(cap.node, code),
-            type: "definition.variable",
+            location: node_to_location(cap.node, TEST_FILE_PATH),
           };
           handler(capture, builder, context);
         }
@@ -1179,11 +1181,13 @@ export const HANDLERS = [
 
         // Process each variable
         for (const cap of captures) {
-          const capture = {
-            node: cap.node,
+          const capture: CaptureNode = {
+            name: "definition.variable",
+            category: "definition" as SemanticCategory,
+            entity: "variable" as SemanticEntity,
+            node: cap.node as any,
             text: cap.text as SymbolName,
-            location: node_to_location(cap.node, code),
-            type: "definition.variable",
+            location: node_to_location(cap.node, TEST_FILE_PATH),
           };
           handler(capture, builder, context);
         }
@@ -1245,11 +1249,13 @@ export const NESTED = {
 
         // Process each variable
         for (const cap of captures) {
-          const capture = {
-            node: cap.node,
+          const capture: CaptureNode = {
+            name: "definition.variable",
+            category: "definition" as SemanticCategory,
+            entity: "variable" as SemanticEntity,
+            node: cap.node as any,
             text: cap.text as SymbolName,
-            location: node_to_location(cap.node, code),
-            type: "definition.variable",
+            location: node_to_location(cap.node, TEST_FILE_PATH),
           };
           handler(capture, builder, context);
         }
@@ -1914,7 +1920,7 @@ export const NESTED = {
         const arrow_func = find_arrow_func(tree.rootNode);
 
         expect(arrow_func).not.toBeNull();
-        const context = detect_callback_context(arrow_func!, "test.js");
+        const context = detect_callback_context(arrow_func!, "test.js" as FilePath);
 
         expect(context.is_callback).toBe(true);
         expect(context.receiver_is_external).toBeNull();
@@ -1928,7 +1934,7 @@ export const NESTED = {
         const arrow_func = find_arrow_func(tree.rootNode);
 
         expect(arrow_func).not.toBeNull();
-        const context = detect_callback_context(arrow_func!, "test.js");
+        const context = detect_callback_context(arrow_func!, "test.js" as FilePath);
 
         expect(context.is_callback).toBe(true);
         expect(context.receiver_location).not.toBeNull();
@@ -1940,7 +1946,7 @@ export const NESTED = {
         const arrow_func = find_arrow_func(tree.rootNode);
 
         expect(arrow_func).not.toBeNull();
-        const context = detect_callback_context(arrow_func!, "test.js");
+        const context = detect_callback_context(arrow_func!, "test.js" as FilePath);
 
         expect(context.is_callback).toBe(true);
       });
@@ -1951,7 +1957,7 @@ export const NESTED = {
         const arrow_func = find_arrow_func(tree.rootNode);
 
         expect(arrow_func).not.toBeNull();
-        const context = detect_callback_context(arrow_func!, "test.js");
+        const context = detect_callback_context(arrow_func!, "test.js" as FilePath);
 
         expect(context.is_callback).toBe(true);
       });
@@ -1975,8 +1981,8 @@ export const NESTED = {
         expect(arrow_funcs.length).toBe(2);
 
         // Both should be detected as callbacks
-        const outer_context = detect_callback_context(arrow_funcs[0], "test.js");
-        const inner_context = detect_callback_context(arrow_funcs[1], "test.js");
+        const outer_context = detect_callback_context(arrow_funcs[0], "test.js" as FilePath);
+        const inner_context = detect_callback_context(arrow_funcs[1], "test.js" as FilePath);
 
         expect(outer_context.is_callback).toBe(true);
         expect(inner_context.is_callback).toBe(true);
@@ -1988,7 +1994,7 @@ export const NESTED = {
         const arrow_func = find_arrow_func(tree.rootNode);
 
         expect(arrow_func).not.toBeNull();
-        const context = detect_callback_context(arrow_func!, "test.js");
+        const context = detect_callback_context(arrow_func!, "test.js" as FilePath);
 
         expect(context.is_callback).toBe(true);
       });
@@ -2001,7 +2007,7 @@ export const NESTED = {
         const arrow_func = find_arrow_func(tree.rootNode);
 
         expect(arrow_func).not.toBeNull();
-        const context = detect_callback_context(arrow_func!, "test.js");
+        const context = detect_callback_context(arrow_func!, "test.js" as FilePath);
 
         expect(context.is_callback).toBe(false);
         expect(context.receiver_location).toBeNull();
@@ -2013,7 +2019,7 @@ export const NESTED = {
         const arrow_func = find_arrow_func(tree.rootNode);
 
         expect(arrow_func).not.toBeNull();
-        const context = detect_callback_context(arrow_func!, "test.js");
+        const context = detect_callback_context(arrow_func!, "test.js" as FilePath);
 
         expect(context.is_callback).toBe(false);
       });
@@ -2024,7 +2030,7 @@ export const NESTED = {
         const arrow_func = find_arrow_func(tree.rootNode);
 
         expect(arrow_func).not.toBeNull();
-        const context = detect_callback_context(arrow_func!, "test.js");
+        const context = detect_callback_context(arrow_func!, "test.js" as FilePath);
 
         expect(context.is_callback).toBe(false);
       });
@@ -2035,7 +2041,7 @@ export const NESTED = {
         const arrow_func = find_arrow_func(tree.rootNode);
 
         expect(arrow_func).not.toBeNull();
-        const context = detect_callback_context(arrow_func!, "test.js");
+        const context = detect_callback_context(arrow_func!, "test.js" as FilePath);
 
         expect(context.is_callback).toBe(false);
       });
@@ -2048,7 +2054,7 @@ export const NESTED = {
         const arrow_func = find_arrow_func(tree.rootNode);
 
         expect(arrow_func).not.toBeNull();
-        const context = detect_callback_context(arrow_func!, "test.js");
+        const context = detect_callback_context(arrow_func!, "test.js" as FilePath);
 
         expect(context.receiver_location).toEqual({
           file_path: "test.js",
@@ -2069,7 +2075,7 @@ export const NESTED = {
         const arrow_func = find_arrow_func(tree.rootNode);
 
         expect(arrow_func).not.toBeNull();
-        const context = detect_callback_context(arrow_func!, "test.js");
+        const context = detect_callback_context(arrow_func!, "test.js" as FilePath);
 
         expect(context.receiver_location).not.toBeNull();
         expect(context.receiver_location?.start_line).toBe(1);

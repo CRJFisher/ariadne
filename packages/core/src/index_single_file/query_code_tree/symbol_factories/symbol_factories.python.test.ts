@@ -4,7 +4,6 @@
 
 import { describe, it, expect } from "vitest";
 import Parser from "tree-sitter";
-// @ts-expect-error - tree-sitter-python types
 import Python from "tree-sitter-python";
 import type { SyntaxNode } from "tree-sitter";
 import {
@@ -38,8 +37,13 @@ import {
   detect_function_collection,
 } from "./symbol_factories.python";
 import { anonymous_function_symbol } from "@ariadnejs/types";
-import type { FilePath } from "@ariadnejs/types";
+import type { FilePath, SymbolName } from "@ariadnejs/types";
 import { node_to_location } from "../../node_utils";
+import {
+  SemanticCategory,
+  SemanticEntity,
+  type CaptureNode,
+} from "../../../index_single_file";
 
 // Helper to parse Python code
 function parse_python(code: string): SyntaxNode {
@@ -284,10 +288,12 @@ describe("find_containing_callable with lambda functions", () => {
     expect(lambda_node).not.toBeNull();
 
     // Create capture node for parameter
-    const capture = {
+    const capture: CaptureNode = {
       node: param_node!,
-      text: "x",
+      text: "x" as SymbolName,
       name: "definition.parameter",
+      category: SemanticCategory.DEFINITION,
+      entity: SemanticEntity.PARAMETER,
       location: {
         file_path,
         start_line: param_node!.startPosition.row + 1,
@@ -319,10 +325,12 @@ describe("find_containing_callable with lambda functions", () => {
     expect(lambda_node).not.toBeNull();
 
     // Create capture node for parameter
-    const capture = {
+    const capture: CaptureNode = {
       node: param_node!,
-      text: "acc",
+      text: "acc" as SymbolName,
       name: "definition.parameter",
+      category: SemanticCategory.DEFINITION,
+      entity: SemanticEntity.PARAMETER,
       location: {
         file_path,
         start_line: param_node!.startPosition.row + 1,

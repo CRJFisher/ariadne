@@ -6,6 +6,7 @@ import type {
   SymbolName,
   Language,
   ScopeId,
+  ModulePath,
 } from "@ariadnejs/types";
 import type { FileSystemFolder } from "../resolve_references/file_folders";
 
@@ -18,7 +19,7 @@ function create_import_definition(
     kind: "import",
     symbol_id: `import:${file}:1:0:1:10:foo` as any,
     name: "foo" as SymbolName,
-    import_path: source,
+    import_path: source as unknown as ModulePath,
     import_kind: "named",
     location: {
       file_path: file,
@@ -27,9 +28,7 @@ function create_import_definition(
       end_line: 1,
       end_column: 10,
     },
-    scope_id: `module:${file}:1:0:100:0:<module>` as ScopeId,
     defining_scope_id: `module:${file}:1:0:100:0:<module>` as ScopeId,
-    is_exported: false,
   };
 }
 
@@ -37,7 +36,7 @@ function create_import_definition(
 // This allows the tests to work without having to list every file used
 const MOCK_ROOT_FOLDER: FileSystemFolder = {
   path: "/test" as FilePath,
-  files: new Map(), // Empty but the import resolver will resolve relative paths
+  files: new Set(), // Empty but the import resolver will resolve relative paths
   folders: new Map(),
 };
 

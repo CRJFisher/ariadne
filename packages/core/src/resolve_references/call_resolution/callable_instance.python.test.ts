@@ -91,7 +91,6 @@ describe("resolve_callable_instance", () => {
       methods: [call_method],
       properties: [],
       decorators: [],
-      constructor: undefined,
     };
 
     // Create variable processor: Processor
@@ -115,6 +114,7 @@ describe("resolve_callable_instance", () => {
         end_line: 12,
         end_column: 20,
       },
+      is_exported: false,
       type: "Processor" as SymbolName,
     };
 
@@ -186,7 +186,6 @@ describe("resolve_callable_instance", () => {
       methods: [], // No __call__ method
       properties: [],
       decorators: [],
-      constructor: undefined,
     };
 
     const variable_id = variable_symbol("obj" as SymbolName, {
@@ -210,6 +209,7 @@ describe("resolve_callable_instance", () => {
         end_column: 10,
       },
       type: "MyClass" as SymbolName,
+      is_exported: false,
     };
 
     definitions.update_file(file_path, [class_def, variable_def]);

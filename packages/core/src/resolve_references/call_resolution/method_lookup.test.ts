@@ -34,6 +34,7 @@ import type {
   FunctionDefinition,
   VariableDefinition,
   ImportDefinition,
+  ModulePath,
 } from "@ariadnejs/types";
 import {
   class_symbol,
@@ -75,8 +76,8 @@ describe("resolve_method_on_type", () => {
 
   describe("Regular class method lookup", () => {
     it("should find method via TypeRegistry", () => {
-      const class_id = class_symbol("MyClass", TEST_FILE, MOCK_LOCATION);
-      const method_id = method_symbol("process", MOCK_LOCATION);
+      const class_id = class_symbol("MyClass", MOCK_LOCATION);
+      const method_id = method_symbol("process" as SymbolName, MOCK_LOCATION);
 
       const method_def: MethodDefinition = {
         kind: "method",
@@ -122,8 +123,8 @@ describe("resolve_method_on_type", () => {
     });
 
     it("should find method via DefinitionRegistry fallback", () => {
-      const class_id = class_symbol("MyClass", TEST_FILE, MOCK_LOCATION);
-      const method_id = method_symbol("process", MOCK_LOCATION);
+      const class_id = class_symbol("MyClass", MOCK_LOCATION);
+      const method_id = method_symbol("process" as SymbolName, MOCK_LOCATION);
 
       const method_def: MethodDefinition = {
         kind: "method",
@@ -163,7 +164,7 @@ describe("resolve_method_on_type", () => {
     });
 
     it("should return empty array if method not found", () => {
-      const class_id = class_symbol("MyClass", TEST_FILE, MOCK_LOCATION);
+      const class_id = class_symbol("MyClass", MOCK_LOCATION);
 
       const class_def: ClassDefinition = {
         kind: "class",
@@ -193,12 +194,12 @@ describe("resolve_method_on_type", () => {
 
   describe("Interface polymorphic resolution", () => {
     it("should resolve method to all implementations", () => {
-      const interface_id = interface_symbol("Handler", TEST_FILE, MOCK_LOCATION);
-      const class_a_id = class_symbol("HandlerA", TEST_FILE, { ...MOCK_LOCATION, start_line: 10 });
-      const class_b_id = class_symbol("HandlerB", TEST_FILE, { ...MOCK_LOCATION, start_line: 20 });
-      const method_a_id = method_symbol("process", { ...MOCK_LOCATION, start_line: 12 });
-      const method_b_id = method_symbol("process", { ...MOCK_LOCATION, start_line: 22 });
-      const interface_method_id = method_symbol("process", MOCK_LOCATION);
+      const interface_id = interface_symbol("Handler", MOCK_LOCATION);
+      const class_a_id = class_symbol("HandlerA", { ...MOCK_LOCATION, start_line: 10 });
+      const class_b_id = class_symbol("HandlerB", { ...MOCK_LOCATION, start_line: 20 });
+      const method_a_id = method_symbol("process" as SymbolName, { ...MOCK_LOCATION, start_line: 12 });
+      const method_b_id = method_symbol("process" as SymbolName, { ...MOCK_LOCATION, start_line: 22 });
+      const interface_method_id = method_symbol("process" as SymbolName, MOCK_LOCATION);
 
       // Setup interface
       const interface_method_def: MethodDefinition = {
@@ -242,8 +243,7 @@ describe("resolve_method_on_type", () => {
         defining_scope_id: FILE_SCOPE_ID,
         location: { ...MOCK_LOCATION, start_line: 10 },
         is_exported: false,
-        extends: [],
-        implements: ["Handler" as SymbolName],
+        extends: ["Handler" as SymbolName],
         methods: [method_a_def],
         properties: [],
         decorators: [],
@@ -269,8 +269,7 @@ describe("resolve_method_on_type", () => {
         defining_scope_id: FILE_SCOPE_ID,
         location: { ...MOCK_LOCATION, start_line: 20 },
         is_exported: false,
-        extends: [],
-        implements: ["Handler" as SymbolName],
+        extends: ["Handler" as SymbolName],
         methods: [method_b_def],
         properties: [],
         decorators: [],
@@ -286,7 +285,7 @@ describe("resolve_method_on_type", () => {
         method_b_def,
       ]);
 
-      // Set up type inheritance index (interface → implementing classes)
+      // Set up type inheritance index (interface -> implementing classes)
       definitions["type_subtypes"] = new Map();
       definitions["type_subtypes"].set(interface_id, new Set([class_a_id, class_b_id]));
 
@@ -310,8 +309,8 @@ describe("resolve_method_on_type", () => {
     });
 
     it("should return empty array for interface with no implementations", () => {
-      const interface_id = interface_symbol("Handler", TEST_FILE, MOCK_LOCATION);
-      const interface_method_id = method_symbol("process", MOCK_LOCATION);
+      const interface_id = interface_symbol("Handler", MOCK_LOCATION);
+      const interface_method_id = method_symbol("process" as SymbolName, MOCK_LOCATION);
 
       const interface_method_def: MethodDefinition = {
         kind: "method",
@@ -357,10 +356,10 @@ describe("resolve_method_on_type", () => {
 
   describe("Class polymorphic resolution", () => {
     it("should resolve method to base and all child overrides", () => {
-      const base_class_id = class_symbol("Base", TEST_FILE, MOCK_LOCATION);
-      const child_class_id = class_symbol("Child", TEST_FILE, { ...MOCK_LOCATION, start_line: 10 });
-      const base_method_id = method_symbol("helper", MOCK_LOCATION);
-      const child_method_id = method_symbol("helper", { ...MOCK_LOCATION, start_line: 12 });
+      const base_class_id = class_symbol("Base", MOCK_LOCATION);
+      const child_class_id = class_symbol("Child", { ...MOCK_LOCATION, start_line: 10 });
+      const base_method_id = method_symbol("helper" as SymbolName, MOCK_LOCATION);
+      const child_method_id = method_symbol("helper" as SymbolName, { ...MOCK_LOCATION, start_line: 12 });
 
       // Setup base class with method
       const base_method_def: MethodDefinition = {
@@ -421,7 +420,7 @@ describe("resolve_method_on_type", () => {
         child_method_def,
       ]);
 
-      // Set up type subtypes index (Base → Child)
+      // Set up type subtypes index (Base -> Child)
       definitions["type_subtypes"] = new Map();
       definitions["type_subtypes"].set(base_class_id, new Set([child_class_id]));
 
@@ -445,12 +444,12 @@ describe("resolve_method_on_type", () => {
     });
 
     it("should resolve multi-level inheritance (3 levels)", () => {
-      const class_a_id = class_symbol("A", TEST_FILE, MOCK_LOCATION);
-      const class_b_id = class_symbol("B", TEST_FILE, { ...MOCK_LOCATION, start_line: 10 });
-      const class_c_id = class_symbol("C", TEST_FILE, { ...MOCK_LOCATION, start_line: 20 });
-      const method_a_id = method_symbol("helper", MOCK_LOCATION);
-      const method_b_id = method_symbol("helper", { ...MOCK_LOCATION, start_line: 12 });
-      const method_c_id = method_symbol("helper", { ...MOCK_LOCATION, start_line: 22 });
+      const class_a_id = class_symbol("A", MOCK_LOCATION);
+      const class_b_id = class_symbol("B", { ...MOCK_LOCATION, start_line: 10 });
+      const class_c_id = class_symbol("C", { ...MOCK_LOCATION, start_line: 20 });
+      const method_a_id = method_symbol("helper" as SymbolName, MOCK_LOCATION);
+      const method_b_id = method_symbol("helper" as SymbolName, { ...MOCK_LOCATION, start_line: 12 });
+      const method_c_id = method_symbol("helper" as SymbolName, { ...MOCK_LOCATION, start_line: 22 });
 
       // Setup class A
       const method_a_def: MethodDefinition = {
@@ -536,7 +535,7 @@ describe("resolve_method_on_type", () => {
         class_c_def, method_c_def,
       ]);
 
-      // Set up transitive type subtypes index (A → B → C)
+      // Set up transitive type subtypes index (A -> B -> C)
       definitions["type_subtypes"] = new Map();
       definitions["type_subtypes"].set(class_a_id, new Set([class_b_id]));
       definitions["type_subtypes"].set(class_b_id, new Set([class_c_id]));
@@ -562,9 +561,9 @@ describe("resolve_method_on_type", () => {
     });
 
     it("should return only base method when no overrides exist", () => {
-      const base_class_id = class_symbol("Base", TEST_FILE, MOCK_LOCATION);
-      const child_class_id = class_symbol("Child", TEST_FILE, { ...MOCK_LOCATION, start_line: 10 });
-      const base_method_id = method_symbol("helper", MOCK_LOCATION);
+      const base_class_id = class_symbol("Base", MOCK_LOCATION);
+      const child_class_id = class_symbol("Child", { ...MOCK_LOCATION, start_line: 10 });
+      const base_method_id = method_symbol("helper" as SymbolName, MOCK_LOCATION);
 
       // Setup base class with method
       const base_method_def: MethodDefinition = {
@@ -613,7 +612,7 @@ describe("resolve_method_on_type", () => {
         child_class_def,
       ]);
 
-      // Set up type subtypes index (Base → Child)
+      // Set up type subtypes index (Base -> Child)
       definitions["type_subtypes"] = new Map();
       definitions["type_subtypes"].set(base_class_id, new Set([child_class_id]));
 
@@ -635,12 +634,12 @@ describe("resolve_method_on_type", () => {
     });
 
     it("should handle sibling classes both overriding", () => {
-      const base_class_id = class_symbol("Base", TEST_FILE, MOCK_LOCATION);
-      const child1_class_id = class_symbol("Child1", TEST_FILE, { ...MOCK_LOCATION, start_line: 10 });
-      const child2_class_id = class_symbol("Child2", TEST_FILE, { ...MOCK_LOCATION, start_line: 20 });
-      const base_method_id = method_symbol("method", MOCK_LOCATION);
-      const child1_method_id = method_symbol("method", { ...MOCK_LOCATION, start_line: 12 });
-      const child2_method_id = method_symbol("method", { ...MOCK_LOCATION, start_line: 22 });
+      const base_class_id = class_symbol("Base", MOCK_LOCATION);
+      const child1_class_id = class_symbol("Child1", { ...MOCK_LOCATION, start_line: 10 });
+      const child2_class_id = class_symbol("Child2", { ...MOCK_LOCATION, start_line: 20 });
+      const base_method_id = method_symbol("method" as SymbolName, MOCK_LOCATION);
+      const child1_method_id = method_symbol("method" as SymbolName, { ...MOCK_LOCATION, start_line: 12 });
+      const child2_method_id = method_symbol("method" as SymbolName, { ...MOCK_LOCATION, start_line: 22 });
 
       // Setup base class
       const base_method_def: MethodDefinition = {
@@ -726,7 +725,7 @@ describe("resolve_method_on_type", () => {
         child2_class_def, child2_method_def,
       ]);
 
-      // Set up type subtypes index (Base → Child1, Base → Child2)
+      // Set up type subtypes index (Base -> Child1, Base -> Child2)
       definitions["type_subtypes"] = new Map();
       definitions["type_subtypes"].set(base_class_id, new Set([child1_class_id, child2_class_id]));
 
@@ -754,7 +753,7 @@ describe("resolve_method_on_type", () => {
   describe("Namespace import method lookup", () => {
     it("should resolve method from source file exports", () => {
       const namespace_import_id = "import:test.ts:1:0:1:20:utils" as SymbolId;
-      const helper_fn_id = function_symbol("helper", UTILS_FILE, {
+      const helper_fn_id = function_symbol("helper" as SymbolName, {
         ...MOCK_LOCATION,
         file_path: UTILS_FILE,
       });
@@ -767,8 +766,7 @@ describe("resolve_method_on_type", () => {
         defining_scope_id: FILE_SCOPE_ID,
         location: MOCK_LOCATION,
         import_kind: "namespace",
-        source_path: "./utils",
-        is_exported: false,
+        import_path: "./utils" as ModulePath,
       };
 
       // Setup exported function in utils.ts
@@ -778,7 +776,7 @@ describe("resolve_method_on_type", () => {
         name: "helper" as SymbolName,
         defining_scope_id: UTILS_SCOPE_ID,
         location: { ...MOCK_LOCATION, file_path: UTILS_FILE },
-        parameters: [],
+        signature: { parameters: [] },
         body_scope_id: "scope:utils.ts:helper:1:0" as ScopeId,
         is_exported: true,
         decorators: [],
@@ -805,7 +803,7 @@ describe("resolve_method_on_type", () => {
 
     it("should return empty for non-exported function", () => {
       const namespace_import_id = "import:test.ts:1:0:1:20:utils" as SymbolId;
-      const private_fn_id = function_symbol("private_helper", UTILS_FILE, {
+      const private_fn_id = function_symbol("private_helper" as SymbolName, {
         ...MOCK_LOCATION,
         file_path: UTILS_FILE,
       });
@@ -817,8 +815,7 @@ describe("resolve_method_on_type", () => {
         defining_scope_id: FILE_SCOPE_ID,
         location: MOCK_LOCATION,
         import_kind: "namespace",
-        source_path: "./utils",
-        is_exported: false,
+        import_path: "./utils" as ModulePath,
       };
 
       // Non-exported function
@@ -828,7 +825,7 @@ describe("resolve_method_on_type", () => {
         name: "private_helper" as SymbolName,
         defining_scope_id: UTILS_SCOPE_ID,
         location: { ...MOCK_LOCATION, file_path: UTILS_FILE },
-        parameters: [],
+        signature: { parameters: [] },
         body_scope_id: "scope:utils.ts:private_helper:1:0" as ScopeId,
         is_exported: false, // Not exported
         decorators: [],
@@ -863,8 +860,7 @@ describe("resolve_method_on_type", () => {
         defining_scope_id: FILE_SCOPE_ID,
         location: MOCK_LOCATION,
         import_kind: "namespace",
-        source_path: "./utils",
-        is_exported: false,
+        import_path: "./utils" as ModulePath,
       };
 
       definitions.update_file(TEST_FILE, [import_def]);
@@ -895,8 +891,7 @@ describe("resolve_method_on_type", () => {
         defining_scope_id: FILE_SCOPE_ID,
         location: MOCK_LOCATION,
         import_kind: "namespace",
-        source_path: "./utils",
-        is_exported: false,
+        import_path: "./utils" as ModulePath,
       };
 
       definitions.update_file(TEST_FILE, [import_def]);
@@ -915,7 +910,7 @@ describe("resolve_method_on_type", () => {
   describe("Object literal FunctionCollection lookup", () => {
     it("should find method in stored_functions", () => {
       const var_id = variable_symbol("HANDLERS", MOCK_LOCATION);
-      const method_fn_id = function_symbol("process", TEST_FILE, MOCK_LOCATION);
+      const method_fn_id = function_symbol("process" as SymbolName, MOCK_LOCATION);
 
       // Setup variable with FunctionCollection
       const var_def: VariableDefinition = {
@@ -934,7 +929,7 @@ describe("resolve_method_on_type", () => {
         name: "process" as SymbolName,
         defining_scope_id: FILE_SCOPE_ID,
         location: MOCK_LOCATION,
-        parameters: [],
+        signature: { parameters: [] },
         body_scope_id: "scope:test.ts:process:5:0" as ScopeId,
         is_exported: false,
         decorators: [],
@@ -945,7 +940,9 @@ describe("resolve_method_on_type", () => {
       // Setup FunctionCollection
       definitions["function_collections"] = new Map();
       definitions["function_collections"].set(var_id, {
-        symbol_id: var_id,
+        collection_id: var_id,
+        collection_type: "Object",
+        location: MOCK_LOCATION,
         stored_functions: [method_fn_id],
         stored_references: [],
       });
@@ -961,7 +958,7 @@ describe("resolve_method_on_type", () => {
 
     it("should find method in stored_references via resolution", () => {
       const var_id = variable_symbol("HANDLERS", MOCK_LOCATION);
-      const external_fn_id = function_symbol("external_process", TEST_FILE, {
+      const external_fn_id = function_symbol("external_process" as SymbolName, {
         ...MOCK_LOCATION,
         start_line: 1,
       });
@@ -983,7 +980,7 @@ describe("resolve_method_on_type", () => {
         name: "external_process" as SymbolName,
         defining_scope_id: FILE_SCOPE_ID,
         location: { ...MOCK_LOCATION, start_line: 1 },
-        parameters: [],
+        signature: { parameters: [] },
         body_scope_id: "scope:test.ts:external_process:1:0" as ScopeId,
         is_exported: false,
         decorators: [],
@@ -994,7 +991,9 @@ describe("resolve_method_on_type", () => {
       // Setup FunctionCollection with stored_references
       definitions["function_collections"] = new Map();
       definitions["function_collections"].set(var_id, {
-        symbol_id: var_id,
+        collection_id: var_id,
+        collection_type: "Object",
+        location: MOCK_LOCATION,
         stored_functions: [],
         stored_references: ["external_process" as SymbolName],
       });
@@ -1015,7 +1014,7 @@ describe("resolve_method_on_type", () => {
 
     it("should return empty for method not in collection", () => {
       const var_id = variable_symbol("HANDLERS", MOCK_LOCATION);
-      const other_fn_id = function_symbol("other", TEST_FILE, MOCK_LOCATION);
+      const other_fn_id = function_symbol("other" as SymbolName, MOCK_LOCATION);
 
       const var_def: VariableDefinition = {
         kind: "variable",
@@ -1032,7 +1031,7 @@ describe("resolve_method_on_type", () => {
         name: "other" as SymbolName,
         defining_scope_id: FILE_SCOPE_ID,
         location: MOCK_LOCATION,
-        parameters: [],
+        signature: { parameters: [] },
         body_scope_id: "scope:test.ts:other:5:0" as ScopeId,
         is_exported: false,
         decorators: [],
@@ -1043,7 +1042,9 @@ describe("resolve_method_on_type", () => {
       // Setup FunctionCollection with only "other"
       definitions["function_collections"] = new Map();
       definitions["function_collections"].set(var_id, {
-        symbol_id: var_id,
+        collection_id: var_id,
+        collection_type: "Object",
+        location: MOCK_LOCATION,
         stored_functions: [other_fn_id],
         stored_references: [],
       });
@@ -1072,9 +1073,9 @@ describe("resolve_method_on_type", () => {
     });
 
     it("should prefer TypeRegistry over member_index", () => {
-      const class_id = class_symbol("MyClass", TEST_FILE, MOCK_LOCATION);
-      const method_id_registry = method_symbol("process", MOCK_LOCATION);
-      const method_id_index = method_symbol("process", { ...MOCK_LOCATION, start_line: 99 });
+      const class_id = class_symbol("MyClass", MOCK_LOCATION);
+      const method_id_registry = method_symbol("process" as SymbolName, MOCK_LOCATION);
+      const method_id_index = method_symbol("process" as SymbolName, { ...MOCK_LOCATION, start_line: 99 });
 
       const method_def_index: MethodDefinition = {
         kind: "method",
@@ -1131,11 +1132,11 @@ describe("resolve_method_on_type", () => {
       // class Project { imports: ImportGraph; update() { this.imports.update_file(...); } }
 
       const import_id = "import:test.ts:1:0:1:30:ImportGraph" as SymbolId;
-      const actual_class_id = class_symbol("ImportGraph", IMPORT_GRAPH_FILE, {
+      const actual_class_id = class_symbol("ImportGraph", {
         ...MOCK_LOCATION,
         file_path: IMPORT_GRAPH_FILE,
       });
-      const update_method_id = method_symbol("update_file", {
+      const update_method_id = method_symbol("update_file" as SymbolName, {
         ...MOCK_LOCATION,
         file_path: IMPORT_GRAPH_FILE,
         start_line: 55,
@@ -1149,8 +1150,7 @@ describe("resolve_method_on_type", () => {
         defining_scope_id: FILE_SCOPE_ID,
         location: MOCK_LOCATION,
         import_kind: "named",
-        source_path: "./import_graph",
-        is_exported: false,
+        import_path: "./import_graph" as ModulePath,
       };
 
       // Setup actual class in import_graph.ts
@@ -1200,7 +1200,7 @@ describe("resolve_method_on_type", () => {
 
     it("should return empty for non-exported class in source file", () => {
       const import_id = "import:test.ts:1:0:1:30:PrivateClass" as SymbolId;
-      const private_class_id = class_symbol("PrivateClass", IMPORT_GRAPH_FILE, {
+      const private_class_id = class_symbol("PrivateClass", {
         ...MOCK_LOCATION,
         file_path: IMPORT_GRAPH_FILE,
       });
@@ -1213,8 +1213,7 @@ describe("resolve_method_on_type", () => {
         defining_scope_id: FILE_SCOPE_ID,
         location: MOCK_LOCATION,
         import_kind: "named",
-        source_path: "./import_graph",
-        is_exported: false,
+        import_path: "./import_graph" as ModulePath,
       };
 
       // Setup non-exported class

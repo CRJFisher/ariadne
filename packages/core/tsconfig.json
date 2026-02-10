@@ -2,7 +2,7 @@
   "extends": "../../tsconfig.json",
   "compilerOptions": {
     "outDir": "./dist",
-    "rootDir": "./src",
+    "rootDir": ".",
     "types": [
       "node"
     ],
@@ -11,15 +11,11 @@
   },
   "include": [
     "src/**/*",
-    "tests/fixtures"
+    "tests/**/*"
   ],
   "exclude": [
     "node_modules",
-    "dist",
-    "tests",
-    "**/*.test.ts",
-    "**/*.test.tsx",
-    "**/*.test_helpers.ts"
+    "dist"
   ],
   "references": [
     {

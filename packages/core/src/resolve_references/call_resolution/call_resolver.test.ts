@@ -15,11 +15,10 @@ import { TypeRegistry } from "../registries/type";
 import { ScopeRegistry } from "../registries/scope";
 import { ReferenceRegistry } from "../registries/reference";
 import { ImportGraph } from "../../project/import_graph";
-import { function_symbol, class_symbol, method_symbol } from "@ariadnejs/types";
+import { function_symbol, method_symbol } from "@ariadnejs/types";
 import type {
   FilePath,
   ScopeId,
-  SymbolId,
   SymbolName,
   Location,
   FunctionDefinition,
@@ -73,18 +72,15 @@ describe("resolve_calls_for_files", () => {
       const file_ids = new Set([TEST_FILE]);
 
       // Set up empty scope structure
-      const scope_map = new Map<ScopeId, LexicalScope>([
-        [
-          FILE_SCOPE_ID,
-          {
-            id: FILE_SCOPE_ID,
-            type: "file",
-            location: MOCK_LOCATION,
-            parent_id: null,
-            name: null,
-          },
-        ],
-      ]);
+      const scope_map = new Map<ScopeId, LexicalScope>();
+      scope_map.set(FILE_SCOPE_ID, {
+        id: FILE_SCOPE_ID,
+        type: "global",
+        location: MOCK_LOCATION,
+        parent_id: null,
+        name: null,
+        child_ids: [],
+      });
       scopes.update_file(TEST_FILE, scope_map);
 
       const result = resolve_calls_for_files(file_ids, context, name_resolver);
@@ -96,7 +92,7 @@ describe("resolve_calls_for_files", () => {
   describe("Function call resolution", () => {
     it("should resolve function call to symbol", () => {
       // Setup: function greet() {} greet();
-      const func_id = function_symbol("greet", TEST_FILE, MOCK_LOCATION);
+      const func_id = function_symbol("greet" as SymbolName, MOCK_LOCATION);
 
       const func_def: FunctionDefinition = {
         kind: "function",
@@ -104,7 +100,7 @@ describe("resolve_calls_for_files", () => {
         name: "greet" as SymbolName,
         defining_scope_id: FILE_SCOPE_ID,
         location: MOCK_LOCATION,
-        parameters: [],
+        signature: { parameters: [] },
         body_scope_id: FUNC_SCOPE_ID,
         is_exported: false,
       };
@@ -112,28 +108,27 @@ describe("resolve_calls_for_files", () => {
       definitions.update_file(TEST_FILE, [func_def]);
 
       // Set up scope structure
-      const scope_map = new Map<ScopeId, LexicalScope>([
-        [
-          FILE_SCOPE_ID,
-          {
-            id: FILE_SCOPE_ID,
-            type: "file",
-            location: MOCK_LOCATION,
-            parent_id: null,
-            name: null,
-          },
-        ],
-        [
-          FUNC_SCOPE_ID,
-          {
-            id: FUNC_SCOPE_ID,
-            type: "function",
-            location: MOCK_LOCATION,
-            parent_id: FILE_SCOPE_ID,
-            name: "greet" as SymbolName,
-          },
-        ],
-      ]);
+      const func_scope_location: Location = {
+        ...MOCK_LOCATION,
+        start_line: 1,
+      };
+      const scope_map = new Map<ScopeId, LexicalScope>();
+      scope_map.set(FILE_SCOPE_ID, {
+        id: FILE_SCOPE_ID,
+        type: "global",
+        location: MOCK_LOCATION,
+        parent_id: null,
+        name: null,
+        child_ids: [FUNC_SCOPE_ID],
+      });
+      scope_map.set(FUNC_SCOPE_ID, {
+        id: FUNC_SCOPE_ID,
+        type: "function",
+        location: func_scope_location,
+        parent_id: FILE_SCOPE_ID,
+        name: "greet" as SymbolName,
+        child_ids: [],
+      });
       scopes.update_file(TEST_FILE, scope_map);
 
       // Add function call reference
@@ -173,18 +168,15 @@ describe("resolve_calls_for_files", () => {
 
     it("should return empty resolutions for unresolved function call", () => {
       // Set up scope structure
-      const scope_map = new Map<ScopeId, LexicalScope>([
-        [
-          FILE_SCOPE_ID,
-          {
-            id: FILE_SCOPE_ID,
-            type: "file",
-            location: MOCK_LOCATION,
-            parent_id: null,
-            name: null,
-          },
-        ],
-      ]);
+      const scope_map = new Map<ScopeId, LexicalScope>();
+      scope_map.set(FILE_SCOPE_ID, {
+        id: FILE_SCOPE_ID,
+        type: "global",
+        location: MOCK_LOCATION,
+        parent_id: null,
+        name: null,
+        child_ids: [],
+      });
       scopes.update_file(TEST_FILE, scope_map);
 
       // Add function call reference to undefined function
@@ -218,8 +210,11 @@ describe("resolve_calls_for_files", () => {
       const scope_a = "scope:a.ts:file:0:0" as ScopeId;
       const scope_b = "scope:b.ts:file:0:0" as ScopeId;
 
-      const func_a = function_symbol("funcA", file_a, MOCK_LOCATION);
-      const func_b = function_symbol("funcB", file_b, MOCK_LOCATION);
+      const location_a: Location = { ...MOCK_LOCATION, file_path: file_a };
+      const location_b: Location = { ...MOCK_LOCATION, file_path: file_b };
+
+      const func_a = function_symbol("funcA" as SymbolName, location_a);
+      const func_b = function_symbol("funcB" as SymbolName, location_b);
 
       // Set up definitions
       definitions.update_file(file_a, [
@@ -228,8 +223,8 @@ describe("resolve_calls_for_files", () => {
           symbol_id: func_a,
           name: "funcA" as SymbolName,
           defining_scope_id: scope_a,
-          location: { ...MOCK_LOCATION, file_path: file_a },
-          parameters: [],
+          location: location_a,
+          signature: { parameters: [] },
           body_scope_id: "scope:a.ts:funcA:1:0" as ScopeId,
           is_exported: false,
         },
@@ -240,39 +235,33 @@ describe("resolve_calls_for_files", () => {
           symbol_id: func_b,
           name: "funcB" as SymbolName,
           defining_scope_id: scope_b,
-          location: { ...MOCK_LOCATION, file_path: file_b },
-          parameters: [],
+          location: location_b,
+          signature: { parameters: [] },
           body_scope_id: "scope:b.ts:funcB:1:0" as ScopeId,
           is_exported: false,
         },
       ]);
 
       // Set up scopes
-      const scope_map_a = new Map<ScopeId, LexicalScope>([
-        [
-          scope_a,
-          {
-            id: scope_a,
-            type: "file",
-            location: { ...MOCK_LOCATION, file_path: file_a },
-            parent_id: null,
-            name: null,
-          },
-        ],
-      ]);
+      const scope_map_a = new Map<ScopeId, LexicalScope>();
+      scope_map_a.set(scope_a, {
+        id: scope_a,
+        type: "global",
+        location: location_a,
+        parent_id: null,
+        name: null,
+        child_ids: [],
+      });
       scopes.update_file(file_a, scope_map_a);
-      const scope_map_b = new Map<ScopeId, LexicalScope>([
-        [
-          scope_b,
-          {
-            id: scope_b,
-            type: "file",
-            location: { ...MOCK_LOCATION, file_path: file_b },
-            parent_id: null,
-            name: null,
-          },
-        ],
-      ]);
+      const scope_map_b = new Map<ScopeId, LexicalScope>();
+      scope_map_b.set(scope_b, {
+        id: scope_b,
+        type: "global",
+        location: location_b,
+        parent_id: null,
+        name: null,
+        child_ids: [],
+      });
       scopes.update_file(file_b, scope_map_b);
 
       // Add call references
@@ -280,7 +269,7 @@ describe("resolve_calls_for_files", () => {
         {
           kind: "function_call",
           name: "funcA" as SymbolName,
-          location: { ...MOCK_LOCATION, file_path: file_a },
+          location: location_a,
           scope_id: scope_a,
         },
       ]);
@@ -288,7 +277,7 @@ describe("resolve_calls_for_files", () => {
         {
           kind: "function_call",
           name: "funcB" as SymbolName,
-          location: { ...MOCK_LOCATION, file_path: file_b },
+          location: location_b,
           scope_id: scope_b,
         },
       ]);
@@ -315,7 +304,7 @@ describe("resolve_calls_for_files", () => {
   describe("Caller scope grouping", () => {
     it("should group calls by caller scope", () => {
       const caller_scope = "scope:test.ts:main:1:0" as ScopeId;
-      const func_id = function_symbol("helper", TEST_FILE, MOCK_LOCATION);
+      const func_id = function_symbol("helper" as SymbolName, MOCK_LOCATION);
 
       definitions.update_file(TEST_FILE, [
         {
@@ -324,35 +313,30 @@ describe("resolve_calls_for_files", () => {
           name: "helper" as SymbolName,
           defining_scope_id: FILE_SCOPE_ID,
           location: MOCK_LOCATION,
-          parameters: [],
+          signature: { parameters: [] },
           body_scope_id: FUNC_SCOPE_ID,
           is_exported: false,
         },
       ]);
 
       // Set up scope structure with caller as function scope
-      const scope_map = new Map<ScopeId, LexicalScope>([
-        [
-          FILE_SCOPE_ID,
-          {
-            id: FILE_SCOPE_ID,
-            type: "file",
-            location: MOCK_LOCATION,
-            parent_id: null,
-            name: null,
-          },
-        ],
-        [
-          caller_scope,
-          {
-            id: caller_scope,
-            type: "function",
-            location: MOCK_LOCATION,
-            parent_id: FILE_SCOPE_ID,
-            name: "main" as SymbolName,
-          },
-        ],
-      ]);
+      const scope_map = new Map<ScopeId, LexicalScope>();
+      scope_map.set(FILE_SCOPE_ID, {
+        id: FILE_SCOPE_ID,
+        type: "global",
+        location: MOCK_LOCATION,
+        parent_id: null,
+        name: null,
+        child_ids: [caller_scope],
+      });
+      scope_map.set(caller_scope, {
+        id: caller_scope,
+        type: "function",
+        location: MOCK_LOCATION,
+        parent_id: FILE_SCOPE_ID,
+        name: "main" as SymbolName,
+        child_ids: [],
+      });
       scopes.update_file(TEST_FILE, scope_map);
 
       // Call from within the caller scope
@@ -398,17 +382,15 @@ describe("resolve_calls_for_files", () => {
       //   do_work() { return do_work(); }  // should resolve to import
       // }
 
+      const source_location: Location = {
+        ...MOCK_LOCATION,
+        file_path: "source.ts" as FilePath,
+      };
       const import_func_id = function_symbol(
-        "do_work",
-        "source.ts" as FilePath,
-        MOCK_LOCATION
+        "do_work" as SymbolName,
+        source_location
       );
-      const method_id = method_symbol(
-        "do_work",
-        "Wrapper",
-        TEST_FILE,
-        MOCK_LOCATION
-      );
+      const method_id = method_symbol("do_work", MOCK_LOCATION);
 
       // Method definition (in class scope)
       const method_def: MethodDefinition = {
@@ -419,8 +401,6 @@ describe("resolve_calls_for_files", () => {
         location: MOCK_LOCATION,
         parameters: [],
         body_scope_id: METHOD_BODY_SCOPE_ID,
-        class_name: "Wrapper" as SymbolName,
-        is_static: false,
       };
 
       // Import is defined as function in source file
@@ -429,8 +409,8 @@ describe("resolve_calls_for_files", () => {
         symbol_id: import_func_id,
         name: "do_work" as SymbolName,
         defining_scope_id: FILE_SCOPE_ID,
-        location: { ...MOCK_LOCATION, file_path: "source.ts" as FilePath },
-        parameters: [],
+        location: source_location,
+        signature: { parameters: [] },
         body_scope_id: "scope:source.ts:do_work:1:0" as ScopeId,
         is_exported: true,
       };
@@ -439,38 +419,31 @@ describe("resolve_calls_for_files", () => {
       definitions.update_file("source.ts" as FilePath, [import_func_def]);
 
       // Scope hierarchy: FILE -> CLASS -> METHOD_BODY
-      const scope_map = new Map<ScopeId, LexicalScope>([
-        [
-          FILE_SCOPE_ID,
-          {
-            id: FILE_SCOPE_ID,
-            type: "file",
-            location: MOCK_LOCATION,
-            parent_id: null,
-            name: null,
-          },
-        ],
-        [
-          CLASS_SCOPE_ID,
-          {
-            id: CLASS_SCOPE_ID,
-            type: "class",
-            location: MOCK_LOCATION,
-            parent_id: FILE_SCOPE_ID,
-            name: "Wrapper" as SymbolName,
-          },
-        ],
-        [
-          METHOD_BODY_SCOPE_ID,
-          {
-            id: METHOD_BODY_SCOPE_ID,
-            type: "function",
-            location: MOCK_LOCATION,
-            parent_id: CLASS_SCOPE_ID,
-            name: "do_work" as SymbolName,
-          },
-        ],
-      ]);
+      const scope_map = new Map<ScopeId, LexicalScope>();
+      scope_map.set(FILE_SCOPE_ID, {
+        id: FILE_SCOPE_ID,
+        type: "global",
+        location: MOCK_LOCATION,
+        parent_id: null,
+        name: null,
+        child_ids: [CLASS_SCOPE_ID],
+      });
+      scope_map.set(CLASS_SCOPE_ID, {
+        id: CLASS_SCOPE_ID,
+        type: "class",
+        location: MOCK_LOCATION,
+        parent_id: FILE_SCOPE_ID,
+        name: "Wrapper" as SymbolName,
+        child_ids: [METHOD_BODY_SCOPE_ID],
+      });
+      scope_map.set(METHOD_BODY_SCOPE_ID, {
+        id: METHOD_BODY_SCOPE_ID,
+        type: "function",
+        location: MOCK_LOCATION,
+        parent_id: CLASS_SCOPE_ID,
+        name: "do_work" as SymbolName,
+        child_ids: [],
+      });
       scopes.update_file(TEST_FILE, scope_map);
 
       // Function call inside method body
@@ -511,11 +484,14 @@ describe("resolve_calls_for_files", () => {
     it("should allow function definition (not method) even if it shadows", () => {
       // Setup: function do_work() {} nested inside another function
       // Inner function shadows outer, but it's still a function - valid target
-      const outer_func_id = function_symbol("do_work", TEST_FILE, MOCK_LOCATION);
+      const outer_func_id = function_symbol(
+        "do_work" as SymbolName,
+        MOCK_LOCATION
+      );
+      const inner_location: Location = { ...MOCK_LOCATION, start_line: 5 };
       const inner_func_id = function_symbol(
-        "do_work",
-        TEST_FILE,
-        { ...MOCK_LOCATION, start_line: 5 }
+        "do_work" as SymbolName,
+        inner_location
       );
 
       const outer_def: FunctionDefinition = {
@@ -524,7 +500,7 @@ describe("resolve_calls_for_files", () => {
         name: "do_work" as SymbolName,
         defining_scope_id: FILE_SCOPE_ID,
         location: MOCK_LOCATION,
-        parameters: [],
+        signature: { parameters: [] },
         body_scope_id: FUNC_SCOPE_ID,
         is_exported: false,
       };
@@ -535,8 +511,8 @@ describe("resolve_calls_for_files", () => {
         symbol_id: inner_func_id,
         name: "do_work" as SymbolName,
         defining_scope_id: FUNC_SCOPE_ID,
-        location: { ...MOCK_LOCATION, start_line: 5 },
-        parameters: [],
+        location: inner_location,
+        signature: { parameters: [] },
         body_scope_id: inner_scope_id,
         is_exported: false,
       };
@@ -548,10 +524,11 @@ describe("resolve_calls_for_files", () => {
           FILE_SCOPE_ID,
           {
             id: FILE_SCOPE_ID,
-            type: "file",
+            type: "global",
             location: MOCK_LOCATION,
             parent_id: null,
             name: null,
+            child_ids: [FUNC_SCOPE_ID],
           },
         ],
         [
@@ -562,6 +539,7 @@ describe("resolve_calls_for_files", () => {
             location: MOCK_LOCATION,
             parent_id: FILE_SCOPE_ID,
             name: "do_work" as SymbolName,
+            child_ids: [inner_scope_id],
           },
         ],
         [
@@ -569,9 +547,10 @@ describe("resolve_calls_for_files", () => {
           {
             id: inner_scope_id,
             type: "function",
-            location: { ...MOCK_LOCATION, start_line: 5 },
+            location: inner_location,
             parent_id: FUNC_SCOPE_ID,
             name: "do_work" as SymbolName,
+            child_ids: [],
           },
         ],
       ]);
@@ -610,12 +589,7 @@ describe("resolve_calls_for_files", () => {
 
     it("should return no resolution when only method exists (no import/function)", () => {
       // Setup: method exists but no import - call cannot be resolved
-      const method_id = method_symbol(
-        "do_work",
-        "Wrapper",
-        TEST_FILE,
-        MOCK_LOCATION
-      );
+      const method_id = method_symbol("do_work", MOCK_LOCATION);
 
       const method_def: MethodDefinition = {
         kind: "method",
@@ -625,8 +599,6 @@ describe("resolve_calls_for_files", () => {
         location: MOCK_LOCATION,
         parameters: [],
         body_scope_id: METHOD_BODY_SCOPE_ID,
-        class_name: "Wrapper" as SymbolName,
-        is_static: false,
       };
 
       definitions.update_file(TEST_FILE, [method_def]);
@@ -636,10 +608,11 @@ describe("resolve_calls_for_files", () => {
           FILE_SCOPE_ID,
           {
             id: FILE_SCOPE_ID,
-            type: "file",
+            type: "global",
             location: MOCK_LOCATION,
             parent_id: null,
             name: null,
+            child_ids: [CLASS_SCOPE_ID],
           },
         ],
         [
@@ -650,6 +623,7 @@ describe("resolve_calls_for_files", () => {
             location: MOCK_LOCATION,
             parent_id: FILE_SCOPE_ID,
             name: "Wrapper" as SymbolName,
+            child_ids: [METHOD_BODY_SCOPE_ID],
           },
         ],
         [
@@ -660,6 +634,7 @@ describe("resolve_calls_for_files", () => {
             location: MOCK_LOCATION,
             parent_id: CLASS_SCOPE_ID,
             name: "do_work" as SymbolName,
+            child_ids: [],
           },
         ],
       ]);

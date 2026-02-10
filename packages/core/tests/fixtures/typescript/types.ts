@@ -46,7 +46,7 @@ const user_id: number = 123;
 const is_active: boolean = true;
 
 // Array type annotations
-const numbers: number[] = [1, 2, 3];
+const type_numbers: number[] = [1, 2, 3];
 const strings: Array<string> = ["a", "b", "c"];
 const mixed: (string | number)[] = ["a", 1, "b", 2];
 

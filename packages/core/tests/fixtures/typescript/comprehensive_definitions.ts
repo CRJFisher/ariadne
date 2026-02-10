@@ -161,7 +161,7 @@ enum ComputedEnum {
   NONE = 0,
   READ = 1 << 1,
   WRITE = 1 << 2,
-  READ_WRITE = Read | Write
+  READ_WRITE = READ | WRITE
 }
 
 const enum ConstEnum {

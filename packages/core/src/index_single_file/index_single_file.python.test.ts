@@ -1316,8 +1316,8 @@ class TestClass:
       expect(class_def).toBeDefined();
 
       // Verify constructor handling
-      if (class_def?.constructor && class_def.constructors.length > 0) {
-        const ctor = class_def.constructors[0];
+      if (class_def?.constructor && class_def.constructors!.length > 0) {
+        const ctor = class_def.constructors![0];
 
         // Verify it has kind "constructor", not "method"
         expect(ctor.kind).toBe("constructor");
@@ -2192,7 +2192,7 @@ type Handler = Callable[[str], None]
       // All block scopes should be descendants of constructor
       for (const block of block_scopes) {
         expect(
-          is_descendant_of(block.id, constructor_scope!.id, index.scopes as Map<string, { id: string; parent_id: string | null }>)
+          is_descendant_of(block.id, constructor_scope!.id, index.scopes as unknown as Map<string, { id: string; parent_id: string | null }>)
         ).toBe(true);
       }
     });
@@ -2233,7 +2233,7 @@ type Handler = Callable[[str], None]
       // All block scopes should be descendants of constructor
       for (const block of block_scopes) {
         expect(
-          is_descendant_of(block.id, constructor_scope!.id, index.scopes as Map<string, { id: string; parent_id: string | null }>)
+          is_descendant_of(block.id, constructor_scope!.id, index.scopes as unknown as Map<string, { id: string; parent_id: string | null }>)
         ).toBe(true);
       }
     });
@@ -2267,7 +2267,7 @@ type Handler = Callable[[str], None]
       // All block scopes should be descendants of constructor
       for (const block of block_scopes) {
         expect(
-          is_descendant_of(block.id, constructor_scope!.id, index.scopes as Map<string, { id: string; parent_id: string | null }>)
+          is_descendant_of(block.id, constructor_scope!.id, index.scopes as unknown as Map<string, { id: string; parent_id: string | null }>)
         ).toBe(true);
       }
     });
@@ -2317,7 +2317,7 @@ type Handler = Callable[[str], None]
 
       for (const block of block_scopes) {
         expect(
-          is_descendant_of(block.id, constructor_scope!.id, index.scopes as Map<string, { id: string; parent_id: string | null }>)
+          is_descendant_of(block.id, constructor_scope!.id, index.scopes as unknown as Map<string, { id: string; parent_id: string | null }>)
         ).toBe(true);
       }
     });

@@ -398,11 +398,11 @@ describe("Project Integration - TypeScript", () => {
       );
       expect(helper_call).toBeDefined();
 
-      if (helper_call && helper_call.context?.property_chain) {
+      if (helper_call && helper_call.property_chain) {
         // Verify property chain is ["utils", "helper"]
-        expect(helper_call.context.property_chain.length).toBe(2);
-        expect(helper_call.context.property_chain[0]).toBe("utils" as SymbolName);
-        expect(helper_call.context.property_chain[1]).toBe("helper" as SymbolName);
+        expect(helper_call.property_chain.length).toBe(2);
+        expect(helper_call.property_chain[0]).toBe("utils" as SymbolName);
+        expect(helper_call.property_chain[1]).toBe("helper" as SymbolName);
 
         // Verify it resolves to the helper function in utils.ts
         const resolved = project.resolutions.resolve(
@@ -708,7 +708,7 @@ describe("Project Integration - TypeScript", () => {
   describe("Call graph resolution", () => {
     it("should resolve this.method() calls in call graph", async () => {
       const project = new Project();
-      await project.initialize(".", ["**/*.ts"]);
+      await project.initialize("." as FilePath, ["**/*.ts"]);
 
       const code = `
 export class TypeRegistry {

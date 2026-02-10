@@ -466,7 +466,6 @@ describe("DefinitionRegistry", () => {
         properties: [property],
         extends: [],
         decorators: [],
-        constructor: undefined,
       };
 
       registry.update_file(file1, [class_def]);
@@ -535,7 +534,6 @@ describe("DefinitionRegistry", () => {
         properties: [],
         extends: [],
         decorators: [],
-        constructor: undefined,
       };
 
       registry.update_file(file1, [class_def]);
@@ -600,7 +598,6 @@ describe("DefinitionRegistry", () => {
         properties: [property],
         extends: [],
         decorators: [],
-        constructor: undefined,
       };
 
       registry.update_file(file1, [class_def]);
@@ -664,7 +661,6 @@ describe("DefinitionRegistry", () => {
         properties: [],
         extends: [],
         decorators: [],
-        constructor: undefined,
       };
 
       registry.update_file(file1, [class_def]);
@@ -775,7 +771,6 @@ describe("DefinitionRegistry", () => {
         properties: [prop1, prop2],
         extends: [],
         decorators: [],
-        constructor: undefined,
       };
 
       registry.update_file(file1, [class_def]);
@@ -870,7 +865,6 @@ describe("DefinitionRegistry", () => {
         properties: [old_prop],
         extends: [],
         decorators: [],
-        constructor: undefined,
       };
 
       registry.update_file(file1, [class_v1]);
@@ -943,7 +937,6 @@ describe("DefinitionRegistry", () => {
         properties: [new_prop],
         extends: [],
         decorators: [],
-        constructor: undefined,
       };
 
       registry.update_file(file1, [class_v2]);
@@ -999,7 +992,6 @@ describe("DefinitionRegistry", () => {
         properties: [],
         extends: [],
         decorators: [],
-        constructor: undefined,
       };
 
       const child_class: ClassDefinition = {
@@ -1019,7 +1011,6 @@ describe("DefinitionRegistry", () => {
         properties: [],
         extends: ["ParentClass" as SymbolName],
         decorators: [],
-        constructor: undefined,
       };
 
       // Register both files
@@ -1081,7 +1072,6 @@ describe("DefinitionRegistry", () => {
         properties: [],
         extends: [],
         decorators: [],
-        constructor: undefined,
       };
 
       registry.update_file(file_a, [parent_class]);
@@ -1140,7 +1130,6 @@ describe("DefinitionRegistry", () => {
         properties: [],
         extends: [],
         decorators: [],
-        constructor: undefined,
       };
 
       const child_class: ClassDefinition = {
@@ -1160,7 +1149,6 @@ describe("DefinitionRegistry", () => {
         properties: [],
         extends: ["ParentClass" as SymbolName],
         decorators: [],
-        constructor: undefined,
       };
 
       registry.update_file(file_a, [parent_class]);

@@ -42,10 +42,9 @@ describe("resolve_names", () => {
   let context: NameResolutionContext;
 
   const mock_root_folder: FileSystemFolder = {
-    name: "",
-    type: "folder",
     path: "/" as FilePath,
-    children: [],
+    folders: new Map(),
+    files: new Set(),
   };
 
   beforeEach(() => {
@@ -84,7 +83,7 @@ describe("resolve_names", () => {
 
   describe("Local definition resolution", () => {
     it("should resolve local function definition in file scope", () => {
-      const func_id = function_symbol("greet" as SymbolName, MOCK_LOCATION);
+      const func_id = function_symbol("greet" as SymbolName, MOCK_LOCATION as Location);
 
       // Set up scope
       const scope_map = new Map<ScopeId, LexicalScope>([
@@ -92,12 +91,12 @@ describe("resolve_names", () => {
           FILE_SCOPE_ID,
           {
             id: FILE_SCOPE_ID,
-            type: "file",
+            type: "global" as const,
             location: MOCK_LOCATION,
             parent_id: null,
             name: null,
-            child_ids: [],
-          },
+            child_ids: [] as readonly ScopeId[],
+          } as unknown as LexicalScope,
         ],
       ]);
       scopes.update_file(TEST_FILE, scope_map);
@@ -125,23 +124,23 @@ describe("resolve_names", () => {
     });
 
     it("should resolve multiple definitions in same scope", () => {
-      const func_a = function_symbol("funcA", TEST_FILE, MOCK_LOCATION);
-      const func_b = function_symbol("funcB", TEST_FILE, {
+      const func_a = function_symbol("funcA" as SymbolName, MOCK_LOCATION as Location);
+      const func_b = function_symbol("funcB" as SymbolName, {
         ...MOCK_LOCATION,
         start_line: 5,
-      });
+      } as Location);
 
       const scope_map = new Map<ScopeId, LexicalScope>([
         [
           FILE_SCOPE_ID,
           {
             id: FILE_SCOPE_ID,
-            type: "file",
+            type: "global" as const,
             location: MOCK_LOCATION,
             parent_id: null,
             name: null,
-            child_ids: [],
-          },
+            child_ids: [] as readonly ScopeId[],
+          } as unknown as LexicalScope,
         ],
       ]);
       scopes.update_file(TEST_FILE, scope_map);
@@ -180,7 +179,7 @@ describe("resolve_names", () => {
 
   describe("Lexical scope inheritance", () => {
     it("should inherit parent scope resolutions in child scope", () => {
-      const outer_func = function_symbol("outer", TEST_FILE, MOCK_LOCATION);
+      const outer_func = function_symbol("outer" as SymbolName, MOCK_LOCATION as Location);
       const inner_scope_id = "scope:test.ts:inner:2:0" as ScopeId;
 
       // Set up nested scopes
@@ -189,23 +188,23 @@ describe("resolve_names", () => {
           FILE_SCOPE_ID,
           {
             id: FILE_SCOPE_ID,
-            type: "file",
+            type: "global" as const,
             location: MOCK_LOCATION,
             parent_id: null,
             name: null,
-            child_ids: [inner_scope_id],
-          },
+            child_ids: [inner_scope_id] as readonly ScopeId[],
+          } as unknown as LexicalScope,
         ],
         [
           inner_scope_id,
           {
             id: inner_scope_id,
-            type: "function",
+            type: "function" as const,
             location: { ...MOCK_LOCATION, start_line: 2 },
             parent_id: FILE_SCOPE_ID,
             name: "inner" as SymbolName,
-            child_ids: [],
-          },
+            child_ids: [] as readonly ScopeId[],
+          } as unknown as LexicalScope,
         ],
       ]);
       scopes.update_file(TEST_FILE, scope_map);
@@ -233,11 +232,11 @@ describe("resolve_names", () => {
     });
 
     it("should allow child scope to shadow parent definition", () => {
-      const outer_func = function_symbol("func", TEST_FILE, MOCK_LOCATION);
-      const inner_func = function_symbol("func", TEST_FILE, {
+      const outer_func = function_symbol("func" as SymbolName, MOCK_LOCATION as Location);
+      const inner_func = function_symbol("func" as SymbolName, {
         ...MOCK_LOCATION,
         start_line: 3,
-      });
+      } as Location);
       const inner_scope_id = "scope:test.ts:inner:2:0" as ScopeId;
 
       const scope_map = new Map<ScopeId, LexicalScope>([
@@ -245,23 +244,23 @@ describe("resolve_names", () => {
           FILE_SCOPE_ID,
           {
             id: FILE_SCOPE_ID,
-            type: "file",
+            type: "global" as const,
             location: MOCK_LOCATION,
             parent_id: null,
             name: null,
-            child_ids: [inner_scope_id],
-          },
+            child_ids: [inner_scope_id] as readonly ScopeId[],
+          } as unknown as LexicalScope,
         ],
         [
           inner_scope_id,
           {
             id: inner_scope_id,
-            type: "function",
+            type: "function" as const,
             location: { ...MOCK_LOCATION, start_line: 2 },
             parent_id: FILE_SCOPE_ID,
             name: "inner" as SymbolName,
-            child_ids: [],
-          },
+            child_ids: [] as readonly ScopeId[],
+          } as unknown as LexicalScope,
         ],
       ]);
       scopes.update_file(TEST_FILE, scope_map);
@@ -310,14 +309,14 @@ describe("resolve_names", () => {
       const scope_a = "scope:a.ts:file:0:0" as ScopeId;
       const scope_b = "scope:b.ts:file:0:0" as ScopeId;
 
-      const func_a = function_symbol("funcA", file_a, {
+      const func_a = function_symbol("funcA" as SymbolName, {
         ...MOCK_LOCATION,
         file_path: file_a,
-      });
-      const func_b = function_symbol("funcB", file_b, {
+      } as Location);
+      const func_b = function_symbol("funcB" as SymbolName, {
         ...MOCK_LOCATION,
         file_path: file_b,
-      });
+      } as Location);
 
       // Update context with both languages
       context = {
@@ -331,33 +330,33 @@ describe("resolve_names", () => {
       // Set up scopes for both files
       scopes.update_file(
         file_a,
-        new Map([
+        new Map<ScopeId, LexicalScope>([
           [
             scope_a,
             {
               id: scope_a,
-              type: "file",
+              type: "global" as const,
               location: { ...MOCK_LOCATION, file_path: file_a },
               parent_id: null,
               name: null,
-              child_ids: [],
-            },
+              child_ids: [] as readonly ScopeId[],
+            } as unknown as LexicalScope,
           ],
         ])
       );
       scopes.update_file(
         file_b,
-        new Map([
+        new Map<ScopeId, LexicalScope>([
           [
             scope_b,
             {
               id: scope_b,
-              type: "file",
+              type: "global" as const,
               location: { ...MOCK_LOCATION, file_path: file_b },
               parent_id: null,
               name: null,
-              child_ids: [],
-            },
+              child_ids: [] as readonly ScopeId[],
+            } as unknown as LexicalScope,
           ],
         ])
       );
@@ -405,30 +404,30 @@ describe("resolve_names", () => {
 
   describe("scope_to_file tracking", () => {
     it("should track which file each scope belongs to", () => {
-      const func_id = function_symbol("greet" as SymbolName, MOCK_LOCATION);
+      const func_id = function_symbol("greet" as SymbolName, MOCK_LOCATION as Location);
 
       const scope_map = new Map<ScopeId, LexicalScope>([
         [
           FILE_SCOPE_ID,
           {
             id: FILE_SCOPE_ID,
-            type: "file",
+            type: "global" as const,
             location: MOCK_LOCATION,
             parent_id: null,
             name: null,
-            child_ids: [FUNC_SCOPE_ID],
-          },
+            child_ids: [FUNC_SCOPE_ID] as readonly ScopeId[],
+          } as unknown as LexicalScope,
         ],
         [
           FUNC_SCOPE_ID,
           {
             id: FUNC_SCOPE_ID,
-            type: "function",
+            type: "function" as const,
             location: MOCK_LOCATION,
             parent_id: FILE_SCOPE_ID,
             name: "greet" as SymbolName,
-            child_ids: [],
-          },
+            child_ids: [] as readonly ScopeId[],
+          } as unknown as LexicalScope,
         ],
       ]);
       scopes.update_file(TEST_FILE, scope_map);

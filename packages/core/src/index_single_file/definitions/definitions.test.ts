@@ -289,12 +289,13 @@ describe("DefinitionBuilder - Complex Assembly", () => {
       is_exported: true,
     });
 
+    const method_location = create_test_location(3, 2);
     builder.add_method_to_class(class_id, {
       symbol_id: method_id,
       name: "decoratedMethod" as SymbolName,
-      location: create_test_location(3, 2),
+      location: method_location,
       scope_id: context.root_scope_id,
-    });
+    }, create_method_capture("decoratedMethod" as SymbolName, method_location));
 
     // Add decorators to method
     builder.add_decorator_to_target(method_id, {
@@ -631,6 +632,7 @@ describe("DefinitionBuilder - Public API", () => {
 
     const class_id = "class:test:1:0:10:0:Chain" as SymbolId;
     const method_id = "method:test:2:2:4:3:chainMethod" as SymbolId;
+    const chain_method_location = create_test_location(2, 2);
 
     const result = builder
       .add_class({
@@ -643,9 +645,9 @@ describe("DefinitionBuilder - Public API", () => {
       .add_method_to_class(class_id, {
         symbol_id: method_id,
         name: "chainMethod" as SymbolName,
-        location: create_test_location(2, 2),
+        location: chain_method_location,
         scope_id: context.root_scope_id,
-      })
+      }, create_method_capture("chainMethod" as SymbolName, chain_method_location))
       .add_property_to_class(class_id, {
         symbol_id: "property:test:5:2:5:15:chainProp" as SymbolId,
         name: "chainProp" as SymbolName,

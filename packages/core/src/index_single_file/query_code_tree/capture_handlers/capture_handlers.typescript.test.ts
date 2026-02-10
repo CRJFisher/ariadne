@@ -148,11 +148,11 @@ describe("TypeScript Builder Configuration", () => {
       expect(name_node).toBeTruthy();
 
       const builder = new DefinitionBuilder(mock_context);
-      const handler = TYPESCRIPT_HANDLERS["def.interface"];
+      const handler = TYPESCRIPT_HANDLERS["definition.interface"];
 
       if (handler && name_node) {
-        const capture = create_raw_capture("def.interface", name_node, "IUser");
-        handler.process(capture, builder, mock_context);
+        const capture = create_raw_capture("definition.interface", name_node, "IUser");
+        handler(capture, builder, mock_context);
 
         const result = builder.build();
         expect(result.interfaces.size).toBe(1);
@@ -204,11 +204,11 @@ describe("TypeScript Builder Configuration", () => {
       expect(name_node).toBeTruthy();
 
       const builder = new DefinitionBuilder(mock_context);
-      const handler = TYPESCRIPT_HANDLERS["def.type_alias"];
+      const handler = TYPESCRIPT_HANDLERS["definition.type_alias"];
 
       if (handler && name_node) {
-        const capture = create_raw_capture("def.type_alias", name_node, "UserID");
-        handler.process(capture, builder, mock_context);
+        const capture = create_raw_capture("definition.type_alias", name_node, "UserID");
+        handler(capture, builder, mock_context);
 
         const result = builder.build();
         expect(result.types.size).toBe(1);
@@ -228,11 +228,11 @@ describe("TypeScript Builder Configuration", () => {
       expect(name_node).toBeTruthy();
 
       const builder = new DefinitionBuilder(mock_context);
-      const handler = TYPESCRIPT_HANDLERS["def.type_alias"];
+      const handler = TYPESCRIPT_HANDLERS["definition.type_alias"];
 
       if (handler && name_node) {
-        const capture = create_raw_capture("def.type_alias", name_node, "Result");
-        handler.process(capture, builder, mock_context);
+        const capture = create_raw_capture("definition.type_alias", name_node, "Result");
+        handler(capture, builder, mock_context);
 
         const result = builder.build();
         expect(result.types.size).toBe(1);
@@ -259,11 +259,11 @@ describe("TypeScript Builder Configuration", () => {
       expect(name_node).toBeTruthy();
 
       const builder = new DefinitionBuilder(mock_context);
-      const handler = TYPESCRIPT_HANDLERS["def.enum"];
+      const handler = TYPESCRIPT_HANDLERS["definition.enum"];
 
       if (handler && name_node) {
-        const capture = create_raw_capture("def.enum", name_node, "Color");
-        handler.process(capture, builder, mock_context);
+        const capture = create_raw_capture("definition.enum", name_node, "Color");
+        handler(capture, builder, mock_context);
 
         const result = builder.build();
         expect(result.enums.size).toBe(1);
@@ -286,11 +286,11 @@ describe("TypeScript Builder Configuration", () => {
       expect(name_node).toBeTruthy();
 
       const builder = new DefinitionBuilder(mock_context);
-      const handler = TYPESCRIPT_HANDLERS["def.enum"];
+      const handler = TYPESCRIPT_HANDLERS["definition.enum"];
 
       if (handler && name_node) {
-        const capture = create_raw_capture("def.enum", name_node, "Status");
-        handler.process(capture, builder, mock_context);
+        const capture = create_raw_capture("definition.enum", name_node, "Status");
+        handler(capture, builder, mock_context);
 
         const result = builder.build();
         expect(result.enums.size).toBe(1);
@@ -314,11 +314,11 @@ describe("TypeScript Builder Configuration", () => {
       expect(name_node).toBeTruthy();
 
       const builder = new DefinitionBuilder(mock_context);
-      const handler = TYPESCRIPT_HANDLERS["def.namespace"];
+      const handler = TYPESCRIPT_HANDLERS["definition.namespace"];
 
       if (handler && name_node) {
-        const capture = create_raw_capture("def.namespace", name_node, "Utils");
-        handler.process(capture, builder, mock_context);
+        const capture = create_raw_capture("definition.namespace", name_node, "Utils");
+        handler(capture, builder, mock_context);
 
         const result = builder.build();
         expect(result.namespaces.size).toBe(1);
@@ -342,11 +342,11 @@ describe("TypeScript Builder Configuration", () => {
       expect(name_node).toBeTruthy();
 
       const builder = new DefinitionBuilder(mock_context);
-      const handler = TYPESCRIPT_HANDLERS["def.class"];
+      const handler = TYPESCRIPT_HANDLERS["definition.class"];
 
       if (handler && name_node) {
-        const capture = create_raw_capture("def.class", name_node, "Shape");
-        handler.process(capture, builder, mock_context);
+        const capture = create_raw_capture("definition.class", name_node, "Shape");
+        handler(capture, builder, mock_context);
 
         const result = builder.build();
         expect(result.classes.size).toBe(1);
@@ -369,11 +369,11 @@ describe("TypeScript Builder Configuration", () => {
       expect(name_node).toBeTruthy();
 
       const builder = new DefinitionBuilder(mock_context);
-      const handler = TYPESCRIPT_HANDLERS["def.class"];
+      const handler = TYPESCRIPT_HANDLERS["definition.class"];
 
       if (handler && name_node) {
-        const capture = create_raw_capture("def.class", name_node, "User");
-        handler.process(capture, builder, mock_context);
+        const capture = create_raw_capture("definition.class", name_node, "User");
+        handler(capture, builder, mock_context);
 
         const result = builder.build();
         expect(result.classes.size).toBe(1);
@@ -396,11 +396,11 @@ describe("TypeScript Builder Configuration", () => {
       expect(name_node).toBeTruthy();
 
       const builder = new DefinitionBuilder(mock_context);
-      const handler = TYPESCRIPT_HANDLERS["def.class"];
+      const handler = TYPESCRIPT_HANDLERS["definition.class"];
 
       if (handler && name_node) {
-        const capture = create_raw_capture("def.class", name_node, "Container");
-        handler.process(capture, builder, mock_context);
+        const capture = create_raw_capture("definition.class", name_node, "Container");
+        handler(capture, builder, mock_context);
 
         const result = builder.build();
         expect(result.classes.size).toBe(1);
@@ -997,7 +997,7 @@ const result = obj.getSomething();
         const arrow_fn = find_arrow_function(tree.rootNode);
 
         expect(arrow_fn).not.toBeNull();
-        const context = detect_callback_context(arrow_fn!, "test.ts");
+        const context = detect_callback_context(arrow_fn!, "test.ts" as FilePath);
 
         expect(context.is_callback).toBe(true);
         expect(context.receiver_is_external).toBeNull();
@@ -1011,7 +1011,7 @@ const result = obj.getSomething();
         const arrow_fn = find_arrow_function(tree.rootNode);
 
         expect(arrow_fn).not.toBeNull();
-        const context = detect_callback_context(arrow_fn!, "test.ts");
+        const context = detect_callback_context(arrow_fn!, "test.ts" as FilePath);
 
         expect(context.is_callback).toBe(true);
         expect(context.receiver_location).not.toBeNull();
@@ -1023,7 +1023,7 @@ const result = obj.getSomething();
         const arrow_fn = find_arrow_function(tree.rootNode);
 
         expect(arrow_fn).not.toBeNull();
-        const context = detect_callback_context(arrow_fn!, "test.ts");
+        const context = detect_callback_context(arrow_fn!, "test.ts" as FilePath);
 
         expect(context.is_callback).toBe(true);
       });
@@ -1034,7 +1034,7 @@ const result = obj.getSomething();
         const arrow_fn = find_arrow_function(tree.rootNode);
 
         expect(arrow_fn).not.toBeNull();
-        const context = detect_callback_context(arrow_fn!, "test.ts");
+        const context = detect_callback_context(arrow_fn!, "test.ts" as FilePath);
 
         expect(context.is_callback).toBe(true);
       });
@@ -1058,8 +1058,8 @@ const result = obj.getSomething();
         expect(arrow_fns.length).toBe(2);
 
         // Both should be detected as callbacks
-        const outer_context = detect_callback_context(arrow_fns[0], "test.ts");
-        const inner_context = detect_callback_context(arrow_fns[1], "test.ts");
+        const outer_context = detect_callback_context(arrow_fns[0], "test.ts" as FilePath);
+        const inner_context = detect_callback_context(arrow_fns[1], "test.ts" as FilePath);
 
         expect(outer_context.is_callback).toBe(true);
         expect(inner_context.is_callback).toBe(true);
@@ -1071,7 +1071,7 @@ const result = obj.getSomething();
         const arrow_fn = find_arrow_function(tree.rootNode);
 
         expect(arrow_fn).not.toBeNull();
-        const context = detect_callback_context(arrow_fn!, "test.ts");
+        const context = detect_callback_context(arrow_fn!, "test.ts" as FilePath);
 
         expect(context.is_callback).toBe(true);
       });
@@ -1084,7 +1084,7 @@ const result = obj.getSomething();
         const arrow_fn = find_arrow_function(tree.rootNode);
 
         expect(arrow_fn).not.toBeNull();
-        const context = detect_callback_context(arrow_fn!, "test.ts");
+        const context = detect_callback_context(arrow_fn!, "test.ts" as FilePath);
 
         expect(context.is_callback).toBe(false);
         expect(context.receiver_location).toBeNull();
@@ -1096,7 +1096,7 @@ const result = obj.getSomething();
         const arrow_fn = find_arrow_function(tree.rootNode);
 
         expect(arrow_fn).not.toBeNull();
-        const context = detect_callback_context(arrow_fn!, "test.ts");
+        const context = detect_callback_context(arrow_fn!, "test.ts" as FilePath);
 
         expect(context.is_callback).toBe(false);
       });
@@ -1107,7 +1107,7 @@ const result = obj.getSomething();
         const arrow_fn = find_arrow_function(tree.rootNode);
 
         expect(arrow_fn).not.toBeNull();
-        const context = detect_callback_context(arrow_fn!, "test.ts");
+        const context = detect_callback_context(arrow_fn!, "test.ts" as FilePath);
 
         expect(context.is_callback).toBe(false);
       });
@@ -1118,7 +1118,7 @@ const result = obj.getSomething();
         const arrow_fn = find_arrow_function(tree.rootNode);
 
         expect(arrow_fn).not.toBeNull();
-        const context = detect_callback_context(arrow_fn!, "test.ts");
+        const context = detect_callback_context(arrow_fn!, "test.ts" as FilePath);
 
         expect(context.is_callback).toBe(false);
       });
@@ -1131,10 +1131,10 @@ const result = obj.getSomething();
         const arrow_fn = find_arrow_function(tree.rootNode);
 
         expect(arrow_fn).not.toBeNull();
-        const context = detect_callback_context(arrow_fn!, "test.ts");
+        const context = detect_callback_context(arrow_fn!, "test.ts" as FilePath);
 
         expect(context.receiver_location).toEqual({
-          file_path: "test.ts",
+          file_path: "test.ts" as FilePath,
           start_line: 1,
           start_column: 1,
           end_line: 1,
@@ -1152,7 +1152,7 @@ const result = obj.getSomething();
         const arrow_fn = find_arrow_function(tree.rootNode);
 
         expect(arrow_fn).not.toBeNull();
-        const context = detect_callback_context(arrow_fn!, "test.ts");
+        const context = detect_callback_context(arrow_fn!, "test.ts" as FilePath);
 
         expect(context.receiver_location).not.toBeNull();
         expect(context.receiver_location?.start_line).toBe(1);

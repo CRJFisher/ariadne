@@ -24,6 +24,7 @@ import type {
   MethodDefinition,
   ClassDefinition,
   ConstructorDefinition,
+  FunctionDefinition,
 } from "@ariadnejs/types";
 
 // Test fixtures
@@ -55,7 +56,7 @@ describe("Constructor Call Resolution", () => {
     it("should resolve constructor call to explicit constructor symbol", () => {
       // Setup: class MyClass { constructor() {} }
       //        const obj = new MyClass();
-      const class_id = class_symbol("MyClass", TEST_FILE, MOCK_LOCATION);
+      const class_id = class_symbol("MyClass", MOCK_LOCATION);
       const constructor_id =
         "constructor:test.ts:2:2:4:3:constructor" as SymbolId;
 
@@ -119,7 +120,7 @@ describe("Constructor Call Resolution", () => {
 
     it("should resolve constructor with parameters", () => {
       // Setup: class User { constructor(name: string, age: number) {} }
-      const class_id = class_symbol("User", TEST_FILE, MOCK_LOCATION);
+      const class_id = class_symbol("User", MOCK_LOCATION);
       const constructor_id =
         "constructor:test.ts:2:2:5:3:constructor" as SymbolId;
 
@@ -196,7 +197,7 @@ describe("Constructor Call Resolution", () => {
     it("should return class symbol when no explicit constructor exists", () => {
       // Setup: class SimpleClass { }
       //        const obj = new SimpleClass();
-      const class_id = class_symbol("SimpleClass", TEST_FILE, MOCK_LOCATION);
+      const class_id = class_symbol("SimpleClass", MOCK_LOCATION);
 
       // Create class definition WITHOUT constructor
       const class_def: ClassDefinition = {
@@ -240,7 +241,7 @@ describe("Constructor Call Resolution", () => {
     });
 
     it("should return class symbol when constructor array is empty", () => {
-      const class_id = class_symbol("EmptyClass", TEST_FILE, MOCK_LOCATION);
+      const class_id = class_symbol("EmptyClass", MOCK_LOCATION);
 
       const class_def: ClassDefinition = {
         kind: "class",
@@ -305,18 +306,20 @@ describe("Constructor Call Resolution", () => {
       //        new NotAClass(); // <- this should fail
       const func_id = "function:test.ts:1:0:3:1:NotAClass" as SymbolId;
 
-      definitions.update_file(TEST_FILE, [
-        {
-          kind: "function",
-          symbol_id: func_id,
-          name: "NotAClass" as SymbolName,
-          defining_scope_id: FILE_SCOPE_ID,
-          location: MOCK_LOCATION,
-          is_exported: false,
+      const func_def: FunctionDefinition = {
+        kind: "function",
+        symbol_id: func_id,
+        name: "NotAClass" as SymbolName,
+        defining_scope_id: FILE_SCOPE_ID,
+        location: MOCK_LOCATION,
+        is_exported: false,
+        signature: {
           parameters: [],
-          body_scope_id: "scope:test.ts:NotAClass:1:0" as ScopeId,
         },
-      ]);
+        body_scope_id: "scope:test.ts:NotAClass:1:0" as ScopeId,
+      };
+
+      definitions.update_file(TEST_FILE, [func_def]);
 
       const scope_resolutions = new Map<SymbolName, SymbolId>();
       scope_resolutions.set("NotAClass" as SymbolName, func_id);
@@ -369,7 +372,7 @@ describe("Constructor Call Resolution", () => {
   describe("Bug fix verification: constructor in separate field", () => {
     it("should NOT find constructor when stored in methods array (old bug behavior)", () => {
       // This test verifies the bug is fixed: constructors should NOT be looked up in methods
-      const class_id = class_symbol("BuggyClass", TEST_FILE, MOCK_LOCATION);
+      const class_id = class_symbol("BuggyClass", MOCK_LOCATION);
 
       // Create a method named "constructor" in the methods array
       // This is NOT how constructors should be stored

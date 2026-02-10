@@ -162,7 +162,6 @@ describe("trace_call_graph", () => {
         methods: [class_method],
         properties: [],
         decorators: [],
-        constructor: undefined,
       };
 
       definitions.update_file(file1, [class_def]);
@@ -321,7 +320,6 @@ describe("trace_call_graph", () => {
         methods: [class_method],
         properties: [],
         decorators: [],
-        constructor: undefined,
       };
 
       definitions.update_file(file1, [interface_def, class_def]);
@@ -395,7 +393,6 @@ describe("trace_call_graph", () => {
         methods: [str_method],
         properties: [],
         decorators: [],
-        constructor: undefined,
       };
 
       definitions.update_file(python_file, [class_def]);
@@ -460,7 +457,6 @@ describe("trace_call_graph", () => {
         methods: [init_method],
         properties: [],
         decorators: [],
-        constructor: undefined,
       };
 
       definitions.update_file(python_file, [class_def]);
@@ -524,7 +520,6 @@ describe("trace_call_graph", () => {
         methods: [call_method],
         properties: [],
         decorators: [],
-        constructor: undefined,
       };
 
       definitions.update_file(python_file, [class_def]);
@@ -639,7 +634,6 @@ describe("trace_call_graph", () => {
         methods: [repr_method, eq_method, process_method],
         properties: [],
         decorators: [],
-        constructor: undefined,
       };
 
       definitions.update_file(python_file, [class_def]);
@@ -713,7 +707,6 @@ describe("trace_call_graph", () => {
         methods: [str_method],
         properties: [],
         decorators: [],
-        constructor: undefined,
       };
 
       definitions.update_file(ts_file, [class_def]);
