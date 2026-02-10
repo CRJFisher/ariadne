@@ -4,7 +4,7 @@
  */
 
 // Named imports
-import { API_URL, API_VERSION, formatDate } from "./exports";
+import { API_URL, API_VERSION, format_date } from "./exports";
 
 // Default import
 import Application from "./exports";
@@ -21,7 +21,7 @@ import type { RequestMethod } from "./exports";
 // Using imported values
 function create_application(): Application {
   const config: Config = {
-    apiUrl: API_URL,
+    api_url: API_URL,
     timeout: 5000,
     retries: 3,
   };
@@ -30,7 +30,7 @@ function create_application(): Application {
 }
 
 function get_current_timestamp(): string {
-  return formatDate(new Date());
+  return format_date(new Date());
 }
 
 function make_client(): HttpClient {

@@ -3,7 +3,14 @@
  */
 
 import { describe, it, expect } from "vitest";
-import type { FilePath, Language, ScopeId, SymbolId } from "@ariadnejs/types";
+import type {
+  FilePath,
+  Language,
+  ScopeId,
+  SymbolId,
+  LexicalScope,
+  FunctionDefinition,
+} from "@ariadnejs/types";
 import type { SemanticIndex } from "../../src/index_single_file/index_single_file";
 import {
   index_single_file_to_json,
@@ -102,7 +109,7 @@ describe("SemanticIndex Serialization", () => {
               child_ids: [],
             },
           ],
-        ]),
+        ]) as unknown as ReadonlyMap<ScopeId, LexicalScope>,
         functions: new Map([
           [
             "function:test.ts:foo:1:0" as SymbolId,
@@ -127,7 +134,7 @@ describe("SemanticIndex Serialization", () => {
               },
             },
           ],
-        ]),
+        ]) as unknown as ReadonlyMap<SymbolId, FunctionDefinition>,
         classes: new Map(),
         variables: new Map(),
         interfaces: new Map(),

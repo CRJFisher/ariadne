@@ -12,7 +12,7 @@ import JavaScript from "tree-sitter-javascript";
 import TypeScript from "tree-sitter-typescript";
 import Python from "tree-sitter-python";
 import Rust from "tree-sitter-rust";
-import type { Language, FilePath } from "@ariadnejs/types";
+import type { Language, FilePath, SymbolName } from "@ariadnejs/types";
 import { build_index_single_file } from "../index_single_file";
 import type { ParsedFile } from "../file_utils";
 import { extract_type_members } from "./member";
@@ -75,8 +75,8 @@ describe("Member Extraction - JavaScript", () => {
 
     // Find the User class member info
     const user_members = Array.from(members.values())[0];
-    expect(user_members.methods.has("getName")).toBe(true);
-    expect(user_members.methods.has("getEmail")).toBe(true);
+    expect(user_members.methods.has("getName" as SymbolName)).toBe(true);
+    expect(user_members.methods.has("getEmail" as SymbolName)).toBe(true);
   });
 
   it("should extract class properties", () => {
@@ -217,8 +217,8 @@ describe("Member Extraction - TypeScript", () => {
 
     const user_members = Array.from(members.values())[0];
     expect(user_members.methods.size).toBeGreaterThan(0);
-    expect(user_members.methods.has("getName")).toBe(true);
-    expect(user_members.methods.has("getEmail")).toBe(true);
+    expect(user_members.methods.has("getName" as SymbolName)).toBe(true);
+    expect(user_members.methods.has("getEmail" as SymbolName)).toBe(true);
 
     expect(user_members.properties.size).toBeGreaterThan(0);
     expect(user_members.properties.size).toBeGreaterThan(0);
@@ -347,7 +347,7 @@ describe("Member Extraction - TypeScript", () => {
     const user_members = Array.from(members.values())[0];
     // Both static and instance methods should be indexed
     expect(user_members.methods.size).toBeGreaterThanOrEqual(1);
-    expect(user_members.methods.has("getName")).toBe(true);
+    expect(user_members.methods.has("getName" as SymbolName)).toBe(true);
   });
 });
 
@@ -459,8 +459,8 @@ class Dog(Animal):
     expect(dog_members!.extends).toContain("Animal");
 
     // Should only have bark, not move
-    expect(dog_members!.methods.has("bark")).toBe(true);
-    expect(dog_members!.methods.has("move")).toBe(false);
+    expect(dog_members!.methods.has("bark" as SymbolName)).toBe(true);
+    expect(dog_members!.methods.has("move" as SymbolName)).toBe(false);
   });
 
   it("should handle static methods", () => {

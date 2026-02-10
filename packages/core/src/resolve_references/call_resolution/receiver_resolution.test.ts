@@ -22,6 +22,7 @@ import { ScopeRegistry } from "../registries/scope";
 import { DefinitionRegistry } from "../registries/definition";
 import { TypeRegistry } from "../registries/type";
 import { ResolutionRegistry } from "../resolve_references";
+import { set_test_resolutions } from "../resolve_references.test";
 import type {
   SymbolId,
   SymbolName,
@@ -62,10 +63,9 @@ describe("extract_receiver", () => {
         kind: "self_reference_call",
         name: "process" as SymbolName,
         keyword: "this",
-        property_chain: ["this", "process"],
+        property_chain: ["this", "process"] as SymbolName[],
         scope_id: METHOD_SCOPE_ID,
         location: MOCK_LOCATION,
-        receiver_location: MOCK_LOCATION,
       };
 
       const result = extract_receiver(ref);
@@ -83,10 +83,9 @@ describe("extract_receiver", () => {
         kind: "self_reference_call",
         name: "query" as SymbolName,
         keyword: "this",
-        property_chain: ["this", "db", "query"],
+        property_chain: ["this", "db", "query"] as SymbolName[],
         scope_id: METHOD_SCOPE_ID,
         location: MOCK_LOCATION,
-        receiver_location: MOCK_LOCATION,
       };
 
       const result = extract_receiver(ref);
@@ -104,10 +103,9 @@ describe("extract_receiver", () => {
         kind: "self_reference_call",
         name: "process" as SymbolName,
         keyword: "self",
-        property_chain: ["self", "process"],
+        property_chain: ["self", "process"] as SymbolName[],
         scope_id: METHOD_SCOPE_ID,
         location: MOCK_LOCATION,
-        receiver_location: MOCK_LOCATION,
       };
 
       const result = extract_receiver(ref);
@@ -125,10 +123,9 @@ describe("extract_receiver", () => {
         kind: "self_reference_call",
         name: "process" as SymbolName,
         keyword: "super",
-        property_chain: ["super", "process"],
+        property_chain: ["super", "process"] as SymbolName[],
         scope_id: METHOD_SCOPE_ID,
         location: MOCK_LOCATION,
-        receiver_location: MOCK_LOCATION,
       };
 
       const result = extract_receiver(ref);
@@ -146,10 +143,9 @@ describe("extract_receiver", () => {
         kind: "self_reference_call",
         name: "create" as SymbolName,
         keyword: "cls",
-        property_chain: ["cls", "create"],
+        property_chain: ["cls", "create"] as SymbolName[],
         scope_id: METHOD_SCOPE_ID,
         location: MOCK_LOCATION,
-        receiver_location: MOCK_LOCATION,
       };
 
       const result = extract_receiver(ref);
@@ -167,10 +163,9 @@ describe("extract_receiver", () => {
         kind: "self_reference_call",
         name: "execute" as SymbolName,
         keyword: "this",
-        property_chain: ["this", "config", "database", "connection", "execute"],
+        property_chain: ["this", "config", "database", "connection", "execute"] as SymbolName[],
         scope_id: METHOD_SCOPE_ID,
         location: MOCK_LOCATION,
-        receiver_location: MOCK_LOCATION,
       };
 
       const result = extract_receiver(ref);
@@ -193,7 +188,7 @@ describe("extract_receiver", () => {
       const ref: MethodCallReference = {
         kind: "method_call",
         name: "process" as SymbolName,
-        property_chain: ["obj", "process"],
+        property_chain: ["obj", "process"] as SymbolName[],
         scope_id: METHOD_SCOPE_ID,
         location: MOCK_LOCATION,
         receiver_location: MOCK_LOCATION,
@@ -213,7 +208,7 @@ describe("extract_receiver", () => {
       const ref: MethodCallReference = {
         kind: "method_call",
         name: "query" as SymbolName,
-        property_chain: ["service", "db", "query"],
+        property_chain: ["service", "db", "query"] as SymbolName[],
         scope_id: METHOD_SCOPE_ID,
         location: MOCK_LOCATION,
         receiver_location: MOCK_LOCATION,
@@ -234,7 +229,7 @@ describe("extract_receiver", () => {
       const ref: MethodCallReference = {
         kind: "method_call",
         name: "query" as SymbolName,
-        property_chain: ["this", "db", "query"],
+        property_chain: ["this", "db", "query"] as SymbolName[],
         scope_id: METHOD_SCOPE_ID,
         location: MOCK_LOCATION,
         receiver_location: MOCK_LOCATION,
@@ -254,7 +249,7 @@ describe("extract_receiver", () => {
       const ref: MethodCallReference = {
         kind: "method_call",
         name: "query" as SymbolName,
-        property_chain: ["self", "db", "query"],
+        property_chain: ["self", "db", "query"] as SymbolName[],
         scope_id: METHOD_SCOPE_ID,
         location: MOCK_LOCATION,
         receiver_location: MOCK_LOCATION,
@@ -274,7 +269,7 @@ describe("extract_receiver", () => {
       const ref: MethodCallReference = {
         kind: "method_call",
         name: "query" as SymbolName,
-        property_chain: ["super", "db", "query"],
+        property_chain: ["super", "db", "query"] as SymbolName[],
         scope_id: METHOD_SCOPE_ID,
         location: MOCK_LOCATION,
         receiver_location: MOCK_LOCATION,
@@ -294,7 +289,7 @@ describe("extract_receiver", () => {
       const ref: MethodCallReference = {
         kind: "method_call",
         name: "create" as SymbolName,
-        property_chain: ["cls", "factory", "create"],
+        property_chain: ["cls", "factory", "create"] as SymbolName[],
         scope_id: METHOD_SCOPE_ID,
         location: MOCK_LOCATION,
         receiver_location: MOCK_LOCATION,
@@ -315,7 +310,7 @@ describe("extract_receiver", () => {
       const ref: MethodCallReference = {
         kind: "method_call",
         name: "process" as SymbolName,
-        property_chain: ["thisService", "process"],
+        property_chain: ["thisService", "process"] as SymbolName[],
         scope_id: METHOD_SCOPE_ID,
         location: MOCK_LOCATION,
         receiver_location: MOCK_LOCATION,
@@ -486,10 +481,10 @@ describe("resolve_receiver_type", () => {
     context = { scopes, definitions, types, resolutions };
 
     // Create test symbols
-    my_class_id = class_symbol("MyClass", TEST_FILE, MOCK_LOCATION);
+    my_class_id = class_symbol("MyClass", MOCK_LOCATION);
     method_id = method_symbol("process", MOCK_LOCATION);
-    property_id = property_symbol("db", "MyClass", TEST_FILE, MOCK_LOCATION);
-    database_class_id = class_symbol("Database", TEST_FILE, {
+    property_id = property_symbol("db", MOCK_LOCATION);
+    database_class_id = class_symbol("Database", {
       ...MOCK_LOCATION,
       start_line: 20,
     });
@@ -540,6 +535,7 @@ describe("resolve_receiver_type", () => {
       defining_scope_id: CLASS_SCOPE_ID,
       location: { ...MOCK_LOCATION, start_line: 2 },
       type: "Database" as SymbolName,
+      decorators: [],
     };
 
     const class_def: ClassDefinition = {
@@ -631,8 +627,7 @@ describe("resolve_receiver_type", () => {
       // Set up resolution for "Database" type name
       const scope_resolutions = new Map<SymbolName, SymbolId>();
       scope_resolutions.set("Database" as SymbolName, database_class_id);
-      resolutions["resolutions_by_scope"] = new Map();
-      resolutions["resolutions_by_scope"].set(CLASS_SCOPE_ID, scope_resolutions);
+      set_test_resolutions(resolutions, CLASS_SCOPE_ID, scope_resolutions);
 
       const receiver: ReceiverExpression = {
         base: { type: "keyword", value: "this" },
@@ -692,6 +687,7 @@ describe("resolve_receiver_type", () => {
         name: "db" as SymbolName,
         defining_scope_id: CLASS_SCOPE_ID,
         location: { ...MOCK_LOCATION, start_line: 2 },
+        decorators: [],
         // No type annotation
       };
 
@@ -778,8 +774,7 @@ describe("resolve_receiver_type", () => {
       // Setup resolution for 'obj' identifier
       const scope_resolutions = new Map<SymbolName, SymbolId>();
       scope_resolutions.set("obj" as SymbolName, var_id);
-      resolutions["resolutions_by_scope"] = new Map();
-      resolutions["resolutions_by_scope"].set(FILE_SCOPE_ID, scope_resolutions);
+      set_test_resolutions(resolutions, FILE_SCOPE_ID, scope_resolutions);
 
       // Setup type for variable
       types["symbol_types"] = new Map();

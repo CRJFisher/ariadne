@@ -83,7 +83,7 @@ describe("preprocess_python_references", () => {
 
   it("should convert function_call to constructor_call when callee is a class", () => {
     // Set up a class definition
-    const class_id = class_symbol("MyClass", TEST_FILE, MOCK_LOCATION);
+    const class_id = class_symbol("MyClass", MOCK_LOCATION);
     const class_def: ClassDefinition = {
       kind: "class",
       symbol_id: class_id,
@@ -135,7 +135,7 @@ describe("preprocess_python_references", () => {
 
   it("should preserve function_call when callee is a function (not a class)", () => {
     // Set up a function definition
-    const func_id = function_symbol("my_function", TEST_FILE, MOCK_LOCATION);
+    const func_id = function_symbol("my_function" as SymbolName, MOCK_LOCATION);
     const func_def: FunctionDefinition = {
       kind: "function",
       symbol_id: func_id,
@@ -143,7 +143,7 @@ describe("preprocess_python_references", () => {
       defining_scope_id: FILE_SCOPE_ID,
       location: MOCK_LOCATION,
       is_exported: false,
-      parameters: [],
+      signature: { parameters: [] },
       body_scope_id: "scope:test.py:my_function:1:0" as ScopeId,
       decorators: [],
     };
@@ -240,7 +240,7 @@ describe("preprocess_python_references", () => {
 
   it("should handle constructor_call without potential_construct_target", () => {
     // Set up a class definition
-    const class_id = class_symbol("MyClass", TEST_FILE, MOCK_LOCATION);
+    const class_id = class_symbol("MyClass", MOCK_LOCATION);
     const class_def: ClassDefinition = {
       kind: "class",
       symbol_id: class_id,

@@ -10,7 +10,7 @@ import type {
   ProcessingContext,
   CaptureNode,
 } from "../../index_single_file";
-import type { Location, SymbolName, ScopeId } from "@ariadnejs/types";
+import type { Location, SymbolName, ScopeId, FilePath } from "@ariadnejs/types";
 import type { SyntaxNode } from "tree-sitter";
 
 describe("rust_builder", () => {
@@ -1399,7 +1399,7 @@ struct Arrays {
         const closure = find_closure(tree.rootNode);
         expect(closure).not.toBeNull();
 
-        const context = detect_callback_context(closure!, "test.rs");
+        const context = detect_callback_context(closure!, "test.rs" as FilePath);
         expect(context.is_callback).toBe(true);
         expect(context.receiver_is_external).toBeNull();
         expect(context.receiver_location).not.toBeNull();
@@ -1411,7 +1411,7 @@ struct Arrays {
         const closure = find_closure(tree.rootNode);
         expect(closure).not.toBeNull();
 
-        const context = detect_callback_context(closure!, "test.rs");
+        const context = detect_callback_context(closure!, "test.rs" as FilePath);
         expect(context.is_callback).toBe(true);
         expect(context.receiver_is_external).toBeNull();
         expect(context.receiver_location).not.toBeNull();
@@ -1423,7 +1423,7 @@ struct Arrays {
         const closure = find_closure(tree.rootNode);
         expect(closure).not.toBeNull();
 
-        const context = detect_callback_context(closure!, "test.rs");
+        const context = detect_callback_context(closure!, "test.rs" as FilePath);
         expect(context.is_callback).toBe(true);
         expect(context.receiver_is_external).toBeNull();
         expect(context.receiver_location).not.toBeNull();
@@ -1435,7 +1435,7 @@ struct Arrays {
         const closure = find_closure(tree.rootNode);
         expect(closure).not.toBeNull();
 
-        const context = detect_callback_context(closure!, "test.rs");
+        const context = detect_callback_context(closure!, "test.rs" as FilePath);
         expect(context.is_callback).toBe(true);
         expect(context.receiver_is_external).toBeNull();
         expect(context.receiver_location).not.toBeNull();
@@ -1448,7 +1448,7 @@ struct Arrays {
         const closure = find_closure(tree.rootNode);
         expect(closure).not.toBeNull();
 
-        const context = detect_callback_context(closure!, "test.rs");
+        const context = detect_callback_context(closure!, "test.rs" as FilePath);
         expect(context.is_callback).toBe(true);
         expect(context.receiver_is_external).toBeNull();
         expect(context.receiver_location).not.toBeNull();
@@ -1460,7 +1460,7 @@ struct Arrays {
         const closure = find_closure(tree.rootNode);
         expect(closure).not.toBeNull();
 
-        const context = detect_callback_context(closure!, "test.rs");
+        const context = detect_callback_context(closure!, "test.rs" as FilePath);
         expect(context.is_callback).toBe(true);
         expect(context.receiver_is_external).toBeNull();
         expect(context.receiver_location).not.toBeNull();
@@ -1474,7 +1474,7 @@ struct Arrays {
         const closure = find_closure(tree.rootNode);
         expect(closure).not.toBeNull();
 
-        const context = detect_callback_context(closure!, "test.rs");
+        const context = detect_callback_context(closure!, "test.rs" as FilePath);
         expect(context.is_callback).toBe(false);
         expect(context.receiver_location).toBeNull();
       });
@@ -1485,7 +1485,7 @@ struct Arrays {
         const closure = find_closure(tree.rootNode);
         expect(closure).not.toBeNull();
 
-        const context = detect_callback_context(closure!, "test.rs");
+        const context = detect_callback_context(closure!, "test.rs" as FilePath);
         expect(context.is_callback).toBe(false);
         expect(context.receiver_location).toBeNull();
       });
@@ -1496,7 +1496,7 @@ struct Arrays {
         const closure = find_closure(tree.rootNode);
         expect(closure).not.toBeNull();
 
-        const context = detect_callback_context(closure!, "test.rs");
+        const context = detect_callback_context(closure!, "test.rs" as FilePath);
         expect(context.is_callback).toBe(false);
         expect(context.receiver_location).toBeNull();
       });
@@ -1507,7 +1507,7 @@ struct Arrays {
         const closure = find_closure(tree.rootNode);
         expect(closure).not.toBeNull();
 
-        const context = detect_callback_context(closure!, "test.rs");
+        const context = detect_callback_context(closure!, "test.rs" as FilePath);
         expect(context.is_callback).toBe(false);
         expect(context.receiver_location).toBeNull();
       });
@@ -1520,7 +1520,7 @@ struct Arrays {
         const closure = find_closure(tree.rootNode);
         expect(closure).not.toBeNull();
 
-        const context = detect_callback_context(closure!, "test.rs");
+        const context = detect_callback_context(closure!, "test.rs" as FilePath);
         expect(context.receiver_location).toEqual({
           file_path: "test.rs",
           start_line: 1,
@@ -1536,7 +1536,7 @@ struct Arrays {
         const closure = find_closure(tree.rootNode);
         expect(closure).not.toBeNull();
 
-        const context = detect_callback_context(closure!, "test.rs");
+        const context = detect_callback_context(closure!, "test.rs" as FilePath);
         expect(context.receiver_location).toEqual({
           file_path: "test.rs",
           start_line: 1,

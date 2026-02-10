@@ -66,7 +66,7 @@ function absolute_to_relative_paths(json_string: string): string {
  */
 function relative_to_absolute_paths(json_string: string): string {
   const fixtures_dir = get_fixtures_dir();
-  return json_string.replaceAll(FIXTURES_PLACEHOLDER, fixtures_dir + "/");
+  return json_string.split(FIXTURES_PLACEHOLDER).join(fixtures_dir + "/");
 }
 
 /**
@@ -129,7 +129,7 @@ export interface SemanticIndexJSON {
  * @returns JSON-serializable object
  */
 export function index_single_file_to_json(
-  index: import("../../../src/index_single_file/semantic_index").SemanticIndex
+  index: import("../../src/index_single_file/index_single_file").SemanticIndex
 ): SemanticIndexJSON {
   return {
     file_path: index.file_path,
@@ -159,46 +159,46 @@ export function index_single_file_to_json(
  */
 export function json_to_index_single_file(
   json: SemanticIndexJSON
-): import("../../../src/index_single_file/semantic_index").SemanticIndex {
+): import("../../src/index_single_file/index_single_file").SemanticIndex {
   return {
     file_path: json.file_path as FilePath,
     language: json.language as Language,
     root_scope_id: json.root_scope_id as ScopeId,
-    scopes: new Map(Object.entries(json.scopes)) as ReadonlyMap<
+    scopes: new Map(Object.entries(json.scopes)) as unknown as ReadonlyMap<
       ScopeId,
       LexicalScope
     >,
-    functions: new Map(Object.entries(json.functions)) as ReadonlyMap<
+    functions: new Map(Object.entries(json.functions)) as unknown as ReadonlyMap<
       SymbolId,
       FunctionDefinition
     >,
-    classes: new Map(Object.entries(json.classes)) as ReadonlyMap<
+    classes: new Map(Object.entries(json.classes)) as unknown as ReadonlyMap<
       SymbolId,
       ClassDefinition
     >,
-    variables: new Map(Object.entries(json.variables)) as ReadonlyMap<
+    variables: new Map(Object.entries(json.variables)) as unknown as ReadonlyMap<
       SymbolId,
       VariableDefinition
     >,
-    interfaces: new Map(Object.entries(json.interfaces)) as ReadonlyMap<
+    interfaces: new Map(Object.entries(json.interfaces)) as unknown as ReadonlyMap<
       SymbolId,
       InterfaceDefinition
     >,
-    enums: new Map(Object.entries(json.enums)) as ReadonlyMap<
+    enums: new Map(Object.entries(json.enums)) as unknown as ReadonlyMap<
       SymbolId,
       EnumDefinition
     >,
-    namespaces: new Map(Object.entries(json.namespaces)) as ReadonlyMap<
+    namespaces: new Map(Object.entries(json.namespaces)) as unknown as ReadonlyMap<
       SymbolId,
       NamespaceDefinition
     >,
-    types: new Map(Object.entries(json.types)) as ReadonlyMap<
+    types: new Map(Object.entries(json.types)) as unknown as ReadonlyMap<
       SymbolId,
       TypeAliasDefinition
     >,
     imported_symbols: new Map(
       Object.entries(json.imported_symbols)
-    ) as ReadonlyMap<SymbolId, ImportDefinition>,
+    ) as unknown as ReadonlyMap<SymbolId, ImportDefinition>,
     references: json.references as readonly SymbolReference[],
   };
 }
@@ -212,7 +212,7 @@ export function json_to_index_single_file(
  * @returns Formatted JSON string
  */
 export function index_single_file_to_json_string(
-  index: import("../../../src/index_single_file/semantic_index").SemanticIndex
+  index: import("../../src/index_single_file/index_single_file").SemanticIndex
 ): string {
   return JSON.stringify(index_single_file_to_json(index), null, 2);
 }
@@ -227,7 +227,7 @@ export function index_single_file_to_json_string(
  */
 export function json_string_to_index_single_file(
   json_string: string
-): import("../../../src/index_single_file/semantic_index").SemanticIndex {
+): import("../../src/index_single_file/index_single_file").SemanticIndex {
   return json_to_index_single_file(JSON.parse(json_string));
 }
 
@@ -242,7 +242,7 @@ export function json_string_to_index_single_file(
  * @param output_path - Absolute path to the output JSON file
  */
 export function write_index_single_file_fixture(
-  index: import("../../../src/index_single_file/semantic_index").SemanticIndex,
+  index: import("../../src/index_single_file/index_single_file").SemanticIndex,
   output_path: string
 ): void {
   const json_string = index_single_file_to_json_string(index);
@@ -261,7 +261,7 @@ export function write_index_single_file_fixture(
  */
 export function load_index_single_file_fixture(
   fixture_path: string
-): import("../../../src/index_single_file/semantic_index").SemanticIndex {
+): import("../../src/index_single_file/index_single_file").SemanticIndex {
   const json_string = fs.readFileSync(fixture_path, "utf-8");
   const absolute_json_string = relative_to_absolute_paths(json_string);
   return json_string_to_index_single_file(absolute_json_string);

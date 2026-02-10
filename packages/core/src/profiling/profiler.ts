@@ -76,27 +76,6 @@ class Profiler {
   }
 
   /**
-   * Check if profiling is enabled
-   */
-  is_enabled(): boolean {
-    return this.enabled;
-  }
-
-  /**
-   * Enable profiling programmatically
-   */
-  enable(): void {
-    this.enabled = true;
-  }
-
-  /**
-   * Disable profiling programmatically
-   */
-  disable(): void {
-    this.enabled = false;
-  }
-
-  /**
    * Start timing a labeled section
    */
   start(label: string): void {
@@ -210,17 +189,6 @@ class Profiler {
     if (counts.definitions !== undefined) {
       this.current_file_data.definition_count = counts.definitions;
     }
-  }
-
-  /**
-   * Reset all timing data
-   */
-  reset(): void {
-    this.root_entries.clear();
-    this.file_timings.clear();
-    this.active_stack = null;
-    this.current_file = null;
-    this.current_file_data = {};
   }
 
   /**
@@ -381,34 +349,6 @@ class Profiler {
     }
 
     console.log("\n" + "=".repeat(70));
-  }
-
-  /**
-   * Export report as JSON
-   */
-  to_json(): string {
-    const report = this.get_report();
-
-    // Convert Map children to arrays for JSON serialization
-    const serialize_entry = (
-      entry: TimingEntry
-    ): Record<string, unknown> => ({
-      label: entry.label,
-      total_ms: entry.total_ms,
-      call_count: entry.call_count,
-      min_ms: entry.min_ms,
-      max_ms: entry.max_ms,
-      children: Array.from(entry.children.values()).map(serialize_entry),
-    });
-
-    return JSON.stringify(
-      {
-        ...report,
-        entries: report.entries.map(serialize_entry),
-      },
-      null,
-      2
-    );
   }
 
   // Private helpers

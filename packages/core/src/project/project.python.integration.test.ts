@@ -1704,4 +1704,33 @@ class C(B):
     });
   });
 
+  describe("Function as Callback - Entry Point Detection", () => {
+    it("should not flag named function passed as argument as entry point", async () => {
+      const source = load_source("functions/function_as_callback.py");
+      const file = file_path("functions/function_as_callback.py");
+      project.update_file(file, source);
+
+      // Verify doubler exists in definitions
+      const index = project.get_index_single_file(file);
+      expect(index).toBeDefined();
+      const functions = Array.from(index!.functions.values());
+      const doubler_fn = functions.find((f) => f.name === ("doubler" as SymbolName));
+      expect(doubler_fn).toBeDefined();
+
+      // Get call graph and check entry points
+      const call_graph = project.get_call_graph();
+      expect(call_graph).toBeDefined();
+
+      const entry_point_ids = new Set(call_graph.entry_points);
+
+      // doubler should NOT be an entry point (it's passed as a value to apply_fn)
+      expect(entry_point_ids.has(doubler_fn!.symbol_id)).toBe(false);
+
+      // apply_fn should be referenced (called by main)
+      const apply_fn = functions.find((f) => f.name === ("apply_fn" as SymbolName));
+      expect(apply_fn).toBeDefined();
+      expect(entry_point_ids.has(apply_fn!.symbol_id)).toBe(false);
+    });
+  });
+
 });

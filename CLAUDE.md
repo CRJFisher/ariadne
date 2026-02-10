@@ -211,6 +211,16 @@ module_name/
 - **Document gaps** - Note any untested edge cases
 - _NEVER_ use `toMatchObject` matcher - use `toEqual` instead and create the expected, typed literal objects
 
+### Test Helper Functions
+
+Test helper functions should go in the first common ancestor test file of all dependent test files:
+
+- If helper is used by `a/b.test.ts` and `a/c.test.ts`, put it in `a/a.test.ts`
+- If helper is used by `a/b.test.ts` and `a/x/c.test.ts`, put it in `a/a.test.ts`
+- Export the helper so child test files can import it
+
+This avoids generic utility files like `test_utils.ts` that become dumping grounds.
+
 ## Scope Boundary Semantics
 
 ### Three Critical Positions

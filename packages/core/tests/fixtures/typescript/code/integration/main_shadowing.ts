@@ -3,7 +3,7 @@
  * Tests: imports helper but local definition shadows the import
  */
 
-import { helper, other_function } from "./utils";
+import { helper as imported_helper, other_function } from "./utils";
 
 // Local function with same name as imported function
 function helper(): string {

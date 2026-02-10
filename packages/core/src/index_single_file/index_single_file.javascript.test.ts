@@ -1511,8 +1511,8 @@ describe("Semantic Index - JavaScript", () => {
       expect(person_class?.constructor).toBeDefined();
       expect(person_class?.constructor?.length).toBe(1);
 
-      if (person_class?.constructor && person_class.constructors.length > 0) {
-        const ctor = person_class.constructors[0];
+      if (person_class?.constructor && person_class.constructors!.length > 0) {
+        const ctor = person_class.constructors![0];
         expect(ctor.name).toBe("constructor");
         expect(ctor.parameters).toBeDefined();
         expect(ctor.parameters.length).toBe(2);
@@ -1541,8 +1541,8 @@ describe("Semantic Index - JavaScript", () => {
       expect(animal_class?.constructor).toBeDefined();
       expect(animal_class?.constructor?.length).toBe(1);
 
-      if (animal_class?.constructor && animal_class.constructors.length > 0) {
-        const ctor = animal_class.constructors[0];
+      if (animal_class?.constructor && animal_class.constructors!.length > 0) {
+        const ctor = animal_class.constructors![0];
         expect(ctor.parameters).toBeDefined();
         expect(ctor.parameters.length).toBe(1);
         expect(ctor.parameters[0].name).toBe("species");

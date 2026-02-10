@@ -1,16 +1,16 @@
 // Callback patterns for testing callback detection
 
 // External callbacks - forEach, map, filter
-const numbers = [1, 2, 3, 4, 5];
+const callback_numbers = [1, 2, 3, 4, 5];
 
 // Map callback
-const doubled = numbers.map((n) => n * 2);
+const doubled = callback_numbers.map((n) => n * 2);
 
 // Filter callback
-const evens = numbers.filter((n) => n % 2 === 0);
+const evens = callback_numbers.filter((n) => n % 2 === 0);
 
 // ForEach callback
-numbers.forEach((n) => console.log(n));
+callback_numbers.forEach((n) => console.log(n));
 
 // Internal callbacks - user-defined higher-order function
 function run_callback(cb: () => void) {
@@ -22,12 +22,12 @@ run_callback(() => {
 });
 
 // Nested callbacks
-const nested = numbers.map((n) => {
+const nested = callback_numbers.map((n) => {
   return [n].filter((x) => x > 2);
 });
 
 // Callback with multiple parameters
-const pairs = numbers.map((n, i) => ({ value: n, index: i }));
+const pairs = callback_numbers.map((n, i) => ({ value: n, index: i }));
 
 // Non-callback anonymous functions
 const standalone_arrow = () => {

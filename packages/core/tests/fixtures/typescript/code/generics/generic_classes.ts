@@ -62,7 +62,7 @@ class Result<T = string, E = Error> {
   }
 
   static err<E>(error: E): Result<never, E> {
-    return new Result(false, undefined, error);
+    return new Result(false, undefined as never, error);
   }
 }
 

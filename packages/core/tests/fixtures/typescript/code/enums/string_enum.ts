@@ -37,11 +37,11 @@ function make_request(method: HttpMethod, url: string): Promise<Response> {
 
 function get_api_url(env: Environment): string {
   switch (env) {
-    case Environment.Development:
+    case Environment.DEVELOPMENT:
       return "http://localhost:3000";
-    case Environment.Staging:
+    case Environment.STAGING:
       return "https://staging.example.com";
-    case Environment.Production:
+    case Environment.PRODUCTION:
       return "https://api.example.com";
   }
 }

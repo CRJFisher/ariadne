@@ -16,6 +16,7 @@ import { ScopeRegistry } from "../registries/scope";
 import { DefinitionRegistry } from "../registries/definition";
 import { TypeRegistry } from "../registries/type";
 import { ResolutionRegistry } from "../resolve_references";
+import { set_test_resolutions } from "../resolve_references.test";
 import { create_method_call_reference } from "../../index_single_file/references/factories";
 import { method_symbol, class_symbol, function_symbol, variable_symbol } from "@ariadnejs/types";
 import type {
@@ -24,6 +25,7 @@ import type {
   ScopeId,
   Location,
   FilePath,
+  ModulePath,
   MethodDefinition,
   ClassDefinition,
   VariableDefinition,
@@ -68,8 +70,8 @@ describe("Method Call Resolution", () => {
     it("should resolve method call on object", () => {
       // Setup: const obj = new MyClass(); obj.process();
       const obj_symbol_id = variable_symbol("obj", MOCK_LOCATION);
-      const class_id = class_symbol("MyClass", TEST_FILE, MOCK_LOCATION);
-      const method_id = method_symbol("process", {
+      const class_id = class_symbol("MyClass" as SymbolName, MOCK_LOCATION);
+      const method_id = method_symbol("process" as SymbolName, {
         ...MOCK_LOCATION,
         start_line: 3,
       });
@@ -141,8 +143,7 @@ describe("Method Call Resolution", () => {
       // Set up resolution registry to resolve 'obj' in scope
       const scope_resolutions = new Map<SymbolName, SymbolId>();
       scope_resolutions.set("obj" as SymbolName, obj_symbol_id);
-      resolutions["resolutions_by_scope"] = new Map();
-      resolutions["resolutions_by_scope"].set(FILE_SCOPE_ID, scope_resolutions);
+      set_test_resolutions(resolutions, FILE_SCOPE_ID, scope_resolutions);
 
       // Create method call: obj.process()
       const call_ref = create_method_call_reference(
@@ -169,8 +170,8 @@ describe("Method Call Resolution", () => {
     it("should resolve method call using TypeRegistry.get_type_member", () => {
       // Setup: Similar to above, but method added via TypeRegistry
       const obj_symbol_id = variable_symbol("obj", MOCK_LOCATION);
-      const class_id = class_symbol("MyClass", TEST_FILE, MOCK_LOCATION);
-      const method_id = method_symbol("getData", {
+      const class_id = class_symbol("MyClass" as SymbolName, MOCK_LOCATION);
+      const method_id = method_symbol("getData" as SymbolName, {
         ...MOCK_LOCATION,
         start_line: 3,
       });
@@ -199,8 +200,7 @@ describe("Method Call Resolution", () => {
       // Set up resolution for 'obj'
       const scope_resolutions = new Map<SymbolName, SymbolId>();
       scope_resolutions.set("obj" as SymbolName, obj_symbol_id);
-      resolutions["resolutions_by_scope"] = new Map();
-      resolutions["resolutions_by_scope"].set(FILE_SCOPE_ID, scope_resolutions);
+      set_test_resolutions(resolutions, FILE_SCOPE_ID, scope_resolutions);
 
       // Create method call: obj.getData()
       const call_ref = create_method_call_reference(
@@ -229,8 +229,8 @@ describe("Method Call Resolution", () => {
     it("should resolve method call on newly constructed object", () => {
       // Scenario: const obj = new MyClass(); obj.method();
       const obj_symbol_id = variable_symbol("obj", MOCK_LOCATION);
-      const class_id = class_symbol("MyClass", TEST_FILE, MOCK_LOCATION);
-      const method_id = method_symbol("method", {
+      const class_id = class_symbol("MyClass" as SymbolName, MOCK_LOCATION);
+      const method_id = method_symbol("method" as SymbolName, {
         ...MOCK_LOCATION,
         start_line: 3,
       });
@@ -259,8 +259,7 @@ describe("Method Call Resolution", () => {
       // Resolve 'obj' in scope
       const scope_resolutions = new Map<SymbolName, SymbolId>();
       scope_resolutions.set("obj" as SymbolName, obj_symbol_id);
-      resolutions["resolutions_by_scope"] = new Map();
-      resolutions["resolutions_by_scope"].set(FILE_SCOPE_ID, scope_resolutions);
+      set_test_resolutions(resolutions, FILE_SCOPE_ID, scope_resolutions);
 
       // Create method call
       const call_ref = create_method_call_reference(
@@ -290,12 +289,12 @@ describe("Method Call Resolution", () => {
       // Scenario: builder.setName("foo").setAge(25)
       // Each method returns the same Builder type
       const builder_symbol_id = variable_symbol("builder", MOCK_LOCATION);
-      const builder_class_id = class_symbol("Builder", TEST_FILE, MOCK_LOCATION);
-      const set_name_id = method_symbol("setName", {
+      const builder_class_id = class_symbol("Builder" as SymbolName, MOCK_LOCATION);
+      const set_name_id = method_symbol("setName" as SymbolName, {
         ...MOCK_LOCATION,
         start_line: 2,
       });
-      const set_age_id = method_symbol("setAge", {
+      const set_age_id = method_symbol("setAge" as SymbolName, {
         ...MOCK_LOCATION,
         start_line: 3,
       });
@@ -329,8 +328,7 @@ describe("Method Call Resolution", () => {
       // Resolve 'builder' in scope
       const scope_resolutions = new Map<SymbolName, SymbolId>();
       scope_resolutions.set("builder" as SymbolName, builder_symbol_id);
-      resolutions["resolutions_by_scope"] = new Map();
-      resolutions["resolutions_by_scope"].set(FILE_SCOPE_ID, scope_resolutions);
+      set_test_resolutions(resolutions, FILE_SCOPE_ID, scope_resolutions);
 
       // Test first call: builder.setName()
       const first_call = create_method_call_reference(
@@ -380,16 +378,16 @@ describe("Method Call Resolution", () => {
       // Scenario: obj.field.method()
       // property_chain: ['obj', 'field', 'method']
       const obj_symbol_id = variable_symbol("obj", MOCK_LOCATION);
-      const outer_class_id = class_symbol("OuterClass", TEST_FILE, MOCK_LOCATION);
+      const outer_class_id = class_symbol("OuterClass" as SymbolName, MOCK_LOCATION);
       const field_symbol_id = variable_symbol("field", {
         ...MOCK_LOCATION,
         start_line: 2,
       });
-      const inner_class_id = class_symbol("InnerClass", TEST_FILE, {
+      const inner_class_id = class_symbol("InnerClass" as SymbolName, {
         ...MOCK_LOCATION,
         start_line: 10,
       });
-      const method_id = method_symbol("method", {
+      const method_id = method_symbol("method" as SymbolName, {
         ...MOCK_LOCATION,
         start_line: 11,
       });
@@ -424,8 +422,7 @@ describe("Method Call Resolution", () => {
       // Resolve 'obj' in scope
       const scope_resolutions = new Map<SymbolName, SymbolId>();
       scope_resolutions.set("obj" as SymbolName, obj_symbol_id);
-      resolutions["resolutions_by_scope"] = new Map();
-      resolutions["resolutions_by_scope"].set(FILE_SCOPE_ID, scope_resolutions);
+      set_test_resolutions(resolutions, FILE_SCOPE_ID, scope_resolutions);
 
       // Create method call: obj.field.method()
       const call_ref = create_method_call_reference(
@@ -458,7 +455,7 @@ describe("Method Call Resolution", () => {
       // Scenario: import * as utils from './utils'; utils.helper();
       // This test verifies that namespace imports work when the resolve_import_path callback is provided
       const utils_import_id = "import:test.ts:1:0:1:30:utils" as SymbolId;
-      const helper_id = function_symbol("helper", UTILS_FILE, {
+      const helper_id = function_symbol("helper" as SymbolName, {
         file_path: UTILS_FILE,
         start_line: 1,
         start_column: 0,
@@ -480,7 +477,7 @@ describe("Method Call Resolution", () => {
           end_column: 1,
         },
         is_exported: true,
-        parameters: [],
+        signature: { parameters: [] },
         body_scope_id: "scope:utils.ts:helper:1:0" as ScopeId,
         decorators: [],
       }]);
@@ -492,16 +489,14 @@ describe("Method Call Resolution", () => {
         name: "utils" as SymbolName,
         defining_scope_id: FILE_SCOPE_ID,
         location: MOCK_LOCATION, // Import location is in test.ts (where the import statement is)
-        is_exported: false,
         import_kind: "namespace",
-        import_path: "./utils",
+        import_path: "./utils" as ModulePath,
       }]);
 
       // Resolve 'utils' in scope
       const scope_resolutions = new Map<SymbolName, SymbolId>();
       scope_resolutions.set("utils" as SymbolName, utils_import_id);
-      resolutions["resolutions_by_scope"] = new Map();
-      resolutions["resolutions_by_scope"].set(FILE_SCOPE_ID, scope_resolutions);
+      set_test_resolutions(resolutions, FILE_SCOPE_ID, scope_resolutions);
 
       // Create method call: utils.helper()
       const call_ref = create_method_call_reference(
@@ -538,7 +533,7 @@ describe("Method Call Resolution", () => {
       // This test demonstrates the failure case when resolve_import_path is not provided
       // This is the bug we need to trap: the full integration flow must provide this resolver
       const utils_import_id = "import:test.ts:1:0:1:30:utils" as SymbolId;
-      const helper_id = function_symbol("helper", UTILS_FILE, {
+      const helper_id = function_symbol("helper" as SymbolName, {
         file_path: UTILS_FILE,
         start_line: 1,
         start_column: 0,
@@ -560,7 +555,7 @@ describe("Method Call Resolution", () => {
           end_column: 1,
         },
         is_exported: true,
-        parameters: [],
+        signature: { parameters: [] },
         body_scope_id: "scope:utils.ts:helper:1:0" as ScopeId,
         decorators: [],
       }]);
@@ -572,16 +567,14 @@ describe("Method Call Resolution", () => {
         name: "utils" as SymbolName,
         defining_scope_id: FILE_SCOPE_ID,
         location: MOCK_LOCATION,
-        is_exported: false,
         import_kind: "namespace",
-        import_path: "./utils",
+        import_path: "./utils" as ModulePath,
       }]);
 
       // Resolve 'utils' in scope
       const scope_resolutions = new Map<SymbolName, SymbolId>();
       scope_resolutions.set("utils" as SymbolName, utils_import_id);
-      resolutions["resolutions_by_scope"] = new Map();
-      resolutions["resolutions_by_scope"].set(FILE_SCOPE_ID, scope_resolutions);
+      set_test_resolutions(resolutions, FILE_SCOPE_ID, scope_resolutions);
 
       // Create method call: utils.helper()
       const call_ref = create_method_call_reference(
@@ -618,16 +611,14 @@ describe("Method Call Resolution", () => {
         name: "os" as SymbolName,
         defining_scope_id: FILE_SCOPE_ID,
         location: MOCK_LOCATION,
-        is_exported: false,
         import_kind: "namespace",
-        import_path: "os",
+        import_path: "os" as ModulePath,
       }]);
 
       // Resolve 'os' in scope
       const scope_resolutions = new Map<SymbolName, SymbolId>();
       scope_resolutions.set("os" as SymbolName, os_import_id);
-      resolutions["resolutions_by_scope"] = new Map();
-      resolutions["resolutions_by_scope"].set(FILE_SCOPE_ID, scope_resolutions);
+      set_test_resolutions(resolutions, FILE_SCOPE_ID, scope_resolutions);
 
       // Create method call: os.listdir()
       const call_ref = create_method_call_reference(
@@ -677,8 +668,7 @@ describe("Method Call Resolution", () => {
       // Resolve 'obj' in scope
       const scope_resolutions = new Map<SymbolName, SymbolId>();
       scope_resolutions.set("obj" as SymbolName, obj_symbol_id);
-      resolutions["resolutions_by_scope"] = new Map();
-      resolutions["resolutions_by_scope"].set(FILE_SCOPE_ID, scope_resolutions);
+      set_test_resolutions(resolutions, FILE_SCOPE_ID, scope_resolutions);
 
       // Create method call
       const call_ref = create_method_call_reference(
@@ -707,8 +697,7 @@ describe("Method Call Resolution", () => {
       const method_id = method_symbol("method", MOCK_LOCATION);
 
       // NO resolution for 'obj' in scope
-      resolutions["resolutions_by_scope"] = new Map();
-      resolutions["resolutions_by_scope"].set(FILE_SCOPE_ID, new Map());
+      set_test_resolutions(resolutions, FILE_SCOPE_ID, new Map());
 
       // Create method call
       const call_ref = create_method_call_reference(
@@ -735,7 +724,7 @@ describe("Method Call Resolution", () => {
     it("should return null when method not on type", () => {
       // Test: obj.nonExistentMethod() when type doesn't have that method
       const obj_symbol_id = variable_symbol("obj", MOCK_LOCATION);
-      const class_id = class_symbol("MyClass", TEST_FILE, MOCK_LOCATION);
+      const class_id = class_symbol("MyClass" as SymbolName, MOCK_LOCATION);
 
       // Create definitions
       const var_def: VariableDefinition = {
@@ -757,8 +746,7 @@ describe("Method Call Resolution", () => {
       // Resolve 'obj' in scope
       const scope_resolutions = new Map<SymbolName, SymbolId>();
       scope_resolutions.set("obj" as SymbolName, obj_symbol_id);
-      resolutions["resolutions_by_scope"] = new Map();
-      resolutions["resolutions_by_scope"].set(FILE_SCOPE_ID, scope_resolutions);
+      set_test_resolutions(resolutions, FILE_SCOPE_ID, scope_resolutions);
 
       // Create method call for non-existent method
       const call_ref = create_method_call_reference(
@@ -808,7 +796,7 @@ describe("Method Call Resolution", () => {
     it("should return null when property chain has unresolved intermediate", () => {
       // Test: obj.unknownField.method() where 'unknownField' doesn't exist
       const obj_symbol_id = variable_symbol("obj", MOCK_LOCATION);
-      const class_id = class_symbol("MyClass", TEST_FILE, MOCK_LOCATION);
+      const class_id = class_symbol("MyClass" as SymbolName, MOCK_LOCATION);
 
       // Create definitions
       const var_def: VariableDefinition = {
@@ -830,8 +818,7 @@ describe("Method Call Resolution", () => {
       // Resolve 'obj' in scope
       const scope_resolutions = new Map<SymbolName, SymbolId>();
       scope_resolutions.set("obj" as SymbolName, obj_symbol_id);
-      resolutions["resolutions_by_scope"] = new Map();
-      resolutions["resolutions_by_scope"].set(FILE_SCOPE_ID, scope_resolutions);
+      set_test_resolutions(resolutions, FILE_SCOPE_ID, scope_resolutions);
 
       // Create method call with unresolved intermediate
       const call_ref = create_method_call_reference(
@@ -864,31 +851,31 @@ describe("Method Call Resolution", () => {
       //        function run(h: Handler) { h.process(); }
 
       const handler_param_id = variable_symbol("h", MOCK_LOCATION);
-      const interface_id = class_symbol("Handler", TEST_FILE, {
+      const interface_id = class_symbol("Handler" as SymbolName, {
         ...MOCK_LOCATION,
         start_line: 1,
       });
-      const interface_method_id = method_symbol("process", {
+      const interface_method_id = method_symbol("process" as SymbolName, {
         ...MOCK_LOCATION,
         start_line: 1,
         start_column: 20,
       });
 
-      const handler_a_id = class_symbol("HandlerA", TEST_FILE, {
+      const handler_a_id = class_symbol("HandlerA" as SymbolName, {
         ...MOCK_LOCATION,
         start_line: 3,
       });
-      const handler_a_process_id = method_symbol("process", {
+      const handler_a_process_id = method_symbol("process" as SymbolName, {
         ...MOCK_LOCATION,
         start_line: 3,
         start_column: 20,
       });
 
-      const handler_b_id = class_symbol("HandlerB", TEST_FILE, {
+      const handler_b_id = class_symbol("HandlerB" as SymbolName, {
         ...MOCK_LOCATION,
         start_line: 6,
       });
-      const handler_b_process_id = method_symbol("process", {
+      const handler_b_process_id = method_symbol("process" as SymbolName, {
         ...MOCK_LOCATION,
         start_line: 6,
         start_column: 20,
@@ -983,6 +970,7 @@ describe("Method Call Resolution", () => {
         name: "h" as SymbolName,
         defining_scope_id: METHOD_SCOPE_ID,
         location: MOCK_LOCATION,
+        is_exported: false,
       };
 
       // Register definitions
@@ -1000,8 +988,7 @@ describe("Method Call Resolution", () => {
       // Resolve 'h' in scope
       const scope_resolutions = new Map<SymbolName, SymbolId>();
       scope_resolutions.set("h" as SymbolName, handler_param_id);
-      resolutions["resolutions_by_scope"] = new Map();
-      resolutions["resolutions_by_scope"].set(METHOD_SCOPE_ID, scope_resolutions);
+      set_test_resolutions(resolutions, METHOD_SCOPE_ID, scope_resolutions);
 
       // Create method call: h.process()
       const call_ref = create_method_call_reference(
@@ -1033,7 +1020,7 @@ describe("Method Call Resolution", () => {
       // This is NOT polymorphic - should return single resolution
 
       const user_param_id = variable_symbol("u", MOCK_LOCATION);
-      const class_id = class_symbol("User", TEST_FILE, MOCK_LOCATION);
+      const class_id = class_symbol("User" as SymbolName, MOCK_LOCATION);
       const method_id = method_symbol("getName", {
         ...MOCK_LOCATION,
         start_line: 2,
@@ -1068,6 +1055,7 @@ describe("Method Call Resolution", () => {
         name: "u" as SymbolName,
         defining_scope_id: METHOD_SCOPE_ID,
         location: MOCK_LOCATION,
+        is_exported: false,
       };
 
       definitions.update_file(TEST_FILE, [class_def, param_def]);
@@ -1079,8 +1067,7 @@ describe("Method Call Resolution", () => {
       // Resolve 'u' in scope
       const scope_resolutions = new Map<SymbolName, SymbolId>();
       scope_resolutions.set("u" as SymbolName, user_param_id);
-      resolutions["resolutions_by_scope"] = new Map();
-      resolutions["resolutions_by_scope"].set(METHOD_SCOPE_ID, scope_resolutions);
+      set_test_resolutions(resolutions, METHOD_SCOPE_ID, scope_resolutions);
 
       // Create method call: u.getName()
       const call_ref = create_method_call_reference(
@@ -1110,8 +1097,8 @@ describe("Method Call Resolution", () => {
       // No implementations exist
 
       const handler_param_id = variable_symbol("h", MOCK_LOCATION);
-      const interface_id = class_symbol("EmptyHandler", TEST_FILE, MOCK_LOCATION);
-      const interface_method_id = method_symbol("process", {
+      const interface_id = class_symbol("EmptyHandler" as SymbolName, MOCK_LOCATION);
+      const interface_method_id = method_symbol("process" as SymbolName, {
         ...MOCK_LOCATION,
         start_line: 1,
       });
@@ -1143,6 +1130,7 @@ describe("Method Call Resolution", () => {
         name: "h" as SymbolName,
         defining_scope_id: METHOD_SCOPE_ID,
         location: MOCK_LOCATION,
+        is_exported: false,
       };
 
       definitions.update_file(TEST_FILE, [interface_def, param_def]);
@@ -1154,8 +1142,7 @@ describe("Method Call Resolution", () => {
       // Resolve 'h' in scope
       const scope_resolutions = new Map<SymbolName, SymbolId>();
       scope_resolutions.set("h" as SymbolName, handler_param_id);
-      resolutions["resolutions_by_scope"] = new Map();
-      resolutions["resolutions_by_scope"].set(METHOD_SCOPE_ID, scope_resolutions);
+      set_test_resolutions(resolutions, METHOD_SCOPE_ID, scope_resolutions);
 
       // Create method call: h.process()
       const call_ref = create_method_call_reference(

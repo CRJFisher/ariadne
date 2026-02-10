@@ -74,6 +74,7 @@ function create_test_context(with_scopes: boolean = false): ProcessingContext {
     scope_depths: new Map(),
     root_scope_id: test_scope_id,
     get_scope_id: (location: Location) => test_scope_id,
+    get_child_scope_with_symbol_name: (_scope_id: ScopeId, _name: SymbolName) => test_scope_id,
   };
 }
 
@@ -101,6 +102,20 @@ function create_test_capture(
   };
 }
 
+function create_method_capture(
+  name: SymbolName,
+  location: Location
+): CaptureNode {
+  return {
+    name: "definition.method",
+    node: {} as any,
+    text: name,
+    category: "definition" as SemanticCategory,
+    entity: "method" as SemanticEntity,
+    location: location,
+  };
+}
+
 // ============================================================================
 // Complex Assembly Tests
 // ============================================================================
@@ -124,25 +139,27 @@ describe("DefinitionBuilder - Complex Assembly", () => {
     const class_id = "class:test.ts:1:0:20:0:ComplexClass" as SymbolId;
 
     // Add multiple methods
+    const method1_location = create_test_location(3, 2);
     builder.add_method_to_class(class_id, {
       symbol_id: "method:test.ts:3:2:5:3:method1" as SymbolId,
       name: "method1" as SymbolName,
-      location: create_test_location(3, 2),
+      location: method1_location,
       scope_id: context.root_scope_id,
       return_type: "string" as SymbolName,
       access_modifier: "public",
       async: true,
-    });
+    }, create_method_capture("method1" as SymbolName, method1_location));
 
+    const method2_location = create_test_location(7, 2);
     builder.add_method_to_class(class_id, {
       symbol_id: "method:test.ts:7:2:9:3:method2" as SymbolId,
       name: "method2" as SymbolName,
-      location: create_test_location(7, 2),
+      location: method2_location,
       scope_id: context.root_scope_id,
       return_type: "number" as SymbolName,
       access_modifier: "private",
       static: true,
-    });
+    }, create_method_capture("method2" as SymbolName, method2_location));
 
     // Add multiple properties
     builder.add_property_to_class(class_id, {
@@ -272,12 +289,13 @@ describe("DefinitionBuilder - Complex Assembly", () => {
       is_exported: true,
     });
 
+    const method_location = create_test_location(3, 2);
     builder.add_method_to_class(class_id, {
       symbol_id: method_id,
       name: "decoratedMethod" as SymbolName,
-      location: create_test_location(3, 2),
+      location: method_location,
       scope_id: context.root_scope_id,
-    });
+    }, create_method_capture("decoratedMethod" as SymbolName, method_location));
 
     // Add decorators to method
     builder.add_decorator_to_target(method_id, {
@@ -614,6 +632,7 @@ describe("DefinitionBuilder - Public API", () => {
 
     const class_id = "class:test:1:0:10:0:Chain" as SymbolId;
     const method_id = "method:test:2:2:4:3:chainMethod" as SymbolId;
+    const chain_method_location = create_test_location(2, 2);
 
     const result = builder
       .add_class({
@@ -626,9 +645,9 @@ describe("DefinitionBuilder - Public API", () => {
       .add_method_to_class(class_id, {
         symbol_id: method_id,
         name: "chainMethod" as SymbolName,
-        location: create_test_location(2, 2),
+        location: chain_method_location,
         scope_id: context.root_scope_id,
-      })
+      }, create_method_capture("chainMethod" as SymbolName, chain_method_location))
       .add_property_to_class(class_id, {
         symbol_id: "property:test:5:2:5:15:chainProp" as SymbolId,
         name: "chainProp" as SymbolName,

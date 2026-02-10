@@ -12,6 +12,7 @@ import { resolve_constructor_call } from "./constructor";
 import { DefinitionRegistry } from "../registries/definition";
 import { TypeRegistry } from "../registries/type";
 import { ResolutionRegistry } from "../resolve_references";
+import { set_test_resolutions } from "../resolve_references.test";
 import { create_constructor_call_reference } from "../../index_single_file/references/factories";
 import { class_symbol } from "@ariadnejs/types";
 import type {
@@ -23,6 +24,7 @@ import type {
   MethodDefinition,
   ClassDefinition,
   ConstructorDefinition,
+  FunctionDefinition,
 } from "@ariadnejs/types";
 
 // Test fixtures
@@ -54,7 +56,7 @@ describe("Constructor Call Resolution", () => {
     it("should resolve constructor call to explicit constructor symbol", () => {
       // Setup: class MyClass { constructor() {} }
       //        const obj = new MyClass();
-      const class_id = class_symbol("MyClass", TEST_FILE, MOCK_LOCATION);
+      const class_id = class_symbol("MyClass", MOCK_LOCATION);
       const constructor_id =
         "constructor:test.ts:2:2:4:3:constructor" as SymbolId;
 
@@ -95,8 +97,7 @@ describe("Constructor Call Resolution", () => {
       // Set up resolution registry to resolve 'MyClass' in scope
       const scope_resolutions = new Map<SymbolName, SymbolId>();
       scope_resolutions.set("MyClass" as SymbolName, class_id);
-      resolutions["resolutions_by_scope"] = new Map();
-      resolutions["resolutions_by_scope"].set(FILE_SCOPE_ID, scope_resolutions);
+      set_test_resolutions(resolutions, FILE_SCOPE_ID, scope_resolutions);
 
       // Create constructor call: new MyClass()
       const call_ref = create_constructor_call_reference(
@@ -119,7 +120,7 @@ describe("Constructor Call Resolution", () => {
 
     it("should resolve constructor with parameters", () => {
       // Setup: class User { constructor(name: string, age: number) {} }
-      const class_id = class_symbol("User", TEST_FILE, MOCK_LOCATION);
+      const class_id = class_symbol("User", MOCK_LOCATION);
       const constructor_id =
         "constructor:test.ts:2:2:5:3:constructor" as SymbolId;
 
@@ -170,8 +171,7 @@ describe("Constructor Call Resolution", () => {
       // Set up resolution
       const scope_resolutions = new Map<SymbolName, SymbolId>();
       scope_resolutions.set("User" as SymbolName, class_id);
-      resolutions["resolutions_by_scope"] = new Map();
-      resolutions["resolutions_by_scope"].set(FILE_SCOPE_ID, scope_resolutions);
+      set_test_resolutions(resolutions, FILE_SCOPE_ID, scope_resolutions);
 
       // Create constructor call: new User("Alice", 30)
       const call_ref = create_constructor_call_reference(
@@ -197,7 +197,7 @@ describe("Constructor Call Resolution", () => {
     it("should return class symbol when no explicit constructor exists", () => {
       // Setup: class SimpleClass { }
       //        const obj = new SimpleClass();
-      const class_id = class_symbol("SimpleClass", TEST_FILE, MOCK_LOCATION);
+      const class_id = class_symbol("SimpleClass", MOCK_LOCATION);
 
       // Create class definition WITHOUT constructor
       const class_def: ClassDefinition = {
@@ -219,8 +219,7 @@ describe("Constructor Call Resolution", () => {
       // Set up resolution
       const scope_resolutions = new Map<SymbolName, SymbolId>();
       scope_resolutions.set("SimpleClass" as SymbolName, class_id);
-      resolutions["resolutions_by_scope"] = new Map();
-      resolutions["resolutions_by_scope"].set(FILE_SCOPE_ID, scope_resolutions);
+      set_test_resolutions(resolutions, FILE_SCOPE_ID, scope_resolutions);
 
       // Create constructor call: new SimpleClass()
       const call_ref = create_constructor_call_reference(
@@ -242,7 +241,7 @@ describe("Constructor Call Resolution", () => {
     });
 
     it("should return class symbol when constructor array is empty", () => {
-      const class_id = class_symbol("EmptyClass", TEST_FILE, MOCK_LOCATION);
+      const class_id = class_symbol("EmptyClass", MOCK_LOCATION);
 
       const class_def: ClassDefinition = {
         kind: "class",
@@ -262,8 +261,7 @@ describe("Constructor Call Resolution", () => {
 
       const scope_resolutions = new Map<SymbolName, SymbolId>();
       scope_resolutions.set("EmptyClass" as SymbolName, class_id);
-      resolutions["resolutions_by_scope"] = new Map();
-      resolutions["resolutions_by_scope"].set(FILE_SCOPE_ID, scope_resolutions);
+      set_test_resolutions(resolutions, FILE_SCOPE_ID, scope_resolutions);
 
       const call_ref = create_constructor_call_reference(
         "EmptyClass" as SymbolName,
@@ -285,8 +283,7 @@ describe("Constructor Call Resolution", () => {
   describe("Unresolved Cases", () => {
     it("should return empty array when class not found in scope", () => {
       // Class name not resolved - e.g., undefined class or missing import
-      resolutions["resolutions_by_scope"] = new Map();
-      resolutions["resolutions_by_scope"].set(FILE_SCOPE_ID, new Map());
+      set_test_resolutions(resolutions, FILE_SCOPE_ID, new Map());
 
       const call_ref = create_constructor_call_reference(
         "UndefinedClass" as SymbolName,
@@ -309,23 +306,24 @@ describe("Constructor Call Resolution", () => {
       //        new NotAClass(); // <- this should fail
       const func_id = "function:test.ts:1:0:3:1:NotAClass" as SymbolId;
 
-      definitions.update_file(TEST_FILE, [
-        {
-          kind: "function",
-          symbol_id: func_id,
-          name: "NotAClass" as SymbolName,
-          defining_scope_id: FILE_SCOPE_ID,
-          location: MOCK_LOCATION,
-          is_exported: false,
+      const func_def: FunctionDefinition = {
+        kind: "function",
+        symbol_id: func_id,
+        name: "NotAClass" as SymbolName,
+        defining_scope_id: FILE_SCOPE_ID,
+        location: MOCK_LOCATION,
+        is_exported: false,
+        signature: {
           parameters: [],
-          body_scope_id: "scope:test.ts:NotAClass:1:0" as ScopeId,
         },
-      ]);
+        body_scope_id: "scope:test.ts:NotAClass:1:0" as ScopeId,
+      };
+
+      definitions.update_file(TEST_FILE, [func_def]);
 
       const scope_resolutions = new Map<SymbolName, SymbolId>();
       scope_resolutions.set("NotAClass" as SymbolName, func_id);
-      resolutions["resolutions_by_scope"] = new Map();
-      resolutions["resolutions_by_scope"].set(FILE_SCOPE_ID, scope_resolutions);
+      set_test_resolutions(resolutions, FILE_SCOPE_ID, scope_resolutions);
 
       const call_ref = create_constructor_call_reference(
         "NotAClass" as SymbolName,
@@ -350,8 +348,7 @@ describe("Constructor Call Resolution", () => {
 
       const scope_resolutions = new Map<SymbolName, SymbolId>();
       scope_resolutions.set("Unknown" as SymbolName, unknown_id);
-      resolutions["resolutions_by_scope"] = new Map();
-      resolutions["resolutions_by_scope"].set(FILE_SCOPE_ID, scope_resolutions);
+      set_test_resolutions(resolutions, FILE_SCOPE_ID, scope_resolutions);
 
       // Don't add definition to registry
 
@@ -375,7 +372,7 @@ describe("Constructor Call Resolution", () => {
   describe("Bug fix verification: constructor in separate field", () => {
     it("should NOT find constructor when stored in methods array (old bug behavior)", () => {
       // This test verifies the bug is fixed: constructors should NOT be looked up in methods
-      const class_id = class_symbol("BuggyClass", TEST_FILE, MOCK_LOCATION);
+      const class_id = class_symbol("BuggyClass", MOCK_LOCATION);
 
       // Create a method named "constructor" in the methods array
       // This is NOT how constructors should be stored
@@ -407,8 +404,7 @@ describe("Constructor Call Resolution", () => {
 
       const scope_resolutions = new Map<SymbolName, SymbolId>();
       scope_resolutions.set("BuggyClass" as SymbolName, class_id);
-      resolutions["resolutions_by_scope"] = new Map();
-      resolutions["resolutions_by_scope"].set(FILE_SCOPE_ID, scope_resolutions);
+      set_test_resolutions(resolutions, FILE_SCOPE_ID, scope_resolutions);
 
       const call_ref = create_constructor_call_reference(
         "BuggyClass" as SymbolName,

@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach } from "vitest";
 import { TypeRegistry } from "./type";
 import { DefinitionRegistry } from "./definition";
 import { ResolutionRegistry } from "../resolve_references";
+import { set_test_resolutions } from "../resolve_references.test";
 import {
   class_symbol,
   method_symbol,
@@ -364,12 +365,11 @@ describe("TypeRegistry", () => {
           classes: new Map([[user_class_id, user_class_def]]),
         });
 
-        (resolutions as any).resolutions_by_scope = new Map([
-          [
-            "module:0:0" as ScopeId,
-            new Map([["User" as SymbolName, user_class_id]]),
-          ],
-        ]);
+        set_test_resolutions(
+          resolutions,
+          "module:0:0" as ScopeId,
+          new Map([["User" as SymbolName, user_class_id]])
+        );
 
         type_registry.update_file(file1, index, definitions, resolutions);
 
@@ -457,15 +457,14 @@ describe("TypeRegistry", () => {
           ]),
         });
 
-        (resolutions as any).resolutions_by_scope = new Map([
-          [
-            "module:0:0" as ScopeId,
-            new Map([
-              ["Animal" as SymbolName, animal_id],
-              ["Mammal" as SymbolName, mammal_id],
-            ]),
-          ],
-        ]);
+        set_test_resolutions(
+          resolutions,
+          "module:0:0" as ScopeId,
+          new Map([
+            ["Animal" as SymbolName, animal_id],
+            ["Mammal" as SymbolName, mammal_id],
+          ])
+        );
 
         type_registry.update_file(file1, index, definitions, resolutions);
 
@@ -616,12 +615,11 @@ describe("TypeRegistry", () => {
           ]),
         });
 
-        (resolutions as any).resolutions_by_scope = new Map([
-          [
-            "module:0:0" as ScopeId,
-            new Map([["Animal" as SymbolName, animal_id]]),
-          ],
-        ]);
+        set_test_resolutions(
+          resolutions,
+          "module:0:0" as ScopeId,
+          new Map([["Animal" as SymbolName, animal_id]])
+        );
 
         type_registry.update_file(file1, index, definitions, resolutions);
 
@@ -728,12 +726,11 @@ describe("TypeRegistry", () => {
           ]),
         });
 
-        (resolutions as any).resolutions_by_scope = new Map([
-          [
-            "module:0:0" as ScopeId,
-            new Map([["Animal" as SymbolName, animal_id]]),
-          ],
-        ]);
+        set_test_resolutions(
+          resolutions,
+          "module:0:0" as ScopeId,
+          new Map([["Animal" as SymbolName, animal_id]])
+        );
 
         type_registry.update_file(file1, index, definitions, resolutions);
 

@@ -29,8 +29,13 @@ import {
   find_containing_callable,
 } from "./symbol_factories.javascript";
 import { anonymous_function_symbol } from "@ariadnejs/types";
-import type { FilePath } from "@ariadnejs/types";
+import type { FilePath, SymbolName } from "@ariadnejs/types";
 import { node_to_location } from "../../node_utils";
+import {
+  SemanticCategory,
+  SemanticEntity,
+  type CaptureNode,
+} from "../../../index_single_file";
 
 // Parsers for tree-sitter
 let js_parser: Parser;
@@ -345,9 +350,11 @@ describe("find_containing_callable with anonymous functions", () => {
     expect(arrow_node).not.toBeNull();
 
     // Create capture node for parameter
-    const capture = {
+    const capture: CaptureNode = {
+      category: SemanticCategory.DEFINITION,
+      entity: SemanticEntity.PARAMETER,
       node: param_node!,
-      text: "x",
+      text: "x" as SymbolName,
       name: "definition.parameter",
       location: {
         file_path,
@@ -380,9 +387,11 @@ describe("find_containing_callable with anonymous functions", () => {
     expect(arrow_node).not.toBeNull();
 
     // Create capture node for parameter
-    const capture = {
+    const capture: CaptureNode = {
+      category: SemanticCategory.DEFINITION,
+      entity: SemanticEntity.PARAMETER,
       node: param_node!,
-      text: "acc",
+      text: "acc" as SymbolName,
       name: "definition.parameter",
       location: {
         file_path,

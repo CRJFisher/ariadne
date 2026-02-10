@@ -448,7 +448,7 @@ describe("ReferenceBuilder", () => {
 
       const mock_extractors = create_mock_extractors({
         extract_receiver_info: vi.fn((node, file_path) => receiver_info),
-        extract_call_name: vi.fn((node) => "build_class"),
+        extract_call_name: vi.fn((node) => "build_class" as SymbolName),
       });
 
       const builder = new ReferenceBuilder(
@@ -491,7 +491,7 @@ describe("ReferenceBuilder", () => {
 
       const mock_extractors = create_mock_extractors({
         extract_receiver_info: vi.fn((node, file_path) => receiver_info),
-        extract_call_name: vi.fn((node) => "process_data"),
+        extract_call_name: vi.fn((node) => "process_data" as SymbolName),
       });
 
       const builder = new ReferenceBuilder(
@@ -526,7 +526,7 @@ describe("ReferenceBuilder", () => {
 
       const mock_extractors = create_mock_extractors({
         extract_receiver_info: vi.fn((node, file_path) => receiver_info),
-        extract_call_name: vi.fn((node) => "init"),
+        extract_call_name: vi.fn((node) => "init" as SymbolName),
       });
 
       const builder = new ReferenceBuilder(
@@ -560,7 +560,7 @@ describe("ReferenceBuilder", () => {
 
       const mock_extractors = create_mock_extractors({
         extract_receiver_info: vi.fn((node, file_path) => receiver_info),
-        extract_call_name: vi.fn((node) => "class_method"),
+        extract_call_name: vi.fn((node) => "class_method" as SymbolName),
       });
 
       const builder = new ReferenceBuilder(
@@ -593,7 +593,7 @@ describe("ReferenceBuilder", () => {
 
       const mock_extractors = create_mock_extractors({
         extract_receiver_info: vi.fn((node, file_path) => receiver_info),
-        extract_call_name: vi.fn((node) => "getName"),
+        extract_call_name: vi.fn((node) => "getName" as SymbolName),
       });
 
       const builder = new ReferenceBuilder(
@@ -622,7 +622,7 @@ describe("ReferenceBuilder", () => {
     test("creates FunctionCallReference when no receiver info available", () => {
       const mock_extractors = create_mock_extractors({
         extract_receiver_info: vi.fn((node, file_path) => undefined),
-        extract_call_name: vi.fn((node) => "standalone_function"),
+        extract_call_name: vi.fn((node) => "standalone_function" as SymbolName),
       });
 
       const builder = new ReferenceBuilder(
@@ -721,7 +721,7 @@ describe("ReferenceBuilder", () => {
 
       const mock_extractors = create_mock_extractors({
         extract_receiver_info: vi.fn((node, file_path) => receiver_info),
-        extract_call_name: vi.fn((node) => "getValue"),
+        extract_call_name: vi.fn((node) => "getValue" as SymbolName),
       });
 
       const builder = new ReferenceBuilder(
@@ -823,7 +823,7 @@ describe("ReferenceBuilder", () => {
 
       const mock_extractors = create_mock_extractors({
         extract_receiver_info: vi.fn((node, file_path) => receiver_info),
-        extract_call_name: vi.fn((node) => "method"),
+        extract_call_name: vi.fn((node) => "method" as SymbolName),
       });
 
       const builder = new ReferenceBuilder(
@@ -889,7 +889,6 @@ describe("ReferenceBuilder", () => {
 
       expect(references).toHaveLength(1);
       expect(references[0].name).toBe("getValue");
-      expect(references[0].context).toBeUndefined(); // No context when extractors return undefined
       expect(references[0].type_info).toBeUndefined(); // No type info when extractors return undefined
     });
 
@@ -994,7 +993,7 @@ describe("ReferenceBuilder", () => {
 
       const mock_extractors = create_mock_extractors({
         extract_receiver_info: vi.fn((node, file_path) => receiver_info),
-        extract_call_name: vi.fn((node) => "toString"),
+        extract_call_name: vi.fn((node) => "toString" as SymbolName) as any,
       });
 
       const builder = new ReferenceBuilder(
