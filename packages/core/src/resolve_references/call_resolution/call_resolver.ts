@@ -22,7 +22,7 @@ import type { TypeRegistry } from "../registries/type";
 import type { ScopeRegistry } from "../registries/scope";
 import type { ReferenceRegistry } from "../registries/reference";
 import type { ImportGraph } from "../../project/import_graph";
-import type { CallResolutionResult } from "../state_updates";
+import type { CallResolutionResult } from "../resolution_state";
 import type { ResolutionRegistry } from "../resolve_references";
 import { process_collection_reads } from "../indirect_reachability";
 import { resolve_method_call } from "./method";
