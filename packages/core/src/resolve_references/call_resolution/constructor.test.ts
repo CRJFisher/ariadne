@@ -12,6 +12,7 @@ import { resolve_constructor_call } from "./constructor";
 import { DefinitionRegistry } from "../registries/definition";
 import { TypeRegistry } from "../registries/type";
 import { ResolutionRegistry } from "../resolve_references";
+import { set_test_resolutions } from "../resolve_references.test";
 import { create_constructor_call_reference } from "../../index_single_file/references/factories";
 import { class_symbol } from "@ariadnejs/types";
 import type {
@@ -95,8 +96,7 @@ describe("Constructor Call Resolution", () => {
       // Set up resolution registry to resolve 'MyClass' in scope
       const scope_resolutions = new Map<SymbolName, SymbolId>();
       scope_resolutions.set("MyClass" as SymbolName, class_id);
-      resolutions["resolutions_by_scope"] = new Map();
-      resolutions["resolutions_by_scope"].set(FILE_SCOPE_ID, scope_resolutions);
+      set_test_resolutions(resolutions, FILE_SCOPE_ID, scope_resolutions);
 
       // Create constructor call: new MyClass()
       const call_ref = create_constructor_call_reference(
@@ -170,8 +170,7 @@ describe("Constructor Call Resolution", () => {
       // Set up resolution
       const scope_resolutions = new Map<SymbolName, SymbolId>();
       scope_resolutions.set("User" as SymbolName, class_id);
-      resolutions["resolutions_by_scope"] = new Map();
-      resolutions["resolutions_by_scope"].set(FILE_SCOPE_ID, scope_resolutions);
+      set_test_resolutions(resolutions, FILE_SCOPE_ID, scope_resolutions);
 
       // Create constructor call: new User("Alice", 30)
       const call_ref = create_constructor_call_reference(
@@ -219,8 +218,7 @@ describe("Constructor Call Resolution", () => {
       // Set up resolution
       const scope_resolutions = new Map<SymbolName, SymbolId>();
       scope_resolutions.set("SimpleClass" as SymbolName, class_id);
-      resolutions["resolutions_by_scope"] = new Map();
-      resolutions["resolutions_by_scope"].set(FILE_SCOPE_ID, scope_resolutions);
+      set_test_resolutions(resolutions, FILE_SCOPE_ID, scope_resolutions);
 
       // Create constructor call: new SimpleClass()
       const call_ref = create_constructor_call_reference(
@@ -262,8 +260,7 @@ describe("Constructor Call Resolution", () => {
 
       const scope_resolutions = new Map<SymbolName, SymbolId>();
       scope_resolutions.set("EmptyClass" as SymbolName, class_id);
-      resolutions["resolutions_by_scope"] = new Map();
-      resolutions["resolutions_by_scope"].set(FILE_SCOPE_ID, scope_resolutions);
+      set_test_resolutions(resolutions, FILE_SCOPE_ID, scope_resolutions);
 
       const call_ref = create_constructor_call_reference(
         "EmptyClass" as SymbolName,
@@ -285,8 +282,7 @@ describe("Constructor Call Resolution", () => {
   describe("Unresolved Cases", () => {
     it("should return empty array when class not found in scope", () => {
       // Class name not resolved - e.g., undefined class or missing import
-      resolutions["resolutions_by_scope"] = new Map();
-      resolutions["resolutions_by_scope"].set(FILE_SCOPE_ID, new Map());
+      set_test_resolutions(resolutions, FILE_SCOPE_ID, new Map());
 
       const call_ref = create_constructor_call_reference(
         "UndefinedClass" as SymbolName,
@@ -324,8 +320,7 @@ describe("Constructor Call Resolution", () => {
 
       const scope_resolutions = new Map<SymbolName, SymbolId>();
       scope_resolutions.set("NotAClass" as SymbolName, func_id);
-      resolutions["resolutions_by_scope"] = new Map();
-      resolutions["resolutions_by_scope"].set(FILE_SCOPE_ID, scope_resolutions);
+      set_test_resolutions(resolutions, FILE_SCOPE_ID, scope_resolutions);
 
       const call_ref = create_constructor_call_reference(
         "NotAClass" as SymbolName,
@@ -350,8 +345,7 @@ describe("Constructor Call Resolution", () => {
 
       const scope_resolutions = new Map<SymbolName, SymbolId>();
       scope_resolutions.set("Unknown" as SymbolName, unknown_id);
-      resolutions["resolutions_by_scope"] = new Map();
-      resolutions["resolutions_by_scope"].set(FILE_SCOPE_ID, scope_resolutions);
+      set_test_resolutions(resolutions, FILE_SCOPE_ID, scope_resolutions);
 
       // Don't add definition to registry
 
@@ -407,8 +401,7 @@ describe("Constructor Call Resolution", () => {
 
       const scope_resolutions = new Map<SymbolName, SymbolId>();
       scope_resolutions.set("BuggyClass" as SymbolName, class_id);
-      resolutions["resolutions_by_scope"] = new Map();
-      resolutions["resolutions_by_scope"].set(FILE_SCOPE_ID, scope_resolutions);
+      set_test_resolutions(resolutions, FILE_SCOPE_ID, scope_resolutions);
 
       const call_ref = create_constructor_call_reference(
         "BuggyClass" as SymbolName,

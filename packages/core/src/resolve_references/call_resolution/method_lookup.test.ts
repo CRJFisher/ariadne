@@ -21,6 +21,7 @@ import { ScopeRegistry } from "../registries/scope";
 import { DefinitionRegistry } from "../registries/definition";
 import { TypeRegistry } from "../registries/type";
 import { ResolutionRegistry } from "../resolve_references";
+import { set_test_resolutions } from "../resolve_references.test";
 import type {
   SymbolId,
   SymbolName,
@@ -1001,8 +1002,7 @@ describe("resolve_method_on_type", () => {
       // Setup resolution for the reference
       const scope_resolutions = new Map<SymbolName, SymbolId>();
       scope_resolutions.set("external_process" as SymbolName, external_fn_id);
-      resolutions["resolutions_by_scope"] = new Map();
-      resolutions["resolutions_by_scope"].set(FILE_SCOPE_ID, scope_resolutions);
+      set_test_resolutions(resolutions, FILE_SCOPE_ID, scope_resolutions);
 
       const result = resolve_method_on_type(
         var_id,

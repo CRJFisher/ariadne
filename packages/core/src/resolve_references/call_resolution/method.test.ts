@@ -16,6 +16,7 @@ import { ScopeRegistry } from "../registries/scope";
 import { DefinitionRegistry } from "../registries/definition";
 import { TypeRegistry } from "../registries/type";
 import { ResolutionRegistry } from "../resolve_references";
+import { set_test_resolutions } from "../resolve_references.test";
 import { create_method_call_reference } from "../../index_single_file/references/factories";
 import { method_symbol, class_symbol, function_symbol, variable_symbol } from "@ariadnejs/types";
 import type {
@@ -141,8 +142,7 @@ describe("Method Call Resolution", () => {
       // Set up resolution registry to resolve 'obj' in scope
       const scope_resolutions = new Map<SymbolName, SymbolId>();
       scope_resolutions.set("obj" as SymbolName, obj_symbol_id);
-      resolutions["resolutions_by_scope"] = new Map();
-      resolutions["resolutions_by_scope"].set(FILE_SCOPE_ID, scope_resolutions);
+      set_test_resolutions(resolutions, FILE_SCOPE_ID, scope_resolutions);
 
       // Create method call: obj.process()
       const call_ref = create_method_call_reference(
@@ -199,8 +199,7 @@ describe("Method Call Resolution", () => {
       // Set up resolution for 'obj'
       const scope_resolutions = new Map<SymbolName, SymbolId>();
       scope_resolutions.set("obj" as SymbolName, obj_symbol_id);
-      resolutions["resolutions_by_scope"] = new Map();
-      resolutions["resolutions_by_scope"].set(FILE_SCOPE_ID, scope_resolutions);
+      set_test_resolutions(resolutions, FILE_SCOPE_ID, scope_resolutions);
 
       // Create method call: obj.getData()
       const call_ref = create_method_call_reference(
@@ -259,8 +258,7 @@ describe("Method Call Resolution", () => {
       // Resolve 'obj' in scope
       const scope_resolutions = new Map<SymbolName, SymbolId>();
       scope_resolutions.set("obj" as SymbolName, obj_symbol_id);
-      resolutions["resolutions_by_scope"] = new Map();
-      resolutions["resolutions_by_scope"].set(FILE_SCOPE_ID, scope_resolutions);
+      set_test_resolutions(resolutions, FILE_SCOPE_ID, scope_resolutions);
 
       // Create method call
       const call_ref = create_method_call_reference(
@@ -329,8 +327,7 @@ describe("Method Call Resolution", () => {
       // Resolve 'builder' in scope
       const scope_resolutions = new Map<SymbolName, SymbolId>();
       scope_resolutions.set("builder" as SymbolName, builder_symbol_id);
-      resolutions["resolutions_by_scope"] = new Map();
-      resolutions["resolutions_by_scope"].set(FILE_SCOPE_ID, scope_resolutions);
+      set_test_resolutions(resolutions, FILE_SCOPE_ID, scope_resolutions);
 
       // Test first call: builder.setName()
       const first_call = create_method_call_reference(
@@ -424,8 +421,7 @@ describe("Method Call Resolution", () => {
       // Resolve 'obj' in scope
       const scope_resolutions = new Map<SymbolName, SymbolId>();
       scope_resolutions.set("obj" as SymbolName, obj_symbol_id);
-      resolutions["resolutions_by_scope"] = new Map();
-      resolutions["resolutions_by_scope"].set(FILE_SCOPE_ID, scope_resolutions);
+      set_test_resolutions(resolutions, FILE_SCOPE_ID, scope_resolutions);
 
       // Create method call: obj.field.method()
       const call_ref = create_method_call_reference(
@@ -500,8 +496,7 @@ describe("Method Call Resolution", () => {
       // Resolve 'utils' in scope
       const scope_resolutions = new Map<SymbolName, SymbolId>();
       scope_resolutions.set("utils" as SymbolName, utils_import_id);
-      resolutions["resolutions_by_scope"] = new Map();
-      resolutions["resolutions_by_scope"].set(FILE_SCOPE_ID, scope_resolutions);
+      set_test_resolutions(resolutions, FILE_SCOPE_ID, scope_resolutions);
 
       // Create method call: utils.helper()
       const call_ref = create_method_call_reference(
@@ -580,8 +575,7 @@ describe("Method Call Resolution", () => {
       // Resolve 'utils' in scope
       const scope_resolutions = new Map<SymbolName, SymbolId>();
       scope_resolutions.set("utils" as SymbolName, utils_import_id);
-      resolutions["resolutions_by_scope"] = new Map();
-      resolutions["resolutions_by_scope"].set(FILE_SCOPE_ID, scope_resolutions);
+      set_test_resolutions(resolutions, FILE_SCOPE_ID, scope_resolutions);
 
       // Create method call: utils.helper()
       const call_ref = create_method_call_reference(
@@ -626,8 +620,7 @@ describe("Method Call Resolution", () => {
       // Resolve 'os' in scope
       const scope_resolutions = new Map<SymbolName, SymbolId>();
       scope_resolutions.set("os" as SymbolName, os_import_id);
-      resolutions["resolutions_by_scope"] = new Map();
-      resolutions["resolutions_by_scope"].set(FILE_SCOPE_ID, scope_resolutions);
+      set_test_resolutions(resolutions, FILE_SCOPE_ID, scope_resolutions);
 
       // Create method call: os.listdir()
       const call_ref = create_method_call_reference(
@@ -677,8 +670,7 @@ describe("Method Call Resolution", () => {
       // Resolve 'obj' in scope
       const scope_resolutions = new Map<SymbolName, SymbolId>();
       scope_resolutions.set("obj" as SymbolName, obj_symbol_id);
-      resolutions["resolutions_by_scope"] = new Map();
-      resolutions["resolutions_by_scope"].set(FILE_SCOPE_ID, scope_resolutions);
+      set_test_resolutions(resolutions, FILE_SCOPE_ID, scope_resolutions);
 
       // Create method call
       const call_ref = create_method_call_reference(
@@ -707,8 +699,7 @@ describe("Method Call Resolution", () => {
       const method_id = method_symbol("method", MOCK_LOCATION);
 
       // NO resolution for 'obj' in scope
-      resolutions["resolutions_by_scope"] = new Map();
-      resolutions["resolutions_by_scope"].set(FILE_SCOPE_ID, new Map());
+      set_test_resolutions(resolutions, FILE_SCOPE_ID, new Map());
 
       // Create method call
       const call_ref = create_method_call_reference(
@@ -757,8 +748,7 @@ describe("Method Call Resolution", () => {
       // Resolve 'obj' in scope
       const scope_resolutions = new Map<SymbolName, SymbolId>();
       scope_resolutions.set("obj" as SymbolName, obj_symbol_id);
-      resolutions["resolutions_by_scope"] = new Map();
-      resolutions["resolutions_by_scope"].set(FILE_SCOPE_ID, scope_resolutions);
+      set_test_resolutions(resolutions, FILE_SCOPE_ID, scope_resolutions);
 
       // Create method call for non-existent method
       const call_ref = create_method_call_reference(
@@ -830,8 +820,7 @@ describe("Method Call Resolution", () => {
       // Resolve 'obj' in scope
       const scope_resolutions = new Map<SymbolName, SymbolId>();
       scope_resolutions.set("obj" as SymbolName, obj_symbol_id);
-      resolutions["resolutions_by_scope"] = new Map();
-      resolutions["resolutions_by_scope"].set(FILE_SCOPE_ID, scope_resolutions);
+      set_test_resolutions(resolutions, FILE_SCOPE_ID, scope_resolutions);
 
       // Create method call with unresolved intermediate
       const call_ref = create_method_call_reference(
@@ -1000,8 +989,7 @@ describe("Method Call Resolution", () => {
       // Resolve 'h' in scope
       const scope_resolutions = new Map<SymbolName, SymbolId>();
       scope_resolutions.set("h" as SymbolName, handler_param_id);
-      resolutions["resolutions_by_scope"] = new Map();
-      resolutions["resolutions_by_scope"].set(METHOD_SCOPE_ID, scope_resolutions);
+      set_test_resolutions(resolutions, METHOD_SCOPE_ID, scope_resolutions);
 
       // Create method call: h.process()
       const call_ref = create_method_call_reference(
@@ -1079,8 +1067,7 @@ describe("Method Call Resolution", () => {
       // Resolve 'u' in scope
       const scope_resolutions = new Map<SymbolName, SymbolId>();
       scope_resolutions.set("u" as SymbolName, user_param_id);
-      resolutions["resolutions_by_scope"] = new Map();
-      resolutions["resolutions_by_scope"].set(METHOD_SCOPE_ID, scope_resolutions);
+      set_test_resolutions(resolutions, METHOD_SCOPE_ID, scope_resolutions);
 
       // Create method call: u.getName()
       const call_ref = create_method_call_reference(
@@ -1154,8 +1141,7 @@ describe("Method Call Resolution", () => {
       // Resolve 'h' in scope
       const scope_resolutions = new Map<SymbolName, SymbolId>();
       scope_resolutions.set("h" as SymbolName, handler_param_id);
-      resolutions["resolutions_by_scope"] = new Map();
-      resolutions["resolutions_by_scope"].set(METHOD_SCOPE_ID, scope_resolutions);
+      set_test_resolutions(resolutions, METHOD_SCOPE_ID, scope_resolutions);
 
       // Create method call: h.process()
       const call_ref = create_method_call_reference(

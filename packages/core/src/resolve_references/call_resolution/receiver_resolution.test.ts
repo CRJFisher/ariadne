@@ -22,6 +22,7 @@ import { ScopeRegistry } from "../registries/scope";
 import { DefinitionRegistry } from "../registries/definition";
 import { TypeRegistry } from "../registries/type";
 import { ResolutionRegistry } from "../resolve_references";
+import { set_test_resolutions } from "../resolve_references.test";
 import type {
   SymbolId,
   SymbolName,
@@ -631,8 +632,7 @@ describe("resolve_receiver_type", () => {
       // Set up resolution for "Database" type name
       const scope_resolutions = new Map<SymbolName, SymbolId>();
       scope_resolutions.set("Database" as SymbolName, database_class_id);
-      resolutions["resolutions_by_scope"] = new Map();
-      resolutions["resolutions_by_scope"].set(CLASS_SCOPE_ID, scope_resolutions);
+      set_test_resolutions(resolutions, CLASS_SCOPE_ID, scope_resolutions);
 
       const receiver: ReceiverExpression = {
         base: { type: "keyword", value: "this" },
@@ -778,8 +778,7 @@ describe("resolve_receiver_type", () => {
       // Setup resolution for 'obj' identifier
       const scope_resolutions = new Map<SymbolName, SymbolId>();
       scope_resolutions.set("obj" as SymbolName, var_id);
-      resolutions["resolutions_by_scope"] = new Map();
-      resolutions["resolutions_by_scope"].set(FILE_SCOPE_ID, scope_resolutions);
+      set_test_resolutions(resolutions, FILE_SCOPE_ID, scope_resolutions);
 
       // Setup type for variable
       types["symbol_types"] = new Map();

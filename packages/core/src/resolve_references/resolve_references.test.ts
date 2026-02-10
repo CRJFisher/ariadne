@@ -1,9 +1,28 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { Project } from "../project/project";
-import type { FilePath, SymbolReference } from "@ariadnejs/types";
+import type { FilePath, ScopeId, SymbolId, SymbolName, SymbolReference } from "@ariadnejs/types";
+import type { ResolutionRegistry } from "./resolve_references";
 import * as path from "path";
 import * as os from "os";
 import * as fs from "fs";
+
+/**
+ * Test helper: Set up scope resolutions directly for testing.
+ * Exported for use by other test files in resolve_references/.
+ */
+export function set_test_resolutions(
+  registry: ResolutionRegistry,
+  scope_id: ScopeId,
+  resolutions: Map<SymbolName, SymbolId>
+): void {
+  const internal = registry as unknown as {
+    state: { resolutions_by_scope: Map<ScopeId, Map<SymbolName, SymbolId>> };
+  };
+  if (!internal.state.resolutions_by_scope) {
+    internal.state.resolutions_by_scope = new Map();
+  }
+  internal.state.resolutions_by_scope.set(scope_id, resolutions);
+}
 
 /**
  * Helper: Check if a reference is a call reference
