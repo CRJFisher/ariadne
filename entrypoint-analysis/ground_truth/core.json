@@ -1,5 +1,6 @@
 [
-  { "name": "name_resolver", "file": "resolve_references/resolve_references.ts", "notes": "FALSE POSITIVE: callback function passed as argument - see task-177" },
+  { "name": "record_counts", "file": "profiling/profiler.ts", "notes": "Profiler public API" },
+  { "name": "report", "file": "profiling/profiler.ts", "notes": "Profiler public API" },
   { "name": "initialize", "file": "project/project.ts", "notes": "Project public API" },
   { "name": "update_file", "file": "project/project.ts", "notes": "Project public API" },
   { "name": "remove_file", "file": "project/project.ts", "notes": "Project public API" },

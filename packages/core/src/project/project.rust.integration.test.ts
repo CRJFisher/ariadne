@@ -543,4 +543,33 @@ fn main() {
 
   });
 
+  describe("Function as Callback - Entry Point Detection", () => {
+    it("should not flag named closure passed as argument as entry point", async () => {
+      const source = load_source("functions/function_as_callback.rs");
+      const file = file_path("functions/function_as_callback.rs");
+      project.update_file(file, source);
+
+      // Verify the fixture indexes successfully
+      const index = project.get_index_single_file(file);
+      expect(index).toBeDefined();
+
+      // Find the apply function and main function
+      const functions = Array.from(index!.functions.values());
+      const apply_fn = functions.find((f) => f.name === ("apply" as SymbolName));
+      expect(apply_fn).toBeDefined();
+
+      const main_fn = functions.find((f) => f.name === ("main" as SymbolName));
+      expect(main_fn).toBeDefined();
+
+      // Get call graph and check entry points
+      const call_graph = project.get_call_graph();
+      expect(call_graph).toBeDefined();
+
+      const entry_point_ids = new Set(call_graph.entry_points);
+
+      // apply should NOT be an entry point (called by main)
+      expect(entry_point_ids.has(apply_fn!.symbol_id)).toBe(false);
+    });
+  });
+
 });

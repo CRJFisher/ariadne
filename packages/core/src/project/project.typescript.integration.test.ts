@@ -790,6 +790,45 @@ export class TypeRegistry {
 
   });
 
+  describe("Function as Callback - Entry Point Detection", () => {
+    it("should not flag named function passed as argument as entry point", async () => {
+      const code = `
+function apply(callback: (x: number) => number, value: number): number {
+  return callback(value);
+}
+
+const doubler = (x: number): number => x * 2;
+
+function main(): void {
+  const result = apply(doubler, 21);
+}
+`;
+      const file = file_path("function_as_callback.ts");
+      project.update_file(file, code);
+
+      // Verify doubler exists in definitions
+      const index = project.get_index_single_file(file);
+      expect(index).toBeDefined();
+      const functions = Array.from(index!.functions.values());
+      const doubler_fn = functions.find((f) => f.name === ("doubler" as SymbolName));
+      expect(doubler_fn).toBeDefined();
+
+      // Get call graph and check entry points
+      const call_graph = project.get_call_graph();
+      expect(call_graph).toBeDefined();
+
+      const entry_point_ids = new Set(call_graph.entry_points);
+
+      // doubler should NOT be an entry point (it's passed as a value to apply)
+      expect(entry_point_ids.has(doubler_fn!.symbol_id)).toBe(false);
+
+      // apply should be referenced (called by main)
+      const apply_fn = functions.find((f) => f.name === ("apply" as SymbolName));
+      expect(apply_fn).toBeDefined();
+      expect(entry_point_ids.has(apply_fn!.symbol_id)).toBe(false);
+    });
+  });
+
   describe("Polymorphic this Dispatch (Task 11.174)", () => {
     it("should mark child override as called when base calls this.method()", async () => {
       const code = `

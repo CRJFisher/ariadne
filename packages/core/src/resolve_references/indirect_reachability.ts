@@ -1,22 +1,15 @@
 /**
- * Indirect reachability processing for function collections.
+ * Indirect reachability detection.
  *
- * When a variable containing function references is read (e.g., `return HANDLERS`),
- * all stored functions become indirectly reachable. This means they should not be
- * considered entry points, even though they are never directly called.
+ * Detects functions that are reachable without direct call edges:
+ * - Functions stored in collections that are read (e.g., `return HANDLERS`)
+ * - Named functions passed as values/arguments (e.g., `apply(doubler, 21)`)
+ *
+ * These functions should not be considered entry points.
  */
 
-import type { FilePath, SymbolId, SymbolName, Location, FunctionCollection } from "@ariadnejs/types";
+import type { FilePath, SymbolId, SymbolName, Location, FunctionCollection, IndirectReachabilityReason } from "@ariadnejs/types";
 import type { DefinitionRegistry } from "./registries/definition";
-
-/**
- * Reason for indirect reachability
- */
-export interface IndirectReachabilityReason {
-  type: "collection_read";
-  collection_id: SymbolId;
-  read_location: Location;
-}
 
 /**
  * Entry for indirectly reachable function
@@ -43,15 +36,20 @@ interface VariableReadReference {
 }
 
 /**
- * Process variable references to detect function collection reads.
- * When a collection is read, all stored functions become indirectly reachable.
+ * Detect indirect reachability from variable read references.
+ *
+ * Handles two cases:
+ * 1. Function collections: when a collection variable is read, all stored functions
+ *    become indirectly reachable.
+ * 2. Function references: when a named function is read as a value (e.g., passed
+ *    as an argument), it becomes indirectly reachable.
  *
  * @param file_references - Map of file_path → references
  * @param definitions - Definition registry
  * @param resolve - Function to resolve symbol names in scopes
  * @returns Map of function_id to IndirectReachabilityEntry
  */
-export function process_collection_reads(
+export function detect_indirect_reachability(
   file_references: Map<FilePath, readonly VariableReadReference[]>,
   definitions: DefinitionRegistry,
   resolve: SymbolResolver
@@ -71,18 +69,36 @@ export function process_collection_reads(
 
       // Check if it has function_collection metadata
       const collection = definitions.get_function_collection(symbol_id);
-      if (!collection) continue;
+      if (collection) {
+        mark_collection_as_consumed(
+          symbol_id,
+          collection,
+          ref.location,
+          definitions,
+          resolve,
+          indirect_reachability,
+          new Set()
+        );
+        continue;
+      }
 
-      // Mark all stored functions as reachable
-      mark_collection_as_consumed(
-        symbol_id,
-        collection,
-        ref.location,
-        definitions,
-        resolve,
-        indirect_reachability,
-        new Set()
-      );
+      // Check if the resolved symbol is a function definition (passed as value)
+      const def = definitions.get(symbol_id);
+      if (def && def.kind === "function") {
+        // Skip if the reference is at the definition site itself
+        // (e.g., Python's `def foo` creates a variable_reference read at the def location)
+        if (
+          ref.location.file_path === def.location.file_path &&
+          ref.location.start_line === def.location.start_line &&
+          ref.location.start_column === def.location.start_column
+        ) {
+          continue;
+        }
+        indirect_reachability.set(symbol_id, {
+          function_id: symbol_id,
+          reason: { type: "function_reference", read_location: ref.location },
+        });
+      }
     }
   }
 

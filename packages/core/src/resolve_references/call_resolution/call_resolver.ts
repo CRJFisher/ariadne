@@ -24,7 +24,7 @@ import type { ReferenceRegistry } from "../registries/reference";
 import type { ImportGraph } from "../../project/import_graph";
 import type { CallResolutionResult } from "../resolution_state";
 import type { ResolutionRegistry } from "../resolve_references";
-import { process_collection_reads } from "../indirect_reachability";
+import { detect_indirect_reachability } from "../indirect_reachability";
 import { resolve_method_call } from "./method";
 import { resolve_constructor_call } from "./constructor";
 import { resolve_collection_dispatch } from "./collection_dispatch";
@@ -220,9 +220,9 @@ export function resolve_calls_for_files(
     resolved_calls_by_file.set(file_id, calls_by_file.get(file_id) ?? []);
   }
 
-  // Process collection reads to mark stored functions as indirectly reachable
+  // Detect indirect reachability (function collections and function-as-value references)
   // Cast name_resolver to SymbolResolver - types are compatible (ScopeId extends string)
-  const indirect_reachability = process_collection_reads(
+  const indirect_reachability = detect_indirect_reachability(
     file_references,
     context.definitions,
     (scope_id, name) => name_resolver(scope_id as ScopeId, name)

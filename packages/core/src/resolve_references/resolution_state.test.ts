@@ -29,7 +29,8 @@ import type {
   Location,
   CallReference,
 } from "@ariadnejs/types";
-import type { IndirectReachabilityEntry, IndirectReachabilityReason } from "./indirect_reachability";
+import type { IndirectReachabilityEntry } from "./indirect_reachability";
+import type { IndirectReachabilityReason } from "@ariadnejs/types";
 
 const TEST_FILE = "test.ts" as FilePath;
 const FILE_A = "a.ts" as FilePath;
@@ -240,6 +241,28 @@ describe("get_all_referenced_symbols", () => {
     expect(result.size).toBe(1);
     expect(result.has(symbol_id)).toBe(true);
   });
+
+  it("should include function_reference indirect reachability entries", () => {
+    const symbol_id = function_symbol("doubler" as SymbolName, MOCK_LOCATION);
+    const reason: IndirectReachabilityReason = {
+      type: "function_reference",
+      read_location: MOCK_LOCATION,
+    };
+    const entry: IndirectReachabilityEntry = {
+      function_id: symbol_id,
+      reason,
+    };
+
+    const state: ResolutionState = {
+      ...create_resolution_state(),
+      indirect_reachability: new Map([[symbol_id, entry]]),
+    };
+
+    const result = get_all_referenced_symbols(state);
+
+    expect(result.size).toBe(1);
+    expect(result.has(symbol_id)).toBe(true);
+  });
 });
 
 describe("get_indirect_reachability", () => {
@@ -421,6 +444,41 @@ describe("remove_file", () => {
     expect(result.indirect_reachability.has(symbol_b)).toBe(true);
   });
 
+  it("should remove function_reference indirect_reachability entries from file", () => {
+    const symbol_a = function_symbol("doublerA" as SymbolName, MOCK_LOCATION_A);
+    const symbol_b = function_symbol("doublerB" as SymbolName, MOCK_LOCATION_B);
+
+    const reason_a: IndirectReachabilityReason = {
+      type: "function_reference",
+      read_location: MOCK_LOCATION_A,
+    };
+    const reason_b: IndirectReachabilityReason = {
+      type: "function_reference",
+      read_location: MOCK_LOCATION_B,
+    };
+    const entry_a: IndirectReachabilityEntry = {
+      function_id: symbol_a,
+      reason: reason_a,
+    };
+    const entry_b: IndirectReachabilityEntry = {
+      function_id: symbol_b,
+      reason: reason_b,
+    };
+
+    const state: ResolutionState = {
+      ...create_resolution_state(),
+      indirect_reachability: new Map([
+        [symbol_a, entry_a],
+        [symbol_b, entry_b],
+      ]),
+    };
+
+    const result = remove_file(state, FILE_A);
+
+    expect(result.indirect_reachability.has(symbol_a)).toBe(false);
+    expect(result.indirect_reachability.has(symbol_b)).toBe(true);
+  });
+
   it("should not mutate original state", () => {
     const symbol_a = function_symbol("funcA" as SymbolName, MOCK_LOCATION_A);
 
@@ -547,6 +605,30 @@ describe("apply_call_resolution", () => {
     const reason: IndirectReachabilityReason = {
       type: "collection_read",
       collection_id: MOCK_COLLECTION_ID_A,
+      read_location: MOCK_LOCATION_A,
+    };
+    const entry: IndirectReachabilityEntry = {
+      function_id: symbol_id,
+      reason,
+    };
+
+    const state = create_resolution_state();
+
+    const result_to_apply: CallResolutionResult = {
+      resolved_calls_by_file: new Map(),
+      calls_by_caller_scope: new Map(),
+      indirect_reachability: new Map([[symbol_id, entry]]),
+    };
+
+    const result = apply_call_resolution(state, result_to_apply);
+
+    expect(result.indirect_reachability.get(symbol_id)).toBe(entry);
+  });
+
+  it("should merge function_reference indirect reachability into state", () => {
+    const symbol_id = function_symbol("doubler" as SymbolName, MOCK_LOCATION_A);
+    const reason: IndirectReachabilityReason = {
+      type: "function_reference",
       read_location: MOCK_LOCATION_A,
     };
     const entry: IndirectReachabilityEntry = {

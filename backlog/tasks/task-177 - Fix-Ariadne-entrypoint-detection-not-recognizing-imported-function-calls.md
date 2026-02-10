@@ -1,9 +1,10 @@
 ---
 id: task-177
 title: Fix Ariadne entrypoint detection not recognizing imported function calls
-status: To Do
+status: Done
 assignee: []
 created_date: '2026-02-05 22:34'
+updated_date: '2026-02-10 17:10'
 labels:
   - bug
 dependencies: []
@@ -59,11 +60,12 @@ When resolving a name inside a method body, the method's own definition should b
 Alternatively, imports should always take precedence over class members when the call syntax is `funcName()` (not `this.funcName()`).
 
 ## Acceptance Criteria
-
-- [ ] Self-shadowing diagnostic test passes (`resolve_references.diagnostic.test.ts`)
-- [ ] Entry point analysis of core package no longer flags `resolve_calls_for_files` as entry point
-- [ ] Re-enable the entrypoint_stop.ts hook (remove early process.exit(0))
-- [ ] Hook passes without blocking on false positives
+<!-- AC:BEGIN -->
+- [x] #1 Self-shadowing diagnostic test passes (`resolve_references.diagnostic.test.ts`)
+- [x] #2 Entry point analysis of core package no longer flags `resolve_calls_for_files` as entry point
+- [x] #3 Re-enable the entrypoint_stop.ts hook (remove early process.exit(0))
+- [x] #4 Hook passes without blocking on false positives
+<!-- AC:END -->
 
 ## Implementation Notes
 
@@ -127,10 +129,18 @@ const result = resolve_calls_for_files(file_ids, context, name_resolver);
 
 **Root cause**: Callback/higher-order function tracking. When a function is passed as an argument, we don't currently connect the argument value (arrow function) to the parameter that receives it.
 
-### Potential Fixes
+### Fix: Function-as-Value Indirect Reachability
 
-1. **Indirect reachability for callbacks**: When a function value is passed as an argument, mark it as "indirectly reachable" via the parameter. This is similar to how we handle functions stored in collections.
+Extended indirect reachability detection to handle functions passed as values (not just collections).
 
-2. **Parameter-to-argument binding**: Track that a call site's argument flows to a parameter, and if the parameter is called, the argument function is "reachable".
+**Changes:**
 
-3. **Accept as expected behavior**: Arrow functions defined and immediately passed as callbacks are a gray area - they ARE entry points in the sense that they're entry points into the callback chain.
+- `packages/types/src/call_chains.ts`: Added `function_reference` variant to `IndirectReachabilityReason` union type
+- `packages/core/src/resolve_references/indirect_reachability.ts`: Removed duplicate type (imports from `@ariadnejs/types`), renamed `process_collection_reads` to `detect_indirect_reachability`, added function reference detection with definition-site exclusion
+- `packages/core/src/resolve_references/call_resolution/call_resolver.ts`: Updated import and call site
+- `packages/core/src/resolve_references/indirect_reachability.test.ts`: 6 unit tests
+- `packages/core/src/resolve_references/resolution_state.test.ts`: 3 additional tests for `function_reference` variant
+- Integration tests added for TypeScript, Python, Rust with fixture files
+- `entrypoint-analysis/ground_truth/core.json`: Removed `name_resolver` false positive
+
+**Key design decision:** Variable references at the same location as the function definition are excluded (Python creates variable reads at `def` sites).
