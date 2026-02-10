@@ -84,7 +84,7 @@ describe("resolve_names", () => {
 
   describe("Local definition resolution", () => {
     it("should resolve local function definition in file scope", () => {
-      const func_id = function_symbol("greet", TEST_FILE, MOCK_LOCATION);
+      const func_id = function_symbol("greet" as SymbolName, MOCK_LOCATION);
 
       // Set up scope
       const scope_map = new Map<ScopeId, LexicalScope>([
@@ -109,7 +109,7 @@ describe("resolve_names", () => {
         name: "greet" as SymbolName,
         defining_scope_id: FILE_SCOPE_ID,
         location: MOCK_LOCATION,
-        parameters: [],
+        signature: { parameters: [] },
         body_scope_id: FUNC_SCOPE_ID,
         is_exported: false,
       };
@@ -153,7 +153,7 @@ describe("resolve_names", () => {
           name: "funcA" as SymbolName,
           defining_scope_id: FILE_SCOPE_ID,
           location: MOCK_LOCATION,
-          parameters: [],
+          signature: { parameters: [] },
           body_scope_id: "scope:test.ts:funcA:1:0" as ScopeId,
           is_exported: false,
         },
@@ -163,7 +163,7 @@ describe("resolve_names", () => {
           name: "funcB" as SymbolName,
           defining_scope_id: FILE_SCOPE_ID,
           location: { ...MOCK_LOCATION, start_line: 5 },
-          parameters: [],
+          signature: { parameters: [] },
           body_scope_id: "scope:test.ts:funcB:5:0" as ScopeId,
           is_exported: false,
         },
@@ -218,7 +218,7 @@ describe("resolve_names", () => {
           name: "outer" as SymbolName,
           defining_scope_id: FILE_SCOPE_ID,
           location: MOCK_LOCATION,
-          parameters: [],
+          signature: { parameters: [] },
           body_scope_id: "scope:test.ts:outer:1:0" as ScopeId,
           is_exported: false,
         },
@@ -273,7 +273,7 @@ describe("resolve_names", () => {
           name: "func" as SymbolName,
           defining_scope_id: FILE_SCOPE_ID,
           location: MOCK_LOCATION,
-          parameters: [],
+          signature: { parameters: [] },
           body_scope_id: "scope:test.ts:func:1:0" as ScopeId,
           is_exported: false,
         },
@@ -283,7 +283,7 @@ describe("resolve_names", () => {
           name: "func" as SymbolName,
           defining_scope_id: inner_scope_id,
           location: { ...MOCK_LOCATION, start_line: 3 },
-          parameters: [],
+          signature: { parameters: [] },
           body_scope_id: "scope:test.ts:func:3:0" as ScopeId,
           is_exported: false,
         },
@@ -370,7 +370,7 @@ describe("resolve_names", () => {
           name: "funcA" as SymbolName,
           defining_scope_id: scope_a,
           location: { ...MOCK_LOCATION, file_path: file_a },
-          parameters: [],
+          signature: { parameters: [] },
           body_scope_id: "scope:a.ts:funcA:1:0" as ScopeId,
           is_exported: false,
         },
@@ -382,7 +382,7 @@ describe("resolve_names", () => {
           name: "funcB" as SymbolName,
           defining_scope_id: scope_b,
           location: { ...MOCK_LOCATION, file_path: file_b },
-          parameters: [],
+          signature: { parameters: [] },
           body_scope_id: "scope:b.ts:funcB:1:0" as ScopeId,
           is_exported: false,
         },
@@ -405,7 +405,7 @@ describe("resolve_names", () => {
 
   describe("scope_to_file tracking", () => {
     it("should track which file each scope belongs to", () => {
-      const func_id = function_symbol("greet", TEST_FILE, MOCK_LOCATION);
+      const func_id = function_symbol("greet" as SymbolName, MOCK_LOCATION);
 
       const scope_map = new Map<ScopeId, LexicalScope>([
         [
@@ -440,7 +440,7 @@ describe("resolve_names", () => {
           name: "greet" as SymbolName,
           defining_scope_id: FILE_SCOPE_ID,
           location: MOCK_LOCATION,
-          parameters: [],
+          signature: { parameters: [] },
           body_scope_id: FUNC_SCOPE_ID,
           is_exported: false,
         },

@@ -24,11 +24,12 @@ import { function_symbol } from "@ariadnejs/types";
 import type {
   ScopeId,
   SymbolName,
+  SymbolId,
   FilePath,
   Location,
   CallReference,
 } from "@ariadnejs/types";
-import type { IndirectReachabilityEntry } from "./indirect_reachability";
+import type { IndirectReachabilityEntry, IndirectReachabilityReason } from "./indirect_reachability";
 
 const TEST_FILE = "test.ts" as FilePath;
 const FILE_A = "a.ts" as FilePath;
@@ -60,13 +61,18 @@ const MOCK_LOCATION_B: Location = {
   end_column: 10,
 };
 
+// Helper for creating mock collection IDs
+const MOCK_COLLECTION_ID = "variable:test.ts:1:0:1:10:handlers" as SymbolId;
+const MOCK_COLLECTION_ID_A = "variable:a.ts:1:0:1:10:handlers" as SymbolId;
+const MOCK_COLLECTION_ID_B = "variable:b.ts:1:0:1:10:handlers" as SymbolId;
+
 // ============================================================================
 // Query Function Tests
 // ============================================================================
 
 describe("resolve", () => {
   it("should return SymbolId when resolution exists", () => {
-    const symbol_id = function_symbol("greet", TEST_FILE, MOCK_LOCATION);
+    const symbol_id = function_symbol("greet" as SymbolName, MOCK_LOCATION);
     const state: ResolutionState = {
       ...create_resolution_state(),
       resolutions_by_scope: new Map([
@@ -88,7 +94,7 @@ describe("resolve", () => {
   });
 
   it("should return null when name not found in scope", () => {
-    const symbol_id = function_symbol("greet", TEST_FILE, MOCK_LOCATION);
+    const symbol_id = function_symbol("greet" as SymbolName, MOCK_LOCATION);
     const state: ResolutionState = {
       ...create_resolution_state(),
       resolutions_by_scope: new Map([
@@ -104,13 +110,13 @@ describe("resolve", () => {
 
 describe("get_calls_by_caller_scope", () => {
   it("should return calls for existing scope", () => {
-    const symbol_id = function_symbol("helper", TEST_FILE, MOCK_LOCATION);
+    const symbol_id = function_symbol("helper" as SymbolName, MOCK_LOCATION);
     const call: CallReference = {
       call_type: "function",
       name: "helper" as SymbolName,
       location: MOCK_LOCATION,
       caller_scope_id: SCOPE_A,
-      resolutions: [{ symbol_id, resolution_kind: "direct" }],
+      resolutions: [{ symbol_id, confidence: "certain", reason: { type: "direct" } }],
     };
     const state: ResolutionState = {
       ...create_resolution_state(),
@@ -141,8 +147,8 @@ describe("get_all_referenced_symbols", () => {
   });
 
   it("should collect symbols from resolved calls", () => {
-    const symbol_a = function_symbol("funcA", TEST_FILE, MOCK_LOCATION);
-    const symbol_b = function_symbol("funcB", TEST_FILE, MOCK_LOCATION);
+    const symbol_a = function_symbol("funcA" as SymbolName, MOCK_LOCATION);
+    const symbol_b = function_symbol("funcB" as SymbolName, MOCK_LOCATION);
 
     const calls: CallReference[] = [
       {
@@ -150,14 +156,14 @@ describe("get_all_referenced_symbols", () => {
         name: "funcA" as SymbolName,
         location: MOCK_LOCATION,
         caller_scope_id: SCOPE_A,
-        resolutions: [{ symbol_id: symbol_a, resolution_kind: "direct" }],
+        resolutions: [{ symbol_id: symbol_a, confidence: "certain", reason: { type: "direct" } }],
       },
       {
         call_type: "function",
         name: "funcB" as SymbolName,
         location: MOCK_LOCATION,
         caller_scope_id: SCOPE_A,
-        resolutions: [{ symbol_id: symbol_b, resolution_kind: "direct" }],
+        resolutions: [{ symbol_id: symbol_b, confidence: "certain", reason: { type: "direct" } }],
       },
     ];
 
@@ -184,8 +190,8 @@ describe("get_all_referenced_symbols", () => {
     };
 
     // Use different names to ensure different symbol IDs
-    const symbol_a = function_symbol("overloadedA", TEST_FILE, MOCK_LOCATION);
-    const symbol_b = function_symbol("overloadedB", other_file, other_location);
+    const symbol_a = function_symbol("overloadedA" as SymbolName, MOCK_LOCATION);
+    const symbol_b = function_symbol("overloadedB" as SymbolName, other_location);
 
     const calls: CallReference[] = [
       {
@@ -194,8 +200,8 @@ describe("get_all_referenced_symbols", () => {
         location: MOCK_LOCATION,
         caller_scope_id: SCOPE_A,
         resolutions: [
-          { symbol_id: symbol_a, resolution_kind: "direct" },
-          { symbol_id: symbol_b, resolution_kind: "direct" },
+          { symbol_id: symbol_a, confidence: "certain", reason: { type: "direct" } },
+          { symbol_id: symbol_b, confidence: "certain", reason: { type: "direct" } },
         ],
       },
     ];
@@ -213,12 +219,15 @@ describe("get_all_referenced_symbols", () => {
   });
 
   it("should include indirectly reachable symbols", () => {
-    const symbol_id = function_symbol("callback", TEST_FILE, MOCK_LOCATION);
+    const symbol_id = function_symbol("callback" as SymbolName, MOCK_LOCATION);
+    const reason: IndirectReachabilityReason = {
+      type: "collection_read",
+      collection_id: MOCK_COLLECTION_ID,
+      read_location: MOCK_LOCATION,
+    };
     const entry: IndirectReachabilityEntry = {
-      reason: {
-        read_location: MOCK_LOCATION,
-        access_path: ["callbacks", "0"],
-      },
+      function_id: symbol_id,
+      reason,
     };
 
     const state: ResolutionState = {
@@ -243,12 +252,15 @@ describe("get_indirect_reachability", () => {
   });
 
   it("should return indirect reachability map", () => {
-    const symbol_id = function_symbol("callback", TEST_FILE, MOCK_LOCATION);
+    const symbol_id = function_symbol("callback" as SymbolName, MOCK_LOCATION);
+    const reason: IndirectReachabilityReason = {
+      type: "collection_read",
+      collection_id: MOCK_COLLECTION_ID,
+      read_location: MOCK_LOCATION,
+    };
     const entry: IndirectReachabilityEntry = {
-      reason: {
-        read_location: MOCK_LOCATION,
-        access_path: ["handlers"],
-      },
+      function_id: symbol_id,
+      reason,
     };
 
     const state: ResolutionState = {
@@ -273,9 +285,9 @@ describe("size", () => {
   });
 
   it("should count resolutions across all scopes", () => {
-    const symbol_a = function_symbol("funcA", TEST_FILE, MOCK_LOCATION);
-    const symbol_b = function_symbol("funcB", TEST_FILE, MOCK_LOCATION);
-    const symbol_c = function_symbol("funcC", TEST_FILE, MOCK_LOCATION);
+    const symbol_a = function_symbol("funcA" as SymbolName, MOCK_LOCATION);
+    const symbol_b = function_symbol("funcB" as SymbolName, MOCK_LOCATION);
+    const symbol_c = function_symbol("funcC" as SymbolName, MOCK_LOCATION);
 
     const state: ResolutionState = {
       ...create_resolution_state(),
@@ -303,8 +315,8 @@ describe("size", () => {
 
 describe("remove_file", () => {
   it("should remove resolutions for file's scopes", () => {
-    const symbol_a = function_symbol("funcA", FILE_A, MOCK_LOCATION_A);
-    const symbol_b = function_symbol("funcB", FILE_B, MOCK_LOCATION_B);
+    const symbol_a = function_symbol("funcA" as SymbolName, MOCK_LOCATION_A);
+    const symbol_b = function_symbol("funcB" as SymbolName, MOCK_LOCATION_B);
 
     const state: ResolutionState = {
       resolutions_by_scope: new Map([
@@ -329,14 +341,14 @@ describe("remove_file", () => {
   });
 
   it("should remove resolved calls for file", () => {
-    const symbol_a = function_symbol("funcA", FILE_A, MOCK_LOCATION_A);
+    const symbol_a = function_symbol("funcA" as SymbolName, MOCK_LOCATION_A);
 
     const call: CallReference = {
       call_type: "function",
       name: "funcA" as SymbolName,
       location: MOCK_LOCATION_A,
       caller_scope_id: SCOPE_A,
-      resolutions: [{ symbol_id: symbol_a, resolution_kind: "direct" }],
+      resolutions: [{ symbol_id: symbol_a, confidence: "certain", reason: { type: "direct" } }],
     };
 
     const state: ResolutionState = {
@@ -351,14 +363,14 @@ describe("remove_file", () => {
   });
 
   it("should remove calls_by_caller_scope for file's scopes", () => {
-    const symbol_a = function_symbol("helper", FILE_A, MOCK_LOCATION_A);
+    const symbol_a = function_symbol("helper" as SymbolName, MOCK_LOCATION_A);
 
     const call: CallReference = {
       call_type: "function",
       name: "helper" as SymbolName,
       location: MOCK_LOCATION_A,
       caller_scope_id: SCOPE_A,
-      resolutions: [{ symbol_id: symbol_a, resolution_kind: "direct" }],
+      resolutions: [{ symbol_id: symbol_a, confidence: "certain", reason: { type: "direct" } }],
     };
 
     const state: ResolutionState = {
@@ -373,20 +385,26 @@ describe("remove_file", () => {
   });
 
   it("should remove indirect_reachability entries from file", () => {
-    const symbol_a = function_symbol("callbackA", FILE_A, MOCK_LOCATION_A);
-    const symbol_b = function_symbol("callbackB", FILE_B, MOCK_LOCATION_B);
+    const symbol_a = function_symbol("callbackA" as SymbolName, MOCK_LOCATION_A);
+    const symbol_b = function_symbol("callbackB" as SymbolName, MOCK_LOCATION_B);
 
+    const reason_a: IndirectReachabilityReason = {
+      type: "collection_read",
+      collection_id: MOCK_COLLECTION_ID_A,
+      read_location: MOCK_LOCATION_A,
+    };
+    const reason_b: IndirectReachabilityReason = {
+      type: "collection_read",
+      collection_id: MOCK_COLLECTION_ID_B,
+      read_location: MOCK_LOCATION_B,
+    };
     const entry_a: IndirectReachabilityEntry = {
-      reason: {
-        read_location: MOCK_LOCATION_A,
-        access_path: ["handlers"],
-      },
+      function_id: symbol_a,
+      reason: reason_a,
     };
     const entry_b: IndirectReachabilityEntry = {
-      reason: {
-        read_location: MOCK_LOCATION_B,
-        access_path: ["handlers"],
-      },
+      function_id: symbol_b,
+      reason: reason_b,
     };
 
     const state: ResolutionState = {
@@ -404,7 +422,7 @@ describe("remove_file", () => {
   });
 
   it("should not mutate original state", () => {
-    const symbol_a = function_symbol("funcA", FILE_A, MOCK_LOCATION_A);
+    const symbol_a = function_symbol("funcA" as SymbolName, MOCK_LOCATION_A);
 
     const state: ResolutionState = {
       ...create_resolution_state(),
@@ -427,8 +445,8 @@ describe("remove_file", () => {
 
 describe("apply_name_resolution", () => {
   it("should merge new resolutions into state", () => {
-    const symbol_a = function_symbol("funcA", FILE_A, MOCK_LOCATION_A);
-    const symbol_b = function_symbol("funcB", FILE_B, MOCK_LOCATION_B);
+    const symbol_a = function_symbol("funcA" as SymbolName, MOCK_LOCATION_A);
+    const symbol_b = function_symbol("funcB" as SymbolName, MOCK_LOCATION_B);
 
     const state: ResolutionState = {
       ...create_resolution_state(),
@@ -454,8 +472,8 @@ describe("apply_name_resolution", () => {
   });
 
   it("should overwrite existing scope resolutions", () => {
-    const symbol_old = function_symbol("funcOld", FILE_A, MOCK_LOCATION_A);
-    const symbol_new = function_symbol("funcNew", FILE_A, MOCK_LOCATION_A);
+    const symbol_old = function_symbol("funcOld" as SymbolName, MOCK_LOCATION_A);
+    const symbol_new = function_symbol("funcNew" as SymbolName, MOCK_LOCATION_A);
 
     const state: ResolutionState = {
       ...create_resolution_state(),
@@ -480,7 +498,7 @@ describe("apply_name_resolution", () => {
   });
 
   it("should not mutate original state", () => {
-    const symbol_b = function_symbol("funcB", FILE_B, MOCK_LOCATION_B);
+    const symbol_b = function_symbol("funcB" as SymbolName, MOCK_LOCATION_B);
 
     const state = create_resolution_state();
 
@@ -500,14 +518,14 @@ describe("apply_name_resolution", () => {
 
 describe("apply_call_resolution", () => {
   it("should merge resolved calls into state", () => {
-    const symbol_a = function_symbol("funcA", FILE_A, MOCK_LOCATION_A);
+    const symbol_a = function_symbol("funcA" as SymbolName, MOCK_LOCATION_A);
 
     const call: CallReference = {
       call_type: "function",
       name: "funcA" as SymbolName,
       location: MOCK_LOCATION_A,
       caller_scope_id: SCOPE_A,
-      resolutions: [{ symbol_id: symbol_a, resolution_kind: "direct" }],
+      resolutions: [{ symbol_id: symbol_a, confidence: "certain", reason: { type: "direct" } }],
     };
 
     const state = create_resolution_state();
@@ -525,12 +543,15 @@ describe("apply_call_resolution", () => {
   });
 
   it("should merge indirect reachability into state", () => {
-    const symbol_id = function_symbol("callback", FILE_A, MOCK_LOCATION_A);
+    const symbol_id = function_symbol("callback" as SymbolName, MOCK_LOCATION_A);
+    const reason: IndirectReachabilityReason = {
+      type: "collection_read",
+      collection_id: MOCK_COLLECTION_ID_A,
+      read_location: MOCK_LOCATION_A,
+    };
     const entry: IndirectReachabilityEntry = {
-      reason: {
-        read_location: MOCK_LOCATION_A,
-        access_path: ["handlers"],
-      },
+      function_id: symbol_id,
+      reason,
     };
 
     const state = create_resolution_state();
@@ -547,14 +568,14 @@ describe("apply_call_resolution", () => {
   });
 
   it("should not mutate original state", () => {
-    const symbol_a = function_symbol("funcA", FILE_A, MOCK_LOCATION_A);
+    const symbol_a = function_symbol("funcA" as SymbolName, MOCK_LOCATION_A);
 
     const call: CallReference = {
       call_type: "function",
       name: "funcA" as SymbolName,
       location: MOCK_LOCATION_A,
       caller_scope_id: SCOPE_A,
-      resolutions: [{ symbol_id: symbol_a, resolution_kind: "direct" }],
+      resolutions: [{ symbol_id: symbol_a, confidence: "certain", reason: { type: "direct" } }],
     };
 
     const state = create_resolution_state();

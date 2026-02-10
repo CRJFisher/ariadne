@@ -877,7 +877,7 @@ describe("JavaScript Builder Configuration", () => {
 
         builder.process(captures[0]);
         const assignments = builder.references.filter(
-          (r) => r.type === "assignment"
+          (r) => r.kind === "assignment"
         );
 
         expect(assignments).toBeDefined();
