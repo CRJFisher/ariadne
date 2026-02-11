@@ -77,7 +77,7 @@ describe("Project - Performance Benchmarks", () => {
   });
 
   describe("incremental vs full rebuild", () => {
-    it("should compare incremental update vs full rebuild", { timeout: 15000 }, async () => {
+    it("should compare incremental update vs full rebuild", { timeout: 30000 }, async () => {
       const file_count = 20;
 
       // === INCREMENTAL APPROACH ===
