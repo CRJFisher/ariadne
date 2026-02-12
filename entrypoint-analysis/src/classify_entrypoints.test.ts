@@ -73,7 +73,7 @@ describe("Rule 1: No textual callers + exported → true positive", () => {
 // ===== Rule 2: Constructors =====
 
 describe("Rule 2: Constructors → constructor resolution bug", () => {
-  it("classifies constructor as false positive", () => {
+  it("classifies constructor with callers as false positive", () => {
     const entry = make_entry({
       kind: "constructor",
       diagnostics: {
@@ -88,6 +88,22 @@ describe("Rule 2: Constructors → constructor resolution bug", () => {
     expect(result.classified_false_positives).toHaveLength(1);
     expect(result.classified_false_positives[0].group_id).toBe("constructor-resolution-bug");
     expect(result.classified_false_positives[0].rule_id).toBe("constructor");
+  });
+
+  it("does not classify constructor with no textual callers (may be dead code)", () => {
+    const entry = make_entry({
+      kind: "constructor",
+      diagnostics: {
+        grep_call_sites: [],
+        ariadne_call_refs: [],
+        diagnosis: "no-textual-callers",
+      },
+    });
+
+    const result = classify_entrypoints([entry]);
+
+    expect(result.classified_false_positives).toHaveLength(0);
+    expect(result.unclassified).toEqual([entry]);
   });
 });
 
@@ -213,7 +229,7 @@ describe("Diagnostic-based entries are not pre-classified", () => {
 // ===== Rule precedence =====
 
 describe("Rule precedence", () => {
-  it("constructor rule classifies constructor regardless of diagnosis", () => {
+  it("constructor rule classifies constructor with callers", () => {
     const entry = make_entry({
       kind: "constructor",
       diagnostics: {

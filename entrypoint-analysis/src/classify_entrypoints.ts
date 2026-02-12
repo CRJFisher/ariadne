@@ -61,16 +61,16 @@ const rule_no_callers_exported: ClassificationRule = {
 };
 
 /**
- * Rule 2: Constructors → constructor resolution bug
+ * Rule 2: Constructors with callers → constructor resolution bug
  *
- * Constructors are frequently missed by call graph resolution because
- * `new ClassName()` patterns require matching the constructor definition
- * through the class symbol.
+ * Constructors with textual callers that aren't resolved are false positives
+ * caused by call graph resolution gaps. Constructors with NO textual callers
+ * may be genuinely dead code (true positives) and are left for LLM triage.
  */
 const rule_constructor: ClassificationRule = {
   id: "constructor",
   classify: (entry) => {
-    if (entry.kind === "constructor") {
+    if (entry.kind === "constructor" && entry.diagnostics.diagnosis !== "no-textual-callers") {
       return {
         group_id: "constructor-resolution-bug",
         root_cause:
