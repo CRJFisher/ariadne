@@ -174,6 +174,170 @@ describe("ImportGraph", () => {
     });
   });
 
+  describe("submodule_import_paths", () => {
+    // Helper to create a FileSystemFolder tree for Python submodule tests
+    function create_python_tree(
+      root_path: string,
+      files: string[]
+    ): FileSystemFolder {
+      const root: FileSystemFolder = {
+        path: root_path as FilePath,
+        folders: new Map(),
+        files: new Set(),
+      };
+      for (const file of files) {
+        const relative_path = file.startsWith(root_path)
+          ? file.slice(root_path.length + 1)
+          : file;
+        const parts = relative_path.split("/");
+        let current = root;
+        for (let i = 0; i < parts.length - 1; i++) {
+          const folder_name = parts[i];
+          let folder = (current.folders as Map<string, FileSystemFolder>).get(
+            folder_name
+          );
+          if (!folder) {
+            const folder_path = [root_path, ...parts.slice(0, i + 1)].join("/");
+            folder = {
+              path: folder_path as FilePath,
+              folders: new Map(),
+              files: new Set(),
+            };
+            (current.folders as Map<string, FileSystemFolder>).set(
+              folder_name,
+              folder
+            );
+          }
+          current = folder;
+        }
+        const file_name = parts[parts.length - 1];
+        (current.files as Set<string>).add(file_name);
+      }
+      return root;
+    }
+
+    it("should cache submodule path for Python named imports of modules", () => {
+      const root_folder = create_python_tree("/project", [
+        "training/__init__.py",
+        "training/pipeline.py",
+        "caller.py",
+      ]);
+      const caller_file = "/project/caller.py" as FilePath;
+      const import_def: ImportDefinition = {
+        kind: "import",
+        symbol_id: `import:${caller_file}:1:0:1:30:pipeline` as any,
+        name: "pipeline" as SymbolName,
+        import_path: "training" as any,
+        import_kind: "named",
+        location: {
+          file_path: caller_file,
+          start_line: 1,
+          start_column: 0,
+          end_line: 1,
+          end_column: 30,
+        },
+        defining_scope_id: `module:${caller_file}:1:0:100:0:<module>` as ScopeId,
+      };
+
+      graph.update_file(caller_file, [import_def], "python", root_folder);
+
+      const submodule_path = graph.get_submodule_import_path(import_def.symbol_id);
+      expect(submodule_path).toBe("/project/training/pipeline.py");
+    });
+
+    it("should return undefined for named imports of symbols (not submodules)", () => {
+      const root_folder = create_python_tree("/project", [
+        "training/__init__.py",
+        "caller.py",
+      ]);
+      const caller_file = "/project/caller.py" as FilePath;
+      const import_def: ImportDefinition = {
+        kind: "import",
+        symbol_id: `import:${caller_file}:1:0:1:30:train_model` as any,
+        name: "train_model" as SymbolName,
+        import_path: "training" as any,
+        import_kind: "named",
+        location: {
+          file_path: caller_file,
+          start_line: 1,
+          start_column: 0,
+          end_line: 1,
+          end_column: 30,
+        },
+        defining_scope_id: `module:${caller_file}:1:0:100:0:<module>` as ScopeId,
+      };
+
+      graph.update_file(caller_file, [import_def], "python", root_folder);
+
+      const submodule_path = graph.get_submodule_import_path(import_def.symbol_id);
+      expect(submodule_path).toBeUndefined();
+    });
+
+    it("should clean up submodule paths on remove_file()", () => {
+      const root_folder = create_python_tree("/project", [
+        "training/__init__.py",
+        "training/pipeline.py",
+        "caller.py",
+      ]);
+      const caller_file = "/project/caller.py" as FilePath;
+      const import_def: ImportDefinition = {
+        kind: "import",
+        symbol_id: `import:${caller_file}:1:0:1:30:pipeline` as any,
+        name: "pipeline" as SymbolName,
+        import_path: "training" as any,
+        import_kind: "named",
+        location: {
+          file_path: caller_file,
+          start_line: 1,
+          start_column: 0,
+          end_line: 1,
+          end_column: 30,
+        },
+        defining_scope_id: `module:${caller_file}:1:0:100:0:<module>` as ScopeId,
+      };
+
+      graph.update_file(caller_file, [import_def], "python", root_folder);
+      expect(graph.get_submodule_import_path(import_def.symbol_id)).toBe(
+        "/project/training/pipeline.py"
+      );
+
+      graph.remove_file(caller_file);
+      expect(graph.get_submodule_import_path(import_def.symbol_id)).toBeUndefined();
+    });
+
+    it("should clean up submodule paths on clear()", () => {
+      const root_folder = create_python_tree("/project", [
+        "training/__init__.py",
+        "training/pipeline.py",
+        "caller.py",
+      ]);
+      const caller_file = "/project/caller.py" as FilePath;
+      const import_def: ImportDefinition = {
+        kind: "import",
+        symbol_id: `import:${caller_file}:1:0:1:30:pipeline` as any,
+        name: "pipeline" as SymbolName,
+        import_path: "training" as any,
+        import_kind: "named",
+        location: {
+          file_path: caller_file,
+          start_line: 1,
+          start_column: 0,
+          end_line: 1,
+          end_column: 30,
+        },
+        defining_scope_id: `module:${caller_file}:1:0:100:0:<module>` as ScopeId,
+      };
+
+      graph.update_file(caller_file, [import_def], "python", root_folder);
+      expect(graph.get_submodule_import_path(import_def.symbol_id)).toBe(
+        "/project/training/pipeline.py"
+      );
+
+      graph.clear();
+      expect(graph.get_submodule_import_path(import_def.symbol_id)).toBeUndefined();
+    });
+  });
+
   describe("clear", () => {
     it("should remove all relationships", () => {
       const file1 = "file1.ts" as FilePath;

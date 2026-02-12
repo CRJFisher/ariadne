@@ -172,6 +172,17 @@ function resolve_scope_recursive(
       );
     }
 
+    // Submodule fallback: if export chain failed for a named import,
+    // check if the imported name refers to a submodule file
+    if (!resolved) {
+      const submodule_path = context.imports.get_submodule_import_path(
+        imp_def.symbol_id
+      );
+      if (submodule_path) {
+        resolved = imp_def.symbol_id;
+      }
+    }
+
     if (resolved) {
       scope_resolutions.set(imp_def.name, resolved);
     }

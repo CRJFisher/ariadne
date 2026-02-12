@@ -217,7 +217,8 @@ function resolve_calls(
             context.definitions,
             context.types,
             resolver,
-            (import_id) => context.imports.get_resolved_import_path(import_id)
+            (import_id) => context.imports.get_resolved_import_path(import_id),
+            (import_id) => context.imports.get_submodule_import_path(import_id)
           );
 
           // If standard resolution failed, try collection dispatch resolution

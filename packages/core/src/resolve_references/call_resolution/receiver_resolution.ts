@@ -62,8 +62,10 @@ export interface ResolutionContext {
   readonly definitions: DefinitionRegistry;
   readonly types: TypeRegistry;
   readonly resolutions: ResolutionRegistry;
-  /** Optional resolver for import paths (for namespace import resolution) */
+  /** Optional resolver for import paths (for module import resolution) */
   readonly resolve_import_path?: ImportPathResolver;
+  /** Optional resolver for submodule import paths (named imports referring to submodules) */
+  readonly resolve_submodule_import_path?: ImportPathResolver;
 }
 
 /**
@@ -243,10 +245,10 @@ function resolve_identifier_base(
     return null;
   }
 
-  // Check if this is a namespace import - needs special handling
+  // Check if this is a module-level import - needs special handling
   const def = context.definitions.get(symbol_id);
-  if (def?.kind === "import" && def.import_kind === "namespace") {
-    // Return the symbol itself - method_lookup will handle namespace exports
+  if (def?.kind === "import") {
+    // Return the symbol itself - method_lookup will handle module exports
     return symbol_id;
   }
 

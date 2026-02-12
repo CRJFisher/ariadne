@@ -11,7 +11,10 @@
 
 import { describe, it, expect } from "vitest";
 import type { FilePath } from "@ariadnejs/types";
-import { resolve_module_path_python } from "./import_resolution.python";
+import {
+  resolve_module_path_python,
+  resolve_submodule_path_python,
+} from "./import_resolution.python";
 import type { FileSystemFolder } from "../file_folders";
 
 /**
@@ -536,6 +539,70 @@ describe("resolve_module_path_python", () => {
       );
 
       expect(result).toBe("/project/a/b/c/helper.py");
+    });
+  });
+
+  describe("submodule path resolution", () => {
+    it("returns module file when import_name.py exists", () => {
+      const tree = create_file_tree("/project", [
+        "training/__init__.py",
+        "training/pipeline.py",
+      ]);
+
+      const result = resolve_submodule_path_python(
+        "/project/training/__init__.py" as FilePath,
+        "pipeline",
+        tree
+      );
+
+      expect(result).toBe("/project/training/pipeline.py");
+    });
+
+    it("returns __init__.py when import_name/ is a package", () => {
+      const tree = create_file_tree("/project", [
+        "training/__init__.py",
+        "training/pipeline/__init__.py",
+        "training/pipeline/runner.py",
+      ]);
+
+      const result = resolve_submodule_path_python(
+        "/project/training/__init__.py" as FilePath,
+        "pipeline",
+        tree
+      );
+
+      expect(result).toBe("/project/training/pipeline/__init__.py");
+    });
+
+    it("returns undefined when no matching file exists", () => {
+      const tree = create_file_tree("/project", [
+        "training/__init__.py",
+        "training/model.py",
+      ]);
+
+      const result = resolve_submodule_path_python(
+        "/project/training/__init__.py" as FilePath,
+        "nonexistent",
+        tree
+      );
+
+      expect(result).toBeUndefined();
+    });
+
+    it("prefers .py file over package __init__.py", () => {
+      const tree = create_file_tree("/project", [
+        "training/__init__.py",
+        "training/pipeline.py",
+        "training/pipeline/__init__.py",
+      ]);
+
+      const result = resolve_submodule_path_python(
+        "/project/training/__init__.py" as FilePath,
+        "pipeline",
+        tree
+      );
+
+      expect(result).toBe("/project/training/pipeline.py");
     });
   });
 

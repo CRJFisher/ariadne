@@ -11,6 +11,39 @@ import type { FileSystemFolder } from "../file_folders";
 import { has_file_in_tree } from "../file_folders";
 
 /**
+ * Check whether a named import refers to a submodule file.
+ *
+ * For `from training import pipeline`, the import resolves to `training/__init__.py`
+ * but `pipeline` may be a submodule file (`training/pipeline.py`) rather than
+ * an explicit export. This function checks for that case.
+ *
+ * @param resolved_source_file - Resolved path of the import source (e.g. training/__init__.py)
+ * @param import_name - The imported name (e.g. "pipeline")
+ * @param root_folder - Root of the file system tree
+ * @returns Absolute path to the submodule file, or undefined if not a submodule
+ */
+export function resolve_submodule_path_python(
+  resolved_source_file: FilePath,
+  import_name: string,
+  root_folder: FileSystemFolder
+): FilePath | undefined {
+  const source_dir = path.dirname(resolved_source_file);
+  const candidates = [
+    path.join(source_dir, import_name + ".py"),
+    path.join(source_dir, import_name, "__init__.py"),
+  ];
+  for (const candidate of candidates) {
+    const relative = path.isAbsolute(candidate)
+      ? path.relative(root_folder.path, candidate)
+      : candidate;
+    if (has_file_in_tree(relative as FilePath, root_folder)) {
+      return candidate as FilePath;
+    }
+  }
+  return undefined;
+}
+
+/**
  * Resolve Python module path to absolute file path
  *
  * Rules:
