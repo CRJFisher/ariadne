@@ -9,7 +9,10 @@ import type { FilePath, Language } from "@ariadnejs/types";
 import type { FileSystemFolder } from "../file_folders";
 import { resolve_module_path_javascript } from "./import_resolution.javascript";
 import { resolve_module_path_typescript } from "./import_resolution.typescript";
-import { resolve_module_path_python } from "./import_resolution.python";
+import {
+  resolve_module_path_python,
+  resolve_submodule_path_python,
+} from "./import_resolution.python";
 import { resolve_module_path_rust } from "./import_resolution.rust";
 
 /**
@@ -51,4 +54,33 @@ export function resolve_module_path(
     default:
       throw new Error(`Unsupported language: ${language}`);
   }
+}
+
+/**
+ * Check whether a named import refers to a submodule file (language-aware dispatch)
+ *
+ * For Python's `from package import module`, the named import may refer to a
+ * submodule file rather than an explicit export. This function dispatches to
+ * language-specific implementations.
+ *
+ * @param resolved_source_file - Resolved path of the import source
+ * @param import_name - The imported name
+ * @param language - Programming language
+ * @param root_folder - Root of the file system tree
+ * @returns Absolute path to the submodule file, or undefined if not a submodule
+ */
+export function resolve_submodule_import_path(
+  resolved_source_file: FilePath,
+  import_name: string,
+  language: Language,
+  root_folder: FileSystemFolder
+): FilePath | undefined {
+  if (language === "python") {
+    return resolve_submodule_path_python(
+      resolved_source_file,
+      import_name,
+      root_folder
+    );
+  }
+  return undefined;
 }

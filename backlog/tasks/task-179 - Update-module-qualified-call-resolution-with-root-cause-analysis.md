@@ -1,9 +1,10 @@
 ---
 id: task-179
 title: Update module-qualified-call-resolution with root cause analysis
-status: To Do
+status: Done
 assignee: []
 created_date: '2026-02-10 20:22'
+updated_date: '2026-02-12 16:24'
 labels:
   - bug
   - call-graph
@@ -14,7 +15,6 @@ priority: medium
 ## Description
 
 Python `from package import module` creates a named import (`import_kind: "named"`) that refers to a submodule file rather than a symbol. The resolution pipeline treats all named imports as symbol imports, causing `module.function()` calls to be unresolved. This produces 17 false positive entry points in the AmazonAdv/projections analysis. Examples: `train` in `pipeline.py:55`, `qb_to_rows` in `read.py:387`, `generate_predictions_at_date` in `generate.py:26`. Evidence: `entrypoint-analysis/analysis_output/external/triage_entry_points/2026-02-10T19-09-38.781Z.json`.
-
 ## Root Cause
 
 Three layers of the resolution pipeline fail in sequence:
@@ -32,6 +32,7 @@ Three layers of the resolution pipeline fail in sequence:
 - [ ] #3 Tests cover from package import module and import module patterns
 - [ ] #4 Python-specific path logic is contained within import_resolution.python.ts (not in language-agnostic resolution modules)
 <!-- AC:END -->
+
 
 ## Implementation Plan
 
@@ -176,6 +177,7 @@ Pass `imports.get_submodule_import_path` as the `resolve_submodule_import_path` 
 **Method lookup fallback test** — add to existing `method_lookup.test.ts`:
 
 - Named import receiver where `resolve_named_import` fails but submodule path exists
+
 
 ## Edge Case Safety
 

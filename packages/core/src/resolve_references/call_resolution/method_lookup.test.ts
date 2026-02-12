@@ -1248,5 +1248,66 @@ describe("resolve_method_on_type", () => {
 
       expect(result).toEqual([]);
     });
+
+    it("should fall back to submodule resolution when named import fails export chain", () => {
+      // This tests the pattern:
+      // from training import pipeline  (pipeline is a submodule file, not an export)
+      // pipeline.train()               (should resolve to train() in pipeline.py)
+      const PIPELINE_FILE = "/project/training/pipeline.py" as FilePath;
+      const PIPELINE_SCOPE = "module:pipeline.py:1:0:100:0:<module>" as ScopeId;
+      const import_id = "import:test.ts:1:0:1:30:pipeline" as SymbolId;
+
+      const train_fn_id = function_symbol("train" as SymbolName, {
+        ...MOCK_LOCATION,
+        file_path: PIPELINE_FILE,
+      });
+
+      // Setup named import
+      const import_def: ImportDefinition = {
+        kind: "import",
+        symbol_id: import_id,
+        name: "pipeline" as SymbolName,
+        defining_scope_id: FILE_SCOPE_ID,
+        location: MOCK_LOCATION,
+        import_kind: "named",
+        import_path: "training" as ModulePath,
+      };
+
+      // Setup exported function in pipeline.py
+      const train_def: FunctionDefinition = {
+        kind: "function",
+        symbol_id: train_fn_id,
+        name: "train" as SymbolName,
+        defining_scope_id: PIPELINE_SCOPE,
+        location: { ...MOCK_LOCATION, file_path: PIPELINE_FILE },
+        signature: { parameters: [] },
+        body_scope_id: "scope:pipeline.py:train:5:0" as ScopeId,
+        is_exported: true,
+        decorators: [],
+      };
+
+      definitions.update_file(TEST_FILE, [import_def]);
+      definitions.update_file(PIPELINE_FILE, [train_def]);
+
+      // resolve_import_path returns the parent __init__.py (normal resolution)
+      // resolve_submodule_import_path returns the actual submodule file
+      const context_with_resolvers: ResolutionContext = {
+        ...context,
+        resolve_import_path: (id) =>
+          id === import_id
+            ? ("/project/training/__init__.py" as FilePath)
+            : undefined,
+        resolve_submodule_import_path: (id) =>
+          id === import_id ? PIPELINE_FILE : undefined,
+      };
+
+      const result = resolve_method_on_type(
+        import_id,
+        "train" as SymbolName,
+        context_with_resolvers
+      );
+
+      expect(result).toEqual([train_fn_id]);
+    });
   });
 });

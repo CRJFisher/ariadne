@@ -49,7 +49,8 @@ import { resolve_method_on_type } from "./method_lookup";
  * @param definitions - Definition registry for lookups
  * @param types - TypeRegistry for type tracking and member lookup
  * @param resolutions - Resolution registry for symbol resolution
- * @param resolve_import_path - Optional resolver for import paths (for namespace imports)
+ * @param resolve_import_path - Optional resolver for import paths (for module imports)
+ * @param resolve_submodule_import_path - Optional resolver for submodule import paths
  * @returns Array of resolved method symbol_ids (empty if resolution fails)
  */
 export function resolve_method_call(
@@ -58,7 +59,8 @@ export function resolve_method_call(
   definitions: DefinitionRegistry,
   types: TypeRegistry,
   resolutions: ResolutionRegistry,
-  resolve_import_path?: ImportPathResolver
+  resolve_import_path?: ImportPathResolver,
+  resolve_submodule_import_path?: ImportPathResolver
 ): SymbolId[] {
   // Build resolution context
   const context: ResolutionContext = {
@@ -67,6 +69,7 @@ export function resolve_method_call(
     types,
     resolutions,
     resolve_import_path,
+    resolve_submodule_import_path,
   };
 
   // Phase 1: Extract and resolve the receiver expression to a type

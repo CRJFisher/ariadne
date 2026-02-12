@@ -6,6 +6,7 @@
 
 export {
   resolve_module_path,
+  resolve_submodule_import_path,
 } from "./import_resolution";
 
 export { resolve_module_path_javascript } from "./import_resolution.javascript";

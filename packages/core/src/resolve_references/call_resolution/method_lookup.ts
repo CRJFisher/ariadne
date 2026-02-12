@@ -71,6 +71,11 @@ export function resolve_method_on_type(
         return resolve_method_on_type(actual_type, method_name, context);
       }
     }
+    // Submodule fallback: named import may refer to a submodule file
+    const submodule_path = context.resolve_submodule_import_path?.(receiver_type);
+    if (submodule_path) {
+      return resolve_namespace_method(submodule_path, method_name, definitions);
+    }
     return [];
   }
 

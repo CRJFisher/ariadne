@@ -6,7 +6,10 @@ import type {
   SymbolId,
 } from "@ariadnejs/types";
 import type { FileSystemFolder } from "../resolve_references/file_folders";
-import { resolve_module_path } from "../resolve_references/import_resolution";
+import {
+  resolve_module_path,
+  resolve_submodule_import_path,
+} from "../resolve_references/import_resolution";
 
 /**
  * Bidirectional import dependency graph.
@@ -40,6 +43,9 @@ export class ImportGraph {
 
   /** Import SymbolId → Resolved file path (pre-computed for performance) */
   private resolved_import_paths: Map<SymbolId, FilePath> = new Map();
+
+  /** Import SymbolId → Submodule file path (for named imports referring to submodules) */
+  private submodule_import_paths: Map<SymbolId, FilePath> = new Map();
 
   /**
    * Update import relationships for a file.
@@ -91,8 +97,9 @@ export class ImportGraph {
             this.imports_by_scope.set(scope_id, filtered);
           }
         }
-        // Clean up resolved path
+        // Clean up resolved path and submodule path
         this.resolved_import_paths.delete(imp_def.symbol_id);
+        this.submodule_import_paths.delete(imp_def.symbol_id);
       }
     }
 
@@ -121,6 +128,20 @@ export class ImportGraph {
         root_folder
       );
       this.resolved_import_paths.set(imp_def.symbol_id, resolved_path);
+
+      // For named imports, check if the imported name is a submodule file
+      if (imp_def.import_kind === "named") {
+        const import_name = (imp_def.original_name || imp_def.name) as string;
+        const submodule_path = resolve_submodule_import_path(
+          resolved_path,
+          import_name,
+          language,
+          root_folder
+        );
+        if (submodule_path) {
+          this.submodule_import_paths.set(imp_def.symbol_id, submodule_path);
+        }
+      }
 
       // For dependency graph: use resolved path
       target_files.add(resolved_path);
@@ -158,7 +179,6 @@ export class ImportGraph {
     const deps = this.dependents.get(file_path);
     return deps ? new Set(deps) : new Set();
   }
-
 
   /**
    * Remove all import relationships for a file.
@@ -219,8 +239,9 @@ export class ImportGraph {
             this.imports_by_scope.set(scope_id, filtered);
           }
         }
-        // Clean up resolved path
+        // Clean up resolved path and submodule path
         this.resolved_import_paths.delete(imp_def.symbol_id);
+        this.submodule_import_paths.delete(imp_def.symbol_id);
       }
       this.imports_by_file.delete(file_path);
     }
@@ -249,6 +270,20 @@ export class ImportGraph {
   }
 
   /**
+   * Get the submodule file path for a named import that refers to a submodule.
+   *
+   * For Python's `from package import module`, returns the path to the submodule
+   * file (e.g. `package/module.py`) if the named import refers to a submodule
+   * rather than an explicit export.
+   *
+   * @param import_symbol_id - The import's symbol ID
+   * @returns Submodule file path, or undefined if not a submodule import
+   */
+  get_submodule_import_path(import_symbol_id: SymbolId): FilePath | undefined {
+    return this.submodule_import_paths.get(import_symbol_id);
+  }
+
+  /**
    * Clear all import relationships from the graph.
    */
   clear(): void {
@@ -257,5 +292,6 @@ export class ImportGraph {
     this.imports_by_file.clear();
     this.imports_by_scope.clear();
     this.resolved_import_paths.clear();
+    this.submodule_import_paths.clear();
   }
 }
