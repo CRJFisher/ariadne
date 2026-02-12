@@ -2,17 +2,35 @@
  * Python integration tests for self-reference call resolution
  */
 
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, beforeEach, beforeAll, afterAll } from "vitest";
+import { Project } from "../../project/project";
 import type {
   FilePath,
   SymbolName,
   SelfReferenceCall,
 } from "@ariadnejs/types";
+import * as fs from "fs";
 import * as path from "path";
-import { create_integration_test_context } from "./receiver_resolution.integration.test";
+import * as os from "os";
 
 describe("Python Self-Reference Resolution Integration", () => {
-  const ctx = create_integration_test_context();
+  let project: Project;
+  let temp_dir: string;
+
+  beforeAll(() => {
+    temp_dir = fs.mkdtempSync(path.join(os.tmpdir(), "ariadne-test-"));
+  });
+
+  afterAll(() => {
+    if (fs.existsSync(temp_dir)) {
+      fs.rmSync(temp_dir, { recursive: true, force: true });
+    }
+  });
+
+  beforeEach(async () => {
+    project = new Project();
+    await project.initialize(temp_dir as FilePath);
+  });
 
   describe("self.method()", () => {
     it("should resolve self.method() call to class method", () => {
@@ -28,10 +46,10 @@ class User:
         return self.name
       `;
 
-      const file = path.join(ctx.temp_dir, "user.py") as FilePath;
-      ctx.project.update_file(file, code);
+      const file = path.join(temp_dir, "user.py") as FilePath;
+      project.update_file(file, code);
 
-      const index = ctx.project.get_index_single_file(file);
+      const index = project.get_index_single_file(file);
       expect(index).toBeDefined();
 
       const user_class = Array.from(index!.classes.values()).find(
@@ -39,7 +57,7 @@ class User:
       );
       expect(user_class).toBeDefined();
 
-      const type_info = ctx.project.get_type_info(user_class!.symbol_id);
+      const type_info = project.get_type_info(user_class!.symbol_id);
       expect(type_info).toBeDefined();
       expect(type_info!.methods.has("get_name" as SymbolName)).toBe(true);
 
@@ -64,10 +82,10 @@ class Counter:
         self.count += 1
       `;
 
-      const file = path.join(ctx.temp_dir, "counter.py") as FilePath;
-      ctx.project.update_file(file, code);
+      const file = path.join(temp_dir, "counter.py") as FilePath;
+      project.update_file(file, code);
 
-      const index = ctx.project.get_index_single_file(file);
+      const index = project.get_index_single_file(file);
       expect(index).toBeDefined();
 
       const counter_class = Array.from(index!.classes.values()).find(
@@ -75,7 +93,7 @@ class Counter:
       );
       expect(counter_class).toBeDefined();
 
-      const type_info = ctx.project.get_type_info(counter_class!.symbol_id);
+      const type_info = project.get_type_info(counter_class!.symbol_id);
       expect(type_info).toBeDefined();
       expect(type_info!.methods.has("increment" as SymbolName)).toBe(true);
     });
@@ -92,10 +110,10 @@ class Factory:
         return Factory()
       `;
 
-      const file = path.join(ctx.temp_dir, "factory.py") as FilePath;
-      ctx.project.update_file(file, code);
+      const file = path.join(temp_dir, "factory.py") as FilePath;
+      project.update_file(file, code);
 
-      const index = ctx.project.get_index_single_file(file);
+      const index = project.get_index_single_file(file);
       expect(index).toBeDefined();
 
       const factory_class = Array.from(index!.classes.values()).find(
@@ -103,7 +121,7 @@ class Factory:
       );
       expect(factory_class).toBeDefined();
 
-      const type_info = ctx.project.get_type_info(factory_class!.symbol_id);
+      const type_info = project.get_type_info(factory_class!.symbol_id);
       expect(type_info).toBeDefined();
       expect(type_info!.methods.has("_build" as SymbolName)).toBe(true);
 
@@ -127,10 +145,10 @@ class Dog(Animal):
         return super().make_sound() + " woof"
       `;
 
-      const file = path.join(ctx.temp_dir, "dog.py") as FilePath;
-      ctx.project.update_file(file, code);
+      const file = path.join(temp_dir, "dog.py") as FilePath;
+      project.update_file(file, code);
 
-      const index = ctx.project.get_index_single_file(file);
+      const index = project.get_index_single_file(file);
       expect(index).toBeDefined();
 
       const animal_class = Array.from(index!.classes.values()).find(
@@ -143,7 +161,7 @@ class Dog(Animal):
       );
       expect(dog_class).toBeDefined();
 
-      const animal_type_info = ctx.project.get_type_info(animal_class!.symbol_id);
+      const animal_type_info = project.get_type_info(animal_class!.symbol_id);
       expect(animal_type_info).toBeDefined();
       expect(animal_type_info!.methods.has("make_sound" as SymbolName)).toBe(true);
     });
@@ -162,10 +180,10 @@ class Service:
         return self.db.query("SELECT * FROM users")
       `;
 
-      const file = path.join(ctx.temp_dir, "service.py") as FilePath;
-      ctx.project.update_file(file, code);
+      const file = path.join(temp_dir, "service.py") as FilePath;
+      project.update_file(file, code);
 
-      const index = ctx.project.get_index_single_file(file);
+      const index = project.get_index_single_file(file);
       expect(index).toBeDefined();
 
       const service_class = Array.from(index!.classes.values()).find(
@@ -178,7 +196,7 @@ class Service:
       );
       expect(db_class).toBeDefined();
 
-      const db_type_info = ctx.project.get_type_info(db_class!.symbol_id);
+      const db_type_info = project.get_type_info(db_class!.symbol_id);
       expect(db_type_info).toBeDefined();
       expect(db_type_info!.methods.has("query" as SymbolName)).toBe(true);
     });
@@ -202,11 +220,11 @@ class Service:
         return self.db.query("SELECT * FROM users")
       `;
 
-      const file = path.join(ctx.temp_dir, "service_resolve.py") as FilePath;
-      ctx.project.update_file(file, code);
+      const file = path.join(temp_dir, "service_resolve.py") as FilePath;
+      project.update_file(file, code);
 
       // Verify the property chain is correct in the index
-      const index = ctx.project.get_index_single_file(file);
+      const index = project.get_index_single_file(file);
       expect(index).toBeDefined();
 
       // Verify Service class has db property from __init__
@@ -215,7 +233,7 @@ class Service:
       );
       expect(service_class).toBeDefined();
 
-      const service_type_info = ctx.project.get_type_info(service_class!.symbol_id);
+      const service_type_info = project.get_type_info(service_class!.symbol_id);
       expect(service_type_info).toBeDefined();
       expect(service_type_info!.properties.has("db" as SymbolName)).toBe(true);
 
@@ -225,7 +243,7 @@ class Service:
       );
       expect(db_class).toBeDefined();
 
-      const db_type_info = ctx.project.get_type_info(db_class!.symbol_id);
+      const db_type_info = project.get_type_info(db_class!.symbol_id);
       expect(db_type_info).toBeDefined();
       expect(db_type_info!.methods.has("query" as SymbolName)).toBe(true);
 
@@ -245,7 +263,7 @@ class Service:
       expect(db_query_call).toBeDefined();
 
       // Verify Database.query is reachable in the call graph
-      const referenced = ctx.project.resolutions.get_all_referenced_symbols();
+      const referenced = project.resolutions.get_all_referenced_symbols();
       const query_method_id = db_type_info!.methods.get("query" as SymbolName);
       expect(query_method_id).toBeDefined();
       expect(referenced.has(query_method_id!)).toBe(true);
@@ -269,10 +287,10 @@ class Outer:
         return self.middle.inner.do_work()
       `;
 
-      const file = path.join(ctx.temp_dir, "nested_chain.py") as FilePath;
-      ctx.project.update_file(file, code);
+      const file = path.join(temp_dir, "nested_chain.py") as FilePath;
+      project.update_file(file, code);
 
-      const index = ctx.project.get_index_single_file(file);
+      const index = project.get_index_single_file(file);
       expect(index).toBeDefined();
 
       // Verify Outer has middle property
@@ -281,7 +299,7 @@ class Outer:
       );
       expect(outer_class).toBeDefined();
 
-      const outer_type_info = ctx.project.get_type_info(outer_class!.symbol_id);
+      const outer_type_info = project.get_type_info(outer_class!.symbol_id);
       expect(outer_type_info).toBeDefined();
       expect(outer_type_info!.properties.has("middle" as SymbolName)).toBe(true);
 
@@ -291,7 +309,7 @@ class Outer:
       );
       expect(middle_class).toBeDefined();
 
-      const middle_type_info = ctx.project.get_type_info(middle_class!.symbol_id);
+      const middle_type_info = project.get_type_info(middle_class!.symbol_id);
       expect(middle_type_info).toBeDefined();
       expect(middle_type_info!.properties.has("inner" as SymbolName)).toBe(true);
 
@@ -327,11 +345,11 @@ class Child(Base):
         return "child"
       `;
 
-      const file = path.join(ctx.temp_dir, "polymorphic.py") as FilePath;
-      ctx.project.update_file(file, code);
+      const file = path.join(temp_dir, "polymorphic.py") as FilePath;
+      project.update_file(file, code);
 
-      const referenced = ctx.project.resolutions.get_all_referenced_symbols();
-      const index = ctx.project.get_index_single_file(file);
+      const referenced = project.resolutions.get_all_referenced_symbols();
+      const index = project.get_index_single_file(file);
 
       const base_class = Array.from(index!.classes.values()).find(
         (c) => c.name === ("Base" as SymbolName)
@@ -343,8 +361,8 @@ class Child(Base):
       expect(base_class).toBeDefined();
       expect(child_class).toBeDefined();
 
-      const base_type_info = ctx.project.get_type_info(base_class!.symbol_id);
-      const child_type_info = ctx.project.get_type_info(child_class!.symbol_id);
+      const base_type_info = project.get_type_info(base_class!.symbol_id);
+      const child_type_info = project.get_type_info(child_class!.symbol_id);
 
       const base_helper = base_type_info!.methods.get("helper" as SymbolName);
       const child_helper = child_type_info!.methods.get("helper" as SymbolName);
@@ -373,17 +391,17 @@ class C(B):
         pass
       `;
 
-      const file = path.join(ctx.temp_dir, "multilevel.py") as FilePath;
-      ctx.project.update_file(file, code);
+      const file = path.join(temp_dir, "multilevel.py") as FilePath;
+      project.update_file(file, code);
 
-      const referenced = ctx.project.resolutions.get_all_referenced_symbols();
-      const index = ctx.project.get_index_single_file(file);
+      const referenced = project.resolutions.get_all_referenced_symbols();
+      const index = project.get_index_single_file(file);
 
       const classes = Array.from(index!.classes.values());
       expect(classes).toHaveLength(3);
 
       for (const cls of classes) {
-        const type_info = ctx.project.get_type_info(cls.symbol_id);
+        const type_info = project.get_type_info(cls.symbol_id);
         const helper_id = type_info!.methods.get("helper" as SymbolName);
         expect(helper_id).toBeDefined();
         expect(referenced.has(helper_id!)).toBe(true);
@@ -406,16 +424,16 @@ class GrandChild(Child):
         return "grandchild"
       `;
 
-      const file = path.join(ctx.temp_dir, "super_py.py") as FilePath;
-      ctx.project.update_file(file, code);
+      const file = path.join(temp_dir, "super_py.py") as FilePath;
+      project.update_file(file, code);
 
-      const index = ctx.project.get_index_single_file(file);
+      const index = project.get_index_single_file(file);
       const parent_class = Array.from(index!.classes.values()).find(
         (c) => c.name === ("Parent" as SymbolName)
       );
       expect(parent_class).toBeDefined();
 
-      const parent_type_info = ctx.project.get_type_info(parent_class!.symbol_id);
+      const parent_type_info = project.get_type_info(parent_class!.symbol_id);
       expect(parent_type_info!.methods.has("method" as SymbolName)).toBe(true);
     });
   });

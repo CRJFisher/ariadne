@@ -2,16 +2,34 @@
  * Rust integration tests for self-reference call resolution
  */
 
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, beforeEach, beforeAll, afterAll } from "vitest";
+import { Project } from "../../project/project";
 import type {
   FilePath,
   SymbolName,
 } from "@ariadnejs/types";
+import * as fs from "fs";
 import * as path from "path";
-import { create_integration_test_context } from "./receiver_resolution.integration.test";
+import * as os from "os";
 
 describe("Rust Self-Reference Resolution Integration", () => {
-  const ctx = create_integration_test_context();
+  let project: Project;
+  let temp_dir: string;
+
+  beforeAll(() => {
+    temp_dir = fs.mkdtempSync(path.join(os.tmpdir(), "ariadne-test-"));
+  });
+
+  afterAll(() => {
+    if (fs.existsSync(temp_dir)) {
+      fs.rmSync(temp_dir, { recursive: true, force: true });
+    }
+  });
+
+  beforeEach(async () => {
+    project = new Project();
+    await project.initialize(temp_dir as FilePath);
+  });
 
   describe("self.method()", () => {
     it("should resolve self.method() in impl block", () => {
@@ -39,10 +57,10 @@ describe("Rust Self-Reference Resolution Integration", () => {
         }
       `;
 
-      const file = path.join(ctx.temp_dir, "counter.rs") as FilePath;
-      ctx.project.update_file(file, code);
+      const file = path.join(temp_dir, "counter.rs") as FilePath;
+      project.update_file(file, code);
 
-      const index = ctx.project.get_index_single_file(file);
+      const index = project.get_index_single_file(file);
       expect(index).toBeDefined();
 
       const counter_struct = Array.from(index!.classes.values()).find(
@@ -50,7 +68,7 @@ describe("Rust Self-Reference Resolution Integration", () => {
       );
       expect(counter_struct).toBeDefined();
 
-      const type_info = ctx.project.get_type_info(counter_struct!.symbol_id);
+      const type_info = project.get_type_info(counter_struct!.symbol_id);
       expect(type_info).toBeDefined();
       expect(type_info!.methods.has("set_count" as SymbolName)).toBe(true);
       expect(type_info!.methods.has("get_count" as SymbolName)).toBe(true);
@@ -78,10 +96,10 @@ describe("Rust Self-Reference Resolution Integration", () => {
         }
       `;
 
-      const file = path.join(ctx.temp_dir, "data.rs") as FilePath;
-      ctx.project.update_file(file, code);
+      const file = path.join(temp_dir, "data.rs") as FilePath;
+      project.update_file(file, code);
 
-      const index = ctx.project.get_index_single_file(file);
+      const index = project.get_index_single_file(file);
       expect(index).toBeDefined();
 
       const data_struct = Array.from(index!.classes.values()).find(
@@ -89,7 +107,7 @@ describe("Rust Self-Reference Resolution Integration", () => {
       );
       expect(data_struct).toBeDefined();
 
-      const type_info = ctx.project.get_type_info(data_struct!.symbol_id);
+      const type_info = project.get_type_info(data_struct!.symbol_id);
       expect(type_info).toBeDefined();
       expect(type_info!.methods.has("get_value" as SymbolName)).toBe(true);
       expect(type_info!.methods.has("update" as SymbolName)).toBe(true);

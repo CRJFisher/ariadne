@@ -2,17 +2,35 @@
  * TypeScript integration tests for self-reference call resolution
  */
 
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, beforeEach, beforeAll, afterAll } from "vitest";
+import { Project } from "../../project/project";
 import type {
   FilePath,
   SymbolName,
   SelfReferenceCall,
 } from "@ariadnejs/types";
+import * as fs from "fs";
 import * as path from "path";
-import { create_integration_test_context } from "./receiver_resolution.integration.test";
+import * as os from "os";
 
 describe("TypeScript Self-Reference Resolution Integration", () => {
-  const ctx = create_integration_test_context();
+  let project: Project;
+  let temp_dir: string;
+
+  beforeAll(() => {
+    temp_dir = fs.mkdtempSync(path.join(os.tmpdir(), "ariadne-test-"));
+  });
+
+  afterAll(() => {
+    if (fs.existsSync(temp_dir)) {
+      fs.rmSync(temp_dir, { recursive: true, force: true });
+    }
+  });
+
+  beforeEach(async () => {
+    project = new Project();
+    await project.initialize(temp_dir as FilePath);
+  });
 
   describe("this.method()", () => {
     it("should resolve this.method() call to class method", () => {
@@ -34,10 +52,10 @@ describe("TypeScript Self-Reference Resolution Integration", () => {
         }
       `;
 
-      const file = path.join(ctx.temp_dir, "user.ts") as FilePath;
-      ctx.project.update_file(file, code);
+      const file = path.join(temp_dir, "user.ts") as FilePath;
+      project.update_file(file, code);
 
-      const index = ctx.project.get_index_single_file(file);
+      const index = project.get_index_single_file(file);
       expect(index).toBeDefined();
 
       const user_class = Array.from(index!.classes.values()).find(
@@ -55,7 +73,7 @@ describe("TypeScript Self-Reference Resolution Integration", () => {
       );
       expect(get_name_call).toBeDefined();
 
-      const type_info = ctx.project.get_type_info(user_class!.symbol_id);
+      const type_info = project.get_type_info(user_class!.symbol_id);
       expect(type_info).toBeDefined();
       expect(type_info!.methods.size).toBeGreaterThan(0);
       expect(type_info!.methods.get("getName" as SymbolName)).toBeDefined();
@@ -76,10 +94,10 @@ describe("TypeScript Self-Reference Resolution Integration", () => {
         }
       `;
 
-      const file = path.join(ctx.temp_dir, "counter.ts") as FilePath;
-      ctx.project.update_file(file, code);
+      const file = path.join(temp_dir, "counter.ts") as FilePath;
+      project.update_file(file, code);
 
-      const index = ctx.project.get_index_single_file(file);
+      const index = project.get_index_single_file(file);
       expect(index).toBeDefined();
 
       const counter_class = Array.from(index!.classes.values()).find(
@@ -87,7 +105,7 @@ describe("TypeScript Self-Reference Resolution Integration", () => {
       );
       expect(counter_class).toBeDefined();
 
-      const type_info = ctx.project.get_type_info(counter_class!.symbol_id);
+      const type_info = project.get_type_info(counter_class!.symbol_id);
       expect(type_info).toBeDefined();
       expect(type_info!.properties.has("count" as SymbolName)).toBe(true);
     });
@@ -113,10 +131,10 @@ describe("TypeScript Self-Reference Resolution Integration", () => {
         }
       `;
 
-      const file = path.join(ctx.temp_dir, "service.ts") as FilePath;
-      ctx.project.update_file(file, code);
+      const file = path.join(temp_dir, "service.ts") as FilePath;
+      project.update_file(file, code);
 
-      const index = ctx.project.get_index_single_file(file);
+      const index = project.get_index_single_file(file);
       expect(index).toBeDefined();
 
       const service_class = Array.from(index!.classes.values()).find(
@@ -124,7 +142,7 @@ describe("TypeScript Self-Reference Resolution Integration", () => {
       );
       expect(service_class).toBeDefined();
 
-      const service_type_info = ctx.project.get_type_info(service_class!.symbol_id);
+      const service_type_info = project.get_type_info(service_class!.symbol_id);
       expect(service_type_info).toBeDefined();
       expect(service_type_info!.properties.has("db" as SymbolName)).toBe(true);
 
@@ -133,7 +151,7 @@ describe("TypeScript Self-Reference Resolution Integration", () => {
       );
       expect(db_class).toBeDefined();
 
-      const db_type_info = ctx.project.get_type_info(db_class!.symbol_id);
+      const db_type_info = project.get_type_info(db_class!.symbol_id);
       expect(db_type_info).toBeDefined();
       expect(db_type_info!.methods.has("query" as SymbolName)).toBe(true);
     });
@@ -162,10 +180,10 @@ describe("TypeScript Self-Reference Resolution Integration", () => {
         }
       `;
 
-      const file = path.join(ctx.temp_dir, "event_handler.ts") as FilePath;
-      ctx.project.update_file(file, code);
+      const file = path.join(temp_dir, "event_handler.ts") as FilePath;
+      project.update_file(file, code);
 
-      const index = ctx.project.get_index_single_file(file);
+      const index = project.get_index_single_file(file);
       expect(index).toBeDefined();
 
       const event_handler_class = Array.from(index!.classes.values()).find(
@@ -173,7 +191,7 @@ describe("TypeScript Self-Reference Resolution Integration", () => {
       );
       expect(event_handler_class).toBeDefined();
 
-      const type_info = ctx.project.get_type_info(event_handler_class!.symbol_id);
+      const type_info = project.get_type_info(event_handler_class!.symbol_id);
       expect(type_info).toBeDefined();
       expect(type_info!.methods.has("addListener" as SymbolName)).toBe(true);
     });
@@ -195,10 +213,10 @@ describe("TypeScript Self-Reference Resolution Integration", () => {
         }
       `;
 
-      const file = path.join(ctx.temp_dir, "dog.ts") as FilePath;
-      ctx.project.update_file(file, code);
+      const file = path.join(temp_dir, "dog.ts") as FilePath;
+      project.update_file(file, code);
 
-      const index = ctx.project.get_index_single_file(file);
+      const index = project.get_index_single_file(file);
       expect(index).toBeDefined();
 
       const animal_class = Array.from(index!.classes.values()).find(
@@ -211,7 +229,7 @@ describe("TypeScript Self-Reference Resolution Integration", () => {
       );
       expect(dog_class).toBeDefined();
 
-      const animal_type_info = ctx.project.get_type_info(animal_class!.symbol_id);
+      const animal_type_info = project.get_type_info(animal_class!.symbol_id);
       expect(animal_type_info).toBeDefined();
       expect(animal_type_info!.methods.has("makeSound" as SymbolName)).toBe(true);
 
@@ -237,10 +255,10 @@ describe("TypeScript Self-Reference Resolution Integration", () => {
         }
       `;
 
-      const file = path.join(ctx.temp_dir, "car.ts") as FilePath;
-      ctx.project.update_file(file, code);
+      const file = path.join(temp_dir, "car.ts") as FilePath;
+      project.update_file(file, code);
 
-      const index = ctx.project.get_index_single_file(file);
+      const index = project.get_index_single_file(file);
       expect(index).toBeDefined();
 
       const vehicle_class = Array.from(index!.classes.values()).find(
@@ -275,10 +293,10 @@ describe("TypeScript Self-Reference Resolution Integration", () => {
         }
       `;
 
-      const file = path.join(ctx.temp_dir, "inheritance.ts") as FilePath;
-      ctx.project.update_file(file, code);
+      const file = path.join(temp_dir, "inheritance.ts") as FilePath;
+      project.update_file(file, code);
 
-      const index = ctx.project.get_index_single_file(file);
+      const index = project.get_index_single_file(file);
       expect(index).toBeDefined();
 
       const base_class = Array.from(index!.classes.values()).find(
@@ -295,9 +313,9 @@ describe("TypeScript Self-Reference Resolution Integration", () => {
       expect(middle_class).toBeDefined();
       expect(derived_class).toBeDefined();
 
-      const base_type_info = ctx.project.get_type_info(base_class!.symbol_id);
-      const middle_type_info = ctx.project.get_type_info(middle_class!.symbol_id);
-      const derived_type_info = ctx.project.get_type_info(derived_class!.symbol_id);
+      const base_type_info = project.get_type_info(base_class!.symbol_id);
+      const middle_type_info = project.get_type_info(middle_class!.symbol_id);
+      const derived_type_info = project.get_type_info(derived_class!.symbol_id);
 
       expect(base_type_info!.methods.has("getValue" as SymbolName)).toBe(true);
       expect(middle_type_info!.methods.has("getValue" as SymbolName)).toBe(true);
@@ -320,10 +338,10 @@ describe("TypeScript Self-Reference Resolution Integration", () => {
         }
       `;
 
-      const file = path.join(ctx.temp_dir, "config.ts") as FilePath;
-      ctx.project.update_file(file, code);
+      const file = path.join(temp_dir, "config.ts") as FilePath;
+      project.update_file(file, code);
 
-      const index = ctx.project.get_index_single_file(file);
+      const index = project.get_index_single_file(file);
       expect(index).toBeDefined();
 
       const config_class = Array.from(index!.classes.values()).find(
@@ -331,7 +349,7 @@ describe("TypeScript Self-Reference Resolution Integration", () => {
       );
       expect(config_class).toBeDefined();
 
-      const type_info = ctx.project.get_type_info(config_class!.symbol_id);
+      const type_info = project.get_type_info(config_class!.symbol_id);
       expect(type_info).toBeDefined();
     });
   });
@@ -348,11 +366,11 @@ describe("TypeScript Self-Reference Resolution Integration", () => {
         }
       `;
 
-      const file = path.join(ctx.temp_dir, "polymorphic.ts") as FilePath;
-      ctx.project.update_file(file, code);
+      const file = path.join(temp_dir, "polymorphic.ts") as FilePath;
+      project.update_file(file, code);
 
-      const referenced = ctx.project.resolutions.get_all_referenced_symbols();
-      const index = ctx.project.get_index_single_file(file);
+      const referenced = project.resolutions.get_all_referenced_symbols();
+      const index = project.get_index_single_file(file);
 
       const base_class = Array.from(index!.classes.values()).find(
         (c) => c.name === ("Base" as SymbolName)
@@ -364,8 +382,8 @@ describe("TypeScript Self-Reference Resolution Integration", () => {
       expect(base_class).toBeDefined();
       expect(child_class).toBeDefined();
 
-      const base_type_info = ctx.project.get_type_info(base_class!.symbol_id);
-      const child_type_info = ctx.project.get_type_info(child_class!.symbol_id);
+      const base_type_info = project.get_type_info(base_class!.symbol_id);
+      const child_type_info = project.get_type_info(child_class!.symbol_id);
 
       const base_helper = base_type_info!.methods.get("helper" as SymbolName);
       const child_helper = child_type_info!.methods.get("helper" as SymbolName);
@@ -391,17 +409,17 @@ describe("TypeScript Self-Reference Resolution Integration", () => {
         }
       `;
 
-      const file = path.join(ctx.temp_dir, "multilevel.ts") as FilePath;
-      ctx.project.update_file(file, code);
+      const file = path.join(temp_dir, "multilevel.ts") as FilePath;
+      project.update_file(file, code);
 
-      const referenced = ctx.project.resolutions.get_all_referenced_symbols();
-      const index = ctx.project.get_index_single_file(file);
+      const referenced = project.resolutions.get_all_referenced_symbols();
+      const index = project.get_index_single_file(file);
 
       const classes = Array.from(index!.classes.values());
       expect(classes).toHaveLength(3);
 
       for (const cls of classes) {
-        const type_info = ctx.project.get_type_info(cls.symbol_id);
+        const type_info = project.get_type_info(cls.symbol_id);
         const helper_id = type_info!.methods.get("helper" as SymbolName);
         expect(helper_id).toBeDefined();
         expect(referenced.has(helper_id!)).toBe(true);
@@ -424,10 +442,10 @@ describe("TypeScript Self-Reference Resolution Integration", () => {
         }
       `;
 
-      const file = path.join(ctx.temp_dir, "super_ts.ts") as FilePath;
-      ctx.project.update_file(file, code);
+      const file = path.join(temp_dir, "super_ts.ts") as FilePath;
+      project.update_file(file, code);
 
-      const index = ctx.project.get_index_single_file(file);
+      const index = project.get_index_single_file(file);
       const super_calls = index!.references.filter(
         (r): r is SelfReferenceCall =>
           r.kind === "self_reference_call" && r.keyword === "super"
@@ -444,7 +462,7 @@ describe("TypeScript Self-Reference Resolution Integration", () => {
       );
       expect(parent_class).toBeDefined();
 
-      const parent_type_info = ctx.project.get_type_info(parent_class!.symbol_id);
+      const parent_type_info = project.get_type_info(parent_class!.symbol_id);
       expect(parent_type_info!.methods.has("method" as SymbolName)).toBe(true);
     });
   });

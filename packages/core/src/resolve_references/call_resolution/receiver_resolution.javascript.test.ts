@@ -2,17 +2,35 @@
  * JavaScript integration tests for self-reference call resolution
  */
 
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, beforeEach, beforeAll, afterAll } from "vitest";
+import { Project } from "../../project/project";
 import type {
   FilePath,
   SymbolName,
   SelfReferenceCall,
 } from "@ariadnejs/types";
+import * as fs from "fs";
 import * as path from "path";
-import { create_integration_test_context } from "./receiver_resolution.integration.test";
+import * as os from "os";
 
 describe("JavaScript Self-Reference Resolution Integration", () => {
-  const ctx = create_integration_test_context();
+  let project: Project;
+  let temp_dir: string;
+
+  beforeAll(() => {
+    temp_dir = fs.mkdtempSync(path.join(os.tmpdir(), "ariadne-test-"));
+  });
+
+  afterAll(() => {
+    if (fs.existsSync(temp_dir)) {
+      fs.rmSync(temp_dir, { recursive: true, force: true });
+    }
+  });
+
+  beforeEach(async () => {
+    project = new Project();
+    await project.initialize(temp_dir as FilePath);
+  });
 
   describe("this.method()", () => {
     it("should resolve this.method() in ES6 class", () => {
@@ -32,10 +50,10 @@ describe("JavaScript Self-Reference Resolution Integration", () => {
         }
       `;
 
-      const file = path.join(ctx.temp_dir, "user.js") as FilePath;
-      ctx.project.update_file(file, code);
+      const file = path.join(temp_dir, "user.js") as FilePath;
+      project.update_file(file, code);
 
-      const index = ctx.project.get_index_single_file(file);
+      const index = project.get_index_single_file(file);
       expect(index).toBeDefined();
 
       const user_class = Array.from(index!.classes.values()).find(
@@ -43,7 +61,7 @@ describe("JavaScript Self-Reference Resolution Integration", () => {
       );
       expect(user_class).toBeDefined();
 
-      const type_info = ctx.project.get_type_info(user_class!.symbol_id);
+      const type_info = project.get_type_info(user_class!.symbol_id);
       expect(type_info).toBeDefined();
       expect(type_info!.methods.has("getName" as SymbolName)).toBe(true);
 
@@ -68,10 +86,10 @@ describe("JavaScript Self-Reference Resolution Integration", () => {
         };
       `;
 
-      const file = path.join(ctx.temp_dir, "counter.js") as FilePath;
-      ctx.project.update_file(file, code);
+      const file = path.join(temp_dir, "counter.js") as FilePath;
+      project.update_file(file, code);
 
-      const index = ctx.project.get_index_single_file(file);
+      const index = project.get_index_single_file(file);
       expect(index).toBeDefined();
 
       const functions = Array.from(index!.functions.values());
@@ -95,11 +113,11 @@ describe("JavaScript Self-Reference Resolution Integration", () => {
         }
       `;
 
-      const file = path.join(ctx.temp_dir, "polymorphic.js") as FilePath;
-      ctx.project.update_file(file, code);
+      const file = path.join(temp_dir, "polymorphic.js") as FilePath;
+      project.update_file(file, code);
 
-      const referenced = ctx.project.resolutions.get_all_referenced_symbols();
-      const index = ctx.project.get_index_single_file(file);
+      const referenced = project.resolutions.get_all_referenced_symbols();
+      const index = project.get_index_single_file(file);
 
       const base_class = Array.from(index!.classes.values()).find(
         (c) => c.name === ("Base" as SymbolName)
@@ -107,7 +125,7 @@ describe("JavaScript Self-Reference Resolution Integration", () => {
 
       expect(base_class).toBeDefined();
 
-      const base_type_info = ctx.project.get_type_info(base_class!.symbol_id);
+      const base_type_info = project.get_type_info(base_class!.symbol_id);
       const base_helper = base_type_info!.methods.get("helper" as SymbolName);
 
       expect(base_helper).toBeDefined();
