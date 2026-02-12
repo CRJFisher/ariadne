@@ -11,7 +11,7 @@
  */
 
 export { resolve_method_call } from "./method";
-export { resolve_constructor_call, enrich_class_calls_with_constructors, find_constructor_in_class_hierarchy, find_class_definition } from "./constructor";
+export { resolve_constructor_call, include_constructors_for_class_symbols } from "./constructor";
 export { resolve_function_call } from "./function_call";
 export {
   extract_receiver,

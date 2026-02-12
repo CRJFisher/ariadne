@@ -59,8 +59,12 @@ export function resolve_constructor_call(
     return [];
   }
 
-  // Step 3: Return constructor symbol if exists, otherwise class symbol
-  const constructor_symbol = class_def.constructors?.[0]?.symbol_id;
+  // Step 3: Walk class hierarchy for constructor, fall back to class symbol
+  const constructor_symbol = find_constructor_in_class_hierarchy(
+    class_def,
+    definitions,
+    resolutions
+  );
 
   return [constructor_symbol || class_symbol];
 }
@@ -80,7 +84,7 @@ export function resolve_constructor_call(
  * @param resolutions - Resolution registry for resolving parent class names
  * @returns Enriched symbol array with constructors added for class symbols
  */
-export function enrich_class_calls_with_constructors(
+export function include_constructors_for_class_symbols(
   resolved_symbols: SymbolId[],
   definitions: DefinitionRegistry,
   resolutions: ResolutionRegistry

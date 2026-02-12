@@ -8,7 +8,7 @@
  */
 
 import { describe, it, expect, beforeEach } from "vitest";
-import { resolve_constructor_call, find_constructor_in_class_hierarchy, enrich_class_calls_with_constructors } from "./constructor";
+import { resolve_constructor_call, find_constructor_in_class_hierarchy, include_constructors_for_class_symbols } from "./constructor";
 import { DefinitionRegistry } from "../registries/definition";
 import { ResolutionRegistry } from "../resolve_references";
 import { set_test_resolutions } from "../resolve_references.test";
@@ -603,7 +603,7 @@ describe("find_constructor_in_class_hierarchy", () => {
   });
 });
 
-describe("enrich_class_calls_with_constructors", () => {
+describe("include_constructors_for_class_symbols", () => {
   let definitions: DefinitionRegistry;
   let resolutions: ResolutionRegistry;
 
@@ -642,7 +642,7 @@ describe("enrich_class_calls_with_constructors", () => {
 
     definitions.update_file(TEST_FILE, [class_def, constructor_def]);
 
-    const result = enrich_class_calls_with_constructors([class_id], definitions, resolutions);
+    const result = include_constructors_for_class_symbols([class_id], definitions, resolutions);
     expect(result).toEqual([class_id, constructor_id]);
   });
 
@@ -677,7 +677,7 @@ describe("enrich_class_calls_with_constructors", () => {
     definitions.update_file(TEST_FILE, [class_def, constructor_def]);
 
     // Constructor already in the list
-    const result = enrich_class_calls_with_constructors(
+    const result = include_constructors_for_class_symbols(
       [class_id, constructor_id],
       definitions,
       resolutions
@@ -700,12 +700,12 @@ describe("enrich_class_calls_with_constructors", () => {
 
     definitions.update_file(TEST_FILE, [func_def]);
 
-    const result = enrich_class_calls_with_constructors([func_id], definitions, resolutions);
+    const result = include_constructors_for_class_symbols([func_id], definitions, resolutions);
     expect(result).toEqual([func_id]);
   });
 
   it("returns empty array unchanged", () => {
-    const result = enrich_class_calls_with_constructors([], definitions, resolutions);
+    const result = include_constructors_for_class_symbols([], definitions, resolutions);
     expect(result).toEqual([]);
   });
 });
