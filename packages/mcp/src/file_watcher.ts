@@ -19,7 +19,7 @@ export interface FileWatcherCallbacks {
  * Create a debounced function that delays invoking func until after wait milliseconds
  * have elapsed since the last time the debounced function was invoked for a given key.
  */
-function create_debounced_handler<T extends (...args: string[]) => void>(
+function create_debounced_handler<T extends (...args: string[]) => void | Promise<void>>(
   func: T,
   wait: number
 ): T {
@@ -32,9 +32,9 @@ function create_debounced_handler<T extends (...args: string[]) => void>(
       globalThis.clearTimeout(existing);
     }
 
-    const timeout = globalThis.setTimeout(() => {
+    const timeout = globalThis.setTimeout(async () => {
       timeouts.delete(key);
-      func(...args);
+      await func(...args);
     }, wait);
 
     timeouts.set(key, timeout);
