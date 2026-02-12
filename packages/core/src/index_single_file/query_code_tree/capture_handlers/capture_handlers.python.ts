@@ -7,9 +7,10 @@
  */
 
 import type { SymbolName } from "@ariadnejs/types";
-import { anonymous_function_symbol } from "@ariadnejs/types";
+import { anonymous_function_symbol, property_symbol } from "@ariadnejs/types";
 import type { DefinitionBuilder } from "../../definitions/definitions";
 import type { CaptureNode, ProcessingContext } from "../../index_single_file";
+import { node_to_location } from "../../node_utils";
 import type { HandlerRegistry } from "./types";
 import {
   create_class_id,
@@ -263,6 +264,68 @@ export function handle_definition_field(
       initial_value: extract_initial_value(capture.node),
     });
   }
+}
+
+/**
+ * Handle `self.attr = value` assignments in `__init__` methods.
+ *
+ * Creates a PropertyDefinition on the containing class for instance attributes
+ * assigned in `__init__`. The `@assignment.property` capture in python.scm fires
+ * for all `obj.attr = value` patterns; this handler filters to only `self.X = ...`
+ * inside `__init__`.
+ */
+export function handle_assignment_property(
+  capture: CaptureNode,
+  builder: DefinitionBuilder,
+  context: ProcessingContext
+): void {
+  const assignment_node = capture.node;
+
+  // Get the left side (attribute node: self.attr)
+  const left = assignment_node.childForFieldName("left");
+  if (!left || left.type !== "attribute") return;
+
+  const object_node = left.childForFieldName("object");
+  const attr_node = left.childForFieldName("attribute");
+  if (!object_node || !attr_node) return;
+
+  // Only handle self.X assignments
+  if (object_node.type !== "identifier" || object_node.text !== "self") return;
+
+  // Only handle assignments inside __init__
+  let node = assignment_node.parent;
+  let in_init = false;
+  while (node) {
+    if (node.type === "function_definition") {
+      const name_node = node.childForFieldName("name");
+      in_init = name_node?.text === "__init__";
+      break;
+    }
+    node = node.parent;
+  }
+  if (!in_init) return;
+
+  const class_id = find_containing_class(capture);
+  if (!class_id) return;
+
+  const attr_name = attr_node.text as SymbolName;
+  const file_path = capture.location.file_path;
+  const attr_location = node_to_location(attr_node, file_path);
+  const prop_id = property_symbol(attr_name, attr_location);
+
+  // Extract type from RHS if it's a constructor call (e.g., Database())
+  const right = assignment_node.childForFieldName("right");
+  const rhs_type = right?.type === "call"
+    ? right.childForFieldName("function")?.text as SymbolName | undefined
+    : undefined;
+
+  builder.add_property_to_class(class_id, {
+    symbol_id: prop_id,
+    name: attr_name,
+    location: attr_location,
+    scope_id: context.get_scope_id(capture.location),
+    type: rhs_type,
+  });
 }
 
 // ============================================================================
@@ -964,6 +1027,7 @@ export const PYTHON_HANDLERS: HandlerRegistry = {
   // Properties
   "definition.property": handle_definition_property,
   "definition.field": handle_definition_field,
+  "assignment.property": handle_assignment_property,
 
   // Functions
   "definition.function": handle_definition_function,

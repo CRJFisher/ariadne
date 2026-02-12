@@ -15,7 +15,7 @@
  */
 
 import type { SyntaxNode } from "tree-sitter";
-import type { Location, SymbolName, TypeInfo, FilePath } from "@ariadnejs/types";
+import type { Location, SymbolName, TypeInfo, FilePath, SelfReferenceKeyword } from "@ariadnejs/types";
 import { type_symbol } from "@ariadnejs/types";
 import type { MetadataExtractors, ReceiverInfo } from "./types";
 import { node_to_location } from "../../node_utils";
@@ -350,7 +350,26 @@ export const PYTHON_METADATA_EXTRACTORS: MetadataExtractors = {
         };
       }
 
-      // Regular object receiver (not a keyword)
+      // Use extract_property_chain for nested receivers like self.db.query()
+      const chain = PYTHON_METADATA_EXTRACTORS.extract_property_chain(target_node);
+
+      if (chain && chain.length > 0) {
+        const SELF_KEYWORDS: Record<string, SelfReferenceKeyword> = {
+          self: "self",
+          cls: "cls",
+          super: "super",
+        };
+        const keyword = SELF_KEYWORDS[chain[0]];
+
+        return {
+          receiver_location: node_to_location(object_node, file_path),
+          property_chain: chain,
+          is_self_reference: keyword !== undefined,
+          ...(keyword ? { self_keyword: keyword } : {}),
+        };
+      }
+
+      // Fallback: simple receiver + property
       return {
         receiver_location: node_to_location(object_node, file_path),
         property_chain: attr_name
