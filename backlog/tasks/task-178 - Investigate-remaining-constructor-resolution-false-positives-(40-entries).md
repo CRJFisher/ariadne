@@ -1,10 +1,10 @@
 ---
 id: task-178
 title: Investigate remaining constructor resolution false positives (40 entries)
-status: To Do
+status: Completed
 assignee: []
 created_date: '2026-02-10 20:22'
-updated_date: '2026-02-12 20:22'
+updated_date: '2026-02-12 22:22'
 labels:
   - bug
   - call-graph
@@ -21,7 +21,7 @@ Feb 12 re-analysis: down to 21 entries. Evidence: entrypoint-analysis/analysis_o
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
 - [x] #1 Root cause of remaining constructor false positives identified
-- [ ] #2 Fix implemented or follow-up task created
+- [x] #2 Fix implemented or follow-up task created
 <!-- AC:END -->
 
 ## Root Cause Analysis (Corrected Feb 12, 2026)
@@ -111,3 +111,34 @@ The remaining ~3-5 entries are caused by import resolution gaps for deep package
 ### Cleanup: Remove dead barrel file
 
 Delete `packages/core/src/resolve_references/call_resolution/index.ts` — confirmed zero imports across the codebase.
+
+## Implementation Notes
+
+### Sub-task 1: Fix `extract_extends()` for generic base classes
+
+Fixed across all four languages:
+
+- __Python__ (`symbol_factories.python.ts`): Added `subscript` node handling to `extract_extends()`. Extracts the `value` child from `subscript` nodes for patterns like `Bar[T]`, `mod.Bar[T, U]`.
+- __TypeScript__ (`symbol_factories.typescript.ts`): Added `generic_type` handling to `extract_class_extends()`, `extract_implements()`, and rewrote `extract_interface_extends()`. The previous interface implementation used `childForFieldName("extends")` which returns `undefined` in tree-sitter-typescript — the grammar uses `extends_type_clause` as a named child instead.
+- __JavaScript__ (`symbol_factories.javascript.ts`): Added `generic_type` handling inside the `class_heritage` → `extends_clause`/`implements_clause` path.
+- __Rust__: Already correct (reference implementation).
+
+Added behavioral tests for all languages (previously zero existed):
+
+- Python: 7 tests covering simple, generic, module-qualified generic, multi-generic, mixed, and no-base cases
+- TypeScript: 14 tests across `extract_class_extends`, `extract_interface_extends`, and `extract_implements`
+- JavaScript: 3 tests for generic extends/implements via TypeScript parser path
+
+### Sub-task 2: Fix grep heuristic for constructor entry points
+
+- Added `build_constructor_to_class_name_map()` to `DefinitionRegistry` — iterates all class definitions and maps constructor symbol_ids to class names.
+- Modified `gather_diagnostics()` in `extract_entry_points.ts` to use the class name instead of `__init__`/`constructor` when grepping for constructor call sites.
+- Updated both `detect_entrypoints.ts` files (external and self-analysis) to build and pass the map.
+
+### Cleanup
+
+- Deleted dead barrel file `packages/core/src/resolve_references/call_resolution/index.ts` (confirmed zero imports).
+
+### Sub-task 3: Cross-module import resolution
+
+Deferred to task-188 (import resolution gaps).

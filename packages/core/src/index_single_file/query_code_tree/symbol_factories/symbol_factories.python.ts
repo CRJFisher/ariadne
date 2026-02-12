@@ -486,6 +486,12 @@ export function extract_extends(node: SyntaxNode): SymbolName[] {
       } else if (child.type === "attribute") {
         // Handle module.Class inheritance pattern
         bases.push(child.text as SymbolName);
+      } else if (child.type === "subscript") {
+        // Handle generic base classes: Bar[T], mod.Bar[T, U]
+        const value = child.childForFieldName?.("value");
+        if (value && (value.type === "identifier" || value.type === "attribute")) {
+          bases.push(value.text as SymbolName);
+        }
       }
     }
   }

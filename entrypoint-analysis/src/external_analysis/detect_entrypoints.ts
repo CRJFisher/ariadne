@@ -316,8 +316,11 @@ async function analyze_directory(
     `Found ${call_graph.entry_points.length} entry points in ${Date.now() - callgraph_start}ms`
   );
 
+  // Build constructor → class name map for grep heuristic
+  const class_name_by_constructor_id = project.definitions.build_constructor_to_class_name_map();
+
   // Extract entry points
-  const entry_points = extract_entry_points(call_graph, source_files);
+  const entry_points = extract_entry_points(call_graph, source_files, undefined, class_name_by_constructor_id);
 
   console.error(`Total analysis time: ${Date.now() - start_time}ms`);
 

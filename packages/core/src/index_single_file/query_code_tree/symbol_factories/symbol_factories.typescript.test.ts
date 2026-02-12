@@ -482,3 +482,110 @@ describe("find_containing_callable with anonymous functions", () => {
     expect(callable_id).toBe(expected_id);
   });
 });
+
+// Helper to find first node of specific type
+function find_node_by_type(node: SyntaxNode, type: string): SyntaxNode | null {
+  if (node.type === type) return node;
+  for (let i = 0; i < node.childCount; i++) {
+    const found = find_node_by_type(node.child(i)!, type);
+    if (found) return found;
+  }
+  return null;
+}
+
+describe("extract_class_extends", () => {
+  it("should extract simple base class", () => {
+    const root = parse_typescript("class Foo extends Bar {}");
+    const class_node = find_node_by_type(root, "class_declaration");
+    expect(class_node).not.toBeNull();
+    expect(extract_class_extends(class_node!)).toEqual(["Bar"]);
+  });
+
+  it("should extract generic base class: class Foo extends Bar<T>", () => {
+    const root = parse_typescript("class Foo extends Bar<T> {}");
+    const class_node = find_node_by_type(root, "class_declaration");
+    expect(class_node).not.toBeNull();
+    expect(extract_class_extends(class_node!)).toEqual(["Bar"]);
+  });
+
+  it("should extract generic base class with multiple type params", () => {
+    const root = parse_typescript("class Foo extends Map<string, number> {}");
+    const class_node = find_node_by_type(root, "class_declaration");
+    expect(class_node).not.toBeNull();
+    expect(extract_class_extends(class_node!)).toEqual(["Map"]);
+  });
+
+  it("should return empty array for class without extends", () => {
+    const root = parse_typescript("class Foo {}");
+    const class_node = find_node_by_type(root, "class_declaration");
+    expect(class_node).not.toBeNull();
+    expect(extract_class_extends(class_node!)).toEqual([]);
+  });
+});
+
+describe("extract_interface_extends", () => {
+  it("should extract simple interface extends", () => {
+    const root = parse_typescript("interface Foo extends Bar {}");
+    const iface_node = find_node_by_type(root, "interface_declaration");
+    expect(iface_node).not.toBeNull();
+    expect(extract_interface_extends(iface_node!)).toEqual(["Bar"]);
+  });
+
+  it("should extract generic interface extends: interface Foo extends Bar<T>", () => {
+    const root = parse_typescript("interface Foo extends Bar<T> {}");
+    const iface_node = find_node_by_type(root, "interface_declaration");
+    expect(iface_node).not.toBeNull();
+    expect(extract_interface_extends(iface_node!)).toEqual(["Bar"]);
+  });
+
+  it("should extract multiple interface extends with generics", () => {
+    const root = parse_typescript("interface Foo extends Bar<T>, Baz<U> {}");
+    const iface_node = find_node_by_type(root, "interface_declaration");
+    expect(iface_node).not.toBeNull();
+    expect(extract_interface_extends(iface_node!)).toEqual(["Bar", "Baz"]);
+  });
+
+  it("should extract mix of simple and generic extends", () => {
+    const root = parse_typescript("interface Foo extends Bar, Baz<T> {}");
+    const iface_node = find_node_by_type(root, "interface_declaration");
+    expect(iface_node).not.toBeNull();
+    expect(extract_interface_extends(iface_node!)).toEqual(["Bar", "Baz"]);
+  });
+
+  it("should return empty array for interface without extends", () => {
+    const root = parse_typescript("interface Foo {}");
+    const iface_node = find_node_by_type(root, "interface_declaration");
+    expect(iface_node).not.toBeNull();
+    expect(extract_interface_extends(iface_node!)).toEqual([]);
+  });
+});
+
+describe("extract_implements", () => {
+  it("should extract simple implements", () => {
+    const root = parse_typescript("class Foo implements Bar {}");
+    const class_node = find_node_by_type(root, "class_declaration");
+    expect(class_node).not.toBeNull();
+    expect(extract_implements(class_node!)).toEqual(["Bar"]);
+  });
+
+  it("should extract generic implements: class Foo implements Bar<T>", () => {
+    const root = parse_typescript("class Foo implements Bar<T> {}");
+    const class_node = find_node_by_type(root, "class_declaration");
+    expect(class_node).not.toBeNull();
+    expect(extract_implements(class_node!)).toEqual(["Bar"]);
+  });
+
+  it("should extract multiple generic implements", () => {
+    const root = parse_typescript("class Foo implements Bar<T>, Baz<U> {}");
+    const class_node = find_node_by_type(root, "class_declaration");
+    expect(class_node).not.toBeNull();
+    expect(extract_implements(class_node!)).toEqual(["Bar", "Baz"]);
+  });
+
+  it("should return empty array for class without implements", () => {
+    const root = parse_typescript("class Foo {}");
+    const class_node = find_node_by_type(root, "class_declaration");
+    expect(class_node).not.toBeNull();
+    expect(extract_implements(class_node!)).toEqual([]);
+  });
+});

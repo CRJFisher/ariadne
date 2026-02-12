@@ -530,3 +530,70 @@ describe("detect_callback_context", () => {
     });
   });
 });
+
+// Helper to find class_definition node
+function find_class_node(root: SyntaxNode): SyntaxNode | null {
+  function visit(node: SyntaxNode): SyntaxNode | null {
+    if (node.type === "class_definition") return node;
+    for (let i = 0; i < node.childCount; i++) {
+      const child = node.child(i);
+      if (child) {
+        const result = visit(child);
+        if (result) return result;
+      }
+    }
+    return null;
+  }
+  return visit(root);
+}
+
+describe("extract_extends", () => {
+  it("should extract simple base class", () => {
+    const root = parse_python("class Foo(Bar):\n  pass");
+    const class_node = find_class_node(root);
+    expect(class_node).not.toBeNull();
+    expect(extract_extends(class_node!)).toEqual(["Bar"]);
+  });
+
+  it("should extract generic base class: class Foo(Bar[T])", () => {
+    const root = parse_python("class Foo(Bar[T]):\n  pass");
+    const class_node = find_class_node(root);
+    expect(class_node).not.toBeNull();
+    expect(extract_extends(class_node!)).toEqual(["Bar"]);
+  });
+
+  it("should extract module-qualified generic base class: class Foo(mod.Bar[T])", () => {
+    const root = parse_python("class Foo(mod.Bar[T]):\n  pass");
+    const class_node = find_class_node(root);
+    expect(class_node).not.toBeNull();
+    expect(extract_extends(class_node!)).toEqual(["mod.Bar"]);
+  });
+
+  it("should extract multiple generic base classes: class Foo(Bar[T], Baz[U])", () => {
+    const root = parse_python("class Foo(Bar[T], Baz[U]):\n  pass");
+    const class_node = find_class_node(root);
+    expect(class_node).not.toBeNull();
+    expect(extract_extends(class_node!)).toEqual(["Bar", "Baz"]);
+  });
+
+  it("should extract mix of simple and generic base classes", () => {
+    const root = parse_python("class Foo(Bar, Baz[T]):\n  pass");
+    const class_node = find_class_node(root);
+    expect(class_node).not.toBeNull();
+    expect(extract_extends(class_node!)).toEqual(["Bar", "Baz"]);
+  });
+
+  it("should extract generic base with multiple type params: class Foo(Dict[K, V])", () => {
+    const root = parse_python("class Foo(Dict[K, V]):\n  pass");
+    const class_node = find_class_node(root);
+    expect(class_node).not.toBeNull();
+    expect(extract_extends(class_node!)).toEqual(["Dict"]);
+  });
+
+  it("should return empty array for class without bases", () => {
+    const root = parse_python("class Foo:\n  pass");
+    const class_node = find_class_node(root);
+    expect(class_node).not.toBeNull();
+    expect(extract_extends(class_node!)).toEqual([]);
+  });
+});

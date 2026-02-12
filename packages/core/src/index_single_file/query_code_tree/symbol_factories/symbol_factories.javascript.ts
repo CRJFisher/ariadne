@@ -518,6 +518,14 @@ export function extract_extends(node: SyntaxNode): SymbolName[] {
         for (const child of clause.children || []) {
           if (child.type === "type_identifier" || child.type === "identifier") {
             results.push(child.text as SymbolName);
+          } else if (child.type === "generic_type") {
+            // Handle generic base classes: class Foo extends Bar<T>
+            const base_type = child.namedChildren?.find(
+              (c) => c.type === "type_identifier" || c.type === "identifier"
+            );
+            if (base_type) {
+              results.push(base_type.text as SymbolName);
+            }
           }
         }
       } else if (clause.type === "identifier") {

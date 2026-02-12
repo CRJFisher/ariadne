@@ -175,12 +175,22 @@ export function extract_type_parameters(node: SyntaxNode | null): SymbolName[] {
  * Extract interface extends clauses
  */
 export function extract_interface_extends(node: SyntaxNode): SymbolName[] {
-  const extends_node = node.childForFieldName?.("extends");
-  if (extends_node) {
+  // tree-sitter-typescript uses extends_type_clause as a named child
+  const extends_clause = node.namedChildren?.find(
+    (c) => c.type === "extends_type_clause"
+  );
+  if (extends_clause) {
     const interfaces: SymbolName[] = [];
-    for (const child of extends_node.children || []) {
+    for (const child of extends_clause.namedChildren || []) {
       if (child.type === "type_identifier") {
         interfaces.push(child.text as SymbolName);
+      } else if (child.type === "generic_type") {
+        const base_type = child.namedChildren?.find(
+          (c) => c.type === "type_identifier" || c.type === "identifier"
+        );
+        if (base_type) {
+          interfaces.push(base_type.text as SymbolName);
+        }
       }
     }
     return interfaces;
@@ -208,12 +218,19 @@ export function extract_class_extends(node: SyntaxNode): SymbolName[] {
     if (extends_clause) {
       // The identifier is accessed via the 'value' field
       const value_node = extends_clause.childForFieldName?.("value");
-      if (
-        value_node &&
-        (value_node.type === "identifier" ||
-          value_node.type === "type_identifier")
-      ) {
-        return [value_node.text as SymbolName];
+      if (value_node) {
+        if (value_node.type === "identifier" || value_node.type === "type_identifier") {
+          return [value_node.text as SymbolName];
+        }
+        // Handle generic base classes: class Foo extends Bar<T>
+        if (value_node.type === "generic_type") {
+          const base_type = value_node.namedChildren?.find(
+            (c) => c.type === "type_identifier" || c.type === "identifier"
+          );
+          if (base_type) {
+            return [base_type.text as SymbolName];
+          }
+        }
       }
     }
   }
@@ -239,6 +256,14 @@ export function extract_implements(node: SyntaxNode): SymbolName[] {
       for (const child of implements_clause.namedChildren || []) {
         if (child.type === "type_identifier") {
           interfaces.push(child.text as SymbolName);
+        } else if (child.type === "generic_type") {
+          // Handle generic interfaces: class Foo implements Bar<T>
+          const base_type = child.namedChildren?.find(
+            (c) => c.type === "type_identifier" || c.type === "identifier"
+          );
+          if (base_type) {
+            interfaces.push(base_type.text as SymbolName);
+          }
         }
       }
       return interfaces;
