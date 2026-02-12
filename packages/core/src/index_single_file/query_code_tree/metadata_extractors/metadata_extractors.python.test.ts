@@ -920,4 +920,106 @@ def value(self):
       expect(result).toBe("MyClass");
     });
   });
+
+  describe("extract_receiver_info", () => {
+    it("should handle self.method() with correct chain", () => {
+      const code = "self.method()";
+      const tree = parser.parse(code);
+      const call = tree.rootNode.descendantsOfType("call")[0];
+
+      const result = PYTHON_METADATA_EXTRACTORS.extract_receiver_info(call, TEST_FILE);
+
+      expect(result).toBeDefined();
+      expect(result!.property_chain).toEqual(["self", "method"]);
+      expect(result!.is_self_reference).toBe(true);
+      expect(result!.self_keyword).toBe("self");
+    });
+
+    it("should handle nested self.db.query() with parsed chain", () => {
+      const code = "self.db.query()";
+      const tree = parser.parse(code);
+      const call = tree.rootNode.descendantsOfType("call")[0];
+
+      const result = PYTHON_METADATA_EXTRACTORS.extract_receiver_info(call, TEST_FILE);
+
+      expect(result).toBeDefined();
+      expect(result!.property_chain).toEqual(["self", "db", "query"]);
+      expect(result!.is_self_reference).toBe(true);
+      expect(result!.self_keyword).toBe("self");
+    });
+
+    it("should handle deeply nested self.a.b.c() chain", () => {
+      const code = "self.a.b.c()";
+      const tree = parser.parse(code);
+      const call = tree.rootNode.descendantsOfType("call")[0];
+
+      const result = PYTHON_METADATA_EXTRACTORS.extract_receiver_info(call, TEST_FILE);
+
+      expect(result).toBeDefined();
+      expect(result!.property_chain).toEqual(["self", "a", "b", "c"]);
+      expect(result!.is_self_reference).toBe(true);
+      expect(result!.self_keyword).toBe("self");
+    });
+
+    it("should handle cls.factory.create() with correct chain", () => {
+      const code = "cls.factory.create()";
+      const tree = parser.parse(code);
+      const call = tree.rootNode.descendantsOfType("call")[0];
+
+      const result = PYTHON_METADATA_EXTRACTORS.extract_receiver_info(call, TEST_FILE);
+
+      expect(result).toBeDefined();
+      expect(result!.property_chain).toEqual(["cls", "factory", "create"]);
+      expect(result!.is_self_reference).toBe(true);
+      expect(result!.self_keyword).toBe("cls");
+    });
+
+    it("should handle obj.attr.method() without self-reference", () => {
+      const code = "obj.attr.method()";
+      const tree = parser.parse(code);
+      const call = tree.rootNode.descendantsOfType("call")[0];
+
+      const result = PYTHON_METADATA_EXTRACTORS.extract_receiver_info(call, TEST_FILE);
+
+      expect(result).toBeDefined();
+      expect(result!.property_chain).toEqual(["obj", "attr", "method"]);
+      expect(result!.is_self_reference).toBe(false);
+      expect(result!.self_keyword).toBeUndefined();
+    });
+
+    it("should handle super().method() with correct chain", () => {
+      const code = "super().method()";
+      const tree = parser.parse(code);
+      const call = tree.rootNode.descendantsOfType("call")[0]; // outer call (DFS: parent before child)
+
+      const result = PYTHON_METADATA_EXTRACTORS.extract_receiver_info(call, TEST_FILE);
+
+      expect(result).toBeDefined();
+      expect(result!.property_chain).toEqual(["super", "method"]);
+      expect(result!.is_self_reference).toBe(true);
+      expect(result!.self_keyword).toBe("super");
+    });
+
+    it("should handle simple obj.method() without self-reference", () => {
+      const code = "obj.method()";
+      const tree = parser.parse(code);
+      const call = tree.rootNode.descendantsOfType("call")[0];
+
+      const result = PYTHON_METADATA_EXTRACTORS.extract_receiver_info(call, TEST_FILE);
+
+      expect(result).toBeDefined();
+      expect(result!.property_chain).toEqual(["obj", "method"]);
+      expect(result!.is_self_reference).toBe(false);
+    });
+
+    it("should return undefined for plain function calls", () => {
+      const code = "print('hello')";
+      const tree = parser.parse(code);
+      const call = tree.rootNode.descendantsOfType("call")[0];
+
+      const result = PYTHON_METADATA_EXTRACTORS.extract_receiver_info(call, TEST_FILE);
+
+      expect(result).toBeUndefined();
+    });
+  });
 });

@@ -1543,20 +1543,20 @@ class Drawable(Protocol):
     // JavaScript/TypeScript which use AST traversal. No additional tests needed.
   });
 
-  describe("Property Type Extraction", () => {
-    async function build_index_from_code(code: string) {
-      const tree = parser.parse(code);
-      const lines = code.split("\n");
-      const parsed_file = {
-        file_path: "test.py" as any,
-        file_lines: lines.length,
-        file_end_column: lines[lines.length - 1]?.length || 0,
-        tree,
-        lang: "python" as const,
-      };
-      return build_index_single_file(parsed_file, tree, "python");
-    }
+  async function build_index_from_code(code: string) {
+    const tree = parser.parse(code);
+    const lines = code.split("\n");
+    const parsed_file = {
+      file_path: "test.py" as any,
+      file_lines: lines.length,
+      file_end_column: lines[lines.length - 1]?.length || 0,
+      tree,
+      lang: "python" as const,
+    };
+    return build_index_single_file(parsed_file, tree, "python");
+  }
 
+  describe("Property Type Extraction", () => {
     it("should extract type from class attribute annotation", async () => {
       const code = `
 class Service:
@@ -1951,6 +1951,102 @@ class Point:
       expect(import_def.name).toBe("h");
       expect(import_def.original_name).toBe("helper");
       expect(import_def.import_path).toBe("..utils");
+    });
+  });
+
+  describe("Instance Attribute Property Definitions (assignment.property)", () => {
+    it("should create PropertyDefinition for self.attr = Constructor() in __init__", async () => {
+      const code = `
+class Service:
+    def __init__(self):
+        self.db = Database()
+`;
+
+      const index = await build_index_from_code(code);
+      const service_class = Array.from(index.classes.values()).find(c => c.name === "Service");
+
+      expect(service_class).toBeDefined();
+      const db_prop = service_class!.properties.find(p => p.name === "db");
+      expect(db_prop).toBeDefined();
+      expect(db_prop!.name).toBe("db");
+      expect(db_prop!.type).toBe("Database");
+    });
+
+    it("should create PropertyDefinition for self.attr = value in __init__", async () => {
+      const code = `
+class Config:
+    def __init__(self):
+        self.name = "default"
+`;
+
+      const index = await build_index_from_code(code);
+      const config_class = Array.from(index.classes.values()).find(c => c.name === "Config");
+
+      expect(config_class).toBeDefined();
+      const name_prop = config_class!.properties.find(p => p.name === "name");
+      expect(name_prop).toBeDefined();
+      expect(name_prop!.name).toBe("name");
+      // Non-constructor RHS has no type
+      expect(name_prop!.type).toBeUndefined();
+    });
+
+    it("should NOT create PropertyDefinition for self.attr = X() outside __init__", async () => {
+      const code = `
+class Service:
+    def setup(self):
+        self.db = Database()
+`;
+
+      const index = await build_index_from_code(code);
+      const service_class = Array.from(index.classes.values()).find(c => c.name === "Service");
+
+      expect(service_class).toBeDefined();
+      // No property should be created since we're not in __init__
+      const db_prop = service_class!.properties.find(p => p.name === "db");
+      expect(db_prop).toBeUndefined();
+    });
+
+    it("should create multiple PropertyDefinitions for multiple self assignments in __init__", async () => {
+      const code = `
+class Service:
+    def __init__(self):
+        self.db = Database()
+        self.cache = Cache()
+        self.name = "service"
+`;
+
+      const index = await build_index_from_code(code);
+      const service_class = Array.from(index.classes.values()).find(c => c.name === "Service");
+
+      expect(service_class).toBeDefined();
+      expect(service_class!.properties.length).toBe(3);
+
+      const db_prop = service_class!.properties.find(p => p.name === "db");
+      expect(db_prop).toBeDefined();
+      expect(db_prop!.type).toBe("Database");
+
+      const cache_prop = service_class!.properties.find(p => p.name === "cache");
+      expect(cache_prop).toBeDefined();
+      expect(cache_prop!.type).toBe("Cache");
+
+      const name_prop = service_class!.properties.find(p => p.name === "name");
+      expect(name_prop).toBeDefined();
+      expect(name_prop!.type).toBeUndefined();
+    });
+
+    it("should NOT create PropertyDefinition for non-self attribute assignment in __init__", async () => {
+      const code = `
+class Service:
+    def __init__(self):
+        other.db = Database()
+`;
+
+      const index = await build_index_from_code(code);
+      const service_class = Array.from(index.classes.values()).find(c => c.name === "Service");
+
+      expect(service_class).toBeDefined();
+      const db_prop = service_class!.properties.find(p => p.name === "db");
+      expect(db_prop).toBeUndefined();
     });
   });
 });

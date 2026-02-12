@@ -1,9 +1,10 @@
 ---
 id: task-180
 title: Investigate remaining instance-method-resolution false positives (10 entries)
-status: To Do
+status: Done
 assignee: []
-created_date: "2026-02-10 20:22"
+created_date: '2026-02-10 20:22'
+updated_date: '2026-02-12 16:45'
 labels:
   - bug
   - call-graph
@@ -33,18 +34,17 @@ Phase 1 addresses Category A (6 entries). Categories B and C require separate ta
 Evidence: `entrypoint-analysis/analysis_output/external/triage_entry_points/2026-02-10T19-09-38.781Z.json`
 
 ## Acceptance Criteria
-
 <!-- AC:BEGIN -->
-
 - [x] #1 Root cause of remaining 10 instance-method false positives identified
-- [ ] #2 `extract_receiver_info` handles nested attribute chains (delegates to `extract_property_chain` like JavaScript)
-- [ ] #3 `self.attr = X()` in `__init__` creates PropertyDefinition on the containing class via `assignment.property` handler
-- [ ] #4 Unit tests for `extract_receiver_info` nested chains in `metadata_extractors.python.test.ts`
-- [ ] #5 Unit tests for instance field handler in `capture_handlers.python.test.ts`
-- [ ] #6 Split `receiver_resolution.integration.test.ts` into language-specific submodules
-- [ ] #7 Integration test in `receiver_resolution.integration.python.test.ts` verifying full `self.attr.method()` call resolution
-- [ ] #8 Follow-up tasks created for Category B (factory return types) and Category C (Type[X] generics)
+- [x] #2 `extract_receiver_info` handles nested attribute chains (delegates to `extract_property_chain` like JavaScript)
+- [x] #3 `self.attr = X()` in `__init__` creates PropertyDefinition on the containing class via `assignment.property` handler
+- [x] #4 Unit tests for `extract_receiver_info` nested chains in `metadata_extractors.python.test.ts`
+- [x] #5 Unit tests for instance field handler in `capture_handlers.python.test.ts`
+- [x] #6 Split `receiver_resolution.integration.test.ts` into language-specific submodules
+- [x] #7 Integration test in `receiver_resolution.python.test.ts` verifying full `self.attr.method()` call resolution
+- [x] #8 Follow-up tasks created for Category B (task-184) and Category C (task-185)
 <!-- AC:END -->
+
 
 ## Implementation Plan
 
@@ -118,3 +118,39 @@ This enables adding new Python `self.attr.method()` tests without further bloati
 - **Capture ALL `self.attr = value` patterns in `__init__`**, not just constructor calls. The property needs to exist in the member_index regardless of RHS type. Type inference is a separate concern handled by constructor bindings.
 - **Python-only changes**. TypeScript/JavaScript don't need equivalent changes because they have explicit class field syntax. All changes are in language-specific files.
 - **No changes to `receiver_resolution.ts`**. The resolution layer is language-agnostic and already works correctly when the member_index is populated and property chains are correct.
+
+
+## Implementation Notes
+
+### Changes Made
+
+**Fix 1: `extract_receiver_info` nested attribute chains**
+
+- `metadata_extractors.python.ts`: After checking for `self`/`cls`/`super` as direct identifiers, delegate to `extract_property_chain(target_node)` for nested attributes. Check if `chain[0]` is a self-reference keyword to set `is_self_reference` and `self_keyword`.
+- Added `SelfReferenceKeyword` import from `@ariadnejs/types`.
+
+**Fix 2: `assignment.property` handler for instance attributes**
+
+- `capture_handlers.python.ts`: Added `handle_assignment_property()` handler that:
+  1. Extracts `left.object` (must be `self` identifier) and `left.attribute` (property name)
+  2. Walks up AST to verify containing function is `__init__`
+  3. Finds containing class via `find_containing_class`
+  4. Creates PropertyDefinition with type from RHS constructor call (if applicable)
+- Registered `"assignment.property": handle_assignment_property` in `PYTHON_HANDLERS`.
+- Added `property_symbol` and `node_to_location` imports.
+
+**Integration test split**
+
+- `receiver_resolution.integration.test.ts`: Refactored to export `create_integration_test_context()` helper.
+- Created `receiver_resolution.{typescript,python,javascript,rust}.test.ts` files (naming convention required `{submodule}.{language}.test.ts` instead of `{submodule}.integration.{language}.test.ts`).
+
+**New tests added**
+
+- 8 unit tests in `metadata_extractors.python.test.ts` for `extract_receiver_info` with nested chains
+- 5 unit tests in `capture_handlers.python.test.ts` for `assignment.property` handler
+- 2 integration tests in `receiver_resolution.python.test.ts` for full `self.attr.method()` resolution
+
+**Follow-up tasks created**
+
+- task-184: Category B false positives (factory function return type inference, 3 entries)
+- task-185: Category C false positives (Type[X] generic instantiation, 1 entry)
