@@ -10,7 +10,7 @@
     "LICENSE"
   ],
   "scripts": {
-    "build": "tsc && npm run copy-scm-files",
+    "build": "tsc -p tsconfig.build.json && npm run copy-scm-files",
     "copy-scm-files": "mkdir -p dist/index_single_file/query_code_tree/queries && cp src/index_single_file/query_code_tree/queries/*.scm dist/index_single_file/query_code_tree/queries/",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
