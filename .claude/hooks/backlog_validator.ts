@@ -1,4 +1,4 @@
-#!/usr/bin/env node
+#!/usr/bin/env npx tsx
 /**
  * PreToolUse hook: Validate backlog task files before Write/Edit operations
  *
@@ -7,15 +7,13 @@
  * - Required frontmatter fields
  * - Required markdown sections
  */
-/* eslint-disable no-undef */
 
-const path = require("path");
-const { create_logger, parse_stdin } = require("./utils.cjs");
+import path from "path";
+import { create_logger, parse_stdin, get_project_dir } from "./utils.js";
 
 const log = create_logger("backlog-validator");
 
 // Valid task file name pattern: task-<id> - <title>.md
-// ID can be numeric (42) or hierarchical (42.1, 42.1.1)
 const TASK_FILE_PATTERN = /^task-(\d+(?:\.\d+)*)\s+-\s+.+\.md$/;
 
 // Required frontmatter fields for task files
@@ -27,12 +25,17 @@ const REQUIRED_SECTIONS = ["## Description"];
 // Recommended sections (warn if missing, don't block)
 const RECOMMENDED_SECTIONS = ["## Acceptance Criteria"];
 
+interface ValidationResult {
+  valid: boolean;
+  error?: string;
+  warning?: string;
+}
+
 /**
  * Validate task file naming convention
  */
-function validate_task_filename(filename) {
+function validate_task_filename(filename: string): ValidationResult {
   if (!TASK_FILE_PATTERN.test(filename)) {
-    // Check for common mistakes
     if (filename.startsWith("task-") && filename.endsWith(".md")) {
       if (!filename.includes(" - ")) {
         return {
@@ -58,8 +61,7 @@ function validate_task_filename(filename) {
 /**
  * Validate frontmatter structure
  */
-function validate_frontmatter(content) {
-  // Check for frontmatter delimiters
+function validate_frontmatter(content: string): ValidationResult {
   if (!content.startsWith("---")) {
     return {
       valid: false,
@@ -67,21 +69,20 @@ function validate_frontmatter(content) {
     };
   }
 
-  const frontmatterEnd = content.indexOf("---", 3);
-  if (frontmatterEnd === -1) {
+  const frontmatter_end = content.indexOf("---", 3);
+  if (frontmatter_end === -1) {
     return {
       valid: false,
       error: "Task file has unclosed frontmatter. Missing closing '---'."
     };
   }
 
-  const frontmatter = content.substring(3, frontmatterEnd).trim();
-  const missing = [];
+  const frontmatter = content.substring(3, frontmatter_end).trim();
+  const missing: string[] = [];
 
   for (const field of REQUIRED_FRONTMATTER) {
-    // Simple check for field presence (field: value pattern)
-    const fieldPattern = new RegExp(`^${field}:`, "m");
-    if (!fieldPattern.test(frontmatter)) {
+    const field_pattern = new RegExp(`^${field}:`, "m");
+    if (!field_pattern.test(frontmatter)) {
       missing.push(field);
     }
   }
@@ -99,9 +100,9 @@ function validate_frontmatter(content) {
 /**
  * Validate required markdown sections
  */
-function validate_sections(content) {
-  const missing = [];
-  const warnings = [];
+function validate_sections(content: string): ValidationResult {
+  const missing: string[] = [];
+  const warnings: string[] = [];
 
   for (const section of REQUIRED_SECTIONS) {
     if (!content.includes(section)) {
@@ -135,27 +136,27 @@ function validate_sections(content) {
 /**
  * Validate task file content
  */
-function validate_task_content(content) {
-  const frontmatterResult = validate_frontmatter(content);
-  if (!frontmatterResult.valid) {
-    return frontmatterResult;
+function validate_task_content(content: string): ValidationResult {
+  const frontmatter_result = validate_frontmatter(content);
+  if (!frontmatter_result.valid) {
+    return frontmatter_result;
   }
 
-  const sectionsResult = validate_sections(content);
-  return sectionsResult;
+  return validate_sections(content);
 }
 
-function main() {
+function main(): void {
   const input = parse_stdin();
   if (!input) return;
 
-  const { tool_name, tool_input } = input;
+  const tool_name = input.tool_name as string;
+  const tool_input = input.tool_input as Record<string, unknown> | undefined;
   if (!["Write", "Edit"].includes(tool_name)) return;
 
-  const file_path = tool_input?.file_path;
+  const file_path = tool_input?.file_path as string | undefined;
   if (!file_path) return;
 
-  const project_dir = process.env.CLAUDE_PROJECT_DIR || process.cwd();
+  const project_dir = get_project_dir();
   const relative = path.relative(project_dir, file_path);
   const parts = relative.split(path.sep);
 
@@ -167,12 +168,12 @@ function main() {
 
   // Validate filename for task files (not drafts)
   if (parts[1] === "tasks" && filename.startsWith("task-")) {
-    const filenameResult = validate_task_filename(filename);
-    if (!filenameResult.valid) {
-      log(`Blocking: ${filenameResult.error}`);
+    const filename_result = validate_task_filename(filename);
+    if (!filename_result.valid) {
+      log(`Blocking: ${filename_result.error}`);
       console.log(JSON.stringify({
         decision: "block",
-        reason: filenameResult.error
+        reason: filename_result.error
       }));
       return;
     }
@@ -180,17 +181,17 @@ function main() {
 
   // For Write operations, validate the content
   if (tool_name === "Write" && tool_input?.content) {
-    const contentResult = validate_task_content(tool_input.content);
-    if (!contentResult.valid) {
-      log(`Blocking: ${contentResult.error}`);
+    const content_result = validate_task_content(tool_input.content as string);
+    if (!content_result.valid) {
+      log(`Blocking: ${content_result.error}`);
       console.log(JSON.stringify({
         decision: "block",
-        reason: contentResult.error
+        reason: content_result.error
       }));
       return;
     }
-    if (contentResult.warning) {
-      log(`Warning: ${contentResult.warning}`);
+    if (content_result.warning) {
+      log(`Warning: ${content_result.warning}`);
     }
   }
 }

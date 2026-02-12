@@ -6,11 +6,11 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node \"$CLAUDE_PROJECT_DIR/.claude/hooks/file_naming_validator.cjs\""
+            "command": "pnpm exec tsx \"$CLAUDE_PROJECT_DIR/.claude/hooks/file_naming_validator.ts\""
           },
           {
             "type": "command",
-            "command": "node \"$CLAUDE_PROJECT_DIR/.claude/hooks/backlog_validator.cjs\""
+            "command": "pnpm exec tsx \"$CLAUDE_PROJECT_DIR/.claude/hooks/backlog_validator.ts\""
           }
         ]
       }
@@ -21,11 +21,11 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node \"$CLAUDE_PROJECT_DIR/.claude/hooks/eslint_post_edit.cjs\""
+            "command": "pnpm exec tsx \"$CLAUDE_PROJECT_DIR/.claude/hooks/eslint_post_edit.ts\""
           },
           {
             "type": "command",
-            "command": "node \"$CLAUDE_PROJECT_DIR/.claude/hooks/markdown_lint.cjs\""
+            "command": "pnpm exec tsx \"$CLAUDE_PROJECT_DIR/.claude/hooks/markdown_lint.ts\""
           }
         ]
       }
@@ -35,23 +35,23 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node \"$CLAUDE_PROJECT_DIR/.claude/hooks/build_stop.cjs\""
+            "command": "pnpm exec tsx \"$CLAUDE_PROJECT_DIR/.claude/hooks/build_stop.ts\""
           },
           {
             "type": "command",
-            "command": "node \"$CLAUDE_PROJECT_DIR/.claude/hooks/eslint_stop.cjs\""
+            "command": "pnpm exec tsx \"$CLAUDE_PROJECT_DIR/.claude/hooks/eslint_stop.ts\""
           },
           {
             "type": "command",
-            "command": "node \"$CLAUDE_PROJECT_DIR/.claude/hooks/file_naming_validator_stop.cjs\""
+            "command": "pnpm exec tsx \"$CLAUDE_PROJECT_DIR/.claude/hooks/file_naming_validator_stop.ts\""
           },
           {
             "type": "command",
-            "command": "node \"$CLAUDE_PROJECT_DIR/.claude/hooks/test_file_enforcement_stop.cjs\""
+            "command": "pnpm exec tsx \"$CLAUDE_PROJECT_DIR/.claude/hooks/test_file_enforcement_stop.ts\""
           },
           {
             "type": "command",
-            "command": "node \"$CLAUDE_PROJECT_DIR/.claude/hooks/run_tests_stop.cjs\""
+            "command": "pnpm exec tsx \"$CLAUDE_PROJECT_DIR/.claude/hooks/run_tests_stop.ts\""
           },
           {
             "type": "command",

@@ -1,4 +1,4 @@
-#!/usr/bin/env node
+#!/usr/bin/env npx tsx
 /**
  * Claude Code PostToolUse hook: Run ESLint and TypeScript on edited file after Write/Edit
  *
@@ -8,24 +8,24 @@
  *
  * Returns JSON with decision:"block" if unfixable lint errors, warnings, or type errors remain.
  */
-/* eslint-disable no-undef */
 
-const { execSync } = require("child_process");
-const fs = require("fs");
-const {
+import { execSync } from "child_process";
+import fs from "fs";
+import {
   create_logger,
   parse_stdin,
   is_ts_js_file,
+  get_project_dir,
   truncate_eslint_output,
   truncate_tsc_output
-} = require("./utils.cjs");
+} from "./utils.js";
 
 const log = create_logger("post-edit");
 
 /**
  * Determine which package a file belongs to
  */
-function get_package_for_file(file_path) {
+function get_package_for_file(file_path: string): string | null {
   if (file_path.includes("packages/types")) return "packages/types";
   if (file_path.includes("packages/core")) return "packages/core";
   if (file_path.includes("packages/mcp")) return "packages/mcp";
@@ -35,9 +35,8 @@ function get_package_for_file(file_path) {
 
 /**
  * Run TypeScript type checking for the package containing the file.
- * Returns true if check passes, false if it blocks.
  */
-function run_typescript_check(file_path, project_dir) {
+function run_typescript_check(file_path: string, project_dir: string): boolean {
   const pkg = get_package_for_file(file_path);
   if (!pkg) {
     log(`File not in a typed package, skipping tsc: ${file_path}`);
@@ -53,8 +52,9 @@ function run_typescript_check(file_path, project_dir) {
     });
     log(`TypeScript check passed for ${pkg}`);
     return true;
-  } catch (error) {
-    const output = error.stdout || error.stderr || "TypeScript errors found";
+  } catch (error: unknown) {
+    const exec_error = error as { stdout?: string; stderr?: string };
+    const output = exec_error.stdout || exec_error.stderr || "TypeScript errors found";
     log(`TypeScript errors in ${pkg} - blocking`);
     const truncated = truncate_tsc_output(output);
     console.log(JSON.stringify({
@@ -65,14 +65,14 @@ function run_typescript_check(file_path, project_dir) {
   }
 }
 
-function main() {
+function main(): void {
   const input = parse_stdin();
   if (!input) {
     process.exit(0);
   }
 
-  const tool_input = input.tool_input || {};
-  const file_path = tool_input.file_path || "";
+  const tool_input = (input.tool_input || {}) as Record<string, unknown>;
+  const file_path = (tool_input.file_path || "") as string;
 
   // Skip non-TS/JS files
   if (!is_ts_js_file(file_path)) {
@@ -87,7 +87,7 @@ function main() {
     process.exit(0);
   }
 
-  const project_dir = process.env.CLAUDE_PROJECT_DIR || process.cwd();
+  const project_dir = get_project_dir();
 
   // Step 1: Run ESLint with --fix to auto-fix what it can
   log(`Running ESLint --fix on ${file_path}...`);
@@ -98,13 +98,12 @@ function main() {
       stdio: ["pipe", "pipe", "pipe"]
     });
     log(`ESLint --fix completed successfully for ${file_path}`);
-  } catch (fix_error) {
-    log(`ESLint --fix had issues: ${fix_error.message}`);
-    // Some issues couldn't be auto-fixed, continue to check remaining errors
+  } catch (fix_error: unknown) {
+    const exec_error = fix_error as { message?: string };
+    log(`ESLint --fix had issues: ${exec_error.message}`);
   }
 
   // Step 2: Always check for remaining errors/warnings after auto-fix
-  // (ESLint exits 0 when only warnings remain, so we must always run this check)
   log(`Checking remaining ESLint issues for ${file_path}...`);
   try {
     const output = execSync(`pnpm exec eslint "${file_path}" --format stylish`, {
@@ -112,6 +111,12 @@ function main() {
       encoding: "utf8",
       stdio: ["pipe", "pipe", "pipe"]
     });
+
+    // Skip "File ignored" warnings - these are not real lint issues
+    if (output && output.includes("File ignored because of a matching ignore pattern")) {
+      log(`File ignored by ESLint config, skipping: ${file_path}`);
+      process.exit(0);
+    }
 
     // ESLint exits 0 but may still have warnings in output
     if (output && output.includes("warning")) {
@@ -128,13 +133,12 @@ function main() {
     log(`ESLint check passed for ${file_path}`);
     run_typescript_check(file_path, project_dir);
     process.exit(0);
-  } catch (error) {
-    // ESLint still has errors that couldn't be auto-fixed
-    const output = error.stdout || error.stderr || "ESLint errors found";
+  } catch (error: unknown) {
+    const exec_error = error as { stdout?: string; stderr?: string };
+    const output = exec_error.stdout || exec_error.stderr || "ESLint errors found";
     log(`ESLint errors remain in ${file_path} - blocking`);
 
     const truncated = truncate_eslint_output(output);
-    // Return JSON to block and prompt Claude to fix manually
     console.log(JSON.stringify({
       decision: "block",
       reason: `ESLint errors in ${file_path} (after auto-fix):\n${truncated}\n\nThese errors require manual fixes.`

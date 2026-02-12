@@ -1,34 +1,33 @@
-#!/usr/bin/env node
+#!/usr/bin/env npx tsx
 /**
  * PostToolUse hook: Run markdownlint on edited markdown files
  *
  * Only runs on the specific .md file that was edited, not all files.
  */
-/* eslint-disable no-undef */
 
-const { execSync } = require("child_process");
-const path = require("path");
-const { create_logger, parse_stdin } = require("./utils.cjs");
+import { execSync } from "child_process";
+import path from "path";
+import { create_logger, parse_stdin, get_project_dir } from "./utils.js";
 
 const log = create_logger("markdown-lint");
 
-function main() {
+function main(): void {
   const input = parse_stdin();
   if (!input) return;
 
-  const { tool_name, tool_input } = input;
+  const tool_name = input.tool_name as string;
+  const tool_input = input.tool_input as Record<string, unknown> | undefined;
   if (!["Write", "Edit"].includes(tool_name)) return;
 
-  const file_path = tool_input?.file_path;
+  const file_path = tool_input?.file_path as string | undefined;
   if (!file_path) return;
 
   // Only lint markdown files
   if (!file_path.endsWith(".md")) return;
 
-  const project_dir = process.env.CLAUDE_PROJECT_DIR || process.cwd();
+  const project_dir = get_project_dir();
 
   try {
-    // Run markdownlint on just this file
     execSync(`pnpm exec markdownlint "${file_path}" --fix`, {
       cwd: project_dir,
       encoding: "utf8",
@@ -36,12 +35,11 @@ function main() {
       stdio: ["pipe", "pipe", "pipe"]
     });
     log(`Linted: ${path.relative(project_dir, file_path)}`);
-  } catch (error) {
-    // markdownlint returns non-zero if there are unfixable issues
-    const output = error.stdout || error.stderr || "";
+  } catch (error: unknown) {
+    const exec_error = error as { stdout?: string; stderr?: string };
+    const output = exec_error.stdout || exec_error.stderr || "";
     if (output.trim()) {
       log(`Lint issues in ${file_path}: ${output.substring(0, 200)}`);
-      // Don't block, just log - some issues can't be auto-fixed
     }
   }
 }

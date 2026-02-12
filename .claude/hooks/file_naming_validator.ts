@@ -1,4 +1,4 @@
-#!/usr/bin/env node
+#!/usr/bin/env npx tsx
 /**
  * PreToolUse hook: Validate file paths before Write/Edit operations
  *
@@ -7,29 +7,29 @@
  * - Package root files (no stray .js files)
  * - Source files against folder-module naming conventions
  */
-/* eslint-disable no-undef */
 
-const path = require("path");
-const { create_logger, parse_stdin } = require("./utils.cjs");
-const {
+import path from "path";
+import { create_logger, parse_stdin, get_project_dir } from "./utils.js";
+import {
   validate_root_file,
   validate_src_file,
   validate_package_root_file
-} = require("./file_naming.cjs");
+} from "./file_naming.js";
 
 const log = create_logger("file-naming");
 
-function main() {
+function main(): void {
   const input = parse_stdin();
   if (!input) return;
 
-  const { tool_name, tool_input } = input;
+  const tool_name = input.tool_name as string;
+  const tool_input = input.tool_input as Record<string, unknown> | undefined;
   if (!["Write", "Edit"].includes(tool_name)) return;
 
-  const file_path = tool_input?.file_path;
+  const file_path = tool_input?.file_path as string | undefined;
   if (!file_path) return;
 
-  const project_dir = process.env.CLAUDE_PROJECT_DIR || process.cwd();
+  const project_dir = get_project_dir();
   const relative = path.relative(project_dir, file_path);
   const parts = relative.split(path.sep);
 
@@ -38,7 +38,7 @@ function main() {
     return;
   }
 
-  let result = { valid: true };
+  let result = { valid: true } as { valid: boolean; error?: string; warning?: string };
 
   // Root directory file (single part, not hidden)
   if (parts.length === 1) {
