@@ -18,7 +18,7 @@ import { ImportGraph } from "../../project/import_graph";
 import { ResolutionRegistry } from "../resolve_references";
 import { set_test_resolutions } from "../resolve_references.test";
 import { create_function_call_reference } from "../../index_single_file/references/factories";
-import { function_symbol, method_symbol } from "@ariadnejs/types";
+import { function_symbol, method_symbol, variable_symbol } from "@ariadnejs/types";
 import type {
   SymbolId,
   SymbolName,
@@ -27,6 +27,7 @@ import type {
   FilePath,
   FunctionDefinition,
   MethodDefinition,
+  VariableDefinition,
   LexicalScope,
 } from "@ariadnejs/types";
 
@@ -207,6 +208,200 @@ describe("Function Call Resolution", () => {
 
       const resolved = resolve_function_call(call_ref, context, resolutions);
       expect(resolved).toEqual([unknown_id]);
+    });
+  });
+
+  describe("Collection dispatch fallback", () => {
+    it("should resolve to collection functions when variable has collection_source", () => {
+      // Setup:
+      //   const CONFIG = new Map([["a", handlerA], ["b", handlerB]]);
+      //   const handler = CONFIG.get(key);  // handler.collection_source = "CONFIG"
+      //   handler();  // should resolve to [handlerA, handlerB]
+
+      const handler_a_id = function_symbol("handlerA" as SymbolName, MOCK_LOCATION);
+      const handler_b_id = function_symbol("handlerB" as SymbolName, {
+        ...MOCK_LOCATION,
+        start_line: 3,
+      });
+      const config_id = variable_symbol("CONFIG" as SymbolName, {
+        ...MOCK_LOCATION,
+        start_line: 1,
+      });
+      const handler_id = variable_symbol("handler" as SymbolName, {
+        ...MOCK_LOCATION,
+        start_line: 5,
+      });
+
+      const handler_a_def: FunctionDefinition = {
+        kind: "function",
+        symbol_id: handler_a_id,
+        name: "handlerA" as SymbolName,
+        defining_scope_id: FILE_SCOPE_ID,
+        location: MOCK_LOCATION,
+        signature: { parameters: [] },
+        body_scope_id: "scope:test.ts:handlerA:1:0" as ScopeId,
+        is_exported: false,
+      };
+
+      const handler_b_def: FunctionDefinition = {
+        kind: "function",
+        symbol_id: handler_b_id,
+        name: "handlerB" as SymbolName,
+        defining_scope_id: FILE_SCOPE_ID,
+        location: { ...MOCK_LOCATION, start_line: 3 },
+        signature: { parameters: [] },
+        body_scope_id: "scope:test.ts:handlerB:3:0" as ScopeId,
+        is_exported: false,
+      };
+
+      const config_def: VariableDefinition = {
+        kind: "variable",
+        symbol_id: config_id,
+        name: "CONFIG" as SymbolName,
+        defining_scope_id: FILE_SCOPE_ID,
+        location: { ...MOCK_LOCATION, start_line: 1 },
+        is_exported: false,
+        function_collection: {
+          collection_id: config_id,
+          collection_type: "Map",
+          location: { ...MOCK_LOCATION, start_line: 1 },
+          stored_functions: [handler_a_id, handler_b_id],
+        },
+      };
+
+      const handler_def: VariableDefinition = {
+        kind: "variable",
+        symbol_id: handler_id,
+        name: "handler" as SymbolName,
+        defining_scope_id: FILE_SCOPE_ID,
+        location: { ...MOCK_LOCATION, start_line: 5 },
+        is_exported: false,
+        collection_source: "CONFIG" as SymbolName,
+      };
+
+      definitions.update_file(TEST_FILE, [
+        handler_a_def,
+        handler_b_def,
+        config_def,
+        handler_def,
+      ]);
+
+      // Resolution: "handler" -> handler_id, "CONFIG" -> config_id
+      const scope_resolutions = new Map<SymbolName, SymbolId>();
+      scope_resolutions.set("handler" as SymbolName, handler_id);
+      scope_resolutions.set("CONFIG" as SymbolName, config_id);
+      set_test_resolutions(resolutions, FILE_SCOPE_ID, scope_resolutions);
+
+      const call_ref = create_function_call_reference(
+        "handler" as SymbolName,
+        { ...MOCK_LOCATION, start_line: 7 },
+        FILE_SCOPE_ID
+      );
+
+      const resolved = resolve_function_call(call_ref, context, resolutions);
+      expect(resolved).toEqual([handler_a_id, handler_b_id]);
+    });
+
+    it("should return direct resolution when variable has no collection_source", () => {
+      const func_id = function_symbol("process" as SymbolName, MOCK_LOCATION);
+
+      const func_def: FunctionDefinition = {
+        kind: "function",
+        symbol_id: func_id,
+        name: "process" as SymbolName,
+        defining_scope_id: FILE_SCOPE_ID,
+        location: MOCK_LOCATION,
+        signature: { parameters: [] },
+        body_scope_id: FUNC_SCOPE_ID,
+        is_exported: false,
+      };
+
+      definitions.update_file(TEST_FILE, [func_def]);
+
+      const scope_resolutions = new Map<SymbolName, SymbolId>();
+      scope_resolutions.set("process" as SymbolName, func_id);
+      set_test_resolutions(resolutions, FILE_SCOPE_ID, scope_resolutions);
+
+      const call_ref = create_function_call_reference(
+        "process" as SymbolName,
+        MOCK_LOCATION,
+        FILE_SCOPE_ID
+      );
+
+      const resolved = resolve_function_call(call_ref, context, resolutions);
+      expect(resolved).toEqual([func_id]);
+    });
+  });
+
+  describe("Python callable instance fallback", () => {
+    it("should attempt __call__ resolution for .py files with single resolved variable", () => {
+      // Setup: processor = Processor()
+      //        processor(data)  # Should try __call__ fallback
+      const py_file = "test.py" as FilePath;
+      const py_scope = "scope:test.py:file:0:0" as ScopeId;
+      const py_location: Location = {
+        file_path: py_file,
+        start_line: 5,
+        start_column: 0,
+        end_line: 5,
+        end_column: 10,
+      };
+
+      const var_id = variable_symbol("processor" as SymbolName, py_location);
+      const var_def: VariableDefinition = {
+        kind: "variable",
+        symbol_id: var_id,
+        name: "processor" as SymbolName,
+        defining_scope_id: py_scope,
+        location: py_location,
+        is_exported: false,
+      };
+
+      definitions.update_file(py_file, [var_def]);
+
+      const scope_resolutions = new Map<SymbolName, SymbolId>();
+      scope_resolutions.set("processor" as SymbolName, var_id);
+      set_test_resolutions(resolutions, py_scope, scope_resolutions);
+
+      const call_ref = create_function_call_reference(
+        "processor" as SymbolName,
+        { ...py_location, start_line: 10 },
+        py_scope
+      );
+
+      // Without type bindings, callable instance returns undefined,
+      // so the variable resolution is preserved
+      const resolved = resolve_function_call(call_ref, context, resolutions);
+      expect(resolved).toEqual([var_id]);
+    });
+
+    it("should not attempt __call__ for non-.py files", () => {
+      // Same setup but with .ts file — should not enter callable instance path
+      const var_id = variable_symbol("processor" as SymbolName, MOCK_LOCATION);
+      const var_def: VariableDefinition = {
+        kind: "variable",
+        symbol_id: var_id,
+        name: "processor" as SymbolName,
+        defining_scope_id: FILE_SCOPE_ID,
+        location: MOCK_LOCATION,
+        is_exported: false,
+      };
+
+      definitions.update_file(TEST_FILE, [var_def]);
+
+      const scope_resolutions = new Map<SymbolName, SymbolId>();
+      scope_resolutions.set("processor" as SymbolName, var_id);
+      set_test_resolutions(resolutions, FILE_SCOPE_ID, scope_resolutions);
+
+      const call_ref = create_function_call_reference(
+        "processor" as SymbolName,
+        { ...MOCK_LOCATION, start_line: 10 },
+        FILE_SCOPE_ID
+      );
+
+      // For .ts files, callable instance path is not attempted
+      const resolved = resolve_function_call(call_ref, context, resolutions);
+      expect(resolved).toEqual([var_id]);
     });
   });
 });

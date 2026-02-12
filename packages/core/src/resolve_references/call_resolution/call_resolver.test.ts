@@ -15,14 +15,17 @@ import { TypeRegistry } from "../registries/type";
 import { ScopeRegistry } from "../registries/scope";
 import { ReferenceRegistry } from "../registries/reference";
 import { ImportGraph } from "../../project/import_graph";
-import { function_symbol, method_symbol } from "@ariadnejs/types";
+import { function_symbol, method_symbol, class_symbol } from "@ariadnejs/types";
 import type {
   FilePath,
   ScopeId,
+  SymbolId,
   SymbolName,
   Location,
   FunctionDefinition,
   MethodDefinition,
+  ClassDefinition,
+  ConstructorDefinition,
   FunctionCallReference,
   LexicalScope,
 } from "@ariadnejs/types";
@@ -668,6 +671,103 @@ describe("resolve_calls_for_files", () => {
       // Should have no resolved calls - method can't be target of bare function call
       const calls = result.resolved_calls_by_file.get(TEST_FILE);
       expect(calls).toEqual([]);
+    });
+  });
+
+  describe("Constructor enrichment pipeline", () => {
+    it("should include constructor when function_call resolves to a class", () => {
+      // Setup: class MyClass { constructor() {} }
+      //        MyClass();  // Python-style call or mis-categorized as function_call
+      const CLASS_SCOPE_ID = "scope:test.ts:MyClass:1:0" as ScopeId;
+      const CTOR_SCOPE_ID = "scope:test.ts:MyClass.constructor:2:2" as ScopeId;
+
+      const class_id = class_symbol("MyClass", MOCK_LOCATION);
+      const constructor_id =
+        "constructor:test.ts:2:2:4:3:constructor" as SymbolId;
+
+      const constructor_def: ConstructorDefinition = {
+        kind: "constructor",
+        symbol_id: constructor_id,
+        name: "constructor" as SymbolName,
+        defining_scope_id: CLASS_SCOPE_ID,
+        location: { ...MOCK_LOCATION, start_line: 2 },
+        parameters: [],
+        body_scope_id: CTOR_SCOPE_ID,
+      };
+
+      const class_def: ClassDefinition = {
+        kind: "class",
+        symbol_id: class_id,
+        name: "MyClass" as SymbolName,
+        defining_scope_id: FILE_SCOPE_ID,
+        location: MOCK_LOCATION,
+        is_exported: false,
+        extends: [],
+        methods: [],
+        properties: [],
+        decorators: [],
+        constructors: [constructor_def],
+      };
+
+      definitions.update_file(TEST_FILE, [class_def, constructor_def]);
+
+      // Scope structure
+      const scope_map = new Map<ScopeId, LexicalScope>();
+      scope_map.set(FILE_SCOPE_ID, {
+        id: FILE_SCOPE_ID,
+        type: "global",
+        location: MOCK_LOCATION,
+        parent_id: null,
+        name: null,
+        child_ids: [CLASS_SCOPE_ID],
+      });
+      scope_map.set(CLASS_SCOPE_ID, {
+        id: CLASS_SCOPE_ID,
+        type: "class",
+        location: MOCK_LOCATION,
+        parent_id: FILE_SCOPE_ID,
+        name: "MyClass" as SymbolName,
+        child_ids: [CTOR_SCOPE_ID],
+      });
+      scope_map.set(CTOR_SCOPE_ID, {
+        id: CTOR_SCOPE_ID,
+        type: "function",
+        location: { ...MOCK_LOCATION, start_line: 2 },
+        parent_id: CLASS_SCOPE_ID,
+        name: "constructor" as SymbolName,
+        child_ids: [],
+      });
+      scopes.update_file(TEST_FILE, scope_map);
+
+      // function_call reference: MyClass()
+      const call_ref: FunctionCallReference = {
+        kind: "function_call",
+        name: "MyClass" as SymbolName,
+        location: { ...MOCK_LOCATION, start_line: 10 },
+        scope_id: FILE_SCOPE_ID,
+      };
+      references.update_file(TEST_FILE, [call_ref]);
+
+      // Name resolver returns class symbol for "MyClass"
+      const name_resolver: NameResolver = (scope_id, name) => {
+        if (name === "MyClass") return class_id;
+        return null;
+      };
+
+      const result = resolve_calls_for_files(
+        new Set([TEST_FILE]),
+        context,
+        name_resolver
+      );
+
+      const calls = result.resolved_calls_by_file.get(TEST_FILE);
+      expect(calls).toBeDefined();
+      expect(calls!.length).toBe(1);
+
+      // Should have both class and constructor in resolutions
+      const resolution_ids = calls![0].resolutions.map((r) => r.symbol_id);
+      expect(resolution_ids).toContain(class_id);
+      expect(resolution_ids).toContain(constructor_id);
     });
   });
 });

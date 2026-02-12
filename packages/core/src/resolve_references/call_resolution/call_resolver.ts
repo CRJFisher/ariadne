@@ -26,7 +26,7 @@ import type { CallResolutionResult } from "../resolution_state";
 import type { ResolutionRegistry } from "../resolve_references";
 import { detect_indirect_reachability } from "../indirect_reachability";
 import { resolve_method_call } from "./method";
-import { resolve_constructor_call, enrich_class_calls_with_constructors } from "./constructor";
+import { resolve_constructor_call, include_constructors_for_class_symbols } from "./constructor";
 import { resolve_collection_dispatch } from "./collection_dispatch";
 import { resolve_function_call } from "./function_call";
 import { find_enclosing_function_scope } from "../../index_single_file/scopes/utils";
@@ -260,7 +260,7 @@ function resolve_calls(
       }
 
       // Enrich: if any resolved symbol is a class, also reference its constructor
-      resolved_symbols = enrich_class_calls_with_constructors(
+      resolved_symbols = include_constructors_for_class_symbols(
         resolved_symbols,
         context.definitions,
         resolver
