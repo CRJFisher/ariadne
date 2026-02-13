@@ -274,6 +274,30 @@ describe("extract_extends", () => {
       const result = extract_extends(class_node!);
       expect(result).toEqual([]);
     });
+
+    it("should extract generic base class: class Foo extends Bar<T>", () => {
+      const root = parse_ts("class Foo extends Bar<T> {}");
+      const class_node = find_node_by_type(root, "class_declaration");
+      expect(class_node).not.toBeNull();
+      const result = extract_extends(class_node!);
+      expect(result).toEqual(["Bar"]);
+    });
+
+    it("should extract generic implements: class Foo implements Bar<T>", () => {
+      const root = parse_ts("class Foo implements Bar<T> {}");
+      const class_node = find_node_by_type(root, "class_declaration");
+      expect(class_node).not.toBeNull();
+      const result = extract_extends(class_node!);
+      expect(result).toEqual(["Bar"]);
+    });
+
+    it("should extract both generic extends and implements", () => {
+      const root = parse_ts("class Foo extends Bar<T> implements Baz<U> {}");
+      const class_node = find_node_by_type(root, "class_declaration");
+      expect(class_node).not.toBeNull();
+      const result = extract_extends(class_node!);
+      expect(result).toEqual(["Bar", "Baz"]);
+    });
   });
 });
 

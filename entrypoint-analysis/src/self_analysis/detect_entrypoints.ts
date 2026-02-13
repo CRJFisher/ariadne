@@ -324,8 +324,11 @@ async function analyze_package(package_name: string, include_tests: boolean = fa
   const callgraph_time = Date.now() - callgraph_start;
   console.error(`Found ${call_graph.entry_points.length} entry points in ${callgraph_time}ms`);
 
+  // Build constructor → class name map for grep heuristic
+  const class_name_by_constructor_id = project.definitions.build_constructor_to_class_name_map();
+
   // Extract entry point information
-  const entry_points = extract_entry_points(call_graph, source_files);
+  const entry_points = extract_entry_points(call_graph, source_files, undefined, class_name_by_constructor_id);
 
   const total_time = Date.now() - start_time;
   console.error(`⏱️  Total analysis time: ${total_time}ms (${(total_time / 1000).toFixed(2)}s)`);
