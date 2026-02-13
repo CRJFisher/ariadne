@@ -2,30 +2,30 @@
  * Triage Entry Points for External Repositories
  *
  * Three-stage pipeline for classifying detected entry points as either
- * true positives (legitimate public API) or false positives (detection bugs):
+ * true positives (legitimate public API), dead code, or false positives
+ * (detection bugs):
  *
- * 1. **Deterministic pre-classification**: Apply rule-based classification
- *    using enriched metadata (exported status, access modifier, callback
- *    context, diagnostic data). Handles 60-80% of entries with no LLM cost.
+ * 1. **Known-entrypoint classification**: Match entries against the
+ *    known-entrypoints registry (confirmed TPs, dead code, framework
+ *    patterns from prior runs). Skips LLM for already-classified entries.
  *
  * 2. **Parallel entry investigation**: For unclassified entries, run
  *    per-entry two-phase queries that determine whether each entry is a
- *    legitimate entry point or a false positive. Processes up to 5 entries
- *    concurrently.
+ *    legitimate entry point, dead code, or a false positive. Processes
+ *    up to 5 entries concurrently.
  *
  * 3. **Aggregation**: A single aggregation call reviews false positive
  *    analyses and groups them by shared root cause.
  *
- * Unlike self-analysis triage (which assumes all entries are false positives
- * and diagnoses bugs), this script must decide whether each entry is a real
- * public API entry point or a detection artifact.
+ * After triage, confirmed TPs and dead code are persisted to the
+ * known-entrypoints registry for future runs.
  *
  * Usage:
  *   npx tsx triage_entry_points.ts
  *   npx tsx triage_entry_points.ts --limit 10
  *
  * Options:
- *   --limit <n>  Max unclassified entries to send to LLM triage (default: all)
+ *   --limit <n>  Max unclassified entries to send to LLM triage (default: 20)
  */
 
 import path from "path";
@@ -47,18 +47,22 @@ import {
   two_phase_query_detailed,
   parallel_map,
 } from "../agent_queries.js";
+import { classify_entrypoints } from "../classify_entrypoints.js";
 import {
-  classify_entrypoints,
-  type ClassifiedEntry,
-} from "../classify_entrypoints.js";
+  load_known_entrypoints,
+  save_known_entrypoints,
+  build_project_source,
+  build_dead_code_source,
+} from "../known_entrypoints.js";
 
 const TRIAGE_CONCURRENCY = 5;
 
 // ===== Types =====
 
-/** Triage results with true/false positive separation */
+/** Triage results with true positive / dead code / false positive separation */
 interface EntryPointTriageResults {
   true_positives: FalsePositiveEntry[];
+  dead_code: FalsePositiveEntry[];
   groups: Record<string, FalsePositiveGroup>;
   last_updated: string;
 }
@@ -66,6 +70,7 @@ interface EntryPointTriageResults {
 /** Per-entry response from triage two-phase query */
 interface EntryTriageResponse {
   is_true_positive: boolean;
+  is_likely_dead_code: boolean;
   group_id: string;
   root_cause: string;
   reasoning: string;
@@ -91,70 +96,37 @@ interface AggregationResponse {
 // ===== Filtering =====
 
 /**
- * Check if entry is already in any group or true_positives list
+ * Check if entry is already in any group, true_positives, or dead_code list
  */
 function is_already_processed(
   entry: EnrichedFunctionEntry,
-  results: EntryPointTriageResults
+  results: EntryPointTriageResults,
 ): boolean {
-  // Check true positives
   if (results.true_positives.some(
-    (e) => e.name === entry.name && e.file_path === entry.file_path && e.start_line === entry.start_line
+    (e) => e.name === entry.name && e.file_path === entry.file_path && e.start_line === entry.start_line,
   )) {
     return true;
   }
 
-  // Check groups
+  if (results.dead_code.some(
+    (e) => e.name === entry.name && e.file_path === entry.file_path && e.start_line === entry.start_line,
+  )) {
+    return true;
+  }
+
   for (const group of Object.values(results.groups)) {
     if (
       group.entries.some(
         (e) =>
           e.name === entry.name &&
           e.file_path === entry.file_path &&
-          e.start_line === entry.start_line
+          e.start_line === entry.start_line,
       )
     ) {
       return true;
     }
   }
   return false;
-}
-
-// ===== Stage 1: Deterministic Pre-classification =====
-
-/**
- * Populate triage results from deterministic classification.
- */
-function apply_pre_classification(
-  classified: ClassifiedEntry[],
-  results: EntryPointTriageResults,
-): number {
-  let count = 0;
-
-  for (const { entry, group_id, root_cause } of classified) {
-    const entry_data: FalsePositiveEntry = {
-      name: entry.name,
-      file_path: entry.file_path,
-      start_line: entry.start_line,
-      signature: entry.signature,
-    };
-
-    const existing = results.groups[group_id];
-    if (existing) {
-      existing.entries.push(entry_data);
-    } else {
-      results.groups[group_id] = {
-        group_id,
-        root_cause,
-        reasoning: "Deterministic classification based on enriched metadata",
-        existing_task_fixes: [],
-        entries: [entry_data],
-      };
-    }
-    count++;
-  }
-
-  return count;
 }
 
 // ===== Stage 2: Parallel Entry Investigation =====
@@ -172,7 +144,7 @@ function build_investigation_prompt(entry: EnrichedFunctionEntry): string {
   const call_refs = entry.diagnostics.ariadne_call_refs.length > 0
     ? entry.diagnostics.ariadne_call_refs
         .map((r) =>
-          `  Called from ${r.caller_function} at ${r.caller_file}:${r.call_line} (${r.call_type}), resolutions: [${r.resolved_to.join(", ") || "NONE"}]`
+          `  Called from ${r.caller_function} at ${r.caller_file}:${r.call_line} (${r.call_type}), resolutions: [${r.resolved_to.join(", ") || "NONE"}]`,
         )
         .join("\n")
     : "  (none found)";
@@ -184,13 +156,15 @@ function build_investigation_prompt(entry: EnrichedFunctionEntry): string {
   const call_summary = entry.call_summary;
 
   return `TASK: Determine whether this detected entry point is a legitimate public API
-entry point or a false positive caused by a detection bug.
+entry point, likely dead code, or a false positive caused by a detection bug.
 
 This is an external codebase with no ground truth. Decide based on evidence:
-Is this function meant to be called by external consumers, or is it internal?
+Is this function meant to be called by external consumers, is it unused dead code,
+or is it an internal function that was misdetected?
 
-If legitimate entry point: set is_true_positive=true.
-If false positive: set is_true_positive=false and diagnose the root cause.
+If legitimate entry point: set is_true_positive=true, is_likely_dead_code=false.
+If dead code: set is_true_positive=false, is_likely_dead_code=true.
+If false positive: set is_true_positive=false, is_likely_dead_code=false and diagnose the root cause.
 
 CALLABLE METADATA:
 - Name: ${entry.name}
@@ -217,8 +191,14 @@ TRUE POSITIVE (is_true_positive=true) if:
   - The function is exported and has no internal callers (it's a public API)
   - The function is a module-level entry point (e.g., main, CLI handler)
   - The function is part of a public interface/protocol
+  - The function is a framework lifecycle method (e.g., React render, Django view)
 
-FALSE POSITIVE (is_true_positive=false) if:
+DEAD CODE (is_likely_dead_code=true) if:
+  - The function has no callers and doesn't appear to be part of a public API
+  - The function looks like abandoned or unused code
+  - The function is not exported or is an internal helper with no references
+
+FALSE POSITIVE (is_true_positive=false, is_likely_dead_code=false) if:
   - The function has real callers that the call graph missed
   - The function is internal but was not resolved due to a detection bug
   - The function is a callback, constructor, or private method that should have been linked
@@ -229,8 +209,9 @@ For false positives, identify the root cause of the detection failure.`;
 const EXTRACTION_PROMPT = `Convert your analysis into this JSON format (no markdown):
 {
   "is_true_positive": true/false,
-  "group_id": "<kebab-case-short-id or 'true-positive'>",
-  "root_cause": "<description of why this is a true/false positive>",
+  "is_likely_dead_code": true/false,
+  "group_id": "<kebab-case-short-id or 'true-positive' or 'dead-code'>",
+  "root_cause": "<description of why this is a true/false positive or dead code>",
   "reasoning": "<explanation connecting the callable to the classification>"
 }`;
 
@@ -243,7 +224,7 @@ async function analyze_entry(
   total: number,
 ): Promise<EntryAnalysis> {
   console.error(
-    `\n🔍 [${index + 1}/${total}] Analyzing: ${entry.name} in ${path.basename(entry.file_path)}:${entry.start_line}`
+    `\n  [${index + 1}/${total}] Analyzing: ${entry.name} in ${path.basename(entry.file_path)}:${entry.start_line}`,
   );
 
   const investigation_prompt = build_investigation_prompt(entry);
@@ -255,8 +236,12 @@ async function analyze_entry(
       { model: "sonnet" },
     );
 
-  const label = result.is_true_positive ? "✅ true positive" : `❌ false positive → "${result.group_id}"`;
-  console.error(`   → ${label} (cost: $${total_cost.toFixed(4)})`);
+  const label = result.is_true_positive
+    ? "TP"
+    : result.is_likely_dead_code
+      ? "dead code"
+      : `FP: "${result.group_id}"`;
+  console.error(`   -> ${label} (cost: $${total_cost.toFixed(4)})`);
 
   return {
     entry,
@@ -273,7 +258,7 @@ async function analyze_entry(
 async function aggregate_analyses(
   analyses: EntryAnalysis[],
 ): Promise<AggregationResponse> {
-  console.error(`\n🧠 Running aggregation over ${analyses.length} false positive analyses...`);
+  console.error(`\n   Running aggregation over ${analyses.length} false positive analyses...`);
 
   const entries_text = analyses
     .map((a) => {
@@ -322,7 +307,7 @@ Include ALL entries in exactly one group each. Use the function names from the a
     { model: "opus" },
   );
 
-  console.error(`   ✓ Aggregated ${analyses.length} entries into ${result.groups.length} groups`);
+  console.error(`   Aggregated ${analyses.length} entries into ${result.groups.length} groups`);
 
   return result;
 }
@@ -335,7 +320,6 @@ function apply_aggregation_groups(
   analyses: EntryAnalysis[],
   results: EntryPointTriageResults,
 ): void {
-  // Build name→entry lookup
   const entry_by_name = new Map<string, EnrichedFunctionEntry>();
   for (const analysis of analyses) {
     entry_by_name.set(analysis.entry.name, analysis.entry);
@@ -381,9 +365,9 @@ function print_summary(
   stats: {
     total_entry_points: number;
     already_processed: number;
-    pre_classified_true_positives: number;
-    pre_classified_false_positives: number;
+    known_from_registry: number;
     llm_true_positives: number;
+    llm_dead_code: number;
     llm_false_positives: number;
     analysis_errors: number;
   },
@@ -394,18 +378,18 @@ function print_summary(
   console.error("=".repeat(60));
   console.error(`Total entry points: ${stats.total_entry_points}`);
   console.error(`  Already processed: ${stats.already_processed}`);
-  console.error(`  Pre-classified true positives: ${stats.pre_classified_true_positives}`);
-  console.error(`  Pre-classified false positives: ${stats.pre_classified_false_positives}`);
+  console.error(`  Known from registry: ${stats.known_from_registry}`);
   console.error(`  LLM-classified true positives: ${stats.llm_true_positives}`);
+  console.error(`  LLM-classified dead code: ${stats.llm_dead_code}`);
   console.error(`  LLM-classified false positives: ${stats.llm_false_positives}`);
   console.error(`  Analysis errors: ${stats.analysis_errors}`);
   console.error(`Total true positives: ${results.true_positives.length}`);
+  console.error(`Total dead code: ${results.dead_code.length}`);
   console.error(`Total false positive groups: ${Object.keys(results.groups).length}`);
   console.error(`\nResults saved to: ${output_file}`);
 
-  // Show group breakdown
   const sorted_groups = Object.values(results.groups).sort(
-    (a, b) => b.entries.length - a.entries.length
+    (a, b) => b.entries.length - a.entries.length,
   );
   if (sorted_groups.length > 0) {
     console.error("\nFalse positive groups by size:");
@@ -427,7 +411,7 @@ function parse_limit_arg(): number | undefined {
   if (limit_index !== -1 && args[limit_index + 1]) {
     return parseInt(args[limit_index + 1], 10);
   }
-  return undefined;
+  return 20;
 }
 
 async function main() {
@@ -442,49 +426,46 @@ async function main() {
 
   // Load analysis data
   const analysis: AnalysisResult = await load_json(analysis_file);
+  const { project_path, project_name } = analysis;
+
+  // Load known entrypoints registry
+  const known_sources = await load_known_entrypoints(project_name);
+  console.error(`Loaded ${known_sources.length} registry sources for "${project_name}"`);
 
   // Initialize results
   const results: EntryPointTriageResults = {
     true_positives: [],
+    dead_code: [],
     groups: {},
     last_updated: new Date().toISOString(),
   };
 
-  // No hard-coded file filter — all entries go through triage
-  const to_triage = analysis.entry_points;
-
   // Filter out already processed entries
+  const to_triage = analysis.entry_points;
   const to_process = to_triage.filter(
-    (ep) => !is_already_processed(ep, results)
+    (ep) => !is_already_processed(ep, results),
   );
   const already_processed = to_triage.length - to_process.length;
 
-  console.error(`\n📊 Total entry points: ${analysis.entry_points.length}`);
+  console.error(`\n   Total entry points: ${analysis.entry_points.length}`);
   console.error(`   Already processed: ${already_processed}`);
   console.error(`   To process: ${to_process.length}`);
 
-  // Stage 1: Deterministic pre-classification
-  console.error("\n🏷️  Stage 1: Deterministic pre-classification...");
-  const classification = classify_entrypoints(to_process);
+  // Stage 1: Known-entrypoint classification
+  console.error("\n   Stage 1: Known-entrypoint classification...");
+  const classification = classify_entrypoints(to_process, known_sources, project_path);
 
-  // Rule 1 true positives go to true_positives list
-  for (const entry of classification.true_positives) {
+  for (const match of classification.known_true_positives) {
     results.true_positives.push({
-      name: entry.name,
-      file_path: entry.file_path,
-      start_line: entry.start_line,
-      signature: entry.signature,
+      name: match.entry.name,
+      file_path: match.entry.file_path,
+      start_line: match.entry.start_line,
+      signature: match.entry.signature,
     });
   }
 
-  console.error(`   True positives: ${classification.true_positives.length}`);
-  console.error(`   Classified false positives: ${classification.classified_false_positives.length}`);
+  console.error(`   Known true positives (registry): ${classification.known_true_positives.length}`);
   console.error(`   Unclassified (need LLM): ${classification.unclassified.length}`);
-
-  const pre_classified_count = apply_pre_classification(
-    classification.classified_false_positives,
-    results,
-  );
 
   // Stage 2: Parallel entry investigation of unclassified entries
   const all_unclassified = classification.unclassified;
@@ -496,9 +477,10 @@ async function main() {
   let analysis_error_count = 0;
   const entry_analyses: EntryAnalysis[] = [];
   let llm_true_positive_count = 0;
+  let llm_dead_code_count = 0;
 
   if (unclassified.length > 0) {
-    console.error(`\n🤖 Stage 2: Triage analysis of ${unclassified.length} entries (${TRIAGE_CONCURRENCY} workers)...`);
+    console.error(`\n   Stage 2: Triage analysis of ${unclassified.length} entries (${TRIAGE_CONCURRENCY} workers)...`);
 
     try {
       const raw_results = await parallel_map(
@@ -507,7 +489,7 @@ async function main() {
           try {
             return await analyze_entry(entry, index, unclassified.length);
           } catch (error) {
-            console.error(`   ⚠️  Error analyzing ${entry.name}: ${error}`);
+            console.error(`   Error analyzing ${entry.name}: ${error}`);
             analysis_error_count++;
             return null;
           }
@@ -515,7 +497,7 @@ async function main() {
         TRIAGE_CONCURRENCY,
       );
 
-      // Partition into true/false positives
+      // Partition into true positives, dead code, and false positives
       for (const result of raw_results) {
         if (!result) continue;
 
@@ -527,43 +509,51 @@ async function main() {
             signature: result.entry.signature,
           });
           llm_true_positive_count++;
+        } else if (result.response.is_likely_dead_code) {
+          results.dead_code.push({
+            name: result.entry.name,
+            file_path: result.entry.file_path,
+            start_line: result.entry.start_line,
+            signature: result.entry.signature,
+          });
+          llm_dead_code_count++;
         } else {
           entry_analyses.push(result);
         }
       }
     } catch (error) {
-      console.error(`\n⚠️  Stage 2 error: ${error}`);
+      console.error(`\n   Stage 2 error: ${error}`);
     }
   }
 
   // Stage 3: Aggregation (only for false positives)
   if (entry_analyses.length > 0) {
-    console.error(`\n🧠 Stage 3: Aggregation of ${entry_analyses.length} false positive analyses...`);
+    console.error(`\n   Stage 3: Aggregation of ${entry_analyses.length} false positive analyses...`);
 
     try {
       const aggregation_result = await aggregate_analyses(entry_analyses);
       apply_aggregation_groups(aggregation_result, entry_analyses, results);
     } catch (error) {
-      console.error(`\n⚠️  Aggregation failed: ${error}`);
+      console.error(`\n   Aggregation failed: ${error}`);
       console.error("   Falling back to per-entry triage groups...");
 
-      for (const analysis of entry_analyses) {
+      for (const fp_analysis of entry_analyses) {
         const entry_data: FalsePositiveEntry = {
-          name: analysis.entry.name,
-          file_path: analysis.entry.file_path,
-          start_line: analysis.entry.start_line,
-          signature: analysis.entry.signature,
+          name: fp_analysis.entry.name,
+          file_path: fp_analysis.entry.file_path,
+          start_line: fp_analysis.entry.start_line,
+          signature: fp_analysis.entry.signature,
         };
 
-        const group_id = analysis.response.group_id;
+        const group_id = fp_analysis.response.group_id;
         const existing = results.groups[group_id];
         if (existing) {
           existing.entries.push(entry_data);
         } else {
           results.groups[group_id] = {
             group_id,
-            root_cause: analysis.response.root_cause,
-            reasoning: analysis.response.reasoning,
+            root_cause: fp_analysis.response.root_cause,
+            reasoning: fp_analysis.response.reasoning,
             existing_task_fixes: [],
             entries: [entry_data],
           };
@@ -572,20 +562,33 @@ async function main() {
     }
   }
 
-  // Save results
+  // Save triage results
   results.last_updated = new Date().toISOString();
   const output_file = await save_json(
     AnalysisCategory.EXTERNAL,
     ExternalScriptType.TRIAGE_ENTRY_POINTS,
-    results
+    results,
   );
+
+  // Persist confirmed TPs and dead code to the known-entrypoints registry
+  const project_source = build_project_source(results.true_positives, project_path);
+  const dead_code_source = build_dead_code_source(results.dead_code, project_path);
+  const framework_sources = known_sources.filter(
+    (s) => s.source !== "project" && s.source !== "dead-code",
+  );
+  const registry_path = await save_known_entrypoints(project_name, [
+    project_source,
+    dead_code_source,
+    ...framework_sources,
+  ]);
+  console.error(`   Registry updated: ${registry_path}`);
 
   print_summary(results, {
     total_entry_points: analysis.entry_points.length,
-    already_processed: already_processed,
-    pre_classified_true_positives: classification.true_positives.length,
-    pre_classified_false_positives: pre_classified_count,
+    already_processed,
+    known_from_registry: classification.known_true_positives.length,
     llm_true_positives: llm_true_positive_count,
+    llm_dead_code: llm_dead_code_count,
     llm_false_positives: entry_analyses.length,
     analysis_errors: analysis_error_count,
   }, output_file);

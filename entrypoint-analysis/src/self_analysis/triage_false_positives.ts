@@ -51,10 +51,7 @@ import {
   two_phase_query_detailed,
   parallel_map,
 } from "../agent_queries.js";
-import {
-  classify_entrypoints,
-  type ClassifiedEntry,
-} from "../classify_entrypoints.js";
+import { classify_entrypoints } from "../classify_entrypoints.js";
 
 const TRIAGE_CONCURRENCY = 5;
 
@@ -121,43 +118,6 @@ function is_deleted(
       d.file_path === entry.file_path &&
       d.start_line === entry.start_line
   );
-}
-
-// ===== Stage 1: Deterministic Pre-classification =====
-
-/**
- * Populate triage results from deterministic classification.
- */
-function apply_pre_classification(
-  classified: ClassifiedEntry[],
-  results: FalsePositiveTriageResults,
-): number {
-  let count = 0;
-
-  for (const { entry, group_id, root_cause } of classified) {
-    const entry_data: FalsePositiveEntry = {
-      name: entry.name,
-      file_path: entry.file_path,
-      start_line: entry.start_line,
-      signature: entry.signature,
-    };
-
-    const existing = results.groups[group_id];
-    if (existing) {
-      existing.entries.push(entry_data);
-    } else {
-      results.groups[group_id] = {
-        group_id,
-        root_cause,
-        reasoning: "Deterministic classification based on enriched metadata",
-        existing_task_fixes: [],
-        entries: [entry_data],
-      };
-    }
-    count++;
-  }
-
-  return count;
 }
 
 // ===== Stage 2: Parallel Entry Investigation =====
@@ -422,8 +382,6 @@ function print_summary(
     false_positives: number;
     deleted: number;
     already_processed: number;
-    pre_classified: number;
-    true_positives: number;
     entries_analyzed: number;
     analysis_errors: number;
   },
@@ -436,8 +394,6 @@ function print_summary(
   console.error(`False positives to triage: ${stats.false_positives}`);
   console.error(`  Already deleted: ${stats.deleted}`);
   console.error(`  Already grouped: ${stats.already_processed}`);
-  console.error(`  Pre-classified (deterministic): ${stats.pre_classified}`);
-  console.error(`  True positives (confirmed): ${stats.true_positives}`);
   console.error(`  Entries analyzed: ${stats.entries_analyzed}`);
   console.error(`  Analysis errors: ${stats.analysis_errors}`);
   console.error(`Total groups: ${Object.keys(results.groups).length}`);
@@ -590,18 +546,10 @@ async function main() {
   console.error(`   Already grouped: ${already_processed}`);
   console.error(`   To process: ${to_process.length}`);
 
-  // Stage 1: Deterministic pre-classification
-  console.error("\n🏷️  Stage 1: Deterministic pre-classification...");
-  const classification = classify_entrypoints(to_process);
+  // Self-analysis has no known-entrypoints registry — all entries go to LLM
+  const classification = classify_entrypoints(to_process, [], "");
 
-  console.error(`   True positives: ${classification.true_positives.length}`);
-  console.error(`   Classified false positives: ${classification.classified_false_positives.length}`);
   console.error(`   Unclassified (need LLM): ${classification.unclassified.length}`);
-
-  const pre_classified_count = apply_pre_classification(
-    classification.classified_false_positives,
-    results,
-  );
 
   // Stage 2: Parallel entry investigation of unclassified entries
   const all_unclassified = classification.unclassified;
@@ -692,8 +640,6 @@ async function main() {
     false_positives: false_positives.length,
     deleted: deleted_count,
     already_processed: already_processed,
-    pre_classified: pre_classified_count,
-    true_positives: classification.true_positives.length,
     entries_analyzed,
     analysis_errors: analysis_error_count,
   }, output_file);

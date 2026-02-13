@@ -82,8 +82,28 @@ export interface CallRefDiagnostic {
 }
 
 export interface AnalysisResult {
+  project_name: string;
+  project_path: string;
   entry_points: EnrichedFunctionEntry[];
   [key: string]: unknown;
+}
+
+// ===== Known Entrypoints Registry =====
+
+export interface KnownEntrypoint {
+  name: string;
+  /** Relative path from project root. Omit for pattern-based matching (frameworks). */
+  file_path?: string;
+  /** Optional kind filter for pattern-based matching. */
+  kind?: "function" | "method" | "constructor";
+  /** Informational only, not used for matching. */
+  start_line?: number;
+}
+
+export interface KnownEntrypointSource {
+  source: string;       // "project", "react", "django", etc.
+  description: string;
+  entrypoints: KnownEntrypoint[];
 }
 
 // ===== Phase 1 Outputs =====
