@@ -233,7 +233,8 @@ function gather_diagnostics(
   const def_line = node.location.start_line;
 
   // Step 1: Grep for textual call sites
-  const grep_call_sites = grep_for_calls(grep_name, def_file, def_line, source_files, MAX_GREP_HITS);
+  const is_constructor = node.definition.kind === "constructor";
+  const grep_call_sites = grep_for_calls(grep_name, def_file, def_line, source_files, MAX_GREP_HITS, is_constructor);
 
   // Step 2: Find matching CallReferences in the call graph
   const ariadne_call_refs = find_matching_call_refs(
@@ -262,6 +263,7 @@ function grep_for_calls(
   def_line: number,
   source_files: ReadonlyMap<string, string>,
   max_hits: number,
+  is_constructor: boolean = false,
 ): GrepHit[] {
   // Can't meaningfully grep for anonymous functions
   if (name === "<anonymous>") {
@@ -270,6 +272,11 @@ function grep_for_calls(
 
   const hits: GrepHit[] = [];
   const pattern = new RegExp(`\\b${escape_regex(name)}\\s*\\(`, "g");
+  // For constructors grepping by class name, skip class definition lines
+  // (e.g., "class AuthApi(object):" matches "AuthApi(" but isn't a call)
+  const class_def_pattern = is_constructor
+    ? new RegExp(`^\\s*class\\s+${escape_regex(name)}\\b`)
+    : null;
 
   for (const [file_path, content] of source_files) {
     const lines = content.split("\n");
@@ -283,6 +290,12 @@ function grep_for_calls(
       }
 
       if (pattern.test(line)) {
+        // Skip class definition lines for constructor grep
+        if (class_def_pattern && class_def_pattern.test(line)) {
+          pattern.lastIndex = 0;
+          continue;
+        }
+
         hits.push({
           file_path,
           line: line_num,

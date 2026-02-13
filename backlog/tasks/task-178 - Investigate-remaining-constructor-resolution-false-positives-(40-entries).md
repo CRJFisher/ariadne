@@ -133,7 +133,18 @@ Added behavioral tests for all languages (previously zero existed):
 
 - Added `build_constructor_to_class_name_map()` to `DefinitionRegistry` — iterates all class definitions and maps constructor symbol_ids to class names.
 - Modified `gather_diagnostics()` in `extract_entry_points.ts` to use the class name instead of `__init__`/`constructor` when grepping for constructor call sites.
+- Added class definition line skipping: `grep_for_calls` now filters lines matching `class\s+ClassName\b` to avoid false grep hits from Python class definitions like `class Foo(object):`.
 - Updated both `detect_entrypoints.ts` files (external and self-analysis) to build and pass the map.
+
+### Verification (Feb 13 re-analysis on AmazonAdv/projections)
+
+constructor-resolution-bug entries: __21 → 3__ (86% reduction)
+
+18 entries now correctly escape to other classification buckets (genuinely dead constructors with no real callers). The 3 remaining entries have genuine callers that Ariadne doesn't resolve:
+
+- `ApiTypeError` (10 callers via cross-module `raise ApiTypeError(...)`) — Root Cause C, deferred to task-188
+- `ReportGenerationError` (1 caller via `errors.ReportGenerationError(...)`) — module-qualified call, task-188
+- `DFMatcher` (1 caller: `DFMatcher(expected_df)`) — genuine resolution gap
 
 ### Cleanup
 
