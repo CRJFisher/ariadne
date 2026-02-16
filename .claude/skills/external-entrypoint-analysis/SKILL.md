@@ -28,19 +28,53 @@ All outputs go to `entrypoint-analysis/analysis_output/` with timestamped filena
 | Detection results     | `{project}-analysis_<timestamp>.json`          |
 | Entry point triage    | `entry_point_triage_<timestamp>.json`          |
 
+## Project Configuration
+
+Before running detection, check for an existing project config:
+
+1. Look in `entrypoint-analysis/project_configs/` for a `{project_name}.json` file
+2. If a config exists, use it with `--config` (skip to Step 1)
+3. If no config exists, ask the user for:
+   - Absolute path to the repository
+   - Folders to include (or all)
+   - Folders to exclude
+4. Create a config file from this template:
+
+```json
+{
+  "project_name": "<short-name>",
+  "project_path": "/absolute/path/to/repo",
+  "folders": ["src", "lib"],
+  "exclude": ["vendor", "generated"],
+  "include_tests": false
+}
+```
+
+| Field            | Required | Description                                      |
+| ---------------- | -------- | ------------------------------------------------ |
+| `project_name`   | Yes      | Short identifier used in output filenames        |
+| `project_path`   | Yes      | Absolute path to the repository root             |
+| `folders`        | No       | Subfolders to analyze (omit to analyze all)      |
+| `exclude`        | No       | Folder names to exclude from analysis            |
+| `include_tests`  | No       | Whether to include test files (default: false)   |
+
+Save the config to `entrypoint-analysis/project_configs/{project_name}.json`.
+
 ## Step 1: Detect Entry Points
 
 ```bash
-# Local repository
+# From project config (preferred)
+npx tsx entrypoint-analysis/src/external_analysis/detect_entrypoints.ts \
+  --config entrypoint-analysis/project_configs/{project_name}.json
+
+# Local repository (without config)
 npx tsx entrypoint-analysis/src/external_analysis/detect_entrypoints.ts --path /path/to/repo
 
 # GitHub repository
 npx tsx entrypoint-analysis/src/external_analysis/detect_entrypoints.ts --github owner/repo
 npx tsx entrypoint-analysis/src/external_analysis/detect_entrypoints.ts --github https://github.com/owner/repo
 
-# Available options:
-#   --path <dir>           Local directory to analyze
-#   --github <repo>        GitHub repository (owner/repo or full URL)
+# Additional options (used with --path or --github):
 #   --branch <name>        Branch to analyze (default: default branch)
 #   --depth <n>            Clone depth for GitHub repos (default: 1)
 #   --output <file>        Output file (default: stdout + timestamped file)
@@ -163,21 +197,7 @@ Method calls via `this` in derived classes are not tracked when the method is de
 
 ## Reproduction
 
-```typescript
-// external-repo/src/base.ts
-export class BaseService {
-  protected handleRequest(req: Request) {
-    // implementation
-  }
-}
-
-// external-repo/src/derived.ts
-export class DerivedService extends BaseService {
-  process(req: Request) {
-    this.handleRequest(req);  // This call is not tracked
-  }
-}
-```
+[List of code blocks in triple backticks, each mentioning the file paths and line numbers of the code that reproduces the problem]
 
 **Expected**: `handleRequest` is NOT an entry point (called via `this` in DerivedService)
 **Actual**: `handleRequest` is detected as entry point

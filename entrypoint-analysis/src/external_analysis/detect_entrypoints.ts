@@ -6,14 +6,18 @@
  * Supports multiple languages: TypeScript, JavaScript, Python, Rust, Go, Java, C++, C.
  *
  * Usage:
+ *   # From project config (preferred)
+ *   npx tsx detect_entrypoints.ts --config path/to/config.json
+ *
  *   # Local repository
- *   npx tsx analyze_external_repo.ts --path /path/to/repo
+ *   npx tsx detect_entrypoints.ts --path /path/to/repo
  *
  *   # GitHub repository
- *   npx tsx analyze_external_repo.ts --github owner/repo
- *   npx tsx analyze_external_repo.ts --github https://github.com/owner/repo
+ *   npx tsx detect_entrypoints.ts --github owner/repo
+ *   npx tsx detect_entrypoints.ts --github https://github.com/owner/repo
  *
  * Options:
+ *   --config <file>        Project config file (preferred)
  *   --path <dir>           Local directory to analyze
  *   --github <repo>        GitHub repository (owner/repo or full URL)
  *   --branch <name>        Branch to analyze (default: default branch)
@@ -29,6 +33,7 @@ import { is_test_file } from "../../../packages/core/src/project/detect_test_fil
 import { FilePath } from "@ariadnejs/types";
 import {
   find_source_files,
+  parse_gitignore,
   IGNORED_DIRECTORIES,
 } from "../../../packages/mcp/src/file_loading.js";
 import type { EnrichedFunctionEntry } from "../types.js";
@@ -70,6 +75,15 @@ interface CLIArgs {
   include_tests: boolean;
   folders?: string[];
   exclude?: string[];
+  config?: string;
+}
+
+interface ProjectConfig {
+  project_name: string;
+  project_path: string;
+  folders?: string[];
+  exclude?: string[];
+  include_tests?: boolean;
 }
 
 interface CloneResult {
@@ -120,6 +134,10 @@ function parse_cli_args(): CLIArgs {
       result.exclude = args[++i].split(",").map((p) => p.trim());
     } else if (arg.startsWith("--exclude=")) {
       result.exclude = arg.split("=")[1].split(",").map((p) => p.trim());
+    } else if (arg === "--config" && args[i + 1]) {
+      result.config = args[++i];
+    } else if (arg.startsWith("--config=")) {
+      result.config = arg.split("=")[1];
     }
   }
 
@@ -129,10 +147,12 @@ function parse_cli_args(): CLIArgs {
 function print_usage(): void {
   console.error(`
 Usage:
-  npx tsx analyze_external_repo.ts --path /path/to/repo
-  npx tsx analyze_external_repo.ts --github owner/repo
+  npx tsx detect_entrypoints.ts --config path/to/config.json
+  npx tsx detect_entrypoints.ts --path /path/to/repo
+  npx tsx detect_entrypoints.ts --github owner/repo
 
 Options:
+  --config <file>        Project config file (preferred, see below)
   --path <dir>           Local directory to analyze
   --github <repo>        GitHub repository (owner/repo or full URL)
   --branch <name>        Branch to analyze (default: default branch)
@@ -141,7 +161,39 @@ Options:
   --include-tests        Include test files in analysis
   --folders <paths>      Comma-separated subfolders to analyze
   --exclude <patterns>   Comma-separated exclude patterns
+
+Config file format (JSON):
+  {
+    "project_name": "my-project",
+    "project_path": "/absolute/path/to/repo",
+    "folders": ["src", "lib"],
+    "exclude": ["vendor", "generated"],
+    "include_tests": false
+  }
 `);
+}
+
+// ===== Config Loading =====
+
+async function load_project_config(config_path: string): Promise<ProjectConfig> {
+  const resolved = path.resolve(config_path);
+  const raw = await fs.readFile(resolved, "utf-8");
+  const parsed = JSON.parse(raw) as Record<string, unknown>;
+
+  if (typeof parsed.project_name !== "string" || !parsed.project_name) {
+    throw new Error("Config missing required field: project_name");
+  }
+  if (typeof parsed.project_path !== "string" || !parsed.project_path) {
+    throw new Error("Config missing required field: project_path");
+  }
+
+  return {
+    project_name: parsed.project_name,
+    project_path: path.resolve(parsed.project_path),
+    folders: Array.isArray(parsed.folders) ? (parsed.folders as string[]) : undefined,
+    exclude: Array.isArray(parsed.exclude) ? (parsed.exclude as string[]) : undefined,
+    include_tests: typeof parsed.include_tests === "boolean" ? parsed.include_tests : undefined,
+  };
 }
 
 // ===== GitHub Cloning =====
@@ -261,10 +313,14 @@ async function analyze_directory(
     search_paths = [project_path];
   }
 
+  // Combine .gitignore patterns with user exclude patterns so find_source_files skips them
+  const gitignore_patterns = await parse_gitignore(project_path);
+  const combined_patterns = [...gitignore_patterns, ...(options.exclude || [])];
+
   let all_files: string[] = [];
   for (const search_path of search_paths) {
     try {
-      const files = await find_source_files(search_path, project_path);
+      const files = await find_source_files(search_path, project_path, combined_patterns);
       all_files = all_files.concat(files);
     } catch (error) {
       console.error(`Warning: Could not read ${search_path}: ${error}`);
@@ -335,24 +391,50 @@ async function analyze_directory(
 async function main() {
   const args = parse_cli_args();
 
-  // Validate arguments
-  if (!args.path && !args.github) {
-    console.error("Error: Either --path or --github is required.");
-    print_usage();
-    process.exit(1);
-  }
-
-  if (args.path && args.github) {
-    console.error("Error: --path and --github are mutually exclusive.");
-    process.exit(1);
-  }
-
   let project_path: string;
   let source_info: SourceInfo;
   let cleanup: (() => Promise<void>) | undefined;
   let project_name: string;
+  let include_tests: boolean;
+  let folders: string[] | undefined;
+  let exclude: string[] | undefined;
 
-  try {
+  if (args.config) {
+    // Config mode — all settings come from the config file
+    const config = await load_project_config(args.config);
+
+    project_path = config.project_path;
+
+    // Verify path exists
+    try {
+      const stat = await fs.stat(project_path);
+      if (!stat.isDirectory()) {
+        console.error(`Error: ${project_path} is not a directory.`);
+        process.exit(1);
+      }
+    } catch {
+      console.error(`Error: Directory ${project_path} does not exist.`);
+      process.exit(1);
+    }
+
+    project_name = config.project_name;
+    include_tests = config.include_tests ?? false;
+    folders = config.folders;
+    exclude = config.exclude;
+    source_info = {
+      type: "local",
+      commit_hash: get_local_commit_hash(project_path),
+    };
+  } else if (args.path || args.github) {
+    if (args.path && args.github) {
+      console.error("Error: --path and --github are mutually exclusive.");
+      process.exit(1);
+    }
+
+    include_tests = args.include_tests;
+    folders = args.folders;
+    exclude = args.exclude;
+
     if (args.github) {
       // Clone GitHub repository
       const clone_result = await clone_github_repo(
@@ -373,7 +455,7 @@ async function main() {
         commit_hash: clone_result.commit_hash,
       };
     } else {
-      // Local path (args.path is guaranteed by validation above)
+      // Local path (args.path is guaranteed by the condition above)
       project_path = path.resolve(args.path as string);
 
       // Verify path exists
@@ -394,14 +476,20 @@ async function main() {
         commit_hash: get_local_commit_hash(project_path),
       };
     }
+  } else {
+    console.error("Error: One of --config, --path, or --github is required.");
+    print_usage();
+    process.exit(1);
+  }
 
+  try {
     // Run analysis
     const { files_analyzed, entry_points } = await analyze_directory(
       project_path,
       {
-        include_tests: args.include_tests,
-        folders: args.folders,
-        exclude: args.exclude,
+        include_tests,
+        folders,
+        exclude,
       }
     );
 
