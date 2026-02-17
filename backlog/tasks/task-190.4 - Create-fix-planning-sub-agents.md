@@ -14,6 +14,75 @@ parent_task_id: task-190
 
 Create the four fix-planning-phase custom sub-agents. For each false positive issue group: fix-planner agents investigate Ariadne core code and propose concrete fix plans, plan-synthesizer combines 5 competing plans into the best overall approach, plan-reviewer reviews the synthesis from specific angles (info-arch, simplicity, fundamentality, lang-coverage), and task-writer creates a backlog task incorporating all reviews. Sub-agents write output to files on disk (not returned to top-level), keeping context clean.
 
+**Original plan file**: `~/.claude/plans/zazzy-brewing-gem.md`
+
+### Agent Definitions
+
+#### fix-planner
+
+```yaml
+---
+name: fix-planner
+description: Proposes a fix plan for a specific false positive issue group. Reads Ariadne core code to understand the detection gap and designs a concrete fix. Writes plan to a file.
+model: sonnet
+tools: Read, Grep, Glob, Write
+mcpServers:
+  - ariadne
+maxTurns: 20
+---
+```
+
+**Instructions**: Receives a group_id, root_cause description, and list of affected entries. Investigates the Ariadne core code to understand exactly where the detection fails. Proposes a concrete fix plan including: which files to modify, what logic to add/change, regression test cases, and expected impact on false positive count. Writes the plan to the specified output file path.
+
+#### plan-synthesizer
+
+```yaml
+---
+name: plan-synthesizer
+description: Reads 5 competing fix plans for an issue group and synthesizes the best overall plan, combining the strongest elements from each.
+model: opus
+tools: Read, Write
+maxTurns: 10
+---
+```
+
+**Instructions**: Reads all 5 plans from the specified directory. Evaluates each plan on: correctness, simplicity, scope of fix (does it fix the root cause or just symptoms?), test coverage, and impact on other code. Synthesizes a single best plan that combines the strongest elements. Writes to the specified output file.
+
+#### plan-reviewer
+
+```yaml
+---
+name: plan-reviewer
+description: Reviews a synthesized fix plan from a specific angle (info-architecture, simplicity, fundamentality, or language-coverage). Writes review to a file.
+model: sonnet
+tools: Read, Grep, Glob, Write
+maxTurns: 15
+---
+```
+
+**Instructions**: Receives the synthesis plan path and a review angle:
+
+- **info-architecture**: Do the changes fit with naming conventions, folder structure, module organization?
+- **simplicity**: Could the implementation be simpler? Better function delegation or intermediary data models?
+- **fundamentality**: Does the fix address the root cause in the most fundamental way?
+- **language-coverage**: If language-specific, does it cover all relevant languages with tests/fixtures?
+
+Writes review (suggestions, concerns, approval) to the specified output file.
+
+#### task-writer
+
+```yaml
+---
+name: task-writer
+description: Creates a backlog task file from a synthesized plan and its reviews. Incorporates reviewer feedback into the final task document.
+model: sonnet
+tools: Read, Write, Bash(backlog:*)
+maxTurns: 10
+---
+```
+
+**Instructions**: Reads the synthesis plan and all 4 reviews. Incorporates review feedback (addressing concerns, integrating suggestions). Creates a properly formatted backlog task file using the `backlog` CLI. The task includes: title, description, acceptance criteria, implementation plan, and review notes.
+
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
 - [ ] #1 fix-planner agent: sonnet model, Read/Grep/Glob/Write tools, ariadne MCP server, 20 max turns

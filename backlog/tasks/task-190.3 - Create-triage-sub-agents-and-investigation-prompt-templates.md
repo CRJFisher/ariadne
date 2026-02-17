@@ -12,7 +12,98 @@ parent_task_id: task-190
 
 ## Description
 
-Create the three triage-phase custom sub-agents and their diagnosis-specific prompt templates. The triage-investigator agent investigates one entry using MCP tools (show_call_graph_neighborhood) and returns structured JSON classification. The triage-aggregator groups false positives by shared root cause. The triage-rule-reviewer identifies patterns in escape-hatch results that could become deterministic classification rules. Prompt templates are diagnosis-specific markdown files that separate investigation protocol from orchestration logic.
+Create the three triage-phase custom sub-agents and their diagnosis-specific prompt templates. The triage-investigator agent investigates one entry using MCP tools (`show_call_graph_neighborhood`) and returns structured JSON classification. The triage-aggregator groups false positives by shared root cause. The triage-rule-reviewer identifies patterns in escape-hatch results that could become deterministic classification rules. Prompt templates are diagnosis-specific markdown files that separate investigation protocol from orchestration logic.
+
+**Original plan file**: `~/.claude/plans/zazzy-brewing-gem.md`
+
+### Agent Definitions
+
+#### triage-investigator
+
+```yaml
+---
+name: triage-investigator
+description: Investigates a single entry point to classify it as true positive, dead code, or false positive. Returns structured JSON.
+model: sonnet
+tools: Read, Grep, Glob
+mcpServers:
+  - ariadne
+maxTurns: 15
+---
+```
+
+**Instructions**: Structured investigation protocol:
+
+1. Verify callers exist (review pre-gathered grep results, run additional searches)
+2. Check call graph coverage using `show_call_graph_neighborhood` MCP tool
+3. Classify: true positive / dead code / false positive with group_id and root_cause
+4. Output ONLY a JSON classification block
+
+The sub-agent works in its own context. Only the final JSON classification returns to the top-level. All investigation reasoning stays in the sub-agent's context.
+
+#### triage-aggregator
+
+```yaml
+---
+name: triage-aggregator
+description: Groups completed triage results by shared root cause. Merges duplicate group IDs into canonical groupings.
+model: opus
+tools: Read
+maxTurns: 5
+---
+```
+
+**Instructions**: Read the state file, review all false positive classifications, group by shared root cause, merge duplicate group_ids. Output JSON with canonical groups.
+
+#### triage-rule-reviewer
+
+```yaml
+---
+name: triage-rule-reviewer
+description: Reviews escape-hatch triage results and identifies patterns that could become deterministic classification rules.
+model: sonnet
+tools: Read, Grep
+maxTurns: 10
+---
+```
+
+**Instructions**: Find entries that required LLM investigation (`route="llm-triage"`), identify common metadata patterns within each group_id, propose deterministic rules that could catch these entries without LLM. Each proposed rule gets a confidence rating (HIGH/MEDIUM/LOW). Only HIGH confidence rules recommended for automatic addition.
+
+### Example Prompt Template
+
+```markdown
+# templates/prompt_callers_not_in_registry.md
+
+## Investigation: Callers Not in Registry
+
+This entry has textual callers (found by grep) but Ariadne's call registry
+has no matching call references.
+
+### Required Steps
+
+1. Read the calling file(s) listed in grep results. Confirm these are real
+   invocations (not string matches, comments, or type annotations).
+2. Use `show_call_graph_neighborhood` on the caller function to check if
+   Ariadne indexed the caller at all.
+3. If the caller IS indexed but the call is not registered: identify the
+   specific call pattern that Ariadne fails to parse (method chain, dynamic
+   dispatch, decorators, etc.)
+4. If the caller is NOT indexed: identify why (test file? excluded folder?
+   file type not supported?)
+
+### Output
+
+Return ONLY a JSON block:
+{
+  "is_true_positive": false,
+  "is_likely_dead_code": false,
+  "group_id": "<kebab-case describing the detection gap>",
+  "root_cause": "<what pattern Ariadne fails to handle>",
+  "reasoning": "<specific evidence from your investigation>"
+}
+```
+
+Claude reads the template, substitutes the entry's metadata, and passes it as the sub-agent's prompt. This separates the investigation protocol (in files) from the orchestration logic (in SKILL.md).
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->

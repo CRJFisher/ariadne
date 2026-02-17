@@ -14,6 +14,8 @@ parent_task_id: task-190
 
 Verify the complete self-repair pipeline end-to-end and clean up old code. Run the pipeline on the core package (small set, ~14 entries) to verify the stop hook drives the triage loop correctly, sub-agents use MCP tools and return correct classifications, the state file progresses through all phases, and fix planning produces backlog tasks. Compare results against the old pipeline output. Then run on an external project (projections) to verify exhaustive triage completes. After validation, delete the old triage scripts.
 
+**Original plan file**: `~/.claude/plans/zazzy-brewing-gem.md`
+
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
 - [ ] #1 Self-analysis on core package: state file progresses triage → aggregation → meta-review → fix-planning → complete

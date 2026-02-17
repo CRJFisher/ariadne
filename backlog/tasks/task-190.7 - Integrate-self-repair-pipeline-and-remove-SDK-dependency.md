@@ -16,7 +16,9 @@ parent_task_id: task-190
 
 ## Description
 
-Wire the self-repair pipeline into the existing skill infrastructure and clean up the old SDK-based code. Update self-entrypoint-analysis and external-entrypoint-analysis skills to reference the self-repair-pipeline skill for their triage + fix-planning steps. Remove the @anthropic-ai/claude-agent-sdk dependency from package.json. Delete agent_queries.ts (the only file using the SDK). Keep the old triage scripts (triage_false_positives.ts, triage_entry_points.ts) for comparison until verification is complete.
+Wire the self-repair pipeline into the existing skill infrastructure and clean up the old SDK-based code. Update `self-entrypoint-analysis` and `external-entrypoint-analysis` skills to reference the `self-repair-pipeline` skill for their triage + fix-planning steps. Remove the `@anthropic-ai/claude-agent-sdk` dependency from `package.json`. Delete `agent_queries.ts` (the only file using the SDK). Keep the old triage scripts (`triage_false_positives.ts`, `triage_entry_points.ts`) for comparison until verification is complete.
+
+**Original plan file**: `~/.claude/plans/zazzy-brewing-gem.md`
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->

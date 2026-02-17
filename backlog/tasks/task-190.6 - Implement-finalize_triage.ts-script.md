@@ -12,7 +12,23 @@ parent_task_id: task-190
 
 ## Description
 
-Create the deterministic finalize_triage.ts script that runs after all triage and fix planning is complete. Reads the completed state file, builds output in the existing FalsePositiveTriageResults / EntryPointTriageResults format, saves to analysis_output/ with timestamp, updates the known-entrypoints registry (TPs → project source, dead code → dead-code source), writes new triage patterns for human review, removes the .claude/triage_active marker, and prints a summary.
+Create the deterministic `finalize_triage.ts` script that runs after all triage and fix planning is complete. Reads the completed state file, builds output in the existing `FalsePositiveTriageResults` / `EntryPointTriageResults` format, saves to `analysis_output/` with timestamp, updates the known-entrypoints registry (TPs → "project" source, dead code → "dead-code" source), writes new triage patterns for human review, removes the `.claude/triage_active` marker, and prints a summary.
+
+**Original plan file**: `~/.claude/plans/zazzy-brewing-gem.md`
+
+### finalize_triage.ts Process
+
+**File**: `.claude/skills/self-repair-pipeline/scripts/finalize_triage.ts`
+
+**Inputs**: `--state <path>`
+
+1. Load state file, verify `phase === "complete"`
+2. Build output in existing `FalsePositiveTriageResults` / `EntryPointTriageResults` format
+3. Save via `save_json()` to `analysis_output/` with timestamp
+4. Update known-entrypoints registry (TPs → "project" source, dead code → "dead-code" source)
+5. If `meta_review` has new patterns, write to `entrypoint-analysis/triage_patterns.json` for human review
+6. Remove `.claude/triage_active` marker
+7. Print summary
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
