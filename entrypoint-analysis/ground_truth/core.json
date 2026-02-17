@@ -14,5 +14,6 @@
   { "name": "get_derived_data", "file": "project/project.ts", "notes": "Project public API" },
   { "name": "get_source_code", "file": "project/project.ts", "notes": "Project public API" },
   { "name": "get_definition", "file": "project/project.ts", "notes": "Project public API" },
-  { "name": "clear", "file": "project/project.ts", "notes": "Project public API" }
+  { "name": "clear", "file": "project/project.ts", "notes": "Project public API" },
+  { "name": "get_class_definitions", "file": "resolve_references/registries/definition.ts", "notes": "Used by entrypoint-analysis for constructor-to-class mapping" }
 ]

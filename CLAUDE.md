@@ -18,57 +18,13 @@
 
 - DO NOT SUPPORT BACKWARD COMPATIBILITY - JUST _CHANGE_ THE CODE.
 
-## Language-specific Code Handling
+## Processing Pipeline
 
-### File Naming Convention
+The core pipeline has three stages. Subsystem-specific guidance lives in `.claude/rules/`.
 
-Language-specific code follows the pattern `{module}.{language}.ts`:
-
-```text
-module_name/
-├── module_name.ts              # Language-agnostic logic with dispatch
-├── module_name.python.ts       # Python-specific implementation
-├── module_name.typescript.ts   # TypeScript-specific implementation
-├── module_name.javascript.ts   # JavaScript-specific implementation
-├── module_name.python.test.ts  # Python-specific tests
-└── module_name.test.ts         # Integration tests
-```
-
-### When to Create Language-Specific Files
-
-Create a language-specific file (`module.{language}.ts`) when:
-
-1. **The fix handles language-specific semantics** - e.g., Python's variable reassignment at module level creates multiple definitions, which differs from JS/TS behavior
-2. **Tree-sitter query patterns differ by language** - Different AST structures require different handling
-3. **The behavior is triggered by file extension** - e.g., `.py` files need Python-specific export handling
-
-### Implementation Pattern
-
-The main module dispatches to language-specific implementations:
-
-```typescript
-// module_name.ts (main entry point)
-import { handle_python } from "./module_name.python";
-import { handle_typescript } from "./module_name.typescript";
-
-function process(file_path: FilePath): void {
-  if (file_path.endsWith(".py")) {
-    return handle_python(file_path);
-  }
-  if (file_path.endsWith(".ts")) {
-    return handle_typescript(file_path);
-  }
-  // ... default handling
-}
-```
-
-### Cross-Language Considerations
-
-When fixing a bug in a language-specific file:
-
-1. **Consider applicability** - Does the fix apply to other languages?
-2. **Apply consistently** - If applicable, apply the fix to all relevant language files
-3. **Test thoroughly** - Include both unit tests for the language-specific module and integration tests that verify end-to-end behavior
+1. **Per-file indexing** (`index_single_file/`) — 4-pass semantic indexing: query tree → scopes → definitions → references
+2. **Project resolution** (`project/` + `resolve_references/`) — Registry updates + 2-phase resolution: name resolution → call resolution
+3. **Entry point detection** (`trace_call_graph/`) — Build call graph, identify unreachable functions
 
 ## Documentation Style: Canonical and Self-Contained
 
@@ -76,87 +32,26 @@ When writing or updating documentation, always write in a **canonical, self-cont
 
 **DO:**
 
-- ✅ Describe the system as it currently IS
-- ✅ Write in present tense ("The system works like this...")
-- ✅ Be authoritative and direct
-- ✅ Assume reader has no prior knowledge or context
-- ✅ Focus on WHAT to do, not what NOT to do
-- ✅ State the approach confidently without justification
+- Describe the system as it currently IS
+- Write in present tense ("The system works like this...")
+- Be authoritative and direct
+- Assume reader has no prior knowledge or context
+- Focus on WHAT to do, not what NOT to do
+- State the approach confidently without justification
 
 **DON'T:**
 
-- ❌ Reference "old approaches," "previous versions," or "deprecated methods"
-- ❌ Use "revised," "updated," or "new" framing
-- ❌ Explain what you're NOT doing or alternative approaches you rejected
-- ❌ Include defensive justifications for design choices
-- ❌ Write comparisons to alternatives (unless teaching concepts)
-- ❌ Use apologetic or hedging language
-- ❌ Assume reader knows the history or evolution
+- Reference "old approaches," "previous versions," or "deprecated methods"
+- Use "revised," "updated," or "new" framing
+- Explain what you're NOT doing or alternative approaches you rejected
+- Include defensive justifications for design choices
+- Write comparisons to alternatives (unless teaching concepts)
+- Use apologetic or hedging language
+- Assume reader knows the history or evolution
 
 **Why:** Documentation should be the authoritative source of truth about the current system. Historical context belongs in commit messages, architecture decision records (separate files), or changelog files - not in the canonical system documentation.
 
-**Example of RELATIVE writing (bad):**
-
-```markdown
-⚠️ IMPORTANT: Revised Scope
-
-Original plan: Three-stage JSON pipeline
-Revised plan: Semantic index JSON only
-Reason: Solves the real problem without complexity
-
-What we're NOT doing:
-
-- ❌ JSON for registry outputs
-- ❌ JSON for call graph outputs
-```
-
-**Example of CANONICAL writing (good):**
-
-```markdown
-## Scope
-
-The fixture system uses JSON for semantic index outputs. These fixtures serve as inputs for registry and call graph integration tests.
-
-JSON fixtures represent semantic index outputs only. Registry and call graph outputs are verified with code assertions.
-```
-
 **Note:** This applies to system documentation (README, task docs, architecture docs). Implementation notes in task files may reference history when documenting specific changes made.
-
-### Core
-
-- `packages/core/src/index_single_file`
-  - builds the semantic index for a single file
-  - build definitions including symbol-ids which are globally unique
-  - builds references including symbol-names which are unique within a scope
-  - builds scopes including lexical scope relationships
-  - build type information including type bindings and type members TODO: verify these details
-  - **Arrow Function Handling**: Arrow functions and function expressions assigned to variables are captured as function definitions only, not as both function and variable definitions. This prevents duplicate symbols for the same entity - the function symbol is sufficient for call graph analysis and reference resolution.
-- `packages/core/src/resolve_references`
-  - resolves references to symbols, matching symbol-names to symbol-ids
-  - resolves symbols by name and scope - start at the bottom of the scope tree and work up i.e. lexical scope resolution
-- `packages/core/src/trace_call_graph`
-  - detects the call graph of a codebase
-  - uses the semantic index and resolve_references to find the entry points to the codebase caller scopes that are never called (internally)
-
-## Universal Symbol System
-
-### Always Use SymbolId for Identifiers
-
-When working with any identifier (variable, function, class, method, property, etc.), use the universal `SymbolId` type instead of individual name types or raw strings:
-
-### Creating SymbolIds
-
-Use the factory functions from `symbol.ts`:
-
-```typescript
-import { function_symbol, class_symbol, method_symbol } from '@ariadnejs/types';
-
-// Create symbols with proper context
-const funcId = function_symbol('processData', 'src/utils.ts', location);
-const classId = class_symbol('MyClass', 'src/classes.ts', location);
-const methodId = method_symbol('getValue', 'MyClass', 'src/classes.ts', location);
-...
-```
 
 ## Code Style Guidelines
 
@@ -220,87 +115,6 @@ Test helper functions should go in the first common ancestor test file of all de
 - Export the helper so child test files can import it
 
 This avoids generic utility files like `test_utils.ts` that become dumping grounds.
-
-## Scope Boundary Semantics
-
-### Three Critical Positions
-
-Every scope-creating construct has three positions:
-
-1. **Symbol Location**: Where the name is declared (belongs to parent scope)
-
-   - Class name, function name, etc.
-   - Used by definition processing to determine where symbols are defined
-
-2. **Scope Start**: Where the new scope begins
-
-   - After class declaration syntax (`:` in Python, `{` in TS/JS)
-   - Excludes the declaration itself
-
-3. **Scope End**: Where the scope ends
-   - Typically the end of the body block
-
-### Language-Specific Extractors
-
-Each language has a `ScopeBoundaryExtractor` that converts tree-sitter node positions
-to our semantic scope model:
-
-- **Python**: `PythonScopeBoundaryExtractor`
-
-  - Finds `:` token for class bodies (tree-sitter reports wrong position)
-  - Function scopes start at parameters
-
-- **TypeScript/JavaScript**: `TypeScriptScopeBoundaryExtractor` / `JavaScriptScopeBoundaryExtractor`
-
-  - Class bodies start at `{`
-  - Named function expressions have special handling
-  - Scope starts after `function` keyword
-
-- **Rust**: `RustScopeBoundaryExtractor`
-  - Similar to TypeScript for most constructs
-  - Handles struct, enum, trait, impl blocks
-  - Uses tree-sitter field names for precise boundaries
-
-### Why This Architecture?
-
-Tree-sitter grammars report node positions inconsistently:
-
-- Python's `(block)` starts at first child, not at `:`
-- TypeScript's `class_body` starts at `{` (correct)
-
-Instead of scattering language-specific logic throughout `scope_processor.ts`,
-we centralize it in extractor classes that transform raw positions to semantic boundaries.
-
-### Architecture Flow
-
-```
-┌─────────────────────┐
-│  Tree-Sitter Query  │  What: Captures scope-creating nodes
-│   (*.scm files)     │
-└──────────┬──────────┘
-           │ CaptureNode with raw position
-           ▼
-┌─────────────────────┐
-│ Scope Boundary      │  Where: Transforms raw positions to semantic boundaries
-│    Extractor        │  (language-specific)
-└──────────┬──────────┘
-           │ { symbol_location, scope_location }
-           ▼
-┌─────────────────────┐
-│  Scope Processor    │  How: Builds scope tree from semantic boundaries
-│                     │  (language-agnostic)
-└─────────────────────┘
-```
-
-### Adding New Languages
-
-To add a new language:
-
-1. Create `extractors/{language}_scope_boundary_extractor.ts`
-2. Implement `extract_boundaries()` for each scope type
-3. Add to factory in `scope_boundary_extractor.ts`
-4. Write tests for boundary extraction
-5. Verify scope depths are correct
 
 ## Debugging
 

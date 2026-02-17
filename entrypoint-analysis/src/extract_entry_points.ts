@@ -12,6 +12,7 @@ import type {
   CallGraph,
   CallableNode,
   CallReference,
+  ClassDefinition,
   FunctionDefinition,
   MethodDefinition,
   ConstructorDefinition,
@@ -26,6 +27,22 @@ import type {
   GrepHit,
   CallRefDiagnostic,
 } from "./types.js";
+
+/**
+ * Build a map from constructor SymbolId to the owning class name.
+ * Used by grep diagnostics to search for `ClassName(` instead of `__init__()`.
+ */
+export function build_constructor_to_class_name_map(
+  class_definitions: readonly ClassDefinition[],
+): ReadonlyMap<SymbolId, SymbolName> {
+  const map = new Map<SymbolId, SymbolName>();
+  for (const def of class_definitions) {
+    for (const ctor of def.constructors ?? []) {
+      map.set(ctor.symbol_id, def.name);
+    }
+  }
+  return map;
+}
 
 // ===== Entry Point Extraction =====
 

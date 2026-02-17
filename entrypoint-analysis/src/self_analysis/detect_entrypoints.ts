@@ -24,6 +24,7 @@ import { is_test_file } from "../../../packages/core/src/project/detect_test_fil
 import { FilePath } from "@ariadnejs/types";
 import type { EnrichedFunctionEntry } from "../types.js";
 import {
+  build_constructor_to_class_name_map,
   detect_language,
   extract_entry_points,
 } from "../extract_entry_points.js";
@@ -325,7 +326,7 @@ async function analyze_package(package_name: string, include_tests: boolean = fa
   console.error(`Found ${call_graph.entry_points.length} entry points in ${callgraph_time}ms`);
 
   // Build constructor → class name map for grep heuristic
-  const class_name_by_constructor_id = project.definitions.build_constructor_to_class_name_map();
+  const class_name_by_constructor_id = build_constructor_to_class_name_map(project.definitions.get_class_definitions());
 
   // Extract entry point information
   const entry_points = extract_entry_points(call_graph, source_files, undefined, class_name_by_constructor_id);

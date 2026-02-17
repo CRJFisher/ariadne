@@ -6,6 +6,7 @@ import type {
   ScopeId,
   SymbolName,
   CallableDefinition,
+  ClassDefinition,
   ExportableDefinition,
   SymbolKind,
   FunctionCollection,
@@ -240,6 +241,19 @@ export class DefinitionRegistry {
       }
     }
     return callables;
+  }
+
+  /**
+   * Get all class definitions in the registry.
+   */
+  get_class_definitions(): ClassDefinition[] {
+    const classes: ClassDefinition[] = [];
+    for (const def of this.by_symbol.values()) {
+      if (def.kind === "class") {
+        classes.push(def);
+      }
+    }
+    return classes;
   }
 
   get_exportable_definitions_in_file(
@@ -602,26 +616,6 @@ export class DefinitionRegistry {
       }
     }
     return false;
-  }
-
-  /**
-   * Clear all definitions from the registry.
-   */
-  /**
-   * Build a map from constructor SymbolId to the owning class name.
-   * Used by entry point analysis to grep for class instantiation calls
-   * instead of constructor method names (e.g., ClassName( instead of __init__().
-   */
-  build_constructor_to_class_name_map(): ReadonlyMap<SymbolId, SymbolName> {
-    const map = new Map<SymbolId, SymbolName>();
-    for (const def of this.by_symbol.values()) {
-      if (def.kind === "class") {
-        for (const ctor of def.constructors ?? []) {
-          map.set(ctor.symbol_id, def.name);
-        }
-      }
-    }
-    return map;
   }
 
   clear(): void {
