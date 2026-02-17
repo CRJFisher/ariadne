@@ -12,7 +12,7 @@ parent_task_id: task-190
 
 ## Description
 
-Create the stop hook script that drives the triage loop as a deterministic state machine. The hook reads the state file, determines the current phase, and either BLOCKs (with instructions for what Claude should do next) or ALLOWs (pipeline complete). Phase transitions: triage → aggregation → meta-review → fix-planning → complete. The hook only activates when `.claude/triage_active` marker exists, ensuring zero overhead for non-pipeline sessions.
+Create the stop hook script that drives the triage loop as a deterministic state machine. The hook discovers the state file via glob (`entrypoint-analysis/triage_state/*_triage.json`), determines the current phase, and either BLOCKs (with instructions for what Claude should do next) or ALLOWs (pipeline complete). Phase transitions: triage → aggregation → meta-review → fix-planning → complete. The hook is scoped to the skill's YAML frontmatter, so it only fires while the `/self-repair-pipeline` skill is active — zero overhead for non-pipeline sessions.
 
 **Original plan file**: `~/.claude/plans/zazzy-brewing-gem.md`
 
@@ -20,13 +20,13 @@ Create the stop hook script that drives the triage loop as a deterministic state
 
 **File**: `.claude/skills/self-repair-pipeline/scripts/triage_loop_stop.ts`
 
-Activation: only runs when `.claude/triage_active` marker file exists (contains path to state file).
+Activation: scoped to the skill's YAML frontmatter — only fires while `/self-repair-pipeline` is active. Discovers state file via glob `entrypoint-analysis/triage_state/*_triage.json`.
 
 ```
 Input: { stop_hook_active: boolean, ... }
 
 if stop_hook_active → ALLOW (prevent infinite loops)
-if no marker file   → ALLOW (not running triage)
+if no state file    → ALLOW (nothing to triage)
 if state parse error → ALLOW (log error, don't block forever)
 
 Phase transitions:
@@ -101,41 +101,38 @@ The BLOCK reason message tells Claude exactly what to do next, ensuring determin
 
 ### Hook Registration
 
-The `.claude/settings.json` entry points to the script inside the skill directory:
+The hook is registered in the skill's YAML frontmatter (`.claude/skills/self-repair-pipeline/SKILL.md`), scoping it to only fire while the skill is active:
 
-```json
-{
-  "hooks": {
-    "Stop": [{
-      "hooks": [{
-        "type": "command",
-        "command": "pnpm exec tsx \"$CLAUDE_PROJECT_DIR/.claude/skills/self-repair-pipeline/scripts/triage_loop_stop.ts\""
-      }]
-    }]
-  }
-}
+```yaml
+---
+hooks:
+  Stop:
+    - hooks:
+        - type: command
+          command: "pnpm exec tsx \"$CLAUDE_PROJECT_DIR/.claude/skills/self-repair-pipeline/scripts/triage_loop_stop.ts\""
+          timeout: 30
+---
 ```
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 Hook reads state file path from .claude/triage_active marker
+- [ ] #1 Hook discovers state file via glob `entrypoint-analysis/triage_state/*_triage.json`
 - [ ] #2 Phase=triage: BLOCKs with batch instructions when pending entries exist, transitions to aggregation when all done
 - [ ] #3 Phase=aggregation: BLOCKs until aggregator completes, transitions to meta-review or complete
 - [ ] #4 Phase=meta-review: BLOCKs until rule-reviewer completes, transitions to fix-planning or complete
 - [ ] #5 Phase=fix-planning: drives per-group sub-phases (planning → synthesis → review → task-writing → complete)
 - [ ] #6 stop_hook_active=true always ALLOWs (prevents infinite loops)
 - [ ] #7 State parse errors ALLOW with logged warning (never blocks forever)
-- [ ] #8 No marker file → ALLOW immediately (zero overhead)
+- [ ] #8 No state file found → ALLOW immediately
 - [ ] #9 BLOCK reason messages contain specific instructions for what Claude should do next
-- [ ] #10 .claude/settings.json updated to register the stop hook
+- [ ] #10 Hook registered in skill YAML frontmatter (not global settings.json)
 <!-- AC:END -->
 
 ## Implementation Plan
 
 1. Create .claude/skills/self-repair-pipeline/scripts/triage_loop_stop.ts
 2. Implement stdin JSON parsing for stop hook input (reads stop_hook_active flag)
-3. Implement marker file check (.claude/triage_active)
+3. Implement state file discovery via glob (`entrypoint-analysis/triage_state/*_triage.json`)
 4. Implement phase-specific logic matching the State Machine section in the plan
 5. Implement fix-planning sub-phase tracking (planning/synthesis/review/task-writing/complete per group)
-6. Add stop hook registration to .claude/settings.json
-7. Test with mock state files at each phase transition
+6. Test with mock state files at each phase transition

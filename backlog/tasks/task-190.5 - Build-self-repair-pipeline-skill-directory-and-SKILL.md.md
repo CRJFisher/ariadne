@@ -25,7 +25,14 @@ Create the multi-file skill directory that ties all components together. SKILL.m
 ---
 name: self-repair-pipeline
 description: Runs the full entry point self-repair pipeline. Detects entry points, triages false positives via sub-agents, plans fixes for each issue group with competing proposals and multi-angle review, and creates backlog tasks.
+disable-model-invocation: true
 allowed-tools: Bash(npx tsx:*,pnpm exec tsx:*), Read, Write, Task(triage-investigator, triage-aggregator, triage-rule-reviewer, fix-planner, plan-synthesizer, plan-reviewer, task-writer)
+hooks:
+  Stop:
+    - hooks:
+        - type: command
+          command: "pnpm exec tsx \"$CLAUDE_PROJECT_DIR/.claude/skills/self-repair-pipeline/scripts/triage_loop_stop.ts\""
+          timeout: 30
 ---
 ```
 
@@ -59,7 +66,7 @@ The existing `self-entrypoint-analysis` and `external-entrypoint-analysis` skill
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 SKILL.md has name, description, and allowed-tools frontmatter
+- [ ] #1 SKILL.md has name, description, disable-model-invocation, allowed-tools, and hooks frontmatter
 - [ ] #2 SKILL.md includes dynamic state injection: cat triage_state/*_triage.json
 - [ ] #3 SKILL.md documents all 5 phases: detect → prepare → triage loop → fix planning → finalize
 - [ ] #4 SKILL.md references prompt templates for diagnosis-based routing
@@ -67,6 +74,8 @@ The existing `self-entrypoint-analysis` and `external-entrypoint-analysis` skill
 - [ ] #6 reference/diagnosis_routes.md documents the routing table and escape hatch
 - [ ] #7 examples/sample_triage_output.json provides example final output
 - [ ] #8 Skill allowed-tools include Bash(npx tsx:*,pnpm exec tsx:*), Read, Write, Task(all 7 sub-agents)
+- [ ] #9 SKILL.md frontmatter includes Stop hook pointing to triage_loop_stop.ts
+- [ ] #10 SKILL.md frontmatter includes `disable-model-invocation: true`
 <!-- AC:END -->
 
 ## Implementation Plan

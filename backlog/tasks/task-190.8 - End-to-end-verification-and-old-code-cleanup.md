@@ -19,13 +19,13 @@ Verify the complete self-repair pipeline end-to-end and clean up old code. Run t
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
 - [ ] #1 Self-analysis on core package: state file progresses triage → aggregation → meta-review → fix-planning → complete
-- [ ] #2 Stop hook correctly BLOCKs and ALLOWs at each phase transition
+- [ ] #2 Stop hook fires on skill invocation and correctly BLOCKs/ALLOWs at each phase transition
 - [ ] #3 Sub-agents return valid TriageEntryResult JSON
 - [ ] #4 Fix planning produces plan files, synthesis, reviews, and backlog task for at least one group
 - [ ] #5 finalize_triage.ts produces output compatible with existing analysis_output format
 - [ ] #6 Classification results comparable to old pipeline (triage_false_positives.ts) on same input
 - [ ] #7 External analysis on projections: exhaustive triage completes without --limit
-- [ ] #8 Pipeline resumes correctly after simulated interruption (kill + restart)
+- [ ] #8 Pipeline resumes correctly after interruption: re-invoke `/self-repair-pipeline` to resume (state file persists, hook re-activates)
 - [ ] #9 Old triage scripts deleted: triage_false_positives.ts, triage_entry_points.ts
 <!-- AC:END -->
 
@@ -37,6 +37,6 @@ Verify the complete self-repair pipeline end-to-end and clean up old code. Run t
 4. Verify fix planning output files in triage_state/fix_plans/
 5. Run finalize_triage.ts, compare output format with old pipeline output
 6. Run on external project (projections scoped) with exhaustive triage
-7. Test resumability: interrupt mid-triage, restart, verify continuation
+7. Test resumability: interrupt mid-triage, re-invoke `/self-repair-pipeline`, verify continuation from state file
 8. After validation: delete triage_false_positives.ts and triage_entry_points.ts
 9. Remove any remaining references to deleted files

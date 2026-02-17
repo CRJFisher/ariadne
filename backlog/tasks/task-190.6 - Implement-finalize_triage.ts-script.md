@@ -12,7 +12,7 @@ parent_task_id: task-190
 
 ## Description
 
-Create the deterministic `finalize_triage.ts` script that runs after all triage and fix planning is complete. Reads the completed state file, builds output in the existing `FalsePositiveTriageResults` / `EntryPointTriageResults` format, saves to `analysis_output/` with timestamp, updates the known-entrypoints registry (TPs → "project" source, dead code → "dead-code" source), writes new triage patterns for human review, removes the `.claude/triage_active` marker, and prints a summary.
+Create the deterministic `finalize_triage.ts` script that runs after all triage and fix planning is complete. Reads the completed state file, builds output in the existing `FalsePositiveTriageResults` / `EntryPointTriageResults` format, saves to `analysis_output/` with timestamp, updates the known-entrypoints registry (TPs → "project" source, dead code → "dead-code" source), writes new triage patterns for human review, and prints a summary.
 
 **Original plan file**: `~/.claude/plans/zazzy-brewing-gem.md`
 
@@ -27,8 +27,7 @@ Create the deterministic `finalize_triage.ts` script that runs after all triage 
 3. Save via `save_json()` to `analysis_output/` with timestamp
 4. Update known-entrypoints registry (TPs → "project" source, dead code → "dead-code" source)
 5. If `meta_review` has new patterns, write to `entrypoint-analysis/triage_patterns.json` for human review
-6. Remove `.claude/triage_active` marker
-7. Print summary
+6. Print summary
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
@@ -37,8 +36,7 @@ Create the deterministic `finalize_triage.ts` script that runs after all triage 
 - [ ] #3 Saves output via save_json() to analysis_output/ with timestamp
 - [ ] #4 Updates known-entrypoints registry: TPs → project source, dead code → dead-code source
 - [ ] #5 Writes new triage patterns from meta_review to triage_patterns.json for human review
-- [ ] #6 Removes .claude/triage_active marker file
-- [ ] #7 Prints summary: counts per category, groups identified, tasks created
+- [ ] #6 Prints summary: counts per category, groups identified, tasks created
 <!-- AC:END -->
 
 ## Implementation Plan
@@ -49,5 +47,5 @@ Create the deterministic `finalize_triage.ts` script that runs after all triage 
 4. Implement save_json() output to analysis_output/
 5. Implement known-entrypoints registry updates
 6. Implement triage_patterns.json output from meta_review
-7. Remove marker file and print summary
+7. Print summary
 8. Test with mock completed state file

@@ -44,7 +44,6 @@ User invokes skill
 │ Phase 2: Prepare State (Bash, no LLM)            │
 │ npx tsx prepare_triage.ts                        │
 │ - Deterministic classification + routing         │
-│ - Creates state file + activation marker         │
 │ Output: triage_state/{project}_triage.json       │
 └─────────────────────────────────────────────────┘
         │
@@ -92,7 +91,6 @@ User invokes skill
 │ npx tsx finalize_triage.ts                       │
 │ - Formats output JSON                            │
 │ - Updates known-entrypoints registry             │
-│ - Removes activation marker                      │
 └─────────────────────────────────────────────────┘
 ```
 
@@ -164,7 +162,6 @@ Stop hooks are the primary orchestration mechanism. Agent teams are deferred as 
 | **Create** | `.claude/agents/plan-synthesizer.md` | Sub-agent: synthesizes 5 competing plans |
 | **Create** | `.claude/agents/plan-reviewer.md` | Sub-agent: reviews plan from specific angle |
 | **Create** | `.claude/agents/task-writer.md` | Sub-agent: creates backlog task from reviewed plan |
-| **Modify** | `.claude/settings.json` | Add stop hook pointing to skill scripts dir |
 | **Modify** | `entrypoint-analysis/src/classify_entrypoints.ts` | Add diagnosis-based routing |
 | **Modify** | `entrypoint-analysis/.gitignore` | Add `triage_state/` |
 | **Modify** | `.claude/skills/self-entrypoint-analysis/SKILL.md` | Reference self-repair-pipeline for triage step |
