@@ -13,7 +13,9 @@ priority: low
 
 ## Description
 
-React lifecycle methods (componentDidMount, componentDidUpdate, etc.) on React.Component subclasses are framework-invoked callbacks. They appear as false positive entry points because they are never called directly in user code - React internal reconciliation invokes them. A single instance was found in the Feb 2026 projections analysis: componentDidMount in App.js:11 (create_keywords_and_targets). The fix would recognize React.Component subclass lifecycle methods as framework callbacks, similar to how Python dunder methods are handled. Evidence: entrypoint-analysis/analysis_output/external/triage_entry_points/2026-02-10T19-09-38.781Z.json
+React lifecycle methods (componentDidMount, componentDidUpdate, etc.) on React.Component subclasses are framework-invoked callbacks. They appear as false positive entry points because they are never called directly in user code - React internal reconciliation invokes them. A single instance was found in the Feb 2026 projections analysis: componentDidMount in App.js:11 (create_keywords_and_targets). The fix would recognize React.Component subclass lifecycle methods as framework callbacks, similar to how Python dunder methods are handled.
+
+Confirmed in Feb 12 re-analysis (same entry). Evidence: entrypoint-analysis/analysis_output/external/triage_entry_points/2026-02-12T18-12-14.458Z.json
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->

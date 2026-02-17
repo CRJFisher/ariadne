@@ -53,13 +53,10 @@ __pycache__/
 .claude/hook_log.txt
 packages/mcp/tests/logs.txt
 
-# Auto Claude data directory
-.auto-claude/
+docs/tmp/
 
-# Auto Claude generated files
-.auto-claude-security.json
-.auto-claude-status
 .claude_settings.json
 .worktrees/
 .security-key
 logs/security/
+
