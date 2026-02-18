@@ -12,7 +12,7 @@ parent_task_id: task-190
 
 ## Description
 
-Create the deterministic `finalize_triage.ts` script that runs after all triage and fix planning is complete. Reads the completed state file, builds output in the existing `FalsePositiveTriageResults` / `EntryPointTriageResults` format, saves to `analysis_output/` with timestamp, updates the known-entrypoints registry (TPs → "project" source, dead code → "dead-code" source), writes new triage patterns for human review, and prints a summary.
+Create the deterministic `finalize_triage.ts` script that runs after all triage and fix planning is complete. Reads the completed state file, builds output with true_positives, dead_code, and false_positive groups, saves to `analysis_output/` with timestamp, updates the known-entrypoints registry (TPs → "project" source, dead code → "dead-code" source), writes new triage patterns for human review, and prints a summary. `finalize_triage.ts` writes triage results back to the registry, preserving existing sources and adding new `source="project"` / `source="dead-code"` entries.
 
 **Original plan file**: `~/.claude/plans/zazzy-brewing-gem.md`
 

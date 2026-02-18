@@ -104,6 +104,8 @@ interface TriageEntryResult {
 - [x] #3 Classification: registry matches → known-tp (completed), everything else → llm-triage (pending)
 - [x] #4 Deterministic entries start as status=completed, LLM entries as status=pending
 - [x] #5 Unit test: run on known analysis JSON, verify correct entries, routes, and statuses
+- [x] #6 known_entrypoints/{package}.json created for core, mcp, types with source="ground-truth" entries
+- [x] #7 ground_truth/ directory deleted — data migrated to known_entrypoints registry format
 <!-- AC:END -->
 
 ## Implementation Plan

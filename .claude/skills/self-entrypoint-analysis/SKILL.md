@@ -36,17 +36,17 @@ All outputs go to `entrypoint-analysis/analysis_output/` with timestamped filena
 
 **Finding the latest file**: Timestamps are lexicographically sortable. Sort alphabetically and take the last file.
 
-## Ground Truth Files
+## Known Entrypoints Registry
 
-Ground truth files are package-specific and located in `entrypoint-analysis/ground_truth/`:
+Known entrypoints are package-specific and located in `entrypoint-analysis/known_entrypoints/`:
 
-| Package | Ground Truth File |
-| ------- | ----------------- |
-| core    | `core.json`       |
-| mcp     | `mcp.json`        |
-| types   | `types.json`      |
+| Package | Registry File |
+| ------- | ------------- |
+| core    | `core.json`   |
+| mcp     | `mcp.json`    |
+| types   | `types.json`  |
 
-Each file contains an array of legitimate API methods: `[{ "name": "...", "file": "..." }, ...]`
+Each file contains an array of `KnownEntrypointSource` objects: `[{ "source": "ground-truth", "description": "...", "entrypoints": [{ "name": "...", "file_path": "..." }] }]`
 
 ## Step 1: Run Detection
 
@@ -244,7 +244,7 @@ All modules live under `entrypoint-analysis/src/`:
 
 - **Fewer entry points = Better** (better call graph resolution)
 - Code fingerprint format: `{commit_short}_{working_tree_hash}`
-- Ground truth is maintained per-package in `ground_truth/{package}.json`
+- Known entrypoints are maintained per-package in `known_entrypoints/{package}.json`
 
 ## Example Output (Step 1)
 

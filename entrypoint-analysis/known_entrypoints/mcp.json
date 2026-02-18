@@ -1,0 +1,10 @@
+[
+  {
+    "source": "ground-truth",
+    "description": "Known public API",
+    "entrypoints": [
+      { "name": "has_loaded_files", "file_path": "project_manager.ts" },
+      { "name": "stop_watching", "file_path": "project_manager.ts" }
+    ]
+  }
+]

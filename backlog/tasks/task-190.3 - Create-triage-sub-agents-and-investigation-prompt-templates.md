@@ -12,7 +12,9 @@ parent_task_id: task-190
 
 ## Description
 
-Create the three triage-phase custom sub-agents and their diagnosis-specific prompt templates. The triage-investigator agent investigates one entry using MCP tools (`show_call_graph_neighborhood`) and returns structured JSON classification. The triage-aggregator groups false positives by shared root cause. The triage-rule-reviewer identifies patterns in escape-hatch results that could become deterministic classification rules. Prompt templates are diagnosis-specific markdown files that separate investigation protocol from orchestration logic.
+Create the three triage-phase custom sub-agents and their diagnosis-specific prompt templates. The triage-investigator agent investigates one entry using MCP tools (`show_call_graph_neighborhood`) and returns structured JSON classification using ternary classification: true-positive, dead-code, or false-positive. The triage-aggregator groups false positives by shared root cause. The triage-rule-reviewer identifies patterns in escape-hatch results that could become deterministic classification rules. Prompt templates are diagnosis-specific markdown files that separate investigation protocol from orchestration logic.
+
+All prompt templates classify entries as true-positive, dead-code, or false-positive. After registry filtering, remaining entries include both dead code and false positives. This aligns with the task-189 taxonomy (`category` + `classification_reason`).
 
 **Original plan file**: `~/.claude/plans/zazzy-brewing-gem.md`
 

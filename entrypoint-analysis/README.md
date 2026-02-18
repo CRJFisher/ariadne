@@ -48,7 +48,7 @@ Contains:
 
 Analyzes which public API methods were missed (false negatives).
 
-Compares detected entry points against the ground truth API methods in `ground_truth/project_api_methods.json`. For each API method NOT detected as an entry point, uses Claude Agent SDK to investigate why.
+Compares detected entry points against the known entrypoints registry in `known_entrypoints/{package}.json`. For each API method NOT detected as an entry point, uses Claude Agent SDK to investigate why.
 
 ```bash
 npx tsx triage_false_negative_entrypoints.ts
@@ -77,7 +77,7 @@ npx tsx triage_false_positive_entrypoints.ts
 |------|---------|
 | `types.ts` | Shared TypeScript type definitions |
 | `utils.ts` | Claude Agent SDK query helpers, file I/O utilities |
-| `ground_truth/project_api_methods.json` | Manual list of public API methods (source of truth) |
+| `known_entrypoints/{package}.json` | Known entrypoints registry (source of truth) |
 | `verify_entry_points_legacy.ts` | Deprecated single-phase verification script |
 
 ## Directory Structure
@@ -96,8 +96,10 @@ top-level-nodes-analysis/
 ├── utils.ts                               # Query helpers and utilities
 ├── verify_entry_points_legacy.ts          # Deprecated
 │
-├── ground_truth/
-│   └── project_api_methods.json           # Manual list of public API
+├── known_entrypoints/
+│   ├── core.json                          # Known entrypoints for core package
+│   ├── mcp.json                           # Known entrypoints for mcp package
+│   └── types.json                         # Known entrypoints for types package
 │
 ├── analysis_output/
 │   └── packages-core-analysis_*.json      # Step 1 outputs (timestamped)
@@ -126,7 +128,7 @@ The ideal result is that **only the public API methods** are detected as entry p
 - "framework callback method" - External framework calls the method
 - "builder pattern method" - Chained calls not fully tracked
 
-## Ground Truth API
+## Known Public API
 
 The public API consists of methods on the `Project` class:
 

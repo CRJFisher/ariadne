@@ -17,6 +17,8 @@ parent_task_id: task-190
 
 Create the multi-file skill directory that ties all components together. SKILL.md is the main orchestration document (always in context). It includes a pipeline overview, dynamic state injection via shell command, phase-specific instructions for what Claude should do at each step, and reference links. The reference/ directory documents the state machine and diagnosis routing table. The examples/ directory provides sample output.
 
+The pipeline loads the known-entrypoints registry, classifies entries, triages remaining entries with ternary classification (true-positive / dead-code / false-positive), aggregates results, plans fixes, and finalizes. The registry is the single source of prior classification knowledge for all projects.
+
 **Original plan file**: `~/.claude/plans/zazzy-brewing-gem.md`
 
 ### SKILL.md Specification

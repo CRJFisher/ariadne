@@ -25,9 +25,10 @@ interface EntryPoint {
   start_line: number;
 }
 
-interface WhitelistEntry {
-  name: string;
-  file: string;
+interface KnownEntrypointSource {
+  source: string;
+  description: string;
+  entrypoints: { name: string; file_path?: string }[];
 }
 
 function log(message: string): void {
@@ -125,19 +126,24 @@ async function load_package_files(
  * Load whitelist for a specific package
  */
 async function load_whitelist(project_dir: string, package_name: string): Promise<Set<string>> {
-  const whitelist_path = path.join(
+  const registry_path = path.join(
     project_dir,
-    "entrypoint-analysis/ground_truth",
+    "entrypoint-analysis/known_entrypoints",
     `${package_name}.json`
   );
 
   try {
-    const content = await fs.readFile(whitelist_path, "utf-8");
-    const entries: WhitelistEntry[] = JSON.parse(content);
-    return new Set(entries.map((e) => e.name));
+    const content = await fs.readFile(registry_path, "utf-8");
+    const sources: KnownEntrypointSource[] = JSON.parse(content);
+    const names = new Set<string>();
+    for (const source of sources) {
+      for (const ep of source.entrypoints) {
+        names.add(ep.name);
+      }
+    }
+    return names;
   } catch {
-    // If package-specific whitelist doesn't exist, return empty set
-    log(`No whitelist found for package ${package_name}`);
+    log(`No known-entrypoints registry found for package ${package_name}`);
     return new Set();
   }
 }
@@ -252,7 +258,7 @@ async function main(): Promise<void> {
       `Found ${total} unexpected entry point(s) [${elapsed_s}s]:\n\n${formatted}\n\n` +
         `These are exported but never called. Either:\n` +
         `  1. Delete the dead code\n` +
-        `  2. Add to ground_truth/${modified_packages[0]}.json if legitimate API`
+        `  2. Add to known_entrypoints/${modified_packages[0]}.json if legitimate API`
     );
   } else {
     log(`All entry points are in whitelists (${elapsed_s}s)`);

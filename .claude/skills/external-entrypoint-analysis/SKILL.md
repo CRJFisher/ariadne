@@ -228,7 +228,7 @@ All modules live under `entrypoint-analysis/src/`:
 
 | Aspect | Self-Analysis | External Analysis |
 | ------ | ------------- | ----------------- |
-| Ground truth | Uses `ground_truth/{package}.json` | No ground truth available |
+| Known entrypoints | Uses `known_entrypoints/{package}.json` | No known entrypoints available |
 | Triage assumption | All entries are false positives | Must decide true vs false positive |
 | Dead code filtering | Filters previously deleted functions | No dead code step |
 | False negative triage | Checks for missed public API | Not applicable |

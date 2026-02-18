@@ -1,5 +1,8 @@
 .clinic/
 analysis_output/
-known_entrypoints/
+known_entrypoints/*
+!known_entrypoints/core.json
+!known_entrypoints/mcp.json
+!known_entrypoints/types.json
 project_configs/
 triage_state/
