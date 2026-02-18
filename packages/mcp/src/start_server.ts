@@ -20,6 +20,11 @@ import {
 import { ProjectManager } from "./project_manager";
 import { find_source_files, is_supported_file } from "./file_loading";
 import { initialize_logger, log_info, log_warn } from "./logger";
+import {
+  init_analytics,
+  record_session_client_info,
+  record_tool_call,
+} from "./analytics/analytics";
 
 /**
  * Options for filtered file loading
@@ -108,6 +113,12 @@ export async function start_server(
   const project_path =
     options.project_path || process.env.PROJECT_PATH || process.cwd();
 
+  // Initialize analytics if enabled
+  const analytics_enabled = process.env.ARIADNE_ANALYTICS === "1";
+  if (analytics_enabled) {
+    init_analytics(project_path);
+  }
+
   // Create the MCP server
   const server = new Server(
     {
@@ -120,6 +131,16 @@ export async function start_server(
       },
     }
   );
+
+  // Capture client info once MCP initialization completes
+  if (analytics_enabled) {
+    server.oninitialized = () => {
+      const client = server.getClientVersion();
+      if (client) {
+        record_session_client_info(client.name, client.version);
+      }
+    };
+  }
 
   // Initialize persistent project manager with file watching
   const project_manager = new ProjectManager();
@@ -213,16 +234,16 @@ export async function start_server(
   });
 
   // Handle tool calls
-  server.setRequestHandler(CallToolRequestSchema, async (request) => {
+  server.setRequestHandler(CallToolRequestSchema, async (request, extra) => {
     const { name } = request.params;
+    const tool_start = Date.now();
+    const tool_args = request.params.arguments ?? {};
 
     try {
       switch (name) {
         case "list_entrypoints": {
           // Parse arguments using schema
-          const args = list_entrypoints_schema.parse(
-            request.params.arguments ?? {}
-          );
+          const args = list_entrypoints_schema.parse(tool_args);
 
           const has_filters =
             (args.files && args.files.length > 0) ||
@@ -250,6 +271,14 @@ export async function start_server(
 
           const result = await list_entrypoints(target_project, args);
 
+          record_tool_call({
+            tool_name: name,
+            arguments: tool_args as Record<string, unknown>,
+            duration_ms: Date.now() - tool_start,
+            success: true,
+            request_id: String(extra.requestId),
+          });
+
           return {
             content: [
               {
@@ -261,9 +290,7 @@ export async function start_server(
         }
 
         case "show_call_graph_neighborhood": {
-          const args = show_call_graph_neighborhood_schema.parse(
-            request.params.arguments ?? {}
-          );
+          const args = show_call_graph_neighborhood_schema.parse(tool_args);
 
           const has_filters =
             (args.files && args.files.length > 0) ||
@@ -293,6 +320,14 @@ export async function start_server(
             args
           );
 
+          record_tool_call({
+            tool_name: name,
+            arguments: tool_args as Record<string, unknown>,
+            duration_ms: Date.now() - tool_start,
+            success: true,
+            request_id: String(extra.requestId),
+          });
+
           return {
             content: [
               {
@@ -307,13 +342,22 @@ export async function start_server(
           throw new Error(`Unknown tool: ${name}`);
       }
     } catch (error) {
+      const error_message = error instanceof Error ? error.message : String(error);
+
+      record_tool_call({
+        tool_name: name,
+        arguments: tool_args as Record<string, unknown>,
+        duration_ms: Date.now() - tool_start,
+        success: false,
+        error_message,
+        request_id: String(extra.requestId),
+      });
+
       return {
         content: [
           {
             type: "text",
-            text: `Error: ${
-              error instanceof Error ? error.message : String(error)
-            }`,
+            text: `Error: ${error_message}`,
           },
         ],
         isError: true,
