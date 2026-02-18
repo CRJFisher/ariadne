@@ -18,22 +18,19 @@ import { fileURLToPath } from "url";
 import {
   save_json,
   load_json,
-  AnalysisCategory,
-  InternalScriptType,
-  ExternalScriptType,
-} from "../../../../entrypoint-analysis/src/analysis_io.js";
+  OutputType,
+} from "../src/analysis_io.js";
 import {
   load_known_entrypoints,
   save_known_entrypoints,
   build_project_source,
   build_dead_code_source,
-  get_registry_path,
-} from "../../../../entrypoint-analysis/src/known_entrypoints.js";
+} from "../src/known_entrypoints.js";
 import {
   build_finalization_output,
   build_finalization_summary,
-} from "../../../../entrypoint-analysis/src/build_finalization_output.js";
-import type { TriageState } from "../../../../entrypoint-analysis/src/triage_state_types.js";
+} from "../src/build_finalization_output.js";
+import type { TriageState } from "../src/triage_state_types.js";
 
 const this_file = fileURLToPath(import.meta.url);
 const this_dir = path.dirname(this_file);
@@ -43,31 +40,24 @@ const PROJECT_ROOT = process.env.CLAUDE_PROJECT_DIR || path.resolve(this_dir, ".
 
 interface CliArgs {
   state_path: string;
-  external: boolean;
 }
 
 function parse_args(argv: string[]): CliArgs {
   const args = argv.slice(2);
   let state_path: string | null = null;
-  let external = false;
 
   for (let i = 0; i < args.length; i++) {
-    switch (args[i]) {
-      case "--state":
-        state_path = args[++i];
-        break;
-      case "--external":
-        external = true;
-        break;
+    if (args[i] === "--state") {
+      state_path = args[++i];
     }
   }
 
   if (!state_path) {
-    console.error("Usage: finalize_triage.ts --state <path> [--external]");
+    console.error("Usage: finalize_triage.ts --state <path>");
     process.exit(1);
   }
 
-  return { state_path, external };
+  return { state_path };
 }
 
 // ===== Main =====
@@ -89,11 +79,7 @@ async function main(): Promise<void> {
   const summary = build_finalization_summary(state, output);
 
   // Save triage results
-  const category = cli.external ? AnalysisCategory.EXTERNAL : AnalysisCategory.INTERNAL;
-  const script_type = cli.external
-    ? ExternalScriptType.TRIAGE_ENTRY_POINTS
-    : InternalScriptType.TRIAGE_FALSE_POSITIVES;
-  const output_file = await save_json(category, script_type, output);
+  const output_file = await save_json(OutputType.TRIAGE_RESULTS, output);
 
   // Update known-entrypoints registry
   const known_sources = await load_known_entrypoints(state.project_name);
@@ -110,7 +96,7 @@ async function main(): Promise<void> {
 
   // Write triage patterns (guarded)
   if (state.meta_review && state.meta_review.patterns) {
-    const patterns_path = path.join(PROJECT_ROOT, "entrypoint-analysis", "triage_patterns.json");
+    const patterns_path = path.join(PROJECT_ROOT, ".claude", "skills", "self-repair-pipeline", "triage_patterns.json");
     await fs.writeFile(patterns_path, JSON.stringify(state.meta_review.patterns, null, 2) + "\n");
     console.error(`Triage patterns written: ${patterns_path}`);
   } else {
@@ -118,7 +104,7 @@ async function main(): Promise<void> {
   }
 
   // Print summary
-  console.error(`\nFinalization complete:`);
+  console.error("\nFinalization complete:");
   console.error(`  Total entries:     ${summary.total_entries}`);
   console.error(`  True positives:    ${summary.true_positive_count}`);
   console.error(`  Dead code:         ${summary.dead_code_count}`);
@@ -128,7 +114,7 @@ async function main(): Promise<void> {
   }
 
   if (summary.task_files.length > 0) {
-    console.error(`\n  Task files created:`);
+    console.error("\n  Task files created:");
     for (const tf of summary.task_files) {
       console.error(`    - ${tf}`);
     }

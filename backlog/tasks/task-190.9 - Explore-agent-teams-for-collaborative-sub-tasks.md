@@ -47,8 +47,8 @@ Replaces 4 independent plan-reviewer sub-agents with a team of 4 reviewers.
 
 - Requires CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1 in environment
 - Each team spawns from the top-level session (no nesting)
-- The state file still tracks progress — the stop hook does not change
-- The skill SKILL.md would document when to use teams vs independent sub-agents
+- The state file (`triage_state/*_triage.json`) still tracks progress — the stop hook (`scripts/triage_loop_stop.ts`) does not change
+- `.claude/skills/self-repair-pipeline/SKILL.md` would document when to use teams vs independent sub-agents
 - Could be gated on the experimental flag: use teams if available, fall back to independent sub-agents if not
 - The state file is the key abstraction — it works with both approaches. Migration is a swap of the orchestration layer, not a redesign
 

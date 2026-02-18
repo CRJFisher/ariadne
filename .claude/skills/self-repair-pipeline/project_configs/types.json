@@ -1,0 +1,6 @@
+{
+  "project_name": "types",
+  "project_path": ".",
+  "folders": ["packages/types/src"],
+  "exclude": ["node_modules", "dist", "tests", ".git"]
+}

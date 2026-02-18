@@ -1,0 +1,6 @@
+{
+  "project_name": "mcp",
+  "project_path": ".",
+  "folders": ["packages/mcp/src"],
+  "exclude": ["node_modules", "dist", "tests", ".git"]
+}

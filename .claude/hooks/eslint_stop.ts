@@ -83,7 +83,7 @@ function main(): void {
     "packages/types": "packages/types",
     "packages/core": "packages/core",
     "packages/mcp": "packages/mcp",
-    "entrypoint-analysis": "entrypoint-analysis",
+    ".claude/skills/self-repair-pipeline": ".claude/skills/self-repair-pipeline",
   };
 
   for (const area of changed.modified_areas) {

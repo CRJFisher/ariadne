@@ -215,7 +215,7 @@ export default [
     }
   },
   {
-    files: ["entrypoint-analysis/**/*.ts"],
+    files: [".claude/skills/self-repair-pipeline/**/*.ts"],
     languageOptions: {
       globals: {
         // Node.js globals for analysis scripts
@@ -235,7 +235,10 @@ export default [
       "packages/*/dist/**",
       "packages/*/node_modules/**",
       "**/tests/fixtures/**/*.js", // Ignore JavaScript fixture files
-      "**/.claude/**", // Ignore Claude hook files
+      "**/.claude/hooks/**", // Ignore Claude hook files
+      "**/.claude/skills/self-repair-pipeline/templates/**", // Ignore templates
+      "**/.claude/skills/self-repair-pipeline/reference/**", // Ignore reference docs
+      "**/.claude/skills/self-repair-pipeline/examples/**", // Ignore examples
       "**/.clinic/**", // Ignore clinic profiler output
       "test_*.ts", // Ignore root-level test/debug scripts
       "debug_*.ts" // Ignore root-level debug scripts

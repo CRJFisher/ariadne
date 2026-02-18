@@ -29,7 +29,7 @@ function get_package_for_file(file_path: string): string | null {
   if (file_path.includes("packages/types")) return "packages/types";
   if (file_path.includes("packages/core")) return "packages/core";
   if (file_path.includes("packages/mcp")) return "packages/mcp";
-  if (file_path.includes("entrypoint-analysis")) return "entrypoint-analysis";
+  if (file_path.includes(".claude/skills/self-repair-pipeline")) return ".claude/skills/self-repair-pipeline";
   return null;
 }
 

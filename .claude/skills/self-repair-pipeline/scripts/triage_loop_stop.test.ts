@@ -6,7 +6,7 @@ import type {
   TriageEntry,
   TriageEntryResult,
   FixPlanGroupState,
-} from "../../../../entrypoint-analysis/src/triage_state_types.js";
+} from "../src/triage_state_types.js";
 import {
   discover_state_file,
   get_escape_hatch_fp_entries,
@@ -418,7 +418,7 @@ describe("handle_fix_planning", () => {
   describe("planning sub-phase", () => {
     it("blocks when plans_written < 5", () => {
       const state = build_fix_planning_state({ plans_written: 2 });
-      const result = handle_fix_planning(state, MOCK_STATE_PATH);
+      const result = handle_fix_planning(state);
       expect(result.decision).toEqual("block");
       expect(result.mutated).toEqual(false);
       expect(result.reason).toContain("2/5 plans written");
@@ -427,7 +427,7 @@ describe("handle_fix_planning", () => {
 
     it("transitions to synthesis when plans_written === 5", () => {
       const state = build_fix_planning_state({ plans_written: 5 });
-      const result = handle_fix_planning(state, MOCK_STATE_PATH);
+      const result = handle_fix_planning(state);
       expect(result.decision).toEqual("block");
       expect(result.mutated).toEqual(true);
       expect(state.fix_planning!.groups["group-a"].sub_phase).toEqual("synthesis");
@@ -441,7 +441,7 @@ describe("handle_fix_planning", () => {
         plans_written: 5,
         synthesis_written: false,
       });
-      const result = handle_fix_planning(state, MOCK_STATE_PATH);
+      const result = handle_fix_planning(state);
       expect(result.decision).toEqual("block");
       expect(result.mutated).toEqual(false);
     });
@@ -452,7 +452,7 @@ describe("handle_fix_planning", () => {
         plans_written: 5,
         synthesis_written: true,
       });
-      const result = handle_fix_planning(state, MOCK_STATE_PATH);
+      const result = handle_fix_planning(state);
       expect(result.decision).toEqual("block");
       expect(result.mutated).toEqual(true);
       expect(state.fix_planning!.groups["group-a"].sub_phase).toEqual("review");
@@ -467,7 +467,7 @@ describe("handle_fix_planning", () => {
         synthesis_written: true,
         reviews_written: 1,
       });
-      const result = handle_fix_planning(state, MOCK_STATE_PATH);
+      const result = handle_fix_planning(state);
       expect(result.decision).toEqual("block");
       expect(result.mutated).toEqual(false);
       expect(result.reason).toContain("1/4 reviews written");
@@ -481,7 +481,7 @@ describe("handle_fix_planning", () => {
         synthesis_written: true,
         reviews_written: 4,
       });
-      const result = handle_fix_planning(state, MOCK_STATE_PATH);
+      const result = handle_fix_planning(state);
       expect(result.decision).toEqual("block");
       expect(result.mutated).toEqual(true);
       expect(state.fix_planning!.groups["group-a"].sub_phase).toEqual("task-writing");
@@ -497,7 +497,7 @@ describe("handle_fix_planning", () => {
         reviews_written: 4,
         task_file: null,
       });
-      const result = handle_fix_planning(state, MOCK_STATE_PATH);
+      const result = handle_fix_planning(state);
       expect(result.decision).toEqual("block");
       expect(result.mutated).toEqual(false);
     });
@@ -510,7 +510,7 @@ describe("handle_fix_planning", () => {
         reviews_written: 4,
         task_file: "/tmp/task.md",
       });
-      const result = handle_fix_planning(state, MOCK_STATE_PATH);
+      const result = handle_fix_planning(state);
       expect(result.decision).toEqual("allow");
       expect(result.mutated).toEqual(true);
       expect(state.phase).toEqual("complete");
@@ -549,7 +549,7 @@ describe("handle_fix_planning", () => {
         },
       });
 
-      const result = handle_fix_planning(state, MOCK_STATE_PATH);
+      const result = handle_fix_planning(state);
       expect(result.decision).toEqual("block");
       expect(state.fix_planning!.groups["group-a"].sub_phase).toEqual("complete");
       expect(result.reason).toContain("group-b");
@@ -585,7 +585,7 @@ describe("handle_fix_planning", () => {
         },
       });
 
-      const result = handle_fix_planning(state, MOCK_STATE_PATH);
+      const result = handle_fix_planning(state);
       expect(result.decision).toEqual("allow");
       expect(result.mutated).toEqual(true);
       expect(state.phase).toEqual("complete");

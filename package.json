@@ -9,10 +9,10 @@
   ],
   "scripts": {
     "build": "pnpm --filter @ariadnejs/types build && pnpm --filter @ariadnejs/core build && pnpm --filter @ariadnejs/mcp build",
-    "typecheck": "pnpm exec tsc --noEmit -p packages/types/tsconfig.json && pnpm exec tsc --noEmit -p packages/core/tsconfig.json && pnpm exec tsc --noEmit -p packages/mcp/tsconfig.json && pnpm exec tsc --noEmit -p entrypoint-analysis/tsconfig.json",
+    "typecheck": "pnpm exec tsc --noEmit -p packages/types/tsconfig.json && pnpm exec tsc --noEmit -p packages/core/tsconfig.json && pnpm exec tsc --noEmit -p packages/mcp/tsconfig.json && pnpm exec tsc --noEmit -p .claude/skills/self-repair-pipeline/tsconfig.json",
     "test": "pnpm --filter './packages/*' test",
-    "lint": "eslint 'packages/*/src/**/*.ts' 'packages/*/tests/**/*.ts' 'entrypoint-analysis/**/*.ts'",
-    "lint:fix": "eslint --fix 'packages/*/src/**/*.ts' 'packages/*/tests/**/*.ts' 'entrypoint-analysis/**/*.ts'",
+    "lint": "eslint 'packages/*/src/**/*.ts' 'packages/*/tests/**/*.ts' '.claude/skills/self-repair-pipeline/**/*.ts'",
+    "lint:fix": "eslint --fix 'packages/*/src/**/*.ts' 'packages/*/tests/**/*.ts' '.claude/skills/self-repair-pipeline/**/*.ts'",
     "clean": "pnpm --filter './packages/*' clean && rm -rf node_modules",
     "changeset": "changeset",
     "version": "changeset version",

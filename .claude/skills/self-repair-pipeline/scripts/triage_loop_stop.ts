@@ -16,7 +16,7 @@ import type {
   TriageEntryResult,
   FixPlanningState,
   FixPlanGroupState,
-} from "../../../../entrypoint-analysis/src/triage_state_types.js";
+} from "../src/triage_state_types.js";
 
 const log = create_logger("triage-loop");
 
@@ -123,7 +123,7 @@ export function handle_triage(state: TriageState, state_path: string): PhaseResu
       reason:
         `${pending.length} entries need triage. ` +
         `Read state file at ${state_path}, find the next ${batch} pending entries, ` +
-        `and launch **triage-investigator** sub-agents for each.`,
+        "and launch **triage-investigator** sub-agents for each.",
       mutated: false,
     };
   }
@@ -132,7 +132,7 @@ export function handle_triage(state: TriageState, state_path: string): PhaseResu
   return {
     decision: "block",
     reason:
-      `All entries triaged. Phase transitioned to aggregation. ` +
+      "All entries triaged. Phase transitioned to aggregation. " +
       `Launch **triage-aggregator** sub-agent with state file at ${state_path}.`,
     mutated: true,
   };
@@ -143,7 +143,7 @@ export function handle_aggregation(state: TriageState, state_path: string): Phas
     return {
       decision: "block",
       reason:
-        `Aggregation phase active. ` +
+        "Aggregation phase active. " +
         `Launch **triage-aggregator** sub-agent with state file at ${state_path}.`,
       mutated: false,
     };
@@ -185,7 +185,7 @@ export function handle_meta_review(state: TriageState, state_path: string): Phas
     return {
       decision: "block",
       reason:
-        `Meta-review phase active. ` +
+        "Meta-review phase active. " +
         `Launch **triage-rule-reviewer** sub-agent with state file at ${state_path}.`,
       mutated: false,
     };
@@ -225,7 +225,7 @@ export function handle_meta_review(state: TriageState, state_path: string): Phas
   };
 }
 
-export function handle_fix_planning(state: TriageState, state_path: string): PhaseResult {
+export function handle_fix_planning(state: TriageState): PhaseResult {
   const planning = state.fix_planning as FixPlanningState;
   const group_ids = Object.keys(planning.groups);
 
@@ -335,7 +335,7 @@ function main(): void {
   }
 
   const project_dir = get_project_dir();
-  const triage_dir = path.join(project_dir, "entrypoint-analysis", "triage_state");
+  const triage_dir = path.join(project_dir, ".claude", "skills", "self-repair-pipeline", "triage_state");
   const state_path = discover_state_file(triage_dir);
 
   if (!state_path) {
@@ -369,7 +369,7 @@ function main(): void {
       result = handle_meta_review(state, state_path);
       break;
     case "fix-planning":
-      result = handle_fix_planning(state, state_path);
+      result = handle_fix_planning(state);
       break;
     default:
       log(`Unknown phase: ${state.phase}`);

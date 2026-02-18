@@ -24,3 +24,6 @@ export {
 
 // Profiling
 export { profiler } from "./profiling";
+
+// Test file detection
+export { is_test_file } from "./project/detect_test_file";

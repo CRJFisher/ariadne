@@ -125,10 +125,32 @@ Stop hooks are the primary orchestration mechanism. Agent teams are deferred as 
 ```
 .claude/skills/self-repair-pipeline/
 ├── SKILL.md                              # Main orchestration (always in context)
+├── package.json                          # Standalone deps (tsx, typescript, clinic)
+├── tsconfig.json
+├── src/                                  # Library code (pure functions + types)
+│   ├── types.ts                          # Core analysis types
+│   ├── triage_state_types.ts             # State file interfaces
+│   ├── analysis_io.ts                    # I/O helpers for analysis files
+│   ├── extract_entry_points.ts           # Entry point extraction from analysis JSON
+│   ├── classify_entrypoints.ts           # Deterministic classification + routing
+│   ├── known_entrypoints.ts              # Known-entrypoints registry lookup
+│   ├── build_triage_entries.ts           # Convert classifications → triage entries
+│   ├── build_finalization_output.ts      # Format final output from triage state
+│   └── *.test.ts                         # Co-located tests
 ├── scripts/
+│   ├── detect_entrypoints.ts             # Unified detection (--config / --path / --github)
 │   ├── prepare_triage.ts                 # State file initialization (no LLM)
 │   ├── finalize_triage.ts                # Output formatting + cleanup (no LLM)
 │   └── triage_loop_stop.ts              # Stop hook: state machine driver
+├── project_configs/                      # Per-project detection configs
+│   ├── core.json                         # packages/core self-analysis config
+│   ├── mcp.json                          # packages/mcp self-analysis config
+│   └── types.json                        # packages/types self-analysis config
+├── known_entrypoints/                    # Known-entrypoints registry (per project)
+│   ├── core.json
+│   ├── mcp.json
+│   ├── types.json
+│   └── projections.json
 ├── templates/
 │   ├── prompt_callers_not_in_registry.md # Investigation prompt for this diagnosis
 │   ├── prompt_resolution_failure.md      # Investigation prompt for this diagnosis
@@ -144,32 +166,37 @@ Stop hooks are the primary orchestration mechanism. Agent teams are deferred as 
 
 ### File Summary
 
-| Action | File | Purpose |
-|--------|------|---------|
-| **Create** | `.claude/skills/self-repair-pipeline/SKILL.md` | Main orchestration instructions |
-| **Create** | `.claude/skills/self-repair-pipeline/scripts/prepare_triage.ts` | Deterministic setup: classify + route + build state file |
-| **Create** | `.claude/skills/self-repair-pipeline/scripts/finalize_triage.ts` | Deterministic output: format results + update registry |
-| **Create** | `.claude/skills/self-repair-pipeline/scripts/triage_loop_stop.ts` | Stop hook: state machine driving the loop |
-| **Create** | `.claude/skills/self-repair-pipeline/templates/prompt_*.md` | Investigation prompt templates (4 files) |
-| **Create** | `.claude/skills/self-repair-pipeline/templates/backlog_task_template.md` | Template for task-writer output |
-| **Create** | `.claude/skills/self-repair-pipeline/reference/state_machine.md` | State machine documentation |
-| **Create** | `.claude/skills/self-repair-pipeline/reference/diagnosis_routes.md` | Routing table + escape hatch docs |
-| **Create** | `entrypoint-analysis/src/triage_state_types.ts` | TypeScript interfaces for state file |
-| **Create** | `.claude/agents/triage-investigator.md` | Sub-agent: investigates one entry using MCP tools |
-| **Create** | `.claude/agents/triage-aggregator.md` | Sub-agent: groups false positives by root cause |
-| **Create** | `.claude/agents/triage-rule-reviewer.md` | Sub-agent: identifies new deterministic rules |
-| **Create** | `.claude/agents/fix-planner.md` | Sub-agent: proposes fix plan for an issue group |
-| **Create** | `.claude/agents/plan-synthesizer.md` | Sub-agent: synthesizes 5 competing plans |
-| **Create** | `.claude/agents/plan-reviewer.md` | Sub-agent: reviews plan from specific angle |
-| **Create** | `.claude/agents/task-writer.md` | Sub-agent: creates backlog task from reviewed plan |
-| **Modify** | `entrypoint-analysis/src/classify_entrypoints.ts` | Add diagnosis-based routing |
-| **Modify** | `entrypoint-analysis/.gitignore` | Add `triage_state/` |
-| **Modify** | `.claude/skills/self-entrypoint-analysis/SKILL.md` | Reference self-repair-pipeline for triage step |
-| **Modify** | `.claude/skills/external-entrypoint-analysis/SKILL.md` | Reference self-repair-pipeline for triage step |
-| **Modify** | `entrypoint-analysis/package.json` | Remove `@anthropic-ai/claude-agent-sdk` dep |
-| **Delete** | `entrypoint-analysis/src/agent_queries.ts` | Replaced by sub-agents |
+| Location | File | Purpose |
+|----------|------|---------|
+| `SKILL.md` | Main orchestration instructions | Always loaded in context when skill is invoked |
+| `package.json` | Standalone dependencies | tsx, typescript, clinic (no SDK dependency) |
+| `src/types.ts` | Core analysis types | Shared type definitions |
+| `src/triage_state_types.ts` | State file interfaces | TriageState, TriageEntry, FixPlanningState |
+| `src/analysis_io.ts` | I/O helpers | Reading/writing analysis files |
+| `src/extract_entry_points.ts` | Entry point extraction | Parse analysis JSON into entry points |
+| `src/classify_entrypoints.ts` | Deterministic classification | Diagnosis-based routing for triage |
+| `src/known_entrypoints.ts` | Registry lookup | Match entries against known-entrypoints registry |
+| `src/build_triage_entries.ts` | Triage entry builder | Convert classifications → triage entries |
+| `src/build_finalization_output.ts` | Output formatter | Format triage state into final output |
+| `scripts/detect_entrypoints.ts` | Unified detection script | `--config` / `--path` / `--github` modes |
+| `scripts/prepare_triage.ts` | State file setup | Deterministic classify + route + build state file |
+| `scripts/finalize_triage.ts` | Output + cleanup | Format results + update known-entrypoints registry |
+| `scripts/triage_loop_stop.ts` | Stop hook | State machine driving the triage loop |
+| `project_configs/*.json` | Per-project configs | Detection configs for core, mcp, types |
+| `known_entrypoints/*.json` | Entrypoint registries | Known-entrypoints per project |
+| `templates/prompt_*.md` | Investigation prompts | Diagnosis-specific prompt templates (4 files) |
+| `templates/backlog_task_template.md` | Task template | Template for task-writer output |
+| `reference/state_machine.md` | State machine docs | Phase documentation |
+| `reference/diagnosis_routes.md` | Routing docs | Routing table + escape hatch docs |
+| `.claude/agents/triage-investigator.md` | Sub-agent | Investigates one entry using MCP tools |
+| `.claude/agents/triage-aggregator.md` | Sub-agent | Groups false positives by root cause |
+| `.claude/agents/triage-rule-reviewer.md` | Sub-agent | Identifies new deterministic rules |
+| `.claude/agents/fix-planner.md` | Sub-agent | Proposes fix plan for an issue group |
+| `.claude/agents/plan-synthesizer.md` | Sub-agent | Synthesizes 5 competing plans |
+| `.claude/agents/plan-reviewer.md` | Sub-agent | Reviews plan from specific angle |
+| `.claude/agents/task-writer.md` | Sub-agent | Creates backlog task from reviewed plan |
 
-Old triage scripts (`triage_false_positives.ts`, `triage_entry_points.ts`) are kept for comparison, deleted after validation.
+All files are under `.claude/skills/self-repair-pipeline/` unless an absolute path is shown.
 
 ### Edge Cases
 
@@ -202,3 +229,26 @@ Three sub-task types would benefit from agent teams (once the experimental API s
 - [ ] #7 @anthropic-ai/claude-agent-sdk dependency removed
 - [ ] #8 Full pipeline verified on core package (self-analysis) and external project
 <!-- AC:END -->
+
+## Implementation Notes
+
+### Architecture Re-structuring (task-190.7)
+
+The `entrypoint-analysis/` top-level directory has been fully merged into `.claude/skills/self-repair-pipeline/`:
+
+- **Library code** (`entrypoint-analysis/src/`) → `src/` (types, classification, extraction, known-entrypoints, triage entries, finalization output)
+- **Detection scripts** → `scripts/detect_entrypoints.ts` (unified from the former `detect_self_entrypoints.ts` + `detect_external_entrypoints.ts`)
+- **Project configs** → `project_configs/{core,mcp,types}.json` replace `--package` for self-analysis. Each config specifies the analysis path, known-entrypoints file, and package metadata.
+- **Known-entrypoints registry** → `known_entrypoints/{core,mcp,types,projections}.json` (migrated from `entrypoint-analysis/known_entrypoints/`)
+
+### Skill Consolidation
+
+The `self-entrypoint-analysis` and `external-entrypoint-analysis` skills have been deleted. `self-repair-pipeline` is the single skill entry point. Detection is invoked via:
+
+- **Self-analysis**: `npx tsx scripts/detect_entrypoints.ts --config project_configs/core.json`
+- **External analysis**: `npx tsx scripts/detect_entrypoints.ts --path /path/to/project`
+- **GitHub analysis**: `npx tsx scripts/detect_entrypoints.ts --github owner/repo`
+
+### SDK Removal
+
+`@anthropic-ai/claude-agent-sdk` has been removed. `entrypoint-analysis/src/agent_queries.ts` is deleted. All LLM work is handled by Claude Code sub-agents via the Task tool.

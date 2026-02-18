@@ -107,7 +107,7 @@ export function get_changed_files(project_dir: string): ChangedFiles {
     const has_no_changes = unique_files.length === 0;
 
     // Filter to project source files only (exclude .claude/, backlog/, etc.)
-    const PROJECT_SOURCE_PREFIXES = ["packages/", "entrypoint-analysis/"];
+    const PROJECT_SOURCE_PREFIXES = ["packages/", ".claude/skills/self-repair-pipeline/"];
 
     // Check if any project source files changed
     const has_source_changes = unique_files.some((f) => {
@@ -126,26 +126,28 @@ export function get_changed_files(project_dir: string): ChangedFiles {
     }
     const modified_packages = Array.from(packages);
 
-    // Extract modified areas (top-level directories like packages/core, entrypoint-analysis)
+    // Extract modified areas (top-level directories like packages/core, .claude/skills/self-repair-pipeline)
     const areas = new Set<string>();
     for (const file of unique_files) {
       if (file.startsWith("packages/")) {
         const match = file.match(/^packages\/[^/]+/);
         if (match) areas.add(match[0]);
-      } else if (file.startsWith("entrypoint-analysis/")) {
-        areas.add("entrypoint-analysis");
+      } else if (file.startsWith(".claude/skills/self-repair-pipeline/")) {
+        areas.add(".claude/skills/self-repair-pipeline");
       }
     }
     const modified_areas = Array.from(areas);
 
     // Collect changed TS/JS files in project source directories (absolute paths)
+    // Filter out deleted files that no longer exist on disk
     const changed_ts_files = unique_files
       .filter((f) => {
         const ext = path.extname(f).toLowerCase();
         return SOURCE_EXTENSIONS.includes(ext) &&
           PROJECT_SOURCE_PREFIXES.some((prefix) => f.startsWith(prefix));
       })
-      .map((f) => path.resolve(project_dir, f));
+      .map((f) => path.resolve(project_dir, f))
+      .filter((f) => fs.existsSync(f));
 
     return {
       all_files: unique_files,
@@ -162,7 +164,7 @@ export function get_changed_files(project_dir: string): ChangedFiles {
       has_source_changes: true,
       has_no_changes: false,
       modified_packages: ["types", "core", "mcp"],
-      modified_areas: ["packages/types", "packages/core", "packages/mcp", "entrypoint-analysis"],
+      modified_areas: ["packages/types", "packages/core", "packages/mcp", ".claude/skills/self-repair-pipeline"],
       changed_ts_files: [],
     };
   }

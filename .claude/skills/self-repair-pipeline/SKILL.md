@@ -1,6 +1,6 @@
 ---
 name: self-repair-pipeline
-description: Runs the full entry point self-repair pipeline. Detects entry points, triages false positives via sub-agents, plans fixes for each issue group with competing proposals and multi-angle review, and creates backlog tasks.
+description: Runs the full entry point self-repair pipeline. Detects entry points in Ariadne packages or external codebases, triages false positives via sub-agents, plans fixes for each issue group with competing proposals and multi-angle review, and creates backlog tasks.
 disable-model-invocation: true
 allowed-tools: Bash(npx tsx:*,pnpm exec tsx:*), Read, Write, Task(triage-investigator, triage-aggregator, triage-rule-reviewer, fix-planner, plan-synthesizer, plan-reviewer, task-writer)
 hooks:
@@ -13,43 +13,53 @@ hooks:
 
 # Self-Repair Pipeline
 
-Triage pipeline for entry point analysis: detect false positives, classify root causes, plan fixes, and create backlog tasks.
+Triage pipeline for entry point analysis: detect false positives, classify root causes, plan fixes, and create backlog tasks. Supports both self-analysis (Ariadne packages) and external codebase analysis.
 
 ## Pipeline Overview
 
 | Phase | Script / Agent | Purpose |
 | ----- | -------------- | ------- |
-| 1. Detect | `detect_entrypoints.ts` | Run entry point detection on a package |
-| 2. Prepare | `prepare_triage.ts` | Classify against known-entrypoints registry, build triage state |
+| 1. Detect | `scripts/detect_entrypoints.ts` | Run entry point detection |
+| 2. Prepare | `scripts/prepare_triage.ts` | Classify against known-entrypoints registry, build triage state |
 | 3. Triage Loop | triage-investigator, triage-aggregator, triage-rule-reviewer | Investigate pending entries, aggregate results, review for patterns |
 | 4. Fix Planning | fix-planner, plan-synthesizer, plan-reviewer, task-writer | Generate competing fix plans, synthesize, review, create tasks |
-| 5. Finalize | `finalize_triage.ts` | Save results, update registry |
+| 5. Finalize | `scripts/finalize_triage.ts` | Save results, update registry |
 
 ## Current State
 
-!`cat entrypoint-analysis/triage_state/*_triage.json 2>/dev/null || echo "No active triage"`
+!`cat .claude/skills/self-repair-pipeline/triage_state/*_triage.json 2>/dev/null || echo "No active triage"`
 
 ## State and Output Locations
 
 | File | Purpose |
 | ---- | ------- |
-| `entrypoint-analysis/triage_state/{project}_triage.json` | Active triage state (phases, entries, results) |
-| `entrypoint-analysis/triage_state/fix_plans/{group_id}/` | Fix plans, synthesis, and reviews per group |
-| `entrypoint-analysis/analysis_output/` | Timestamped analysis and triage result files |
-| `entrypoint-analysis/known_entrypoints/{project}.json` | Known-entrypoints registry (persists across runs) |
-| `entrypoint-analysis/triage_patterns.json` | Extracted classification patterns from meta-review |
+| `triage_state/{project}_triage.json` | Active triage state (phases, entries, results) |
+| `triage_state/fix_plans/{group_id}/` | Fix plans, synthesis, and reviews per group |
+| `analysis_output/` | Timestamped analysis and triage result files |
+| `known_entrypoints/{project}.json` | Known-entrypoints registry (persists across runs) |
+| `triage_patterns.json` | Extracted classification patterns from meta-review |
+
+All paths above are relative to `.claude/skills/self-repair-pipeline/`.
 
 ## Phase 1: Detect
 
-Run entry point detection for a package:
-
 ```bash
-pnpm exec tsx entrypoint-analysis/src/self_analysis/detect_entrypoints.ts --package core
+# From project config (preferred for Ariadne packages)
+pnpm exec tsx .claude/skills/self-repair-pipeline/scripts/detect_entrypoints.ts \
+  --config .claude/skills/self-repair-pipeline/project_configs/core.json
+
+# Local repository
+pnpm exec tsx .claude/skills/self-repair-pipeline/scripts/detect_entrypoints.ts --path /path/to/repo
+
+# GitHub repository
+pnpm exec tsx .claude/skills/self-repair-pipeline/scripts/detect_entrypoints.ts --github owner/repo
 ```
 
-Options: `--package <name>` (required), `--stdout`, `--include-tests`
+Options: `--config <file>`, `--path <dir>`, `--github <repo>`, `--branch <name>`, `--depth <n>`, `--output <file>`, `--include-tests`, `--folders <paths>`, `--exclude <patterns>`
 
-Output: `entrypoint-analysis/analysis_output/{package}-analysis_<timestamp>.json`
+Tracked project configs for Ariadne packages: `project_configs/{core,mcp,types}.json`
+
+Output: `analysis_output/detect_entrypoints/<timestamp>.json`
 
 ## Phase 2: Prepare
 
@@ -57,7 +67,7 @@ Build triage state from the latest analysis output:
 
 ```bash
 pnpm exec tsx .claude/skills/self-repair-pipeline/scripts/prepare_triage.ts \
-  --analysis entrypoint-analysis/analysis_output/{package}-analysis_<timestamp>.json \
+  --analysis .claude/skills/self-repair-pipeline/analysis_output/detect_entrypoints/<timestamp>.json \
   --package <name> \
   --batch-size 5
 ```
@@ -69,7 +79,7 @@ The script loads the known-entrypoints registry and classifies entries:
 - **known-tp**: Matches registry — marked completed immediately
 - **llm-triage**: No registry match — marked pending for investigation
 
-Output: `entrypoint-analysis/triage_state/{project}_triage.json`
+Output: `triage_state/{project}_triage.json`
 
 ## Phase 3: Triage Loop
 
@@ -125,7 +135,7 @@ Fix planning proceeds per group through four sub-phases:
 
 Launch 5 **fix-planner** sub-agents for each group. Each generates an independent fix proposal.
 
-Output: `entrypoint-analysis/triage_state/fix_plans/{group_id}/plan_{n}.md`
+Output: `triage_state/fix_plans/{group_id}/plan_{n}.md`
 
 Update `plans_written` in the state file after each plan is written.
 
@@ -133,7 +143,7 @@ Update `plans_written` in the state file after each plan is written.
 
 Launch a **plan-synthesizer** sub-agent that reads all 5 plans and produces a unified fix approach.
 
-Output: `entrypoint-analysis/triage_state/fix_plans/{group_id}/synthesis.md`
+Output: `triage_state/fix_plans/{group_id}/synthesis.md`
 
 Set `synthesis_written: true` in the state file.
 
@@ -146,7 +156,7 @@ Launch 4 **plan-reviewer** sub-agents, each reviewing from a different angle:
 - Fundamentality
 - Language coverage
 
-Output: `entrypoint-analysis/triage_state/fix_plans/{group_id}/review_{angle}.md`
+Output: `triage_state/fix_plans/{group_id}/review_{angle}.md`
 
 Update `reviews_written` in the state file after each review.
 
@@ -162,10 +172,8 @@ After the stop hook ALLOWs completion (all phases done or error exit), run final
 
 ```bash
 pnpm exec tsx .claude/skills/self-repair-pipeline/scripts/finalize_triage.ts \
-  --state entrypoint-analysis/triage_state/{project}_triage.json
+  --state .claude/skills/self-repair-pipeline/triage_state/{project}_triage.json
 ```
-
-Add `--external` for external (non-Ariadne) projects.
 
 Finalization:
 
@@ -173,6 +181,21 @@ Finalization:
 - Saves triage results JSON to `analysis_output/`
 - Updates the known-entrypoints registry with confirmed true positives and dead code
 - Writes triage patterns file (if meta-review produced patterns)
+
+## Architecture: Key Modules
+
+All library modules live under `src/`:
+
+| Module | Purpose |
+| ------ | ------- |
+| `extract_entry_points.ts` | Shared extraction with enriched metadata + diagnostics |
+| `classify_entrypoints.ts` | Deterministic rule-based classification (no LLM) |
+| `known_entrypoints.ts` | Known-entrypoints registry I/O and matching |
+| `build_triage_entries.ts` | Build triage entries from classification results |
+| `build_finalization_output.ts` | Build finalization output from completed state |
+| `types.ts` | Shared type definitions (`EnrichedFunctionEntry`, `EntryPointDiagnostics`, etc.) |
+| `triage_state_types.ts` | Triage state machine types |
+| `analysis_io.ts` | Analysis file lookup, JSON I/O |
 
 ## Reference
 

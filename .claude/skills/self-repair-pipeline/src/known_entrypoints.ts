@@ -5,7 +5,7 @@
  * Once an entry is classified (by LLM or framework source), it is recorded
  * and skipped in future runs.
  *
- * Registry files live in entrypoint-analysis/known_entrypoints/{project_name}.json
+ * Registry files live in known_entrypoints/{project_name}.json (relative to skill root)
  */
 
 import * as fs from "node:fs/promises";

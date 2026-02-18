@@ -2,49 +2,6 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "Analyze Self",
-      "type": "node",
-      "request": "launch",
-      "runtimeExecutable": "npx",
-      "runtimeArgs": ["tsx"],
-      "args": ["entrypoint-analysis/src/self_analysis/detect_entrypoints.ts"],
-      "cwd": "${workspaceFolder}",
-      "console": "integratedTerminal",
-      "internalConsoleOptions": "neverOpen",
-      "sourceMaps": true,
-      "skipFiles": ["<node_internals>/**"]
-    },
-    {
-      "name": "Phase 1: API Coverage Analysis",
-      "type": "node",
-      "request": "launch",
-      "runtimeExecutable": "npx",
-      "runtimeArgs": ["tsx"],
-      "args": [
-        "entrypoint-analysis/src/self_analysis/triage_false_negatives.ts"
-      ],
-      "cwd": "${workspaceFolder}",
-      "console": "integratedTerminal",
-      "internalConsoleOptions": "neverOpen",
-      "sourceMaps": true,
-      "skipFiles": ["<node_internals>/**"]
-    },
-    {
-      "name": "Phase 2: Internal Triage Analysis",
-      "type": "node",
-      "request": "launch",
-      "runtimeExecutable": "npx",
-      "runtimeArgs": ["tsx"],
-      "args": [
-        "entrypoint-analysis/src/self_analysis/triage_false_positives.ts"
-      ],
-      "cwd": "${workspaceFolder}",
-      "console": "integratedTerminal",
-      "internalConsoleOptions": "neverOpen",
-      "sourceMaps": true,
-      "skipFiles": ["<node_internals>/**"]
-    },
-    {
       "name": "Debug: Current TypeScript File",
       "type": "node",
       "request": "launch",

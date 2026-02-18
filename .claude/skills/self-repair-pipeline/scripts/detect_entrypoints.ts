@@ -28,21 +28,20 @@
  *   --exclude <patterns>   Comma-separated exclude patterns
  */
 
-import { Project } from "../../../packages/core/src/index.js";
-import { is_test_file } from "../../../packages/core/src/project/detect_test_file.js";
+import { Project, is_test_file } from "@ariadnejs/core";
 import { FilePath } from "@ariadnejs/types";
 import {
   find_source_files,
   parse_gitignore,
   IGNORED_DIRECTORIES,
-} from "../../../packages/mcp/src/file_loading.js";
-import type { EnrichedFunctionEntry } from "../types.js";
+} from "@ariadnejs/mcp";
+import type { EnrichedFunctionEntry } from "../src/types.js";
 import {
   build_constructor_to_class_name_map,
   detect_language,
   extract_entry_points,
-} from "../extract_entry_points.js";
-import { save_json, AnalysisCategory, ExternalScriptType } from "../analysis_io.js";
+} from "../src/extract_entry_points.js";
+import { save_json, OutputType } from "../src/analysis_io.js";
 import * as path from "path";
 import * as fs from "fs/promises";
 import * as os from "os";
@@ -512,11 +511,7 @@ async function main() {
       console.error(`Output written to: ${args.output}`);
     } else {
       // Use structured output
-      const output_file = await save_json(
-        AnalysisCategory.EXTERNAL,
-        ExternalScriptType.DETECT_ENTRYPOINTS,
-        result
-      );
+      const output_file = await save_json(OutputType.DETECT_ENTRYPOINTS, result);
       console.error(`Output written to: ${output_file}`);
     }
 

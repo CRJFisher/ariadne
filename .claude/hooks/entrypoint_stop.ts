@@ -128,7 +128,7 @@ async function load_package_files(
 async function load_whitelist(project_dir: string, package_name: string): Promise<Set<string>> {
   const registry_path = path.join(
     project_dir,
-    "entrypoint-analysis/known_entrypoints",
+    ".claude/skills/self-repair-pipeline/known_entrypoints",
     `${package_name}.json`
   );
 
@@ -163,7 +163,7 @@ async function analyze_package(
     "node_modules",
     "tests",
     "dist",
-    "entrypoint-analysis",
+    ".claude",
     ".git",
   ]);
 
