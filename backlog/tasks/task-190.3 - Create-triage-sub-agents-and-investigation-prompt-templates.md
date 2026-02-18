@@ -1,9 +1,10 @@
 ---
 id: task-190.3
 title: Create triage sub-agents and investigation prompt templates
-status: To Do
+status: Done
 assignee: []
 created_date: '2026-02-17 16:57'
+updated_date: '2026-02-18 09:56'
 labels: []
 dependencies:
   - task-190.1
@@ -75,7 +76,6 @@ maxTurns: 10
 
 ```markdown
 # templates/prompt_callers_not_in_registry.md
-
 ## Investigation: Callers Not in Registry
 
 This entry has textual callers (found by grep) but Ariadne's call registry
@@ -109,16 +109,17 @@ Claude reads the template, substitutes the entry's metadata, and passes it as th
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 triage-investigator agent: sonnet model, Read/Grep/Glob tools, ariadne MCP server, 15 max turns
-- [ ] #2 triage-aggregator agent: opus model, Read tools, 5 max turns
-- [ ] #3 triage-rule-reviewer agent: sonnet model, Read/Grep tools, 10 max turns
-- [ ] #4 Template: prompt_callers_not_in_registry.md — for entries with textual callers but no registry matches
-- [ ] #5 Template: prompt_resolution_failure.md — for entries where Ariadne failed to resolve the call target
-- [ ] #6 Template: prompt_wrong_target.md — for entries where caller resolves to wrong target
-- [ ] #7 Template: prompt_generic.md — escape-hatch for entries not matching any specific diagnosis
-- [ ] #8 All agents output structured JSON matching TriageEntryResult interface
-- [ ] #9 Agent instructions reference prompt templates from the skill directory
+- [x] #1 triage-investigator agent: sonnet model, Read/Grep/Glob tools, ariadne MCP server, 15 max turns
+- [x] #2 triage-aggregator agent: sonnet model (changed from opus per plan — aggregation is structured pattern matching), Read tools, 5 max turns
+- [x] #3 triage-rule-reviewer agent: sonnet model, Read/Grep tools, 10 max turns
+- [x] #4 Template: prompt_callers_not_in_registry.md — for entries with textual callers but no registry matches
+- [x] #5 Template: prompt_resolution_failure.md — for entries where Ariadne failed to resolve the call target
+- [x] #6 Template: prompt_wrong_target.md — for entries where caller resolves to wrong target
+- [x] #7 Template: prompt_generic.md — escape-hatch for entries not matching any specific diagnosis
+- [x] #8 All agents output structured JSON matching TriageEntryResult interface
+- [x] #9 Agent instructions reference prompt templates from the skill directory
 <!-- AC:END -->
+
 
 ## Implementation Plan
 
@@ -130,3 +131,28 @@ Claude reads the template, substitutes the entry's metadata, and passes it as th
 6. Create .claude/skills/self-repair-pipeline/templates/prompt_wrong_target.md
 7. Create .claude/skills/self-repair-pipeline/templates/prompt_generic.md
 8. Validate agents can be discovered by Claude Code (correct frontmatter format)
+
+
+## Implementation Notes
+
+### Files Created
+
+**Agents** (`.claude/agents/`):
+
+- `triage-investigator.md` — sonnet, Read/Grep/Glob + ariadne MCP, 15 maxTurns. Generic investigation protocol with ternary classification. Diagnosis-specific steps injected by orchestrator via templates.
+- `triage-aggregator.md` — sonnet (changed from opus per plan rationale), Read, 5 maxTurns. Groups false-positive results by shared root cause, merges duplicate group_ids.
+- `triage-rule-reviewer.md` — sonnet, Read/Grep, 10 maxTurns. Identifies metadata patterns for deterministic rules with HIGH/MEDIUM/LOW confidence ratings.
+
+**Templates** (`.claude/skills/self-repair-pipeline/templates/`):
+
+- `prompt_callers_not_in_registry.md` — `callers-not-in-registry` diagnosis
+- `prompt_resolution_failure.md` — `callers-in-registry-unresolved` diagnosis
+- `prompt_wrong_target.md` — `callers-in-registry-wrong-target` diagnosis
+- `prompt_generic.md` — `no-textual-callers` and fallback
+
+### Design Decisions
+
+- **Aggregator model changed to sonnet**: Grouping entries by comparing `group_id` and `root_cause` strings is structured pattern matching. Sonnet handles this well and is cheaper. Trivial to change later if needed.
+- **Templates use `{{placeholder}}` markers**: The orchestrator (task-190.5) reads templates, loads `TriageEntry` + `EnrichedFunctionEntry` from the analysis file, and substitutes placeholders before passing to the investigator agent.
+- **Investigator body is generic**: No diagnosis-specific steps in the agent definition. Templates provide the specialization. This keeps the agent reusable across all diagnosis types.
+- **`## Context` section folded into `# Purpose`**: Matches existing agent convention where context is part of the purpose paragraph.

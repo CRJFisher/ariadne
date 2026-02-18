@@ -70,9 +70,37 @@ export interface FixPlanGroupState {
 // ===== Placeholder types (populated by later pipeline phases) =====
 
 export interface AggregationResult {
-  completed_at: string;
+  status: "pending" | "completed" | "failed";
+  completed_at: string | null;
+}
+
+// ===== Meta-Review Types =====
+
+export interface ProposedRule {
+  rule_id: string;
+  description: string;
+  confidence: "HIGH" | "MEDIUM" | "LOW";
+  classification: "true-positive" | "dead-code" | "false-positive";
+  group_id: string;
+  predicate: string;
+  matching_entries: number;
+  total_with_classification: number;
+  accuracy: number;
+  evidence: string;
+}
+
+export interface RuleReviewOutput {
+  proposed_rules: ProposedRule[];
+  summary: {
+    total_completed_entries: number;
+    rules_proposed: number;
+    entries_coverable_by_rules: number;
+    coverage_percentage: number;
+  };
 }
 
 export interface MetaReviewResult {
-  completed_at: string;
+  status: "pending" | "completed" | "failed";
+  completed_at: string | null;
+  patterns: RuleReviewOutput | null;
 }

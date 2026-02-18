@@ -1,9 +1,10 @@
 ---
 id: task-190.2
 title: Implement stop hook state machine (triage_loop_stop.ts)
-status: To Do
+status: Done
 assignee: []
 created_date: '2026-02-17 16:56'
+updated_date: '2026-02-18 10:23'
 labels: []
 dependencies:
   - task-190.1
@@ -116,17 +117,18 @@ hooks:
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 Hook discovers state file via glob `entrypoint-analysis/triage_state/*_triage.json`
-- [ ] #2 Phase=triage: BLOCKs with batch instructions when pending entries exist, transitions to aggregation when all done
-- [ ] #3 Phase=aggregation: BLOCKs until aggregator completes, transitions to meta-review or complete
-- [ ] #4 Phase=meta-review: BLOCKs until rule-reviewer completes, transitions to fix-planning or complete
-- [ ] #5 Phase=fix-planning: drives per-group sub-phases (planning → synthesis → review → task-writing → complete)
-- [ ] #6 stop_hook_active=true always ALLOWs (prevents infinite loops)
-- [ ] #7 State parse errors ALLOW with logged warning (never blocks forever)
-- [ ] #8 No state file found → ALLOW immediately
-- [ ] #9 BLOCK reason messages contain specific instructions for what Claude should do next
-- [ ] #10 Hook registered in skill YAML frontmatter (not global settings.json)
+- [x] #1 Hook discovers state file via glob `entrypoint-analysis/triage_state/*_triage.json`
+- [x] #2 Phase=triage: BLOCKs with batch instructions when pending entries exist, transitions to aggregation when all done
+- [x] #3 Phase=aggregation: BLOCKs until aggregator completes, transitions to meta-review or complete
+- [x] #4 Phase=meta-review: BLOCKs until rule-reviewer completes, transitions to fix-planning or complete
+- [x] #5 Phase=fix-planning: drives per-group sub-phases (planning → synthesis → review → task-writing → complete)
+- [x] #6 stop_hook_active=true always ALLOWs (prevents infinite loops)
+- [x] #7 State parse errors ALLOW with logged warning (never blocks forever)
+- [x] #8 No state file found → ALLOW immediately
+- [x] #9 BLOCK reason messages contain specific instructions for what Claude should do next
+- [x] #10 Hook registered in skill YAML frontmatter (not global settings.json)
 <!-- AC:END -->
+
 
 ## Implementation Plan
 
@@ -136,3 +138,12 @@ hooks:
 4. Implement phase-specific logic matching the State Machine section in the plan
 5. Implement fix-planning sub-phase tracking (planning/synthesis/review/task-writing/complete per group)
 6. Test with mock state files at each phase transition
+
+
+## Implementation Notes
+
+- Created `.claude/skills/self-repair-pipeline/scripts/triage_loop_stop.ts` with phase handler architecture: `handle_triage`, `handle_aggregation`, `handle_meta_review`, `handle_fix_planning`
+- Each handler returns a `PhaseResult` (`{ decision, reason, mutated }`) — the main loop writes state only when `mutated` is true
+- 29 tests in `triage_loop_stop.test.ts` covering: state file discovery, FP entry filtering, multi-entry grouping, all phase transitions, fix-planning sub-phases, multi-group progression
+- Named constants `REQUIRED_PLANS` (5) and `REQUIRED_REVIEWS` (4) for magic numbers
+- BLOCK reason messages name the specific sub-agent to launch (e.g., `**triage-investigator**`, `**fix-planner**`) and file path conventions

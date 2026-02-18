@@ -1,9 +1,10 @@
 ---
 id: task-190.4
 title: Create fix planning sub-agents
-status: To Do
+status: Done
 assignee: []
 created_date: '2026-02-17 16:57'
+updated_date: '2026-02-18 10:23'
 labels: []
 dependencies:
   - task-190.1
@@ -85,16 +86,17 @@ maxTurns: 10
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 fix-planner agent: sonnet model, Read/Grep/Glob/Write tools, ariadne MCP server, 20 max turns
-- [ ] #2 plan-synthesizer agent: opus model, Read/Write tools, 10 max turns
-- [ ] #3 plan-reviewer agent: sonnet model, Read/Grep/Glob/Write tools, 15 max turns
-- [ ] #4 task-writer agent: sonnet model, Read/Write/Bash(backlog:*) tools, 10 max turns
-- [ ] #5 Fix-planner writes plans to triage_state/fix_plans/{group_id}/plan_{n}.md
-- [ ] #6 Plan-synthesizer reads all 5 plans and writes synthesis to fix_plans/{group_id}/synthesis.md
-- [ ] #7 Plan-reviewer writes reviews to fix_plans/{group_id}/review_{angle}.md
-- [ ] #8 Task-writer creates backlog task using backlog CLI
-- [ ] #9 Template: backlog_task_template.md for task-writer output format
+- [x] #1 fix-planner agent: sonnet model, Read/Grep/Glob/Write tools, ariadne MCP server, 20 max turns
+- [x] #2 plan-synthesizer agent: opus model, Read/Write tools, 10 max turns
+- [x] #3 plan-reviewer agent: sonnet model, Read/Grep/Glob/Write tools, ariadne MCP server, 15 max turns
+- [x] #4 task-writer agent: sonnet model, Read/Write/Bash tools, 10 max turns (Bash scoping to `backlog` CLI enforced via instructions, not frontmatter)
+- [x] #5 Fix-planner writes plans to triage_state/fix_plans/{group_id}/plan_{n}.md
+- [x] #6 Plan-synthesizer reads all 5 plans and writes synthesis to fix_plans/{group_id}/synthesis.md
+- [x] #7 Plan-reviewer writes reviews to fix_plans/{group_id}/review_{angle}.md
+- [x] #8 Task-writer creates backlog task using backlog CLI
+- [x] #9 Template: backlog_task_template.md for task-writer output format
 <!-- AC:END -->
+
 
 ## Implementation Plan
 
@@ -103,3 +105,11 @@ maxTurns: 10
 3. Create .claude/agents/plan-reviewer.md — reviews from one of 4 angles, writes review to file
 4. Create .claude/agents/task-writer.md — reads synthesis + 4 reviews, creates backlog task
 5. Create .claude/skills/self-repair-pipeline/templates/backlog_task_template.md
+
+
+## Implementation Notes
+
+- Created 4 agent definitions: `fix-planner.md`, `plan-synthesizer.md`, `plan-reviewer.md`, `task-writer.md`
+- Created 1 template: `backlog_task_template.md` for task-writer output format
+- `plan-reviewer.md` includes `mcpServers: [ariadne]` so reviewers can ground feedback in actual code (AC#3 updated to reflect this)
+- Claude Code agent frontmatter does not support tool-scoping syntax (e.g., `Bash(backlog:*)`). `task-writer.md` uses `tools: Read, Write, Bash` with a constraint in instructions: "Only use Bash for `backlog` CLI commands" (AC#4 updated)
