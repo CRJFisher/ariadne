@@ -1,6 +1,7 @@
 ---
 name: self-repair-pipeline
 description: Runs the full entry point self-repair pipeline. Detects entry points in Ariadne packages or external codebases, triages false positives via sub-agents, plans fixes for each issue group with competing proposals and multi-angle review, and creates backlog tasks.
+argument-hint: "[config-name | /path/to/repo | owner/repo (GitHub)]"
 disable-model-invocation: true
 allowed-tools: Bash(npx tsx:*,pnpm exec tsx:*), Read, Write, Task(triage-investigator, triage-aggregator, triage-rule-reviewer, fix-planner, plan-synthesizer, plan-reviewer, task-writer)
 hooks:
@@ -25,6 +26,31 @@ Triage pipeline for entry point analysis: detect false positives, classify root 
 | 4. Fix Planning | fix-planner, plan-synthesizer, plan-reviewer, task-writer | Generate competing fix plans, synthesize, review, create tasks |
 | 5. Finalize | `scripts/finalize_triage.ts` | Save results, update registry |
 
+## Analysis Target
+
+**User input:** `$ARGUMENTS`
+
+Resolve the analysis target from the user's input using this routing table:
+
+| Input pattern | Example | Action |
+| ------------- | ------- | ------ |
+| Empty or blank | `/self-repair-pipeline` | List available configs below, ask user what to analyze |
+| Config name | `core`, `mcp`, `types`, `projections` | Use `--config .claude/skills/self-repair-pipeline/project_configs/{name}.json` |
+| Absolute or relative directory path | `/Users/chuck/workspace/some-repo`, `../other-repo` | Use `--path <path>` |
+| `owner/repo` or GitHub URL | `anthropics/sdk-python`, `https://github.com/owner/repo` | Use `--github <value>` |
+| Natural language | "analyze the core package" | Interpret intent and map to one of the above |
+
+Available project configs:
+
+| Config name | Config path |
+| ----------- | ----------- |
+| `core` | `project_configs/core.json` |
+| `mcp` | `project_configs/mcp.json` |
+| `types` | `project_configs/types.json` |
+| `projections` | `project_configs/projections.json` |
+
+If no arguments are provided or the input is ambiguous, **ask the user** before proceeding.
+
 ## Current State
 
 !`cat .claude/skills/self-repair-pipeline/triage_state/*_triage.json 2>/dev/null || echo "No active triage"`
@@ -43,6 +69,8 @@ Triage pipeline for entry point analysis: detect false positives, classify root 
 All paths above are relative to `.claude/skills/self-repair-pipeline/`.
 
 ## Phase 1: Detect
+
+Use the target resolved from the **Analysis Target** section above to construct the detect command.
 
 ```bash
 # From project config (preferred for Ariadne packages)
