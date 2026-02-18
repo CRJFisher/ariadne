@@ -34,8 +34,9 @@ Triage pipeline for entry point analysis: detect false positives, classify root 
 | File | Purpose |
 | ---- | ------- |
 | `triage_state/{project}_triage.json` | Active triage state (phases, entries, results) |
+| `triage_state/results/{entry_index}.json` | Per-entry triage result files (written by sub-agents) |
 | `triage_state/fix_plans/{group_id}/` | Fix plans, synthesis, and reviews per group |
-| `analysis_output/` | Timestamped analysis and triage result files |
+| `analysis_output/{project}/` | Project-scoped timestamped analysis and triage result files |
 | `known_entrypoints/{project}.json` | Known-entrypoints registry (persists across runs) |
 | `triage_patterns.json` | Extracted classification patterns from meta-review |
 
@@ -59,7 +60,7 @@ Options: `--config <file>`, `--path <dir>`, `--github <repo>`, `--branch <name>`
 
 Tracked project configs for Ariadne packages: `project_configs/{core,mcp,types}.json`
 
-Output: `analysis_output/detect_entrypoints/<timestamp>.json`
+Output: `analysis_output/<project>/detect_entrypoints/<timestamp>.json`
 
 ## Phase 2: Prepare
 
@@ -67,7 +68,7 @@ Build triage state from the latest analysis output:
 
 ```bash
 pnpm exec tsx .claude/skills/self-repair-pipeline/scripts/prepare_triage.ts \
-  --analysis .claude/skills/self-repair-pipeline/analysis_output/detect_entrypoints/<timestamp>.json \
+  --analysis .claude/skills/self-repair-pipeline/analysis_output/<project>/detect_entrypoints/<timestamp>.json \
   --package <name> \
   --batch-size 5
 ```
@@ -99,8 +100,8 @@ For each pending entry in the state file:
    | All other diagnoses | `templates/prompt_generic.md` | Broad investigation |
 
 2. Read the template and substitute `{{entry.*}}` placeholders with values from the entry
-3. Launch a **triage-investigator** sub-agent with the constructed prompt
-4. Write the result (`TriageEntryResult`) back to the entry in the state file, set `status: "completed"`
+3. Launch a **triage-investigator** sub-agent with `run_in_background: true`. Include `output_path` = `triage_state/results/{entry.entry_index}.json` in the prompt
+4. Do not read or process the sub-agent's response. The stop hook merges result files automatically
 
 Process entries in batches of `batch_size` (from state file). The stop hook re-triggers after each batch.
 
@@ -178,7 +179,7 @@ pnpm exec tsx .claude/skills/self-repair-pipeline/scripts/finalize_triage.ts \
 Finalization:
 
 - Partitions entries into true positives, dead code, and false-positive groups
-- Saves triage results JSON to `analysis_output/`
+- Saves triage results JSON to `analysis_output/<project>/triage_results/`
 - Updates the known-entrypoints registry with confirmed true positives and dead code
 - Writes triage patterns file (if meta-review produced patterns)
 

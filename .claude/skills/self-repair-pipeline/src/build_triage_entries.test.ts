@@ -55,6 +55,7 @@ describe("build_triage_entries", () => {
     const result = build_triage_entries(classification);
 
     const expected: TriageEntry[] = [{
+      entry_index: 0,
       name: "main",
       file_path: "/projects/myapp/src/main.py",
       start_line: 10,
@@ -90,6 +91,7 @@ describe("build_triage_entries", () => {
     const result = build_triage_entries(classification);
 
     const expected: TriageEntry[] = [{
+      entry_index: 0,
       name: "mystery_func",
       file_path: "/projects/myapp/src/test.ts",
       start_line: 10,
@@ -120,13 +122,16 @@ describe("build_triage_entries", () => {
     const result = build_triage_entries(classification);
 
     expect(result).toHaveLength(3);
+    expect(result[0].entry_index).toBe(0);
     expect(result[0].route).toBe("known-tp");
     expect(result[0].known_source).toBe("react");
     expect(result[0].status).toBe("completed");
     expect(result[0].result).toEqual(KNOWN_TP_RESULT);
+    expect(result[1].entry_index).toBe(1);
     expect(result[1].route).toBe("llm-triage");
     expect(result[1].status).toBe("pending");
     expect(result[1].result).toBe(null);
+    expect(result[2].entry_index).toBe(2);
     expect(result[2].route).toBe("llm-triage");
     expect(result[2].status).toBe("pending");
   });

@@ -112,9 +112,58 @@ export function init_fix_planning(
   };
 }
 
+// ===== Result File Merging =====
+
+/**
+ * Merge per-entry result files from triage_state/results/ into the state.
+ *
+ * Each sub-agent writes its result to {triage_dir}/results/{entry_index}.json.
+ * This function scans that directory, parses results, and updates the
+ * corresponding entries in the state. Returns the count of entries merged.
+ */
+export function merge_result_files(state: TriageState, triage_dir: string): number {
+  const results_dir = path.join(triage_dir, "results");
+  if (!fs.existsSync(results_dir)) return 0;
+
+  const files = fs.readdirSync(results_dir).filter((f) => f.endsWith(".json"));
+  let merged = 0;
+
+  for (const file of files) {
+    const basename = path.basename(file, ".json");
+    const entry_index = parseInt(basename, 10);
+    if (isNaN(entry_index)) continue;
+
+    const entry = state.entries.find((e) => e.entry_index === entry_index);
+    if (!entry) continue;
+    if (entry.status === "completed") continue;
+
+    const file_path = path.join(results_dir, file);
+    try {
+      const raw = fs.readFileSync(file_path, "utf8");
+      const result = JSON.parse(raw) as TriageEntryResult;
+      entry.result = result;
+      entry.status = "completed";
+    } catch (err) {
+      entry.status = "failed";
+      entry.error = `Failed to parse result file: ${err}`;
+    }
+    entry.attempt_count++;
+    merged++;
+  }
+
+  return merged;
+}
+
 // ===== Phase Handlers =====
 
-export function handle_triage(state: TriageState, state_path: string): PhaseResult {
+export function handle_triage(state: TriageState, triage_dir: string, state_path: string): PhaseResult {
+  let mutated = false;
+  const files_merged = merge_result_files(state, triage_dir);
+  if (files_merged > 0) {
+    mutated = true;
+    log(`Merged ${files_merged} result files`);
+  }
+
   const pending = state.entries.filter((e) => e.status === "pending");
   if (pending.length > 0) {
     const batch = Math.min(pending.length, state.batch_size);
@@ -123,8 +172,8 @@ export function handle_triage(state: TriageState, state_path: string): PhaseResu
       reason:
         `${pending.length} entries need triage. ` +
         `Read state file at ${state_path}, find the next ${batch} pending entries, ` +
-        "and launch **triage-investigator** sub-agents for each.",
-      mutated: false,
+        "and launch **triage-investigator** sub-agents **in background** for each.",
+      mutated,
     };
   }
 
@@ -360,7 +409,7 @@ function main(): void {
   let result: PhaseResult;
   switch (state.phase) {
     case "triage":
-      result = handle_triage(state, state_path);
+      result = handle_triage(state, triage_dir, state_path);
       break;
     case "aggregation":
       result = handle_aggregation(state, state_path);

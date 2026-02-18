@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from "vitest";
+import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import fs from "fs";
 import path from "path";
 import type {
@@ -9,6 +9,7 @@ import type {
 } from "../src/triage_state_types.js";
 import {
   discover_state_file,
+  merge_result_files,
   get_escape_hatch_fp_entries,
   get_multi_entry_fp_groups,
   init_fix_planning,
@@ -31,23 +32,30 @@ function build_mock_result(overrides: Partial<TriageEntryResult> = {}): TriageEn
   };
 }
 
+let mock_entry_index = 0;
+
 function build_mock_entry(overrides: Partial<TriageEntry> = {}): TriageEntry {
-  return {
-    name: "test_func",
-    file_path: "src/test.ts",
-    start_line: 1,
-    kind: "function",
-    signature: "function test_func(): void",
-    route: "llm-triage",
-    diagnosis: "needs triage",
-    deterministic_group_id: null,
-    known_source: null,
-    status: "pending",
-    result: null,
-    error: null,
-    attempt_count: 0,
-    ...overrides,
-  };
+  const idx = overrides.entry_index ?? mock_entry_index++;
+  return Object.assign(
+    {
+      entry_index: idx,
+      name: "test_func",
+      file_path: "src/test.ts",
+      start_line: 1,
+      kind: "function",
+      signature: "function test_func(): void",
+      route: "llm-triage" as const,
+      diagnosis: "needs triage",
+      deterministic_group_id: null,
+      known_source: null,
+      status: "pending" as const,
+      result: null,
+      error: null,
+      attempt_count: 0,
+    } satisfies TriageEntry,
+    overrides,
+    { entry_index: idx },
+  );
 }
 
 function build_mock_state(overrides: Partial<TriageState> = {}): TriageState {
@@ -67,6 +75,7 @@ function build_mock_state(overrides: Partial<TriageState> = {}): TriageState {
   };
 }
 
+const MOCK_TRIAGE_DIR = "/tmp/triage_state";
 const MOCK_STATE_PATH = "/tmp/triage_state/test_triage.json";
 
 // ===== discover_state_file =====
@@ -201,6 +210,128 @@ describe("get_multi_entry_fp_groups", () => {
   });
 });
 
+// ===== merge_result_files =====
+
+describe("merge_result_files", () => {
+  const test_dir = "/tmp/claude/merge_result_test";
+  const results_dir = path.join(test_dir, "results");
+
+  afterEach(() => {
+    if (fs.existsSync(test_dir)) {
+      fs.rmSync(test_dir, { recursive: true });
+    }
+  });
+
+  it("returns 0 when results dir does not exist", () => {
+    const state = build_mock_state({
+      entries: [build_mock_entry({ entry_index: 0, status: "pending" })],
+    });
+    expect(merge_result_files(state, "/tmp/claude/nonexistent_merge_test")).toEqual(0);
+  });
+
+  it("merges valid result into correct entry", () => {
+    const state = build_mock_state({
+      entries: [
+        build_mock_entry({ entry_index: 0, status: "pending" }),
+        build_mock_entry({ entry_index: 1, status: "pending" }),
+      ],
+    });
+
+    fs.mkdirSync(results_dir, { recursive: true });
+    const result: TriageEntryResult = {
+      is_true_positive: true,
+      is_likely_dead_code: false,
+      group_id: "true-positive",
+      root_cause: "Public API",
+      reasoning: "Exported from index",
+    };
+    fs.writeFileSync(path.join(results_dir, "1.json"), JSON.stringify(result));
+
+    const merged = merge_result_files(state, test_dir);
+
+    expect(merged).toEqual(1);
+    expect(state.entries[1].status).toEqual("completed");
+    expect(state.entries[1].result).toEqual(result);
+    expect(state.entries[1].attempt_count).toEqual(1);
+    expect(state.entries[0].status).toEqual("pending");
+  });
+
+  it("skips already-completed entries (idempotent)", () => {
+    const existing_result = build_mock_result({ group_id: "original" });
+    const state = build_mock_state({
+      entries: [
+        build_mock_entry({ entry_index: 0, status: "completed", result: existing_result }),
+      ],
+    });
+
+    fs.mkdirSync(results_dir, { recursive: true });
+    const new_result: TriageEntryResult = {
+      is_true_positive: false,
+      is_likely_dead_code: true,
+      group_id: "dead-code",
+      root_cause: "Unused",
+      reasoning: "No callers",
+    };
+    fs.writeFileSync(path.join(results_dir, "0.json"), JSON.stringify(new_result));
+
+    const merged = merge_result_files(state, test_dir);
+
+    expect(merged).toEqual(0);
+    expect(state.entries[0].result).toEqual(existing_result);
+  });
+
+  it("marks entry failed on malformed JSON", () => {
+    const state = build_mock_state({
+      entries: [build_mock_entry({ entry_index: 0, status: "pending" })],
+    });
+
+    fs.mkdirSync(results_dir, { recursive: true });
+    fs.writeFileSync(path.join(results_dir, "0.json"), "not valid json{{{");
+
+    const merged = merge_result_files(state, test_dir);
+
+    expect(merged).toEqual(1);
+    expect(state.entries[0].status).toEqual("failed");
+    expect(state.entries[0].error).toContain("Failed to parse result file");
+    expect(state.entries[0].attempt_count).toEqual(1);
+  });
+
+  it("ignores non-numeric filenames", () => {
+    const state = build_mock_state({
+      entries: [build_mock_entry({ entry_index: 0, status: "pending" })],
+    });
+
+    fs.mkdirSync(results_dir, { recursive: true });
+    fs.writeFileSync(path.join(results_dir, "readme.json"), "{}");
+    fs.writeFileSync(path.join(results_dir, "abc.json"), "{}");
+
+    const merged = merge_result_files(state, test_dir);
+
+    expect(merged).toEqual(0);
+    expect(state.entries[0].status).toEqual("pending");
+  });
+
+  it("ignores out-of-range indices", () => {
+    const state = build_mock_state({
+      entries: [build_mock_entry({ entry_index: 0, status: "pending" })],
+    });
+
+    fs.mkdirSync(results_dir, { recursive: true });
+    const result: TriageEntryResult = {
+      is_true_positive: true,
+      is_likely_dead_code: false,
+      group_id: "true-positive",
+      root_cause: "API",
+      reasoning: "Exported",
+    };
+    fs.writeFileSync(path.join(results_dir, "99.json"), JSON.stringify(result));
+
+    const merged = merge_result_files(state, test_dir);
+
+    expect(merged).toEqual(0);
+  });
+});
+
 // ===== handle_triage =====
 
 describe("handle_triage", () => {
@@ -213,7 +344,7 @@ describe("handle_triage", () => {
       ],
     });
 
-    const result = handle_triage(state, MOCK_STATE_PATH);
+    const result = handle_triage(state, MOCK_TRIAGE_DIR, MOCK_STATE_PATH);
     expect(result.decision).toEqual("block");
     expect(result.mutated).toEqual(false);
     expect(result.reason).toContain("2 entries need triage");
@@ -228,7 +359,7 @@ describe("handle_triage", () => {
       ],
     });
 
-    const result = handle_triage(state, MOCK_STATE_PATH);
+    const result = handle_triage(state, MOCK_TRIAGE_DIR, MOCK_STATE_PATH);
     expect(result.decision).toEqual("block");
     expect(result.mutated).toEqual(true);
     expect(state.phase).toEqual("aggregation");

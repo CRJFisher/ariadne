@@ -79,7 +79,7 @@ async function main(): Promise<void> {
   const summary = build_finalization_summary(state, output);
 
   // Save triage results
-  const output_file = await save_json(OutputType.TRIAGE_RESULTS, output);
+  const output_file = await save_json(OutputType.TRIAGE_RESULTS, output, state.project_name);
 
   // Update known-entrypoints registry
   const known_sources = await load_known_entrypoints(state.project_name);
@@ -101,6 +101,15 @@ async function main(): Promise<void> {
     console.error(`Triage patterns written: ${patterns_path}`);
   } else {
     console.error("No triage patterns in meta_review, skipping patterns file.");
+  }
+
+  // Clean up per-entry result files
+  const results_dir = path.join(path.dirname(cli.state_path), "results");
+  try {
+    await fs.rm(results_dir, { recursive: true });
+    console.error(`Cleaned up results directory: ${results_dir}`);
+  } catch {
+    // May not exist if all entries were known-tp
   }
 
   // Print summary

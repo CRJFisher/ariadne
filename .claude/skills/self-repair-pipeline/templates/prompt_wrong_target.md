@@ -11,6 +11,10 @@
 - **Exported**: {{entry.is_exported}}
 - **Access modifier**: {{entry.access_modifier}}
 
+### Output Location
+
+Write your result JSON to: {{output_path}}
+
 ### Pre-Gathered Evidence
 
 **Textual call sites (grep results):**
@@ -69,7 +73,7 @@
 
 ### Output
 
-Return raw JSON (no markdown fencing):
+Write raw JSON (no markdown fencing) to the output path above:
 
 ```
 {

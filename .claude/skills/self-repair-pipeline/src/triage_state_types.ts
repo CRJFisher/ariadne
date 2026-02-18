@@ -26,6 +26,7 @@ export interface TriageState {
 export type TriageRoute = "known-tp" | "deterministic-fp" | "llm-triage";
 
 export interface TriageEntry {
+  entry_index: number;
   name: string;
   file_path: string;
   start_line: number;

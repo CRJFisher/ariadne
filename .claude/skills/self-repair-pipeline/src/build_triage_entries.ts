@@ -35,9 +35,11 @@ export function build_triage_entries(
   classification: PreClassificationResult,
 ): TriageEntry[] {
   const entries: TriageEntry[] = [];
+  let index = 0;
 
   for (const match of classification.known_true_positives) {
     entries.push({
+      entry_index: index++,
       ...entry_to_triage_base(match.entry),
       route: "known-tp",
       deterministic_group_id: null,
@@ -51,6 +53,7 @@ export function build_triage_entries(
 
   for (const entry of classification.unclassified) {
     entries.push({
+      entry_index: index++,
       ...entry_to_triage_base(entry),
       route: "llm-triage",
       deterministic_group_id: null,

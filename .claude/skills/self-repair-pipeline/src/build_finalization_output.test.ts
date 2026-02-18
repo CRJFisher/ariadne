@@ -21,23 +21,30 @@ function make_result(overrides: Partial<TriageEntryResult> = {}): TriageEntryRes
   };
 }
 
+let entry_counter = 0;
+
 function make_entry(overrides: Partial<TriageEntry> = {}): TriageEntry {
-  return {
-    name: "test_func",
-    file_path: "/projects/myapp/src/test.ts",
-    start_line: 10,
-    kind: "function",
-    signature: null,
-    route: "llm-triage",
-    diagnosis: "no-textual-callers",
-    deterministic_group_id: null,
-    known_source: null,
-    status: "completed",
-    result: make_result(),
-    error: null,
-    attempt_count: 1,
-    ...overrides,
-  };
+  const idx = overrides.entry_index ?? entry_counter++;
+  return Object.assign(
+    {
+      entry_index: idx,
+      name: "test_func",
+      file_path: "/projects/myapp/src/test.ts",
+      start_line: 10,
+      kind: "function",
+      signature: null,
+      route: "llm-triage" as const,
+      diagnosis: "no-textual-callers",
+      deterministic_group_id: null,
+      known_source: null,
+      status: "completed" as const,
+      result: make_result(),
+      error: null,
+      attempt_count: 1,
+    } satisfies TriageEntry,
+    overrides,
+    { entry_index: idx },
+  );
 }
 
 function make_state(overrides: Partial<TriageState> = {}): TriageState {

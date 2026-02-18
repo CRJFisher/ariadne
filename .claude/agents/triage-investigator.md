@@ -1,7 +1,7 @@
 ---
 name: triage-investigator
 description: Investigates a single entry point candidate to determine if it is a true positive, dead code, or a false positive that Ariadne missed callers for. Returns a TriageEntryResult JSON.
-tools: Read, Grep, Glob
+tools: Read, Grep, Glob, Write
 mcpServers:
   - ariadne
 model: sonnet
@@ -48,7 +48,7 @@ You investigate a single entry point candidate detected by Ariadne's call graph 
 
 ## Output Format
 
-Return raw JSON (no markdown fencing, no extra text) matching this shape:
+Write your result JSON to the output path provided in your prompt. Use the Write tool to write raw JSON (no markdown fencing, no extra text) matching this shape:
 
 ```
 {
