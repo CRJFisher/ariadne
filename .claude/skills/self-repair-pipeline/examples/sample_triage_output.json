@@ -1,0 +1,65 @@
+{
+  "true_positives": [
+    {
+      "name": "initialize",
+      "file_path": "packages/core/src/index.ts",
+      "start_line": 42,
+      "signature": "initialize(config: Config): Project"
+    },
+    {
+      "name": "create_project",
+      "file_path": "packages/core/src/project/project.ts",
+      "start_line": 18
+    }
+  ],
+  "dead_code": [
+    {
+      "name": "legacy_resolve",
+      "file_path": "packages/core/src/resolve_references/legacy_resolve.ts",
+      "start_line": 7,
+      "signature": "legacy_resolve(ref: Reference): Definition | null"
+    }
+  ],
+  "groups": {
+    "barrel-reexport": {
+      "group_id": "barrel-reexport",
+      "root_cause": "Functions re-exported through barrel files (index.ts) are not resolved because Ariadne does not follow re-export chains during name resolution",
+      "reasoning": "When a function is defined in module A, re-exported from module B's index.ts, and called via the barrel import, Ariadne resolves the call to the barrel's re-export declaration rather than the original definition. The original function appears uncalled.",
+      "existing_task_fixes": ["backlog/tasks/task-191 - Fix-barrel-reexport-resolution.md"],
+      "entries": [
+        {
+          "name": "parse_query",
+          "file_path": "packages/core/src/index_single_file/parse_query.ts",
+          "start_line": 23,
+          "signature": "parse_query(source: string, language: Language): QueryResult"
+        },
+        {
+          "name": "extract_scopes",
+          "file_path": "packages/core/src/index_single_file/extract_scopes.ts",
+          "start_line": 15,
+          "signature": "extract_scopes(tree: SyntaxTree): Scope[]"
+        }
+      ]
+    },
+    "cross-package-call": {
+      "group_id": "cross-package-call",
+      "root_cause": "Cross-package function calls are not tracked when the calling package is outside the analysis scope",
+      "reasoning": "When package A calls a function from package B, but only package B is analyzed, the call from package A is invisible. The function in package B appears as an entry point because its caller was never indexed.",
+      "existing_task_fixes": [],
+      "entries": [
+        {
+          "name": "validate_config",
+          "file_path": "packages/core/src/project/validate_config.ts",
+          "start_line": 8
+        },
+        {
+          "name": "resolve_path",
+          "file_path": "packages/core/src/project/resolve_path.ts",
+          "start_line": 31,
+          "signature": "resolve_path(base: string, relative: string): string"
+        }
+      ]
+    }
+  },
+  "last_updated": "2026-02-18T14:30:00.000Z"
+}

@@ -1,9 +1,10 @@
 ---
 id: task-190.5
 title: Build self-repair-pipeline skill directory and SKILL.md
-status: To Do
+status: Done
 assignee: []
 created_date: '2026-02-17 16:57'
+updated_date: '2026-02-18 10:55'
 labels: []
 dependencies:
   - task-190.1
@@ -68,17 +69,18 @@ The existing `self-entrypoint-analysis` and `external-entrypoint-analysis` skill
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 SKILL.md has name, description, disable-model-invocation, allowed-tools, and hooks frontmatter
-- [ ] #2 SKILL.md includes dynamic state injection: cat triage_state/*_triage.json
-- [ ] #3 SKILL.md documents all 5 phases: detect → prepare → triage loop → fix planning → finalize
-- [ ] #4 SKILL.md references prompt templates for diagnosis-based routing
-- [ ] #5 reference/state_machine.md documents all phase transitions and BLOCK/ALLOW logic
-- [ ] #6 reference/diagnosis_routes.md documents the routing table and escape hatch
-- [ ] #7 examples/sample_triage_output.json provides example final output
-- [ ] #8 Skill allowed-tools include Bash(npx tsx:*,pnpm exec tsx:*), Read, Write, Task(all 7 sub-agents)
-- [ ] #9 SKILL.md frontmatter includes Stop hook pointing to triage_loop_stop.ts
-- [ ] #10 SKILL.md frontmatter includes `disable-model-invocation: true`
+- [x] #1 SKILL.md has name, description, disable-model-invocation, allowed-tools, and hooks frontmatter
+- [x] #2 SKILL.md includes dynamic state injection: cat triage_state/*_triage.json
+- [x] #3 SKILL.md documents all 5 phases: detect → prepare → triage loop → fix planning → finalize
+- [x] #4 SKILL.md references prompt templates for diagnosis-based routing
+- [x] #5 reference/state_machine.md documents all phase transitions and BLOCK/ALLOW logic
+- [x] #6 reference/diagnosis_routes.md documents the routing table and escape hatch
+- [x] #7 examples/sample_triage_output.json provides example final output
+- [x] #8 Skill allowed-tools include Bash(npx tsx:*,pnpm exec tsx:*), Read, Write, Task(all 7 sub-agents)
+- [x] #9 SKILL.md frontmatter includes Stop hook pointing to triage_loop_stop.ts
+- [x] #10 SKILL.md frontmatter includes `disable-model-invocation: true`
 <!-- AC:END -->
+
 
 ## Implementation Plan
 
@@ -89,3 +91,16 @@ The existing `self-entrypoint-analysis` and `external-entrypoint-analysis` skill
 5. Create reference/state_machine.md from plan's Stop Hook State Machine section
 6. Create reference/diagnosis_routes.md from plan's routing table
 7. Create examples/sample_triage_output.json
+
+
+## Implementation Notes
+
+Created/modified 4 files:
+
+1. **SKILL.md** (rewritten) — Full orchestration document with frontmatter (name, description, disable-model-invocation, allowed-tools with all 7 sub-agents, Stop hook), pipeline overview table, dynamic state injection, 5 phase-specific instruction sections, diagnosis-to-template routing table, and sub-agent summary table.
+
+2. **reference/state_machine.md** — Documents all phase transitions from triage_loop_stop.ts: triage, aggregation, meta-review, fix-planning, complete. Covers BLOCK/ALLOW decisions for each phase including fix-planning sub-phases (planning, synthesis, review, task-writing). Documents constants (REQUIRED_PLANS=5, REQUIRED_REVIEWS=4) and edge cases.
+
+3. **reference/diagnosis_routes.md** — Documents entry classification routes (known-tp, llm-triage), all 6 diagnosis values, diagnosis-to-template routing table (4 templates), ternary classification output format, and the multi-entry FP group escape hatch.
+
+4. **examples/sample_triage_output.json** — Valid JSON matching FinalizationOutput interface with 2 true positives, 1 dead code entry, and 2 false-positive groups (one with task_file, one without).

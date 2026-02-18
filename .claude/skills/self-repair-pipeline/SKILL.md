@@ -1,4 +1,8 @@
 ---
+name: self-repair-pipeline
+description: Runs the full entry point self-repair pipeline. Detects entry points, triages false positives via sub-agents, plans fixes for each issue group with competing proposals and multi-angle review, and creates backlog tasks.
+disable-model-invocation: true
+allowed-tools: Bash(npx tsx:*,pnpm exec tsx:*), Read, Write, Task(triage-investigator, triage-aggregator, triage-rule-reviewer, fix-planner, plan-synthesizer, plan-reviewer, task-writer)
 hooks:
   Stop:
     - hooks:
@@ -9,4 +13,181 @@ hooks:
 
 # Self-Repair Pipeline
 
-Triage pipeline for entrypoint analysis false positive detection.
+Triage pipeline for entry point analysis: detect false positives, classify root causes, plan fixes, and create backlog tasks.
+
+## Pipeline Overview
+
+| Phase | Script / Agent | Purpose |
+| ----- | -------------- | ------- |
+| 1. Detect | `detect_entrypoints.ts` | Run entry point detection on a package |
+| 2. Prepare | `prepare_triage.ts` | Classify against known-entrypoints registry, build triage state |
+| 3. Triage Loop | triage-investigator, triage-aggregator, triage-rule-reviewer | Investigate pending entries, aggregate results, review for patterns |
+| 4. Fix Planning | fix-planner, plan-synthesizer, plan-reviewer, task-writer | Generate competing fix plans, synthesize, review, create tasks |
+| 5. Finalize | `finalize_triage.ts` | Save results, update registry |
+
+## Current State
+
+!`cat entrypoint-analysis/triage_state/*_triage.json 2>/dev/null || echo "No active triage"`
+
+## State and Output Locations
+
+| File | Purpose |
+| ---- | ------- |
+| `entrypoint-analysis/triage_state/{project}_triage.json` | Active triage state (phases, entries, results) |
+| `entrypoint-analysis/triage_state/fix_plans/{group_id}/` | Fix plans, synthesis, and reviews per group |
+| `entrypoint-analysis/analysis_output/` | Timestamped analysis and triage result files |
+| `entrypoint-analysis/known_entrypoints/{project}.json` | Known-entrypoints registry (persists across runs) |
+| `entrypoint-analysis/triage_patterns.json` | Extracted classification patterns from meta-review |
+
+## Phase 1: Detect
+
+Run entry point detection for a package:
+
+```bash
+pnpm exec tsx entrypoint-analysis/src/self_analysis/detect_entrypoints.ts --package core
+```
+
+Options: `--package <name>` (required), `--stdout`, `--include-tests`
+
+Output: `entrypoint-analysis/analysis_output/{package}-analysis_<timestamp>.json`
+
+## Phase 2: Prepare
+
+Build triage state from the latest analysis output:
+
+```bash
+pnpm exec tsx .claude/skills/self-repair-pipeline/scripts/prepare_triage.ts \
+  --analysis entrypoint-analysis/analysis_output/{package}-analysis_<timestamp>.json \
+  --package <name> \
+  --batch-size 5
+```
+
+Options: `--analysis <path>` (required), `--package <name>`, `--state <path>`, `--batch-size <n>` (default 5)
+
+The script loads the known-entrypoints registry and classifies entries:
+
+- **known-tp**: Matches registry — marked completed immediately
+- **llm-triage**: No registry match — marked pending for investigation
+
+Output: `entrypoint-analysis/triage_state/{project}_triage.json`
+
+## Phase 3: Triage Loop
+
+The Stop hook (`triage_loop_stop.ts`) drives this phase as a state machine. Each time Claude tries to stop, the hook reads the state file, determines what to do next, and either BLOCKs with instructions or ALLOWs completion.
+
+### 3a. Investigate Pending Entries
+
+For each pending entry in the state file:
+
+1. Read the entry's `diagnosis` field to select the prompt template:
+
+   | Diagnosis | Template | Focus |
+   | --------- | -------- | ----- |
+   | `callers-not-in-registry` | `templates/prompt_callers_not_in_registry.md` | File coverage gap investigation |
+   | `callers-in-registry-unresolved` | `templates/prompt_resolution_failure.md` | Resolution failure pattern identification |
+   | `callers-in-registry-wrong-target` | `templates/prompt_wrong_target.md` | Wrong resolution target analysis |
+   | All other diagnoses | `templates/prompt_generic.md` | Broad investigation |
+
+2. Read the template and substitute `{{entry.*}}` placeholders with values from the entry
+3. Launch a **triage-investigator** sub-agent with the constructed prompt
+4. Write the result (`TriageEntryResult`) back to the entry in the state file, set `status: "completed"`
+
+Process entries in batches of `batch_size` (from state file). The stop hook re-triggers after each batch.
+
+### 3b. Aggregation
+
+When all entries are completed, the stop hook transitions to `aggregation` phase.
+
+Launch a **triage-aggregator** sub-agent with the state file path. The aggregator:
+
+- Reviews all completed entry results
+- Groups entries by shared root cause
+- Merges duplicate/overlapping group IDs
+- Writes `aggregation: { status: "completed", completed_at: ... }` to the state file
+
+### 3c. Meta-Review
+
+If aggregation found false-positive entries, the stop hook transitions to `meta-review` phase.
+
+Launch a **triage-rule-reviewer** sub-agent with the state file path. The reviewer:
+
+- Analyzes false-positive patterns across entries
+- Proposes deterministic classification rules
+- Writes `meta_review: { status: "completed", patterns: ..., completed_at: ... }` to the state file
+
+## Phase 4: Fix Planning
+
+If meta-review found multi-entry false-positive groups (>1 entry sharing the same group_id), the stop hook transitions to `fix-planning` phase. Single-entry groups are recorded but skipped.
+
+Fix planning proceeds per group through four sub-phases:
+
+### 4a. Planning
+
+Launch 5 **fix-planner** sub-agents for each group. Each generates an independent fix proposal.
+
+Output: `entrypoint-analysis/triage_state/fix_plans/{group_id}/plan_{n}.md`
+
+Update `plans_written` in the state file after each plan is written.
+
+### 4b. Synthesis
+
+Launch a **plan-synthesizer** sub-agent that reads all 5 plans and produces a unified fix approach.
+
+Output: `entrypoint-analysis/triage_state/fix_plans/{group_id}/synthesis.md`
+
+Set `synthesis_written: true` in the state file.
+
+### 4c. Review
+
+Launch 4 **plan-reviewer** sub-agents, each reviewing from a different angle:
+
+- Information architecture
+- Simplicity
+- Fundamentality
+- Language coverage
+
+Output: `entrypoint-analysis/triage_state/fix_plans/{group_id}/review_{angle}.md`
+
+Update `reviews_written` in the state file after each review.
+
+### 4d. Task Writing
+
+Launch a **task-writer** sub-agent that creates a backlog task using `templates/backlog_task_template.md`.
+
+Set `task_file` in the state file to the created task path.
+
+## Phase 5: Finalize
+
+After the stop hook ALLOWs completion (all phases done or error exit), run finalization:
+
+```bash
+pnpm exec tsx .claude/skills/self-repair-pipeline/scripts/finalize_triage.ts \
+  --state entrypoint-analysis/triage_state/{project}_triage.json
+```
+
+Add `--external` for external (non-Ariadne) projects.
+
+Finalization:
+
+- Partitions entries into true positives, dead code, and false-positive groups
+- Saves triage results JSON to `analysis_output/`
+- Updates the known-entrypoints registry with confirmed true positives and dead code
+- Writes triage patterns file (if meta-review produced patterns)
+
+## Reference
+
+- [State Machine: Phase Transitions and BLOCK/ALLOW Logic](reference/state_machine.md)
+- [Diagnosis Routes: Routing Table and Escape Hatch](reference/diagnosis_routes.md)
+- [Sample Triage Output](examples/sample_triage_output.json)
+
+## Sub-Agents
+
+| Agent | Model | Purpose |
+| ----- | ----- | ------- |
+| triage-investigator | sonnet | Investigate a single pending entry using diagnosis-specific prompt template |
+| triage-aggregator | sonnet | Review all entry results, group by root cause, merge duplicates |
+| triage-rule-reviewer | sonnet | Analyze false-positive patterns, propose deterministic classification rules |
+| fix-planner | sonnet | Generate one independent fix proposal for a false-positive group |
+| plan-synthesizer | opus | Synthesize 5 competing plans into a unified fix approach |
+| plan-reviewer | sonnet | Review synthesized plan from one specific angle |
+| task-writer | sonnet | Create a backlog task from synthesis + reviews using the task template |
