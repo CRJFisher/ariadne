@@ -511,7 +511,7 @@ async function main() {
       console.error(`Output written to: ${args.output}`);
     } else {
       // Use structured output
-      const output_file = await save_json(OutputType.DETECT_ENTRYPOINTS, result);
+      const output_file = await save_json(OutputType.DETECT_ENTRYPOINTS, result, project_name);
       console.error(`Output written to: ${output_file}`);
     }
 

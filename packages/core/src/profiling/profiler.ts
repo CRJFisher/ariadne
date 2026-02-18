@@ -13,7 +13,7 @@
  *   const tree = parser.parse(content);
  *   profiler.end('tree_sitter_parse');
  *   profiler.end('update_file');
- *   profiler.report();
+ *   const report = profiler.get_report();
  */
 
 import { performance } from "perf_hooks";
@@ -278,77 +278,6 @@ class Profiler {
         slowest_files,
       },
     };
-  }
-
-  /**
-   * Print human-readable report to console
-   */
-  report(): void {
-    if (!this.enabled) {
-      console.log("Profiler: disabled (set ARIADNE_PROFILE=1 to enable)");
-      return;
-    }
-
-    const report = this.get_report();
-
-    console.log("\n" + "=".repeat(70));
-    console.log("                    ARIADNE PERFORMANCE PROFILE");
-    console.log("=".repeat(70));
-
-    console.log(`\nTotal Time: ${report.total_ms.toFixed(2)}ms`);
-    console.log(
-      `  Native (tree-sitter): ${report.summary.native_ms.toFixed(2)}ms (${report.summary.native_pct.toFixed(1)}%)`
-    );
-    console.log(
-      `  JavaScript:           ${report.summary.js_ms.toFixed(2)}ms (${report.summary.js_pct.toFixed(1)}%)`
-    );
-
-    console.log(`\nFiles Processed: ${report.summary.file_count}`);
-    console.log(`Average per file: ${report.summary.avg_file_ms.toFixed(2)}ms`);
-
-    console.log("\n" + "-".repeat(70));
-    console.log("TIMING BREAKDOWN BY PHASE");
-    console.log("-".repeat(70));
-
-    const print_entry = (entry: TimingEntry, indent: number = 0): void => {
-      const prefix = "  ".repeat(indent);
-      const pct =
-        report.total_ms > 0
-          ? ((entry.total_ms / report.total_ms) * 100).toFixed(1)
-          : "0.0";
-      const avg =
-        entry.call_count > 0
-          ? (entry.total_ms / entry.call_count).toFixed(2)
-          : "0.00";
-
-      console.log(
-        `${prefix}${entry.label}: ${entry.total_ms.toFixed(2)}ms (${pct}%) ` +
-          `[${entry.call_count} calls, avg: ${avg}ms, min: ${entry.min_ms.toFixed(2)}ms, max: ${entry.max_ms.toFixed(2)}ms]`
-      );
-
-      for (const child of entry.children.values()) {
-        print_entry(child, indent + 1);
-      }
-    };
-
-    for (const entry of report.entries) {
-      print_entry(entry);
-    }
-
-    if (report.summary.slowest_files.length > 0) {
-      console.log("\n" + "-".repeat(70));
-      console.log("SLOWEST FILES (Top 10)");
-      console.log("-".repeat(70));
-
-      for (let i = 0; i < report.summary.slowest_files.length; i++) {
-        const { file, ms } = report.summary.slowest_files[i];
-        const pct = report.total_ms > 0 ? ((ms / report.total_ms) * 100).toFixed(1) : "0.0";
-        console.log(`  ${i + 1}. ${file}`);
-        console.log(`     ${ms.toFixed(2)}ms (${pct}%)`);
-      }
-    }
-
-    console.log("\n" + "=".repeat(70));
   }
 
   // Private helpers

@@ -127,6 +127,16 @@ describe("matches_known_entrypoint", () => {
 
     expect(matches_known_entrypoint(entry, known, PROJECT_PATH)).toBe(false);
   });
+
+  it("monorepo entry: matches when file_path includes intermediate directories", () => {
+    const entry = make_entry({
+      name: "initialize",
+      file_path: "/workspace/repo/packages/core/src/project/project.ts",
+    });
+    const known = { name: "initialize", file_path: "packages/core/src/project/project.ts" };
+
+    expect(matches_known_entrypoint(entry, known, "/workspace/repo")).toBe(true);
+  });
 });
 
 // ===== Filtering =====

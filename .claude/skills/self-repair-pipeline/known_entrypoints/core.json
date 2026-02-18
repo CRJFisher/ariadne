@@ -1,25 +1,167 @@
 [
   {
+    "source": "project",
+    "description": "Confirmed entry points from triage",
+    "entrypoints": [
+      {
+        "name": "update_file",
+        "file_path": "packages/core/src/project/project.ts",
+        "start_line": 158
+      },
+      {
+        "name": "remove_file",
+        "file_path": "packages/core/src/project/project.ts",
+        "start_line": 370
+      },
+      {
+        "name": "get_call_graph",
+        "file_path": "packages/core/src/project/project.ts",
+        "start_line": 460
+      },
+      {
+        "name": "clear",
+        "file_path": "packages/core/src/project/project.ts",
+        "start_line": 628
+      },
+      {
+        "name": "get_stats",
+        "file_path": "packages/core/src/project/project.ts",
+        "start_line": 440
+      },
+      {
+        "name": "get_type_info",
+        "file_path": "packages/core/src/project/project.ts",
+        "start_line": 546
+      },
+      {
+        "name": "initialize",
+        "file_path": "packages/core/src/project/project.ts",
+        "start_line": 128
+      },
+      {
+        "name": "get_dependents",
+        "file_path": "packages/core/src/project/project.ts",
+        "start_line": 520
+      },
+      {
+        "name": "get_derived_data",
+        "file_path": "packages/core/src/project/project.ts",
+        "start_line": 555
+      },
+      {
+        "name": "get_definition",
+        "file_path": "packages/core/src/project/project.ts",
+        "start_line": 620
+      },
+      {
+        "name": "record_counts",
+        "file_path": "packages/core/src/profiling/profiler.ts",
+        "start_line": 176
+      },
+      {
+        "name": "get_all_scope_graphs",
+        "file_path": "packages/core/src/project/project.ts",
+        "start_line": 511
+      },
+      {
+        "name": "get_all_files",
+        "file_path": "packages/core/src/project/project.ts",
+        "start_line": 528
+      },
+      {
+        "name": "get_index_single_file",
+        "file_path": "packages/core/src/project/project.ts",
+        "start_line": 537
+      },
+      {
+        "name": "get_source_code",
+        "file_path": "packages/core/src/project/project.ts",
+        "start_line": 574
+      },
+      {
+        "name": "get_class_definitions",
+        "file_path": "packages/core/src/resolve_references/registries/definition.ts",
+        "start_line": 249
+      }
+    ]
+  },
+  {
+    "source": "dead-code",
+    "description": "Functions identified as likely dead code",
+    "entrypoints": []
+  },
+  {
     "source": "ground-truth",
     "description": "Known public API",
     "entrypoints": [
-      { "name": "record_counts", "file_path": "profiling/profiler.ts" },
-      { "name": "report", "file_path": "profiling/profiler.ts" },
-      { "name": "initialize", "file_path": "project/project.ts" },
-      { "name": "update_file", "file_path": "project/project.ts" },
-      { "name": "remove_file", "file_path": "project/project.ts" },
-      { "name": "get_stats", "file_path": "project/project.ts" },
-      { "name": "get_call_graph", "file_path": "project/project.ts" },
-      { "name": "get_all_scope_graphs", "file_path": "project/project.ts" },
-      { "name": "get_dependents", "file_path": "project/project.ts" },
-      { "name": "get_all_files", "file_path": "project/project.ts" },
-      { "name": "get_index_single_file", "file_path": "project/project.ts" },
-      { "name": "get_type_info", "file_path": "project/project.ts" },
-      { "name": "get_derived_data", "file_path": "project/project.ts" },
-      { "name": "get_source_code", "file_path": "project/project.ts" },
-      { "name": "get_definition", "file_path": "project/project.ts" },
-      { "name": "clear", "file_path": "project/project.ts" },
-      { "name": "get_class_definitions", "file_path": "resolve_references/registries/definition.ts" }
+      {
+        "name": "record_counts",
+        "file_path": "packages/core/src/profiling/profiler.ts"
+      },
+      {
+        "name": "get_report",
+        "file_path": "packages/core/src/profiling/profiler.ts"
+      },
+      {
+        "name": "initialize",
+        "file_path": "packages/core/src/project/project.ts"
+      },
+      {
+        "name": "update_file",
+        "file_path": "packages/core/src/project/project.ts"
+      },
+      {
+        "name": "remove_file",
+        "file_path": "packages/core/src/project/project.ts"
+      },
+      {
+        "name": "get_stats",
+        "file_path": "packages/core/src/project/project.ts"
+      },
+      {
+        "name": "get_call_graph",
+        "file_path": "packages/core/src/project/project.ts"
+      },
+      {
+        "name": "get_all_scope_graphs",
+        "file_path": "packages/core/src/project/project.ts"
+      },
+      {
+        "name": "get_dependents",
+        "file_path": "packages/core/src/project/project.ts"
+      },
+      {
+        "name": "get_all_files",
+        "file_path": "packages/core/src/project/project.ts"
+      },
+      {
+        "name": "get_index_single_file",
+        "file_path": "packages/core/src/project/project.ts"
+      },
+      {
+        "name": "get_type_info",
+        "file_path": "packages/core/src/project/project.ts"
+      },
+      {
+        "name": "get_derived_data",
+        "file_path": "packages/core/src/project/project.ts"
+      },
+      {
+        "name": "get_source_code",
+        "file_path": "packages/core/src/project/project.ts"
+      },
+      {
+        "name": "get_definition",
+        "file_path": "packages/core/src/project/project.ts"
+      },
+      {
+        "name": "clear",
+        "file_path": "packages/core/src/project/project.ts"
+      },
+      {
+        "name": "get_class_definitions",
+        "file_path": "packages/core/src/resolve_references/registries/definition.ts"
+      }
     ]
   }
 ]

@@ -2,5 +2,5 @@
   "project_name": "core",
   "project_path": ".",
   "folders": ["packages/core/src"],
-  "exclude": ["node_modules", "dist", "tests", ".git"]
+  "exclude": ["node_modules", "dist", "tests", ".git", ".worktrees"]
 }

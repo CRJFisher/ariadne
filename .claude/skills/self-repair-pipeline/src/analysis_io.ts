@@ -17,7 +17,8 @@ export enum OutputType {
  */
 export async function save_json(
   output_type: OutputType,
-  data: unknown
+  data: unknown,
+  project_name: string
 ): Promise<string> {
   // eslint-disable-next-line @typescript-eslint/naming-convention
   const __filename = fileURLToPath(import.meta.url);
@@ -27,8 +28,8 @@ export async function save_json(
   // Generate ISO timestamp
   const timestamp = new Date().toISOString().replace(/:/g, "-");
 
-  // Build output directory path
-  const output_dir = path.resolve(__dirname, "..", "analysis_output", output_type);
+  // Build output directory path: analysis_output/{project_name}/{output_type}/
+  const output_dir = path.resolve(__dirname, "..", "analysis_output", project_name, output_type);
 
   // Create directories if they don't exist
   await fs.mkdir(output_dir, { recursive: true });
@@ -55,13 +56,14 @@ export async function load_json<T>(file_path: string): Promise<T> {
  * Returns the absolute path to the file
  */
 export async function find_most_recent_analysis(
+  project_name: string,
   output_type: OutputType = OutputType.DETECT_ENTRYPOINTS
 ): Promise<string> {
   // eslint-disable-next-line @typescript-eslint/naming-convention
   const __filename = fileURLToPath(import.meta.url);
   // eslint-disable-next-line @typescript-eslint/naming-convention
   const __dirname = dirname(__filename);
-  const target_dir = path.resolve(__dirname, "..", "analysis_output", output_type);
+  const target_dir = path.resolve(__dirname, "..", "analysis_output", project_name, output_type);
 
   try {
     const files = await fs.readdir(target_dir);
