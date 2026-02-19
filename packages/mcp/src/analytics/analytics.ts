@@ -11,6 +11,7 @@ export interface ToolCallRecord {
   success: boolean;
   error_message?: string;
   request_id?: string;
+  tool_use_id?: string;
 }
 
 // Module-level singleton state (matches logger.ts pattern)
@@ -36,6 +37,7 @@ CREATE TABLE IF NOT EXISTS tool_calls (
   error_message TEXT,
   arguments     TEXT NOT NULL,
   request_id    TEXT,
+  tool_use_id   TEXT,
   FOREIGN KEY (session_id) REFERENCES sessions(session_id)
 );
 
@@ -51,7 +53,7 @@ function resolve_db_path(db_path?: string): string {
   return path.join(home, ".ariadne", "analytics.db");
 }
 
-export function init_analytics(project_path: string, db_path?: string): void {
+export function init_analytics(project_path: string, db_path?: string): string {
   const resolved_path = resolve_db_path(db_path);
 
   // Create directory if needed (unless in-memory)
@@ -65,6 +67,7 @@ export function init_analytics(project_path: string, db_path?: string): void {
   db = new Database(resolved_path);
   db.pragma("journal_mode = WAL");
   db.exec(SCHEMA);
+  try { db.exec("ALTER TABLE tool_calls ADD COLUMN tool_use_id TEXT"); } catch { /* exists */ }
 
   session_id = crypto.randomUUID();
   const started_at = new Date().toISOString();
@@ -74,6 +77,7 @@ export function init_analytics(project_path: string, db_path?: string): void {
   ).run(session_id, started_at, project_path);
 
   log_info(`Analytics initialized (session: ${session_id})`);
+  return session_id;
 }
 
 export function record_session_client_info(
@@ -95,8 +99,8 @@ export function record_tool_call(record: ToolCallRecord): void {
   try {
     const called_at = new Date().toISOString();
     db.prepare(
-      `INSERT INTO tool_calls (session_id, tool_name, called_at, duration_ms, success, error_message, arguments, request_id)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
+      `INSERT INTO tool_calls (session_id, tool_name, called_at, duration_ms, success, error_message, arguments, request_id, tool_use_id)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
     ).run(
       session_id,
       record.tool_name,
@@ -105,7 +109,8 @@ export function record_tool_call(record: ToolCallRecord): void {
       record.success ? 1 : 0,
       record.error_message ?? null,
       JSON.stringify(record.arguments),
-      record.request_id ?? null
+      record.request_id ?? null,
+      record.tool_use_id ?? null
     );
   } catch (error) {
     log_warn(`Failed to record tool call: ${error}`);
@@ -120,11 +125,14 @@ export function close_analytics(): void {
   session_id = null;
 }
 
-// Expose for testing
-export function get_db(): Database.Database | null {
-  return db;
-}
-
-export function get_session_id(): string | null {
-  return session_id;
+export function is_analytics_enabled(): boolean {
+  if (process.env.ARIADNE_ANALYTICS === "1") return true;
+  try {
+    const home = process.env.HOME || process.env.USERPROFILE || "";
+    const config_path = path.join(home, ".ariadne", "config.json");
+    const config = JSON.parse(fs.readFileSync(config_path, "utf-8"));
+    return config.analytics === true;
+  } catch {
+    return false;
+  }
 }

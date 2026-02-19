@@ -26,6 +26,7 @@ export interface ToolCallDetail {
   error_message: string | null;
   arguments: string;
   request_id: string | null;
+  tool_use_id: string | null;
 }
 
 export function calls_per_tool(db: Database.Database): ToolCallSummary[] {
@@ -93,7 +94,7 @@ export function session_detail(
 ): ToolCallDetail[] {
   const rows = db
     .prepare(
-      `SELECT id, tool_name, called_at, duration_ms, success, error_message, arguments, request_id
+      `SELECT id, tool_name, called_at, duration_ms, success, error_message, arguments, request_id, tool_use_id
       FROM tool_calls
       WHERE session_id = ?
       ORDER BY called_at ASC`
@@ -107,6 +108,7 @@ export function session_detail(
     error_message: string | null;
     arguments: string;
     request_id: string | null;
+    tool_use_id: string | null;
   }>;
 
   return rows.map((row) => ({

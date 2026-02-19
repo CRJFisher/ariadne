@@ -29,6 +29,7 @@ CREATE TABLE tool_calls (
   error_message TEXT,
   arguments     TEXT NOT NULL,
   request_id    TEXT,
+  tool_use_id   TEXT,
   FOREIGN KEY (session_id) REFERENCES sessions(session_id)
 );
 
@@ -55,16 +56,16 @@ function seed_db(db: Database.Database): void {
 
   // Insert tool calls for s1
   const insert_call = db.prepare(
-    "INSERT INTO tool_calls (session_id, tool_name, called_at, duration_ms, success, error_message, arguments, request_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)"
+    "INSERT INTO tool_calls (session_id, tool_name, called_at, duration_ms, success, error_message, arguments, request_id, tool_use_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)"
   );
 
-  insert_call.run("s1", "list_entrypoints", "2026-02-17T10:01:00.000Z", 400, 1, null, "{\"files\":[\"a.ts\"]}", "r1");
-  insert_call.run("s1", "list_entrypoints", "2026-02-17T10:02:00.000Z", 500, 1, null, "{}", "r2");
-  insert_call.run("s1", "show_call_graph_neighborhood", "2026-02-17T10:03:00.000Z", 200, 1, null, "{\"symbol_ref\":\"a:1#f\"}", "r3");
-  insert_call.run("s1", "list_entrypoints", "2026-02-17T10:04:00.000Z", 100, 0, "Timeout", "{}", "r4");
+  insert_call.run("s1", "list_entrypoints", "2026-02-17T10:01:00.000Z", 400, 1, null, "{\"files\":[\"a.ts\"]}", "r1", "toolu_abc1");
+  insert_call.run("s1", "list_entrypoints", "2026-02-17T10:02:00.000Z", 500, 1, null, "{}", "r2", null);
+  insert_call.run("s1", "show_call_graph_neighborhood", "2026-02-17T10:03:00.000Z", 200, 1, null, "{\"symbol_ref\":\"a:1#f\"}", "r3", "toolu_abc3");
+  insert_call.run("s1", "list_entrypoints", "2026-02-17T10:04:00.000Z", 100, 0, "Timeout", "{}", "r4", null);
 
   // Insert tool calls for s2
-  insert_call.run("s2", "show_call_graph_neighborhood", "2026-02-16T14:01:00.000Z", 300, 1, null, "{\"symbol_ref\":\"b:2#g\"}", "r5");
+  insert_call.run("s2", "show_call_graph_neighborhood", "2026-02-16T14:01:00.000Z", 300, 1, null, "{\"symbol_ref\":\"b:2#g\"}", "r5", "toolu_abc5");
 
   // s3 has no tool calls
 }
@@ -214,6 +215,7 @@ describe("query_stats", () => {
           error_message: null,
           arguments: "{\"files\":[\"a.ts\"]}",
           request_id: "r1",
+          tool_use_id: "toolu_abc1",
         },
         {
           id: 2,
@@ -224,6 +226,7 @@ describe("query_stats", () => {
           error_message: null,
           arguments: "{}",
           request_id: "r2",
+          tool_use_id: null,
         },
         {
           id: 3,
@@ -234,6 +237,7 @@ describe("query_stats", () => {
           error_message: null,
           arguments: "{\"symbol_ref\":\"a:1#f\"}",
           request_id: "r3",
+          tool_use_id: "toolu_abc3",
         },
         {
           id: 4,
@@ -244,6 +248,7 @@ describe("query_stats", () => {
           error_message: "Timeout",
           arguments: "{}",
           request_id: "r4",
+          tool_use_id: null,
         },
       ];
 

@@ -22,6 +22,7 @@ import { find_source_files, is_supported_file } from "./file_loading";
 import { initialize_logger, log_info, log_warn } from "./logger";
 import {
   init_analytics,
+  is_analytics_enabled,
   record_session_client_info,
   record_tool_call,
 } from "./analytics/analytics";
@@ -113,8 +114,8 @@ export async function start_server(
   const project_path =
     options.project_path || process.env.PROJECT_PATH || process.cwd();
 
-  // Initialize analytics if enabled
-  const analytics_enabled = process.env.ARIADNE_ANALYTICS === "1";
+  // Initialize analytics if enabled (env var or global config)
+  const analytics_enabled = is_analytics_enabled();
   if (analytics_enabled) {
     init_analytics(project_path);
   }
@@ -238,6 +239,7 @@ export async function start_server(
     const { name } = request.params;
     const tool_start = Date.now();
     const tool_args = request.params.arguments ?? {};
+    const tool_use_id = (extra._meta?.["claudecode/toolUseId"] as string) ?? undefined;
 
     try {
       switch (name) {
@@ -277,6 +279,7 @@ export async function start_server(
             duration_ms: Date.now() - tool_start,
             success: true,
             request_id: String(extra.requestId),
+            tool_use_id,
           });
 
           return {
@@ -326,6 +329,7 @@ export async function start_server(
             duration_ms: Date.now() - tool_start,
             success: true,
             request_id: String(extra.requestId),
+            tool_use_id,
           });
 
           return {
@@ -351,6 +355,7 @@ export async function start_server(
         success: false,
         error_message,
         request_id: String(extra.requestId),
+        tool_use_id,
       });
 
       return {
