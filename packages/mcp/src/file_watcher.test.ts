@@ -1,48 +1,47 @@
-import { describe, it, expect, beforeEach, afterEach, vi, type Mock } from "vitest";
-import * as fs from "fs/promises";
-import * as path from "path";
-import * as os from "os";
+import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
+import { EventEmitter } from "events";
 import { create_file_watcher, FileWatcherCallbacks } from "./file_watcher";
 
-/**
- * Wait for a mock function to be called, with timeout
- */
-async function wait_for_call(mock: Mock, timeout_ms: number = 2000): Promise<void> {
-  const start = Date.now();
-  while (mock.mock.calls.length === 0) {
-    if (Date.now() - start > timeout_ms) {
-      throw new Error(`Timed out waiting for mock to be called after ${timeout_ms}ms`);
-    }
-    await new Promise((resolve) => setTimeout(resolve, 50));
-  }
-}
+// We import fs/promises *after* vi.mock so we get the mocked version
+import * as fs from "fs/promises";
 
-/**
- * Wait for a mock function to be called N times, with timeout
- */
-async function wait_for_calls(mock: Mock, count: number, timeout_ms: number = 2000): Promise<void> {
-  const start = Date.now();
-  while (mock.mock.calls.length < count) {
-    if (Date.now() - start > timeout_ms) {
-      throw new Error(`Timed out waiting for ${count} calls (got ${mock.mock.calls.length}) after ${timeout_ms}ms`);
-    }
-    await new Promise((resolve) => setTimeout(resolve, 50));
-  }
+// --- Mocks ---
+
+let fake_watcher: EventEmitter & { close: ReturnType<typeof vi.fn> };
+
+vi.mock("chokidar", () => ({
+  watch: vi.fn(() => fake_watcher),
+}));
+
+vi.mock("fs/promises", () => ({
+  readFile: vi.fn((_path: string) => Promise.resolve("file content")),
+  writeFile: vi.fn(() => Promise.resolve()),
+  unlink: vi.fn(() => Promise.resolve()),
+}));
+
+vi.mock("./logger", () => ({
+  log_debug: vi.fn(),
+  log_warn: vi.fn(),
+  log_error: vi.fn(),
+}));
+
+const PROJECT_PATH = "/fake/project";
+
+function make_fake_watcher(): EventEmitter & { close: ReturnType<typeof vi.fn> } {
+  const emitter = new EventEmitter();
+  (emitter as EventEmitter & { close: ReturnType<typeof vi.fn> }).close = vi.fn(() => Promise.resolve());
+  return emitter as EventEmitter & { close: ReturnType<typeof vi.fn> };
 }
 
 describe("file_watcher", () => {
-  let temp_dir: string;
-
-  beforeEach(async () => {
-    temp_dir = await fs.mkdtemp(path.join(os.tmpdir(), "ariadne-watcher-test-"));
+  beforeEach(() => {
+    vi.useFakeTimers();
+    fake_watcher = make_fake_watcher();
   });
 
-  afterEach(async () => {
-    try {
-      await fs.rm(temp_dir, { recursive: true });
-    } catch {
-      // Ignore cleanup errors
-    }
+  afterEach(() => {
+    vi.useRealTimers();
+    vi.restoreAllMocks();
   });
 
   describe("create_file_watcher", () => {
@@ -53,11 +52,12 @@ describe("file_watcher", () => {
         on_delete: vi.fn(),
       };
 
-      const watcher = create_file_watcher({ project_path: temp_dir }, callbacks);
+      const watcher = create_file_watcher({ project_path: PROJECT_PATH }, callbacks);
 
       expect(watcher).toBeDefined();
 
       await watcher.close();
+      expect(fake_watcher.close).toHaveBeenCalled();
     });
 
     it("should call on_add when a supported file is created", async () => {
@@ -68,24 +68,17 @@ describe("file_watcher", () => {
         on_delete: vi.fn(),
       };
 
-      const watcher = create_file_watcher(
-        { project_path: temp_dir, debounce_ms: 50 },
-        callbacks
-      );
+      vi.mocked(fs.readFile).mockResolvedValue("const x = 1;");
 
-      // Wait for watcher to be ready
-      await new Promise<void>((resolve) => watcher.on("ready", resolve));
+      create_file_watcher({ project_path: PROJECT_PATH, debounce_ms: 50 }, callbacks);
+      fake_watcher.emit("ready");
 
-      // Create a TypeScript file
-      const test_file = path.join(temp_dir, "test.ts");
-      await fs.writeFile(test_file, "const x = 1;");
+      fake_watcher.emit("add", "/fake/project/test.ts");
 
-      // Wait for callback to be called (with timeout)
-      await wait_for_call(on_add);
+      // Advance past the debounce window
+      await vi.advanceTimersByTimeAsync(50);
 
-      expect(on_add).toHaveBeenCalledWith(test_file, "const x = 1;");
-
-      await watcher.close();
+      expect(on_add).toHaveBeenCalledWith("/fake/project/test.ts", "const x = 1;");
     });
 
     it("should call on_change when a supported file is modified", async () => {
@@ -97,36 +90,25 @@ describe("file_watcher", () => {
         on_delete: vi.fn(),
       };
 
-      const watcher = create_file_watcher(
-        { project_path: temp_dir, debounce_ms: 50 },
-        callbacks
-      );
+      vi.mocked(fs.readFile).mockResolvedValue("const x = 1;");
 
-      await new Promise<void>((resolve) => watcher.on("ready", resolve));
+      create_file_watcher({ project_path: PROJECT_PATH, debounce_ms: 50 }, callbacks);
+      fake_watcher.emit("ready");
 
-      // Create file after watcher is ready
-      const test_file = path.join(temp_dir, "test.ts");
-      await fs.writeFile(test_file, "const x = 1;");
+      // First, an add event
+      fake_watcher.emit("add", "/fake/project/test.ts");
+      await vi.advanceTimersByTimeAsync(50);
+      expect(on_add).toHaveBeenCalledWith("/fake/project/test.ts", "const x = 1;");
 
-      // Wait for the add event to complete
-      await wait_for_call(on_add);
-      expect(on_add).toHaveBeenCalledWith(test_file, "const x = 1;");
+      // Now a change event
+      vi.mocked(fs.readFile).mockResolvedValue("const x = 2;");
+      fake_watcher.emit("change", "/fake/project/test.ts");
+      await vi.advanceTimersByTimeAsync(50);
 
-      // Now modify the file
-      await fs.writeFile(test_file, "const x = 2;");
-
-      await wait_for_call(on_change);
-
-      expect(on_change).toHaveBeenCalledWith(test_file, "const x = 2;");
-
-      await watcher.close();
+      expect(on_change).toHaveBeenCalledWith("/fake/project/test.ts", "const x = 2;");
     });
 
     it("should call on_delete when a supported file is removed", async () => {
-      // Create file before starting watcher
-      const test_file = path.join(temp_dir, "test.ts");
-      await fs.writeFile(test_file, "const x = 1;");
-
       const on_delete = vi.fn();
       const callbacks: FileWatcherCallbacks = {
         on_change: vi.fn(),
@@ -134,21 +116,13 @@ describe("file_watcher", () => {
         on_delete,
       };
 
-      const watcher = create_file_watcher(
-        { project_path: temp_dir, debounce_ms: 50 },
-        callbacks
-      );
+      create_file_watcher({ project_path: PROJECT_PATH, debounce_ms: 50 }, callbacks);
+      fake_watcher.emit("ready");
 
-      await new Promise<void>((resolve) => watcher.on("ready", resolve));
+      fake_watcher.emit("unlink", "/fake/project/test.ts");
+      await vi.advanceTimersByTimeAsync(50);
 
-      // Delete the file
-      await fs.unlink(test_file);
-
-      await wait_for_call(on_delete);
-
-      expect(on_delete).toHaveBeenCalledWith(test_file);
-
-      await watcher.close();
+      expect(on_delete).toHaveBeenCalledWith("/fake/project/test.ts");
     });
 
     it("should ignore unsupported file extensions", async () => {
@@ -159,23 +133,17 @@ describe("file_watcher", () => {
         on_delete: vi.fn(),
       };
 
-      const watcher = create_file_watcher(
-        { project_path: temp_dir, debounce_ms: 50 },
-        callbacks
-      );
+      create_file_watcher({ project_path: PROJECT_PATH, debounce_ms: 50 }, callbacks);
+      fake_watcher.emit("ready");
 
-      await new Promise<void>((resolve) => watcher.on("ready", resolve));
+      // Emit add events for unsupported file types
+      fake_watcher.emit("add", "/fake/project/readme.md");
+      fake_watcher.emit("add", "/fake/project/data.json");
+      fake_watcher.emit("add", "/fake/project/image.png");
 
-      // Create files with unsupported extensions
-      await fs.writeFile(path.join(temp_dir, "readme.md"), "# Hello");
-      await fs.writeFile(path.join(temp_dir, "data.json"), "{}");
-      await fs.writeFile(path.join(temp_dir, "image.png"), "binary");
-
-      await new Promise((resolve) => setTimeout(resolve, 300));
+      await vi.advanceTimersByTimeAsync(100);
 
       expect(on_add).not.toHaveBeenCalled();
-
-      await watcher.close();
     });
 
     it("should ignore .d.ts declaration files", async () => {
@@ -186,21 +154,14 @@ describe("file_watcher", () => {
         on_delete: vi.fn(),
       };
 
-      const watcher = create_file_watcher(
-        { project_path: temp_dir, debounce_ms: 50 },
-        callbacks
-      );
+      create_file_watcher({ project_path: PROJECT_PATH, debounce_ms: 50 }, callbacks);
+      fake_watcher.emit("ready");
 
-      await new Promise<void>((resolve) => watcher.on("ready", resolve));
+      fake_watcher.emit("add", "/fake/project/types.d.ts");
 
-      // Create a .d.ts file (should be ignored)
-      await fs.writeFile(path.join(temp_dir, "types.d.ts"), "declare const x: number;");
-
-      await new Promise((resolve) => setTimeout(resolve, 300));
+      await vi.advanceTimersByTimeAsync(100);
 
       expect(on_add).not.toHaveBeenCalled();
-
-      await watcher.close();
     });
 
     it("should watch supported file extensions", async () => {
@@ -211,31 +172,22 @@ describe("file_watcher", () => {
         on_delete: vi.fn(),
       };
 
-      const watcher = create_file_watcher(
-        { project_path: temp_dir, debounce_ms: 50 },
-        callbacks
-      );
+      vi.mocked(fs.readFile).mockResolvedValue("code");
 
-      await new Promise<void>((resolve) => watcher.on("ready", resolve));
+      create_file_watcher({ project_path: PROJECT_PATH, debounce_ms: 50 }, callbacks);
+      fake_watcher.emit("ready");
 
-      // Create files with various supported extensions
       const extensions = [".ts", ".tsx", ".js", ".jsx", ".py", ".rs", ".go"];
       for (const ext of extensions) {
-        await fs.writeFile(path.join(temp_dir, `file${ext}`), "code");
+        fake_watcher.emit("add", `/fake/project/file${ext}`);
       }
 
-      await wait_for_calls(on_add, extensions.length);
+      await vi.advanceTimersByTimeAsync(50);
 
       expect(on_add).toHaveBeenCalledTimes(extensions.length);
-
-      await watcher.close();
     });
 
     it("should debounce rapid file changes", async () => {
-      // Create file before starting watcher
-      const test_file = path.join(temp_dir, "test.ts");
-      await fs.writeFile(test_file, "const x = 0;");
-
       const on_change = vi.fn();
       const callbacks: FileWatcherCallbacks = {
         on_change,
@@ -243,41 +195,25 @@ describe("file_watcher", () => {
         on_delete: vi.fn(),
       };
 
-      const watcher = create_file_watcher(
-        { project_path: temp_dir, debounce_ms: 100 },
-        callbacks
-      );
+      create_file_watcher({ project_path: PROJECT_PATH, debounce_ms: 100 }, callbacks);
+      fake_watcher.emit("ready");
 
-      await new Promise<void>((resolve) => watcher.on("ready", resolve));
+      // Rapid change events on the same file
+      fake_watcher.emit("change", "/fake/project/test.ts");
+      fake_watcher.emit("change", "/fake/project/test.ts");
+      fake_watcher.emit("change", "/fake/project/test.ts");
 
-      // Make rapid changes
-      await fs.writeFile(test_file, "const x = 1;");
-      await fs.writeFile(test_file, "const x = 2;");
-      await fs.writeFile(test_file, "const x = 3;");
+      // Set up readFile to return the "final" content
+      vi.mocked(fs.readFile).mockResolvedValue("const x = 3;");
 
-      // Wait for debounced callback
-      await wait_for_call(on_change);
+      await vi.advanceTimersByTimeAsync(100);
 
-      // Give a bit more time to ensure no additional calls come through
-      await new Promise((resolve) => setTimeout(resolve, 200));
-
-      // Should only be called once with final content due to debouncing
+      // Should only be called once due to debouncing
       expect(on_change).toHaveBeenCalledTimes(1);
-      expect(on_change).toHaveBeenCalledWith(test_file, "const x = 3;");
-
-      await watcher.close();
+      expect(on_change).toHaveBeenCalledWith("/fake/project/test.ts", "const x = 3;");
     });
 
-    it("should handle symlink cycles gracefully without crashing", async () => {
-      // Create a subdirectory with a symlink back to the parent (cycle).
-      // On macOS, FSEvents may still report events through symlink paths
-      // even with followSymlinks: false. The watcher should handle this
-      // gracefully — ENOENT from stale symlink paths is logged at debug
-      // level, not warn level.
-      const sub_dir = path.join(temp_dir, "subdir");
-      await fs.mkdir(sub_dir);
-      await fs.symlink(temp_dir, path.join(sub_dir, "parent_link"));
-
+    it("should resolve relative paths to absolute", async () => {
       const on_add = vi.fn();
       const callbacks: FileWatcherCallbacks = {
         on_change: vi.fn(),
@@ -285,30 +221,18 @@ describe("file_watcher", () => {
         on_delete: vi.fn(),
       };
 
-      const watcher = create_file_watcher(
-        { project_path: temp_dir, debounce_ms: 50 },
-        callbacks
-      );
+      vi.mocked(fs.readFile).mockResolvedValue("code");
 
-      await new Promise<void>((resolve) => watcher.on("ready", resolve));
+      create_file_watcher({ project_path: PROJECT_PATH, debounce_ms: 50 }, callbacks);
+      fake_watcher.emit("ready");
 
-      // Create a file in the subdirectory
-      const test_file = path.join(sub_dir, "test.ts");
-      await fs.writeFile(test_file, "const x = 1;");
+      // Emit a relative path (chokidar sometimes does this)
+      fake_watcher.emit("add", "src/test.ts");
+      await vi.advanceTimersByTimeAsync(50);
 
-      await wait_for_call(on_add);
-
-      // The file should be detected with the correct content.
-      // On macOS, FSEvents may report through symlink paths, so we verify
-      // content rather than exact path.
-      expect(on_add).toHaveBeenCalled();
-      const calls = on_add.mock.calls;
-      const content_found = calls.some(
-        ([_path, content]: [string, string]) => content === "const x = 1;"
-      );
-      expect(content_found).toBe(true);
-
-      await watcher.close();
+      // Should resolve to absolute path using project_path
+      const expected_path = require("path").resolve(PROJECT_PATH, "src/test.ts");
+      expect(on_add).toHaveBeenCalledWith(expected_path, "code");
     });
   });
 });

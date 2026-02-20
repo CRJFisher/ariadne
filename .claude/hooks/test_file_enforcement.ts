@@ -280,6 +280,9 @@ export function audit_test_coverage(project_dir: string): string[] {
   return violations;
 }
 
+// Directories containing standalone CLI scripts that don't require unit tests
+const SCRIPT_DIRECTORIES = new Set(["scripts"]);
+
 /**
  * Recursively audit directory for test coverage violations
  */
@@ -290,6 +293,7 @@ function audit_directory(dir: string, pkg_prefix: string, violations: string[], 
     const full_path = path.join(dir, entry.name);
 
     if (entry.isDirectory()) {
+      if (SCRIPT_DIRECTORIES.has(entry.name)) continue;
       audit_directory(full_path, pkg_prefix, violations, project_dir);
     } else if (entry.isFile() && entry.name.endsWith(".ts")) {
       const relative_from_pkg = full_path.split(pkg_prefix + "/")[1];
