@@ -2,6 +2,13 @@ import * as fs from "node:fs/promises";
 import path from "path";
 import { ANALYSIS_OUTPUT_DIR } from "./paths.js";
 
+// ===== Project ID =====
+
+/** Convert a resolved project path to a collision-free identifier for file naming. */
+export function path_to_project_id(project_path: string): string {
+  return project_path.replace(/\//g, "-");
+}
+
 // ===== Output Type =====
 
 export enum OutputType {

@@ -1,0 +1,128 @@
+[
+  {
+    "rule_name": "caller-outside-project-root",
+    "group_id": "file-coverage-gap",
+    "condition": "diagnosis is 'callers-not-in-registry'. For each caller file path recorded by Ariadne, check whether that path starts with the project root directory. If any caller path does NOT start with the project root, the entry is unreachable from within the project scope and is a false positive caused by a sibling-repo or external-module caller. Concretely: callers_in_registry paths that do not share the project_path prefix, OR root_cause text referencing a directory outside project_path (e.g. amazon_ads/, e2e_tests/ sibling dirs).",
+    "classification": {
+      "is_true_positive": false,
+      "is_likely_dead_code": false,
+      "group_id": "file-coverage-gap"
+    },
+    "confidence": "high",
+    "matched_entries": [
+      63,
+      68
+    ],
+    "notes": "Entry 63: caller in amazon_ads/scripts/daily_update.py — outside projections/ root. Entry 68: caller in e2e_tests/ directory — outside projections/ root. Both are deterministically detectable by comparing the caller file path against the analysis project_path prefix."
+  },
+  {
+    "rule_name": "caller-file-exists-but-unindexed",
+    "group_id": "file-coverage-gap",
+    "condition": "diagnosis is 'callers-not-in-registry' AND the caller file path IS within the project root. For each caller file path mentioned in Ariadne's output (via grep/textual search for the function name across the project directory), check if the file exists on disk (fs.existsSync) AND is NOT present in Ariadne's file registry. If the file exists on disk but is missing from the registry, this is a coverage gap — the function is called but the calling file was not indexed.",
+    "classification": {
+      "is_true_positive": false,
+      "is_likely_dead_code": false,
+      "group_id": "file-coverage-gap"
+    },
+    "confidence": "high",
+    "matched_entries": [
+      62,
+      70,
+      71,
+      78,
+      81
+    ],
+    "notes": "Entry 62: forecast_on_df callers in predict/generate.py and model/forecast_protocol.py — files exist, not indexed. Entry 70: _check_checkpoint_exists callers in unindexed project files. Entry 71: clear_process_model_cache called from unindexed test fixture. Entry 78: summary caller in train.py — file exists, not indexed. Entry 81: proj_week_col_names_and_dates callers in unindexed files. Algorithm: grep the project directory for the function name, collect matching file paths, cross-reference against registry. Any hit in an existing, non-indexed file within project root = this rule fires."
+  },
+  {
+    "rule_name": "intra-file-caller-unindexed",
+    "group_id": "file-coverage-gap",
+    "condition": "diagnosis is 'callers-not-in-registry' AND a textual search for the function name within the same source file (entry.file_path) finds a call site. If the call site is in the same file as the definition and Ariadne did not record it as a caller, this is an intra-file indexing gap. Check: grep entry.file_path for the function name; if matches appear at lines OTHER than the definition line (entry.start_line), the function is called within its own file.",
+    "classification": {
+      "is_true_positive": false,
+      "is_likely_dead_code": false,
+      "group_id": "file-coverage-gap"
+    },
+    "confidence": "high",
+    "matched_entries": [
+      76
+    ],
+    "notes": "Entry 76: total_projections_for_dates is called at lines 263, 265, 271 within the same file (longitudinal_projections_totals_changes.py) but Ariadne did not record these intra-file edges. Grep the same file for the function name and exclude the definition line — any remaining match is an intra-file caller."
+  },
+  {
+    "rule_name": "constructor-call-via-classname-syntax",
+    "group_id": "python-language-gap",
+    "condition": "entry.kind is 'constructor' (name is '__init__'). Python constructors are invoked as ClassName() rather than obj.__init__(), so a textual search for '__init__' will never find callers. Instead, search for the class name as a callable: grep the project for '<ClassName>(' (excluding class definition lines 'class <ClassName>'). If any match is found in an indexed file, the constructor IS called but Ariadne did not model it. Additionally, if the class is a base class and a subclass is instantiated, the base __init__ is called transitively — detect this by searching for subclasses (grep for 'class \\w+(<ClassName>)') and then searching for instantiations of those subclasses.",
+    "classification": {
+      "is_true_positive": false,
+      "is_likely_dead_code": false,
+      "group_id": "python-language-gap"
+    },
+    "confidence": "high",
+    "matched_entries": [
+      65
+    ],
+    "notes": "Entry 65: TimesFmBase.__init__ is invoked whenever TimesFmTorch is instantiated. Grep for 'TimesFmBase(' finds no direct instantiation, but grep for 'class TimesFmTorch(timesfm_base.TimesFmBase)' reveals a subclass, and grep for 'TimesFmTorch(' finds instantiations in create_timesfm_model.py and load_timesfm_model.py. The rule needs both the direct-instantiation and subclass-instantiation checks."
+  },
+  {
+    "rule_name": "property-decorator-access",
+    "group_id": "python-language-gap",
+    "condition": "entry.kind is 'method' AND diagnosis is 'no-textual-callers'. Read the source file at entry.file_path around entry.start_line (look 1-5 lines above the def line). If the line immediately before 'def <name>(self' is '@property', this is a property accessor. Property accessors are called as attribute reads (obj.name) not as method calls (obj.name()), so a textual search for '<name>(' will miss them. Search instead for '\\.<name>[^(]' (dot-access without following parenthesis) in indexed project files. If matches are found, the property IS accessed and this is a python-language-gap false positive.",
+    "classification": {
+      "is_true_positive": false,
+      "is_likely_dead_code": false,
+      "group_id": "python-language-gap"
+    },
+    "confidence": "high",
+    "matched_entries": [
+      75
+    ],
+    "notes": "Entry 75: start_date is decorated with @property in longitudinal_projections_totals_changes.py. The callers access .start_date (no parentheses) at lines 192 and 247. Detection algorithm: (1) read source file, find @property on line before def; (2) grep project for '.start_date' (without following '('); (3) any match in an indexed file confirms the property is accessed."
+  },
+  {
+    "rule_name": "inherited-method-called-on-subclass",
+    "group_id": "python-language-gap",
+    "condition": "entry.kind is 'method' AND diagnosis is 'callers-not-in-registry'. The entry's class (extracted from entry.file_path + entry.start_line context) has at least one subclass in the project. A textual search for 'self.<method_name>(' in subclass files finds a call. Algorithm: (1) extract the class name from the source file containing entry.start_line; (2) grep project for 'class \\w+(<ClassName>)' to find subclasses; (3) for each subclass file, grep for 'self\\.<entry.name>(' — if found, the method is invoked via inheritance and Ariadne missed the cross-file resolution.",
+    "classification": {
+      "is_true_positive": false,
+      "is_likely_dead_code": false,
+      "group_id": "python-language-gap"
+    },
+    "confidence": "medium",
+    "matched_entries": [
+      77
+    ],
+    "notes": "Entry 77: _preprocess is defined in TimesFmBase (timesfm_base.py). TimesFmTorch extends TimesFmBase and calls self._preprocess at timesfm_torch.py:129. Confidence is medium because step (1) requires parsing the source file to identify the enclosing class name — this is a regex heuristic ('class (\\w+):' before entry.start_line), not a full parse. False positives possible if method names are shared across unrelated class hierarchies."
+  },
+  {
+    "rule_name": "common-method-name-wrong-target",
+    "group_id": "method-resolution-gap",
+    "condition": "diagnosis is 'callers-in-registry-wrong-target'. Count the number of distinct class definitions (grep project for 'def <entry.name>(self') — if count >= 3, the method name is common enough to cause resolution ambiguity. Additionally verify: grep the entry.file_path for the function name excluding its own definition line — if a call site exists in the same file OR in a file that imports from entry.file_path, the method IS called on the correct type but Ariadne attributed the call to a different symbol.",
+    "classification": {
+      "is_true_positive": false,
+      "is_likely_dead_code": false,
+      "group_id": "method-resolution-gap"
+    },
+    "confidence": "medium",
+    "matched_entries": [
+      69,
+      79
+    ],
+    "notes": "Entry 69: to_dict appears on many classes; the real caller at chatgpt_projections.py:291 calls it on an AcctMStyleGPTResponse instance, but Ariadne resolved to config.py methods. Entry 79: to_qb_row appears on multiple unrelated classes; Ariadne resolved to wrong zero-argument variants. Confidence is medium because determining that the resolution target is WRONG (not just that multiple targets exist) still requires type-tracing or argument-count comparison — neither is trivially deterministic without type information."
+  },
+  {
+    "rule_name": "call-in-lambda-or-higher-order-context",
+    "group_id": "method-resolution-gap",
+    "condition": "diagnosis is 'no-textual-callers'. A textual search (grep) for the function name across the project finds at least one match in a file that imports from entry.file_path, but the match is inside a lambda expression or passed as a callable argument (pattern: 'lambda.*<name>' or '<name>' appearing as a bare identifier after '=' or ',' without a following '('). This covers cases where the function is passed as a value rather than called directly, which some static analyzers and Ariadne may miss.",
+    "classification": {
+      "is_true_positive": false,
+      "is_likely_dead_code": false,
+      "group_id": "method-resolution-gap"
+    },
+    "confidence": "medium",
+    "matched_entries": [
+      80
+    ],
+    "notes": "Entry 80: get_max_of_cols is explicitly imported in order_history_dataframe_builder.py and called as 'lambda x: get_max_of_cols(...)' at line 115 — the call IS inside a lambda, but the function name appears directly with parentheses inside the lambda body. The grep pattern 'get_max_of_cols(' WOULD match it, so the failure mode here is that Ariadne indexed the import but not the call reference inside the lambda. The deterministic check is: grep for '<function_name>(' in files that import it; if any match is found, Ariadne's failure to record it is a method-resolution-gap."
+  }
+]

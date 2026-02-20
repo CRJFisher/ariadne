@@ -299,6 +299,86 @@ test_neighborhood_with_depth() {
     fi
 }
 
+# Test 7: Analytics client info capture
+test_analytics_client_info() {
+    log_info "Test 7: Analytics Client Info"
+    log_info "Verifying analytics captures client_name and client_version..."
+
+    cd "$PROJECT_ROOT"
+
+    local test_db="/tmp/claude/ariadne-headless-test-analytics.db"
+
+    # Clean up any previous test DB
+    rm -f "$test_db" "$test_db-shm" "$test_db-wal"
+
+    echo "=== Test 7: Analytics Client Info ===" >> "$LOG_FILE"
+
+    # Run a tool invocation which triggers server init + tool call recording
+    local output
+    output=$(claude -p "Use the list_entrypoints tool to analyze the codebase." \
+        --mcp-config "$MCP_CONFIG" \
+        --output-format json \
+        --no-session-persistence \
+        --allowedTools "mcp__ariadne__list_entrypoints" \
+        --debug mcp \
+        2>> "$LOG_FILE") || true
+
+    echo "Response: $output" >> "$LOG_FILE"
+
+    # Query the analytics DB for client info
+    if [[ ! -f "$test_db" ]]; then
+        log_error "FAIL: Analytics DB not created at $test_db"
+        return 1
+    fi
+
+    local client_name
+    client_name=$(sqlite3 "$test_db" "SELECT client_name FROM sessions ORDER BY started_at DESC LIMIT 1" 2>/dev/null)
+
+    local client_version
+    client_version=$(sqlite3 "$test_db" "SELECT client_version FROM sessions ORDER BY started_at DESC LIMIT 1" 2>/dev/null)
+
+    echo "  client_name=$client_name, client_version=$client_version" >> "$LOG_FILE"
+    log_verbose "client_name=$client_name, client_version=$client_version"
+
+    local passed=true
+
+    if [[ -n "$client_name" && "$client_name" != "NULL" ]]; then
+        log_info "  - client_name: $client_name"
+    else
+        log_error "  - client_name is empty or NULL"
+        passed=false
+    fi
+
+    if [[ -n "$client_version" && "$client_version" != "NULL" ]]; then
+        log_info "  - client_version: $client_version"
+    else
+        log_error "  - client_version is empty or NULL"
+        passed=false
+    fi
+
+    # Also verify a tool call was recorded
+    local call_count
+    call_count=$(sqlite3 "$test_db" "SELECT COUNT(*) FROM tool_calls" 2>/dev/null)
+
+    if [[ "$call_count" -gt 0 ]]; then
+        log_info "  - tool_calls recorded: $call_count"
+    else
+        log_error "  - No tool calls recorded"
+        passed=false
+    fi
+
+    # Cleanup
+    rm -f "$test_db" "$test_db-shm" "$test_db-wal"
+
+    if $passed; then
+        log_info "PASS: Analytics captured client info"
+        return 0
+    else
+        log_error "FAIL: Analytics did not capture client info"
+        return 1
+    fi
+}
+
 # Run all tests
 run_tests() {
     local total=0
@@ -362,6 +442,15 @@ run_tests() {
     # Test 6
     ((total++))
     if test_neighborhood_with_depth; then
+        ((passed++))
+    else
+        ((failed++))
+    fi
+    echo ""
+
+    # Test 7
+    ((total++))
+    if test_analytics_client_info; then
         ((passed++))
     else
         ((failed++))

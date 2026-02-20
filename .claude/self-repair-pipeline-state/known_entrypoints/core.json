@@ -24,6 +24,11 @@
         "start_line": 628
       },
       {
+        "name": "report",
+        "file_path": "packages/core/src/profiling/profiler.ts",
+        "start_line": 286
+      },
+      {
         "name": "get_stats",
         "file_path": "packages/core/src/project/project.ts",
         "start_line": 440
