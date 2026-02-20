@@ -11,7 +11,7 @@ import type { TriageEntry, TriageEntryResult } from "./triage_state_types.js";
 
 function entry_to_triage_base(entry: EnrichedFunctionEntry): Pick<
   TriageEntry,
-  "name" | "file_path" | "start_line" | "kind" | "signature" | "diagnosis"
+  "name" | "file_path" | "start_line" | "kind" | "signature" | "diagnosis" | "is_exported" | "access_modifier" | "diagnostics"
 > {
   return {
     name: entry.name,
@@ -20,6 +20,9 @@ function entry_to_triage_base(entry: EnrichedFunctionEntry): Pick<
     kind: entry.kind,
     signature: entry.signature ?? null,
     diagnosis: entry.diagnostics.diagnosis,
+    is_exported: entry.is_exported,
+    access_modifier: entry.access_modifier ?? null,
+    diagnostics: entry.diagnostics,
   };
 }
 

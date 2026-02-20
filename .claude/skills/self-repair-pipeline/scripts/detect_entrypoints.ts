@@ -41,7 +41,7 @@ import {
   detect_language,
   extract_entry_points,
 } from "../src/extract_entry_points.js";
-import { save_json, OutputType } from "../src/analysis_io.js";
+import { save_json, OutputType, path_to_project_id } from "../src/analysis_io.js";
 import * as path from "path";
 import * as fs from "fs/promises";
 import * as os from "os";
@@ -444,9 +444,7 @@ async function main() {
       );
       project_path = clone_result.local_path;
       cleanup = clone_result.cleanup;
-      const repo_parts = args.github.split("/");
-      const last_part = repo_parts[repo_parts.length - 1] || args.github;
-      project_name = last_part.replace(".git", "");
+      project_name = path_to_project_id(project_path);
 
       source_info = {
         type: "github",
@@ -470,7 +468,7 @@ async function main() {
         process.exit(1);
       }
 
-      project_name = path.basename(project_path);
+      project_name = path_to_project_id(project_path);
       source_info = {
         type: "local",
         commit_hash: get_local_commit_hash(project_path),

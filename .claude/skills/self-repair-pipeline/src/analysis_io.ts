@@ -4,6 +4,13 @@ import path from "path";
 import { fileURLToPath } from "url";
 import { dirname } from "path";
 
+// ===== Project ID =====
+
+/** Convert a resolved project path to a collision-free identifier for file naming. */
+export function path_to_project_id(project_path: string): string {
+  return project_path.replace(/\//g, "-");
+}
+
 // ===== Output Type =====
 
 export enum OutputType {

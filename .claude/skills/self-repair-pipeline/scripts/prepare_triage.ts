@@ -102,8 +102,17 @@ async function main(): Promise<void> {
   const state_path = cli.state_path
     ?? path.join(PROJECT_ROOT, ".claude", "skills", "self-repair-pipeline", "triage_state", `${project_name}_triage.json`);
 
+  // Clean up old state files — one pipeline at a time
+  const triage_dir = path.dirname(state_path);
+  await fs.mkdir(triage_dir, { recursive: true });
+  const existing = await fs.readdir(triage_dir).catch(() => [] as string[]);
+  for (const f of existing) {
+    if (f.endsWith("_triage.json")) {
+      await fs.rm(path.join(triage_dir, f));
+    }
+  }
+
   // Write state file
-  await fs.mkdir(path.dirname(state_path), { recursive: true });
   await fs.writeFile(state_path, JSON.stringify(state, null, 2) + "\n");
 
   // Summary

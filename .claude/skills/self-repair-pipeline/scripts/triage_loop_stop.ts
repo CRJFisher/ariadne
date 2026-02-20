@@ -10,6 +10,7 @@ import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
 import { create_logger, parse_stdin, get_project_dir } from "../../../hooks/utils.js";
+import { discover_state_file, get_triage_dir } from "../src/discover_state.js";
 import type {
   TriageState,
   TriageEntry,
@@ -17,6 +18,7 @@ import type {
   FixPlanningState,
   FixPlanGroupState,
 } from "../src/triage_state_types.js";
+export { discover_state_file };
 
 const log = create_logger("triage-loop");
 
@@ -34,16 +36,6 @@ export interface PhaseResult {
 }
 
 // ===== Helper Functions =====
-
-/**
- * Find a triage state file (*_triage.json) in the given directory.
- */
-export function discover_state_file(triage_dir: string): string | null {
-  if (!fs.existsSync(triage_dir)) return null;
-  const files = fs.readdirSync(triage_dir).filter((f) => f.endsWith("_triage.json"));
-  if (files.length === 0) return null;
-  return path.join(triage_dir, files[0]);
-}
 
 /**
  * Get entries routed through LLM triage that were classified as false positives.
@@ -141,6 +133,14 @@ export function merge_result_files(state: TriageState, triage_dir: string): numb
     try {
       const raw = fs.readFileSync(file_path, "utf8");
       const result = JSON.parse(raw) as TriageEntryResult;
+
+      // Validate: is_true_positive and is_likely_dead_code are mutually exclusive
+      if (result.is_true_positive && result.is_likely_dead_code) {
+        log(`Warning: entry ${entry_index} has both is_true_positive and is_likely_dead_code=true, normalizing to dead-code`);
+        result.is_true_positive = false;
+        result.group_id = "dead-code";
+      }
+
       entry.result = result;
       entry.status = "completed";
     } catch (err) {
@@ -166,13 +166,11 @@ export function handle_triage(state: TriageState, triage_dir: string, state_path
 
   const pending = state.entries.filter((e) => e.status === "pending");
   if (pending.length > 0) {
-    const batch = Math.min(pending.length, state.batch_size);
+    const batch_entries = pending.slice(0, state.batch_size);
+    const indices = batch_entries.map((e) => e.entry_index);
     return {
       decision: "block",
-      reason:
-        `${pending.length} entries need triage. ` +
-        `Read state file at ${state_path}, find the next ${batch} pending entries, ` +
-        "and launch **triage-investigator** sub-agents **in background** for each.",
+      reason: `Triage batch: entries [${indices.join(", ")}]. State: ${state_path}`,
       mutated,
     };
   }
@@ -384,7 +382,7 @@ function main(): void {
   }
 
   const project_dir = get_project_dir();
-  const triage_dir = path.join(project_dir, ".claude", "skills", "self-repair-pipeline", "triage_state");
+  const triage_dir = get_triage_dir(project_dir);
   const state_path = discover_state_file(triage_dir);
 
   if (!state_path) {

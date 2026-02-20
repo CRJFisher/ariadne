@@ -3,12 +3,12 @@ name: self-repair-pipeline
 description: Runs the full entry point self-repair pipeline. Detects entry points in Ariadne packages or external codebases, triages false positives via sub-agents, plans fixes for each issue group with competing proposals and multi-angle review, and creates backlog tasks.
 argument-hint: "[config-name | /path/to/repo | owner/repo (GitHub)]"
 disable-model-invocation: true
-allowed-tools: Bash(npx tsx:*,pnpm exec tsx:*), Read, Write, Task(triage-investigator, triage-aggregator, triage-rule-reviewer, fix-planner, plan-synthesizer, plan-reviewer, task-writer)
+allowed-tools: Bash(node --import tsx:*), Read, Write, Task(triage-investigator, triage-aggregator, triage-rule-reviewer, fix-planner, plan-synthesizer, plan-reviewer, task-writer)
 hooks:
   Stop:
     - hooks:
         - type: command
-          command: "pnpm exec tsx \"$CLAUDE_PROJECT_DIR/.claude/skills/self-repair-pipeline/scripts/triage_loop_stop.ts\""
+          command: "node --import tsx \"$CLAUDE_PROJECT_DIR/.claude/skills/self-repair-pipeline/scripts/triage_loop_stop.ts\""
           timeout: 30
 ---
 
@@ -74,14 +74,14 @@ Use the target resolved from the **Analysis Target** section above to construct 
 
 ```bash
 # From project config (preferred for Ariadne packages)
-pnpm exec tsx .claude/skills/self-repair-pipeline/scripts/detect_entrypoints.ts \
+node --import tsx .claude/skills/self-repair-pipeline/scripts/detect_entrypoints.ts \
   --config .claude/skills/self-repair-pipeline/project_configs/core.json
 
 # Local repository
-pnpm exec tsx .claude/skills/self-repair-pipeline/scripts/detect_entrypoints.ts --path /path/to/repo
+node --import tsx .claude/skills/self-repair-pipeline/scripts/detect_entrypoints.ts --path /path/to/repo
 
 # GitHub repository
-pnpm exec tsx .claude/skills/self-repair-pipeline/scripts/detect_entrypoints.ts --github owner/repo
+node --import tsx .claude/skills/self-repair-pipeline/scripts/detect_entrypoints.ts --github owner/repo
 ```
 
 Options: `--config <file>`, `--path <dir>`, `--github <repo>`, `--branch <name>`, `--depth <n>`, `--output <file>`, `--include-tests`, `--folders <paths>`, `--exclude <patterns>`
@@ -95,7 +95,7 @@ Output: `analysis_output/<project>/detect_entrypoints/<timestamp>.json`
 Build triage state from the latest analysis output:
 
 ```bash
-pnpm exec tsx .claude/skills/self-repair-pipeline/scripts/prepare_triage.ts \
+node --import tsx .claude/skills/self-repair-pipeline/scripts/prepare_triage.ts \
   --analysis .claude/skills/self-repair-pipeline/analysis_output/<project>/detect_entrypoints/<timestamp>.json \
   --package <name> \
   --batch-size 5
@@ -110,49 +110,21 @@ The script loads the known-entrypoints registry and classifies entries:
 
 Output: `triage_state/{project}_triage.json`
 
-## Phase 3: Triage Loop
+## Phase 3: Triage Loop (Hook-Driven)
 
-The Stop hook (`triage_loop_stop.ts`) drives this phase as a state machine. Each time Claude tries to stop, the hook reads the state file, determines what to do next, and either BLOCKs with instructions or ALLOWs completion.
+After running `prepare_triage.ts`, stop. The stop hook drives all remaining phases.
 
-### 3a. Investigate Pending Entries
+Each time you stop, the hook evaluates the triage state and either BLOCKs with instructions or ALLOWs completion:
 
-For each pending entry in the state file:
+| Hook says | You do |
+|-----------|--------|
+| `Triage batch: entries [62, 63, ...]. State: <path>` | Launch a **triage-investigator** per entry index (`prompt: "<N>"`, `run_in_background: true`). Stop. |
+| `All entries triaged. Phase transitioned to aggregation.` | Launch one **triage-aggregator** (`prompt: "<state_path>"`). Stop. |
+| `Phase transitioned to meta-review.` | Launch one **triage-rule-reviewer** (`prompt: "<state_path>"`). Stop. |
+| Fix planning instructions | Follow sub-phase instructions for fix-planner/synthesizer/reviewer/task-writer. |
+| (ALLOW — no block) | Run `finalize_triage.ts`. |
 
-1. Read the entry's `diagnosis` field to select the prompt template:
-
-   | Diagnosis | Template | Focus |
-   | --------- | -------- | ----- |
-   | `callers-not-in-registry` | `templates/prompt_callers_not_in_registry.md` | File coverage gap investigation |
-   | `callers-in-registry-unresolved` | `templates/prompt_resolution_failure.md` | Resolution failure pattern identification |
-   | `callers-in-registry-wrong-target` | `templates/prompt_wrong_target.md` | Wrong resolution target analysis |
-   | All other diagnoses | `templates/prompt_generic.md` | Broad investigation |
-
-2. Read the template and substitute `{{entry.*}}` placeholders with values from the entry
-3. Launch a **triage-investigator** sub-agent with `run_in_background: true`. Include `output_path` = `triage_state/results/{entry.entry_index}.json` in the prompt
-4. Do not read or process the sub-agent's response. The stop hook merges result files automatically
-
-Process entries in batches of `batch_size` (from state file). The stop hook re-triggers after each batch.
-
-### 3b. Aggregation
-
-When all entries are completed, the stop hook transitions to `aggregation` phase.
-
-Launch a **triage-aggregator** sub-agent with the state file path. The aggregator:
-
-- Reviews all completed entry results
-- Groups entries by shared root cause
-- Merges duplicate/overlapping group IDs
-- Writes `aggregation: { status: "completed", completed_at: ... }` to the state file
-
-### 3c. Meta-Review
-
-If aggregation found false-positive entries, the stop hook transitions to `meta-review` phase.
-
-Launch a **triage-rule-reviewer** sub-agent with the state file path. The reviewer:
-
-- Analyzes false-positive patterns across entries
-- Proposes deterministic classification rules
-- Writes `meta_review: { status: "completed", patterns: ..., completed_at: ... }` to the state file
+The hook handles result merging, validation, phase transitions, and batch coordination. Sub-agents fetch their own context via `scripts/get_entry_context.ts` — the main agent never reads entry data, diagnostics, or templates.
 
 ## Phase 4: Fix Planning
 
@@ -200,7 +172,7 @@ Set `task_file` in the state file to the created task path.
 After the stop hook ALLOWs completion (all phases done or error exit), run finalization:
 
 ```bash
-pnpm exec tsx .claude/skills/self-repair-pipeline/scripts/finalize_triage.ts \
+node --import tsx .claude/skills/self-repair-pipeline/scripts/finalize_triage.ts \
   --state .claude/skills/self-repair-pipeline/triage_state/{project}_triage.json
 ```
 
@@ -225,6 +197,7 @@ All library modules live under `src/`:
 | `types.ts` | Shared type definitions (`EnrichedFunctionEntry`, `EntryPointDiagnostics`, etc.) |
 | `triage_state_types.ts` | Triage state machine types |
 | `analysis_io.ts` | Analysis file lookup, JSON I/O |
+| `discover_state.ts` | Triage state file discovery (shared by hook + scripts) |
 
 ## Reference
 
@@ -236,7 +209,7 @@ All library modules live under `src/`:
 
 | Agent | Model | Purpose |
 | ----- | ----- | ------- |
-| triage-investigator | sonnet | Investigate a single pending entry using diagnosis-specific prompt template |
+| triage-investigator | sonnet | Investigate a single pending entry (fetches own context via `get_entry_context.ts`) |
 | triage-aggregator | sonnet | Review all entry results, group by root cause, merge duplicates |
 | triage-rule-reviewer | sonnet | Analyze false-positive patterns, propose deterministic classification rules |
 | fix-planner | sonnet | Generate one independent fix proposal for a false-positive group |

@@ -24,14 +24,15 @@ const REGISTRY_DIR = path.resolve(this_dir, "..", "known_entrypoints");
 
 // ===== I/O =====
 
-export function get_registry_path(project_name: string): string {
-  return path.join(REGISTRY_DIR, `${project_name}.json`);
+export function get_registry_path(project_name: string, registry_dir = REGISTRY_DIR): string {
+  return path.join(registry_dir, `${project_name}.json`);
 }
 
 export async function load_known_entrypoints(
   project_name: string,
+  registry_dir = REGISTRY_DIR,
 ): Promise<KnownEntrypointSource[]> {
-  const file_path = get_registry_path(project_name);
+  const file_path = get_registry_path(project_name, registry_dir);
   try {
     const content = await fs.readFile(file_path, "utf-8");
     return JSON.parse(content) as KnownEntrypointSource[];
@@ -43,9 +44,10 @@ export async function load_known_entrypoints(
 export async function save_known_entrypoints(
   project_name: string,
   sources: KnownEntrypointSource[],
+  registry_dir = REGISTRY_DIR,
 ): Promise<string> {
-  await fs.mkdir(REGISTRY_DIR, { recursive: true });
-  const file_path = get_registry_path(project_name);
+  await fs.mkdir(registry_dir, { recursive: true });
+  const file_path = get_registry_path(project_name, registry_dir);
   await fs.writeFile(file_path, JSON.stringify(sources, null, 2) + "\n");
   return file_path;
 }

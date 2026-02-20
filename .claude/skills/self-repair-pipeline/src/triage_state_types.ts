@@ -5,6 +5,8 @@
  * triage → aggregation → meta-review → fix-planning → complete.
  */
 
+import type { EntryPointDiagnostics } from "./types.js";
+
 // ===== Top-Level State =====
 
 export interface TriageState {
@@ -40,6 +42,11 @@ export interface TriageEntry {
   result: TriageEntryResult | null;
   error: string | null;
   attempt_count: number;
+  /** Enriched metadata for template substitution (stripped on finalize) */
+  is_exported: boolean;
+  access_modifier: string | null;
+  /** Pre-gathered diagnostics for self-service context (stripped on finalize) */
+  diagnostics: EntryPointDiagnostics | null;
 }
 
 export interface TriageEntryResult {

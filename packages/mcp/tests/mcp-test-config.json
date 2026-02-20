@@ -5,7 +5,9 @@
       "command": "node",
       "args": ["./packages/mcp/dist/server.js"],
       "env": {
-        "PROJECT_PATH": "./packages/core/tests/fixtures/typescript/code"
+        "PROJECT_PATH": "./packages/core/tests/fixtures/typescript/code",
+        "ARIADNE_ANALYTICS": "1",
+        "ARIADNE_ANALYTICS_DB": "/tmp/claude/ariadne-headless-test-analytics.db"
       }
     }
   }

@@ -1,7 +1,7 @@
 ---
 name: triage-investigator
 description: Investigates a single entry point candidate to determine if it is a true positive, dead code, or a false positive that Ariadne missed callers for. Returns a TriageEntryResult JSON.
-tools: Read, Grep, Glob, Write
+tools: Read, Grep, Glob, Write, Bash
 mcpServers:
   - ariadne
 model: sonnet
@@ -10,15 +10,25 @@ maxTurns: 15
 
 # Purpose
 
-You investigate a single entry point candidate detected by Ariadne's call graph analyzer. Ariadne detects entry points by finding callables with no inbound edges in the call graph. Some of these are legitimate entry points (public API, CLI handlers, framework hooks), some are dead code, and some are false positives where callers exist but Ariadne's indexing or resolution pipeline missed them. Your job is to determine which category this callable falls into and return a structured `TriageEntryResult` JSON. The orchestrator provides you with entry metadata, pre-gathered diagnostic evidence, and diagnosis-specific investigation steps injected from a template.
+You investigate a single entry point candidate detected by Ariadne's call graph analyzer. Ariadne detects entry points by finding callables with no inbound edges in the call graph. Some of these are legitimate entry points (public API, CLI handlers, framework hooks), some are dead code, and some are false positives where callers exist but Ariadne's indexing or resolution pipeline missed them. Your job is to determine which category this callable falls into and return a structured `TriageEntryResult` JSON.
+
+## Self-Service Context
+
+Your prompt contains an entry index (a number). Before investigating, run:
+
+```bash
+node --import tsx .claude/skills/self-repair-pipeline/scripts/get_entry_context.ts --entry <ENTRY_INDEX>
+```
+
+This outputs the entry metadata, pre-gathered evidence, and diagnosis-specific investigation steps. Follow those instructions to investigate the entry.
 
 ## Instructions
 
-1. **Read the entry metadata and diagnosis** provided in your prompt. Understand what kind of callable this is and what the pre-diagnosis suggests about why it appears as an entry point.
+1. **Fetch your investigation context** by running the script above with the entry index from your prompt. The output contains entry metadata, pre-gathered diagnostic evidence, and diagnosis-specific investigation steps.
 
-2. **Review pre-gathered evidence**. The prompt includes grep call sites and Ariadne call references collected before your invocation. Analyze these first before running your own searches.
+2. **Review pre-gathered evidence**. The context includes grep call sites and Ariadne call references collected before your invocation. Analyze these first before running your own searches.
 
-3. **Follow the diagnosis-specific investigation steps** provided in your prompt. These steps are tailored to the type of detection gap suspected for this entry.
+3. **Follow the diagnosis-specific investigation steps** provided in the context output. These steps are tailored to the type of detection gap suspected for this entry.
 
 4. **Use Ariadne MCP tools** to inspect the call graph:
    - `show_call_graph_neighborhood` — shows callers and callees of a symbol
@@ -48,7 +58,7 @@ You investigate a single entry point candidate detected by Ariadne's call graph 
 
 ## Output Format
 
-Write your result JSON to the output path provided in your prompt. Use the Write tool to write raw JSON (no markdown fencing, no extra text) matching this shape:
+Write your result JSON to the output path provided in the context output. Use the Write tool to write raw JSON (no markdown fencing, no extra text) matching this shape:
 
 ```
 {

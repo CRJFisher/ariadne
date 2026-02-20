@@ -74,6 +74,11 @@ async function main(): Promise<void> {
     process.exit(1);
   }
 
+  // Strip transient diagnostics from entries before finalization
+  for (const entry of state.entries) {
+    entry.diagnostics = null;
+  }
+
   // Build output
   const output = build_finalization_output(state);
   const summary = build_finalization_summary(state, output);

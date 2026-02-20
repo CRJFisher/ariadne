@@ -39,13 +39,17 @@ cd packages/mcp
 
 ## Test Scenarios
 
-The script runs 3 tests:
+The script runs 7 tests:
 
-| Test | Name              | What It Validates                                     |
-| ---- | ----------------- | ----------------------------------------------------- |
-| 1    | Tool Discovery    | Claude can see the `list_entrypoints` tool            |
-| 2    | Tool Invocation   | Tool runs successfully on fixture code                |
-| 3    | Filtered Analysis | File/folder filtering parameters work                 |
+| Test | Name                  | What It Validates                                     |
+| ---- | --------------------- | ----------------------------------------------------- |
+| 1    | Tool Discovery        | Claude can see the `list_entrypoints` tool            |
+| 2    | Tool Invocation       | Tool runs successfully on fixture code                |
+| 3    | Filtered Analysis     | File/folder filtering parameters work                 |
+| 4    | Neighborhood Discovery| Claude can see the `show_call_graph_neighborhood` tool|
+| 5    | Neighborhood Invocation| Tool runs successfully on fixture code               |
+| 6    | Neighborhood Depth    | Depth parameters work correctly                       |
+| 7    | Analytics Client Info | Analytics captures client_name and client_version     |
 
 ## Interpreting Results
 

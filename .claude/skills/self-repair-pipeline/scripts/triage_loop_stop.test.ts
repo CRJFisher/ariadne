@@ -52,6 +52,9 @@ function build_mock_entry(overrides: Partial<TriageEntry> = {}): TriageEntry {
       result: null,
       error: null,
       attempt_count: 0,
+      is_exported: true,
+      access_modifier: null,
+      diagnostics: null,
     } satisfies TriageEntry,
     overrides,
     { entry_index: idx },
@@ -311,6 +314,30 @@ describe("merge_result_files", () => {
     expect(state.entries[0].status).toEqual("pending");
   });
 
+  it("normalizes contradictory classification (both TP and dead-code)", () => {
+    const state = build_mock_state({
+      entries: [build_mock_entry({ entry_index: 0, status: "pending" })],
+    });
+
+    fs.mkdirSync(results_dir, { recursive: true });
+    const contradictory: TriageEntryResult = {
+      is_true_positive: true,
+      is_likely_dead_code: true,
+      group_id: "true-positive",
+      root_cause: "Contradictory",
+      reasoning: "Agent confused",
+    };
+    fs.writeFileSync(path.join(results_dir, "0.json"), JSON.stringify(contradictory));
+
+    const merged = merge_result_files(state, test_dir);
+
+    expect(merged).toEqual(1);
+    expect(state.entries[0].status).toEqual("completed");
+    expect(state.entries[0].result!.is_true_positive).toEqual(false);
+    expect(state.entries[0].result!.is_likely_dead_code).toEqual(true);
+    expect(state.entries[0].result!.group_id).toEqual("dead-code");
+  });
+
   it("ignores out-of-range indices", () => {
     const state = build_mock_state({
       entries: [build_mock_entry({ entry_index: 0, status: "pending" })],
@@ -335,20 +362,38 @@ describe("merge_result_files", () => {
 // ===== handle_triage =====
 
 describe("handle_triage", () => {
-  it("blocks with pending entries", () => {
+  it("blocks with entry indices in reason", () => {
     const state = build_mock_state({
+      batch_size: 5,
       entries: [
-        build_mock_entry({ status: "pending" }),
-        build_mock_entry({ status: "pending" }),
-        build_mock_entry({ status: "completed", result: build_mock_result() }),
+        build_mock_entry({ entry_index: 10, status: "pending" }),
+        build_mock_entry({ entry_index: 11, status: "pending" }),
+        build_mock_entry({ entry_index: 12, status: "completed", result: build_mock_result() }),
       ],
     });
 
     const result = handle_triage(state, MOCK_TRIAGE_DIR, MOCK_STATE_PATH);
     expect(result.decision).toEqual("block");
     expect(result.mutated).toEqual(false);
-    expect(result.reason).toContain("2 entries need triage");
-    expect(result.reason).toContain("**triage-investigator**");
+    expect(result.reason).toContain("Triage batch: entries [10, 11]");
+    expect(result.reason).toContain("State:");
+  });
+
+  it("respects batch_size when providing indices", () => {
+    const state = build_mock_state({
+      batch_size: 2,
+      entries: [
+        build_mock_entry({ entry_index: 0, status: "pending" }),
+        build_mock_entry({ entry_index: 1, status: "pending" }),
+        build_mock_entry({ entry_index: 2, status: "pending" }),
+        build_mock_entry({ entry_index: 3, status: "pending" }),
+      ],
+    });
+
+    const result = handle_triage(state, MOCK_TRIAGE_DIR, MOCK_STATE_PATH);
+    expect(result.reason).toContain("entries [0, 1]");
+    expect(result.reason).not.toContain("2,");
+    expect(result.reason).not.toContain("3");
   });
 
   it("transitions to aggregation when all entries done", () => {
