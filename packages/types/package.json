@@ -30,6 +30,10 @@
     "url": "https://github.com/CRJFisher/ariadne/issues"
   },
   "homepage": "https://github.com/CRJFisher/ariadne#readme",
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
   "devDependencies": {
     "vitest": "^3.2.4"
   }

@@ -195,16 +195,6 @@ export function class_scope(location: Location): ScopeId {
 }
 
 /**
- * Create a block scope ID
- */
-export function block_scope(location: Location): ScopeId {
-  return scope_string({
-    type: "block",
-    location,
-  });
-}
-
-/**
  * Create a parameter scope ID
  */
 export function parameter_scope(location: Location): ScopeId {

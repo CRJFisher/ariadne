@@ -11,7 +11,6 @@ import {
   module_scope,
   function_scope,
   class_scope,
-  block_scope,
   parameter_scope,
   local_scope,
 } from "./scopes";
@@ -43,11 +42,6 @@ describe("Scope ID Creation", () => {
   it("should create a class scope", () => {
     const scope = class_scope(test_location);
     expect(scope).toContain("class");
-  });
-
-  it("should create a block scope", () => {
-    const scope = block_scope(test_location);
-    expect(scope).toContain("block");
   });
 
   it("should create a parameter scope", () => {
