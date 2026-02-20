@@ -1,6 +1,6 @@
 {
   "name": "@ariadnejs/mcp",
-  "version": "0.1.5",
+  "version": "0.2.0",
   "description": "Model Context Protocol server for Ariadne - Expose code intelligence capabilities to AI agents",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -52,7 +52,7 @@
   "dependencies": {
     "@ariadnejs/core": "workspace:*",
     "@ariadnejs/types": "workspace:*",
-    "@modelcontextprotocol/sdk": "^1.0.0",
+    "@modelcontextprotocol/sdk": "^1.26.0",
     "better-sqlite3": "^11.0.0",
     "chokidar": "^3.6.0",
     "zod": "^3.22.0"
