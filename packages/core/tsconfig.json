@@ -2,18 +2,24 @@
   "extends": "../../tsconfig.json",
   "compilerOptions": {
     "outDir": "./dist",
-    "rootDir": "./src",
-    "types": ["node"]
+    "rootDir": ".",
+    "types": [
+      "node"
+    ],
+    "downlevelIteration": true,
+    "esModuleInterop": true
   },
   "include": [
-    "src/**/*"
+    "src/**/*",
+    "tests/**/*"
   ],
   "exclude": [
     "node_modules",
-    "dist",
-    "tests"
+    "dist"
   ],
   "references": [
-    { "path": "../types" }
+    {
+      "path": "../types"
+    }
   ]
 }

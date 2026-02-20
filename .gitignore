@@ -1,25 +1,24 @@
 # Dependencies
 node_modules/
+node_modules
+package-lock.json
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
 # Build output
 dist/
+dist
 build/
-*.js
-*.d.ts
-*.js.map
+build
 *.tsbuildinfo
-!jest.config.js
-!scripts/*.js
-!scripts/*.sh
-!packages/*/scripts/*.js
+*.js.map
+*.d.ts
 !packages/types/**/*.d.ts
-!packages/types/**/*.js
 
 # IDE and editor files
-.vscode/
+.vscode/*
+!.vscode/launch.json
 .idea/
 *.swp
 *.swo
@@ -39,11 +38,25 @@ coverage/
 *.tmp
 *.temp
 .cache/
+.eslintcache
 
 # Claude AI specific
-.claude/
+.claude/settings.local.json
+.claude/worktrees.local.md
 CLAUDE.local.md
+.cursorrules
 
 venv
 
 __pycache__/
+.cursorrules
+.claude/hook_log.txt
+packages/mcp/tests/logs.txt
+
+docs/tmp/
+
+.claude_settings.json
+.worktrees/
+.security-key
+logs/security/
+

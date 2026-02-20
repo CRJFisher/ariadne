@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "ariadne": {
+      "type": "stdio",
+      "command": "node",
+      "args": ["./packages/mcp/dist/server.js"],
+      "env": {
+        "PROJECT_PATH": "./packages/core/tests/fixtures/typescript/code"
+      }
+    }
+  }
+}

@@ -1,18 +1,6 @@
-export { startServer } from './start_server';
+export { start_server, load_project_files, load_file_if_needed } from "./start_server";
+export { initialize_logger, log_info, log_warn, log_error } from "./logger";
+export { find_source_files, parse_gitignore, IGNORED_DIRECTORIES } from "./file_loading";
 
 // Re-export types that might be useful for consumers
-export type { AriadneMCPServerOptions } from './start_server';
-
-// Export the new context-oriented tools
-export { 
-  getSymbolContext, 
-  getSymbolContextSchema,
-  type GetSymbolContextRequest,
-  type GetSymbolContextResponse,
-  type SymbolContext,
-  type SymbolInfo,
-  type DefinitionInfo,
-  type UsageInfo,
-  type RelationshipInfo,
-  type MetricsInfo
-} from './tools/get_symbol_context';
+export type { AriadneMCPServerOptions } from "./start_server";

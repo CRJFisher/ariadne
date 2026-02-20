@@ -1,39 +1,29 @@
-// Export the Project class
-export { Project } from './project/project';
+/**
+ * Ariadne Core - Public API
+ *
+ * Main entry point for the Ariadne code analysis library.
+ * Provides functions to analyze codebases and extract code graphs.
+ */
 
-// Export storage interfaces for advanced usage
+// Main coordinator
+export { Project } from "./project";
+
+// Core processing functions
+export { build_index_single_file } from "./index_single_file/index_single_file";
+export { trace_call_graph } from "./trace_call_graph/trace_call_graph";
+
+// Project-level registries
 export {
-  StorageInterface,
-  StorageTransaction,
-  ProjectState,
-  StoredFileCache,
-  StorageFactory,
-  createStorage,
-  registerStorageProvider
-} from './storage/storage_interface';
+  DefinitionRegistry,
+  TypeRegistry,
+  ScopeRegistry,
+  ExportRegistry,
+  ImportGraph,
+  ResolutionRegistry,
+} from "./project";
 
-export {
-  StorageInterfaceSync,
-  StorageTransactionSync
-} from './storage/storage_interface_sync';
+// Profiling
+export { profiler } from "./profiling";
 
-export { InMemoryStorage } from './storage/in_memory_storage';
-
-// Re-export important types
-export { Point, Def, Ref, FunctionCall, SimpleRange, CallGraph, CallGraphOptions, CallGraphNode, CallGraphEdge, Call, IScopeGraph } from './graph';
-export type { Import } from '@ariadnejs/types';
-export { Edit } from './edit';
-export { get_symbol_id, parse_symbol_id, normalize_module_path } from './symbol_naming';
-export { ClassRelationship } from './inheritance';
-
-// Export language configurations for direct use
-export { typescript_config } from './languages/typescript';
-export { javascript_config } from './languages/javascript';
-export { python_config } from './languages/python';
-export { rust_config } from './languages/rust';
-
-// Export utility types  
-export { LanguageConfig } from './types';
-
-// The Project class implementation has been moved to ./project.ts
-// This file now only contains exports
+// Test file detection
+export { is_test_file } from "./project/detect_test_file";

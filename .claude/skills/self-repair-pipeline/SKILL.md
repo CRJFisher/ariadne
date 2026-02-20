@@ -1,0 +1,245 @@
+---
+name: self-repair-pipeline
+description: Runs the full entry point self-repair pipeline. Detects entry points in Ariadne packages or external codebases, triages false positives via sub-agents, plans fixes for each issue group with competing proposals and multi-angle review, and creates backlog tasks.
+argument-hint: "[config-name | /path/to/repo | owner/repo (GitHub)]"
+disable-model-invocation: true
+allowed-tools: Bash(npx tsx:*,pnpm exec tsx:*), Read, Write, Task(triage-investigator, triage-aggregator, triage-rule-reviewer, fix-planner, plan-synthesizer, plan-reviewer, task-writer)
+hooks:
+  Stop:
+    - hooks:
+        - type: command
+          command: "pnpm exec tsx \"$CLAUDE_PROJECT_DIR/.claude/skills/self-repair-pipeline/scripts/triage_loop_stop.ts\""
+          timeout: 30
+---
+
+# Self-Repair Pipeline
+
+Triage pipeline for entry point analysis: detect false positives, classify root causes, plan fixes, and create backlog tasks. Supports both self-analysis (Ariadne packages) and external codebase analysis.
+
+## Pipeline Overview
+
+| Phase | Script / Agent | Purpose |
+| ----- | -------------- | ------- |
+| 1. Detect | `scripts/detect_entrypoints.ts` | Run entry point detection |
+| 2. Prepare | `scripts/prepare_triage.ts` | Classify against known-entrypoints registry, build triage state |
+| 3. Triage Loop | triage-investigator, triage-aggregator, triage-rule-reviewer | Investigate pending entries, aggregate results, review for patterns |
+| 4. Fix Planning | fix-planner, plan-synthesizer, plan-reviewer, task-writer | Generate competing fix plans, synthesize, review, create tasks |
+| 5. Finalize | `scripts/finalize_triage.ts` | Save results, update registry |
+
+## Analysis Target
+
+**User input:** `$ARGUMENTS`
+
+Resolve the analysis target from the user's input using this routing table:
+
+| Input pattern | Example | Action |
+| ------------- | ------- | ------ |
+| Empty or blank | `/self-repair-pipeline` | List available configs below, ask user what to analyze |
+| Config name | `core`, `mcp`, `types`, `projections` | Use `--config .claude/skills/self-repair-pipeline/project_configs/{name}.json` |
+| Absolute or relative directory path | `/Users/chuck/workspace/some-repo`, `../other-repo` | Use `--path <path>` |
+| `owner/repo` or GitHub URL | `anthropics/sdk-python`, `https://github.com/owner/repo` | Use `--github <value>` |
+| Natural language | "analyze the core package" | Interpret intent and map to one of the above |
+
+Available project configs:
+
+| Config name | Config path |
+| ----------- | ----------- |
+| `core` | `project_configs/core.json` |
+| `mcp` | `project_configs/mcp.json` |
+| `types` | `project_configs/types.json` |
+| `projections` | `project_configs/projections.json` |
+
+If no arguments are provided or the input is ambiguous, **ask the user** before proceeding.
+
+## Current State
+
+!`cat .claude/skills/self-repair-pipeline/triage_state/*_triage.json 2>/dev/null || echo "No active triage"`
+
+## State and Output Locations
+
+| File | Purpose |
+| ---- | ------- |
+| `triage_state/{project}_triage.json` | Active triage state (phases, entries, results) |
+| `triage_state/results/{entry_index}.json` | Per-entry triage result files (written by sub-agents) |
+| `triage_state/fix_plans/{group_id}/` | Fix plans, synthesis, and reviews per group |
+| `analysis_output/{project}/` | Project-scoped timestamped analysis and triage result files |
+| `known_entrypoints/{project}.json` | Known-entrypoints registry (persists across runs) |
+| `triage_patterns.json` | Extracted classification patterns from meta-review |
+
+All paths above are relative to `.claude/skills/self-repair-pipeline/`.
+
+## Phase 1: Detect
+
+Use the target resolved from the **Analysis Target** section above to construct the detect command.
+
+```bash
+# From project config (preferred for Ariadne packages)
+pnpm exec tsx .claude/skills/self-repair-pipeline/scripts/detect_entrypoints.ts \
+  --config .claude/skills/self-repair-pipeline/project_configs/core.json
+
+# Local repository
+pnpm exec tsx .claude/skills/self-repair-pipeline/scripts/detect_entrypoints.ts --path /path/to/repo
+
+# GitHub repository
+pnpm exec tsx .claude/skills/self-repair-pipeline/scripts/detect_entrypoints.ts --github owner/repo
+```
+
+Options: `--config <file>`, `--path <dir>`, `--github <repo>`, `--branch <name>`, `--depth <n>`, `--output <file>`, `--include-tests`, `--folders <paths>`, `--exclude <patterns>`
+
+Tracked project configs for Ariadne packages: `project_configs/{core,mcp,types}.json`
+
+Output: `analysis_output/<project>/detect_entrypoints/<timestamp>.json`
+
+## Phase 2: Prepare
+
+Build triage state from the latest analysis output:
+
+```bash
+pnpm exec tsx .claude/skills/self-repair-pipeline/scripts/prepare_triage.ts \
+  --analysis .claude/skills/self-repair-pipeline/analysis_output/<project>/detect_entrypoints/<timestamp>.json \
+  --package <name> \
+  --batch-size 5
+```
+
+Options: `--analysis <path>` (required), `--package <name>`, `--state <path>`, `--batch-size <n>` (default 5)
+
+The script loads the known-entrypoints registry and classifies entries:
+
+- **known-tp**: Matches registry — marked completed immediately
+- **llm-triage**: No registry match — marked pending for investigation
+
+Output: `triage_state/{project}_triage.json`
+
+## Phase 3: Triage Loop
+
+The Stop hook (`triage_loop_stop.ts`) drives this phase as a state machine. Each time Claude tries to stop, the hook reads the state file, determines what to do next, and either BLOCKs with instructions or ALLOWs completion.
+
+### 3a. Investigate Pending Entries
+
+For each pending entry in the state file:
+
+1. Read the entry's `diagnosis` field to select the prompt template:
+
+   | Diagnosis | Template | Focus |
+   | --------- | -------- | ----- |
+   | `callers-not-in-registry` | `templates/prompt_callers_not_in_registry.md` | File coverage gap investigation |
+   | `callers-in-registry-unresolved` | `templates/prompt_resolution_failure.md` | Resolution failure pattern identification |
+   | `callers-in-registry-wrong-target` | `templates/prompt_wrong_target.md` | Wrong resolution target analysis |
+   | All other diagnoses | `templates/prompt_generic.md` | Broad investigation |
+
+2. Read the template and substitute `{{entry.*}}` placeholders with values from the entry
+3. Launch a **triage-investigator** sub-agent with `run_in_background: true`. Include `output_path` = `triage_state/results/{entry.entry_index}.json` in the prompt
+4. Do not read or process the sub-agent's response. The stop hook merges result files automatically
+
+Process entries in batches of `batch_size` (from state file). The stop hook re-triggers after each batch.
+
+### 3b. Aggregation
+
+When all entries are completed, the stop hook transitions to `aggregation` phase.
+
+Launch a **triage-aggregator** sub-agent with the state file path. The aggregator:
+
+- Reviews all completed entry results
+- Groups entries by shared root cause
+- Merges duplicate/overlapping group IDs
+- Writes `aggregation: { status: "completed", completed_at: ... }` to the state file
+
+### 3c. Meta-Review
+
+If aggregation found false-positive entries, the stop hook transitions to `meta-review` phase.
+
+Launch a **triage-rule-reviewer** sub-agent with the state file path. The reviewer:
+
+- Analyzes false-positive patterns across entries
+- Proposes deterministic classification rules
+- Writes `meta_review: { status: "completed", patterns: ..., completed_at: ... }` to the state file
+
+## Phase 4: Fix Planning
+
+If meta-review found multi-entry false-positive groups (>1 entry sharing the same group_id), the stop hook transitions to `fix-planning` phase. Single-entry groups are recorded but skipped.
+
+Fix planning proceeds per group through four sub-phases:
+
+### 4a. Planning
+
+Launch 5 **fix-planner** sub-agents for each group. Each generates an independent fix proposal.
+
+Output: `triage_state/fix_plans/{group_id}/plan_{n}.md`
+
+Update `plans_written` in the state file after each plan is written.
+
+### 4b. Synthesis
+
+Launch a **plan-synthesizer** sub-agent that reads all 5 plans and produces a unified fix approach.
+
+Output: `triage_state/fix_plans/{group_id}/synthesis.md`
+
+Set `synthesis_written: true` in the state file.
+
+### 4c. Review
+
+Launch 4 **plan-reviewer** sub-agents, each reviewing from a different angle:
+
+- Information architecture
+- Simplicity
+- Fundamentality
+- Language coverage
+
+Output: `triage_state/fix_plans/{group_id}/review_{angle}.md`
+
+Update `reviews_written` in the state file after each review.
+
+### 4d. Task Writing
+
+Launch a **task-writer** sub-agent that creates a backlog task using `templates/backlog_task_template.md`.
+
+Set `task_file` in the state file to the created task path.
+
+## Phase 5: Finalize
+
+After the stop hook ALLOWs completion (all phases done or error exit), run finalization:
+
+```bash
+pnpm exec tsx .claude/skills/self-repair-pipeline/scripts/finalize_triage.ts \
+  --state .claude/skills/self-repair-pipeline/triage_state/{project}_triage.json
+```
+
+Finalization:
+
+- Partitions entries into true positives, dead code, and false-positive groups
+- Saves triage results JSON to `analysis_output/<project>/triage_results/`
+- Updates the known-entrypoints registry with confirmed true positives and dead code
+- Writes triage patterns file (if meta-review produced patterns)
+
+## Architecture: Key Modules
+
+All library modules live under `src/`:
+
+| Module | Purpose |
+| ------ | ------- |
+| `extract_entry_points.ts` | Shared extraction with enriched metadata + diagnostics |
+| `classify_entrypoints.ts` | Deterministic rule-based classification (no LLM) |
+| `known_entrypoints.ts` | Known-entrypoints registry I/O and matching |
+| `build_triage_entries.ts` | Build triage entries from classification results |
+| `build_finalization_output.ts` | Build finalization output from completed state |
+| `types.ts` | Shared type definitions (`EnrichedFunctionEntry`, `EntryPointDiagnostics`, etc.) |
+| `triage_state_types.ts` | Triage state machine types |
+| `analysis_io.ts` | Analysis file lookup, JSON I/O |
+
+## Reference
+
+- [State Machine: Phase Transitions and BLOCK/ALLOW Logic](reference/state_machine.md)
+- [Diagnosis Routes: Routing Table and Escape Hatch](reference/diagnosis_routes.md)
+- [Sample Triage Output](examples/sample_triage_output.json)
+
+## Sub-Agents
+
+| Agent | Model | Purpose |
+| ----- | ----- | ------- |
+| triage-investigator | sonnet | Investigate a single pending entry using diagnosis-specific prompt template |
+| triage-aggregator | sonnet | Review all entry results, group by root cause, merge duplicates |
+| triage-rule-reviewer | sonnet | Analyze false-positive patterns, propose deterministic classification rules |
+| fix-planner | sonnet | Generate one independent fix proposal for a false-positive group |
+| plan-synthesizer | opus | Synthesize 5 competing plans into a unified fix approach |
+| plan-reviewer | sonnet | Review synthesized plan from one specific angle |
+| task-writer | sonnet | Create a backlog task from synthesis + reviews using the task template |

@@ -1,0 +1,492 @@
+{
+  "file_path": "<fixtures>/javascript/code/modules/main_reexport.js",
+  "language": "javascript",
+  "root_scope_id": "module:<fixtures>/javascript/code/modules/main_reexport.js:1:1:18:0",
+  "scopes": {
+    "module:<fixtures>/javascript/code/modules/main_reexport.js:1:1:18:0": {
+      "id": "module:<fixtures>/javascript/code/modules/main_reexport.js:1:1:18:0",
+      "parent_id": null,
+      "name": null,
+      "type": "module",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/main_reexport.js",
+        "start_line": 1,
+        "start_column": 1,
+        "end_line": 18,
+        "end_column": 0
+      },
+      "child_ids": []
+    }
+  },
+  "functions": {},
+  "classes": {},
+  "variables": {
+    "variable:<fixtures>/javascript/code/modules/main_reexport.js:9:7:9:13:result1": {
+      "kind": "constant",
+      "symbol_id": "variable:<fixtures>/javascript/code/modules/main_reexport.js:9:7:9:13:result1",
+      "name": "result1",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/main_reexport.js",
+        "start_line": 9,
+        "start_column": 7,
+        "end_line": 9,
+        "end_column": 13
+      },
+      "defining_scope_id": "module:<fixtures>/javascript/code/modules/main_reexport.js:1:1:18:0",
+      "is_exported": true,
+      "initial_value": "coreFunction()",
+      "initialized_from_call": "coreFunction"
+    },
+    "variable:<fixtures>/javascript/code/modules/main_reexport.js:12:7:12:13:result2": {
+      "kind": "constant",
+      "symbol_id": "variable:<fixtures>/javascript/code/modules/main_reexport.js:12:7:12:13:result2",
+      "name": "result2",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/main_reexport.js",
+        "start_line": 12,
+        "start_column": 7,
+        "end_line": 12,
+        "end_column": 13
+      },
+      "defining_scope_id": "module:<fixtures>/javascript/code/modules/main_reexport.js:1:1:18:0",
+      "is_exported": true,
+      "initial_value": "anotherFunction()",
+      "initialized_from_call": "anotherFunction"
+    },
+    "variable:<fixtures>/javascript/code/modules/main_reexport.js:15:7:15:13:result3": {
+      "kind": "constant",
+      "symbol_id": "variable:<fixtures>/javascript/code/modules/main_reexport.js:15:7:15:13:result3",
+      "name": "result3",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/main_reexport.js",
+        "start_line": 15,
+        "start_column": 7,
+        "end_line": 15,
+        "end_column": 13
+      },
+      "defining_scope_id": "module:<fixtures>/javascript/code/modules/main_reexport.js:1:1:18:0",
+      "is_exported": true,
+      "initial_value": "middleFunction()",
+      "initialized_from_call": "middleFunction"
+    }
+  },
+  "interfaces": {},
+  "enums": {},
+  "namespaces": {},
+  "types": {},
+  "imported_symbols": {
+    "variable:<fixtures>/javascript/code/modules/main_reexport.js:6:10:6:21:coreFunction": {
+      "kind": "import",
+      "symbol_id": "variable:<fixtures>/javascript/code/modules/main_reexport.js:6:10:6:21:coreFunction",
+      "name": "coreFunction",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/main_reexport.js",
+        "start_line": 6,
+        "start_column": 10,
+        "end_line": 6,
+        "end_column": 21
+      },
+      "defining_scope_id": "module:<fixtures>/javascript/code/modules/main_reexport.js:1:1:18:0",
+      "import_path": "./middle.js",
+      "import_kind": "named"
+    },
+    "variable:<fixtures>/javascript/code/modules/main_reexport.js:6:24:6:38:anotherFunction": {
+      "kind": "import",
+      "symbol_id": "variable:<fixtures>/javascript/code/modules/main_reexport.js:6:24:6:38:anotherFunction",
+      "name": "anotherFunction",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/main_reexport.js",
+        "start_line": 6,
+        "start_column": 24,
+        "end_line": 6,
+        "end_column": 38
+      },
+      "defining_scope_id": "module:<fixtures>/javascript/code/modules/main_reexport.js:1:1:18:0",
+      "import_path": "./middle.js",
+      "import_kind": "named"
+    },
+    "variable:<fixtures>/javascript/code/modules/main_reexport.js:6:41:6:54:middleFunction": {
+      "kind": "import",
+      "symbol_id": "variable:<fixtures>/javascript/code/modules/main_reexport.js:6:41:6:54:middleFunction",
+      "name": "middleFunction",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/main_reexport.js",
+        "start_line": 6,
+        "start_column": 41,
+        "end_line": 6,
+        "end_column": 54
+      },
+      "defining_scope_id": "module:<fixtures>/javascript/code/modules/main_reexport.js:1:1:18:0",
+      "import_path": "./middle.js",
+      "import_kind": "named"
+    }
+  },
+  "references": [
+    {
+      "kind": "variable_reference",
+      "name": "coreFunction",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/main_reexport.js",
+        "start_line": 6,
+        "start_column": 10,
+        "end_line": 6,
+        "end_column": 21
+      },
+      "scope_id": "module:<fixtures>/javascript/code/modules/main_reexport.js:1:1:18:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "anotherFunction",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/main_reexport.js",
+        "start_line": 6,
+        "start_column": 24,
+        "end_line": 6,
+        "end_column": 38
+      },
+      "scope_id": "module:<fixtures>/javascript/code/modules/main_reexport.js:1:1:18:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "middleFunction",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/main_reexport.js",
+        "start_line": 6,
+        "start_column": 41,
+        "end_line": 6,
+        "end_column": 54
+      },
+      "scope_id": "module:<fixtures>/javascript/code/modules/main_reexport.js:1:1:18:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "assignment",
+      "name": "result1 = coreFunction()",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/main_reexport.js",
+        "start_line": 9,
+        "start_column": 7,
+        "end_line": 9,
+        "end_column": 30
+      },
+      "scope_id": "module:<fixtures>/javascript/code/modules/main_reexport.js:1:1:18:0",
+      "target_location": {
+        "file_path": "<fixtures>/javascript/code/modules/main_reexport.js",
+        "start_line": 9,
+        "start_column": 7,
+        "end_line": 9,
+        "end_column": 30
+      }
+    },
+    {
+      "kind": "assignment",
+      "name": "result1",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/main_reexport.js",
+        "start_line": 9,
+        "start_column": 7,
+        "end_line": 9,
+        "end_column": 13
+      },
+      "scope_id": "module:<fixtures>/javascript/code/modules/main_reexport.js:1:1:18:0",
+      "target_location": {
+        "file_path": "<fixtures>/javascript/code/modules/main_reexport.js",
+        "start_line": 9,
+        "start_column": 7,
+        "end_line": 9,
+        "end_column": 13
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "result1",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/main_reexport.js",
+        "start_line": 9,
+        "start_column": 7,
+        "end_line": 9,
+        "end_column": 13
+      },
+      "scope_id": "module:<fixtures>/javascript/code/modules/main_reexport.js:1:1:18:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "coreFunction",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/main_reexport.js",
+        "start_line": 9,
+        "start_column": 17,
+        "end_line": 9,
+        "end_column": 30
+      },
+      "scope_id": "module:<fixtures>/javascript/code/modules/main_reexport.js:1:1:18:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "function_call",
+      "name": "coreFunction",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/main_reexport.js",
+        "start_line": 9,
+        "start_column": 17,
+        "end_line": 9,
+        "end_column": 28
+      },
+      "scope_id": "module:<fixtures>/javascript/code/modules/main_reexport.js:1:1:18:0",
+      "potential_construct_target": {
+        "file_path": "<fixtures>/javascript/code/modules/main_reexport.js",
+        "start_line": 9,
+        "start_column": 7,
+        "end_line": 9,
+        "end_column": 13
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "coreFunction",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/main_reexport.js",
+        "start_line": 9,
+        "start_column": 17,
+        "end_line": 9,
+        "end_column": 28
+      },
+      "scope_id": "module:<fixtures>/javascript/code/modules/main_reexport.js:1:1:18:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "assignment",
+      "name": "result2 = anotherFunction()",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/main_reexport.js",
+        "start_line": 12,
+        "start_column": 7,
+        "end_line": 12,
+        "end_column": 33
+      },
+      "scope_id": "module:<fixtures>/javascript/code/modules/main_reexport.js:1:1:18:0",
+      "target_location": {
+        "file_path": "<fixtures>/javascript/code/modules/main_reexport.js",
+        "start_line": 12,
+        "start_column": 7,
+        "end_line": 12,
+        "end_column": 33
+      }
+    },
+    {
+      "kind": "assignment",
+      "name": "result2",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/main_reexport.js",
+        "start_line": 12,
+        "start_column": 7,
+        "end_line": 12,
+        "end_column": 13
+      },
+      "scope_id": "module:<fixtures>/javascript/code/modules/main_reexport.js:1:1:18:0",
+      "target_location": {
+        "file_path": "<fixtures>/javascript/code/modules/main_reexport.js",
+        "start_line": 12,
+        "start_column": 7,
+        "end_line": 12,
+        "end_column": 13
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "result2",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/main_reexport.js",
+        "start_line": 12,
+        "start_column": 7,
+        "end_line": 12,
+        "end_column": 13
+      },
+      "scope_id": "module:<fixtures>/javascript/code/modules/main_reexport.js:1:1:18:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "anotherFunction",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/main_reexport.js",
+        "start_line": 12,
+        "start_column": 17,
+        "end_line": 12,
+        "end_column": 33
+      },
+      "scope_id": "module:<fixtures>/javascript/code/modules/main_reexport.js:1:1:18:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "function_call",
+      "name": "anotherFunction",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/main_reexport.js",
+        "start_line": 12,
+        "start_column": 17,
+        "end_line": 12,
+        "end_column": 31
+      },
+      "scope_id": "module:<fixtures>/javascript/code/modules/main_reexport.js:1:1:18:0",
+      "potential_construct_target": {
+        "file_path": "<fixtures>/javascript/code/modules/main_reexport.js",
+        "start_line": 12,
+        "start_column": 7,
+        "end_line": 12,
+        "end_column": 13
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "anotherFunction",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/main_reexport.js",
+        "start_line": 12,
+        "start_column": 17,
+        "end_line": 12,
+        "end_column": 31
+      },
+      "scope_id": "module:<fixtures>/javascript/code/modules/main_reexport.js:1:1:18:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "assignment",
+      "name": "result3 = middleFunction()",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/main_reexport.js",
+        "start_line": 15,
+        "start_column": 7,
+        "end_line": 15,
+        "end_column": 32
+      },
+      "scope_id": "module:<fixtures>/javascript/code/modules/main_reexport.js:1:1:18:0",
+      "target_location": {
+        "file_path": "<fixtures>/javascript/code/modules/main_reexport.js",
+        "start_line": 15,
+        "start_column": 7,
+        "end_line": 15,
+        "end_column": 32
+      }
+    },
+    {
+      "kind": "assignment",
+      "name": "result3",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/main_reexport.js",
+        "start_line": 15,
+        "start_column": 7,
+        "end_line": 15,
+        "end_column": 13
+      },
+      "scope_id": "module:<fixtures>/javascript/code/modules/main_reexport.js:1:1:18:0",
+      "target_location": {
+        "file_path": "<fixtures>/javascript/code/modules/main_reexport.js",
+        "start_line": 15,
+        "start_column": 7,
+        "end_line": 15,
+        "end_column": 13
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "result3",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/main_reexport.js",
+        "start_line": 15,
+        "start_column": 7,
+        "end_line": 15,
+        "end_column": 13
+      },
+      "scope_id": "module:<fixtures>/javascript/code/modules/main_reexport.js:1:1:18:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "middleFunction",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/main_reexport.js",
+        "start_line": 15,
+        "start_column": 17,
+        "end_line": 15,
+        "end_column": 32
+      },
+      "scope_id": "module:<fixtures>/javascript/code/modules/main_reexport.js:1:1:18:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "function_call",
+      "name": "middleFunction",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/main_reexport.js",
+        "start_line": 15,
+        "start_column": 17,
+        "end_line": 15,
+        "end_column": 30
+      },
+      "scope_id": "module:<fixtures>/javascript/code/modules/main_reexport.js:1:1:18:0",
+      "potential_construct_target": {
+        "file_path": "<fixtures>/javascript/code/modules/main_reexport.js",
+        "start_line": 15,
+        "start_column": 7,
+        "end_line": 15,
+        "end_column": 13
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "middleFunction",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/main_reexport.js",
+        "start_line": 15,
+        "start_column": 17,
+        "end_line": 15,
+        "end_column": 30
+      },
+      "scope_id": "module:<fixtures>/javascript/code/modules/main_reexport.js:1:1:18:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "result1",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/main_reexport.js",
+        "start_line": 17,
+        "start_column": 10,
+        "end_line": 17,
+        "end_column": 16
+      },
+      "scope_id": "module:<fixtures>/javascript/code/modules/main_reexport.js:1:1:18:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "result2",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/main_reexport.js",
+        "start_line": 17,
+        "start_column": 19,
+        "end_line": 17,
+        "end_column": 25
+      },
+      "scope_id": "module:<fixtures>/javascript/code/modules/main_reexport.js:1:1:18:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "result3",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/main_reexport.js",
+        "start_line": 17,
+        "start_column": 28,
+        "end_line": 17,
+        "end_column": 34
+      },
+      "scope_id": "module:<fixtures>/javascript/code/modules/main_reexport.js:1:1:18:0",
+      "access_type": "read"
+    }
+  ]
+}

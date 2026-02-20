@@ -1,0 +1,1886 @@
+{
+  "file_path": "<fixtures>/javascript/code/classes/constructor_workflow.js",
+  "language": "javascript",
+  "root_scope_id": "module:<fixtures>/javascript/code/classes/constructor_workflow.js:1:1:51:2",
+  "scopes": {
+    "module:<fixtures>/javascript/code/classes/constructor_workflow.js:1:1:51:2": {
+      "id": "module:<fixtures>/javascript/code/classes/constructor_workflow.js:1:1:51:2",
+      "parent_id": null,
+      "name": null,
+      "type": "module",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/constructor_workflow.js",
+        "start_line": 1,
+        "start_column": 1,
+        "end_line": 51,
+        "end_column": 2
+      },
+      "child_ids": [
+        "class:<fixtures>/javascript/code/classes/constructor_workflow.js:6:15:31:1"
+      ]
+    },
+    "class:<fixtures>/javascript/code/classes/constructor_workflow.js:6:15:31:1": {
+      "id": "class:<fixtures>/javascript/code/classes/constructor_workflow.js:6:15:31:1",
+      "parent_id": "module:<fixtures>/javascript/code/classes/constructor_workflow.js:1:1:51:2",
+      "name": "Product",
+      "type": "class",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/constructor_workflow.js",
+        "start_line": 6,
+        "start_column": 15,
+        "end_line": 31,
+        "end_column": 1
+      },
+      "child_ids": [
+        "method:<fixtures>/javascript/code/classes/constructor_workflow.js:7:14:12:3",
+        "method:<fixtures>/javascript/code/classes/constructor_workflow.js:14:10:16:3",
+        "method:<fixtures>/javascript/code/classes/constructor_workflow.js:18:11:20:3",
+        "method:<fixtures>/javascript/code/classes/constructor_workflow.js:22:16:25:3",
+        "method:<fixtures>/javascript/code/classes/constructor_workflow.js:27:17:30:3"
+      ]
+    },
+    "method:<fixtures>/javascript/code/classes/constructor_workflow.js:7:14:12:3": {
+      "id": "method:<fixtures>/javascript/code/classes/constructor_workflow.js:7:14:12:3",
+      "parent_id": "class:<fixtures>/javascript/code/classes/constructor_workflow.js:6:15:31:1",
+      "name": "constructor",
+      "type": "method",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/constructor_workflow.js",
+        "start_line": 7,
+        "start_column": 14,
+        "end_line": 12,
+        "end_column": 3
+      },
+      "child_ids": [
+        "constructor:<fixtures>/javascript/code/classes/constructor_workflow.js:7:14:12:3"
+      ]
+    },
+    "constructor:<fixtures>/javascript/code/classes/constructor_workflow.js:7:14:12:3": {
+      "id": "constructor:<fixtures>/javascript/code/classes/constructor_workflow.js:7:14:12:3",
+      "parent_id": "method:<fixtures>/javascript/code/classes/constructor_workflow.js:7:14:12:3",
+      "name": "constructor",
+      "type": "constructor",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/constructor_workflow.js",
+        "start_line": 7,
+        "start_column": 14,
+        "end_line": 12,
+        "end_column": 3
+      },
+      "child_ids": []
+    },
+    "method:<fixtures>/javascript/code/classes/constructor_workflow.js:14:10:16:3": {
+      "id": "method:<fixtures>/javascript/code/classes/constructor_workflow.js:14:10:16:3",
+      "parent_id": "class:<fixtures>/javascript/code/classes/constructor_workflow.js:6:15:31:1",
+      "name": "getName",
+      "type": "method",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/constructor_workflow.js",
+        "start_line": 14,
+        "start_column": 10,
+        "end_line": 16,
+        "end_column": 3
+      },
+      "child_ids": []
+    },
+    "method:<fixtures>/javascript/code/classes/constructor_workflow.js:18:11:20:3": {
+      "id": "method:<fixtures>/javascript/code/classes/constructor_workflow.js:18:11:20:3",
+      "parent_id": "class:<fixtures>/javascript/code/classes/constructor_workflow.js:6:15:31:1",
+      "name": "getPrice",
+      "type": "method",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/constructor_workflow.js",
+        "start_line": 18,
+        "start_column": 11,
+        "end_line": 20,
+        "end_column": 3
+      },
+      "child_ids": []
+    },
+    "method:<fixtures>/javascript/code/classes/constructor_workflow.js:22:16:25:3": {
+      "id": "method:<fixtures>/javascript/code/classes/constructor_workflow.js:22:16:25:3",
+      "parent_id": "class:<fixtures>/javascript/code/classes/constructor_workflow.js:6:15:31:1",
+      "name": "applyDiscount",
+      "type": "method",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/constructor_workflow.js",
+        "start_line": 22,
+        "start_column": 16,
+        "end_line": 25,
+        "end_column": 3
+      },
+      "child_ids": []
+    },
+    "method:<fixtures>/javascript/code/classes/constructor_workflow.js:27:17:30:3": {
+      "id": "method:<fixtures>/javascript/code/classes/constructor_workflow.js:27:17:30:3",
+      "parent_id": "class:<fixtures>/javascript/code/classes/constructor_workflow.js:6:15:31:1",
+      "name": "markOutOfStock",
+      "type": "method",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/constructor_workflow.js",
+        "start_line": 27,
+        "start_column": 17,
+        "end_line": 30,
+        "end_column": 3
+      },
+      "child_ids": []
+    }
+  },
+  "functions": {},
+  "classes": {
+    "class:<fixtures>/javascript/code/classes/constructor_workflow.js:6:7:6:13:Product": {
+      "kind": "class",
+      "symbol_id": "class:<fixtures>/javascript/code/classes/constructor_workflow.js:6:7:6:13:Product",
+      "name": "Product",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/constructor_workflow.js",
+        "start_line": 6,
+        "start_column": 7,
+        "end_line": 6,
+        "end_column": 13
+      },
+      "defining_scope_id": "module:<fixtures>/javascript/code/classes/constructor_workflow.js:1:1:51:2",
+      "extends": [],
+      "is_exported": true,
+      "export": {
+        "is_reexport": false
+      },
+      "methods": [
+        {
+          "kind": "method",
+          "defining_scope_id": "class:<fixtures>/javascript/code/classes/constructor_workflow.js:6:15:31:1",
+          "symbol_id": "method:<fixtures>/javascript/code/classes/constructor_workflow.js:14:3:14:9:getName",
+          "name": "getName",
+          "location": {
+            "file_path": "<fixtures>/javascript/code/classes/constructor_workflow.js",
+            "start_line": 14,
+            "start_column": 3,
+            "end_line": 14,
+            "end_column": 9
+          },
+          "parameters": [],
+          "body_scope_id": "method:<fixtures>/javascript/code/classes/constructor_workflow.js:14:10:16:3"
+        },
+        {
+          "kind": "method",
+          "defining_scope_id": "class:<fixtures>/javascript/code/classes/constructor_workflow.js:6:15:31:1",
+          "symbol_id": "method:<fixtures>/javascript/code/classes/constructor_workflow.js:18:3:18:10:getPrice",
+          "name": "getPrice",
+          "location": {
+            "file_path": "<fixtures>/javascript/code/classes/constructor_workflow.js",
+            "start_line": 18,
+            "start_column": 3,
+            "end_line": 18,
+            "end_column": 10
+          },
+          "parameters": [],
+          "body_scope_id": "method:<fixtures>/javascript/code/classes/constructor_workflow.js:18:11:20:3"
+        },
+        {
+          "kind": "method",
+          "defining_scope_id": "class:<fixtures>/javascript/code/classes/constructor_workflow.js:6:15:31:1",
+          "symbol_id": "method:<fixtures>/javascript/code/classes/constructor_workflow.js:22:3:22:15:applyDiscount",
+          "name": "applyDiscount",
+          "location": {
+            "file_path": "<fixtures>/javascript/code/classes/constructor_workflow.js",
+            "start_line": 22,
+            "start_column": 3,
+            "end_line": 22,
+            "end_column": 15
+          },
+          "parameters": [
+            {
+              "kind": "parameter",
+              "defining_scope_id": "method:<fixtures>/javascript/code/classes/constructor_workflow.js:22:16:25:3",
+              "symbol_id": "parameter:<fixtures>/javascript/code/classes/constructor_workflow.js:22:17:22:26:percentage",
+              "name": "percentage",
+              "location": {
+                "file_path": "<fixtures>/javascript/code/classes/constructor_workflow.js",
+                "start_line": 22,
+                "start_column": 17,
+                "end_line": 22,
+                "end_column": 26
+              }
+            }
+          ],
+          "body_scope_id": "method:<fixtures>/javascript/code/classes/constructor_workflow.js:22:16:25:3"
+        },
+        {
+          "kind": "method",
+          "defining_scope_id": "class:<fixtures>/javascript/code/classes/constructor_workflow.js:6:15:31:1",
+          "symbol_id": "method:<fixtures>/javascript/code/classes/constructor_workflow.js:27:3:27:16:markOutOfStock",
+          "name": "markOutOfStock",
+          "location": {
+            "file_path": "<fixtures>/javascript/code/classes/constructor_workflow.js",
+            "start_line": 27,
+            "start_column": 3,
+            "end_line": 27,
+            "end_column": 16
+          },
+          "parameters": [],
+          "body_scope_id": "method:<fixtures>/javascript/code/classes/constructor_workflow.js:27:17:30:3"
+        }
+      ],
+      "properties": [],
+      "constructors": [
+        {
+          "kind": "constructor",
+          "defining_scope_id": "class:<fixtures>/javascript/code/classes/constructor_workflow.js:6:15:31:1",
+          "symbol_id": "method:<fixtures>/javascript/code/classes/constructor_workflow.js:7:3:7:13:constructor",
+          "name": "constructor",
+          "location": {
+            "file_path": "<fixtures>/javascript/code/classes/constructor_workflow.js",
+            "start_line": 7,
+            "start_column": 3,
+            "end_line": 7,
+            "end_column": 13
+          },
+          "parameters": [
+            {
+              "kind": "parameter",
+              "defining_scope_id": "constructor:<fixtures>/javascript/code/classes/constructor_workflow.js:7:14:12:3",
+              "symbol_id": "parameter:<fixtures>/javascript/code/classes/constructor_workflow.js:7:15:7:18:name",
+              "name": "name",
+              "location": {
+                "file_path": "<fixtures>/javascript/code/classes/constructor_workflow.js",
+                "start_line": 7,
+                "start_column": 15,
+                "end_line": 7,
+                "end_column": 18
+              }
+            },
+            {
+              "kind": "parameter",
+              "defining_scope_id": "constructor:<fixtures>/javascript/code/classes/constructor_workflow.js:7:14:12:3",
+              "symbol_id": "parameter:<fixtures>/javascript/code/classes/constructor_workflow.js:7:21:7:25:price",
+              "name": "price",
+              "location": {
+                "file_path": "<fixtures>/javascript/code/classes/constructor_workflow.js",
+                "start_line": 7,
+                "start_column": 21,
+                "end_line": 7,
+                "end_column": 25
+              }
+            },
+            {
+              "kind": "parameter",
+              "defining_scope_id": "constructor:<fixtures>/javascript/code/classes/constructor_workflow.js:7:14:12:3",
+              "symbol_id": "parameter:<fixtures>/javascript/code/classes/constructor_workflow.js:7:28:7:35:category",
+              "name": "category",
+              "location": {
+                "file_path": "<fixtures>/javascript/code/classes/constructor_workflow.js",
+                "start_line": 7,
+                "start_column": 28,
+                "end_line": 7,
+                "end_column": 35
+              }
+            }
+          ],
+          "body_scope_id": "method:<fixtures>/javascript/code/classes/constructor_workflow.js:7:14:12:3"
+        }
+      ],
+      "decorators": []
+    }
+  },
+  "variables": {
+    "variable:<fixtures>/javascript/code/classes/constructor_workflow.js:34:7:34:13:product": {
+      "kind": "constant",
+      "symbol_id": "variable:<fixtures>/javascript/code/classes/constructor_workflow.js:34:7:34:13:product",
+      "name": "product",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/constructor_workflow.js",
+        "start_line": 34,
+        "start_column": 7,
+        "end_line": 34,
+        "end_column": 13
+      },
+      "defining_scope_id": "module:<fixtures>/javascript/code/classes/constructor_workflow.js:1:1:51:2",
+      "is_exported": true,
+      "initial_value": "new Product(\"Laptop\", 1000, \"Electronics\")"
+    },
+    "variable:<fixtures>/javascript/code/classes/constructor_workflow.js:37:7:37:17:productName": {
+      "kind": "constant",
+      "symbol_id": "variable:<fixtures>/javascript/code/classes/constructor_workflow.js:37:7:37:17:productName",
+      "name": "productName",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/constructor_workflow.js",
+        "start_line": 37,
+        "start_column": 7,
+        "end_line": 37,
+        "end_column": 17
+      },
+      "defining_scope_id": "module:<fixtures>/javascript/code/classes/constructor_workflow.js:1:1:51:2",
+      "is_exported": true,
+      "initial_value": "product.getName()",
+      "collection_source": "product"
+    },
+    "variable:<fixtures>/javascript/code/classes/constructor_workflow.js:38:7:38:19:originalPrice": {
+      "kind": "constant",
+      "symbol_id": "variable:<fixtures>/javascript/code/classes/constructor_workflow.js:38:7:38:19:originalPrice",
+      "name": "originalPrice",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/constructor_workflow.js",
+        "start_line": 38,
+        "start_column": 7,
+        "end_line": 38,
+        "end_column": 19
+      },
+      "defining_scope_id": "module:<fixtures>/javascript/code/classes/constructor_workflow.js:1:1:51:2",
+      "is_exported": true,
+      "initial_value": "product.getPrice()",
+      "collection_source": "product"
+    },
+    "variable:<fixtures>/javascript/code/classes/constructor_workflow.js:41:7:41:23:discountedProduct": {
+      "kind": "constant",
+      "symbol_id": "variable:<fixtures>/javascript/code/classes/constructor_workflow.js:41:7:41:23:discountedProduct",
+      "name": "discountedProduct",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/constructor_workflow.js",
+        "start_line": 41,
+        "start_column": 7,
+        "end_line": 41,
+        "end_column": 23
+      },
+      "defining_scope_id": "module:<fixtures>/javascript/code/classes/constructor_workflow.js:1:1:51:2",
+      "is_exported": false,
+      "initial_value": "product.applyDiscount(10).markOutOfStock()"
+    },
+    "variable:<fixtures>/javascript/code/classes/constructor_workflow.js:42:7:42:16:finalPrice": {
+      "kind": "constant",
+      "symbol_id": "variable:<fixtures>/javascript/code/classes/constructor_workflow.js:42:7:42:16:finalPrice",
+      "name": "finalPrice",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/constructor_workflow.js",
+        "start_line": 42,
+        "start_column": 7,
+        "end_line": 42,
+        "end_column": 16
+      },
+      "defining_scope_id": "module:<fixtures>/javascript/code/classes/constructor_workflow.js:1:1:51:2",
+      "is_exported": true,
+      "initial_value": "discountedProduct.getPrice()",
+      "collection_source": "discountedProduct"
+    }
+  },
+  "interfaces": {},
+  "enums": {},
+  "namespaces": {},
+  "types": {},
+  "imported_symbols": {},
+  "references": [
+    {
+      "kind": "variable_reference",
+      "name": "Product",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/constructor_workflow.js",
+        "start_line": 6,
+        "start_column": 7,
+        "end_line": 6,
+        "end_column": 13
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/constructor_workflow.js:1:1:51:2",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "name",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/constructor_workflow.js",
+        "start_line": 7,
+        "start_column": 15,
+        "end_line": 7,
+        "end_column": 18
+      },
+      "scope_id": "constructor:<fixtures>/javascript/code/classes/constructor_workflow.js:7:14:12:3",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "price",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/constructor_workflow.js",
+        "start_line": 7,
+        "start_column": 21,
+        "end_line": 7,
+        "end_column": 25
+      },
+      "scope_id": "constructor:<fixtures>/javascript/code/classes/constructor_workflow.js:7:14:12:3",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "category",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/constructor_workflow.js",
+        "start_line": 7,
+        "start_column": 28,
+        "end_line": 7,
+        "end_column": 35
+      },
+      "scope_id": "constructor:<fixtures>/javascript/code/classes/constructor_workflow.js:7:14:12:3",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "this",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/constructor_workflow.js",
+        "start_line": 8,
+        "start_column": 5,
+        "end_line": 8,
+        "end_column": 8
+      },
+      "scope_id": "constructor:<fixtures>/javascript/code/classes/constructor_workflow.js:7:14:12:3",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "name",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/constructor_workflow.js",
+        "start_line": 8,
+        "start_column": 17,
+        "end_line": 8,
+        "end_column": 20
+      },
+      "scope_id": "constructor:<fixtures>/javascript/code/classes/constructor_workflow.js:7:14:12:3",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "this",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/constructor_workflow.js",
+        "start_line": 9,
+        "start_column": 5,
+        "end_line": 9,
+        "end_column": 8
+      },
+      "scope_id": "constructor:<fixtures>/javascript/code/classes/constructor_workflow.js:7:14:12:3",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "price",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/constructor_workflow.js",
+        "start_line": 9,
+        "start_column": 18,
+        "end_line": 9,
+        "end_column": 22
+      },
+      "scope_id": "constructor:<fixtures>/javascript/code/classes/constructor_workflow.js:7:14:12:3",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "this",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/constructor_workflow.js",
+        "start_line": 10,
+        "start_column": 5,
+        "end_line": 10,
+        "end_column": 8
+      },
+      "scope_id": "constructor:<fixtures>/javascript/code/classes/constructor_workflow.js:7:14:12:3",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "category",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/constructor_workflow.js",
+        "start_line": 10,
+        "start_column": 21,
+        "end_line": 10,
+        "end_column": 28
+      },
+      "scope_id": "constructor:<fixtures>/javascript/code/classes/constructor_workflow.js:7:14:12:3",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "this",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/constructor_workflow.js",
+        "start_line": 11,
+        "start_column": 5,
+        "end_line": 11,
+        "end_column": 8
+      },
+      "scope_id": "constructor:<fixtures>/javascript/code/classes/constructor_workflow.js:7:14:12:3",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "return this.name;",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/constructor_workflow.js",
+        "start_line": 15,
+        "start_column": 5,
+        "end_line": 15,
+        "end_column": 21
+      },
+      "scope_id": "method:<fixtures>/javascript/code/classes/constructor_workflow.js:14:10:16:3",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "this.name",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/constructor_workflow.js",
+        "start_line": 15,
+        "start_column": 12,
+        "end_line": 15,
+        "end_column": 20
+      },
+      "scope_id": "method:<fixtures>/javascript/code/classes/constructor_workflow.js:14:10:16:3",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "this",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/constructor_workflow.js",
+        "start_line": 15,
+        "start_column": 12,
+        "end_line": 15,
+        "end_column": 15
+      },
+      "scope_id": "method:<fixtures>/javascript/code/classes/constructor_workflow.js:14:10:16:3",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "return this.price;",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/constructor_workflow.js",
+        "start_line": 19,
+        "start_column": 5,
+        "end_line": 19,
+        "end_column": 22
+      },
+      "scope_id": "method:<fixtures>/javascript/code/classes/constructor_workflow.js:18:11:20:3",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "this.price",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/constructor_workflow.js",
+        "start_line": 19,
+        "start_column": 12,
+        "end_line": 19,
+        "end_column": 21
+      },
+      "scope_id": "method:<fixtures>/javascript/code/classes/constructor_workflow.js:18:11:20:3",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "this",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/constructor_workflow.js",
+        "start_line": 19,
+        "start_column": 12,
+        "end_line": 19,
+        "end_column": 15
+      },
+      "scope_id": "method:<fixtures>/javascript/code/classes/constructor_workflow.js:18:11:20:3",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "percentage",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/constructor_workflow.js",
+        "start_line": 22,
+        "start_column": 17,
+        "end_line": 22,
+        "end_column": 26
+      },
+      "scope_id": "method:<fixtures>/javascript/code/classes/constructor_workflow.js:22:16:25:3",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "this",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/constructor_workflow.js",
+        "start_line": 23,
+        "start_column": 5,
+        "end_line": 23,
+        "end_column": 8
+      },
+      "scope_id": "method:<fixtures>/javascript/code/classes/constructor_workflow.js:22:16:25:3",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "this",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/constructor_workflow.js",
+        "start_line": 23,
+        "start_column": 18,
+        "end_line": 23,
+        "end_column": 21
+      },
+      "scope_id": "method:<fixtures>/javascript/code/classes/constructor_workflow.js:22:16:25:3",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "percentage",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/constructor_workflow.js",
+        "start_line": 23,
+        "start_column": 36,
+        "end_line": 23,
+        "end_column": 45
+      },
+      "scope_id": "method:<fixtures>/javascript/code/classes/constructor_workflow.js:22:16:25:3",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "return this;",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/constructor_workflow.js",
+        "start_line": 24,
+        "start_column": 5,
+        "end_line": 24,
+        "end_column": 16
+      },
+      "scope_id": "method:<fixtures>/javascript/code/classes/constructor_workflow.js:22:16:25:3",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "this",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/constructor_workflow.js",
+        "start_line": 24,
+        "start_column": 12,
+        "end_line": 24,
+        "end_column": 15
+      },
+      "scope_id": "method:<fixtures>/javascript/code/classes/constructor_workflow.js:22:16:25:3",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "this",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/constructor_workflow.js",
+        "start_line": 24,
+        "start_column": 12,
+        "end_line": 24,
+        "end_column": 15
+      },
+      "scope_id": "method:<fixtures>/javascript/code/classes/constructor_workflow.js:22:16:25:3",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "this",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/constructor_workflow.js",
+        "start_line": 28,
+        "start_column": 5,
+        "end_line": 28,
+        "end_column": 8
+      },
+      "scope_id": "method:<fixtures>/javascript/code/classes/constructor_workflow.js:27:17:30:3",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "return this;",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/constructor_workflow.js",
+        "start_line": 29,
+        "start_column": 5,
+        "end_line": 29,
+        "end_column": 16
+      },
+      "scope_id": "method:<fixtures>/javascript/code/classes/constructor_workflow.js:27:17:30:3",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "this",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/constructor_workflow.js",
+        "start_line": 29,
+        "start_column": 12,
+        "end_line": 29,
+        "end_column": 15
+      },
+      "scope_id": "method:<fixtures>/javascript/code/classes/constructor_workflow.js:27:17:30:3",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "this",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/constructor_workflow.js",
+        "start_line": 29,
+        "start_column": 12,
+        "end_line": 29,
+        "end_column": 15
+      },
+      "scope_id": "method:<fixtures>/javascript/code/classes/constructor_workflow.js:27:17:30:3",
+      "access_type": "read"
+    },
+    {
+      "kind": "assignment",
+      "name": "product = new Product(\"Laptop\", 1000, \"Electronics\")",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/constructor_workflow.js",
+        "start_line": 34,
+        "start_column": 7,
+        "end_line": 34,
+        "end_column": 58
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/constructor_workflow.js:1:1:51:2",
+      "target_location": {
+        "file_path": "<fixtures>/javascript/code/classes/constructor_workflow.js",
+        "start_line": 34,
+        "start_column": 7,
+        "end_line": 34,
+        "end_column": 58
+      }
+    },
+    {
+      "kind": "assignment",
+      "name": "product",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/constructor_workflow.js",
+        "start_line": 34,
+        "start_column": 7,
+        "end_line": 34,
+        "end_column": 13
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/constructor_workflow.js:1:1:51:2",
+      "target_location": {
+        "file_path": "<fixtures>/javascript/code/classes/constructor_workflow.js",
+        "start_line": 34,
+        "start_column": 7,
+        "end_line": 34,
+        "end_column": 13
+      }
+    },
+    {
+      "kind": "assignment",
+      "name": "product = new Product(\"Laptop\", 1000, \"Electronics\")",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/constructor_workflow.js",
+        "start_line": 34,
+        "start_column": 7,
+        "end_line": 34,
+        "end_column": 58
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/constructor_workflow.js:1:1:51:2",
+      "target_location": {
+        "file_path": "<fixtures>/javascript/code/classes/constructor_workflow.js",
+        "start_line": 34,
+        "start_column": 7,
+        "end_line": 34,
+        "end_column": 58
+      }
+    },
+    {
+      "kind": "assignment",
+      "name": "product",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/constructor_workflow.js",
+        "start_line": 34,
+        "start_column": 7,
+        "end_line": 34,
+        "end_column": 13
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/constructor_workflow.js:1:1:51:2",
+      "target_location": {
+        "file_path": "<fixtures>/javascript/code/classes/constructor_workflow.js",
+        "start_line": 34,
+        "start_column": 7,
+        "end_line": 34,
+        "end_column": 13
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "product",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/constructor_workflow.js",
+        "start_line": 34,
+        "start_column": 7,
+        "end_line": 34,
+        "end_column": 13
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/constructor_workflow.js:1:1:51:2",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "Product",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/constructor_workflow.js",
+        "start_line": 34,
+        "start_column": 17,
+        "end_line": 34,
+        "end_column": 58
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/constructor_workflow.js:1:1:51:2",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "Product",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/constructor_workflow.js",
+        "start_line": 34,
+        "start_column": 17,
+        "end_line": 34,
+        "end_column": 58
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/constructor_workflow.js:1:1:51:2",
+      "access_type": "read"
+    },
+    {
+      "kind": "function_call",
+      "name": "Product",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/constructor_workflow.js",
+        "start_line": 34,
+        "start_column": 17,
+        "end_line": 34,
+        "end_column": 58
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/constructor_workflow.js:1:1:51:2",
+      "potential_construct_target": {
+        "file_path": "<fixtures>/javascript/code/classes/constructor_workflow.js",
+        "start_line": 34,
+        "start_column": 7,
+        "end_line": 34,
+        "end_column": 13
+      }
+    },
+    {
+      "kind": "function_call",
+      "name": "Product",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/constructor_workflow.js",
+        "start_line": 34,
+        "start_column": 21,
+        "end_line": 34,
+        "end_column": 27
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/constructor_workflow.js:1:1:51:2",
+      "potential_construct_target": {
+        "file_path": "<fixtures>/javascript/code/classes/constructor_workflow.js",
+        "start_line": 34,
+        "start_column": 7,
+        "end_line": 34,
+        "end_column": 13
+      }
+    },
+    {
+      "kind": "constructor_call",
+      "name": "Product",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/constructor_workflow.js",
+        "start_line": 34,
+        "start_column": 21,
+        "end_line": 34,
+        "end_column": 27
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/constructor_workflow.js:1:1:51:2",
+      "construct_target": {
+        "file_path": "<fixtures>/javascript/code/classes/constructor_workflow.js",
+        "start_line": 34,
+        "start_column": 7,
+        "end_line": 34,
+        "end_column": 13
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "Product",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/constructor_workflow.js",
+        "start_line": 34,
+        "start_column": 21,
+        "end_line": 34,
+        "end_column": 27
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/constructor_workflow.js:1:1:51:2",
+      "access_type": "read"
+    },
+    {
+      "kind": "assignment",
+      "name": "productName = product.getName()",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/constructor_workflow.js",
+        "start_line": 37,
+        "start_column": 7,
+        "end_line": 37,
+        "end_column": 37
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/constructor_workflow.js:1:1:51:2",
+      "target_location": {
+        "file_path": "<fixtures>/javascript/code/classes/constructor_workflow.js",
+        "start_line": 37,
+        "start_column": 7,
+        "end_line": 37,
+        "end_column": 37
+      }
+    },
+    {
+      "kind": "assignment",
+      "name": "productName",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/constructor_workflow.js",
+        "start_line": 37,
+        "start_column": 7,
+        "end_line": 37,
+        "end_column": 17
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/constructor_workflow.js:1:1:51:2",
+      "target_location": {
+        "file_path": "<fixtures>/javascript/code/classes/constructor_workflow.js",
+        "start_line": 37,
+        "start_column": 7,
+        "end_line": 37,
+        "end_column": 17
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "productName",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/constructor_workflow.js",
+        "start_line": 37,
+        "start_column": 7,
+        "end_line": 37,
+        "end_column": 17
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/constructor_workflow.js:1:1:51:2",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "product.getName()",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/constructor_workflow.js",
+        "start_line": 37,
+        "start_column": 21,
+        "end_line": 37,
+        "end_column": 37
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/constructor_workflow.js:1:1:51:2",
+      "access_type": "read"
+    },
+    {
+      "kind": "method_call",
+      "name": "getName",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/constructor_workflow.js",
+        "start_line": 37,
+        "start_column": 21,
+        "end_line": 37,
+        "end_column": 37
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/constructor_workflow.js:1:1:51:2",
+      "receiver_location": {
+        "file_path": "<fixtures>/javascript/code/classes/constructor_workflow.js",
+        "start_line": 37,
+        "start_column": 21,
+        "end_line": 37,
+        "end_column": 27
+      },
+      "property_chain": [
+        "product",
+        "getName"
+      ],
+      "optional_chaining": false
+    },
+    {
+      "kind": "variable_reference",
+      "name": "product",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/constructor_workflow.js",
+        "start_line": 37,
+        "start_column": 21,
+        "end_line": 37,
+        "end_column": 27
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/constructor_workflow.js:1:1:51:2",
+      "access_type": "read"
+    },
+    {
+      "kind": "property_access",
+      "name": "getName",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/constructor_workflow.js",
+        "start_line": 37,
+        "start_column": 21,
+        "end_line": 37,
+        "end_column": 35
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/constructor_workflow.js:1:1:51:2",
+      "receiver_location": {
+        "file_path": "<fixtures>/javascript/code/classes/constructor_workflow.js",
+        "start_line": 37,
+        "start_column": 21,
+        "end_line": 37,
+        "end_column": 27
+      },
+      "property_chain": [
+        "product",
+        "getName"
+      ],
+      "access_type": "property",
+      "is_optional_chain": false
+    },
+    {
+      "kind": "variable_reference",
+      "name": "product",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/constructor_workflow.js",
+        "start_line": 37,
+        "start_column": 21,
+        "end_line": 37,
+        "end_column": 27
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/constructor_workflow.js:1:1:51:2",
+      "access_type": "read"
+    },
+    {
+      "kind": "property_access",
+      "name": "getName",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/constructor_workflow.js",
+        "start_line": 37,
+        "start_column": 21,
+        "end_line": 37,
+        "end_column": 35
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/constructor_workflow.js:1:1:51:2",
+      "receiver_location": {
+        "file_path": "<fixtures>/javascript/code/classes/constructor_workflow.js",
+        "start_line": 37,
+        "start_column": 21,
+        "end_line": 37,
+        "end_column": 27
+      },
+      "property_chain": [
+        "product",
+        "getName"
+      ],
+      "access_type": "property",
+      "is_optional_chain": false
+    },
+    {
+      "kind": "variable_reference",
+      "name": "product",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/constructor_workflow.js",
+        "start_line": 37,
+        "start_column": 21,
+        "end_line": 37,
+        "end_column": 27
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/constructor_workflow.js:1:1:51:2",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "product",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/constructor_workflow.js",
+        "start_line": 37,
+        "start_column": 21,
+        "end_line": 37,
+        "end_column": 27
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/constructor_workflow.js:1:1:51:2",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "getName",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/constructor_workflow.js",
+        "start_line": 37,
+        "start_column": 29,
+        "end_line": 37,
+        "end_column": 35
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/constructor_workflow.js:1:1:51:2",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "getName",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/constructor_workflow.js",
+        "start_line": 37,
+        "start_column": 29,
+        "end_line": 37,
+        "end_column": 35
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/constructor_workflow.js:1:1:51:2",
+      "access_type": "read"
+    },
+    {
+      "kind": "assignment",
+      "name": "originalPrice = product.getPrice()",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/constructor_workflow.js",
+        "start_line": 38,
+        "start_column": 7,
+        "end_line": 38,
+        "end_column": 40
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/constructor_workflow.js:1:1:51:2",
+      "target_location": {
+        "file_path": "<fixtures>/javascript/code/classes/constructor_workflow.js",
+        "start_line": 38,
+        "start_column": 7,
+        "end_line": 38,
+        "end_column": 40
+      }
+    },
+    {
+      "kind": "assignment",
+      "name": "originalPrice",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/constructor_workflow.js",
+        "start_line": 38,
+        "start_column": 7,
+        "end_line": 38,
+        "end_column": 19
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/constructor_workflow.js:1:1:51:2",
+      "target_location": {
+        "file_path": "<fixtures>/javascript/code/classes/constructor_workflow.js",
+        "start_line": 38,
+        "start_column": 7,
+        "end_line": 38,
+        "end_column": 19
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "originalPrice",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/constructor_workflow.js",
+        "start_line": 38,
+        "start_column": 7,
+        "end_line": 38,
+        "end_column": 19
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/constructor_workflow.js:1:1:51:2",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "product.getPrice()",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/constructor_workflow.js",
+        "start_line": 38,
+        "start_column": 23,
+        "end_line": 38,
+        "end_column": 40
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/constructor_workflow.js:1:1:51:2",
+      "access_type": "read"
+    },
+    {
+      "kind": "method_call",
+      "name": "getPrice",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/constructor_workflow.js",
+        "start_line": 38,
+        "start_column": 23,
+        "end_line": 38,
+        "end_column": 40
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/constructor_workflow.js:1:1:51:2",
+      "receiver_location": {
+        "file_path": "<fixtures>/javascript/code/classes/constructor_workflow.js",
+        "start_line": 38,
+        "start_column": 23,
+        "end_line": 38,
+        "end_column": 29
+      },
+      "property_chain": [
+        "product",
+        "getPrice"
+      ],
+      "optional_chaining": false
+    },
+    {
+      "kind": "variable_reference",
+      "name": "product",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/constructor_workflow.js",
+        "start_line": 38,
+        "start_column": 23,
+        "end_line": 38,
+        "end_column": 29
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/constructor_workflow.js:1:1:51:2",
+      "access_type": "read"
+    },
+    {
+      "kind": "property_access",
+      "name": "getPrice",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/constructor_workflow.js",
+        "start_line": 38,
+        "start_column": 23,
+        "end_line": 38,
+        "end_column": 38
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/constructor_workflow.js:1:1:51:2",
+      "receiver_location": {
+        "file_path": "<fixtures>/javascript/code/classes/constructor_workflow.js",
+        "start_line": 38,
+        "start_column": 23,
+        "end_line": 38,
+        "end_column": 29
+      },
+      "property_chain": [
+        "product",
+        "getPrice"
+      ],
+      "access_type": "property",
+      "is_optional_chain": false
+    },
+    {
+      "kind": "variable_reference",
+      "name": "product",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/constructor_workflow.js",
+        "start_line": 38,
+        "start_column": 23,
+        "end_line": 38,
+        "end_column": 29
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/constructor_workflow.js:1:1:51:2",
+      "access_type": "read"
+    },
+    {
+      "kind": "property_access",
+      "name": "getPrice",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/constructor_workflow.js",
+        "start_line": 38,
+        "start_column": 23,
+        "end_line": 38,
+        "end_column": 38
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/constructor_workflow.js:1:1:51:2",
+      "receiver_location": {
+        "file_path": "<fixtures>/javascript/code/classes/constructor_workflow.js",
+        "start_line": 38,
+        "start_column": 23,
+        "end_line": 38,
+        "end_column": 29
+      },
+      "property_chain": [
+        "product",
+        "getPrice"
+      ],
+      "access_type": "property",
+      "is_optional_chain": false
+    },
+    {
+      "kind": "variable_reference",
+      "name": "product",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/constructor_workflow.js",
+        "start_line": 38,
+        "start_column": 23,
+        "end_line": 38,
+        "end_column": 29
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/constructor_workflow.js:1:1:51:2",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "product",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/constructor_workflow.js",
+        "start_line": 38,
+        "start_column": 23,
+        "end_line": 38,
+        "end_column": 29
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/constructor_workflow.js:1:1:51:2",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "getPrice",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/constructor_workflow.js",
+        "start_line": 38,
+        "start_column": 31,
+        "end_line": 38,
+        "end_column": 38
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/constructor_workflow.js:1:1:51:2",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "getPrice",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/constructor_workflow.js",
+        "start_line": 38,
+        "start_column": 31,
+        "end_line": 38,
+        "end_column": 38
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/constructor_workflow.js:1:1:51:2",
+      "access_type": "read"
+    },
+    {
+      "kind": "assignment",
+      "name": "discountedProduct = product.applyDiscount(10).markOutOfStock()",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/constructor_workflow.js",
+        "start_line": 41,
+        "start_column": 7,
+        "end_line": 41,
+        "end_column": 68
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/constructor_workflow.js:1:1:51:2",
+      "target_location": {
+        "file_path": "<fixtures>/javascript/code/classes/constructor_workflow.js",
+        "start_line": 41,
+        "start_column": 7,
+        "end_line": 41,
+        "end_column": 68
+      }
+    },
+    {
+      "kind": "assignment",
+      "name": "discountedProduct",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/constructor_workflow.js",
+        "start_line": 41,
+        "start_column": 7,
+        "end_line": 41,
+        "end_column": 23
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/constructor_workflow.js:1:1:51:2",
+      "target_location": {
+        "file_path": "<fixtures>/javascript/code/classes/constructor_workflow.js",
+        "start_line": 41,
+        "start_column": 7,
+        "end_line": 41,
+        "end_column": 23
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "discountedProduct",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/constructor_workflow.js",
+        "start_line": 41,
+        "start_column": 7,
+        "end_line": 41,
+        "end_column": 23
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/constructor_workflow.js:1:1:51:2",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "product.applyDiscount(10).markOutOfStock()",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/constructor_workflow.js",
+        "start_line": 41,
+        "start_column": 27,
+        "end_line": 41,
+        "end_column": 68
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/constructor_workflow.js:1:1:51:2",
+      "access_type": "read"
+    },
+    {
+      "kind": "method_call",
+      "name": "applyDiscount",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/constructor_workflow.js",
+        "start_line": 41,
+        "start_column": 27,
+        "end_line": 41,
+        "end_column": 51
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/constructor_workflow.js:1:1:51:2",
+      "receiver_location": {
+        "file_path": "<fixtures>/javascript/code/classes/constructor_workflow.js",
+        "start_line": 41,
+        "start_column": 27,
+        "end_line": 41,
+        "end_column": 33
+      },
+      "property_chain": [
+        "product",
+        "applyDiscount"
+      ],
+      "optional_chaining": false
+    },
+    {
+      "kind": "variable_reference",
+      "name": "product",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/constructor_workflow.js",
+        "start_line": 41,
+        "start_column": 27,
+        "end_line": 41,
+        "end_column": 33
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/constructor_workflow.js:1:1:51:2",
+      "access_type": "read"
+    },
+    {
+      "kind": "method_call",
+      "name": "markOutOfStock",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/constructor_workflow.js",
+        "start_line": 41,
+        "start_column": 27,
+        "end_line": 41,
+        "end_column": 68
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/constructor_workflow.js:1:1:51:2",
+      "receiver_location": {
+        "file_path": "<fixtures>/javascript/code/classes/constructor_workflow.js",
+        "start_line": 41,
+        "start_column": 27,
+        "end_line": 41,
+        "end_column": 51
+      },
+      "property_chain": [
+        "markOutOfStock"
+      ],
+      "optional_chaining": false
+    },
+    {
+      "kind": "variable_reference",
+      "name": "product.applyDiscount(10)",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/constructor_workflow.js",
+        "start_line": 41,
+        "start_column": 27,
+        "end_line": 41,
+        "end_column": 51
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/constructor_workflow.js:1:1:51:2",
+      "access_type": "read"
+    },
+    {
+      "kind": "property_access",
+      "name": "applyDiscount",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/constructor_workflow.js",
+        "start_line": 41,
+        "start_column": 27,
+        "end_line": 41,
+        "end_column": 47
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/constructor_workflow.js:1:1:51:2",
+      "receiver_location": {
+        "file_path": "<fixtures>/javascript/code/classes/constructor_workflow.js",
+        "start_line": 41,
+        "start_column": 27,
+        "end_line": 41,
+        "end_column": 33
+      },
+      "property_chain": [
+        "product",
+        "applyDiscount"
+      ],
+      "access_type": "property",
+      "is_optional_chain": false
+    },
+    {
+      "kind": "variable_reference",
+      "name": "product",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/constructor_workflow.js",
+        "start_line": 41,
+        "start_column": 27,
+        "end_line": 41,
+        "end_column": 33
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/constructor_workflow.js:1:1:51:2",
+      "access_type": "read"
+    },
+    {
+      "kind": "property_access",
+      "name": "applyDiscount",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/constructor_workflow.js",
+        "start_line": 41,
+        "start_column": 27,
+        "end_line": 41,
+        "end_column": 47
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/constructor_workflow.js:1:1:51:2",
+      "receiver_location": {
+        "file_path": "<fixtures>/javascript/code/classes/constructor_workflow.js",
+        "start_line": 41,
+        "start_column": 27,
+        "end_line": 41,
+        "end_column": 33
+      },
+      "property_chain": [
+        "product",
+        "applyDiscount"
+      ],
+      "access_type": "property",
+      "is_optional_chain": false
+    },
+    {
+      "kind": "variable_reference",
+      "name": "product",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/constructor_workflow.js",
+        "start_line": 41,
+        "start_column": 27,
+        "end_line": 41,
+        "end_column": 33
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/constructor_workflow.js:1:1:51:2",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "product",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/constructor_workflow.js",
+        "start_line": 41,
+        "start_column": 27,
+        "end_line": 41,
+        "end_column": 33
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/constructor_workflow.js:1:1:51:2",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "applyDiscount",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/constructor_workflow.js",
+        "start_line": 41,
+        "start_column": 35,
+        "end_line": 41,
+        "end_column": 47
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/constructor_workflow.js:1:1:51:2",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "applyDiscount",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/constructor_workflow.js",
+        "start_line": 41,
+        "start_column": 35,
+        "end_line": 41,
+        "end_column": 47
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/constructor_workflow.js:1:1:51:2",
+      "access_type": "read"
+    },
+    {
+      "kind": "assignment",
+      "name": "finalPrice = discountedProduct.getPrice()",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/constructor_workflow.js",
+        "start_line": 42,
+        "start_column": 7,
+        "end_line": 42,
+        "end_column": 47
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/constructor_workflow.js:1:1:51:2",
+      "target_location": {
+        "file_path": "<fixtures>/javascript/code/classes/constructor_workflow.js",
+        "start_line": 42,
+        "start_column": 7,
+        "end_line": 42,
+        "end_column": 47
+      }
+    },
+    {
+      "kind": "assignment",
+      "name": "finalPrice",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/constructor_workflow.js",
+        "start_line": 42,
+        "start_column": 7,
+        "end_line": 42,
+        "end_column": 16
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/constructor_workflow.js:1:1:51:2",
+      "target_location": {
+        "file_path": "<fixtures>/javascript/code/classes/constructor_workflow.js",
+        "start_line": 42,
+        "start_column": 7,
+        "end_line": 42,
+        "end_column": 16
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "finalPrice",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/constructor_workflow.js",
+        "start_line": 42,
+        "start_column": 7,
+        "end_line": 42,
+        "end_column": 16
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/constructor_workflow.js:1:1:51:2",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "discountedProduct.getPrice()",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/constructor_workflow.js",
+        "start_line": 42,
+        "start_column": 20,
+        "end_line": 42,
+        "end_column": 47
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/constructor_workflow.js:1:1:51:2",
+      "access_type": "read"
+    },
+    {
+      "kind": "method_call",
+      "name": "getPrice",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/constructor_workflow.js",
+        "start_line": 42,
+        "start_column": 20,
+        "end_line": 42,
+        "end_column": 47
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/constructor_workflow.js:1:1:51:2",
+      "receiver_location": {
+        "file_path": "<fixtures>/javascript/code/classes/constructor_workflow.js",
+        "start_line": 42,
+        "start_column": 20,
+        "end_line": 42,
+        "end_column": 36
+      },
+      "property_chain": [
+        "discountedProduct",
+        "getPrice"
+      ],
+      "optional_chaining": false
+    },
+    {
+      "kind": "variable_reference",
+      "name": "discountedProduct",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/constructor_workflow.js",
+        "start_line": 42,
+        "start_column": 20,
+        "end_line": 42,
+        "end_column": 36
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/constructor_workflow.js:1:1:51:2",
+      "access_type": "read"
+    },
+    {
+      "kind": "property_access",
+      "name": "getPrice",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/constructor_workflow.js",
+        "start_line": 42,
+        "start_column": 20,
+        "end_line": 42,
+        "end_column": 45
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/constructor_workflow.js:1:1:51:2",
+      "receiver_location": {
+        "file_path": "<fixtures>/javascript/code/classes/constructor_workflow.js",
+        "start_line": 42,
+        "start_column": 20,
+        "end_line": 42,
+        "end_column": 36
+      },
+      "property_chain": [
+        "discountedProduct",
+        "getPrice"
+      ],
+      "access_type": "property",
+      "is_optional_chain": false
+    },
+    {
+      "kind": "variable_reference",
+      "name": "discountedProduct",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/constructor_workflow.js",
+        "start_line": 42,
+        "start_column": 20,
+        "end_line": 42,
+        "end_column": 36
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/constructor_workflow.js:1:1:51:2",
+      "access_type": "read"
+    },
+    {
+      "kind": "property_access",
+      "name": "getPrice",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/constructor_workflow.js",
+        "start_line": 42,
+        "start_column": 20,
+        "end_line": 42,
+        "end_column": 45
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/constructor_workflow.js:1:1:51:2",
+      "receiver_location": {
+        "file_path": "<fixtures>/javascript/code/classes/constructor_workflow.js",
+        "start_line": 42,
+        "start_column": 20,
+        "end_line": 42,
+        "end_column": 36
+      },
+      "property_chain": [
+        "discountedProduct",
+        "getPrice"
+      ],
+      "access_type": "property",
+      "is_optional_chain": false
+    },
+    {
+      "kind": "variable_reference",
+      "name": "discountedProduct",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/constructor_workflow.js",
+        "start_line": 42,
+        "start_column": 20,
+        "end_line": 42,
+        "end_column": 36
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/constructor_workflow.js:1:1:51:2",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "discountedProduct",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/constructor_workflow.js",
+        "start_line": 42,
+        "start_column": 20,
+        "end_line": 42,
+        "end_column": 36
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/constructor_workflow.js:1:1:51:2",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "getPrice",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/constructor_workflow.js",
+        "start_line": 42,
+        "start_column": 38,
+        "end_line": 42,
+        "end_column": 45
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/constructor_workflow.js:1:1:51:2",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "getPrice",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/constructor_workflow.js",
+        "start_line": 42,
+        "start_column": 38,
+        "end_line": 42,
+        "end_column": 45
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/constructor_workflow.js:1:1:51:2",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "Product",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/constructor_workflow.js",
+        "start_line": 46,
+        "start_column": 3,
+        "end_line": 46,
+        "end_column": 9
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/constructor_workflow.js:1:1:51:2",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "product",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/constructor_workflow.js",
+        "start_line": 47,
+        "start_column": 3,
+        "end_line": 47,
+        "end_column": 9
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/constructor_workflow.js:1:1:51:2",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "productName",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/constructor_workflow.js",
+        "start_line": 48,
+        "start_column": 3,
+        "end_line": 48,
+        "end_column": 13
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/constructor_workflow.js:1:1:51:2",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "originalPrice",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/constructor_workflow.js",
+        "start_line": 49,
+        "start_column": 3,
+        "end_line": 49,
+        "end_column": 15
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/constructor_workflow.js:1:1:51:2",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "finalPrice",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/classes/constructor_workflow.js",
+        "start_line": 50,
+        "start_column": 3,
+        "end_line": 50,
+        "end_column": 12
+      },
+      "scope_id": "module:<fixtures>/javascript/code/classes/constructor_workflow.js:1:1:51:2",
+      "access_type": "read"
+    }
+  ]
+}

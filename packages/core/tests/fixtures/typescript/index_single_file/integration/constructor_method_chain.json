@@ -1,0 +1,1179 @@
+{
+  "file_path": "<fixtures>/typescript/code/integration/constructor_method_chain.ts",
+  "language": "typescript",
+  "root_scope_id": "module:<fixtures>/typescript/code/integration/constructor_method_chain.ts:1:1:28:45",
+  "scopes": {
+    "module:<fixtures>/typescript/code/integration/constructor_method_chain.ts:1:1:28:45": {
+      "id": "module:<fixtures>/typescript/code/integration/constructor_method_chain.ts:1:1:28:45",
+      "parent_id": null,
+      "name": null,
+      "type": "module",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/constructor_method_chain.ts",
+        "start_line": 1,
+        "start_column": 1,
+        "end_line": 28,
+        "end_column": 45
+      },
+      "child_ids": [
+        "class:<fixtures>/typescript/code/integration/constructor_method_chain.ts:6:12:19:1"
+      ]
+    },
+    "class:<fixtures>/typescript/code/integration/constructor_method_chain.ts:6:12:19:1": {
+      "id": "class:<fixtures>/typescript/code/integration/constructor_method_chain.ts:6:12:19:1",
+      "parent_id": "module:<fixtures>/typescript/code/integration/constructor_method_chain.ts:1:1:28:45",
+      "name": "User",
+      "type": "class",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/constructor_method_chain.ts",
+        "start_line": 6,
+        "start_column": 12,
+        "end_line": 19,
+        "end_column": 1
+      },
+      "child_ids": [
+        "method:<fixtures>/typescript/code/integration/constructor_method_chain.ts:7:14:10:6",
+        "method:<fixtures>/typescript/code/integration/constructor_method_chain.ts:12:11:14:3",
+        "method:<fixtures>/typescript/code/integration/constructor_method_chain.ts:16:12:18:3"
+      ]
+    },
+    "method:<fixtures>/typescript/code/integration/constructor_method_chain.ts:7:14:10:6": {
+      "id": "method:<fixtures>/typescript/code/integration/constructor_method_chain.ts:7:14:10:6",
+      "parent_id": "class:<fixtures>/typescript/code/integration/constructor_method_chain.ts:6:12:19:1",
+      "name": "constructor",
+      "type": "method",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/constructor_method_chain.ts",
+        "start_line": 7,
+        "start_column": 14,
+        "end_line": 10,
+        "end_column": 6
+      },
+      "child_ids": [
+        "constructor:<fixtures>/typescript/code/integration/constructor_method_chain.ts:7:14:10:6"
+      ]
+    },
+    "constructor:<fixtures>/typescript/code/integration/constructor_method_chain.ts:7:14:10:6": {
+      "id": "constructor:<fixtures>/typescript/code/integration/constructor_method_chain.ts:7:14:10:6",
+      "parent_id": "method:<fixtures>/typescript/code/integration/constructor_method_chain.ts:7:14:10:6",
+      "name": "constructor",
+      "type": "constructor",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/constructor_method_chain.ts",
+        "start_line": 7,
+        "start_column": 14,
+        "end_line": 10,
+        "end_column": 6
+      },
+      "child_ids": []
+    },
+    "method:<fixtures>/typescript/code/integration/constructor_method_chain.ts:12:11:14:3": {
+      "id": "method:<fixtures>/typescript/code/integration/constructor_method_chain.ts:12:11:14:3",
+      "parent_id": "class:<fixtures>/typescript/code/integration/constructor_method_chain.ts:6:12:19:1",
+      "name": "get_name",
+      "type": "method",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/constructor_method_chain.ts",
+        "start_line": 12,
+        "start_column": 11,
+        "end_line": 14,
+        "end_column": 3
+      },
+      "child_ids": []
+    },
+    "method:<fixtures>/typescript/code/integration/constructor_method_chain.ts:16:12:18:3": {
+      "id": "method:<fixtures>/typescript/code/integration/constructor_method_chain.ts:16:12:18:3",
+      "parent_id": "class:<fixtures>/typescript/code/integration/constructor_method_chain.ts:6:12:19:1",
+      "name": "get_email",
+      "type": "method",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/constructor_method_chain.ts",
+        "start_line": 16,
+        "start_column": 12,
+        "end_line": 18,
+        "end_column": 3
+      },
+      "child_ids": []
+    }
+  },
+  "functions": {},
+  "classes": {
+    "class:<fixtures>/typescript/code/integration/constructor_method_chain.ts:6:7:6:10:User": {
+      "kind": "class",
+      "symbol_id": "class:<fixtures>/typescript/code/integration/constructor_method_chain.ts:6:7:6:10:User",
+      "name": "User",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/constructor_method_chain.ts",
+        "start_line": 6,
+        "start_column": 7,
+        "end_line": 6,
+        "end_column": 10
+      },
+      "defining_scope_id": "module:<fixtures>/typescript/code/integration/constructor_method_chain.ts:1:1:28:45",
+      "generics": [],
+      "extends": [],
+      "is_exported": true,
+      "export": {
+        "is_reexport": false
+      },
+      "methods": [
+        {
+          "kind": "method",
+          "defining_scope_id": "class:<fixtures>/typescript/code/integration/constructor_method_chain.ts:6:12:19:1",
+          "symbol_id": "method:<fixtures>/typescript/code/integration/constructor_method_chain.ts:12:3:12:10:get_name",
+          "name": "get_name",
+          "location": {
+            "file_path": "<fixtures>/typescript/code/integration/constructor_method_chain.ts",
+            "start_line": 12,
+            "start_column": 3,
+            "end_line": 12,
+            "end_column": 10
+          },
+          "abstract": false,
+          "static": false,
+          "async": false,
+          "return_type": "string",
+          "generics": [],
+          "parameters": [],
+          "body_scope_id": "method:<fixtures>/typescript/code/integration/constructor_method_chain.ts:12:11:14:3"
+        },
+        {
+          "kind": "method",
+          "defining_scope_id": "class:<fixtures>/typescript/code/integration/constructor_method_chain.ts:6:12:19:1",
+          "symbol_id": "method:<fixtures>/typescript/code/integration/constructor_method_chain.ts:16:3:16:11:get_email",
+          "name": "get_email",
+          "location": {
+            "file_path": "<fixtures>/typescript/code/integration/constructor_method_chain.ts",
+            "start_line": 16,
+            "start_column": 3,
+            "end_line": 16,
+            "end_column": 11
+          },
+          "abstract": false,
+          "static": false,
+          "async": false,
+          "return_type": "string",
+          "generics": [],
+          "parameters": [],
+          "body_scope_id": "method:<fixtures>/typescript/code/integration/constructor_method_chain.ts:16:12:18:3"
+        }
+      ],
+      "properties": [
+        {
+          "kind": "property",
+          "defining_scope_id": "constructor:<fixtures>/typescript/code/integration/constructor_method_chain.ts:7:14:10:6",
+          "symbol_id": "property:<fixtures>/typescript/code/integration/constructor_method_chain.ts:8:12:8:15:name",
+          "name": "name",
+          "location": {
+            "file_path": "<fixtures>/typescript/code/integration/constructor_method_chain.ts",
+            "start_line": 8,
+            "start_column": 12,
+            "end_line": 8,
+            "end_column": 15
+          },
+          "access_modifier": "public",
+          "static": false,
+          "readonly": false,
+          "abstract": false,
+          "type": "string",
+          "decorators": []
+        },
+        {
+          "kind": "property",
+          "defining_scope_id": "constructor:<fixtures>/typescript/code/integration/constructor_method_chain.ts:7:14:10:6",
+          "symbol_id": "property:<fixtures>/typescript/code/integration/constructor_method_chain.ts:9:12:9:16:email",
+          "name": "email",
+          "location": {
+            "file_path": "<fixtures>/typescript/code/integration/constructor_method_chain.ts",
+            "start_line": 9,
+            "start_column": 12,
+            "end_line": 9,
+            "end_column": 16
+          },
+          "access_modifier": "public",
+          "static": false,
+          "readonly": false,
+          "abstract": false,
+          "type": "string",
+          "decorators": []
+        }
+      ],
+      "constructors": [
+        {
+          "kind": "constructor",
+          "defining_scope_id": "class:<fixtures>/typescript/code/integration/constructor_method_chain.ts:6:12:19:1",
+          "symbol_id": "method:<fixtures>/typescript/code/integration/constructor_method_chain.ts:7:3:7:13:constructor",
+          "name": "constructor",
+          "location": {
+            "file_path": "<fixtures>/typescript/code/integration/constructor_method_chain.ts",
+            "start_line": 7,
+            "start_column": 3,
+            "end_line": 7,
+            "end_column": 13
+          },
+          "parameters": [
+            {
+              "kind": "parameter",
+              "defining_scope_id": "constructor:<fixtures>/typescript/code/integration/constructor_method_chain.ts:7:14:10:6",
+              "symbol_id": "parameter:<fixtures>/typescript/code/integration/constructor_method_chain.ts:8:12:8:15:name",
+              "name": "name",
+              "location": {
+                "file_path": "<fixtures>/typescript/code/integration/constructor_method_chain.ts",
+                "start_line": 8,
+                "start_column": 12,
+                "end_line": 8,
+                "end_column": 15
+              },
+              "type": "string",
+              "optional": false
+            },
+            {
+              "kind": "parameter",
+              "defining_scope_id": "constructor:<fixtures>/typescript/code/integration/constructor_method_chain.ts:7:14:10:6",
+              "symbol_id": "parameter:<fixtures>/typescript/code/integration/constructor_method_chain.ts:9:12:9:16:email",
+              "name": "email",
+              "location": {
+                "file_path": "<fixtures>/typescript/code/integration/constructor_method_chain.ts",
+                "start_line": 9,
+                "start_column": 12,
+                "end_line": 9,
+                "end_column": 16
+              },
+              "type": "string",
+              "optional": false
+            }
+          ],
+          "body_scope_id": "method:<fixtures>/typescript/code/integration/constructor_method_chain.ts:7:14:10:6"
+        }
+      ],
+      "decorators": []
+    }
+  },
+  "variables": {
+    "variable:<fixtures>/typescript/code/integration/constructor_method_chain.ts:22:7:22:10:user": {
+      "kind": "constant",
+      "symbol_id": "variable:<fixtures>/typescript/code/integration/constructor_method_chain.ts:22:7:22:10:user",
+      "name": "user",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/constructor_method_chain.ts",
+        "start_line": 22,
+        "start_column": 7,
+        "end_line": 22,
+        "end_column": 10
+      },
+      "defining_scope_id": "module:<fixtures>/typescript/code/integration/constructor_method_chain.ts:1:1:28:45",
+      "is_exported": true,
+      "initial_value": "new User(\"Alice\", \"alice@example.com\")"
+    },
+    "variable:<fixtures>/typescript/code/integration/constructor_method_chain.ts:25:7:25:15:user_name": {
+      "kind": "constant",
+      "symbol_id": "variable:<fixtures>/typescript/code/integration/constructor_method_chain.ts:25:7:25:15:user_name",
+      "name": "user_name",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/constructor_method_chain.ts",
+        "start_line": 25,
+        "start_column": 7,
+        "end_line": 25,
+        "end_column": 15
+      },
+      "defining_scope_id": "module:<fixtures>/typescript/code/integration/constructor_method_chain.ts:1:1:28:45",
+      "is_exported": true,
+      "initial_value": "user.get_name()",
+      "collection_source": "user"
+    },
+    "variable:<fixtures>/typescript/code/integration/constructor_method_chain.ts:26:7:26:16:user_email": {
+      "kind": "constant",
+      "symbol_id": "variable:<fixtures>/typescript/code/integration/constructor_method_chain.ts:26:7:26:16:user_email",
+      "name": "user_email",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/constructor_method_chain.ts",
+        "start_line": 26,
+        "start_column": 7,
+        "end_line": 26,
+        "end_column": 16
+      },
+      "defining_scope_id": "module:<fixtures>/typescript/code/integration/constructor_method_chain.ts:1:1:28:45",
+      "is_exported": true,
+      "initial_value": "user.get_email()",
+      "collection_source": "user"
+    }
+  },
+  "interfaces": {},
+  "enums": {},
+  "namespaces": {},
+  "types": {},
+  "imported_symbols": {},
+  "references": [
+    {
+      "kind": "type_reference",
+      "name": "User",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/constructor_method_chain.ts",
+        "start_line": 6,
+        "start_column": 7,
+        "end_line": 6,
+        "end_column": 10
+      },
+      "scope_id": "module:<fixtures>/typescript/code/integration/constructor_method_chain.ts:1:1:28:45",
+      "type_context": "annotation",
+      "type_info": {
+        "type_id": "type:<fixtures>/typescript/code/integration/constructor_method_chain.ts:6:7:6:10:User",
+        "type_name": "User",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "name",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/constructor_method_chain.ts",
+        "start_line": 8,
+        "start_column": 12,
+        "end_line": 8,
+        "end_column": 15
+      },
+      "scope_id": "constructor:<fixtures>/typescript/code/integration/constructor_method_chain.ts:7:14:10:6",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "email",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/constructor_method_chain.ts",
+        "start_line": 9,
+        "start_column": 12,
+        "end_line": 9,
+        "end_column": 16
+      },
+      "scope_id": "constructor:<fixtures>/typescript/code/integration/constructor_method_chain.ts:7:14:10:6",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "return this.name;",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/constructor_method_chain.ts",
+        "start_line": 13,
+        "start_column": 5,
+        "end_line": 13,
+        "end_column": 21
+      },
+      "scope_id": "method:<fixtures>/typescript/code/integration/constructor_method_chain.ts:12:11:14:3",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "this.name",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/constructor_method_chain.ts",
+        "start_line": 13,
+        "start_column": 12,
+        "end_line": 13,
+        "end_column": 20
+      },
+      "scope_id": "method:<fixtures>/typescript/code/integration/constructor_method_chain.ts:12:11:14:3",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "this",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/constructor_method_chain.ts",
+        "start_line": 13,
+        "start_column": 12,
+        "end_line": 13,
+        "end_column": 15
+      },
+      "scope_id": "method:<fixtures>/typescript/code/integration/constructor_method_chain.ts:12:11:14:3",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "return this.email;",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/constructor_method_chain.ts",
+        "start_line": 17,
+        "start_column": 5,
+        "end_line": 17,
+        "end_column": 22
+      },
+      "scope_id": "method:<fixtures>/typescript/code/integration/constructor_method_chain.ts:16:12:18:3",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "this.email",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/constructor_method_chain.ts",
+        "start_line": 17,
+        "start_column": 12,
+        "end_line": 17,
+        "end_column": 21
+      },
+      "scope_id": "method:<fixtures>/typescript/code/integration/constructor_method_chain.ts:16:12:18:3",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "this",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/constructor_method_chain.ts",
+        "start_line": 17,
+        "start_column": 12,
+        "end_line": 17,
+        "end_column": 15
+      },
+      "scope_id": "method:<fixtures>/typescript/code/integration/constructor_method_chain.ts:16:12:18:3",
+      "access_type": "read"
+    },
+    {
+      "kind": "assignment",
+      "name": "user = new User(\"Alice\", \"alice@example.com\")",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/constructor_method_chain.ts",
+        "start_line": 22,
+        "start_column": 7,
+        "end_line": 22,
+        "end_column": 51
+      },
+      "scope_id": "module:<fixtures>/typescript/code/integration/constructor_method_chain.ts:1:1:28:45",
+      "target_location": {
+        "file_path": "<fixtures>/typescript/code/integration/constructor_method_chain.ts",
+        "start_line": 22,
+        "start_column": 7,
+        "end_line": 22,
+        "end_column": 51
+      }
+    },
+    {
+      "kind": "assignment",
+      "name": "user",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/constructor_method_chain.ts",
+        "start_line": 22,
+        "start_column": 7,
+        "end_line": 22,
+        "end_column": 10
+      },
+      "scope_id": "module:<fixtures>/typescript/code/integration/constructor_method_chain.ts:1:1:28:45",
+      "target_location": {
+        "file_path": "<fixtures>/typescript/code/integration/constructor_method_chain.ts",
+        "start_line": 22,
+        "start_column": 7,
+        "end_line": 22,
+        "end_column": 10
+      }
+    },
+    {
+      "kind": "assignment",
+      "name": "user = new User(\"Alice\", \"alice@example.com\")",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/constructor_method_chain.ts",
+        "start_line": 22,
+        "start_column": 7,
+        "end_line": 22,
+        "end_column": 51
+      },
+      "scope_id": "module:<fixtures>/typescript/code/integration/constructor_method_chain.ts:1:1:28:45",
+      "target_location": {
+        "file_path": "<fixtures>/typescript/code/integration/constructor_method_chain.ts",
+        "start_line": 22,
+        "start_column": 7,
+        "end_line": 22,
+        "end_column": 51
+      }
+    },
+    {
+      "kind": "assignment",
+      "name": "user",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/constructor_method_chain.ts",
+        "start_line": 22,
+        "start_column": 7,
+        "end_line": 22,
+        "end_column": 10
+      },
+      "scope_id": "module:<fixtures>/typescript/code/integration/constructor_method_chain.ts:1:1:28:45",
+      "target_location": {
+        "file_path": "<fixtures>/typescript/code/integration/constructor_method_chain.ts",
+        "start_line": 22,
+        "start_column": 7,
+        "end_line": 22,
+        "end_column": 10
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "user",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/constructor_method_chain.ts",
+        "start_line": 22,
+        "start_column": 7,
+        "end_line": 22,
+        "end_column": 10
+      },
+      "scope_id": "module:<fixtures>/typescript/code/integration/constructor_method_chain.ts:1:1:28:45",
+      "access_type": "read"
+    },
+    {
+      "kind": "assignment",
+      "name": "User",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/constructor_method_chain.ts",
+        "start_line": 22,
+        "start_column": 14,
+        "end_line": 22,
+        "end_column": 51
+      },
+      "scope_id": "module:<fixtures>/typescript/code/integration/constructor_method_chain.ts:1:1:28:45",
+      "target_location": {
+        "file_path": "<fixtures>/typescript/code/integration/constructor_method_chain.ts",
+        "start_line": 22,
+        "start_column": 7,
+        "end_line": 22,
+        "end_column": 10
+      }
+    },
+    {
+      "kind": "function_call",
+      "name": "User",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/constructor_method_chain.ts",
+        "start_line": 22,
+        "start_column": 14,
+        "end_line": 22,
+        "end_column": 51
+      },
+      "scope_id": "module:<fixtures>/typescript/code/integration/constructor_method_chain.ts:1:1:28:45",
+      "potential_construct_target": {
+        "file_path": "<fixtures>/typescript/code/integration/constructor_method_chain.ts",
+        "start_line": 22,
+        "start_column": 7,
+        "end_line": 22,
+        "end_column": 10
+      }
+    },
+    {
+      "kind": "assignment",
+      "name": "User",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/constructor_method_chain.ts",
+        "start_line": 22,
+        "start_column": 18,
+        "end_line": 22,
+        "end_column": 21
+      },
+      "scope_id": "module:<fixtures>/typescript/code/integration/constructor_method_chain.ts:1:1:28:45",
+      "target_location": {
+        "file_path": "<fixtures>/typescript/code/integration/constructor_method_chain.ts",
+        "start_line": 22,
+        "start_column": 7,
+        "end_line": 22,
+        "end_column": 10
+      }
+    },
+    {
+      "kind": "constructor_call",
+      "name": "User",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/constructor_method_chain.ts",
+        "start_line": 22,
+        "start_column": 18,
+        "end_line": 22,
+        "end_column": 21
+      },
+      "scope_id": "module:<fixtures>/typescript/code/integration/constructor_method_chain.ts:1:1:28:45",
+      "construct_target": {
+        "file_path": "<fixtures>/typescript/code/integration/constructor_method_chain.ts",
+        "start_line": 22,
+        "start_column": 7,
+        "end_line": 22,
+        "end_column": 10
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "User",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/constructor_method_chain.ts",
+        "start_line": 22,
+        "start_column": 18,
+        "end_line": 22,
+        "end_column": 21
+      },
+      "scope_id": "module:<fixtures>/typescript/code/integration/constructor_method_chain.ts:1:1:28:45",
+      "access_type": "read"
+    },
+    {
+      "kind": "assignment",
+      "name": "user_name = user.get_name()",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/constructor_method_chain.ts",
+        "start_line": 25,
+        "start_column": 7,
+        "end_line": 25,
+        "end_column": 33
+      },
+      "scope_id": "module:<fixtures>/typescript/code/integration/constructor_method_chain.ts:1:1:28:45",
+      "target_location": {
+        "file_path": "<fixtures>/typescript/code/integration/constructor_method_chain.ts",
+        "start_line": 25,
+        "start_column": 7,
+        "end_line": 25,
+        "end_column": 33
+      }
+    },
+    {
+      "kind": "assignment",
+      "name": "user_name",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/constructor_method_chain.ts",
+        "start_line": 25,
+        "start_column": 7,
+        "end_line": 25,
+        "end_column": 15
+      },
+      "scope_id": "module:<fixtures>/typescript/code/integration/constructor_method_chain.ts:1:1:28:45",
+      "target_location": {
+        "file_path": "<fixtures>/typescript/code/integration/constructor_method_chain.ts",
+        "start_line": 25,
+        "start_column": 7,
+        "end_line": 25,
+        "end_column": 15
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "user_name",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/constructor_method_chain.ts",
+        "start_line": 25,
+        "start_column": 7,
+        "end_line": 25,
+        "end_column": 15
+      },
+      "scope_id": "module:<fixtures>/typescript/code/integration/constructor_method_chain.ts:1:1:28:45",
+      "access_type": "read"
+    },
+    {
+      "kind": "assignment",
+      "name": "user.get_name()",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/constructor_method_chain.ts",
+        "start_line": 25,
+        "start_column": 19,
+        "end_line": 25,
+        "end_column": 33
+      },
+      "scope_id": "module:<fixtures>/typescript/code/integration/constructor_method_chain.ts:1:1:28:45",
+      "target_location": {
+        "file_path": "<fixtures>/typescript/code/integration/constructor_method_chain.ts",
+        "start_line": 25,
+        "start_column": 7,
+        "end_line": 25,
+        "end_column": 15
+      }
+    },
+    {
+      "kind": "method_call",
+      "name": "get_name",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/constructor_method_chain.ts",
+        "start_line": 25,
+        "start_column": 19,
+        "end_line": 25,
+        "end_column": 33
+      },
+      "scope_id": "module:<fixtures>/typescript/code/integration/constructor_method_chain.ts:1:1:28:45",
+      "receiver_location": {
+        "file_path": "<fixtures>/typescript/code/integration/constructor_method_chain.ts",
+        "start_line": 25,
+        "start_column": 19,
+        "end_line": 25,
+        "end_column": 22
+      },
+      "property_chain": [
+        "user",
+        "get_name"
+      ],
+      "optional_chaining": false
+    },
+    {
+      "kind": "variable_reference",
+      "name": "user",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/constructor_method_chain.ts",
+        "start_line": 25,
+        "start_column": 19,
+        "end_line": 25,
+        "end_column": 22
+      },
+      "scope_id": "module:<fixtures>/typescript/code/integration/constructor_method_chain.ts:1:1:28:45",
+      "access_type": "read"
+    },
+    {
+      "kind": "property_access",
+      "name": "get_name",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/constructor_method_chain.ts",
+        "start_line": 25,
+        "start_column": 19,
+        "end_line": 25,
+        "end_column": 31
+      },
+      "scope_id": "module:<fixtures>/typescript/code/integration/constructor_method_chain.ts:1:1:28:45",
+      "receiver_location": {
+        "file_path": "<fixtures>/typescript/code/integration/constructor_method_chain.ts",
+        "start_line": 25,
+        "start_column": 19,
+        "end_line": 25,
+        "end_column": 22
+      },
+      "property_chain": [
+        "user",
+        "get_name"
+      ],
+      "access_type": "property",
+      "is_optional_chain": false
+    },
+    {
+      "kind": "variable_reference",
+      "name": "user",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/constructor_method_chain.ts",
+        "start_line": 25,
+        "start_column": 19,
+        "end_line": 25,
+        "end_column": 22
+      },
+      "scope_id": "module:<fixtures>/typescript/code/integration/constructor_method_chain.ts:1:1:28:45",
+      "access_type": "read"
+    },
+    {
+      "kind": "property_access",
+      "name": "get_name",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/constructor_method_chain.ts",
+        "start_line": 25,
+        "start_column": 19,
+        "end_line": 25,
+        "end_column": 31
+      },
+      "scope_id": "module:<fixtures>/typescript/code/integration/constructor_method_chain.ts:1:1:28:45",
+      "receiver_location": {
+        "file_path": "<fixtures>/typescript/code/integration/constructor_method_chain.ts",
+        "start_line": 25,
+        "start_column": 19,
+        "end_line": 25,
+        "end_column": 22
+      },
+      "property_chain": [
+        "user",
+        "get_name"
+      ],
+      "access_type": "property",
+      "is_optional_chain": false
+    },
+    {
+      "kind": "variable_reference",
+      "name": "user",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/constructor_method_chain.ts",
+        "start_line": 25,
+        "start_column": 19,
+        "end_line": 25,
+        "end_column": 22
+      },
+      "scope_id": "module:<fixtures>/typescript/code/integration/constructor_method_chain.ts:1:1:28:45",
+      "access_type": "read"
+    },
+    {
+      "kind": "method_call",
+      "name": "get_name",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/constructor_method_chain.ts",
+        "start_line": 25,
+        "start_column": 19,
+        "end_line": 25,
+        "end_column": 33
+      },
+      "scope_id": "module:<fixtures>/typescript/code/integration/constructor_method_chain.ts:1:1:28:45",
+      "receiver_location": {
+        "file_path": "<fixtures>/typescript/code/integration/constructor_method_chain.ts",
+        "start_line": 25,
+        "start_column": 19,
+        "end_line": 25,
+        "end_column": 22
+      },
+      "property_chain": [
+        "user",
+        "get_name"
+      ],
+      "optional_chaining": false
+    },
+    {
+      "kind": "variable_reference",
+      "name": "user",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/constructor_method_chain.ts",
+        "start_line": 25,
+        "start_column": 19,
+        "end_line": 25,
+        "end_column": 22
+      },
+      "scope_id": "module:<fixtures>/typescript/code/integration/constructor_method_chain.ts:1:1:28:45",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "user",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/constructor_method_chain.ts",
+        "start_line": 25,
+        "start_column": 19,
+        "end_line": 25,
+        "end_column": 22
+      },
+      "scope_id": "module:<fixtures>/typescript/code/integration/constructor_method_chain.ts:1:1:28:45",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "get_name",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/constructor_method_chain.ts",
+        "start_line": 25,
+        "start_column": 24,
+        "end_line": 25,
+        "end_column": 31
+      },
+      "scope_id": "module:<fixtures>/typescript/code/integration/constructor_method_chain.ts:1:1:28:45",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "get_name",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/constructor_method_chain.ts",
+        "start_line": 25,
+        "start_column": 24,
+        "end_line": 25,
+        "end_column": 31
+      },
+      "scope_id": "module:<fixtures>/typescript/code/integration/constructor_method_chain.ts:1:1:28:45",
+      "access_type": "read"
+    },
+    {
+      "kind": "assignment",
+      "name": "user_email = user.get_email()",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/constructor_method_chain.ts",
+        "start_line": 26,
+        "start_column": 7,
+        "end_line": 26,
+        "end_column": 35
+      },
+      "scope_id": "module:<fixtures>/typescript/code/integration/constructor_method_chain.ts:1:1:28:45",
+      "target_location": {
+        "file_path": "<fixtures>/typescript/code/integration/constructor_method_chain.ts",
+        "start_line": 26,
+        "start_column": 7,
+        "end_line": 26,
+        "end_column": 35
+      }
+    },
+    {
+      "kind": "assignment",
+      "name": "user_email",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/constructor_method_chain.ts",
+        "start_line": 26,
+        "start_column": 7,
+        "end_line": 26,
+        "end_column": 16
+      },
+      "scope_id": "module:<fixtures>/typescript/code/integration/constructor_method_chain.ts:1:1:28:45",
+      "target_location": {
+        "file_path": "<fixtures>/typescript/code/integration/constructor_method_chain.ts",
+        "start_line": 26,
+        "start_column": 7,
+        "end_line": 26,
+        "end_column": 16
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "user_email",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/constructor_method_chain.ts",
+        "start_line": 26,
+        "start_column": 7,
+        "end_line": 26,
+        "end_column": 16
+      },
+      "scope_id": "module:<fixtures>/typescript/code/integration/constructor_method_chain.ts:1:1:28:45",
+      "access_type": "read"
+    },
+    {
+      "kind": "assignment",
+      "name": "user.get_email()",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/constructor_method_chain.ts",
+        "start_line": 26,
+        "start_column": 20,
+        "end_line": 26,
+        "end_column": 35
+      },
+      "scope_id": "module:<fixtures>/typescript/code/integration/constructor_method_chain.ts:1:1:28:45",
+      "target_location": {
+        "file_path": "<fixtures>/typescript/code/integration/constructor_method_chain.ts",
+        "start_line": 26,
+        "start_column": 7,
+        "end_line": 26,
+        "end_column": 16
+      }
+    },
+    {
+      "kind": "method_call",
+      "name": "get_email",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/constructor_method_chain.ts",
+        "start_line": 26,
+        "start_column": 20,
+        "end_line": 26,
+        "end_column": 35
+      },
+      "scope_id": "module:<fixtures>/typescript/code/integration/constructor_method_chain.ts:1:1:28:45",
+      "receiver_location": {
+        "file_path": "<fixtures>/typescript/code/integration/constructor_method_chain.ts",
+        "start_line": 26,
+        "start_column": 20,
+        "end_line": 26,
+        "end_column": 23
+      },
+      "property_chain": [
+        "user",
+        "get_email"
+      ],
+      "optional_chaining": false
+    },
+    {
+      "kind": "variable_reference",
+      "name": "user",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/constructor_method_chain.ts",
+        "start_line": 26,
+        "start_column": 20,
+        "end_line": 26,
+        "end_column": 23
+      },
+      "scope_id": "module:<fixtures>/typescript/code/integration/constructor_method_chain.ts:1:1:28:45",
+      "access_type": "read"
+    },
+    {
+      "kind": "property_access",
+      "name": "get_email",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/constructor_method_chain.ts",
+        "start_line": 26,
+        "start_column": 20,
+        "end_line": 26,
+        "end_column": 33
+      },
+      "scope_id": "module:<fixtures>/typescript/code/integration/constructor_method_chain.ts:1:1:28:45",
+      "receiver_location": {
+        "file_path": "<fixtures>/typescript/code/integration/constructor_method_chain.ts",
+        "start_line": 26,
+        "start_column": 20,
+        "end_line": 26,
+        "end_column": 23
+      },
+      "property_chain": [
+        "user",
+        "get_email"
+      ],
+      "access_type": "property",
+      "is_optional_chain": false
+    },
+    {
+      "kind": "variable_reference",
+      "name": "user",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/constructor_method_chain.ts",
+        "start_line": 26,
+        "start_column": 20,
+        "end_line": 26,
+        "end_column": 23
+      },
+      "scope_id": "module:<fixtures>/typescript/code/integration/constructor_method_chain.ts:1:1:28:45",
+      "access_type": "read"
+    },
+    {
+      "kind": "property_access",
+      "name": "get_email",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/constructor_method_chain.ts",
+        "start_line": 26,
+        "start_column": 20,
+        "end_line": 26,
+        "end_column": 33
+      },
+      "scope_id": "module:<fixtures>/typescript/code/integration/constructor_method_chain.ts:1:1:28:45",
+      "receiver_location": {
+        "file_path": "<fixtures>/typescript/code/integration/constructor_method_chain.ts",
+        "start_line": 26,
+        "start_column": 20,
+        "end_line": 26,
+        "end_column": 23
+      },
+      "property_chain": [
+        "user",
+        "get_email"
+      ],
+      "access_type": "property",
+      "is_optional_chain": false
+    },
+    {
+      "kind": "variable_reference",
+      "name": "user",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/constructor_method_chain.ts",
+        "start_line": 26,
+        "start_column": 20,
+        "end_line": 26,
+        "end_column": 23
+      },
+      "scope_id": "module:<fixtures>/typescript/code/integration/constructor_method_chain.ts:1:1:28:45",
+      "access_type": "read"
+    },
+    {
+      "kind": "method_call",
+      "name": "get_email",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/constructor_method_chain.ts",
+        "start_line": 26,
+        "start_column": 20,
+        "end_line": 26,
+        "end_column": 35
+      },
+      "scope_id": "module:<fixtures>/typescript/code/integration/constructor_method_chain.ts:1:1:28:45",
+      "receiver_location": {
+        "file_path": "<fixtures>/typescript/code/integration/constructor_method_chain.ts",
+        "start_line": 26,
+        "start_column": 20,
+        "end_line": 26,
+        "end_column": 23
+      },
+      "property_chain": [
+        "user",
+        "get_email"
+      ],
+      "optional_chaining": false
+    },
+    {
+      "kind": "variable_reference",
+      "name": "user",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/constructor_method_chain.ts",
+        "start_line": 26,
+        "start_column": 20,
+        "end_line": 26,
+        "end_column": 23
+      },
+      "scope_id": "module:<fixtures>/typescript/code/integration/constructor_method_chain.ts:1:1:28:45",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "user",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/constructor_method_chain.ts",
+        "start_line": 26,
+        "start_column": 20,
+        "end_line": 26,
+        "end_column": 23
+      },
+      "scope_id": "module:<fixtures>/typescript/code/integration/constructor_method_chain.ts:1:1:28:45",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "get_email",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/constructor_method_chain.ts",
+        "start_line": 26,
+        "start_column": 25,
+        "end_line": 26,
+        "end_column": 33
+      },
+      "scope_id": "module:<fixtures>/typescript/code/integration/constructor_method_chain.ts:1:1:28:45",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "get_email",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/constructor_method_chain.ts",
+        "start_line": 26,
+        "start_column": 25,
+        "end_line": 26,
+        "end_column": 33
+      },
+      "scope_id": "module:<fixtures>/typescript/code/integration/constructor_method_chain.ts:1:1:28:45",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "User",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/constructor_method_chain.ts",
+        "start_line": 28,
+        "start_column": 10,
+        "end_line": 28,
+        "end_column": 13
+      },
+      "scope_id": "module:<fixtures>/typescript/code/integration/constructor_method_chain.ts:1:1:28:45",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "user",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/constructor_method_chain.ts",
+        "start_line": 28,
+        "start_column": 16,
+        "end_line": 28,
+        "end_column": 19
+      },
+      "scope_id": "module:<fixtures>/typescript/code/integration/constructor_method_chain.ts:1:1:28:45",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "user_name",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/constructor_method_chain.ts",
+        "start_line": 28,
+        "start_column": 22,
+        "end_line": 28,
+        "end_column": 30
+      },
+      "scope_id": "module:<fixtures>/typescript/code/integration/constructor_method_chain.ts:1:1:28:45",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "user_email",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/constructor_method_chain.ts",
+        "start_line": 28,
+        "start_column": 33,
+        "end_line": 28,
+        "end_column": 42
+      },
+      "scope_id": "module:<fixtures>/typescript/code/integration/constructor_method_chain.ts:1:1:28:45",
+      "access_type": "read"
+    }
+  ]
+}

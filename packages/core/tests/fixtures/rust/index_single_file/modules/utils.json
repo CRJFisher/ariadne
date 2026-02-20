@@ -1,0 +1,681 @@
+{
+  "file_path": "<fixtures>/rust/code/modules/utils.rs",
+  "language": "rust",
+  "root_scope_id": "module:<fixtures>/rust/code/modules/utils.rs:1:1:23:1",
+  "scopes": {
+    "module:<fixtures>/rust/code/modules/utils.rs:1:1:23:1": {
+      "id": "module:<fixtures>/rust/code/modules/utils.rs:1:1:23:1",
+      "parent_id": null,
+      "name": null,
+      "type": "module",
+      "location": {
+        "file_path": "<fixtures>/rust/code/modules/utils.rs",
+        "start_line": 1,
+        "start_column": 1,
+        "end_line": 23,
+        "end_column": 1
+      },
+      "child_ids": [
+        "function:<fixtures>/rust/code/modules/utils.rs:4:14:6:1",
+        "function:<fixtures>/rust/code/modules/utils.rs:8:20:10:1",
+        "function:<fixtures>/rust/code/modules/utils.rs:12:23:14:1",
+        "function:<fixtures>/rust/code/modules/utils.rs:16:22:18:1",
+        "function:<fixtures>/rust/code/modules/utils.rs:21:19:23:1"
+      ]
+    },
+    "function:<fixtures>/rust/code/modules/utils.rs:4:14:6:1": {
+      "id": "function:<fixtures>/rust/code/modules/utils.rs:4:14:6:1",
+      "parent_id": "module:<fixtures>/rust/code/modules/utils.rs:1:1:23:1",
+      "name": "helper",
+      "type": "function",
+      "location": {
+        "file_path": "<fixtures>/rust/code/modules/utils.rs",
+        "start_line": 4,
+        "start_column": 14,
+        "end_line": 6,
+        "end_column": 1
+      },
+      "child_ids": []
+    },
+    "function:<fixtures>/rust/code/modules/utils.rs:8:20:10:1": {
+      "id": "function:<fixtures>/rust/code/modules/utils.rs:8:20:10:1",
+      "parent_id": "module:<fixtures>/rust/code/modules/utils.rs:1:1:23:1",
+      "name": "process_data",
+      "type": "function",
+      "location": {
+        "file_path": "<fixtures>/rust/code/modules/utils.rs",
+        "start_line": 8,
+        "start_column": 20,
+        "end_line": 10,
+        "end_column": 1
+      },
+      "child_ids": []
+    },
+    "function:<fixtures>/rust/code/modules/utils.rs:12:23:14:1": {
+      "id": "function:<fixtures>/rust/code/modules/utils.rs:12:23:14:1",
+      "parent_id": "module:<fixtures>/rust/code/modules/utils.rs:1:1:23:1",
+      "name": "calculate_total",
+      "type": "function",
+      "location": {
+        "file_path": "<fixtures>/rust/code/modules/utils.rs",
+        "start_line": 12,
+        "start_column": 23,
+        "end_line": 14,
+        "end_column": 1
+      },
+      "child_ids": []
+    },
+    "function:<fixtures>/rust/code/modules/utils.rs:16:22:18:1": {
+      "id": "function:<fixtures>/rust/code/modules/utils.rs:16:22:18:1",
+      "parent_id": "module:<fixtures>/rust/code/modules/utils.rs:1:1:23:1",
+      "name": "validate_email",
+      "type": "function",
+      "location": {
+        "file_path": "<fixtures>/rust/code/modules/utils.rs",
+        "start_line": 16,
+        "start_column": 22,
+        "end_line": 18,
+        "end_column": 1
+      },
+      "child_ids": []
+    },
+    "function:<fixtures>/rust/code/modules/utils.rs:21:19:23:1": {
+      "id": "function:<fixtures>/rust/code/modules/utils.rs:21:19:23:1",
+      "parent_id": "module:<fixtures>/rust/code/modules/utils.rs:1:1:23:1",
+      "name": "internal_helper",
+      "type": "function",
+      "location": {
+        "file_path": "<fixtures>/rust/code/modules/utils.rs",
+        "start_line": 21,
+        "start_column": 19,
+        "end_line": 23,
+        "end_column": 1
+      },
+      "child_ids": []
+    }
+  },
+  "functions": {
+    "function:<fixtures>/rust/code/modules/utils.rs:4:1:6:1:helper": {
+      "kind": "function",
+      "symbol_id": "function:<fixtures>/rust/code/modules/utils.rs:4:1:6:1:helper",
+      "name": "helper",
+      "location": {
+        "file_path": "<fixtures>/rust/code/modules/utils.rs",
+        "start_line": 4,
+        "start_column": 8,
+        "end_line": 4,
+        "end_column": 13
+      },
+      "defining_scope_id": "module:<fixtures>/rust/code/modules/utils.rs:1:1:23:1",
+      "is_exported": true,
+      "signature": {
+        "parameters": [],
+        "return_type": "&'static str"
+      },
+      "return_type": "&'static str",
+      "body_scope_id": "function:<fixtures>/rust/code/modules/utils.rs:4:14:6:1"
+    },
+    "function:<fixtures>/rust/code/modules/utils.rs:8:1:10:1:process_data": {
+      "kind": "function",
+      "symbol_id": "function:<fixtures>/rust/code/modules/utils.rs:8:1:10:1:process_data",
+      "name": "process_data",
+      "location": {
+        "file_path": "<fixtures>/rust/code/modules/utils.rs",
+        "start_line": 8,
+        "start_column": 8,
+        "end_line": 8,
+        "end_column": 19
+      },
+      "defining_scope_id": "module:<fixtures>/rust/code/modules/utils.rs:1:1:23:1",
+      "is_exported": true,
+      "signature": {
+        "parameters": [
+          {
+            "kind": "parameter",
+            "defining_scope_id": "function:<fixtures>/rust/code/modules/utils.rs:8:20:10:1",
+            "symbol_id": "parameter:<fixtures>/rust/code/modules/utils.rs:8:21:8:25:input",
+            "name": "input",
+            "location": {
+              "file_path": "<fixtures>/rust/code/modules/utils.rs",
+              "start_line": 8,
+              "start_column": 21,
+              "end_line": 8,
+              "end_column": 25
+            },
+            "type": "&str",
+            "optional": false
+          }
+        ],
+        "return_type": "String"
+      },
+      "return_type": "String",
+      "body_scope_id": "function:<fixtures>/rust/code/modules/utils.rs:8:20:10:1"
+    },
+    "function:<fixtures>/rust/code/modules/utils.rs:12:1:14:1:calculate_total": {
+      "kind": "function",
+      "symbol_id": "function:<fixtures>/rust/code/modules/utils.rs:12:1:14:1:calculate_total",
+      "name": "calculate_total",
+      "location": {
+        "file_path": "<fixtures>/rust/code/modules/utils.rs",
+        "start_line": 12,
+        "start_column": 8,
+        "end_line": 12,
+        "end_column": 22
+      },
+      "defining_scope_id": "module:<fixtures>/rust/code/modules/utils.rs:1:1:23:1",
+      "is_exported": true,
+      "signature": {
+        "parameters": [
+          {
+            "kind": "parameter",
+            "defining_scope_id": "function:<fixtures>/rust/code/modules/utils.rs:12:23:14:1",
+            "symbol_id": "parameter:<fixtures>/rust/code/modules/utils.rs:12:24:12:29:prices",
+            "name": "prices",
+            "location": {
+              "file_path": "<fixtures>/rust/code/modules/utils.rs",
+              "start_line": 12,
+              "start_column": 24,
+              "end_line": 12,
+              "end_column": 29
+            },
+            "type": "&[f64]",
+            "optional": false
+          }
+        ],
+        "return_type": "f64"
+      },
+      "return_type": "f64",
+      "body_scope_id": "function:<fixtures>/rust/code/modules/utils.rs:12:23:14:1"
+    },
+    "function:<fixtures>/rust/code/modules/utils.rs:16:1:18:1:validate_email": {
+      "kind": "function",
+      "symbol_id": "function:<fixtures>/rust/code/modules/utils.rs:16:1:18:1:validate_email",
+      "name": "validate_email",
+      "location": {
+        "file_path": "<fixtures>/rust/code/modules/utils.rs",
+        "start_line": 16,
+        "start_column": 8,
+        "end_line": 16,
+        "end_column": 21
+      },
+      "defining_scope_id": "module:<fixtures>/rust/code/modules/utils.rs:1:1:23:1",
+      "is_exported": true,
+      "signature": {
+        "parameters": [
+          {
+            "kind": "parameter",
+            "defining_scope_id": "function:<fixtures>/rust/code/modules/utils.rs:16:22:18:1",
+            "symbol_id": "parameter:<fixtures>/rust/code/modules/utils.rs:16:23:16:27:email",
+            "name": "email",
+            "location": {
+              "file_path": "<fixtures>/rust/code/modules/utils.rs",
+              "start_line": 16,
+              "start_column": 23,
+              "end_line": 16,
+              "end_column": 27
+            },
+            "type": "&str",
+            "optional": false
+          }
+        ],
+        "return_type": "bool"
+      },
+      "return_type": "bool",
+      "body_scope_id": "function:<fixtures>/rust/code/modules/utils.rs:16:22:18:1"
+    },
+    "function:<fixtures>/rust/code/modules/utils.rs:21:1:23:1:internal_helper": {
+      "kind": "function",
+      "symbol_id": "function:<fixtures>/rust/code/modules/utils.rs:21:1:23:1:internal_helper",
+      "name": "internal_helper",
+      "location": {
+        "file_path": "<fixtures>/rust/code/modules/utils.rs",
+        "start_line": 21,
+        "start_column": 4,
+        "end_line": 21,
+        "end_column": 18
+      },
+      "defining_scope_id": "module:<fixtures>/rust/code/modules/utils.rs:1:1:23:1",
+      "is_exported": false,
+      "signature": {
+        "parameters": [],
+        "return_type": "&'static str"
+      },
+      "return_type": "&'static str",
+      "body_scope_id": "function:<fixtures>/rust/code/modules/utils.rs:21:19:23:1"
+    }
+  },
+  "classes": {},
+  "variables": {},
+  "interfaces": {},
+  "enums": {},
+  "namespaces": {},
+  "types": {},
+  "imported_symbols": {},
+  "references": [
+    {
+      "kind": "variable_reference",
+      "name": "helper",
+      "location": {
+        "file_path": "<fixtures>/rust/code/modules/utils.rs",
+        "start_line": 4,
+        "start_column": 8,
+        "end_line": 4,
+        "end_column": 13
+      },
+      "scope_id": "module:<fixtures>/rust/code/modules/utils.rs:1:1:23:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "static",
+      "location": {
+        "file_path": "<fixtures>/rust/code/modules/utils.rs",
+        "start_line": 4,
+        "start_column": 22,
+        "end_line": 4,
+        "end_column": 27
+      },
+      "scope_id": "function:<fixtures>/rust/code/modules/utils.rs:4:14:6:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "process_data",
+      "location": {
+        "file_path": "<fixtures>/rust/code/modules/utils.rs",
+        "start_line": 8,
+        "start_column": 8,
+        "end_line": 8,
+        "end_column": 19
+      },
+      "scope_id": "module:<fixtures>/rust/code/modules/utils.rs:1:1:23:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "input",
+      "location": {
+        "file_path": "<fixtures>/rust/code/modules/utils.rs",
+        "start_line": 8,
+        "start_column": 21,
+        "end_line": 8,
+        "end_column": 25
+      },
+      "scope_id": "function:<fixtures>/rust/code/modules/utils.rs:8:20:10:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "type_reference",
+      "name": "String",
+      "location": {
+        "file_path": "<fixtures>/rust/code/modules/utils.rs",
+        "start_line": 8,
+        "start_column": 37,
+        "end_line": 8,
+        "end_column": 42
+      },
+      "scope_id": "function:<fixtures>/rust/code/modules/utils.rs:8:20:10:1",
+      "type_context": "annotation",
+      "type_info": {
+        "type_id": "type:<fixtures>/rust/code/modules/utils.rs:8:37:8:42:String",
+        "type_name": "String",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "kind": "method_call",
+      "name": "to_uppercase",
+      "location": {
+        "file_path": "<fixtures>/rust/code/modules/utils.rs",
+        "start_line": 9,
+        "start_column": 5,
+        "end_line": 9,
+        "end_column": 22
+      },
+      "scope_id": "function:<fixtures>/rust/code/modules/utils.rs:8:20:10:1",
+      "receiver_location": {
+        "file_path": "<fixtures>/rust/code/modules/utils.rs",
+        "start_line": 9,
+        "start_column": 5,
+        "end_line": 9,
+        "end_column": 9
+      },
+      "property_chain": [
+        "input",
+        "to_uppercase"
+      ],
+      "optional_chaining": false
+    },
+    {
+      "kind": "variable_reference",
+      "name": "input",
+      "location": {
+        "file_path": "<fixtures>/rust/code/modules/utils.rs",
+        "start_line": 9,
+        "start_column": 5,
+        "end_line": 9,
+        "end_column": 9
+      },
+      "scope_id": "function:<fixtures>/rust/code/modules/utils.rs:8:20:10:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "input",
+      "location": {
+        "file_path": "<fixtures>/rust/code/modules/utils.rs",
+        "start_line": 9,
+        "start_column": 5,
+        "end_line": 9,
+        "end_column": 9
+      },
+      "scope_id": "function:<fixtures>/rust/code/modules/utils.rs:8:20:10:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "to_uppercase",
+      "location": {
+        "file_path": "<fixtures>/rust/code/modules/utils.rs",
+        "start_line": 9,
+        "start_column": 11,
+        "end_line": 9,
+        "end_column": 22
+      },
+      "scope_id": "function:<fixtures>/rust/code/modules/utils.rs:8:20:10:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "calculate_total",
+      "location": {
+        "file_path": "<fixtures>/rust/code/modules/utils.rs",
+        "start_line": 12,
+        "start_column": 8,
+        "end_line": 12,
+        "end_column": 22
+      },
+      "scope_id": "module:<fixtures>/rust/code/modules/utils.rs:1:1:23:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "prices",
+      "location": {
+        "file_path": "<fixtures>/rust/code/modules/utils.rs",
+        "start_line": 12,
+        "start_column": 24,
+        "end_line": 12,
+        "end_column": 29
+      },
+      "scope_id": "function:<fixtures>/rust/code/modules/utils.rs:12:23:14:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "method_call",
+      "name": "sum",
+      "location": {
+        "file_path": "<fixtures>/rust/code/modules/utils.rs",
+        "start_line": 13,
+        "start_column": 5,
+        "end_line": 13,
+        "end_column": 21
+      },
+      "scope_id": "function:<fixtures>/rust/code/modules/utils.rs:12:23:14:1",
+      "receiver_location": {
+        "file_path": "<fixtures>/rust/code/modules/utils.rs",
+        "start_line": 13,
+        "start_column": 5,
+        "end_line": 13,
+        "end_column": 17
+      },
+      "property_chain": [
+        "prices.iter()",
+        "sum"
+      ],
+      "optional_chaining": false
+    },
+    {
+      "kind": "method_call",
+      "name": "iter",
+      "location": {
+        "file_path": "<fixtures>/rust/code/modules/utils.rs",
+        "start_line": 13,
+        "start_column": 5,
+        "end_line": 13,
+        "end_column": 15
+      },
+      "scope_id": "function:<fixtures>/rust/code/modules/utils.rs:12:23:14:1",
+      "receiver_location": {
+        "file_path": "<fixtures>/rust/code/modules/utils.rs",
+        "start_line": 13,
+        "start_column": 5,
+        "end_line": 13,
+        "end_column": 10
+      },
+      "property_chain": [
+        "prices",
+        "iter"
+      ],
+      "optional_chaining": false
+    },
+    {
+      "kind": "variable_reference",
+      "name": "prices",
+      "location": {
+        "file_path": "<fixtures>/rust/code/modules/utils.rs",
+        "start_line": 13,
+        "start_column": 5,
+        "end_line": 13,
+        "end_column": 10
+      },
+      "scope_id": "function:<fixtures>/rust/code/modules/utils.rs:12:23:14:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "prices",
+      "location": {
+        "file_path": "<fixtures>/rust/code/modules/utils.rs",
+        "start_line": 13,
+        "start_column": 5,
+        "end_line": 13,
+        "end_column": 10
+      },
+      "scope_id": "function:<fixtures>/rust/code/modules/utils.rs:12:23:14:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "iter",
+      "location": {
+        "file_path": "<fixtures>/rust/code/modules/utils.rs",
+        "start_line": 13,
+        "start_column": 12,
+        "end_line": 13,
+        "end_column": 15
+      },
+      "scope_id": "function:<fixtures>/rust/code/modules/utils.rs:12:23:14:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "validate_email",
+      "location": {
+        "file_path": "<fixtures>/rust/code/modules/utils.rs",
+        "start_line": 16,
+        "start_column": 8,
+        "end_line": 16,
+        "end_column": 21
+      },
+      "scope_id": "module:<fixtures>/rust/code/modules/utils.rs:1:1:23:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "email",
+      "location": {
+        "file_path": "<fixtures>/rust/code/modules/utils.rs",
+        "start_line": 16,
+        "start_column": 23,
+        "end_line": 16,
+        "end_column": 27
+      },
+      "scope_id": "function:<fixtures>/rust/code/modules/utils.rs:16:22:18:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "method_call",
+      "name": "contains",
+      "location": {
+        "file_path": "<fixtures>/rust/code/modules/utils.rs",
+        "start_line": 17,
+        "start_column": 5,
+        "end_line": 17,
+        "end_column": 18
+      },
+      "scope_id": "function:<fixtures>/rust/code/modules/utils.rs:16:22:18:1",
+      "receiver_location": {
+        "file_path": "<fixtures>/rust/code/modules/utils.rs",
+        "start_line": 17,
+        "start_column": 5,
+        "end_line": 17,
+        "end_column": 9
+      },
+      "property_chain": [
+        "email",
+        "contains"
+      ],
+      "optional_chaining": false
+    },
+    {
+      "kind": "variable_reference",
+      "name": "email",
+      "location": {
+        "file_path": "<fixtures>/rust/code/modules/utils.rs",
+        "start_line": 17,
+        "start_column": 5,
+        "end_line": 17,
+        "end_column": 9
+      },
+      "scope_id": "function:<fixtures>/rust/code/modules/utils.rs:16:22:18:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "email",
+      "location": {
+        "file_path": "<fixtures>/rust/code/modules/utils.rs",
+        "start_line": 17,
+        "start_column": 5,
+        "end_line": 17,
+        "end_column": 9
+      },
+      "scope_id": "function:<fixtures>/rust/code/modules/utils.rs:16:22:18:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "contains",
+      "location": {
+        "file_path": "<fixtures>/rust/code/modules/utils.rs",
+        "start_line": 17,
+        "start_column": 11,
+        "end_line": 17,
+        "end_column": 18
+      },
+      "scope_id": "function:<fixtures>/rust/code/modules/utils.rs:16:22:18:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "method_call",
+      "name": "contains",
+      "location": {
+        "file_path": "<fixtures>/rust/code/modules/utils.rs",
+        "start_line": 17,
+        "start_column": 28,
+        "end_line": 17,
+        "end_column": 41
+      },
+      "scope_id": "function:<fixtures>/rust/code/modules/utils.rs:16:22:18:1",
+      "receiver_location": {
+        "file_path": "<fixtures>/rust/code/modules/utils.rs",
+        "start_line": 17,
+        "start_column": 28,
+        "end_line": 17,
+        "end_column": 32
+      },
+      "property_chain": [
+        "email",
+        "contains"
+      ],
+      "optional_chaining": false
+    },
+    {
+      "kind": "variable_reference",
+      "name": "email",
+      "location": {
+        "file_path": "<fixtures>/rust/code/modules/utils.rs",
+        "start_line": 17,
+        "start_column": 28,
+        "end_line": 17,
+        "end_column": 32
+      },
+      "scope_id": "function:<fixtures>/rust/code/modules/utils.rs:16:22:18:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "email",
+      "location": {
+        "file_path": "<fixtures>/rust/code/modules/utils.rs",
+        "start_line": 17,
+        "start_column": 28,
+        "end_line": 17,
+        "end_column": 32
+      },
+      "scope_id": "function:<fixtures>/rust/code/modules/utils.rs:16:22:18:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "contains",
+      "location": {
+        "file_path": "<fixtures>/rust/code/modules/utils.rs",
+        "start_line": 17,
+        "start_column": 34,
+        "end_line": 17,
+        "end_column": 41
+      },
+      "scope_id": "function:<fixtures>/rust/code/modules/utils.rs:16:22:18:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "internal_helper",
+      "location": {
+        "file_path": "<fixtures>/rust/code/modules/utils.rs",
+        "start_line": 21,
+        "start_column": 4,
+        "end_line": 21,
+        "end_column": 18
+      },
+      "scope_id": "module:<fixtures>/rust/code/modules/utils.rs:1:1:23:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "static",
+      "location": {
+        "file_path": "<fixtures>/rust/code/modules/utils.rs",
+        "start_line": 21,
+        "start_column": 27,
+        "end_line": 21,
+        "end_column": 32
+      },
+      "scope_id": "function:<fixtures>/rust/code/modules/utils.rs:21:19:23:1",
+      "access_type": "read"
+    }
+  ]
+}

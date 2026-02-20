@@ -101,10 +101,10 @@ const references = project.find_references("src/main.ts", { row: 10, column: 15 
 
 ## Documentation
 
-- **[Core Concepts](docs/scope-mechanism.md)** - How the scope resolution works
-- **[Architecture](docs/graph-structure.md)** - Graph algorithms and data structures
+- **[Architecture](docs/Architecture.md)** - System architecture and design patterns
+- **[Core Concepts](docs/scope-mechanism.md)** - How scope resolution works
+- **[Graph Structure](docs/graph-structure.md)** - Scope graph data structures
 - **[Language Support](docs/language-configuration.md)** - Adding new languages
-- **[Call Graph API](docs/call-graph-api.md)** - Analyzing function relationships
 - **[All Documentation](docs/README.md)** - Complete documentation index
 
 ## Known Limitations

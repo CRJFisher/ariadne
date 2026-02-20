@@ -1,0 +1,6 @@
+{
+  "project_name": "ariadne",
+  "state_files": [".auto-claude/.env"],
+  "build_command": "pnpm install",
+  "worktree_dir": ".worktrees"
+}

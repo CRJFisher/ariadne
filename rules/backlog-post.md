@@ -86,7 +86,7 @@ backlog task create -p <parent-id> "Related improvement" -d "Context from parent
 Before moving to next task:
 
 - [ ] All tests passing
-- [ ] Linting/formatting clean
+- [ ] Linting/formatting clean, including on the task markdown files themselves
 - [ ] Documentation updated if needed
 - [ ] No TODO comments left uncommitted
 - [ ] Git commits made with clear messages

@@ -1,208 +1,344 @@
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
-import { CallToolRequestSchema, ListToolsRequestSchema } from "@modelcontextprotocol/sdk/types.js";
-import { Project } from "@ariadnejs/core";
-import { z } from "zod";
+import {
+  CallToolRequestSchema,
+  ListToolsRequestSchema,
+} from "@modelcontextprotocol/sdk/types.js";
 import * as path from "path";
 import * as fs from "fs/promises";
-import { getSymbolContext, getSymbolContextSchema } from "./tools/get_symbol_context";
-import { getFileMetadata, getFileMetadataSchema } from "./tools/get_file_metadata";
-import { findReferences, findReferencesSchema } from "./tools/find_references";
-import { getSourceCode, getSourceCodeSchema } from "./tools/get_source_code";
 import { VERSION } from "./version";
+import { Project } from "@ariadnejs/core";
+import { FilePath } from "@ariadnejs/types";
+import {
+  list_entrypoints,
+  list_entrypoints_schema,
+} from "./tools/list_entrypoints.js";
+import {
+  show_call_graph_neighborhood,
+  show_call_graph_neighborhood_schema,
+} from "./tools/show_call_graph_neighborhood.js";
+import { ProjectManager } from "./project_manager";
+import { find_source_files, is_supported_file } from "./file_loading";
+import { initialize_logger, log_info, log_warn } from "./logger";
+import {
+  init_analytics,
+  is_analytics_enabled,
+  record_session_client_info,
+  record_tool_call,
+} from "./analytics/analytics";
 
-export interface AriadneMCPServerOptions {
-  projectPath?: string;
-  transport?: "stdio";
+/**
+ * Options for filtered file loading
+ */
+export interface FileLoadOptions {
+  files?: string[];
+  folders?: string[];
+  project_path: string;
 }
 
-export async function startServer(options: AriadneMCPServerOptions = {}): Promise<Server> {
-  // Support PROJECT_PATH environment variable as per task 53
-  const projectPath = options.projectPath || process.env.PROJECT_PATH || process.cwd();
-  
+/**
+ * Resolve a path to absolute, relative to project_path
+ */
+function resolve_to_absolute(path_input: string, project_path: string): string {
+  if (path.isAbsolute(path_input)) {
+    return path_input;
+  }
+  return path.resolve(project_path, path_input);
+}
+
+/**
+ * Load files based on filtering options.
+ * If no files or folders specified, loads all project files.
+ */
+export async function load_filtered_project_files(
+  project: Project,
+  options: FileLoadOptions
+): Promise<void> {
+  const { files = [], folders = [], project_path } = options;
+
+  // If no filters specified, load entire project
+  if (files.length === 0 && folders.length === 0) {
+    await load_project_files(project, project_path);
+    return;
+  }
+
+  const files_to_load = new Set<string>();
+
+  // Add explicitly specified files
+  for (const file_path of files) {
+    const abs_path = resolve_to_absolute(file_path, project_path);
+    if (is_supported_file(abs_path)) {
+      files_to_load.add(abs_path);
+    }
+  }
+
+  // Expand folders to files
+  for (const folder_path of folders) {
+    const abs_folder = resolve_to_absolute(folder_path, project_path);
+    const folder_files = await find_source_files(abs_folder, project_path);
+    for (const file of folder_files) {
+      files_to_load.add(file);
+    }
+  }
+
+  // Load each file
+  log_info(`Loading ${files_to_load.size} filtered files...`);
+  const start_time = Date.now();
+
+  for (const file_path of files_to_load) {
+    try {
+      await load_file_if_needed(project, file_path);
+    } catch (error) {
+      log_warn(`Skipping file ${file_path}: ${error}`);
+    }
+  }
+
+  const duration = Date.now() - start_time;
+  log_info(`Loaded ${files_to_load.size} files in ${duration}ms`);
+}
+
+export interface AriadneMCPServerOptions {
+  project_path?: string;
+  transport?: "stdio";
+  watch?: boolean;
+}
+
+export async function start_server(
+  options: AriadneMCPServerOptions = {}
+): Promise<Server> {
+  // Initialize logger first (reads DEBUG_LOG_FILE env var)
+  initialize_logger();
+
+  // Support PROJECT_PATH environment variable
+  // Precedence: options.project_path (CLI) > PROJECT_PATH env > cwd
+  const project_path =
+    options.project_path || process.env.PROJECT_PATH || process.cwd();
+
+  // Initialize analytics if enabled (env var or global config)
+  const analytics_enabled = is_analytics_enabled();
+  if (analytics_enabled) {
+    init_analytics(project_path);
+  }
+
   // Create the MCP server
   const server = new Server(
     {
       name: "ariadne-mcp",
-      version: VERSION
+      version: VERSION,
     },
     {
       capabilities: {
-        tools: {}
-      }
+        tools: {},
+      },
     }
   );
 
-  // Initialize Ariadne project
-  const project = new Project();
+  // Capture client info once MCP initialization completes
+  if (analytics_enabled) {
+    server.oninitialized = () => {
+      const client = server.getClientVersion();
+      if (client) {
+        record_session_client_info(client.name, client.version);
+      }
+    };
+  }
 
-  // Register tools handler
+  // Initialize persistent project manager with file watching
+  const project_manager = new ProjectManager();
+  await project_manager.initialize({
+    project_path,
+    watch: options.watch ?? true, // Enable file watching by default
+  });
+
+  // Load all project files on startup
+  await project_manager.load_all_files();
+
+  log_info(
+    `Ariadne MCP server initialized for: ${project_path}` +
+      (project_manager.is_watching() ? " (watching for changes)" : "")
+  );
+
+  // Register tools
   server.setRequestHandler(ListToolsRequestSchema, async () => {
     return {
       tools: [
         {
-          name: "get_symbol_context",
-          description: "Get comprehensive information about any code symbol by name (function, class, variable, etc.)",
+          name: "list_entrypoints",
+          description:
+            "Lists all entry point functions ordered by call tree complexity. Entry points are functions never called by other functions in the analyzed scope. Shows function signatures with parameters and return types, call tree size, and a reference ID (Ref) for use with other tools. Supports filtering by specific files or folders for scoped analysis. Test functions are marked with [TEST].",
           inputSchema: {
             type: "object",
             properties: {
-              symbol: {
-                type: "string",
-                description: "Name of the symbol to look up"
+              files: {
+                type: "array",
+                items: { type: "string" },
+                description:
+                  "Specific file paths to analyze (relative or absolute)",
               },
-              searchScope: {
-                type: "string",
-                enum: ["file", "project", "dependencies"],
-                description: "Scope to search within (default: project)"
+              folders: {
+                type: "array",
+                items: { type: "string" },
+                description: "Folder paths to include recursively",
               },
-              includeTests: {
+              include_tests: {
                 type: "boolean",
-                description: "Whether to include test file references (default: false)"
-              }
+                description: "Include test functions in output (default: true)",
+              },
             },
-            required: ["symbol"]
-          }
+            required: [],
+          },
         },
         {
-          name: "get_file_metadata",
-          description: "Get all symbols defined in a file with their signatures and line numbers",
+          name: "show_call_graph_neighborhood",
+          description:
+            "Shows the call graph neighborhood around a callable. Displays callers (upstream, who calls this function) and callees (downstream, what this function calls) with configurable depth. Use the Ref output from list_entrypoints as the symbol_ref input, or construct it as file_path:line#name. Supports filtering by specific files or folders for scoped analysis.",
           inputSchema: {
             type: "object",
             properties: {
-              filePath: {
+              symbol_ref: {
                 type: "string",
-                description: "Path to the file to analyze (relative or absolute)"
-              }
-            },
-            required: ["filePath"]
-          }
-        },
-        {
-          name: "find_references",
-          description: "Find all references to a symbol by name across the codebase",
-          inputSchema: {
-            type: "object",
-            properties: {
-              symbol: {
-                type: "string",
-                description: "Name of the symbol to find references for"
+                description:
+                  "Callable reference in format 'file_path:line#name' (e.g., 'src/handlers.ts:15#handle_request')",
               },
-              includeDeclaration: {
+              callers_depth: {
+                type: ["number", "null"],
+                description:
+                  "Levels of callers to show (null = unlimited, default: 1)",
+              },
+              callees_depth: {
+                type: ["number", "null"],
+                description:
+                  "Levels of callees to show (null = unlimited, default: 1)",
+              },
+              show_full_signature: {
                 type: "boolean",
-                description: "Include the declaration itself in results (default: false)"
+                description:
+                  "Show full signature with params/return type (default: true) vs just name",
               },
-              searchScope: {
-                type: "string",
-                enum: ["file", "project"],
-                description: "Scope to search within (default: project)"
-              }
+              files: {
+                type: "array",
+                items: { type: "string" },
+                description:
+                  "Specific file paths to analyze (relative or absolute)",
+              },
+              folders: {
+                type: "array",
+                items: { type: "string" },
+                description: "Folder paths to include recursively",
+              },
             },
-            required: ["symbol"]
-          }
+            required: ["symbol_ref"],
+          },
         },
-        {
-          name: "get_source_code",
-          description: "Extract the complete source code of a function, class, or other symbol",
-          inputSchema: {
-            type: "object",
-            properties: {
-              symbol: {
-                type: "string",
-                description: "Name of the symbol to get source code for"
-              },
-              includeDocstring: {
-                type: "boolean",
-                description: "Include documentation/comments if available (default: true)"
-              }
-            },
-            required: ["symbol"]
-          }
-        }
-      ]
+      ],
     };
   });
 
   // Handle tool calls
-  server.setRequestHandler(CallToolRequestSchema, async (request) => {
-    const { name, arguments: args } = request.params;
+  server.setRequestHandler(CallToolRequestSchema, async (request, extra) => {
+    const { name } = request.params;
+    const tool_start = Date.now();
+    const tool_args = request.params.arguments ?? {};
+    const tool_use_id = (extra._meta?.["claudecode/toolUseId"] as string) ?? undefined;
 
     try {
       switch (name) {
-        case "get_symbol_context": {
-          const validatedArgs = getSymbolContextSchema.parse(args);
-          
-          // Load all files in the project if needed
-          // TODO: Implement smart file loading based on search scope
-          // For now, load all files in the project
-          await loadProjectFiles(project, projectPath);
-          
-          const result = await getSymbolContext(project, validatedArgs);
-          
+        case "list_entrypoints": {
+          // Parse arguments using schema
+          const args = list_entrypoints_schema.parse(tool_args);
+
+          const has_filters =
+            (args.files && args.files.length > 0) ||
+            (args.folders && args.folders.length > 0);
+
+          let target_project: Project;
+
+          if (has_filters) {
+            // For scoped analysis with filters, create a fresh project
+            // with only the specified files. This is semantically different
+            // from full analysis (entry points are relative to the scope).
+            const scoped_project = new Project();
+            await scoped_project.initialize(project_path as FilePath);
+            await load_filtered_project_files(scoped_project, {
+              files: args.files,
+              folders: args.folders,
+              project_path,
+            });
+            target_project = scoped_project;
+          } else {
+            // For unfiltered analysis, use the persistent project
+            // which is kept up-to-date via file watching
+            target_project = project_manager.get_project();
+          }
+
+          const result = await list_entrypoints(target_project, args);
+
+          record_tool_call({
+            tool_name: name,
+            arguments: tool_args as Record<string, unknown>,
+            duration_ms: Date.now() - tool_start,
+            success: true,
+            request_id: String(extra.requestId),
+            tool_use_id,
+          });
+
           return {
             content: [
               {
                 type: "text",
-                text: JSON.stringify(result, null, 2)
-              }
-            ]
+                text: result,
+              },
+            ],
           };
         }
 
-        case "get_file_metadata": {
-          const validatedArgs = getFileMetadataSchema.parse(args);
-          
-          // Load the specific file
-          const resolvedPath = path.isAbsolute(validatedArgs.filePath)
-            ? validatedArgs.filePath
-            : path.join(projectPath, validatedArgs.filePath);
-          
-          await loadFileIfNeeded(project, resolvedPath);
-          
-          const result = await getFileMetadata(project, validatedArgs);
-          
-          return {
-            content: [
-              {
-                type: "text",
-                text: JSON.stringify(result, null, 2)
-              }
-            ]
-          };
-        }
+        case "show_call_graph_neighborhood": {
+          const args = show_call_graph_neighborhood_schema.parse(tool_args);
 
-        case "find_references": {
-          const validatedArgs = findReferencesSchema.parse(args);
-          
-          // Load all project files for reference finding
-          await loadProjectFiles(project, projectPath);
-          
-          const result = await findReferences(project, validatedArgs);
-          
-          return {
-            content: [
-              {
-                type: "text",
-                text: JSON.stringify(result, null, 2)
-              }
-            ]
-          };
-        }
+          const has_filters =
+            (args.files && args.files.length > 0) ||
+            (args.folders && args.folders.length > 0);
 
-        case "get_source_code": {
-          const validatedArgs = getSourceCodeSchema.parse(args);
-          
-          // Load all project files to find the symbol
-          await loadProjectFiles(project, projectPath);
-          
-          const result = await getSourceCode(project, validatedArgs);
-          
+          let target_project: Project;
+
+          if (has_filters) {
+            // For scoped analysis with filters, create a fresh project
+            // with only the specified files. The neighborhood will be
+            // relative to this filtered scope.
+            const scoped_project = new Project();
+            await scoped_project.initialize(project_path as FilePath);
+            await load_filtered_project_files(scoped_project, {
+              files: args.files,
+              folders: args.folders,
+              project_path,
+            });
+            target_project = scoped_project;
+          } else {
+            // For unfiltered analysis, use the persistent project
+            target_project = project_manager.get_project();
+          }
+
+          const result = await show_call_graph_neighborhood(
+            target_project,
+            args
+          );
+
+          record_tool_call({
+            tool_name: name,
+            arguments: tool_args as Record<string, unknown>,
+            duration_ms: Date.now() - tool_start,
+            success: true,
+            request_id: String(extra.requestId),
+            tool_use_id,
+          });
+
           return {
             content: [
               {
                 type: "text",
-                text: JSON.stringify(result, null, 2)
-              }
-            ]
+                text: result,
+              },
+            ],
           };
         }
 
@@ -210,111 +346,29 @@ export async function startServer(options: AriadneMCPServerOptions = {}): Promis
           throw new Error(`Unknown tool: ${name}`);
       }
     } catch (error) {
+      const error_message = error instanceof Error ? error.message : String(error);
+
+      record_tool_call({
+        tool_name: name,
+        arguments: tool_args as Record<string, unknown>,
+        duration_ms: Date.now() - tool_start,
+        success: false,
+        error_message,
+        request_id: String(extra.requestId),
+        tool_use_id,
+      });
+
       return {
         content: [
           {
             type: "text",
-            text: `Error: ${error instanceof Error ? error.message : String(error)}`
-          }
+            text: `Error: ${error_message}`,
+          },
         ],
-        isError: true
+        isError: true,
       };
     }
   });
-
-  // Helper function to load a file if not already in the project
-  async function loadFileIfNeeded(project: Project, filePath: string): Promise<void> {
-    try {
-      const sourceCode = await fs.readFile(filePath, "utf-8");
-      project.add_or_update_file(filePath, sourceCode);
-    } catch (error) {
-      throw new Error(`Failed to read file ${filePath}: ${error instanceof Error ? error.message : String(error)}`);
-    }
-  }
-  
-  // Helper function to load all project files (Task 53)
-  async function loadProjectFiles(project: Project, projectPath: string): Promise<void> {
-    const loadedFiles = new Set<string>();
-    let gitignorePatterns: string[] = [];
-    
-    // Try to read .gitignore
-    try {
-      const gitignorePath = path.join(projectPath, '.gitignore');
-      const gitignoreContent = await fs.readFile(gitignorePath, 'utf-8');
-      gitignorePatterns = gitignoreContent
-        .split('\n')
-        .map(line => line.trim())
-        .filter(line => line && !line.startsWith('#'));
-    } catch {
-      // .gitignore not found or unreadable, continue without it
-    }
-    
-    function shouldIgnore(filePath: string): boolean {
-      const relativePath = path.relative(projectPath, filePath);
-      
-      // Always ignore common directories
-      const commonIgnores = [
-        'node_modules', '.git', 'dist', 'build', '.next', 'coverage',
-        '.nyc_output', '.cache', 'tmp', 'temp', '.DS_Store'
-      ];
-      
-      for (const ignore of commonIgnores) {
-        if (relativePath.includes(ignore)) return true;
-      }
-      
-      // Check gitignore patterns (simple implementation)
-      for (const pattern of gitignorePatterns) {
-        if (pattern.endsWith('*')) {
-          const prefix = pattern.slice(0, -1);
-          if (relativePath.startsWith(prefix)) return true;
-        } else if (relativePath === pattern || relativePath.includes('/' + pattern)) {
-          return true;
-        }
-      }
-      
-      return false;
-    }
-    
-    async function loadDirectory(dirPath: string): Promise<void> {
-      if (shouldIgnore(dirPath)) return;
-      
-      let entries;
-      try {
-        entries = await fs.readdir(dirPath, { withFileTypes: true });
-      } catch (error) {
-        console.warn(`Cannot read directory ${dirPath}: ${error}`);
-        return;
-      }
-      
-      for (const entry of entries) {
-        const fullPath = path.join(dirPath, entry.name);
-        
-        if (shouldIgnore(fullPath)) continue;
-        
-        if (entry.isDirectory()) {
-          await loadDirectory(fullPath);
-        } else if (entry.isFile()) {
-          // Load supported source files
-          if (/\.(ts|tsx|js|jsx|py|rs|go|java|cpp|c|hpp|h)$/.test(entry.name) && !entry.name.endsWith('.d.ts')) {
-            if (!loadedFiles.has(fullPath)) {
-              try {
-                await loadFileIfNeeded(project, fullPath);
-                loadedFiles.add(fullPath);
-              } catch (error) {
-                console.warn(`Skipping file ${fullPath}: ${error}`);
-              }
-            }
-          }
-        }
-      }
-    }
-    
-    console.log(`Loading project files from: ${projectPath}`);
-    const startTime = Date.now();
-    await loadDirectory(projectPath);
-    const duration = Date.now() - startTime;
-    console.log(`Loaded ${loadedFiles.size} files in ${duration}ms`);
-  }
 
   // Connect transport based on options
   if (options.transport === "stdio" || !options.transport) {
@@ -323,4 +377,45 @@ export async function startServer(options: AriadneMCPServerOptions = {}): Promis
   }
 
   return server;
+}
+
+// Helper function to load a file if not already in the project
+export async function load_file_if_needed(
+  project: Project,
+  file_path: string
+): Promise<void> {
+  try {
+    const source_code = await fs.readFile(file_path, "utf-8");
+    project.update_file(file_path as FilePath, source_code);
+  } catch (error) {
+    throw new Error(
+      `Failed to read file ${file_path}: ${
+        error instanceof Error ? error.message : String(error)
+      }`
+    );
+  }
+}
+
+// Helper function to load all project files
+export async function load_project_files(
+  project: Project,
+  project_path: string
+): Promise<void> {
+  log_info(`Loading project files from: ${project_path}`);
+  const start_time = Date.now();
+
+  const files = await find_source_files(project_path, project_path);
+  let loaded_count = 0;
+
+  for (const file_path of files) {
+    try {
+      await load_file_if_needed(project, file_path);
+      loaded_count++;
+    } catch (error) {
+      log_warn(`Skipping file ${file_path}: ${error}`);
+    }
+  }
+
+  const duration = Date.now() - start_time;
+  log_info(`Loaded ${loaded_count} files in ${duration}ms`);
 }

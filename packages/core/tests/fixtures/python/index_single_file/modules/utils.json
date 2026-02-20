@@ -1,0 +1,2246 @@
+{
+  "file_path": "<fixtures>/python/code/modules/utils.py",
+  "language": "python",
+  "root_scope_id": "module:<fixtures>/python/code/modules/utils.py:1:1:26:48",
+  "scopes": {
+    "module:<fixtures>/python/code/modules/utils.py:1:1:26:48": {
+      "id": "module:<fixtures>/python/code/modules/utils.py:1:1:26:48",
+      "parent_id": null,
+      "name": null,
+      "type": "module",
+      "location": {
+        "file_path": "<fixtures>/python/code/modules/utils.py",
+        "start_line": 1,
+        "start_column": 1,
+        "end_line": 26,
+        "end_column": 48
+      },
+      "child_ids": [
+        "function:<fixtures>/python/code/modules/utils.py:19:20:21:54",
+        "function:<fixtures>/python/code/modules/utils.py:24:23:26:48",
+        "function:<fixtures>/python/code/modules/utils.py:14:17:16:29",
+        "function:<fixtures>/python/code/modules/utils.py:9:11:11:23"
+      ]
+    },
+    "function:<fixtures>/python/code/modules/utils.py:19:20:21:54": {
+      "id": "function:<fixtures>/python/code/modules/utils.py:19:20:21:54",
+      "parent_id": "module:<fixtures>/python/code/modules/utils.py:1:1:26:48",
+      "name": "calculate_total",
+      "type": "function",
+      "location": {
+        "file_path": "<fixtures>/python/code/modules/utils.py",
+        "start_line": 19,
+        "start_column": 20,
+        "end_line": 21,
+        "end_column": 54
+      },
+      "child_ids": [
+        "block:<fixtures>/python/code/modules/utils.py:21:15:21:54"
+      ]
+    },
+    "function:<fixtures>/python/code/modules/utils.py:24:23:26:48": {
+      "id": "function:<fixtures>/python/code/modules/utils.py:24:23:26:48",
+      "parent_id": "module:<fixtures>/python/code/modules/utils.py:1:1:26:48",
+      "name": "validate_user_data",
+      "type": "function",
+      "location": {
+        "file_path": "<fixtures>/python/code/modules/utils.py",
+        "start_line": 24,
+        "start_column": 23,
+        "end_line": 26,
+        "end_column": 48
+      },
+      "child_ids": []
+    },
+    "function:<fixtures>/python/code/modules/utils.py:14:17:16:29": {
+      "id": "function:<fixtures>/python/code/modules/utils.py:14:17:16:29",
+      "parent_id": "module:<fixtures>/python/code/modules/utils.py:1:1:26:48",
+      "name": "process_data",
+      "type": "function",
+      "location": {
+        "file_path": "<fixtures>/python/code/modules/utils.py",
+        "start_line": 14,
+        "start_column": 17,
+        "end_line": 16,
+        "end_column": 29
+      },
+      "child_ids": []
+    },
+    "function:<fixtures>/python/code/modules/utils.py:9:11:11:23": {
+      "id": "function:<fixtures>/python/code/modules/utils.py:9:11:11:23",
+      "parent_id": "module:<fixtures>/python/code/modules/utils.py:1:1:26:48",
+      "name": "helper",
+      "type": "function",
+      "location": {
+        "file_path": "<fixtures>/python/code/modules/utils.py",
+        "start_line": 9,
+        "start_column": 11,
+        "end_line": 11,
+        "end_column": 23
+      },
+      "child_ids": []
+    },
+    "block:<fixtures>/python/code/modules/utils.py:21:15:21:54": {
+      "id": "block:<fixtures>/python/code/modules/utils.py:21:15:21:54",
+      "parent_id": "function:<fixtures>/python/code/modules/utils.py:19:20:21:54",
+      "name": null,
+      "type": "block",
+      "location": {
+        "file_path": "<fixtures>/python/code/modules/utils.py",
+        "start_line": 21,
+        "start_column": 15,
+        "end_line": 21,
+        "end_column": 54
+      },
+      "child_ids": []
+    }
+  },
+  "functions": {
+    "function:<fixtures>/python/code/modules/utils.py:9:5:9:10:helper": {
+      "kind": "function",
+      "symbol_id": "function:<fixtures>/python/code/modules/utils.py:9:5:9:10:helper",
+      "name": "helper",
+      "location": {
+        "file_path": "<fixtures>/python/code/modules/utils.py",
+        "start_line": 9,
+        "start_column": 5,
+        "end_line": 9,
+        "end_column": 10
+      },
+      "defining_scope_id": "module:<fixtures>/python/code/modules/utils.py:1:1:26:48",
+      "is_exported": true,
+      "signature": {
+        "parameters": [],
+        "return_type": "str"
+      },
+      "return_type": "str",
+      "body_scope_id": "function:<fixtures>/python/code/modules/utils.py:9:11:11:23"
+    },
+    "function:<fixtures>/python/code/modules/utils.py:14:5:14:16:process_data": {
+      "kind": "function",
+      "symbol_id": "function:<fixtures>/python/code/modules/utils.py:14:5:14:16:process_data",
+      "name": "process_data",
+      "location": {
+        "file_path": "<fixtures>/python/code/modules/utils.py",
+        "start_line": 14,
+        "start_column": 5,
+        "end_line": 14,
+        "end_column": 16
+      },
+      "defining_scope_id": "module:<fixtures>/python/code/modules/utils.py:1:1:26:48",
+      "is_exported": true,
+      "signature": {
+        "parameters": [
+          {
+            "kind": "parameter",
+            "defining_scope_id": "function:<fixtures>/python/code/modules/utils.py:14:17:16:29",
+            "symbol_id": "parameter:<fixtures>/python/code/modules/utils.py:14:18:14:27:input_data",
+            "name": "input_data",
+            "location": {
+              "file_path": "<fixtures>/python/code/modules/utils.py",
+              "start_line": 14,
+              "start_column": 18,
+              "end_line": 14,
+              "end_column": 27
+            },
+            "type": "str"
+          }
+        ],
+        "return_type": "str"
+      },
+      "return_type": "str",
+      "body_scope_id": "function:<fixtures>/python/code/modules/utils.py:14:17:16:29"
+    },
+    "function:<fixtures>/python/code/modules/utils.py:19:5:19:19:calculate_total": {
+      "kind": "function",
+      "symbol_id": "function:<fixtures>/python/code/modules/utils.py:19:5:19:19:calculate_total",
+      "name": "calculate_total",
+      "location": {
+        "file_path": "<fixtures>/python/code/modules/utils.py",
+        "start_line": 19,
+        "start_column": 5,
+        "end_line": 19,
+        "end_column": 19
+      },
+      "defining_scope_id": "module:<fixtures>/python/code/modules/utils.py:1:1:26:48",
+      "is_exported": true,
+      "signature": {
+        "parameters": [
+          {
+            "kind": "parameter",
+            "defining_scope_id": "function:<fixtures>/python/code/modules/utils.py:19:20:21:54",
+            "symbol_id": "parameter:<fixtures>/python/code/modules/utils.py:19:21:19:25:items",
+            "name": "items",
+            "location": {
+              "file_path": "<fixtures>/python/code/modules/utils.py",
+              "start_line": 19,
+              "start_column": 21,
+              "end_line": 19,
+              "end_column": 25
+            },
+            "type": "List[Dict[str, Any]]"
+          }
+        ],
+        "return_type": "float"
+      },
+      "return_type": "float",
+      "body_scope_id": "function:<fixtures>/python/code/modules/utils.py:19:20:21:54"
+    },
+    "function:<fixtures>/python/code/modules/utils.py:24:5:24:22:validate_user_data": {
+      "kind": "function",
+      "symbol_id": "function:<fixtures>/python/code/modules/utils.py:24:5:24:22:validate_user_data",
+      "name": "validate_user_data",
+      "location": {
+        "file_path": "<fixtures>/python/code/modules/utils.py",
+        "start_line": 24,
+        "start_column": 5,
+        "end_line": 24,
+        "end_column": 22
+      },
+      "defining_scope_id": "module:<fixtures>/python/code/modules/utils.py:1:1:26:48",
+      "is_exported": true,
+      "signature": {
+        "parameters": [
+          {
+            "kind": "parameter",
+            "defining_scope_id": "function:<fixtures>/python/code/modules/utils.py:24:23:26:48",
+            "symbol_id": "parameter:<fixtures>/python/code/modules/utils.py:24:24:24:27:name",
+            "name": "name",
+            "location": {
+              "file_path": "<fixtures>/python/code/modules/utils.py",
+              "start_line": 24,
+              "start_column": 24,
+              "end_line": 24,
+              "end_column": 27
+            },
+            "type": "str"
+          },
+          {
+            "kind": "parameter",
+            "defining_scope_id": "function:<fixtures>/python/code/modules/utils.py:24:23:26:48",
+            "symbol_id": "parameter:<fixtures>/python/code/modules/utils.py:24:35:24:39:email",
+            "name": "email",
+            "location": {
+              "file_path": "<fixtures>/python/code/modules/utils.py",
+              "start_line": 24,
+              "start_column": 35,
+              "end_line": 24,
+              "end_column": 39
+            },
+            "type": "str"
+          }
+        ],
+        "return_type": "bool"
+      },
+      "return_type": "bool",
+      "body_scope_id": "function:<fixtures>/python/code/modules/utils.py:24:23:26:48"
+    }
+  },
+  "classes": {},
+  "variables": {
+    "variable:<fixtures>/python/code/modules/utils.py:21:41:21:44:item": {
+      "kind": "variable",
+      "symbol_id": "variable:<fixtures>/python/code/modules/utils.py:21:41:21:44:item",
+      "name": "item",
+      "location": {
+        "file_path": "<fixtures>/python/code/modules/utils.py",
+        "start_line": 21,
+        "start_column": 41,
+        "end_line": 21,
+        "end_column": 44
+      },
+      "defining_scope_id": "block:<fixtures>/python/code/modules/utils.py:21:15:21:54",
+      "is_exported": false
+    }
+  },
+  "interfaces": {},
+  "enums": {},
+  "namespaces": {},
+  "types": {},
+  "imported_symbols": {
+    "variable:<fixtures>/python/code/modules/utils.py:6:20:6:23:List": {
+      "kind": "import",
+      "symbol_id": "variable:<fixtures>/python/code/modules/utils.py:6:20:6:23:List",
+      "name": "List",
+      "location": {
+        "file_path": "<fixtures>/python/code/modules/utils.py",
+        "start_line": 6,
+        "start_column": 20,
+        "end_line": 6,
+        "end_column": 23
+      },
+      "defining_scope_id": "module:<fixtures>/python/code/modules/utils.py:1:1:26:48",
+      "import_path": "typing",
+      "import_kind": "named"
+    },
+    "variable:<fixtures>/python/code/modules/utils.py:6:26:6:29:Dict": {
+      "kind": "import",
+      "symbol_id": "variable:<fixtures>/python/code/modules/utils.py:6:26:6:29:Dict",
+      "name": "Dict",
+      "location": {
+        "file_path": "<fixtures>/python/code/modules/utils.py",
+        "start_line": 6,
+        "start_column": 26,
+        "end_line": 6,
+        "end_column": 29
+      },
+      "defining_scope_id": "module:<fixtures>/python/code/modules/utils.py:1:1:26:48",
+      "import_path": "typing",
+      "import_kind": "named"
+    },
+    "variable:<fixtures>/python/code/modules/utils.py:6:32:6:34:Any": {
+      "kind": "import",
+      "symbol_id": "variable:<fixtures>/python/code/modules/utils.py:6:32:6:34:Any",
+      "name": "Any",
+      "location": {
+        "file_path": "<fixtures>/python/code/modules/utils.py",
+        "start_line": 6,
+        "start_column": 32,
+        "end_line": 6,
+        "end_column": 34
+      },
+      "defining_scope_id": "module:<fixtures>/python/code/modules/utils.py:1:1:26:48",
+      "import_path": "typing",
+      "import_kind": "named"
+    }
+  },
+  "references": [
+    {
+      "kind": "variable_reference",
+      "name": "typing",
+      "location": {
+        "file_path": "<fixtures>/python/code/modules/utils.py",
+        "start_line": 6,
+        "start_column": 6,
+        "end_line": 6,
+        "end_column": 11
+      },
+      "scope_id": "module:<fixtures>/python/code/modules/utils.py:1:1:26:48",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "typing",
+      "location": {
+        "file_path": "<fixtures>/python/code/modules/utils.py",
+        "start_line": 6,
+        "start_column": 6,
+        "end_line": 6,
+        "end_column": 11
+      },
+      "scope_id": "module:<fixtures>/python/code/modules/utils.py:1:1:26:48",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "typing",
+      "location": {
+        "file_path": "<fixtures>/python/code/modules/utils.py",
+        "start_line": 6,
+        "start_column": 6,
+        "end_line": 6,
+        "end_column": 11
+      },
+      "scope_id": "module:<fixtures>/python/code/modules/utils.py:1:1:26:48",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "List",
+      "location": {
+        "file_path": "<fixtures>/python/code/modules/utils.py",
+        "start_line": 6,
+        "start_column": 20,
+        "end_line": 6,
+        "end_column": 23
+      },
+      "scope_id": "module:<fixtures>/python/code/modules/utils.py:1:1:26:48",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "List",
+      "location": {
+        "file_path": "<fixtures>/python/code/modules/utils.py",
+        "start_line": 6,
+        "start_column": 20,
+        "end_line": 6,
+        "end_column": 23
+      },
+      "scope_id": "module:<fixtures>/python/code/modules/utils.py:1:1:26:48",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "List",
+      "location": {
+        "file_path": "<fixtures>/python/code/modules/utils.py",
+        "start_line": 6,
+        "start_column": 20,
+        "end_line": 6,
+        "end_column": 23
+      },
+      "scope_id": "module:<fixtures>/python/code/modules/utils.py:1:1:26:48",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "Dict",
+      "location": {
+        "file_path": "<fixtures>/python/code/modules/utils.py",
+        "start_line": 6,
+        "start_column": 26,
+        "end_line": 6,
+        "end_column": 29
+      },
+      "scope_id": "module:<fixtures>/python/code/modules/utils.py:1:1:26:48",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "Dict",
+      "location": {
+        "file_path": "<fixtures>/python/code/modules/utils.py",
+        "start_line": 6,
+        "start_column": 26,
+        "end_line": 6,
+        "end_column": 29
+      },
+      "scope_id": "module:<fixtures>/python/code/modules/utils.py:1:1:26:48",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "Dict",
+      "location": {
+        "file_path": "<fixtures>/python/code/modules/utils.py",
+        "start_line": 6,
+        "start_column": 26,
+        "end_line": 6,
+        "end_column": 29
+      },
+      "scope_id": "module:<fixtures>/python/code/modules/utils.py:1:1:26:48",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "Any",
+      "location": {
+        "file_path": "<fixtures>/python/code/modules/utils.py",
+        "start_line": 6,
+        "start_column": 32,
+        "end_line": 6,
+        "end_column": 34
+      },
+      "scope_id": "module:<fixtures>/python/code/modules/utils.py:1:1:26:48",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "Any",
+      "location": {
+        "file_path": "<fixtures>/python/code/modules/utils.py",
+        "start_line": 6,
+        "start_column": 32,
+        "end_line": 6,
+        "end_column": 34
+      },
+      "scope_id": "module:<fixtures>/python/code/modules/utils.py:1:1:26:48",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "Any",
+      "location": {
+        "file_path": "<fixtures>/python/code/modules/utils.py",
+        "start_line": 6,
+        "start_column": 32,
+        "end_line": 6,
+        "end_column": 34
+      },
+      "scope_id": "module:<fixtures>/python/code/modules/utils.py:1:1:26:48",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "helper",
+      "location": {
+        "file_path": "<fixtures>/python/code/modules/utils.py",
+        "start_line": 9,
+        "start_column": 5,
+        "end_line": 9,
+        "end_column": 10
+      },
+      "scope_id": "module:<fixtures>/python/code/modules/utils.py:1:1:26:48",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "helper",
+      "location": {
+        "file_path": "<fixtures>/python/code/modules/utils.py",
+        "start_line": 9,
+        "start_column": 5,
+        "end_line": 9,
+        "end_column": 10
+      },
+      "scope_id": "module:<fixtures>/python/code/modules/utils.py:1:1:26:48",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "helper",
+      "location": {
+        "file_path": "<fixtures>/python/code/modules/utils.py",
+        "start_line": 9,
+        "start_column": 5,
+        "end_line": 9,
+        "end_column": 10
+      },
+      "scope_id": "module:<fixtures>/python/code/modules/utils.py:1:1:26:48",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "str",
+      "location": {
+        "file_path": "<fixtures>/python/code/modules/utils.py",
+        "start_line": 9,
+        "start_column": 17,
+        "end_line": 9,
+        "end_column": 19
+      },
+      "scope_id": "function:<fixtures>/python/code/modules/utils.py:9:11:11:23",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "str",
+      "location": {
+        "file_path": "<fixtures>/python/code/modules/utils.py",
+        "start_line": 9,
+        "start_column": 17,
+        "end_line": 9,
+        "end_column": 19
+      },
+      "scope_id": "function:<fixtures>/python/code/modules/utils.py:9:11:11:23",
+      "access_type": "read"
+    },
+    {
+      "kind": "type_reference",
+      "name": "str",
+      "location": {
+        "file_path": "<fixtures>/python/code/modules/utils.py",
+        "start_line": 9,
+        "start_column": 17,
+        "end_line": 9,
+        "end_column": 19
+      },
+      "scope_id": "function:<fixtures>/python/code/modules/utils.py:9:11:11:23",
+      "type_context": "annotation",
+      "type_info": {
+        "type_id": "type:<fixtures>/python/code/modules/utils.py:9:17:9:19:str",
+        "type_name": "str",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "str",
+      "location": {
+        "file_path": "<fixtures>/python/code/modules/utils.py",
+        "start_line": 9,
+        "start_column": 17,
+        "end_line": 9,
+        "end_column": 19
+      },
+      "scope_id": "function:<fixtures>/python/code/modules/utils.py:9:11:11:23",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "return \"from utils\"",
+      "location": {
+        "file_path": "<fixtures>/python/code/modules/utils.py",
+        "start_line": 11,
+        "start_column": 5,
+        "end_line": 11,
+        "end_column": 23
+      },
+      "scope_id": "function:<fixtures>/python/code/modules/utils.py:9:11:11:23",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "\"from utils\"",
+      "location": {
+        "file_path": "<fixtures>/python/code/modules/utils.py",
+        "start_line": 11,
+        "start_column": 12,
+        "end_line": 11,
+        "end_column": 23
+      },
+      "scope_id": "function:<fixtures>/python/code/modules/utils.py:9:11:11:23",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "process_data",
+      "location": {
+        "file_path": "<fixtures>/python/code/modules/utils.py",
+        "start_line": 14,
+        "start_column": 5,
+        "end_line": 14,
+        "end_column": 16
+      },
+      "scope_id": "module:<fixtures>/python/code/modules/utils.py:1:1:26:48",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "process_data",
+      "location": {
+        "file_path": "<fixtures>/python/code/modules/utils.py",
+        "start_line": 14,
+        "start_column": 5,
+        "end_line": 14,
+        "end_column": 16
+      },
+      "scope_id": "module:<fixtures>/python/code/modules/utils.py:1:1:26:48",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "process_data",
+      "location": {
+        "file_path": "<fixtures>/python/code/modules/utils.py",
+        "start_line": 14,
+        "start_column": 5,
+        "end_line": 14,
+        "end_column": 16
+      },
+      "scope_id": "module:<fixtures>/python/code/modules/utils.py:1:1:26:48",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "input_data",
+      "location": {
+        "file_path": "<fixtures>/python/code/modules/utils.py",
+        "start_line": 14,
+        "start_column": 18,
+        "end_line": 14,
+        "end_column": 27
+      },
+      "scope_id": "function:<fixtures>/python/code/modules/utils.py:14:17:16:29",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "input_data",
+      "location": {
+        "file_path": "<fixtures>/python/code/modules/utils.py",
+        "start_line": 14,
+        "start_column": 18,
+        "end_line": 14,
+        "end_column": 27
+      },
+      "scope_id": "function:<fixtures>/python/code/modules/utils.py:14:17:16:29",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "input_data",
+      "location": {
+        "file_path": "<fixtures>/python/code/modules/utils.py",
+        "start_line": 14,
+        "start_column": 18,
+        "end_line": 14,
+        "end_column": 27
+      },
+      "scope_id": "function:<fixtures>/python/code/modules/utils.py:14:17:16:29",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "str",
+      "location": {
+        "file_path": "<fixtures>/python/code/modules/utils.py",
+        "start_line": 14,
+        "start_column": 30,
+        "end_line": 14,
+        "end_column": 32
+      },
+      "scope_id": "function:<fixtures>/python/code/modules/utils.py:14:17:16:29",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "str",
+      "location": {
+        "file_path": "<fixtures>/python/code/modules/utils.py",
+        "start_line": 14,
+        "start_column": 30,
+        "end_line": 14,
+        "end_column": 32
+      },
+      "scope_id": "function:<fixtures>/python/code/modules/utils.py:14:17:16:29",
+      "access_type": "read"
+    },
+    {
+      "kind": "type_reference",
+      "name": "str",
+      "location": {
+        "file_path": "<fixtures>/python/code/modules/utils.py",
+        "start_line": 14,
+        "start_column": 30,
+        "end_line": 14,
+        "end_column": 32
+      },
+      "scope_id": "function:<fixtures>/python/code/modules/utils.py:14:17:16:29",
+      "type_context": "annotation",
+      "type_info": {
+        "type_id": "type:<fixtures>/python/code/modules/utils.py:14:30:14:32:str",
+        "type_name": "str",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "str",
+      "location": {
+        "file_path": "<fixtures>/python/code/modules/utils.py",
+        "start_line": 14,
+        "start_column": 30,
+        "end_line": 14,
+        "end_column": 32
+      },
+      "scope_id": "function:<fixtures>/python/code/modules/utils.py:14:17:16:29",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "str",
+      "location": {
+        "file_path": "<fixtures>/python/code/modules/utils.py",
+        "start_line": 14,
+        "start_column": 38,
+        "end_line": 14,
+        "end_column": 40
+      },
+      "scope_id": "function:<fixtures>/python/code/modules/utils.py:14:17:16:29",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "str",
+      "location": {
+        "file_path": "<fixtures>/python/code/modules/utils.py",
+        "start_line": 14,
+        "start_column": 38,
+        "end_line": 14,
+        "end_column": 40
+      },
+      "scope_id": "function:<fixtures>/python/code/modules/utils.py:14:17:16:29",
+      "access_type": "read"
+    },
+    {
+      "kind": "type_reference",
+      "name": "str",
+      "location": {
+        "file_path": "<fixtures>/python/code/modules/utils.py",
+        "start_line": 14,
+        "start_column": 38,
+        "end_line": 14,
+        "end_column": 40
+      },
+      "scope_id": "function:<fixtures>/python/code/modules/utils.py:14:17:16:29",
+      "type_context": "annotation",
+      "type_info": {
+        "type_id": "type:<fixtures>/python/code/modules/utils.py:14:38:14:40:str",
+        "type_name": "str",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "str",
+      "location": {
+        "file_path": "<fixtures>/python/code/modules/utils.py",
+        "start_line": 14,
+        "start_column": 38,
+        "end_line": 14,
+        "end_column": 40
+      },
+      "scope_id": "function:<fixtures>/python/code/modules/utils.py:14:17:16:29",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "return input_data.upper()",
+      "location": {
+        "file_path": "<fixtures>/python/code/modules/utils.py",
+        "start_line": 16,
+        "start_column": 5,
+        "end_line": 16,
+        "end_column": 29
+      },
+      "scope_id": "function:<fixtures>/python/code/modules/utils.py:14:17:16:29",
+      "access_type": "read"
+    },
+    {
+      "kind": "method_call",
+      "name": "upper",
+      "location": {
+        "file_path": "<fixtures>/python/code/modules/utils.py",
+        "start_line": 16,
+        "start_column": 12,
+        "end_line": 16,
+        "end_column": 29
+      },
+      "scope_id": "function:<fixtures>/python/code/modules/utils.py:14:17:16:29",
+      "receiver_location": {
+        "file_path": "<fixtures>/python/code/modules/utils.py",
+        "start_line": 16,
+        "start_column": 12,
+        "end_line": 16,
+        "end_column": 21
+      },
+      "property_chain": [
+        "input_data",
+        "upper"
+      ],
+      "optional_chaining": false
+    },
+    {
+      "kind": "variable_reference",
+      "name": "input_data",
+      "location": {
+        "file_path": "<fixtures>/python/code/modules/utils.py",
+        "start_line": 16,
+        "start_column": 12,
+        "end_line": 16,
+        "end_column": 21
+      },
+      "scope_id": "function:<fixtures>/python/code/modules/utils.py:14:17:16:29",
+      "access_type": "read"
+    },
+    {
+      "kind": "method_call",
+      "name": "upper",
+      "location": {
+        "file_path": "<fixtures>/python/code/modules/utils.py",
+        "start_line": 16,
+        "start_column": 12,
+        "end_line": 16,
+        "end_column": 29
+      },
+      "scope_id": "function:<fixtures>/python/code/modules/utils.py:14:17:16:29",
+      "receiver_location": {
+        "file_path": "<fixtures>/python/code/modules/utils.py",
+        "start_line": 16,
+        "start_column": 12,
+        "end_line": 16,
+        "end_column": 21
+      },
+      "property_chain": [
+        "input_data",
+        "upper"
+      ],
+      "optional_chaining": false
+    },
+    {
+      "kind": "variable_reference",
+      "name": "input_data",
+      "location": {
+        "file_path": "<fixtures>/python/code/modules/utils.py",
+        "start_line": 16,
+        "start_column": 12,
+        "end_line": 16,
+        "end_column": 21
+      },
+      "scope_id": "function:<fixtures>/python/code/modules/utils.py:14:17:16:29",
+      "access_type": "read"
+    },
+    {
+      "kind": "property_access",
+      "name": "upper",
+      "location": {
+        "file_path": "<fixtures>/python/code/modules/utils.py",
+        "start_line": 16,
+        "start_column": 12,
+        "end_line": 16,
+        "end_column": 27
+      },
+      "scope_id": "function:<fixtures>/python/code/modules/utils.py:14:17:16:29",
+      "receiver_location": {
+        "file_path": "<fixtures>/python/code/modules/utils.py",
+        "start_line": 16,
+        "start_column": 12,
+        "end_line": 16,
+        "end_column": 21
+      },
+      "property_chain": [
+        "input_data",
+        "upper"
+      ],
+      "access_type": "property",
+      "is_optional_chain": false
+    },
+    {
+      "kind": "variable_reference",
+      "name": "input_data",
+      "location": {
+        "file_path": "<fixtures>/python/code/modules/utils.py",
+        "start_line": 16,
+        "start_column": 12,
+        "end_line": 16,
+        "end_column": 21
+      },
+      "scope_id": "function:<fixtures>/python/code/modules/utils.py:14:17:16:29",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "input_data.upper()",
+      "location": {
+        "file_path": "<fixtures>/python/code/modules/utils.py",
+        "start_line": 16,
+        "start_column": 12,
+        "end_line": 16,
+        "end_column": 29
+      },
+      "scope_id": "function:<fixtures>/python/code/modules/utils.py:14:17:16:29",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "input_data",
+      "location": {
+        "file_path": "<fixtures>/python/code/modules/utils.py",
+        "start_line": 16,
+        "start_column": 12,
+        "end_line": 16,
+        "end_column": 21
+      },
+      "scope_id": "function:<fixtures>/python/code/modules/utils.py:14:17:16:29",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "input_data",
+      "location": {
+        "file_path": "<fixtures>/python/code/modules/utils.py",
+        "start_line": 16,
+        "start_column": 12,
+        "end_line": 16,
+        "end_column": 21
+      },
+      "scope_id": "function:<fixtures>/python/code/modules/utils.py:14:17:16:29",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "input_data",
+      "location": {
+        "file_path": "<fixtures>/python/code/modules/utils.py",
+        "start_line": 16,
+        "start_column": 12,
+        "end_line": 16,
+        "end_column": 21
+      },
+      "scope_id": "function:<fixtures>/python/code/modules/utils.py:14:17:16:29",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "upper",
+      "location": {
+        "file_path": "<fixtures>/python/code/modules/utils.py",
+        "start_line": 16,
+        "start_column": 23,
+        "end_line": 16,
+        "end_column": 27
+      },
+      "scope_id": "function:<fixtures>/python/code/modules/utils.py:14:17:16:29",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "upper",
+      "location": {
+        "file_path": "<fixtures>/python/code/modules/utils.py",
+        "start_line": 16,
+        "start_column": 23,
+        "end_line": 16,
+        "end_column": 27
+      },
+      "scope_id": "function:<fixtures>/python/code/modules/utils.py:14:17:16:29",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "upper",
+      "location": {
+        "file_path": "<fixtures>/python/code/modules/utils.py",
+        "start_line": 16,
+        "start_column": 23,
+        "end_line": 16,
+        "end_column": 27
+      },
+      "scope_id": "function:<fixtures>/python/code/modules/utils.py:14:17:16:29",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "upper",
+      "location": {
+        "file_path": "<fixtures>/python/code/modules/utils.py",
+        "start_line": 16,
+        "start_column": 23,
+        "end_line": 16,
+        "end_column": 27
+      },
+      "scope_id": "function:<fixtures>/python/code/modules/utils.py:14:17:16:29",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "calculate_total",
+      "location": {
+        "file_path": "<fixtures>/python/code/modules/utils.py",
+        "start_line": 19,
+        "start_column": 5,
+        "end_line": 19,
+        "end_column": 19
+      },
+      "scope_id": "module:<fixtures>/python/code/modules/utils.py:1:1:26:48",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "calculate_total",
+      "location": {
+        "file_path": "<fixtures>/python/code/modules/utils.py",
+        "start_line": 19,
+        "start_column": 5,
+        "end_line": 19,
+        "end_column": 19
+      },
+      "scope_id": "module:<fixtures>/python/code/modules/utils.py:1:1:26:48",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "calculate_total",
+      "location": {
+        "file_path": "<fixtures>/python/code/modules/utils.py",
+        "start_line": 19,
+        "start_column": 5,
+        "end_line": 19,
+        "end_column": 19
+      },
+      "scope_id": "module:<fixtures>/python/code/modules/utils.py:1:1:26:48",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "items",
+      "location": {
+        "file_path": "<fixtures>/python/code/modules/utils.py",
+        "start_line": 19,
+        "start_column": 21,
+        "end_line": 19,
+        "end_column": 25
+      },
+      "scope_id": "function:<fixtures>/python/code/modules/utils.py:19:20:21:54",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "items",
+      "location": {
+        "file_path": "<fixtures>/python/code/modules/utils.py",
+        "start_line": 19,
+        "start_column": 21,
+        "end_line": 19,
+        "end_column": 25
+      },
+      "scope_id": "function:<fixtures>/python/code/modules/utils.py:19:20:21:54",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "items",
+      "location": {
+        "file_path": "<fixtures>/python/code/modules/utils.py",
+        "start_line": 19,
+        "start_column": 21,
+        "end_line": 19,
+        "end_column": 25
+      },
+      "scope_id": "function:<fixtures>/python/code/modules/utils.py:19:20:21:54",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "List",
+      "location": {
+        "file_path": "<fixtures>/python/code/modules/utils.py",
+        "start_line": 19,
+        "start_column": 28,
+        "end_line": 19,
+        "end_column": 31
+      },
+      "scope_id": "function:<fixtures>/python/code/modules/utils.py:19:20:21:54",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "List",
+      "location": {
+        "file_path": "<fixtures>/python/code/modules/utils.py",
+        "start_line": 19,
+        "start_column": 28,
+        "end_line": 19,
+        "end_column": 31
+      },
+      "scope_id": "function:<fixtures>/python/code/modules/utils.py:19:20:21:54",
+      "access_type": "read"
+    },
+    {
+      "kind": "type_reference",
+      "name": "List",
+      "location": {
+        "file_path": "<fixtures>/python/code/modules/utils.py",
+        "start_line": 19,
+        "start_column": 28,
+        "end_line": 19,
+        "end_column": 31
+      },
+      "scope_id": "function:<fixtures>/python/code/modules/utils.py:19:20:21:54",
+      "type_context": "annotation",
+      "type_info": {
+        "type_id": "type:<fixtures>/python/code/modules/utils.py:19:28:19:31:List",
+        "type_name": "List",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "List",
+      "location": {
+        "file_path": "<fixtures>/python/code/modules/utils.py",
+        "start_line": 19,
+        "start_column": 28,
+        "end_line": 19,
+        "end_column": 31
+      },
+      "scope_id": "function:<fixtures>/python/code/modules/utils.py:19:20:21:54",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "Dict",
+      "location": {
+        "file_path": "<fixtures>/python/code/modules/utils.py",
+        "start_line": 19,
+        "start_column": 33,
+        "end_line": 19,
+        "end_column": 36
+      },
+      "scope_id": "function:<fixtures>/python/code/modules/utils.py:19:20:21:54",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "Dict",
+      "location": {
+        "file_path": "<fixtures>/python/code/modules/utils.py",
+        "start_line": 19,
+        "start_column": 33,
+        "end_line": 19,
+        "end_column": 36
+      },
+      "scope_id": "function:<fixtures>/python/code/modules/utils.py:19:20:21:54",
+      "access_type": "read"
+    },
+    {
+      "kind": "type_reference",
+      "name": "Dict",
+      "location": {
+        "file_path": "<fixtures>/python/code/modules/utils.py",
+        "start_line": 19,
+        "start_column": 33,
+        "end_line": 19,
+        "end_column": 36
+      },
+      "scope_id": "function:<fixtures>/python/code/modules/utils.py:19:20:21:54",
+      "type_context": "annotation",
+      "type_info": {
+        "type_id": "type:<fixtures>/python/code/modules/utils.py:19:33:19:36:Dict",
+        "type_name": "Dict",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "Dict",
+      "location": {
+        "file_path": "<fixtures>/python/code/modules/utils.py",
+        "start_line": 19,
+        "start_column": 33,
+        "end_line": 19,
+        "end_column": 36
+      },
+      "scope_id": "function:<fixtures>/python/code/modules/utils.py:19:20:21:54",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "str",
+      "location": {
+        "file_path": "<fixtures>/python/code/modules/utils.py",
+        "start_line": 19,
+        "start_column": 38,
+        "end_line": 19,
+        "end_column": 40
+      },
+      "scope_id": "function:<fixtures>/python/code/modules/utils.py:19:20:21:54",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "str",
+      "location": {
+        "file_path": "<fixtures>/python/code/modules/utils.py",
+        "start_line": 19,
+        "start_column": 38,
+        "end_line": 19,
+        "end_column": 40
+      },
+      "scope_id": "function:<fixtures>/python/code/modules/utils.py:19:20:21:54",
+      "access_type": "read"
+    },
+    {
+      "kind": "type_reference",
+      "name": "str",
+      "location": {
+        "file_path": "<fixtures>/python/code/modules/utils.py",
+        "start_line": 19,
+        "start_column": 38,
+        "end_line": 19,
+        "end_column": 40
+      },
+      "scope_id": "function:<fixtures>/python/code/modules/utils.py:19:20:21:54",
+      "type_context": "annotation",
+      "type_info": {
+        "type_id": "type:<fixtures>/python/code/modules/utils.py:19:38:19:40:str",
+        "type_name": "str",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "str",
+      "location": {
+        "file_path": "<fixtures>/python/code/modules/utils.py",
+        "start_line": 19,
+        "start_column": 38,
+        "end_line": 19,
+        "end_column": 40
+      },
+      "scope_id": "function:<fixtures>/python/code/modules/utils.py:19:20:21:54",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "Any",
+      "location": {
+        "file_path": "<fixtures>/python/code/modules/utils.py",
+        "start_line": 19,
+        "start_column": 43,
+        "end_line": 19,
+        "end_column": 45
+      },
+      "scope_id": "function:<fixtures>/python/code/modules/utils.py:19:20:21:54",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "Any",
+      "location": {
+        "file_path": "<fixtures>/python/code/modules/utils.py",
+        "start_line": 19,
+        "start_column": 43,
+        "end_line": 19,
+        "end_column": 45
+      },
+      "scope_id": "function:<fixtures>/python/code/modules/utils.py:19:20:21:54",
+      "access_type": "read"
+    },
+    {
+      "kind": "type_reference",
+      "name": "Any",
+      "location": {
+        "file_path": "<fixtures>/python/code/modules/utils.py",
+        "start_line": 19,
+        "start_column": 43,
+        "end_line": 19,
+        "end_column": 45
+      },
+      "scope_id": "function:<fixtures>/python/code/modules/utils.py:19:20:21:54",
+      "type_context": "annotation",
+      "type_info": {
+        "type_id": "type:<fixtures>/python/code/modules/utils.py:19:43:19:45:Any",
+        "type_name": "Any",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "Any",
+      "location": {
+        "file_path": "<fixtures>/python/code/modules/utils.py",
+        "start_line": 19,
+        "start_column": 43,
+        "end_line": 19,
+        "end_column": 45
+      },
+      "scope_id": "function:<fixtures>/python/code/modules/utils.py:19:20:21:54",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "float",
+      "location": {
+        "file_path": "<fixtures>/python/code/modules/utils.py",
+        "start_line": 19,
+        "start_column": 53,
+        "end_line": 19,
+        "end_column": 57
+      },
+      "scope_id": "function:<fixtures>/python/code/modules/utils.py:19:20:21:54",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "float",
+      "location": {
+        "file_path": "<fixtures>/python/code/modules/utils.py",
+        "start_line": 19,
+        "start_column": 53,
+        "end_line": 19,
+        "end_column": 57
+      },
+      "scope_id": "function:<fixtures>/python/code/modules/utils.py:19:20:21:54",
+      "access_type": "read"
+    },
+    {
+      "kind": "type_reference",
+      "name": "float",
+      "location": {
+        "file_path": "<fixtures>/python/code/modules/utils.py",
+        "start_line": 19,
+        "start_column": 53,
+        "end_line": 19,
+        "end_column": 57
+      },
+      "scope_id": "function:<fixtures>/python/code/modules/utils.py:19:20:21:54",
+      "type_context": "annotation",
+      "type_info": {
+        "type_id": "type:<fixtures>/python/code/modules/utils.py:19:53:19:57:float",
+        "type_name": "float",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "float",
+      "location": {
+        "file_path": "<fixtures>/python/code/modules/utils.py",
+        "start_line": 19,
+        "start_column": 53,
+        "end_line": 19,
+        "end_column": 57
+      },
+      "scope_id": "function:<fixtures>/python/code/modules/utils.py:19:20:21:54",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "return sum(item.get(\"price\", 0) for item in items)",
+      "location": {
+        "file_path": "<fixtures>/python/code/modules/utils.py",
+        "start_line": 21,
+        "start_column": 5,
+        "end_line": 21,
+        "end_column": 54
+      },
+      "scope_id": "function:<fixtures>/python/code/modules/utils.py:19:20:21:54",
+      "access_type": "read"
+    },
+    {
+      "kind": "function_call",
+      "name": "sum",
+      "location": {
+        "file_path": "<fixtures>/python/code/modules/utils.py",
+        "start_line": 21,
+        "start_column": 12,
+        "end_line": 21,
+        "end_column": 14
+      },
+      "scope_id": "function:<fixtures>/python/code/modules/utils.py:19:20:21:54"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "sum(item.get(\"price\", 0) for item in items)",
+      "location": {
+        "file_path": "<fixtures>/python/code/modules/utils.py",
+        "start_line": 21,
+        "start_column": 12,
+        "end_line": 21,
+        "end_column": 54
+      },
+      "scope_id": "function:<fixtures>/python/code/modules/utils.py:19:20:21:54",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "sum",
+      "location": {
+        "file_path": "<fixtures>/python/code/modules/utils.py",
+        "start_line": 21,
+        "start_column": 12,
+        "end_line": 21,
+        "end_column": 14
+      },
+      "scope_id": "function:<fixtures>/python/code/modules/utils.py:19:20:21:54",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "sum",
+      "location": {
+        "file_path": "<fixtures>/python/code/modules/utils.py",
+        "start_line": 21,
+        "start_column": 12,
+        "end_line": 21,
+        "end_column": 14
+      },
+      "scope_id": "function:<fixtures>/python/code/modules/utils.py:19:20:21:54",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "sum",
+      "location": {
+        "file_path": "<fixtures>/python/code/modules/utils.py",
+        "start_line": 21,
+        "start_column": 12,
+        "end_line": 21,
+        "end_column": 14
+      },
+      "scope_id": "function:<fixtures>/python/code/modules/utils.py:19:20:21:54",
+      "access_type": "read"
+    },
+    {
+      "kind": "method_call",
+      "name": "get",
+      "location": {
+        "file_path": "<fixtures>/python/code/modules/utils.py",
+        "start_line": 21,
+        "start_column": 16,
+        "end_line": 21,
+        "end_column": 35
+      },
+      "scope_id": "block:<fixtures>/python/code/modules/utils.py:21:15:21:54",
+      "receiver_location": {
+        "file_path": "<fixtures>/python/code/modules/utils.py",
+        "start_line": 21,
+        "start_column": 16,
+        "end_line": 21,
+        "end_column": 19
+      },
+      "property_chain": [
+        "item",
+        "get"
+      ],
+      "optional_chaining": false
+    },
+    {
+      "kind": "variable_reference",
+      "name": "item",
+      "location": {
+        "file_path": "<fixtures>/python/code/modules/utils.py",
+        "start_line": 21,
+        "start_column": 16,
+        "end_line": 21,
+        "end_column": 19
+      },
+      "scope_id": "block:<fixtures>/python/code/modules/utils.py:21:15:21:54",
+      "access_type": "read"
+    },
+    {
+      "kind": "method_call",
+      "name": "get",
+      "location": {
+        "file_path": "<fixtures>/python/code/modules/utils.py",
+        "start_line": 21,
+        "start_column": 16,
+        "end_line": 21,
+        "end_column": 35
+      },
+      "scope_id": "block:<fixtures>/python/code/modules/utils.py:21:15:21:54",
+      "receiver_location": {
+        "file_path": "<fixtures>/python/code/modules/utils.py",
+        "start_line": 21,
+        "start_column": 16,
+        "end_line": 21,
+        "end_column": 19
+      },
+      "property_chain": [
+        "item",
+        "get"
+      ],
+      "optional_chaining": false
+    },
+    {
+      "kind": "variable_reference",
+      "name": "item",
+      "location": {
+        "file_path": "<fixtures>/python/code/modules/utils.py",
+        "start_line": 21,
+        "start_column": 16,
+        "end_line": 21,
+        "end_column": 19
+      },
+      "scope_id": "block:<fixtures>/python/code/modules/utils.py:21:15:21:54",
+      "access_type": "read"
+    },
+    {
+      "kind": "property_access",
+      "name": "get",
+      "location": {
+        "file_path": "<fixtures>/python/code/modules/utils.py",
+        "start_line": 21,
+        "start_column": 16,
+        "end_line": 21,
+        "end_column": 23
+      },
+      "scope_id": "block:<fixtures>/python/code/modules/utils.py:21:15:21:54",
+      "receiver_location": {
+        "file_path": "<fixtures>/python/code/modules/utils.py",
+        "start_line": 21,
+        "start_column": 16,
+        "end_line": 21,
+        "end_column": 19
+      },
+      "property_chain": [
+        "item",
+        "get"
+      ],
+      "access_type": "property",
+      "is_optional_chain": false
+    },
+    {
+      "kind": "variable_reference",
+      "name": "item",
+      "location": {
+        "file_path": "<fixtures>/python/code/modules/utils.py",
+        "start_line": 21,
+        "start_column": 16,
+        "end_line": 21,
+        "end_column": 19
+      },
+      "scope_id": "block:<fixtures>/python/code/modules/utils.py:21:15:21:54",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "item",
+      "location": {
+        "file_path": "<fixtures>/python/code/modules/utils.py",
+        "start_line": 21,
+        "start_column": 16,
+        "end_line": 21,
+        "end_column": 19
+      },
+      "scope_id": "block:<fixtures>/python/code/modules/utils.py:21:15:21:54",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "item",
+      "location": {
+        "file_path": "<fixtures>/python/code/modules/utils.py",
+        "start_line": 21,
+        "start_column": 16,
+        "end_line": 21,
+        "end_column": 19
+      },
+      "scope_id": "block:<fixtures>/python/code/modules/utils.py:21:15:21:54",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "item",
+      "location": {
+        "file_path": "<fixtures>/python/code/modules/utils.py",
+        "start_line": 21,
+        "start_column": 16,
+        "end_line": 21,
+        "end_column": 19
+      },
+      "scope_id": "block:<fixtures>/python/code/modules/utils.py:21:15:21:54",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "get",
+      "location": {
+        "file_path": "<fixtures>/python/code/modules/utils.py",
+        "start_line": 21,
+        "start_column": 21,
+        "end_line": 21,
+        "end_column": 23
+      },
+      "scope_id": "block:<fixtures>/python/code/modules/utils.py:21:15:21:54",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "get",
+      "location": {
+        "file_path": "<fixtures>/python/code/modules/utils.py",
+        "start_line": 21,
+        "start_column": 21,
+        "end_line": 21,
+        "end_column": 23
+      },
+      "scope_id": "block:<fixtures>/python/code/modules/utils.py:21:15:21:54",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "get",
+      "location": {
+        "file_path": "<fixtures>/python/code/modules/utils.py",
+        "start_line": 21,
+        "start_column": 21,
+        "end_line": 21,
+        "end_column": 23
+      },
+      "scope_id": "block:<fixtures>/python/code/modules/utils.py:21:15:21:54",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "get",
+      "location": {
+        "file_path": "<fixtures>/python/code/modules/utils.py",
+        "start_line": 21,
+        "start_column": 21,
+        "end_line": 21,
+        "end_column": 23
+      },
+      "scope_id": "block:<fixtures>/python/code/modules/utils.py:21:15:21:54",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "item",
+      "location": {
+        "file_path": "<fixtures>/python/code/modules/utils.py",
+        "start_line": 21,
+        "start_column": 41,
+        "end_line": 21,
+        "end_column": 44
+      },
+      "scope_id": "block:<fixtures>/python/code/modules/utils.py:21:15:21:54",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "item",
+      "location": {
+        "file_path": "<fixtures>/python/code/modules/utils.py",
+        "start_line": 21,
+        "start_column": 41,
+        "end_line": 21,
+        "end_column": 44
+      },
+      "scope_id": "block:<fixtures>/python/code/modules/utils.py:21:15:21:54",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "item",
+      "location": {
+        "file_path": "<fixtures>/python/code/modules/utils.py",
+        "start_line": 21,
+        "start_column": 41,
+        "end_line": 21,
+        "end_column": 44
+      },
+      "scope_id": "block:<fixtures>/python/code/modules/utils.py:21:15:21:54",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "items",
+      "location": {
+        "file_path": "<fixtures>/python/code/modules/utils.py",
+        "start_line": 21,
+        "start_column": 49,
+        "end_line": 21,
+        "end_column": 53
+      },
+      "scope_id": "block:<fixtures>/python/code/modules/utils.py:21:15:21:54",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "items",
+      "location": {
+        "file_path": "<fixtures>/python/code/modules/utils.py",
+        "start_line": 21,
+        "start_column": 49,
+        "end_line": 21,
+        "end_column": 53
+      },
+      "scope_id": "block:<fixtures>/python/code/modules/utils.py:21:15:21:54",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "items",
+      "location": {
+        "file_path": "<fixtures>/python/code/modules/utils.py",
+        "start_line": 21,
+        "start_column": 49,
+        "end_line": 21,
+        "end_column": 53
+      },
+      "scope_id": "block:<fixtures>/python/code/modules/utils.py:21:15:21:54",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "validate_user_data",
+      "location": {
+        "file_path": "<fixtures>/python/code/modules/utils.py",
+        "start_line": 24,
+        "start_column": 5,
+        "end_line": 24,
+        "end_column": 22
+      },
+      "scope_id": "module:<fixtures>/python/code/modules/utils.py:1:1:26:48",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "validate_user_data",
+      "location": {
+        "file_path": "<fixtures>/python/code/modules/utils.py",
+        "start_line": 24,
+        "start_column": 5,
+        "end_line": 24,
+        "end_column": 22
+      },
+      "scope_id": "module:<fixtures>/python/code/modules/utils.py:1:1:26:48",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "validate_user_data",
+      "location": {
+        "file_path": "<fixtures>/python/code/modules/utils.py",
+        "start_line": 24,
+        "start_column": 5,
+        "end_line": 24,
+        "end_column": 22
+      },
+      "scope_id": "module:<fixtures>/python/code/modules/utils.py:1:1:26:48",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "name",
+      "location": {
+        "file_path": "<fixtures>/python/code/modules/utils.py",
+        "start_line": 24,
+        "start_column": 24,
+        "end_line": 24,
+        "end_column": 27
+      },
+      "scope_id": "function:<fixtures>/python/code/modules/utils.py:24:23:26:48",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "name",
+      "location": {
+        "file_path": "<fixtures>/python/code/modules/utils.py",
+        "start_line": 24,
+        "start_column": 24,
+        "end_line": 24,
+        "end_column": 27
+      },
+      "scope_id": "function:<fixtures>/python/code/modules/utils.py:24:23:26:48",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "name",
+      "location": {
+        "file_path": "<fixtures>/python/code/modules/utils.py",
+        "start_line": 24,
+        "start_column": 24,
+        "end_line": 24,
+        "end_column": 27
+      },
+      "scope_id": "function:<fixtures>/python/code/modules/utils.py:24:23:26:48",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "str",
+      "location": {
+        "file_path": "<fixtures>/python/code/modules/utils.py",
+        "start_line": 24,
+        "start_column": 30,
+        "end_line": 24,
+        "end_column": 32
+      },
+      "scope_id": "function:<fixtures>/python/code/modules/utils.py:24:23:26:48",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "str",
+      "location": {
+        "file_path": "<fixtures>/python/code/modules/utils.py",
+        "start_line": 24,
+        "start_column": 30,
+        "end_line": 24,
+        "end_column": 32
+      },
+      "scope_id": "function:<fixtures>/python/code/modules/utils.py:24:23:26:48",
+      "access_type": "read"
+    },
+    {
+      "kind": "type_reference",
+      "name": "str",
+      "location": {
+        "file_path": "<fixtures>/python/code/modules/utils.py",
+        "start_line": 24,
+        "start_column": 30,
+        "end_line": 24,
+        "end_column": 32
+      },
+      "scope_id": "function:<fixtures>/python/code/modules/utils.py:24:23:26:48",
+      "type_context": "annotation",
+      "type_info": {
+        "type_id": "type:<fixtures>/python/code/modules/utils.py:24:30:24:32:str",
+        "type_name": "str",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "str",
+      "location": {
+        "file_path": "<fixtures>/python/code/modules/utils.py",
+        "start_line": 24,
+        "start_column": 30,
+        "end_line": 24,
+        "end_column": 32
+      },
+      "scope_id": "function:<fixtures>/python/code/modules/utils.py:24:23:26:48",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "email",
+      "location": {
+        "file_path": "<fixtures>/python/code/modules/utils.py",
+        "start_line": 24,
+        "start_column": 35,
+        "end_line": 24,
+        "end_column": 39
+      },
+      "scope_id": "function:<fixtures>/python/code/modules/utils.py:24:23:26:48",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "email",
+      "location": {
+        "file_path": "<fixtures>/python/code/modules/utils.py",
+        "start_line": 24,
+        "start_column": 35,
+        "end_line": 24,
+        "end_column": 39
+      },
+      "scope_id": "function:<fixtures>/python/code/modules/utils.py:24:23:26:48",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "email",
+      "location": {
+        "file_path": "<fixtures>/python/code/modules/utils.py",
+        "start_line": 24,
+        "start_column": 35,
+        "end_line": 24,
+        "end_column": 39
+      },
+      "scope_id": "function:<fixtures>/python/code/modules/utils.py:24:23:26:48",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "str",
+      "location": {
+        "file_path": "<fixtures>/python/code/modules/utils.py",
+        "start_line": 24,
+        "start_column": 42,
+        "end_line": 24,
+        "end_column": 44
+      },
+      "scope_id": "function:<fixtures>/python/code/modules/utils.py:24:23:26:48",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "str",
+      "location": {
+        "file_path": "<fixtures>/python/code/modules/utils.py",
+        "start_line": 24,
+        "start_column": 42,
+        "end_line": 24,
+        "end_column": 44
+      },
+      "scope_id": "function:<fixtures>/python/code/modules/utils.py:24:23:26:48",
+      "access_type": "read"
+    },
+    {
+      "kind": "type_reference",
+      "name": "str",
+      "location": {
+        "file_path": "<fixtures>/python/code/modules/utils.py",
+        "start_line": 24,
+        "start_column": 42,
+        "end_line": 24,
+        "end_column": 44
+      },
+      "scope_id": "function:<fixtures>/python/code/modules/utils.py:24:23:26:48",
+      "type_context": "annotation",
+      "type_info": {
+        "type_id": "type:<fixtures>/python/code/modules/utils.py:24:42:24:44:str",
+        "type_name": "str",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "str",
+      "location": {
+        "file_path": "<fixtures>/python/code/modules/utils.py",
+        "start_line": 24,
+        "start_column": 42,
+        "end_line": 24,
+        "end_column": 44
+      },
+      "scope_id": "function:<fixtures>/python/code/modules/utils.py:24:23:26:48",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "bool",
+      "location": {
+        "file_path": "<fixtures>/python/code/modules/utils.py",
+        "start_line": 24,
+        "start_column": 50,
+        "end_line": 24,
+        "end_column": 53
+      },
+      "scope_id": "function:<fixtures>/python/code/modules/utils.py:24:23:26:48",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "bool",
+      "location": {
+        "file_path": "<fixtures>/python/code/modules/utils.py",
+        "start_line": 24,
+        "start_column": 50,
+        "end_line": 24,
+        "end_column": 53
+      },
+      "scope_id": "function:<fixtures>/python/code/modules/utils.py:24:23:26:48",
+      "access_type": "read"
+    },
+    {
+      "kind": "type_reference",
+      "name": "bool",
+      "location": {
+        "file_path": "<fixtures>/python/code/modules/utils.py",
+        "start_line": 24,
+        "start_column": 50,
+        "end_line": 24,
+        "end_column": 53
+      },
+      "scope_id": "function:<fixtures>/python/code/modules/utils.py:24:23:26:48",
+      "type_context": "annotation",
+      "type_info": {
+        "type_id": "type:<fixtures>/python/code/modules/utils.py:24:50:24:53:bool",
+        "type_name": "bool",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "bool",
+      "location": {
+        "file_path": "<fixtures>/python/code/modules/utils.py",
+        "start_line": 24,
+        "start_column": 50,
+        "end_line": 24,
+        "end_column": 53
+      },
+      "scope_id": "function:<fixtures>/python/code/modules/utils.py:24:23:26:48",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "return bool(name and email and \"@\" in email)",
+      "location": {
+        "file_path": "<fixtures>/python/code/modules/utils.py",
+        "start_line": 26,
+        "start_column": 5,
+        "end_line": 26,
+        "end_column": 48
+      },
+      "scope_id": "function:<fixtures>/python/code/modules/utils.py:24:23:26:48",
+      "access_type": "read"
+    },
+    {
+      "kind": "function_call",
+      "name": "bool",
+      "location": {
+        "file_path": "<fixtures>/python/code/modules/utils.py",
+        "start_line": 26,
+        "start_column": 12,
+        "end_line": 26,
+        "end_column": 15
+      },
+      "scope_id": "function:<fixtures>/python/code/modules/utils.py:24:23:26:48"
+    },
+    {
+      "kind": "function_call",
+      "name": "bool",
+      "location": {
+        "file_path": "<fixtures>/python/code/modules/utils.py",
+        "start_line": 26,
+        "start_column": 12,
+        "end_line": 26,
+        "end_column": 48
+      },
+      "scope_id": "function:<fixtures>/python/code/modules/utils.py:24:23:26:48"
+    },
+    {
+      "kind": "constructor_call",
+      "name": "bool",
+      "location": {
+        "file_path": "<fixtures>/python/code/modules/utils.py",
+        "start_line": 26,
+        "start_column": 12,
+        "end_line": 26,
+        "end_column": 15
+      },
+      "scope_id": "function:<fixtures>/python/code/modules/utils.py:24:23:26:48"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "bool(name and email and \"@\" in email)",
+      "location": {
+        "file_path": "<fixtures>/python/code/modules/utils.py",
+        "start_line": 26,
+        "start_column": 12,
+        "end_line": 26,
+        "end_column": 48
+      },
+      "scope_id": "function:<fixtures>/python/code/modules/utils.py:24:23:26:48",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "bool",
+      "location": {
+        "file_path": "<fixtures>/python/code/modules/utils.py",
+        "start_line": 26,
+        "start_column": 12,
+        "end_line": 26,
+        "end_column": 15
+      },
+      "scope_id": "function:<fixtures>/python/code/modules/utils.py:24:23:26:48",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "bool",
+      "location": {
+        "file_path": "<fixtures>/python/code/modules/utils.py",
+        "start_line": 26,
+        "start_column": 12,
+        "end_line": 26,
+        "end_column": 15
+      },
+      "scope_id": "function:<fixtures>/python/code/modules/utils.py:24:23:26:48",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "bool",
+      "location": {
+        "file_path": "<fixtures>/python/code/modules/utils.py",
+        "start_line": 26,
+        "start_column": 12,
+        "end_line": 26,
+        "end_column": 15
+      },
+      "scope_id": "function:<fixtures>/python/code/modules/utils.py:24:23:26:48",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "name",
+      "location": {
+        "file_path": "<fixtures>/python/code/modules/utils.py",
+        "start_line": 26,
+        "start_column": 17,
+        "end_line": 26,
+        "end_column": 20
+      },
+      "scope_id": "function:<fixtures>/python/code/modules/utils.py:24:23:26:48",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "name",
+      "location": {
+        "file_path": "<fixtures>/python/code/modules/utils.py",
+        "start_line": 26,
+        "start_column": 17,
+        "end_line": 26,
+        "end_column": 20
+      },
+      "scope_id": "function:<fixtures>/python/code/modules/utils.py:24:23:26:48",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "name",
+      "location": {
+        "file_path": "<fixtures>/python/code/modules/utils.py",
+        "start_line": 26,
+        "start_column": 17,
+        "end_line": 26,
+        "end_column": 20
+      },
+      "scope_id": "function:<fixtures>/python/code/modules/utils.py:24:23:26:48",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "email",
+      "location": {
+        "file_path": "<fixtures>/python/code/modules/utils.py",
+        "start_line": 26,
+        "start_column": 26,
+        "end_line": 26,
+        "end_column": 30
+      },
+      "scope_id": "function:<fixtures>/python/code/modules/utils.py:24:23:26:48",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "email",
+      "location": {
+        "file_path": "<fixtures>/python/code/modules/utils.py",
+        "start_line": 26,
+        "start_column": 26,
+        "end_line": 26,
+        "end_column": 30
+      },
+      "scope_id": "function:<fixtures>/python/code/modules/utils.py:24:23:26:48",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "email",
+      "location": {
+        "file_path": "<fixtures>/python/code/modules/utils.py",
+        "start_line": 26,
+        "start_column": 26,
+        "end_line": 26,
+        "end_column": 30
+      },
+      "scope_id": "function:<fixtures>/python/code/modules/utils.py:24:23:26:48",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "email",
+      "location": {
+        "file_path": "<fixtures>/python/code/modules/utils.py",
+        "start_line": 26,
+        "start_column": 43,
+        "end_line": 26,
+        "end_column": 47
+      },
+      "scope_id": "function:<fixtures>/python/code/modules/utils.py:24:23:26:48",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "email",
+      "location": {
+        "file_path": "<fixtures>/python/code/modules/utils.py",
+        "start_line": 26,
+        "start_column": 43,
+        "end_line": 26,
+        "end_column": 47
+      },
+      "scope_id": "function:<fixtures>/python/code/modules/utils.py:24:23:26:48",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "email",
+      "location": {
+        "file_path": "<fixtures>/python/code/modules/utils.py",
+        "start_line": 26,
+        "start_column": 43,
+        "end_line": 26,
+        "end_column": 47
+      },
+      "scope_id": "function:<fixtures>/python/code/modules/utils.py:24:23:26:48",
+      "access_type": "read"
+    }
+  ]
+}

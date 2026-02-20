@@ -1,0 +1,1215 @@
+{
+  "file_path": "<fixtures>/typescript/code/modules/imports.ts",
+  "language": "typescript",
+  "root_scope_id": "module:<fixtures>/typescript/code/modules/imports.ts:1:1:46:0",
+  "scopes": {
+    "module:<fixtures>/typescript/code/modules/imports.ts:1:1:46:0": {
+      "id": "module:<fixtures>/typescript/code/modules/imports.ts:1:1:46:0",
+      "parent_id": null,
+      "name": null,
+      "type": "module",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/modules/imports.ts",
+        "start_line": 1,
+        "start_column": 1,
+        "end_line": 46,
+        "end_column": 0
+      },
+      "child_ids": [
+        "function:<fixtures>/typescript/code/modules/imports.ts:22:28:30:1",
+        "function:<fixtures>/typescript/code/modules/imports.ts:32:31:34:1",
+        "function:<fixtures>/typescript/code/modules/imports.ts:36:21:38:1",
+        "function:<fixtures>/typescript/code/modules/imports.ts:41:21:43:1"
+      ]
+    },
+    "function:<fixtures>/typescript/code/modules/imports.ts:22:28:30:1": {
+      "id": "function:<fixtures>/typescript/code/modules/imports.ts:22:28:30:1",
+      "parent_id": "module:<fixtures>/typescript/code/modules/imports.ts:1:1:46:0",
+      "name": "create_application",
+      "type": "function",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/modules/imports.ts",
+        "start_line": 22,
+        "start_column": 28,
+        "end_line": 30,
+        "end_column": 1
+      },
+      "child_ids": []
+    },
+    "function:<fixtures>/typescript/code/modules/imports.ts:32:31:34:1": {
+      "id": "function:<fixtures>/typescript/code/modules/imports.ts:32:31:34:1",
+      "parent_id": "module:<fixtures>/typescript/code/modules/imports.ts:1:1:46:0",
+      "name": "get_current_timestamp",
+      "type": "function",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/modules/imports.ts",
+        "start_line": 32,
+        "start_column": 31,
+        "end_line": 34,
+        "end_column": 1
+      },
+      "child_ids": []
+    },
+    "function:<fixtures>/typescript/code/modules/imports.ts:36:21:38:1": {
+      "id": "function:<fixtures>/typescript/code/modules/imports.ts:36:21:38:1",
+      "parent_id": "module:<fixtures>/typescript/code/modules/imports.ts:1:1:46:0",
+      "name": "make_client",
+      "type": "function",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/modules/imports.ts",
+        "start_line": 36,
+        "start_column": 21,
+        "end_line": 38,
+        "end_column": 1
+      },
+      "child_ids": []
+    },
+    "function:<fixtures>/typescript/code/modules/imports.ts:41:21:43:1": {
+      "id": "function:<fixtures>/typescript/code/modules/imports.ts:41:21:43:1",
+      "parent_id": "module:<fixtures>/typescript/code/modules/imports.ts:1:1:46:0",
+      "name": "get_version",
+      "type": "function",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/modules/imports.ts",
+        "start_line": 41,
+        "start_column": 21,
+        "end_line": 43,
+        "end_column": 1
+      },
+      "child_ids": []
+    }
+  },
+  "functions": {
+    "function:<fixtures>/typescript/code/modules/imports.ts:22:10:22:27:create_application": {
+      "kind": "function",
+      "symbol_id": "function:<fixtures>/typescript/code/modules/imports.ts:22:10:22:27:create_application",
+      "name": "create_application",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/modules/imports.ts",
+        "start_line": 22,
+        "start_column": 10,
+        "end_line": 22,
+        "end_column": 27
+      },
+      "defining_scope_id": "module:<fixtures>/typescript/code/modules/imports.ts:1:1:46:0",
+      "is_exported": true,
+      "export": {
+        "is_reexport": false
+      },
+      "signature": {
+        "parameters": [],
+        "return_type": "Application"
+      },
+      "return_type": "Application",
+      "body_scope_id": "function:<fixtures>/typescript/code/modules/imports.ts:22:28:30:1"
+    },
+    "function:<fixtures>/typescript/code/modules/imports.ts:32:10:32:30:get_current_timestamp": {
+      "kind": "function",
+      "symbol_id": "function:<fixtures>/typescript/code/modules/imports.ts:32:10:32:30:get_current_timestamp",
+      "name": "get_current_timestamp",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/modules/imports.ts",
+        "start_line": 32,
+        "start_column": 10,
+        "end_line": 32,
+        "end_column": 30
+      },
+      "defining_scope_id": "module:<fixtures>/typescript/code/modules/imports.ts:1:1:46:0",
+      "is_exported": true,
+      "export": {
+        "is_reexport": false
+      },
+      "signature": {
+        "parameters": [],
+        "return_type": "string"
+      },
+      "return_type": "string",
+      "body_scope_id": "function:<fixtures>/typescript/code/modules/imports.ts:32:31:34:1"
+    },
+    "function:<fixtures>/typescript/code/modules/imports.ts:36:10:36:20:make_client": {
+      "kind": "function",
+      "symbol_id": "function:<fixtures>/typescript/code/modules/imports.ts:36:10:36:20:make_client",
+      "name": "make_client",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/modules/imports.ts",
+        "start_line": 36,
+        "start_column": 10,
+        "end_line": 36,
+        "end_column": 20
+      },
+      "defining_scope_id": "module:<fixtures>/typescript/code/modules/imports.ts:1:1:46:0",
+      "is_exported": true,
+      "export": {
+        "is_reexport": false
+      },
+      "signature": {
+        "parameters": [],
+        "return_type": "HttpClient"
+      },
+      "return_type": "HttpClient",
+      "body_scope_id": "function:<fixtures>/typescript/code/modules/imports.ts:36:21:38:1"
+    },
+    "function:<fixtures>/typescript/code/modules/imports.ts:41:10:41:20:get_version": {
+      "kind": "function",
+      "symbol_id": "function:<fixtures>/typescript/code/modules/imports.ts:41:10:41:20:get_version",
+      "name": "get_version",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/modules/imports.ts",
+        "start_line": 41,
+        "start_column": 10,
+        "end_line": 41,
+        "end_column": 20
+      },
+      "defining_scope_id": "module:<fixtures>/typescript/code/modules/imports.ts:1:1:46:0",
+      "is_exported": true,
+      "export": {
+        "is_reexport": false
+      },
+      "signature": {
+        "parameters": [],
+        "return_type": "string"
+      },
+      "return_type": "string",
+      "body_scope_id": "function:<fixtures>/typescript/code/modules/imports.ts:41:21:43:1"
+    }
+  },
+  "classes": {},
+  "variables": {
+    "variable:<fixtures>/typescript/code/modules/imports.ts:23:9:23:14:config": {
+      "kind": "constant",
+      "symbol_id": "variable:<fixtures>/typescript/code/modules/imports.ts:23:9:23:14:config",
+      "name": "config",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/modules/imports.ts",
+        "start_line": 23,
+        "start_column": 9,
+        "end_line": 23,
+        "end_column": 14
+      },
+      "defining_scope_id": "function:<fixtures>/typescript/code/modules/imports.ts:22:28:30:1",
+      "is_exported": false,
+      "initial_value": "{\n    apiUrl: API_URL,\n    timeout: 5000,\n    retries: 3,\n  }",
+      "function_collection": {
+        "collection_type": "Object",
+        "location": {
+          "file_path": "<fixtures>/typescript/code/modules/imports.ts",
+          "start_line": 23,
+          "start_column": 26,
+          "end_line": 27,
+          "end_column": 3
+        },
+        "stored_functions": [],
+        "stored_references": [
+          "API_URL"
+        ],
+        "collection_id": "variable:<fixtures>/typescript/code/modules/imports.ts:23:9:23:14:config"
+      }
+    }
+  },
+  "interfaces": {},
+  "enums": {},
+  "namespaces": {},
+  "types": {},
+  "imported_symbols": {
+    "variable:<fixtures>/typescript/code/modules/imports.ts:7:10:7:16:API_URL": {
+      "kind": "import",
+      "symbol_id": "variable:<fixtures>/typescript/code/modules/imports.ts:7:10:7:16:API_URL",
+      "name": "API_URL",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/modules/imports.ts",
+        "start_line": 7,
+        "start_column": 10,
+        "end_line": 7,
+        "end_column": 16
+      },
+      "defining_scope_id": "module:<fixtures>/typescript/code/modules/imports.ts:1:1:46:0",
+      "import_path": "./exports",
+      "import_kind": "named"
+    },
+    "variable:<fixtures>/typescript/code/modules/imports.ts:7:19:7:29:API_VERSION": {
+      "kind": "import",
+      "symbol_id": "variable:<fixtures>/typescript/code/modules/imports.ts:7:19:7:29:API_VERSION",
+      "name": "API_VERSION",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/modules/imports.ts",
+        "start_line": 7,
+        "start_column": 19,
+        "end_line": 7,
+        "end_column": 29
+      },
+      "defining_scope_id": "module:<fixtures>/typescript/code/modules/imports.ts:1:1:46:0",
+      "import_path": "./exports",
+      "import_kind": "named"
+    },
+    "variable:<fixtures>/typescript/code/modules/imports.ts:7:32:7:41:formatDate": {
+      "kind": "import",
+      "symbol_id": "variable:<fixtures>/typescript/code/modules/imports.ts:7:32:7:41:formatDate",
+      "name": "formatDate",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/modules/imports.ts",
+        "start_line": 7,
+        "start_column": 32,
+        "end_line": 7,
+        "end_column": 41
+      },
+      "defining_scope_id": "module:<fixtures>/typescript/code/modules/imports.ts:1:1:46:0",
+      "import_path": "./exports",
+      "import_kind": "named"
+    },
+    "variable:<fixtures>/typescript/code/modules/imports.ts:10:8:10:18:Application": {
+      "kind": "import",
+      "symbol_id": "variable:<fixtures>/typescript/code/modules/imports.ts:10:8:10:18:Application",
+      "name": "Application",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/modules/imports.ts",
+        "start_line": 10,
+        "start_column": 8,
+        "end_line": 10,
+        "end_column": 18
+      },
+      "defining_scope_id": "module:<fixtures>/typescript/code/modules/imports.ts:1:1:46:0",
+      "import_path": "./exports",
+      "import_kind": "default"
+    },
+    "variable:<fixtures>/typescript/code/modules/imports.ts:13:8:13:20:DefaultExport": {
+      "kind": "import",
+      "symbol_id": "variable:<fixtures>/typescript/code/modules/imports.ts:13:8:13:20:DefaultExport",
+      "name": "DefaultExport",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/modules/imports.ts",
+        "start_line": 13,
+        "start_column": 8,
+        "end_line": 13,
+        "end_column": 20
+      },
+      "defining_scope_id": "module:<fixtures>/typescript/code/modules/imports.ts:1:1:46:0",
+      "import_path": "./exports",
+      "import_kind": "default"
+    },
+    "variable:<fixtures>/typescript/code/modules/imports.ts:13:25:13:34:HttpClient": {
+      "kind": "import",
+      "symbol_id": "variable:<fixtures>/typescript/code/modules/imports.ts:13:25:13:34:HttpClient",
+      "name": "HttpClient",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/modules/imports.ts",
+        "start_line": 13,
+        "start_column": 25,
+        "end_line": 13,
+        "end_column": 34
+      },
+      "defining_scope_id": "module:<fixtures>/typescript/code/modules/imports.ts:1:1:46:0",
+      "import_path": "./exports",
+      "import_kind": "named"
+    },
+    "variable:<fixtures>/typescript/code/modules/imports.ts:13:37:13:42:Config": {
+      "kind": "import",
+      "symbol_id": "variable:<fixtures>/typescript/code/modules/imports.ts:13:37:13:42:Config",
+      "name": "Config",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/modules/imports.ts",
+        "start_line": 13,
+        "start_column": 37,
+        "end_line": 13,
+        "end_column": 42
+      },
+      "defining_scope_id": "module:<fixtures>/typescript/code/modules/imports.ts:1:1:46:0",
+      "import_path": "./exports",
+      "import_kind": "named"
+    },
+    "variable:<fixtures>/typescript/code/modules/imports.ts:16:13:16:19:Exports": {
+      "kind": "import",
+      "symbol_id": "variable:<fixtures>/typescript/code/modules/imports.ts:16:13:16:19:Exports",
+      "name": "Exports",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/modules/imports.ts",
+        "start_line": 16,
+        "start_column": 13,
+        "end_line": 16,
+        "end_column": 19
+      },
+      "defining_scope_id": "module:<fixtures>/typescript/code/modules/imports.ts:1:1:46:0",
+      "import_path": "./exports",
+      "import_kind": "namespace"
+    },
+    "variable:<fixtures>/typescript/code/modules/imports.ts:19:15:19:27:RequestMethod": {
+      "kind": "import",
+      "symbol_id": "variable:<fixtures>/typescript/code/modules/imports.ts:19:15:19:27:RequestMethod",
+      "name": "RequestMethod",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/modules/imports.ts",
+        "start_line": 19,
+        "start_column": 15,
+        "end_line": 19,
+        "end_column": 27
+      },
+      "defining_scope_id": "module:<fixtures>/typescript/code/modules/imports.ts:1:1:46:0",
+      "import_path": "./exports",
+      "import_kind": "named"
+    }
+  },
+  "references": [
+    {
+      "kind": "variable_reference",
+      "name": "API_URL",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/modules/imports.ts",
+        "start_line": 7,
+        "start_column": 10,
+        "end_line": 7,
+        "end_column": 16
+      },
+      "scope_id": "module:<fixtures>/typescript/code/modules/imports.ts:1:1:46:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "API_VERSION",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/modules/imports.ts",
+        "start_line": 7,
+        "start_column": 19,
+        "end_line": 7,
+        "end_column": 29
+      },
+      "scope_id": "module:<fixtures>/typescript/code/modules/imports.ts:1:1:46:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "formatDate",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/modules/imports.ts",
+        "start_line": 7,
+        "start_column": 32,
+        "end_line": 7,
+        "end_column": 41
+      },
+      "scope_id": "module:<fixtures>/typescript/code/modules/imports.ts:1:1:46:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "Application",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/modules/imports.ts",
+        "start_line": 10,
+        "start_column": 8,
+        "end_line": 10,
+        "end_column": 18
+      },
+      "scope_id": "module:<fixtures>/typescript/code/modules/imports.ts:1:1:46:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "DefaultExport",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/modules/imports.ts",
+        "start_line": 13,
+        "start_column": 8,
+        "end_line": 13,
+        "end_column": 20
+      },
+      "scope_id": "module:<fixtures>/typescript/code/modules/imports.ts:1:1:46:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "HttpClient",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/modules/imports.ts",
+        "start_line": 13,
+        "start_column": 25,
+        "end_line": 13,
+        "end_column": 34
+      },
+      "scope_id": "module:<fixtures>/typescript/code/modules/imports.ts:1:1:46:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "Config",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/modules/imports.ts",
+        "start_line": 13,
+        "start_column": 37,
+        "end_line": 13,
+        "end_column": 42
+      },
+      "scope_id": "module:<fixtures>/typescript/code/modules/imports.ts:1:1:46:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "Exports",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/modules/imports.ts",
+        "start_line": 16,
+        "start_column": 13,
+        "end_line": 16,
+        "end_column": 19
+      },
+      "scope_id": "module:<fixtures>/typescript/code/modules/imports.ts:1:1:46:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "RequestMethod",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/modules/imports.ts",
+        "start_line": 19,
+        "start_column": 15,
+        "end_line": 19,
+        "end_column": 27
+      },
+      "scope_id": "module:<fixtures>/typescript/code/modules/imports.ts:1:1:46:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "create_application",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/modules/imports.ts",
+        "start_line": 22,
+        "start_column": 10,
+        "end_line": 22,
+        "end_column": 27
+      },
+      "scope_id": "module:<fixtures>/typescript/code/modules/imports.ts:1:1:46:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "type_reference",
+      "name": "Application",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/modules/imports.ts",
+        "start_line": 22,
+        "start_column": 32,
+        "end_line": 22,
+        "end_column": 42
+      },
+      "scope_id": "function:<fixtures>/typescript/code/modules/imports.ts:22:28:30:1",
+      "type_context": "annotation",
+      "type_info": {
+        "type_id": "type:<fixtures>/typescript/code/modules/imports.ts:22:32:22:42:Application",
+        "type_name": "Application",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "kind": "assignment",
+      "name": "config: Config = {\n    apiUrl: API_URL,\n    timeout: 5000,\n    retries: 3,\n  }",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/modules/imports.ts",
+        "start_line": 23,
+        "start_column": 9,
+        "end_line": 27,
+        "end_column": 3
+      },
+      "scope_id": "function:<fixtures>/typescript/code/modules/imports.ts:22:28:30:1",
+      "target_location": {
+        "file_path": "<fixtures>/typescript/code/modules/imports.ts",
+        "start_line": 23,
+        "start_column": 9,
+        "end_line": 27,
+        "end_column": 3
+      },
+      "assignment_type": {
+        "type_id": "type:<fixtures>/typescript/code/modules/imports.ts:23:9:27:3:Config",
+        "type_name": "Config",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "kind": "assignment",
+      "name": "config",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/modules/imports.ts",
+        "start_line": 23,
+        "start_column": 9,
+        "end_line": 23,
+        "end_column": 14
+      },
+      "scope_id": "function:<fixtures>/typescript/code/modules/imports.ts:22:28:30:1",
+      "target_location": {
+        "file_path": "<fixtures>/typescript/code/modules/imports.ts",
+        "start_line": 23,
+        "start_column": 9,
+        "end_line": 23,
+        "end_column": 14
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "config",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/modules/imports.ts",
+        "start_line": 23,
+        "start_column": 9,
+        "end_line": 23,
+        "end_column": 14
+      },
+      "scope_id": "function:<fixtures>/typescript/code/modules/imports.ts:22:28:30:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "type_reference",
+      "name": "Config",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/modules/imports.ts",
+        "start_line": 23,
+        "start_column": 17,
+        "end_line": 23,
+        "end_column": 22
+      },
+      "scope_id": "function:<fixtures>/typescript/code/modules/imports.ts:22:28:30:1",
+      "type_context": "annotation",
+      "type_info": {
+        "type_id": "type:<fixtures>/typescript/code/modules/imports.ts:23:17:23:22:Config",
+        "type_name": "Config",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "kind": "assignment",
+      "name": "{\n    apiUrl: API_URL,\n    timeout: 5000,\n    retries: 3,\n  }",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/modules/imports.ts",
+        "start_line": 23,
+        "start_column": 26,
+        "end_line": 27,
+        "end_column": 3
+      },
+      "scope_id": "function:<fixtures>/typescript/code/modules/imports.ts:22:28:30:1",
+      "target_location": {
+        "file_path": "<fixtures>/typescript/code/modules/imports.ts",
+        "start_line": 23,
+        "start_column": 9,
+        "end_line": 23,
+        "end_column": 14
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "API_URL",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/modules/imports.ts",
+        "start_line": 24,
+        "start_column": 13,
+        "end_line": 24,
+        "end_column": 19
+      },
+      "scope_id": "function:<fixtures>/typescript/code/modules/imports.ts:22:28:30:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "return new Application(config);",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/modules/imports.ts",
+        "start_line": 29,
+        "start_column": 3,
+        "end_line": 29,
+        "end_column": 33
+      },
+      "scope_id": "function:<fixtures>/typescript/code/modules/imports.ts:22:28:30:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "function_call",
+      "name": "Application",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/modules/imports.ts",
+        "start_line": 29,
+        "start_column": 10,
+        "end_line": 29,
+        "end_column": 32
+      },
+      "scope_id": "function:<fixtures>/typescript/code/modules/imports.ts:22:28:30:1"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "Application",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/modules/imports.ts",
+        "start_line": 29,
+        "start_column": 10,
+        "end_line": 29,
+        "end_column": 32
+      },
+      "scope_id": "function:<fixtures>/typescript/code/modules/imports.ts:22:28:30:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "constructor_call",
+      "name": "Application",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/modules/imports.ts",
+        "start_line": 29,
+        "start_column": 14,
+        "end_line": 29,
+        "end_column": 24
+      },
+      "scope_id": "function:<fixtures>/typescript/code/modules/imports.ts:22:28:30:1"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "Application",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/modules/imports.ts",
+        "start_line": 29,
+        "start_column": 14,
+        "end_line": 29,
+        "end_column": 24
+      },
+      "scope_id": "function:<fixtures>/typescript/code/modules/imports.ts:22:28:30:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "config",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/modules/imports.ts",
+        "start_line": 29,
+        "start_column": 26,
+        "end_line": 29,
+        "end_column": 31
+      },
+      "scope_id": "function:<fixtures>/typescript/code/modules/imports.ts:22:28:30:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "get_current_timestamp",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/modules/imports.ts",
+        "start_line": 32,
+        "start_column": 10,
+        "end_line": 32,
+        "end_column": 30
+      },
+      "scope_id": "module:<fixtures>/typescript/code/modules/imports.ts:1:1:46:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "return formatDate(new Date());",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/modules/imports.ts",
+        "start_line": 33,
+        "start_column": 3,
+        "end_line": 33,
+        "end_column": 32
+      },
+      "scope_id": "function:<fixtures>/typescript/code/modules/imports.ts:32:31:34:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "function_call",
+      "name": "formatDate",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/modules/imports.ts",
+        "start_line": 33,
+        "start_column": 10,
+        "end_line": 33,
+        "end_column": 19
+      },
+      "scope_id": "function:<fixtures>/typescript/code/modules/imports.ts:32:31:34:1"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "formatDate",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/modules/imports.ts",
+        "start_line": 33,
+        "start_column": 10,
+        "end_line": 33,
+        "end_column": 31
+      },
+      "scope_id": "function:<fixtures>/typescript/code/modules/imports.ts:32:31:34:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "formatDate",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/modules/imports.ts",
+        "start_line": 33,
+        "start_column": 10,
+        "end_line": 33,
+        "end_column": 19
+      },
+      "scope_id": "function:<fixtures>/typescript/code/modules/imports.ts:32:31:34:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "function_call",
+      "name": "Date",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/modules/imports.ts",
+        "start_line": 33,
+        "start_column": 21,
+        "end_line": 33,
+        "end_column": 30
+      },
+      "scope_id": "function:<fixtures>/typescript/code/modules/imports.ts:32:31:34:1"
+    },
+    {
+      "kind": "constructor_call",
+      "name": "Date",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/modules/imports.ts",
+        "start_line": 33,
+        "start_column": 25,
+        "end_line": 33,
+        "end_column": 28
+      },
+      "scope_id": "function:<fixtures>/typescript/code/modules/imports.ts:32:31:34:1"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "Date",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/modules/imports.ts",
+        "start_line": 33,
+        "start_column": 25,
+        "end_line": 33,
+        "end_column": 28
+      },
+      "scope_id": "function:<fixtures>/typescript/code/modules/imports.ts:32:31:34:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "make_client",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/modules/imports.ts",
+        "start_line": 36,
+        "start_column": 10,
+        "end_line": 36,
+        "end_column": 20
+      },
+      "scope_id": "module:<fixtures>/typescript/code/modules/imports.ts:1:1:46:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "type_reference",
+      "name": "HttpClient",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/modules/imports.ts",
+        "start_line": 36,
+        "start_column": 25,
+        "end_line": 36,
+        "end_column": 34
+      },
+      "scope_id": "function:<fixtures>/typescript/code/modules/imports.ts:36:21:38:1",
+      "type_context": "annotation",
+      "type_info": {
+        "type_id": "type:<fixtures>/typescript/code/modules/imports.ts:36:25:36:34:HttpClient",
+        "type_name": "HttpClient",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "return new HttpClient(API_URL);",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/modules/imports.ts",
+        "start_line": 37,
+        "start_column": 3,
+        "end_line": 37,
+        "end_column": 33
+      },
+      "scope_id": "function:<fixtures>/typescript/code/modules/imports.ts:36:21:38:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "function_call",
+      "name": "HttpClient",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/modules/imports.ts",
+        "start_line": 37,
+        "start_column": 10,
+        "end_line": 37,
+        "end_column": 32
+      },
+      "scope_id": "function:<fixtures>/typescript/code/modules/imports.ts:36:21:38:1"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "HttpClient",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/modules/imports.ts",
+        "start_line": 37,
+        "start_column": 10,
+        "end_line": 37,
+        "end_column": 32
+      },
+      "scope_id": "function:<fixtures>/typescript/code/modules/imports.ts:36:21:38:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "constructor_call",
+      "name": "HttpClient",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/modules/imports.ts",
+        "start_line": 37,
+        "start_column": 14,
+        "end_line": 37,
+        "end_column": 23
+      },
+      "scope_id": "function:<fixtures>/typescript/code/modules/imports.ts:36:21:38:1"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "HttpClient",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/modules/imports.ts",
+        "start_line": 37,
+        "start_column": 14,
+        "end_line": 37,
+        "end_column": 23
+      },
+      "scope_id": "function:<fixtures>/typescript/code/modules/imports.ts:36:21:38:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "API_URL",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/modules/imports.ts",
+        "start_line": 37,
+        "start_column": 25,
+        "end_line": 37,
+        "end_column": 31
+      },
+      "scope_id": "function:<fixtures>/typescript/code/modules/imports.ts:36:21:38:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "get_version",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/modules/imports.ts",
+        "start_line": 41,
+        "start_column": 10,
+        "end_line": 41,
+        "end_column": 20
+      },
+      "scope_id": "module:<fixtures>/typescript/code/modules/imports.ts:1:1:46:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "return `${Exports.API_URL}/${Exports.API_VERSION}`;",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/modules/imports.ts",
+        "start_line": 42,
+        "start_column": 3,
+        "end_line": 42,
+        "end_column": 53
+      },
+      "scope_id": "function:<fixtures>/typescript/code/modules/imports.ts:41:21:43:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "`${Exports.API_URL}/${Exports.API_VERSION}`",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/modules/imports.ts",
+        "start_line": 42,
+        "start_column": 10,
+        "end_line": 42,
+        "end_column": 52
+      },
+      "scope_id": "function:<fixtures>/typescript/code/modules/imports.ts:41:21:43:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "property_access",
+      "name": "API_URL",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/modules/imports.ts",
+        "start_line": 42,
+        "start_column": 13,
+        "end_line": 42,
+        "end_column": 27
+      },
+      "scope_id": "function:<fixtures>/typescript/code/modules/imports.ts:41:21:43:1",
+      "receiver_location": {
+        "file_path": "<fixtures>/typescript/code/modules/imports.ts",
+        "start_line": 42,
+        "start_column": 13,
+        "end_line": 42,
+        "end_column": 19
+      },
+      "property_chain": [
+        "Exports",
+        "API_URL"
+      ],
+      "access_type": "property",
+      "is_optional_chain": false
+    },
+    {
+      "kind": "variable_reference",
+      "name": "Exports",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/modules/imports.ts",
+        "start_line": 42,
+        "start_column": 13,
+        "end_line": 42,
+        "end_column": 19
+      },
+      "scope_id": "function:<fixtures>/typescript/code/modules/imports.ts:41:21:43:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "property_access",
+      "name": "API_URL",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/modules/imports.ts",
+        "start_line": 42,
+        "start_column": 13,
+        "end_line": 42,
+        "end_column": 27
+      },
+      "scope_id": "function:<fixtures>/typescript/code/modules/imports.ts:41:21:43:1",
+      "receiver_location": {
+        "file_path": "<fixtures>/typescript/code/modules/imports.ts",
+        "start_line": 42,
+        "start_column": 13,
+        "end_line": 42,
+        "end_column": 19
+      },
+      "property_chain": [
+        "Exports",
+        "API_URL"
+      ],
+      "access_type": "property",
+      "is_optional_chain": false
+    },
+    {
+      "kind": "variable_reference",
+      "name": "Exports",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/modules/imports.ts",
+        "start_line": 42,
+        "start_column": 13,
+        "end_line": 42,
+        "end_column": 19
+      },
+      "scope_id": "function:<fixtures>/typescript/code/modules/imports.ts:41:21:43:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "Exports",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/modules/imports.ts",
+        "start_line": 42,
+        "start_column": 13,
+        "end_line": 42,
+        "end_column": 19
+      },
+      "scope_id": "function:<fixtures>/typescript/code/modules/imports.ts:41:21:43:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "API_URL",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/modules/imports.ts",
+        "start_line": 42,
+        "start_column": 21,
+        "end_line": 42,
+        "end_column": 27
+      },
+      "scope_id": "function:<fixtures>/typescript/code/modules/imports.ts:41:21:43:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "API_URL",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/modules/imports.ts",
+        "start_line": 42,
+        "start_column": 21,
+        "end_line": 42,
+        "end_column": 27
+      },
+      "scope_id": "function:<fixtures>/typescript/code/modules/imports.ts:41:21:43:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "property_access",
+      "name": "API_VERSION",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/modules/imports.ts",
+        "start_line": 42,
+        "start_column": 32,
+        "end_line": 42,
+        "end_column": 50
+      },
+      "scope_id": "function:<fixtures>/typescript/code/modules/imports.ts:41:21:43:1",
+      "receiver_location": {
+        "file_path": "<fixtures>/typescript/code/modules/imports.ts",
+        "start_line": 42,
+        "start_column": 32,
+        "end_line": 42,
+        "end_column": 38
+      },
+      "property_chain": [
+        "Exports",
+        "API_VERSION"
+      ],
+      "access_type": "property",
+      "is_optional_chain": false
+    },
+    {
+      "kind": "variable_reference",
+      "name": "Exports",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/modules/imports.ts",
+        "start_line": 42,
+        "start_column": 32,
+        "end_line": 42,
+        "end_column": 38
+      },
+      "scope_id": "function:<fixtures>/typescript/code/modules/imports.ts:41:21:43:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "property_access",
+      "name": "API_VERSION",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/modules/imports.ts",
+        "start_line": 42,
+        "start_column": 32,
+        "end_line": 42,
+        "end_column": 50
+      },
+      "scope_id": "function:<fixtures>/typescript/code/modules/imports.ts:41:21:43:1",
+      "receiver_location": {
+        "file_path": "<fixtures>/typescript/code/modules/imports.ts",
+        "start_line": 42,
+        "start_column": 32,
+        "end_line": 42,
+        "end_column": 38
+      },
+      "property_chain": [
+        "Exports",
+        "API_VERSION"
+      ],
+      "access_type": "property",
+      "is_optional_chain": false
+    },
+    {
+      "kind": "variable_reference",
+      "name": "Exports",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/modules/imports.ts",
+        "start_line": 42,
+        "start_column": 32,
+        "end_line": 42,
+        "end_column": 38
+      },
+      "scope_id": "function:<fixtures>/typescript/code/modules/imports.ts:41:21:43:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "Exports",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/modules/imports.ts",
+        "start_line": 42,
+        "start_column": 32,
+        "end_line": 42,
+        "end_column": 38
+      },
+      "scope_id": "function:<fixtures>/typescript/code/modules/imports.ts:41:21:43:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "API_VERSION",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/modules/imports.ts",
+        "start_line": 42,
+        "start_column": 40,
+        "end_line": 42,
+        "end_column": 50
+      },
+      "scope_id": "function:<fixtures>/typescript/code/modules/imports.ts:41:21:43:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "API_VERSION",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/modules/imports.ts",
+        "start_line": 42,
+        "start_column": 40,
+        "end_line": 42,
+        "end_column": 50
+      },
+      "scope_id": "function:<fixtures>/typescript/code/modules/imports.ts:41:21:43:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "create_application",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/modules/imports.ts",
+        "start_line": 45,
+        "start_column": 10,
+        "end_line": 45,
+        "end_column": 27
+      },
+      "scope_id": "module:<fixtures>/typescript/code/modules/imports.ts:1:1:46:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "get_current_timestamp",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/modules/imports.ts",
+        "start_line": 45,
+        "start_column": 30,
+        "end_line": 45,
+        "end_column": 50
+      },
+      "scope_id": "module:<fixtures>/typescript/code/modules/imports.ts:1:1:46:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "make_client",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/modules/imports.ts",
+        "start_line": 45,
+        "start_column": 53,
+        "end_line": 45,
+        "end_column": 63
+      },
+      "scope_id": "module:<fixtures>/typescript/code/modules/imports.ts:1:1:46:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "get_version",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/modules/imports.ts",
+        "start_line": 45,
+        "start_column": 66,
+        "end_line": 45,
+        "end_column": 76
+      },
+      "scope_id": "module:<fixtures>/typescript/code/modules/imports.ts:1:1:46:0",
+      "access_type": "read"
+    }
+  ]
+}

@@ -1,7 +1,7 @@
-// Export project-related modules
-export { Project } from './project';
-export { FileManager } from './file_manager';
-export { LanguageManager } from './language_manager';
-export { CallGraphService } from './call_graph_service';
-export { InheritanceService } from './inheritance_service';
-export { ImportResolver } from './import_resolver';
+export { DefinitionRegistry } from "../resolve_references/registries/definition";
+export { TypeRegistry } from "../resolve_references/registries/type";
+export { ScopeRegistry } from "../resolve_references/registries/scope";
+export { ExportRegistry } from "../resolve_references/registries/export";
+export { ImportGraph } from "./import_graph";
+export { ResolutionRegistry } from "../resolve_references/resolve_references";
+export { Project } from "./project";

@@ -1,0 +1,1311 @@
+{
+  "file_path": "<fixtures>/typescript/code/types/type_aliases.ts",
+  "language": "typescript",
+  "root_scope_id": "module:<fixtures>/typescript/code/types/type_aliases.ts:1:1:54:0",
+  "scopes": {
+    "module:<fixtures>/typescript/code/types/type_aliases.ts:1:1:54:0": {
+      "id": "module:<fixtures>/typescript/code/types/type_aliases.ts:1:1:54:0",
+      "parent_id": null,
+      "name": null,
+      "type": "module",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/types/type_aliases.ts",
+        "start_line": 1,
+        "start_column": 1,
+        "end_line": 54,
+        "end_column": 0
+      },
+      "child_ids": []
+    }
+  },
+  "functions": {},
+  "classes": {},
+  "variables": {},
+  "interfaces": {},
+  "enums": {},
+  "namespaces": {},
+  "types": {
+    "type:<fixtures>/typescript/code/types/type_aliases.ts:7:1:7:26:type ID = string | number;": {
+      "kind": "type_alias",
+      "symbol_id": "type:<fixtures>/typescript/code/types/type_aliases.ts:7:1:7:26:type ID = string | number;",
+      "name": "type ID = string | number;",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/types/type_aliases.ts",
+        "start_line": 7,
+        "start_column": 1,
+        "end_line": 7,
+        "end_column": 26
+      },
+      "scope_id": "module:<fixtures>/typescript/code/types/type_aliases.ts:1:1:54:0",
+      "is_exported": false,
+      "generics": [],
+      "defining_scope_id": "module:<fixtures>/typescript/code/types/type_aliases.ts:1:1:54:0"
+    },
+    "type:<fixtures>/typescript/code/types/type_aliases.ts:7:6:7:7:ID": {
+      "kind": "type_alias",
+      "symbol_id": "type:<fixtures>/typescript/code/types/type_aliases.ts:7:6:7:7:ID",
+      "name": "ID",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/types/type_aliases.ts",
+        "start_line": 7,
+        "start_column": 6,
+        "end_line": 7,
+        "end_column": 7
+      },
+      "scope_id": "module:<fixtures>/typescript/code/types/type_aliases.ts:1:1:54:0",
+      "is_exported": true,
+      "export": {
+        "is_reexport": false
+      },
+      "type_expression": "string | number",
+      "generics": [],
+      "defining_scope_id": "module:<fixtures>/typescript/code/types/type_aliases.ts:1:1:54:0"
+    },
+    "type:<fixtures>/typescript/code/types/type_aliases.ts:8:1:8:18:type Age = number;": {
+      "kind": "type_alias",
+      "symbol_id": "type:<fixtures>/typescript/code/types/type_aliases.ts:8:1:8:18:type Age = number;",
+      "name": "type Age = number;",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/types/type_aliases.ts",
+        "start_line": 8,
+        "start_column": 1,
+        "end_line": 8,
+        "end_column": 18
+      },
+      "scope_id": "module:<fixtures>/typescript/code/types/type_aliases.ts:1:1:54:0",
+      "is_exported": false,
+      "generics": [],
+      "defining_scope_id": "module:<fixtures>/typescript/code/types/type_aliases.ts:1:1:54:0"
+    },
+    "type:<fixtures>/typescript/code/types/type_aliases.ts:8:6:8:8:Age": {
+      "kind": "type_alias",
+      "symbol_id": "type:<fixtures>/typescript/code/types/type_aliases.ts:8:6:8:8:Age",
+      "name": "Age",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/types/type_aliases.ts",
+        "start_line": 8,
+        "start_column": 6,
+        "end_line": 8,
+        "end_column": 8
+      },
+      "scope_id": "module:<fixtures>/typescript/code/types/type_aliases.ts:1:1:54:0",
+      "is_exported": true,
+      "export": {
+        "is_reexport": false
+      },
+      "type_expression": "number",
+      "generics": [],
+      "defining_scope_id": "module:<fixtures>/typescript/code/types/type_aliases.ts:1:1:54:0"
+    },
+    "type:<fixtures>/typescript/code/types/type_aliases.ts:9:1:9:20:type Email = string;": {
+      "kind": "type_alias",
+      "symbol_id": "type:<fixtures>/typescript/code/types/type_aliases.ts:9:1:9:20:type Email = string;",
+      "name": "type Email = string;",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/types/type_aliases.ts",
+        "start_line": 9,
+        "start_column": 1,
+        "end_line": 9,
+        "end_column": 20
+      },
+      "scope_id": "module:<fixtures>/typescript/code/types/type_aliases.ts:1:1:54:0",
+      "is_exported": false,
+      "generics": [],
+      "defining_scope_id": "module:<fixtures>/typescript/code/types/type_aliases.ts:1:1:54:0"
+    },
+    "type:<fixtures>/typescript/code/types/type_aliases.ts:9:6:9:10:Email": {
+      "kind": "type_alias",
+      "symbol_id": "type:<fixtures>/typescript/code/types/type_aliases.ts:9:6:9:10:Email",
+      "name": "Email",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/types/type_aliases.ts",
+        "start_line": 9,
+        "start_column": 6,
+        "end_line": 9,
+        "end_column": 10
+      },
+      "scope_id": "module:<fixtures>/typescript/code/types/type_aliases.ts:1:1:54:0",
+      "is_exported": true,
+      "export": {
+        "is_reexport": false
+      },
+      "type_expression": "string",
+      "generics": [],
+      "defining_scope_id": "module:<fixtures>/typescript/code/types/type_aliases.ts:1:1:54:0"
+    },
+    "type:<fixtures>/typescript/code/types/type_aliases.ts:12:1:17:2:type User = {\n  id: ID;\n  name: string;\n  email: Email;\n  age?: Age;\n};": {
+      "kind": "type_alias",
+      "symbol_id": "type:<fixtures>/typescript/code/types/type_aliases.ts:12:1:17:2:type User = {\n  id: ID;\n  name: string;\n  email: Email;\n  age?: Age;\n};",
+      "name": "type User = {\n  id: ID;\n  name: string;\n  email: Email;\n  age?: Age;\n};",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/types/type_aliases.ts",
+        "start_line": 12,
+        "start_column": 1,
+        "end_line": 17,
+        "end_column": 2
+      },
+      "scope_id": "module:<fixtures>/typescript/code/types/type_aliases.ts:1:1:54:0",
+      "is_exported": false,
+      "generics": [],
+      "defining_scope_id": "module:<fixtures>/typescript/code/types/type_aliases.ts:1:1:54:0"
+    },
+    "type:<fixtures>/typescript/code/types/type_aliases.ts:12:6:12:9:User": {
+      "kind": "type_alias",
+      "symbol_id": "type:<fixtures>/typescript/code/types/type_aliases.ts:12:6:12:9:User",
+      "name": "User",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/types/type_aliases.ts",
+        "start_line": 12,
+        "start_column": 6,
+        "end_line": 12,
+        "end_column": 9
+      },
+      "scope_id": "module:<fixtures>/typescript/code/types/type_aliases.ts:1:1:54:0",
+      "is_exported": true,
+      "export": {
+        "is_reexport": false
+      },
+      "type_expression": "{\n  id: ID;\n  name: string;\n  email: Email;\n  age?: Age;\n}",
+      "generics": [],
+      "defining_scope_id": "module:<fixtures>/typescript/code/types/type_aliases.ts:1:1:54:0"
+    },
+    "type:<fixtures>/typescript/code/types/type_aliases.ts:20:1:20:42:type Predicate<T> = (value: T) => boolean;": {
+      "kind": "type_alias",
+      "symbol_id": "type:<fixtures>/typescript/code/types/type_aliases.ts:20:1:20:42:type Predicate<T> = (value: T) => boolean;",
+      "name": "type Predicate<T> = (value: T) => boolean;",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/types/type_aliases.ts",
+        "start_line": 20,
+        "start_column": 1,
+        "end_line": 20,
+        "end_column": 42
+      },
+      "scope_id": "module:<fixtures>/typescript/code/types/type_aliases.ts:1:1:54:0",
+      "is_exported": false,
+      "generics": [],
+      "defining_scope_id": "module:<fixtures>/typescript/code/types/type_aliases.ts:1:1:54:0"
+    },
+    "type:<fixtures>/typescript/code/types/type_aliases.ts:20:6:20:14:Predicate": {
+      "kind": "type_alias",
+      "symbol_id": "type:<fixtures>/typescript/code/types/type_aliases.ts:20:6:20:14:Predicate",
+      "name": "Predicate",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/types/type_aliases.ts",
+        "start_line": 20,
+        "start_column": 6,
+        "end_line": 20,
+        "end_column": 14
+      },
+      "scope_id": "module:<fixtures>/typescript/code/types/type_aliases.ts:1:1:54:0",
+      "is_exported": true,
+      "export": {
+        "is_reexport": false
+      },
+      "type_expression": "(value: T) => boolean",
+      "generics": [
+        "T"
+      ],
+      "defining_scope_id": "module:<fixtures>/typescript/code/types/type_aliases.ts:1:1:54:0"
+    },
+    "type:<fixtures>/typescript/code/types/type_aliases.ts:21:1:21:36:type Mapper<T, U> = (value: T) => U;": {
+      "kind": "type_alias",
+      "symbol_id": "type:<fixtures>/typescript/code/types/type_aliases.ts:21:1:21:36:type Mapper<T, U> = (value: T) => U;",
+      "name": "type Mapper<T, U> = (value: T) => U;",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/types/type_aliases.ts",
+        "start_line": 21,
+        "start_column": 1,
+        "end_line": 21,
+        "end_column": 36
+      },
+      "scope_id": "module:<fixtures>/typescript/code/types/type_aliases.ts:1:1:54:0",
+      "is_exported": false,
+      "generics": [],
+      "defining_scope_id": "module:<fixtures>/typescript/code/types/type_aliases.ts:1:1:54:0"
+    },
+    "type:<fixtures>/typescript/code/types/type_aliases.ts:21:6:21:11:Mapper": {
+      "kind": "type_alias",
+      "symbol_id": "type:<fixtures>/typescript/code/types/type_aliases.ts:21:6:21:11:Mapper",
+      "name": "Mapper",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/types/type_aliases.ts",
+        "start_line": 21,
+        "start_column": 6,
+        "end_line": 21,
+        "end_column": 11
+      },
+      "scope_id": "module:<fixtures>/typescript/code/types/type_aliases.ts:1:1:54:0",
+      "is_exported": true,
+      "export": {
+        "is_reexport": false
+      },
+      "type_expression": "(value: T) => U",
+      "generics": [
+        "T",
+        "U"
+      ],
+      "defining_scope_id": "module:<fixtures>/typescript/code/types/type_aliases.ts:1:1:54:0"
+    },
+    "type:<fixtures>/typescript/code/types/type_aliases.ts:22:1:22:44:type Comparator<T> = (a: T, b: T) => number;": {
+      "kind": "type_alias",
+      "symbol_id": "type:<fixtures>/typescript/code/types/type_aliases.ts:22:1:22:44:type Comparator<T> = (a: T, b: T) => number;",
+      "name": "type Comparator<T> = (a: T, b: T) => number;",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/types/type_aliases.ts",
+        "start_line": 22,
+        "start_column": 1,
+        "end_line": 22,
+        "end_column": 44
+      },
+      "scope_id": "module:<fixtures>/typescript/code/types/type_aliases.ts:1:1:54:0",
+      "is_exported": false,
+      "generics": [],
+      "defining_scope_id": "module:<fixtures>/typescript/code/types/type_aliases.ts:1:1:54:0"
+    },
+    "type:<fixtures>/typescript/code/types/type_aliases.ts:22:6:22:15:Comparator": {
+      "kind": "type_alias",
+      "symbol_id": "type:<fixtures>/typescript/code/types/type_aliases.ts:22:6:22:15:Comparator",
+      "name": "Comparator",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/types/type_aliases.ts",
+        "start_line": 22,
+        "start_column": 6,
+        "end_line": 22,
+        "end_column": 15
+      },
+      "scope_id": "module:<fixtures>/typescript/code/types/type_aliases.ts:1:1:54:0",
+      "is_exported": true,
+      "export": {
+        "is_reexport": false
+      },
+      "type_expression": "(a: T, b: T) => number",
+      "generics": [
+        "T"
+      ],
+      "defining_scope_id": "module:<fixtures>/typescript/code/types/type_aliases.ts:1:1:54:0"
+    },
+    "type:<fixtures>/typescript/code/types/type_aliases.ts:25:1:25:32:type Point2D = [number, number];": {
+      "kind": "type_alias",
+      "symbol_id": "type:<fixtures>/typescript/code/types/type_aliases.ts:25:1:25:32:type Point2D = [number, number];",
+      "name": "type Point2D = [number, number];",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/types/type_aliases.ts",
+        "start_line": 25,
+        "start_column": 1,
+        "end_line": 25,
+        "end_column": 32
+      },
+      "scope_id": "module:<fixtures>/typescript/code/types/type_aliases.ts:1:1:54:0",
+      "is_exported": false,
+      "generics": [],
+      "defining_scope_id": "module:<fixtures>/typescript/code/types/type_aliases.ts:1:1:54:0"
+    },
+    "type:<fixtures>/typescript/code/types/type_aliases.ts:25:6:25:12:Point2D": {
+      "kind": "type_alias",
+      "symbol_id": "type:<fixtures>/typescript/code/types/type_aliases.ts:25:6:25:12:Point2D",
+      "name": "Point2D",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/types/type_aliases.ts",
+        "start_line": 25,
+        "start_column": 6,
+        "end_line": 25,
+        "end_column": 12
+      },
+      "scope_id": "module:<fixtures>/typescript/code/types/type_aliases.ts:1:1:54:0",
+      "is_exported": true,
+      "export": {
+        "is_reexport": false
+      },
+      "type_expression": "[number, number]",
+      "generics": [],
+      "defining_scope_id": "module:<fixtures>/typescript/code/types/type_aliases.ts:1:1:54:0"
+    },
+    "type:<fixtures>/typescript/code/types/type_aliases.ts:26:1:26:40:type Point3D = [number, number, number];": {
+      "kind": "type_alias",
+      "symbol_id": "type:<fixtures>/typescript/code/types/type_aliases.ts:26:1:26:40:type Point3D = [number, number, number];",
+      "name": "type Point3D = [number, number, number];",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/types/type_aliases.ts",
+        "start_line": 26,
+        "start_column": 1,
+        "end_line": 26,
+        "end_column": 40
+      },
+      "scope_id": "module:<fixtures>/typescript/code/types/type_aliases.ts:1:1:54:0",
+      "is_exported": false,
+      "generics": [],
+      "defining_scope_id": "module:<fixtures>/typescript/code/types/type_aliases.ts:1:1:54:0"
+    },
+    "type:<fixtures>/typescript/code/types/type_aliases.ts:26:6:26:12:Point3D": {
+      "kind": "type_alias",
+      "symbol_id": "type:<fixtures>/typescript/code/types/type_aliases.ts:26:6:26:12:Point3D",
+      "name": "Point3D",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/types/type_aliases.ts",
+        "start_line": 26,
+        "start_column": 6,
+        "end_line": 26,
+        "end_column": 12
+      },
+      "scope_id": "module:<fixtures>/typescript/code/types/type_aliases.ts:1:1:54:0",
+      "is_exported": true,
+      "export": {
+        "is_reexport": false
+      },
+      "type_expression": "[number, number, number]",
+      "generics": [],
+      "defining_scope_id": "module:<fixtures>/typescript/code/types/type_aliases.ts:1:1:54:0"
+    },
+    "type:<fixtures>/typescript/code/types/type_aliases.ts:27:1:27:36:type RGB = [number, number, number];": {
+      "kind": "type_alias",
+      "symbol_id": "type:<fixtures>/typescript/code/types/type_aliases.ts:27:1:27:36:type RGB = [number, number, number];",
+      "name": "type RGB = [number, number, number];",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/types/type_aliases.ts",
+        "start_line": 27,
+        "start_column": 1,
+        "end_line": 27,
+        "end_column": 36
+      },
+      "scope_id": "module:<fixtures>/typescript/code/types/type_aliases.ts:1:1:54:0",
+      "is_exported": false,
+      "generics": [],
+      "defining_scope_id": "module:<fixtures>/typescript/code/types/type_aliases.ts:1:1:54:0"
+    },
+    "type:<fixtures>/typescript/code/types/type_aliases.ts:27:6:27:8:RGB": {
+      "kind": "type_alias",
+      "symbol_id": "type:<fixtures>/typescript/code/types/type_aliases.ts:27:6:27:8:RGB",
+      "name": "RGB",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/types/type_aliases.ts",
+        "start_line": 27,
+        "start_column": 6,
+        "end_line": 27,
+        "end_column": 8
+      },
+      "scope_id": "module:<fixtures>/typescript/code/types/type_aliases.ts:1:1:54:0",
+      "is_exported": true,
+      "export": {
+        "is_reexport": false
+      },
+      "type_expression": "[number, number, number]",
+      "generics": [],
+      "defining_scope_id": "module:<fixtures>/typescript/code/types/type_aliases.ts:1:1:54:0"
+    },
+    "type:<fixtures>/typescript/code/types/type_aliases.ts:30:1:36:2:type Result<T, E = Error> = {\n  success: true;\n  value: T;\n} | {\n  success: false;\n  error: E;\n};": {
+      "kind": "type_alias",
+      "symbol_id": "type:<fixtures>/typescript/code/types/type_aliases.ts:30:1:36:2:type Result<T, E = Error> = {\n  success: true;\n  value: T;\n} | {\n  success: false;\n  error: E;\n};",
+      "name": "type Result<T, E = Error> = {\n  success: true;\n  value: T;\n} | {\n  success: false;\n  error: E;\n};",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/types/type_aliases.ts",
+        "start_line": 30,
+        "start_column": 1,
+        "end_line": 36,
+        "end_column": 2
+      },
+      "scope_id": "module:<fixtures>/typescript/code/types/type_aliases.ts:1:1:54:0",
+      "is_exported": false,
+      "generics": [],
+      "defining_scope_id": "module:<fixtures>/typescript/code/types/type_aliases.ts:1:1:54:0"
+    },
+    "type:<fixtures>/typescript/code/types/type_aliases.ts:30:6:30:11:Result": {
+      "kind": "type_alias",
+      "symbol_id": "type:<fixtures>/typescript/code/types/type_aliases.ts:30:6:30:11:Result",
+      "name": "Result",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/types/type_aliases.ts",
+        "start_line": 30,
+        "start_column": 6,
+        "end_line": 30,
+        "end_column": 11
+      },
+      "scope_id": "module:<fixtures>/typescript/code/types/type_aliases.ts:1:1:54:0",
+      "is_exported": true,
+      "export": {
+        "is_reexport": false
+      },
+      "type_expression": "{\n  success: true;\n  value: T;\n} | {\n  success: false;\n  error: E;\n}",
+      "generics": [
+        "T",
+        "E"
+      ],
+      "defining_scope_id": "module:<fixtures>/typescript/code/types/type_aliases.ts:1:1:54:0"
+    },
+    "type:<fixtures>/typescript/code/types/type_aliases.ts:38:1:38:41:type AsyncFunction<T> = () => Promise<T>;": {
+      "kind": "type_alias",
+      "symbol_id": "type:<fixtures>/typescript/code/types/type_aliases.ts:38:1:38:41:type AsyncFunction<T> = () => Promise<T>;",
+      "name": "type AsyncFunction<T> = () => Promise<T>;",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/types/type_aliases.ts",
+        "start_line": 38,
+        "start_column": 1,
+        "end_line": 38,
+        "end_column": 41
+      },
+      "scope_id": "module:<fixtures>/typescript/code/types/type_aliases.ts:1:1:54:0",
+      "is_exported": false,
+      "generics": [],
+      "defining_scope_id": "module:<fixtures>/typescript/code/types/type_aliases.ts:1:1:54:0"
+    },
+    "type:<fixtures>/typescript/code/types/type_aliases.ts:38:6:38:18:AsyncFunction": {
+      "kind": "type_alias",
+      "symbol_id": "type:<fixtures>/typescript/code/types/type_aliases.ts:38:6:38:18:AsyncFunction",
+      "name": "AsyncFunction",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/types/type_aliases.ts",
+        "start_line": 38,
+        "start_column": 6,
+        "end_line": 38,
+        "end_column": 18
+      },
+      "scope_id": "module:<fixtures>/typescript/code/types/type_aliases.ts:1:1:54:0",
+      "is_exported": true,
+      "export": {
+        "is_reexport": false
+      },
+      "type_expression": "() => Promise<T>",
+      "generics": [
+        "T"
+      ],
+      "defining_scope_id": "module:<fixtures>/typescript/code/types/type_aliases.ts:1:1:54:0"
+    }
+  },
+  "imported_symbols": {},
+  "references": [
+    {
+      "kind": "type_reference",
+      "name": "ID",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/types/type_aliases.ts",
+        "start_line": 7,
+        "start_column": 6,
+        "end_line": 7,
+        "end_column": 7
+      },
+      "scope_id": "module:<fixtures>/typescript/code/types/type_aliases.ts:1:1:54:0",
+      "type_context": "annotation",
+      "type_info": {
+        "type_id": "type:<fixtures>/typescript/code/types/type_aliases.ts:7:6:7:7:ID",
+        "type_name": "ID",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "kind": "type_reference",
+      "name": "Age",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/types/type_aliases.ts",
+        "start_line": 8,
+        "start_column": 6,
+        "end_line": 8,
+        "end_column": 8
+      },
+      "scope_id": "module:<fixtures>/typescript/code/types/type_aliases.ts:1:1:54:0",
+      "type_context": "annotation",
+      "type_info": {
+        "type_id": "type:<fixtures>/typescript/code/types/type_aliases.ts:8:6:8:8:Age",
+        "type_name": "Age",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "kind": "type_reference",
+      "name": "Email",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/types/type_aliases.ts",
+        "start_line": 9,
+        "start_column": 6,
+        "end_line": 9,
+        "end_column": 10
+      },
+      "scope_id": "module:<fixtures>/typescript/code/types/type_aliases.ts:1:1:54:0",
+      "type_context": "annotation",
+      "type_info": {
+        "type_id": "type:<fixtures>/typescript/code/types/type_aliases.ts:9:6:9:10:Email",
+        "type_name": "Email",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "kind": "type_reference",
+      "name": "User",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/types/type_aliases.ts",
+        "start_line": 12,
+        "start_column": 6,
+        "end_line": 12,
+        "end_column": 9
+      },
+      "scope_id": "module:<fixtures>/typescript/code/types/type_aliases.ts:1:1:54:0",
+      "type_context": "annotation",
+      "type_info": {
+        "type_id": "type:<fixtures>/typescript/code/types/type_aliases.ts:12:6:12:9:User",
+        "type_name": "User",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "kind": "type_reference",
+      "name": "ID",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/types/type_aliases.ts",
+        "start_line": 13,
+        "start_column": 7,
+        "end_line": 13,
+        "end_column": 8
+      },
+      "scope_id": "module:<fixtures>/typescript/code/types/type_aliases.ts:1:1:54:0",
+      "type_context": "annotation",
+      "type_info": {
+        "type_id": "type:<fixtures>/typescript/code/types/type_aliases.ts:13:7:13:8:ID",
+        "type_name": "ID",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "kind": "type_reference",
+      "name": "Email",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/types/type_aliases.ts",
+        "start_line": 15,
+        "start_column": 10,
+        "end_line": 15,
+        "end_column": 14
+      },
+      "scope_id": "module:<fixtures>/typescript/code/types/type_aliases.ts:1:1:54:0",
+      "type_context": "annotation",
+      "type_info": {
+        "type_id": "type:<fixtures>/typescript/code/types/type_aliases.ts:15:10:15:14:Email",
+        "type_name": "Email",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "kind": "type_reference",
+      "name": "Age",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/types/type_aliases.ts",
+        "start_line": 16,
+        "start_column": 9,
+        "end_line": 16,
+        "end_column": 11
+      },
+      "scope_id": "module:<fixtures>/typescript/code/types/type_aliases.ts:1:1:54:0",
+      "type_context": "annotation",
+      "type_info": {
+        "type_id": "type:<fixtures>/typescript/code/types/type_aliases.ts:16:9:16:11:Age",
+        "type_name": "Age",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "kind": "type_reference",
+      "name": "Predicate",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/types/type_aliases.ts",
+        "start_line": 20,
+        "start_column": 6,
+        "end_line": 20,
+        "end_column": 14
+      },
+      "scope_id": "module:<fixtures>/typescript/code/types/type_aliases.ts:1:1:54:0",
+      "type_context": "annotation",
+      "type_info": {
+        "type_id": "type:<fixtures>/typescript/code/types/type_aliases.ts:20:6:20:14:Predicate",
+        "type_name": "Predicate",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "kind": "type_reference",
+      "name": "T",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/types/type_aliases.ts",
+        "start_line": 20,
+        "start_column": 16,
+        "end_line": 20,
+        "end_column": 16
+      },
+      "scope_id": "module:<fixtures>/typescript/code/types/type_aliases.ts:1:1:54:0",
+      "type_context": "annotation",
+      "type_info": {
+        "type_id": "type:<fixtures>/typescript/code/types/type_aliases.ts:20:16:20:16:T",
+        "type_name": "T",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "value",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/types/type_aliases.ts",
+        "start_line": 20,
+        "start_column": 22,
+        "end_line": 20,
+        "end_column": 26
+      },
+      "scope_id": "module:<fixtures>/typescript/code/types/type_aliases.ts:1:1:54:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "type_reference",
+      "name": "T",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/types/type_aliases.ts",
+        "start_line": 20,
+        "start_column": 29,
+        "end_line": 20,
+        "end_column": 29
+      },
+      "scope_id": "module:<fixtures>/typescript/code/types/type_aliases.ts:1:1:54:0",
+      "type_context": "annotation",
+      "type_info": {
+        "type_id": "type:<fixtures>/typescript/code/types/type_aliases.ts:20:29:20:29:T",
+        "type_name": "T",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "kind": "type_reference",
+      "name": "Mapper",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/types/type_aliases.ts",
+        "start_line": 21,
+        "start_column": 6,
+        "end_line": 21,
+        "end_column": 11
+      },
+      "scope_id": "module:<fixtures>/typescript/code/types/type_aliases.ts:1:1:54:0",
+      "type_context": "annotation",
+      "type_info": {
+        "type_id": "type:<fixtures>/typescript/code/types/type_aliases.ts:21:6:21:11:Mapper",
+        "type_name": "Mapper",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "kind": "type_reference",
+      "name": "T",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/types/type_aliases.ts",
+        "start_line": 21,
+        "start_column": 13,
+        "end_line": 21,
+        "end_column": 13
+      },
+      "scope_id": "module:<fixtures>/typescript/code/types/type_aliases.ts:1:1:54:0",
+      "type_context": "annotation",
+      "type_info": {
+        "type_id": "type:<fixtures>/typescript/code/types/type_aliases.ts:21:13:21:13:T",
+        "type_name": "T",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "kind": "type_reference",
+      "name": "U",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/types/type_aliases.ts",
+        "start_line": 21,
+        "start_column": 16,
+        "end_line": 21,
+        "end_column": 16
+      },
+      "scope_id": "module:<fixtures>/typescript/code/types/type_aliases.ts:1:1:54:0",
+      "type_context": "annotation",
+      "type_info": {
+        "type_id": "type:<fixtures>/typescript/code/types/type_aliases.ts:21:16:21:16:U",
+        "type_name": "U",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "value",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/types/type_aliases.ts",
+        "start_line": 21,
+        "start_column": 22,
+        "end_line": 21,
+        "end_column": 26
+      },
+      "scope_id": "module:<fixtures>/typescript/code/types/type_aliases.ts:1:1:54:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "type_reference",
+      "name": "T",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/types/type_aliases.ts",
+        "start_line": 21,
+        "start_column": 29,
+        "end_line": 21,
+        "end_column": 29
+      },
+      "scope_id": "module:<fixtures>/typescript/code/types/type_aliases.ts:1:1:54:0",
+      "type_context": "annotation",
+      "type_info": {
+        "type_id": "type:<fixtures>/typescript/code/types/type_aliases.ts:21:29:21:29:T",
+        "type_name": "T",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "kind": "type_reference",
+      "name": "U",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/types/type_aliases.ts",
+        "start_line": 21,
+        "start_column": 35,
+        "end_line": 21,
+        "end_column": 35
+      },
+      "scope_id": "module:<fixtures>/typescript/code/types/type_aliases.ts:1:1:54:0",
+      "type_context": "annotation",
+      "type_info": {
+        "type_id": "type:<fixtures>/typescript/code/types/type_aliases.ts:21:35:21:35:U",
+        "type_name": "U",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "kind": "type_reference",
+      "name": "Comparator",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/types/type_aliases.ts",
+        "start_line": 22,
+        "start_column": 6,
+        "end_line": 22,
+        "end_column": 15
+      },
+      "scope_id": "module:<fixtures>/typescript/code/types/type_aliases.ts:1:1:54:0",
+      "type_context": "annotation",
+      "type_info": {
+        "type_id": "type:<fixtures>/typescript/code/types/type_aliases.ts:22:6:22:15:Comparator",
+        "type_name": "Comparator",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "kind": "type_reference",
+      "name": "T",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/types/type_aliases.ts",
+        "start_line": 22,
+        "start_column": 17,
+        "end_line": 22,
+        "end_column": 17
+      },
+      "scope_id": "module:<fixtures>/typescript/code/types/type_aliases.ts:1:1:54:0",
+      "type_context": "annotation",
+      "type_info": {
+        "type_id": "type:<fixtures>/typescript/code/types/type_aliases.ts:22:17:22:17:T",
+        "type_name": "T",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "a",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/types/type_aliases.ts",
+        "start_line": 22,
+        "start_column": 23,
+        "end_line": 22,
+        "end_column": 23
+      },
+      "scope_id": "module:<fixtures>/typescript/code/types/type_aliases.ts:1:1:54:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "type_reference",
+      "name": "T",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/types/type_aliases.ts",
+        "start_line": 22,
+        "start_column": 26,
+        "end_line": 22,
+        "end_column": 26
+      },
+      "scope_id": "module:<fixtures>/typescript/code/types/type_aliases.ts:1:1:54:0",
+      "type_context": "annotation",
+      "type_info": {
+        "type_id": "type:<fixtures>/typescript/code/types/type_aliases.ts:22:26:22:26:T",
+        "type_name": "T",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "b",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/types/type_aliases.ts",
+        "start_line": 22,
+        "start_column": 29,
+        "end_line": 22,
+        "end_column": 29
+      },
+      "scope_id": "module:<fixtures>/typescript/code/types/type_aliases.ts:1:1:54:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "type_reference",
+      "name": "T",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/types/type_aliases.ts",
+        "start_line": 22,
+        "start_column": 32,
+        "end_line": 22,
+        "end_column": 32
+      },
+      "scope_id": "module:<fixtures>/typescript/code/types/type_aliases.ts:1:1:54:0",
+      "type_context": "annotation",
+      "type_info": {
+        "type_id": "type:<fixtures>/typescript/code/types/type_aliases.ts:22:32:22:32:T",
+        "type_name": "T",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "kind": "type_reference",
+      "name": "Point2D",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/types/type_aliases.ts",
+        "start_line": 25,
+        "start_column": 6,
+        "end_line": 25,
+        "end_column": 12
+      },
+      "scope_id": "module:<fixtures>/typescript/code/types/type_aliases.ts:1:1:54:0",
+      "type_context": "annotation",
+      "type_info": {
+        "type_id": "type:<fixtures>/typescript/code/types/type_aliases.ts:25:6:25:12:Point2D",
+        "type_name": "Point2D",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "kind": "type_reference",
+      "name": "Point3D",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/types/type_aliases.ts",
+        "start_line": 26,
+        "start_column": 6,
+        "end_line": 26,
+        "end_column": 12
+      },
+      "scope_id": "module:<fixtures>/typescript/code/types/type_aliases.ts:1:1:54:0",
+      "type_context": "annotation",
+      "type_info": {
+        "type_id": "type:<fixtures>/typescript/code/types/type_aliases.ts:26:6:26:12:Point3D",
+        "type_name": "Point3D",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "kind": "type_reference",
+      "name": "RGB",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/types/type_aliases.ts",
+        "start_line": 27,
+        "start_column": 6,
+        "end_line": 27,
+        "end_column": 8
+      },
+      "scope_id": "module:<fixtures>/typescript/code/types/type_aliases.ts:1:1:54:0",
+      "type_context": "annotation",
+      "type_info": {
+        "type_id": "type:<fixtures>/typescript/code/types/type_aliases.ts:27:6:27:8:RGB",
+        "type_name": "RGB",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "kind": "type_reference",
+      "name": "Result",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/types/type_aliases.ts",
+        "start_line": 30,
+        "start_column": 6,
+        "end_line": 30,
+        "end_column": 11
+      },
+      "scope_id": "module:<fixtures>/typescript/code/types/type_aliases.ts:1:1:54:0",
+      "type_context": "annotation",
+      "type_info": {
+        "type_id": "type:<fixtures>/typescript/code/types/type_aliases.ts:30:6:30:11:Result",
+        "type_name": "Result",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "kind": "type_reference",
+      "name": "T",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/types/type_aliases.ts",
+        "start_line": 30,
+        "start_column": 13,
+        "end_line": 30,
+        "end_column": 13
+      },
+      "scope_id": "module:<fixtures>/typescript/code/types/type_aliases.ts:1:1:54:0",
+      "type_context": "annotation",
+      "type_info": {
+        "type_id": "type:<fixtures>/typescript/code/types/type_aliases.ts:30:13:30:13:T",
+        "type_name": "T",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "kind": "type_reference",
+      "name": "E",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/types/type_aliases.ts",
+        "start_line": 30,
+        "start_column": 16,
+        "end_line": 30,
+        "end_column": 16
+      },
+      "scope_id": "module:<fixtures>/typescript/code/types/type_aliases.ts:1:1:54:0",
+      "type_context": "annotation",
+      "type_info": {
+        "type_id": "type:<fixtures>/typescript/code/types/type_aliases.ts:30:16:30:16:E",
+        "type_name": "E",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "kind": "type_reference",
+      "name": "Error",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/types/type_aliases.ts",
+        "start_line": 30,
+        "start_column": 20,
+        "end_line": 30,
+        "end_column": 24
+      },
+      "scope_id": "module:<fixtures>/typescript/code/types/type_aliases.ts:1:1:54:0",
+      "type_context": "annotation",
+      "type_info": {
+        "type_id": "type:<fixtures>/typescript/code/types/type_aliases.ts:30:20:30:24:Error",
+        "type_name": "Error",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "kind": "type_reference",
+      "name": "T",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/types/type_aliases.ts",
+        "start_line": 32,
+        "start_column": 10,
+        "end_line": 32,
+        "end_column": 10
+      },
+      "scope_id": "module:<fixtures>/typescript/code/types/type_aliases.ts:1:1:54:0",
+      "type_context": "annotation",
+      "type_info": {
+        "type_id": "type:<fixtures>/typescript/code/types/type_aliases.ts:32:10:32:10:T",
+        "type_name": "T",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "kind": "type_reference",
+      "name": "E",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/types/type_aliases.ts",
+        "start_line": 35,
+        "start_column": 10,
+        "end_line": 35,
+        "end_column": 10
+      },
+      "scope_id": "module:<fixtures>/typescript/code/types/type_aliases.ts:1:1:54:0",
+      "type_context": "annotation",
+      "type_info": {
+        "type_id": "type:<fixtures>/typescript/code/types/type_aliases.ts:35:10:35:10:E",
+        "type_name": "E",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "kind": "type_reference",
+      "name": "AsyncFunction",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/types/type_aliases.ts",
+        "start_line": 38,
+        "start_column": 6,
+        "end_line": 38,
+        "end_column": 18
+      },
+      "scope_id": "module:<fixtures>/typescript/code/types/type_aliases.ts:1:1:54:0",
+      "type_context": "annotation",
+      "type_info": {
+        "type_id": "type:<fixtures>/typescript/code/types/type_aliases.ts:38:6:38:18:AsyncFunction",
+        "type_name": "AsyncFunction",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "kind": "type_reference",
+      "name": "T",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/types/type_aliases.ts",
+        "start_line": 38,
+        "start_column": 20,
+        "end_line": 38,
+        "end_column": 20
+      },
+      "scope_id": "module:<fixtures>/typescript/code/types/type_aliases.ts:1:1:54:0",
+      "type_context": "annotation",
+      "type_info": {
+        "type_id": "type:<fixtures>/typescript/code/types/type_aliases.ts:38:20:38:20:T",
+        "type_name": "T",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "kind": "type_reference",
+      "name": "Promise",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/types/type_aliases.ts",
+        "start_line": 38,
+        "start_column": 31,
+        "end_line": 38,
+        "end_column": 37
+      },
+      "scope_id": "module:<fixtures>/typescript/code/types/type_aliases.ts:1:1:54:0",
+      "type_context": "annotation",
+      "type_info": {
+        "type_id": "type:<fixtures>/typescript/code/types/type_aliases.ts:38:31:38:37:Promise",
+        "type_name": "Promise",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "kind": "type_reference",
+      "name": "Promise",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/types/type_aliases.ts",
+        "start_line": 38,
+        "start_column": 31,
+        "end_line": 38,
+        "end_column": 37
+      },
+      "scope_id": "module:<fixtures>/typescript/code/types/type_aliases.ts:1:1:54:0",
+      "type_context": "annotation",
+      "type_info": {
+        "type_id": "type:<fixtures>/typescript/code/types/type_aliases.ts:38:31:38:37:Promise",
+        "type_name": "Promise",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "kind": "type_reference",
+      "name": "T",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/types/type_aliases.ts",
+        "start_line": 38,
+        "start_column": 39,
+        "end_line": 38,
+        "end_column": 39
+      },
+      "scope_id": "module:<fixtures>/typescript/code/types/type_aliases.ts:1:1:54:0",
+      "type_context": "annotation",
+      "type_info": {
+        "type_id": "type:<fixtures>/typescript/code/types/type_aliases.ts:38:39:38:39:T",
+        "type_name": "T",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "ID",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/types/type_aliases.ts",
+        "start_line": 41,
+        "start_column": 3,
+        "end_line": 41,
+        "end_column": 4
+      },
+      "scope_id": "module:<fixtures>/typescript/code/types/type_aliases.ts:1:1:54:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "Age",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/types/type_aliases.ts",
+        "start_line": 42,
+        "start_column": 3,
+        "end_line": 42,
+        "end_column": 5
+      },
+      "scope_id": "module:<fixtures>/typescript/code/types/type_aliases.ts:1:1:54:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "Email",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/types/type_aliases.ts",
+        "start_line": 43,
+        "start_column": 3,
+        "end_line": 43,
+        "end_column": 7
+      },
+      "scope_id": "module:<fixtures>/typescript/code/types/type_aliases.ts:1:1:54:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "User",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/types/type_aliases.ts",
+        "start_line": 44,
+        "start_column": 3,
+        "end_line": 44,
+        "end_column": 6
+      },
+      "scope_id": "module:<fixtures>/typescript/code/types/type_aliases.ts:1:1:54:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "Predicate",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/types/type_aliases.ts",
+        "start_line": 45,
+        "start_column": 3,
+        "end_line": 45,
+        "end_column": 11
+      },
+      "scope_id": "module:<fixtures>/typescript/code/types/type_aliases.ts:1:1:54:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "Mapper",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/types/type_aliases.ts",
+        "start_line": 46,
+        "start_column": 3,
+        "end_line": 46,
+        "end_column": 8
+      },
+      "scope_id": "module:<fixtures>/typescript/code/types/type_aliases.ts:1:1:54:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "Comparator",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/types/type_aliases.ts",
+        "start_line": 47,
+        "start_column": 3,
+        "end_line": 47,
+        "end_column": 12
+      },
+      "scope_id": "module:<fixtures>/typescript/code/types/type_aliases.ts:1:1:54:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "Point2D",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/types/type_aliases.ts",
+        "start_line": 48,
+        "start_column": 3,
+        "end_line": 48,
+        "end_column": 9
+      },
+      "scope_id": "module:<fixtures>/typescript/code/types/type_aliases.ts:1:1:54:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "Point3D",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/types/type_aliases.ts",
+        "start_line": 49,
+        "start_column": 3,
+        "end_line": 49,
+        "end_column": 9
+      },
+      "scope_id": "module:<fixtures>/typescript/code/types/type_aliases.ts:1:1:54:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "RGB",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/types/type_aliases.ts",
+        "start_line": 50,
+        "start_column": 3,
+        "end_line": 50,
+        "end_column": 5
+      },
+      "scope_id": "module:<fixtures>/typescript/code/types/type_aliases.ts:1:1:54:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "Result",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/types/type_aliases.ts",
+        "start_line": 51,
+        "start_column": 3,
+        "end_line": 51,
+        "end_column": 8
+      },
+      "scope_id": "module:<fixtures>/typescript/code/types/type_aliases.ts:1:1:54:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "AsyncFunction",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/types/type_aliases.ts",
+        "start_line": 52,
+        "start_column": 3,
+        "end_line": 52,
+        "end_column": 15
+      },
+      "scope_id": "module:<fixtures>/typescript/code/types/type_aliases.ts:1:1:54:0",
+      "access_type": "read"
+    }
+  ]
+}

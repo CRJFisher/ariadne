@@ -1,0 +1,772 @@
+[
+  {
+    "name": "resolve_calls",
+    "file_path": "/Users/chuck/workspace/ariadne/packages/core/src/resolve_references/resolution_registry.ts",
+    "start_line": 248,
+    "signature": "resolve_calls(file_references: Map<FilePath, readonly SymbolReference[]>, scopes: ScopeRegistry, types: TypeRegistry, definitions: DefinitionRegistry): CallReference[]",
+    "root_cause": "internal helper method called through this",
+    "reasoning": "The method resolve_calls is called internally by resolve_calls_for_files at line 180 using this.resolve_calls(). This is a private implementation detail pattern where a public method delegates to an internal helper. The call exists but is not being tracked by our call graph analysis.",
+    "triage_analysis": {
+      "detection_gap": "Method calls on this (self-references within a class) are not captured or resolved during call graph analysis, so internal helper methods appear as uncalled functions",
+      "existing_task_fixes": [],
+      "suggested_new_task_fix": "Add support for tracking this.method() calls by capturing them in query files, resolving this to the containing class during reference resolution, and looking up method SymbolIds within that class scope."
+    }
+  },
+  {
+    "name": "resolve_scope_recursive",
+    "file_path": "/Users/chuck/workspace/ariadne/packages/core/src/resolve_references/resolution_registry.ts",
+    "start_line": 429,
+    "signature": "resolve_scope_recursive(scope_id: ScopeId, parent_resolutions: ReadonlyMap<SymbolName, SymbolId>, file_path: FilePath, language: Language, languages: ReadonlyMap<FilePath, Language>, exports: ExportRegistry, imports: ImportGraph, definitions: DefinitionRegistry, scopes: ScopeRegistry, root_folder: FileSystemFolder): Map<ScopeId, Map<SymbolName, SymbolId>>",
+    "root_cause": "method called through this - simple two-element property chain not handled",
+    "reasoning": "The method resolve_scope_recursive is called via this.resolve_scope_recursive() at lines 122 and 497. Method resolution fails because the simple method call path (line 96-110) tries to resolve 'this' as a variable in scope, which returns null since 'this' is a keyword. Special handling for 'this' only exists in the property chain resolver for chains with length > 2.",
+    "triage_analysis": {
+      "detection_gap": "Method calls on this/self keywords with two-element property chains (this.method) are not resolved because the simple method call path does not recognize self-reference keywords, only the multi-step property chain path handles them",
+      "existing_task_fixes": [
+        "task-epic-11.152"
+      ],
+      "suggested_new_task_fix": "Extend task-epic-11.152 to add self-reference keyword handling to BOTH the simple method call path (line 96-110) and the property chain path (line 240+) in method_resolver.ts, ensuring this.method() calls are resolved correctly."
+    }
+  },
+  {
+    "name": "extract_function_boundaries",
+    "file_path": "/Users/chuck/workspace/ariadne/packages/core/src/index_single_file/scopes/extractors/javascript_typescript_scope_boundary_extractor.ts",
+    "start_line": 85,
+    "signature": "extract_function_boundaries(node: Parser.SyntaxNode, file_path: FilePath): ScopeBoundaries",
+    "root_cause": "method called by parent class through this",
+    "reasoning": "The protected method extract_function_boundaries is called by parent class CommonScopeBoundaryExtractor.extract_boundaries() at scope_boundary_base.ts:78 using this.extract_function_boundaries(), and by sibling method extract_constructor_boundaries at line 199. Method resolution fails because the simple method call path (line 96-110 in method_resolver.ts) tries to resolve 'this' as a variable in scope, which returns null since 'this' is a keyword. Only the multi-step property chain path (line 240+) has special handling for the 'this' keyword.",
+    "triage_analysis": {
+      "detection_gap": "Method calls on this/self keywords with two-element property chains (this.method) are not resolved because the simple method call resolution path does not recognize self-reference keywords, only the multi-step property chain path handles them",
+      "existing_task_fixes": [
+        "task-epic-11.152"
+      ],
+      "suggested_new_task_fix": "Extend task-epic-11.152 to add self-reference keyword handling to BOTH the simple method call path (line 96-110) and the property chain path (line 240+) in method_resolver.ts, ensuring this.method() calls are resolved correctly regardless of chain length."
+    }
+  },
+  {
+    "name": "resolve_type_metadata",
+    "file_path": "/Users/chuck/workspace/ariadne/packages/core/src/resolve_references/registries/type_registry.ts",
+    "start_line": 172,
+    "signature": "resolve_type_metadata(file_id: FilePath, extracted: ExtractedTypeData, definitions: DefinitionRegistry, resolutions: ResolutionRegistry): void",
+    "root_cause": "method called by parent class through this",
+    "reasoning": "The private method resolve_type_metadata is called at line 107 via this.resolve_type_metadata() by the public update_file() method. Method resolution fails because the simple method call path tries to resolve 'this' as a variable in scope, which returns null since 'this' is a keyword. Only the multi-step property chain path has special handling for the 'this' keyword.",
+    "triage_analysis": {
+      "detection_gap": "Method calls on this/self keywords with two-element property chains (this.method) are not resolved because the simple method call resolution path does not recognize self-reference keywords, only the multi-step property chain path handles them",
+      "existing_task_fixes": [
+        "task-epic-11.152"
+      ],
+      "suggested_new_task_fix": "Extend task-epic-11.152 to add self-reference keyword handling to BOTH the simple method call path (line 96-110) and the property chain path (line 240+) in method_resolver.ts, ensuring this.method() calls are resolved correctly regardless of chain length."
+    }
+  },
+  {
+    "name": "extract_type_data",
+    "file_path": "/Users/chuck/workspace/ariadne/packages/core/src/resolve_references/registries/type_registry.ts",
+    "start_line": 119,
+    "signature": "extract_type_data(index: SemanticIndex): ExtractedTypeData",
+    "root_cause": "method called by same class (intra-class call)",
+    "reasoning": "The private method extract_type_data is called by the public method update_file within the same TypeRegistry class via this.extract_type_data(index) at line 104. The call graph analysis failed to detect this intra-class method invocation, treating the private method as an entry point when it is actually an internal implementation detail.",
+    "triage_analysis": {
+      "detection_gap": "Call graph analysis fails to track same-class method invocations via 'this' (TypeScript/JavaScript), 'self' (Python/Rust). The resolution system resolves method calls on typed external receivers but does not handle calls where the receiver is the implicit 'this' within the same class, causing these internal method calls to be invisible in the call graph.",
+      "existing_task_fixes": [
+        "task-110"
+      ],
+      "suggested_new_task_fix": "Add intra-class method call tracking: when resolving method calls with 'this'/'self' as receiver, determine the containing class of the caller method and resolve the target method within that same class, creating proper call references for internal method decomposition patterns."
+    }
+  },
+  {
+    "name": "extract_class_boundaries",
+    "file_path": "/Users/chuck/workspace/ariadne/packages/core/src/index_single_file/scopes/extractors/javascript_typescript_scope_boundary_extractor.ts",
+    "start_line": 19,
+    "signature": "extract_class_boundaries(node: Parser.SyntaxNode, file_path: FilePath): ScopeBoundaries",
+    "root_cause": "method called by parent class through this",
+    "reasoning": "The protected method extract_class_boundaries is called by parent class CommonScopeBoundaryExtractor.extract_boundaries() at scope_boundary_base.ts:75 using this.extract_class_boundaries(), and by child class TypeScriptScopeBoundaryExtractor via super.extract_class_boundaries() at lines 44, 58, 61. Method resolution fails because the simple method call path (line 96-110 in method_resolver.ts) tries to resolve 'this' as a variable in scope, which returns null since 'this' is a keyword. Only the multi-step property chain path (line 240+) has special handling for the 'this' keyword.",
+    "triage_analysis": {
+      "detection_gap": "Method calls on this/self keywords with two-element property chains (this.method) are not resolved because the simple method call resolution path does not recognize self-reference keywords, only the multi-step property chain path handles them. Additionally, super.method() calls to parent class methods are not tracked at all.",
+      "existing_task_fixes": [
+        "task-epic-11.152"
+      ],
+      "suggested_new_task_fix": "Extend task-epic-11.152 to add self-reference keyword handling to BOTH the simple method call path (line 96-110) and the property chain path (line 240+) in method_resolver.ts, ensuring this.method() calls are resolved correctly. Additionally, add super.method() call tracking by recognizing the super keyword and resolving calls to parent class methods using inheritance relationships."
+    }
+  },
+  {
+    "name": "extract_class_body_boundaries",
+    "file_path": "/Users/chuck/workspace/ariadne/packages/core/src/index_single_file/scopes/extractors/javascript_typescript_scope_boundary_extractor.ts",
+    "start_line": 62,
+    "signature": "extract_class_body_boundaries(node: Parser.SyntaxNode, file_path: FilePath): ScopeBoundaries",
+    "root_cause": "method called by another method in the same class via this",
+    "reasoning": "The method extract_class_body_boundaries is called by extract_class_boundaries at line 25 using this.extract_class_body_boundaries(). Method resolution fails because the simple method call path (method_resolver.ts:96-110) tries to resolve 'this' as a variable in scope, which returns null since 'this' is a keyword. Only the multi-step property chain path (line 240+) has special handling for the 'this' keyword.",
+    "triage_analysis": {
+      "detection_gap": "Method calls on this/self keywords with two-element property chains (this.method) are not resolved because the simple method call resolution path does not recognize self-reference keywords, only the multi-step property chain path handles them",
+      "existing_task_fixes": [
+        "task-epic-11.152"
+      ],
+      "suggested_new_task_fix": "Extend task-epic-11.152 to add self-reference keyword handling to BOTH the simple method call path (line 96-110) and the property chain path (line 240+) in method_resolver.ts, ensuring this.method() calls are resolved correctly regardless of chain length."
+    }
+  },
+  {
+    "name": "extract_struct_boundaries",
+    "file_path": "/Users/chuck/workspace/ariadne/packages/core/src/index_single_file/scopes/extractors/rust_scope_boundary_extractor.ts",
+    "start_line": 68,
+    "signature": "extract_struct_boundaries(node: Parser.SyntaxNode, file_path: FilePath): ScopeBoundaries",
+    "root_cause": "method called through this - simple two-element property chain not handled",
+    "reasoning": "The method extract_struct_boundaries is called via this.extract_struct_boundaries() at line 45 by extract_rust_class_like_boundaries in the same class. Method resolution fails because the simple method call path (line 96-110 in method_resolver.ts) tries to resolve 'this' as a variable in scope, which returns null since 'this' is a keyword. Special handling for 'this' only exists in the property chain resolver for chains with length > 2.",
+    "triage_analysis": {
+      "detection_gap": "Method calls on this/self keywords with two-element property chains (this.method) are not resolved because the simple method call resolution path does not recognize self-reference keywords, only the multi-step property chain path handles them",
+      "existing_task_fixes": [
+        "task-epic-11.152"
+      ],
+      "suggested_new_task_fix": "Extend task-epic-11.152 to add self-reference keyword handling to BOTH the simple method call path (line 96-110) and the property chain path (line 240+) in method_resolver.ts, ensuring this.method() calls are resolved correctly regardless of chain length."
+    }
+  },
+  {
+    "name": "extract_impl_boundaries",
+    "file_path": "/Users/chuck/workspace/ariadne/packages/core/src/index_single_file/scopes/extractors/rust_scope_boundary_extractor.ts",
+    "start_line": 142,
+    "signature": "extract_impl_boundaries(node: Parser.SyntaxNode, file_path: FilePath): ScopeBoundaries",
+    "root_cause": "method called through this keyword",
+    "reasoning": "The method is called via this.extract_impl_boundaries() on line 51 of the same file. Our call graph analysis detects it as a method call and extracts 'this' as the receiver, but fails to resolve it because the method resolver attempts to look up 'this' as a symbol in the resolution registry. The special handling for 'this' keyword only executes for property chains with length > 2, so simple this.method() calls (chain length = 2) fail to resolve.",
+    "triage_analysis": {
+      "detection_gap": "Method resolver does not handle 'this' keyword for simple method calls (property chain length ≤ 2). The this-keyword resolution logic exists in resolve_property_chain() but is only invoked for longer chains. For simple this.method() calls, the resolver tries to resolve 'this' as a regular symbol name, which returns null.",
+      "existing_task_fixes": [],
+      "suggested_new_task_fix": "Add 'this' keyword detection before symbol resolution in resolve_single_method_call() for all property chain lengths. Extract and reuse the this-resolution logic from resolve_property_chain() (lines 240-297) to handle both simple and complex this-based method calls."
+    }
+  },
+  {
+    "name": "extract_arrow_function_boundaries",
+    "file_path": "/Users/chuck/workspace/ariadne/packages/core/src/index_single_file/scopes/extractors/javascript_typescript_scope_boundary_extractor.ts",
+    "start_line": 218,
+    "signature": "extract_arrow_function_boundaries(node: Parser.SyntaxNode, file_path: FilePath): ScopeBoundaries",
+    "root_cause": "method called through this - simple two-element property chain not handled",
+    "reasoning": "The protected method extract_arrow_function_boundaries is called by extract_function_boundaries at line 91 using this.extract_arrow_function_boundaries(). Method resolution fails because the simple method call path (method_resolver.ts:96-110) tries to resolve 'this' as a variable in scope, which returns null since 'this' is a keyword. Special handling for 'this' only exists in the property chain resolver for chains with length > 2.",
+    "triage_analysis": {
+      "detection_gap": "Method calls on this/self keywords with two-element property chains (this.method) are not resolved because the simple method call resolution path does not recognize self-reference keywords, only the multi-step property chain path handles them",
+      "existing_task_fixes": [
+        "task-epic-11.152"
+      ],
+      "suggested_new_task_fix": "Extend task-epic-11.152 to add self-reference keyword handling to BOTH the simple method call path (line 96-110) and the property chain path (line 240+) in method_resolver.ts, ensuring this.method() calls are resolved correctly regardless of chain length."
+    }
+  },
+  {
+    "name": "extract_enum_boundaries",
+    "file_path": "/Users/chuck/workspace/ariadne/packages/core/src/index_single_file/scopes/extractors/rust_scope_boundary_extractor.ts",
+    "start_line": 96,
+    "signature": "extract_enum_boundaries(node: Parser.SyntaxNode, file_path: FilePath): ScopeBoundaries",
+    "root_cause": "method called through this - simple two-element property chain not handled",
+    "reasoning": "The private method extract_enum_boundaries is called via this.extract_enum_boundaries() at line 47 by extract_rust_class_like_boundaries in the same class. Method resolution fails because the simple method call path (method_resolver.ts:96-110) tries to resolve 'this' as a variable in scope, which returns null since 'this' is a keyword. Special handling for 'this' only exists in the property chain resolver for chains with length > 2.",
+    "triage_analysis": {
+      "detection_gap": "Method resolver does not handle 'this' keyword for simple method calls (property chain length ≤ 2). The this-keyword resolution logic exists in resolve_property_chain() but is only invoked for longer chains. For simple this.method() calls, the resolver tries to resolve 'this' as a regular symbol name, which returns null.",
+      "existing_task_fixes": [
+        "task-epic-11.152"
+      ],
+      "suggested_new_task_fix": "Add 'this' keyword detection before symbol resolution in resolve_single_method_call() for all property chain lengths. Extract and reuse the this-resolution logic from resolve_property_chain() (lines 240-297) to handle both simple and complex this-based method calls."
+    }
+  },
+  {
+    "name": "extract_trait_boundaries",
+    "file_path": "/Users/chuck/workspace/ariadne/packages/core/src/index_single_file/scopes/extractors/rust_scope_boundary_extractor.ts",
+    "start_line": 119,
+    "signature": "extract_trait_boundaries(node: Parser.SyntaxNode, file_path: FilePath): ScopeBoundaries",
+    "root_cause": "method called through this - simple two-element property chain not handled",
+    "reasoning": "The private method extract_trait_boundaries is called via this.extract_trait_boundaries() at line 49 by extract_rust_class_like_boundaries in the same class. Method resolution fails because the simple method call path (method_resolver.ts:96-110) tries to resolve 'this' as a variable in scope, which returns null since 'this' is a keyword. Special handling for 'this' only exists in the property chain resolver for chains with length > 2.",
+    "triage_analysis": {
+      "detection_gap": "Method calls on this/self keywords with two-element property chains (this.method) are not resolved because the simple method call resolution path does not recognize self-reference keywords, only the multi-step property chain path handles them",
+      "existing_task_fixes": [
+        "task-epic-11.152"
+      ],
+      "suggested_new_task_fix": "Extend task-epic-11.152 to add self-reference keyword handling to BOTH the simple method call path (line 96-110) and the property chain path (line 240+) in method_resolver.ts, ensuring this.method() calls are resolved correctly regardless of chain length."
+    }
+  },
+  {
+    "name": "extract_interface_boundaries",
+    "file_path": "/Users/chuck/workspace/ariadne/packages/core/src/index_single_file/scopes/extractors/typescript_scope_boundary_extractor.ts",
+    "start_line": 71,
+    "signature": "extract_interface_boundaries(node: Parser.SyntaxNode, file_path: FilePath): ScopeBoundaries",
+    "root_cause": "method called through this - simple two-element property chain not handled",
+    "reasoning": "The private method extract_interface_boundaries is called at line 49 via this.extract_interface_boundaries() by extract_typescript_class_like_boundaries in the same class. Method resolution fails because the simple method call path (method_resolver.ts:96-110) tries to resolve 'this' as a variable in scope, which returns null since 'this' is a keyword. Special handling for 'this' only exists in the property chain resolver for chains with length > 2.",
+    "triage_analysis": {
+      "detection_gap": "Method calls on this/self keywords with two-element property chains (this.method) are not resolved because the simple method call resolution path does not recognize self-reference keywords, only the multi-step property chain path handles them",
+      "existing_task_fixes": [
+        "task-epic-11.152"
+      ],
+      "suggested_new_task_fix": "Extend task-epic-11.152 to add self-reference keyword handling to BOTH the simple method call path (line 96-110) and the property chain path (line 240+) in method_resolver.ts, ensuring this.method() calls are resolved correctly regardless of chain length."
+    }
+  },
+  {
+    "name": "extract_enum_boundaries",
+    "file_path": "/Users/chuck/workspace/ariadne/packages/core/src/index_single_file/scopes/extractors/typescript_scope_boundary_extractor.ts",
+    "start_line": 95,
+    "signature": "extract_enum_boundaries(node: Parser.SyntaxNode, file_path: FilePath): ScopeBoundaries",
+    "root_cause": "method called through self-reference (this/self)",
+    "reasoning": "The method extract_enum_boundaries is called at line 53 via this.extract_enum_boundaries() from within the same class. The call graph analysis failed to resolve method calls where the receiver is 'this', which requires looking up the enclosing class scope and matching the method name to a definition within that class.",
+    "triage_analysis": {
+      "detection_gap": "Method call resolution does not handle 'this' receiver - when receiver_location points to 'this' keyword, the system fails to find the enclosing class scope and resolve the method name within that class's definitions, preventing the call from being registered in resolved_calls_by_file",
+      "existing_task_fixes": [
+        "task-epic-11.152",
+        "task-epic-11.136",
+        "task-epic-11.133",
+        "task-epic-11.109.6"
+      ],
+      "suggested_new_task_fix": "Implement self-reference receiver resolution: detect when receiver is 'this'/'self'/equivalent, walk up scope tree to find enclosing class, and resolve method by name within class scope definitions. Should handle this.method(), super.method(), and ClassName.staticMethod() patterns."
+    }
+  },
+  {
+    "name": "extract_interface_body_boundaries",
+    "file_path": "/Users/chuck/workspace/ariadne/packages/core/src/index_single_file/scopes/extractors/typescript_scope_boundary_extractor.ts",
+    "start_line": 120,
+    "signature": "extract_interface_body_boundaries(node: Parser.SyntaxNode, file_path: FilePath): ScopeBoundaries",
+    "root_cause": "method called through this - simple two-element property chain not handled",
+    "reasoning": "The private method extract_interface_body_boundaries is called at line 51 via this.extract_interface_body_boundaries() by extract_typescript_class_like_boundaries in the same class. Method resolution fails because the simple method call path (method_resolver.ts:96-110) tries to resolve 'this' as a variable in scope, which returns null since 'this' is a keyword. Special handling for 'this' only exists in the property chain resolver for chains with length > 2.",
+    "triage_analysis": {
+      "detection_gap": "Method calls on this/self keywords with two-element property chains (this.method) are not resolved because the simple method call resolution path does not recognize self-reference keywords, only the multi-step property chain path handles them",
+      "existing_task_fixes": [
+        "task-epic-11.152"
+      ],
+      "suggested_new_task_fix": "Extend task-epic-11.152 to add self-reference keyword handling to BOTH the simple method call path (line 96-110) and the property chain path (line 240+) in method_resolver.ts, ensuring this.method() calls are resolved correctly regardless of chain length."
+    }
+  },
+  {
+    "name": "extract_enum_body_boundaries",
+    "file_path": "/Users/chuck/workspace/ariadne/packages/core/src/index_single_file/scopes/extractors/typescript_scope_boundary_extractor.ts",
+    "start_line": 145,
+    "signature": "extract_enum_body_boundaries(node: Parser.SyntaxNode, file_path: FilePath): ScopeBoundaries",
+    "root_cause": "method called through this within same class",
+    "reasoning": "extract_enum_body_boundaries is a private method called via this.extract_enum_body_boundaries() at line 55 in the same class. Our call graph analysis captures this. method calls but fails to resolve them when this refers to the containing class, preventing the call from being tracked.",
+    "triage_analysis": {
+      "detection_gap": "Method resolver fails to resolve this.method() calls where the caller method is inside the same class as the callee method, likely due to this keyword resolution failing to find the containing class type in the method's own scope context",
+      "existing_task_fixes": [],
+      "suggested_new_task_fix": "Add test coverage and fix for this.method() resolution within class methods by improving the containing class lookup in resolve_property_chain() to handle cases where the call site is inside a method of the same class being resolved"
+    }
+  },
+  {
+    "name": "extract_namespace_boundaries",
+    "file_path": "/Users/chuck/workspace/ariadne/packages/core/src/index_single_file/scopes/extractors/typescript_scope_boundary_extractor.ts",
+    "start_line": 170,
+    "signature": "extract_namespace_boundaries(node: Parser.SyntaxNode, file_path: FilePath): ScopeBoundaries",
+    "root_cause": "method called through this - simple two-element property chain not handled",
+    "reasoning": "The private method extract_namespace_boundaries is called at line 30 via this.extract_namespace_boundaries() by extract_boundaries in the same class. Method resolution fails because the simple method call path (method_resolver.ts:96-110) tries to resolve 'this' as a variable in scope, which returns null since 'this' is a keyword. Special handling for 'this' only exists in the property chain resolver for chains with length > 2.",
+    "triage_analysis": {
+      "detection_gap": "Method calls on this/self keywords with two-element property chains (this.method) are not resolved because the simple method call resolution path does not recognize self-reference keywords, only the multi-step property chain path handles them",
+      "existing_task_fixes": [],
+      "suggested_new_task_fix": "Add 'this' keyword detection before symbol resolution in resolve_single_method_call() for all property chain lengths. Extract and reuse the this-resolution logic from resolve_property_chain() (lines 240-297) to handle both simple and complex this-based method calls."
+    }
+  },
+  {
+    "name": "extract_class_boundaries",
+    "file_path": "/Users/chuck/workspace/ariadne/packages/core/src/index_single_file/scopes/scope_boundary_base.ts",
+    "start_line": 97,
+    "signature": "extract_class_boundaries(node: Parser.SyntaxNode, file_path: FilePath): ScopeBoundaries",
+    "root_cause": "protected method called by parent class",
+    "reasoning": "extract_class_boundaries is a protected template method called only by extract_boundaries (line 75) within the same class hierarchy via this.extract_class_boundaries(). Internal method calls using 'this' or 'super' are not captured as SymbolReferences during semantic indexing, so they never appear in ResolutionRegistry.resolved_calls_by_file and are excluded from get_all_referenced_symbols().",
+    "triage_analysis": {
+      "detection_gap": "Call graph analysis only tracks calls that create SymbolReference objects during semantic indexing. Internal OOP method calls (this.method(), super.method()) are not captured by tree-sitter queries as references, so they never enter the resolution pipeline and appear as uncalled functions.",
+      "existing_task_fixes": [],
+      "suggested_new_task_fix": "Create task to capture internal method calls (this/self/super) in tree-sitter queries and process them as SymbolReferences during semantic indexing. Add resolution strategy to look up methods within the caller's enclosing class and parent classes."
+    }
+  },
+  {
+    "name": "extract_function_boundaries",
+    "file_path": "/Users/chuck/workspace/ariadne/packages/core/src/index_single_file/scopes/scope_boundary_base.ts",
+    "start_line": 126,
+    "signature": "extract_function_boundaries(node: Parser.SyntaxNode, file_path: FilePath): ScopeBoundaries",
+    "root_cause": "method called by parent class",
+    "reasoning": "The protected method extract_function_boundaries is called internally via this.extract_function_boundaries() from the public extract_boundaries method (line 78) and extract_constructor_boundaries method (line 160) within the same class. These internal polymorphic method calls via the 'this' reference are not being tracked in the call graph, causing the method to appear as an entry point despite being actively used.",
+    "triage_analysis": {
+      "detection_gap": "Internal method calls via 'this' reference are not being resolved and tracked in the call graph. The method resolver can handle 'this' keyword, but internal same-class method calls are not creating proper call graph edges, so they don't appear in get_all_referenced_symbols().",
+      "existing_task_fixes": [
+        "task-110",
+        "task-43"
+      ],
+      "suggested_new_task_fix": "Add specific handling for internal method calls (same-class calls via 'this') to ensure they are captured as references and included in the call graph before tackling the larger polymorphic dispatch problem."
+    }
+  },
+  {
+    "name": "extract_block_boundaries",
+    "file_path": "/Users/chuck/workspace/ariadne/packages/core/src/index_single_file/scopes/extractors/javascript_typescript_scope_boundary_extractor.ts",
+    "start_line": 202,
+    "signature": "extract_block_boundaries(node: Parser.SyntaxNode, file_path: FilePath): ScopeBoundaries",
+    "root_cause": "method called by parent class through this",
+    "reasoning": "The protected method extract_block_boundaries is called by parent class CommonScopeBoundaryExtractor.extract_boundaries() at scope_boundary_base.ts:82 using this.extract_block_boundaries(). Method resolution fails because the simple method call path (line 96-110 in method_resolver.ts) tries to resolve 'this' as a variable in scope, which returns null since 'this' is a keyword. Only the multi-step property chain path (line 240+) has special handling for the 'this' keyword.",
+    "triage_analysis": {
+      "detection_gap": "Method calls on this/self keywords with two-element property chains (this.method) are not resolved because the simple method call resolution path does not recognize self-reference keywords, only the multi-step property chain path handles them",
+      "existing_task_fixes": [
+        "task-epic-11.152"
+      ],
+      "suggested_new_task_fix": "Extend task-epic-11.152 to add self-reference keyword handling to BOTH the simple method call path (line 96-110) and the property chain path (line 240+) in method_resolver.ts, ensuring this.method() calls are resolved correctly regardless of chain length."
+    }
+  },
+  {
+    "name": "extract_class_boundaries_from_definition",
+    "file_path": "/Users/chuck/workspace/ariadne/packages/core/src/index_single_file/scopes/extractors/python_scope_boundary_extractor.ts",
+    "start_line": 56,
+    "signature": "extract_class_boundaries_from_definition(node: Parser.SyntaxNode, file_path: FilePath): ScopeBoundaries",
+    "root_cause": "method called through this - simple two-element property chain not handled",
+    "reasoning": "The private method extract_class_boundaries_from_definition is called at lines 46 and 48 via this.extract_class_boundaries_from_definition() by extract_class_boundaries in the same class. Method resolution fails because the simple method call path (method_resolver.ts:96-110) tries to resolve 'this' as a variable in scope, which returns null since 'this' is a keyword. Special handling for 'this' only exists in the property chain resolver for chains with length > 2.",
+    "triage_analysis": {
+      "detection_gap": "Method calls on this/self keywords with two-element property chains (this.method) are not resolved because the simple method call resolution path does not recognize self-reference keywords, only the multi-step property chain path handles them",
+      "existing_task_fixes": [
+        "task-epic-11.152"
+      ],
+      "suggested_new_task_fix": "Extend task-epic-11.152 to add self-reference keyword handling to BOTH the simple method call path (line 96-110) and the property chain path (line 240+) in method_resolver.ts, ensuring this.method() calls are resolved correctly regardless of chain length."
+    }
+  },
+  {
+    "name": "extract_regular_function_boundaries",
+    "file_path": "/Users/chuck/workspace/ariadne/packages/core/src/index_single_file/scopes/extractors/python_scope_boundary_extractor.ts",
+    "start_line": 115,
+    "signature": "extract_regular_function_boundaries(node: Parser.SyntaxNode, file_path: FilePath): ScopeBoundaries",
+    "root_cause": "method called through this - simple two-element property chain not handled",
+    "reasoning": "The private method extract_regular_function_boundaries is called at line 103 via this.extract_regular_function_boundaries() by extract_function_boundaries in the same class. Method resolution fails because the simple method call path (method_resolver.ts:96-110) tries to resolve 'this' as a variable in scope, which returns null since 'this' is a keyword. Special handling for 'this' only exists in the property chain resolver for chains with length > 2.",
+    "triage_analysis": {
+      "detection_gap": "Method calls on this/self keywords with two-element property chains (this.method) are not resolved because the simple method call resolution path does not recognize self-reference keywords, only the multi-step property chain path handles them",
+      "existing_task_fixes": [
+        "task-epic-11.152"
+      ],
+      "suggested_new_task_fix": "Extend task-epic-11.152 to add self-reference keyword handling to BOTH the simple method call path (line 96-110) and the property chain path (line 240+) in method_resolver.ts, ensuring this.method() calls are resolved correctly regardless of chain length."
+    }
+  },
+  {
+    "name": "extract_block_boundaries",
+    "file_path": "/Users/chuck/workspace/ariadne/packages/core/src/index_single_file/scopes/extractors/python_scope_boundary_extractor.ts",
+    "start_line": 166,
+    "signature": "extract_block_boundaries(node: Parser.SyntaxNode, file_path: FilePath): ScopeBoundaries",
+    "root_cause": "method called by parent class through polymorphic dispatch",
+    "reasoning": "The protected method extract_block_boundaries is called by its parent class CommonScopeBoundaryExtractor.extract_boundaries() at line 82 via this.extract_block_boundaries(). This is a Template Method pattern where the base class dispatches to protected methods overridden by subclasses. The call graph analysis doesn't track polymorphic dispatch through 'this.methodName()' calls within class hierarchies.",
+    "triage_analysis": {
+      "detection_gap": "Call graph analysis fails to resolve polymorphic method dispatch where parent class methods call this.methodName() - it doesn't track which concrete implementations (parent or child) will be invoked at runtime, and doesn't create edges to all possible override implementations in the class hierarchy",
+      "existing_task_fixes": [
+        "task-110"
+      ],
+      "suggested_new_task_fix": "Add visibility tracking (public/protected/private) to method definitions in semantic index, and exclude protected/private methods from entry point detection since they are internal APIs not external entry points."
+    }
+  },
+  {
+    "name": "extract_lambda_boundaries",
+    "file_path": "/Users/chuck/workspace/ariadne/packages/core/src/index_single_file/scopes/extractors/python_scope_boundary_extractor.ts",
+    "start_line": 248,
+    "signature": "extract_lambda_boundaries(node: Parser.SyntaxNode, file_path: FilePath): ScopeBoundaries",
+    "root_cause": "investigation error - function not actually misidentified",
+    "reasoning": "The function extract_lambda_boundaries does not appear in internal_misidentified.json, indicating the call graph analysis correctly detected it is called via this.extract_lambda_boundaries() at line 105. Structurally identical methods (extract_regular_function_boundaries, extract_decorated_function_boundaries) in the same file were misidentified, suggesting either intermittent resolution success or an error in the investigation task data.",
+    "triage_analysis": {
+      "detection_gap": "None - this function was correctly identified as called. However, similar this.method() calls in the same class were not resolved, indicating possible non-deterministic behavior in the method resolver for simple two-element property chains (this.method).",
+      "existing_task_fixes": [
+        "task-epic-11.152"
+      ],
+      "suggested_new_task_fix": "Investigate why some this.method() calls in PythonScopeBoundaryExtractor are resolved correctly (extract_lambda_boundaries) while others fail (extract_regular_function_boundaries, extract_decorated_function_boundaries) despite identical call patterns. Add test coverage to prevent regression."
+    }
+  },
+  {
+    "name": "extract_field_list_boundaries",
+    "file_path": "/Users/chuck/workspace/ariadne/packages/core/src/index_single_file/scopes/extractors/rust_scope_boundary_extractor.ts",
+    "start_line": 195,
+    "signature": "extract_field_list_boundaries(node: Parser.SyntaxNode, file_path: FilePath): ScopeBoundaries",
+    "root_cause": "method called through this keyword",
+    "reasoning": "The function extract_field_list_boundaries is called from extract_rust_class_like_boundaries using this.extract_field_list_boundaries(). The call graph analysis has infrastructure to resolve this.method() calls (tree-sitter captures, method resolver with this handling), but resolution is failing, likely because the semantic index isn't capturing the call with proper receiver_location context or the class scope lookup is failing.",
+    "triage_analysis": {
+      "detection_gap": "this.method() call resolution fails - either the reference builder doesn't capture this as receiver with proper context (receiver_location, property_chain), or the method resolver's class scope walking/definition lookup fails for TypeScript classes",
+      "existing_task_fixes": [],
+      "suggested_new_task_fix": "Add comprehensive testing and debugging for this.method() call resolution across all languages. Debug the exact failure point in the resolution pipeline (semantic index capture vs method resolver) and fix the root cause with integration tests for internal class method calls."
+    }
+  },
+  {
+    "name": "extract_enum_variant_list_boundaries",
+    "file_path": "/Users/chuck/workspace/ariadne/packages/core/src/index_single_file/scopes/extractors/rust_scope_boundary_extractor.ts",
+    "start_line": 209,
+    "signature": "extract_enum_variant_list_boundaries(node: Parser.SyntaxNode, file_path: FilePath): ScopeBoundaries",
+    "root_cause": "method called through this - simple two-element property chain not handled",
+    "reasoning": "The private method extract_enum_variant_list_boundaries is called via this.extract_enum_variant_list_boundaries() at line 55 by extract_rust_class_like_boundaries in the same class. Method resolution fails because the simple method call path (method_resolver.ts:96-110) tries to resolve 'this' as a variable in scope, which returns null since 'this' is a keyword. Special handling for 'this' only exists in the property chain resolver for chains with length > 2.",
+    "triage_analysis": {
+      "detection_gap": "Method calls on this/self keywords with two-element property chains (this.method) are not resolved because the simple method call resolution path does not recognize self-reference keywords, only the multi-step property chain path handles them",
+      "existing_task_fixes": [
+        "task-epic-11.152"
+      ],
+      "suggested_new_task_fix": "Extend task-epic-11.152 to add self-reference keyword handling to BOTH the simple method call path (line 96-110) and the property chain path (line 240+) in method_resolver.ts, ensuring this.method() calls are resolved correctly regardless of chain length."
+    }
+  },
+  {
+    "name": "extract_declaration_list_boundaries",
+    "file_path": "/Users/chuck/workspace/ariadne/packages/core/src/index_single_file/scopes/extractors/rust_scope_boundary_extractor.ts",
+    "start_line": 223,
+    "signature": "extract_declaration_list_boundaries(node: Parser.SyntaxNode, file_path: FilePath): ScopeBoundaries",
+    "root_cause": "method called by parent class through this",
+    "reasoning": "The private method extract_declaration_list_boundaries is called at line 57 via this.extract_declaration_list_boundaries() from the extract_rust_class_like_boundaries method in the same class. Method resolution fails because the simple method call path (line 96-110 in method_resolver.ts) tries to resolve 'this' as a variable in scope, which returns null since 'this' is a keyword. Only the multi-step property chain path (line 240+) has special handling for the 'this' keyword.",
+    "triage_analysis": {
+      "detection_gap": "Method calls on this/self keywords with two-element property chains (this.method) are not resolved because the simple method call resolution path does not recognize self-reference keywords, only the multi-step property chain path handles them",
+      "existing_task_fixes": [
+        "task-epic-11.152"
+      ],
+      "suggested_new_task_fix": "Extend task-epic-11.152 to add self-reference keyword handling to BOTH the simple method call path (line 96-110) and the property chain path (line 240+) in method_resolver.ts, ensuring this.method() calls are resolved correctly regardless of chain length."
+    }
+  },
+  {
+    "name": "extract_block_boundaries",
+    "file_path": "/Users/chuck/workspace/ariadne/packages/core/src/index_single_file/scopes/scope_boundary_base.ts",
+    "start_line": 168,
+    "signature": "extract_block_boundaries(node: Parser.SyntaxNode, file_path: FilePath): ScopeBoundaries",
+    "root_cause": "method called by parent class through this",
+    "reasoning": "The protected method extract_block_boundaries is called by parent class CommonScopeBoundaryExtractor.extract_boundaries() at scope_boundary_base.ts:82 using this.extract_block_boundaries(). Method resolution fails because the simple method call path (line 96-110 in method_resolver.ts) tries to resolve 'this' as a variable in scope, which returns null since 'this' is a keyword. Only the multi-step property chain path (line 240+) has special handling for the 'this' keyword.",
+    "triage_analysis": {
+      "detection_gap": "Method calls on this/self keywords with two-element property chains (this.method) are not resolved because the simple method call resolution path does not recognize self-reference keywords, only the multi-step property chain path handles them",
+      "existing_task_fixes": [
+        "task-epic-11.152"
+      ],
+      "suggested_new_task_fix": "Extend task-epic-11.152 to add self-reference keyword handling to BOTH the simple method call path (line 96-110) and the property chain path (line 240+) in method_resolver.ts, ensuring this.method() calls are resolved correctly regardless of chain length."
+    }
+  },
+  {
+    "name": "build_method",
+    "file_path": "/Users/chuck/workspace/ariadne/packages/core/src/index_single_file/definitions/definition_builder.ts",
+    "start_line": 874,
+    "signature": "build_method(state: MethodBuilderState): MethodDefinition",
+    "root_cause": "method called through this - simple two-element property chain not handled",
+    "reasoning": "The build_method function is called internally at lines 851, 936, and 952 using this.build_method(). The method resolution system has special handling for 'this' keyword only in the property chain path (line 240+), which requires chain length > 2. Simple two-element chains like this.build_method() fall through to the simple method call path (lines 96-110), which tries to resolve 'this' as a variable and fails because it's a keyword, not a variable.",
+    "triage_analysis": {
+      "detection_gap": "Method calls on this/self keywords with two-element property chains (this.method) are not resolved because the simple method call path does not recognize self-reference keywords, only the multi-step property chain path handles them",
+      "existing_task_fixes": [
+        "task-epic-11.152"
+      ],
+      "suggested_new_task_fix": "Extend task-epic-11.152 to add self-reference keyword handling to BOTH the simple method call path (line 96-110) and the property chain path (line 240+) in method_resolver.ts, ensuring this.method() calls are resolved correctly."
+    }
+  },
+  {
+    "name": "build_constructor",
+    "file_path": "/Users/chuck/workspace/ariadne/packages/core/src/index_single_file/definitions/definition_builder.ts",
+    "start_line": 889,
+    "signature": "build_constructor(state: ConstructorBuilderState): ConstructorDefinition",
+    "root_cause": "method called through JavaScript built-in higher-order function callback",
+    "reasoning": "The build_constructor method is called at line 859 inside an anonymous arrow function passed to Array.map(): Array.from(state.constructors.values()).map((c) => this.build_constructor(c)). Our call graph analysis does not capture inline/anonymous arrow functions as CallableDefinitions, so calls made within these arrow function bodies have no caller attribution in the call graph, causing build_constructor to appear as an uncalled entry point.",
+    "triage_analysis": {
+      "detection_gap": "Call graph analysis excludes anonymous/inline arrow functions from callable definitions (only captures arrow functions assigned to variables). Calls made inside these anonymous function bodies cannot be attributed to any caller, making their callees appear as false-positive entry points.",
+      "existing_task_fixes": [
+        "task-110",
+        "task-155",
+        "task-epic-11.152"
+      ],
+      "suggested_new_task_fix": "Extend tree-sitter queries to capture ALL arrow functions (including inline/anonymous ones) as CallableDefinitions with synthetic location-based SymbolIds. Include them in build_function_nodes() to ensure calls from arrow function bodies are properly attributed to a caller in the call graph."
+    }
+  },
+  {
+    "name": "build_property",
+    "file_path": "/Users/chuck/workspace/ariadne/packages/core/src/index_single_file/definitions/definition_builder.ts",
+    "start_line": 907,
+    "signature": "build_property(state: PropertyBuilderState): PropertyDefinition",
+    "root_cause": "cascading false positive from parent caller in arrow function callback",
+    "reasoning": "build_property is called by build_class (line 854) via this.build_property(p). However, build_class itself is misidentified as an entry point because it's called at line 202 inside an arrow function callback passed to forEach(). Since build_class appears uncalled in the call graph, all functions it calls (including build_property) also have no traceable caller, creating a cascading false positive.",
+    "triage_analysis": {
+      "detection_gap": "Call graph analysis does not track calls made within arrow function callback bodies passed to higher-order functions like forEach(). Additionally, this.method() calls are not resolved, preventing detection of the call from build_class to build_property even if build_class were correctly identified as called.",
+      "existing_task_fixes": [
+        "task-110",
+        "task-epic-11.152"
+      ],
+      "suggested_new_task_fix": "Extend build_function_nodes() to capture calls made inside arrow function bodies by associating them with the enclosing function scope that contains the higher-order function invocation (e.g., forEach call site), creating proper call graph edges through callback indirection."
+    }
+  },
+  {
+    "name": "build_function",
+    "file_path": "/Users/chuck/workspace/ariadne/packages/core/src/index_single_file/definitions/definition_builder.ts",
+    "start_line": 915,
+    "signature": "build_function(state: FunctionBuilderState): FunctionDefinition",
+    "root_cause": "method called through this keyword",
+    "reasoning": "build_function is a private method called via this.build_function(state) at line 199. The method resolver has a bug where property chains with length <= 2 try to resolve 'this' as a regular symbol instead of using special keyword handling. Only chains with length > 2 use the special this handling in resolve_property_chain().",
+    "triage_analysis": {
+      "detection_gap": "Property chain length check at method_resolver.ts:82 incorrectly routes short this.method() calls (length=2) to code path that tries to resolve 'this' as a symbol in scope, which fails because 'this' is a keyword. Special this handling only applies to longer chains (length > 2).",
+      "existing_task_fixes": [],
+      "suggested_new_task_fix": "Fix method_resolver.ts line 82 condition to route all property chains starting with 'this' to resolve_property_chain() regardless of length, or extract this handling into a shared function used by both code paths."
+    }
+  },
+  {
+    "name": "build_interface",
+    "file_path": "/Users/chuck/workspace/ariadne/packages/core/src/index_single_file/definitions/definition_builder.ts",
+    "start_line": 934,
+    "signature": "build_interface(state: InterfaceBuilderState): InterfaceDefinition",
+    "root_cause": "method called through JavaScript built-in higher-order function callback",
+    "reasoning": "The build_interface method is called at line 205 inside an anonymous arrow function callback passed to forEach(): this.interfaces.forEach((state, id) => { interfaces.set(id, this.build_interface(state)); }). Anonymous arrow functions create scopes but are not captured as CallableDefinitions in our tree-sitter queries (only arrow functions assigned to variables are captured). When find_enclosing_function_scope() attributes the call to build_interface to the arrow function's scope_id, that scope has no corresponding CallableNode in the call graph, so the call is never tracked as being made by any caller.",
+    "triage_analysis": {
+      "detection_gap": "Call graph analysis excludes anonymous/inline arrow functions from callable definitions (only captures arrow functions assigned to variables). Calls made inside these anonymous function bodies cannot be attributed to any caller, making their callees appear as false-positive entry points.",
+      "existing_task_fixes": [
+        "task-110"
+      ],
+      "suggested_new_task_fix": "Modify find_enclosing_function_scope() to skip anonymous arrow function scopes and continue walking up the scope tree until finding a named callable (function/method/constructor with a corresponding CallableDefinition), ensuring calls inside arrow function callbacks are attributed to the enclosing named function rather than the anonymous callback scope."
+    }
+  },
+  {
+    "name": "build_enum",
+    "file_path": "/Users/chuck/workspace/ariadne/packages/core/src/index_single_file/definitions/definition_builder.ts",
+    "start_line": 949,
+    "signature": "build_enum(state: EnumBuilderState): EnumDefinition",
+    "root_cause": "method called through this",
+    "reasoning": "The method build_enum is called at line 208 via this.build_enum(state) within the DefinitionBuilder.build() method. Method resolution fails because the simple method call path (line 96-110 in method_resolver.ts) tries to resolve 'this' as a variable in scope, which returns null since 'this' is a keyword. Only the multi-step property chain path (line 240+) has special handling for the 'this' keyword.",
+    "triage_analysis": {
+      "detection_gap": "Method calls on this/self keywords with two-element property chains (this.method) are not resolved because the simple method call resolution path does not recognize self-reference keywords, only the multi-step property chain path handles them",
+      "existing_task_fixes": [
+        "task-epic-11.152"
+      ],
+      "suggested_new_task_fix": "Extend task-epic-11.152 to add self-reference keyword handling to BOTH the simple method call path (line 96-110) and the property chain path (line 240+) in method_resolver.ts, ensuring this.method() calls are resolved correctly regardless of chain length."
+    }
+  },
+  {
+    "name": "build_namespace",
+    "file_path": "/Users/chuck/workspace/ariadne/packages/core/src/index_single_file/definitions/definition_builder.ts",
+    "start_line": 964,
+    "signature": "build_namespace(state: NamespaceBuilderState): NamespaceDefinition",
+    "root_cause": "investigation error - function not actually misidentified",
+    "reasoning": "The function build_namespace does not appear in internal_misidentified.json, indicating the call graph analysis correctly detected it is called via this.build_namespace() at line 211. Structurally identical methods (build_class, build_enum, build_interface) in the same file were misidentified, suggesting either intermittent resolution success or an error in the investigation task data.",
+    "triage_analysis": {
+      "detection_gap": "None - this function was correctly identified as called. However, similar this.method() calls in the same class were not resolved, indicating possible non-deterministic behavior in the method resolver for simple two-element property chains (this.method).",
+      "existing_task_fixes": [
+        "task-epic-11.152"
+      ],
+      "suggested_new_task_fix": "Investigate why some this.method() calls in DefinitionBuilder are resolved correctly (build_namespace) while others fail (build_class, build_enum, build_interface) despite identical call patterns. Add test coverage to prevent regression."
+    }
+  },
+  {
+    "name": "extract_constructor_boundaries",
+    "file_path": "/Users/chuck/workspace/ariadne/packages/core/src/index_single_file/scopes/extractors/javascript_typescript_scope_boundary_extractor.ts",
+    "start_line": 194,
+    "signature": "extract_constructor_boundaries(node: Parser.SyntaxNode, file_path: FilePath): ScopeBoundaries",
+    "root_cause": "method called by parent class through this",
+    "reasoning": "The protected method extract_constructor_boundaries is called by parent class CommonScopeBoundaryExtractor.extract_boundaries() at scope_boundary_base.ts:80 using this.extract_constructor_boundaries(). This is a polymorphic override pattern where the parent class's public method dispatches to the child class's protected implementation via the this keyword.",
+    "triage_analysis": {
+      "detection_gap": "Method calls on this/self keywords with two-element property chains (this.method) are not resolved because the simple method call resolution path does not recognize self-reference keywords, only the multi-step property chain path handles them",
+      "existing_task_fixes": [
+        "task-epic-11.152"
+      ],
+      "suggested_new_task_fix": "Extend task-epic-11.152 to add self-reference keyword handling to BOTH the simple method call path (line 96-110) and the property chain path (line 240+) in method_resolver.ts, ensuring this.method() calls are resolved correctly regardless of chain length."
+    }
+  },
+  {
+    "name": "extract_class_boundaries",
+    "file_path": "/Users/chuck/workspace/ariadne/packages/core/src/index_single_file/scopes/extractors/python_scope_boundary_extractor.ts",
+    "start_line": 31,
+    "signature": "extract_class_boundaries(node: Parser.SyntaxNode, file_path: FilePath): ScopeBoundaries",
+    "root_cause": "method called by parent class through this",
+    "reasoning": "The protected method extract_class_boundaries is called by PythonScopeBoundaryExtractor.extract_boundaries() at line 18 using this.extract_class_boundaries(node, file_path). Method resolution fails because the simple method call path (method_resolver.ts:96-110) tries to resolve 'this' as a variable in scope, which returns null since 'this' is a keyword. Only the multi-step property chain path (line 240+) has special handling for the 'this' keyword.",
+    "triage_analysis": {
+      "detection_gap": "Method calls on this/self keywords with two-element property chains (this.method) are not resolved because the simple method call resolution path does not recognize self-reference keywords, only the multi-step property chain path handles them",
+      "existing_task_fixes": [
+        "task-152"
+      ],
+      "suggested_new_task_fix": "Extend task-152 to add self-reference keyword handling to BOTH the simple method call path (line 96-110) and the property chain path (line 240+) in method_resolver.ts, ensuring this.method() calls are resolved correctly regardless of chain length."
+    }
+  },
+  {
+    "name": "extract_function_boundaries",
+    "file_path": "/Users/chuck/workspace/ariadne/packages/core/src/index_single_file/scopes/extractors/python_scope_boundary_extractor.ts",
+    "start_line": 97,
+    "signature": "extract_function_boundaries(node: Parser.SyntaxNode, file_path: FilePath): ScopeBoundaries",
+    "root_cause": "method called by parent class through this",
+    "reasoning": "The protected method extract_function_boundaries is called by its parent class CommonScopeBoundaryExtractor.extract_boundaries() at scope_boundary_base.ts:78 via this.extract_function_boundaries(), and by sibling methods extract_constructor_boundaries (line 163) and extract_decorated_function_boundaries (line 241) in the same class. Method resolution fails because the simple method call path (method_resolver.ts:96-110) tries to resolve 'this' as a variable in scope, which returns null since 'this' is a keyword. Special handling for 'this' only exists in the property chain resolver for chains with length > 2.",
+    "triage_analysis": {
+      "detection_gap": "Method calls on this/self keywords with two-element property chains (this.method) are not resolved because the simple method call resolution path does not recognize self-reference keywords, only the multi-step property chain path handles them",
+      "existing_task_fixes": [
+        "task-epic-11.152"
+      ],
+      "suggested_new_task_fix": "Extend task-epic-11.152 to add self-reference keyword handling to BOTH the simple method call path (line 96-110) and the property chain path (line 240+) in method_resolver.ts, ensuring this.method() calls are resolved correctly regardless of chain length."
+    }
+  },
+  {
+    "name": "extract_constructor_boundaries",
+    "file_path": "/Users/chuck/workspace/ariadne/packages/core/src/index_single_file/scopes/extractors/python_scope_boundary_extractor.ts",
+    "start_line": 158,
+    "signature": "extract_constructor_boundaries(node: Parser.SyntaxNode, file_path: FilePath): ScopeBoundaries",
+    "root_cause": "method called by parent class",
+    "reasoning": "extract_constructor_boundaries is a protected method called internally by extract_boundaries (line 23) within the same class. This is an intra-class method invocation using this.extract_constructor_boundaries(). The call graph analysis failed to detect this internal method call within the class hierarchy.",
+    "triage_analysis": {
+      "detection_gap": "We don't track this.methodName() calls within method bodies - the call graph analysis misses internal instance method invocations where methods call other methods in the same class or parent class hierarchy.",
+      "existing_task_fixes": [
+        "task-110",
+        "task-epic-11.113",
+        "task-43"
+      ],
+      "suggested_new_task_fix": "Add intra-class method call detection by parsing method bodies to extract this.method() invocations and resolving them to class method definitions. This requires ensuring method implementations are scanned for internal method calls during call graph construction."
+    }
+  },
+  {
+    "name": "find_colon_after_name",
+    "file_path": "/Users/chuck/workspace/ariadne/packages/core/src/index_single_file/scopes/extractors/python_scope_boundary_extractor.ts",
+    "start_line": 187,
+    "signature": "find_colon_after_name(class_node: Parser.SyntaxNode, name_node: Parser.SyntaxNode): Parser.Point",
+    "root_cause": "method called through this - simple two-element property chain not handled",
+    "reasoning": "The method find_colon_after_name is called at line 82 via this.find_colon_after_name(node, name_node). Method resolution fails because the resolver attempts to resolve 'this' as a variable through lexical scope, which returns null since 'this' is a keyword. Without the receiver's SymbolId, the method call cannot be resolved and doesn't appear in the referenced symbols set.",
+    "triage_analysis": {
+      "detection_gap": "Method calls on this/self keywords are not resolved because the method resolver does not recognize self-reference keywords - it attempts lexical scope lookup which fails for language keywords, preventing resolution of internal class method calls",
+      "existing_task_fixes": [
+        "task-epic-11.152"
+      ],
+      "suggested_new_task_fix": "Extend task-epic-11.152 to add special handling for 'this' keyword in method_resolver.ts: when receiver is 'this', find the enclosing class scope and resolve the method within that class's definitions rather than attempting lexical scope resolution."
+    }
+  },
+  {
+    "name": "extract_decorated_function_boundaries",
+    "file_path": "/Users/chuck/workspace/ariadne/packages/core/src/index_single_file/scopes/extractors/python_scope_boundary_extractor.ts",
+    "start_line": 230,
+    "signature": "extract_decorated_function_boundaries(node: Parser.SyntaxNode, file_path: FilePath): ScopeBoundaries",
+    "root_cause": "method called through this keyword",
+    "reasoning": "The function extract_decorated_function_boundaries is called from line 107 via this.extract_decorated_function_boundaries(). The method resolver has two code paths: one for multi-step property chains (length > 2) that correctly handles 'this' by finding the containing class, and one for simple calls (length ≤ 2) that incorrectly tries to resolve 'this' as a variable in the scope symbol table, causing resolution to fail since 'this' is a keyword, not a defined symbol.",
+    "triage_analysis": {
+      "detection_gap": "The simple method call resolution path (method_resolver.ts:96-110) lacks self-reference keyword handling. It attempts to resolve 'this' as a variable using resolutions.resolve(), which returns null since keywords are not in the scope symbol table. This causes all simple this.method() calls to fail resolution, while this.prop.method() calls succeed via the property chain resolver that has special 'this' handling.",
+      "existing_task_fixes": [
+        "task-epic-11.152"
+      ],
+      "suggested_new_task_fix": "Add self-reference keyword detection (is_self_reference_keyword) to the simple method call path in method_resolver.ts:96-110, mirroring the 'this' handling logic from the property chain resolver (lines 240-297). This should resolve the containing class scope and set receiver_type accordingly before attempting variable lookup."
+    }
+  },
+  {
+    "name": "extract_rust_class_like_boundaries",
+    "file_path": "/Users/chuck/workspace/ariadne/packages/core/src/index_single_file/scopes/extractors/rust_scope_boundary_extractor.ts",
+    "start_line": 38,
+    "signature": "extract_rust_class_like_boundaries(node: Parser.SyntaxNode, file_path: FilePath): ScopeBoundaries",
+    "root_cause": "method called through this reference - internal class method call",
+    "reasoning": "The private method extract_rust_class_like_boundaries is called on line 29 via this.extract_rust_class_like_boundaries() from within the same class's public extract_boundaries method. Our call graph analysis fails to detect this self-referential method call using the this keyword.",
+    "triage_analysis": {
+      "detection_gap": "Method call resolution does not properly handle this keyword references to resolve internal class method calls to their SymbolIds, causing these calls to be invisible to the call graph",
+      "existing_task_fixes": [
+        "task-epic-11.152"
+      ],
+      "suggested_new_task_fix": "Enhance tree-sitter queries to capture this.methodName() patterns as method call references with proper receiver_location tracking, and ensure method_resolver.ts resolves this to the containing class scope for internal method lookup."
+    }
+  },
+  {
+    "name": "extract_typescript_class_like_boundaries",
+    "file_path": "/Users/chuck/workspace/ariadne/packages/core/src/index_single_file/scopes/extractors/typescript_scope_boundary_extractor.ts",
+    "start_line": 37,
+    "signature": "extract_typescript_class_like_boundaries(node: Parser.SyntaxNode, file_path: FilePath): ScopeBoundaries",
+    "root_cause": "method called through this keyword - intra-class method call",
+    "reasoning": "The private method extract_typescript_class_like_boundaries is called via this.extract_typescript_class_like_boundaries() from the public extract_boundaries method (line 27). Our method call resolution fails to properly resolve this.method() calls within the same class, so the call is not tracked in the call graph, making the private method appear as an entry point.",
+    "triage_analysis": {
+      "detection_gap": "Method resolution for this.method() calls fails to resolve the receiver (this keyword) to the containing class and look up the method in that class's members. The resolution pipeline requires type information for the receiver, but this is a lexical scope lookup that should use the containing class scope directly.",
+      "existing_task_fixes": [
+        "task-152"
+      ],
+      "suggested_new_task_fix": "Add special-case handling in method_resolver.ts for self-reference keywords (this/self): when receiver is this, find the containing class scope and look up the method directly in that class's members, bypassing the type resolution step entirely."
+    }
+  },
+  {
+    "name": "extract_constructor_boundaries",
+    "file_path": "/Users/chuck/workspace/ariadne/packages/core/src/index_single_file/scopes/scope_boundary_base.ts",
+    "start_line": 156,
+    "signature": "extract_constructor_boundaries(node: Parser.SyntaxNode, file_path: FilePath): ScopeBoundaries",
+    "root_cause": "method called by parent class through this",
+    "reasoning": "The protected method extract_constructor_boundaries is called by the public extract_boundaries method at line 80 using this.extract_constructor_boundaries(). This is a template method pattern where the base class dispatches to protected methods that can be overridden by subclasses (JavaScriptTypescriptScopeBoundaryExtractor, PythonScopeBoundaryExtractor). The call graph analysis fails to track this internal method invocation.",
+    "triage_analysis": {
+      "detection_gap": "Method calls on this/self keywords with two-element property chains (this.method) are not resolved because the simple method call resolution path (method_resolver.ts lines 96-110) does not recognize self-reference keywords - it tries to resolve 'this' as a variable in scope which returns null. Only the multi-step property chain path (line 240+) has special handling for the 'this' keyword.",
+      "existing_task_fixes": [
+        "task-epic-11.152"
+      ],
+      "suggested_new_task_fix": "Extend task-epic-11.152 to add self-reference keyword handling to BOTH the simple method call path (line 96-110) and the property chain path (line 240+) in method_resolver.ts, ensuring this.method() and self.method() calls are resolved correctly regardless of chain length."
+    }
+  },
+  {
+    "name": "get_all_files",
+    "file_path": "/Users/chuck/workspace/ariadne/packages/core/src/project/import_graph.ts",
+    "start_line": 315,
+    "signature": "get_all_files(): Set<FilePath>",
+    "root_cause": "method called by same class (internal)",
+    "reasoning": "The method get_all_files() is only called internally within ImportGraph class by the get_stats() method at line 406 via this.get_all_files(). Both methods are internal implementation details never called from production code (only tests). The call graph failed to detect this simple intra-class method call.",
+    "triage_analysis": {
+      "detection_gap": "Simple this.method() calls within the same class are not resolved. Method call resolution only handles multi-step property chains with 'this', not direct method invocations like this.get_all_files(). Language-specific self-reference keywords (this/self) are not uniformly detected across all call patterns.",
+      "existing_task_fixes": [
+        "task-epic-11.152"
+      ],
+      "suggested_new_task_fix": "Extend method_call_resolver.ts to treat simple this.method_name() calls identically to multi-step property access chains. Add language-agnostic self-reference detection (this for TS/JS, self for Python/Rust) and ensure call graph edges are created for all intra-class method calls."
+    }
+  },
+  {
+    "name": "build_scope_to_definitions_index",
+    "file_path": "/Users/chuck/workspace/ariadne/packages/core/src/resolve_references/registries/definition_registry.ts",
+    "start_line": 269,
+    "signature": "build_scope_to_definitions_index(definitions: AnyDefinition[]): Map<ScopeId, Map<SymbolKind, AnyDefinition[]>>",
+    "root_cause": "method called through `this.` but not tracked by call resolution",
+    "reasoning": "The private method `build_scope_to_definitions_index` is called on line 134 via `this.build_scope_to_definitions_index(definitions)` within the same class. The call graph analysis fails to resolve `this.method()` calls, likely because `this` type resolution fails or the method call resolution doesn't properly handle same-class invocations. When resolution fails, the call never gets added to `resolved_calls_by_file`, so it doesn't appear in `get_all_referenced_symbols()`, causing the method to be misidentified as an entry point.",
+    "triage_analysis": {
+      "detection_gap": "Method call resolution (resolve_single_method_call) fails to resolve calls where the receiver is `this` within a class method. The system doesn't track that `this` refers to the enclosing class type, so it can't look up the method in the class's member index. This causes legitimate internal method calls to be completely missing from the resolved calls registry.",
+      "existing_task_fixes": [
+        "task-155.7",
+        "task-152"
+      ],
+      "suggested_new_task_fix": "Add explicit `this` keyword type binding during method body scope processing - when indexing a method, record that `this` within that method's body scope resolves to the parent class type. Update method call resolution to use this binding when the receiver is the `this` keyword."
+    }
+  },
+  {
+    "name": "get_export",
+    "file_path": "/Users/chuck/workspace/ariadne/packages/core/src/resolve_references/registries/export_registry.ts",
+    "start_line": 270,
+    "signature": "get_export(file_path: FilePath, export_name: SymbolName): EnhancedExportMetadata | undefined",
+    "root_cause": "method called through this - simple two-element property chain not handled",
+    "reasoning": "The method get_export is called via this.get_export() at line 347 within resolve_export_chain. Method resolution fails because the simple method call path (lines 96-110 in method_resolver.ts) tries to resolve 'this' as a variable in scope, which returns null since 'this' is a keyword. Special handling for 'this' only exists in the property chain resolver for chains with length > 2, but this.get_export() has a two-element chain.",
+    "triage_analysis": {
+      "detection_gap": "Method calls on this/self keywords with two-element property chains (this.method) are not resolved because the simple method call path does not recognize self-reference keywords, only the multi-step property chain path handles them",
+      "existing_task_fixes": [
+        "task-epic-11.152"
+      ],
+      "suggested_new_task_fix": "Extend task-epic-11.152 to add self-reference keyword handling to BOTH the simple method call path (line 96-110) and modify the condition at line 82 to include two-element chains when the first element is a self-reference keyword (this/self), ensuring this.method() calls are resolved correctly."
+    }
+  },
+  {
+    "name": "get_default_export",
+    "file_path": "/Users/chuck/workspace/ariadne/packages/core/src/resolve_references/registries/export_registry.ts",
+    "start_line": 283,
+    "signature": "get_default_export(file_path: FilePath): EnhancedExportMetadata | undefined",
+    "root_cause": "method called by same-class method via 'this'",
+    "reasoning": "get_default_export is called by resolve_export_chain (same class) at line 346 via this.get_default_export(). The call chain traces to public API: get_default_export <- resolve_export_chain <- resolve_scope_recursive <- resolve_names <- Project.update_file/remove_file. This is a same-class method call that should be detected but isn't appearing in the referenced symbols set.",
+    "triage_analysis": {
+      "detection_gap": "Same-class method calls via 'this' keyword are either not being captured as references during semantic indexing, or not being resolved successfully during call resolution, causing them to be excluded from the get_all_referenced_symbols() set used for entry point detection",
+      "existing_task_fixes": [],
+      "suggested_new_task_fix": "Create task to verify and fix 'this.method()' call tracking: ensure semantic indexing captures same-class method call references with correct receiver_location context, and verify resolve_single_method_call() correctly handles 'this' keyword resolution to class type and method lookup. Add test coverage for same-class call chains across all supported languages."
+    }
+  },
+  {
+    "name": "remove_scopes_recursively",
+    "file_path": "/Users/chuck/workspace/ariadne/packages/core/src/resolve_references/registries/scope_registry.ts",
+    "start_line": 122,
+    "signature": "remove_scopes_recursively(scope: LexicalScope): void",
+    "root_cause": "method called through this - simple two-element property chain not handled",
+    "reasoning": "The method remove_scopes_recursively is called at lines 111 and 129 via this.remove_scopes_recursively(). Method resolution has two code paths: one for property chains with length > 2 (which handles 'this' keyword) and one for chains with length <= 2 (which does not). For this.method() calls, the chain length is 2, so it takes the simple path which tries to resolve 'this' as a variable, fails, and returns null.",
+    "triage_analysis": {
+      "detection_gap": "Method calls on this/self keywords with two-element property chains (this.method) are not resolved because the simple method call resolution path (method_resolver.ts:96-110) does not recognize self-reference keywords, only the multi-step property chain path (line 240+) handles them",
+      "existing_task_fixes": [
+        "task-epic-11.152"
+      ],
+      "suggested_new_task_fix": "Extend task-epic-11.152 to add self-reference keyword handling to BOTH the simple method call path (line 96-110) and the property chain path (line 240+) in method_resolver.ts, ensuring this.method() calls are resolved correctly regardless of chain length."
+    }
+  },
+  {
+    "name": "get_parent_class",
+    "file_path": "/Users/chuck/workspace/ariadne/packages/core/src/resolve_references/registries/type_registry.ts",
+    "start_line": 337,
+    "signature": "get_parent_class(class_id: SymbolId): SymbolId | null",
+    "root_cause": "unused public API method",
+    "reasoning": "The method get_parent_class is a legitimate public API accessor method exposed through TypeRegistry, but it's never called in production code. Internal usage (walk_inheritance_chain) directly accesses this.parent_classes.get() instead of calling the method. This is NOT a detection bug - the method is genuinely unused.",
+    "triage_analysis": {
+      "detection_gap": "Entry point detection doesn't distinguish between public API methods (intentionally exposed but unused) and internal methods (unexpectedly uncalled). All uncalled functions are classified as entry points regardless of their visibility or purpose.",
+      "existing_task_fixes": [],
+      "suggested_new_task_fix": "Add public API classification to entry point detection by filtering out public methods of exported Registry classes (TypeRegistry, DefinitionRegistry, etc.) or using ExportRegistry to identify public API surface, creating separate categories for 'unused public API' vs 'internal uncalled functions'."
+    }
+  },
+  {
+    "name": "get_implemented_interfaces",
+    "file_path": "/Users/chuck/workspace/ariadne/packages/core/src/resolve_references/registries/type_registry.ts",
+    "start_line": 356,
+    "signature": "get_implemented_interfaces(class_id: SymbolId): readonly SymbolId[]",
+    "root_cause": "internal utility function - direct property access bypasses public getter",
+    "reasoning": "The method get_implemented_interfaces() is a public getter that wraps access to the private property this.implemented_interfaces. Internal code (get_type_member at line 440) directly accesses this.implemented_interfaces.get() instead of calling the getter method. The getter exists only for external API consumers (tests), while internal implementation bypasses it for direct property access.",
+    "triage_analysis": {
+      "detection_gap": "Call graph analysis does not track direct property access (this.property_name) on class instances, only method calls (this.method_name()). It cannot recognize that accessing a private property directly is semantically equivalent to calling its public getter wrapper.",
+      "existing_task_fixes": [
+        "task-epic-11.152"
+      ],
+      "suggested_new_task_fix": "Extend task-epic-11.152 to track this.property access patterns in addition to this.method() calls. Add tree-sitter queries to capture property member access expressions and resolve them to understand that direct property access (this.implemented_interfaces) represents usage of the data source exposed by the getter method (get_implemented_interfaces)."
+    }
+  },
+  {
+    "name": "walk_inheritance_chain",
+    "file_path": "/Users/chuck/workspace/ariadne/packages/core/src/resolve_references/registries/type_registry.ts",
+    "start_line": 378,
+    "signature": "walk_inheritance_chain(class_id: SymbolId): readonly SymbolId[]",
+    "root_cause": "method called through this keyword - simple chain",
+    "reasoning": "The method walk_inheritance_chain is called by get_type_member using this.walk_inheritance_chain(). The semantic index captures this call with property_chain ['this', 'walk_inheritance_chain'], but the method resolver only handles this keyword for chains longer than 2. It tries to resolve 'this' as a regular symbol, fails, and returns null without resolving the call.",
+    "triage_analysis": {
+      "detection_gap": "Method resolver (method_resolver.ts:82) only invokes resolve_property_chain for chains with length > 2. Simple this.method() calls (length=2) attempt to resolve 'this' as a symbol via resolutions.resolve(), which fails because 'this' is a keyword. The special this-handling logic exists only in resolve_property_chain and is unreachable for simple same-class method calls.",
+      "existing_task_fixes": [],
+      "suggested_new_task_fix": "Change method_resolver.ts:82 condition from 'chain.length > 2' to 'chain.length >= 2 && chain[0] === \"this\"' to route all this-prefixed calls through resolve_property_chain, which has the proper keyword handling logic. This will resolve internal method calls and prevent them from being misidentified as entry points."
+    }
+  }
+]

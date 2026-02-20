@@ -1,0 +1,1849 @@
+{
+  "file_path": "<fixtures>/rust/code/modules/user_mod.rs",
+  "language": "rust",
+  "root_scope_id": "module:<fixtures>/rust/code/modules/user_mod.rs:1:1:76:1",
+  "scopes": {
+    "module:<fixtures>/rust/code/modules/user_mod.rs:1:1:76:1": {
+      "id": "module:<fixtures>/rust/code/modules/user_mod.rs:1:1:76:1",
+      "parent_id": null,
+      "name": null,
+      "type": "module",
+      "location": {
+        "file_path": "<fixtures>/rust/code/modules/user_mod.rs",
+        "start_line": 1,
+        "start_column": 1,
+        "end_line": 76,
+        "end_column": 1
+      },
+      "child_ids": [
+        "class:<fixtures>/rust/code/modules/user_mod.rs:5:17:9:1",
+        "block:<fixtures>/rust/code/modules/user_mod.rs:11:11:57:1",
+        "class:<fixtures>/rust/code/modules/user_mod.rs:60:24:62:1",
+        "block:<fixtures>/rust/code/modules/user_mod.rs:64:18:76:1"
+      ]
+    },
+    "class:<fixtures>/rust/code/modules/user_mod.rs:5:17:9:1": {
+      "id": "class:<fixtures>/rust/code/modules/user_mod.rs:5:17:9:1",
+      "parent_id": "module:<fixtures>/rust/code/modules/user_mod.rs:1:1:76:1",
+      "name": null,
+      "type": "class",
+      "location": {
+        "file_path": "<fixtures>/rust/code/modules/user_mod.rs",
+        "start_line": 5,
+        "start_column": 17,
+        "end_line": 9,
+        "end_column": 1
+      },
+      "child_ids": []
+    },
+    "block:<fixtures>/rust/code/modules/user_mod.rs:11:11:57:1": {
+      "id": "block:<fixtures>/rust/code/modules/user_mod.rs:11:11:57:1",
+      "parent_id": "module:<fixtures>/rust/code/modules/user_mod.rs:1:1:76:1",
+      "name": null,
+      "type": "block",
+      "location": {
+        "file_path": "<fixtures>/rust/code/modules/user_mod.rs",
+        "start_line": 11,
+        "start_column": 11,
+        "end_line": 57,
+        "end_column": 1
+      },
+      "child_ids": [
+        "function:<fixtures>/rust/code/modules/user_mod.rs:13:15:19:5",
+        "function:<fixtures>/rust/code/modules/user_mod.rs:22:20:24:5",
+        "function:<fixtures>/rust/code/modules/user_mod.rs:27:21:29:5",
+        "function:<fixtures>/rust/code/modules/user_mod.rs:32:21:34:5",
+        "function:<fixtures>/rust/code/modules/user_mod.rs:37:23:39:5",
+        "function:<fixtures>/rust/code/modules/user_mod.rs:42:20:45:5",
+        "function:<fixtures>/rust/code/modules/user_mod.rs:48:22:51:5",
+        "function:<fixtures>/rust/code/modules/user_mod.rs:54:23:56:5"
+      ]
+    },
+    "function:<fixtures>/rust/code/modules/user_mod.rs:13:15:19:5": {
+      "id": "function:<fixtures>/rust/code/modules/user_mod.rs:13:15:19:5",
+      "parent_id": "block:<fixtures>/rust/code/modules/user_mod.rs:11:11:57:1",
+      "name": "new",
+      "type": "function",
+      "location": {
+        "file_path": "<fixtures>/rust/code/modules/user_mod.rs",
+        "start_line": 13,
+        "start_column": 15,
+        "end_line": 19,
+        "end_column": 5
+      },
+      "child_ids": []
+    },
+    "function:<fixtures>/rust/code/modules/user_mod.rs:22:20:24:5": {
+      "id": "function:<fixtures>/rust/code/modules/user_mod.rs:22:20:24:5",
+      "parent_id": "block:<fixtures>/rust/code/modules/user_mod.rs:11:11:57:1",
+      "name": "get_name",
+      "type": "function",
+      "location": {
+        "file_path": "<fixtures>/rust/code/modules/user_mod.rs",
+        "start_line": 22,
+        "start_column": 20,
+        "end_line": 24,
+        "end_column": 5
+      },
+      "child_ids": []
+    },
+    "function:<fixtures>/rust/code/modules/user_mod.rs:27:21:29:5": {
+      "id": "function:<fixtures>/rust/code/modules/user_mod.rs:27:21:29:5",
+      "parent_id": "block:<fixtures>/rust/code/modules/user_mod.rs:11:11:57:1",
+      "name": "get_email",
+      "type": "function",
+      "location": {
+        "file_path": "<fixtures>/rust/code/modules/user_mod.rs",
+        "start_line": 27,
+        "start_column": 21,
+        "end_line": 29,
+        "end_column": 5
+      },
+      "child_ids": []
+    },
+    "function:<fixtures>/rust/code/modules/user_mod.rs:32:21:34:5": {
+      "id": "function:<fixtures>/rust/code/modules/user_mod.rs:32:21:34:5",
+      "parent_id": "block:<fixtures>/rust/code/modules/user_mod.rs:11:11:57:1",
+      "name": "is_active",
+      "type": "function",
+      "location": {
+        "file_path": "<fixtures>/rust/code/modules/user_mod.rs",
+        "start_line": 32,
+        "start_column": 21,
+        "end_line": 34,
+        "end_column": 5
+      },
+      "child_ids": []
+    },
+    "function:<fixtures>/rust/code/modules/user_mod.rs:37:23:39:5": {
+      "id": "function:<fixtures>/rust/code/modules/user_mod.rs:37:23:39:5",
+      "parent_id": "block:<fixtures>/rust/code/modules/user_mod.rs:11:11:57:1",
+      "name": "update_name",
+      "type": "function",
+      "location": {
+        "file_path": "<fixtures>/rust/code/modules/user_mod.rs",
+        "start_line": 37,
+        "start_column": 23,
+        "end_line": 39,
+        "end_column": 5
+      },
+      "child_ids": []
+    },
+    "function:<fixtures>/rust/code/modules/user_mod.rs:42:20:45:5": {
+      "id": "function:<fixtures>/rust/code/modules/user_mod.rs:42:20:45:5",
+      "parent_id": "block:<fixtures>/rust/code/modules/user_mod.rs:11:11:57:1",
+      "name": "activate",
+      "type": "function",
+      "location": {
+        "file_path": "<fixtures>/rust/code/modules/user_mod.rs",
+        "start_line": 42,
+        "start_column": 20,
+        "end_line": 45,
+        "end_column": 5
+      },
+      "child_ids": []
+    },
+    "function:<fixtures>/rust/code/modules/user_mod.rs:48:22:51:5": {
+      "id": "function:<fixtures>/rust/code/modules/user_mod.rs:48:22:51:5",
+      "parent_id": "block:<fixtures>/rust/code/modules/user_mod.rs:11:11:57:1",
+      "name": "deactivate",
+      "type": "function",
+      "location": {
+        "file_path": "<fixtures>/rust/code/modules/user_mod.rs",
+        "start_line": 48,
+        "start_column": 22,
+        "end_line": 51,
+        "end_column": 5
+      },
+      "child_ids": []
+    },
+    "function:<fixtures>/rust/code/modules/user_mod.rs:54:23:56:5": {
+      "id": "function:<fixtures>/rust/code/modules/user_mod.rs:54:23:56:5",
+      "parent_id": "block:<fixtures>/rust/code/modules/user_mod.rs:11:11:57:1",
+      "name": "format_info",
+      "type": "function",
+      "location": {
+        "file_path": "<fixtures>/rust/code/modules/user_mod.rs",
+        "start_line": 54,
+        "start_column": 23,
+        "end_line": 56,
+        "end_column": 5
+      },
+      "child_ids": []
+    },
+    "class:<fixtures>/rust/code/modules/user_mod.rs:60:24:62:1": {
+      "id": "class:<fixtures>/rust/code/modules/user_mod.rs:60:24:62:1",
+      "parent_id": "module:<fixtures>/rust/code/modules/user_mod.rs:1:1:76:1",
+      "name": null,
+      "type": "class",
+      "location": {
+        "file_path": "<fixtures>/rust/code/modules/user_mod.rs",
+        "start_line": 60,
+        "start_column": 24,
+        "end_line": 62,
+        "end_column": 1
+      },
+      "child_ids": []
+    },
+    "block:<fixtures>/rust/code/modules/user_mod.rs:64:18:76:1": {
+      "id": "block:<fixtures>/rust/code/modules/user_mod.rs:64:18:76:1",
+      "parent_id": "module:<fixtures>/rust/code/modules/user_mod.rs:1:1:76:1",
+      "name": null,
+      "type": "block",
+      "location": {
+        "file_path": "<fixtures>/rust/code/modules/user_mod.rs",
+        "start_line": 64,
+        "start_column": 18,
+        "end_line": 76,
+        "end_column": 1
+      },
+      "child_ids": [
+        "function:<fixtures>/rust/code/modules/user_mod.rs:65:15:67:5",
+        "function:<fixtures>/rust/code/modules/user_mod.rs:69:20:71:5",
+        "function:<fixtures>/rust/code/modules/user_mod.rs:73:26:75:5"
+      ]
+    },
+    "function:<fixtures>/rust/code/modules/user_mod.rs:65:15:67:5": {
+      "id": "function:<fixtures>/rust/code/modules/user_mod.rs:65:15:67:5",
+      "parent_id": "block:<fixtures>/rust/code/modules/user_mod.rs:64:18:76:1",
+      "name": "new",
+      "type": "function",
+      "location": {
+        "file_path": "<fixtures>/rust/code/modules/user_mod.rs",
+        "start_line": 65,
+        "start_column": 15,
+        "end_line": 67,
+        "end_column": 5
+      },
+      "child_ids": []
+    },
+    "function:<fixtures>/rust/code/modules/user_mod.rs:69:20:71:5": {
+      "id": "function:<fixtures>/rust/code/modules/user_mod.rs:69:20:71:5",
+      "parent_id": "block:<fixtures>/rust/code/modules/user_mod.rs:64:18:76:1",
+      "name": "add_user",
+      "type": "function",
+      "location": {
+        "file_path": "<fixtures>/rust/code/modules/user_mod.rs",
+        "start_line": 69,
+        "start_column": 20,
+        "end_line": 71,
+        "end_column": 5
+      },
+      "child_ids": []
+    },
+    "function:<fixtures>/rust/code/modules/user_mod.rs:73:26:75:5": {
+      "id": "function:<fixtures>/rust/code/modules/user_mod.rs:73:26:75:5",
+      "parent_id": "block:<fixtures>/rust/code/modules/user_mod.rs:64:18:76:1",
+      "name": "get_user_count",
+      "type": "function",
+      "location": {
+        "file_path": "<fixtures>/rust/code/modules/user_mod.rs",
+        "start_line": 73,
+        "start_column": 26,
+        "end_line": 75,
+        "end_column": 5
+      },
+      "child_ids": []
+    }
+  },
+  "functions": {},
+  "classes": {
+    "class:<fixtures>/rust/code/modules/user_mod.rs:5:1:9:1:User": {
+      "kind": "class",
+      "symbol_id": "class:<fixtures>/rust/code/modules/user_mod.rs:5:1:9:1:User",
+      "name": "User",
+      "location": {
+        "file_path": "<fixtures>/rust/code/modules/user_mod.rs",
+        "start_line": 5,
+        "start_column": 12,
+        "end_line": 5,
+        "end_column": 15
+      },
+      "defining_scope_id": "module:<fixtures>/rust/code/modules/user_mod.rs:1:1:76:1",
+      "extends": [],
+      "is_exported": true,
+      "methods": [
+        {
+          "kind": "method",
+          "defining_scope_id": "block:<fixtures>/rust/code/modules/user_mod.rs:11:11:57:1",
+          "symbol_id": "method:<fixtures>/rust/code/modules/user_mod.rs:13:5:19:5:new",
+          "name": "new",
+          "location": {
+            "file_path": "<fixtures>/rust/code/modules/user_mod.rs",
+            "start_line": 13,
+            "start_column": 12,
+            "end_line": 13,
+            "end_column": 14
+          },
+          "return_type": "Self",
+          "static": true,
+          "parameters": [
+            {
+              "kind": "parameter",
+              "defining_scope_id": "function:<fixtures>/rust/code/modules/user_mod.rs:13:15:19:5",
+              "symbol_id": "parameter:<fixtures>/rust/code/modules/user_mod.rs:13:16:13:19:name",
+              "name": "name",
+              "location": {
+                "file_path": "<fixtures>/rust/code/modules/user_mod.rs",
+                "start_line": 13,
+                "start_column": 16,
+                "end_line": 13,
+                "end_column": 19
+              },
+              "type": "String",
+              "optional": false
+            },
+            {
+              "kind": "parameter",
+              "defining_scope_id": "function:<fixtures>/rust/code/modules/user_mod.rs:13:15:19:5",
+              "symbol_id": "parameter:<fixtures>/rust/code/modules/user_mod.rs:13:30:13:34:email",
+              "name": "email",
+              "location": {
+                "file_path": "<fixtures>/rust/code/modules/user_mod.rs",
+                "start_line": 13,
+                "start_column": 30,
+                "end_line": 13,
+                "end_column": 34
+              },
+              "type": "String",
+              "optional": false
+            }
+          ],
+          "body_scope_id": "function:<fixtures>/rust/code/modules/user_mod.rs:13:15:19:5"
+        },
+        {
+          "kind": "method",
+          "defining_scope_id": "block:<fixtures>/rust/code/modules/user_mod.rs:11:11:57:1",
+          "symbol_id": "method:<fixtures>/rust/code/modules/user_mod.rs:22:5:24:5:get_name",
+          "name": "get_name",
+          "location": {
+            "file_path": "<fixtures>/rust/code/modules/user_mod.rs",
+            "start_line": 22,
+            "start_column": 12,
+            "end_line": 22,
+            "end_column": 19
+          },
+          "return_type": "&str",
+          "parameters": [
+            {
+              "kind": "parameter",
+              "defining_scope_id": "function:<fixtures>/rust/code/modules/user_mod.rs:22:20:24:5",
+              "symbol_id": "parameter:<fixtures>/rust/code/modules/user_mod.rs:22:21:22:25:&self",
+              "name": "self",
+              "location": {
+                "file_path": "<fixtures>/rust/code/modules/user_mod.rs",
+                "start_line": 22,
+                "start_column": 21,
+                "end_line": 22,
+                "end_column": 25
+              },
+              "type": "User",
+              "optional": false
+            }
+          ],
+          "body_scope_id": "function:<fixtures>/rust/code/modules/user_mod.rs:22:20:24:5"
+        },
+        {
+          "kind": "method",
+          "defining_scope_id": "block:<fixtures>/rust/code/modules/user_mod.rs:11:11:57:1",
+          "symbol_id": "method:<fixtures>/rust/code/modules/user_mod.rs:27:5:29:5:get_email",
+          "name": "get_email",
+          "location": {
+            "file_path": "<fixtures>/rust/code/modules/user_mod.rs",
+            "start_line": 27,
+            "start_column": 12,
+            "end_line": 27,
+            "end_column": 20
+          },
+          "return_type": "&str",
+          "parameters": [
+            {
+              "kind": "parameter",
+              "defining_scope_id": "function:<fixtures>/rust/code/modules/user_mod.rs:27:21:29:5",
+              "symbol_id": "parameter:<fixtures>/rust/code/modules/user_mod.rs:27:22:27:26:&self",
+              "name": "self",
+              "location": {
+                "file_path": "<fixtures>/rust/code/modules/user_mod.rs",
+                "start_line": 27,
+                "start_column": 22,
+                "end_line": 27,
+                "end_column": 26
+              },
+              "type": "User",
+              "optional": false
+            }
+          ],
+          "body_scope_id": "function:<fixtures>/rust/code/modules/user_mod.rs:27:21:29:5"
+        },
+        {
+          "kind": "method",
+          "defining_scope_id": "block:<fixtures>/rust/code/modules/user_mod.rs:11:11:57:1",
+          "symbol_id": "method:<fixtures>/rust/code/modules/user_mod.rs:32:5:34:5:is_active",
+          "name": "is_active",
+          "location": {
+            "file_path": "<fixtures>/rust/code/modules/user_mod.rs",
+            "start_line": 32,
+            "start_column": 12,
+            "end_line": 32,
+            "end_column": 20
+          },
+          "return_type": "bool",
+          "parameters": [
+            {
+              "kind": "parameter",
+              "defining_scope_id": "function:<fixtures>/rust/code/modules/user_mod.rs:32:21:34:5",
+              "symbol_id": "parameter:<fixtures>/rust/code/modules/user_mod.rs:32:22:32:26:&self",
+              "name": "self",
+              "location": {
+                "file_path": "<fixtures>/rust/code/modules/user_mod.rs",
+                "start_line": 32,
+                "start_column": 22,
+                "end_line": 32,
+                "end_column": 26
+              },
+              "type": "User",
+              "optional": false
+            }
+          ],
+          "body_scope_id": "function:<fixtures>/rust/code/modules/user_mod.rs:32:21:34:5"
+        },
+        {
+          "kind": "method",
+          "defining_scope_id": "block:<fixtures>/rust/code/modules/user_mod.rs:11:11:57:1",
+          "symbol_id": "method:<fixtures>/rust/code/modules/user_mod.rs:37:5:39:5:update_name",
+          "name": "update_name",
+          "location": {
+            "file_path": "<fixtures>/rust/code/modules/user_mod.rs",
+            "start_line": 37,
+            "start_column": 12,
+            "end_line": 37,
+            "end_column": 22
+          },
+          "parameters": [
+            {
+              "kind": "parameter",
+              "defining_scope_id": "function:<fixtures>/rust/code/modules/user_mod.rs:37:23:39:5",
+              "symbol_id": "parameter:<fixtures>/rust/code/modules/user_mod.rs:37:24:37:32:&mut self",
+              "name": "self",
+              "location": {
+                "file_path": "<fixtures>/rust/code/modules/user_mod.rs",
+                "start_line": 37,
+                "start_column": 24,
+                "end_line": 37,
+                "end_column": 32
+              },
+              "type": "User",
+              "optional": false
+            },
+            {
+              "kind": "parameter",
+              "defining_scope_id": "function:<fixtures>/rust/code/modules/user_mod.rs:37:23:39:5",
+              "symbol_id": "parameter:<fixtures>/rust/code/modules/user_mod.rs:37:35:37:42:new_name",
+              "name": "new_name",
+              "location": {
+                "file_path": "<fixtures>/rust/code/modules/user_mod.rs",
+                "start_line": 37,
+                "start_column": 35,
+                "end_line": 37,
+                "end_column": 42
+              },
+              "type": "String",
+              "optional": false
+            }
+          ],
+          "body_scope_id": "function:<fixtures>/rust/code/modules/user_mod.rs:37:23:39:5"
+        },
+        {
+          "kind": "method",
+          "defining_scope_id": "block:<fixtures>/rust/code/modules/user_mod.rs:11:11:57:1",
+          "symbol_id": "method:<fixtures>/rust/code/modules/user_mod.rs:42:5:45:5:activate",
+          "name": "activate",
+          "location": {
+            "file_path": "<fixtures>/rust/code/modules/user_mod.rs",
+            "start_line": 42,
+            "start_column": 12,
+            "end_line": 42,
+            "end_column": 19
+          },
+          "return_type": "&mut Self",
+          "parameters": [
+            {
+              "kind": "parameter",
+              "defining_scope_id": "function:<fixtures>/rust/code/modules/user_mod.rs:42:20:45:5",
+              "symbol_id": "parameter:<fixtures>/rust/code/modules/user_mod.rs:42:21:42:29:&mut self",
+              "name": "self",
+              "location": {
+                "file_path": "<fixtures>/rust/code/modules/user_mod.rs",
+                "start_line": 42,
+                "start_column": 21,
+                "end_line": 42,
+                "end_column": 29
+              },
+              "type": "User",
+              "optional": false
+            }
+          ],
+          "body_scope_id": "function:<fixtures>/rust/code/modules/user_mod.rs:42:20:45:5"
+        },
+        {
+          "kind": "method",
+          "defining_scope_id": "block:<fixtures>/rust/code/modules/user_mod.rs:11:11:57:1",
+          "symbol_id": "method:<fixtures>/rust/code/modules/user_mod.rs:48:5:51:5:deactivate",
+          "name": "deactivate",
+          "location": {
+            "file_path": "<fixtures>/rust/code/modules/user_mod.rs",
+            "start_line": 48,
+            "start_column": 12,
+            "end_line": 48,
+            "end_column": 21
+          },
+          "return_type": "&mut Self",
+          "parameters": [
+            {
+              "kind": "parameter",
+              "defining_scope_id": "function:<fixtures>/rust/code/modules/user_mod.rs:48:22:51:5",
+              "symbol_id": "parameter:<fixtures>/rust/code/modules/user_mod.rs:48:23:48:31:&mut self",
+              "name": "self",
+              "location": {
+                "file_path": "<fixtures>/rust/code/modules/user_mod.rs",
+                "start_line": 48,
+                "start_column": 23,
+                "end_line": 48,
+                "end_column": 31
+              },
+              "type": "User",
+              "optional": false
+            }
+          ],
+          "body_scope_id": "function:<fixtures>/rust/code/modules/user_mod.rs:48:22:51:5"
+        },
+        {
+          "kind": "method",
+          "defining_scope_id": "block:<fixtures>/rust/code/modules/user_mod.rs:11:11:57:1",
+          "symbol_id": "method:<fixtures>/rust/code/modules/user_mod.rs:54:5:56:5:format_info",
+          "name": "format_info",
+          "location": {
+            "file_path": "<fixtures>/rust/code/modules/user_mod.rs",
+            "start_line": 54,
+            "start_column": 12,
+            "end_line": 54,
+            "end_column": 22
+          },
+          "return_type": "String",
+          "parameters": [
+            {
+              "kind": "parameter",
+              "defining_scope_id": "function:<fixtures>/rust/code/modules/user_mod.rs:54:23:56:5",
+              "symbol_id": "parameter:<fixtures>/rust/code/modules/user_mod.rs:54:24:54:28:&self",
+              "name": "self",
+              "location": {
+                "file_path": "<fixtures>/rust/code/modules/user_mod.rs",
+                "start_line": 54,
+                "start_column": 24,
+                "end_line": 54,
+                "end_column": 28
+              },
+              "type": "User",
+              "optional": false
+            }
+          ],
+          "body_scope_id": "function:<fixtures>/rust/code/modules/user_mod.rs:54:23:56:5"
+        }
+      ],
+      "properties": [
+        {
+          "kind": "property",
+          "defining_scope_id": "class:<fixtures>/rust/code/modules/user_mod.rs:5:17:9:1",
+          "symbol_id": "property:<fixtures>/rust/code/modules/user_mod.rs:6:9:6:12:name",
+          "name": "name",
+          "location": {
+            "file_path": "<fixtures>/rust/code/modules/user_mod.rs",
+            "start_line": 6,
+            "start_column": 9,
+            "end_line": 6,
+            "end_column": 12
+          },
+          "type": "String",
+          "decorators": []
+        },
+        {
+          "kind": "property",
+          "defining_scope_id": "class:<fixtures>/rust/code/modules/user_mod.rs:5:17:9:1",
+          "symbol_id": "property:<fixtures>/rust/code/modules/user_mod.rs:7:9:7:13:email",
+          "name": "email",
+          "location": {
+            "file_path": "<fixtures>/rust/code/modules/user_mod.rs",
+            "start_line": 7,
+            "start_column": 9,
+            "end_line": 7,
+            "end_column": 13
+          },
+          "type": "String",
+          "decorators": []
+        },
+        {
+          "kind": "property",
+          "defining_scope_id": "class:<fixtures>/rust/code/modules/user_mod.rs:5:17:9:1",
+          "symbol_id": "property:<fixtures>/rust/code/modules/user_mod.rs:8:5:8:10:active",
+          "name": "active",
+          "location": {
+            "file_path": "<fixtures>/rust/code/modules/user_mod.rs",
+            "start_line": 8,
+            "start_column": 5,
+            "end_line": 8,
+            "end_column": 10
+          },
+          "type": "bool",
+          "decorators": []
+        }
+      ],
+      "decorators": []
+    },
+    "class:<fixtures>/rust/code/modules/user_mod.rs:60:1:62:1:UserManager": {
+      "kind": "class",
+      "symbol_id": "class:<fixtures>/rust/code/modules/user_mod.rs:60:1:62:1:UserManager",
+      "name": "UserManager",
+      "location": {
+        "file_path": "<fixtures>/rust/code/modules/user_mod.rs",
+        "start_line": 60,
+        "start_column": 12,
+        "end_line": 60,
+        "end_column": 22
+      },
+      "defining_scope_id": "module:<fixtures>/rust/code/modules/user_mod.rs:1:1:76:1",
+      "extends": [],
+      "is_exported": true,
+      "methods": [
+        {
+          "kind": "method",
+          "defining_scope_id": "block:<fixtures>/rust/code/modules/user_mod.rs:64:18:76:1",
+          "symbol_id": "method:<fixtures>/rust/code/modules/user_mod.rs:65:5:67:5:new",
+          "name": "new",
+          "location": {
+            "file_path": "<fixtures>/rust/code/modules/user_mod.rs",
+            "start_line": 65,
+            "start_column": 12,
+            "end_line": 65,
+            "end_column": 14
+          },
+          "return_type": "Self",
+          "static": true,
+          "parameters": [],
+          "body_scope_id": "function:<fixtures>/rust/code/modules/user_mod.rs:65:15:67:5"
+        },
+        {
+          "kind": "method",
+          "defining_scope_id": "block:<fixtures>/rust/code/modules/user_mod.rs:64:18:76:1",
+          "symbol_id": "method:<fixtures>/rust/code/modules/user_mod.rs:69:5:71:5:add_user",
+          "name": "add_user",
+          "location": {
+            "file_path": "<fixtures>/rust/code/modules/user_mod.rs",
+            "start_line": 69,
+            "start_column": 12,
+            "end_line": 69,
+            "end_column": 19
+          },
+          "parameters": [
+            {
+              "kind": "parameter",
+              "defining_scope_id": "function:<fixtures>/rust/code/modules/user_mod.rs:69:20:71:5",
+              "symbol_id": "parameter:<fixtures>/rust/code/modules/user_mod.rs:69:21:69:29:&mut self",
+              "name": "self",
+              "location": {
+                "file_path": "<fixtures>/rust/code/modules/user_mod.rs",
+                "start_line": 69,
+                "start_column": 21,
+                "end_line": 69,
+                "end_column": 29
+              },
+              "type": "UserManager",
+              "optional": false
+            },
+            {
+              "kind": "parameter",
+              "defining_scope_id": "function:<fixtures>/rust/code/modules/user_mod.rs:69:20:71:5",
+              "symbol_id": "parameter:<fixtures>/rust/code/modules/user_mod.rs:69:32:69:35:user",
+              "name": "user",
+              "location": {
+                "file_path": "<fixtures>/rust/code/modules/user_mod.rs",
+                "start_line": 69,
+                "start_column": 32,
+                "end_line": 69,
+                "end_column": 35
+              },
+              "type": "User",
+              "optional": false
+            }
+          ],
+          "body_scope_id": "function:<fixtures>/rust/code/modules/user_mod.rs:69:20:71:5"
+        },
+        {
+          "kind": "method",
+          "defining_scope_id": "block:<fixtures>/rust/code/modules/user_mod.rs:64:18:76:1",
+          "symbol_id": "method:<fixtures>/rust/code/modules/user_mod.rs:73:5:75:5:get_user_count",
+          "name": "get_user_count",
+          "location": {
+            "file_path": "<fixtures>/rust/code/modules/user_mod.rs",
+            "start_line": 73,
+            "start_column": 12,
+            "end_line": 73,
+            "end_column": 25
+          },
+          "return_type": "usize",
+          "parameters": [
+            {
+              "kind": "parameter",
+              "defining_scope_id": "function:<fixtures>/rust/code/modules/user_mod.rs:73:26:75:5",
+              "symbol_id": "parameter:<fixtures>/rust/code/modules/user_mod.rs:73:27:73:31:&self",
+              "name": "self",
+              "location": {
+                "file_path": "<fixtures>/rust/code/modules/user_mod.rs",
+                "start_line": 73,
+                "start_column": 27,
+                "end_line": 73,
+                "end_column": 31
+              },
+              "type": "UserManager",
+              "optional": false
+            }
+          ],
+          "body_scope_id": "function:<fixtures>/rust/code/modules/user_mod.rs:73:26:75:5"
+        }
+      ],
+      "properties": [
+        {
+          "kind": "property",
+          "defining_scope_id": "class:<fixtures>/rust/code/modules/user_mod.rs:60:24:62:1",
+          "symbol_id": "property:<fixtures>/rust/code/modules/user_mod.rs:61:5:61:9:users",
+          "name": "users",
+          "location": {
+            "file_path": "<fixtures>/rust/code/modules/user_mod.rs",
+            "start_line": 61,
+            "start_column": 5,
+            "end_line": 61,
+            "end_column": 9
+          },
+          "type": "Vec<User>",
+          "decorators": []
+        }
+      ],
+      "decorators": []
+    }
+  },
+  "variables": {},
+  "interfaces": {},
+  "enums": {},
+  "namespaces": {},
+  "types": {},
+  "imported_symbols": {},
+  "references": [
+    {
+      "kind": "variable_reference",
+      "name": "derive",
+      "location": {
+        "file_path": "<fixtures>/rust/code/modules/user_mod.rs",
+        "start_line": 4,
+        "start_column": 3,
+        "end_line": 4,
+        "end_column": 8
+      },
+      "scope_id": "module:<fixtures>/rust/code/modules/user_mod.rs:1:1:76:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "Debug",
+      "location": {
+        "file_path": "<fixtures>/rust/code/modules/user_mod.rs",
+        "start_line": 4,
+        "start_column": 10,
+        "end_line": 4,
+        "end_column": 14
+      },
+      "scope_id": "module:<fixtures>/rust/code/modules/user_mod.rs:1:1:76:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "Clone",
+      "location": {
+        "file_path": "<fixtures>/rust/code/modules/user_mod.rs",
+        "start_line": 4,
+        "start_column": 17,
+        "end_line": 4,
+        "end_column": 21
+      },
+      "scope_id": "module:<fixtures>/rust/code/modules/user_mod.rs:1:1:76:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "type_reference",
+      "name": "User",
+      "location": {
+        "file_path": "<fixtures>/rust/code/modules/user_mod.rs",
+        "start_line": 5,
+        "start_column": 12,
+        "end_line": 5,
+        "end_column": 15
+      },
+      "scope_id": "module:<fixtures>/rust/code/modules/user_mod.rs:1:1:76:1",
+      "type_context": "annotation",
+      "type_info": {
+        "type_id": "type:<fixtures>/rust/code/modules/user_mod.rs:5:12:5:15:User",
+        "type_name": "User",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "kind": "type_reference",
+      "name": "String",
+      "location": {
+        "file_path": "<fixtures>/rust/code/modules/user_mod.rs",
+        "start_line": 6,
+        "start_column": 15,
+        "end_line": 6,
+        "end_column": 20
+      },
+      "scope_id": "class:<fixtures>/rust/code/modules/user_mod.rs:5:17:9:1",
+      "type_context": "annotation",
+      "type_info": {
+        "type_id": "type:<fixtures>/rust/code/modules/user_mod.rs:6:15:6:20:String",
+        "type_name": "String",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "kind": "type_reference",
+      "name": "String",
+      "location": {
+        "file_path": "<fixtures>/rust/code/modules/user_mod.rs",
+        "start_line": 7,
+        "start_column": 16,
+        "end_line": 7,
+        "end_column": 21
+      },
+      "scope_id": "class:<fixtures>/rust/code/modules/user_mod.rs:5:17:9:1",
+      "type_context": "annotation",
+      "type_info": {
+        "type_id": "type:<fixtures>/rust/code/modules/user_mod.rs:7:16:7:21:String",
+        "type_name": "String",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "kind": "type_reference",
+      "name": "User",
+      "location": {
+        "file_path": "<fixtures>/rust/code/modules/user_mod.rs",
+        "start_line": 11,
+        "start_column": 6,
+        "end_line": 11,
+        "end_column": 9
+      },
+      "scope_id": "module:<fixtures>/rust/code/modules/user_mod.rs:1:1:76:1",
+      "type_context": "annotation",
+      "type_info": {
+        "type_id": "type:<fixtures>/rust/code/modules/user_mod.rs:11:6:11:9:User",
+        "type_name": "User",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "new",
+      "location": {
+        "file_path": "<fixtures>/rust/code/modules/user_mod.rs",
+        "start_line": 13,
+        "start_column": 12,
+        "end_line": 13,
+        "end_column": 14
+      },
+      "scope_id": "block:<fixtures>/rust/code/modules/user_mod.rs:11:11:57:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "name",
+      "location": {
+        "file_path": "<fixtures>/rust/code/modules/user_mod.rs",
+        "start_line": 13,
+        "start_column": 16,
+        "end_line": 13,
+        "end_column": 19
+      },
+      "scope_id": "function:<fixtures>/rust/code/modules/user_mod.rs:13:15:19:5",
+      "access_type": "read"
+    },
+    {
+      "kind": "type_reference",
+      "name": "String",
+      "location": {
+        "file_path": "<fixtures>/rust/code/modules/user_mod.rs",
+        "start_line": 13,
+        "start_column": 22,
+        "end_line": 13,
+        "end_column": 27
+      },
+      "scope_id": "function:<fixtures>/rust/code/modules/user_mod.rs:13:15:19:5",
+      "type_context": "annotation",
+      "type_info": {
+        "type_id": "type:<fixtures>/rust/code/modules/user_mod.rs:13:22:13:27:String",
+        "type_name": "String",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "email",
+      "location": {
+        "file_path": "<fixtures>/rust/code/modules/user_mod.rs",
+        "start_line": 13,
+        "start_column": 30,
+        "end_line": 13,
+        "end_column": 34
+      },
+      "scope_id": "function:<fixtures>/rust/code/modules/user_mod.rs:13:15:19:5",
+      "access_type": "read"
+    },
+    {
+      "kind": "type_reference",
+      "name": "String",
+      "location": {
+        "file_path": "<fixtures>/rust/code/modules/user_mod.rs",
+        "start_line": 13,
+        "start_column": 37,
+        "end_line": 13,
+        "end_column": 42
+      },
+      "scope_id": "function:<fixtures>/rust/code/modules/user_mod.rs:13:15:19:5",
+      "type_context": "annotation",
+      "type_info": {
+        "type_id": "type:<fixtures>/rust/code/modules/user_mod.rs:13:37:13:42:String",
+        "type_name": "String",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "kind": "type_reference",
+      "name": "Self",
+      "location": {
+        "file_path": "<fixtures>/rust/code/modules/user_mod.rs",
+        "start_line": 13,
+        "start_column": 48,
+        "end_line": 13,
+        "end_column": 51
+      },
+      "scope_id": "function:<fixtures>/rust/code/modules/user_mod.rs:13:15:19:5",
+      "type_context": "annotation",
+      "type_info": {
+        "type_id": "type:<fixtures>/rust/code/modules/user_mod.rs:13:48:13:51:Self",
+        "type_name": "Self",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "kind": "constructor_call",
+      "name": "User",
+      "location": {
+        "file_path": "<fixtures>/rust/code/modules/user_mod.rs",
+        "start_line": 14,
+        "start_column": 9,
+        "end_line": 14,
+        "end_column": 12
+      },
+      "scope_id": "function:<fixtures>/rust/code/modules/user_mod.rs:13:15:19:5"
+    },
+    {
+      "kind": "type_reference",
+      "name": "User",
+      "location": {
+        "file_path": "<fixtures>/rust/code/modules/user_mod.rs",
+        "start_line": 14,
+        "start_column": 9,
+        "end_line": 14,
+        "end_column": 12
+      },
+      "scope_id": "function:<fixtures>/rust/code/modules/user_mod.rs:13:15:19:5",
+      "type_context": "annotation",
+      "type_info": {
+        "type_id": "type:<fixtures>/rust/code/modules/user_mod.rs:14:9:14:12:User",
+        "type_name": "User",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "name",
+      "location": {
+        "file_path": "<fixtures>/rust/code/modules/user_mod.rs",
+        "start_line": 15,
+        "start_column": 13,
+        "end_line": 15,
+        "end_column": 16
+      },
+      "scope_id": "function:<fixtures>/rust/code/modules/user_mod.rs:13:15:19:5",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "email",
+      "location": {
+        "file_path": "<fixtures>/rust/code/modules/user_mod.rs",
+        "start_line": 16,
+        "start_column": 13,
+        "end_line": 16,
+        "end_column": 17
+      },
+      "scope_id": "function:<fixtures>/rust/code/modules/user_mod.rs:13:15:19:5",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "get_name",
+      "location": {
+        "file_path": "<fixtures>/rust/code/modules/user_mod.rs",
+        "start_line": 22,
+        "start_column": 12,
+        "end_line": 22,
+        "end_column": 19
+      },
+      "scope_id": "block:<fixtures>/rust/code/modules/user_mod.rs:11:11:57:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "self",
+      "location": {
+        "file_path": "<fixtures>/rust/code/modules/user_mod.rs",
+        "start_line": 22,
+        "start_column": 22,
+        "end_line": 22,
+        "end_column": 25
+      },
+      "scope_id": "function:<fixtures>/rust/code/modules/user_mod.rs:22:20:24:5",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "self.name",
+      "location": {
+        "file_path": "<fixtures>/rust/code/modules/user_mod.rs",
+        "start_line": 23,
+        "start_column": 10,
+        "end_line": 23,
+        "end_column": 18
+      },
+      "scope_id": "function:<fixtures>/rust/code/modules/user_mod.rs:22:20:24:5",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "self",
+      "location": {
+        "file_path": "<fixtures>/rust/code/modules/user_mod.rs",
+        "start_line": 23,
+        "start_column": 10,
+        "end_line": 23,
+        "end_column": 13
+      },
+      "scope_id": "function:<fixtures>/rust/code/modules/user_mod.rs:22:20:24:5",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "get_email",
+      "location": {
+        "file_path": "<fixtures>/rust/code/modules/user_mod.rs",
+        "start_line": 27,
+        "start_column": 12,
+        "end_line": 27,
+        "end_column": 20
+      },
+      "scope_id": "block:<fixtures>/rust/code/modules/user_mod.rs:11:11:57:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "self",
+      "location": {
+        "file_path": "<fixtures>/rust/code/modules/user_mod.rs",
+        "start_line": 27,
+        "start_column": 23,
+        "end_line": 27,
+        "end_column": 26
+      },
+      "scope_id": "function:<fixtures>/rust/code/modules/user_mod.rs:27:21:29:5",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "self.email",
+      "location": {
+        "file_path": "<fixtures>/rust/code/modules/user_mod.rs",
+        "start_line": 28,
+        "start_column": 10,
+        "end_line": 28,
+        "end_column": 19
+      },
+      "scope_id": "function:<fixtures>/rust/code/modules/user_mod.rs:27:21:29:5",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "self",
+      "location": {
+        "file_path": "<fixtures>/rust/code/modules/user_mod.rs",
+        "start_line": 28,
+        "start_column": 10,
+        "end_line": 28,
+        "end_column": 13
+      },
+      "scope_id": "function:<fixtures>/rust/code/modules/user_mod.rs:27:21:29:5",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "is_active",
+      "location": {
+        "file_path": "<fixtures>/rust/code/modules/user_mod.rs",
+        "start_line": 32,
+        "start_column": 12,
+        "end_line": 32,
+        "end_column": 20
+      },
+      "scope_id": "block:<fixtures>/rust/code/modules/user_mod.rs:11:11:57:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "self",
+      "location": {
+        "file_path": "<fixtures>/rust/code/modules/user_mod.rs",
+        "start_line": 32,
+        "start_column": 23,
+        "end_line": 32,
+        "end_column": 26
+      },
+      "scope_id": "function:<fixtures>/rust/code/modules/user_mod.rs:32:21:34:5",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "self",
+      "location": {
+        "file_path": "<fixtures>/rust/code/modules/user_mod.rs",
+        "start_line": 33,
+        "start_column": 9,
+        "end_line": 33,
+        "end_column": 12
+      },
+      "scope_id": "function:<fixtures>/rust/code/modules/user_mod.rs:32:21:34:5",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "update_name",
+      "location": {
+        "file_path": "<fixtures>/rust/code/modules/user_mod.rs",
+        "start_line": 37,
+        "start_column": 12,
+        "end_line": 37,
+        "end_column": 22
+      },
+      "scope_id": "block:<fixtures>/rust/code/modules/user_mod.rs:11:11:57:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "self",
+      "location": {
+        "file_path": "<fixtures>/rust/code/modules/user_mod.rs",
+        "start_line": 37,
+        "start_column": 29,
+        "end_line": 37,
+        "end_column": 32
+      },
+      "scope_id": "function:<fixtures>/rust/code/modules/user_mod.rs:37:23:39:5",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "new_name",
+      "location": {
+        "file_path": "<fixtures>/rust/code/modules/user_mod.rs",
+        "start_line": 37,
+        "start_column": 35,
+        "end_line": 37,
+        "end_column": 42
+      },
+      "scope_id": "function:<fixtures>/rust/code/modules/user_mod.rs:37:23:39:5",
+      "access_type": "read"
+    },
+    {
+      "kind": "type_reference",
+      "name": "String",
+      "location": {
+        "file_path": "<fixtures>/rust/code/modules/user_mod.rs",
+        "start_line": 37,
+        "start_column": 45,
+        "end_line": 37,
+        "end_column": 50
+      },
+      "scope_id": "function:<fixtures>/rust/code/modules/user_mod.rs:37:23:39:5",
+      "type_context": "annotation",
+      "type_info": {
+        "type_id": "type:<fixtures>/rust/code/modules/user_mod.rs:37:45:37:50:String",
+        "type_name": "String",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "self",
+      "location": {
+        "file_path": "<fixtures>/rust/code/modules/user_mod.rs",
+        "start_line": 38,
+        "start_column": 9,
+        "end_line": 38,
+        "end_column": 12
+      },
+      "scope_id": "function:<fixtures>/rust/code/modules/user_mod.rs:37:23:39:5",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "new_name",
+      "location": {
+        "file_path": "<fixtures>/rust/code/modules/user_mod.rs",
+        "start_line": 38,
+        "start_column": 21,
+        "end_line": 38,
+        "end_column": 28
+      },
+      "scope_id": "function:<fixtures>/rust/code/modules/user_mod.rs:37:23:39:5",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "activate",
+      "location": {
+        "file_path": "<fixtures>/rust/code/modules/user_mod.rs",
+        "start_line": 42,
+        "start_column": 12,
+        "end_line": 42,
+        "end_column": 19
+      },
+      "scope_id": "block:<fixtures>/rust/code/modules/user_mod.rs:11:11:57:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "self",
+      "location": {
+        "file_path": "<fixtures>/rust/code/modules/user_mod.rs",
+        "start_line": 42,
+        "start_column": 26,
+        "end_line": 42,
+        "end_column": 29
+      },
+      "scope_id": "function:<fixtures>/rust/code/modules/user_mod.rs:42:20:45:5",
+      "access_type": "read"
+    },
+    {
+      "kind": "type_reference",
+      "name": "Self",
+      "location": {
+        "file_path": "<fixtures>/rust/code/modules/user_mod.rs",
+        "start_line": 42,
+        "start_column": 40,
+        "end_line": 42,
+        "end_column": 43
+      },
+      "scope_id": "function:<fixtures>/rust/code/modules/user_mod.rs:42:20:45:5",
+      "type_context": "annotation",
+      "type_info": {
+        "type_id": "type:<fixtures>/rust/code/modules/user_mod.rs:42:40:42:43:Self",
+        "type_name": "Self",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "self",
+      "location": {
+        "file_path": "<fixtures>/rust/code/modules/user_mod.rs",
+        "start_line": 43,
+        "start_column": 9,
+        "end_line": 43,
+        "end_column": 12
+      },
+      "scope_id": "function:<fixtures>/rust/code/modules/user_mod.rs:42:20:45:5",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "self",
+      "location": {
+        "file_path": "<fixtures>/rust/code/modules/user_mod.rs",
+        "start_line": 44,
+        "start_column": 9,
+        "end_line": 44,
+        "end_column": 12
+      },
+      "scope_id": "function:<fixtures>/rust/code/modules/user_mod.rs:42:20:45:5",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "deactivate",
+      "location": {
+        "file_path": "<fixtures>/rust/code/modules/user_mod.rs",
+        "start_line": 48,
+        "start_column": 12,
+        "end_line": 48,
+        "end_column": 21
+      },
+      "scope_id": "block:<fixtures>/rust/code/modules/user_mod.rs:11:11:57:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "self",
+      "location": {
+        "file_path": "<fixtures>/rust/code/modules/user_mod.rs",
+        "start_line": 48,
+        "start_column": 28,
+        "end_line": 48,
+        "end_column": 31
+      },
+      "scope_id": "function:<fixtures>/rust/code/modules/user_mod.rs:48:22:51:5",
+      "access_type": "read"
+    },
+    {
+      "kind": "type_reference",
+      "name": "Self",
+      "location": {
+        "file_path": "<fixtures>/rust/code/modules/user_mod.rs",
+        "start_line": 48,
+        "start_column": 42,
+        "end_line": 48,
+        "end_column": 45
+      },
+      "scope_id": "function:<fixtures>/rust/code/modules/user_mod.rs:48:22:51:5",
+      "type_context": "annotation",
+      "type_info": {
+        "type_id": "type:<fixtures>/rust/code/modules/user_mod.rs:48:42:48:45:Self",
+        "type_name": "Self",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "self",
+      "location": {
+        "file_path": "<fixtures>/rust/code/modules/user_mod.rs",
+        "start_line": 49,
+        "start_column": 9,
+        "end_line": 49,
+        "end_column": 12
+      },
+      "scope_id": "function:<fixtures>/rust/code/modules/user_mod.rs:48:22:51:5",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "self",
+      "location": {
+        "file_path": "<fixtures>/rust/code/modules/user_mod.rs",
+        "start_line": 50,
+        "start_column": 9,
+        "end_line": 50,
+        "end_column": 12
+      },
+      "scope_id": "function:<fixtures>/rust/code/modules/user_mod.rs:48:22:51:5",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "format_info",
+      "location": {
+        "file_path": "<fixtures>/rust/code/modules/user_mod.rs",
+        "start_line": 54,
+        "start_column": 12,
+        "end_line": 54,
+        "end_column": 22
+      },
+      "scope_id": "block:<fixtures>/rust/code/modules/user_mod.rs:11:11:57:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "self",
+      "location": {
+        "file_path": "<fixtures>/rust/code/modules/user_mod.rs",
+        "start_line": 54,
+        "start_column": 25,
+        "end_line": 54,
+        "end_column": 28
+      },
+      "scope_id": "function:<fixtures>/rust/code/modules/user_mod.rs:54:23:56:5",
+      "access_type": "read"
+    },
+    {
+      "kind": "type_reference",
+      "name": "String",
+      "location": {
+        "file_path": "<fixtures>/rust/code/modules/user_mod.rs",
+        "start_line": 54,
+        "start_column": 34,
+        "end_line": 54,
+        "end_column": 39
+      },
+      "scope_id": "function:<fixtures>/rust/code/modules/user_mod.rs:54:23:56:5",
+      "type_context": "annotation",
+      "type_info": {
+        "type_id": "type:<fixtures>/rust/code/modules/user_mod.rs:54:34:54:39:String",
+        "type_name": "String",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "format",
+      "location": {
+        "file_path": "<fixtures>/rust/code/modules/user_mod.rs",
+        "start_line": 55,
+        "start_column": 9,
+        "end_line": 55,
+        "end_column": 14
+      },
+      "scope_id": "function:<fixtures>/rust/code/modules/user_mod.rs:54:23:56:5",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "format",
+      "location": {
+        "file_path": "<fixtures>/rust/code/modules/user_mod.rs",
+        "start_line": 55,
+        "start_column": 9,
+        "end_line": 55,
+        "end_column": 14
+      },
+      "scope_id": "function:<fixtures>/rust/code/modules/user_mod.rs:54:23:56:5",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "self",
+      "location": {
+        "file_path": "<fixtures>/rust/code/modules/user_mod.rs",
+        "start_line": 55,
+        "start_column": 28,
+        "end_line": 55,
+        "end_column": 31
+      },
+      "scope_id": "function:<fixtures>/rust/code/modules/user_mod.rs:54:23:56:5",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "name",
+      "location": {
+        "file_path": "<fixtures>/rust/code/modules/user_mod.rs",
+        "start_line": 55,
+        "start_column": 33,
+        "end_line": 55,
+        "end_column": 36
+      },
+      "scope_id": "function:<fixtures>/rust/code/modules/user_mod.rs:54:23:56:5",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "self",
+      "location": {
+        "file_path": "<fixtures>/rust/code/modules/user_mod.rs",
+        "start_line": 55,
+        "start_column": 39,
+        "end_line": 55,
+        "end_column": 42
+      },
+      "scope_id": "function:<fixtures>/rust/code/modules/user_mod.rs:54:23:56:5",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "email",
+      "location": {
+        "file_path": "<fixtures>/rust/code/modules/user_mod.rs",
+        "start_line": 55,
+        "start_column": 44,
+        "end_line": 55,
+        "end_column": 48
+      },
+      "scope_id": "function:<fixtures>/rust/code/modules/user_mod.rs:54:23:56:5",
+      "access_type": "read"
+    },
+    {
+      "kind": "type_reference",
+      "name": "UserManager",
+      "location": {
+        "file_path": "<fixtures>/rust/code/modules/user_mod.rs",
+        "start_line": 60,
+        "start_column": 12,
+        "end_line": 60,
+        "end_column": 22
+      },
+      "scope_id": "module:<fixtures>/rust/code/modules/user_mod.rs:1:1:76:1",
+      "type_context": "annotation",
+      "type_info": {
+        "type_id": "type:<fixtures>/rust/code/modules/user_mod.rs:60:12:60:22:UserManager",
+        "type_name": "UserManager",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "kind": "type_reference",
+      "name": "Vec",
+      "location": {
+        "file_path": "<fixtures>/rust/code/modules/user_mod.rs",
+        "start_line": 61,
+        "start_column": 12,
+        "end_line": 61,
+        "end_column": 14
+      },
+      "scope_id": "class:<fixtures>/rust/code/modules/user_mod.rs:60:24:62:1",
+      "type_context": "annotation",
+      "type_info": {
+        "type_id": "type:<fixtures>/rust/code/modules/user_mod.rs:61:12:61:14:Vec",
+        "type_name": "Vec",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "kind": "type_reference",
+      "name": "User",
+      "location": {
+        "file_path": "<fixtures>/rust/code/modules/user_mod.rs",
+        "start_line": 61,
+        "start_column": 16,
+        "end_line": 61,
+        "end_column": 19
+      },
+      "scope_id": "class:<fixtures>/rust/code/modules/user_mod.rs:60:24:62:1",
+      "type_context": "annotation",
+      "type_info": {
+        "type_id": "type:<fixtures>/rust/code/modules/user_mod.rs:61:16:61:19:User",
+        "type_name": "User",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "kind": "type_reference",
+      "name": "UserManager",
+      "location": {
+        "file_path": "<fixtures>/rust/code/modules/user_mod.rs",
+        "start_line": 64,
+        "start_column": 6,
+        "end_line": 64,
+        "end_column": 16
+      },
+      "scope_id": "module:<fixtures>/rust/code/modules/user_mod.rs:1:1:76:1",
+      "type_context": "annotation",
+      "type_info": {
+        "type_id": "type:<fixtures>/rust/code/modules/user_mod.rs:64:6:64:16:UserManager",
+        "type_name": "UserManager",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "new",
+      "location": {
+        "file_path": "<fixtures>/rust/code/modules/user_mod.rs",
+        "start_line": 65,
+        "start_column": 12,
+        "end_line": 65,
+        "end_column": 14
+      },
+      "scope_id": "block:<fixtures>/rust/code/modules/user_mod.rs:64:18:76:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "type_reference",
+      "name": "Self",
+      "location": {
+        "file_path": "<fixtures>/rust/code/modules/user_mod.rs",
+        "start_line": 65,
+        "start_column": 21,
+        "end_line": 65,
+        "end_column": 24
+      },
+      "scope_id": "function:<fixtures>/rust/code/modules/user_mod.rs:65:15:67:5",
+      "type_context": "annotation",
+      "type_info": {
+        "type_id": "type:<fixtures>/rust/code/modules/user_mod.rs:65:21:65:24:Self",
+        "type_name": "Self",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "kind": "constructor_call",
+      "name": "UserManager",
+      "location": {
+        "file_path": "<fixtures>/rust/code/modules/user_mod.rs",
+        "start_line": 66,
+        "start_column": 9,
+        "end_line": 66,
+        "end_column": 19
+      },
+      "scope_id": "function:<fixtures>/rust/code/modules/user_mod.rs:65:15:67:5"
+    },
+    {
+      "kind": "type_reference",
+      "name": "UserManager",
+      "location": {
+        "file_path": "<fixtures>/rust/code/modules/user_mod.rs",
+        "start_line": 66,
+        "start_column": 9,
+        "end_line": 66,
+        "end_column": 19
+      },
+      "scope_id": "function:<fixtures>/rust/code/modules/user_mod.rs:65:15:67:5",
+      "type_context": "annotation",
+      "type_info": {
+        "type_id": "type:<fixtures>/rust/code/modules/user_mod.rs:66:9:66:19:UserManager",
+        "type_name": "UserManager",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "kind": "function_call",
+      "name": "Vec::new",
+      "location": {
+        "file_path": "<fixtures>/rust/code/modules/user_mod.rs",
+        "start_line": 66,
+        "start_column": 30,
+        "end_line": 66,
+        "end_column": 37
+      },
+      "scope_id": "function:<fixtures>/rust/code/modules/user_mod.rs:65:15:67:5"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "Vec",
+      "location": {
+        "file_path": "<fixtures>/rust/code/modules/user_mod.rs",
+        "start_line": 66,
+        "start_column": 30,
+        "end_line": 66,
+        "end_column": 32
+      },
+      "scope_id": "function:<fixtures>/rust/code/modules/user_mod.rs:65:15:67:5",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "new",
+      "location": {
+        "file_path": "<fixtures>/rust/code/modules/user_mod.rs",
+        "start_line": 66,
+        "start_column": 35,
+        "end_line": 66,
+        "end_column": 37
+      },
+      "scope_id": "function:<fixtures>/rust/code/modules/user_mod.rs:65:15:67:5",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "add_user",
+      "location": {
+        "file_path": "<fixtures>/rust/code/modules/user_mod.rs",
+        "start_line": 69,
+        "start_column": 12,
+        "end_line": 69,
+        "end_column": 19
+      },
+      "scope_id": "block:<fixtures>/rust/code/modules/user_mod.rs:64:18:76:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "self",
+      "location": {
+        "file_path": "<fixtures>/rust/code/modules/user_mod.rs",
+        "start_line": 69,
+        "start_column": 26,
+        "end_line": 69,
+        "end_column": 29
+      },
+      "scope_id": "function:<fixtures>/rust/code/modules/user_mod.rs:69:20:71:5",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "user",
+      "location": {
+        "file_path": "<fixtures>/rust/code/modules/user_mod.rs",
+        "start_line": 69,
+        "start_column": 32,
+        "end_line": 69,
+        "end_column": 35
+      },
+      "scope_id": "function:<fixtures>/rust/code/modules/user_mod.rs:69:20:71:5",
+      "access_type": "read"
+    },
+    {
+      "kind": "type_reference",
+      "name": "User",
+      "location": {
+        "file_path": "<fixtures>/rust/code/modules/user_mod.rs",
+        "start_line": 69,
+        "start_column": 38,
+        "end_line": 69,
+        "end_column": 41
+      },
+      "scope_id": "function:<fixtures>/rust/code/modules/user_mod.rs:69:20:71:5",
+      "type_context": "annotation",
+      "type_info": {
+        "type_id": "type:<fixtures>/rust/code/modules/user_mod.rs:69:38:69:41:User",
+        "type_name": "User",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "kind": "method_call",
+      "name": "push",
+      "location": {
+        "file_path": "<fixtures>/rust/code/modules/user_mod.rs",
+        "start_line": 70,
+        "start_column": 9,
+        "end_line": 70,
+        "end_column": 23
+      },
+      "scope_id": "function:<fixtures>/rust/code/modules/user_mod.rs:69:20:71:5",
+      "receiver_location": {
+        "file_path": "<fixtures>/rust/code/modules/user_mod.rs",
+        "start_line": 70,
+        "start_column": 9,
+        "end_line": 70,
+        "end_column": 18
+      },
+      "property_chain": [
+        "self.users",
+        "push"
+      ],
+      "optional_chaining": false
+    },
+    {
+      "kind": "variable_reference",
+      "name": "self",
+      "location": {
+        "file_path": "<fixtures>/rust/code/modules/user_mod.rs",
+        "start_line": 70,
+        "start_column": 9,
+        "end_line": 70,
+        "end_column": 12
+      },
+      "scope_id": "function:<fixtures>/rust/code/modules/user_mod.rs:69:20:71:5",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "user",
+      "location": {
+        "file_path": "<fixtures>/rust/code/modules/user_mod.rs",
+        "start_line": 70,
+        "start_column": 25,
+        "end_line": 70,
+        "end_column": 28
+      },
+      "scope_id": "function:<fixtures>/rust/code/modules/user_mod.rs:69:20:71:5",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "get_user_count",
+      "location": {
+        "file_path": "<fixtures>/rust/code/modules/user_mod.rs",
+        "start_line": 73,
+        "start_column": 12,
+        "end_line": 73,
+        "end_column": 25
+      },
+      "scope_id": "block:<fixtures>/rust/code/modules/user_mod.rs:64:18:76:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "self",
+      "location": {
+        "file_path": "<fixtures>/rust/code/modules/user_mod.rs",
+        "start_line": 73,
+        "start_column": 28,
+        "end_line": 73,
+        "end_column": 31
+      },
+      "scope_id": "function:<fixtures>/rust/code/modules/user_mod.rs:73:26:75:5",
+      "access_type": "read"
+    },
+    {
+      "kind": "method_call",
+      "name": "len",
+      "location": {
+        "file_path": "<fixtures>/rust/code/modules/user_mod.rs",
+        "start_line": 74,
+        "start_column": 9,
+        "end_line": 74,
+        "end_column": 22
+      },
+      "scope_id": "function:<fixtures>/rust/code/modules/user_mod.rs:73:26:75:5",
+      "receiver_location": {
+        "file_path": "<fixtures>/rust/code/modules/user_mod.rs",
+        "start_line": 74,
+        "start_column": 9,
+        "end_line": 74,
+        "end_column": 18
+      },
+      "property_chain": [
+        "self.users",
+        "len"
+      ],
+      "optional_chaining": false
+    },
+    {
+      "kind": "variable_reference",
+      "name": "self",
+      "location": {
+        "file_path": "<fixtures>/rust/code/modules/user_mod.rs",
+        "start_line": 74,
+        "start_column": 9,
+        "end_line": 74,
+        "end_column": 12
+      },
+      "scope_id": "function:<fixtures>/rust/code/modules/user_mod.rs:73:26:75:5",
+      "access_type": "read"
+    }
+  ]
+}

@@ -4,7 +4,7 @@ import { z } from "zod";
 
 // 1. Create an MCP server that communicates over stdin/stdout.
 // No network configuration is needed.
-const mcpServer = new McpServer({
+const mcp_server = new McpServer({
   name: "poem-generator",
   version: "1.0.0",
 });
@@ -14,7 +14,7 @@ const mcpServer = new McpServer({
 console.error("STDIO poemGenerator server process started.");
 
 // 2. Define the tool using the tool method
-mcpServer.registerTool(
+mcp_server.registerTool(
   "poemGenerator",
   {
     description: "Generates a poem about a given topic",
@@ -28,7 +28,7 @@ mcpServer.registerTool(
     console.error(`Tool 'poemGenerator' called with topic: "${topic}"`);
 
     // Use the mcpServer's server.createMessage method for LLM sampling
-    const llmResponse = await mcpServer.server.createMessage({
+    const llm_response = await mcp_server.server.createMessage({
         messages: [
           {
             role: "user",
@@ -43,7 +43,7 @@ mcpServer.registerTool(
         // model: "claude-3-5-sonnet-20240620", 
       });
 
-    const poem = llmResponse.content.type === "text" ? llmResponse.content.text : "Unable to generate poem";
+    const poem = llm_response.content.type === "text" ? llm_response.content.text : "Unable to generate poem";
     console.error(`Received poem from host LLM:\n${poem}`);
 
     return {
@@ -55,7 +55,7 @@ mcpServer.registerTool(
 // Start the server
 async function main() {
   const transport = new StdioServerTransport();
-  await mcpServer.connect(transport);
+  await mcp_server.connect(transport);
   console.error("Poem generator MCP server running on stdio");
 }
 

@@ -1,0 +1,437 @@
+/**
+ * Tests for JavaScript symbol factories
+ */
+
+import { describe, it, expect, beforeAll } from "vitest";
+import Parser from "tree-sitter";
+import JavaScript from "tree-sitter-javascript";
+import TypeScript from "tree-sitter-typescript";
+import type { SyntaxNode } from "tree-sitter";
+import {
+  create_class_id,
+  create_method_id,
+  create_function_id,
+  create_variable_id,
+  create_parameter_id,
+  create_property_id,
+  create_import_id,
+  extract_return_type,
+  extract_parameter_type,
+  extract_jsdoc_type,
+  extract_import_path,
+  extract_require_path,
+  is_default_import,
+  is_namespace_import,
+  extract_extends,
+  extract_call_initializer_name,
+  detect_callback_context,
+  detect_function_collection,
+  find_containing_callable,
+} from "./symbol_factories.javascript";
+import { anonymous_function_symbol } from "@ariadnejs/types";
+import type { FilePath, SymbolName } from "@ariadnejs/types";
+import { node_to_location } from "../../node_utils";
+import {
+  SemanticCategory,
+  SemanticEntity,
+  type CaptureNode,
+} from "../../../index_single_file";
+
+// Parsers for tree-sitter
+let js_parser: Parser;
+let ts_parser: Parser;
+
+beforeAll(() => {
+  js_parser = new Parser();
+  js_parser.setLanguage(JavaScript);
+  ts_parser = new Parser();
+  ts_parser.setLanguage(TypeScript.typescript);
+});
+
+// Helper to parse code and get AST root
+function parse_js(code: string): SyntaxNode {
+  return js_parser.parse(code).rootNode;
+}
+
+function parse_ts(code: string): SyntaxNode {
+  return ts_parser.parse(code).rootNode;
+}
+
+// Helper to find first node of specific type
+function find_node_by_type(node: SyntaxNode, type: string): SyntaxNode | null {
+  if (node.type === type) return node;
+  for (let i = 0; i < node.childCount; i++) {
+    const found = find_node_by_type(node.child(i)!, type);
+    if (found) return found;
+  }
+  return null;
+}
+
+describe("JavaScript Symbol Factory Exports", () => {
+  it("should export create_class_id", () => {
+    expect(typeof create_class_id).toBe("function");
+  });
+
+  it("should export create_method_id", () => {
+    expect(typeof create_method_id).toBe("function");
+  });
+
+  it("should export create_function_id", () => {
+    expect(typeof create_function_id).toBe("function");
+  });
+
+  it("should export create_variable_id", () => {
+    expect(typeof create_variable_id).toBe("function");
+  });
+
+  it("should export create_parameter_id", () => {
+    expect(typeof create_parameter_id).toBe("function");
+  });
+
+  it("should export create_property_id", () => {
+    expect(typeof create_property_id).toBe("function");
+  });
+
+  it("should export create_import_id", () => {
+    expect(typeof create_import_id).toBe("function");
+  });
+});
+
+describe("JavaScript Type Extraction Exports", () => {
+  it("should export extract_return_type", () => {
+    expect(typeof extract_return_type).toBe("function");
+  });
+
+  it("should export extract_parameter_type", () => {
+    expect(typeof extract_parameter_type).toBe("function");
+  });
+
+  it("should export extract_jsdoc_type", () => {
+    expect(typeof extract_jsdoc_type).toBe("function");
+  });
+});
+
+describe("JavaScript Import Utilities", () => {
+  it("should export extract_import_path", () => {
+    expect(typeof extract_import_path).toBe("function");
+  });
+
+  it("should export extract_require_path", () => {
+    expect(typeof extract_require_path).toBe("function");
+  });
+
+  it("should export is_default_import", () => {
+    expect(typeof is_default_import).toBe("function");
+  });
+
+  it("should export is_namespace_import", () => {
+    expect(typeof is_namespace_import).toBe("function");
+  });
+});
+
+describe("JavaScript Analysis Functions", () => {
+  it("should export extract_extends", () => {
+    expect(typeof extract_extends).toBe("function");
+  });
+
+  it("should export detect_callback_context", () => {
+    expect(typeof detect_callback_context).toBe("function");
+  });
+
+  it("should export detect_function_collection", () => {
+    expect(typeof detect_function_collection).toBe("function");
+  });
+});
+
+describe("extract_jsdoc_type", () => {
+  it("should extract type from @type annotation", () => {
+    const comment = "/** @type {string} */";
+    const result = extract_jsdoc_type(comment);
+    expect(result).toBe("string");
+  });
+
+  it("should return undefined for comments without type", () => {
+    const comment = "/** Just a comment */";
+    const result = extract_jsdoc_type(comment);
+    expect(result).toBeUndefined();
+  });
+});
+
+describe("extract_call_initializer_name", () => {
+  it("should extract function name from plain call: const x = foo()", () => {
+    const root = parse_js("const x = foo()");
+    const identifier = find_node_by_type(root, "identifier");
+    expect(identifier).not.toBeNull();
+    const result = extract_call_initializer_name(identifier!);
+    expect(result).toBe("foo");
+  });
+
+  it("should extract function name with underscore: const x = get_scope_boundary_extractor()", () => {
+    const root = parse_js("const x = get_scope_boundary_extractor()");
+    const identifier = find_node_by_type(root, "identifier");
+    expect(identifier).not.toBeNull();
+    const result = extract_call_initializer_name(identifier!);
+    expect(result).toBe("get_scope_boundary_extractor");
+  });
+
+  it("should return undefined for method calls: const x = obj.method()", () => {
+    const root = parse_js("const x = obj.method()");
+    const identifier = find_node_by_type(root, "identifier");
+    expect(identifier).not.toBeNull();
+    const result = extract_call_initializer_name(identifier!);
+    expect(result).toBeUndefined();
+  });
+
+  it("should return undefined for method calls with args: const x = config.get('key')", () => {
+    const root = parse_js("const x = config.get('key')");
+    const identifier = find_node_by_type(root, "identifier");
+    expect(identifier).not.toBeNull();
+    const result = extract_call_initializer_name(identifier!);
+    expect(result).toBeUndefined();
+  });
+
+  it("should handle call with arguments: const x = foo(arg1, arg2)", () => {
+    const root = parse_js("const x = foo(arg1, arg2)");
+    const identifier = find_node_by_type(root, "identifier");
+    expect(identifier).not.toBeNull();
+    const result = extract_call_initializer_name(identifier!);
+    expect(result).toBe("foo");
+  });
+
+  it("should return undefined for non-call initializers: const x = 42", () => {
+    const root = parse_js("const x = 42");
+    const identifier = find_node_by_type(root, "identifier");
+    expect(identifier).not.toBeNull();
+    const result = extract_call_initializer_name(identifier!);
+    expect(result).toBeUndefined();
+  });
+
+  it("should return undefined for string initializers: const x = 'hello'", () => {
+    const root = parse_js("const x = 'hello'");
+    const identifier = find_node_by_type(root, "identifier");
+    expect(identifier).not.toBeNull();
+    const result = extract_call_initializer_name(identifier!);
+    expect(result).toBeUndefined();
+  });
+});
+
+describe("extract_extends", () => {
+  describe("JavaScript heritage path", () => {
+    it("should extract parent class from JavaScript class extends", () => {
+      const root = parse_js("class Foo extends Bar {}");
+      const class_node = find_node_by_type(root, "class_declaration");
+      expect(class_node).not.toBeNull();
+      const result = extract_extends(class_node!);
+      expect(result).toEqual(["Bar"]);
+    });
+
+    it("should return empty array for class without extends", () => {
+      const root = parse_js("class Foo {}");
+      const class_node = find_node_by_type(root, "class_declaration");
+      expect(class_node).not.toBeNull();
+      const result = extract_extends(class_node!);
+      expect(result).toEqual([]);
+    });
+  });
+
+  describe("TypeScript class_heritage path", () => {
+    it("should extract from extends_clause", () => {
+      const root = parse_ts("class Foo extends Bar {}");
+      const class_node = find_node_by_type(root, "class_declaration");
+      expect(class_node).not.toBeNull();
+      const result = extract_extends(class_node!);
+      expect(result).toEqual(["Bar"]);
+    });
+
+    it("should extract from implements_clause", () => {
+      const root = parse_ts("class Foo implements IFoo {}");
+      const class_node = find_node_by_type(root, "class_declaration");
+      expect(class_node).not.toBeNull();
+      const result = extract_extends(class_node!);
+      expect(result).toEqual(["IFoo"]);
+    });
+
+    it("should extract both extends and implements", () => {
+      const root = parse_ts("class Foo extends Bar implements IFoo {}");
+      const class_node = find_node_by_type(root, "class_declaration");
+      expect(class_node).not.toBeNull();
+      const result = extract_extends(class_node!);
+      expect(result).toEqual(["Bar", "IFoo"]);
+    });
+
+    it("should handle multiple implemented interfaces", () => {
+      const root = parse_ts("class Foo implements A, B, C {}");
+      const class_node = find_node_by_type(root, "class_declaration");
+      expect(class_node).not.toBeNull();
+      const result = extract_extends(class_node!);
+      expect(result).toEqual(["A", "B", "C"]);
+    });
+
+    it("should return empty array for TypeScript class without extends or implements", () => {
+      const root = parse_ts("class Foo {}");
+      const class_node = find_node_by_type(root, "class_declaration");
+      expect(class_node).not.toBeNull();
+      const result = extract_extends(class_node!);
+      expect(result).toEqual([]);
+    });
+
+    it("should extract generic base class: class Foo extends Bar<T>", () => {
+      const root = parse_ts("class Foo extends Bar<T> {}");
+      const class_node = find_node_by_type(root, "class_declaration");
+      expect(class_node).not.toBeNull();
+      const result = extract_extends(class_node!);
+      expect(result).toEqual(["Bar"]);
+    });
+
+    it("should extract generic implements: class Foo implements Bar<T>", () => {
+      const root = parse_ts("class Foo implements Bar<T> {}");
+      const class_node = find_node_by_type(root, "class_declaration");
+      expect(class_node).not.toBeNull();
+      const result = extract_extends(class_node!);
+      expect(result).toEqual(["Bar"]);
+    });
+
+    it("should extract both generic extends and implements", () => {
+      const root = parse_ts("class Foo extends Bar<T> implements Baz<U> {}");
+      const class_node = find_node_by_type(root, "class_declaration");
+      expect(class_node).not.toBeNull();
+      const result = extract_extends(class_node!);
+      expect(result).toEqual(["Bar", "Baz"]);
+    });
+  });
+});
+
+// Helper to find a parameter node inside an arrow function
+function find_arrow_function_param(root: SyntaxNode, param_name: string): SyntaxNode | null {
+  function visit(node: SyntaxNode): SyntaxNode | null {
+    if (node.type === "arrow_function") {
+      // Look for the parameter inside the arrow function
+      for (let i = 0; i < node.childCount; i++) {
+        const child = node.child(i);
+        if (child) {
+          const result = find_identifier_in_params(child, param_name);
+          if (result) return result;
+        }
+      }
+    }
+    for (let i = 0; i < node.childCount; i++) {
+      const child = node.child(i);
+      if (child) {
+        const result = visit(child);
+        if (result) return result;
+      }
+    }
+    return null;
+  }
+  return visit(root);
+}
+
+function find_identifier_in_params(node: SyntaxNode, param_name: string): SyntaxNode | null {
+  if (node.type === "identifier" && node.text === param_name) {
+    return node;
+  }
+  for (let i = 0; i < node.childCount; i++) {
+    const child = node.child(i);
+    if (child) {
+      const result = find_identifier_in_params(child, param_name);
+      if (result) return result;
+    }
+  }
+  return null;
+}
+
+// Helper to find the arrow function node itself
+function find_arrow_function(root: SyntaxNode): SyntaxNode | null {
+  function visit(node: SyntaxNode): SyntaxNode | null {
+    if (node.type === "arrow_function") {
+      return node;
+    }
+    for (let i = 0; i < node.childCount; i++) {
+      const child = node.child(i);
+      if (child) {
+        const result = visit(child);
+        if (result) return result;
+      }
+    }
+    return null;
+  }
+  return visit(root);
+}
+
+describe("find_containing_callable with anonymous functions", () => {
+  const file_path = "/test.js" as FilePath;
+
+  it("should return matching SymbolId for arrow function parameters", () => {
+    const code = "const fn = (x) => x * 2;";
+    const root = parse_js(code);
+
+    // Find the parameter 'x' node
+    const param_node = find_arrow_function_param(root, "x");
+    expect(param_node).not.toBeNull();
+
+    // Find the arrow function node
+    const arrow_node = find_arrow_function(root);
+    expect(arrow_node).not.toBeNull();
+
+    // Create capture node for parameter
+    const capture: CaptureNode = {
+      category: SemanticCategory.DEFINITION,
+      entity: SemanticEntity.PARAMETER,
+      node: param_node!,
+      text: "x" as SymbolName,
+      name: "definition.parameter",
+      location: {
+        file_path,
+        start_line: param_node!.startPosition.row + 1,
+        start_column: param_node!.startPosition.column + 1,
+        end_line: param_node!.endPosition.row + 1,
+        end_column: param_node!.endPosition.column + 1,
+      },
+    };
+
+    // Get the callable ID
+    const callable_id = find_containing_callable(capture);
+
+    // Expected: anonymous_function_symbol with arrow function's location
+    const expected_id = anonymous_function_symbol(node_to_location(arrow_node!, file_path));
+
+    expect(callable_id).toBe(expected_id);
+  });
+
+  it("should return matching SymbolId for callback arrow function parameters", () => {
+    const code = "items.reduce((acc, item) => acc + item, 0);";
+    const root = parse_js(code);
+
+    // Find the parameter 'acc' node
+    const param_node = find_arrow_function_param(root, "acc");
+    expect(param_node).not.toBeNull();
+
+    // Find the arrow function node
+    const arrow_node = find_arrow_function(root);
+    expect(arrow_node).not.toBeNull();
+
+    // Create capture node for parameter
+    const capture: CaptureNode = {
+      category: SemanticCategory.DEFINITION,
+      entity: SemanticEntity.PARAMETER,
+      node: param_node!,
+      text: "acc" as SymbolName,
+      name: "definition.parameter",
+      location: {
+        file_path,
+        start_line: param_node!.startPosition.row + 1,
+        start_column: param_node!.startPosition.column + 1,
+        end_line: param_node!.endPosition.row + 1,
+        end_column: param_node!.endPosition.column + 1,
+      },
+    };
+
+    // Get the callable ID
+    const callable_id = find_containing_callable(capture);
+
+    // Expected: anonymous_function_symbol with arrow function's location
+    const expected_id = anonymous_function_symbol(node_to_location(arrow_node!, file_path));
+
+    expect(callable_id).toBe(expected_id);
+  });
+});

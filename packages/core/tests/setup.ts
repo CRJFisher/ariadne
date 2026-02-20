@@ -1,4 +1,2 @@
-// Test setup for Vitest
-// This file is executed before each test file
-
-// Add any global test setup here if needed
+// Minimal test setup file for vitest
+// This file is required by vitest.config.mjs but currently empty

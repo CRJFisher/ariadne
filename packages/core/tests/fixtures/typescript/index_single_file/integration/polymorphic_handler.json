@@ -1,0 +1,2825 @@
+{
+  "file_path": "<fixtures>/typescript/code/integration/polymorphic_handler.ts",
+  "language": "typescript",
+  "root_scope_id": "module:<fixtures>/typescript/code/integration/polymorphic_handler.ts:1:1:59:0",
+  "scopes": {
+    "module:<fixtures>/typescript/code/integration/polymorphic_handler.ts:1:1:59:0": {
+      "id": "module:<fixtures>/typescript/code/integration/polymorphic_handler.ts:1:1:59:0",
+      "parent_id": null,
+      "name": null,
+      "type": "module",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/polymorphic_handler.ts",
+        "start_line": 1,
+        "start_column": 1,
+        "end_line": 59,
+        "end_column": 0
+      },
+      "child_ids": [
+        "class:<fixtures>/typescript/code/integration/polymorphic_handler.ts:6:19:9:1",
+        "class:<fixtures>/typescript/code/integration/polymorphic_handler.ts:11:35:19:1",
+        "class:<fixtures>/typescript/code/integration/polymorphic_handler.ts:21:35:29:1",
+        "class:<fixtures>/typescript/code/integration/polymorphic_handler.ts:31:35:39:1",
+        "function:<fixtures>/typescript/code/integration/polymorphic_handler.ts:42:25:47:1"
+      ]
+    },
+    "class:<fixtures>/typescript/code/integration/polymorphic_handler.ts:6:19:9:1": {
+      "id": "class:<fixtures>/typescript/code/integration/polymorphic_handler.ts:6:19:9:1",
+      "parent_id": "module:<fixtures>/typescript/code/integration/polymorphic_handler.ts:1:1:59:0",
+      "name": "Handler",
+      "type": "class",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/polymorphic_handler.ts",
+        "start_line": 6,
+        "start_column": 19,
+        "end_line": 9,
+        "end_column": 1
+      },
+      "child_ids": [
+        "method:<fixtures>/typescript/code/integration/polymorphic_handler.ts:7:10:7:11",
+        "method:<fixtures>/typescript/code/integration/polymorphic_handler.ts:8:11:8:12"
+      ]
+    },
+    "method:<fixtures>/typescript/code/integration/polymorphic_handler.ts:7:10:7:11": {
+      "id": "method:<fixtures>/typescript/code/integration/polymorphic_handler.ts:7:10:7:11",
+      "parent_id": "class:<fixtures>/typescript/code/integration/polymorphic_handler.ts:6:19:9:1",
+      "name": "process",
+      "type": "method",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/polymorphic_handler.ts",
+        "start_line": 7,
+        "start_column": 10,
+        "end_line": 7,
+        "end_column": 11
+      },
+      "child_ids": []
+    },
+    "method:<fixtures>/typescript/code/integration/polymorphic_handler.ts:8:11:8:12": {
+      "id": "method:<fixtures>/typescript/code/integration/polymorphic_handler.ts:8:11:8:12",
+      "parent_id": "class:<fixtures>/typescript/code/integration/polymorphic_handler.ts:6:19:9:1",
+      "name": "get_name",
+      "type": "method",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/polymorphic_handler.ts",
+        "start_line": 8,
+        "start_column": 11,
+        "end_line": 8,
+        "end_column": 12
+      },
+      "child_ids": []
+    },
+    "class:<fixtures>/typescript/code/integration/polymorphic_handler.ts:11:35:19:1": {
+      "id": "class:<fixtures>/typescript/code/integration/polymorphic_handler.ts:11:35:19:1",
+      "parent_id": "module:<fixtures>/typescript/code/integration/polymorphic_handler.ts:1:1:59:0",
+      "name": "HandlerA",
+      "type": "class",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/polymorphic_handler.ts",
+        "start_line": 11,
+        "start_column": 35,
+        "end_line": 19,
+        "end_column": 1
+      },
+      "child_ids": [
+        "method:<fixtures>/typescript/code/integration/polymorphic_handler.ts:12:10:14:3",
+        "method:<fixtures>/typescript/code/integration/polymorphic_handler.ts:16:11:18:3"
+      ]
+    },
+    "method:<fixtures>/typescript/code/integration/polymorphic_handler.ts:12:10:14:3": {
+      "id": "method:<fixtures>/typescript/code/integration/polymorphic_handler.ts:12:10:14:3",
+      "parent_id": "class:<fixtures>/typescript/code/integration/polymorphic_handler.ts:11:35:19:1",
+      "name": "process",
+      "type": "method",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/polymorphic_handler.ts",
+        "start_line": 12,
+        "start_column": 10,
+        "end_line": 14,
+        "end_column": 3
+      },
+      "child_ids": []
+    },
+    "method:<fixtures>/typescript/code/integration/polymorphic_handler.ts:16:11:18:3": {
+      "id": "method:<fixtures>/typescript/code/integration/polymorphic_handler.ts:16:11:18:3",
+      "parent_id": "class:<fixtures>/typescript/code/integration/polymorphic_handler.ts:11:35:19:1",
+      "name": "get_name",
+      "type": "method",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/polymorphic_handler.ts",
+        "start_line": 16,
+        "start_column": 11,
+        "end_line": 18,
+        "end_column": 3
+      },
+      "child_ids": []
+    },
+    "class:<fixtures>/typescript/code/integration/polymorphic_handler.ts:21:35:29:1": {
+      "id": "class:<fixtures>/typescript/code/integration/polymorphic_handler.ts:21:35:29:1",
+      "parent_id": "module:<fixtures>/typescript/code/integration/polymorphic_handler.ts:1:1:59:0",
+      "name": "HandlerB",
+      "type": "class",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/polymorphic_handler.ts",
+        "start_line": 21,
+        "start_column": 35,
+        "end_line": 29,
+        "end_column": 1
+      },
+      "child_ids": [
+        "method:<fixtures>/typescript/code/integration/polymorphic_handler.ts:22:10:24:3",
+        "method:<fixtures>/typescript/code/integration/polymorphic_handler.ts:26:11:28:3"
+      ]
+    },
+    "method:<fixtures>/typescript/code/integration/polymorphic_handler.ts:22:10:24:3": {
+      "id": "method:<fixtures>/typescript/code/integration/polymorphic_handler.ts:22:10:24:3",
+      "parent_id": "class:<fixtures>/typescript/code/integration/polymorphic_handler.ts:21:35:29:1",
+      "name": "process",
+      "type": "method",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/polymorphic_handler.ts",
+        "start_line": 22,
+        "start_column": 10,
+        "end_line": 24,
+        "end_column": 3
+      },
+      "child_ids": []
+    },
+    "method:<fixtures>/typescript/code/integration/polymorphic_handler.ts:26:11:28:3": {
+      "id": "method:<fixtures>/typescript/code/integration/polymorphic_handler.ts:26:11:28:3",
+      "parent_id": "class:<fixtures>/typescript/code/integration/polymorphic_handler.ts:21:35:29:1",
+      "name": "get_name",
+      "type": "method",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/polymorphic_handler.ts",
+        "start_line": 26,
+        "start_column": 11,
+        "end_line": 28,
+        "end_column": 3
+      },
+      "child_ids": []
+    },
+    "class:<fixtures>/typescript/code/integration/polymorphic_handler.ts:31:35:39:1": {
+      "id": "class:<fixtures>/typescript/code/integration/polymorphic_handler.ts:31:35:39:1",
+      "parent_id": "module:<fixtures>/typescript/code/integration/polymorphic_handler.ts:1:1:59:0",
+      "name": "HandlerC",
+      "type": "class",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/polymorphic_handler.ts",
+        "start_line": 31,
+        "start_column": 35,
+        "end_line": 39,
+        "end_column": 1
+      },
+      "child_ids": [
+        "method:<fixtures>/typescript/code/integration/polymorphic_handler.ts:32:10:34:3",
+        "method:<fixtures>/typescript/code/integration/polymorphic_handler.ts:36:11:38:3"
+      ]
+    },
+    "method:<fixtures>/typescript/code/integration/polymorphic_handler.ts:32:10:34:3": {
+      "id": "method:<fixtures>/typescript/code/integration/polymorphic_handler.ts:32:10:34:3",
+      "parent_id": "class:<fixtures>/typescript/code/integration/polymorphic_handler.ts:31:35:39:1",
+      "name": "process",
+      "type": "method",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/polymorphic_handler.ts",
+        "start_line": 32,
+        "start_column": 10,
+        "end_line": 34,
+        "end_column": 3
+      },
+      "child_ids": []
+    },
+    "method:<fixtures>/typescript/code/integration/polymorphic_handler.ts:36:11:38:3": {
+      "id": "method:<fixtures>/typescript/code/integration/polymorphic_handler.ts:36:11:38:3",
+      "parent_id": "class:<fixtures>/typescript/code/integration/polymorphic_handler.ts:31:35:39:1",
+      "name": "get_name",
+      "type": "method",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/polymorphic_handler.ts",
+        "start_line": 36,
+        "start_column": 11,
+        "end_line": 38,
+        "end_column": 3
+      },
+      "child_ids": []
+    },
+    "function:<fixtures>/typescript/code/integration/polymorphic_handler.ts:42:25:47:1": {
+      "id": "function:<fixtures>/typescript/code/integration/polymorphic_handler.ts:42:25:47:1",
+      "parent_id": "module:<fixtures>/typescript/code/integration/polymorphic_handler.ts:1:1:59:0",
+      "name": "execute_handler",
+      "type": "function",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/polymorphic_handler.ts",
+        "start_line": 42,
+        "start_column": 25,
+        "end_line": 47,
+        "end_column": 1
+      },
+      "child_ids": []
+    }
+  },
+  "functions": {
+    "function:<fixtures>/typescript/code/integration/polymorphic_handler.ts:42:10:42:24:execute_handler": {
+      "kind": "function",
+      "symbol_id": "function:<fixtures>/typescript/code/integration/polymorphic_handler.ts:42:10:42:24:execute_handler",
+      "name": "execute_handler",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/polymorphic_handler.ts",
+        "start_line": 42,
+        "start_column": 10,
+        "end_line": 42,
+        "end_column": 24
+      },
+      "defining_scope_id": "module:<fixtures>/typescript/code/integration/polymorphic_handler.ts:1:1:59:0",
+      "is_exported": true,
+      "export": {
+        "is_reexport": false
+      },
+      "signature": {
+        "parameters": [
+          {
+            "kind": "parameter",
+            "defining_scope_id": "function:<fixtures>/typescript/code/integration/polymorphic_handler.ts:42:25:47:1",
+            "symbol_id": "parameter:<fixtures>/typescript/code/integration/polymorphic_handler.ts:42:26:42:32:handler",
+            "name": "handler",
+            "location": {
+              "file_path": "<fixtures>/typescript/code/integration/polymorphic_handler.ts",
+              "start_line": 42,
+              "start_column": 26,
+              "end_line": 42,
+              "end_column": 32
+            },
+            "type": "Handler",
+            "optional": false
+          }
+        ],
+        "return_type": "void"
+      },
+      "return_type": "void",
+      "body_scope_id": "function:<fixtures>/typescript/code/integration/polymorphic_handler.ts:42:25:47:1"
+    }
+  },
+  "classes": {
+    "class:<fixtures>/typescript/code/integration/polymorphic_handler.ts:11:7:11:14:HandlerA": {
+      "kind": "class",
+      "symbol_id": "class:<fixtures>/typescript/code/integration/polymorphic_handler.ts:11:7:11:14:HandlerA",
+      "name": "HandlerA",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/polymorphic_handler.ts",
+        "start_line": 11,
+        "start_column": 7,
+        "end_line": 11,
+        "end_column": 14
+      },
+      "defining_scope_id": "module:<fixtures>/typescript/code/integration/polymorphic_handler.ts:1:1:59:0",
+      "generics": [],
+      "extends": [
+        "Handler"
+      ],
+      "is_exported": true,
+      "export": {
+        "is_reexport": false
+      },
+      "methods": [
+        {
+          "kind": "method",
+          "defining_scope_id": "class:<fixtures>/typescript/code/integration/polymorphic_handler.ts:11:35:19:1",
+          "symbol_id": "method:<fixtures>/typescript/code/integration/polymorphic_handler.ts:12:3:12:9:process",
+          "name": "process",
+          "location": {
+            "file_path": "<fixtures>/typescript/code/integration/polymorphic_handler.ts",
+            "start_line": 12,
+            "start_column": 3,
+            "end_line": 12,
+            "end_column": 9
+          },
+          "abstract": false,
+          "static": false,
+          "async": false,
+          "return_type": "void",
+          "generics": [],
+          "parameters": [],
+          "body_scope_id": "method:<fixtures>/typescript/code/integration/polymorphic_handler.ts:12:10:14:3"
+        },
+        {
+          "kind": "method",
+          "defining_scope_id": "class:<fixtures>/typescript/code/integration/polymorphic_handler.ts:11:35:19:1",
+          "symbol_id": "method:<fixtures>/typescript/code/integration/polymorphic_handler.ts:16:3:16:10:get_name",
+          "name": "get_name",
+          "location": {
+            "file_path": "<fixtures>/typescript/code/integration/polymorphic_handler.ts",
+            "start_line": 16,
+            "start_column": 3,
+            "end_line": 16,
+            "end_column": 10
+          },
+          "abstract": false,
+          "static": false,
+          "async": false,
+          "return_type": "string",
+          "generics": [],
+          "parameters": [],
+          "body_scope_id": "method:<fixtures>/typescript/code/integration/polymorphic_handler.ts:16:11:18:3"
+        }
+      ],
+      "properties": [],
+      "decorators": []
+    },
+    "class:<fixtures>/typescript/code/integration/polymorphic_handler.ts:21:7:21:14:HandlerB": {
+      "kind": "class",
+      "symbol_id": "class:<fixtures>/typescript/code/integration/polymorphic_handler.ts:21:7:21:14:HandlerB",
+      "name": "HandlerB",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/polymorphic_handler.ts",
+        "start_line": 21,
+        "start_column": 7,
+        "end_line": 21,
+        "end_column": 14
+      },
+      "defining_scope_id": "module:<fixtures>/typescript/code/integration/polymorphic_handler.ts:1:1:59:0",
+      "generics": [],
+      "extends": [
+        "Handler"
+      ],
+      "is_exported": true,
+      "export": {
+        "is_reexport": false
+      },
+      "methods": [
+        {
+          "kind": "method",
+          "defining_scope_id": "class:<fixtures>/typescript/code/integration/polymorphic_handler.ts:21:35:29:1",
+          "symbol_id": "method:<fixtures>/typescript/code/integration/polymorphic_handler.ts:22:3:22:9:process",
+          "name": "process",
+          "location": {
+            "file_path": "<fixtures>/typescript/code/integration/polymorphic_handler.ts",
+            "start_line": 22,
+            "start_column": 3,
+            "end_line": 22,
+            "end_column": 9
+          },
+          "abstract": false,
+          "static": false,
+          "async": false,
+          "return_type": "void",
+          "generics": [],
+          "parameters": [],
+          "body_scope_id": "method:<fixtures>/typescript/code/integration/polymorphic_handler.ts:22:10:24:3"
+        },
+        {
+          "kind": "method",
+          "defining_scope_id": "class:<fixtures>/typescript/code/integration/polymorphic_handler.ts:21:35:29:1",
+          "symbol_id": "method:<fixtures>/typescript/code/integration/polymorphic_handler.ts:26:3:26:10:get_name",
+          "name": "get_name",
+          "location": {
+            "file_path": "<fixtures>/typescript/code/integration/polymorphic_handler.ts",
+            "start_line": 26,
+            "start_column": 3,
+            "end_line": 26,
+            "end_column": 10
+          },
+          "abstract": false,
+          "static": false,
+          "async": false,
+          "return_type": "string",
+          "generics": [],
+          "parameters": [],
+          "body_scope_id": "method:<fixtures>/typescript/code/integration/polymorphic_handler.ts:26:11:28:3"
+        }
+      ],
+      "properties": [],
+      "decorators": []
+    },
+    "class:<fixtures>/typescript/code/integration/polymorphic_handler.ts:31:7:31:14:HandlerC": {
+      "kind": "class",
+      "symbol_id": "class:<fixtures>/typescript/code/integration/polymorphic_handler.ts:31:7:31:14:HandlerC",
+      "name": "HandlerC",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/polymorphic_handler.ts",
+        "start_line": 31,
+        "start_column": 7,
+        "end_line": 31,
+        "end_column": 14
+      },
+      "defining_scope_id": "module:<fixtures>/typescript/code/integration/polymorphic_handler.ts:1:1:59:0",
+      "generics": [],
+      "extends": [
+        "Handler"
+      ],
+      "is_exported": true,
+      "export": {
+        "is_reexport": false
+      },
+      "methods": [
+        {
+          "kind": "method",
+          "defining_scope_id": "class:<fixtures>/typescript/code/integration/polymorphic_handler.ts:31:35:39:1",
+          "symbol_id": "method:<fixtures>/typescript/code/integration/polymorphic_handler.ts:32:3:32:9:process",
+          "name": "process",
+          "location": {
+            "file_path": "<fixtures>/typescript/code/integration/polymorphic_handler.ts",
+            "start_line": 32,
+            "start_column": 3,
+            "end_line": 32,
+            "end_column": 9
+          },
+          "abstract": false,
+          "static": false,
+          "async": false,
+          "return_type": "void",
+          "generics": [],
+          "parameters": [],
+          "body_scope_id": "method:<fixtures>/typescript/code/integration/polymorphic_handler.ts:32:10:34:3"
+        },
+        {
+          "kind": "method",
+          "defining_scope_id": "class:<fixtures>/typescript/code/integration/polymorphic_handler.ts:31:35:39:1",
+          "symbol_id": "method:<fixtures>/typescript/code/integration/polymorphic_handler.ts:36:3:36:10:get_name",
+          "name": "get_name",
+          "location": {
+            "file_path": "<fixtures>/typescript/code/integration/polymorphic_handler.ts",
+            "start_line": 36,
+            "start_column": 3,
+            "end_line": 36,
+            "end_column": 10
+          },
+          "abstract": false,
+          "static": false,
+          "async": false,
+          "return_type": "string",
+          "generics": [],
+          "parameters": [],
+          "body_scope_id": "method:<fixtures>/typescript/code/integration/polymorphic_handler.ts:36:11:38:3"
+        }
+      ],
+      "properties": [],
+      "decorators": []
+    }
+  },
+  "variables": {
+    "variable:<fixtures>/typescript/code/integration/polymorphic_handler.ts:45:9:45:12:name": {
+      "kind": "constant",
+      "symbol_id": "variable:<fixtures>/typescript/code/integration/polymorphic_handler.ts:45:9:45:12:name",
+      "name": "name",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/polymorphic_handler.ts",
+        "start_line": 45,
+        "start_column": 9,
+        "end_line": 45,
+        "end_column": 12
+      },
+      "defining_scope_id": "function:<fixtures>/typescript/code/integration/polymorphic_handler.ts:42:25:47:1",
+      "is_exported": false,
+      "initial_value": "handler.get_name()",
+      "collection_source": "handler"
+    },
+    "variable:<fixtures>/typescript/code/integration/polymorphic_handler.ts:50:7:50:7:a": {
+      "kind": "constant",
+      "symbol_id": "variable:<fixtures>/typescript/code/integration/polymorphic_handler.ts:50:7:50:7:a",
+      "name": "a",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/polymorphic_handler.ts",
+        "start_line": 50,
+        "start_column": 7,
+        "end_line": 50,
+        "end_column": 7
+      },
+      "defining_scope_id": "module:<fixtures>/typescript/code/integration/polymorphic_handler.ts:1:1:59:0",
+      "is_exported": false,
+      "initial_value": "new HandlerA()"
+    },
+    "variable:<fixtures>/typescript/code/integration/polymorphic_handler.ts:51:7:51:7:b": {
+      "kind": "constant",
+      "symbol_id": "variable:<fixtures>/typescript/code/integration/polymorphic_handler.ts:51:7:51:7:b",
+      "name": "b",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/polymorphic_handler.ts",
+        "start_line": 51,
+        "start_column": 7,
+        "end_line": 51,
+        "end_column": 7
+      },
+      "defining_scope_id": "module:<fixtures>/typescript/code/integration/polymorphic_handler.ts:1:1:59:0",
+      "is_exported": false,
+      "initial_value": "new HandlerB()"
+    },
+    "variable:<fixtures>/typescript/code/integration/polymorphic_handler.ts:52:7:52:7:c": {
+      "kind": "constant",
+      "symbol_id": "variable:<fixtures>/typescript/code/integration/polymorphic_handler.ts:52:7:52:7:c",
+      "name": "c",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/polymorphic_handler.ts",
+        "start_line": 52,
+        "start_column": 7,
+        "end_line": 52,
+        "end_column": 7
+      },
+      "defining_scope_id": "module:<fixtures>/typescript/code/integration/polymorphic_handler.ts:1:1:59:0",
+      "is_exported": false,
+      "initial_value": "new HandlerC()"
+    }
+  },
+  "interfaces": {
+    "interface:<fixtures>/typescript/code/integration/polymorphic_handler.ts:6:1:9:1:interface Handler {\n  process(): void;\n  get_name(): string;\n}": {
+      "kind": "interface",
+      "symbol_id": "interface:<fixtures>/typescript/code/integration/polymorphic_handler.ts:6:1:9:1:interface Handler {\n  process(): void;\n  get_name(): string;\n}",
+      "name": "interface Handler {\n  process(): void;\n  get_name(): string;\n}",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/polymorphic_handler.ts",
+        "start_line": 6,
+        "start_column": 1,
+        "end_line": 9,
+        "end_column": 1
+      },
+      "defining_scope_id": "module:<fixtures>/typescript/code/integration/polymorphic_handler.ts:1:1:59:0",
+      "is_exported": false,
+      "extends": [],
+      "methods": [],
+      "properties": []
+    },
+    "interface:<fixtures>/typescript/code/integration/polymorphic_handler.ts:6:11:6:17:Handler": {
+      "kind": "interface",
+      "symbol_id": "interface:<fixtures>/typescript/code/integration/polymorphic_handler.ts:6:11:6:17:Handler",
+      "name": "Handler",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/polymorphic_handler.ts",
+        "start_line": 6,
+        "start_column": 11,
+        "end_line": 6,
+        "end_column": 17
+      },
+      "defining_scope_id": "module:<fixtures>/typescript/code/integration/polymorphic_handler.ts:1:1:59:0",
+      "is_exported": true,
+      "export": {
+        "is_reexport": false
+      },
+      "extends": [],
+      "methods": [
+        {
+          "kind": "method",
+          "symbol_id": "method:<fixtures>/typescript/code/integration/polymorphic_handler.ts:7:3:7:9:process",
+          "name": "process",
+          "location": {
+            "file_path": "<fixtures>/typescript/code/integration/polymorphic_handler.ts",
+            "start_line": 7,
+            "start_column": 3,
+            "end_line": 7,
+            "end_column": 9
+          },
+          "defining_scope_id": "class:<fixtures>/typescript/code/integration/polymorphic_handler.ts:6:19:9:1",
+          "return_type": "void",
+          "generics": [],
+          "parameters": []
+        },
+        {
+          "kind": "method",
+          "symbol_id": "method:<fixtures>/typescript/code/integration/polymorphic_handler.ts:8:3:8:10:get_name",
+          "name": "get_name",
+          "location": {
+            "file_path": "<fixtures>/typescript/code/integration/polymorphic_handler.ts",
+            "start_line": 8,
+            "start_column": 3,
+            "end_line": 8,
+            "end_column": 10
+          },
+          "defining_scope_id": "class:<fixtures>/typescript/code/integration/polymorphic_handler.ts:6:19:9:1",
+          "return_type": "string",
+          "generics": [],
+          "parameters": []
+        }
+      ],
+      "properties": []
+    }
+  },
+  "enums": {},
+  "namespaces": {},
+  "types": {},
+  "imported_symbols": {},
+  "references": [
+    {
+      "kind": "type_reference",
+      "name": "Handler",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/polymorphic_handler.ts",
+        "start_line": 6,
+        "start_column": 11,
+        "end_line": 6,
+        "end_column": 17
+      },
+      "scope_id": "module:<fixtures>/typescript/code/integration/polymorphic_handler.ts:1:1:59:0",
+      "type_context": "annotation",
+      "type_info": {
+        "type_id": "type:<fixtures>/typescript/code/integration/polymorphic_handler.ts:6:11:6:17:Handler",
+        "type_name": "Handler",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "kind": "type_reference",
+      "name": "HandlerA",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/polymorphic_handler.ts",
+        "start_line": 11,
+        "start_column": 7,
+        "end_line": 11,
+        "end_column": 14
+      },
+      "scope_id": "module:<fixtures>/typescript/code/integration/polymorphic_handler.ts:1:1:59:0",
+      "type_context": "annotation",
+      "type_info": {
+        "type_id": "type:<fixtures>/typescript/code/integration/polymorphic_handler.ts:11:7:11:14:HandlerA",
+        "type_name": "HandlerA",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "Handler",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/polymorphic_handler.ts",
+        "start_line": 11,
+        "start_column": 27,
+        "end_line": 11,
+        "end_column": 33
+      },
+      "scope_id": "module:<fixtures>/typescript/code/integration/polymorphic_handler.ts:1:1:59:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "type_reference",
+      "name": "Handler",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/polymorphic_handler.ts",
+        "start_line": 11,
+        "start_column": 27,
+        "end_line": 11,
+        "end_column": 33
+      },
+      "scope_id": "module:<fixtures>/typescript/code/integration/polymorphic_handler.ts:1:1:59:0",
+      "type_context": "annotation",
+      "type_info": {
+        "type_id": "type:<fixtures>/typescript/code/integration/polymorphic_handler.ts:11:27:11:33:Handler",
+        "type_name": "Handler",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "kind": "method_call",
+      "name": "log",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/polymorphic_handler.ts",
+        "start_line": 13,
+        "start_column": 5,
+        "end_line": 13,
+        "end_column": 39
+      },
+      "scope_id": "method:<fixtures>/typescript/code/integration/polymorphic_handler.ts:12:10:14:3",
+      "receiver_location": {
+        "file_path": "<fixtures>/typescript/code/integration/polymorphic_handler.ts",
+        "start_line": 13,
+        "start_column": 5,
+        "end_line": 13,
+        "end_column": 11
+      },
+      "property_chain": [
+        "console",
+        "log"
+      ],
+      "optional_chaining": false
+    },
+    {
+      "kind": "variable_reference",
+      "name": "console",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/polymorphic_handler.ts",
+        "start_line": 13,
+        "start_column": 5,
+        "end_line": 13,
+        "end_column": 11
+      },
+      "scope_id": "method:<fixtures>/typescript/code/integration/polymorphic_handler.ts:12:10:14:3",
+      "access_type": "read"
+    },
+    {
+      "kind": "property_access",
+      "name": "log",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/polymorphic_handler.ts",
+        "start_line": 13,
+        "start_column": 5,
+        "end_line": 13,
+        "end_column": 15
+      },
+      "scope_id": "method:<fixtures>/typescript/code/integration/polymorphic_handler.ts:12:10:14:3",
+      "receiver_location": {
+        "file_path": "<fixtures>/typescript/code/integration/polymorphic_handler.ts",
+        "start_line": 13,
+        "start_column": 5,
+        "end_line": 13,
+        "end_column": 11
+      },
+      "property_chain": [
+        "console",
+        "log"
+      ],
+      "access_type": "property",
+      "is_optional_chain": false
+    },
+    {
+      "kind": "variable_reference",
+      "name": "console",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/polymorphic_handler.ts",
+        "start_line": 13,
+        "start_column": 5,
+        "end_line": 13,
+        "end_column": 11
+      },
+      "scope_id": "method:<fixtures>/typescript/code/integration/polymorphic_handler.ts:12:10:14:3",
+      "access_type": "read"
+    },
+    {
+      "kind": "property_access",
+      "name": "log",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/polymorphic_handler.ts",
+        "start_line": 13,
+        "start_column": 5,
+        "end_line": 13,
+        "end_column": 15
+      },
+      "scope_id": "method:<fixtures>/typescript/code/integration/polymorphic_handler.ts:12:10:14:3",
+      "receiver_location": {
+        "file_path": "<fixtures>/typescript/code/integration/polymorphic_handler.ts",
+        "start_line": 13,
+        "start_column": 5,
+        "end_line": 13,
+        "end_column": 11
+      },
+      "property_chain": [
+        "console",
+        "log"
+      ],
+      "access_type": "property",
+      "is_optional_chain": false
+    },
+    {
+      "kind": "variable_reference",
+      "name": "console",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/polymorphic_handler.ts",
+        "start_line": 13,
+        "start_column": 5,
+        "end_line": 13,
+        "end_column": 11
+      },
+      "scope_id": "method:<fixtures>/typescript/code/integration/polymorphic_handler.ts:12:10:14:3",
+      "access_type": "read"
+    },
+    {
+      "kind": "method_call",
+      "name": "log",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/polymorphic_handler.ts",
+        "start_line": 13,
+        "start_column": 5,
+        "end_line": 13,
+        "end_column": 39
+      },
+      "scope_id": "method:<fixtures>/typescript/code/integration/polymorphic_handler.ts:12:10:14:3",
+      "receiver_location": {
+        "file_path": "<fixtures>/typescript/code/integration/polymorphic_handler.ts",
+        "start_line": 13,
+        "start_column": 5,
+        "end_line": 13,
+        "end_column": 11
+      },
+      "property_chain": [
+        "console",
+        "log"
+      ],
+      "optional_chaining": false
+    },
+    {
+      "kind": "variable_reference",
+      "name": "console",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/polymorphic_handler.ts",
+        "start_line": 13,
+        "start_column": 5,
+        "end_line": 13,
+        "end_column": 11
+      },
+      "scope_id": "method:<fixtures>/typescript/code/integration/polymorphic_handler.ts:12:10:14:3",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "console",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/polymorphic_handler.ts",
+        "start_line": 13,
+        "start_column": 5,
+        "end_line": 13,
+        "end_column": 11
+      },
+      "scope_id": "method:<fixtures>/typescript/code/integration/polymorphic_handler.ts:12:10:14:3",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "log",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/polymorphic_handler.ts",
+        "start_line": 13,
+        "start_column": 13,
+        "end_line": 13,
+        "end_column": 15
+      },
+      "scope_id": "method:<fixtures>/typescript/code/integration/polymorphic_handler.ts:12:10:14:3",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "log",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/polymorphic_handler.ts",
+        "start_line": 13,
+        "start_column": 13,
+        "end_line": 13,
+        "end_column": 15
+      },
+      "scope_id": "method:<fixtures>/typescript/code/integration/polymorphic_handler.ts:12:10:14:3",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "return \"Handler A\";",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/polymorphic_handler.ts",
+        "start_line": 17,
+        "start_column": 5,
+        "end_line": 17,
+        "end_column": 23
+      },
+      "scope_id": "method:<fixtures>/typescript/code/integration/polymorphic_handler.ts:16:11:18:3",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "\"Handler A\"",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/polymorphic_handler.ts",
+        "start_line": 17,
+        "start_column": 12,
+        "end_line": 17,
+        "end_column": 22
+      },
+      "scope_id": "method:<fixtures>/typescript/code/integration/polymorphic_handler.ts:16:11:18:3",
+      "access_type": "read"
+    },
+    {
+      "kind": "type_reference",
+      "name": "HandlerB",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/polymorphic_handler.ts",
+        "start_line": 21,
+        "start_column": 7,
+        "end_line": 21,
+        "end_column": 14
+      },
+      "scope_id": "module:<fixtures>/typescript/code/integration/polymorphic_handler.ts:1:1:59:0",
+      "type_context": "annotation",
+      "type_info": {
+        "type_id": "type:<fixtures>/typescript/code/integration/polymorphic_handler.ts:21:7:21:14:HandlerB",
+        "type_name": "HandlerB",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "Handler",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/polymorphic_handler.ts",
+        "start_line": 21,
+        "start_column": 27,
+        "end_line": 21,
+        "end_column": 33
+      },
+      "scope_id": "module:<fixtures>/typescript/code/integration/polymorphic_handler.ts:1:1:59:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "type_reference",
+      "name": "Handler",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/polymorphic_handler.ts",
+        "start_line": 21,
+        "start_column": 27,
+        "end_line": 21,
+        "end_column": 33
+      },
+      "scope_id": "module:<fixtures>/typescript/code/integration/polymorphic_handler.ts:1:1:59:0",
+      "type_context": "annotation",
+      "type_info": {
+        "type_id": "type:<fixtures>/typescript/code/integration/polymorphic_handler.ts:21:27:21:33:Handler",
+        "type_name": "Handler",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "kind": "method_call",
+      "name": "log",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/polymorphic_handler.ts",
+        "start_line": 23,
+        "start_column": 5,
+        "end_line": 23,
+        "end_column": 39
+      },
+      "scope_id": "method:<fixtures>/typescript/code/integration/polymorphic_handler.ts:22:10:24:3",
+      "receiver_location": {
+        "file_path": "<fixtures>/typescript/code/integration/polymorphic_handler.ts",
+        "start_line": 23,
+        "start_column": 5,
+        "end_line": 23,
+        "end_column": 11
+      },
+      "property_chain": [
+        "console",
+        "log"
+      ],
+      "optional_chaining": false
+    },
+    {
+      "kind": "variable_reference",
+      "name": "console",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/polymorphic_handler.ts",
+        "start_line": 23,
+        "start_column": 5,
+        "end_line": 23,
+        "end_column": 11
+      },
+      "scope_id": "method:<fixtures>/typescript/code/integration/polymorphic_handler.ts:22:10:24:3",
+      "access_type": "read"
+    },
+    {
+      "kind": "property_access",
+      "name": "log",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/polymorphic_handler.ts",
+        "start_line": 23,
+        "start_column": 5,
+        "end_line": 23,
+        "end_column": 15
+      },
+      "scope_id": "method:<fixtures>/typescript/code/integration/polymorphic_handler.ts:22:10:24:3",
+      "receiver_location": {
+        "file_path": "<fixtures>/typescript/code/integration/polymorphic_handler.ts",
+        "start_line": 23,
+        "start_column": 5,
+        "end_line": 23,
+        "end_column": 11
+      },
+      "property_chain": [
+        "console",
+        "log"
+      ],
+      "access_type": "property",
+      "is_optional_chain": false
+    },
+    {
+      "kind": "variable_reference",
+      "name": "console",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/polymorphic_handler.ts",
+        "start_line": 23,
+        "start_column": 5,
+        "end_line": 23,
+        "end_column": 11
+      },
+      "scope_id": "method:<fixtures>/typescript/code/integration/polymorphic_handler.ts:22:10:24:3",
+      "access_type": "read"
+    },
+    {
+      "kind": "property_access",
+      "name": "log",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/polymorphic_handler.ts",
+        "start_line": 23,
+        "start_column": 5,
+        "end_line": 23,
+        "end_column": 15
+      },
+      "scope_id": "method:<fixtures>/typescript/code/integration/polymorphic_handler.ts:22:10:24:3",
+      "receiver_location": {
+        "file_path": "<fixtures>/typescript/code/integration/polymorphic_handler.ts",
+        "start_line": 23,
+        "start_column": 5,
+        "end_line": 23,
+        "end_column": 11
+      },
+      "property_chain": [
+        "console",
+        "log"
+      ],
+      "access_type": "property",
+      "is_optional_chain": false
+    },
+    {
+      "kind": "variable_reference",
+      "name": "console",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/polymorphic_handler.ts",
+        "start_line": 23,
+        "start_column": 5,
+        "end_line": 23,
+        "end_column": 11
+      },
+      "scope_id": "method:<fixtures>/typescript/code/integration/polymorphic_handler.ts:22:10:24:3",
+      "access_type": "read"
+    },
+    {
+      "kind": "method_call",
+      "name": "log",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/polymorphic_handler.ts",
+        "start_line": 23,
+        "start_column": 5,
+        "end_line": 23,
+        "end_column": 39
+      },
+      "scope_id": "method:<fixtures>/typescript/code/integration/polymorphic_handler.ts:22:10:24:3",
+      "receiver_location": {
+        "file_path": "<fixtures>/typescript/code/integration/polymorphic_handler.ts",
+        "start_line": 23,
+        "start_column": 5,
+        "end_line": 23,
+        "end_column": 11
+      },
+      "property_chain": [
+        "console",
+        "log"
+      ],
+      "optional_chaining": false
+    },
+    {
+      "kind": "variable_reference",
+      "name": "console",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/polymorphic_handler.ts",
+        "start_line": 23,
+        "start_column": 5,
+        "end_line": 23,
+        "end_column": 11
+      },
+      "scope_id": "method:<fixtures>/typescript/code/integration/polymorphic_handler.ts:22:10:24:3",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "console",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/polymorphic_handler.ts",
+        "start_line": 23,
+        "start_column": 5,
+        "end_line": 23,
+        "end_column": 11
+      },
+      "scope_id": "method:<fixtures>/typescript/code/integration/polymorphic_handler.ts:22:10:24:3",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "log",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/polymorphic_handler.ts",
+        "start_line": 23,
+        "start_column": 13,
+        "end_line": 23,
+        "end_column": 15
+      },
+      "scope_id": "method:<fixtures>/typescript/code/integration/polymorphic_handler.ts:22:10:24:3",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "log",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/polymorphic_handler.ts",
+        "start_line": 23,
+        "start_column": 13,
+        "end_line": 23,
+        "end_column": 15
+      },
+      "scope_id": "method:<fixtures>/typescript/code/integration/polymorphic_handler.ts:22:10:24:3",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "return \"Handler B\";",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/polymorphic_handler.ts",
+        "start_line": 27,
+        "start_column": 5,
+        "end_line": 27,
+        "end_column": 23
+      },
+      "scope_id": "method:<fixtures>/typescript/code/integration/polymorphic_handler.ts:26:11:28:3",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "\"Handler B\"",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/polymorphic_handler.ts",
+        "start_line": 27,
+        "start_column": 12,
+        "end_line": 27,
+        "end_column": 22
+      },
+      "scope_id": "method:<fixtures>/typescript/code/integration/polymorphic_handler.ts:26:11:28:3",
+      "access_type": "read"
+    },
+    {
+      "kind": "type_reference",
+      "name": "HandlerC",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/polymorphic_handler.ts",
+        "start_line": 31,
+        "start_column": 7,
+        "end_line": 31,
+        "end_column": 14
+      },
+      "scope_id": "module:<fixtures>/typescript/code/integration/polymorphic_handler.ts:1:1:59:0",
+      "type_context": "annotation",
+      "type_info": {
+        "type_id": "type:<fixtures>/typescript/code/integration/polymorphic_handler.ts:31:7:31:14:HandlerC",
+        "type_name": "HandlerC",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "Handler",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/polymorphic_handler.ts",
+        "start_line": 31,
+        "start_column": 27,
+        "end_line": 31,
+        "end_column": 33
+      },
+      "scope_id": "module:<fixtures>/typescript/code/integration/polymorphic_handler.ts:1:1:59:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "type_reference",
+      "name": "Handler",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/polymorphic_handler.ts",
+        "start_line": 31,
+        "start_column": 27,
+        "end_line": 31,
+        "end_column": 33
+      },
+      "scope_id": "module:<fixtures>/typescript/code/integration/polymorphic_handler.ts:1:1:59:0",
+      "type_context": "annotation",
+      "type_info": {
+        "type_id": "type:<fixtures>/typescript/code/integration/polymorphic_handler.ts:31:27:31:33:Handler",
+        "type_name": "Handler",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "kind": "method_call",
+      "name": "log",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/polymorphic_handler.ts",
+        "start_line": 33,
+        "start_column": 5,
+        "end_line": 33,
+        "end_column": 39
+      },
+      "scope_id": "method:<fixtures>/typescript/code/integration/polymorphic_handler.ts:32:10:34:3",
+      "receiver_location": {
+        "file_path": "<fixtures>/typescript/code/integration/polymorphic_handler.ts",
+        "start_line": 33,
+        "start_column": 5,
+        "end_line": 33,
+        "end_column": 11
+      },
+      "property_chain": [
+        "console",
+        "log"
+      ],
+      "optional_chaining": false
+    },
+    {
+      "kind": "variable_reference",
+      "name": "console",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/polymorphic_handler.ts",
+        "start_line": 33,
+        "start_column": 5,
+        "end_line": 33,
+        "end_column": 11
+      },
+      "scope_id": "method:<fixtures>/typescript/code/integration/polymorphic_handler.ts:32:10:34:3",
+      "access_type": "read"
+    },
+    {
+      "kind": "property_access",
+      "name": "log",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/polymorphic_handler.ts",
+        "start_line": 33,
+        "start_column": 5,
+        "end_line": 33,
+        "end_column": 15
+      },
+      "scope_id": "method:<fixtures>/typescript/code/integration/polymorphic_handler.ts:32:10:34:3",
+      "receiver_location": {
+        "file_path": "<fixtures>/typescript/code/integration/polymorphic_handler.ts",
+        "start_line": 33,
+        "start_column": 5,
+        "end_line": 33,
+        "end_column": 11
+      },
+      "property_chain": [
+        "console",
+        "log"
+      ],
+      "access_type": "property",
+      "is_optional_chain": false
+    },
+    {
+      "kind": "variable_reference",
+      "name": "console",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/polymorphic_handler.ts",
+        "start_line": 33,
+        "start_column": 5,
+        "end_line": 33,
+        "end_column": 11
+      },
+      "scope_id": "method:<fixtures>/typescript/code/integration/polymorphic_handler.ts:32:10:34:3",
+      "access_type": "read"
+    },
+    {
+      "kind": "property_access",
+      "name": "log",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/polymorphic_handler.ts",
+        "start_line": 33,
+        "start_column": 5,
+        "end_line": 33,
+        "end_column": 15
+      },
+      "scope_id": "method:<fixtures>/typescript/code/integration/polymorphic_handler.ts:32:10:34:3",
+      "receiver_location": {
+        "file_path": "<fixtures>/typescript/code/integration/polymorphic_handler.ts",
+        "start_line": 33,
+        "start_column": 5,
+        "end_line": 33,
+        "end_column": 11
+      },
+      "property_chain": [
+        "console",
+        "log"
+      ],
+      "access_type": "property",
+      "is_optional_chain": false
+    },
+    {
+      "kind": "variable_reference",
+      "name": "console",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/polymorphic_handler.ts",
+        "start_line": 33,
+        "start_column": 5,
+        "end_line": 33,
+        "end_column": 11
+      },
+      "scope_id": "method:<fixtures>/typescript/code/integration/polymorphic_handler.ts:32:10:34:3",
+      "access_type": "read"
+    },
+    {
+      "kind": "method_call",
+      "name": "log",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/polymorphic_handler.ts",
+        "start_line": 33,
+        "start_column": 5,
+        "end_line": 33,
+        "end_column": 39
+      },
+      "scope_id": "method:<fixtures>/typescript/code/integration/polymorphic_handler.ts:32:10:34:3",
+      "receiver_location": {
+        "file_path": "<fixtures>/typescript/code/integration/polymorphic_handler.ts",
+        "start_line": 33,
+        "start_column": 5,
+        "end_line": 33,
+        "end_column": 11
+      },
+      "property_chain": [
+        "console",
+        "log"
+      ],
+      "optional_chaining": false
+    },
+    {
+      "kind": "variable_reference",
+      "name": "console",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/polymorphic_handler.ts",
+        "start_line": 33,
+        "start_column": 5,
+        "end_line": 33,
+        "end_column": 11
+      },
+      "scope_id": "method:<fixtures>/typescript/code/integration/polymorphic_handler.ts:32:10:34:3",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "console",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/polymorphic_handler.ts",
+        "start_line": 33,
+        "start_column": 5,
+        "end_line": 33,
+        "end_column": 11
+      },
+      "scope_id": "method:<fixtures>/typescript/code/integration/polymorphic_handler.ts:32:10:34:3",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "log",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/polymorphic_handler.ts",
+        "start_line": 33,
+        "start_column": 13,
+        "end_line": 33,
+        "end_column": 15
+      },
+      "scope_id": "method:<fixtures>/typescript/code/integration/polymorphic_handler.ts:32:10:34:3",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "log",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/polymorphic_handler.ts",
+        "start_line": 33,
+        "start_column": 13,
+        "end_line": 33,
+        "end_column": 15
+      },
+      "scope_id": "method:<fixtures>/typescript/code/integration/polymorphic_handler.ts:32:10:34:3",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "return \"Handler C\";",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/polymorphic_handler.ts",
+        "start_line": 37,
+        "start_column": 5,
+        "end_line": 37,
+        "end_column": 23
+      },
+      "scope_id": "method:<fixtures>/typescript/code/integration/polymorphic_handler.ts:36:11:38:3",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "\"Handler C\"",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/polymorphic_handler.ts",
+        "start_line": 37,
+        "start_column": 12,
+        "end_line": 37,
+        "end_column": 22
+      },
+      "scope_id": "method:<fixtures>/typescript/code/integration/polymorphic_handler.ts:36:11:38:3",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "execute_handler",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/polymorphic_handler.ts",
+        "start_line": 42,
+        "start_column": 10,
+        "end_line": 42,
+        "end_column": 24
+      },
+      "scope_id": "module:<fixtures>/typescript/code/integration/polymorphic_handler.ts:1:1:59:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "handler",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/polymorphic_handler.ts",
+        "start_line": 42,
+        "start_column": 26,
+        "end_line": 42,
+        "end_column": 32
+      },
+      "scope_id": "function:<fixtures>/typescript/code/integration/polymorphic_handler.ts:42:25:47:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "type_reference",
+      "name": "Handler",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/polymorphic_handler.ts",
+        "start_line": 42,
+        "start_column": 35,
+        "end_line": 42,
+        "end_column": 41
+      },
+      "scope_id": "function:<fixtures>/typescript/code/integration/polymorphic_handler.ts:42:25:47:1",
+      "type_context": "annotation",
+      "type_info": {
+        "type_id": "type:<fixtures>/typescript/code/integration/polymorphic_handler.ts:42:35:42:41:Handler",
+        "type_name": "Handler",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "kind": "method_call",
+      "name": "process",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/polymorphic_handler.ts",
+        "start_line": 44,
+        "start_column": 3,
+        "end_line": 44,
+        "end_column": 19
+      },
+      "scope_id": "function:<fixtures>/typescript/code/integration/polymorphic_handler.ts:42:25:47:1",
+      "receiver_location": {
+        "file_path": "<fixtures>/typescript/code/integration/polymorphic_handler.ts",
+        "start_line": 44,
+        "start_column": 3,
+        "end_line": 44,
+        "end_column": 9
+      },
+      "property_chain": [
+        "handler",
+        "process"
+      ],
+      "optional_chaining": false
+    },
+    {
+      "kind": "variable_reference",
+      "name": "handler",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/polymorphic_handler.ts",
+        "start_line": 44,
+        "start_column": 3,
+        "end_line": 44,
+        "end_column": 9
+      },
+      "scope_id": "function:<fixtures>/typescript/code/integration/polymorphic_handler.ts:42:25:47:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "property_access",
+      "name": "process",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/polymorphic_handler.ts",
+        "start_line": 44,
+        "start_column": 3,
+        "end_line": 44,
+        "end_column": 17
+      },
+      "scope_id": "function:<fixtures>/typescript/code/integration/polymorphic_handler.ts:42:25:47:1",
+      "receiver_location": {
+        "file_path": "<fixtures>/typescript/code/integration/polymorphic_handler.ts",
+        "start_line": 44,
+        "start_column": 3,
+        "end_line": 44,
+        "end_column": 9
+      },
+      "property_chain": [
+        "handler",
+        "process"
+      ],
+      "access_type": "property",
+      "is_optional_chain": false
+    },
+    {
+      "kind": "variable_reference",
+      "name": "handler",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/polymorphic_handler.ts",
+        "start_line": 44,
+        "start_column": 3,
+        "end_line": 44,
+        "end_column": 9
+      },
+      "scope_id": "function:<fixtures>/typescript/code/integration/polymorphic_handler.ts:42:25:47:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "property_access",
+      "name": "process",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/polymorphic_handler.ts",
+        "start_line": 44,
+        "start_column": 3,
+        "end_line": 44,
+        "end_column": 17
+      },
+      "scope_id": "function:<fixtures>/typescript/code/integration/polymorphic_handler.ts:42:25:47:1",
+      "receiver_location": {
+        "file_path": "<fixtures>/typescript/code/integration/polymorphic_handler.ts",
+        "start_line": 44,
+        "start_column": 3,
+        "end_line": 44,
+        "end_column": 9
+      },
+      "property_chain": [
+        "handler",
+        "process"
+      ],
+      "access_type": "property",
+      "is_optional_chain": false
+    },
+    {
+      "kind": "variable_reference",
+      "name": "handler",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/polymorphic_handler.ts",
+        "start_line": 44,
+        "start_column": 3,
+        "end_line": 44,
+        "end_column": 9
+      },
+      "scope_id": "function:<fixtures>/typescript/code/integration/polymorphic_handler.ts:42:25:47:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "method_call",
+      "name": "process",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/polymorphic_handler.ts",
+        "start_line": 44,
+        "start_column": 3,
+        "end_line": 44,
+        "end_column": 19
+      },
+      "scope_id": "function:<fixtures>/typescript/code/integration/polymorphic_handler.ts:42:25:47:1",
+      "receiver_location": {
+        "file_path": "<fixtures>/typescript/code/integration/polymorphic_handler.ts",
+        "start_line": 44,
+        "start_column": 3,
+        "end_line": 44,
+        "end_column": 9
+      },
+      "property_chain": [
+        "handler",
+        "process"
+      ],
+      "optional_chaining": false
+    },
+    {
+      "kind": "variable_reference",
+      "name": "handler",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/polymorphic_handler.ts",
+        "start_line": 44,
+        "start_column": 3,
+        "end_line": 44,
+        "end_column": 9
+      },
+      "scope_id": "function:<fixtures>/typescript/code/integration/polymorphic_handler.ts:42:25:47:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "handler",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/polymorphic_handler.ts",
+        "start_line": 44,
+        "start_column": 3,
+        "end_line": 44,
+        "end_column": 9
+      },
+      "scope_id": "function:<fixtures>/typescript/code/integration/polymorphic_handler.ts:42:25:47:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "process",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/polymorphic_handler.ts",
+        "start_line": 44,
+        "start_column": 11,
+        "end_line": 44,
+        "end_column": 17
+      },
+      "scope_id": "function:<fixtures>/typescript/code/integration/polymorphic_handler.ts:42:25:47:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "process",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/polymorphic_handler.ts",
+        "start_line": 44,
+        "start_column": 11,
+        "end_line": 44,
+        "end_column": 17
+      },
+      "scope_id": "function:<fixtures>/typescript/code/integration/polymorphic_handler.ts:42:25:47:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "assignment",
+      "name": "name = handler.get_name()",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/polymorphic_handler.ts",
+        "start_line": 45,
+        "start_column": 9,
+        "end_line": 45,
+        "end_column": 33
+      },
+      "scope_id": "function:<fixtures>/typescript/code/integration/polymorphic_handler.ts:42:25:47:1",
+      "target_location": {
+        "file_path": "<fixtures>/typescript/code/integration/polymorphic_handler.ts",
+        "start_line": 45,
+        "start_column": 9,
+        "end_line": 45,
+        "end_column": 33
+      }
+    },
+    {
+      "kind": "assignment",
+      "name": "name",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/polymorphic_handler.ts",
+        "start_line": 45,
+        "start_column": 9,
+        "end_line": 45,
+        "end_column": 12
+      },
+      "scope_id": "function:<fixtures>/typescript/code/integration/polymorphic_handler.ts:42:25:47:1",
+      "target_location": {
+        "file_path": "<fixtures>/typescript/code/integration/polymorphic_handler.ts",
+        "start_line": 45,
+        "start_column": 9,
+        "end_line": 45,
+        "end_column": 12
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "name",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/polymorphic_handler.ts",
+        "start_line": 45,
+        "start_column": 9,
+        "end_line": 45,
+        "end_column": 12
+      },
+      "scope_id": "function:<fixtures>/typescript/code/integration/polymorphic_handler.ts:42:25:47:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "assignment",
+      "name": "handler.get_name()",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/polymorphic_handler.ts",
+        "start_line": 45,
+        "start_column": 16,
+        "end_line": 45,
+        "end_column": 33
+      },
+      "scope_id": "function:<fixtures>/typescript/code/integration/polymorphic_handler.ts:42:25:47:1",
+      "target_location": {
+        "file_path": "<fixtures>/typescript/code/integration/polymorphic_handler.ts",
+        "start_line": 45,
+        "start_column": 9,
+        "end_line": 45,
+        "end_column": 12
+      }
+    },
+    {
+      "kind": "method_call",
+      "name": "get_name",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/polymorphic_handler.ts",
+        "start_line": 45,
+        "start_column": 16,
+        "end_line": 45,
+        "end_column": 33
+      },
+      "scope_id": "function:<fixtures>/typescript/code/integration/polymorphic_handler.ts:42:25:47:1",
+      "receiver_location": {
+        "file_path": "<fixtures>/typescript/code/integration/polymorphic_handler.ts",
+        "start_line": 45,
+        "start_column": 16,
+        "end_line": 45,
+        "end_column": 22
+      },
+      "property_chain": [
+        "handler",
+        "get_name"
+      ],
+      "optional_chaining": false
+    },
+    {
+      "kind": "variable_reference",
+      "name": "handler",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/polymorphic_handler.ts",
+        "start_line": 45,
+        "start_column": 16,
+        "end_line": 45,
+        "end_column": 22
+      },
+      "scope_id": "function:<fixtures>/typescript/code/integration/polymorphic_handler.ts:42:25:47:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "property_access",
+      "name": "get_name",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/polymorphic_handler.ts",
+        "start_line": 45,
+        "start_column": 16,
+        "end_line": 45,
+        "end_column": 31
+      },
+      "scope_id": "function:<fixtures>/typescript/code/integration/polymorphic_handler.ts:42:25:47:1",
+      "receiver_location": {
+        "file_path": "<fixtures>/typescript/code/integration/polymorphic_handler.ts",
+        "start_line": 45,
+        "start_column": 16,
+        "end_line": 45,
+        "end_column": 22
+      },
+      "property_chain": [
+        "handler",
+        "get_name"
+      ],
+      "access_type": "property",
+      "is_optional_chain": false
+    },
+    {
+      "kind": "variable_reference",
+      "name": "handler",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/polymorphic_handler.ts",
+        "start_line": 45,
+        "start_column": 16,
+        "end_line": 45,
+        "end_column": 22
+      },
+      "scope_id": "function:<fixtures>/typescript/code/integration/polymorphic_handler.ts:42:25:47:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "property_access",
+      "name": "get_name",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/polymorphic_handler.ts",
+        "start_line": 45,
+        "start_column": 16,
+        "end_line": 45,
+        "end_column": 31
+      },
+      "scope_id": "function:<fixtures>/typescript/code/integration/polymorphic_handler.ts:42:25:47:1",
+      "receiver_location": {
+        "file_path": "<fixtures>/typescript/code/integration/polymorphic_handler.ts",
+        "start_line": 45,
+        "start_column": 16,
+        "end_line": 45,
+        "end_column": 22
+      },
+      "property_chain": [
+        "handler",
+        "get_name"
+      ],
+      "access_type": "property",
+      "is_optional_chain": false
+    },
+    {
+      "kind": "variable_reference",
+      "name": "handler",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/polymorphic_handler.ts",
+        "start_line": 45,
+        "start_column": 16,
+        "end_line": 45,
+        "end_column": 22
+      },
+      "scope_id": "function:<fixtures>/typescript/code/integration/polymorphic_handler.ts:42:25:47:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "method_call",
+      "name": "get_name",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/polymorphic_handler.ts",
+        "start_line": 45,
+        "start_column": 16,
+        "end_line": 45,
+        "end_column": 33
+      },
+      "scope_id": "function:<fixtures>/typescript/code/integration/polymorphic_handler.ts:42:25:47:1",
+      "receiver_location": {
+        "file_path": "<fixtures>/typescript/code/integration/polymorphic_handler.ts",
+        "start_line": 45,
+        "start_column": 16,
+        "end_line": 45,
+        "end_column": 22
+      },
+      "property_chain": [
+        "handler",
+        "get_name"
+      ],
+      "optional_chaining": false
+    },
+    {
+      "kind": "variable_reference",
+      "name": "handler",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/polymorphic_handler.ts",
+        "start_line": 45,
+        "start_column": 16,
+        "end_line": 45,
+        "end_column": 22
+      },
+      "scope_id": "function:<fixtures>/typescript/code/integration/polymorphic_handler.ts:42:25:47:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "handler",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/polymorphic_handler.ts",
+        "start_line": 45,
+        "start_column": 16,
+        "end_line": 45,
+        "end_column": 22
+      },
+      "scope_id": "function:<fixtures>/typescript/code/integration/polymorphic_handler.ts:42:25:47:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "get_name",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/polymorphic_handler.ts",
+        "start_line": 45,
+        "start_column": 24,
+        "end_line": 45,
+        "end_column": 31
+      },
+      "scope_id": "function:<fixtures>/typescript/code/integration/polymorphic_handler.ts:42:25:47:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "get_name",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/polymorphic_handler.ts",
+        "start_line": 45,
+        "start_column": 24,
+        "end_line": 45,
+        "end_column": 31
+      },
+      "scope_id": "function:<fixtures>/typescript/code/integration/polymorphic_handler.ts:42:25:47:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "method_call",
+      "name": "log",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/polymorphic_handler.ts",
+        "start_line": 46,
+        "start_column": 3,
+        "end_line": 46,
+        "end_column": 34
+      },
+      "scope_id": "function:<fixtures>/typescript/code/integration/polymorphic_handler.ts:42:25:47:1",
+      "receiver_location": {
+        "file_path": "<fixtures>/typescript/code/integration/polymorphic_handler.ts",
+        "start_line": 46,
+        "start_column": 3,
+        "end_line": 46,
+        "end_column": 9
+      },
+      "property_chain": [
+        "console",
+        "log"
+      ],
+      "optional_chaining": false
+    },
+    {
+      "kind": "variable_reference",
+      "name": "console",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/polymorphic_handler.ts",
+        "start_line": 46,
+        "start_column": 3,
+        "end_line": 46,
+        "end_column": 9
+      },
+      "scope_id": "function:<fixtures>/typescript/code/integration/polymorphic_handler.ts:42:25:47:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "property_access",
+      "name": "log",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/polymorphic_handler.ts",
+        "start_line": 46,
+        "start_column": 3,
+        "end_line": 46,
+        "end_column": 13
+      },
+      "scope_id": "function:<fixtures>/typescript/code/integration/polymorphic_handler.ts:42:25:47:1",
+      "receiver_location": {
+        "file_path": "<fixtures>/typescript/code/integration/polymorphic_handler.ts",
+        "start_line": 46,
+        "start_column": 3,
+        "end_line": 46,
+        "end_column": 9
+      },
+      "property_chain": [
+        "console",
+        "log"
+      ],
+      "access_type": "property",
+      "is_optional_chain": false
+    },
+    {
+      "kind": "variable_reference",
+      "name": "console",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/polymorphic_handler.ts",
+        "start_line": 46,
+        "start_column": 3,
+        "end_line": 46,
+        "end_column": 9
+      },
+      "scope_id": "function:<fixtures>/typescript/code/integration/polymorphic_handler.ts:42:25:47:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "property_access",
+      "name": "log",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/polymorphic_handler.ts",
+        "start_line": 46,
+        "start_column": 3,
+        "end_line": 46,
+        "end_column": 13
+      },
+      "scope_id": "function:<fixtures>/typescript/code/integration/polymorphic_handler.ts:42:25:47:1",
+      "receiver_location": {
+        "file_path": "<fixtures>/typescript/code/integration/polymorphic_handler.ts",
+        "start_line": 46,
+        "start_column": 3,
+        "end_line": 46,
+        "end_column": 9
+      },
+      "property_chain": [
+        "console",
+        "log"
+      ],
+      "access_type": "property",
+      "is_optional_chain": false
+    },
+    {
+      "kind": "variable_reference",
+      "name": "console",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/polymorphic_handler.ts",
+        "start_line": 46,
+        "start_column": 3,
+        "end_line": 46,
+        "end_column": 9
+      },
+      "scope_id": "function:<fixtures>/typescript/code/integration/polymorphic_handler.ts:42:25:47:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "method_call",
+      "name": "log",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/polymorphic_handler.ts",
+        "start_line": 46,
+        "start_column": 3,
+        "end_line": 46,
+        "end_column": 34
+      },
+      "scope_id": "function:<fixtures>/typescript/code/integration/polymorphic_handler.ts:42:25:47:1",
+      "receiver_location": {
+        "file_path": "<fixtures>/typescript/code/integration/polymorphic_handler.ts",
+        "start_line": 46,
+        "start_column": 3,
+        "end_line": 46,
+        "end_column": 9
+      },
+      "property_chain": [
+        "console",
+        "log"
+      ],
+      "optional_chaining": false
+    },
+    {
+      "kind": "variable_reference",
+      "name": "console",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/polymorphic_handler.ts",
+        "start_line": 46,
+        "start_column": 3,
+        "end_line": 46,
+        "end_column": 9
+      },
+      "scope_id": "function:<fixtures>/typescript/code/integration/polymorphic_handler.ts:42:25:47:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "console",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/polymorphic_handler.ts",
+        "start_line": 46,
+        "start_column": 3,
+        "end_line": 46,
+        "end_column": 9
+      },
+      "scope_id": "function:<fixtures>/typescript/code/integration/polymorphic_handler.ts:42:25:47:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "log",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/polymorphic_handler.ts",
+        "start_line": 46,
+        "start_column": 11,
+        "end_line": 46,
+        "end_column": 13
+      },
+      "scope_id": "function:<fixtures>/typescript/code/integration/polymorphic_handler.ts:42:25:47:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "log",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/polymorphic_handler.ts",
+        "start_line": 46,
+        "start_column": 11,
+        "end_line": 46,
+        "end_column": 13
+      },
+      "scope_id": "function:<fixtures>/typescript/code/integration/polymorphic_handler.ts:42:25:47:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "name",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/polymorphic_handler.ts",
+        "start_line": 46,
+        "start_column": 28,
+        "end_line": 46,
+        "end_column": 31
+      },
+      "scope_id": "function:<fixtures>/typescript/code/integration/polymorphic_handler.ts:42:25:47:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "assignment",
+      "name": "a = new HandlerA()",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/polymorphic_handler.ts",
+        "start_line": 50,
+        "start_column": 7,
+        "end_line": 50,
+        "end_column": 24
+      },
+      "scope_id": "module:<fixtures>/typescript/code/integration/polymorphic_handler.ts:1:1:59:0",
+      "target_location": {
+        "file_path": "<fixtures>/typescript/code/integration/polymorphic_handler.ts",
+        "start_line": 50,
+        "start_column": 7,
+        "end_line": 50,
+        "end_column": 24
+      }
+    },
+    {
+      "kind": "assignment",
+      "name": "a",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/polymorphic_handler.ts",
+        "start_line": 50,
+        "start_column": 7,
+        "end_line": 50,
+        "end_column": 7
+      },
+      "scope_id": "module:<fixtures>/typescript/code/integration/polymorphic_handler.ts:1:1:59:0",
+      "target_location": {
+        "file_path": "<fixtures>/typescript/code/integration/polymorphic_handler.ts",
+        "start_line": 50,
+        "start_column": 7,
+        "end_line": 50,
+        "end_column": 7
+      }
+    },
+    {
+      "kind": "assignment",
+      "name": "a = new HandlerA()",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/polymorphic_handler.ts",
+        "start_line": 50,
+        "start_column": 7,
+        "end_line": 50,
+        "end_column": 24
+      },
+      "scope_id": "module:<fixtures>/typescript/code/integration/polymorphic_handler.ts:1:1:59:0",
+      "target_location": {
+        "file_path": "<fixtures>/typescript/code/integration/polymorphic_handler.ts",
+        "start_line": 50,
+        "start_column": 7,
+        "end_line": 50,
+        "end_column": 24
+      }
+    },
+    {
+      "kind": "assignment",
+      "name": "a",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/polymorphic_handler.ts",
+        "start_line": 50,
+        "start_column": 7,
+        "end_line": 50,
+        "end_column": 7
+      },
+      "scope_id": "module:<fixtures>/typescript/code/integration/polymorphic_handler.ts:1:1:59:0",
+      "target_location": {
+        "file_path": "<fixtures>/typescript/code/integration/polymorphic_handler.ts",
+        "start_line": 50,
+        "start_column": 7,
+        "end_line": 50,
+        "end_column": 7
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "a",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/polymorphic_handler.ts",
+        "start_line": 50,
+        "start_column": 7,
+        "end_line": 50,
+        "end_column": 7
+      },
+      "scope_id": "module:<fixtures>/typescript/code/integration/polymorphic_handler.ts:1:1:59:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "assignment",
+      "name": "HandlerA",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/polymorphic_handler.ts",
+        "start_line": 50,
+        "start_column": 11,
+        "end_line": 50,
+        "end_column": 24
+      },
+      "scope_id": "module:<fixtures>/typescript/code/integration/polymorphic_handler.ts:1:1:59:0",
+      "target_location": {
+        "file_path": "<fixtures>/typescript/code/integration/polymorphic_handler.ts",
+        "start_line": 50,
+        "start_column": 7,
+        "end_line": 50,
+        "end_column": 7
+      }
+    },
+    {
+      "kind": "function_call",
+      "name": "HandlerA",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/polymorphic_handler.ts",
+        "start_line": 50,
+        "start_column": 11,
+        "end_line": 50,
+        "end_column": 24
+      },
+      "scope_id": "module:<fixtures>/typescript/code/integration/polymorphic_handler.ts:1:1:59:0",
+      "potential_construct_target": {
+        "file_path": "<fixtures>/typescript/code/integration/polymorphic_handler.ts",
+        "start_line": 50,
+        "start_column": 7,
+        "end_line": 50,
+        "end_column": 7
+      }
+    },
+    {
+      "kind": "assignment",
+      "name": "HandlerA",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/polymorphic_handler.ts",
+        "start_line": 50,
+        "start_column": 15,
+        "end_line": 50,
+        "end_column": 22
+      },
+      "scope_id": "module:<fixtures>/typescript/code/integration/polymorphic_handler.ts:1:1:59:0",
+      "target_location": {
+        "file_path": "<fixtures>/typescript/code/integration/polymorphic_handler.ts",
+        "start_line": 50,
+        "start_column": 7,
+        "end_line": 50,
+        "end_column": 7
+      }
+    },
+    {
+      "kind": "constructor_call",
+      "name": "HandlerA",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/polymorphic_handler.ts",
+        "start_line": 50,
+        "start_column": 15,
+        "end_line": 50,
+        "end_column": 22
+      },
+      "scope_id": "module:<fixtures>/typescript/code/integration/polymorphic_handler.ts:1:1:59:0",
+      "construct_target": {
+        "file_path": "<fixtures>/typescript/code/integration/polymorphic_handler.ts",
+        "start_line": 50,
+        "start_column": 7,
+        "end_line": 50,
+        "end_column": 7
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "HandlerA",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/polymorphic_handler.ts",
+        "start_line": 50,
+        "start_column": 15,
+        "end_line": 50,
+        "end_column": 22
+      },
+      "scope_id": "module:<fixtures>/typescript/code/integration/polymorphic_handler.ts:1:1:59:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "assignment",
+      "name": "b = new HandlerB()",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/polymorphic_handler.ts",
+        "start_line": 51,
+        "start_column": 7,
+        "end_line": 51,
+        "end_column": 24
+      },
+      "scope_id": "module:<fixtures>/typescript/code/integration/polymorphic_handler.ts:1:1:59:0",
+      "target_location": {
+        "file_path": "<fixtures>/typescript/code/integration/polymorphic_handler.ts",
+        "start_line": 51,
+        "start_column": 7,
+        "end_line": 51,
+        "end_column": 24
+      }
+    },
+    {
+      "kind": "assignment",
+      "name": "b",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/polymorphic_handler.ts",
+        "start_line": 51,
+        "start_column": 7,
+        "end_line": 51,
+        "end_column": 7
+      },
+      "scope_id": "module:<fixtures>/typescript/code/integration/polymorphic_handler.ts:1:1:59:0",
+      "target_location": {
+        "file_path": "<fixtures>/typescript/code/integration/polymorphic_handler.ts",
+        "start_line": 51,
+        "start_column": 7,
+        "end_line": 51,
+        "end_column": 7
+      }
+    },
+    {
+      "kind": "assignment",
+      "name": "b = new HandlerB()",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/polymorphic_handler.ts",
+        "start_line": 51,
+        "start_column": 7,
+        "end_line": 51,
+        "end_column": 24
+      },
+      "scope_id": "module:<fixtures>/typescript/code/integration/polymorphic_handler.ts:1:1:59:0",
+      "target_location": {
+        "file_path": "<fixtures>/typescript/code/integration/polymorphic_handler.ts",
+        "start_line": 51,
+        "start_column": 7,
+        "end_line": 51,
+        "end_column": 24
+      }
+    },
+    {
+      "kind": "assignment",
+      "name": "b",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/polymorphic_handler.ts",
+        "start_line": 51,
+        "start_column": 7,
+        "end_line": 51,
+        "end_column": 7
+      },
+      "scope_id": "module:<fixtures>/typescript/code/integration/polymorphic_handler.ts:1:1:59:0",
+      "target_location": {
+        "file_path": "<fixtures>/typescript/code/integration/polymorphic_handler.ts",
+        "start_line": 51,
+        "start_column": 7,
+        "end_line": 51,
+        "end_column": 7
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "b",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/polymorphic_handler.ts",
+        "start_line": 51,
+        "start_column": 7,
+        "end_line": 51,
+        "end_column": 7
+      },
+      "scope_id": "module:<fixtures>/typescript/code/integration/polymorphic_handler.ts:1:1:59:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "assignment",
+      "name": "HandlerB",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/polymorphic_handler.ts",
+        "start_line": 51,
+        "start_column": 11,
+        "end_line": 51,
+        "end_column": 24
+      },
+      "scope_id": "module:<fixtures>/typescript/code/integration/polymorphic_handler.ts:1:1:59:0",
+      "target_location": {
+        "file_path": "<fixtures>/typescript/code/integration/polymorphic_handler.ts",
+        "start_line": 51,
+        "start_column": 7,
+        "end_line": 51,
+        "end_column": 7
+      }
+    },
+    {
+      "kind": "function_call",
+      "name": "HandlerB",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/polymorphic_handler.ts",
+        "start_line": 51,
+        "start_column": 11,
+        "end_line": 51,
+        "end_column": 24
+      },
+      "scope_id": "module:<fixtures>/typescript/code/integration/polymorphic_handler.ts:1:1:59:0",
+      "potential_construct_target": {
+        "file_path": "<fixtures>/typescript/code/integration/polymorphic_handler.ts",
+        "start_line": 51,
+        "start_column": 7,
+        "end_line": 51,
+        "end_column": 7
+      }
+    },
+    {
+      "kind": "assignment",
+      "name": "HandlerB",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/polymorphic_handler.ts",
+        "start_line": 51,
+        "start_column": 15,
+        "end_line": 51,
+        "end_column": 22
+      },
+      "scope_id": "module:<fixtures>/typescript/code/integration/polymorphic_handler.ts:1:1:59:0",
+      "target_location": {
+        "file_path": "<fixtures>/typescript/code/integration/polymorphic_handler.ts",
+        "start_line": 51,
+        "start_column": 7,
+        "end_line": 51,
+        "end_column": 7
+      }
+    },
+    {
+      "kind": "constructor_call",
+      "name": "HandlerB",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/polymorphic_handler.ts",
+        "start_line": 51,
+        "start_column": 15,
+        "end_line": 51,
+        "end_column": 22
+      },
+      "scope_id": "module:<fixtures>/typescript/code/integration/polymorphic_handler.ts:1:1:59:0",
+      "construct_target": {
+        "file_path": "<fixtures>/typescript/code/integration/polymorphic_handler.ts",
+        "start_line": 51,
+        "start_column": 7,
+        "end_line": 51,
+        "end_column": 7
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "HandlerB",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/polymorphic_handler.ts",
+        "start_line": 51,
+        "start_column": 15,
+        "end_line": 51,
+        "end_column": 22
+      },
+      "scope_id": "module:<fixtures>/typescript/code/integration/polymorphic_handler.ts:1:1:59:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "assignment",
+      "name": "c = new HandlerC()",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/polymorphic_handler.ts",
+        "start_line": 52,
+        "start_column": 7,
+        "end_line": 52,
+        "end_column": 24
+      },
+      "scope_id": "module:<fixtures>/typescript/code/integration/polymorphic_handler.ts:1:1:59:0",
+      "target_location": {
+        "file_path": "<fixtures>/typescript/code/integration/polymorphic_handler.ts",
+        "start_line": 52,
+        "start_column": 7,
+        "end_line": 52,
+        "end_column": 24
+      }
+    },
+    {
+      "kind": "assignment",
+      "name": "c",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/polymorphic_handler.ts",
+        "start_line": 52,
+        "start_column": 7,
+        "end_line": 52,
+        "end_column": 7
+      },
+      "scope_id": "module:<fixtures>/typescript/code/integration/polymorphic_handler.ts:1:1:59:0",
+      "target_location": {
+        "file_path": "<fixtures>/typescript/code/integration/polymorphic_handler.ts",
+        "start_line": 52,
+        "start_column": 7,
+        "end_line": 52,
+        "end_column": 7
+      }
+    },
+    {
+      "kind": "assignment",
+      "name": "c = new HandlerC()",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/polymorphic_handler.ts",
+        "start_line": 52,
+        "start_column": 7,
+        "end_line": 52,
+        "end_column": 24
+      },
+      "scope_id": "module:<fixtures>/typescript/code/integration/polymorphic_handler.ts:1:1:59:0",
+      "target_location": {
+        "file_path": "<fixtures>/typescript/code/integration/polymorphic_handler.ts",
+        "start_line": 52,
+        "start_column": 7,
+        "end_line": 52,
+        "end_column": 24
+      }
+    },
+    {
+      "kind": "assignment",
+      "name": "c",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/polymorphic_handler.ts",
+        "start_line": 52,
+        "start_column": 7,
+        "end_line": 52,
+        "end_column": 7
+      },
+      "scope_id": "module:<fixtures>/typescript/code/integration/polymorphic_handler.ts:1:1:59:0",
+      "target_location": {
+        "file_path": "<fixtures>/typescript/code/integration/polymorphic_handler.ts",
+        "start_line": 52,
+        "start_column": 7,
+        "end_line": 52,
+        "end_column": 7
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "c",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/polymorphic_handler.ts",
+        "start_line": 52,
+        "start_column": 7,
+        "end_line": 52,
+        "end_column": 7
+      },
+      "scope_id": "module:<fixtures>/typescript/code/integration/polymorphic_handler.ts:1:1:59:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "assignment",
+      "name": "HandlerC",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/polymorphic_handler.ts",
+        "start_line": 52,
+        "start_column": 11,
+        "end_line": 52,
+        "end_column": 24
+      },
+      "scope_id": "module:<fixtures>/typescript/code/integration/polymorphic_handler.ts:1:1:59:0",
+      "target_location": {
+        "file_path": "<fixtures>/typescript/code/integration/polymorphic_handler.ts",
+        "start_line": 52,
+        "start_column": 7,
+        "end_line": 52,
+        "end_column": 7
+      }
+    },
+    {
+      "kind": "function_call",
+      "name": "HandlerC",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/polymorphic_handler.ts",
+        "start_line": 52,
+        "start_column": 11,
+        "end_line": 52,
+        "end_column": 24
+      },
+      "scope_id": "module:<fixtures>/typescript/code/integration/polymorphic_handler.ts:1:1:59:0",
+      "potential_construct_target": {
+        "file_path": "<fixtures>/typescript/code/integration/polymorphic_handler.ts",
+        "start_line": 52,
+        "start_column": 7,
+        "end_line": 52,
+        "end_column": 7
+      }
+    },
+    {
+      "kind": "assignment",
+      "name": "HandlerC",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/polymorphic_handler.ts",
+        "start_line": 52,
+        "start_column": 15,
+        "end_line": 52,
+        "end_column": 22
+      },
+      "scope_id": "module:<fixtures>/typescript/code/integration/polymorphic_handler.ts:1:1:59:0",
+      "target_location": {
+        "file_path": "<fixtures>/typescript/code/integration/polymorphic_handler.ts",
+        "start_line": 52,
+        "start_column": 7,
+        "end_line": 52,
+        "end_column": 7
+      }
+    },
+    {
+      "kind": "constructor_call",
+      "name": "HandlerC",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/polymorphic_handler.ts",
+        "start_line": 52,
+        "start_column": 15,
+        "end_line": 52,
+        "end_column": 22
+      },
+      "scope_id": "module:<fixtures>/typescript/code/integration/polymorphic_handler.ts:1:1:59:0",
+      "construct_target": {
+        "file_path": "<fixtures>/typescript/code/integration/polymorphic_handler.ts",
+        "start_line": 52,
+        "start_column": 7,
+        "end_line": 52,
+        "end_column": 7
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "HandlerC",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/polymorphic_handler.ts",
+        "start_line": 52,
+        "start_column": 15,
+        "end_line": 52,
+        "end_column": 22
+      },
+      "scope_id": "module:<fixtures>/typescript/code/integration/polymorphic_handler.ts:1:1:59:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "function_call",
+      "name": "execute_handler",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/polymorphic_handler.ts",
+        "start_line": 54,
+        "start_column": 1,
+        "end_line": 54,
+        "end_column": 15
+      },
+      "scope_id": "module:<fixtures>/typescript/code/integration/polymorphic_handler.ts:1:1:59:0"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "execute_handler",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/polymorphic_handler.ts",
+        "start_line": 54,
+        "start_column": 1,
+        "end_line": 54,
+        "end_column": 15
+      },
+      "scope_id": "module:<fixtures>/typescript/code/integration/polymorphic_handler.ts:1:1:59:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "a",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/polymorphic_handler.ts",
+        "start_line": 54,
+        "start_column": 17,
+        "end_line": 54,
+        "end_column": 17
+      },
+      "scope_id": "module:<fixtures>/typescript/code/integration/polymorphic_handler.ts:1:1:59:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "function_call",
+      "name": "execute_handler",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/polymorphic_handler.ts",
+        "start_line": 55,
+        "start_column": 1,
+        "end_line": 55,
+        "end_column": 15
+      },
+      "scope_id": "module:<fixtures>/typescript/code/integration/polymorphic_handler.ts:1:1:59:0"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "execute_handler",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/polymorphic_handler.ts",
+        "start_line": 55,
+        "start_column": 1,
+        "end_line": 55,
+        "end_column": 15
+      },
+      "scope_id": "module:<fixtures>/typescript/code/integration/polymorphic_handler.ts:1:1:59:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "b",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/polymorphic_handler.ts",
+        "start_line": 55,
+        "start_column": 17,
+        "end_line": 55,
+        "end_column": 17
+      },
+      "scope_id": "module:<fixtures>/typescript/code/integration/polymorphic_handler.ts:1:1:59:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "function_call",
+      "name": "execute_handler",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/polymorphic_handler.ts",
+        "start_line": 56,
+        "start_column": 1,
+        "end_line": 56,
+        "end_column": 15
+      },
+      "scope_id": "module:<fixtures>/typescript/code/integration/polymorphic_handler.ts:1:1:59:0"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "execute_handler",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/polymorphic_handler.ts",
+        "start_line": 56,
+        "start_column": 1,
+        "end_line": 56,
+        "end_column": 15
+      },
+      "scope_id": "module:<fixtures>/typescript/code/integration/polymorphic_handler.ts:1:1:59:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "c",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/polymorphic_handler.ts",
+        "start_line": 56,
+        "start_column": 17,
+        "end_line": 56,
+        "end_column": 17
+      },
+      "scope_id": "module:<fixtures>/typescript/code/integration/polymorphic_handler.ts:1:1:59:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "Handler",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/polymorphic_handler.ts",
+        "start_line": 58,
+        "start_column": 10,
+        "end_line": 58,
+        "end_column": 16
+      },
+      "scope_id": "module:<fixtures>/typescript/code/integration/polymorphic_handler.ts:1:1:59:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "HandlerA",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/polymorphic_handler.ts",
+        "start_line": 58,
+        "start_column": 19,
+        "end_line": 58,
+        "end_column": 26
+      },
+      "scope_id": "module:<fixtures>/typescript/code/integration/polymorphic_handler.ts:1:1:59:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "HandlerB",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/polymorphic_handler.ts",
+        "start_line": 58,
+        "start_column": 29,
+        "end_line": 58,
+        "end_column": 36
+      },
+      "scope_id": "module:<fixtures>/typescript/code/integration/polymorphic_handler.ts:1:1:59:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "HandlerC",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/polymorphic_handler.ts",
+        "start_line": 58,
+        "start_column": 39,
+        "end_line": 58,
+        "end_column": 46
+      },
+      "scope_id": "module:<fixtures>/typescript/code/integration/polymorphic_handler.ts:1:1:59:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "execute_handler",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/polymorphic_handler.ts",
+        "start_line": 58,
+        "start_column": 49,
+        "end_line": 58,
+        "end_column": 63
+      },
+      "scope_id": "module:<fixtures>/typescript/code/integration/polymorphic_handler.ts:1:1:59:0",
+      "access_type": "read"
+    }
+  ]
+}

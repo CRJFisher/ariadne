@@ -1,0 +1,11 @@
+.clinic/
+analysis_output/
+known_entrypoints/*
+!known_entrypoints/core.json
+!known_entrypoints/mcp.json
+!known_entrypoints/types.json
+project_configs/*
+!project_configs/core.json
+!project_configs/mcp.json
+!project_configs/types.json
+triage_state/

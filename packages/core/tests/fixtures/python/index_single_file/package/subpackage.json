@@ -1,0 +1,30 @@
+{
+  "file_path": "<fixtures>/python/code/package/subpackage/__init__.py",
+  "language": "python",
+  "root_scope_id": "module:<fixtures>/python/code/package/subpackage/__init__.py:1:1:5:0",
+  "scopes": {
+    "module:<fixtures>/python/code/package/subpackage/__init__.py:1:1:5:0": {
+      "id": "module:<fixtures>/python/code/package/subpackage/__init__.py:1:1:5:0",
+      "parent_id": null,
+      "name": null,
+      "type": "module",
+      "location": {
+        "file_path": "<fixtures>/python/code/package/subpackage/__init__.py",
+        "start_line": 1,
+        "start_column": 1,
+        "end_line": 5,
+        "end_column": 0
+      },
+      "child_ids": []
+    }
+  },
+  "functions": {},
+  "classes": {},
+  "variables": {},
+  "interfaces": {},
+  "enums": {},
+  "namespaces": {},
+  "types": {},
+  "imported_symbols": {},
+  "references": []
+}

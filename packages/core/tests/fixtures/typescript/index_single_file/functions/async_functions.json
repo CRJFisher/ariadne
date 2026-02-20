@@ -1,0 +1,2765 @@
+{
+  "file_path": "<fixtures>/typescript/code/functions/async_functions.ts",
+  "language": "typescript",
+  "root_scope_id": "module:<fixtures>/typescript/code/functions/async_functions.ts:1:1:47:0",
+  "scopes": {
+    "module:<fixtures>/typescript/code/functions/async_functions.ts:1:1:47:0": {
+      "id": "module:<fixtures>/typescript/code/functions/async_functions.ts:1:1:47:0",
+      "parent_id": null,
+      "name": null,
+      "type": "module",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/functions/async_functions.ts",
+        "start_line": 1,
+        "start_column": 1,
+        "end_line": 47,
+        "end_column": 0
+      },
+      "child_ids": [
+        "function:<fixtures>/typescript/code/functions/async_functions.ts:6:26:9:1",
+        "function:<fixtures>/typescript/code/functions/async_functions.ts:11:27:14:1",
+        "function:<fixtures>/typescript/code/functions/async_functions.ts:16:33:20:1",
+        "function:<fixtures>/typescript/code/functions/async_functions.ts:22:30:25:1",
+        "function:<fixtures>/typescript/code/functions/async_functions.ts:27:26:29:1",
+        "function:<fixtures>/typescript/code/functions/async_functions.ts:31:15:33:1",
+        "function:<fixtures>/typescript/code/functions/async_functions.ts:36:26:44:1"
+      ]
+    },
+    "function:<fixtures>/typescript/code/functions/async_functions.ts:6:26:9:1": {
+      "id": "function:<fixtures>/typescript/code/functions/async_functions.ts:6:26:9:1",
+      "parent_id": "module:<fixtures>/typescript/code/functions/async_functions.ts:1:1:47:0",
+      "name": "fetch_user",
+      "type": "function",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/functions/async_functions.ts",
+        "start_line": 6,
+        "start_column": 26,
+        "end_line": 9,
+        "end_column": 1
+      },
+      "child_ids": []
+    },
+    "function:<fixtures>/typescript/code/functions/async_functions.ts:11:27:14:1": {
+      "id": "function:<fixtures>/typescript/code/functions/async_functions.ts:11:27:14:1",
+      "parent_id": "module:<fixtures>/typescript/code/functions/async_functions.ts:1:1:47:0",
+      "name": "fetch_users",
+      "type": "function",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/functions/async_functions.ts",
+        "start_line": 11,
+        "start_column": 27,
+        "end_line": 14,
+        "end_column": 1
+      },
+      "child_ids": [
+        "function:<fixtures>/typescript/code/functions/async_functions.ts:12:28:12:49"
+      ]
+    },
+    "function:<fixtures>/typescript/code/functions/async_functions.ts:12:28:12:49": {
+      "id": "function:<fixtures>/typescript/code/functions/async_functions.ts:12:28:12:49",
+      "parent_id": "function:<fixtures>/typescript/code/functions/async_functions.ts:11:27:14:1",
+      "name": null,
+      "type": "function",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/functions/async_functions.ts",
+        "start_line": 12,
+        "start_column": 28,
+        "end_line": 12,
+        "end_column": 49
+      },
+      "child_ids": []
+    },
+    "function:<fixtures>/typescript/code/functions/async_functions.ts:16:33:20:1": {
+      "id": "function:<fixtures>/typescript/code/functions/async_functions.ts:16:33:20:1",
+      "parent_id": "module:<fixtures>/typescript/code/functions/async_functions.ts:1:1:47:0",
+      "name": "process_user_data",
+      "type": "function",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/functions/async_functions.ts",
+        "start_line": 16,
+        "start_column": 33,
+        "end_line": 20,
+        "end_column": 1
+      },
+      "child_ids": []
+    },
+    "function:<fixtures>/typescript/code/functions/async_functions.ts:22:30:25:1": {
+      "id": "function:<fixtures>/typescript/code/functions/async_functions.ts:22:30:25:1",
+      "parent_id": "module:<fixtures>/typescript/code/functions/async_functions.ts:1:1:47:0",
+      "name": "transform_user",
+      "type": "function",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/functions/async_functions.ts",
+        "start_line": 22,
+        "start_column": 30,
+        "end_line": 25,
+        "end_column": 1
+      },
+      "child_ids": []
+    },
+    "function:<fixtures>/typescript/code/functions/async_functions.ts:27:26:29:1": {
+      "id": "function:<fixtures>/typescript/code/functions/async_functions.ts:27:26:29:1",
+      "parent_id": "module:<fixtures>/typescript/code/functions/async_functions.ts:1:1:47:0",
+      "name": "format_user_data",
+      "type": "function",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/functions/async_functions.ts",
+        "start_line": 27,
+        "start_column": 26,
+        "end_line": 29,
+        "end_column": 1
+      },
+      "child_ids": []
+    },
+    "function:<fixtures>/typescript/code/functions/async_functions.ts:31:15:33:1": {
+      "id": "function:<fixtures>/typescript/code/functions/async_functions.ts:31:15:33:1",
+      "parent_id": "module:<fixtures>/typescript/code/functions/async_functions.ts:1:1:47:0",
+      "name": "delay",
+      "type": "function",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/functions/async_functions.ts",
+        "start_line": 31,
+        "start_column": 15,
+        "end_line": 33,
+        "end_column": 1
+      },
+      "child_ids": [
+        "function:<fixtures>/typescript/code/functions/async_functions.ts:32:22:32:57"
+      ]
+    },
+    "function:<fixtures>/typescript/code/functions/async_functions.ts:32:22:32:57": {
+      "id": "function:<fixtures>/typescript/code/functions/async_functions.ts:32:22:32:57",
+      "parent_id": "function:<fixtures>/typescript/code/functions/async_functions.ts:31:15:33:1",
+      "name": null,
+      "type": "function",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/functions/async_functions.ts",
+        "start_line": 32,
+        "start_column": 22,
+        "end_line": 32,
+        "end_column": 57
+      },
+      "child_ids": []
+    },
+    "function:<fixtures>/typescript/code/functions/async_functions.ts:36:26:44:1": {
+      "id": "function:<fixtures>/typescript/code/functions/async_functions.ts:36:26:44:1",
+      "parent_id": "module:<fixtures>/typescript/code/functions/async_functions.ts:1:1:47:0",
+      "name": "safe_fetch",
+      "type": "function",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/functions/async_functions.ts",
+        "start_line": 36,
+        "start_column": 26,
+        "end_line": 44,
+        "end_column": 1
+      },
+      "child_ids": [
+        "block:<fixtures>/typescript/code/functions/async_functions.ts:37:3:43:3"
+      ]
+    },
+    "block:<fixtures>/typescript/code/functions/async_functions.ts:37:3:43:3": {
+      "id": "block:<fixtures>/typescript/code/functions/async_functions.ts:37:3:43:3",
+      "parent_id": "function:<fixtures>/typescript/code/functions/async_functions.ts:36:26:44:1",
+      "name": null,
+      "type": "block",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/functions/async_functions.ts",
+        "start_line": 37,
+        "start_column": 3,
+        "end_line": 43,
+        "end_column": 3
+      },
+      "child_ids": [
+        "block:<fixtures>/typescript/code/functions/async_functions.ts:40:5:43:3"
+      ]
+    },
+    "block:<fixtures>/typescript/code/functions/async_functions.ts:40:5:43:3": {
+      "id": "block:<fixtures>/typescript/code/functions/async_functions.ts:40:5:43:3",
+      "parent_id": "block:<fixtures>/typescript/code/functions/async_functions.ts:37:3:43:3",
+      "name": null,
+      "type": "block",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/functions/async_functions.ts",
+        "start_line": 40,
+        "start_column": 5,
+        "end_line": 43,
+        "end_column": 3
+      },
+      "child_ids": []
+    }
+  },
+  "functions": {
+    "function:<fixtures>/typescript/code/functions/async_functions.ts:6:16:6:25:fetch_user": {
+      "kind": "function",
+      "symbol_id": "function:<fixtures>/typescript/code/functions/async_functions.ts:6:16:6:25:fetch_user",
+      "name": "fetch_user",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/functions/async_functions.ts",
+        "start_line": 6,
+        "start_column": 16,
+        "end_line": 6,
+        "end_column": 25
+      },
+      "defining_scope_id": "module:<fixtures>/typescript/code/functions/async_functions.ts:1:1:47:0",
+      "is_exported": true,
+      "export": {
+        "is_reexport": false
+      },
+      "signature": {
+        "parameters": [
+          {
+            "kind": "parameter",
+            "defining_scope_id": "function:<fixtures>/typescript/code/functions/async_functions.ts:6:26:9:1",
+            "symbol_id": "parameter:<fixtures>/typescript/code/functions/async_functions.ts:6:27:6:28:id",
+            "name": "id",
+            "location": {
+              "file_path": "<fixtures>/typescript/code/functions/async_functions.ts",
+              "start_line": 6,
+              "start_column": 27,
+              "end_line": 6,
+              "end_column": 28
+            },
+            "type": "number",
+            "optional": false
+          }
+        ],
+        "return_type": "Promise<object>"
+      },
+      "return_type": "Promise<object>",
+      "body_scope_id": "function:<fixtures>/typescript/code/functions/async_functions.ts:6:26:9:1"
+    },
+    "function:<fixtures>/typescript/code/functions/async_functions.ts:11:16:11:26:fetch_users": {
+      "kind": "function",
+      "symbol_id": "function:<fixtures>/typescript/code/functions/async_functions.ts:11:16:11:26:fetch_users",
+      "name": "fetch_users",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/functions/async_functions.ts",
+        "start_line": 11,
+        "start_column": 16,
+        "end_line": 11,
+        "end_column": 26
+      },
+      "defining_scope_id": "module:<fixtures>/typescript/code/functions/async_functions.ts:1:1:47:0",
+      "is_exported": true,
+      "export": {
+        "is_reexport": false
+      },
+      "signature": {
+        "parameters": [
+          {
+            "kind": "parameter",
+            "defining_scope_id": "function:<fixtures>/typescript/code/functions/async_functions.ts:11:27:14:1",
+            "symbol_id": "parameter:<fixtures>/typescript/code/functions/async_functions.ts:11:28:11:30:ids",
+            "name": "ids",
+            "location": {
+              "file_path": "<fixtures>/typescript/code/functions/async_functions.ts",
+              "start_line": 11,
+              "start_column": 28,
+              "end_line": 11,
+              "end_column": 30
+            },
+            "type": "number[]",
+            "optional": false
+          }
+        ],
+        "return_type": "Promise<object[]>"
+      },
+      "return_type": "Promise<object[]>",
+      "body_scope_id": "function:<fixtures>/typescript/code/functions/async_functions.ts:11:27:14:1"
+    },
+    "function:<fixtures>/typescript/code/functions/async_functions.ts:12:28:12:49:<anonymous>": {
+      "kind": "function",
+      "symbol_id": "function:<fixtures>/typescript/code/functions/async_functions.ts:12:28:12:49:<anonymous>",
+      "name": "<anonymous>",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/functions/async_functions.ts",
+        "start_line": 12,
+        "start_column": 28,
+        "end_line": 12,
+        "end_column": 49
+      },
+      "defining_scope_id": "function:<fixtures>/typescript/code/functions/async_functions.ts:12:28:12:49",
+      "is_exported": false,
+      "signature": {
+        "parameters": [
+          {
+            "kind": "parameter",
+            "defining_scope_id": "function:<fixtures>/typescript/code/functions/async_functions.ts:12:28:12:49",
+            "symbol_id": "parameter:<fixtures>/typescript/code/functions/async_functions.ts:12:29:12:30:id",
+            "name": "id",
+            "location": {
+              "file_path": "<fixtures>/typescript/code/functions/async_functions.ts",
+              "start_line": 12,
+              "start_column": 29,
+              "end_line": 12,
+              "end_column": 30
+            },
+            "optional": false
+          }
+        ]
+      },
+      "body_scope_id": "function:<fixtures>/typescript/code/functions/async_functions.ts:12:28:12:49",
+      "callback_context": {
+        "is_callback": true,
+        "receiver_is_external": null,
+        "receiver_location": {
+          "file_path": "<fixtures>/typescript/code/functions/async_functions.ts",
+          "start_line": 12,
+          "start_column": 20,
+          "end_line": 12,
+          "end_column": 50
+        }
+      }
+    },
+    "function:<fixtures>/typescript/code/functions/async_functions.ts:16:16:16:32:process_user_data": {
+      "kind": "function",
+      "symbol_id": "function:<fixtures>/typescript/code/functions/async_functions.ts:16:16:16:32:process_user_data",
+      "name": "process_user_data",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/functions/async_functions.ts",
+        "start_line": 16,
+        "start_column": 16,
+        "end_line": 16,
+        "end_column": 32
+      },
+      "defining_scope_id": "module:<fixtures>/typescript/code/functions/async_functions.ts:1:1:47:0",
+      "is_exported": true,
+      "export": {
+        "is_reexport": false
+      },
+      "signature": {
+        "parameters": [
+          {
+            "kind": "parameter",
+            "defining_scope_id": "function:<fixtures>/typescript/code/functions/async_functions.ts:16:33:20:1",
+            "symbol_id": "parameter:<fixtures>/typescript/code/functions/async_functions.ts:16:34:16:40:user_id",
+            "name": "user_id",
+            "location": {
+              "file_path": "<fixtures>/typescript/code/functions/async_functions.ts",
+              "start_line": 16,
+              "start_column": 34,
+              "end_line": 16,
+              "end_column": 40
+            },
+            "type": "number",
+            "optional": false
+          }
+        ],
+        "return_type": "Promise<string>"
+      },
+      "return_type": "Promise<string>",
+      "body_scope_id": "function:<fixtures>/typescript/code/functions/async_functions.ts:16:33:20:1"
+    },
+    "function:<fixtures>/typescript/code/functions/async_functions.ts:22:16:22:29:transform_user": {
+      "kind": "function",
+      "symbol_id": "function:<fixtures>/typescript/code/functions/async_functions.ts:22:16:22:29:transform_user",
+      "name": "transform_user",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/functions/async_functions.ts",
+        "start_line": 22,
+        "start_column": 16,
+        "end_line": 22,
+        "end_column": 29
+      },
+      "defining_scope_id": "module:<fixtures>/typescript/code/functions/async_functions.ts:1:1:47:0",
+      "is_exported": false,
+      "signature": {
+        "parameters": [
+          {
+            "kind": "parameter",
+            "defining_scope_id": "function:<fixtures>/typescript/code/functions/async_functions.ts:22:30:25:1",
+            "symbol_id": "parameter:<fixtures>/typescript/code/functions/async_functions.ts:22:31:22:34:user",
+            "name": "user",
+            "location": {
+              "file_path": "<fixtures>/typescript/code/functions/async_functions.ts",
+              "start_line": 22,
+              "start_column": 31,
+              "end_line": 22,
+              "end_column": 34
+            },
+            "type": "object",
+            "optional": false
+          }
+        ],
+        "return_type": "Promise<object>"
+      },
+      "return_type": "Promise<object>",
+      "body_scope_id": "function:<fixtures>/typescript/code/functions/async_functions.ts:22:30:25:1"
+    },
+    "function:<fixtures>/typescript/code/functions/async_functions.ts:27:10:27:25:format_user_data": {
+      "kind": "function",
+      "symbol_id": "function:<fixtures>/typescript/code/functions/async_functions.ts:27:10:27:25:format_user_data",
+      "name": "format_user_data",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/functions/async_functions.ts",
+        "start_line": 27,
+        "start_column": 10,
+        "end_line": 27,
+        "end_column": 25
+      },
+      "defining_scope_id": "module:<fixtures>/typescript/code/functions/async_functions.ts:1:1:47:0",
+      "is_exported": false,
+      "signature": {
+        "parameters": [
+          {
+            "kind": "parameter",
+            "defining_scope_id": "function:<fixtures>/typescript/code/functions/async_functions.ts:27:26:29:1",
+            "symbol_id": "parameter:<fixtures>/typescript/code/functions/async_functions.ts:27:27:27:30:user",
+            "name": "user",
+            "location": {
+              "file_path": "<fixtures>/typescript/code/functions/async_functions.ts",
+              "start_line": 27,
+              "start_column": 27,
+              "end_line": 27,
+              "end_column": 30
+            },
+            "type": "any",
+            "optional": false
+          }
+        ],
+        "return_type": "string"
+      },
+      "return_type": "string",
+      "body_scope_id": "function:<fixtures>/typescript/code/functions/async_functions.ts:27:26:29:1"
+    },
+    "function:<fixtures>/typescript/code/functions/async_functions.ts:31:10:31:14:delay": {
+      "kind": "function",
+      "symbol_id": "function:<fixtures>/typescript/code/functions/async_functions.ts:31:10:31:14:delay",
+      "name": "delay",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/functions/async_functions.ts",
+        "start_line": 31,
+        "start_column": 10,
+        "end_line": 31,
+        "end_column": 14
+      },
+      "defining_scope_id": "module:<fixtures>/typescript/code/functions/async_functions.ts:1:1:47:0",
+      "is_exported": false,
+      "signature": {
+        "parameters": [
+          {
+            "kind": "parameter",
+            "defining_scope_id": "function:<fixtures>/typescript/code/functions/async_functions.ts:31:15:33:1",
+            "symbol_id": "parameter:<fixtures>/typescript/code/functions/async_functions.ts:31:16:31:17:ms",
+            "name": "ms",
+            "location": {
+              "file_path": "<fixtures>/typescript/code/functions/async_functions.ts",
+              "start_line": 31,
+              "start_column": 16,
+              "end_line": 31,
+              "end_column": 17
+            },
+            "type": "number",
+            "optional": false
+          }
+        ],
+        "return_type": "Promise<void>"
+      },
+      "return_type": "Promise<void>",
+      "body_scope_id": "function:<fixtures>/typescript/code/functions/async_functions.ts:31:15:33:1"
+    },
+    "function:<fixtures>/typescript/code/functions/async_functions.ts:36:16:36:25:safe_fetch": {
+      "kind": "function",
+      "symbol_id": "function:<fixtures>/typescript/code/functions/async_functions.ts:36:16:36:25:safe_fetch",
+      "name": "safe_fetch",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/functions/async_functions.ts",
+        "start_line": 36,
+        "start_column": 16,
+        "end_line": 36,
+        "end_column": 25
+      },
+      "defining_scope_id": "module:<fixtures>/typescript/code/functions/async_functions.ts:1:1:47:0",
+      "is_exported": true,
+      "export": {
+        "is_reexport": false
+      },
+      "signature": {
+        "parameters": [
+          {
+            "kind": "parameter",
+            "defining_scope_id": "function:<fixtures>/typescript/code/functions/async_functions.ts:36:26:44:1",
+            "symbol_id": "parameter:<fixtures>/typescript/code/functions/async_functions.ts:36:27:36:28:id",
+            "name": "id",
+            "location": {
+              "file_path": "<fixtures>/typescript/code/functions/async_functions.ts",
+              "start_line": 36,
+              "start_column": 27,
+              "end_line": 36,
+              "end_column": 28
+            },
+            "type": "number",
+            "optional": false
+          },
+          {
+            "kind": "parameter",
+            "defining_scope_id": "block:<fixtures>/typescript/code/functions/async_functions.ts:40:5:43:3",
+            "symbol_id": "parameter:<fixtures>/typescript/code/functions/async_functions.ts:40:12:40:16:error",
+            "name": "error",
+            "location": {
+              "file_path": "<fixtures>/typescript/code/functions/async_functions.ts",
+              "start_line": 40,
+              "start_column": 12,
+              "end_line": 40,
+              "end_column": 16
+            },
+            "optional": false
+          }
+        ],
+        "return_type": "Promise<object | null>"
+      },
+      "return_type": "Promise<object | null>",
+      "body_scope_id": "function:<fixtures>/typescript/code/functions/async_functions.ts:36:26:44:1"
+    }
+  },
+  "classes": {},
+  "variables": {
+    "variable:<fixtures>/typescript/code/functions/async_functions.ts:12:9:12:16:promises": {
+      "kind": "constant",
+      "symbol_id": "variable:<fixtures>/typescript/code/functions/async_functions.ts:12:9:12:16:promises",
+      "name": "promises",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/functions/async_functions.ts",
+        "start_line": 12,
+        "start_column": 9,
+        "end_line": 12,
+        "end_column": 16
+      },
+      "defining_scope_id": "function:<fixtures>/typescript/code/functions/async_functions.ts:11:27:14:1",
+      "is_exported": false,
+      "initial_value": "ids.map((id) => fetch_user(id))",
+      "collection_source": "ids"
+    },
+    "variable:<fixtures>/typescript/code/functions/async_functions.ts:17:9:17:12:user": {
+      "kind": "constant",
+      "symbol_id": "variable:<fixtures>/typescript/code/functions/async_functions.ts:17:9:17:12:user",
+      "name": "user",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/functions/async_functions.ts",
+        "start_line": 17,
+        "start_column": 9,
+        "end_line": 17,
+        "end_column": 12
+      },
+      "defining_scope_id": "function:<fixtures>/typescript/code/functions/async_functions.ts:16:33:20:1",
+      "is_exported": false,
+      "initial_value": "await fetch_user(user_id)"
+    },
+    "variable:<fixtures>/typescript/code/functions/async_functions.ts:18:9:18:17:processed": {
+      "kind": "constant",
+      "symbol_id": "variable:<fixtures>/typescript/code/functions/async_functions.ts:18:9:18:17:processed",
+      "name": "processed",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/functions/async_functions.ts",
+        "start_line": 18,
+        "start_column": 9,
+        "end_line": 18,
+        "end_column": 17
+      },
+      "defining_scope_id": "function:<fixtures>/typescript/code/functions/async_functions.ts:16:33:20:1",
+      "is_exported": false,
+      "initial_value": "await transform_user(user)"
+    },
+    "variable:<fixtures>/typescript/code/functions/async_functions.ts:38:11:38:14:data": {
+      "kind": "constant",
+      "symbol_id": "variable:<fixtures>/typescript/code/functions/async_functions.ts:38:11:38:14:data",
+      "name": "data",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/functions/async_functions.ts",
+        "start_line": 38,
+        "start_column": 11,
+        "end_line": 38,
+        "end_column": 14
+      },
+      "defining_scope_id": "block:<fixtures>/typescript/code/functions/async_functions.ts:37:3:43:3",
+      "is_exported": false,
+      "initial_value": "await fetch_user(id)"
+    }
+  },
+  "interfaces": {},
+  "enums": {},
+  "namespaces": {},
+  "types": {},
+  "imported_symbols": {},
+  "references": [
+    {
+      "kind": "variable_reference",
+      "name": "fetch_user",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/functions/async_functions.ts",
+        "start_line": 6,
+        "start_column": 16,
+        "end_line": 6,
+        "end_column": 25
+      },
+      "scope_id": "module:<fixtures>/typescript/code/functions/async_functions.ts:1:1:47:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "id",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/functions/async_functions.ts",
+        "start_line": 6,
+        "start_column": 27,
+        "end_line": 6,
+        "end_column": 28
+      },
+      "scope_id": "function:<fixtures>/typescript/code/functions/async_functions.ts:6:26:9:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "type_reference",
+      "name": "Promise",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/functions/async_functions.ts",
+        "start_line": 6,
+        "start_column": 40,
+        "end_line": 6,
+        "end_column": 46
+      },
+      "scope_id": "function:<fixtures>/typescript/code/functions/async_functions.ts:6:26:9:1",
+      "type_context": "annotation",
+      "type_info": {
+        "type_id": "type:<fixtures>/typescript/code/functions/async_functions.ts:6:40:6:46:Promise",
+        "type_name": "Promise",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "kind": "type_reference",
+      "name": "Promise",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/functions/async_functions.ts",
+        "start_line": 6,
+        "start_column": 40,
+        "end_line": 6,
+        "end_column": 46
+      },
+      "scope_id": "function:<fixtures>/typescript/code/functions/async_functions.ts:6:26:9:1",
+      "type_context": "annotation",
+      "type_info": {
+        "type_id": "type:<fixtures>/typescript/code/functions/async_functions.ts:6:40:6:46:Promise",
+        "type_name": "Promise",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "kind": "function_call",
+      "name": "delay",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/functions/async_functions.ts",
+        "start_line": 7,
+        "start_column": 9,
+        "end_line": 7,
+        "end_column": 13
+      },
+      "scope_id": "function:<fixtures>/typescript/code/functions/async_functions.ts:6:26:9:1"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "delay",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/functions/async_functions.ts",
+        "start_line": 7,
+        "start_column": 9,
+        "end_line": 7,
+        "end_column": 13
+      },
+      "scope_id": "function:<fixtures>/typescript/code/functions/async_functions.ts:6:26:9:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "return { id, name: \"User\" + id };",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/functions/async_functions.ts",
+        "start_line": 8,
+        "start_column": 3,
+        "end_line": 8,
+        "end_column": 35
+      },
+      "scope_id": "function:<fixtures>/typescript/code/functions/async_functions.ts:6:26:9:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "{ id, name: \"User\" + id }",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/functions/async_functions.ts",
+        "start_line": 8,
+        "start_column": 10,
+        "end_line": 8,
+        "end_column": 34
+      },
+      "scope_id": "function:<fixtures>/typescript/code/functions/async_functions.ts:6:26:9:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "id",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/functions/async_functions.ts",
+        "start_line": 8,
+        "start_column": 31,
+        "end_line": 8,
+        "end_column": 32
+      },
+      "scope_id": "function:<fixtures>/typescript/code/functions/async_functions.ts:6:26:9:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "fetch_users",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/functions/async_functions.ts",
+        "start_line": 11,
+        "start_column": 16,
+        "end_line": 11,
+        "end_column": 26
+      },
+      "scope_id": "module:<fixtures>/typescript/code/functions/async_functions.ts:1:1:47:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "ids",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/functions/async_functions.ts",
+        "start_line": 11,
+        "start_column": 28,
+        "end_line": 11,
+        "end_column": 30
+      },
+      "scope_id": "function:<fixtures>/typescript/code/functions/async_functions.ts:11:27:14:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "type_reference",
+      "name": "Promise",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/functions/async_functions.ts",
+        "start_line": 11,
+        "start_column": 44,
+        "end_line": 11,
+        "end_column": 50
+      },
+      "scope_id": "function:<fixtures>/typescript/code/functions/async_functions.ts:11:27:14:1",
+      "type_context": "annotation",
+      "type_info": {
+        "type_id": "type:<fixtures>/typescript/code/functions/async_functions.ts:11:44:11:50:Promise",
+        "type_name": "Promise",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "kind": "type_reference",
+      "name": "Promise",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/functions/async_functions.ts",
+        "start_line": 11,
+        "start_column": 44,
+        "end_line": 11,
+        "end_column": 50
+      },
+      "scope_id": "function:<fixtures>/typescript/code/functions/async_functions.ts:11:27:14:1",
+      "type_context": "annotation",
+      "type_info": {
+        "type_id": "type:<fixtures>/typescript/code/functions/async_functions.ts:11:44:11:50:Promise",
+        "type_name": "Promise",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "kind": "assignment",
+      "name": "promises = ids.map((id) => fetch_user(id))",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/functions/async_functions.ts",
+        "start_line": 12,
+        "start_column": 9,
+        "end_line": 12,
+        "end_column": 50
+      },
+      "scope_id": "function:<fixtures>/typescript/code/functions/async_functions.ts:11:27:14:1",
+      "target_location": {
+        "file_path": "<fixtures>/typescript/code/functions/async_functions.ts",
+        "start_line": 12,
+        "start_column": 9,
+        "end_line": 12,
+        "end_column": 50
+      }
+    },
+    {
+      "kind": "assignment",
+      "name": "promises",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/functions/async_functions.ts",
+        "start_line": 12,
+        "start_column": 9,
+        "end_line": 12,
+        "end_column": 16
+      },
+      "scope_id": "function:<fixtures>/typescript/code/functions/async_functions.ts:11:27:14:1",
+      "target_location": {
+        "file_path": "<fixtures>/typescript/code/functions/async_functions.ts",
+        "start_line": 12,
+        "start_column": 9,
+        "end_line": 12,
+        "end_column": 16
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "promises",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/functions/async_functions.ts",
+        "start_line": 12,
+        "start_column": 9,
+        "end_line": 12,
+        "end_column": 16
+      },
+      "scope_id": "function:<fixtures>/typescript/code/functions/async_functions.ts:11:27:14:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "assignment",
+      "name": "ids.map((id) => fetch_user(id))",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/functions/async_functions.ts",
+        "start_line": 12,
+        "start_column": 20,
+        "end_line": 12,
+        "end_column": 50
+      },
+      "scope_id": "function:<fixtures>/typescript/code/functions/async_functions.ts:11:27:14:1",
+      "target_location": {
+        "file_path": "<fixtures>/typescript/code/functions/async_functions.ts",
+        "start_line": 12,
+        "start_column": 9,
+        "end_line": 12,
+        "end_column": 16
+      }
+    },
+    {
+      "kind": "method_call",
+      "name": "map",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/functions/async_functions.ts",
+        "start_line": 12,
+        "start_column": 20,
+        "end_line": 12,
+        "end_column": 50
+      },
+      "scope_id": "function:<fixtures>/typescript/code/functions/async_functions.ts:11:27:14:1",
+      "receiver_location": {
+        "file_path": "<fixtures>/typescript/code/functions/async_functions.ts",
+        "start_line": 12,
+        "start_column": 20,
+        "end_line": 12,
+        "end_column": 22
+      },
+      "property_chain": [
+        "ids",
+        "map"
+      ],
+      "optional_chaining": false
+    },
+    {
+      "kind": "variable_reference",
+      "name": "ids",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/functions/async_functions.ts",
+        "start_line": 12,
+        "start_column": 20,
+        "end_line": 12,
+        "end_column": 22
+      },
+      "scope_id": "function:<fixtures>/typescript/code/functions/async_functions.ts:11:27:14:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "property_access",
+      "name": "map",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/functions/async_functions.ts",
+        "start_line": 12,
+        "start_column": 20,
+        "end_line": 12,
+        "end_column": 26
+      },
+      "scope_id": "function:<fixtures>/typescript/code/functions/async_functions.ts:11:27:14:1",
+      "receiver_location": {
+        "file_path": "<fixtures>/typescript/code/functions/async_functions.ts",
+        "start_line": 12,
+        "start_column": 20,
+        "end_line": 12,
+        "end_column": 22
+      },
+      "property_chain": [
+        "ids",
+        "map"
+      ],
+      "access_type": "property",
+      "is_optional_chain": false
+    },
+    {
+      "kind": "variable_reference",
+      "name": "ids",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/functions/async_functions.ts",
+        "start_line": 12,
+        "start_column": 20,
+        "end_line": 12,
+        "end_column": 22
+      },
+      "scope_id": "function:<fixtures>/typescript/code/functions/async_functions.ts:11:27:14:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "property_access",
+      "name": "map",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/functions/async_functions.ts",
+        "start_line": 12,
+        "start_column": 20,
+        "end_line": 12,
+        "end_column": 26
+      },
+      "scope_id": "function:<fixtures>/typescript/code/functions/async_functions.ts:11:27:14:1",
+      "receiver_location": {
+        "file_path": "<fixtures>/typescript/code/functions/async_functions.ts",
+        "start_line": 12,
+        "start_column": 20,
+        "end_line": 12,
+        "end_column": 22
+      },
+      "property_chain": [
+        "ids",
+        "map"
+      ],
+      "access_type": "property",
+      "is_optional_chain": false
+    },
+    {
+      "kind": "variable_reference",
+      "name": "ids",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/functions/async_functions.ts",
+        "start_line": 12,
+        "start_column": 20,
+        "end_line": 12,
+        "end_column": 22
+      },
+      "scope_id": "function:<fixtures>/typescript/code/functions/async_functions.ts:11:27:14:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "method_call",
+      "name": "map",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/functions/async_functions.ts",
+        "start_line": 12,
+        "start_column": 20,
+        "end_line": 12,
+        "end_column": 50
+      },
+      "scope_id": "function:<fixtures>/typescript/code/functions/async_functions.ts:11:27:14:1",
+      "receiver_location": {
+        "file_path": "<fixtures>/typescript/code/functions/async_functions.ts",
+        "start_line": 12,
+        "start_column": 20,
+        "end_line": 12,
+        "end_column": 22
+      },
+      "property_chain": [
+        "ids",
+        "map"
+      ],
+      "optional_chaining": false
+    },
+    {
+      "kind": "variable_reference",
+      "name": "ids",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/functions/async_functions.ts",
+        "start_line": 12,
+        "start_column": 20,
+        "end_line": 12,
+        "end_column": 22
+      },
+      "scope_id": "function:<fixtures>/typescript/code/functions/async_functions.ts:11:27:14:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "ids",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/functions/async_functions.ts",
+        "start_line": 12,
+        "start_column": 20,
+        "end_line": 12,
+        "end_column": 22
+      },
+      "scope_id": "function:<fixtures>/typescript/code/functions/async_functions.ts:11:27:14:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "map",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/functions/async_functions.ts",
+        "start_line": 12,
+        "start_column": 24,
+        "end_line": 12,
+        "end_column": 26
+      },
+      "scope_id": "function:<fixtures>/typescript/code/functions/async_functions.ts:11:27:14:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "map",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/functions/async_functions.ts",
+        "start_line": 12,
+        "start_column": 24,
+        "end_line": 12,
+        "end_column": 26
+      },
+      "scope_id": "function:<fixtures>/typescript/code/functions/async_functions.ts:11:27:14:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "id",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/functions/async_functions.ts",
+        "start_line": 12,
+        "start_column": 29,
+        "end_line": 12,
+        "end_column": 30
+      },
+      "scope_id": "function:<fixtures>/typescript/code/functions/async_functions.ts:12:28:12:49",
+      "access_type": "read"
+    },
+    {
+      "kind": "function_call",
+      "name": "fetch_user",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/functions/async_functions.ts",
+        "start_line": 12,
+        "start_column": 36,
+        "end_line": 12,
+        "end_column": 45
+      },
+      "scope_id": "function:<fixtures>/typescript/code/functions/async_functions.ts:12:28:12:49",
+      "potential_construct_target": {
+        "file_path": "<fixtures>/typescript/code/functions/async_functions.ts",
+        "start_line": 12,
+        "start_column": 9,
+        "end_line": 12,
+        "end_column": 16
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "fetch_user",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/functions/async_functions.ts",
+        "start_line": 12,
+        "start_column": 36,
+        "end_line": 12,
+        "end_column": 45
+      },
+      "scope_id": "function:<fixtures>/typescript/code/functions/async_functions.ts:12:28:12:49",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "id",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/functions/async_functions.ts",
+        "start_line": 12,
+        "start_column": 47,
+        "end_line": 12,
+        "end_column": 48
+      },
+      "scope_id": "function:<fixtures>/typescript/code/functions/async_functions.ts:12:28:12:49",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "return Promise.all(promises);",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/functions/async_functions.ts",
+        "start_line": 13,
+        "start_column": 3,
+        "end_line": 13,
+        "end_column": 31
+      },
+      "scope_id": "function:<fixtures>/typescript/code/functions/async_functions.ts:11:27:14:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "method_call",
+      "name": "all",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/functions/async_functions.ts",
+        "start_line": 13,
+        "start_column": 10,
+        "end_line": 13,
+        "end_column": 30
+      },
+      "scope_id": "function:<fixtures>/typescript/code/functions/async_functions.ts:11:27:14:1",
+      "receiver_location": {
+        "file_path": "<fixtures>/typescript/code/functions/async_functions.ts",
+        "start_line": 13,
+        "start_column": 10,
+        "end_line": 13,
+        "end_column": 16
+      },
+      "property_chain": [
+        "Promise",
+        "all"
+      ],
+      "optional_chaining": false
+    },
+    {
+      "kind": "variable_reference",
+      "name": "Promise",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/functions/async_functions.ts",
+        "start_line": 13,
+        "start_column": 10,
+        "end_line": 13,
+        "end_column": 16
+      },
+      "scope_id": "function:<fixtures>/typescript/code/functions/async_functions.ts:11:27:14:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "property_access",
+      "name": "all",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/functions/async_functions.ts",
+        "start_line": 13,
+        "start_column": 10,
+        "end_line": 13,
+        "end_column": 20
+      },
+      "scope_id": "function:<fixtures>/typescript/code/functions/async_functions.ts:11:27:14:1",
+      "receiver_location": {
+        "file_path": "<fixtures>/typescript/code/functions/async_functions.ts",
+        "start_line": 13,
+        "start_column": 10,
+        "end_line": 13,
+        "end_column": 16
+      },
+      "property_chain": [
+        "Promise",
+        "all"
+      ],
+      "access_type": "property",
+      "is_optional_chain": false
+    },
+    {
+      "kind": "variable_reference",
+      "name": "Promise",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/functions/async_functions.ts",
+        "start_line": 13,
+        "start_column": 10,
+        "end_line": 13,
+        "end_column": 16
+      },
+      "scope_id": "function:<fixtures>/typescript/code/functions/async_functions.ts:11:27:14:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "property_access",
+      "name": "all",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/functions/async_functions.ts",
+        "start_line": 13,
+        "start_column": 10,
+        "end_line": 13,
+        "end_column": 20
+      },
+      "scope_id": "function:<fixtures>/typescript/code/functions/async_functions.ts:11:27:14:1",
+      "receiver_location": {
+        "file_path": "<fixtures>/typescript/code/functions/async_functions.ts",
+        "start_line": 13,
+        "start_column": 10,
+        "end_line": 13,
+        "end_column": 16
+      },
+      "property_chain": [
+        "Promise",
+        "all"
+      ],
+      "access_type": "property",
+      "is_optional_chain": false
+    },
+    {
+      "kind": "variable_reference",
+      "name": "Promise",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/functions/async_functions.ts",
+        "start_line": 13,
+        "start_column": 10,
+        "end_line": 13,
+        "end_column": 16
+      },
+      "scope_id": "function:<fixtures>/typescript/code/functions/async_functions.ts:11:27:14:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "method_call",
+      "name": "all",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/functions/async_functions.ts",
+        "start_line": 13,
+        "start_column": 10,
+        "end_line": 13,
+        "end_column": 30
+      },
+      "scope_id": "function:<fixtures>/typescript/code/functions/async_functions.ts:11:27:14:1",
+      "receiver_location": {
+        "file_path": "<fixtures>/typescript/code/functions/async_functions.ts",
+        "start_line": 13,
+        "start_column": 10,
+        "end_line": 13,
+        "end_column": 16
+      },
+      "property_chain": [
+        "Promise",
+        "all"
+      ],
+      "optional_chaining": false
+    },
+    {
+      "kind": "variable_reference",
+      "name": "Promise",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/functions/async_functions.ts",
+        "start_line": 13,
+        "start_column": 10,
+        "end_line": 13,
+        "end_column": 16
+      },
+      "scope_id": "function:<fixtures>/typescript/code/functions/async_functions.ts:11:27:14:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "Promise.all(promises)",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/functions/async_functions.ts",
+        "start_line": 13,
+        "start_column": 10,
+        "end_line": 13,
+        "end_column": 30
+      },
+      "scope_id": "function:<fixtures>/typescript/code/functions/async_functions.ts:11:27:14:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "Promise",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/functions/async_functions.ts",
+        "start_line": 13,
+        "start_column": 10,
+        "end_line": 13,
+        "end_column": 16
+      },
+      "scope_id": "function:<fixtures>/typescript/code/functions/async_functions.ts:11:27:14:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "all",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/functions/async_functions.ts",
+        "start_line": 13,
+        "start_column": 18,
+        "end_line": 13,
+        "end_column": 20
+      },
+      "scope_id": "function:<fixtures>/typescript/code/functions/async_functions.ts:11:27:14:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "all",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/functions/async_functions.ts",
+        "start_line": 13,
+        "start_column": 18,
+        "end_line": 13,
+        "end_column": 20
+      },
+      "scope_id": "function:<fixtures>/typescript/code/functions/async_functions.ts:11:27:14:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "promises",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/functions/async_functions.ts",
+        "start_line": 13,
+        "start_column": 22,
+        "end_line": 13,
+        "end_column": 29
+      },
+      "scope_id": "function:<fixtures>/typescript/code/functions/async_functions.ts:11:27:14:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "process_user_data",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/functions/async_functions.ts",
+        "start_line": 16,
+        "start_column": 16,
+        "end_line": 16,
+        "end_column": 32
+      },
+      "scope_id": "module:<fixtures>/typescript/code/functions/async_functions.ts:1:1:47:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "user_id",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/functions/async_functions.ts",
+        "start_line": 16,
+        "start_column": 34,
+        "end_line": 16,
+        "end_column": 40
+      },
+      "scope_id": "function:<fixtures>/typescript/code/functions/async_functions.ts:16:33:20:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "type_reference",
+      "name": "Promise",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/functions/async_functions.ts",
+        "start_line": 16,
+        "start_column": 52,
+        "end_line": 16,
+        "end_column": 58
+      },
+      "scope_id": "function:<fixtures>/typescript/code/functions/async_functions.ts:16:33:20:1",
+      "type_context": "annotation",
+      "type_info": {
+        "type_id": "type:<fixtures>/typescript/code/functions/async_functions.ts:16:52:16:58:Promise",
+        "type_name": "Promise",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "kind": "type_reference",
+      "name": "Promise",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/functions/async_functions.ts",
+        "start_line": 16,
+        "start_column": 52,
+        "end_line": 16,
+        "end_column": 58
+      },
+      "scope_id": "function:<fixtures>/typescript/code/functions/async_functions.ts:16:33:20:1",
+      "type_context": "annotation",
+      "type_info": {
+        "type_id": "type:<fixtures>/typescript/code/functions/async_functions.ts:16:52:16:58:Promise",
+        "type_name": "Promise",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "kind": "assignment",
+      "name": "user = await fetch_user(user_id)",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/functions/async_functions.ts",
+        "start_line": 17,
+        "start_column": 9,
+        "end_line": 17,
+        "end_column": 40
+      },
+      "scope_id": "function:<fixtures>/typescript/code/functions/async_functions.ts:16:33:20:1",
+      "target_location": {
+        "file_path": "<fixtures>/typescript/code/functions/async_functions.ts",
+        "start_line": 17,
+        "start_column": 9,
+        "end_line": 17,
+        "end_column": 40
+      }
+    },
+    {
+      "kind": "assignment",
+      "name": "user",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/functions/async_functions.ts",
+        "start_line": 17,
+        "start_column": 9,
+        "end_line": 17,
+        "end_column": 12
+      },
+      "scope_id": "function:<fixtures>/typescript/code/functions/async_functions.ts:16:33:20:1",
+      "target_location": {
+        "file_path": "<fixtures>/typescript/code/functions/async_functions.ts",
+        "start_line": 17,
+        "start_column": 9,
+        "end_line": 17,
+        "end_column": 12
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "user",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/functions/async_functions.ts",
+        "start_line": 17,
+        "start_column": 9,
+        "end_line": 17,
+        "end_column": 12
+      },
+      "scope_id": "function:<fixtures>/typescript/code/functions/async_functions.ts:16:33:20:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "assignment",
+      "name": "await fetch_user(user_id)",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/functions/async_functions.ts",
+        "start_line": 17,
+        "start_column": 16,
+        "end_line": 17,
+        "end_column": 40
+      },
+      "scope_id": "function:<fixtures>/typescript/code/functions/async_functions.ts:16:33:20:1",
+      "target_location": {
+        "file_path": "<fixtures>/typescript/code/functions/async_functions.ts",
+        "start_line": 17,
+        "start_column": 9,
+        "end_line": 17,
+        "end_column": 12
+      }
+    },
+    {
+      "kind": "function_call",
+      "name": "fetch_user",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/functions/async_functions.ts",
+        "start_line": 17,
+        "start_column": 22,
+        "end_line": 17,
+        "end_column": 31
+      },
+      "scope_id": "function:<fixtures>/typescript/code/functions/async_functions.ts:16:33:20:1",
+      "potential_construct_target": {
+        "file_path": "<fixtures>/typescript/code/functions/async_functions.ts",
+        "start_line": 17,
+        "start_column": 9,
+        "end_line": 17,
+        "end_column": 12
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "fetch_user",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/functions/async_functions.ts",
+        "start_line": 17,
+        "start_column": 22,
+        "end_line": 17,
+        "end_column": 31
+      },
+      "scope_id": "function:<fixtures>/typescript/code/functions/async_functions.ts:16:33:20:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "user_id",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/functions/async_functions.ts",
+        "start_line": 17,
+        "start_column": 33,
+        "end_line": 17,
+        "end_column": 39
+      },
+      "scope_id": "function:<fixtures>/typescript/code/functions/async_functions.ts:16:33:20:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "assignment",
+      "name": "processed = await transform_user(user)",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/functions/async_functions.ts",
+        "start_line": 18,
+        "start_column": 9,
+        "end_line": 18,
+        "end_column": 46
+      },
+      "scope_id": "function:<fixtures>/typescript/code/functions/async_functions.ts:16:33:20:1",
+      "target_location": {
+        "file_path": "<fixtures>/typescript/code/functions/async_functions.ts",
+        "start_line": 18,
+        "start_column": 9,
+        "end_line": 18,
+        "end_column": 46
+      }
+    },
+    {
+      "kind": "assignment",
+      "name": "processed",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/functions/async_functions.ts",
+        "start_line": 18,
+        "start_column": 9,
+        "end_line": 18,
+        "end_column": 17
+      },
+      "scope_id": "function:<fixtures>/typescript/code/functions/async_functions.ts:16:33:20:1",
+      "target_location": {
+        "file_path": "<fixtures>/typescript/code/functions/async_functions.ts",
+        "start_line": 18,
+        "start_column": 9,
+        "end_line": 18,
+        "end_column": 17
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "processed",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/functions/async_functions.ts",
+        "start_line": 18,
+        "start_column": 9,
+        "end_line": 18,
+        "end_column": 17
+      },
+      "scope_id": "function:<fixtures>/typescript/code/functions/async_functions.ts:16:33:20:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "assignment",
+      "name": "await transform_user(user)",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/functions/async_functions.ts",
+        "start_line": 18,
+        "start_column": 21,
+        "end_line": 18,
+        "end_column": 46
+      },
+      "scope_id": "function:<fixtures>/typescript/code/functions/async_functions.ts:16:33:20:1",
+      "target_location": {
+        "file_path": "<fixtures>/typescript/code/functions/async_functions.ts",
+        "start_line": 18,
+        "start_column": 9,
+        "end_line": 18,
+        "end_column": 17
+      }
+    },
+    {
+      "kind": "function_call",
+      "name": "transform_user",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/functions/async_functions.ts",
+        "start_line": 18,
+        "start_column": 27,
+        "end_line": 18,
+        "end_column": 40
+      },
+      "scope_id": "function:<fixtures>/typescript/code/functions/async_functions.ts:16:33:20:1",
+      "potential_construct_target": {
+        "file_path": "<fixtures>/typescript/code/functions/async_functions.ts",
+        "start_line": 18,
+        "start_column": 9,
+        "end_line": 18,
+        "end_column": 17
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "transform_user",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/functions/async_functions.ts",
+        "start_line": 18,
+        "start_column": 27,
+        "end_line": 18,
+        "end_column": 40
+      },
+      "scope_id": "function:<fixtures>/typescript/code/functions/async_functions.ts:16:33:20:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "user",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/functions/async_functions.ts",
+        "start_line": 18,
+        "start_column": 42,
+        "end_line": 18,
+        "end_column": 45
+      },
+      "scope_id": "function:<fixtures>/typescript/code/functions/async_functions.ts:16:33:20:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "return format_user_data(processed);",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/functions/async_functions.ts",
+        "start_line": 19,
+        "start_column": 3,
+        "end_line": 19,
+        "end_column": 37
+      },
+      "scope_id": "function:<fixtures>/typescript/code/functions/async_functions.ts:16:33:20:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "function_call",
+      "name": "format_user_data",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/functions/async_functions.ts",
+        "start_line": 19,
+        "start_column": 10,
+        "end_line": 19,
+        "end_column": 25
+      },
+      "scope_id": "function:<fixtures>/typescript/code/functions/async_functions.ts:16:33:20:1"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "format_user_data",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/functions/async_functions.ts",
+        "start_line": 19,
+        "start_column": 10,
+        "end_line": 19,
+        "end_column": 36
+      },
+      "scope_id": "function:<fixtures>/typescript/code/functions/async_functions.ts:16:33:20:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "format_user_data",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/functions/async_functions.ts",
+        "start_line": 19,
+        "start_column": 10,
+        "end_line": 19,
+        "end_column": 25
+      },
+      "scope_id": "function:<fixtures>/typescript/code/functions/async_functions.ts:16:33:20:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "processed",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/functions/async_functions.ts",
+        "start_line": 19,
+        "start_column": 27,
+        "end_line": 19,
+        "end_column": 35
+      },
+      "scope_id": "function:<fixtures>/typescript/code/functions/async_functions.ts:16:33:20:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "transform_user",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/functions/async_functions.ts",
+        "start_line": 22,
+        "start_column": 16,
+        "end_line": 22,
+        "end_column": 29
+      },
+      "scope_id": "module:<fixtures>/typescript/code/functions/async_functions.ts:1:1:47:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "user",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/functions/async_functions.ts",
+        "start_line": 22,
+        "start_column": 31,
+        "end_line": 22,
+        "end_column": 34
+      },
+      "scope_id": "function:<fixtures>/typescript/code/functions/async_functions.ts:22:30:25:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "type_reference",
+      "name": "Promise",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/functions/async_functions.ts",
+        "start_line": 22,
+        "start_column": 46,
+        "end_line": 22,
+        "end_column": 52
+      },
+      "scope_id": "function:<fixtures>/typescript/code/functions/async_functions.ts:22:30:25:1",
+      "type_context": "annotation",
+      "type_info": {
+        "type_id": "type:<fixtures>/typescript/code/functions/async_functions.ts:22:46:22:52:Promise",
+        "type_name": "Promise",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "kind": "type_reference",
+      "name": "Promise",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/functions/async_functions.ts",
+        "start_line": 22,
+        "start_column": 46,
+        "end_line": 22,
+        "end_column": 52
+      },
+      "scope_id": "function:<fixtures>/typescript/code/functions/async_functions.ts:22:30:25:1",
+      "type_context": "annotation",
+      "type_info": {
+        "type_id": "type:<fixtures>/typescript/code/functions/async_functions.ts:22:46:22:52:Promise",
+        "type_name": "Promise",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "kind": "function_call",
+      "name": "delay",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/functions/async_functions.ts",
+        "start_line": 23,
+        "start_column": 9,
+        "end_line": 23,
+        "end_column": 13
+      },
+      "scope_id": "function:<fixtures>/typescript/code/functions/async_functions.ts:22:30:25:1"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "delay",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/functions/async_functions.ts",
+        "start_line": 23,
+        "start_column": 9,
+        "end_line": 23,
+        "end_column": 13
+      },
+      "scope_id": "function:<fixtures>/typescript/code/functions/async_functions.ts:22:30:25:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "return { ...user, transformed: true };",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/functions/async_functions.ts",
+        "start_line": 24,
+        "start_column": 3,
+        "end_line": 24,
+        "end_column": 40
+      },
+      "scope_id": "function:<fixtures>/typescript/code/functions/async_functions.ts:22:30:25:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "{ ...user, transformed: true }",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/functions/async_functions.ts",
+        "start_line": 24,
+        "start_column": 10,
+        "end_line": 24,
+        "end_column": 39
+      },
+      "scope_id": "function:<fixtures>/typescript/code/functions/async_functions.ts:22:30:25:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "user",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/functions/async_functions.ts",
+        "start_line": 24,
+        "start_column": 15,
+        "end_line": 24,
+        "end_column": 18
+      },
+      "scope_id": "function:<fixtures>/typescript/code/functions/async_functions.ts:22:30:25:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "format_user_data",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/functions/async_functions.ts",
+        "start_line": 27,
+        "start_column": 10,
+        "end_line": 27,
+        "end_column": 25
+      },
+      "scope_id": "module:<fixtures>/typescript/code/functions/async_functions.ts:1:1:47:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "user",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/functions/async_functions.ts",
+        "start_line": 27,
+        "start_column": 27,
+        "end_line": 27,
+        "end_column": 30
+      },
+      "scope_id": "function:<fixtures>/typescript/code/functions/async_functions.ts:27:26:29:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "return JSON.stringify(user);",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/functions/async_functions.ts",
+        "start_line": 28,
+        "start_column": 3,
+        "end_line": 28,
+        "end_column": 30
+      },
+      "scope_id": "function:<fixtures>/typescript/code/functions/async_functions.ts:27:26:29:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "method_call",
+      "name": "stringify",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/functions/async_functions.ts",
+        "start_line": 28,
+        "start_column": 10,
+        "end_line": 28,
+        "end_column": 29
+      },
+      "scope_id": "function:<fixtures>/typescript/code/functions/async_functions.ts:27:26:29:1",
+      "receiver_location": {
+        "file_path": "<fixtures>/typescript/code/functions/async_functions.ts",
+        "start_line": 28,
+        "start_column": 10,
+        "end_line": 28,
+        "end_column": 13
+      },
+      "property_chain": [
+        "JSON",
+        "stringify"
+      ],
+      "optional_chaining": false
+    },
+    {
+      "kind": "variable_reference",
+      "name": "JSON",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/functions/async_functions.ts",
+        "start_line": 28,
+        "start_column": 10,
+        "end_line": 28,
+        "end_column": 13
+      },
+      "scope_id": "function:<fixtures>/typescript/code/functions/async_functions.ts:27:26:29:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "property_access",
+      "name": "stringify",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/functions/async_functions.ts",
+        "start_line": 28,
+        "start_column": 10,
+        "end_line": 28,
+        "end_column": 23
+      },
+      "scope_id": "function:<fixtures>/typescript/code/functions/async_functions.ts:27:26:29:1",
+      "receiver_location": {
+        "file_path": "<fixtures>/typescript/code/functions/async_functions.ts",
+        "start_line": 28,
+        "start_column": 10,
+        "end_line": 28,
+        "end_column": 13
+      },
+      "property_chain": [
+        "JSON",
+        "stringify"
+      ],
+      "access_type": "property",
+      "is_optional_chain": false
+    },
+    {
+      "kind": "variable_reference",
+      "name": "JSON",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/functions/async_functions.ts",
+        "start_line": 28,
+        "start_column": 10,
+        "end_line": 28,
+        "end_column": 13
+      },
+      "scope_id": "function:<fixtures>/typescript/code/functions/async_functions.ts:27:26:29:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "property_access",
+      "name": "stringify",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/functions/async_functions.ts",
+        "start_line": 28,
+        "start_column": 10,
+        "end_line": 28,
+        "end_column": 23
+      },
+      "scope_id": "function:<fixtures>/typescript/code/functions/async_functions.ts:27:26:29:1",
+      "receiver_location": {
+        "file_path": "<fixtures>/typescript/code/functions/async_functions.ts",
+        "start_line": 28,
+        "start_column": 10,
+        "end_line": 28,
+        "end_column": 13
+      },
+      "property_chain": [
+        "JSON",
+        "stringify"
+      ],
+      "access_type": "property",
+      "is_optional_chain": false
+    },
+    {
+      "kind": "variable_reference",
+      "name": "JSON",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/functions/async_functions.ts",
+        "start_line": 28,
+        "start_column": 10,
+        "end_line": 28,
+        "end_column": 13
+      },
+      "scope_id": "function:<fixtures>/typescript/code/functions/async_functions.ts:27:26:29:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "method_call",
+      "name": "stringify",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/functions/async_functions.ts",
+        "start_line": 28,
+        "start_column": 10,
+        "end_line": 28,
+        "end_column": 29
+      },
+      "scope_id": "function:<fixtures>/typescript/code/functions/async_functions.ts:27:26:29:1",
+      "receiver_location": {
+        "file_path": "<fixtures>/typescript/code/functions/async_functions.ts",
+        "start_line": 28,
+        "start_column": 10,
+        "end_line": 28,
+        "end_column": 13
+      },
+      "property_chain": [
+        "JSON",
+        "stringify"
+      ],
+      "optional_chaining": false
+    },
+    {
+      "kind": "variable_reference",
+      "name": "JSON",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/functions/async_functions.ts",
+        "start_line": 28,
+        "start_column": 10,
+        "end_line": 28,
+        "end_column": 13
+      },
+      "scope_id": "function:<fixtures>/typescript/code/functions/async_functions.ts:27:26:29:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "JSON.stringify(user)",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/functions/async_functions.ts",
+        "start_line": 28,
+        "start_column": 10,
+        "end_line": 28,
+        "end_column": 29
+      },
+      "scope_id": "function:<fixtures>/typescript/code/functions/async_functions.ts:27:26:29:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "JSON",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/functions/async_functions.ts",
+        "start_line": 28,
+        "start_column": 10,
+        "end_line": 28,
+        "end_column": 13
+      },
+      "scope_id": "function:<fixtures>/typescript/code/functions/async_functions.ts:27:26:29:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "stringify",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/functions/async_functions.ts",
+        "start_line": 28,
+        "start_column": 15,
+        "end_line": 28,
+        "end_column": 23
+      },
+      "scope_id": "function:<fixtures>/typescript/code/functions/async_functions.ts:27:26:29:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "stringify",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/functions/async_functions.ts",
+        "start_line": 28,
+        "start_column": 15,
+        "end_line": 28,
+        "end_column": 23
+      },
+      "scope_id": "function:<fixtures>/typescript/code/functions/async_functions.ts:27:26:29:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "user",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/functions/async_functions.ts",
+        "start_line": 28,
+        "start_column": 25,
+        "end_line": 28,
+        "end_column": 28
+      },
+      "scope_id": "function:<fixtures>/typescript/code/functions/async_functions.ts:27:26:29:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "delay",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/functions/async_functions.ts",
+        "start_line": 31,
+        "start_column": 10,
+        "end_line": 31,
+        "end_column": 14
+      },
+      "scope_id": "module:<fixtures>/typescript/code/functions/async_functions.ts:1:1:47:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "ms",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/functions/async_functions.ts",
+        "start_line": 31,
+        "start_column": 16,
+        "end_line": 31,
+        "end_column": 17
+      },
+      "scope_id": "function:<fixtures>/typescript/code/functions/async_functions.ts:31:15:33:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "type_reference",
+      "name": "Promise",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/functions/async_functions.ts",
+        "start_line": 31,
+        "start_column": 29,
+        "end_line": 31,
+        "end_column": 35
+      },
+      "scope_id": "function:<fixtures>/typescript/code/functions/async_functions.ts:31:15:33:1",
+      "type_context": "annotation",
+      "type_info": {
+        "type_id": "type:<fixtures>/typescript/code/functions/async_functions.ts:31:29:31:35:Promise",
+        "type_name": "Promise",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "kind": "type_reference",
+      "name": "Promise",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/functions/async_functions.ts",
+        "start_line": 31,
+        "start_column": 29,
+        "end_line": 31,
+        "end_column": 35
+      },
+      "scope_id": "function:<fixtures>/typescript/code/functions/async_functions.ts:31:15:33:1",
+      "type_context": "annotation",
+      "type_info": {
+        "type_id": "type:<fixtures>/typescript/code/functions/async_functions.ts:31:29:31:35:Promise",
+        "type_name": "Promise",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "return new Promise((resolve) => setTimeout(resolve, ms));",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/functions/async_functions.ts",
+        "start_line": 32,
+        "start_column": 3,
+        "end_line": 32,
+        "end_column": 59
+      },
+      "scope_id": "function:<fixtures>/typescript/code/functions/async_functions.ts:31:15:33:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "function_call",
+      "name": "Promise",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/functions/async_functions.ts",
+        "start_line": 32,
+        "start_column": 10,
+        "end_line": 32,
+        "end_column": 58
+      },
+      "scope_id": "function:<fixtures>/typescript/code/functions/async_functions.ts:31:15:33:1"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "Promise",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/functions/async_functions.ts",
+        "start_line": 32,
+        "start_column": 10,
+        "end_line": 32,
+        "end_column": 58
+      },
+      "scope_id": "function:<fixtures>/typescript/code/functions/async_functions.ts:31:15:33:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "constructor_call",
+      "name": "Promise",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/functions/async_functions.ts",
+        "start_line": 32,
+        "start_column": 14,
+        "end_line": 32,
+        "end_column": 20
+      },
+      "scope_id": "function:<fixtures>/typescript/code/functions/async_functions.ts:31:15:33:1"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "Promise",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/functions/async_functions.ts",
+        "start_line": 32,
+        "start_column": 14,
+        "end_line": 32,
+        "end_column": 20
+      },
+      "scope_id": "function:<fixtures>/typescript/code/functions/async_functions.ts:31:15:33:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "resolve",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/functions/async_functions.ts",
+        "start_line": 32,
+        "start_column": 23,
+        "end_line": 32,
+        "end_column": 29
+      },
+      "scope_id": "function:<fixtures>/typescript/code/functions/async_functions.ts:32:22:32:57",
+      "access_type": "read"
+    },
+    {
+      "kind": "function_call",
+      "name": "setTimeout",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/functions/async_functions.ts",
+        "start_line": 32,
+        "start_column": 35,
+        "end_line": 32,
+        "end_column": 44
+      },
+      "scope_id": "function:<fixtures>/typescript/code/functions/async_functions.ts:32:22:32:57"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "setTimeout",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/functions/async_functions.ts",
+        "start_line": 32,
+        "start_column": 35,
+        "end_line": 32,
+        "end_column": 44
+      },
+      "scope_id": "function:<fixtures>/typescript/code/functions/async_functions.ts:32:22:32:57",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "resolve",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/functions/async_functions.ts",
+        "start_line": 32,
+        "start_column": 46,
+        "end_line": 32,
+        "end_column": 52
+      },
+      "scope_id": "function:<fixtures>/typescript/code/functions/async_functions.ts:32:22:32:57",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "ms",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/functions/async_functions.ts",
+        "start_line": 32,
+        "start_column": 55,
+        "end_line": 32,
+        "end_column": 56
+      },
+      "scope_id": "function:<fixtures>/typescript/code/functions/async_functions.ts:32:22:32:57",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "safe_fetch",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/functions/async_functions.ts",
+        "start_line": 36,
+        "start_column": 16,
+        "end_line": 36,
+        "end_column": 25
+      },
+      "scope_id": "module:<fixtures>/typescript/code/functions/async_functions.ts:1:1:47:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "id",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/functions/async_functions.ts",
+        "start_line": 36,
+        "start_column": 27,
+        "end_line": 36,
+        "end_column": 28
+      },
+      "scope_id": "function:<fixtures>/typescript/code/functions/async_functions.ts:36:26:44:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "type_reference",
+      "name": "Promise",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/functions/async_functions.ts",
+        "start_line": 36,
+        "start_column": 40,
+        "end_line": 36,
+        "end_column": 46
+      },
+      "scope_id": "function:<fixtures>/typescript/code/functions/async_functions.ts:36:26:44:1",
+      "type_context": "annotation",
+      "type_info": {
+        "type_id": "type:<fixtures>/typescript/code/functions/async_functions.ts:36:40:36:46:Promise",
+        "type_name": "Promise",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "kind": "type_reference",
+      "name": "Promise",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/functions/async_functions.ts",
+        "start_line": 36,
+        "start_column": 40,
+        "end_line": 36,
+        "end_column": 46
+      },
+      "scope_id": "function:<fixtures>/typescript/code/functions/async_functions.ts:36:26:44:1",
+      "type_context": "annotation",
+      "type_info": {
+        "type_id": "type:<fixtures>/typescript/code/functions/async_functions.ts:36:40:36:46:Promise",
+        "type_name": "Promise",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "kind": "assignment",
+      "name": "data = await fetch_user(id)",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/functions/async_functions.ts",
+        "start_line": 38,
+        "start_column": 11,
+        "end_line": 38,
+        "end_column": 37
+      },
+      "scope_id": "block:<fixtures>/typescript/code/functions/async_functions.ts:37:3:43:3",
+      "target_location": {
+        "file_path": "<fixtures>/typescript/code/functions/async_functions.ts",
+        "start_line": 38,
+        "start_column": 11,
+        "end_line": 38,
+        "end_column": 37
+      }
+    },
+    {
+      "kind": "assignment",
+      "name": "data",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/functions/async_functions.ts",
+        "start_line": 38,
+        "start_column": 11,
+        "end_line": 38,
+        "end_column": 14
+      },
+      "scope_id": "block:<fixtures>/typescript/code/functions/async_functions.ts:37:3:43:3",
+      "target_location": {
+        "file_path": "<fixtures>/typescript/code/functions/async_functions.ts",
+        "start_line": 38,
+        "start_column": 11,
+        "end_line": 38,
+        "end_column": 14
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "data",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/functions/async_functions.ts",
+        "start_line": 38,
+        "start_column": 11,
+        "end_line": 38,
+        "end_column": 14
+      },
+      "scope_id": "block:<fixtures>/typescript/code/functions/async_functions.ts:37:3:43:3",
+      "access_type": "read"
+    },
+    {
+      "kind": "assignment",
+      "name": "await fetch_user(id)",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/functions/async_functions.ts",
+        "start_line": 38,
+        "start_column": 18,
+        "end_line": 38,
+        "end_column": 37
+      },
+      "scope_id": "block:<fixtures>/typescript/code/functions/async_functions.ts:37:3:43:3",
+      "target_location": {
+        "file_path": "<fixtures>/typescript/code/functions/async_functions.ts",
+        "start_line": 38,
+        "start_column": 11,
+        "end_line": 38,
+        "end_column": 14
+      }
+    },
+    {
+      "kind": "function_call",
+      "name": "fetch_user",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/functions/async_functions.ts",
+        "start_line": 38,
+        "start_column": 24,
+        "end_line": 38,
+        "end_column": 33
+      },
+      "scope_id": "block:<fixtures>/typescript/code/functions/async_functions.ts:37:3:43:3",
+      "potential_construct_target": {
+        "file_path": "<fixtures>/typescript/code/functions/async_functions.ts",
+        "start_line": 38,
+        "start_column": 11,
+        "end_line": 38,
+        "end_column": 14
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "fetch_user",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/functions/async_functions.ts",
+        "start_line": 38,
+        "start_column": 24,
+        "end_line": 38,
+        "end_column": 33
+      },
+      "scope_id": "block:<fixtures>/typescript/code/functions/async_functions.ts:37:3:43:3",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "id",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/functions/async_functions.ts",
+        "start_line": 38,
+        "start_column": 35,
+        "end_line": 38,
+        "end_column": 36
+      },
+      "scope_id": "block:<fixtures>/typescript/code/functions/async_functions.ts:37:3:43:3",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "return data;",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/functions/async_functions.ts",
+        "start_line": 39,
+        "start_column": 5,
+        "end_line": 39,
+        "end_column": 16
+      },
+      "scope_id": "block:<fixtures>/typescript/code/functions/async_functions.ts:37:3:43:3",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "data",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/functions/async_functions.ts",
+        "start_line": 39,
+        "start_column": 12,
+        "end_line": 39,
+        "end_column": 15
+      },
+      "scope_id": "block:<fixtures>/typescript/code/functions/async_functions.ts:37:3:43:3",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "data",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/functions/async_functions.ts",
+        "start_line": 39,
+        "start_column": 12,
+        "end_line": 39,
+        "end_column": 15
+      },
+      "scope_id": "block:<fixtures>/typescript/code/functions/async_functions.ts:37:3:43:3",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "error",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/functions/async_functions.ts",
+        "start_line": 40,
+        "start_column": 12,
+        "end_line": 40,
+        "end_column": 16
+      },
+      "scope_id": "block:<fixtures>/typescript/code/functions/async_functions.ts:40:5:43:3",
+      "access_type": "read"
+    },
+    {
+      "kind": "method_call",
+      "name": "error",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/functions/async_functions.ts",
+        "start_line": 41,
+        "start_column": 5,
+        "end_line": 41,
+        "end_column": 41
+      },
+      "scope_id": "block:<fixtures>/typescript/code/functions/async_functions.ts:40:5:43:3",
+      "receiver_location": {
+        "file_path": "<fixtures>/typescript/code/functions/async_functions.ts",
+        "start_line": 41,
+        "start_column": 5,
+        "end_line": 41,
+        "end_column": 11
+      },
+      "property_chain": [
+        "console",
+        "error"
+      ],
+      "optional_chaining": false
+    },
+    {
+      "kind": "variable_reference",
+      "name": "console",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/functions/async_functions.ts",
+        "start_line": 41,
+        "start_column": 5,
+        "end_line": 41,
+        "end_column": 11
+      },
+      "scope_id": "block:<fixtures>/typescript/code/functions/async_functions.ts:40:5:43:3",
+      "access_type": "read"
+    },
+    {
+      "kind": "property_access",
+      "name": "error",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/functions/async_functions.ts",
+        "start_line": 41,
+        "start_column": 5,
+        "end_line": 41,
+        "end_column": 17
+      },
+      "scope_id": "block:<fixtures>/typescript/code/functions/async_functions.ts:40:5:43:3",
+      "receiver_location": {
+        "file_path": "<fixtures>/typescript/code/functions/async_functions.ts",
+        "start_line": 41,
+        "start_column": 5,
+        "end_line": 41,
+        "end_column": 11
+      },
+      "property_chain": [
+        "console",
+        "error"
+      ],
+      "access_type": "property",
+      "is_optional_chain": false
+    },
+    {
+      "kind": "variable_reference",
+      "name": "console",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/functions/async_functions.ts",
+        "start_line": 41,
+        "start_column": 5,
+        "end_line": 41,
+        "end_column": 11
+      },
+      "scope_id": "block:<fixtures>/typescript/code/functions/async_functions.ts:40:5:43:3",
+      "access_type": "read"
+    },
+    {
+      "kind": "property_access",
+      "name": "error",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/functions/async_functions.ts",
+        "start_line": 41,
+        "start_column": 5,
+        "end_line": 41,
+        "end_column": 17
+      },
+      "scope_id": "block:<fixtures>/typescript/code/functions/async_functions.ts:40:5:43:3",
+      "receiver_location": {
+        "file_path": "<fixtures>/typescript/code/functions/async_functions.ts",
+        "start_line": 41,
+        "start_column": 5,
+        "end_line": 41,
+        "end_column": 11
+      },
+      "property_chain": [
+        "console",
+        "error"
+      ],
+      "access_type": "property",
+      "is_optional_chain": false
+    },
+    {
+      "kind": "variable_reference",
+      "name": "console",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/functions/async_functions.ts",
+        "start_line": 41,
+        "start_column": 5,
+        "end_line": 41,
+        "end_column": 11
+      },
+      "scope_id": "block:<fixtures>/typescript/code/functions/async_functions.ts:40:5:43:3",
+      "access_type": "read"
+    },
+    {
+      "kind": "method_call",
+      "name": "error",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/functions/async_functions.ts",
+        "start_line": 41,
+        "start_column": 5,
+        "end_line": 41,
+        "end_column": 41
+      },
+      "scope_id": "block:<fixtures>/typescript/code/functions/async_functions.ts:40:5:43:3",
+      "receiver_location": {
+        "file_path": "<fixtures>/typescript/code/functions/async_functions.ts",
+        "start_line": 41,
+        "start_column": 5,
+        "end_line": 41,
+        "end_column": 11
+      },
+      "property_chain": [
+        "console",
+        "error"
+      ],
+      "optional_chaining": false
+    },
+    {
+      "kind": "variable_reference",
+      "name": "console",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/functions/async_functions.ts",
+        "start_line": 41,
+        "start_column": 5,
+        "end_line": 41,
+        "end_column": 11
+      },
+      "scope_id": "block:<fixtures>/typescript/code/functions/async_functions.ts:40:5:43:3",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "console",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/functions/async_functions.ts",
+        "start_line": 41,
+        "start_column": 5,
+        "end_line": 41,
+        "end_column": 11
+      },
+      "scope_id": "block:<fixtures>/typescript/code/functions/async_functions.ts:40:5:43:3",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "error",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/functions/async_functions.ts",
+        "start_line": 41,
+        "start_column": 13,
+        "end_line": 41,
+        "end_column": 17
+      },
+      "scope_id": "block:<fixtures>/typescript/code/functions/async_functions.ts:40:5:43:3",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "error",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/functions/async_functions.ts",
+        "start_line": 41,
+        "start_column": 13,
+        "end_line": 41,
+        "end_column": 17
+      },
+      "scope_id": "block:<fixtures>/typescript/code/functions/async_functions.ts:40:5:43:3",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "error",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/functions/async_functions.ts",
+        "start_line": 41,
+        "start_column": 36,
+        "end_line": 41,
+        "end_column": 40
+      },
+      "scope_id": "block:<fixtures>/typescript/code/functions/async_functions.ts:40:5:43:3",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "return null;",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/functions/async_functions.ts",
+        "start_line": 42,
+        "start_column": 5,
+        "end_line": 42,
+        "end_column": 16
+      },
+      "scope_id": "block:<fixtures>/typescript/code/functions/async_functions.ts:40:5:43:3",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "null",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/functions/async_functions.ts",
+        "start_line": 42,
+        "start_column": 12,
+        "end_line": 42,
+        "end_column": 15
+      },
+      "scope_id": "block:<fixtures>/typescript/code/functions/async_functions.ts:40:5:43:3",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "fetch_user",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/functions/async_functions.ts",
+        "start_line": 46,
+        "start_column": 10,
+        "end_line": 46,
+        "end_column": 19
+      },
+      "scope_id": "module:<fixtures>/typescript/code/functions/async_functions.ts:1:1:47:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "fetch_users",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/functions/async_functions.ts",
+        "start_line": 46,
+        "start_column": 22,
+        "end_line": 46,
+        "end_column": 32
+      },
+      "scope_id": "module:<fixtures>/typescript/code/functions/async_functions.ts:1:1:47:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "process_user_data",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/functions/async_functions.ts",
+        "start_line": 46,
+        "start_column": 35,
+        "end_line": 46,
+        "end_column": 51
+      },
+      "scope_id": "module:<fixtures>/typescript/code/functions/async_functions.ts:1:1:47:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "safe_fetch",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/functions/async_functions.ts",
+        "start_line": 46,
+        "start_column": 54,
+        "end_line": 46,
+        "end_column": 63
+      },
+      "scope_id": "module:<fixtures>/typescript/code/functions/async_functions.ts:1:1:47:0",
+      "access_type": "read"
+    }
+  ]
+}

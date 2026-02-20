@@ -1,0 +1,1231 @@
+{
+  "file_path": "<fixtures>/typescript/code/interfaces/basic_interface.ts",
+  "language": "typescript",
+  "root_scope_id": "module:<fixtures>/typescript/code/interfaces/basic_interface.ts:1:1:41:0",
+  "scopes": {
+    "module:<fixtures>/typescript/code/interfaces/basic_interface.ts:1:1:41:0": {
+      "id": "module:<fixtures>/typescript/code/interfaces/basic_interface.ts:1:1:41:0",
+      "parent_id": null,
+      "name": null,
+      "type": "module",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/interfaces/basic_interface.ts",
+        "start_line": 1,
+        "start_column": 1,
+        "end_line": 41,
+        "end_column": 0
+      },
+      "child_ids": [
+        "class:<fixtures>/typescript/code/interfaces/basic_interface.ts:6:16:11:1",
+        "class:<fixtures>/typescript/code/interfaces/basic_interface.ts:13:19:18:1",
+        "class:<fixtures>/typescript/code/interfaces/basic_interface.ts:20:25:25:1",
+        "class:<fixtures>/typescript/code/interfaces/basic_interface.ts:28:22:33:1",
+        "class:<fixtures>/typescript/code/interfaces/basic_interface.ts:36:22:38:1"
+      ]
+    },
+    "class:<fixtures>/typescript/code/interfaces/basic_interface.ts:6:16:11:1": {
+      "id": "class:<fixtures>/typescript/code/interfaces/basic_interface.ts:6:16:11:1",
+      "parent_id": "module:<fixtures>/typescript/code/interfaces/basic_interface.ts:1:1:41:0",
+      "name": "User",
+      "type": "class",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/interfaces/basic_interface.ts",
+        "start_line": 6,
+        "start_column": 16,
+        "end_line": 11,
+        "end_column": 1
+      },
+      "child_ids": []
+    },
+    "class:<fixtures>/typescript/code/interfaces/basic_interface.ts:13:19:18:1": {
+      "id": "class:<fixtures>/typescript/code/interfaces/basic_interface.ts:13:19:18:1",
+      "parent_id": "module:<fixtures>/typescript/code/interfaces/basic_interface.ts:1:1:41:0",
+      "name": "Product",
+      "type": "class",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/interfaces/basic_interface.ts",
+        "start_line": 13,
+        "start_column": 19,
+        "end_line": 18,
+        "end_column": 1
+      },
+      "child_ids": []
+    },
+    "class:<fixtures>/typescript/code/interfaces/basic_interface.ts:20:25:25:1": {
+      "id": "class:<fixtures>/typescript/code/interfaces/basic_interface.ts:20:25:25:1",
+      "parent_id": "module:<fixtures>/typescript/code/interfaces/basic_interface.ts:1:1:41:0",
+      "name": "Repository",
+      "type": "class",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/interfaces/basic_interface.ts",
+        "start_line": 20,
+        "start_column": 25,
+        "end_line": 25,
+        "end_column": 1
+      },
+      "child_ids": [
+        "method:<fixtures>/typescript/code/interfaces/basic_interface.ts:21:13:21:24",
+        "method:<fixtures>/typescript/code/interfaces/basic_interface.ts:22:11:22:12",
+        "method:<fixtures>/typescript/code/interfaces/basic_interface.ts:23:7:23:15",
+        "method:<fixtures>/typescript/code/interfaces/basic_interface.ts:24:9:24:20"
+      ]
+    },
+    "method:<fixtures>/typescript/code/interfaces/basic_interface.ts:21:13:21:24": {
+      "id": "method:<fixtures>/typescript/code/interfaces/basic_interface.ts:21:13:21:24",
+      "parent_id": "class:<fixtures>/typescript/code/interfaces/basic_interface.ts:20:25:25:1",
+      "name": "find_by_id",
+      "type": "method",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/interfaces/basic_interface.ts",
+        "start_line": 21,
+        "start_column": 13,
+        "end_line": 21,
+        "end_column": 24
+      },
+      "child_ids": []
+    },
+    "method:<fixtures>/typescript/code/interfaces/basic_interface.ts:22:11:22:12": {
+      "id": "method:<fixtures>/typescript/code/interfaces/basic_interface.ts:22:11:22:12",
+      "parent_id": "class:<fixtures>/typescript/code/interfaces/basic_interface.ts:20:25:25:1",
+      "name": "find_all",
+      "type": "method",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/interfaces/basic_interface.ts",
+        "start_line": 22,
+        "start_column": 11,
+        "end_line": 22,
+        "end_column": 12
+      },
+      "child_ids": []
+    },
+    "method:<fixtures>/typescript/code/interfaces/basic_interface.ts:23:7:23:15": {
+      "id": "method:<fixtures>/typescript/code/interfaces/basic_interface.ts:23:7:23:15",
+      "parent_id": "class:<fixtures>/typescript/code/interfaces/basic_interface.ts:20:25:25:1",
+      "name": "save",
+      "type": "method",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/interfaces/basic_interface.ts",
+        "start_line": 23,
+        "start_column": 7,
+        "end_line": 23,
+        "end_column": 15
+      },
+      "child_ids": []
+    },
+    "method:<fixtures>/typescript/code/interfaces/basic_interface.ts:24:9:24:20": {
+      "id": "method:<fixtures>/typescript/code/interfaces/basic_interface.ts:24:9:24:20",
+      "parent_id": "class:<fixtures>/typescript/code/interfaces/basic_interface.ts:20:25:25:1",
+      "name": "delete",
+      "type": "method",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/interfaces/basic_interface.ts",
+        "start_line": 24,
+        "start_column": 9,
+        "end_line": 24,
+        "end_column": 20
+      },
+      "child_ids": []
+    },
+    "class:<fixtures>/typescript/code/interfaces/basic_interface.ts:28:22:33:1": {
+      "id": "class:<fixtures>/typescript/code/interfaces/basic_interface.ts:28:22:33:1",
+      "parent_id": "module:<fixtures>/typescript/code/interfaces/basic_interface.ts:1:1:41:0",
+      "name": "Calculator",
+      "type": "class",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/interfaces/basic_interface.ts",
+        "start_line": 28,
+        "start_column": 22,
+        "end_line": 33,
+        "end_column": 1
+      },
+      "child_ids": [
+        "method:<fixtures>/typescript/code/interfaces/basic_interface.ts:29:6:29:27",
+        "method:<fixtures>/typescript/code/interfaces/basic_interface.ts:30:11:30:32",
+        "method:<fixtures>/typescript/code/interfaces/basic_interface.ts:31:11:31:32",
+        "method:<fixtures>/typescript/code/interfaces/basic_interface.ts:32:9:32:30"
+      ]
+    },
+    "method:<fixtures>/typescript/code/interfaces/basic_interface.ts:29:6:29:27": {
+      "id": "method:<fixtures>/typescript/code/interfaces/basic_interface.ts:29:6:29:27",
+      "parent_id": "class:<fixtures>/typescript/code/interfaces/basic_interface.ts:28:22:33:1",
+      "name": "add",
+      "type": "method",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/interfaces/basic_interface.ts",
+        "start_line": 29,
+        "start_column": 6,
+        "end_line": 29,
+        "end_column": 27
+      },
+      "child_ids": []
+    },
+    "method:<fixtures>/typescript/code/interfaces/basic_interface.ts:30:11:30:32": {
+      "id": "method:<fixtures>/typescript/code/interfaces/basic_interface.ts:30:11:30:32",
+      "parent_id": "class:<fixtures>/typescript/code/interfaces/basic_interface.ts:28:22:33:1",
+      "name": "subtract",
+      "type": "method",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/interfaces/basic_interface.ts",
+        "start_line": 30,
+        "start_column": 11,
+        "end_line": 30,
+        "end_column": 32
+      },
+      "child_ids": []
+    },
+    "method:<fixtures>/typescript/code/interfaces/basic_interface.ts:31:11:31:32": {
+      "id": "method:<fixtures>/typescript/code/interfaces/basic_interface.ts:31:11:31:32",
+      "parent_id": "class:<fixtures>/typescript/code/interfaces/basic_interface.ts:28:22:33:1",
+      "name": "multiply",
+      "type": "method",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/interfaces/basic_interface.ts",
+        "start_line": 31,
+        "start_column": 11,
+        "end_line": 31,
+        "end_column": 32
+      },
+      "child_ids": []
+    },
+    "method:<fixtures>/typescript/code/interfaces/basic_interface.ts:32:9:32:30": {
+      "id": "method:<fixtures>/typescript/code/interfaces/basic_interface.ts:32:9:32:30",
+      "parent_id": "class:<fixtures>/typescript/code/interfaces/basic_interface.ts:28:22:33:1",
+      "name": "divide",
+      "type": "method",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/interfaces/basic_interface.ts",
+        "start_line": 32,
+        "start_column": 9,
+        "end_line": 32,
+        "end_column": 30
+      },
+      "child_ids": []
+    },
+    "class:<fixtures>/typescript/code/interfaces/basic_interface.ts:36:22:38:1": {
+      "id": "class:<fixtures>/typescript/code/interfaces/basic_interface.ts:36:22:38:1",
+      "parent_id": "module:<fixtures>/typescript/code/interfaces/basic_interface.ts:1:1:41:0",
+      "name": "Dictionary",
+      "type": "class",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/interfaces/basic_interface.ts",
+        "start_line": 36,
+        "start_column": 22,
+        "end_line": 38,
+        "end_column": 1
+      },
+      "child_ids": []
+    }
+  },
+  "functions": {},
+  "classes": {},
+  "variables": {},
+  "interfaces": {
+    "interface:<fixtures>/typescript/code/interfaces/basic_interface.ts:6:1:11:1:interface User {\n  id: number;\n  name: string;\n  email: string;\n  age?: number;\n}": {
+      "kind": "interface",
+      "symbol_id": "interface:<fixtures>/typescript/code/interfaces/basic_interface.ts:6:1:11:1:interface User {\n  id: number;\n  name: string;\n  email: string;\n  age?: number;\n}",
+      "name": "interface User {\n  id: number;\n  name: string;\n  email: string;\n  age?: number;\n}",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/interfaces/basic_interface.ts",
+        "start_line": 6,
+        "start_column": 1,
+        "end_line": 11,
+        "end_column": 1
+      },
+      "defining_scope_id": "module:<fixtures>/typescript/code/interfaces/basic_interface.ts:1:1:41:0",
+      "is_exported": false,
+      "extends": [],
+      "methods": [],
+      "properties": []
+    },
+    "interface:<fixtures>/typescript/code/interfaces/basic_interface.ts:6:11:6:14:User": {
+      "kind": "interface",
+      "symbol_id": "interface:<fixtures>/typescript/code/interfaces/basic_interface.ts:6:11:6:14:User",
+      "name": "User",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/interfaces/basic_interface.ts",
+        "start_line": 6,
+        "start_column": 11,
+        "end_line": 6,
+        "end_column": 14
+      },
+      "defining_scope_id": "module:<fixtures>/typescript/code/interfaces/basic_interface.ts:1:1:41:0",
+      "is_exported": true,
+      "export": {
+        "is_reexport": false
+      },
+      "extends": [],
+      "methods": [],
+      "properties": [
+        {
+          "kind": "property",
+          "symbol_id": "property:<fixtures>/typescript/code/interfaces/basic_interface.ts:7:3:7:4:id",
+          "name": "id",
+          "type": "number",
+          "defining_scope_id": "class:<fixtures>/typescript/code/interfaces/basic_interface.ts:6:16:11:1",
+          "location": {
+            "file_path": "<fixtures>/typescript/code/interfaces/basic_interface.ts",
+            "start_line": 7,
+            "start_column": 3,
+            "end_line": 7,
+            "end_column": 4
+          },
+          "decorators": []
+        },
+        {
+          "kind": "property",
+          "symbol_id": "property:<fixtures>/typescript/code/interfaces/basic_interface.ts:8:3:8:6:name",
+          "name": "name",
+          "type": "string",
+          "defining_scope_id": "class:<fixtures>/typescript/code/interfaces/basic_interface.ts:6:16:11:1",
+          "location": {
+            "file_path": "<fixtures>/typescript/code/interfaces/basic_interface.ts",
+            "start_line": 8,
+            "start_column": 3,
+            "end_line": 8,
+            "end_column": 6
+          },
+          "decorators": []
+        },
+        {
+          "kind": "property",
+          "symbol_id": "property:<fixtures>/typescript/code/interfaces/basic_interface.ts:9:3:9:7:email",
+          "name": "email",
+          "type": "string",
+          "defining_scope_id": "class:<fixtures>/typescript/code/interfaces/basic_interface.ts:6:16:11:1",
+          "location": {
+            "file_path": "<fixtures>/typescript/code/interfaces/basic_interface.ts",
+            "start_line": 9,
+            "start_column": 3,
+            "end_line": 9,
+            "end_column": 7
+          },
+          "decorators": []
+        },
+        {
+          "kind": "property",
+          "symbol_id": "property:<fixtures>/typescript/code/interfaces/basic_interface.ts:10:3:10:5:age",
+          "name": "age",
+          "type": "number",
+          "defining_scope_id": "class:<fixtures>/typescript/code/interfaces/basic_interface.ts:6:16:11:1",
+          "location": {
+            "file_path": "<fixtures>/typescript/code/interfaces/basic_interface.ts",
+            "start_line": 10,
+            "start_column": 3,
+            "end_line": 10,
+            "end_column": 5
+          },
+          "decorators": []
+        }
+      ]
+    },
+    "interface:<fixtures>/typescript/code/interfaces/basic_interface.ts:13:1:18:1:interface Product {\n  readonly id: string;\n  name: string;\n  price: number;\n  in_stock: boolean;\n}": {
+      "kind": "interface",
+      "symbol_id": "interface:<fixtures>/typescript/code/interfaces/basic_interface.ts:13:1:18:1:interface Product {\n  readonly id: string;\n  name: string;\n  price: number;\n  in_stock: boolean;\n}",
+      "name": "interface Product {\n  readonly id: string;\n  name: string;\n  price: number;\n  in_stock: boolean;\n}",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/interfaces/basic_interface.ts",
+        "start_line": 13,
+        "start_column": 1,
+        "end_line": 18,
+        "end_column": 1
+      },
+      "defining_scope_id": "module:<fixtures>/typescript/code/interfaces/basic_interface.ts:1:1:41:0",
+      "is_exported": false,
+      "extends": [],
+      "methods": [],
+      "properties": []
+    },
+    "interface:<fixtures>/typescript/code/interfaces/basic_interface.ts:13:11:13:17:Product": {
+      "kind": "interface",
+      "symbol_id": "interface:<fixtures>/typescript/code/interfaces/basic_interface.ts:13:11:13:17:Product",
+      "name": "Product",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/interfaces/basic_interface.ts",
+        "start_line": 13,
+        "start_column": 11,
+        "end_line": 13,
+        "end_column": 17
+      },
+      "defining_scope_id": "module:<fixtures>/typescript/code/interfaces/basic_interface.ts:1:1:41:0",
+      "is_exported": true,
+      "export": {
+        "is_reexport": false
+      },
+      "extends": [],
+      "methods": [],
+      "properties": [
+        {
+          "kind": "property",
+          "symbol_id": "property:<fixtures>/typescript/code/interfaces/basic_interface.ts:14:12:14:13:id",
+          "name": "id",
+          "type": "string",
+          "defining_scope_id": "class:<fixtures>/typescript/code/interfaces/basic_interface.ts:13:19:18:1",
+          "location": {
+            "file_path": "<fixtures>/typescript/code/interfaces/basic_interface.ts",
+            "start_line": 14,
+            "start_column": 12,
+            "end_line": 14,
+            "end_column": 13
+          },
+          "decorators": []
+        },
+        {
+          "kind": "property",
+          "symbol_id": "property:<fixtures>/typescript/code/interfaces/basic_interface.ts:15:3:15:6:name",
+          "name": "name",
+          "type": "string",
+          "defining_scope_id": "class:<fixtures>/typescript/code/interfaces/basic_interface.ts:13:19:18:1",
+          "location": {
+            "file_path": "<fixtures>/typescript/code/interfaces/basic_interface.ts",
+            "start_line": 15,
+            "start_column": 3,
+            "end_line": 15,
+            "end_column": 6
+          },
+          "decorators": []
+        },
+        {
+          "kind": "property",
+          "symbol_id": "property:<fixtures>/typescript/code/interfaces/basic_interface.ts:16:3:16:7:price",
+          "name": "price",
+          "type": "number",
+          "defining_scope_id": "class:<fixtures>/typescript/code/interfaces/basic_interface.ts:13:19:18:1",
+          "location": {
+            "file_path": "<fixtures>/typescript/code/interfaces/basic_interface.ts",
+            "start_line": 16,
+            "start_column": 3,
+            "end_line": 16,
+            "end_column": 7
+          },
+          "decorators": []
+        },
+        {
+          "kind": "property",
+          "symbol_id": "property:<fixtures>/typescript/code/interfaces/basic_interface.ts:17:3:17:10:in_stock",
+          "name": "in_stock",
+          "type": "boolean",
+          "defining_scope_id": "class:<fixtures>/typescript/code/interfaces/basic_interface.ts:13:19:18:1",
+          "location": {
+            "file_path": "<fixtures>/typescript/code/interfaces/basic_interface.ts",
+            "start_line": 17,
+            "start_column": 3,
+            "end_line": 17,
+            "end_column": 10
+          },
+          "decorators": []
+        }
+      ]
+    },
+    "interface:<fixtures>/typescript/code/interfaces/basic_interface.ts:20:1:25:1:interface Repository<T> {\n  find_by_id(id: string): T | null;\n  find_all(): T[];\n  save(item: T): void;\n  delete(id: string): boolean;\n}": {
+      "kind": "interface",
+      "symbol_id": "interface:<fixtures>/typescript/code/interfaces/basic_interface.ts:20:1:25:1:interface Repository<T> {\n  find_by_id(id: string): T | null;\n  find_all(): T[];\n  save(item: T): void;\n  delete(id: string): boolean;\n}",
+      "name": "interface Repository<T> {\n  find_by_id(id: string): T | null;\n  find_all(): T[];\n  save(item: T): void;\n  delete(id: string): boolean;\n}",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/interfaces/basic_interface.ts",
+        "start_line": 20,
+        "start_column": 1,
+        "end_line": 25,
+        "end_column": 1
+      },
+      "defining_scope_id": "module:<fixtures>/typescript/code/interfaces/basic_interface.ts:1:1:41:0",
+      "is_exported": false,
+      "extends": [],
+      "methods": [],
+      "properties": []
+    },
+    "interface:<fixtures>/typescript/code/interfaces/basic_interface.ts:20:11:20:20:Repository": {
+      "kind": "interface",
+      "symbol_id": "interface:<fixtures>/typescript/code/interfaces/basic_interface.ts:20:11:20:20:Repository",
+      "name": "Repository",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/interfaces/basic_interface.ts",
+        "start_line": 20,
+        "start_column": 11,
+        "end_line": 20,
+        "end_column": 20
+      },
+      "defining_scope_id": "module:<fixtures>/typescript/code/interfaces/basic_interface.ts:1:1:41:0",
+      "is_exported": true,
+      "export": {
+        "is_reexport": false
+      },
+      "extends": [],
+      "methods": [
+        {
+          "kind": "method",
+          "symbol_id": "method:<fixtures>/typescript/code/interfaces/basic_interface.ts:21:3:21:12:find_by_id",
+          "name": "find_by_id",
+          "location": {
+            "file_path": "<fixtures>/typescript/code/interfaces/basic_interface.ts",
+            "start_line": 21,
+            "start_column": 3,
+            "end_line": 21,
+            "end_column": 12
+          },
+          "defining_scope_id": "class:<fixtures>/typescript/code/interfaces/basic_interface.ts:20:25:25:1",
+          "return_type": "T | null",
+          "generics": [],
+          "parameters": [
+            {
+              "kind": "parameter",
+              "defining_scope_id": "method:<fixtures>/typescript/code/interfaces/basic_interface.ts:21:13:21:24",
+              "symbol_id": "parameter:<fixtures>/typescript/code/interfaces/basic_interface.ts:21:14:21:15:id",
+              "name": "id",
+              "location": {
+                "file_path": "<fixtures>/typescript/code/interfaces/basic_interface.ts",
+                "start_line": 21,
+                "start_column": 14,
+                "end_line": 21,
+                "end_column": 15
+              },
+              "type": "string",
+              "optional": false
+            }
+          ]
+        },
+        {
+          "kind": "method",
+          "symbol_id": "method:<fixtures>/typescript/code/interfaces/basic_interface.ts:22:3:22:10:find_all",
+          "name": "find_all",
+          "location": {
+            "file_path": "<fixtures>/typescript/code/interfaces/basic_interface.ts",
+            "start_line": 22,
+            "start_column": 3,
+            "end_line": 22,
+            "end_column": 10
+          },
+          "defining_scope_id": "class:<fixtures>/typescript/code/interfaces/basic_interface.ts:20:25:25:1",
+          "return_type": "T[]",
+          "generics": [],
+          "parameters": []
+        },
+        {
+          "kind": "method",
+          "symbol_id": "method:<fixtures>/typescript/code/interfaces/basic_interface.ts:23:3:23:6:save",
+          "name": "save",
+          "location": {
+            "file_path": "<fixtures>/typescript/code/interfaces/basic_interface.ts",
+            "start_line": 23,
+            "start_column": 3,
+            "end_line": 23,
+            "end_column": 6
+          },
+          "defining_scope_id": "class:<fixtures>/typescript/code/interfaces/basic_interface.ts:20:25:25:1",
+          "return_type": "void",
+          "generics": [],
+          "parameters": [
+            {
+              "kind": "parameter",
+              "defining_scope_id": "method:<fixtures>/typescript/code/interfaces/basic_interface.ts:23:7:23:15",
+              "symbol_id": "parameter:<fixtures>/typescript/code/interfaces/basic_interface.ts:23:8:23:11:item",
+              "name": "item",
+              "location": {
+                "file_path": "<fixtures>/typescript/code/interfaces/basic_interface.ts",
+                "start_line": 23,
+                "start_column": 8,
+                "end_line": 23,
+                "end_column": 11
+              },
+              "type": "T",
+              "optional": false
+            }
+          ]
+        },
+        {
+          "kind": "method",
+          "symbol_id": "method:<fixtures>/typescript/code/interfaces/basic_interface.ts:24:3:24:8:delete",
+          "name": "delete",
+          "location": {
+            "file_path": "<fixtures>/typescript/code/interfaces/basic_interface.ts",
+            "start_line": 24,
+            "start_column": 3,
+            "end_line": 24,
+            "end_column": 8
+          },
+          "defining_scope_id": "class:<fixtures>/typescript/code/interfaces/basic_interface.ts:20:25:25:1",
+          "return_type": "boolean",
+          "generics": [],
+          "parameters": [
+            {
+              "kind": "parameter",
+              "defining_scope_id": "method:<fixtures>/typescript/code/interfaces/basic_interface.ts:24:9:24:20",
+              "symbol_id": "parameter:<fixtures>/typescript/code/interfaces/basic_interface.ts:24:10:24:11:id",
+              "name": "id",
+              "location": {
+                "file_path": "<fixtures>/typescript/code/interfaces/basic_interface.ts",
+                "start_line": 24,
+                "start_column": 10,
+                "end_line": 24,
+                "end_column": 11
+              },
+              "type": "string",
+              "optional": false
+            }
+          ]
+        }
+      ],
+      "properties": []
+    },
+    "interface:<fixtures>/typescript/code/interfaces/basic_interface.ts:28:1:33:1:interface Calculator {\n  add(a: number, b: number): number;\n  subtract(a: number, b: number): number;\n  multiply(a: number, b: number): number;\n  divide(a: number, b: number): number;\n}": {
+      "kind": "interface",
+      "symbol_id": "interface:<fixtures>/typescript/code/interfaces/basic_interface.ts:28:1:33:1:interface Calculator {\n  add(a: number, b: number): number;\n  subtract(a: number, b: number): number;\n  multiply(a: number, b: number): number;\n  divide(a: number, b: number): number;\n}",
+      "name": "interface Calculator {\n  add(a: number, b: number): number;\n  subtract(a: number, b: number): number;\n  multiply(a: number, b: number): number;\n  divide(a: number, b: number): number;\n}",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/interfaces/basic_interface.ts",
+        "start_line": 28,
+        "start_column": 1,
+        "end_line": 33,
+        "end_column": 1
+      },
+      "defining_scope_id": "module:<fixtures>/typescript/code/interfaces/basic_interface.ts:1:1:41:0",
+      "is_exported": false,
+      "extends": [],
+      "methods": [],
+      "properties": []
+    },
+    "interface:<fixtures>/typescript/code/interfaces/basic_interface.ts:28:11:28:20:Calculator": {
+      "kind": "interface",
+      "symbol_id": "interface:<fixtures>/typescript/code/interfaces/basic_interface.ts:28:11:28:20:Calculator",
+      "name": "Calculator",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/interfaces/basic_interface.ts",
+        "start_line": 28,
+        "start_column": 11,
+        "end_line": 28,
+        "end_column": 20
+      },
+      "defining_scope_id": "module:<fixtures>/typescript/code/interfaces/basic_interface.ts:1:1:41:0",
+      "is_exported": true,
+      "export": {
+        "is_reexport": false
+      },
+      "extends": [],
+      "methods": [
+        {
+          "kind": "method",
+          "symbol_id": "method:<fixtures>/typescript/code/interfaces/basic_interface.ts:29:3:29:5:add",
+          "name": "add",
+          "location": {
+            "file_path": "<fixtures>/typescript/code/interfaces/basic_interface.ts",
+            "start_line": 29,
+            "start_column": 3,
+            "end_line": 29,
+            "end_column": 5
+          },
+          "defining_scope_id": "class:<fixtures>/typescript/code/interfaces/basic_interface.ts:28:22:33:1",
+          "return_type": "number",
+          "generics": [],
+          "parameters": [
+            {
+              "kind": "parameter",
+              "defining_scope_id": "method:<fixtures>/typescript/code/interfaces/basic_interface.ts:29:6:29:27",
+              "symbol_id": "parameter:<fixtures>/typescript/code/interfaces/basic_interface.ts:29:7:29:7:a",
+              "name": "a",
+              "location": {
+                "file_path": "<fixtures>/typescript/code/interfaces/basic_interface.ts",
+                "start_line": 29,
+                "start_column": 7,
+                "end_line": 29,
+                "end_column": 7
+              },
+              "type": "number",
+              "optional": false
+            },
+            {
+              "kind": "parameter",
+              "defining_scope_id": "method:<fixtures>/typescript/code/interfaces/basic_interface.ts:29:6:29:27",
+              "symbol_id": "parameter:<fixtures>/typescript/code/interfaces/basic_interface.ts:29:18:29:18:b",
+              "name": "b",
+              "location": {
+                "file_path": "<fixtures>/typescript/code/interfaces/basic_interface.ts",
+                "start_line": 29,
+                "start_column": 18,
+                "end_line": 29,
+                "end_column": 18
+              },
+              "type": "number",
+              "optional": false
+            }
+          ]
+        },
+        {
+          "kind": "method",
+          "symbol_id": "method:<fixtures>/typescript/code/interfaces/basic_interface.ts:30:3:30:10:subtract",
+          "name": "subtract",
+          "location": {
+            "file_path": "<fixtures>/typescript/code/interfaces/basic_interface.ts",
+            "start_line": 30,
+            "start_column": 3,
+            "end_line": 30,
+            "end_column": 10
+          },
+          "defining_scope_id": "class:<fixtures>/typescript/code/interfaces/basic_interface.ts:28:22:33:1",
+          "return_type": "number",
+          "generics": [],
+          "parameters": [
+            {
+              "kind": "parameter",
+              "defining_scope_id": "method:<fixtures>/typescript/code/interfaces/basic_interface.ts:30:11:30:32",
+              "symbol_id": "parameter:<fixtures>/typescript/code/interfaces/basic_interface.ts:30:12:30:12:a",
+              "name": "a",
+              "location": {
+                "file_path": "<fixtures>/typescript/code/interfaces/basic_interface.ts",
+                "start_line": 30,
+                "start_column": 12,
+                "end_line": 30,
+                "end_column": 12
+              },
+              "type": "number",
+              "optional": false
+            },
+            {
+              "kind": "parameter",
+              "defining_scope_id": "method:<fixtures>/typescript/code/interfaces/basic_interface.ts:30:11:30:32",
+              "symbol_id": "parameter:<fixtures>/typescript/code/interfaces/basic_interface.ts:30:23:30:23:b",
+              "name": "b",
+              "location": {
+                "file_path": "<fixtures>/typescript/code/interfaces/basic_interface.ts",
+                "start_line": 30,
+                "start_column": 23,
+                "end_line": 30,
+                "end_column": 23
+              },
+              "type": "number",
+              "optional": false
+            }
+          ]
+        },
+        {
+          "kind": "method",
+          "symbol_id": "method:<fixtures>/typescript/code/interfaces/basic_interface.ts:31:3:31:10:multiply",
+          "name": "multiply",
+          "location": {
+            "file_path": "<fixtures>/typescript/code/interfaces/basic_interface.ts",
+            "start_line": 31,
+            "start_column": 3,
+            "end_line": 31,
+            "end_column": 10
+          },
+          "defining_scope_id": "class:<fixtures>/typescript/code/interfaces/basic_interface.ts:28:22:33:1",
+          "return_type": "number",
+          "generics": [],
+          "parameters": [
+            {
+              "kind": "parameter",
+              "defining_scope_id": "method:<fixtures>/typescript/code/interfaces/basic_interface.ts:31:11:31:32",
+              "symbol_id": "parameter:<fixtures>/typescript/code/interfaces/basic_interface.ts:31:12:31:12:a",
+              "name": "a",
+              "location": {
+                "file_path": "<fixtures>/typescript/code/interfaces/basic_interface.ts",
+                "start_line": 31,
+                "start_column": 12,
+                "end_line": 31,
+                "end_column": 12
+              },
+              "type": "number",
+              "optional": false
+            },
+            {
+              "kind": "parameter",
+              "defining_scope_id": "method:<fixtures>/typescript/code/interfaces/basic_interface.ts:31:11:31:32",
+              "symbol_id": "parameter:<fixtures>/typescript/code/interfaces/basic_interface.ts:31:23:31:23:b",
+              "name": "b",
+              "location": {
+                "file_path": "<fixtures>/typescript/code/interfaces/basic_interface.ts",
+                "start_line": 31,
+                "start_column": 23,
+                "end_line": 31,
+                "end_column": 23
+              },
+              "type": "number",
+              "optional": false
+            }
+          ]
+        },
+        {
+          "kind": "method",
+          "symbol_id": "method:<fixtures>/typescript/code/interfaces/basic_interface.ts:32:3:32:8:divide",
+          "name": "divide",
+          "location": {
+            "file_path": "<fixtures>/typescript/code/interfaces/basic_interface.ts",
+            "start_line": 32,
+            "start_column": 3,
+            "end_line": 32,
+            "end_column": 8
+          },
+          "defining_scope_id": "class:<fixtures>/typescript/code/interfaces/basic_interface.ts:28:22:33:1",
+          "return_type": "number",
+          "generics": [],
+          "parameters": [
+            {
+              "kind": "parameter",
+              "defining_scope_id": "method:<fixtures>/typescript/code/interfaces/basic_interface.ts:32:9:32:30",
+              "symbol_id": "parameter:<fixtures>/typescript/code/interfaces/basic_interface.ts:32:10:32:10:a",
+              "name": "a",
+              "location": {
+                "file_path": "<fixtures>/typescript/code/interfaces/basic_interface.ts",
+                "start_line": 32,
+                "start_column": 10,
+                "end_line": 32,
+                "end_column": 10
+              },
+              "type": "number",
+              "optional": false
+            },
+            {
+              "kind": "parameter",
+              "defining_scope_id": "method:<fixtures>/typescript/code/interfaces/basic_interface.ts:32:9:32:30",
+              "symbol_id": "parameter:<fixtures>/typescript/code/interfaces/basic_interface.ts:32:21:32:21:b",
+              "name": "b",
+              "location": {
+                "file_path": "<fixtures>/typescript/code/interfaces/basic_interface.ts",
+                "start_line": 32,
+                "start_column": 21,
+                "end_line": 32,
+                "end_column": 21
+              },
+              "type": "number",
+              "optional": false
+            }
+          ]
+        }
+      ],
+      "properties": []
+    },
+    "interface:<fixtures>/typescript/code/interfaces/basic_interface.ts:36:1:38:1:interface Dictionary {\n  [key: string]: string;\n}": {
+      "kind": "interface",
+      "symbol_id": "interface:<fixtures>/typescript/code/interfaces/basic_interface.ts:36:1:38:1:interface Dictionary {\n  [key: string]: string;\n}",
+      "name": "interface Dictionary {\n  [key: string]: string;\n}",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/interfaces/basic_interface.ts",
+        "start_line": 36,
+        "start_column": 1,
+        "end_line": 38,
+        "end_column": 1
+      },
+      "defining_scope_id": "module:<fixtures>/typescript/code/interfaces/basic_interface.ts:1:1:41:0",
+      "is_exported": false,
+      "extends": [],
+      "methods": [],
+      "properties": []
+    },
+    "interface:<fixtures>/typescript/code/interfaces/basic_interface.ts:36:11:36:20:Dictionary": {
+      "kind": "interface",
+      "symbol_id": "interface:<fixtures>/typescript/code/interfaces/basic_interface.ts:36:11:36:20:Dictionary",
+      "name": "Dictionary",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/interfaces/basic_interface.ts",
+        "start_line": 36,
+        "start_column": 11,
+        "end_line": 36,
+        "end_column": 20
+      },
+      "defining_scope_id": "module:<fixtures>/typescript/code/interfaces/basic_interface.ts:1:1:41:0",
+      "is_exported": true,
+      "export": {
+        "is_reexport": false
+      },
+      "extends": [],
+      "methods": [],
+      "properties": []
+    }
+  },
+  "enums": {},
+  "namespaces": {},
+  "types": {},
+  "imported_symbols": {},
+  "references": [
+    {
+      "kind": "type_reference",
+      "name": "User",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/interfaces/basic_interface.ts",
+        "start_line": 6,
+        "start_column": 11,
+        "end_line": 6,
+        "end_column": 14
+      },
+      "scope_id": "module:<fixtures>/typescript/code/interfaces/basic_interface.ts:1:1:41:0",
+      "type_context": "annotation",
+      "type_info": {
+        "type_id": "type:<fixtures>/typescript/code/interfaces/basic_interface.ts:6:11:6:14:User",
+        "type_name": "User",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "kind": "type_reference",
+      "name": "Product",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/interfaces/basic_interface.ts",
+        "start_line": 13,
+        "start_column": 11,
+        "end_line": 13,
+        "end_column": 17
+      },
+      "scope_id": "module:<fixtures>/typescript/code/interfaces/basic_interface.ts:1:1:41:0",
+      "type_context": "annotation",
+      "type_info": {
+        "type_id": "type:<fixtures>/typescript/code/interfaces/basic_interface.ts:13:11:13:17:Product",
+        "type_name": "Product",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "kind": "type_reference",
+      "name": "Repository",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/interfaces/basic_interface.ts",
+        "start_line": 20,
+        "start_column": 11,
+        "end_line": 20,
+        "end_column": 20
+      },
+      "scope_id": "module:<fixtures>/typescript/code/interfaces/basic_interface.ts:1:1:41:0",
+      "type_context": "annotation",
+      "type_info": {
+        "type_id": "type:<fixtures>/typescript/code/interfaces/basic_interface.ts:20:11:20:20:Repository",
+        "type_name": "Repository",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "kind": "type_reference",
+      "name": "T",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/interfaces/basic_interface.ts",
+        "start_line": 20,
+        "start_column": 22,
+        "end_line": 20,
+        "end_column": 22
+      },
+      "scope_id": "module:<fixtures>/typescript/code/interfaces/basic_interface.ts:1:1:41:0",
+      "type_context": "annotation",
+      "type_info": {
+        "type_id": "type:<fixtures>/typescript/code/interfaces/basic_interface.ts:20:22:20:22:T",
+        "type_name": "T",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "id",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/interfaces/basic_interface.ts",
+        "start_line": 21,
+        "start_column": 14,
+        "end_line": 21,
+        "end_column": 15
+      },
+      "scope_id": "method:<fixtures>/typescript/code/interfaces/basic_interface.ts:21:13:21:24",
+      "access_type": "read"
+    },
+    {
+      "kind": "type_reference",
+      "name": "T",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/interfaces/basic_interface.ts",
+        "start_line": 21,
+        "start_column": 27,
+        "end_line": 21,
+        "end_column": 27
+      },
+      "scope_id": "class:<fixtures>/typescript/code/interfaces/basic_interface.ts:20:25:25:1",
+      "type_context": "annotation",
+      "type_info": {
+        "type_id": "type:<fixtures>/typescript/code/interfaces/basic_interface.ts:21:27:21:27:T",
+        "type_name": "T",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "kind": "type_reference",
+      "name": "T",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/interfaces/basic_interface.ts",
+        "start_line": 22,
+        "start_column": 15,
+        "end_line": 22,
+        "end_column": 15
+      },
+      "scope_id": "class:<fixtures>/typescript/code/interfaces/basic_interface.ts:20:25:25:1",
+      "type_context": "annotation",
+      "type_info": {
+        "type_id": "type:<fixtures>/typescript/code/interfaces/basic_interface.ts:22:15:22:15:T",
+        "type_name": "T",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "item",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/interfaces/basic_interface.ts",
+        "start_line": 23,
+        "start_column": 8,
+        "end_line": 23,
+        "end_column": 11
+      },
+      "scope_id": "method:<fixtures>/typescript/code/interfaces/basic_interface.ts:23:7:23:15",
+      "access_type": "read"
+    },
+    {
+      "kind": "type_reference",
+      "name": "T",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/interfaces/basic_interface.ts",
+        "start_line": 23,
+        "start_column": 14,
+        "end_line": 23,
+        "end_column": 14
+      },
+      "scope_id": "method:<fixtures>/typescript/code/interfaces/basic_interface.ts:23:7:23:15",
+      "type_context": "annotation",
+      "type_info": {
+        "type_id": "type:<fixtures>/typescript/code/interfaces/basic_interface.ts:23:14:23:14:T",
+        "type_name": "T",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "id",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/interfaces/basic_interface.ts",
+        "start_line": 24,
+        "start_column": 10,
+        "end_line": 24,
+        "end_column": 11
+      },
+      "scope_id": "method:<fixtures>/typescript/code/interfaces/basic_interface.ts:24:9:24:20",
+      "access_type": "read"
+    },
+    {
+      "kind": "type_reference",
+      "name": "Calculator",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/interfaces/basic_interface.ts",
+        "start_line": 28,
+        "start_column": 11,
+        "end_line": 28,
+        "end_column": 20
+      },
+      "scope_id": "module:<fixtures>/typescript/code/interfaces/basic_interface.ts:1:1:41:0",
+      "type_context": "annotation",
+      "type_info": {
+        "type_id": "type:<fixtures>/typescript/code/interfaces/basic_interface.ts:28:11:28:20:Calculator",
+        "type_name": "Calculator",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "a",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/interfaces/basic_interface.ts",
+        "start_line": 29,
+        "start_column": 7,
+        "end_line": 29,
+        "end_column": 7
+      },
+      "scope_id": "method:<fixtures>/typescript/code/interfaces/basic_interface.ts:29:6:29:27",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "b",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/interfaces/basic_interface.ts",
+        "start_line": 29,
+        "start_column": 18,
+        "end_line": 29,
+        "end_column": 18
+      },
+      "scope_id": "method:<fixtures>/typescript/code/interfaces/basic_interface.ts:29:6:29:27",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "a",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/interfaces/basic_interface.ts",
+        "start_line": 30,
+        "start_column": 12,
+        "end_line": 30,
+        "end_column": 12
+      },
+      "scope_id": "method:<fixtures>/typescript/code/interfaces/basic_interface.ts:30:11:30:32",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "b",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/interfaces/basic_interface.ts",
+        "start_line": 30,
+        "start_column": 23,
+        "end_line": 30,
+        "end_column": 23
+      },
+      "scope_id": "method:<fixtures>/typescript/code/interfaces/basic_interface.ts:30:11:30:32",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "a",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/interfaces/basic_interface.ts",
+        "start_line": 31,
+        "start_column": 12,
+        "end_line": 31,
+        "end_column": 12
+      },
+      "scope_id": "method:<fixtures>/typescript/code/interfaces/basic_interface.ts:31:11:31:32",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "b",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/interfaces/basic_interface.ts",
+        "start_line": 31,
+        "start_column": 23,
+        "end_line": 31,
+        "end_column": 23
+      },
+      "scope_id": "method:<fixtures>/typescript/code/interfaces/basic_interface.ts:31:11:31:32",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "a",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/interfaces/basic_interface.ts",
+        "start_line": 32,
+        "start_column": 10,
+        "end_line": 32,
+        "end_column": 10
+      },
+      "scope_id": "method:<fixtures>/typescript/code/interfaces/basic_interface.ts:32:9:32:30",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "b",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/interfaces/basic_interface.ts",
+        "start_line": 32,
+        "start_column": 21,
+        "end_line": 32,
+        "end_column": 21
+      },
+      "scope_id": "method:<fixtures>/typescript/code/interfaces/basic_interface.ts:32:9:32:30",
+      "access_type": "read"
+    },
+    {
+      "kind": "type_reference",
+      "name": "Dictionary",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/interfaces/basic_interface.ts",
+        "start_line": 36,
+        "start_column": 11,
+        "end_line": 36,
+        "end_column": 20
+      },
+      "scope_id": "module:<fixtures>/typescript/code/interfaces/basic_interface.ts:1:1:41:0",
+      "type_context": "annotation",
+      "type_info": {
+        "type_id": "type:<fixtures>/typescript/code/interfaces/basic_interface.ts:36:11:36:20:Dictionary",
+        "type_name": "Dictionary",
+        "certainty": "declared",
+        "is_nullable": false
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "key",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/interfaces/basic_interface.ts",
+        "start_line": 37,
+        "start_column": 4,
+        "end_line": 37,
+        "end_column": 6
+      },
+      "scope_id": "class:<fixtures>/typescript/code/interfaces/basic_interface.ts:36:22:38:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "User",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/interfaces/basic_interface.ts",
+        "start_line": 40,
+        "start_column": 10,
+        "end_line": 40,
+        "end_column": 13
+      },
+      "scope_id": "module:<fixtures>/typescript/code/interfaces/basic_interface.ts:1:1:41:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "Product",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/interfaces/basic_interface.ts",
+        "start_line": 40,
+        "start_column": 16,
+        "end_line": 40,
+        "end_column": 22
+      },
+      "scope_id": "module:<fixtures>/typescript/code/interfaces/basic_interface.ts:1:1:41:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "Repository",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/interfaces/basic_interface.ts",
+        "start_line": 40,
+        "start_column": 25,
+        "end_line": 40,
+        "end_column": 34
+      },
+      "scope_id": "module:<fixtures>/typescript/code/interfaces/basic_interface.ts:1:1:41:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "Calculator",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/interfaces/basic_interface.ts",
+        "start_line": 40,
+        "start_column": 37,
+        "end_line": 40,
+        "end_column": 46
+      },
+      "scope_id": "module:<fixtures>/typescript/code/interfaces/basic_interface.ts:1:1:41:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "Dictionary",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/interfaces/basic_interface.ts",
+        "start_line": 40,
+        "start_column": 49,
+        "end_line": 40,
+        "end_column": 58
+      },
+      "scope_id": "module:<fixtures>/typescript/code/interfaces/basic_interface.ts:1:1:41:0",
+      "access_type": "read"
+    }
+  ]
+}

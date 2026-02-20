@@ -1,12 +1,12 @@
 {
   "mcpServers": {
-    "ariadne-local": {
+    "ariadne": {
       "type": "stdio",
       "command": "node",
-      "args": [
-        "/Users/chuck/workspace/ariadne/packages/mcp/dist/server.js"
-      ],
-      "env": {}
+      "args": ["./packages/mcp/dist/server.js"],
+      "env": {
+        "PROJECT_PATH": "."
+      }
     }
   }
 }

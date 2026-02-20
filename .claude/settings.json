@@ -1,0 +1,64 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "pnpm exec tsx \"$CLAUDE_PROJECT_DIR/.claude/hooks/file_naming_validator.ts\""
+          },
+          {
+            "type": "command",
+            "command": "pnpm exec tsx \"$CLAUDE_PROJECT_DIR/.claude/hooks/backlog_validator.ts\""
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "pnpm exec tsx \"$CLAUDE_PROJECT_DIR/.claude/hooks/eslint_post_edit.ts\""
+          },
+          {
+            "type": "command",
+            "command": "pnpm exec tsx \"$CLAUDE_PROJECT_DIR/.claude/hooks/markdown_lint.ts\""
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "pnpm exec tsx \"$CLAUDE_PROJECT_DIR/.claude/hooks/build_stop.ts\""
+          },
+          {
+            "type": "command",
+            "command": "pnpm exec tsx \"$CLAUDE_PROJECT_DIR/.claude/hooks/eslint_stop.ts\""
+          },
+          {
+            "type": "command",
+            "command": "pnpm exec tsx \"$CLAUDE_PROJECT_DIR/.claude/hooks/file_naming_validator_stop.ts\""
+          },
+          {
+            "type": "command",
+            "command": "pnpm exec tsx \"$CLAUDE_PROJECT_DIR/.claude/hooks/test_file_enforcement_stop.ts\""
+          },
+          {
+            "type": "command",
+            "command": "pnpm exec tsx \"$CLAUDE_PROJECT_DIR/.claude/hooks/run_tests_stop.ts\""
+          },
+          {
+            "type": "command",
+            "command": "pnpm exec tsx \"$CLAUDE_PROJECT_DIR/.claude/hooks/entrypoint_stop.ts\""
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,867 @@
+{
+  "file_path": "<fixtures>/javascript/code/modules/main_aliased.js",
+  "language": "javascript",
+  "root_scope_id": "module:<fixtures>/javascript/code/modules/main_aliased.js:1:1:23:0",
+  "scopes": {
+    "module:<fixtures>/javascript/code/modules/main_aliased.js:1:1:23:0": {
+      "id": "module:<fixtures>/javascript/code/modules/main_aliased.js:1:1:23:0",
+      "parent_id": null,
+      "name": null,
+      "type": "module",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/main_aliased.js",
+        "start_line": 1,
+        "start_column": 1,
+        "end_line": 23,
+        "end_column": 0
+      },
+      "child_ids": []
+    }
+  },
+  "functions": {},
+  "classes": {},
+  "variables": {
+    "variable:<fixtures>/javascript/code/modules/main_aliased.js:13:7:13:13:result1": {
+      "kind": "constant",
+      "symbol_id": "variable:<fixtures>/javascript/code/modules/main_aliased.js:13:7:13:13:result1",
+      "name": "result1",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/main_aliased.js",
+        "start_line": 13,
+        "start_column": 7,
+        "end_line": 13,
+        "end_column": 13
+      },
+      "defining_scope_id": "module:<fixtures>/javascript/code/modules/main_aliased.js:1:1:23:0",
+      "is_exported": true,
+      "initial_value": "utilHelper()",
+      "initialized_from_call": "utilHelper"
+    },
+    "variable:<fixtures>/javascript/code/modules/main_aliased.js:16:7:16:13:result2": {
+      "kind": "constant",
+      "symbol_id": "variable:<fixtures>/javascript/code/modules/main_aliased.js:16:7:16:13:result2",
+      "name": "result2",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/main_aliased.js",
+        "start_line": 16,
+        "start_column": 7,
+        "end_line": 16,
+        "end_column": 13
+      },
+      "defining_scope_id": "module:<fixtures>/javascript/code/modules/main_aliased.js:1:1:23:0",
+      "is_exported": true,
+      "initial_value": "dataProcessor()",
+      "initialized_from_call": "dataProcessor"
+    },
+    "variable:<fixtures>/javascript/code/modules/main_aliased.js:19:7:19:13:manager": {
+      "kind": "constant",
+      "symbol_id": "variable:<fixtures>/javascript/code/modules/main_aliased.js:19:7:19:13:manager",
+      "name": "manager",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/main_aliased.js",
+        "start_line": 19,
+        "start_column": 7,
+        "end_line": 19,
+        "end_column": 13
+      },
+      "defining_scope_id": "module:<fixtures>/javascript/code/modules/main_aliased.js:1:1:23:0",
+      "is_exported": true,
+      "initial_value": "new Manager()"
+    },
+    "variable:<fixtures>/javascript/code/modules/main_aliased.js:20:7:20:13:result3": {
+      "kind": "constant",
+      "symbol_id": "variable:<fixtures>/javascript/code/modules/main_aliased.js:20:7:20:13:result3",
+      "name": "result3",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/main_aliased.js",
+        "start_line": 20,
+        "start_column": 7,
+        "end_line": 20,
+        "end_column": 13
+      },
+      "defining_scope_id": "module:<fixtures>/javascript/code/modules/main_aliased.js:1:1:23:0",
+      "is_exported": true,
+      "initial_value": "manager.process()",
+      "collection_source": "manager"
+    }
+  },
+  "interfaces": {},
+  "enums": {},
+  "namespaces": {},
+  "types": {},
+  "imported_symbols": {
+    "variable:<fixtures>/javascript/code/modules/main_aliased.js:7:13:7:22:utilHelper": {
+      "kind": "import",
+      "symbol_id": "variable:<fixtures>/javascript/code/modules/main_aliased.js:7:13:7:22:utilHelper",
+      "name": "utilHelper",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/main_aliased.js",
+        "start_line": 7,
+        "start_column": 13,
+        "end_line": 7,
+        "end_column": 22
+      },
+      "defining_scope_id": "module:<fixtures>/javascript/code/modules/main_aliased.js:1:1:23:0",
+      "import_path": "./utils_aliased.js",
+      "original_name": "helper",
+      "import_kind": "named"
+    },
+    "variable:<fixtures>/javascript/code/modules/main_aliased.js:8:16:8:28:dataProcessor": {
+      "kind": "import",
+      "symbol_id": "variable:<fixtures>/javascript/code/modules/main_aliased.js:8:16:8:28:dataProcessor",
+      "name": "dataProcessor",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/main_aliased.js",
+        "start_line": 8,
+        "start_column": 16,
+        "end_line": 8,
+        "end_column": 28
+      },
+      "defining_scope_id": "module:<fixtures>/javascript/code/modules/main_aliased.js:1:1:23:0",
+      "import_path": "./utils_aliased.js",
+      "original_name": "processor",
+      "import_kind": "named"
+    },
+    "variable:<fixtures>/javascript/code/modules/main_aliased.js:9:18:9:24:Manager": {
+      "kind": "import",
+      "symbol_id": "variable:<fixtures>/javascript/code/modules/main_aliased.js:9:18:9:24:Manager",
+      "name": "Manager",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/main_aliased.js",
+        "start_line": 9,
+        "start_column": 18,
+        "end_line": 9,
+        "end_column": 24
+      },
+      "defining_scope_id": "module:<fixtures>/javascript/code/modules/main_aliased.js:1:1:23:0",
+      "import_path": "./utils_aliased.js",
+      "original_name": "DataManager",
+      "import_kind": "named"
+    }
+  },
+  "references": [
+    {
+      "kind": "variable_reference",
+      "name": "helper",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/main_aliased.js",
+        "start_line": 7,
+        "start_column": 3,
+        "end_line": 7,
+        "end_column": 8
+      },
+      "scope_id": "module:<fixtures>/javascript/code/modules/main_aliased.js:1:1:23:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "utilHelper",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/main_aliased.js",
+        "start_line": 7,
+        "start_column": 13,
+        "end_line": 7,
+        "end_column": 22
+      },
+      "scope_id": "module:<fixtures>/javascript/code/modules/main_aliased.js:1:1:23:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "processor",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/main_aliased.js",
+        "start_line": 8,
+        "start_column": 3,
+        "end_line": 8,
+        "end_column": 11
+      },
+      "scope_id": "module:<fixtures>/javascript/code/modules/main_aliased.js:1:1:23:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "dataProcessor",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/main_aliased.js",
+        "start_line": 8,
+        "start_column": 16,
+        "end_line": 8,
+        "end_column": 28
+      },
+      "scope_id": "module:<fixtures>/javascript/code/modules/main_aliased.js:1:1:23:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "DataManager",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/main_aliased.js",
+        "start_line": 9,
+        "start_column": 3,
+        "end_line": 9,
+        "end_column": 13
+      },
+      "scope_id": "module:<fixtures>/javascript/code/modules/main_aliased.js:1:1:23:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "Manager",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/main_aliased.js",
+        "start_line": 9,
+        "start_column": 18,
+        "end_line": 9,
+        "end_column": 24
+      },
+      "scope_id": "module:<fixtures>/javascript/code/modules/main_aliased.js:1:1:23:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "assignment",
+      "name": "result1 = utilHelper()",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/main_aliased.js",
+        "start_line": 13,
+        "start_column": 7,
+        "end_line": 13,
+        "end_column": 28
+      },
+      "scope_id": "module:<fixtures>/javascript/code/modules/main_aliased.js:1:1:23:0",
+      "target_location": {
+        "file_path": "<fixtures>/javascript/code/modules/main_aliased.js",
+        "start_line": 13,
+        "start_column": 7,
+        "end_line": 13,
+        "end_column": 28
+      }
+    },
+    {
+      "kind": "assignment",
+      "name": "result1",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/main_aliased.js",
+        "start_line": 13,
+        "start_column": 7,
+        "end_line": 13,
+        "end_column": 13
+      },
+      "scope_id": "module:<fixtures>/javascript/code/modules/main_aliased.js:1:1:23:0",
+      "target_location": {
+        "file_path": "<fixtures>/javascript/code/modules/main_aliased.js",
+        "start_line": 13,
+        "start_column": 7,
+        "end_line": 13,
+        "end_column": 13
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "result1",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/main_aliased.js",
+        "start_line": 13,
+        "start_column": 7,
+        "end_line": 13,
+        "end_column": 13
+      },
+      "scope_id": "module:<fixtures>/javascript/code/modules/main_aliased.js:1:1:23:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "utilHelper",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/main_aliased.js",
+        "start_line": 13,
+        "start_column": 17,
+        "end_line": 13,
+        "end_column": 28
+      },
+      "scope_id": "module:<fixtures>/javascript/code/modules/main_aliased.js:1:1:23:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "function_call",
+      "name": "utilHelper",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/main_aliased.js",
+        "start_line": 13,
+        "start_column": 17,
+        "end_line": 13,
+        "end_column": 26
+      },
+      "scope_id": "module:<fixtures>/javascript/code/modules/main_aliased.js:1:1:23:0",
+      "potential_construct_target": {
+        "file_path": "<fixtures>/javascript/code/modules/main_aliased.js",
+        "start_line": 13,
+        "start_column": 7,
+        "end_line": 13,
+        "end_column": 13
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "utilHelper",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/main_aliased.js",
+        "start_line": 13,
+        "start_column": 17,
+        "end_line": 13,
+        "end_column": 26
+      },
+      "scope_id": "module:<fixtures>/javascript/code/modules/main_aliased.js:1:1:23:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "assignment",
+      "name": "result2 = dataProcessor()",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/main_aliased.js",
+        "start_line": 16,
+        "start_column": 7,
+        "end_line": 16,
+        "end_column": 31
+      },
+      "scope_id": "module:<fixtures>/javascript/code/modules/main_aliased.js:1:1:23:0",
+      "target_location": {
+        "file_path": "<fixtures>/javascript/code/modules/main_aliased.js",
+        "start_line": 16,
+        "start_column": 7,
+        "end_line": 16,
+        "end_column": 31
+      }
+    },
+    {
+      "kind": "assignment",
+      "name": "result2",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/main_aliased.js",
+        "start_line": 16,
+        "start_column": 7,
+        "end_line": 16,
+        "end_column": 13
+      },
+      "scope_id": "module:<fixtures>/javascript/code/modules/main_aliased.js:1:1:23:0",
+      "target_location": {
+        "file_path": "<fixtures>/javascript/code/modules/main_aliased.js",
+        "start_line": 16,
+        "start_column": 7,
+        "end_line": 16,
+        "end_column": 13
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "result2",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/main_aliased.js",
+        "start_line": 16,
+        "start_column": 7,
+        "end_line": 16,
+        "end_column": 13
+      },
+      "scope_id": "module:<fixtures>/javascript/code/modules/main_aliased.js:1:1:23:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "dataProcessor",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/main_aliased.js",
+        "start_line": 16,
+        "start_column": 17,
+        "end_line": 16,
+        "end_column": 31
+      },
+      "scope_id": "module:<fixtures>/javascript/code/modules/main_aliased.js:1:1:23:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "function_call",
+      "name": "dataProcessor",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/main_aliased.js",
+        "start_line": 16,
+        "start_column": 17,
+        "end_line": 16,
+        "end_column": 29
+      },
+      "scope_id": "module:<fixtures>/javascript/code/modules/main_aliased.js:1:1:23:0",
+      "potential_construct_target": {
+        "file_path": "<fixtures>/javascript/code/modules/main_aliased.js",
+        "start_line": 16,
+        "start_column": 7,
+        "end_line": 16,
+        "end_column": 13
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "dataProcessor",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/main_aliased.js",
+        "start_line": 16,
+        "start_column": 17,
+        "end_line": 16,
+        "end_column": 29
+      },
+      "scope_id": "module:<fixtures>/javascript/code/modules/main_aliased.js:1:1:23:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "assignment",
+      "name": "manager = new Manager()",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/main_aliased.js",
+        "start_line": 19,
+        "start_column": 7,
+        "end_line": 19,
+        "end_column": 29
+      },
+      "scope_id": "module:<fixtures>/javascript/code/modules/main_aliased.js:1:1:23:0",
+      "target_location": {
+        "file_path": "<fixtures>/javascript/code/modules/main_aliased.js",
+        "start_line": 19,
+        "start_column": 7,
+        "end_line": 19,
+        "end_column": 29
+      }
+    },
+    {
+      "kind": "assignment",
+      "name": "manager",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/main_aliased.js",
+        "start_line": 19,
+        "start_column": 7,
+        "end_line": 19,
+        "end_column": 13
+      },
+      "scope_id": "module:<fixtures>/javascript/code/modules/main_aliased.js:1:1:23:0",
+      "target_location": {
+        "file_path": "<fixtures>/javascript/code/modules/main_aliased.js",
+        "start_line": 19,
+        "start_column": 7,
+        "end_line": 19,
+        "end_column": 13
+      }
+    },
+    {
+      "kind": "assignment",
+      "name": "manager = new Manager()",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/main_aliased.js",
+        "start_line": 19,
+        "start_column": 7,
+        "end_line": 19,
+        "end_column": 29
+      },
+      "scope_id": "module:<fixtures>/javascript/code/modules/main_aliased.js:1:1:23:0",
+      "target_location": {
+        "file_path": "<fixtures>/javascript/code/modules/main_aliased.js",
+        "start_line": 19,
+        "start_column": 7,
+        "end_line": 19,
+        "end_column": 29
+      }
+    },
+    {
+      "kind": "assignment",
+      "name": "manager",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/main_aliased.js",
+        "start_line": 19,
+        "start_column": 7,
+        "end_line": 19,
+        "end_column": 13
+      },
+      "scope_id": "module:<fixtures>/javascript/code/modules/main_aliased.js:1:1:23:0",
+      "target_location": {
+        "file_path": "<fixtures>/javascript/code/modules/main_aliased.js",
+        "start_line": 19,
+        "start_column": 7,
+        "end_line": 19,
+        "end_column": 13
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "manager",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/main_aliased.js",
+        "start_line": 19,
+        "start_column": 7,
+        "end_line": 19,
+        "end_column": 13
+      },
+      "scope_id": "module:<fixtures>/javascript/code/modules/main_aliased.js:1:1:23:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "Manager",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/main_aliased.js",
+        "start_line": 19,
+        "start_column": 17,
+        "end_line": 19,
+        "end_column": 29
+      },
+      "scope_id": "module:<fixtures>/javascript/code/modules/main_aliased.js:1:1:23:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "Manager",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/main_aliased.js",
+        "start_line": 19,
+        "start_column": 17,
+        "end_line": 19,
+        "end_column": 29
+      },
+      "scope_id": "module:<fixtures>/javascript/code/modules/main_aliased.js:1:1:23:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "function_call",
+      "name": "Manager",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/main_aliased.js",
+        "start_line": 19,
+        "start_column": 17,
+        "end_line": 19,
+        "end_column": 29
+      },
+      "scope_id": "module:<fixtures>/javascript/code/modules/main_aliased.js:1:1:23:0",
+      "potential_construct_target": {
+        "file_path": "<fixtures>/javascript/code/modules/main_aliased.js",
+        "start_line": 19,
+        "start_column": 7,
+        "end_line": 19,
+        "end_column": 13
+      }
+    },
+    {
+      "kind": "function_call",
+      "name": "Manager",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/main_aliased.js",
+        "start_line": 19,
+        "start_column": 21,
+        "end_line": 19,
+        "end_column": 27
+      },
+      "scope_id": "module:<fixtures>/javascript/code/modules/main_aliased.js:1:1:23:0",
+      "potential_construct_target": {
+        "file_path": "<fixtures>/javascript/code/modules/main_aliased.js",
+        "start_line": 19,
+        "start_column": 7,
+        "end_line": 19,
+        "end_column": 13
+      }
+    },
+    {
+      "kind": "constructor_call",
+      "name": "Manager",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/main_aliased.js",
+        "start_line": 19,
+        "start_column": 21,
+        "end_line": 19,
+        "end_column": 27
+      },
+      "scope_id": "module:<fixtures>/javascript/code/modules/main_aliased.js:1:1:23:0",
+      "construct_target": {
+        "file_path": "<fixtures>/javascript/code/modules/main_aliased.js",
+        "start_line": 19,
+        "start_column": 7,
+        "end_line": 19,
+        "end_column": 13
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "Manager",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/main_aliased.js",
+        "start_line": 19,
+        "start_column": 21,
+        "end_line": 19,
+        "end_column": 27
+      },
+      "scope_id": "module:<fixtures>/javascript/code/modules/main_aliased.js:1:1:23:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "assignment",
+      "name": "result3 = manager.process()",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/main_aliased.js",
+        "start_line": 20,
+        "start_column": 7,
+        "end_line": 20,
+        "end_column": 33
+      },
+      "scope_id": "module:<fixtures>/javascript/code/modules/main_aliased.js:1:1:23:0",
+      "target_location": {
+        "file_path": "<fixtures>/javascript/code/modules/main_aliased.js",
+        "start_line": 20,
+        "start_column": 7,
+        "end_line": 20,
+        "end_column": 33
+      }
+    },
+    {
+      "kind": "assignment",
+      "name": "result3",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/main_aliased.js",
+        "start_line": 20,
+        "start_column": 7,
+        "end_line": 20,
+        "end_column": 13
+      },
+      "scope_id": "module:<fixtures>/javascript/code/modules/main_aliased.js:1:1:23:0",
+      "target_location": {
+        "file_path": "<fixtures>/javascript/code/modules/main_aliased.js",
+        "start_line": 20,
+        "start_column": 7,
+        "end_line": 20,
+        "end_column": 13
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "result3",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/main_aliased.js",
+        "start_line": 20,
+        "start_column": 7,
+        "end_line": 20,
+        "end_column": 13
+      },
+      "scope_id": "module:<fixtures>/javascript/code/modules/main_aliased.js:1:1:23:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "manager.process()",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/main_aliased.js",
+        "start_line": 20,
+        "start_column": 17,
+        "end_line": 20,
+        "end_column": 33
+      },
+      "scope_id": "module:<fixtures>/javascript/code/modules/main_aliased.js:1:1:23:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "method_call",
+      "name": "process",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/main_aliased.js",
+        "start_line": 20,
+        "start_column": 17,
+        "end_line": 20,
+        "end_column": 33
+      },
+      "scope_id": "module:<fixtures>/javascript/code/modules/main_aliased.js:1:1:23:0",
+      "receiver_location": {
+        "file_path": "<fixtures>/javascript/code/modules/main_aliased.js",
+        "start_line": 20,
+        "start_column": 17,
+        "end_line": 20,
+        "end_column": 23
+      },
+      "property_chain": [
+        "manager",
+        "process"
+      ],
+      "optional_chaining": false
+    },
+    {
+      "kind": "variable_reference",
+      "name": "manager",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/main_aliased.js",
+        "start_line": 20,
+        "start_column": 17,
+        "end_line": 20,
+        "end_column": 23
+      },
+      "scope_id": "module:<fixtures>/javascript/code/modules/main_aliased.js:1:1:23:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "property_access",
+      "name": "process",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/main_aliased.js",
+        "start_line": 20,
+        "start_column": 17,
+        "end_line": 20,
+        "end_column": 31
+      },
+      "scope_id": "module:<fixtures>/javascript/code/modules/main_aliased.js:1:1:23:0",
+      "receiver_location": {
+        "file_path": "<fixtures>/javascript/code/modules/main_aliased.js",
+        "start_line": 20,
+        "start_column": 17,
+        "end_line": 20,
+        "end_column": 23
+      },
+      "property_chain": [
+        "manager",
+        "process"
+      ],
+      "access_type": "property",
+      "is_optional_chain": false
+    },
+    {
+      "kind": "variable_reference",
+      "name": "manager",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/main_aliased.js",
+        "start_line": 20,
+        "start_column": 17,
+        "end_line": 20,
+        "end_column": 23
+      },
+      "scope_id": "module:<fixtures>/javascript/code/modules/main_aliased.js:1:1:23:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "property_access",
+      "name": "process",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/main_aliased.js",
+        "start_line": 20,
+        "start_column": 17,
+        "end_line": 20,
+        "end_column": 31
+      },
+      "scope_id": "module:<fixtures>/javascript/code/modules/main_aliased.js:1:1:23:0",
+      "receiver_location": {
+        "file_path": "<fixtures>/javascript/code/modules/main_aliased.js",
+        "start_line": 20,
+        "start_column": 17,
+        "end_line": 20,
+        "end_column": 23
+      },
+      "property_chain": [
+        "manager",
+        "process"
+      ],
+      "access_type": "property",
+      "is_optional_chain": false
+    },
+    {
+      "kind": "variable_reference",
+      "name": "manager",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/main_aliased.js",
+        "start_line": 20,
+        "start_column": 17,
+        "end_line": 20,
+        "end_column": 23
+      },
+      "scope_id": "module:<fixtures>/javascript/code/modules/main_aliased.js:1:1:23:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "manager",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/main_aliased.js",
+        "start_line": 20,
+        "start_column": 17,
+        "end_line": 20,
+        "end_column": 23
+      },
+      "scope_id": "module:<fixtures>/javascript/code/modules/main_aliased.js:1:1:23:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "process",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/main_aliased.js",
+        "start_line": 20,
+        "start_column": 25,
+        "end_line": 20,
+        "end_column": 31
+      },
+      "scope_id": "module:<fixtures>/javascript/code/modules/main_aliased.js:1:1:23:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "process",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/main_aliased.js",
+        "start_line": 20,
+        "start_column": 25,
+        "end_line": 20,
+        "end_column": 31
+      },
+      "scope_id": "module:<fixtures>/javascript/code/modules/main_aliased.js:1:1:23:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "result1",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/main_aliased.js",
+        "start_line": 22,
+        "start_column": 10,
+        "end_line": 22,
+        "end_column": 16
+      },
+      "scope_id": "module:<fixtures>/javascript/code/modules/main_aliased.js:1:1:23:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "result2",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/main_aliased.js",
+        "start_line": 22,
+        "start_column": 19,
+        "end_line": 22,
+        "end_column": 25
+      },
+      "scope_id": "module:<fixtures>/javascript/code/modules/main_aliased.js:1:1:23:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "result3",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/main_aliased.js",
+        "start_line": 22,
+        "start_column": 28,
+        "end_line": 22,
+        "end_column": 34
+      },
+      "scope_id": "module:<fixtures>/javascript/code/modules/main_aliased.js:1:1:23:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "manager",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/main_aliased.js",
+        "start_line": 22,
+        "start_column": 37,
+        "end_line": 22,
+        "end_column": 43
+      },
+      "scope_id": "module:<fixtures>/javascript/code/modules/main_aliased.js:1:1:23:0",
+      "access_type": "read"
+    }
+  ]
+}

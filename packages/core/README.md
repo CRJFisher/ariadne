@@ -1,20 +1,18 @@
 # @ariadnejs/core
 
-Core code intelligence engine for Ariadne - Find references and definitions in your codebase using tree-sitter.
+Code intelligence engine for detecting call graphs and entry points across multi-file codebases.
 
 ## Overview
 
-This package provides the core functionality for building a scope graph of your code's symbols, their definitions, and their references. It enables language-agnostic code intelligence by leveraging tree-sitter for parsing and custom scope resolution algorithms.
+This package provides the core functionality for building semantic indexes of code symbols, resolving cross-file references, and detecting call graphs. It uses tree-sitter for parsing and custom scope resolution algorithms.
 
 ## Features
 
-- **AST Parsing**: Uses tree-sitter to parse source code into an Abstract Syntax Tree
-- **Scope Resolution**: Builds a scope graph tracking definitions, references, imports, and lexical scopes
-- **Cross-file Symbol Resolution**: Find definitions and references across multiple files
-- **Call Graph Analysis**: Build complete function call graphs with cross-file import resolution
-- **Class Inheritance Analysis**: Track class hierarchies, interface implementations, and trait relationships
-- **Incremental Parsing**: Efficiently handles file edits by reusing unchanged AST portions
-- **Multi-language Support**: Extensible architecture supporting JavaScript, TypeScript, Python, and Rust
+- **Semantic Indexing**: Extracts definitions, references, scopes, and type information from source files
+- **Cross-file Resolution**: Resolves imports and references across multiple files
+- **Call Graph Analysis**: Builds complete function call graphs with entry point detection
+- **Indirect Reachability**: Tracks functions stored in collections (Maps, Arrays, Objects) that are read but not directly called
+- **Multi-language Support**: JavaScript, TypeScript, Python, and Rust
 
 ## Installation
 
@@ -22,43 +20,31 @@ This package provides the core functionality for building a scope graph of your 
 npm install @ariadnejs/core
 ```
 
-The package includes prebuilt binaries for common platforms, so you don't need build tools installed. If prebuilt binaries aren't available for your platform, it will automatically build from source.
+The package includes prebuilt binaries for common platforms. If prebuilt binaries aren't available for your platform, it will automatically build from source.
 
 ## Quick Start
 
 ```typescript
 import { Project } from "@ariadnejs/core";
+import { FilePath } from "@ariadnejs/types";
+import * as fs from "fs";
 
-// Create a project instance
+// Create and initialize a project
 const project = new Project();
+await project.initialize("/path/to/project" as FilePath);
 
 // Add files to the project
-project.add_or_update_file("src/main.ts", sourceCode);
-project.add_or_update_file("src/utils.ts", utilsCode);
+const source = fs.readFileSync("src/main.ts", "utf-8");
+project.update_file("src/main.ts" as FilePath, source);
 
-// Find definition of a symbol
-const definition = project.go_to_definition("src/main.ts", {
-  row: 10,
-  column: 15,
-});
+// Build call graph and find entry points
+const call_graph = project.get_call_graph();
+console.log("Entry points:", call_graph.entry_points.length);
 
-// Find all references to a symbol
-const references = project.find_references("src/utils.ts", {
-  row: 5,
-  column: 10,
-});
-
-// Get all definitions in a file
-const definitions = project.get_definitions("src/main.ts");
-
-// Build a call graph
-const callGraph = project.get_call_graph();
-console.log("Entry points:", callGraph.top_level_nodes);
-
-// Analyze class inheritance
-const classInfo = project.get_class_relationships(classDef);
-console.log("Parent class:", classInfo?.parent_class);
-console.log("Implements:", classInfo?.implemented_interfaces);
+// Inspect a specific function node
+for (const [symbol_id, node] of call_graph.nodes) {
+  console.log(`${node.name}: ${node.enclosed_calls.length} calls`);
+}
 ```
 
 ## API Reference
@@ -67,195 +53,174 @@ console.log("Implements:", classInfo?.implemented_interfaces);
 
 The main class for managing code intelligence across multiple files.
 
-#### Core Methods
+#### Initialization
 
-##### `add_or_update_file(file_path: string, source_code: string, edit?: Edit): void`
+##### `initialize(root_folder?: FilePath, excluded_folders?: string[]): Promise<void>`
 
-Adds a new file or updates an existing file in the project.
+Initializes the project with a root folder path. Must be called before adding files.
 
-- `file_path` - Unique identifier for the file
-- `source_code` - The complete source code of the file
-- `edit` - Optional edit information for incremental parsing
+- `root_folder` - Absolute path to the project root (defaults to cwd)
+- `excluded_folders` - Folder names to exclude (e.g., `["node_modules", "dist"]`)
 
-##### `remove_file(file_path: string): void`
+#### File Management
 
-Removes a file from the project.
+##### `update_file(file_id: FilePath, content: string): void`
 
-##### `go_to_definition(file_path: string, position: Point): Def | null`
+Adds a new file or updates an existing file in the project. Automatically re-resolves affected files.
 
-Finds the definition of a symbol at the given position.
+##### `remove_file(file_id: FilePath): void`
 
-- Returns `Def` object with file path and position, or `null` if not found
+Removes a file from the project and re-resolves dependent files.
 
-##### `find_references(file_path: string, position: Point): Ref[]`
+##### `get_all_files(): FilePath[]`
 
-Finds all references to the symbol at the given position across all files.
+Returns all file paths currently tracked in the project.
 
-- Returns array of `Ref` objects, each containing file path and position
+##### `get_dependents(file_id: FilePath): Set<FilePath>`
 
-##### `get_definitions(file_path: string): Def[]`
+Returns all files that import from the specified file.
 
-Get all symbol definitions in a file.
-
-- Returns array of all definitions (functions, classes, variables, etc.)
-
-##### `get_source_with_context(def: Def, file_path: string): SourceWithContext`
-
-Extract source code with documentation and decorators.
-
-- Returns source implementation, docstring, and decorators/annotations
-
-#### Call Graph Methods
+#### Call Graph
 
 ##### `get_call_graph(): CallGraph`
 
-Build a complete function call graph for the project.
+Builds the call graph from current project state.
 
-- Returns graph with nodes (functions) and edges (calls)
-- Includes entry points and cross-file relationships
+```typescript
+const call_graph = project.get_call_graph();
 
-##### `get_exported_functions(file_path: string): Def[]`
+// Entry points: functions never called (directly or indirectly)
+for (const entry_id of call_graph.entry_points) {
+  const node = call_graph.nodes.get(entry_id);
+  console.log(`Entry point: ${node?.name}`);
+}
 
-Get all exported functions from a specific file.
+// Check indirect reachability (functions in collections)
+if (call_graph.indirect_reachability) {
+  for (const [fn_id, info] of call_graph.indirect_reachability) {
+    console.log(`${fn_id} reachable via ${info.reason.type}`);
+  }
+}
+```
 
-#### Inheritance Methods
+#### Introspection
 
-##### `get_class_relationships(class_def: Def): ClassRelationship | null`
+##### `get_stats(): { file_count, definition_count, resolution_count }`
 
-Get inheritance information for a class/interface.
+Returns statistics about the project state.
 
-- Returns parent class, implemented interfaces, and resolved definitions
+##### `get_index_single_file(file_id: FilePath): SemanticIndex | undefined`
 
-##### `find_subclasses(parent_class: Def): Def[]`
+Returns the semantic index for a specific file, containing all extracted definitions, references, and scopes.
 
-Find all classes that extend a given class.
+##### `get_definition(symbol_id: SymbolId): AnyDefinition | undefined`
 
-##### `find_implementations(interface_def: Def): Def[]`
+Looks up a definition by its symbol ID.
 
-Find all classes that implement a given interface.
+##### `get_type_info(symbol_id: SymbolId): TypeMemberInfo | undefined`
 
-##### `get_inheritance_chain(class_def: Def): Def[]`
+Returns type member information for a symbol.
 
-Get the complete inheritance hierarchy for a class.
+##### `get_source_code(file_id: FilePath, location: Location): string | undefined`
 
-##### `is_subclass_of(child: Def, parent: Def): boolean`
+Extracts source code for a given location range.
 
-Check if one class inherits from another.
+#### Registries
 
-#### Incremental Updates
+The Project exposes several registries for advanced use cases:
 
-##### `update_file_range(file_path: string, start_position: Point, old_text: string, new_text: string): void`
-
-Efficiently updates a portion of a file using incremental parsing.
+- `project.definitions` - All symbol definitions
+- `project.resolutions` - Resolved references and call graph data
+- `project.scopes` - Scope hierarchy information
+- `project.types` - Type registry with member information
+- `project.imports` - Import graph between files
+- `project.exports` - Exported symbols per file
 
 ### Types
 
 ```typescript
-interface Point {
-  row: number;    // 0-indexed line number
-  column: number; // 0-indexed column number
+// Location in source code
+interface Location {
+  file_path: FilePath;
+  start_line: number;
+  start_column: number;
+  end_line: number;
+  end_column: number;
 }
 
-interface Range {
-  start: Point;
-  end: Point;
+// Call graph structure
+interface CallGraph {
+  // All callable nodes (functions, methods, constructors)
+  nodes: ReadonlyMap<SymbolId, CallableNode>;
+
+  // Functions never called - the true entry points
+  entry_points: readonly SymbolId[];
+
+  // Functions reachable through indirect mechanisms (e.g., collection reads)
+  indirect_reachability?: ReadonlyMap<SymbolId, IndirectReachability>;
 }
 
-interface Def {
-  id: number;
-  kind: "definition";
-  name: string;
-  symbol_kind: "function" | "class" | "interface" | "variable" | "method" | "property" | "type" | "enum" | "struct";
-  range: Range;
-  enclosing_range?: Range;  // Full range including body
-  file_path: string;
-  symbol_id: string;
-  docstring?: string;
-  metadata?: {
-    line_count?: number;
+// Node in the call graph
+interface CallableNode {
+  symbol_id: SymbolId;
+  name: SymbolName;
+  enclosed_calls: readonly CallReference[];  // Calls made by this function
+  location: Location;
+  definition: AnyDefinition;
+}
+
+// Indirect reachability tracking
+interface IndirectReachability {
+  function_id: SymbolId;
+  reason: {
+    type: "collection_read";
+    collection_id: SymbolId;
+    read_location: Location;
   };
 }
 
-interface Ref {
-  id: number;
-  kind: "reference";
-  range: Range;
-  file_path: string;
-  def_id: number;
-  is_definition: boolean;
-}
-
-interface CallGraph {
-  nodes: Map<string, CallNode>;
-  edges: CallEdge[];
-  top_level_nodes: string[];
-}
-
-interface ClassRelationship {
-  parent_class?: string;
-  parent_class_def?: Def;
-  implemented_interfaces: string[];
-  interface_defs: Def[];
+// Reference to a function call
+interface CallReference {
+  location: Location;
+  name: SymbolName;
+  scope_id: ScopeId;
+  call_type: "function" | "method" | "constructor";
+  resolutions: readonly Resolution[];  // All possible call targets
+  is_callback_invocation?: boolean;
 }
 ```
+
+## Entry Point Detection
+
+Entry points are functions that are never called by any other function in the codebase. The algorithm considers:
+
+1. **Direct calls**: Function A calls function B → B is not an entry point
+2. **Indirect reachability**: Function stored in a collection that is read → function is not an entry point
+
+Example of indirect reachability:
+
+```typescript
+// Handler functions are stored in HANDLERS
+const HANDLERS = {
+  "create": handle_create,
+  "delete": handle_delete,
+} as const;
+
+// HANDLERS is read here - all stored functions become reachable
+function dispatch(action: string) {
+  const handler = HANDLERS[action];
+  handler?.();
+}
+```
+
+In this case, `handle_create` and `handle_delete` are NOT entry points because they are indirectly reachable through the `HANDLERS` collection read.
 
 ## Supported Languages
 
-- ✅ JavaScript (including JSX)
-- ✅ TypeScript (including TSX)
-- ✅ Python
-- ✅ Rust
-- 🚧 Go (coming soon)
-- 🚧 Java (coming soon)
-- 🚧 C/C++ (coming soon)
-
-## Advanced Usage
-
-### Working with Call Graphs
-
-```typescript
-const callGraph = project.get_call_graph();
-
-// Find entry points (functions not called by others)
-console.log("Entry points:", callGraph.top_level_nodes);
-
-// Analyze specific function
-const funcNode = callGraph.nodes.get("src/utils#calculateTotal");
-if (funcNode) {
-  console.log("This function calls:", funcNode.calls);
-  console.log("Called by:", funcNode.called_by);
-}
-```
-
-### Analyzing Class Hierarchies
-
-```typescript
-const defs = project.get_definitions("src/models.ts");
-const userClass = defs.find(d => d.name === "User" && d.symbol_kind === "class");
-
-if (userClass) {
-  // Get inheritance info
-  const relationships = project.get_class_relationships(userClass);
-  console.log("Extends:", relationships?.parent_class);
-  console.log("Implements:", relationships?.implemented_interfaces);
-  
-  // Find all subclasses
-  const subclasses = project.find_subclasses(userClass);
-  console.log("Subclasses:", subclasses.map(s => s.name));
-}
-```
-
-### Incremental Updates for Performance
-
-```typescript
-// Instead of replacing entire file
-project.update_file_range(
-  "src/main.ts",
-  { row: 10, column: 0 },
-  "const",
-  "let"
-);
-```
+- JavaScript (including JSX)
+- TypeScript (including TSX)
+- Python
+- Rust
 
 ## License
 

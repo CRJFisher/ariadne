@@ -1,0 +1,134 @@
+# Task 11.161.5: Update Documentation
+
+## Status: Completed
+
+## Parent: Task 11.161
+
+## Goal
+
+Update documentation to reflect the new file naming conventions and hook enforcement.
+
+## Subtasks
+
+### 11.161.5.1: Finalize file-naming-conventions.md
+
+Update `backlog/docs/file-naming-conventions.md` with:
+
+1. **Final Directory Structure**
+
+   - `capture_handlers/` - Named handler functions
+   - `metadata_extractors/` - AST extraction
+   - `symbol_factories/` - SymbolId creation
+
+2. **Naming Patterns**
+
+   | Pattern | Use Case | Example |
+   |---------|----------|---------|
+   | `{module}.ts` | Core implementation | `semantic_index.ts` |
+   | `{module}.test.ts` | Unit tests | `semantic_index.test.ts` |
+   | `{module}.{lang}.ts` | Language variant | `import_resolver.python.ts` |
+   | `{module}.{lang}.test.ts` | Language tests | `semantic_index.typescript.test.ts` |
+   | `{module}.integration.test.ts` | Integration | `project.integration.test.ts` |
+   | `{lang}_{module}.ts` | Distinct impl (in designated dirs) | `extractors/python_scope_boundary_extractor.ts` |
+   | `{dir}.{module}.ts` | Module in semantic role dir | `capture_handlers.javascript.ts` |
+   | `{dir}.{module}.{submodule}.ts` | Split module | `capture_handlers.python.imports.ts` |
+
+3. **Semantic Role Directory Naming Convention**
+
+   In semantic role directories (`capture_handlers/`, `metadata_extractors/`, `symbol_factories/`), files (except `index.ts`) use directory prefix naming:
+
+   ```
+   capture_handlers/
+   ├── index.ts                              # No prefix (barrel file)
+   ├── capture_handlers.types.ts             # {dir}.types.ts
+   ├── capture_handlers.javascript.ts        # {dir}.{language}.ts
+   ├── capture_handlers.typescript.ts
+   ├── capture_handlers.python.ts
+   ├── capture_handlers.python.imports.ts    # {dir}.{language}.{submodule}.ts (split)
+   └── capture_handlers.rust.ts
+   ```
+
+   This pattern:
+   - Makes imports self-documenting: `from "./capture_handlers.javascript"`
+   - Disambiguates files when viewing multiple similar files
+   - Supports submodule splits: `capture_handlers.python.imports.ts`
+
+4. **Exception Directories**
+
+   - `scopes/extractors/` - Uses prefix pattern for distinct implementations
+   - `.claude/hooks/` - Uses `.cjs` extension for CommonJS
+
+5. **Root Directory Whitelist**
+
+   ```
+   package.json, package-lock.json, tsconfig.json, eslint.config.js
+   .gitignore, .npmrc, .npmignore, LICENSE
+   README.md, CONTRIBUTING.md, CLAUDE.md, AGENTS.md, .cursorrules
+   ```
+
+6. **Prohibited Patterns**
+
+   ```
+   debug_*.ts, test_*.ts, verify_*.ts
+   *.py, *.sed, fix_*.sh
+   *_report.md, *_analysis.md, *.log
+   ```
+
+7. **Hook Enforcement**
+
+   - PreToolUse: Blocks prohibited file creation
+   - Stop: Audits for violations before task completion
+
+### 11.161.5.2: Update CLAUDE.md
+
+Add section to CLAUDE.md:
+
+```markdown
+## File Naming Conventions
+
+See `backlog/docs/file-naming-conventions.md` for complete documentation.
+
+### Quick Reference
+
+- Source files: `snake_case.ts`
+- Test files: `{module}.test.ts` or `{module}.{language}.test.ts`
+- Language variants: `{module}.{language}.ts` (with base module)
+- Distinct implementations: `{language}_{module}.ts` (in designated directories)
+- Semantic role dirs: `{dir}.{module}.ts` (e.g., `capture_handlers.javascript.ts`)
+
+### Root Directory
+
+Only whitelisted files allowed. Debug scripts, reports, and logs are prohibited.
+
+### Enforcement
+
+Hook scripts validate file naming on Write/Edit and audit on task completion.
+```
+
+## Files to Update
+
+- `backlog/docs/file-naming-conventions.md` - Complete rewrite
+- `CLAUDE.md` - Add new section
+
+## Success Criteria
+
+1. Documentation reflects current state (not history)
+2. All naming patterns documented with examples
+3. Exception directories clearly listed
+4. Hook behavior documented
+5. CLAUDE.md references full documentation
+
+## Implementation Notes
+
+### Completed 2025-12-18
+
+1. **Rewrote `backlog/docs/file-naming-conventions.md`**
+   - Emphasized the folder-module naming rule (all files prefixed with folder name)
+   - Documented rationale: signaling intentionality and preventing debug script accumulation
+   - Written in canonical style (describes current state, not history)
+   - Includes all patterns, special cases, and hook enforcement details
+
+2. **Updated CLAUDE.md**
+   - Added "File Naming Conventions" section after Code Style Guidelines
+   - Quick reference to folder-module naming rule
+   - Lists special cases and references full documentation

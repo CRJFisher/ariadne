@@ -1,0 +1,181 @@
+{
+  "file_path": "<fixtures>/typescript/code/integration/utils.ts",
+  "language": "typescript",
+  "root_scope_id": "module:<fixtures>/typescript/code/integration/utils.ts:1:1:12:1",
+  "scopes": {
+    "module:<fixtures>/typescript/code/integration/utils.ts:1:1:12:1": {
+      "id": "module:<fixtures>/typescript/code/integration/utils.ts:1:1:12:1",
+      "parent_id": null,
+      "name": null,
+      "type": "module",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/utils.ts",
+        "start_line": 1,
+        "start_column": 1,
+        "end_line": 12,
+        "end_column": 1
+      },
+      "child_ids": [
+        "function:<fixtures>/typescript/code/integration/utils.ts:6:23:8:1",
+        "function:<fixtures>/typescript/code/integration/utils.ts:10:31:12:1"
+      ]
+    },
+    "function:<fixtures>/typescript/code/integration/utils.ts:6:23:8:1": {
+      "id": "function:<fixtures>/typescript/code/integration/utils.ts:6:23:8:1",
+      "parent_id": "module:<fixtures>/typescript/code/integration/utils.ts:1:1:12:1",
+      "name": "helper",
+      "type": "function",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/utils.ts",
+        "start_line": 6,
+        "start_column": 23,
+        "end_line": 8,
+        "end_column": 1
+      },
+      "child_ids": []
+    },
+    "function:<fixtures>/typescript/code/integration/utils.ts:10:31:12:1": {
+      "id": "function:<fixtures>/typescript/code/integration/utils.ts:10:31:12:1",
+      "parent_id": "module:<fixtures>/typescript/code/integration/utils.ts:1:1:12:1",
+      "name": "other_function",
+      "type": "function",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/utils.ts",
+        "start_line": 10,
+        "start_column": 31,
+        "end_line": 12,
+        "end_column": 1
+      },
+      "child_ids": []
+    }
+  },
+  "functions": {
+    "function:<fixtures>/typescript/code/integration/utils.ts:6:17:6:22:helper": {
+      "kind": "function",
+      "symbol_id": "function:<fixtures>/typescript/code/integration/utils.ts:6:17:6:22:helper",
+      "name": "helper",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/utils.ts",
+        "start_line": 6,
+        "start_column": 17,
+        "end_line": 6,
+        "end_column": 22
+      },
+      "defining_scope_id": "module:<fixtures>/typescript/code/integration/utils.ts:1:1:12:1",
+      "is_exported": true,
+      "signature": {
+        "parameters": [],
+        "return_type": "string"
+      },
+      "return_type": "string",
+      "body_scope_id": "function:<fixtures>/typescript/code/integration/utils.ts:6:23:8:1"
+    },
+    "function:<fixtures>/typescript/code/integration/utils.ts:10:17:10:30:other_function": {
+      "kind": "function",
+      "symbol_id": "function:<fixtures>/typescript/code/integration/utils.ts:10:17:10:30:other_function",
+      "name": "other_function",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/utils.ts",
+        "start_line": 10,
+        "start_column": 17,
+        "end_line": 10,
+        "end_column": 30
+      },
+      "defining_scope_id": "module:<fixtures>/typescript/code/integration/utils.ts:1:1:12:1",
+      "is_exported": true,
+      "signature": {
+        "parameters": [],
+        "return_type": "number"
+      },
+      "return_type": "number",
+      "body_scope_id": "function:<fixtures>/typescript/code/integration/utils.ts:10:31:12:1"
+    }
+  },
+  "classes": {},
+  "variables": {},
+  "interfaces": {},
+  "enums": {},
+  "namespaces": {},
+  "types": {},
+  "imported_symbols": {},
+  "references": [
+    {
+      "kind": "variable_reference",
+      "name": "helper",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/utils.ts",
+        "start_line": 6,
+        "start_column": 17,
+        "end_line": 6,
+        "end_column": 22
+      },
+      "scope_id": "module:<fixtures>/typescript/code/integration/utils.ts:1:1:12:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "return \"from utils\";",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/utils.ts",
+        "start_line": 7,
+        "start_column": 3,
+        "end_line": 7,
+        "end_column": 22
+      },
+      "scope_id": "function:<fixtures>/typescript/code/integration/utils.ts:6:23:8:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "\"from utils\"",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/utils.ts",
+        "start_line": 7,
+        "start_column": 10,
+        "end_line": 7,
+        "end_column": 21
+      },
+      "scope_id": "function:<fixtures>/typescript/code/integration/utils.ts:6:23:8:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "other_function",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/utils.ts",
+        "start_line": 10,
+        "start_column": 17,
+        "end_line": 10,
+        "end_column": 30
+      },
+      "scope_id": "module:<fixtures>/typescript/code/integration/utils.ts:1:1:12:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "return 42;",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/utils.ts",
+        "start_line": 11,
+        "start_column": 3,
+        "end_line": 11,
+        "end_column": 12
+      },
+      "scope_id": "function:<fixtures>/typescript/code/integration/utils.ts:10:31:12:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "42",
+      "location": {
+        "file_path": "<fixtures>/typescript/code/integration/utils.ts",
+        "start_line": 11,
+        "start_column": 10,
+        "end_line": 11,
+        "end_column": 11
+      },
+      "scope_id": "function:<fixtures>/typescript/code/integration/utils.ts:10:31:12:1",
+      "access_type": "read"
+    }
+  ]
+}

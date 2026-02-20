@@ -1,0 +1,897 @@
+{
+  "file_path": "<fixtures>/javascript/code/modules/utils_es6.js",
+  "language": "javascript",
+  "root_scope_id": "module:<fixtures>/javascript/code/modules/utils_es6.js:1:1:22:1",
+  "scopes": {
+    "module:<fixtures>/javascript/code/modules/utils_es6.js:1:1:22:1": {
+      "id": "module:<fixtures>/javascript/code/modules/utils_es6.js:1:1:22:1",
+      "parent_id": null,
+      "name": null,
+      "type": "module",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/utils_es6.js",
+        "start_line": 1,
+        "start_column": 1,
+        "end_line": 22,
+        "end_column": 1
+      },
+      "child_ids": [
+        "function:<fixtures>/javascript/code/modules/utils_es6.js:7:23:9:1",
+        "function:<fixtures>/javascript/code/modules/utils_es6.js:11:28:13:1",
+        "function:<fixtures>/javascript/code/modules/utils_es6.js:15:30:17:1",
+        "function:<fixtures>/javascript/code/modules/utils_es6.js:20:35:22:1"
+      ]
+    },
+    "function:<fixtures>/javascript/code/modules/utils_es6.js:7:23:9:1": {
+      "id": "function:<fixtures>/javascript/code/modules/utils_es6.js:7:23:9:1",
+      "parent_id": "module:<fixtures>/javascript/code/modules/utils_es6.js:1:1:22:1",
+      "name": "helper",
+      "type": "function",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/utils_es6.js",
+        "start_line": 7,
+        "start_column": 23,
+        "end_line": 9,
+        "end_column": 1
+      },
+      "child_ids": []
+    },
+    "function:<fixtures>/javascript/code/modules/utils_es6.js:11:28:13:1": {
+      "id": "function:<fixtures>/javascript/code/modules/utils_es6.js:11:28:13:1",
+      "parent_id": "module:<fixtures>/javascript/code/modules/utils_es6.js:1:1:22:1",
+      "name": "processData",
+      "type": "function",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/utils_es6.js",
+        "start_line": 11,
+        "start_column": 28,
+        "end_line": 13,
+        "end_column": 1
+      },
+      "child_ids": []
+    },
+    "function:<fixtures>/javascript/code/modules/utils_es6.js:15:30:17:1": {
+      "id": "function:<fixtures>/javascript/code/modules/utils_es6.js:15:30:17:1",
+      "parent_id": "module:<fixtures>/javascript/code/modules/utils_es6.js:1:1:22:1",
+      "name": "validateEmail",
+      "type": "function",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/utils_es6.js",
+        "start_line": 15,
+        "start_column": 30,
+        "end_line": 17,
+        "end_column": 1
+      },
+      "child_ids": []
+    },
+    "function:<fixtures>/javascript/code/modules/utils_es6.js:20:35:22:1": {
+      "id": "function:<fixtures>/javascript/code/modules/utils_es6.js:20:35:22:1",
+      "parent_id": "module:<fixtures>/javascript/code/modules/utils_es6.js:1:1:22:1",
+      "name": "formatDate",
+      "type": "function",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/utils_es6.js",
+        "start_line": 20,
+        "start_column": 35,
+        "end_line": 22,
+        "end_column": 1
+      },
+      "child_ids": []
+    }
+  },
+  "functions": {
+    "function:<fixtures>/javascript/code/modules/utils_es6.js:7:17:7:22:helper": {
+      "kind": "function",
+      "symbol_id": "function:<fixtures>/javascript/code/modules/utils_es6.js:7:17:7:22:helper",
+      "name": "helper",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/utils_es6.js",
+        "start_line": 7,
+        "start_column": 17,
+        "end_line": 7,
+        "end_column": 22
+      },
+      "defining_scope_id": "module:<fixtures>/javascript/code/modules/utils_es6.js:1:1:22:1",
+      "is_exported": true,
+      "signature": {
+        "parameters": []
+      },
+      "body_scope_id": "function:<fixtures>/javascript/code/modules/utils_es6.js:7:23:9:1"
+    },
+    "function:<fixtures>/javascript/code/modules/utils_es6.js:11:17:11:27:processData": {
+      "kind": "function",
+      "symbol_id": "function:<fixtures>/javascript/code/modules/utils_es6.js:11:17:11:27:processData",
+      "name": "processData",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/utils_es6.js",
+        "start_line": 11,
+        "start_column": 17,
+        "end_line": 11,
+        "end_column": 27
+      },
+      "defining_scope_id": "module:<fixtures>/javascript/code/modules/utils_es6.js:1:1:22:1",
+      "is_exported": true,
+      "signature": {
+        "parameters": [
+          {
+            "kind": "parameter",
+            "defining_scope_id": "function:<fixtures>/javascript/code/modules/utils_es6.js:11:28:13:1",
+            "symbol_id": "parameter:<fixtures>/javascript/code/modules/utils_es6.js:11:29:11:33:input",
+            "name": "input",
+            "location": {
+              "file_path": "<fixtures>/javascript/code/modules/utils_es6.js",
+              "start_line": 11,
+              "start_column": 29,
+              "end_line": 11,
+              "end_column": 33
+            }
+          }
+        ]
+      },
+      "body_scope_id": "function:<fixtures>/javascript/code/modules/utils_es6.js:11:28:13:1"
+    },
+    "function:<fixtures>/javascript/code/modules/utils_es6.js:15:17:15:29:validateEmail": {
+      "kind": "function",
+      "symbol_id": "function:<fixtures>/javascript/code/modules/utils_es6.js:15:17:15:29:validateEmail",
+      "name": "validateEmail",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/utils_es6.js",
+        "start_line": 15,
+        "start_column": 17,
+        "end_line": 15,
+        "end_column": 29
+      },
+      "defining_scope_id": "module:<fixtures>/javascript/code/modules/utils_es6.js:1:1:22:1",
+      "is_exported": true,
+      "signature": {
+        "parameters": [
+          {
+            "kind": "parameter",
+            "defining_scope_id": "function:<fixtures>/javascript/code/modules/utils_es6.js:15:30:17:1",
+            "symbol_id": "parameter:<fixtures>/javascript/code/modules/utils_es6.js:15:31:15:35:email",
+            "name": "email",
+            "location": {
+              "file_path": "<fixtures>/javascript/code/modules/utils_es6.js",
+              "start_line": 15,
+              "start_column": 31,
+              "end_line": 15,
+              "end_column": 35
+            }
+          }
+        ]
+      },
+      "body_scope_id": "function:<fixtures>/javascript/code/modules/utils_es6.js:15:30:17:1"
+    },
+    "function:<fixtures>/javascript/code/modules/utils_es6.js:20:25:20:34:formatDate": {
+      "kind": "function",
+      "symbol_id": "function:<fixtures>/javascript/code/modules/utils_es6.js:20:25:20:34:formatDate",
+      "name": "formatDate",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/utils_es6.js",
+        "start_line": 20,
+        "start_column": 25,
+        "end_line": 20,
+        "end_column": 34
+      },
+      "defining_scope_id": "module:<fixtures>/javascript/code/modules/utils_es6.js:1:1:22:1",
+      "is_exported": true,
+      "export": {
+        "is_default": true
+      },
+      "signature": {
+        "parameters": [
+          {
+            "kind": "parameter",
+            "defining_scope_id": "function:<fixtures>/javascript/code/modules/utils_es6.js:20:35:22:1",
+            "symbol_id": "parameter:<fixtures>/javascript/code/modules/utils_es6.js:20:36:20:39:date",
+            "name": "date",
+            "location": {
+              "file_path": "<fixtures>/javascript/code/modules/utils_es6.js",
+              "start_line": 20,
+              "start_column": 36,
+              "end_line": 20,
+              "end_column": 39
+            }
+          }
+        ]
+      },
+      "body_scope_id": "function:<fixtures>/javascript/code/modules/utils_es6.js:20:35:22:1"
+    }
+  },
+  "classes": {},
+  "variables": {},
+  "interfaces": {},
+  "enums": {},
+  "namespaces": {},
+  "types": {},
+  "imported_symbols": {},
+  "references": [
+    {
+      "kind": "variable_reference",
+      "name": "helper",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/utils_es6.js",
+        "start_line": 7,
+        "start_column": 17,
+        "end_line": 7,
+        "end_column": 22
+      },
+      "scope_id": "module:<fixtures>/javascript/code/modules/utils_es6.js:1:1:22:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "return \"from utils es6\";",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/utils_es6.js",
+        "start_line": 8,
+        "start_column": 3,
+        "end_line": 8,
+        "end_column": 26
+      },
+      "scope_id": "function:<fixtures>/javascript/code/modules/utils_es6.js:7:23:9:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "\"from utils es6\"",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/utils_es6.js",
+        "start_line": 8,
+        "start_column": 10,
+        "end_line": 8,
+        "end_column": 25
+      },
+      "scope_id": "function:<fixtures>/javascript/code/modules/utils_es6.js:7:23:9:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "processData",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/utils_es6.js",
+        "start_line": 11,
+        "start_column": 17,
+        "end_line": 11,
+        "end_column": 27
+      },
+      "scope_id": "module:<fixtures>/javascript/code/modules/utils_es6.js:1:1:22:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "input",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/utils_es6.js",
+        "start_line": 11,
+        "start_column": 29,
+        "end_line": 11,
+        "end_column": 33
+      },
+      "scope_id": "function:<fixtures>/javascript/code/modules/utils_es6.js:11:28:13:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "return input.toLowerCase();",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/utils_es6.js",
+        "start_line": 12,
+        "start_column": 3,
+        "end_line": 12,
+        "end_column": 29
+      },
+      "scope_id": "function:<fixtures>/javascript/code/modules/utils_es6.js:11:28:13:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "method_call",
+      "name": "toLowerCase",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/utils_es6.js",
+        "start_line": 12,
+        "start_column": 10,
+        "end_line": 12,
+        "end_column": 28
+      },
+      "scope_id": "function:<fixtures>/javascript/code/modules/utils_es6.js:11:28:13:1",
+      "receiver_location": {
+        "file_path": "<fixtures>/javascript/code/modules/utils_es6.js",
+        "start_line": 12,
+        "start_column": 10,
+        "end_line": 12,
+        "end_column": 14
+      },
+      "property_chain": [
+        "input",
+        "toLowerCase"
+      ],
+      "optional_chaining": false
+    },
+    {
+      "kind": "variable_reference",
+      "name": "input",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/utils_es6.js",
+        "start_line": 12,
+        "start_column": 10,
+        "end_line": 12,
+        "end_column": 14
+      },
+      "scope_id": "function:<fixtures>/javascript/code/modules/utils_es6.js:11:28:13:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "property_access",
+      "name": "toLowerCase",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/utils_es6.js",
+        "start_line": 12,
+        "start_column": 10,
+        "end_line": 12,
+        "end_column": 26
+      },
+      "scope_id": "function:<fixtures>/javascript/code/modules/utils_es6.js:11:28:13:1",
+      "receiver_location": {
+        "file_path": "<fixtures>/javascript/code/modules/utils_es6.js",
+        "start_line": 12,
+        "start_column": 10,
+        "end_line": 12,
+        "end_column": 14
+      },
+      "property_chain": [
+        "input",
+        "toLowerCase"
+      ],
+      "access_type": "property",
+      "is_optional_chain": false
+    },
+    {
+      "kind": "variable_reference",
+      "name": "input",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/utils_es6.js",
+        "start_line": 12,
+        "start_column": 10,
+        "end_line": 12,
+        "end_column": 14
+      },
+      "scope_id": "function:<fixtures>/javascript/code/modules/utils_es6.js:11:28:13:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "property_access",
+      "name": "toLowerCase",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/utils_es6.js",
+        "start_line": 12,
+        "start_column": 10,
+        "end_line": 12,
+        "end_column": 26
+      },
+      "scope_id": "function:<fixtures>/javascript/code/modules/utils_es6.js:11:28:13:1",
+      "receiver_location": {
+        "file_path": "<fixtures>/javascript/code/modules/utils_es6.js",
+        "start_line": 12,
+        "start_column": 10,
+        "end_line": 12,
+        "end_column": 14
+      },
+      "property_chain": [
+        "input",
+        "toLowerCase"
+      ],
+      "access_type": "property",
+      "is_optional_chain": false
+    },
+    {
+      "kind": "variable_reference",
+      "name": "input",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/utils_es6.js",
+        "start_line": 12,
+        "start_column": 10,
+        "end_line": 12,
+        "end_column": 14
+      },
+      "scope_id": "function:<fixtures>/javascript/code/modules/utils_es6.js:11:28:13:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "input.toLowerCase()",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/utils_es6.js",
+        "start_line": 12,
+        "start_column": 10,
+        "end_line": 12,
+        "end_column": 28
+      },
+      "scope_id": "function:<fixtures>/javascript/code/modules/utils_es6.js:11:28:13:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "input",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/utils_es6.js",
+        "start_line": 12,
+        "start_column": 10,
+        "end_line": 12,
+        "end_column": 14
+      },
+      "scope_id": "function:<fixtures>/javascript/code/modules/utils_es6.js:11:28:13:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "toLowerCase",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/utils_es6.js",
+        "start_line": 12,
+        "start_column": 16,
+        "end_line": 12,
+        "end_column": 26
+      },
+      "scope_id": "function:<fixtures>/javascript/code/modules/utils_es6.js:11:28:13:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "toLowerCase",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/utils_es6.js",
+        "start_line": 12,
+        "start_column": 16,
+        "end_line": 12,
+        "end_column": 26
+      },
+      "scope_id": "function:<fixtures>/javascript/code/modules/utils_es6.js:11:28:13:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "validateEmail",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/utils_es6.js",
+        "start_line": 15,
+        "start_column": 17,
+        "end_line": 15,
+        "end_column": 29
+      },
+      "scope_id": "module:<fixtures>/javascript/code/modules/utils_es6.js:1:1:22:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "email",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/utils_es6.js",
+        "start_line": 15,
+        "start_column": 31,
+        "end_line": 15,
+        "end_column": 35
+      },
+      "scope_id": "function:<fixtures>/javascript/code/modules/utils_es6.js:15:30:17:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "return email.includes(\"@\");",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/utils_es6.js",
+        "start_line": 16,
+        "start_column": 3,
+        "end_line": 16,
+        "end_column": 29
+      },
+      "scope_id": "function:<fixtures>/javascript/code/modules/utils_es6.js:15:30:17:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "method_call",
+      "name": "includes",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/utils_es6.js",
+        "start_line": 16,
+        "start_column": 10,
+        "end_line": 16,
+        "end_column": 28
+      },
+      "scope_id": "function:<fixtures>/javascript/code/modules/utils_es6.js:15:30:17:1",
+      "receiver_location": {
+        "file_path": "<fixtures>/javascript/code/modules/utils_es6.js",
+        "start_line": 16,
+        "start_column": 10,
+        "end_line": 16,
+        "end_column": 14
+      },
+      "property_chain": [
+        "email",
+        "includes"
+      ],
+      "optional_chaining": false
+    },
+    {
+      "kind": "variable_reference",
+      "name": "email",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/utils_es6.js",
+        "start_line": 16,
+        "start_column": 10,
+        "end_line": 16,
+        "end_column": 14
+      },
+      "scope_id": "function:<fixtures>/javascript/code/modules/utils_es6.js:15:30:17:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "property_access",
+      "name": "includes",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/utils_es6.js",
+        "start_line": 16,
+        "start_column": 10,
+        "end_line": 16,
+        "end_column": 23
+      },
+      "scope_id": "function:<fixtures>/javascript/code/modules/utils_es6.js:15:30:17:1",
+      "receiver_location": {
+        "file_path": "<fixtures>/javascript/code/modules/utils_es6.js",
+        "start_line": 16,
+        "start_column": 10,
+        "end_line": 16,
+        "end_column": 14
+      },
+      "property_chain": [
+        "email",
+        "includes"
+      ],
+      "access_type": "property",
+      "is_optional_chain": false
+    },
+    {
+      "kind": "variable_reference",
+      "name": "email",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/utils_es6.js",
+        "start_line": 16,
+        "start_column": 10,
+        "end_line": 16,
+        "end_column": 14
+      },
+      "scope_id": "function:<fixtures>/javascript/code/modules/utils_es6.js:15:30:17:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "property_access",
+      "name": "includes",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/utils_es6.js",
+        "start_line": 16,
+        "start_column": 10,
+        "end_line": 16,
+        "end_column": 23
+      },
+      "scope_id": "function:<fixtures>/javascript/code/modules/utils_es6.js:15:30:17:1",
+      "receiver_location": {
+        "file_path": "<fixtures>/javascript/code/modules/utils_es6.js",
+        "start_line": 16,
+        "start_column": 10,
+        "end_line": 16,
+        "end_column": 14
+      },
+      "property_chain": [
+        "email",
+        "includes"
+      ],
+      "access_type": "property",
+      "is_optional_chain": false
+    },
+    {
+      "kind": "variable_reference",
+      "name": "email",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/utils_es6.js",
+        "start_line": 16,
+        "start_column": 10,
+        "end_line": 16,
+        "end_column": 14
+      },
+      "scope_id": "function:<fixtures>/javascript/code/modules/utils_es6.js:15:30:17:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "email.includes(\"@\")",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/utils_es6.js",
+        "start_line": 16,
+        "start_column": 10,
+        "end_line": 16,
+        "end_column": 28
+      },
+      "scope_id": "function:<fixtures>/javascript/code/modules/utils_es6.js:15:30:17:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "email",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/utils_es6.js",
+        "start_line": 16,
+        "start_column": 10,
+        "end_line": 16,
+        "end_column": 14
+      },
+      "scope_id": "function:<fixtures>/javascript/code/modules/utils_es6.js:15:30:17:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "includes",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/utils_es6.js",
+        "start_line": 16,
+        "start_column": 16,
+        "end_line": 16,
+        "end_column": 23
+      },
+      "scope_id": "function:<fixtures>/javascript/code/modules/utils_es6.js:15:30:17:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "includes",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/utils_es6.js",
+        "start_line": 16,
+        "start_column": 16,
+        "end_line": 16,
+        "end_column": 23
+      },
+      "scope_id": "function:<fixtures>/javascript/code/modules/utils_es6.js:15:30:17:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "formatDate",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/utils_es6.js",
+        "start_line": 20,
+        "start_column": 25,
+        "end_line": 20,
+        "end_column": 34
+      },
+      "scope_id": "module:<fixtures>/javascript/code/modules/utils_es6.js:1:1:22:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "date",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/utils_es6.js",
+        "start_line": 20,
+        "start_column": 36,
+        "end_line": 20,
+        "end_column": 39
+      },
+      "scope_id": "function:<fixtures>/javascript/code/modules/utils_es6.js:20:35:22:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "return date.toISOString().split('T')[0];",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/utils_es6.js",
+        "start_line": 21,
+        "start_column": 3,
+        "end_line": 21,
+        "end_column": 42
+      },
+      "scope_id": "function:<fixtures>/javascript/code/modules/utils_es6.js:20:35:22:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "method_call",
+      "name": "toISOString",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/utils_es6.js",
+        "start_line": 21,
+        "start_column": 10,
+        "end_line": 21,
+        "end_column": 27
+      },
+      "scope_id": "function:<fixtures>/javascript/code/modules/utils_es6.js:20:35:22:1",
+      "receiver_location": {
+        "file_path": "<fixtures>/javascript/code/modules/utils_es6.js",
+        "start_line": 21,
+        "start_column": 10,
+        "end_line": 21,
+        "end_column": 13
+      },
+      "property_chain": [
+        "date",
+        "toISOString"
+      ],
+      "optional_chaining": false
+    },
+    {
+      "kind": "variable_reference",
+      "name": "date",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/utils_es6.js",
+        "start_line": 21,
+        "start_column": 10,
+        "end_line": 21,
+        "end_column": 13
+      },
+      "scope_id": "function:<fixtures>/javascript/code/modules/utils_es6.js:20:35:22:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "method_call",
+      "name": "split",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/utils_es6.js",
+        "start_line": 21,
+        "start_column": 10,
+        "end_line": 21,
+        "end_column": 38
+      },
+      "scope_id": "function:<fixtures>/javascript/code/modules/utils_es6.js:20:35:22:1",
+      "receiver_location": {
+        "file_path": "<fixtures>/javascript/code/modules/utils_es6.js",
+        "start_line": 21,
+        "start_column": 10,
+        "end_line": 21,
+        "end_column": 27
+      },
+      "property_chain": [
+        "split"
+      ],
+      "optional_chaining": false
+    },
+    {
+      "kind": "variable_reference",
+      "name": "date.toISOString()",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/utils_es6.js",
+        "start_line": 21,
+        "start_column": 10,
+        "end_line": 21,
+        "end_column": 27
+      },
+      "scope_id": "function:<fixtures>/javascript/code/modules/utils_es6.js:20:35:22:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "property_access",
+      "name": "toISOString",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/utils_es6.js",
+        "start_line": 21,
+        "start_column": 10,
+        "end_line": 21,
+        "end_column": 25
+      },
+      "scope_id": "function:<fixtures>/javascript/code/modules/utils_es6.js:20:35:22:1",
+      "receiver_location": {
+        "file_path": "<fixtures>/javascript/code/modules/utils_es6.js",
+        "start_line": 21,
+        "start_column": 10,
+        "end_line": 21,
+        "end_column": 13
+      },
+      "property_chain": [
+        "date",
+        "toISOString"
+      ],
+      "access_type": "property",
+      "is_optional_chain": false
+    },
+    {
+      "kind": "variable_reference",
+      "name": "date",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/utils_es6.js",
+        "start_line": 21,
+        "start_column": 10,
+        "end_line": 21,
+        "end_column": 13
+      },
+      "scope_id": "function:<fixtures>/javascript/code/modules/utils_es6.js:20:35:22:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "property_access",
+      "name": "toISOString",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/utils_es6.js",
+        "start_line": 21,
+        "start_column": 10,
+        "end_line": 21,
+        "end_column": 25
+      },
+      "scope_id": "function:<fixtures>/javascript/code/modules/utils_es6.js:20:35:22:1",
+      "receiver_location": {
+        "file_path": "<fixtures>/javascript/code/modules/utils_es6.js",
+        "start_line": 21,
+        "start_column": 10,
+        "end_line": 21,
+        "end_column": 13
+      },
+      "property_chain": [
+        "date",
+        "toISOString"
+      ],
+      "access_type": "property",
+      "is_optional_chain": false
+    },
+    {
+      "kind": "variable_reference",
+      "name": "date",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/utils_es6.js",
+        "start_line": 21,
+        "start_column": 10,
+        "end_line": 21,
+        "end_column": 13
+      },
+      "scope_id": "function:<fixtures>/javascript/code/modules/utils_es6.js:20:35:22:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "date.toISOString().split('T')[0]",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/utils_es6.js",
+        "start_line": 21,
+        "start_column": 10,
+        "end_line": 21,
+        "end_column": 41
+      },
+      "scope_id": "function:<fixtures>/javascript/code/modules/utils_es6.js:20:35:22:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "date",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/utils_es6.js",
+        "start_line": 21,
+        "start_column": 10,
+        "end_line": 21,
+        "end_column": 13
+      },
+      "scope_id": "function:<fixtures>/javascript/code/modules/utils_es6.js:20:35:22:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "toISOString",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/utils_es6.js",
+        "start_line": 21,
+        "start_column": 15,
+        "end_line": 21,
+        "end_column": 25
+      },
+      "scope_id": "function:<fixtures>/javascript/code/modules/utils_es6.js:20:35:22:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "toISOString",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/modules/utils_es6.js",
+        "start_line": 21,
+        "start_column": 15,
+        "end_line": 21,
+        "end_column": 25
+      },
+      "scope_id": "function:<fixtures>/javascript/code/modules/utils_es6.js:20:35:22:1",
+      "access_type": "read"
+    }
+  ]
+}

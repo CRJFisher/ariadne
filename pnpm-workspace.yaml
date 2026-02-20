@@ -1,0 +1,3 @@
+packages:
+  - "packages/*"
+  - ".claude/skills/self-repair-pipeline"

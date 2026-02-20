@@ -126,11 +126,13 @@ Get comprehensive information about any symbol by name - no file position needed
 ```
 
 Parameters:
+
 - `symbol` (required): Name of the function, class, or variable to look up
 - `searchScope` (optional): "file" | "project" | "dependencies" (default: "project")
 - `includeTests` (optional): Whether to include test file references (default: false)
 
 Returns:
+
 - Full function/class implementation with documentation
 - Usage statistics (references, imports, tests)
 - Call relationships (calls/called by)
@@ -138,6 +140,7 @@ Returns:
 - File location and signature
 
 Coming soon:
+
 - `get_call_graph` - Analyze function call relationships
 - `get_references` - Find all references to a symbol
 - `preview_refactor` - Preview the impact of refactoring changes
@@ -170,7 +173,7 @@ The MCP server helps AI assistants provide better:
 ### Environment Variables
 
 - `PROJECT_PATH`: The root directory of your project (defaults to current working directory)
-- `LOG_LEVEL`: Logging verbosity (`debug`, `info`, `warn`, `error`)
+- `DEBUG_LOG_FILE`: Path to a file for debug logging (optional). When set, diagnostic messages are written to this file in addition to stderr.
 
 ### Project-Specific Configuration
 
@@ -182,7 +185,7 @@ The MCP server helps AI assistants provide better:
       "args": ["@ariadnejs/mcp"],
       "env": {
         "PROJECT_PATH": "/path/to/your/project",
-        "LOG_LEVEL": "info"
+        "DEBUG_LOG_FILE": "/tmp/ariadne-debug.log"
       }
     }
   }
@@ -230,14 +233,20 @@ The MCP package versions independently from core packages. Check the [releases p
 
 ### Debug Mode
 
-Enable debug logging to troubleshoot issues:
+Enable file logging to troubleshoot issues:
 
 ```json
 {
   "env": {
-    "LOG_LEVEL": "debug"
+    "DEBUG_LOG_FILE": "/tmp/ariadne-debug.log"
   }
 }
+```
+
+Then check the log file for diagnostic messages:
+
+```bash
+tail -f /tmp/ariadne-debug.log
 ```
 
 ## Development

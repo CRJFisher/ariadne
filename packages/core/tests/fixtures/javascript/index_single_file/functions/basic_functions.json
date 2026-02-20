@@ -1,0 +1,1382 @@
+{
+  "file_path": "<fixtures>/javascript/code/functions/basic_functions.js",
+  "language": "javascript",
+  "root_scope_id": "module:<fixtures>/javascript/code/functions/basic_functions.js:1:1:38:0",
+  "scopes": {
+    "module:<fixtures>/javascript/code/functions/basic_functions.js:1:1:38:0": {
+      "id": "module:<fixtures>/javascript/code/functions/basic_functions.js:1:1:38:0",
+      "parent_id": null,
+      "name": null,
+      "type": "module",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/functions/basic_functions.js",
+        "start_line": 1,
+        "start_column": 1,
+        "end_line": 38,
+        "end_column": 0
+      },
+      "child_ids": [
+        "function:<fixtures>/javascript/code/functions/basic_functions.js:6:15:8:1",
+        "function:<fixtures>/javascript/code/functions/basic_functions.js:10:13:12:1",
+        "function:<fixtures>/javascript/code/functions/basic_functions.js:14:18:14:32",
+        "function:<fixtures>/javascript/code/functions/basic_functions.js:16:16:16:33",
+        "function:<fixtures>/javascript/code/functions/basic_functions.js:18:19:21:1",
+        "function:<fixtures>/javascript/code/functions/basic_functions.js:23:19:25:1",
+        "function:<fixtures>/javascript/code/functions/basic_functions.js:27:23:29:1"
+      ]
+    },
+    "function:<fixtures>/javascript/code/functions/basic_functions.js:6:15:8:1": {
+      "id": "function:<fixtures>/javascript/code/functions/basic_functions.js:6:15:8:1",
+      "parent_id": "module:<fixtures>/javascript/code/functions/basic_functions.js:1:1:38:0",
+      "name": "greet",
+      "type": "function",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/functions/basic_functions.js",
+        "start_line": 6,
+        "start_column": 15,
+        "end_line": 8,
+        "end_column": 1
+      },
+      "child_ids": []
+    },
+    "function:<fixtures>/javascript/code/functions/basic_functions.js:10:13:12:1": {
+      "id": "function:<fixtures>/javascript/code/functions/basic_functions.js:10:13:12:1",
+      "parent_id": "module:<fixtures>/javascript/code/functions/basic_functions.js:1:1:38:0",
+      "name": "add",
+      "type": "function",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/functions/basic_functions.js",
+        "start_line": 10,
+        "start_column": 13,
+        "end_line": 12,
+        "end_column": 1
+      },
+      "child_ids": []
+    },
+    "function:<fixtures>/javascript/code/functions/basic_functions.js:14:18:14:32": {
+      "id": "function:<fixtures>/javascript/code/functions/basic_functions.js:14:18:14:32",
+      "parent_id": "module:<fixtures>/javascript/code/functions/basic_functions.js:1:1:38:0",
+      "name": null,
+      "type": "function",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/functions/basic_functions.js",
+        "start_line": 14,
+        "start_column": 18,
+        "end_line": 14,
+        "end_column": 32
+      },
+      "child_ids": []
+    },
+    "function:<fixtures>/javascript/code/functions/basic_functions.js:16:16:16:33": {
+      "id": "function:<fixtures>/javascript/code/functions/basic_functions.js:16:16:16:33",
+      "parent_id": "module:<fixtures>/javascript/code/functions/basic_functions.js:1:1:38:0",
+      "name": null,
+      "type": "function",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/functions/basic_functions.js",
+        "start_line": 16,
+        "start_column": 16,
+        "end_line": 16,
+        "end_column": 33
+      },
+      "child_ids": []
+    },
+    "function:<fixtures>/javascript/code/functions/basic_functions.js:18:19:21:1": {
+      "id": "function:<fixtures>/javascript/code/functions/basic_functions.js:18:19:21:1",
+      "parent_id": "module:<fixtures>/javascript/code/functions/basic_functions.js:1:1:38:0",
+      "name": "callChain",
+      "type": "function",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/functions/basic_functions.js",
+        "start_line": 18,
+        "start_column": 19,
+        "end_line": 21,
+        "end_column": 1
+      },
+      "child_ids": []
+    },
+    "function:<fixtures>/javascript/code/functions/basic_functions.js:23:19:25:1": {
+      "id": "function:<fixtures>/javascript/code/functions/basic_functions.js:23:19:25:1",
+      "parent_id": "module:<fixtures>/javascript/code/functions/basic_functions.js:1:1:38:0",
+      "name": "fetchData",
+      "type": "function",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/functions/basic_functions.js",
+        "start_line": 23,
+        "start_column": 19,
+        "end_line": 25,
+        "end_column": 1
+      },
+      "child_ids": []
+    },
+    "function:<fixtures>/javascript/code/functions/basic_functions.js:27:23:29:1": {
+      "id": "function:<fixtures>/javascript/code/functions/basic_functions.js:27:23:29:1",
+      "parent_id": "module:<fixtures>/javascript/code/functions/basic_functions.js:1:1:38:0",
+      "name": "transformData",
+      "type": "function",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/functions/basic_functions.js",
+        "start_line": 27,
+        "start_column": 23,
+        "end_line": 29,
+        "end_column": 1
+      },
+      "child_ids": []
+    }
+  },
+  "functions": {
+    "function:<fixtures>/javascript/code/functions/basic_functions.js:6:10:6:14:greet": {
+      "kind": "function",
+      "symbol_id": "function:<fixtures>/javascript/code/functions/basic_functions.js:6:10:6:14:greet",
+      "name": "greet",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/functions/basic_functions.js",
+        "start_line": 6,
+        "start_column": 10,
+        "end_line": 6,
+        "end_column": 14
+      },
+      "defining_scope_id": "module:<fixtures>/javascript/code/functions/basic_functions.js:1:1:38:0",
+      "is_exported": true,
+      "export": {},
+      "signature": {
+        "parameters": [
+          {
+            "kind": "parameter",
+            "defining_scope_id": "function:<fixtures>/javascript/code/functions/basic_functions.js:6:15:8:1",
+            "symbol_id": "parameter:<fixtures>/javascript/code/functions/basic_functions.js:6:16:6:19:name",
+            "name": "name",
+            "location": {
+              "file_path": "<fixtures>/javascript/code/functions/basic_functions.js",
+              "start_line": 6,
+              "start_column": 16,
+              "end_line": 6,
+              "end_column": 19
+            }
+          }
+        ]
+      },
+      "body_scope_id": "function:<fixtures>/javascript/code/functions/basic_functions.js:6:15:8:1"
+    },
+    "function:<fixtures>/javascript/code/functions/basic_functions.js:10:10:10:12:add": {
+      "kind": "function",
+      "symbol_id": "function:<fixtures>/javascript/code/functions/basic_functions.js:10:10:10:12:add",
+      "name": "add",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/functions/basic_functions.js",
+        "start_line": 10,
+        "start_column": 10,
+        "end_line": 10,
+        "end_column": 12
+      },
+      "defining_scope_id": "module:<fixtures>/javascript/code/functions/basic_functions.js:1:1:38:0",
+      "is_exported": true,
+      "export": {},
+      "signature": {
+        "parameters": [
+          {
+            "kind": "parameter",
+            "defining_scope_id": "function:<fixtures>/javascript/code/functions/basic_functions.js:10:13:12:1",
+            "symbol_id": "parameter:<fixtures>/javascript/code/functions/basic_functions.js:10:14:10:14:a",
+            "name": "a",
+            "location": {
+              "file_path": "<fixtures>/javascript/code/functions/basic_functions.js",
+              "start_line": 10,
+              "start_column": 14,
+              "end_line": 10,
+              "end_column": 14
+            }
+          },
+          {
+            "kind": "parameter",
+            "defining_scope_id": "function:<fixtures>/javascript/code/functions/basic_functions.js:10:13:12:1",
+            "symbol_id": "parameter:<fixtures>/javascript/code/functions/basic_functions.js:10:17:10:17:b",
+            "name": "b",
+            "location": {
+              "file_path": "<fixtures>/javascript/code/functions/basic_functions.js",
+              "start_line": 10,
+              "start_column": 17,
+              "end_line": 10,
+              "end_column": 17
+            }
+          }
+        ]
+      },
+      "body_scope_id": "function:<fixtures>/javascript/code/functions/basic_functions.js:10:13:12:1"
+    },
+    "function:<fixtures>/javascript/code/functions/basic_functions.js:14:7:14:14:multiply": {
+      "kind": "function",
+      "symbol_id": "function:<fixtures>/javascript/code/functions/basic_functions.js:14:7:14:14:multiply",
+      "name": "multiply",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/functions/basic_functions.js",
+        "start_line": 14,
+        "start_column": 7,
+        "end_line": 14,
+        "end_column": 14
+      },
+      "defining_scope_id": "module:<fixtures>/javascript/code/functions/basic_functions.js:1:1:38:0",
+      "is_exported": true,
+      "export": {},
+      "signature": {
+        "parameters": []
+      },
+      "body_scope_id": "function:<fixtures>/javascript/code/functions/basic_functions.js:14:18:14:32"
+    },
+    "function:<fixtures>/javascript/code/functions/basic_functions.js:16:7:16:12:isEven": {
+      "kind": "function",
+      "symbol_id": "function:<fixtures>/javascript/code/functions/basic_functions.js:16:7:16:12:isEven",
+      "name": "isEven",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/functions/basic_functions.js",
+        "start_line": 16,
+        "start_column": 7,
+        "end_line": 16,
+        "end_column": 12
+      },
+      "defining_scope_id": "module:<fixtures>/javascript/code/functions/basic_functions.js:1:1:38:0",
+      "is_exported": true,
+      "export": {},
+      "signature": {
+        "parameters": []
+      },
+      "body_scope_id": "function:<fixtures>/javascript/code/functions/basic_functions.js:16:16:16:33"
+    },
+    "function:<fixtures>/javascript/code/functions/basic_functions.js:18:10:18:18:callChain": {
+      "kind": "function",
+      "symbol_id": "function:<fixtures>/javascript/code/functions/basic_functions.js:18:10:18:18:callChain",
+      "name": "callChain",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/functions/basic_functions.js",
+        "start_line": 18,
+        "start_column": 10,
+        "end_line": 18,
+        "end_column": 18
+      },
+      "defining_scope_id": "module:<fixtures>/javascript/code/functions/basic_functions.js:1:1:38:0",
+      "is_exported": true,
+      "export": {},
+      "signature": {
+        "parameters": []
+      },
+      "body_scope_id": "function:<fixtures>/javascript/code/functions/basic_functions.js:18:19:21:1"
+    },
+    "function:<fixtures>/javascript/code/functions/basic_functions.js:23:10:23:18:fetchData": {
+      "kind": "function",
+      "symbol_id": "function:<fixtures>/javascript/code/functions/basic_functions.js:23:10:23:18:fetchData",
+      "name": "fetchData",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/functions/basic_functions.js",
+        "start_line": 23,
+        "start_column": 10,
+        "end_line": 23,
+        "end_column": 18
+      },
+      "defining_scope_id": "module:<fixtures>/javascript/code/functions/basic_functions.js:1:1:38:0",
+      "is_exported": false,
+      "signature": {
+        "parameters": []
+      },
+      "body_scope_id": "function:<fixtures>/javascript/code/functions/basic_functions.js:23:19:25:1"
+    },
+    "function:<fixtures>/javascript/code/functions/basic_functions.js:27:10:27:22:transformData": {
+      "kind": "function",
+      "symbol_id": "function:<fixtures>/javascript/code/functions/basic_functions.js:27:10:27:22:transformData",
+      "name": "transformData",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/functions/basic_functions.js",
+        "start_line": 27,
+        "start_column": 10,
+        "end_line": 27,
+        "end_column": 22
+      },
+      "defining_scope_id": "module:<fixtures>/javascript/code/functions/basic_functions.js:1:1:38:0",
+      "is_exported": false,
+      "signature": {
+        "parameters": [
+          {
+            "kind": "parameter",
+            "defining_scope_id": "function:<fixtures>/javascript/code/functions/basic_functions.js:27:23:29:1",
+            "symbol_id": "parameter:<fixtures>/javascript/code/functions/basic_functions.js:27:24:27:27:data",
+            "name": "data",
+            "location": {
+              "file_path": "<fixtures>/javascript/code/functions/basic_functions.js",
+              "start_line": 27,
+              "start_column": 24,
+              "end_line": 27,
+              "end_column": 27
+            }
+          }
+        ]
+      },
+      "body_scope_id": "function:<fixtures>/javascript/code/functions/basic_functions.js:27:23:29:1"
+    }
+  },
+  "classes": {},
+  "variables": {
+    "variable:<fixtures>/javascript/code/functions/basic_functions.js:19:9:19:12:data": {
+      "kind": "constant",
+      "symbol_id": "variable:<fixtures>/javascript/code/functions/basic_functions.js:19:9:19:12:data",
+      "name": "data",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/functions/basic_functions.js",
+        "start_line": 19,
+        "start_column": 9,
+        "end_line": 19,
+        "end_column": 12
+      },
+      "defining_scope_id": "function:<fixtures>/javascript/code/functions/basic_functions.js:18:19:21:1",
+      "is_exported": false,
+      "initial_value": "fetchData()",
+      "initialized_from_call": "fetchData"
+    }
+  },
+  "interfaces": {},
+  "enums": {},
+  "namespaces": {},
+  "types": {},
+  "imported_symbols": {},
+  "references": [
+    {
+      "kind": "variable_reference",
+      "name": "greet",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/functions/basic_functions.js",
+        "start_line": 6,
+        "start_column": 10,
+        "end_line": 6,
+        "end_column": 14
+      },
+      "scope_id": "module:<fixtures>/javascript/code/functions/basic_functions.js:1:1:38:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "name",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/functions/basic_functions.js",
+        "start_line": 6,
+        "start_column": 16,
+        "end_line": 6,
+        "end_column": 19
+      },
+      "scope_id": "function:<fixtures>/javascript/code/functions/basic_functions.js:6:15:8:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "return `Hello, ${name}!`;",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/functions/basic_functions.js",
+        "start_line": 7,
+        "start_column": 3,
+        "end_line": 7,
+        "end_column": 27
+      },
+      "scope_id": "function:<fixtures>/javascript/code/functions/basic_functions.js:6:15:8:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "`Hello, ${name}!`",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/functions/basic_functions.js",
+        "start_line": 7,
+        "start_column": 10,
+        "end_line": 7,
+        "end_column": 26
+      },
+      "scope_id": "function:<fixtures>/javascript/code/functions/basic_functions.js:6:15:8:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "name",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/functions/basic_functions.js",
+        "start_line": 7,
+        "start_column": 20,
+        "end_line": 7,
+        "end_column": 23
+      },
+      "scope_id": "function:<fixtures>/javascript/code/functions/basic_functions.js:6:15:8:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "add",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/functions/basic_functions.js",
+        "start_line": 10,
+        "start_column": 10,
+        "end_line": 10,
+        "end_column": 12
+      },
+      "scope_id": "module:<fixtures>/javascript/code/functions/basic_functions.js:1:1:38:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "a",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/functions/basic_functions.js",
+        "start_line": 10,
+        "start_column": 14,
+        "end_line": 10,
+        "end_column": 14
+      },
+      "scope_id": "function:<fixtures>/javascript/code/functions/basic_functions.js:10:13:12:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "b",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/functions/basic_functions.js",
+        "start_line": 10,
+        "start_column": 17,
+        "end_line": 10,
+        "end_column": 17
+      },
+      "scope_id": "function:<fixtures>/javascript/code/functions/basic_functions.js:10:13:12:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "return a + b;",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/functions/basic_functions.js",
+        "start_line": 11,
+        "start_column": 3,
+        "end_line": 11,
+        "end_column": 15
+      },
+      "scope_id": "function:<fixtures>/javascript/code/functions/basic_functions.js:10:13:12:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "a + b",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/functions/basic_functions.js",
+        "start_line": 11,
+        "start_column": 10,
+        "end_line": 11,
+        "end_column": 14
+      },
+      "scope_id": "function:<fixtures>/javascript/code/functions/basic_functions.js:10:13:12:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "a",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/functions/basic_functions.js",
+        "start_line": 11,
+        "start_column": 10,
+        "end_line": 11,
+        "end_column": 10
+      },
+      "scope_id": "function:<fixtures>/javascript/code/functions/basic_functions.js:10:13:12:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "b",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/functions/basic_functions.js",
+        "start_line": 11,
+        "start_column": 14,
+        "end_line": 11,
+        "end_column": 14
+      },
+      "scope_id": "function:<fixtures>/javascript/code/functions/basic_functions.js:10:13:12:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "assignment",
+      "name": "multiply = (a, b) => a * b",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/functions/basic_functions.js",
+        "start_line": 14,
+        "start_column": 7,
+        "end_line": 14,
+        "end_column": 32
+      },
+      "scope_id": "module:<fixtures>/javascript/code/functions/basic_functions.js:1:1:38:0",
+      "target_location": {
+        "file_path": "<fixtures>/javascript/code/functions/basic_functions.js",
+        "start_line": 14,
+        "start_column": 7,
+        "end_line": 14,
+        "end_column": 32
+      }
+    },
+    {
+      "kind": "assignment",
+      "name": "multiply",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/functions/basic_functions.js",
+        "start_line": 14,
+        "start_column": 7,
+        "end_line": 14,
+        "end_column": 14
+      },
+      "scope_id": "module:<fixtures>/javascript/code/functions/basic_functions.js:1:1:38:0",
+      "target_location": {
+        "file_path": "<fixtures>/javascript/code/functions/basic_functions.js",
+        "start_line": 14,
+        "start_column": 7,
+        "end_line": 14,
+        "end_column": 14
+      }
+    },
+    {
+      "kind": "assignment",
+      "name": "multiply = (a, b) => a * b",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/functions/basic_functions.js",
+        "start_line": 14,
+        "start_column": 7,
+        "end_line": 14,
+        "end_column": 32
+      },
+      "scope_id": "module:<fixtures>/javascript/code/functions/basic_functions.js:1:1:38:0",
+      "target_location": {
+        "file_path": "<fixtures>/javascript/code/functions/basic_functions.js",
+        "start_line": 14,
+        "start_column": 7,
+        "end_line": 14,
+        "end_column": 32
+      }
+    },
+    {
+      "kind": "assignment",
+      "name": "multiply",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/functions/basic_functions.js",
+        "start_line": 14,
+        "start_column": 7,
+        "end_line": 14,
+        "end_column": 14
+      },
+      "scope_id": "module:<fixtures>/javascript/code/functions/basic_functions.js:1:1:38:0",
+      "target_location": {
+        "file_path": "<fixtures>/javascript/code/functions/basic_functions.js",
+        "start_line": 14,
+        "start_column": 7,
+        "end_line": 14,
+        "end_column": 14
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "multiply",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/functions/basic_functions.js",
+        "start_line": 14,
+        "start_column": 7,
+        "end_line": 14,
+        "end_column": 14
+      },
+      "scope_id": "module:<fixtures>/javascript/code/functions/basic_functions.js:1:1:38:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "(a, b) => a * b",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/functions/basic_functions.js",
+        "start_line": 14,
+        "start_column": 18,
+        "end_line": 14,
+        "end_column": 32
+      },
+      "scope_id": "function:<fixtures>/javascript/code/functions/basic_functions.js:14:18:14:32",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "(a, b) => a * b",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/functions/basic_functions.js",
+        "start_line": 14,
+        "start_column": 18,
+        "end_line": 14,
+        "end_column": 32
+      },
+      "scope_id": "function:<fixtures>/javascript/code/functions/basic_functions.js:14:18:14:32",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "a",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/functions/basic_functions.js",
+        "start_line": 14,
+        "start_column": 19,
+        "end_line": 14,
+        "end_column": 19
+      },
+      "scope_id": "function:<fixtures>/javascript/code/functions/basic_functions.js:14:18:14:32",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "b",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/functions/basic_functions.js",
+        "start_line": 14,
+        "start_column": 22,
+        "end_line": 14,
+        "end_column": 22
+      },
+      "scope_id": "function:<fixtures>/javascript/code/functions/basic_functions.js:14:18:14:32",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "a",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/functions/basic_functions.js",
+        "start_line": 14,
+        "start_column": 28,
+        "end_line": 14,
+        "end_column": 28
+      },
+      "scope_id": "function:<fixtures>/javascript/code/functions/basic_functions.js:14:18:14:32",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "b",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/functions/basic_functions.js",
+        "start_line": 14,
+        "start_column": 32,
+        "end_line": 14,
+        "end_column": 32
+      },
+      "scope_id": "function:<fixtures>/javascript/code/functions/basic_functions.js:14:18:14:32",
+      "access_type": "read"
+    },
+    {
+      "kind": "assignment",
+      "name": "isEven = (n) => n % 2 === 0",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/functions/basic_functions.js",
+        "start_line": 16,
+        "start_column": 7,
+        "end_line": 16,
+        "end_column": 33
+      },
+      "scope_id": "module:<fixtures>/javascript/code/functions/basic_functions.js:1:1:38:0",
+      "target_location": {
+        "file_path": "<fixtures>/javascript/code/functions/basic_functions.js",
+        "start_line": 16,
+        "start_column": 7,
+        "end_line": 16,
+        "end_column": 33
+      }
+    },
+    {
+      "kind": "assignment",
+      "name": "isEven",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/functions/basic_functions.js",
+        "start_line": 16,
+        "start_column": 7,
+        "end_line": 16,
+        "end_column": 12
+      },
+      "scope_id": "module:<fixtures>/javascript/code/functions/basic_functions.js:1:1:38:0",
+      "target_location": {
+        "file_path": "<fixtures>/javascript/code/functions/basic_functions.js",
+        "start_line": 16,
+        "start_column": 7,
+        "end_line": 16,
+        "end_column": 12
+      }
+    },
+    {
+      "kind": "assignment",
+      "name": "isEven = (n) => n % 2 === 0",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/functions/basic_functions.js",
+        "start_line": 16,
+        "start_column": 7,
+        "end_line": 16,
+        "end_column": 33
+      },
+      "scope_id": "module:<fixtures>/javascript/code/functions/basic_functions.js:1:1:38:0",
+      "target_location": {
+        "file_path": "<fixtures>/javascript/code/functions/basic_functions.js",
+        "start_line": 16,
+        "start_column": 7,
+        "end_line": 16,
+        "end_column": 33
+      }
+    },
+    {
+      "kind": "assignment",
+      "name": "isEven",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/functions/basic_functions.js",
+        "start_line": 16,
+        "start_column": 7,
+        "end_line": 16,
+        "end_column": 12
+      },
+      "scope_id": "module:<fixtures>/javascript/code/functions/basic_functions.js:1:1:38:0",
+      "target_location": {
+        "file_path": "<fixtures>/javascript/code/functions/basic_functions.js",
+        "start_line": 16,
+        "start_column": 7,
+        "end_line": 16,
+        "end_column": 12
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "isEven",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/functions/basic_functions.js",
+        "start_line": 16,
+        "start_column": 7,
+        "end_line": 16,
+        "end_column": 12
+      },
+      "scope_id": "module:<fixtures>/javascript/code/functions/basic_functions.js:1:1:38:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "(n) => n % 2 === 0",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/functions/basic_functions.js",
+        "start_line": 16,
+        "start_column": 16,
+        "end_line": 16,
+        "end_column": 33
+      },
+      "scope_id": "function:<fixtures>/javascript/code/functions/basic_functions.js:16:16:16:33",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "(n) => n % 2 === 0",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/functions/basic_functions.js",
+        "start_line": 16,
+        "start_column": 16,
+        "end_line": 16,
+        "end_column": 33
+      },
+      "scope_id": "function:<fixtures>/javascript/code/functions/basic_functions.js:16:16:16:33",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "n",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/functions/basic_functions.js",
+        "start_line": 16,
+        "start_column": 17,
+        "end_line": 16,
+        "end_column": 17
+      },
+      "scope_id": "function:<fixtures>/javascript/code/functions/basic_functions.js:16:16:16:33",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "n",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/functions/basic_functions.js",
+        "start_line": 16,
+        "start_column": 23,
+        "end_line": 16,
+        "end_column": 23
+      },
+      "scope_id": "function:<fixtures>/javascript/code/functions/basic_functions.js:16:16:16:33",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "callChain",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/functions/basic_functions.js",
+        "start_line": 18,
+        "start_column": 10,
+        "end_line": 18,
+        "end_column": 18
+      },
+      "scope_id": "module:<fixtures>/javascript/code/functions/basic_functions.js:1:1:38:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "assignment",
+      "name": "data = fetchData()",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/functions/basic_functions.js",
+        "start_line": 19,
+        "start_column": 9,
+        "end_line": 19,
+        "end_column": 26
+      },
+      "scope_id": "function:<fixtures>/javascript/code/functions/basic_functions.js:18:19:21:1",
+      "target_location": {
+        "file_path": "<fixtures>/javascript/code/functions/basic_functions.js",
+        "start_line": 19,
+        "start_column": 9,
+        "end_line": 19,
+        "end_column": 26
+      }
+    },
+    {
+      "kind": "assignment",
+      "name": "data",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/functions/basic_functions.js",
+        "start_line": 19,
+        "start_column": 9,
+        "end_line": 19,
+        "end_column": 12
+      },
+      "scope_id": "function:<fixtures>/javascript/code/functions/basic_functions.js:18:19:21:1",
+      "target_location": {
+        "file_path": "<fixtures>/javascript/code/functions/basic_functions.js",
+        "start_line": 19,
+        "start_column": 9,
+        "end_line": 19,
+        "end_column": 12
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "data",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/functions/basic_functions.js",
+        "start_line": 19,
+        "start_column": 9,
+        "end_line": 19,
+        "end_column": 12
+      },
+      "scope_id": "function:<fixtures>/javascript/code/functions/basic_functions.js:18:19:21:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "fetchData",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/functions/basic_functions.js",
+        "start_line": 19,
+        "start_column": 16,
+        "end_line": 19,
+        "end_column": 26
+      },
+      "scope_id": "function:<fixtures>/javascript/code/functions/basic_functions.js:18:19:21:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "function_call",
+      "name": "fetchData",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/functions/basic_functions.js",
+        "start_line": 19,
+        "start_column": 16,
+        "end_line": 19,
+        "end_column": 24
+      },
+      "scope_id": "function:<fixtures>/javascript/code/functions/basic_functions.js:18:19:21:1",
+      "potential_construct_target": {
+        "file_path": "<fixtures>/javascript/code/functions/basic_functions.js",
+        "start_line": 19,
+        "start_column": 9,
+        "end_line": 19,
+        "end_column": 12
+      }
+    },
+    {
+      "kind": "variable_reference",
+      "name": "fetchData",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/functions/basic_functions.js",
+        "start_line": 19,
+        "start_column": 16,
+        "end_line": 19,
+        "end_column": 24
+      },
+      "scope_id": "function:<fixtures>/javascript/code/functions/basic_functions.js:18:19:21:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "return transformData(data);",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/functions/basic_functions.js",
+        "start_line": 20,
+        "start_column": 3,
+        "end_line": 20,
+        "end_column": 29
+      },
+      "scope_id": "function:<fixtures>/javascript/code/functions/basic_functions.js:18:19:21:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "function_call",
+      "name": "transformData",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/functions/basic_functions.js",
+        "start_line": 20,
+        "start_column": 10,
+        "end_line": 20,
+        "end_column": 22
+      },
+      "scope_id": "function:<fixtures>/javascript/code/functions/basic_functions.js:18:19:21:1"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "transformData",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/functions/basic_functions.js",
+        "start_line": 20,
+        "start_column": 10,
+        "end_line": 20,
+        "end_column": 28
+      },
+      "scope_id": "function:<fixtures>/javascript/code/functions/basic_functions.js:18:19:21:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "transformData",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/functions/basic_functions.js",
+        "start_line": 20,
+        "start_column": 10,
+        "end_line": 20,
+        "end_column": 22
+      },
+      "scope_id": "function:<fixtures>/javascript/code/functions/basic_functions.js:18:19:21:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "data",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/functions/basic_functions.js",
+        "start_line": 20,
+        "start_column": 24,
+        "end_line": 20,
+        "end_column": 27
+      },
+      "scope_id": "function:<fixtures>/javascript/code/functions/basic_functions.js:18:19:21:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "fetchData",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/functions/basic_functions.js",
+        "start_line": 23,
+        "start_column": 10,
+        "end_line": 23,
+        "end_column": 18
+      },
+      "scope_id": "module:<fixtures>/javascript/code/functions/basic_functions.js:1:1:38:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "return { value: 42 };",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/functions/basic_functions.js",
+        "start_line": 24,
+        "start_column": 3,
+        "end_line": 24,
+        "end_column": 23
+      },
+      "scope_id": "function:<fixtures>/javascript/code/functions/basic_functions.js:23:19:25:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "{ value: 42 }",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/functions/basic_functions.js",
+        "start_line": 24,
+        "start_column": 10,
+        "end_line": 24,
+        "end_column": 22
+      },
+      "scope_id": "function:<fixtures>/javascript/code/functions/basic_functions.js:23:19:25:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "transformData",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/functions/basic_functions.js",
+        "start_line": 27,
+        "start_column": 10,
+        "end_line": 27,
+        "end_column": 22
+      },
+      "scope_id": "module:<fixtures>/javascript/code/functions/basic_functions.js:1:1:38:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "data",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/functions/basic_functions.js",
+        "start_line": 27,
+        "start_column": 24,
+        "end_line": 27,
+        "end_column": 27
+      },
+      "scope_id": "function:<fixtures>/javascript/code/functions/basic_functions.js:27:23:29:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "return data.value * 2;",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/functions/basic_functions.js",
+        "start_line": 28,
+        "start_column": 3,
+        "end_line": 28,
+        "end_column": 24
+      },
+      "scope_id": "function:<fixtures>/javascript/code/functions/basic_functions.js:27:23:29:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "property_access",
+      "name": "value",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/functions/basic_functions.js",
+        "start_line": 28,
+        "start_column": 10,
+        "end_line": 28,
+        "end_column": 19
+      },
+      "scope_id": "function:<fixtures>/javascript/code/functions/basic_functions.js:27:23:29:1",
+      "receiver_location": {
+        "file_path": "<fixtures>/javascript/code/functions/basic_functions.js",
+        "start_line": 28,
+        "start_column": 10,
+        "end_line": 28,
+        "end_column": 13
+      },
+      "property_chain": [
+        "data",
+        "value"
+      ],
+      "access_type": "property",
+      "is_optional_chain": false
+    },
+    {
+      "kind": "variable_reference",
+      "name": "data",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/functions/basic_functions.js",
+        "start_line": 28,
+        "start_column": 10,
+        "end_line": 28,
+        "end_column": 13
+      },
+      "scope_id": "function:<fixtures>/javascript/code/functions/basic_functions.js:27:23:29:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "property_access",
+      "name": "value",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/functions/basic_functions.js",
+        "start_line": 28,
+        "start_column": 10,
+        "end_line": 28,
+        "end_column": 19
+      },
+      "scope_id": "function:<fixtures>/javascript/code/functions/basic_functions.js:27:23:29:1",
+      "receiver_location": {
+        "file_path": "<fixtures>/javascript/code/functions/basic_functions.js",
+        "start_line": 28,
+        "start_column": 10,
+        "end_line": 28,
+        "end_column": 13
+      },
+      "property_chain": [
+        "data",
+        "value"
+      ],
+      "access_type": "property",
+      "is_optional_chain": false
+    },
+    {
+      "kind": "variable_reference",
+      "name": "data",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/functions/basic_functions.js",
+        "start_line": 28,
+        "start_column": 10,
+        "end_line": 28,
+        "end_column": 13
+      },
+      "scope_id": "function:<fixtures>/javascript/code/functions/basic_functions.js:27:23:29:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "data.value * 2",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/functions/basic_functions.js",
+        "start_line": 28,
+        "start_column": 10,
+        "end_line": 28,
+        "end_column": 23
+      },
+      "scope_id": "function:<fixtures>/javascript/code/functions/basic_functions.js:27:23:29:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "data",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/functions/basic_functions.js",
+        "start_line": 28,
+        "start_column": 10,
+        "end_line": 28,
+        "end_column": 13
+      },
+      "scope_id": "function:<fixtures>/javascript/code/functions/basic_functions.js:27:23:29:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "value",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/functions/basic_functions.js",
+        "start_line": 28,
+        "start_column": 15,
+        "end_line": 28,
+        "end_column": 19
+      },
+      "scope_id": "function:<fixtures>/javascript/code/functions/basic_functions.js:27:23:29:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "value",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/functions/basic_functions.js",
+        "start_line": 28,
+        "start_column": 15,
+        "end_line": 28,
+        "end_column": 19
+      },
+      "scope_id": "function:<fixtures>/javascript/code/functions/basic_functions.js:27:23:29:1",
+      "access_type": "read"
+    },
+    {
+      "kind": "property_access",
+      "name": "exports",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/functions/basic_functions.js",
+        "start_line": 31,
+        "start_column": 1,
+        "end_line": 31,
+        "end_column": 14
+      },
+      "scope_id": "module:<fixtures>/javascript/code/functions/basic_functions.js:1:1:38:0",
+      "receiver_location": {
+        "file_path": "<fixtures>/javascript/code/functions/basic_functions.js",
+        "start_line": 31,
+        "start_column": 1,
+        "end_line": 31,
+        "end_column": 6
+      },
+      "property_chain": [
+        "module",
+        "exports"
+      ],
+      "access_type": "property",
+      "is_optional_chain": false
+    },
+    {
+      "kind": "variable_reference",
+      "name": "module",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/functions/basic_functions.js",
+        "start_line": 31,
+        "start_column": 1,
+        "end_line": 31,
+        "end_column": 6
+      },
+      "scope_id": "module:<fixtures>/javascript/code/functions/basic_functions.js:1:1:38:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "property_access",
+      "name": "exports",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/functions/basic_functions.js",
+        "start_line": 31,
+        "start_column": 1,
+        "end_line": 31,
+        "end_column": 14
+      },
+      "scope_id": "module:<fixtures>/javascript/code/functions/basic_functions.js:1:1:38:0",
+      "receiver_location": {
+        "file_path": "<fixtures>/javascript/code/functions/basic_functions.js",
+        "start_line": 31,
+        "start_column": 1,
+        "end_line": 31,
+        "end_column": 6
+      },
+      "property_chain": [
+        "module",
+        "exports"
+      ],
+      "access_type": "property",
+      "is_optional_chain": false
+    },
+    {
+      "kind": "variable_reference",
+      "name": "module",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/functions/basic_functions.js",
+        "start_line": 31,
+        "start_column": 1,
+        "end_line": 31,
+        "end_column": 6
+      },
+      "scope_id": "module:<fixtures>/javascript/code/functions/basic_functions.js:1:1:38:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "assignment",
+      "name": "module.exports = {\n  greet,\n  add,\n  multiply,\n  isEven,\n  callChain,\n}",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/functions/basic_functions.js",
+        "start_line": 31,
+        "start_column": 1,
+        "end_line": 37,
+        "end_column": 1
+      },
+      "scope_id": "module:<fixtures>/javascript/code/functions/basic_functions.js:1:1:38:0",
+      "target_location": {
+        "file_path": "<fixtures>/javascript/code/functions/basic_functions.js",
+        "start_line": 31,
+        "start_column": 1,
+        "end_line": 37,
+        "end_column": 1
+      }
+    },
+    {
+      "kind": "property_access",
+      "name": "exports",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/functions/basic_functions.js",
+        "start_line": 31,
+        "start_column": 1,
+        "end_line": 31,
+        "end_column": 14
+      },
+      "scope_id": "module:<fixtures>/javascript/code/functions/basic_functions.js:1:1:38:0",
+      "receiver_location": {
+        "file_path": "<fixtures>/javascript/code/functions/basic_functions.js",
+        "start_line": 31,
+        "start_column": 1,
+        "end_line": 31,
+        "end_column": 6
+      },
+      "property_chain": [
+        "module",
+        "exports"
+      ],
+      "access_type": "property",
+      "is_optional_chain": false
+    },
+    {
+      "kind": "variable_reference",
+      "name": "module",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/functions/basic_functions.js",
+        "start_line": 31,
+        "start_column": 1,
+        "end_line": 31,
+        "end_column": 6
+      },
+      "scope_id": "module:<fixtures>/javascript/code/functions/basic_functions.js:1:1:38:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "module",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/functions/basic_functions.js",
+        "start_line": 31,
+        "start_column": 1,
+        "end_line": 31,
+        "end_column": 6
+      },
+      "scope_id": "module:<fixtures>/javascript/code/functions/basic_functions.js:1:1:38:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "exports",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/functions/basic_functions.js",
+        "start_line": 31,
+        "start_column": 8,
+        "end_line": 31,
+        "end_column": 14
+      },
+      "scope_id": "module:<fixtures>/javascript/code/functions/basic_functions.js:1:1:38:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "exports",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/functions/basic_functions.js",
+        "start_line": 31,
+        "start_column": 8,
+        "end_line": 31,
+        "end_column": 14
+      },
+      "scope_id": "module:<fixtures>/javascript/code/functions/basic_functions.js:1:1:38:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "exports",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/functions/basic_functions.js",
+        "start_line": 31,
+        "start_column": 8,
+        "end_line": 31,
+        "end_column": 14
+      },
+      "scope_id": "module:<fixtures>/javascript/code/functions/basic_functions.js:1:1:38:0",
+      "access_type": "read"
+    },
+    {
+      "kind": "variable_reference",
+      "name": "{\n  greet,\n  add,\n  multiply,\n  isEven,\n  callChain,\n}",
+      "location": {
+        "file_path": "<fixtures>/javascript/code/functions/basic_functions.js",
+        "start_line": 31,
+        "start_column": 18,
+        "end_line": 37,
+        "end_column": 1
+      },
+      "scope_id": "module:<fixtures>/javascript/code/functions/basic_functions.js:1:1:38:0",
+      "access_type": "read"
+    }
+  ]
+}

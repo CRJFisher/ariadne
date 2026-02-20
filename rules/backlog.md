@@ -189,7 +189,8 @@ backlog/tasks/epics/
 ├── epic-1-type-system/
 │   ├── README.md           # Epic overview and goals
 │   ├── audit-task.md       # Initial audit of module structure
-│   └── task-*.md          # Individual feature tasks
+│   ├── task-*.md          # Individual feature tasks
+│   └── *.md               # Epic-specific planning docs (see below)
 ```
 
 Each epic should have:
@@ -198,6 +199,16 @@ Each epic should have:
 2. Refactoring sub-tasks based on audit
 3. Feature implementation tasks
 4. Final tasks applying testing-standards.md and coding-standards.md
+
+**Important: Epic Planning Documents**
+
+All epic-related planning and analysis documents should be kept within the epic's folder, not in the global `/docs` folder. Examples:
+- `FUNCTIONALITY_TREE.md` - Analysis of existing functionality
+- `CODE_STYLE_AUDIT.md` - Code quality assessments
+- `MIGRATION_PROCESS.md` - Migration strategies
+- `NEW_STRUCTURE_PROPOSAL.md` - Architecture proposals
+
+This keeps all epic-related materials together and makes them easier to find and archive when the epic is complete.
 
 ### Operations
 
