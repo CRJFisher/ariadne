@@ -69,6 +69,13 @@ describe("build_triage_entries", () => {
       result: KNOWN_TP_RESULT,
       error: null,
       attempt_count: 0,
+      is_exported: false,
+      access_modifier: null,
+      diagnostics: {
+        grep_call_sites: [],
+        ariadne_call_refs: [],
+        diagnosis: "no-textual-callers",
+      },
     }];
     expect(result).toEqual(expected);
   });
@@ -105,6 +112,13 @@ describe("build_triage_entries", () => {
       result: null,
       error: null,
       attempt_count: 0,
+      is_exported: false,
+      access_modifier: null,
+      diagnostics: {
+        grep_call_sites: [],
+        ariadne_call_refs: [],
+        diagnosis: "callers-not-in-registry",
+      },
     }];
     expect(result).toEqual(expected);
   });

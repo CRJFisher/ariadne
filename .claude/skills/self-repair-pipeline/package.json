@@ -5,7 +5,7 @@
   "type": "module",
   "description": "Entry point self-repair pipeline: detect, triage, fix, finalize",
   "scripts": {
-    "analyze": "npx tsx scripts/detect_entrypoints.ts --config project_configs/core.json",
+    "analyze": "node --import tsx scripts/detect_entrypoints.ts --config project_configs/core.json",
     "profile": "clinic doctor -- node --import tsx scripts/detect_entrypoints.ts --config project_configs/core.json",
     "profile:flame": "clinic flame -- node --import tsx scripts/detect_entrypoints.ts --config project_configs/core.json",
     "profile:simple": "NODE_ENV=production node --cpu-prof --cpu-prof-interval=100 --import tsx scripts/detect_entrypoints.ts --config project_configs/core.json",

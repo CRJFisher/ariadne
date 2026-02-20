@@ -8,18 +8,18 @@ import {
   session_detail,
 } from "../analytics/query_stats";
 
-function resolve_db_path(): string {
+export function resolve_db_path(): string {
   if (process.env.ARIADNE_ANALYTICS_DB) return process.env.ARIADNE_ANALYTICS_DB;
   const home = process.env.HOME || process.env.USERPROFILE || "";
   return path.join(home, ".ariadne", "analytics.db");
 }
 
-interface CliArgs {
+export interface CliArgs {
   since?: string;
   session?: string;
 }
 
-function parse_args(argv: string[] = process.argv.slice(2)): CliArgs {
+export function parse_args(argv: string[] = process.argv.slice(2)): CliArgs {
   const result: CliArgs = {};
   for (let i = 0; i < argv.length; i++) {
     if (argv[i] === "--since" && argv[i + 1]) {
@@ -33,11 +33,11 @@ function parse_args(argv: string[] = process.argv.slice(2)): CliArgs {
   return result;
 }
 
-function pad_right(str: string, len: number): string {
+export function pad_right(str: string, len: number): string {
   return str.length >= len ? str : str + " ".repeat(len - str.length);
 }
 
-function main(): void {
+export function main(argv?: string[]): void {
   const db_path = resolve_db_path();
   let db: Database.Database;
 
@@ -49,7 +49,7 @@ function main(): void {
     process.exit(1);
   }
 
-  const args = parse_args();
+  const args = parse_args(argv);
 
   if (args.session) {
     // Per-session detail view
@@ -75,7 +75,7 @@ function main(): void {
   }
 
   // Summary view
-  const sessions = recent_sessions(db, 5);
+  const sessions_list = recent_sessions(db, 5);
   const total_sessions_row = db
     .prepare("SELECT COUNT(*) as count FROM sessions")
     .get() as { count: number };
@@ -110,9 +110,9 @@ function main(): void {
   }
 
   // Recent sessions
-  if (sessions.length > 0) {
-    console.log(`\nRecent sessions (last ${sessions.length}):`);
-    for (const s of sessions) {
+  if (sessions_list.length > 0) {
+    console.log(`\nRecent sessions (last ${sessions_list.length}):`);
+    for (const s of sessions_list) {
       const client = s.client_name
         ? `${s.client_name}@${s.client_version}`
         : "unknown-client";
@@ -126,4 +126,8 @@ function main(): void {
   db.close();
 }
 
-main();
+// Run when executed directly (not imported by tests)
+const is_direct = process.argv[1]?.includes("ariadne_analytics");
+if (is_direct) {
+  main();
+}
