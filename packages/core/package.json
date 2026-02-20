@@ -51,6 +51,10 @@
     "url": "https://github.com/CRJFisher/ariadne/issues"
   },
   "homepage": "https://github.com/CRJFisher/ariadne#readme",
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
   "dependencies": {
     "@ariadnejs/types": "workspace:*",
     "@types/glob": "^8.1.0",
