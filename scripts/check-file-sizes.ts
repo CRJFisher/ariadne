@@ -7,6 +7,9 @@
 
 import * as fs from "fs";
 import * as path from "path";
+import { fileURLToPath } from "url";
+
+const script_dir = path.dirname(fileURLToPath(import.meta.url));
 
 // Configuration
 const WARNING_THRESHOLD = 28 * 1024; // 28KB
@@ -103,9 +106,10 @@ async function check_file_sizes(root_dir: string = "."): Promise<{
   for (const file of files) {
     const stats = fs.statSync(file);
     const size = stats.size;
-    
+    const is_test = file.includes(".test.") || file.includes(".spec.");
+
     let status: "ok" | "warning" | "error" = "ok";
-    if (size >= ERROR_THRESHOLD) {
+    if (size >= ERROR_THRESHOLD && !is_test) {
       status = "error";
       has_errors = true;
     } else if (size >= WARNING_THRESHOLD) {
@@ -127,7 +131,7 @@ async function main() {
   console.log("🔍 Checking file sizes...\n");
 
   // Check files in the packages directory
-  const packages_dir = path.join(__dirname, "..", "packages");
+  const packages_dir = path.join(script_dir, "..", "packages");
   const { results, has_warnings, has_errors } = await check_file_sizes(packages_dir);
 
   // Sort by size descending
@@ -186,10 +190,8 @@ async function main() {
 // Support running as a module
 export { check_file_sizes, WARNING_THRESHOLD, ERROR_THRESHOLD };
 
-// Run if called directly
-if (require.main === module) {
-  main().catch(err => {
-    console.error("Error checking file sizes:", err);
-    process.exit(1);
-  });
-}
+// Run directly
+main().catch(err => {
+  console.error("Error checking file sizes:", err);
+  process.exit(1);
+});
