@@ -23,8 +23,8 @@
 The core pipeline has three stages. Subsystem-specific guidance lives in `.claude/rules/`.
 
 1. **Per-file indexing** (`index_single_file/`) — 4-pass semantic indexing: query tree → scopes → definitions → references
-2. **Project resolution** (`project/` + `resolve_references/`) — Registry updates + 2-phase resolution: name resolution → call resolution
-3. **Entry point detection** (`trace_call_graph/`) — Build call graph, identify unreachable functions
+2. **Project resolution** (`project/` + `resolve_references/`) — Registry updates, import location fixing, name resolution → call resolution
+3. **Entry point detection** (`trace_call_graph/`) — Build call graph, identify unreachable functions with language-specific filtering
 
 ## Documentation Style: Canonical and Self-Contained
 
