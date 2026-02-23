@@ -41,7 +41,7 @@ import {
   detect_language,
   extract_entry_points,
 } from "../src/extract_entry_points.js";
-import { save_json, OutputType, path_to_project_id } from "../src/analysis_io.js";
+import { save_json, OutputType, path_to_project_id, project_id_from_config } from "../src/analysis_io.js";
 import { get_data_dir } from "../src/discover_state.js";
 import * as path from "path";
 import * as fs from "fs/promises";
@@ -171,11 +171,11 @@ Options:
 
 Config file format (JSON):
   {
-    "project_name": "my-project",
     "project_path": "/absolute/path/to/repo",
     "folders": ["src", "lib"],
     "exclude": ["vendor", "generated"],
-    "include_tests": false
+    "include_tests": false,
+    "project_name": "name"  // required only for project_path="."
   }
 `);
 }
@@ -187,16 +187,17 @@ async function load_project_config(config_path: string): Promise<ProjectConfig> 
   const raw = await fs.readFile(resolved, "utf-8");
   const parsed = JSON.parse(raw) as Record<string, unknown>;
 
-  if (typeof parsed.project_name !== "string" || !parsed.project_name) {
-    throw new Error("Config missing required field: project_name");
-  }
   if (typeof parsed.project_path !== "string" || !parsed.project_path) {
     throw new Error("Config missing required field: project_path");
   }
 
+  const raw_project_path = parsed.project_path as string;
+  const explicit_name = typeof parsed.project_name === "string" ? parsed.project_name : undefined;
+  const project_name = project_id_from_config(raw_project_path, explicit_name);
+
   return {
-    project_name: parsed.project_name,
-    project_path: path.resolve(parsed.project_path),
+    project_name,
+    project_path: path.resolve(raw_project_path),
     folders: Array.isArray(parsed.folders) ? (parsed.folders as string[]) : undefined,
     exclude: Array.isArray(parsed.exclude) ? (parsed.exclude as string[]) : undefined,
     include_tests: typeof parsed.include_tests === "boolean" ? parsed.include_tests : undefined,

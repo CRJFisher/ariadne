@@ -47,10 +47,10 @@ When the input is a directory path and no existing config matches:
 1. Resolve the path and verify it exists
 2. Run `ls` to see top-level structure; check for `.gitignore`, `package.json`, `pyproject.toml`
 3. Propose a config with:
-   - `project_name`: basename of the path (e.g., "projections")
-   - `project_path`: absolute path
+   - `project_path`: absolute path (required)
    - `folders`: relevant source directories (omit if analyzing everything)
    - `exclude`: obvious non-source directories beyond the defaults
+   - `project_name` is auto-derived for external projects via `path_to_project_id(project_path)` — do not include it in the config. Only internal projects (`project_path: "."`) require an explicit `project_name`.
 4. Show the proposed config and ask the user to confirm or adjust
 5. Save to `project_configs/{name}.json`
 6. Continue the pipeline with `--config project_configs/{name}.json`
@@ -79,6 +79,8 @@ If no arguments are provided or the input is ambiguous, **ask the user** before 
 | `triage/fix_plans/{group_id}/` | Fix plans, synthesis, and reviews per group |
 | `analysis/{project}/` | Project-scoped timestamped analysis and triage result files |
 | `known_entrypoints/{project}.json` | Known-entrypoints registry (persists across runs) |
+
+`{project}` is the short name for internal packages (e.g., `core`) or the full path identifier for external projects (e.g., `-Users-chuck-workspace-AmazonAdv-projections`).
 | `triage_patterns.json` | Extracted classification patterns from meta-review |
 
 All paths above are relative to `.claude/self-repair-pipeline-state/`.
