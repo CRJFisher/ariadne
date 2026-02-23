@@ -52,7 +52,7 @@ The `Project` class orchestrates the full pipeline. It manages incremental updat
 
 ## Language Dispatch Pattern
 
-Language-specific code uses the `{module}.{language}.ts` naming convention. A main dispatcher routes to language-specific implementations based on file extension. This pattern appears in capture handlers, metadata extractors, import resolvers, receiver resolvers, scope boundary extractors, and test file detectors.
+Language-specific code uses the `{module}.{language}.ts` naming convention. A main dispatcher routes to language-specific implementations based on file extension. This pattern appears in capture handlers, metadata extractors, import resolvers, and test file detectors.
 
 ## Symbol System
 
