@@ -19,20 +19,22 @@ describe("MCP Server E2E - list_entrypoints tool", () => {
   let transport: StdioClientTransport;
 
   // Path to packages/core (the codebase we'll analyze)
-  const PACKAGES_CORE_PATH = path.resolve(__dirname, "../../../core");
+  const PACKAGES_CORE_PATH = path.resolve(__dirname, "../../../../core");
 
-  // Path to the built server executable
-  const SERVER_PATH = path.resolve(__dirname, "../../dist/server.js");
+  // Path to the built server executable (3 levels up from src/tools/core/)
+  const SERVER_PATH = path.resolve(__dirname, "../../../dist/server.js");
 
   beforeAll(async () => {
     // Create MCP client with stdio transport
     // This will automatically spawn the server process
     transport = new StdioClientTransport({
       command: "node",
-      args: [SERVER_PATH],
+      args: [SERVER_PATH, "--no-watch"],
       env: {
         ...process.env,
         PROJECT_PATH: PACKAGES_CORE_PATH,
+        ARIADNE_ANALYTICS: "",
+        ARIADNE_ANALYTICS_DB: ":memory:",
       },
     });
 

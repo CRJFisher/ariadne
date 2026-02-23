@@ -28,13 +28,13 @@
  *   --exclude <patterns>   Comma-separated exclude patterns
  */
 
-import { Project, is_test_file } from "@ariadnejs/core";
-import { FilePath } from "@ariadnejs/types";
 import {
+  load_project,
+  is_test_file,
   find_source_files,
-  parse_gitignore,
   IGNORED_DIRECTORIES,
-} from "@ariadnejs/mcp";
+  parse_gitignore,
+} from "@ariadnejs/core";
 import type { EnrichedFunctionEntry } from "../src/types.js";
 import {
   build_constructor_to_class_name_map,
@@ -289,33 +289,39 @@ async function analyze_directory(
 }> {
   const start_time = Date.now();
 
-  // Build exclude list
-  const excluded_folders = [...IGNORED_DIRECTORIES, ...(options.exclude || [])];
+  const exclude = [...IGNORED_DIRECTORIES, ...(options.exclude || [])];
+  const test_file_filter = options.include_tests
+    ? undefined
+    : (file: string) => {
+        const language = detect_language(file);
+        return !language || !is_test_file(file, language);
+      };
 
   console.error(`Initializing project at: ${project_path}`);
-  console.error(`Excluded folders: ${excluded_folders.join(", ")}`);
-
-  // Initialize project
-  const init_start = Date.now();
-  const project = new Project();
-  await project.initialize(project_path as FilePath, excluded_folders);
-  console.error(`Initialization: ${Date.now() - init_start}ms`);
-
-  // Find source files
-  const load_start = Date.now();
-  let search_paths: string[];
-
-  if (options.folders && options.folders.length > 0) {
-    // Analyze only specified subfolders
-    search_paths = options.folders.map((f) => path.join(project_path, f));
+  console.error(`Excluded folders: ${exclude.join(", ")}`);
+  if (options.folders) {
     console.error(`Analyzing folders: ${options.folders.join(", ")}`);
-  } else {
-    search_paths = [project_path];
   }
 
-  // Combine .gitignore patterns with user exclude patterns so find_source_files skips them
+  // Load project using shared pipeline
+  const load_start = Date.now();
+  const project = await load_project({
+    project_path,
+    folders: options.folders,
+    exclude,
+    file_filter: test_file_filter,
+  });
+  console.error(`Project loaded in ${Date.now() - load_start}ms`);
+
+  const stats = project.get_stats();
+  console.error(`Found ${stats.file_count} indexed files`);
+
+  // Build source_files Map for grep heuristics (re-read discovered files)
   const gitignore_patterns = await parse_gitignore(project_path);
   const combined_patterns = [...gitignore_patterns, ...(options.exclude || [])];
+  const search_paths = options.folders
+    ? options.folders.map((f) => path.join(project_path, f))
+    : [project_path];
 
   let all_files: string[] = [];
   for (const search_path of search_paths) {
@@ -326,42 +332,17 @@ async function analyze_directory(
       console.error(`Warning: Could not read ${search_path}: ${error}`);
     }
   }
-
-  // Filter test files if needed
-  if (!options.include_tests) {
-    all_files = all_files.filter((file) => {
-      const language = detect_language(file);
-      if (language && is_test_file(file, language)) {
-        return false;
-      }
-      return true;
-    });
+  if (test_file_filter) {
+    all_files = all_files.filter(test_file_filter);
   }
 
-  console.error(`Found ${all_files.length} source files`);
-
-  // Load files into project
   const source_files = new Map<string, string>();
-  let loaded_count = 0;
   for (const file_path of all_files) {
     try {
-      const source_code = await fs.readFile(file_path, "utf-8");
-      project.update_file(file_path as FilePath, source_code);
-      source_files.set(file_path, source_code);
-      loaded_count++;
-    } catch (error) {
-      console.error(`Warning: Failed to load ${file_path}: ${error}`);
+      source_files.set(file_path, await fs.readFile(file_path, "utf-8"));
+    } catch {
+      // Skip unreadable files
     }
-  }
-
-  console.error(`Loaded ${loaded_count} files in ${Date.now() - load_start}ms`);
-
-  // Check indexed count
-  const stats = project.get_stats();
-  if (stats.file_count !== loaded_count) {
-    console.error(
-      `Warning: ${loaded_count} files loaded but only ${stats.file_count} indexed`
-    );
   }
 
   // Build call graph

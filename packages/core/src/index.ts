@@ -27,3 +27,18 @@ export { profiler } from "./profiling";
 
 // Test file detection
 export { is_test_file } from "./project/detect_test_file";
+
+// Project loading
+export { load_project } from "./project/load_project";
+export type { LoadProjectOptions } from "./project/load_project";
+
+// File discovery
+export {
+  SUPPORTED_EXTENSIONS,
+  IGNORED_DIRECTORIES,
+  IGNORED_GLOBS,
+  is_supported_file,
+  parse_gitignore,
+  should_ignore_path,
+  find_source_files,
+} from "./project/file_loading";
