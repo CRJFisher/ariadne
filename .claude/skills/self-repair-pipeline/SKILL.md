@@ -36,9 +36,24 @@ Resolve the analysis target from the user's input using this routing table:
 | ------------- | ------- | ------ |
 | Empty or blank | `/self-repair-pipeline` | List available configs below, ask user what to analyze |
 | Config name | `core`, `mcp`, `types`, `projections` | Use `--config .claude/skills/self-repair-pipeline/project_configs/{name}.json` |
-| Absolute or relative directory path | `/Users/chuck/workspace/some-repo`, `../other-repo` | Use `--path <path>` |
+| Absolute or relative directory path | `/Users/chuck/workspace/some-repo`, `../other-repo` | Check for matching config; if none, create one interactively (see below) |
 | `owner/repo` or GitHub URL | `anthropics/sdk-python`, `https://github.com/owner/repo` | Use `--github <value>` |
 | Natural language | "analyze the core package" | Interpret intent and map to one of the above |
+
+### Creating a New Project Config
+
+When the input is a directory path and no existing config matches:
+
+1. Resolve the path and verify it exists
+2. Run `ls` to see top-level structure; check for `.gitignore`, `package.json`, `pyproject.toml`
+3. Propose a config with:
+   - `project_name`: basename of the path (e.g., "projections")
+   - `project_path`: absolute path
+   - `folders`: relevant source directories (omit if analyzing everything)
+   - `exclude`: obvious non-source directories beyond the defaults
+4. Show the proposed config and ask the user to confirm or adjust
+5. Save to `project_configs/{name}.json`
+6. Continue the pipeline with `--config project_configs/{name}.json`
 
 Available project configs:
 
@@ -53,20 +68,20 @@ If no arguments are provided or the input is ambiguous, **ask the user** before 
 
 ## Current State
 
-!`cat .claude/skills/self-repair-pipeline/triage_state/*_triage.json 2>/dev/null || echo "No active triage"`
+!`cat .claude/self-repair-pipeline-state/triage/*_triage.json 2>/dev/null || echo "No active triage"`
 
 ## State and Output Locations
 
 | File | Purpose |
 | ---- | ------- |
-| `triage_state/{project}_triage.json` | Active triage state (phases, entries, results) |
-| `triage_state/results/{entry_index}.json` | Per-entry triage result files (written by sub-agents) |
-| `triage_state/fix_plans/{group_id}/` | Fix plans, synthesis, and reviews per group |
-| `analysis_output/{project}/` | Project-scoped timestamped analysis and triage result files |
+| `triage/{project}_triage.json` | Active triage state (phases, entries, results) |
+| `triage/results/{entry_index}.json` | Per-entry triage result files (written by sub-agents) |
+| `triage/fix_plans/{group_id}/` | Fix plans, synthesis, and reviews per group |
+| `analysis/{project}/` | Project-scoped timestamped analysis and triage result files |
 | `known_entrypoints/{project}.json` | Known-entrypoints registry (persists across runs) |
 | `triage_patterns.json` | Extracted classification patterns from meta-review |
 
-All paths above are relative to `.claude/skills/self-repair-pipeline/`.
+All paths above are relative to `.claude/self-repair-pipeline-state/`.
 
 ## Phase 1: Detect
 
@@ -88,7 +103,7 @@ Options: `--config <file>`, `--path <dir>`, `--github <repo>`, `--branch <name>`
 
 Tracked project configs for Ariadne packages: `project_configs/{core,mcp,types}.json`
 
-Output: `analysis_output/<project>/detect_entrypoints/<timestamp>.json`
+Output: `.claude/self-repair-pipeline-state/analysis/<project>/detect_entrypoints/<timestamp>.json`
 
 ## Phase 2: Prepare
 
@@ -96,7 +111,7 @@ Build triage state from the latest analysis output:
 
 ```bash
 node --import tsx .claude/skills/self-repair-pipeline/scripts/prepare_triage.ts \
-  --analysis .claude/skills/self-repair-pipeline/analysis_output/<project>/detect_entrypoints/<timestamp>.json \
+  --analysis .claude/self-repair-pipeline-state/analysis/<project>/detect_entrypoints/<timestamp>.json \
   --package <name> \
   --batch-size 5
 ```
@@ -108,7 +123,7 @@ The script loads the known-entrypoints registry and classifies entries:
 - **known-tp**: Matches registry — marked completed immediately
 - **llm-triage**: No registry match — marked pending for investigation
 
-Output: `triage_state/{project}_triage.json`
+Output: `.claude/self-repair-pipeline-state/triage/{project}_triage.json`
 
 ## Phase 3: Triage Loop (Hook-Driven)
 
@@ -136,7 +151,7 @@ Fix planning proceeds per group through four sub-phases:
 
 Launch 5 **fix-planner** sub-agents for each group. Each generates an independent fix proposal.
 
-Output: `triage_state/fix_plans/{group_id}/plan_{n}.md`
+Output: `triage/fix_plans/{group_id}/plan_{n}.md` (relative to `.claude/self-repair-pipeline-state/`)
 
 Update `plans_written` in the state file after each plan is written.
 
@@ -144,7 +159,7 @@ Update `plans_written` in the state file after each plan is written.
 
 Launch a **plan-synthesizer** sub-agent that reads all 5 plans and produces a unified fix approach.
 
-Output: `triage_state/fix_plans/{group_id}/synthesis.md`
+Output: `triage/fix_plans/{group_id}/synthesis.md` (relative to `.claude/self-repair-pipeline-state/`)
 
 Set `synthesis_written: true` in the state file.
 
@@ -157,7 +172,7 @@ Launch 4 **plan-reviewer** sub-agents, each reviewing from a different angle:
 - Fundamentality
 - Language coverage
 
-Output: `triage_state/fix_plans/{group_id}/review_{angle}.md`
+Output: `triage/fix_plans/{group_id}/review_{angle}.md` (relative to `.claude/self-repair-pipeline-state/`)
 
 Update `reviews_written` in the state file after each review.
 
@@ -173,13 +188,13 @@ After the stop hook ALLOWs completion (all phases done or error exit), run final
 
 ```bash
 node --import tsx .claude/skills/self-repair-pipeline/scripts/finalize_triage.ts \
-  --state .claude/skills/self-repair-pipeline/triage_state/{project}_triage.json
+  --state .claude/self-repair-pipeline-state/triage/{project}_triage.json
 ```
 
 Finalization:
 
 - Partitions entries into true positives, dead code, and false-positive groups
-- Saves triage results JSON to `analysis_output/<project>/triage_results/`
+- Saves triage results JSON to `.claude/self-repair-pipeline-state/analysis/<project>/triage_results/`
 - Updates the known-entrypoints registry with confirmed true positives and dead code
 - Writes triage patterns file (if meta-review produced patterns)
 

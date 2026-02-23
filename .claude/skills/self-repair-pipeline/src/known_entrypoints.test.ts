@@ -15,7 +15,7 @@ import type { EnrichedFunctionEntry, KnownEntrypointSource } from "./types.js";
 // ===== Test Helpers =====
 
 const TEST_PROJECT = "__test_known_entrypoints__";
-const TEST_REGISTRY_DIR = "/tmp/claude/known_entrypoints_test";
+const TEST_DATA_DIR = "/tmp/claude/known_entrypoints_test";
 
 function make_entry(overrides: Partial<EnrichedFunctionEntry>): EnrichedFunctionEntry {
   return {
@@ -50,7 +50,7 @@ const PROJECT_PATH = "/projects/myapp";
 // Clean up test registry files after each test
 afterEach(async () => {
   try {
-    await fs.rm(TEST_REGISTRY_DIR, { recursive: true });
+    await fs.rm(TEST_DATA_DIR, { recursive: true });
   } catch {
     // Directory may not exist
   }
@@ -60,7 +60,7 @@ afterEach(async () => {
 
 describe("registry I/O", () => {
   it("load non-existent registry returns empty array", async () => {
-    const sources = await load_known_entrypoints("__nonexistent_project__");
+    const sources = await load_known_entrypoints("__nonexistent_project__", TEST_DATA_DIR);
     expect(sources).toEqual([]);
   });
 
@@ -82,10 +82,10 @@ describe("registry I/O", () => {
       },
     ];
 
-    const saved_path = await save_known_entrypoints(TEST_PROJECT, sources, TEST_REGISTRY_DIR);
-    expect(saved_path).toBe(get_registry_path(TEST_PROJECT, TEST_REGISTRY_DIR));
+    const saved_path = await save_known_entrypoints(TEST_PROJECT, sources, TEST_DATA_DIR);
+    expect(saved_path).toBe(get_registry_path(TEST_PROJECT, TEST_DATA_DIR));
 
-    const loaded = await load_known_entrypoints(TEST_PROJECT, TEST_REGISTRY_DIR);
+    const loaded = await load_known_entrypoints(TEST_PROJECT, TEST_DATA_DIR);
     expect(loaded).toEqual(sources);
   });
 });

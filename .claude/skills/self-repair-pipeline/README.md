@@ -12,7 +12,7 @@ flowchart TD
     subgraph P1["Phase 1: Detect"]
         RESOLVE[/"Resolve analysis target<br/>(config · path · github)"/]
         RESOLVE --> DETECT(["detect_entrypoints.ts"])
-        DETECT --> ANALYSIS[("analysis_output/{project}/<br/>detect_entrypoints/{ts}.json")]
+        DETECT --> ANALYSIS[("analysis/{project}/<br/>detect_entrypoints/{ts}.json")]
     end
 
     ANALYSIS --> PREPARE
@@ -25,7 +25,7 @@ flowchart TD
         CLASSIFY -->|"No match"| LLM_TRIAGE["llm-triage<br/>(pending, with diagnostics)"]
         KNOWN_TP --> STATE
         LLM_TRIAGE --> STATE
-        STATE[("triage_state/{project}_triage.json")]
+        STATE[("triage/{project}_triage.json")]
     end
 
     STATE --> HOOK_ENTRY
@@ -92,7 +92,7 @@ flowchart TD
         STRIP --> PARTITION["Partition: true positives /<br/>dead code / FP groups"]
         PARTITION --> UPD_REG["Update known-entrypoints registry"]
         UPD_REG --> PATTERNS["Write triage_patterns.json"]
-        PATTERNS --> SAVE["Save results to<br/>analysis_output/{project}/triage_results/"]
+        PATTERNS --> SAVE["Save results to<br/>analysis/{project}/triage_results/"]
     end
 
     SAVE --> DONE(["Pipeline complete"])
@@ -117,7 +117,7 @@ flowchart TD
 The main agent stays thin during triage. The stop hook provides only entry indices in its BLOCK reason:
 
 ```
-Triage batch: entries [62, 63, 64, 65, 66]. State: /path/to/triage_state/projections_triage.json
+Triage batch: entries [62, 63, 64, 65, 66]. State: /path/to/.claude/self-repair-pipeline-state/triage/projections_triage.json
 ```
 
 Each triage-investigator sub-agent fetches its own investigation context by running:

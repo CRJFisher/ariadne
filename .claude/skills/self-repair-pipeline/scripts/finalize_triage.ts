@@ -30,11 +30,13 @@ import {
   build_finalization_output,
   build_finalization_summary,
 } from "../src/build_finalization_output.js";
+import { get_data_dir } from "../src/discover_state.js";
 import type { TriageState } from "../src/triage_state_types.js";
 
 const this_file = fileURLToPath(import.meta.url);
 const this_dir = path.dirname(this_file);
 const PROJECT_ROOT = process.env.CLAUDE_PROJECT_DIR || path.resolve(this_dir, "../../../..");
+const DATA_DIR = get_data_dir(PROJECT_ROOT);
 
 // ===== CLI Argument Parsing =====
 
@@ -84,10 +86,10 @@ async function main(): Promise<void> {
   const summary = build_finalization_summary(state, output);
 
   // Save triage results
-  const output_file = await save_json(OutputType.TRIAGE_RESULTS, output, state.project_name);
+  const output_file = await save_json(OutputType.TRIAGE_RESULTS, output, state.project_name, DATA_DIR);
 
   // Update known-entrypoints registry
-  const known_sources = await load_known_entrypoints(state.project_name);
+  const known_sources = await load_known_entrypoints(state.project_name, DATA_DIR);
   const project_source = build_project_source(output.true_positives, state.project_path);
   const dead_code_source = build_dead_code_source(output.dead_code, state.project_path);
   const framework_sources = known_sources.filter(
@@ -97,11 +99,11 @@ async function main(): Promise<void> {
     project_source,
     dead_code_source,
     ...framework_sources,
-  ]);
+  ], DATA_DIR);
 
   // Write triage patterns (guarded)
   if (state.meta_review && state.meta_review.patterns) {
-    const patterns_path = path.join(PROJECT_ROOT, ".claude", "skills", "self-repair-pipeline", "triage_patterns.json");
+    const patterns_path = path.join(DATA_DIR, "triage_patterns.json");
     await fs.writeFile(patterns_path, JSON.stringify(state.meta_review.patterns, null, 2) + "\n");
     console.error(`Triage patterns written: ${patterns_path}`);
   } else {

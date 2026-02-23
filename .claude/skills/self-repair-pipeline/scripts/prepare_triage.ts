@@ -17,6 +17,7 @@ import { load_json } from "../src/analysis_io.js";
 import { load_known_entrypoints } from "../src/known_entrypoints.js";
 import { classify_entrypoints } from "../src/classify_entrypoints.js";
 import { build_triage_entries } from "../src/build_triage_entries.js";
+import { get_data_dir } from "../src/discover_state.js";
 import type { AnalysisResult } from "../src/types.js";
 import type { TriageState } from "../src/triage_state_types.js";
 
@@ -76,7 +77,8 @@ async function main(): Promise<void> {
   const project_path = analysis.project_path;
 
   // Load known-entrypoints registry and classify
-  const known_sources = await load_known_entrypoints(project_name);
+  const data_dir = get_data_dir(PROJECT_ROOT);
+  const known_sources = await load_known_entrypoints(project_name, data_dir);
   const classification = classify_entrypoints(analysis.entry_points, known_sources, project_path);
 
   // Build triage entries
@@ -100,7 +102,7 @@ async function main(): Promise<void> {
 
   // Determine output path
   const state_path = cli.state_path
-    ?? path.join(PROJECT_ROOT, ".claude", "skills", "self-repair-pipeline", "triage_state", `${project_name}_triage.json`);
+    ?? path.join(data_dir, "triage", `${project_name}_triage.json`);
 
   // Clean up old state files — one pipeline at a time
   const triage_dir = path.dirname(state_path);

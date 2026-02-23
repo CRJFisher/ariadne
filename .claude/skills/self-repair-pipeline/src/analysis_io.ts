@@ -1,8 +1,6 @@
- 
+
 import * as fs from "node:fs/promises";
 import path from "path";
-import { fileURLToPath } from "url";
-import { dirname } from "path";
 
 // ===== Project ID =====
 
@@ -19,24 +17,20 @@ export enum OutputType {
 }
 
 /**
- * Save JSON file with formatting to structured output directory
- * Returns the absolute path to the saved file
+ * Save JSON file with formatting to structured output directory.
+ * Returns the absolute path to the saved file.
  */
 export async function save_json(
   output_type: OutputType,
   data: unknown,
-  project_name: string
+  project_name: string,
+  data_dir: string,
 ): Promise<string> {
-  // eslint-disable-next-line @typescript-eslint/naming-convention
-  const __filename = fileURLToPath(import.meta.url);
-  // eslint-disable-next-line @typescript-eslint/naming-convention
-  const __dirname = dirname(__filename);
-
   // Generate ISO timestamp
   const timestamp = new Date().toISOString().replace(/:/g, "-");
 
-  // Build output directory path: analysis_output/{project_name}/{output_type}/
-  const output_dir = path.resolve(__dirname, "..", "analysis_output", project_name, output_type);
+  // Build output directory path: {data_dir}/analysis/{project_name}/{output_type}/
+  const output_dir = path.join(data_dir, "analysis", project_name, output_type);
 
   // Create directories if they don't exist
   await fs.mkdir(output_dir, { recursive: true });
@@ -59,18 +53,15 @@ export async function load_json<T>(file_path: string): Promise<T> {
 }
 
 /**
- * Find the most recent analysis file for a given output type
- * Returns the absolute path to the file
+ * Find the most recent analysis file for a given output type.
+ * Returns the absolute path to the file.
  */
 export async function find_most_recent_analysis(
   project_name: string,
-  output_type: OutputType = OutputType.DETECT_ENTRYPOINTS
+  data_dir: string,
+  output_type: OutputType = OutputType.DETECT_ENTRYPOINTS,
 ): Promise<string> {
-  // eslint-disable-next-line @typescript-eslint/naming-convention
-  const __filename = fileURLToPath(import.meta.url);
-  // eslint-disable-next-line @typescript-eslint/naming-convention
-  const __dirname = dirname(__filename);
-  const target_dir = path.resolve(__dirname, "..", "analysis_output", project_name, output_type);
+  const target_dir = path.join(data_dir, "analysis", project_name, output_type);
 
   try {
     const files = await fs.readdir(target_dir);
@@ -98,4 +89,3 @@ export async function find_most_recent_analysis(
     throw error;
   }
 }
-

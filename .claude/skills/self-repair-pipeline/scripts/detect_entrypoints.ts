@@ -42,10 +42,17 @@ import {
   extract_entry_points,
 } from "../src/extract_entry_points.js";
 import { save_json, OutputType, path_to_project_id } from "../src/analysis_io.js";
+import { get_data_dir } from "../src/discover_state.js";
 import * as path from "path";
 import * as fs from "fs/promises";
 import * as os from "os";
 import { execSync } from "child_process";
+import { fileURLToPath } from "url";
+
+const this_file = fileURLToPath(import.meta.url);
+const this_dir = path.dirname(this_file);
+const PROJECT_ROOT = process.env.CLAUDE_PROJECT_DIR || path.resolve(this_dir, "../../../..");
+const DATA_DIR = get_data_dir(PROJECT_ROOT);
 
 // ===== Types =====
 
@@ -509,7 +516,7 @@ async function main() {
       console.error(`Output written to: ${args.output}`);
     } else {
       // Use structured output
-      const output_file = await save_json(OutputType.DETECT_ENTRYPOINTS, result, project_name);
+      const output_file = await save_json(OutputType.DETECT_ENTRYPOINTS, result, project_name, DATA_DIR);
       console.error(`Output written to: ${output_file}`);
     }
 

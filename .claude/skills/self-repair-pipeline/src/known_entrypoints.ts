@@ -10,7 +10,6 @@
 
 import * as fs from "node:fs/promises";
 import * as path from "path";
-import { fileURLToPath } from "url";
 import type {
   EnrichedFunctionEntry,
   FalsePositiveEntry,
@@ -18,21 +17,21 @@ import type {
   KnownEntrypointSource,
 } from "./types.js";
 
-const this_file = fileURLToPath(import.meta.url);
-const this_dir = path.dirname(this_file);
-const REGISTRY_DIR = path.resolve(this_dir, "..", "known_entrypoints");
-
 // ===== I/O =====
 
-export function get_registry_path(project_name: string, registry_dir = REGISTRY_DIR): string {
-  return path.join(registry_dir, `${project_name}.json`);
+function get_registry_dir(data_dir: string): string {
+  return path.join(data_dir, "known_entrypoints");
+}
+
+export function get_registry_path(project_name: string, data_dir: string): string {
+  return path.join(get_registry_dir(data_dir), `${project_name}.json`);
 }
 
 export async function load_known_entrypoints(
   project_name: string,
-  registry_dir = REGISTRY_DIR,
+  data_dir: string,
 ): Promise<KnownEntrypointSource[]> {
-  const file_path = get_registry_path(project_name, registry_dir);
+  const file_path = get_registry_path(project_name, data_dir);
   try {
     const content = await fs.readFile(file_path, "utf-8");
     return JSON.parse(content) as KnownEntrypointSource[];
@@ -44,10 +43,11 @@ export async function load_known_entrypoints(
 export async function save_known_entrypoints(
   project_name: string,
   sources: KnownEntrypointSource[],
-  registry_dir = REGISTRY_DIR,
+  data_dir: string,
 ): Promise<string> {
+  const registry_dir = get_registry_dir(data_dir);
   await fs.mkdir(registry_dir, { recursive: true });
-  const file_path = get_registry_path(project_name, registry_dir);
+  const file_path = path.join(registry_dir, `${project_name}.json`);
   await fs.writeFile(file_path, JSON.stringify(sources, null, 2) + "\n");
   return file_path;
 }

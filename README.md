@@ -97,7 +97,10 @@ const references = project.find_references("src/main.ts", { row: 10, column: 15 
 - ✅ JavaScript/TypeScript (including JSX/TSX)
 - ✅ Python
 - ✅ Rust
-- 🚧 Go, Java, C/C++ (coming soon)
+
+Want support for another language? Upvote the relevant issue — we prioritize based on demand:
+
+[Go](https://github.com/CRJFisher/ariadne/issues/44) | [Java](https://github.com/CRJFisher/ariadne/issues/45) | [C](https://github.com/CRJFisher/ariadne/issues/46) | [C++](https://github.com/CRJFisher/ariadne/issues/47) | [C#](https://github.com/CRJFisher/ariadne/issues/48) | [Ruby](https://github.com/CRJFisher/ariadne/issues/49) | [PHP](https://github.com/CRJFisher/ariadne/issues/50) | [Swift](https://github.com/CRJFisher/ariadne/issues/51) | [Kotlin](https://github.com/CRJFisher/ariadne/issues/52)
 
 ## Documentation
 
