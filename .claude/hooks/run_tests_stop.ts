@@ -1,55 +1,17 @@
 #!/usr/bin/env npx tsx
 /**
- * Stop hook: Run tests for modified packages before allowing Claude to stop
+ * Stop hook: Run folder-scoped tests for changed files before allowing Claude to stop.
  *
- * Scoped to modified packages + their dependents:
- * - types change → test types, core, mcp
- * - core change → test core, mcp
- * - mcp change → test mcp only
- * - No source changes → skip entirely
+ * Auto-discovers test areas by walking up from each changed file to find
+ * vitest.config.* or package.json. Runs only the directories that changed
+ * within each test root, keeping feedback fast and focused.
  */
 
+import path from "path";
 import { execSync } from "child_process";
-import { create_logger, parse_stdin, get_project_dir, get_changed_files } from "./utils.js";
+import { create_logger, parse_stdin, get_project_dir, get_changed_files, find_test_root } from "./utils.js";
 
 const log = create_logger("run-tests");
-
-/**
- * Package workspace names for pnpm --filter
- */
-const PACKAGE_WORKSPACES: Record<string, string> = {
-  types: "@ariadnejs/types",
-  core: "@ariadnejs/core",
-  mcp: "@ariadnejs/mcp",
-};
-
-/**
- * Downstream dependents: if a package changes, these also need testing
- */
-const DEPENDENTS: Record<string, string[]> = {
-  types: ["core", "mcp"],
-  core: ["mcp"],
-  mcp: [],
-};
-
-/**
- * Expand modified packages with their dependents
- */
-function expand_with_dependents(modified: string[]): string[] {
-  const to_test = new Set(modified);
-  for (const pkg of modified) {
-    const deps = DEPENDENTS[pkg];
-    if (deps) {
-      for (const dep of deps) {
-        to_test.add(dep);
-      }
-    }
-  }
-
-  // Return in dependency order
-  const order = ["types", "core", "mcp"];
-  return order.filter((p) => to_test.has(p));
-}
 
 function main(): void {
   log("Test runner hook started");
@@ -69,31 +31,48 @@ function main(): void {
     return;
   }
 
-  if (changed.modified_packages.length === 0) {
-    log("No package changes detected, skipping tests");
+  // Group changed files by test root → Set<relative_dirs>
+  const test_groups = new Map<string, Set<string>>();
+
+  for (const file of changed.changed_ts_files) {
+    const rel_file = path.relative(project_dir, file);
+    const test_root = find_test_root(rel_file, project_dir);
+    if (!test_root) continue;
+
+    if (!test_groups.has(test_root)) {
+      test_groups.set(test_root, new Set());
+    }
+
+    // Compute the file's directory relative to the test root
+    const abs_test_root = path.resolve(project_dir, test_root);
+    const abs_file_dir = path.dirname(path.resolve(project_dir, rel_file));
+    const rel_dir = path.relative(abs_test_root, abs_file_dir);
+    test_groups.get(test_root)!.add(rel_dir || ".");
+  }
+
+  if (test_groups.size === 0) {
+    log("No test areas found for changed files, skipping tests");
     return;
   }
 
-  const packages_to_test = expand_with_dependents(changed.modified_packages);
-  log(`Modified packages: ${changed.modified_packages.join(", ")} → testing: ${packages_to_test.join(", ")}`);
-
   const errors: string[] = [];
 
-  for (const pkg of packages_to_test) {
-    const workspace = PACKAGE_WORKSPACES[pkg];
-    if (!workspace) continue;
+  for (const [test_root, dirs] of test_groups) {
+    const dir_list = Array.from(dirs).join(" ");
+    log(`Running tests in ${test_root} for dirs: ${dir_list}`);
 
-    log(`Running tests for ${pkg}...`);
+    const abs_test_root = path.resolve(project_dir, test_root);
+
     try {
-      execSync(`pnpm --filter ${workspace} test`, {
-        cwd: project_dir,
+      execSync(`npx vitest run ${dir_list}`, {
+        cwd: abs_test_root,
         stdio: ["ignore", "pipe", "pipe"],
         encoding: "utf8",
-        timeout: 300000
+        timeout: 300000,
       });
-      log(`${pkg} tests passed`);
+      log(`${test_root} tests passed`);
     } catch (error: unknown) {
-      log(`${pkg} tests failed - blocking`);
+      log(`${test_root} tests failed - blocking`);
 
       const exec_error = error as { stdout?: string; stderr?: string };
       let output = exec_error.stdout || "";
@@ -107,7 +86,7 @@ function main(): void {
         output = "... (truncated)\n" + output.substring(output.length - 2000);
       }
 
-      errors.push(`Tests failed for ${pkg}:\n${output}`);
+      errors.push(`Tests failed in ${test_root} (dirs: ${dir_list}):\n${output}`);
     }
   }
 
@@ -115,7 +94,7 @@ function main(): void {
     log(`Tests completed with ${errors.length} failure(s) - blocking`);
     console.log(JSON.stringify({
       decision: "block",
-      reason: `Tests failed. Fix the failing tests before completing:\n\n${errors.join("\n\n")}`
+      reason: `Tests failed. Fix the failing tests before completing:\n\n${errors.join("\n\n")}`,
     }));
   } else {
     log("All tests passed");

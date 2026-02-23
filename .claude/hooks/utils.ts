@@ -170,6 +170,39 @@ export function get_changed_files(project_dir: string): ChangedFiles {
   }
 }
 
+const TEST_ROOT_MARKERS = [
+  "vitest.config.mjs",
+  "vitest.config.ts",
+  "vitest.config.js",
+  "package.json",
+];
+
+/**
+ * Walk up from a file's directory to find the nearest test root.
+ * A test root is a directory containing a vitest config or package.json.
+ * The project root itself is excluded (it's a meta-workspace, not a test area).
+ * Returns the test root path relative to project_dir, or null if none found.
+ */
+export function find_test_root(file_path: string, project_dir: string): string | null {
+  const abs_project = path.resolve(project_dir);
+  let dir = path.dirname(path.resolve(project_dir, file_path));
+
+  while (dir.length >= abs_project.length) {
+    // Skip the project root — it's the meta-workspace
+    if (dir === abs_project) break;
+
+    for (const marker of TEST_ROOT_MARKERS) {
+      if (fs.existsSync(path.join(dir, marker))) {
+        return path.relative(abs_project, dir);
+      }
+    }
+
+    dir = path.dirname(dir);
+  }
+
+  return null;
+}
+
 /**
  * Truncate ESLint output to focus on the first file's issues only.
  */
