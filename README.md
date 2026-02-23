@@ -57,21 +57,18 @@ Perfect for webviews, type-safe message passing, or when you only need types.
 
 ### For AI Users - MCP Setup
 
-1. Install globally: `npm install -g @ariadnejs/mcp`
-2. Add to your AI assistant's config:
+Add to your AI assistant's MCP config:
 
-   ```json
-   {
-     "mcpServers": {
-       "ariadne": {
-         "command": "npx",
-         "args": ["@ariadnejs/mcp"]
-       }
-     }
-   }
-   ```
-
-3. Ask natural language questions about your code!
+```json
+{
+  "mcpServers": {
+    "ariadne": {
+      "command": "npx",
+      "args": ["@ariadnejs/mcp"]
+    }
+  }
+}
+```
 
 [→ Detailed setup instructions](packages/mcp/SETUP.md)
 
@@ -79,15 +76,28 @@ Perfect for webviews, type-safe message passing, or when you only need types.
 
 ```typescript
 import { Project } from "@ariadnejs/core";
+import * as fs from "fs";
+import * as path from "path";
 
 const project = new Project();
-project.add_or_update_file("src/main.ts", sourceCode);
+await project.initialize("/path/to/project");
 
-// Find where a symbol is defined
-const definition = project.go_to_definition("src/main.ts", { row: 10, column: 15 });
+// Load source files into the project
+function load_dir(dir: string) {
+  for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+    const full = path.join(dir, entry.name);
+    if (entry.isDirectory() && entry.name !== "node_modules" && entry.name !== ".git") {
+      load_dir(full);
+    } else if (/\.(ts|tsx|js|jsx|py|rs)$/.test(entry.name)) {
+      project.update_file(full, fs.readFileSync(full, "utf-8"));
+    }
+  }
+}
+load_dir("/path/to/project");
 
-// Find all usages
-const references = project.find_references("src/main.ts", { row: 10, column: 15 });
+// Analyze
+const call_graph = project.get_call_graph();
+console.log(call_graph.entry_points);
 ```
 
 [→ See full API documentation](packages/core/README.md)
@@ -104,26 +114,12 @@ Want support for another language? Upvote the relevant issue — we prioritize b
 
 ## Documentation
 
-- **[Architecture](docs/Architecture.md)** - System architecture and design patterns
-- **[Core Concepts](docs/scope-mechanism.md)** - How scope resolution works
-- **[Graph Structure](docs/graph-structure.md)** - Scope graph data structures
-- **[Language Support](docs/language-configuration.md)** - Adding new languages
-- **[All Documentation](docs/README.md)** - Complete documentation index
-
-## Known Limitations
-
-- **Cross-file method resolution**: Method calls on imported class instances are not yet resolved ([details](docs/cross-file-method-resolution.md))
-- **Export detection**: The system doesn't distinguish between exported and non-exported definitions ([task-30](https://github.com/sourcecodegraph/ariadne/issues/30))
-- **Module path resolution**: Import paths are resolved through brute-force search ([task-28](https://github.com/sourcecodegraph/ariadne/issues/28))
+- **[Architecture](docs/Architecture.md)** — Module structure, registry architecture, language dispatch pattern
+- **[Processing Pipeline](docs/PROCESSING_PIPELINE.md)** — Per-file indexing, project-level resolution, call graph detection
 
 ## Contributing
 
-See our [Contributing Guide](CONTRIBUTING.md) for details on:
-
-- Setting up the development environment
-- Running tests
-- Adding language support
-- Code style guidelines
+See [CONTRIBUTING.md](CONTRIBUTING.md) for development setup, code style, and PR process.
 
 ## License
 
