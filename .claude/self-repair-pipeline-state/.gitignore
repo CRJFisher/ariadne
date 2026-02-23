@@ -1,0 +1,6 @@
+analysis/
+triage/
+known_entrypoints/*
+!known_entrypoints/core.json
+!known_entrypoints/mcp.json
+!known_entrypoints/types.json
