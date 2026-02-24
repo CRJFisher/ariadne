@@ -3,7 +3,7 @@ import { FilePath } from "@ariadnejs/types";
 import * as chokidar from "chokidar";
 import * as fs from "fs/promises";
 import { create_file_watcher, FileWatcherOptions } from "./file_watcher";
-import { find_source_files } from "./file_loading";
+import { find_source_files } from "@ariadnejs/core";
 import { log_info, log_warn } from "./logger";
 
 export interface ProjectManagerOptions {

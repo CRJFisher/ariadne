@@ -1,6 +1,5 @@
 import * as fs from "fs/promises";
 import * as path from "path";
-import { log_debug } from "./logger";
 
 /**
  * Supported source file extensions regex
@@ -135,7 +134,6 @@ export async function find_source_files(
       return;
     }
     if (visited_real_paths.has(real_path)) {
-      log_debug(`Skipping already-visited path (cycle detected): ${dir_path} -> ${real_path}`);
       return;
     }
     visited_real_paths.add(real_path);
