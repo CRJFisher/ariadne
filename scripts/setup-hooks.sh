@@ -47,7 +47,7 @@ fi
 # Run full test suites if any TS/JS files are staged
 if git diff --cached --name-only | grep -qE '\.(ts|tsx|js|jsx)$'; then
   echo "🧪 Running full test suites..."
-  pnpm exec tsx scripts/run_all_tests.ts
+  scripts/run_all_tests.sh
 fi
 EOF
 
