@@ -19,7 +19,7 @@ The core hypothesis: Ariadne's call graph analysis and entry point detection red
 
 ## Acceptance Criteria
 
-- [ ] At least one standardized benchmark (SWE-bench Verified or SWE-QA) run with and without Ariadne MCP, with reproducible results
+- [ ] At least one standardized benchmark (FeatureBench, SWE-bench Pro, or SWE-QA) run with and without Ariadne MCP, with reproducible results
 - [ ] Metrics captured per task: pass/fail, token usage (all 4 types), tool call count, files explored, wall-clock time, cost
 - [ ] Side-by-side visualization of agent trajectories (vanilla vs Ariadne) for at least 3 curated tasks
 - [ ] Static chart output (PNG/SVG) suitable for README, blog posts, and slide decks
@@ -35,11 +35,11 @@ Ariadne's value is in **codebase navigation and cross-file understanding**. The 
 | Benchmark | What It Tests | Ariadne Relevance | Difficulty |
 |-----------|--------------|-------------------|------------|
 | **[SWE-QA](https://arxiv.org/abs/2509.14635)** | Repo-level Q&A: intention understanding, cross-file reasoning, multi-hop dependencies | HIGHEST — directly tests what Ariadne provides | 576 tasks, Python repos |
-| **[SWE-EVO](https://arxiv.org/abs/2512.18470)** | Multi-file evolution (avg 21 files, avg 874 tests) | VERY HIGH — cross-cutting changes need call graphs | GPT-5 only 21% resolution |
-| **[SWE-bench Verified](https://openai.com/index/introducing-swe-bench-verified/)** | Real GitHub issues, human-validated 500-problem subset | HIGH — gold standard, many tasks require navigation | Claude Opus 4.5 at 80.9% |
+| **[SWE-EVO](https://arxiv.org/abs/2512.18470)** | Multi-file evolution (avg 21 files, avg 874 tests) | VERY HIGH — cross-cutting changes need call graphs | 48 tasks, GPT-5 at 21% |
+| **[SWE-bench Pro](https://scale.com/leaderboard/swe_bench_pro_public)** | Real GitHub issues, multi-language (Python/Go/TS/JS), 41 repos. Replaces retired SWE-bench Verified (saturated at ~80%, contaminated) | HIGH — unsaturated (~23% top), less contaminated, good headroom | 1,865 tasks, Claude Opus 4.1 at 23% |
 | **[RepoBench-R](https://proceedings.iclr.cc/paper_files/paper/2024/file/d191ba4c8923ed8fd8935b7c98658b5f-Paper-Conference.pdf)** | Cross-file code retrieval | HIGH — Ariadne gives this for free | ICLR 2024 |
 | **[FEA-Bench](https://github.com/microsoft/FEA-Bench)** | Feature implementation in existing codebases | HIGH — requires understanding existing architecture | Microsoft, ACL 2025 |
-| **[FeatureBench](https://openreview.net/forum?id=41xrZ3uGuI)** | End-to-end feature development | HIGH — Claude Opus 4.5 only 11% (vs 74% on SWE-bench) | Hard ceiling |
+| **[FeatureBench](https://github.com/LiberCoders/FeatureBench)** | End-to-end feature development. Primary failure mode is `NameError` from cross-file dependency resolution — exactly what Ariadne's call graph addresses. ICLR 2026. | HIGHEST — Claude Opus 4.5 at 11%, cross-file deps are the bottleneck | 200 tasks, 24 repos |
 | **[CrossCodeEval](https://www.evidentlyai.com/blog/llm-coding-benchmarks)** | Cross-file code completion (Python, Java, TS, C#) | HIGH — tests dependency understanding | Multilingual |
 
 ### MCP-Specific Evaluation Tools
@@ -143,59 +143,39 @@ From [AgiFlow](https://agiflow.io/blog/token-efficiency-in-ai-assisted-developme
 
 ## Implementation Plan
 
-### Track A: Benchmark Evaluation
+Three tracks, with A and B running in parallel and C depending on B:
+
+```
+191.1 Benchmarks ──────────────────────┐
+  [no deps, can start immediately]     │ (optional enrichment via 191.2.4)
+                                       v
+191.2 Data Pipeline ──────────> 191.3 Visualization
+  [no deps, parallel with 191.1]   [depends on 191.2]
+```
+
+### Track A: Standardized Benchmark Evaluation (task-191.1)
 
 **Location**: `demo/benchmarks/` at repo root.
 
-**Phase A1: MCPBR Setup**
+Dual strategy: (1) **accuracy lift** on hard benchmarks where cross-file understanding is the bottleneck (FeatureBench at 11%, SWE-EVO at 21%), and (2) **efficiency gains** on medium benchmarks where models already pass (SWE-bench Pro at 23%). External harnesses, prescribed methodology — value = *credibility*.
 
-1. `pip install mcpbr`
-2. Configure Ariadne as the MCP server under test
-3. Run `mcpbr run -n N` on a subset of SWE-bench Verified tasks
-4. Enable OTEL + metadata hooks during runs for per-task tool call traces
+Sub-tasks: 191.1.1 (harness feasibility spike) → 191.1.2 (FeatureBench ~50 tasks) → 191.1.3 (SWE-bench Pro ~50 tasks) → 191.1.4 (SWE-QA 576 tasks) → 191.1.5 (statistical analysis).
 
-**Phase A2: Benchmark Selection**
-
-| Priority | Benchmark | Why | Tasks |
-|----------|-----------|-----|-------|
-| 1 | SWE-bench Verified (via MCPBR) | Gold standard, credible | Start with 50 tasks |
-| 2 | SWE-QA | Directly tests repo-level understanding | 576 tasks |
-| 3 | RepoBench-R | Cross-file retrieval — Ariadne's core strength | ICLR 2024 |
-
-**Phase A3: Metrics Collection**
-Per task: pass/fail, token usage (4 types), tool call count (total/exploration/mutation), files explored vs modified, MCP tool calls (count, durations), wall-clock time, cost. Run 3-5 times per condition.
-
-### Track B: Visualization
+### Track B: Data Extraction Pipeline (task-191.2)
 
 **Location**: `demo/session-comparison/` at repo root.
 
-**Phase B1: Ad-Hoc Session Capture**
+Build `extract_metrics.py`, `run_comparison.sh`, and `manifest.json` to capture richer behavioral metrics from our infrastructure (metadata.db, analytics.db, JSONL). Custom tooling, our methodology — value = *insight*. Output is the normalized JSON contract consumed by Track C.
 
-- `manifest.json` — 3-5 curated tasks with exact prompts
-- `run_comparison.sh` — Orchestrates vanilla vs Ariadne runs from same git commit
+Sub-tasks: 191.2.1 (data quality spike) → 191.2.2 (extract_metrics.py) → 191.2.3 (run_comparison.sh + manifest) → 191.2.4 (optional benchmark enrichment).
 
-**Phase B2: Data Extraction (Python)**
+### Track C: Visualization (task-191.3)
 
-- `extract_metrics.py` — Produces normalized JSON per session from metadata.db + JSONL + analytics.db
-- Derived metrics: exploration efficiency, time to first edit, duplicate reads, backtracking
+**Location**: `demo/session-comparison/` at repo root.
 
-**Phase B3: Static Visualization (Python + Matplotlib)**
+Build visualizations (static charts, interactive HTML, GIF/video) from the normalized JSON produced by Track B. Consumes data, does not produce it.
 
-- `render_comparison.py` — Produces PNG/SVG:
-  - Chart A: Hero Timeline (side-by-side tool call sequences)
-  - Chart B: Benchmark Results Summary (pass rate, token usage, cost)
-  - Chart C: Cumulative Tokens Over Time
-  - Chart D: Exploration Funnel
-  - Chart E: Pareto Frontier (accuracy vs cost)
-- Color palette: Read=#4A90D9, Grep=#7BC67E, Glob=#F5A623, Bash=#9B9B9B, Edit/Write=#D0021B, Ariadne MCP=#8B5CF6
-
-**Phase B4: Interactive HTML**
-
-- `dashboard.html` — Self-contained HTML+D3.js with embedded data, synchronized timelines, playback mode
-
-**Phase B5: GIF/Video**
-
-- Record dashboard playback or use matplotlib FuncAnimation
+Sub-tasks: 191.3.1 (hero timeline spike) → 191.3.2 (render_comparison.py) → 191.3.3 (dashboard.html) → 191.3.4 (playback mode) → 191.3.5 (GIF/video capture).
 
 ### Key Metrics
 
@@ -212,14 +192,14 @@ Per task: pass/fail, token usage (4 types), tool call count (total/exploration/m
 
 ```
 demo/
-├── benchmarks/                    # Track A
+├── benchmarks/                    # Track A (task-191.1)
 │   └── (MCPBR config + results)
-└── session-comparison/            # Track B
-    ├── manifest.json
-    ├── run_comparison.sh
-    ├── extract_metrics.py
-    ├── render_comparison.py
-    ├── dashboard.html
+└── session-comparison/            # Track B (task-191.2) + Track C (task-191.3)
+    ├── manifest.json              # Track B
+    ├── run_comparison.sh          # Track B
+    ├── extract_metrics.py         # Track B
+    ├── render_comparison.py       # Track C
+    ├── dashboard.html             # Track C
     └── output/
 ```
 

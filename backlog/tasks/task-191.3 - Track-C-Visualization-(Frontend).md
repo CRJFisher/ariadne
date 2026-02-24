@@ -1,18 +1,18 @@
 ---
-id: task-191.2
-title: 'Track B: Visualization (Frontend)'
+id: task-191.3
+title: 'Track C: Visualization (Frontend)'
 status: To Do
 assignee: []
 created_date: '2026-02-24 09:59'
 labels: []
-dependencies: [task-191.1]
+dependencies: [task-191.2]
 parent_task_id: task-191
 priority: low
 ---
 
 ## Description
 
-Build visualizations that make benchmark results and session comparisons compelling for demos, presentations, and documentation. Consumes the normalized JSON output from Track A (task-191.1).
+Build visualizations that make benchmark results and session comparisons compelling for demos, presentations, and documentation. Consumes the normalized JSON output from the data extraction pipeline (task-191.2).
 
 Uses the Spike/Tracer Bullet pattern (see doc-1): start with a minimal static chart (tracer bullet), then iterate toward interactive HTML and animated output.
 
@@ -36,17 +36,17 @@ Uses the Spike/Tracer Bullet pattern (see doc-1): start with a minimal static ch
 
 ### Phase 1: Tracer Bullet (static charts, ~2 days)
 
-> The minimal end-to-end visualization. Depends on task-191.1 producing at least some data.
+> The minimal end-to-end visualization. Depends on task-191.2 producing at least some data.
 
-- **191.2.1** — Spike: Hero timeline chart prototype
-  - Take the output from task-191.1.2 (ad-hoc session data) or mock data
+- **191.3.1** — Spike: Hero timeline chart prototype
+  - Take the output from task-191.2.1 (ad-hoc session data) or mock data
   - Build a matplotlib side-by-side timeline (Chart A from task-191)
   - Color-coded tool calls, labeled with file paths
   - Output: single PNG showing vanilla vs Ariadne
   - Time-box: 4 hours
   - Tests: B1, B3
 
-- **191.2.2** — Build `render_comparison.py`: full static chart suite
+- **191.3.2** — Build `render_comparison.py`: full static chart suite
   - Chart A: Hero Timeline (side-by-side tool call sequences)
   - Chart B: Benchmark Results Summary (pass rate, token usage, cost bars)
   - Chart C: Cumulative Tokens Over Time (two lines)
@@ -62,7 +62,7 @@ Review static charts. Are they compelling? Which chart types best tell the story
 
 > Created after Decision Gate 1. Only if static charts validate the approach.
 
-- **191.2.3** — Build `dashboard.html`: self-contained interactive visualization
+- **191.3.3** — Build `dashboard.html`: self-contained interactive visualization
   - Session data embedded as JSON (no server required)
   - Two synchronized scrollable timelines with hover tooltips
   - Toggle time-proportional vs event-proportional view
@@ -77,12 +77,12 @@ Review interactive dashboard. Is playback mode needed? What's the target output 
 
 > Created after Decision Gate 2.
 
-- **191.2.4** — Add playback mode to dashboard.html or build matplotlib FuncAnimation
+- **191.3.4** — Add playback mode to dashboard.html or build matplotlib FuncAnimation
   - Events appear sequentially on both timelines
   - Ariadne side finishes first (the key visual)
   - Configurable speed (1x, 2x, 5x)
 
-- **191.2.5** — GIF/video capture pipeline
+- **191.3.5** — GIF/video capture pipeline
   - Screen recording of dashboard playback, or Puppeteer automation
   - Produce shareable artifacts for README/presentations
 
@@ -98,6 +98,6 @@ Review interactive dashboard. Is playback mode needed? What's the target output 
 ## Reference
 
 - Parent task: task-191
-- Depends on: task-191.1 (data extraction output)
+- Depends on: task-191.2 (data extraction pipeline output)
 - Planning framework: doc-1 (Adaptive Planning Frameworks)
 - Key design inspiration: [jhlee0409/history-viewer](https://github.com/jhlee0409/claude-code-history-viewer), [HAL Leaderboard](https://hal.cs.princeton.edu/)
