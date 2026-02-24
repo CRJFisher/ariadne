@@ -43,6 +43,12 @@ if [ -n "$STAGED_FILES" ]; then
 else
   echo "📏 No TypeScript/JavaScript files staged for commit"
 fi
+
+# Run full test suites if any TS/JS files are staged
+if git diff --cached --name-only | grep -qE '\.(ts|tsx|js|jsx)$'; then
+  echo "🧪 Running full test suites..."
+  scripts/run_all_tests.sh
+fi
 EOF
 
 chmod +x .git/hooks/pre-commit
