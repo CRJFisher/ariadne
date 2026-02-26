@@ -4,7 +4,7 @@ title: 'Track A: Standardized Benchmark Evaluation'
 status: In Progress
 assignee: []
 created_date: '2026-02-24 09:59'
-updated_date: '2026-02-25 17:45'
+updated_date: '2026-02-26 11:30'
 labels: []
 dependencies: []
 parent_task_id: task-191
@@ -31,6 +31,7 @@ SWE-bench Verified remains available and can be used as an optional comparabilit
 
 - **FeatureBench (lite/full subset)**: Cross-file feature development difficulty where current frontier models still have substantial headroom.
 - **SWE-bench Pro (public subset)**: Long-horizon, multi-file software engineering with strong contamination resistance and reproducible evaluation.
+- **SWE-QA (calibrated subset)**: Repo-level, multi-hop cross-file reasoning benchmark aligned with Ariadne's linkage strengths.
 
 ### MCP-native (required for MCP-standard claim)
 
@@ -130,6 +131,7 @@ Proceed only if all are true:
 - Token/cost accounting validation passes
 - Projected Phase 2 spend is within approved cap
 - Ariadne tools are actually being invoked in treatment runs
+- Manifest/evaluation schema v2 fields are captured in run artifacts
 
 ### Phase 2: Core Benchmark Runs (~3-7 days)
 
@@ -142,16 +144,20 @@ Proceed only if all are true:
 - **191.1.5** — MCP-native paired run
   - Target: benchmark-defined subset sufficient for stable efficiency/task metrics
 
+- **191.1.6** — SWE-QA paired run
+  - Target: 20-40 questions x 1-3 runs per condition (scale by pilot cost and variance)
+
 ### Decision Gate 2
 
 Decide whether to scale up sample sizes based on statistical power and remaining budget.
 
 ### Phase 3: Analysis and Reporting
 
-- **191.1.6** — Final statistical analysis and report
+- **191.1.7** — Final statistical analysis and report
   - Accuracy: paired pass/fail tests
   - Efficiency: tokens, cost, time
   - MCP-specific: tool selection efficiency and execution metrics
+  - Cross-file reasoning: SWE-QA accuracy and efficiency deltas
   - Confidence intervals and validity threats
 
 ## Methodology Controls
@@ -176,11 +182,13 @@ Decide whether to scale up sample sizes based on statistical power and remaining
 - SWE-bench Pro paper: https://arxiv.org/abs/2509.16941
 - SWE-bench Pro leaderboard: https://scale.com/leaderboard/swe_bench_pro_public
 - SWE-bench datasets overview (Verified still available): https://www.swebench.com/SWE-bench/
+- SWE-QA paper: https://arxiv.org/abs/2509.14635
 - MCPAgentBench paper: https://arxiv.org/abs/2512.24565
 - MCP-Bench paper: https://arxiv.org/abs/2508.20453
 - MCP-Bench repo: https://github.com/Accenture/mcp-bench
 - MCPBR: https://github.com/greynewell/mcpbr
 - Anthropic pricing: https://platform.claude.com/docs/en/about-claude/pricing
+- Claude Agents SDK TypeScript reference: backlog/docs/claude-agent-sdk-typescript.md
 
 ## Implementation Notes
 
@@ -202,6 +210,8 @@ All benchmark infrastructure currently lives in `demo/benchmarks/`:
 2. Correct transcript dedup logic in stream parser (`message.id` last-wins behavior).
 3. Expand manifest from single spike task to paired benchmark cohorts with seeds.
 4. Add pilot budget reporting (`median`, `p90`, projected full spend) as a first-class output.
+
+For Claude Agents SDK integration details during Phase 0 runner/evaluator wiring, reference backlog/docs/claude-agent-sdk-typescript.md.
 
 ### Immediate next steps
 

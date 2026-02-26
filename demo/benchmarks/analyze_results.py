@@ -26,13 +26,15 @@ from collections import defaultdict
 from dataclasses import dataclass
 from pathlib import Path
 
-import numpy as np
+try:
+    import numpy as np
+except ImportError:
+    np = None  # type: ignore[assignment]
 
 try:
     from scipy import stats
 except ImportError:
-    print("scipy required: pip install scipy", file=sys.stderr)
-    sys.exit(1)
+    stats = None  # type: ignore[assignment]
 
 try:
     import matplotlib
@@ -74,6 +76,25 @@ def load_results(path: Path) -> dict:
     return json.loads(path.read_text())
 
 
+def validate_accuracy_evaluation_completeness(results: list[dict]) -> None:
+    """Ensure pass/fail outcomes are populated for accuracy analysis."""
+    unevaluated = []
+    for r in results:
+        if r.get("passed") is None or r.get("evaluation_status") in (None, "unevaluated"):
+            unevaluated.append(
+                f"{r.get('task_id', 'unknown')}:{r.get('condition', 'unknown')}:run{r.get('run_number', '?')}"
+            )
+
+    if unevaluated:
+        preview = ", ".join(unevaluated[:8])
+        if len(unevaluated) > 8:
+            preview += ", ..."
+        raise ValueError(
+            "Accuracy analysis requires evaluator-populated pass/fail for every run. "
+            f"Found {len(unevaluated)} unevaluated runs: {preview}"
+        )
+
+
 def aggregate_by_task(results: list[dict]) -> dict[str, dict]:
     """Aggregate multiple runs per task into majority-vote pass/fail and median metrics.
 
@@ -93,7 +114,13 @@ def aggregate_by_task(results: list[dict]) -> dict[str, dict]:
         if task_id not in tasks:
             tasks[task_id] = {}
 
-        # Majority vote for pass/fail (None = unevaluated, treated as fail)
+        if any(r.get("passed") is None for r in runs):
+            raise ValueError(
+                f"Task {task_id} / {condition} contains unevaluated runs. "
+                "Pass/fail must be populated before aggregate analysis."
+            )
+
+        # Majority vote for pass/fail
         pass_votes = sum(1 for r in runs if r.get("passed") is True)
         fail_votes = len(runs) - pass_votes
         passed = pass_votes > fail_votes
@@ -627,6 +654,11 @@ def main() -> None:
     parser.add_argument("--output", default="RESULTS.md", help="Output report path")
     parser.add_argument("--plots", default="results", help="Directory for plot images")
     parser.add_argument("--bootstrap-samples", type=int, default=10_000, help="Bootstrap iterations")
+    parser.add_argument(
+        "--allow-unevaluated",
+        action="store_true",
+        help="Allow analysis when pass/fail outcomes are missing (not recommended).",
+    )
 
     args = parser.parse_args()
 
@@ -641,8 +673,26 @@ def main() -> None:
 
     print(f"Loaded {len(raw_results)} raw results")
 
+    if np is None:
+        print("numpy required: pip install numpy", file=sys.stderr)
+        sys.exit(1)
+    if stats is None:
+        print("scipy required: pip install scipy", file=sys.stderr)
+        sys.exit(1)
+
+    if not args.allow_unevaluated:
+        try:
+            validate_accuracy_evaluation_completeness(raw_results)
+        except ValueError as exc:
+            print(f"ERROR: {exc}", file=sys.stderr)
+            sys.exit(2)
+
     # Aggregate
-    tasks = aggregate_by_task(raw_results)
+    try:
+        tasks = aggregate_by_task(raw_results)
+    except ValueError as exc:
+        print(f"ERROR: {exc}", file=sys.stderr)
+        sys.exit(2)
     paired_count = sum(
         1 for conds in tasks.values()
         if "ariadne" in conds and "baseline" in conds

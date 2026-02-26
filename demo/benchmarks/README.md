@@ -38,11 +38,11 @@ python run_benchmark.py spike --task-id <task_id> --repo-path /path/to/repo
 ### Run Full Benchmark
 
 ```bash
-# 50 tasks, 3 runs per condition, interleaved scheduling
+# 50 tasks, 3 runs per condition, blocked paired scheduling
 python run_benchmark.py full \
   --manifest manifest.json \
   --runs-per-condition 3 \
-  --max-concurrent 5 \
+  --phase-budget-usd 1200 \
   --output results/full_run.json
 ```
 
@@ -72,11 +72,33 @@ demo/benchmarks/
 
 ### Run Protocol
 
-- **Interleaving**: Conditions are interleaved per Anthropic's infrastructure noise research
-  (6pp swing from infra config alone). A shuffled run schedule ensures fair comparison.
+- **Blocked paired schedule**: Randomization unit is task+run pair. Ariadne/baseline are adjacent
+  within each pair with randomized order, reducing temporal confounding.
 - **Repetition**: 3 runs per task per condition. Majority vote for pass/fail, median for continuous.
 - **Environment locking**: Model version (exact ID), Ariadne commit hash, and target repo commit
   are pinned and recorded.
+- **Budget guardrail**: Optional phase-level cap with automatic stop at 90% threshold.
+- **Evaluation completeness**: Pass/fail must be populated by task evaluators for accuracy analysis.
+
+### Evaluation Contract (manifest v2)
+
+Each task may define evaluator wiring:
+
+```json
+{
+  "evaluation": {
+    "type": "command_json",
+    "command": "python evaluator.py --task {task_id} --condition {condition}",
+    "timeout_seconds": 300
+  }
+}
+```
+
+Evaluator command must emit JSON on stdout:
+
+```json
+{ "status": "ok", "passed": true, "details_path": "optional/path.json" }
+```
 
 ### Metrics (Pre-Registered)
 
@@ -104,3 +126,5 @@ demo/benchmarks/
 | Spike (1 task) | 1 | 2 | $2-10 |
 | Full (Sonnet, 50 tasks) | 50 | 300 | $150-450 |
 | Full (Sonnet, 30 tasks) | 30 | 180 | $90-360 |
+
+Use pilot medians and p90s from actual runs to calibrate final spend projections.
