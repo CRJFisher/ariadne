@@ -4,7 +4,7 @@ title: 'Track B: Data Extraction Pipeline (Session Metrics Backend)'
 status: In Progress
 assignee: []
 created_date: '2026-02-24 12:00'
-updated_date: '2026-02-25 16:11'
+updated_date: '2026-02-26 00:00'
 labels: []
 dependencies: []
 parent_task_id: task-191
@@ -13,7 +13,7 @@ priority: low
 
 ## Description
 
-Build the data extraction pipeline that produces normalized JSON per session from metadata.db + analytics.db + JSONL transcripts. Includes session capture orchestration and derived metrics. The output is the contract consumed by task-191.3 (Visualization).
+Build the data extraction pipeline that produces normalized JSON per session from `metadata.db` + JSONL transcripts, with optional diagnostics from `analytics.db`. Includes session capture orchestration and derived metrics. The output is the contract consumed by task-191.3 (Visualization).
 
 Uses the Discovery-Driven Planning approach (see doc-1): start with a data quality validation spike before committing to pipeline implementation.
 
@@ -30,10 +30,10 @@ Uses the Discovery-Driven Planning approach (see doc-1): start with a data quali
 
 | ID | Assumption | Confidence | Criticality | Spike Result |
 |----|-----------|-----------|-------------|-------------|
-| A3 | Claude Code native OTEL captures enough data for A/B comparison | HIGH | MEDIUM | **PASS** — metadata.db has complete tool call timeline (72k events, 519 sessions) |
-| A4 | Existing metadata.db hooks capture MCP tool calls with tool_use_id | HIGH | LOW | **PASS** — MCP calls captured with Pre-Post duration (avg 337-386ms) |
-| A5 | JSONL transcripts contain reliable token counts for cost calculation | HIGH | MEDIUM | **PASS** — 2.9-3.4x dedup ratio, $6-12/session for opus |
-| A4b | analytics.db cross-join via tool_use_id | LOW | LOW | **CONFIRMED LOW** — 7/532 records. Different ID spaces. Not needed: metadata Pre-Post is sufficient |
+| A3 | Claude Code native OTEL captures enough data for A/B comparison | HIGH | MEDIUM | **PASS** - metadata.db has complete tool call timeline (72k events, 519 sessions) |
+| A4 | Existing metadata.db hooks capture MCP tool calls with tool_use_id | HIGH | LOW | **PASS** - MCP calls captured with Pre-Post duration (avg 337-386ms) |
+| A5 | JSONL transcripts contain reliable token counts for cost calculation | HIGH | MEDIUM | **PASS** - 2.9-3.4x dedup ratio, $6-12/session for opus |
+| A4b | analytics.db is suitable as a primary MCP duration source | LOW | LOW | **CONFIRMED LOW** - 7/532 records with `tool_use_id`; analytics is optional diagnostics, metadata Pre-Post is canonical |
 
 ## Provisional Sub-Tasks
 
@@ -41,7 +41,7 @@ Uses the Discovery-Driven Planning approach (see doc-1): start with a data quali
 
 > Tests data quality assumptions before committing to pipeline implementation.
 
-- **191.2.1** — Spike: Ad-hoc session data quality validation
+- **191.2.1** - Spike: Ad-hoc session data quality validation
   - Run 3 tasks manually (`claude --no-mcp -p "..."` vs `claude -p "..."`)
   - Query metadata.db for tool call timeline
   - Parse JSONL for token usage
@@ -50,29 +50,32 @@ Uses the Discovery-Driven Planning approach (see doc-1): start with a data quali
   - Time-box: 4 hours
   - Tests: A3, A4, A5
 
-### Decision Gate 1 — **GO for Phase 2**
+### Decision Gate 1 - **GO for Phase 2**
 
-All critical assumptions validated. Data quality is sufficient. Key insight: analytics.db enrichment is unnecessary — metadata.db Pre-Post delta provides 100% MCP duration coverage.
+All critical assumptions validated. Data quality is sufficient. metadata.db Pre-Post delta provides canonical MCP duration coverage, and analytics remains optional diagnostics.
 
 ### Phase 2: Data Pipeline (provisional, ~2-3 days)
 
-> Created after Decision Gate 1. Tasks below are best-guess placeholders.
+> Created after Decision Gate 1. Tasks below are implementation scope.
 
-- **191.2.2** — Build `extract_metrics.py`: normalized JSON per session
+- **191.2.2** - Build `extract_metrics.py`: normalized JSON per session
   - Query metadata.db for tool call timeline
-  - Parse JSONL for token usage (dedup by message.id)
-  - Join analytics.db for Ariadne call durations (via tool_use_id)
+  - Parse JSONL for token usage (dedup by `message.id`)
+  - Compute MCP durations from metadata PreToolUse -> PostToolUse deltas
+  - Include analytics.db join stats as optional diagnostics only (warning-only)
   - Compute derived metrics:
     - **Exploration efficiency**: files_read_then_edited / total_files_read
     - **Time to first edit**: elapsed ms from session start to first Edit/Write
     - **Duplicate reads**: files read more than once
     - **Backtracking**: re-reads of previously visited files
+    - **Navigation waste ratio**: files_read_not_edited / total_files_read
 
-- **191.2.3** — Build `run_comparison.sh` + `manifest.json`: session capture orchestrator
+- **191.2.3** - Build `run_comparison.sh` + `manifest.json`: session capture orchestrator
   - Manifest-driven: reads task definitions, runs both conditions
   - Enables OTEL + metadata hooks
   - Captures session IDs back to manifest
   - Ensures same git commit for both runs
+  - Captures and extracts at least 3 curated task pairs
 
 ### Decision Gate 2
 
@@ -80,10 +83,10 @@ Review pipeline output. Is the data quality sufficient for visualization? Are th
 
 ### Phase 3: Enrichment (optional, additive)
 
-- **191.2.4** — Enrich benchmark results with session metrics
+- **191.2.4** - Enrich benchmark results with session metrics
   - For task-191.1 runs that had OTEL enabled, extract per-task tool traces
   - Join benchmark pass/fail outcomes with session-level behavioral metrics
-  - Additive — benchmark results are valid without this enrichment
+  - Additive - benchmark results are valid without this enrichment
 
 ## Location
 
@@ -99,16 +102,41 @@ Review pipeline output. Is the data quality sufficient for visualization? Are th
 
 ## Implementation Notes
 
-### Phase 1 Spike (191.2.1) — Completed
+### Phase 1 Spike (191.2.1) - Completed
 
-Created `demo/session-comparison/extract_metrics.py`: single-file 4-pass pipeline with zero external dependencies.
+Created `demo/session-comparison/extract_metrics.py`: single-file pipeline with zero external dependencies.
 
-**Commands**: `list-sessions [--ariadne] [--limit N]`, `probe <session_id>`
+Current implemented commands:
 
-**Validated on real data**:
+- `list-sessions [--ariadne] [--limit N]`
+- `probe <session_id_prefix>`
+
+Phase 2 command contract:
+
+- `extract <session_id_prefix> [--out PATH]`
+- `extract-pair <s1_prefix> <s2_prefix> [--task-id TASK_ID] [--out PATH]`
+
+Validated on real data:
 
 - Probed session `dd63d90d` (ariadne, 144 tools, 8 MCP): nav waste 72.7%, cost $12.00
 - Probed session `5f5cd88d` (baseline, 513 tools, 0 MCP): nav waste 95.2%, cost $6.90
 - 19 ariadne sessions available, 500+ baseline sessions
 
-**Phase 2 simplification**: analytics.db Pass 3 can be kept minimal since metadata.db Pre-Post delta is the primary MCP duration source.
+### Acceptance Criteria Mapping
+
+- **AC #1**: `extract` output uses metadata + JSONL and includes optional analytics diagnostics fields.
+- **AC #2**: `tokens`, `tool_calls`, `files`, `session.wall_clock_ms`, `cost`, `mcp_calls` provide required metric coverage.
+- **AC #3**: `derived` includes exploration efficiency, time-to-first-edit, duplicate reads, backtracking.
+- **AC #4**: JSON schema is documented in `backlog/docs/task-191.2-synthesis-plan.md` and consumed by Track C.
+- **AC #5**: `manifest.json` plus `output/` session and pair artifacts demonstrate at least 3 curated task pairs.
+
+### Testing Scope (Phase 2)
+
+Stdlib-first test strategy (`unittest`) with fixture-backed cases:
+
+- JSONL dedup correctness and malformed line handling
+- metadata session boundary and ordered timeline extraction
+- MCP Pre/Post duration pairing coverage
+- Derived metric formulas (including navigation waste ratio)
+- CLI prefix-match ambiguity and missing-session errors
+- Optional analytics diagnostics behavior when DB is missing/unmatched
