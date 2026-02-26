@@ -1,0 +1,8 @@
+# Benchmark results (regenerated per run)
+results/
+*.db
+.venv/
+__pycache__/
+
+# Generated report
+RESULTS.md
