@@ -6,17 +6,26 @@
     "ariadne_commit": null,
     "max_turns": 15,
     "max_budget_usd": 2.00,
-    "timeout_seconds": 600
+    "timeout_seconds": 600,
+    "phase_budget_usd": 200.0,
+    "seed": 42,
+    "fail_fast_evaluation": true
   },
   "tasks": [
     {
       "id": "spike-001",
+      "benchmark": "swe-bench-pro",
+      "harness": "mcpbr",
       "source": "swe-bench-lite",
       "instance_id": "django__django-16379",
-      "repo": "django/django",
+      "repo_path": "/path/to/local/django",
       "commit": null,
       "prompt": "Fix the bug described in the issue. Run the relevant tests to verify your fix.",
-      "evaluation": "pytest",
+      "evaluation": {
+        "type": "command_json",
+        "command": "python -c \"import json; print(json.dumps({'status':'ok','passed': False}))\"",
+        "timeout_seconds": 120
+      },
       "notes": "Spike task for harness validation"
     }
   ],
