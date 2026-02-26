@@ -1,0 +1,40 @@
+# MCPBR configuration for Ariadne MCP A/B benchmarking
+#
+# Usage:
+#   # Treatment (with Ariadne):
+#   mcpbr run -c mcpbr_ariadne.yaml -o results/spike_treatment.json
+#
+#   # Baseline (without Ariadne): use mcpbr_baseline.yaml or remove mcp_server section
+#
+# Notes:
+#   - {workdir} is substituted by MCPBR with the task's working directory
+#   - setup_command runs once per Docker container to install Ariadne
+#   - SWE-bench images are Debian with build tools; Node 20.x installed by MCPBR
+#   - tree-sitter native compilation requires: python3, make, g++ (present in SWE-bench images)
+
+mcp_server:
+  command: "node"
+  args:
+    - "/opt/ariadne/packages/mcp/dist/server.js"
+    - "--project-path"
+    - "{workdir}"
+    - "--no-watch"
+  env: {}
+  setup_command: |
+    set -e
+    if [ ! -d /opt/ariadne ]; then
+      cd /opt
+      git clone --depth 1 https://github.com/CRJFisher/ariadne.git
+      cd ariadne
+      npm install
+      npm run build
+    fi
+  setup_timeout_ms: 300000
+
+provider: "anthropic"
+agent_harness: "claude-code"
+model: "claude-sonnet-4-5-20250929"
+benchmark: "swe-bench-lite"
+sample_size: 1
+timeout_seconds: 600
+max_concurrent: 1

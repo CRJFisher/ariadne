@@ -1,0 +1,24 @@
+{
+  "$schema": "manifest-schema",
+  "description": "Ariadne MCP benchmark task definitions",
+  "environment": {
+    "model": "claude-sonnet-4-5-20250929",
+    "ariadne_commit": null,
+    "max_turns": 15,
+    "max_budget_usd": 2.00,
+    "timeout_seconds": 600
+  },
+  "tasks": [
+    {
+      "id": "spike-001",
+      "source": "swe-bench-lite",
+      "instance_id": "django__django-16379",
+      "repo": "django/django",
+      "commit": null,
+      "prompt": "Fix the bug described in the issue. Run the relevant tests to verify your fix.",
+      "evaluation": "pytest",
+      "notes": "Spike task for harness validation"
+    }
+  ],
+  "runs": []
+}
