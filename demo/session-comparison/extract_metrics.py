@@ -3,14 +3,16 @@
 Extract session metrics from metadata.db, JSONL transcripts, and analytics.db.
 
 4-pass pipeline:
-  Pass 1: metadata.db  → tool call timeline, file paths, session boundaries
-  Pass 2: JSONL        → token usage (deduped), cost calculation
-  Pass 3: analytics.db → Ariadne MCP call durations (dual-path join)
-  Pass 4: Derivation   → computed metrics from passes 1-3
+  Pass 1: metadata.db  -> tool call timeline, file paths, session boundaries
+  Pass 2: JSONL        -> token usage (deduped), cost calculation
+  Pass 3: analytics.db -> Ariadne MCP call durations (optional diagnostics)
+  Pass 4: Derivation   -> computed metrics from passes 1-3
 
 Usage:
   python extract_metrics.py list-sessions [--ariadne] [--limit N]
   python extract_metrics.py probe <SESSION_ID>
+  python extract_metrics.py extract <SESSION_ID> [--out PATH] [--task-id ID]
+  python extract_metrics.py extract-pair <S1> <S2> [--task-id ID] [--out PATH]
 """
 
 import argparse
@@ -27,6 +29,8 @@ import sys
 
 METADATA_DB_PATH = pathlib.Path.home() / ".claude" / "metadata.db"
 ANALYTICS_DB_PATH = pathlib.Path.home() / ".ariadne" / "analytics.db"
+SCRIPT_DIR = pathlib.Path(__file__).resolve().parent
+OUTPUT_DIR = SCRIPT_DIR / "output"
 
 PRICING = {
     "claude-opus-4-6-20250219": {
@@ -51,6 +55,8 @@ TOOL_CATEGORIES = {
     "mcp__ariadne__list_entrypoints": "mcp",
     "mcp__ariadne__show_call_graph_neighborhood": "mcp",
 }
+
+ALL_CATEGORIES = ("read", "search", "edit", "bash", "mcp", "other")
 
 
 def categorize_tool(tool_name):
@@ -348,7 +354,7 @@ def find_closest_by_timestamp(tool_name, target_ts_ms, candidates, tolerance_ms=
 
 def join_analytics_db(mcp_durations, tool_calls, analytics_db_path):
     """Dual-path join: tool_use_id (direct) then fuzzy timestamp+tool_name."""
-    if not analytics_db_path.exists():
+    if analytics_db_path is None or not analytics_db_path.exists():
         return {
             "joined": [],
             "direct_count": 0,
@@ -519,7 +525,7 @@ def compute_derived_metrics(session_boundary, tool_calls, file_activity):
 
 
 # ---------------------------------------------------------------------------
-# Probe orchestrator + data quality report
+# Pipeline orchestration
 # ---------------------------------------------------------------------------
 
 def ms_to_iso(ms):
@@ -530,24 +536,82 @@ def ms_to_iso(ms):
     ).isoformat()
 
 
-def probe_session(session_id):
-    """Run all 4 passes, assemble ProbeResult dict."""
-    conn = sqlite3.connect(str(METADATA_DB_PATH))
+def run_pipeline(session_id_prefix, metadata_conn, analytics_db_path=None, jsonl_path=None):
+    """Execute the 4-pass extraction pipeline.
+
+    Stateless query function. Call once for a finished session or repeatedly
+    for a live one.
+
+    Args:
+        session_id_prefix: Session ID or prefix to match
+        metadata_conn: Open sqlite3 connection to metadata.db
+        analytics_db_path: Path to analytics.db (None to skip)
+        jsonl_path: Override JSONL transcript path (None for automatic lookup)
+
+    Returns dict with raw intermediate results from each pass.
+    """
     warnings = []
-    errors = []
 
     # --- Pass 1: metadata.db ---
-    full_session_id = resolve_session_id(session_id, conn)
-    boundary = query_session_boundary(conn, full_session_id)
-    tool_calls = query_tool_calls(conn, full_session_id)
-    mcp_durations = compute_mcp_durations(conn, full_session_id)
+    full_session_id = resolve_session_id(session_id_prefix, metadata_conn)
+    boundary = query_session_boundary(metadata_conn, full_session_id)
+    tool_calls = query_tool_calls(metadata_conn, full_session_id)
+    mcp_durations = compute_mcp_durations(metadata_conn, full_session_id)
 
     if not boundary["has_stop"]:
-        warnings.append("No Stop event found — using last event as session end")
+        warnings.append("No Stop event found -- using last event as session end")
 
-    # Tool call counts
+    # --- Pass 2: JSONL ---
+    resolved_jsonl = jsonl_path
+    if resolved_jsonl is None:
+        resolved_jsonl = find_jsonl_path(boundary["transcript_path"], full_session_id)
+
+    jsonl_result = None
+    cost = None
+    if resolved_jsonl and pathlib.Path(resolved_jsonl).exists():
+        jsonl_result = parse_jsonl_tokens(resolved_jsonl)
+        cost = calculate_cost(jsonl_result["tokens"], jsonl_result["model"])
+    else:
+        warnings.append("JSONL transcript not found -- token/cost data unavailable")
+
+    # --- Pass 3: analytics.db (optional diagnostics) ---
+    analytics_result = join_analytics_db(mcp_durations, tool_calls, analytics_db_path)
+    if analytics_db_path is not None and not analytics_result["available"]:
+        warnings.append("analytics.db not found -- MCP enrichment unavailable")
+
+    # --- Pass 4: Derived metrics ---
+    file_activity = compute_file_activity(tool_calls)
+    derived = compute_derived_metrics(boundary, tool_calls, file_activity)
+
+    return {
+        "boundary": boundary,
+        "tool_calls": tool_calls,
+        "mcp_durations": mcp_durations,
+        "jsonl_result": jsonl_result,
+        "cost": cost,
+        "analytics_result": analytics_result,
+        "file_activity": file_activity,
+        "derived": derived,
+        "warnings": warnings,
+    }
+
+
+def assemble_v1(raw, task_id=None, task_description=None, git_commit=None):
+    """Shape raw pipeline results into the v1.0.0 normalized JSON contract."""
+    boundary = raw["boundary"]
+    tool_calls = raw["tool_calls"]
+    mcp_durations = raw["mcp_durations"]
+    jsonl_result = raw["jsonl_result"]
+    cost = raw["cost"]
+    analytics_result = raw["analytics_result"]
+    file_activity = raw["file_activity"]
+    derived = raw["derived"]
+    warnings = list(raw["warnings"])
+
     by_tool = collections.Counter(c["tool_name"] for c in tool_calls)
     by_category = collections.Counter(c["category"] for c in tool_calls)
+    for cat in ALL_CATEGORIES:
+        by_category.setdefault(cat, 0)
 
     # MCP summary from Pre-Post durations
     mcp_by_tool = {}
@@ -565,47 +629,56 @@ def probe_session(session_id):
         )
         del tool_data["durations"]
 
-    conn.close()
-
-    # --- Pass 2: JSONL ---
-    jsonl_path = find_jsonl_path(boundary["transcript_path"], full_session_id)
-    jsonl_result = None
-    cost = None
-    if jsonl_path:
-        jsonl_result = parse_jsonl_tokens(jsonl_path)
-        cost = calculate_cost(jsonl_result["tokens"], jsonl_result["model"])
-    else:
-        warnings.append("JSONL transcript not found — token/cost data unavailable")
-
-    # --- Pass 3: analytics.db ---
-    analytics_result = join_analytics_db(mcp_durations, tool_calls, ANALYTICS_DB_PATH)
-    if not analytics_result["available"]:
-        warnings.append("analytics.db not found — MCP enrichment unavailable")
-
-    # --- Pass 4: Derived metrics ---
-    file_activity = compute_file_activity(tool_calls)
-    derived = compute_derived_metrics(boundary, tool_calls, file_activity)
-
-    # --- Assemble result ---
     wall_clock_ms = (
         boundary["end_ms"] - boundary["start_ms"]
         if boundary["start_ms"] and boundary["end_ms"]
         else None
     )
 
-    result = {
-        "schema_version": "0.1.0-spike",
+    # Tokens with total
+    tokens = None
+    if jsonl_result:
+        t = jsonl_result["tokens"]
+        tokens = {
+            "input": t["input"],
+            "output": t["output"],
+            "cache_read": t["cache_read"],
+            "cache_creation": t["cache_creation"],
+            "total": t["input"] + t["output"] + t["cache_read"] + t["cache_creation"],
+        }
+
+    # Analytics diagnostics (nested object)
+    analytics_warning = None
+    if analytics_result["available"] and analytics_result["unmatched_count"] > 0:
+        analytics_warning = (
+            f"{analytics_result['unmatched_count']} MCP calls unmatched in analytics"
+        )
+    elif not analytics_result["available"]:
+        analytics_warning = "analytics.db not found"
+
+    analytics_diagnostics = {
+        "enabled": analytics_result["available"],
+        "join_method": analytics_result["join_method"],
+        "direct_joins": analytics_result["direct_count"],
+        "fuzzy_joins": analytics_result["fuzzy_count"],
+        "unmatched": analytics_result["unmatched_count"],
+        "warning": analytics_warning,
+    }
+
+    return {
+        "schema_version": "1.0.0",
         "session": {
-            "session_id": full_session_id,
+            "session_id": boundary["session_id"],
             "condition": "ariadne" if by_category.get("mcp", 0) > 0 else "baseline",
+            "task_id": task_id,
+            "task_description": task_description,
             "start_time": ms_to_iso(boundary["start_ms"]),
             "end_time": ms_to_iso(boundary["end_ms"]),
             "wall_clock_ms": wall_clock_ms,
             "model": jsonl_result["model"] if jsonl_result else "unknown",
-            "project_dir": boundary["project_dir"],
-            "has_stop": boundary["has_stop"],
+            "git_commit": git_commit,
         },
-        "tokens": jsonl_result["tokens"] if jsonl_result else None,
+        "tokens": tokens,
         "cost": cost,
         "tool_calls": {
             "total": len(tool_calls),
@@ -620,32 +693,115 @@ def probe_session(session_id):
             "read_not_edited": file_activity["read_not_edited"],
         },
         "mcp_calls": {
+            "duration_source": "metadata_pre_post",
             "total": len(mcp_durations),
             "by_tool": mcp_by_tool,
-            "join_method": analytics_result["join_method"],
         },
         "derived": derived,
         "data_quality": {
             "warnings": warnings,
-            "errors": errors,
+            "errors": [],
             "metadata_events_count": boundary["event_count"],
-            "tool_calls_count": len(tool_calls),
             "jsonl_raw_line_count": jsonl_result["raw_line_count"] if jsonl_result else 0,
             "jsonl_lines_with_usage": jsonl_result["lines_with_usage"] if jsonl_result else 0,
             "jsonl_dedup_message_count": jsonl_result["dedup_message_count"] if jsonl_result else 0,
-            "analytics_direct_joins": analytics_result["direct_count"],
-            "analytics_fuzzy_joins": analytics_result["fuzzy_count"],
-            "analytics_unmatched": analytics_result["unmatched_count"],
+            "analytics_diagnostics": analytics_diagnostics,
         },
     }
 
-    return result
+
+# ---------------------------------------------------------------------------
+# Pair comparison
+# ---------------------------------------------------------------------------
+
+def compute_pair_delta(baseline, ariadne):
+    """Compute deltas between baseline and ariadne v1.0.0 results."""
+
+    def metric_delta(base_val, ariadne_val):
+        if base_val is None or ariadne_val is None:
+            return {
+                "baseline": base_val,
+                "ariadne": ariadne_val,
+                "absolute": None,
+                "percent": None,
+            }
+        absolute = ariadne_val - base_val
+        percent = round(absolute / base_val * 100, 1) if base_val != 0 else None
+        return {
+            "baseline": base_val,
+            "ariadne": ariadne_val,
+            "absolute": absolute,
+            "percent": percent,
+        }
+
+    b_tokens = baseline["tokens"]["total"] if baseline["tokens"] else None
+    a_tokens = ariadne["tokens"]["total"] if ariadne["tokens"] else None
+    b_cost = baseline["cost"]["total_usd"] if baseline["cost"] else None
+    a_cost = ariadne["cost"]["total_usd"] if ariadne["cost"] else None
+
+    return {
+        "schema_version": "1.0.0",
+        "task_id": baseline["session"]["task_id"],
+        "task_description": baseline["session"]["task_description"],
+        "baseline": baseline,
+        "ariadne": ariadne,
+        "delta": {
+            "tokens": metric_delta(b_tokens, a_tokens),
+            "cost": metric_delta(b_cost, a_cost),
+            "tool_calls": {
+                "total": metric_delta(
+                    baseline["tool_calls"]["total"],
+                    ariadne["tool_calls"]["total"],
+                ),
+                "by_category": {
+                    cat: metric_delta(
+                        baseline["tool_calls"]["by_category"].get(cat, 0),
+                        ariadne["tool_calls"]["by_category"].get(cat, 0),
+                    )
+                    for cat in ALL_CATEGORIES
+                },
+            },
+            "files": {
+                "total_unique": metric_delta(
+                    baseline["files"]["total_unique"],
+                    ariadne["files"]["total_unique"],
+                ),
+                "read_not_edited_count": metric_delta(
+                    len(baseline["files"]["read_not_edited"]),
+                    len(ariadne["files"]["read_not_edited"]),
+                ),
+            },
+            "derived": {
+                key: metric_delta(
+                    baseline["derived"].get(key),
+                    ariadne["derived"].get(key),
+                )
+                for key in (
+                    "navigation_waste_ratio",
+                    "exploration_efficiency",
+                    "time_to_first_edit_ms",
+                    "duplicate_read_count",
+                    "backtracking_count",
+                )
+            },
+            "wall_clock_ms": metric_delta(
+                baseline["session"]["wall_clock_ms"],
+                ariadne["session"]["wall_clock_ms"],
+            ),
+        },
+    }
 
 
-def print_data_quality_report(result, file=sys.stderr):
-    """Human-readable data quality report with PASS/WARN/FAIL indicators."""
+def print_data_quality_report(result, boundary=None, file=sys.stderr):
+    """Human-readable data quality report with PASS/WARN/FAIL indicators.
+
+    Args:
+        result: v1.0.0 normalized JSON dict
+        boundary: raw pipeline boundary dict (for probe extras like project_dir, has_stop)
+    """
     dq = result["data_quality"]
     session = result["session"]
+    boundary = boundary or {}
 
     def status(ok, warn_cond=False):
         if not ok:
@@ -660,15 +816,16 @@ def print_data_quality_report(result, file=sys.stderr):
 
     print(f"\nSession: {session['session_id'][:12]}...", file=file)
     print(f"Condition: {session['condition']}", file=file)
-    print(f"Project: {session.get('project_dir', 'unknown')}", file=file)
+    if boundary.get("project_dir"):
+        print(f"Project: {boundary['project_dir']}", file=file)
 
     # Section 1: Session boundary
-    has_stop = session["has_stop"]
+    has_stop = boundary.get("has_stop", True)
     wall_ms = session.get("wall_clock_ms")
     wall_str = f"{wall_ms / 1000:.1f}s" if wall_ms else "N/A"
     print(f"\n[{status(True, not has_stop)}] Session Boundary", file=file)
     print(f"  Events: {dq['metadata_events_count']}", file=file)
-    print(f"  Tool calls: {dq['tool_calls_count']}", file=file)
+    print(f"  Tool calls: {result['tool_calls']['total']}", file=file)
     print(f"  Has Stop: {has_stop}", file=file)
     print(f"  Wall clock: {wall_str}", file=file)
 
@@ -676,7 +833,7 @@ def print_data_quality_report(result, file=sys.stderr):
     tc = result["tool_calls"]
     print(f"\n[{status(tc['total'] > 0)}] Tool Call Timeline", file=file)
     print(f"  Total: {tc['total']}", file=file)
-    for cat in ["read", "search", "edit", "bash", "mcp", "other"]:
+    for cat in ALL_CATEGORIES:
         count = tc["by_category"].get(cat, 0)
         if count:
             print(f"    {cat}: {count}", file=file)
@@ -686,7 +843,6 @@ def print_data_quality_report(result, file=sys.stderr):
     print(f"\n[{status(has_jsonl)}] JSONL Token Extraction", file=file)
     if has_jsonl:
         t = result["tokens"]
-        total_tok = t["input"] + t["output"] + t["cache_read"] + t["cache_creation"]
         dedup_ratio = (
             dq["jsonl_lines_with_usage"] / dq["jsonl_dedup_message_count"]
             if dq["jsonl_dedup_message_count"] > 0
@@ -696,8 +852,8 @@ def print_data_quality_report(result, file=sys.stderr):
         print(f"  Lines with usage: {dq['jsonl_lines_with_usage']}", file=file)
         print(f"  Deduped messages: {dq['jsonl_dedup_message_count']}", file=file)
         print(f"  Dedup ratio: {dedup_ratio:.1f}x", file=file)
-        print(f"  Total tokens: {total_tok:,}", file=file)
-        print(f"  Model: {result['session']['model']}", file=file)
+        print(f"  Total tokens: {t['total']:,}", file=file)
+        print(f"  Model: {session['model']}", file=file)
         if result["cost"]:
             print(f"  Cost: ${result['cost']['total_usd']:.4f}", file=file)
     else:
@@ -716,11 +872,12 @@ def print_data_quality_report(result, file=sys.stderr):
                 f"total {stats['total_duration_ms']}ms",
                 file=file,
             )
-        print(f"  Analytics join method: {mcp['join_method']}", file=file)
+        ad = dq["analytics_diagnostics"]
+        print(f"  Analytics join method: {ad['join_method']}", file=file)
         print(
-            f"  Direct: {dq['analytics_direct_joins']}, "
-            f"Fuzzy: {dq['analytics_fuzzy_joins']}, "
-            f"Unmatched: {dq['analytics_unmatched']}",
+            f"  Direct: {ad['direct_joins']}, "
+            f"Fuzzy: {ad['fuzzy_joins']}, "
+            f"Unmatched: {ad['unmatched']}",
             file=file,
         )
 
@@ -730,7 +887,7 @@ def print_data_quality_report(result, file=sys.stderr):
     print(f"  Unique files: {files['total_unique']}", file=file)
     print(f"  Read: {len(files['read'])}", file=file)
     print(f"  Edited: {len(files['edited'])}", file=file)
-    print(f"  Read→Edited: {len(files['read_then_edited'])}", file=file)
+    print(f"  Read->Edited: {len(files['read_then_edited'])}", file=file)
     print(f"  Read, not edited: {len(files['read_not_edited'])}", file=file)
 
     # Section 6: Derived metrics
@@ -748,13 +905,13 @@ def print_data_quality_report(result, file=sys.stderr):
 
     # Warnings & errors
     if dq["warnings"]:
-        print(f"\nWarnings:", file=file)
+        print("\nWarnings:", file=file)
         for w in dq["warnings"]:
-            print(f"  ⚠ {w}", file=file)
+            print(f"  ! {w}", file=file)
     if dq["errors"]:
-        print(f"\nErrors:", file=file)
+        print("\nErrors:", file=file)
         for e in dq["errors"]:
-            print(f"  ✗ {e}", file=file)
+            print(f"  x {e}", file=file)
 
     print("\n" + "=" * 60, file=file)
 
@@ -870,24 +1027,113 @@ def main():
 
     # probe
     probe_parser = sub.add_parser("probe", help="Probe a session and report data quality")
-    probe_parser.add_argument(
-        "session_id", help="Session ID (prefix match supported)"
+    probe_parser.add_argument("session_id", help="Session ID (prefix match supported)")
+
+    # extract
+    extract_parser = sub.add_parser(
+        "extract", help="Extract normalized v1.0.0 JSON for a session"
     )
+    extract_parser.add_argument("session_id", help="Session ID (prefix match supported)")
+    extract_parser.add_argument("--out", type=pathlib.Path, help="Output file path")
+    extract_parser.add_argument("--task-id", help="Task ID")
+    extract_parser.add_argument("--task-description", help="Task description")
+    extract_parser.add_argument("--git-commit", help="Git commit SHA")
+
+    # extract-pair
+    pair_parser = sub.add_parser(
+        "extract-pair", help="Extract and compare a baseline/ariadne session pair"
+    )
+    pair_parser.add_argument("session_1", help="First session ID (prefix match supported)")
+    pair_parser.add_argument("session_2", help="Second session ID (prefix match supported)")
+    pair_parser.add_argument("--out", type=pathlib.Path, help="Output file path")
+    pair_parser.add_argument("--task-id", help="Task ID")
+    pair_parser.add_argument("--task-description", help="Task description")
+    pair_parser.add_argument("--git-commit", help="Git commit SHA")
 
     args = parser.parse_args()
 
-    if not METADATA_DB_PATH.exists():
-        print(f"metadata.db not found at {METADATA_DB_PATH}", file=sys.stderr)
-        sys.exit(1)
-
     if args.command == "list-sessions":
+        if not METADATA_DB_PATH.exists():
+            print(f"metadata.db not found at {METADATA_DB_PATH}", file=sys.stderr)
+            sys.exit(1)
         list_sessions(ariadne_only=args.ariadne, limit=args.limit)
 
     elif args.command == "probe":
-        result = probe_session(args.session_id)
-        print_data_quality_report(result, file=sys.stderr)
+        if not METADATA_DB_PATH.exists():
+            print(f"metadata.db not found at {METADATA_DB_PATH}", file=sys.stderr)
+            sys.exit(1)
+        conn = sqlite3.connect(str(METADATA_DB_PATH))
+        raw = run_pipeline(args.session_id, conn, ANALYTICS_DB_PATH)
+        conn.close()
+        result = assemble_v1(raw)
+        print_data_quality_report(result, raw["boundary"])
         json.dump(result, sys.stdout, indent=2)
-        print()  # trailing newline
+        print()
+
+    elif args.command == "extract":
+        if not METADATA_DB_PATH.exists():
+            print(f"metadata.db not found at {METADATA_DB_PATH}", file=sys.stderr)
+            sys.exit(1)
+        conn = sqlite3.connect(str(METADATA_DB_PATH))
+        raw = run_pipeline(args.session_id, conn, ANALYTICS_DB_PATH)
+        conn.close()
+        result = assemble_v1(
+            raw,
+            task_id=args.task_id,
+            task_description=args.task_description,
+            git_commit=args.git_commit,
+        )
+        out_path = args.out or (OUTPUT_DIR / f"{result['session']['session_id']}.json")
+        out_path.parent.mkdir(parents=True, exist_ok=True)
+        with open(out_path, "w") as f:
+            json.dump(result, f, indent=2)
+            f.write("\n")
+        print(f"Wrote {out_path}", file=sys.stderr)
+
+    elif args.command == "extract-pair":
+        if not METADATA_DB_PATH.exists():
+            print(f"metadata.db not found at {METADATA_DB_PATH}", file=sys.stderr)
+            sys.exit(1)
+        conn = sqlite3.connect(str(METADATA_DB_PATH))
+        raw1 = run_pipeline(args.session_1, conn, ANALYTICS_DB_PATH)
+        raw2 = run_pipeline(args.session_2, conn, ANALYTICS_DB_PATH)
+        conn.close()
+
+        r1 = assemble_v1(
+            raw1,
+            task_id=args.task_id,
+            task_description=args.task_description,
+            git_commit=args.git_commit,
+        )
+        r2 = assemble_v1(
+            raw2,
+            task_id=args.task_id,
+            task_description=args.task_description,
+            git_commit=args.git_commit,
+        )
+
+        # Auto-detect baseline vs ariadne
+        c1, c2 = r1["session"]["condition"], r2["session"]["condition"]
+        if c1 == "baseline" and c2 == "ariadne":
+            baseline_result, ariadne_result = r1, r2
+        elif c1 == "ariadne" and c2 == "baseline":
+            baseline_result, ariadne_result = r2, r1
+        else:
+            print(
+                f"Warning: both sessions have condition '{c1}' "
+                f"-- using argument order",
+                file=sys.stderr,
+            )
+            baseline_result, ariadne_result = r1, r2
+
+        comparison = compute_pair_delta(baseline_result, ariadne_result)
+        task_label = args.task_id or "unknown"
+        out_path = args.out or (OUTPUT_DIR / f"comparison_{task_label}.json")
+        out_path.parent.mkdir(parents=True, exist_ok=True)
+        with open(out_path, "w") as f:
+            json.dump(comparison, f, indent=2)
+            f.write("\n")
+        print(f"Wrote {out_path}", file=sys.stderr)
 
     else:
         parser.print_help()
