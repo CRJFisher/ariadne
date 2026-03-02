@@ -4,6 +4,11 @@ import type { ResolutionRegistry } from "../resolve_references/resolve_reference
 import { is_test_file } from "../project/detect_test_file";
 import { should_filter_entry_point } from "./filter_entry_points";
 
+export interface TraceCallGraphOptions {
+  /** Include test file functions in entry point detection. Default: false */
+  include_tests?: boolean;
+}
+
 /**
  * Detect language from file extension
  */
@@ -96,8 +101,11 @@ function build_function_nodes(
  */
 function detect_entry_points(
   nodes: ReadonlyMap<SymbolId, CallableNode>,
-  resolutions: ResolutionRegistry
+  resolutions: ResolutionRegistry,
+  options?: TraceCallGraphOptions
 ): SymbolId[] {
+  const include_tests = options?.include_tests ?? false;
+
   // Get all SymbolIds that are referenced (called)
   // This correctly handles multi-candidate calls by processing all resolutions
   const called_symbols = resolutions.get_all_referenced_symbols();
@@ -108,6 +116,11 @@ function detect_entry_points(
   for (const [symbol_id, node] of nodes) {
     // Skip if this symbol is called
     if (called_symbols.has(symbol_id)) {
+      continue;
+    }
+
+    // Skip test file functions unless explicitly included
+    if (!include_tests && node.is_test) {
       continue;
     }
 
@@ -140,13 +153,14 @@ function detect_entry_points(
  */
 export function trace_call_graph(
   definitions: DefinitionRegistry,
-  resolutions: ResolutionRegistry
+  resolutions: ResolutionRegistry,
+  options?: TraceCallGraphOptions
 ): CallGraph {
   // Build function nodes with their enclosed calls
   const nodes = build_function_nodes(definitions, resolutions);
 
   // Detect entry points (functions never called)
-  const entry_points = detect_entry_points(nodes, resolutions);
+  const entry_points = detect_entry_points(nodes, resolutions, options);
 
   return {
     nodes,

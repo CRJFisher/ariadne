@@ -25,7 +25,7 @@ export const list_entrypoints_schema = z.object({
   include_tests: z
     .boolean()
     .optional()
-    .describe("Include test functions in output (default: true)"),
+    .describe("Include test functions in output (default: false)"),
 });
 
 export type ListEntrypointsRequest = z.infer<typeof list_entrypoints_schema>;
@@ -252,10 +252,10 @@ export async function list_entrypoints(
   project: Project,
   request: ListEntrypointsRequest = {}
 ): Promise<string> {
-  const { include_tests = true } = request;
+  const { include_tests = false } = request;
 
   // Get call graph (always up-to-date)
-  const call_graph = project.get_call_graph();
+  const call_graph = project.get_call_graph({ include_tests });
 
   // Calculate tree size for each entry point
   const entries: EntryPointData[] = [];
@@ -264,7 +264,7 @@ export async function list_entrypoints(
     const node = call_graph.nodes.get(entry_point_id);
     if (!node) continue;
 
-    // Filter out test entry points if requested
+    // Filter test entry points when not included
     if (!include_tests && node.is_test) continue;
 
     // Count tree size with fresh visited set for each entry point

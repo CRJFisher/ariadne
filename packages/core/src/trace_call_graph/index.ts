@@ -1,1 +1,1 @@
-export { trace_call_graph } from "./trace_call_graph";
+export { trace_call_graph, type TraceCallGraphOptions } from "./trace_call_graph";
