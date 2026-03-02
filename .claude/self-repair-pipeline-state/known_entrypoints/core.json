@@ -4,29 +4,39 @@
     "description": "Confirmed entry points from triage",
     "entrypoints": [
       {
+        "name": "index_file",
+        "file_path": "packages/core/src/project/project.ts",
+        "start_line": 150
+      },
+      {
         "name": "update_file",
         "file_path": "packages/core/src/project/project.ts",
-        "start_line": 158
+        "start_line": 173
+      },
+      {
+        "name": "resolve_all",
+        "file_path": "packages/core/src/project/project.ts",
+        "start_line": 200
       },
       {
         "name": "remove_file",
         "file_path": "packages/core/src/project/project.ts",
-        "start_line": 370
+        "start_line": 477
       },
       {
         "name": "get_call_graph",
         "file_path": "packages/core/src/project/project.ts",
-        "start_line": 460
+        "start_line": 560
       },
       {
         "name": "clear",
         "file_path": "packages/core/src/project/project.ts",
-        "start_line": 628
+        "start_line": 738
       },
       {
         "name": "get_stats",
         "file_path": "packages/core/src/project/project.ts",
-        "start_line": 440
+        "start_line": 540
       },
       {
         "name": "get_type_info",
@@ -107,7 +117,15 @@
         "file_path": "packages/core/src/project/project.ts"
       },
       {
+        "name": "index_file",
+        "file_path": "packages/core/src/project/project.ts"
+      },
+      {
         "name": "update_file",
+        "file_path": "packages/core/src/project/project.ts"
+      },
+      {
+        "name": "resolve_all",
         "file_path": "packages/core/src/project/project.ts"
       },
       {
