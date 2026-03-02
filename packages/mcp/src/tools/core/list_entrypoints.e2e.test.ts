@@ -191,10 +191,10 @@ describe("MCP Server E2E - list_entrypoints tool", () => {
   }, 120000);
 
   it("should mark test functions with [TEST] indicator", async () => {
-    // packages/core has test files, so we should see [TEST] markers
+    // packages/core has test files, so we should see [TEST] markers when include_tests is true
     const response = await client.callTool({
       name: "list_entrypoints",
-      arguments: {},
+      arguments: { include_tests: true },
     });
 
     const text = (response.content as any[])[0].text as string;

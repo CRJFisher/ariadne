@@ -12,7 +12,10 @@ import { ImportGraph } from "./import_graph";
 import { ResolutionRegistry } from "../resolve_references/resolve_references";
 import { preprocess_references } from "../resolve_references/preprocess_references";
 import { type CallGraph } from "@ariadnejs/types";
-import { trace_call_graph } from "../trace_call_graph/trace_call_graph";
+import {
+  trace_call_graph,
+  type TraceCallGraphOptions,
+} from "../trace_call_graph/trace_call_graph";
 import { fix_import_definition_locations } from "./fix_import_locations";
 import { extract_all_parameters } from "./extract_nested_definitions";
 import Parser from "tree-sitter";
@@ -457,10 +460,10 @@ export class Project {
    *
    * @returns The call graph
    */
-  get_call_graph(): CallGraph {
+  get_call_graph(options?: TraceCallGraphOptions): CallGraph {
     // Build call graph from current state
     // All resolutions are always up-to-date (eager resolution)
-    return trace_call_graph(this.definitions, this.resolutions);
+    return trace_call_graph(this.definitions, this.resolutions, options);
   }
 
   /**

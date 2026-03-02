@@ -1153,7 +1153,7 @@ def process():
       project.update_file(file_path_str, code);
 
       const definitions = project.definitions;
-      const call_graph = project.get_call_graph();
+      const call_graph = project.get_call_graph({ include_tests: true });
 
       // Find lambdas
       const lambdas = Array.from(definitions.get_callable_definitions()).filter(
@@ -1480,7 +1480,7 @@ class C(B):
       project.update_file(utils_file, utils_source);
       project.update_file(import_patterns_file, import_patterns_source);
 
-      const call_graph = project.get_call_graph();
+      const call_graph = project.get_call_graph({ include_tests: true });
       const entry_point_ids = new Set(call_graph.entry_points);
 
       // Find all utils.py functions

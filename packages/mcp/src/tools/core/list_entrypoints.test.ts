@@ -466,7 +466,9 @@ describe("list_entrypoints", () => {
     };
     vi.mocked(mock_project.get_call_graph).mockReturnValue(mock_call_graph);
 
-    const result = await list_entrypoints(mock_project);
+    const result = await list_entrypoints(mock_project, {
+      include_tests: true,
+    });
 
     expect(result).toContain("[TEST]");
     expect(result).toContain("test_add(): void");
@@ -552,7 +554,7 @@ describe("list_entrypoints", () => {
     expect(result).toContain("Total: 1 entry point");
   });
 
-  it("should include test functions by default", async () => {
+  it("should exclude test functions by default", async () => {
     const test_id = "symbol:test_func" as SymbolId;
     const test_node: CallableNode = {
       symbol_id: test_id,
@@ -588,11 +590,11 @@ describe("list_entrypoints", () => {
     };
     vi.mocked(mock_project.get_call_graph).mockReturnValue(mock_call_graph);
 
-    // Without specifying include_tests, should include tests by default
+    // Without specifying include_tests, test functions are excluded by default
     const result = await list_entrypoints(mock_project);
 
-    expect(result).toContain("test_func(): void");
-    expect(result).toContain("[TEST]");
+    expect(result).not.toContain("test_func(): void");
+    expect(result).not.toContain("[TEST]");
   });
 });
 
