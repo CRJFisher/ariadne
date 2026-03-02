@@ -1,9 +1,10 @@
 ---
 id: task-192
 title: Fix missing scope captures for decorated Python functions
-status: To Do
+status: In Progress
 assignee: []
 created_date: '2026-03-02'
+updated_date: '2026-03-02 16:49'
 labels:
   - bug
   - python
@@ -102,17 +103,17 @@ checks that the function appears in index.functions and that the decorator call 
 It does NOT verify a body scope exists. The bug passes undetected.
 
 ## Acceptance Criteria
+<!-- AC:BEGIN -->
+- [ ] #1 Decorated module-level Python functions have a body scope in the semantic index
+- [ ] #2 Decorated nested Python functions have a body scope
+- [ ] #3 No "Could not find body scope for function" warnings when indexing the Django repo:
+- [ ] #4 Async function definitions are not duplicated (one symbol per function, not two)
+- [ ] #5 Existing tests continue to pass
+- [ ] #6 New test: decorated module-level function produces a "function" scope with the correct name
+- [ ] #7 New test: decorated nested function produces a "function" scope with the correct name
+- [ ] #8 New test: decorated async function produces exactly one entry in index.functions
+<!-- AC:END -->
 
-- [ ] Decorated module-level Python functions have a body scope in the semantic index
-- [ ] Decorated nested Python functions have a body scope
-- [ ] No "Could not find body scope for function" warnings when indexing the Django repo:
-      `ARIADNE_PROFILE=1 pnpm exec tsx scripts/profile_load.ts --project-path /tmp/django --batch 2>&1 | grep "Could not find body scope"`
-      should produce no output
-- [ ] Async function definitions are not duplicated (one symbol per function, not two)
-- [ ] Existing tests continue to pass
-- [ ] New test: decorated module-level function produces a "function" scope with the correct name
-- [ ] New test: decorated nested function produces a "function" scope with the correct name
-- [ ] New test: decorated async function produces exactly one entry in index.functions
 
 ## Implementation Plan
 
@@ -168,6 +169,7 @@ In the "Decorator handling" describe block (line 752), add 3 tests:
 1. Decorated module-level function → scope with name "my_view" and type "function" exists in index.scopes
 2. Decorated nested function → scope with name "inner" and type "function" exists in index.scopes
 3. Decorated async function → exactly one entry in index.functions for that name
+
 
 ## Files to Modify
 

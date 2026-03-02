@@ -167,7 +167,6 @@ describe("Python Builder Configuration", () => {
     it("should contain function definition capture mappings", () => {
       const function_mappings = [
         "definition.function",
-        "definition.function.async",
         "definition.lambda",
       ];
 
@@ -306,19 +305,6 @@ describe("Python Builder Configuration", () => {
 
       expect(() => {
         handler?.(capture, builder, create_test_context());
-      }).not.toThrow();
-    });
-
-    it("should handle async functions", () => {
-      const code = `async def async_function():
-    pass`;
-      const capture = create_capture(code, "definition.function.async", "identifier");
-      const context = create_test_context(true); // Need scopes for function bodies
-      const builder = new DefinitionBuilder(context);
-      const handler = PYTHON_HANDLERS["definition.function.async"];
-
-      expect(() => {
-        handler?.(capture, builder, context);
       }).not.toThrow();
     });
 
@@ -1035,27 +1021,6 @@ describe("Python Builder Configuration", () => {
           expect(func).toBeDefined();
           expect(func?.name).toBe("inner_function");
           expect(func?.is_exported).toBe(false);
-        });
-
-        it("should have is_exported=true for module-level async functions", () => {
-          const code = `async def async_function():
-    pass`;
-          const context = create_test_context(true); // Need scopes for function bodies
-          const builder = new DefinitionBuilder(context);
-          const capture = create_capture(code, "definition.function.async", "identifier");
-
-          PYTHON_HANDLERS["definition.function.async"]?.(
-            capture,
-            builder,
-            context
-          );
-
-          const definitions = builder.build();
-          const func = definitions.functions.values().next().value;
-
-          expect(func).toBeDefined();
-          expect(func?.name).toBe("async_function");
-          expect(func?.is_exported).toBe(true);
         });
 
         it("should have is_exported=false for lambda functions", () => {
