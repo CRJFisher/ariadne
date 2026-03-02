@@ -1,5 +1,5 @@
-import { describe, it, expect } from "vitest";
-import { parse_cli_args } from "./server";
+import { describe, it, expect, afterEach } from "vitest";
+import { parse_cli_args, resolve_toolsets } from "./server";
 
 /**
  * Tests for server.ts CLI argument parsing logic
@@ -86,6 +86,72 @@ describe("server CLI argument parsing", () => {
       // so --no-watch after --watch should set watch to false
       const result = parse_cli_args(["--watch", "--no-watch"]);
       expect(result.watch).toBe(false);
+    });
+
+    it("should parse --toolsets=value format", () => {
+      const result = parse_cli_args(["--toolsets=core,topology"]);
+      expect(result.toolsets).toEqual(["core", "topology"]);
+    });
+
+    it("should parse --toolsets with separate value", () => {
+      const result = parse_cli_args(["--toolsets", "core"]);
+      expect(result.toolsets).toEqual(["core"]);
+    });
+
+    it("should parse single toolset", () => {
+      const result = parse_cli_args(["--toolsets=core"]);
+      expect(result.toolsets).toEqual(["core"]);
+    });
+
+    it("should combine --toolsets with other flags", () => {
+      const result = parse_cli_args(["-p", "/path", "--toolsets=core", "--no-watch"]);
+      expect(result).toEqual({
+        project_path: "/path",
+        toolsets: ["core"],
+        watch: false,
+      });
+    });
+
+    it("should return undefined toolsets when not specified", () => {
+      const result = parse_cli_args([]);
+      expect(result.toolsets).toBeUndefined();
+    });
+  });
+
+  describe("resolve_toolsets", () => {
+    const original_env = process.env.ARIADNE_TOOLSETS;
+
+    afterEach(() => {
+      if (original_env === undefined) {
+        delete process.env.ARIADNE_TOOLSETS;
+      } else {
+        process.env.ARIADNE_TOOLSETS = original_env;
+      }
+    });
+
+    it("should return CLI toolsets when provided", () => {
+      process.env.ARIADNE_TOOLSETS = "env_group";
+      expect(resolve_toolsets(["cli_group"])).toEqual(["cli_group"]);
+    });
+
+    it("should fall back to ARIADNE_TOOLSETS env var when CLI is empty", () => {
+      process.env.ARIADNE_TOOLSETS = "core,topology";
+      expect(resolve_toolsets([])).toEqual(["core", "topology"]);
+    });
+
+    it("should fall back to ARIADNE_TOOLSETS env var when CLI is undefined", () => {
+      process.env.ARIADNE_TOOLSETS = "core";
+      expect(resolve_toolsets(undefined)).toEqual(["core"]);
+    });
+
+    it("should return empty array when neither CLI nor env var is set", () => {
+      delete process.env.ARIADNE_TOOLSETS;
+      expect(resolve_toolsets(undefined)).toEqual([]);
+    });
+
+    it("should filter empty strings from env var", () => {
+      process.env.ARIADNE_TOOLSETS = "core,,topology,";
+      expect(resolve_toolsets(undefined)).toEqual(["core", "topology"]);
     });
   });
 });

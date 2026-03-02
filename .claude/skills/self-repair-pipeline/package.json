@@ -13,7 +13,6 @@
   },
   "dependencies": {
     "@ariadnejs/core": "workspace:*",
-    "@ariadnejs/mcp": "workspace:*",
     "@ariadnejs/types": "workspace:*"
   },
   "devDependencies": {

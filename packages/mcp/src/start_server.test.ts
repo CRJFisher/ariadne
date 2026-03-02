@@ -1,238 +1,112 @@
-/**
- * Tests for start_server and helper functions
- */
+import { describe, it, expect, vi, beforeEach } from "vitest";
 
-/* eslint-disable @typescript-eslint/naming-convention */
-// Disabled because we mock fs.Dirent which has isFile/isDirectory methods
+import { start_server } from "./start_server";
+import { ProjectManager } from "./project_manager";
+import { register_tool_groups } from "./tools/tool_registry";
+import { is_analytics_enabled, init_analytics } from "./analytics/analytics";
 
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import * as fs from "fs/promises";
-import * as path from "path";
-import { load_file_if_needed, load_project_files } from "./start_server";
-import type { Project } from "@ariadnejs/core";
-import type { FilePath } from "@ariadnejs/types";
+vi.mock("@modelcontextprotocol/sdk/server/mcp.js", () => ({
+  McpServer: vi.fn().mockImplementation(() => ({
+    server: { oninitialized: null, getClientVersion: vi.fn() },
+    connect: vi.fn(),
+  })),
+}));
 
-// Mock fs/promises
-vi.mock("fs/promises");
+vi.mock("@modelcontextprotocol/sdk/server/stdio.js", () => ({
+  StdioServerTransport: vi.fn(),
+}));
 
-describe("load_file_if_needed", () => {
-  let mock_project: Project;
+vi.mock("./project_manager", () => ({
+  ProjectManager: vi.fn().mockImplementation(() => ({
+    initialize: vi.fn(),
+    load_all_files: vi.fn(),
+    is_watching: vi.fn().mockReturnValue(false),
+  })),
+}));
 
+vi.mock("./logger", () => ({
+  initialize_logger: vi.fn(),
+  log_info: vi.fn(),
+}));
+
+vi.mock("./analytics/analytics", () => ({
+  is_analytics_enabled: vi.fn().mockReturnValue(false),
+  init_analytics: vi.fn(),
+  record_session_client_info: vi.fn(),
+}));
+
+vi.mock("./tools/tool_registry", () => ({
+  register_tool_groups: vi.fn(),
+}));
+
+vi.mock("./tools/core/tool_group", () => ({
+  CORE_TOOL_GROUP: { group_name: "core", description: "Core tools", tools: [] },
+}));
+
+describe("start_server", () => {
   beforeEach(() => {
-    mock_project = {
-      update_file: vi.fn(),
-    } as unknown as Project;
     vi.clearAllMocks();
   });
 
-  it("should load file content and update project", async () => {
-    const file_content = "const x = 1;";
-    vi.mocked(fs.readFile).mockResolvedValue(file_content);
+  it("should initialize project manager with given path and watch setting", async () => {
+    await start_server({ project_path: "/test/path", watch: false });
 
-    await load_file_if_needed(mock_project, "/path/to/file.ts");
+    const pm_instance = vi.mocked(ProjectManager).mock.results[0].value;
+    expect(pm_instance.initialize).toHaveBeenCalledWith({
+      project_path: "/test/path",
+      watch: false,
+    });
+    expect(pm_instance.load_all_files).toHaveBeenCalled();
+  });
 
-    expect(fs.readFile).toHaveBeenCalledWith("/path/to/file.ts", "utf-8");
-    expect(mock_project.update_file).toHaveBeenCalledWith(
-      "/path/to/file.ts" as FilePath,
-      file_content
+  it("should default watch to true when not specified", async () => {
+    await start_server({ project_path: "/test/path" });
+
+    const pm_instance = vi.mocked(ProjectManager).mock.results[0].value;
+    expect(pm_instance.initialize).toHaveBeenCalledWith({
+      project_path: "/test/path",
+      watch: true,
+    });
+  });
+
+  it("should pass toolsets to register_tool_groups as enabled_groups", async () => {
+    await start_server({ project_path: "/test/path", toolsets: ["core"] });
+
+    expect(register_tool_groups).toHaveBeenCalledWith(
+      expect.any(Array),
+      expect.objectContaining({ enabled_groups: ["core"] }),
     );
   });
 
-  it("should throw error when file read fails", async () => {
-    vi.mocked(fs.readFile).mockRejectedValue(new Error("File not found"));
+  it("should default enabled_groups to empty array when no toolsets specified", async () => {
+    await start_server({ project_path: "/test/path" });
 
-    await expect(
-      load_file_if_needed(mock_project, "/path/to/missing.ts")
-    ).rejects.toThrow("Failed to read file /path/to/missing.ts: File not found");
-  });
-});
-
-describe("load_project_files", () => {
-  let mock_project: Project;
-  let console_error_spy: ReturnType<typeof vi.spyOn>;
-
-  beforeEach(() => {
-    mock_project = {
-      update_file: vi.fn(),
-    } as unknown as Project;
-    // Logger writes to stderr via console.error
-    console_error_spy = vi.spyOn(console, "error").mockImplementation(() => {});
-    vi.clearAllMocks();
-    // Mock realpath to return the input path (identity) for cycle detection
-    vi.mocked(fs.realpath).mockImplementation(async (p) => String(p));
-  });
-
-  afterEach(() => {
-    console_error_spy.mockRestore();
-  });
-
-  it("should load supported source files", async () => {
-    // Mock .gitignore as not found
-    vi.mocked(fs.readFile).mockImplementation(async (file_path) => {
-      if (String(file_path).endsWith(".gitignore")) {
-        throw new Error("ENOENT");
-      }
-      return "const x = 1;";
-    });
-
-    // Mock directory structure
-    vi.mocked(fs.readdir).mockResolvedValue([
-      { name: "file.ts", isFile: () => true, isDirectory: () => false },
-      { name: "file.js", isFile: () => true, isDirectory: () => false },
-      { name: "file.py", isFile: () => true, isDirectory: () => false },
-    ] as any);
-
-    await load_project_files(mock_project, "/project");
-
-    expect(mock_project.update_file).toHaveBeenCalledTimes(3);
-  });
-
-  it("should ignore node_modules directory", async () => {
-    vi.mocked(fs.readFile).mockImplementation(async (file_path) => {
-      if (String(file_path).endsWith(".gitignore")) {
-        throw new Error("ENOENT");
-      }
-      return "const x = 1;";
-    });
-
-    vi.mocked(fs.readdir).mockImplementation(async (dir_path) => {
-      const dir = String(dir_path);
-      if (dir === "/project") {
-        return [
-          { name: "node_modules", isFile: () => false, isDirectory: () => true },
-          { name: "src", isFile: () => false, isDirectory: () => true },
-        ] as any;
-      }
-      if (dir === "/project/src") {
-        return [
-          { name: "index.ts", isFile: () => true, isDirectory: () => false },
-        ] as any;
-      }
-      return [];
-    });
-
-    await load_project_files(mock_project, "/project");
-
-    // Should only load from src, not node_modules
-    expect(mock_project.update_file).toHaveBeenCalledTimes(1);
-    expect(mock_project.update_file).toHaveBeenCalledWith(
-      expect.stringContaining("index.ts"),
-      expect.any(String)
+    expect(register_tool_groups).toHaveBeenCalledWith(
+      expect.any(Array),
+      expect.objectContaining({ enabled_groups: [] }),
     );
   });
 
-  it("should ignore .d.ts files", async () => {
-    vi.mocked(fs.readFile).mockImplementation(async (file_path) => {
-      if (String(file_path).endsWith(".gitignore")) {
-        throw new Error("ENOENT");
-      }
-      return "const x = 1;";
-    });
+  it("should initialize analytics when enabled", async () => {
+    vi.mocked(is_analytics_enabled).mockReturnValue(true);
 
-    vi.mocked(fs.readdir).mockResolvedValue([
-      { name: "types.d.ts", isFile: () => true, isDirectory: () => false },
-      { name: "index.ts", isFile: () => true, isDirectory: () => false },
-    ] as any);
+    await start_server({ project_path: "/analytics/path" });
 
-    await load_project_files(mock_project, "/project");
-
-    // Should only load index.ts, not types.d.ts
-    expect(mock_project.update_file).toHaveBeenCalledTimes(1);
+    expect(init_analytics).toHaveBeenCalledWith("/analytics/path");
   });
 
-  it("should respect gitignore patterns", async () => {
-    vi.mocked(fs.readFile).mockImplementation(async (file_path) => {
-      if (String(file_path).endsWith(".gitignore")) {
-        return "dist/*\nbuild\n# comment\n";
-      }
-      return "const x = 1;";
-    });
+  it("should not initialize analytics when disabled", async () => {
+    vi.mocked(is_analytics_enabled).mockReturnValue(false);
 
-    vi.mocked(fs.readdir).mockImplementation(async (dir_path) => {
-      const dir = String(dir_path);
-      if (dir === "/project") {
-        return [
-          { name: "dist", isFile: () => false, isDirectory: () => true },
-          { name: "src", isFile: () => false, isDirectory: () => true },
-        ] as any;
-      }
-      if (dir === "/project/src") {
-        return [
-          { name: "index.ts", isFile: () => true, isDirectory: () => false },
-        ] as any;
-      }
-      return [];
-    });
+    await start_server({ project_path: "/test/path" });
 
-    await load_project_files(mock_project, "/project");
-
-    // Should only load from src
-    expect(mock_project.update_file).toHaveBeenCalledTimes(1);
+    expect(init_analytics).not.toHaveBeenCalled();
   });
 
-  it("should handle directory read errors gracefully", async () => {
-    vi.mocked(fs.readFile).mockImplementation(async (file_path) => {
-      if (String(file_path).endsWith(".gitignore")) {
-        throw new Error("ENOENT");
-      }
-      return "const x = 1;";
-    });
+  it("should return McpServer instance", async () => {
+    const result = await start_server({ project_path: "/test/path" });
 
-    vi.mocked(fs.readdir).mockRejectedValue(new Error("Permission denied"));
-
-    // Should not throw - errors are handled gracefully
-    await expect(load_project_files(mock_project, "/project")).resolves.not.toThrow();
-
-    // No files loaded due to read error
-    expect(mock_project.update_file).not.toHaveBeenCalled();
-  });
-
-  it("should skip files that fail to load", async () => {
-    let call_count = 0;
-    vi.mocked(fs.readFile).mockImplementation(async (file_path) => {
-      if (String(file_path).endsWith(".gitignore")) {
-        throw new Error("ENOENT");
-      }
-      call_count++;
-      if (call_count === 1) {
-        throw new Error("Read error");
-      }
-      return "const x = 1;";
-    });
-
-    vi.mocked(fs.readdir).mockResolvedValue([
-      { name: "bad.ts", isFile: () => true, isDirectory: () => false },
-      { name: "good.ts", isFile: () => true, isDirectory: () => false },
-    ] as any);
-
-    await load_project_files(mock_project, "/project");
-
-    // Should skip bad.ts and load good.ts
-    expect(mock_project.update_file).toHaveBeenCalledTimes(1);
-    expect(console_error_spy).toHaveBeenCalledWith(
-      expect.stringContaining("Skipping file")
-    );
-  });
-
-  it("should log loading progress", async () => {
-    vi.mocked(fs.readFile).mockImplementation(async (file_path) => {
-      if (String(file_path).endsWith(".gitignore")) {
-        throw new Error("ENOENT");
-      }
-      return "const x = 1;";
-    });
-
-    vi.mocked(fs.readdir).mockResolvedValue([
-      { name: "file.ts", isFile: () => true, isDirectory: () => false },
-    ] as any);
-
-    await load_project_files(mock_project, "/project");
-
-    expect(console_error_spy).toHaveBeenCalledWith(
-      expect.stringContaining("Loading project files from:")
-    );
-    expect(console_error_spy).toHaveBeenCalledWith(
-      expect.stringMatching(/Loaded \d+ files in \d+ms/)
-    );
+    expect(result).toBeDefined();
+    expect(result.connect).toBeDefined();
   });
 });

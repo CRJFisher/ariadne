@@ -44,9 +44,6 @@ importers:
       '@ariadnejs/core':
         specifier: workspace:*
         version: link:../../../packages/core
-      '@ariadnejs/mcp':
-        specifier: workspace:*
-        version: link:../../../packages/mcp
       '@ariadnejs/types':
         specifier: workspace:*
         version: link:../../../packages/types
