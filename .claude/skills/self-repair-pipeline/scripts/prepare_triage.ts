@@ -11,18 +11,14 @@
 
 import * as fs from "node:fs/promises";
 import * as path from "path";
-import { fileURLToPath } from "url";
 
 import { load_json } from "../src/analysis_io.js";
 import { load_known_entrypoints } from "../src/known_entrypoints.js";
 import { classify_entrypoints } from "../src/classify_entrypoints.js";
 import { build_triage_entries } from "../src/build_triage_entries.js";
+import { TRIAGE_STATE_DIR } from "../src/paths.js";
 import type { AnalysisResult } from "../src/types.js";
 import type { TriageState } from "../src/triage_state_types.js";
-
-const this_file = fileURLToPath(import.meta.url);
-const this_dir = path.dirname(this_file);
-const PROJECT_ROOT = process.env.CLAUDE_PROJECT_DIR || path.resolve(this_dir, "../../../..");
 
 // ===== CLI Argument Parsing =====
 
@@ -100,7 +96,7 @@ async function main(): Promise<void> {
 
   // Determine output path
   const state_path = cli.state_path
-    ?? path.join(PROJECT_ROOT, ".claude", "skills", "self-repair-pipeline", "triage_state", `${project_name}_triage.json`);
+    ?? path.join(TRIAGE_STATE_DIR, `${project_name}_triage.json`);
 
   // Write state file
   await fs.mkdir(path.dirname(state_path), { recursive: true });

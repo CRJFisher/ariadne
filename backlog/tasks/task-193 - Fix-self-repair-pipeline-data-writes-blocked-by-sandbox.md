@@ -1,7 +1,7 @@
 ---
 id: task-193
 title: Fix self-repair pipeline data writes blocked by sandbox
-status: To Do
+status: Done
 assignee: []
 created_date: '2026-03-03'
 labels:
@@ -26,11 +26,11 @@ any sandboxed context.
 
 ## Acceptance Criteria
 
-- [ ] `known_entrypoints.test.ts` passes in a sandboxed spinoff worktree (no EPERM)
-- [ ] All data writes go to `.claude/self-repair-pipeline-state/` instead of `.claude/skills/self-repair-pipeline/`
-- [ ] Existing `known_entrypoints/core.json` data is migrated to the new location via `git mv`
-- [ ] Ephemeral state dirs (`analysis_output/`, `triage_state/`) are gitignored at the new location
-- [ ] All existing tests pass
+- [x] `known_entrypoints.test.ts` passes in a sandboxed spinoff worktree (no EPERM)
+- [x] All data writes go to `.claude/self-repair-pipeline-state/` instead of `.claude/skills/self-repair-pipeline/`
+- [x] Existing `known_entrypoints/core.json` data is migrated to the new location via `git mv`
+- [x] Ephemeral state dirs (`analysis_output/`, `triage_state/`) are gitignored at the new location
+- [x] All existing tests pass
 
 ## Implementation Plan
 
@@ -96,3 +96,12 @@ Add to `.gitignore`:
 6. `.claude/skills/self-repair-pipeline/scripts/triage_loop_stop.ts`
 7. `.gitignore`
 8. `.claude/self-repair-pipeline-state/known_entrypoints/core.json` (moved from old location)
+
+## Implementation Notes
+
+- Created `src/paths.ts` with centralized path constants pointing to `.claude/self-repair-pipeline-state/`
+- Updated 5 files to import paths from the shared module instead of computing them locally
+- Migrated all 3 tracked registry files (core.json, mcp.json, types.json) via `git mv`
+- Cleaned up the skill-local `.gitignore` to remove stale entries for the old data locations
+- Added ephemeral state directories to root `.gitignore`
+- All 79 self-repair-pipeline tests pass (6 test files)
