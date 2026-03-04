@@ -11,7 +11,8 @@
 ; Root scope
 (module) @scope.module
 
-; Function scopes (only top-level or nested, not in classes)
+; Function scopes — four patterns (module/nested × undecorated/decorated)
+; Cannot collapse: must exclude class bodies where @scope.method applies instead
 (module
   (function_definition) @scope.function
 )

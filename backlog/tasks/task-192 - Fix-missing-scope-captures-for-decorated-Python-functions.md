@@ -114,7 +114,6 @@ It does NOT verify a body scope exists. The bug passes undetected.
 - [ ] #8 New test: decorated async function produces exactly one entry in index.functions
 <!-- AC:END -->
 
-
 ## Implementation Plan
 
 ### Step 1: Fix python.scm
@@ -170,10 +169,28 @@ In the "Decorator handling" describe block (line 752), add 3 tests:
 2. Decorated nested function → scope with name "inner" and type "function" exists in index.scopes
 3. Decorated async function → exactly one entry in index.functions for that name
 
-
 ## Files to Modify
 
 1. `packages/core/src/index_single_file/query_code_tree/queries/python.scm`
 2. `packages/core/src/index_single_file/query_code_tree/capture_handlers/capture_handlers.python.ts`
 3. `packages/core/src/index_single_file/query_code_tree/capture_handlers/capture_handlers.python.test.ts`
 4. `packages/core/src/index_single_file/index_single_file.python.test.ts`
+
+## Implementation Notes
+
+### Changes made
+
+- **`python.scm`**: Added 2 missing `@scope.function` patterns — one for module-level decorated functions (`module > decorated_definition > function_definition`) and one for nested decorated functions (`function_definition > block > decorated_definition > function_definition`). These four function scope patterns cannot be collapsed into one: tree-sitter has no OR syntax, and each pattern must be explicitly anchored to exclude class bodies where `@scope.method` already applies.
+- **`capture_handlers.python.ts`**: Removed `handle_definition_function_async()` and its registry entry. The async patterns in `python.scm` fired duplicate symbols because both the generic `@definition.function` and the `@definition.function.async` patterns matched on the same node, and the async handler called `builder.add_function()` with identical parameters (no `async` field existed on `FunctionDefinition`).
+- **`capture_handlers.python.test.ts`**: Removed the `"definition.function.async"` mapping and the two async-specific tests that were deleted alongside the handler.
+- **`index_single_file.python.test.ts`**: Added 3 regression tests — decorated module-level function scope, decorated nested function scope, and decorated async function produces exactly one symbol.
+- **`python_scope_boundary_extractor.test.ts`** (follow-on): Fixed `"should handle function with decorators"` test to pass the outer `decorated_node` to `extract_boundaries()`, exercising the `extract_decorated_function_boundaries()` dispatch branch rather than `extract_regular_function_boundaries()`.
+- **`project.python.integration.test.ts`** (follow-on): Added end-to-end test verifying `greet` (decorated function in `closures.py`) appears in `index.functions` and that a call to it resolves to its definition.
+
+### Async information is silently dropped
+
+`FunctionDefinition` in `@ariadnejs/types` has no `async` field. The removed `@definition.function.async` patterns captured the `"async"` keyword token but neither handler stored it. Async information for Python functions is currently not represented in the semantic index. A follow-up task should add `async?: boolean` to `FunctionSignature`, restore explicit async-aware patterns if needed, and also clean up `MethodDefinition` which spreads `async` at runtime (via `add_method_to_class`) without a declared type field.
+
+### `extract_decorated_function_boundaries()` is wired in (not dead code)
+
+The scope patterns tag the inner `function_definition` node, so `extract_function_boundaries()` always receives a `function_definition` and dispatches to `extract_regular_function_boundaries()`. The `decorated_definition` branch in `extract_function_boundaries()` is a defensive guard for direct callers. Its test was previously exercising `extract_regular_function_boundaries()` instead — this was fixed by passing the outer `decorated_node` in the boundary extractor test.
