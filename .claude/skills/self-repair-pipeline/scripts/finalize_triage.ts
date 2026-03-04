@@ -13,7 +13,6 @@
 
 import * as fs from "node:fs/promises";
 import * as path from "path";
-import { fileURLToPath } from "url";
 
 import {
   save_json,
@@ -30,11 +29,8 @@ import {
   build_finalization_output,
   build_finalization_summary,
 } from "../src/build_finalization_output.js";
+import { TRIAGE_PATTERNS_FILE } from "../src/paths.js";
 import type { TriageState } from "../src/triage_state_types.js";
-
-const this_file = fileURLToPath(import.meta.url);
-const this_dir = path.dirname(this_file);
-const PROJECT_ROOT = process.env.CLAUDE_PROJECT_DIR || path.resolve(this_dir, "../../../..");
 
 // ===== CLI Argument Parsing =====
 
@@ -96,9 +92,8 @@ async function main(): Promise<void> {
 
   // Write triage patterns (guarded)
   if (state.meta_review && state.meta_review.patterns) {
-    const patterns_path = path.join(PROJECT_ROOT, ".claude", "skills", "self-repair-pipeline", "triage_patterns.json");
-    await fs.writeFile(patterns_path, JSON.stringify(state.meta_review.patterns, null, 2) + "\n");
-    console.error(`Triage patterns written: ${patterns_path}`);
+    await fs.writeFile(TRIAGE_PATTERNS_FILE, JSON.stringify(state.meta_review.patterns, null, 2) + "\n");
+    console.error(`Triage patterns written: ${TRIAGE_PATTERNS_FILE}`);
   } else {
     console.error("No triage patterns in meta_review, skipping patterns file.");
   }

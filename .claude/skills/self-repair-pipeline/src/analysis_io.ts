@@ -1,8 +1,6 @@
- 
 import * as fs from "node:fs/promises";
 import path from "path";
-import { fileURLToPath } from "url";
-import { dirname } from "path";
+import { ANALYSIS_OUTPUT_DIR } from "./paths.js";
 
 // ===== Output Type =====
 
@@ -20,24 +18,12 @@ export async function save_json(
   data: unknown,
   project_name: string
 ): Promise<string> {
-  // eslint-disable-next-line @typescript-eslint/naming-convention
-  const __filename = fileURLToPath(import.meta.url);
-  // eslint-disable-next-line @typescript-eslint/naming-convention
-  const __dirname = dirname(__filename);
-
-  // Generate ISO timestamp
   const timestamp = new Date().toISOString().replace(/:/g, "-");
+  const output_dir = path.join(ANALYSIS_OUTPUT_DIR, project_name, output_type);
 
-  // Build output directory path: analysis_output/{project_name}/{output_type}/
-  const output_dir = path.resolve(__dirname, "..", "analysis_output", project_name, output_type);
-
-  // Create directories if they don't exist
   await fs.mkdir(output_dir, { recursive: true });
 
-  // Build file path
   const file_path = path.join(output_dir, `${timestamp}.json`);
-
-  // Write formatted JSON
   await fs.writeFile(file_path, JSON.stringify(data, null, 2) + "\n", "utf-8");
 
   return file_path;
@@ -59,16 +45,10 @@ export async function find_most_recent_analysis(
   project_name: string,
   output_type: OutputType = OutputType.DETECT_ENTRYPOINTS
 ): Promise<string> {
-  // eslint-disable-next-line @typescript-eslint/naming-convention
-  const __filename = fileURLToPath(import.meta.url);
-  // eslint-disable-next-line @typescript-eslint/naming-convention
-  const __dirname = dirname(__filename);
-  const target_dir = path.resolve(__dirname, "..", "analysis_output", project_name, output_type);
+  const target_dir = path.join(ANALYSIS_OUTPUT_DIR, project_name, output_type);
 
   try {
     const files = await fs.readdir(target_dir);
-
-    // Filter for JSON files
     const json_files = files.filter((file) => file.endsWith(".json"));
 
     if (json_files.length === 0) {
@@ -77,7 +57,6 @@ export async function find_most_recent_analysis(
       );
     }
 
-    // Sort by filename (ISO timestamps sort lexicographically) - most recent last
     json_files.sort();
     const most_recent = json_files[json_files.length - 1];
 

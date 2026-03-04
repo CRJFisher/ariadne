@@ -10,17 +10,13 @@
 
 import * as fs from "node:fs/promises";
 import * as path from "path";
-import { fileURLToPath } from "url";
 import type {
   EnrichedFunctionEntry,
   FalsePositiveEntry,
   KnownEntrypoint,
   KnownEntrypointSource,
 } from "./types.js";
-
-const this_file = fileURLToPath(import.meta.url);
-const this_dir = path.dirname(this_file);
-const REGISTRY_DIR = path.resolve(this_dir, "..", "known_entrypoints");
+import { REGISTRY_DIR } from "./paths.js";
 
 // ===== I/O =====
 
