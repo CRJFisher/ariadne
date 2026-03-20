@@ -699,6 +699,37 @@ class Service:
       // Verify instance methods also exist
       expect(type_info.methods.size).toBeGreaterThan(0);
     });
+
+    it("should index decorated module-level functions and resolve calls to them", async () => {
+      const source = load_source("functions/closures.py");
+      const file = file_path("functions/closures.py");
+      project.update_file(file, source);
+
+      const index = project.get_index_single_file(file);
+      expect(index).toBeDefined();
+
+      // Decorated function `greet` must appear in the project index
+      const greet_fn = Array.from(index!.functions.values()).find(
+        (f) => f.name === ("greet" as SymbolName)
+      );
+      expect(greet_fn).toBeDefined();
+
+      // A call reference to `greet` must exist (line 131: greeting = greet("Alice"))
+      const greet_call = index!.references.find(
+        (r): r is FunctionCallReference | ConstructorCallReference =>
+          (r.kind === "function_call" || r.kind === "constructor_call") &&
+          r.name === ("greet" as SymbolName)
+      );
+      expect(greet_call).toBeDefined();
+
+      // The call must resolve to the decorated function's definition
+      const resolved = project.resolutions.resolve(
+        greet_call!.scope_id,
+        greet_call!.name
+      );
+      expect(resolved).toBeDefined();
+      expect(resolved).toBe(greet_fn!.symbol_id);
+    });
   });
 
   describe("Incremental Updates", () => {

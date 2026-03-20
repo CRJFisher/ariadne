@@ -359,33 +359,6 @@ export function handle_definition_function(
   );
 }
 
-export function handle_definition_function_async(
-  capture: CaptureNode,
-  builder: DefinitionBuilder,
-  context: ProcessingContext
-): void {
-  const func_id = create_function_id(capture);
-  const defining_scope_id = context.get_scope_id(capture.location);
-  const export_info = extract_export_info(
-    capture.text,
-    defining_scope_id,
-    context.root_scope_id
-  );
-
-  builder.add_function(
-    {
-      symbol_id: func_id,
-      name: capture.text,
-      location: capture.location,
-      scope_id: defining_scope_id,
-      is_exported: export_info.is_exported,
-      export: export_info.export,
-      return_type: extract_return_type(capture.node.parent || capture.node),
-    },
-    capture
-  );
-}
-
 export function handle_definition_lambda(
   capture: CaptureNode,
   builder: DefinitionBuilder,
@@ -1031,7 +1004,6 @@ export const PYTHON_HANDLERS: HandlerRegistry = {
 
   // Functions
   "definition.function": handle_definition_function,
-  "definition.function.async": handle_definition_function_async,
   "definition.lambda": handle_definition_lambda,
   "definition.anonymous_function": handle_definition_anonymous_function,
 
