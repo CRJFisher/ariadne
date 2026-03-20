@@ -9,7 +9,8 @@
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
-import { create_logger, parse_stdin, get_project_dir } from "../../../hooks/utils.js";
+import { create_logger, parse_stdin } from "../../../hooks/utils.js";
+import { TRIAGE_STATE_DIR } from "../src/paths.js";
 import type {
   TriageState,
   TriageEntry,
@@ -383,8 +384,7 @@ function main(): void {
     return;
   }
 
-  const project_dir = get_project_dir();
-  const triage_dir = path.join(project_dir, ".claude", "skills", "self-repair-pipeline", "triage_state");
+  const triage_dir = TRIAGE_STATE_DIR;
   const state_path = discover_state_file(triage_dir);
 
   if (!state_path) {
