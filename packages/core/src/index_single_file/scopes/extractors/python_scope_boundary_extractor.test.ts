@@ -349,12 +349,12 @@ def expensive_func():
     return calculation()`;
 
       const tree = parser.parse(code);
-      // Decorated function is wrapped in decorated_definition
+      // Decorated function is wrapped in decorated_definition — pass the outer node
+      // to exercise the extract_decorated_function_boundaries() dispatch branch
       const decorated_node = tree.rootNode.firstChild!;
-      const func_node = decorated_node.childForFieldName("definition")!;
 
       const boundaries = extractor.extract_boundaries(
-        func_node,
+        decorated_node,
         "function",
         "test.py" as FilePath
       );

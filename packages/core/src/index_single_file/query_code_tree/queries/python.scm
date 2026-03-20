@@ -11,7 +11,8 @@
 ; Root scope
 (module) @scope.module
 
-; Function scopes (only top-level or nested, not in classes)
+; Function scopes — four patterns (module/nested × undecorated/decorated)
+; Cannot collapse: must exclude class bodies where @scope.method applies instead
 (module
   (function_definition) @scope.function
 )
@@ -20,6 +21,23 @@
     (function_definition) @scope.function
   )
 )
+
+; Module-level decorated function scopes
+(module
+  (decorated_definition
+    definition: (function_definition) @scope.function
+  )
+)
+
+; Nested decorated function scopes
+(function_definition
+  body: (block
+    (decorated_definition
+      definition: (function_definition) @scope.function
+    )
+  )
+)
+
 (lambda) @scope.closure
 
 ; Class scopes
@@ -101,46 +119,6 @@
     (decorated_definition
       definition: (function_definition
         name: (identifier) @definition.function
-      )
-    )
-  )
-)
-
-; Async function definitions at module level
-(module
-  (function_definition
-    "async" @modifier.visibility
-    name: (identifier) @definition.function.async
-  )
-)
-
-; Module-level decorated async function definitions
-(module
-  (decorated_definition
-    definition: (function_definition
-      "async" @modifier.visibility
-      name: (identifier) @definition.function.async
-    )
-  )
-)
-
-; Async nested function definitions
-(function_definition
-  body: (block
-    (function_definition
-      "async" @modifier.visibility
-      name: (identifier) @definition.function.async
-    )
-  )
-)
-
-; Nested decorated async function definitions
-(function_definition
-  body: (block
-    (decorated_definition
-      definition: (function_definition
-        "async" @modifier.visibility
-        name: (identifier) @definition.function.async
       )
     )
   )

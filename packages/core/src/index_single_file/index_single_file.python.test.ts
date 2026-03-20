@@ -823,6 +823,68 @@ def decorated_function():
       );
       expect(decorator_call).toBeDefined();
     });
+
+    it("should create a body scope for a decorated module-level function", () => {
+      const code = `
+def my_decorator(func):
+    return func
+
+@my_decorator
+def my_view(request):
+    pass
+`;
+      const tree = parser.parse(code);
+      const file_path = "test.py" as FilePath;
+      const parsed_file = create_parsed_file(code, file_path, tree, "python");
+      const index = build_index_single_file(parsed_file, tree, "python");
+
+      const scopes = Array.from(index.scopes.values());
+      const view_scope = scopes.find(
+        (s) => s.name === "my_view" && s.type === "function"
+      );
+      expect(view_scope).toBeDefined();
+    });
+
+    it("should create a body scope for a decorated nested function", () => {
+      const code = `
+def my_decorator(func):
+    return func
+
+def outer():
+    @my_decorator
+    def inner():
+        pass
+`;
+      const tree = parser.parse(code);
+      const file_path = "test.py" as FilePath;
+      const parsed_file = create_parsed_file(code, file_path, tree, "python");
+      const index = build_index_single_file(parsed_file, tree, "python");
+
+      const scopes = Array.from(index.scopes.values());
+      const inner_scope = scopes.find(
+        (s) => s.name === "inner" && s.type === "function"
+      );
+      expect(inner_scope).toBeDefined();
+    });
+
+    it("should produce exactly one entry in index.functions for a decorated async function", () => {
+      const code = `
+def my_decorator(func):
+    return func
+
+@my_decorator
+async def async_view(request):
+    pass
+`;
+      const tree = parser.parse(code);
+      const file_path = "test.py" as FilePath;
+      const parsed_file = create_parsed_file(code, file_path, tree, "python");
+      const index = build_index_single_file(parsed_file, tree, "python");
+
+      const functions = Array.from(index.functions.values());
+      const async_views = functions.filter((f) => f.name === "async_view");
+      expect(async_views).toHaveLength(1);
+    });
   });
 
   // ============================================================================
