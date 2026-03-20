@@ -7,7 +7,7 @@
  * Blocks if unexpected entry points are found.
  */
 
-import { load_project } from "../../packages/core/src/index.js";
+import { load_project } from "@ariadnejs/core";
 import * as fs from "fs/promises";
 import * as path from "path";
 import { execSync } from "child_process";
