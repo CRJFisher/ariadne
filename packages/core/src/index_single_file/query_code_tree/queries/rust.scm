@@ -249,12 +249,13 @@
   )
 )
 
-; Methods in regular impl blocks - capture all methods
+; Methods in regular impl blocks — exclude fn new (handled by definition.constructor)
 (impl_item
   type: (_)
   body: (declaration_list
     (function_item
       (identifier) @definition.method
+      (#not-match? @definition.method "^new$")
     )
   )
 )
@@ -293,7 +294,7 @@
 (trait_item
   body: (declaration_list
     (function_item
-      (identifier) @definition.method
+      (identifier) @definition.method.default
     )
   )
 )
@@ -569,6 +570,14 @@
 (use_declaration
   (visibility_modifier)
 ) @import.reexport
+
+;; ==============================================================================
+;; DOCUMENTATION
+;; ==============================================================================
+
+; Doc comments (/// only, not regular // comments)
+((line_comment) @definition.documentation
+  (#match? @definition.documentation "^///"))
 
 ;; ==============================================================================
 ;; MACROS

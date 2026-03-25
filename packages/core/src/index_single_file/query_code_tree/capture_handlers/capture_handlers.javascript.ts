@@ -47,31 +47,7 @@ import {
 // DOCUMENTATION HANDLERS
 // ============================================================================
 
-export function handle_definition_function_documentation(
-  capture: CaptureNode,
-  _builder: DefinitionBuilder,
-  _context: ProcessingContext
-): void {
-  store_documentation(capture.text, capture.location.end_line);
-}
-
-export function handle_definition_class_documentation(
-  capture: CaptureNode,
-  _builder: DefinitionBuilder,
-  _context: ProcessingContext
-): void {
-  store_documentation(capture.text, capture.location.end_line);
-}
-
-export function handle_definition_method_documentation(
-  capture: CaptureNode,
-  _builder: DefinitionBuilder,
-  _context: ProcessingContext
-): void {
-  store_documentation(capture.text, capture.location.end_line);
-}
-
-export function handle_definition_variable_documentation(
+export function handle_definition_documentation(
   capture: CaptureNode,
   _builder: DefinitionBuilder,
   _context: ProcessingContext
@@ -963,10 +939,7 @@ export function handle_import_reexport_namespace_alias(
 
 export const JAVASCRIPT_HANDLERS: HandlerRegistry = {
   // Documentation
-  "definition.function.documentation": handle_definition_function_documentation,
-  "definition.class.documentation": handle_definition_class_documentation,
-  "definition.method.documentation": handle_definition_method_documentation,
-  "definition.variable.documentation": handle_definition_variable_documentation,
+  "definition.documentation": handle_definition_documentation,
 
   // Definitions
   "definition.class": handle_definition_class,

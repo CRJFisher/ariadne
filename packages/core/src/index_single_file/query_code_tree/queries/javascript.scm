@@ -129,6 +129,9 @@
   !value
 )
 
+; Documentation comments (JSDoc block comments and line comments)
+(comment) @definition.documentation
+
 ; Class definitions with inheritance
 (class_declaration
   name: (identifier) @definition.class

@@ -43,6 +43,8 @@ import {
   detect_callback_context,
   detect_function_collection,
   extract_collection_source,
+  store_python_docstring,
+  consume_python_docstring,
 } from "../symbol_factories/symbol_factories.python";
 // Import handlers from python_imports.ts for local use
 import {
@@ -68,6 +70,18 @@ export {
 };
 
 // ============================================================================
+// DOCUMENTATION HANDLERS
+// ============================================================================
+
+export function handle_definition_documentation(
+  capture: CaptureNode,
+  _builder: DefinitionBuilder,
+  _context: ProcessingContext
+): void {
+  store_python_docstring(capture);
+}
+
+// ============================================================================
 // CLASS HANDLERS
 // ============================================================================
 
@@ -84,6 +98,7 @@ export function handle_definition_class(
     defining_scope_id,
     context.root_scope_id
   );
+  const docstring = consume_python_docstring(capture.location.start_line);
 
   builder.add_class({
     symbol_id: class_id,
@@ -93,6 +108,7 @@ export function handle_definition_class(
     is_exported: export_info.is_exported,
     export: export_info.export,
     extends: base_classes,
+    docstring: docstring ? [docstring] : undefined,
   });
 }
 
@@ -112,6 +128,8 @@ export function handle_definition_method(
   if (name === "__init__") {
     return;
   }
+
+  const docstring = consume_python_docstring(capture.location.start_line);
 
   // Check if this is a Protocol method (should be added to interface)
   const protocol_id = find_containing_protocol(capture);
@@ -142,6 +160,7 @@ export function handle_definition_method(
         return_type: extract_return_type(capture.node.parent || capture.node),
         ...method_type,
         async: is_async,
+        docstring,
       },
       capture
     );
@@ -155,6 +174,7 @@ export function handle_definition_method_static(
 ): void {
   const method_id = create_method_id(capture);
   const class_id = find_containing_class(capture);
+  const docstring = consume_python_docstring(capture.location.start_line);
 
   if (class_id) {
     builder.add_method_to_class(
@@ -167,6 +187,7 @@ export function handle_definition_method_static(
         return_type: extract_return_type(capture.node.parent || capture.node),
         static: true,
         async: is_async_function(capture.node.parent || capture.node),
+        docstring,
       },
       capture
     );
@@ -180,6 +201,7 @@ export function handle_definition_method_class(
 ): void {
   const method_id = create_method_id(capture);
   const class_id = find_containing_class(capture);
+  const docstring = consume_python_docstring(capture.location.start_line);
 
   if (class_id) {
     builder.add_method_to_class(
@@ -192,6 +214,7 @@ export function handle_definition_method_class(
         return_type: extract_return_type(capture.node.parent || capture.node),
         abstract: true, // Use abstract flag for classmethod
         async: is_async_function(capture.node.parent || capture.node),
+        docstring,
       },
       capture
     );
@@ -344,6 +367,7 @@ export function handle_definition_function(
     defining_scope_id,
     context.root_scope_id
   );
+  const docstring = consume_python_docstring(capture.location.start_line);
 
   builder.add_function(
     {
@@ -354,6 +378,7 @@ export function handle_definition_function(
       is_exported: export_info.is_exported,
       export: export_info.export,
       return_type: extract_return_type(capture.node.parent || capture.node),
+      docstring,
     },
     capture
   );
@@ -988,6 +1013,9 @@ export function handle_definition_type_alias(
 // ============================================================================
 
 export const PYTHON_HANDLERS: HandlerRegistry = {
+  // Documentation
+  "definition.documentation": handle_definition_documentation,
+
   // Classes
   "definition.class": handle_definition_class,
 

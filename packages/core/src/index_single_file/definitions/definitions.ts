@@ -708,6 +708,7 @@ export class DefinitionBuilder {
       scope_id: ScopeId;
       generics?: SymbolName[];
       return_type?: SymbolName;
+      docstring?: string;
     }
   ): DefinitionBuilder {
     const interface_state = this.interfaces.get(interface_id);
@@ -722,6 +723,7 @@ export class DefinitionBuilder {
         defining_scope_id: definition.scope_id,
         return_type: definition.return_type,
         generics: definition.generics,
+        docstring: definition.docstring,
       },
       parameters: new Map(),
       decorators: [],

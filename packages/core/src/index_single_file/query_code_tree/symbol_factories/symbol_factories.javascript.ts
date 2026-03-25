@@ -574,6 +574,13 @@ export function consume_documentation(location: Location): string | undefined {
   return undefined;
 }
 
+/**
+ * Reset documentation state between file indexing passes to prevent cross-file contamination
+ */
+export function reset_documentation_state(): void {
+  pending_documentation.clear();
+}
+
 // ============================================================================
 // Collection Source Extraction
 // ============================================================================

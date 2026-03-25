@@ -592,7 +592,7 @@ describe("Semantic Index - JavaScript", () => {
       expect(mixed_call?.optional_chaining).toBe(true);
     });
 
-    it.skip("should capture JSDoc documentation for functions", () => {
+    it("should capture JSDoc documentation for functions", () => {
       const code = `
         /**
          * Creates a user account
@@ -630,7 +630,7 @@ describe("Semantic Index - JavaScript", () => {
       expect(create_user_func?.docstring).toContain("@returns {User}");
     });
 
-    it.skip("should capture JSDoc documentation for classes", () => {
+    it("should capture JSDoc documentation for classes", () => {
       const code = `
         /**
          * Represents a user in the system
@@ -666,7 +666,7 @@ describe("Semantic Index - JavaScript", () => {
       expect(user_class?.docstring?.[0]).toContain("@class");
     });
 
-    it.skip("should capture JSDoc documentation for methods", () => {
+    it("should capture JSDoc documentation for methods", () => {
       const code = `
         class Calculator {
           /**
@@ -709,7 +709,7 @@ describe("Semantic Index - JavaScript", () => {
       expect(add_method?.docstring).toContain("@returns {number}");
     });
 
-    it.skip("should capture JSDoc documentation for variables", () => {
+    it("should capture JSDoc documentation for variables", () => {
       const code = `
         /** @type {Service} */
         const service = createService();

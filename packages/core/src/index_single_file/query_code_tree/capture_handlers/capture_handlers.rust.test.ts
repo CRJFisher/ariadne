@@ -1547,4 +1547,215 @@ struct Arrays {
       });
     });
   });
+
+  describe("Documentation Extraction", () => {
+    async function build_index_from_code_doc(code: string) {
+      const tree = parser.parse(code);
+      const lines = code.split("\n");
+      const parsed_file = {
+        file_path: "test.rs" as any,
+        file_lines: lines.length,
+        file_end_column: lines[lines.length - 1]?.length || 0,
+        tree,
+        lang: "rust" as const,
+      };
+      return build_index_single_file(parsed_file, tree, "rust");
+    }
+
+    it("should extract doc comment on a function", async () => {
+      const code = `/// Calculate the sum of two numbers.
+fn add(a: i32, b: i32) -> i32 {
+    a + b
+}
+`;
+      const index = await build_index_from_code_doc(code);
+      const fn_def = Array.from(index.functions.values()).find(f => f.name === "add");
+      expect(fn_def).toBeDefined();
+      expect(fn_def!.docstring).toBe("/// Calculate the sum of two numbers.");
+    });
+
+    it("should extract doc comment on a struct", async () => {
+      const code = `/// A point in 2D space.
+struct Point {
+    x: f64,
+    y: f64,
+}
+`;
+      const index = await build_index_from_code_doc(code);
+      const cls = Array.from(index.classes.values()).find(c => c.name === "Point");
+      expect(cls).toBeDefined();
+      expect(cls!.docstring).toEqual(["/// A point in 2D space."]);
+    });
+
+    it("should concatenate multi-line doc comments", async () => {
+      const code = `/// First line.
+/// Second line.
+fn described() -> bool {
+    true
+}
+`;
+      const index = await build_index_from_code_doc(code);
+      const fn_def = Array.from(index.functions.values()).find(f => f.name === "described");
+      expect(fn_def).toBeDefined();
+      expect(fn_def!.docstring).toBe("/// First line.\n/// Second line.");
+    });
+
+    it("should NOT capture a regular // comment as docstring", async () => {
+      const code = `// Internal helper, not a doc comment.
+fn helper() {}
+`;
+      const index = await build_index_from_code_doc(code);
+      const fn_def = Array.from(index.functions.values()).find(f => f.name === "helper");
+      expect(fn_def).toBeDefined();
+      expect(fn_def!.docstring).toBeUndefined();
+    });
+
+    it("should extract doc comment on an impl method", async () => {
+      const code = `
+struct Calculator {}
+impl Calculator {
+    /// Add two integers.
+    fn add(&self, a: i32, b: i32) -> i32 {
+        a + b
+    }
+}
+`;
+      const index = await build_index_from_code_doc(code);
+      const cls = Array.from(index.classes.values()).find(c => c.name === "Calculator");
+      const method = cls!.methods.find(m => m.name === "add");
+      expect(method).toBeDefined();
+      expect(method!.docstring).toBe("/// Add two integers.");
+    });
+
+    it("should extract doc comment on a static (associated) impl method", async () => {
+      const code = `
+struct Point { x: f64, y: f64 }
+impl Point {
+    /// Create a Point from coordinates.
+    fn make(x: f64, y: f64) -> Self {
+        Point { x, y }
+    }
+}
+`;
+      const index = await build_index_from_code_doc(code);
+      const cls = Array.from(index.classes.values()).find(c => c.name === "Point");
+      const method = cls!.methods.find(m => m.name === "make");
+      expect(method).toBeDefined();
+      expect(method!.docstring).toBe("/// Create a Point from coordinates.");
+    });
+
+    it("should extract doc comment on a generic struct", async () => {
+      const code = `/// A generic box.
+struct Box<T> {
+    value: T,
+}
+`;
+      const index = await build_index_from_code_doc(code);
+      const cls = Array.from(index.classes.values()).find(c => c.name === "Box");
+      expect(cls).toBeDefined();
+      expect(cls!.docstring).toEqual(["/// A generic box."]);
+    });
+
+    it("should extract doc comment on a generic function", async () => {
+      const code = `/// Process items.
+fn process<T>(v: T) -> T {
+    v
+}
+`;
+      const index = await build_index_from_code_doc(code);
+      const fn_def = Array.from(index.functions.values()).find(f => f.name === "process");
+      expect(fn_def).toBeDefined();
+      expect(fn_def!.docstring).toBe("/// Process items.");
+    });
+
+    it("should extract doc comment on an async free function", async () => {
+      const code = `/// Fetch data.
+async fn fetch() {}
+`;
+      const index = await build_index_from_code_doc(code);
+      const fn_def = Array.from(index.functions.values()).find(f => f.name === "fetch");
+      expect(fn_def).toBeDefined();
+      expect(fn_def!.docstring).toBe("/// Fetch data.");
+    });
+
+    it("should extract doc comment on a const function", async () => {
+      const code = `/// Compute hash.
+const fn hash(x: u32) -> u32 { x }
+`;
+      const index = await build_index_from_code_doc(code);
+      const fn_def = Array.from(index.functions.values()).find(f => f.name === "hash");
+      expect(fn_def).toBeDefined();
+      expect(fn_def!.docstring).toBe("/// Compute hash.");
+    });
+
+    it("should extract doc comment on an unsafe function", async () => {
+      const code = `/// Raw write.
+unsafe fn raw_write() {}
+`;
+      const index = await build_index_from_code_doc(code);
+      const fn_def = Array.from(index.functions.values()).find(f => f.name === "raw_write");
+      expect(fn_def).toBeDefined();
+      expect(fn_def!.docstring).toBe("/// Raw write.");
+    });
+
+    it("should extract doc comment on an async impl method", async () => {
+      const code = `
+struct Store {}
+impl Store {
+    /// Load from disk.
+    async fn load(&self) -> String {
+        String::new()
+    }
+}
+`;
+      const index = await build_index_from_code_doc(code);
+      const cls = Array.from(index.classes.values()).find(c => c.name === "Store");
+      const method = cls!.methods.find(m => m.name === "load");
+      expect(method).toBeDefined();
+      expect(method!.docstring).toBe("/// Load from disk.");
+    });
+
+    it("should extract doc comment on a trait default method", async () => {
+      const code = `trait Greet {
+    /// Greet someone.
+    fn greet(&self) -> String {
+        String::from("Hello")
+    }
+}
+`;
+      const index = await build_index_from_code_doc(code);
+      const iface = Array.from(index.interfaces.values()).find(i => i.name === "Greet");
+      const method = iface!.methods.find(m => m.name === "greet");
+      expect(method).toBeDefined();
+      expect(method!.docstring).toBe("/// Greet someone.");
+    });
+
+    it("should extract doc comment on fn new constructor", async () => {
+      const code = `
+struct Counter { value: u32 }
+impl Counter {
+    /// Creates a new Counter.
+    fn new() -> Self {
+        Counter { value: 0 }
+    }
+}
+`;
+      const index = await build_index_from_code_doc(code);
+      const cls = Array.from(index.classes.values()).find(c => c.name === "Counter");
+      const ctor = cls!.methods.find(m => m.name === "new");
+      expect(ctor).toBeDefined();
+      expect(ctor!.docstring).toBe("/// Creates a new Counter.");
+    });
+
+    it("should extract doc comment when an attribute separates the comment and fn", async () => {
+      const code = `/// Inline helper.
+#[inline]
+fn helper() {}
+`;
+      const index = await build_index_from_code_doc(code);
+      const fn_def = Array.from(index.functions.values()).find(f => f.name === "helper");
+      expect(fn_def).toBeDefined();
+      expect(fn_def!.docstring).toBe("/// Inline helper.");
+    });
+  });
 });
