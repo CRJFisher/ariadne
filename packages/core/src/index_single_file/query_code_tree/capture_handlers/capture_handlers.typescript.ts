@@ -358,6 +358,7 @@ export function handle_ts_definition_function(
 ): void {
   const func_id = function_symbol(capture.text, capture.location);
   const export_info = extract_export_info(capture.node, capture.text);
+  const docstring = consume_documentation(capture.location);
 
   // Determine scope based on function type
   let scope_id;
@@ -381,6 +382,7 @@ export function handle_ts_definition_function(
       is_exported: export_info.is_exported,
       export: export_info.export,
       return_type: extract_return_type(capture.node),
+      docstring,
     },
     capture
   );
@@ -429,6 +431,7 @@ export function handle_ts_definition_class(
   const class_id = create_class_id(capture);
   const parent = capture.node.parent; // class_declaration or abstract_class_declaration
   const export_info = extract_export_info(capture.node, capture.text);
+  const docstring = consume_documentation(capture.location);
 
   // Extract both extends and implements, combining into unified extends field
   // Task 11.158: For polymorphic resolution, both inheritance and implementation work the same way
@@ -445,6 +448,7 @@ export function handle_ts_definition_class(
     export: export_info.export,
     extends: all_extends,
     generics: parent ? extract_type_parameters(parent) : [],
+    docstring: docstring ? [docstring] : undefined,
   });
 }
 
@@ -462,6 +466,7 @@ export function handle_ts_definition_method(
 
   const method_id = create_method_id(capture);
   const parent = capture.node.parent; // method_definition
+  const docstring = consume_documentation(capture.location);
 
   builder.add_method_to_class(
     class_id,
@@ -476,6 +481,7 @@ export function handle_ts_definition_method(
       async: is_async_method(capture.node),
       return_type: extract_return_type(capture.node),
       generics: parent ? extract_type_parameters(parent) : [],
+      docstring,
     },
     capture
   );

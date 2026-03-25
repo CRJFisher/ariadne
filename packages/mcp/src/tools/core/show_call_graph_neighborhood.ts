@@ -456,6 +456,10 @@ function format_output(
   const loc = target_node.location;
   lines.push(`Call graph for: ${signature}`);
   lines.push(`Location: ${loc.file_path}:${loc.start_line}-${loc.end_line}`);
+  const def = target_node.definition;
+  if ("docstring" in def && typeof def.docstring === "string" && def.docstring) {
+    lines.push(`Docstring: ${def.docstring}`);
+  }
   lines.push("");
 
   // Callers section

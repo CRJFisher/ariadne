@@ -1160,4 +1160,39 @@ const result = obj.getSomething();
       });
     });
   });
+
+  describe("TypeScript docstring extraction", () => {
+    it("should extract JSDoc on a function", () => {
+      const code = "/** Compute the total. */\nfunction total(a: number): number { return a; }";
+      const index = build_index_from_code(code);
+      const fn = Array.from(index.functions.values()).find(f => f.name === "total");
+      expect(fn).toBeDefined();
+      expect(fn!.docstring).toContain("Compute the total.");
+    });
+
+    it("should extract JSDoc on a class", () => {
+      const code = "/** A user entity. */\nclass User { name: string = \"\"; }";
+      const index = build_index_from_code(code);
+      const cls = Array.from(index.classes.values()).find(c => c.name === "User");
+      expect(cls).toBeDefined();
+      expect(cls!.docstring?.[0]).toContain("A user entity.");
+    });
+
+    it("should extract JSDoc on a method", () => {
+      const code = "class Calc {\n  /** Add two numbers. */\n  add(a: number, b: number) { return a + b; }\n}";
+      const index = build_index_from_code(code);
+      const cls = Array.from(index.classes.values()).find(c => c.name === "Calc");
+      const method = cls!.methods.find(m => m.name === "add");
+      expect(method).toBeDefined();
+      expect(method!.docstring).toContain("Add two numbers.");
+    });
+
+    it("should extract JSDoc on a const variable", () => {
+      const code = "/** @type {Service} */\nconst svc = create_service();";
+      const index = build_index_from_code(code);
+      const variable = Array.from(index.variables.values()).find(v => v.name === "svc");
+      expect(variable).toBeDefined();
+      expect(variable!.docstring).toContain("@type {Service}");
+    });
+  });
 });

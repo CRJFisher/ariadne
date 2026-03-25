@@ -1,9 +1,10 @@
 ---
-id: task-103
+id: TASK-103
 title: Extract docstring and decorators in query service
-status: To Do
+status: Done
 assignee: []
 created_date: '2025-08-05 13:47'
+updated_date: '2026-03-20 14:28'
 labels:
   - enhancement
 dependencies: []
@@ -11,15 +12,17 @@ dependencies: []
 
 ## Description
 
+<!-- SECTION:DESCRIPTION:BEGIN -->
 The query_service.ts has a TODO to extract docstring and decorators based on language when getting symbol metadata. Currently it returns empty values for these fields.
+<!-- SECTION:DESCRIPTION:END -->
 
 ## Acceptance Criteria
-
-- [ ] Docstring extraction implemented for supported languages
-- [ ] Decorator extraction implemented for supported languages
-- [ ] Language-specific logic properly handles different syntax
-- [ ] Tests verify extraction works correctly
-- [ ] Fix docstring boundary detection to not include code beyond the docstring
+<!-- AC:BEGIN -->
+- [ ] #1 Docstring extraction implemented for supported languages
+- [ ] #2 Decorator extraction implemented for supported languages
+- [ ] #3 Language-specific logic properly handles different syntax
+- [ ] #4 Tests verify extraction works correctly
+- [ ] #5 Fix docstring boundary detection to not include code beyond the docstring
 
 ## Known Issues
 
@@ -61,3 +64,4 @@ Calculate the mean of all data points
 ```
 
 This suggests the docstring extraction is not properly finding the closing triple quotes and is including subsequent code.
+<!-- AC:END -->

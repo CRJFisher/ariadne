@@ -88,6 +88,14 @@
 ;; DEFINITIONS - Symbols that introduce new names
 ;; ==============================================================================
 
+; Function docstrings (first statement in function body)
+(function_definition
+  body: (block . (expression_statement (string) @definition.documentation)))
+
+; Class docstrings (first statement in class body)
+(class_definition
+  body: (block . (expression_statement (string) @definition.documentation)))
+
 ; Module-level function definitions (not class methods)
 (module
   (function_definition
@@ -274,7 +282,7 @@
   )
 )
 
-; Class methods
+; Class methods — modifier only (@definition.method comes from the general decorated pattern below)
 (class_definition
   body: (block
     (decorated_definition
@@ -282,9 +290,7 @@
         (identifier) @modifier.visibility
         (#eq? @modifier.visibility "classmethod")
       )
-      definition: (function_definition
-        name: (identifier) @definition.method
-      )
+      (function_definition)
     ) @scope.method
   )
 )

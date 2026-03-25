@@ -129,6 +129,9 @@
   name: (identifier) @definition.variable
 )
 
+; Documentation comments (JSDoc block comments and line comments)
+(comment) @definition.documentation
+
 ;; ==============================================================================
 ;; ACCESS MODIFIERS AND DECORATORS
 ;; ==============================================================================
@@ -303,15 +306,15 @@
   value: (function_expression) @definition.anonymous_function
 )
 
-; Variable declarations with assignments
+; Variable declarations with assignments (tracking only — definition created by generic pattern above)
 (variable_declarator
-  name: (identifier) @definition.variable @assignment.variable
+  name: (identifier) @assignment.variable
   value: (_) @assignment.variable
 ) @assignment.variable
 
 ; Variable declarations with constructor calls
 (variable_declarator
-  name: (identifier) @definition.variable @assignment.variable
+  name: (identifier) @assignment.variable
   value: (new_expression
     constructor: (identifier) @assignment.constructor
   )

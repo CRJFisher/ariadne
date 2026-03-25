@@ -46,6 +46,9 @@ import {
 } from "./query_code_tree/metadata_extractors";
 import { ParsedFile } from "./file_utils";
 import { profiler } from "../profiling";
+import { reset_documentation_state as reset_js_documentation } from "./query_code_tree/symbol_factories/symbol_factories.javascript";
+import { reset_documentation_state as reset_python_documentation } from "./query_code_tree/symbol_factories/symbol_factories.python";
+import { reset_documentation_state as reset_rust_documentation } from "./query_code_tree/symbol_factories/symbol_factories.rust";
 
 /**
  * Semantic Index - Single-file analysis results
@@ -131,6 +134,10 @@ export function build_index_single_file(
 
   // PASS 3: Process definitions with language-specific handler registry
   // Returns categorized maps (single-file only)
+  // Reset documentation state to prevent cross-file contamination from prior indexing passes
+  reset_js_documentation();
+  reset_python_documentation();
+  reset_rust_documentation();
   profiler.start("process_definitions");
   const handler_registry = get_handler_registry(language);
   const builder_result = process_definitions(context, handler_registry);
@@ -206,11 +213,26 @@ function process_definitions(
 ): BuilderResult {
   const builder = new DefinitionBuilder(context);
 
-  // PASS 1: Process all definitions (classes, methods, functions, etc.)
-  // Exclude decorators which need to be processed after their targets exist
+  // PRE-PASS: Store all documentation captures before processing definitions.
+  // Necessary because in some languages (e.g. Python) the docstring capture
+  // appears AFTER its enclosing definition in document order.
   for (const capture of context.captures) {
-    // Skip decorator captures in first pass
-    if (capture.name.startsWith("decorator.")) {
+    if (capture.name !== "definition.documentation") {
+      continue;
+    }
+    const handler = registry[capture.name];
+    if (handler) {
+      profiler.start(`handler:${capture.name}`);
+      handler(capture, builder, context);
+      profiler.end(`handler:${capture.name}`);
+    }
+  }
+
+  // PASS 1: Process all definitions (classes, methods, functions, etc.)
+  // Exclude decorators which need to be processed after their targets exist.
+  // Skip documentation captures already handled in the pre-pass.
+  for (const capture of context.captures) {
+    if (capture.name.startsWith("decorator.") || capture.name === "definition.documentation") {
       continue;
     }
 
@@ -329,6 +351,9 @@ export enum SemanticEntity {
   VISIBILITY = "visibility",
   MUTABILITY = "mutability",
   REFERENCE = "reference",
+
+  // Documentation
+  DOCUMENTATION = "documentation",
 
   // Expressions and constructs
   OPERATOR = "operator",
