@@ -9,8 +9,10 @@ import {
 } from "./file_loading";
 import type { PersistenceStorage } from "../persistence/storage";
 import { compute_content_hash } from "../persistence/content_hash";
-import type { ContentHash } from "../persistence/content_hash";
-import type { CacheManifest, CacheManifestEntry } from "../persistence/cache_manifest";
+import type {
+  CacheManifest,
+  CacheManifestEntry,
+} from "../persistence/cache_manifest";
 import {
   CURRENT_SCHEMA_VERSION,
   deserialize_manifest,
@@ -21,6 +23,11 @@ import {
   deserialize_semantic_index,
   validate_semantic_index_shape,
 } from "../persistence/serialize_index";
+import {
+  is_git_repo,
+  query_git_file_state,
+} from "../persistence/git_change_detection";
+import type { GitFileState } from "../persistence/git_change_detection";
 
 export interface LoadProjectOptions {
   project_path: string;
@@ -55,6 +62,7 @@ function resolve_to_absolute(
  *
  * When `storage` is provided, per-file SemanticIndex data is cached. On subsequent loads,
  * files whose content has not changed skip tree-sitter parsing entirely.
+ * In git repos, git plumbing commands accelerate change detection.
  */
 export async function load_project(
   options: LoadProjectOptions,
@@ -137,56 +145,68 @@ export async function load_project(
     }
   }
 
-  const manifest_entries = new Map<FilePath, CacheManifestEntry>();
+  // Git-accelerated change detection
+  let git_state: GitFileState | null = null;
+  let git_tree_unchanged = false;
+  if (storage && manifest) {
+    try {
+      if (await is_git_repo(project_path)) {
+        git_state = await query_git_file_state(project_path);
+        if (
+          git_state &&
+          manifest.git_tree_hash &&
+          git_state.tree_hash === manifest.git_tree_hash
+        ) {
+          git_tree_unchanged = true;
+        }
+      }
+    } catch {
+      // Git detection failed — fall back to content-hash path
+    }
+  }
+
+  // Seed manifest_entries from existing manifest (preserves entries for files not in this load)
+  const manifest_entries = new Map<FilePath, CacheManifestEntry>(
+    manifest ? manifest.entries : [],
+  );
 
   for (const file_path of final_files) {
-    let content: string;
-    try {
-      content = await fs.readFile(file_path, "utf-8");
-    } catch {
-      continue; // Skip unreadable files
-    }
-
     const fp = file_path as FilePath;
-    const content_hash: ContentHash | null = storage
-      ? compute_content_hash(content)
-      : null;
     let used_cache = false;
 
-    if (storage && manifest && content_hash) {
+    if (storage && manifest) {
       const cached_entry = manifest.entries.get(fp);
 
-      if (cached_entry && cached_entry.content_hash === content_hash) {
-        try {
-          const raw_index = await storage.read_index(file_path);
-          if (raw_index !== null) {
-            const parsed = JSON.parse(raw_index);
-            if (validate_semantic_index_shape(parsed)) {
-              const cached_index = deserialize_semantic_index(parsed);
-              project.restore_file(fp, content, cached_index);
-              used_cache = true;
-            }
-          }
-        } catch (error) {
-          console.warn(
-            `[ariadne:persistence] Cache read error for ${file_path}: ${
-              error instanceof Error ? error.message : error
-            }. Re-indexing.`,
-          );
-        }
+      if (cached_entry && can_use_cache(fp, cached_entry, git_state, git_tree_unchanged)) {
+        // Try to restore from cache without content hashing
+        used_cache = await try_restore_from_cache(
+          project,
+          fp,
+          storage,
+        );
       }
     }
 
     if (!used_cache) {
+      // Cache miss — read file and full index
+      let content: string;
+      try {
+        content = await fs.readFile(file_path, "utf-8");
+      } catch {
+        continue; // Skip unreadable files
+      }
+
       project.update_file(fp, content);
-    }
 
-    // Track hash for manifest (compute if not yet computed)
-    if (storage && content_hash) {
-      manifest_entries.set(fp, { content_hash });
+      // Update cache for this file
+      if (storage) {
+        const content_hash = compute_content_hash(content);
+        const entry: CacheManifestEntry = {
+          content_hash,
+          git_blob_hash: git_state?.tracked_hashes.get(file_path),
+        };
+        manifest_entries.set(fp, entry);
 
-      // Save newly indexed files to storage
-      if (!used_cache) {
         try {
           const index = project.get_index_single_file(fp);
           if (index) {
@@ -209,6 +229,7 @@ export async function load_project(
       await storage.write_manifest(
         serialize_manifest({
           schema_version: CURRENT_SCHEMA_VERSION,
+          git_tree_hash: git_state?.tree_hash,
           entries: manifest_entries,
         }),
       );
@@ -222,4 +243,74 @@ export async function load_project(
   }
 
   return project;
+}
+
+/**
+ * Determine if a file can use its cached index based on git state.
+ *
+ * Fast path (git tree unchanged): tracked+clean files are guaranteed unchanged.
+ * Diff path (git tree changed): compare git blob hash against cached entry.
+ * Fallback (no git): must read file and compute content hash (returns false).
+ */
+function can_use_cache(
+  file_path: FilePath,
+  cached_entry: CacheManifestEntry,
+  git_state: GitFileState | null,
+  git_tree_unchanged: boolean,
+): boolean {
+  if (!git_state) {
+    // No git — can't determine without reading file. Caller must content-hash.
+    return false;
+  }
+
+  // File is dirty (unstaged changes) or untracked — must re-index
+  if (git_state.dirty_files.has(file_path)) return false;
+  if (git_state.untracked_files.has(file_path)) return false;
+
+  if (git_tree_unchanged) {
+    // Tree hash matches — all tracked clean files are unchanged
+    return git_state.tracked_hashes.has(file_path);
+  }
+
+  // Tree hash differs — compare per-file git blob hash
+  if (cached_entry.git_blob_hash) {
+    const current_blob = git_state.tracked_hashes.get(file_path);
+    return current_blob === cached_entry.git_blob_hash;
+  }
+
+  // No git blob hash in cache entry — can't determine without reading
+  return false;
+}
+
+/**
+ * Try to restore a file from cache. Reads the cached index from storage,
+ * reads file content from disk, and calls restore_file.
+ * Returns true on success, false on any failure.
+ */
+async function try_restore_from_cache(
+  project: Project,
+  file_path: FilePath,
+  storage: PersistenceStorage,
+): Promise<boolean> {
+  try {
+    const raw_index = await storage.read_index(file_path);
+    if (raw_index === null) return false;
+
+    const parsed = JSON.parse(raw_index);
+    if (!validate_semantic_index_shape(parsed)) return false;
+
+    const cached_index = deserialize_semantic_index(parsed);
+
+    // Still need file content for get_source_code() lookups
+    const content = await fs.readFile(file_path, "utf-8");
+    project.restore_file(file_path, content, cached_index);
+    return true;
+  } catch (error) {
+    console.warn(
+      `[ariadne:persistence] Cache read error for ${file_path}: ${
+        error instanceof Error ? error.message : error
+      }. Re-indexing.`,
+    );
+    return false;
+  }
 }

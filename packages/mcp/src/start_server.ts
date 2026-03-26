@@ -1,8 +1,10 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
+import { FileSystemStorage } from "@ariadnejs/core";
 import { VERSION } from "./version";
 import { ProjectManager } from "./project_manager";
 import { initialize_logger, log_info } from "./logger";
+import { resolve_cache_dir } from "./resolve_cache_dir";
 import {
   init_analytics,
   is_analytics_enabled,
@@ -54,17 +56,25 @@ export async function start_server(
     };
   }
 
-  // Initialize persistent project with file watching
+  // Resolve cache directory for persistence
+  const cache_dir = resolve_cache_dir(project_path);
+  const storage = cache_dir ? new FileSystemStorage(cache_dir) : undefined;
+  if (cache_dir) {
+    log_info(`Cache directory: ${cache_dir}`);
+  }
+
+  // Initialize persistent project with file watching and optional persistence
   const project_manager = new ProjectManager();
   await project_manager.initialize({
     project_path,
     watch: options.watch ?? true,
+    storage,
   });
   await project_manager.load_all_files();
 
   log_info(
     `Ariadne MCP server initialized for: ${project_path}` +
-      (project_manager.is_watching() ? " (watching for changes)" : "")
+      (project_manager.is_watching() ? " (watching for changes)" : ""),
   );
 
   // Register tool groups (filtered by --toolsets if specified)
@@ -73,6 +83,7 @@ export async function start_server(
     project_manager,
     project_path,
     enabled_groups: options.toolsets ?? [],
+    storage,
   });
 
   // Connect transport
