@@ -2694,4 +2694,72 @@ fn main() {
       expect(variable?.collection_source).toBe("config");
     });
   });
+
+  describe("Docstring extraction", () => {
+    function build_index(code: string) {
+      const tree = parser.parse(code);
+      const file_path = "test.rs" as FilePath;
+      const parsed_file = create_parsed_file(code, file_path, tree, "rust");
+      return build_index_single_file(parsed_file, tree, "rust");
+    }
+
+    it("should extract /// doc comment on a free function", () => {
+      const code = `/// Compute sum.
+fn add(a: i32, b: i32) -> i32 { a + b }
+`;
+      const index = build_index(code);
+      const fn_def = Array.from(index.functions.values()).find(f => f.name === "add");
+      expect(fn_def).toBeDefined();
+      expect(fn_def!.docstring).toBe("/// Compute sum.");
+    });
+
+    it("should extract /// doc comment on a struct", () => {
+      const code = `/// Represents a point.
+struct Point { x: f64, y: f64 }
+`;
+      const index = build_index(code);
+      const cls = Array.from(index.classes.values()).find(c => c.name === "Point");
+      expect(cls).toBeDefined();
+      expect(cls!.docstring?.[0]).toBe("/// Represents a point.");
+    });
+
+    it("should extract /// doc comment on an impl instance method", () => {
+      const code = `
+struct Calc {}
+impl Calc {
+    /// Adds two values.
+    fn add(&self, a: i32, b: i32) -> i32 { a + b }
+}
+`;
+      const index = build_index(code);
+      const cls = Array.from(index.classes.values()).find(c => c.name === "Calc");
+      const method = cls!.methods.find(m => m.name === "add");
+      expect(method).toBeDefined();
+      expect(method!.docstring).toBe("/// Adds two values.");
+    });
+
+    it("should extract /// doc comment on fn new constructor", () => {
+      const code = `
+struct Counter { value: u32 }
+impl Counter {
+    /// Creates instance.
+    fn new() -> Self { Counter { value: 0 } }
+}
+`;
+      const index = build_index(code);
+      const cls = Array.from(index.classes.values()).find(c => c.name === "Counter");
+      const ctor = cls!.methods.find(m => m.name === "new");
+      expect(ctor).toBeDefined();
+      expect(ctor!.docstring).toBe("/// Creates instance.");
+    });
+
+    it("should leave docstring undefined when function has no doc comment", () => {
+      const code = `fn no_doc() {}
+`;
+      const index = build_index(code);
+      const fn_def = Array.from(index.functions.values()).find(f => f.name === "no_doc");
+      expect(fn_def).toBeDefined();
+      expect(fn_def!.docstring).toBeUndefined();
+    });
+  });
 });

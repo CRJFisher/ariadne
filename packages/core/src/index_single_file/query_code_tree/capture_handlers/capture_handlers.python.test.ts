@@ -2014,4 +2014,122 @@ class Service:
       expect(db_prop).toBeUndefined();
     });
   });
+
+  describe("Documentation Extraction", () => {
+    async function build_index_from_code_doc(code: string) {
+      const tree = parser.parse(code);
+      const lines = code.split("\n");
+      const parsed_file = {
+        file_path: "test.py" as any,
+        file_lines: lines.length,
+        file_end_column: lines[lines.length - 1]?.length || 0,
+        tree,
+        lang: "python" as const,
+      };
+      return build_index_single_file(parsed_file, tree, "python");
+    }
+
+    it("should extract triple-quoted docstring on a function", async () => {
+      const code = `def greet(name):
+    """Say hello to the given name."""
+    return f"Hello, {name}"
+`;
+      const index = await build_index_from_code_doc(code);
+      const fn = Array.from(index.functions.values()).find(f => f.name === "greet");
+      expect(fn).toBeDefined();
+      expect(fn!.docstring).toBe("Say hello to the given name.");
+    });
+
+    it("should extract triple-quoted docstring on a class", async () => {
+      const code = `class Greeter:
+    """A class that greets people."""
+    pass
+`;
+      const index = await build_index_from_code_doc(code);
+      const cls = Array.from(index.classes.values()).find(c => c.name === "Greeter");
+      expect(cls).toBeDefined();
+      expect(cls!.docstring).toEqual(["A class that greets people."]);
+    });
+
+    it("should extract single-quoted docstring", async () => {
+      const code = `def farewell():
+    '''Say goodbye.'''
+    pass
+`;
+      const index = await build_index_from_code_doc(code);
+      const fn = Array.from(index.functions.values()).find(f => f.name === "farewell");
+      expect(fn).toBeDefined();
+      expect(fn!.docstring).toBe("Say goodbye.");
+    });
+
+    it("should extract multi-line docstring and normalise whitespace", async () => {
+      const code = `def calculate(x, y):
+    """
+    Calculate the sum.
+
+    Returns the result.
+    """
+    return x + y
+`;
+      const index = await build_index_from_code_doc(code);
+      const fn = Array.from(index.functions.values()).find(f => f.name === "calculate");
+      expect(fn).toBeDefined();
+      expect(fn!.docstring).toBeDefined();
+      expect(fn!.docstring).toContain("Calculate the sum.");
+    });
+
+    it("should leave docstring undefined when function has no docstring", async () => {
+      const code = `def no_doc():
+    return 42
+`;
+      const index = await build_index_from_code_doc(code);
+      const fn = Array.from(index.functions.values()).find(f => f.name === "no_doc");
+      expect(fn).toBeDefined();
+      expect(fn!.docstring).toBeUndefined();
+    });
+
+    it("should extract triple-quoted docstring on a method", async () => {
+      const code = `
+class Greeter:
+    def greet(self, name):
+        """Greet the given name."""
+        return f"Hello, {name}"
+`;
+      const index = await build_index_from_code_doc(code);
+      const cls = Array.from(index.classes.values()).find(c => c.name === "Greeter");
+      const method = cls!.methods.find(m => m.name === "greet");
+      expect(method).toBeDefined();
+      expect(method!.docstring).toBe("Greet the given name.");
+    });
+
+    it("should extract docstring on a @staticmethod", async () => {
+      const code = `
+class Utils:
+    @staticmethod
+    def helper():
+        """Static helper."""
+        pass
+`;
+      const index = await build_index_from_code_doc(code);
+      const cls = Array.from(index.classes.values()).find(c => c.name === "Utils");
+      const method = cls!.methods.find(m => m.name === "helper");
+      expect(method).toBeDefined();
+      expect(method!.docstring).toBe("Static helper.");
+    });
+
+    it("should extract docstring on a @classmethod", async () => {
+      const code = `
+class Factory:
+    @classmethod
+    def create(cls):
+        """Class constructor."""
+        return cls()
+`;
+      const index = await build_index_from_code_doc(code);
+      const cls = Array.from(index.classes.values()).find(c => c.name === "Factory");
+      const method = cls!.methods.find(m => m.name === "create");
+      expect(method).toBeDefined();
+      expect(method!.docstring).toBe("Class constructor.");
+    });
+  });
 });

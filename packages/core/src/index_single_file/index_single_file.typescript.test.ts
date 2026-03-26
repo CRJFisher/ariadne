@@ -3114,4 +3114,56 @@ const result = items.map((x) =>
     });
   });
 
+  describe("Docstring extraction", () => {
+    function build_index(code: string) {
+      const tree = parser.parse(code);
+      return build_index_single_file(
+        create_parsed_file(code, "test.ts" as FilePath, tree, "typescript" as Language),
+        tree,
+        "typescript" as Language
+      );
+    }
+
+    it("should extract JSDoc on a function", () => {
+      const code = "/** Compute the total. */\nfunction total(a: number): number { return a; }";
+      const index = build_index(code);
+      const fn = Array.from(index.functions.values()).find(f => f.name === "total");
+      expect(fn).toBeDefined();
+      expect(fn!.docstring).toContain("Compute the total.");
+    });
+
+    it("should extract JSDoc on a class", () => {
+      const code = "/** A user entity. */\nclass User { name: string = \"\"; }";
+      const index = build_index(code);
+      const cls = Array.from(index.classes.values()).find(c => c.name === "User");
+      expect(cls).toBeDefined();
+      expect(cls!.docstring?.[0]).toContain("A user entity.");
+    });
+
+    it("should extract JSDoc on a method", () => {
+      const code = "class Calc {\n  /** Add two numbers. */\n  add(a: number, b: number) { return a + b; }\n}";
+      const index = build_index(code);
+      const cls = Array.from(index.classes.values()).find(c => c.name === "Calc");
+      const method = cls!.methods.find(m => m.name === "add");
+      expect(method).toBeDefined();
+      expect(method!.docstring).toContain("Add two numbers.");
+    });
+
+    it("should extract JSDoc on a const variable", () => {
+      const code = "/** @type {Service} */\nconst svc = create_service();";
+      const index = build_index(code);
+      const variable = Array.from(index.variables.values()).find(v => v.name === "svc");
+      expect(variable).toBeDefined();
+      expect(variable!.docstring).toContain("@type {Service}");
+    });
+
+    it("should leave docstring undefined when function has no JSDoc", () => {
+      const code = "function no_doc(): number { return 42; }";
+      const index = build_index(code);
+      const fn = Array.from(index.functions.values()).find(f => f.name === "no_doc");
+      expect(fn).toBeDefined();
+      expect(fn!.docstring).toBeUndefined();
+    });
+  });
+
 });

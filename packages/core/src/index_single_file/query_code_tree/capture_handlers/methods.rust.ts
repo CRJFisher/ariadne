@@ -13,6 +13,7 @@ import {
   find_containing_impl,
   find_containing_trait,
   is_associated_function,
+  consume_documentation,
 } from "../symbol_factories/symbol_factories.rust";
 
 // ============================================================================
@@ -28,6 +29,7 @@ export function handle_definition_method(
   const impl_info = find_containing_impl(capture);
   const return_type = extract_return_type(capture.node.parent || capture.node);
   const is_static = is_associated_function(capture.node.parent || capture.node);
+  const docstring = consume_documentation(capture.location);
 
   if (impl_info?.struct_name) {
     // Look up struct by name
@@ -42,6 +44,7 @@ export function handle_definition_method(
           scope_id: context.get_scope_id(capture.location),
           return_type: return_type,
           static: is_static || undefined,
+          docstring,
         },
         capture
       );
@@ -57,6 +60,7 @@ export function handle_definition_method_associated(
   const method_id = create_method_id(capture);
   const impl_info = find_containing_impl(capture);
   const return_type = extract_return_type(capture.node.parent || capture.node);
+  const docstring = consume_documentation(capture.location);
 
   if (impl_info?.struct_name) {
     const struct_id = builder.find_class_by_name(impl_info.struct_name);
@@ -70,6 +74,7 @@ export function handle_definition_method_associated(
           scope_id: context.get_scope_id(capture.location),
           return_type: return_type,
           static: true,
+          docstring,
         },
         capture
       );
@@ -85,22 +90,20 @@ export function handle_definition_method_default(
   const method_id = create_method_id(capture);
   const trait_name = find_containing_trait(capture);
   const return_type = extract_return_type(capture.node.parent || capture.node);
+  const docstring = consume_documentation(capture.location);
 
   if (trait_name) {
     // Look up trait by name
     const trait_id = builder.find_interface_by_name(trait_name);
     if (trait_id) {
-      builder.add_method_to_class(
-        trait_id,
-        {
-          symbol_id: method_id,
-          name: capture.text,
-          location: capture.location,
-          scope_id: context.get_scope_id(capture.location),
-          return_type: return_type,
-        },
-        capture
-      );
+      builder.add_method_signature_to_interface(trait_id, {
+        symbol_id: method_id,
+        name: capture.text,
+        location: capture.location,
+        scope_id: context.get_scope_id(capture.location),
+        return_type: return_type,
+        docstring,
+      });
     }
   }
 }
@@ -113,6 +116,7 @@ export function handle_definition_method_async(
   const method_id = create_method_id(capture);
   const impl_info = find_containing_impl(capture);
   const return_type = extract_return_type(capture.node.parent || capture.node);
+  const docstring = consume_documentation(capture.location);
 
   if (impl_info?.struct_name) {
     const struct_id = builder.find_class_by_name(impl_info.struct_name);
@@ -126,6 +130,7 @@ export function handle_definition_method_async(
           scope_id: context.get_scope_id(capture.location),
           return_type: return_type,
           async: true,
+          docstring,
         },
         capture
       );
@@ -141,6 +146,7 @@ export function handle_definition_constructor(
   const method_id = create_method_id(capture);
   const impl_info = find_containing_impl(capture);
   const return_type = extract_return_type(capture.node.parent || capture.node);
+  const docstring = consume_documentation(capture.location);
 
   if (impl_info?.struct_name && capture.text === "new") {
     const struct_id = builder.find_class_by_name(impl_info.struct_name);
@@ -154,6 +160,7 @@ export function handle_definition_constructor(
           scope_id: context.get_scope_id(capture.location),
           return_type: return_type,
           static: true,
+          docstring,
         },
         capture
       );

@@ -2525,4 +2525,89 @@ handler = config['key']
       expect(variable?.collection_source).toBe("config");
     });
   });
+
+  describe("Docstring extraction", () => {
+    function build_index(code: string) {
+      const tree = parser.parse(code);
+      const file_path = "test.py" as FilePath;
+      const parsed_file = create_parsed_file(code, file_path, tree, "python");
+      return build_index_single_file(parsed_file, tree, "python");
+    }
+
+    it("should extract triple-quoted docstring on a function", () => {
+      const code = `def calculate(x, y):
+    """Calculate the sum."""
+    return x + y
+`;
+      const index = build_index(code);
+      const fn = Array.from(index.functions.values()).find(f => f.name === "calculate");
+      expect(fn).toBeDefined();
+      expect(fn!.docstring).toContain("Calculate the sum.");
+    });
+
+    it("should extract triple-quoted docstring on a class", () => {
+      const code = `class MyClass:
+    """A useful class."""
+    pass
+`;
+      const index = build_index(code);
+      const cls = Array.from(index.classes.values()).find(c => c.name === "MyClass");
+      expect(cls).toBeDefined();
+      expect(cls!.docstring?.[0]).toContain("A useful class.");
+    });
+
+    it("should extract docstring on an instance method", () => {
+      const code = `
+class Calc:
+    def add(self, a, b):
+        """Add two numbers."""
+        return a + b
+`;
+      const index = build_index(code);
+      const cls = Array.from(index.classes.values()).find(c => c.name === "Calc");
+      const method = cls!.methods.find(m => m.name === "add");
+      expect(method).toBeDefined();
+      expect(method!.docstring).toBe("Add two numbers.");
+    });
+
+    it("should extract docstring on a @staticmethod", () => {
+      const code = `
+class Utils:
+    @staticmethod
+    def helper():
+        """Static helper."""
+        pass
+`;
+      const index = build_index(code);
+      const cls = Array.from(index.classes.values()).find(c => c.name === "Utils");
+      const method = cls!.methods.find(m => m.name === "helper");
+      expect(method).toBeDefined();
+      expect(method!.docstring).toBe("Static helper.");
+    });
+
+    it("should extract docstring on a @classmethod", () => {
+      const code = `
+class Factory:
+    @classmethod
+    def create(cls):
+        """Class constructor."""
+        return cls()
+`;
+      const index = build_index(code);
+      const cls = Array.from(index.classes.values()).find(c => c.name === "Factory");
+      const method = cls!.methods.find(m => m.name === "create");
+      expect(method).toBeDefined();
+      expect(method!.docstring).toBe("Class constructor.");
+    });
+
+    it("should leave docstring undefined when function has no docstring", () => {
+      const code = `def no_doc():
+    return 42
+`;
+      const index = build_index(code);
+      const fn = Array.from(index.functions.values()).find(f => f.name === "no_doc");
+      expect(fn).toBeDefined();
+      expect(fn!.docstring).toBeUndefined();
+    });
+  });
 });

@@ -1066,4 +1066,82 @@ describe("show_call_graph_neighborhood", () => {
     // Should appear exactly once (deduplicated)
     expect(helper_matches.length).toBe(1);
   });
+
+  describe("Docstring output", () => {
+    it("should include Docstring line when definition has a docstring", async () => {
+      const base = create_mock_node("symbol:fn", "calculate", "stats.py", 10, 15);
+      const node_with_doc: CallableNode = {
+        ...base,
+        definition: { ...base.definition, docstring: "Calculate the mean." },
+      };
+      const call_graph: CallGraph = {
+        nodes: new Map([[node_with_doc.symbol_id, node_with_doc]]),
+        entry_points: [node_with_doc.symbol_id],
+      };
+      vi.mocked(mock_project.get_call_graph).mockReturnValue(call_graph);
+
+      const result = await show_call_graph_neighborhood(mock_project, {
+        symbol_ref: "stats.py:10#calculate",
+        show_full_signature: true,
+      });
+
+      expect(result).toContain("Docstring: Calculate the mean.");
+    });
+
+    it("should omit Docstring line when definition has no docstring", async () => {
+      const node = create_mock_node("symbol:fn", "calculate", "stats.py", 10, 15);
+      const call_graph: CallGraph = {
+        nodes: new Map([[node.symbol_id, node]]),
+        entry_points: [node.symbol_id],
+      };
+      vi.mocked(mock_project.get_call_graph).mockReturnValue(call_graph);
+
+      const result = await show_call_graph_neighborhood(mock_project, {
+        symbol_ref: "stats.py:10#calculate",
+        show_full_signature: true,
+      });
+
+      expect(result).not.toContain("Docstring:");
+    });
+
+    it("should omit Docstring line when docstring is an array (class-style)", async () => {
+      const base = create_mock_node("symbol:fn", "calculate", "stats.py", 10, 15);
+      const node_with_array_doc: CallableNode = {
+        ...base,
+        definition: { ...base.definition, docstring: ["A class doc."] as any },
+      };
+      const call_graph: CallGraph = {
+        nodes: new Map([[node_with_array_doc.symbol_id, node_with_array_doc]]),
+        entry_points: [node_with_array_doc.symbol_id],
+      };
+      vi.mocked(mock_project.get_call_graph).mockReturnValue(call_graph);
+
+      const result = await show_call_graph_neighborhood(mock_project, {
+        symbol_ref: "stats.py:10#calculate",
+        show_full_signature: true,
+      });
+
+      expect(result).not.toContain("Docstring:");
+    });
+
+    it("should omit Docstring line when docstring is an empty string", async () => {
+      const base = create_mock_node("symbol:fn", "calculate", "stats.py", 10, 15);
+      const node_with_empty_doc: CallableNode = {
+        ...base,
+        definition: { ...base.definition, docstring: "" },
+      };
+      const call_graph: CallGraph = {
+        nodes: new Map([[node_with_empty_doc.symbol_id, node_with_empty_doc]]),
+        entry_points: [node_with_empty_doc.symbol_id],
+      };
+      vi.mocked(mock_project.get_call_graph).mockReturnValue(call_graph);
+
+      const result = await show_call_graph_neighborhood(mock_project, {
+        symbol_ref: "stats.py:10#calculate",
+        show_full_signature: true,
+      });
+
+      expect(result).not.toContain("Docstring:");
+    });
+  });
 });

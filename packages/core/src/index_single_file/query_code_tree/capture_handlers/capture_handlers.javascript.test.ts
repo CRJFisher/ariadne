@@ -1281,20 +1281,11 @@ export const NESTED = {
     });
 
     describe("JSDoc Documentation Extraction", () => {
-      it("should have documentation capture handlers in config", () => {
-        const documentation_mappings = [
-          "definition.function.documentation",
-          "definition.class.documentation",
-          "definition.method.documentation",
-          "definition.variable.documentation",
-        ];
-
-        for (const mapping of documentation_mappings) {
-          expect(mapping in JAVASCRIPT_HANDLERS).toBe(true);
-          const handler = JAVASCRIPT_HANDLERS[mapping];
-          expect(handler).toBeDefined();
-          expect(handler).toBeInstanceOf(Function);
-        }
+      it("should have documentation capture handler in config", () => {
+        expect("definition.documentation" in JAVASCRIPT_HANDLERS).toBe(true);
+        const handler = JAVASCRIPT_HANDLERS["definition.documentation"];
+        expect(handler).toBeDefined();
+        expect(handler).toBeInstanceOf(Function);
       });
 
       it("should capture and attach JSDoc documentation to functions", () => {
@@ -1318,7 +1309,7 @@ export const NESTED = {
 
         if (comment_node) {
           const doc_capture: CaptureNode = {
-            name: "definition.function.documentation",
+            name: "definition.documentation",
             category: "definition" as SemanticCategory,
             entity: "function" as SemanticEntity,
             node: comment_node as any,
@@ -1327,7 +1318,7 @@ export const NESTED = {
           };
 
           const doc_processor = JAVASCRIPT_HANDLERS[
-            "definition.function.documentation"
+            "definition.documentation"
           ];
           doc_processor?.(doc_capture, builder, context);
         }
@@ -1382,7 +1373,7 @@ export const NESTED = {
         const comment_node = find_node_by_type(ast.rootNode, "comment");
         if (comment_node) {
           const doc_capture: CaptureNode = {
-            name: "definition.class.documentation",
+            name: "definition.documentation",
             category: "definition" as SemanticCategory,
             entity: "class" as SemanticEntity,
             node: comment_node as any,
@@ -1391,7 +1382,7 @@ export const NESTED = {
           };
 
           const doc_processor = JAVASCRIPT_HANDLERS[
-            "definition.class.documentation"
+            "definition.documentation"
           ];
           doc_processor?.(doc_capture, builder, context);
         }
@@ -1465,7 +1456,7 @@ export const NESTED = {
         const comment_node = find_node_by_type(ast.rootNode, "comment");
         if (comment_node) {
           const doc_capture: CaptureNode = {
-            name: "definition.method.documentation",
+            name: "definition.documentation",
             category: "definition" as SemanticCategory,
             entity: "method" as SemanticEntity,
             node: comment_node as any,
@@ -1474,7 +1465,7 @@ export const NESTED = {
           };
 
           const doc_processor = JAVASCRIPT_HANDLERS[
-            "definition.method.documentation"
+            "definition.documentation"
           ];
           doc_processor?.(doc_capture, builder, context);
         }
@@ -1525,7 +1516,7 @@ export const NESTED = {
         const comment_node = find_node_by_type(ast.rootNode, "comment");
         if (comment_node) {
           const doc_capture: CaptureNode = {
-            name: "definition.variable.documentation",
+            name: "definition.documentation",
             category: "definition" as SemanticCategory,
             entity: "variable" as SemanticEntity,
             node: comment_node as any,
@@ -1534,7 +1525,7 @@ export const NESTED = {
           };
 
           const doc_processor = JAVASCRIPT_HANDLERS[
-            "definition.variable.documentation"
+            "definition.documentation"
           ];
           doc_processor?.(doc_capture, builder, context);
         }
@@ -1635,7 +1626,7 @@ export const NESTED = {
         // Process first comment and function
         if (comments[0]) {
           const doc_capture1: CaptureNode = {
-            name: "definition.function.documentation",
+            name: "definition.documentation",
             category: "definition" as SemanticCategory,
             entity: "function" as SemanticEntity,
             node: comments[0] as any,
@@ -1650,7 +1641,7 @@ export const NESTED = {
           };
 
           const doc_processor = JAVASCRIPT_HANDLERS[
-            "definition.function.documentation"
+            "definition.documentation"
           ];
           doc_processor?.(doc_capture1, builder, context);
         }
@@ -1681,7 +1672,7 @@ export const NESTED = {
         // Process second comment and function
         if (comments[1]) {
           const doc_capture2: CaptureNode = {
-            name: "definition.function.documentation",
+            name: "definition.documentation",
             category: "definition" as SemanticCategory,
             entity: "function" as SemanticEntity,
             node: comments[1] as any,
@@ -1696,7 +1687,7 @@ export const NESTED = {
           };
 
           const doc_processor = JAVASCRIPT_HANDLERS[
-            "definition.function.documentation"
+            "definition.documentation"
           ];
           doc_processor?.(doc_capture2, builder, context);
         }

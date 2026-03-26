@@ -37,6 +37,8 @@ import {
   detect_callback_context,
   detect_function_collection,
   extract_collection_source,
+  store_documentation,
+  consume_documentation,
   type ImportInfo,
 } from "../symbol_factories/symbol_factories.rust";
 
@@ -58,6 +60,21 @@ export {
 };
 
 // ============================================================================
+// DOCUMENTATION HANDLERS
+// ============================================================================
+
+export function handle_definition_documentation(
+  capture: CaptureNode,
+  _builder: DefinitionBuilder,
+  _context: ProcessingContext
+): void {
+  // Use start_line because Rust's line_comment node text includes the trailing
+  // newline, making end_line point to the next line rather than the comment's own line.
+  // Trim to remove the trailing newline included in the line_comment node text.
+  store_documentation(capture.text.trimEnd(), capture.location.start_line);
+}
+
+// ============================================================================
 // STRUCT/CLASS HANDLERS
 // ============================================================================
 
@@ -66,9 +83,15 @@ export function handle_definition_class(
   builder: DefinitionBuilder,
   context: ProcessingContext
 ): void {
-  const struct_id = create_struct_id(capture);
+  // Skip generic structs - handled by handle_definition_class_generic
   const generics = extract_generic_parameters(capture.node.parent || capture.node);
+  if (generics && generics.length > 0) {
+    return;
+  }
+
+  const struct_id = create_struct_id(capture);
   const export_info = extract_export_info(capture.node.parent || capture.node);
+  const docstring = consume_documentation(capture.location);
 
   builder.add_class({
     symbol_id: struct_id,
@@ -77,7 +100,7 @@ export function handle_definition_class(
     scope_id: context.get_scope_id(capture.location),
     is_exported: export_info.is_exported,
     export: export_info.export,
-    generics: generics.length > 0 ? generics : undefined,
+    docstring: docstring ? [docstring] : undefined,
   });
 }
 
@@ -89,6 +112,7 @@ export function handle_definition_class_generic(
   const struct_id = create_struct_id(capture);
   const generics = extract_generic_parameters(capture.node.parent || capture.node);
   const export_info = extract_export_info(capture.node.parent || capture.node);
+  const docstring = consume_documentation(capture.location);
 
   builder.add_class({
     symbol_id: struct_id,
@@ -98,6 +122,7 @@ export function handle_definition_class_generic(
     is_exported: export_info.is_exported,
     export: export_info.export,
     generics: generics,
+    docstring: docstring ? [docstring] : undefined,
   });
 }
 
@@ -259,8 +284,15 @@ export function handle_definition_function(
     return;
   }
 
+  // Skip functions with modifiers (async, const, unsafe) - handled by specialized handlers
+  const fn_node = capture.node.parent || capture.node;
+  if (fn_node.children?.some(c => c.type === "function_modifiers")) {
+    return;
+  }
+
   const func_id = create_function_id(capture);
   const export_info = extract_export_info(capture.node.parent || capture.node);
+  const docstring = consume_documentation(capture.location);
 
   builder.add_function(
     {
@@ -271,6 +303,7 @@ export function handle_definition_function(
       is_exported: export_info.is_exported,
       export: export_info.export,
       return_type: extract_return_type(capture.node.parent || capture.node),
+      docstring,
     },
     capture
   );
@@ -291,6 +324,7 @@ export function handle_definition_function_generic(
   const func_id = create_function_id(capture);
   const generics = extract_generic_parameters(capture.node.parent || capture.node);
   const export_info = extract_export_info(capture.node.parent || capture.node);
+  const docstring = consume_documentation(capture.location);
 
   builder.add_function(
     {
@@ -302,6 +336,7 @@ export function handle_definition_function_generic(
       export: export_info.export,
       generics,
       return_type: extract_return_type(capture.node.parent || capture.node),
+      docstring,
     },
     capture
   );
@@ -321,6 +356,7 @@ export function handle_definition_function_async(
 
   const func_id = create_function_id(capture);
   const export_info = extract_export_info(capture.node.parent || capture.node);
+  const docstring = consume_documentation(capture.location);
 
   builder.add_function(
     {
@@ -331,6 +367,7 @@ export function handle_definition_function_async(
       is_exported: export_info.is_exported,
       export: export_info.export,
       return_type: extract_return_type(capture.node.parent || capture.node),
+      docstring,
     },
     capture
   );
@@ -350,6 +387,7 @@ export function handle_definition_function_const(
 
   const func_id = create_function_id(capture);
   const export_info = extract_export_info(capture.node.parent || capture.node);
+  const docstring = consume_documentation(capture.location);
 
   builder.add_function(
     {
@@ -360,6 +398,7 @@ export function handle_definition_function_const(
       is_exported: export_info.is_exported,
       export: export_info.export,
       return_type: extract_return_type(capture.node.parent || capture.node),
+      docstring,
     },
     capture
   );
@@ -379,6 +418,7 @@ export function handle_definition_function_unsafe(
 
   const func_id = create_function_id(capture);
   const export_info = extract_export_info(capture.node.parent || capture.node);
+  const docstring = consume_documentation(capture.location);
 
   builder.add_function(
     {
@@ -389,6 +429,7 @@ export function handle_definition_function_unsafe(
       is_exported: export_info.is_exported,
       export: export_info.export,
       return_type: extract_return_type(capture.node.parent || capture.node),
+      docstring,
     },
     capture
   );
@@ -894,6 +935,9 @@ export function handle_definition_visibility(
 // ============================================================================
 
 export const RUST_HANDLERS: HandlerRegistry = {
+  // Documentation
+  "definition.documentation": handle_definition_documentation,
+
   // Struct/Class definitions
   "definition.class": handle_definition_class,
   "definition.class.generic": handle_definition_class_generic,
