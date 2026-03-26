@@ -138,13 +138,19 @@ export function get_changed_files(project_dir: string): ChangedFiles {
     }
     const modified_areas = Array.from(areas);
 
+    // Paths that contain source-like files but are NOT project source code
+    // (test fixtures, generated code, etc.). Changes here should not trigger
+    // test runs or type checks.
+    const NON_SOURCE_SEGMENTS = ["/fixtures/", "/__fixtures__/"];
+
     // Collect changed TS/JS files in project source directories (absolute paths)
     // Filter out deleted files that no longer exist on disk
     const changed_ts_files = unique_files
       .filter((f) => {
         const ext = path.extname(f).toLowerCase();
         return SOURCE_EXTENSIONS.includes(ext) &&
-          PROJECT_SOURCE_PREFIXES.some((prefix) => f.startsWith(prefix));
+          PROJECT_SOURCE_PREFIXES.some((prefix) => f.startsWith(prefix)) &&
+          !NON_SOURCE_SEGMENTS.some((seg) => f.includes(seg));
       })
       .map((f) => path.resolve(project_dir, f))
       .filter((f) => fs.existsSync(f));
