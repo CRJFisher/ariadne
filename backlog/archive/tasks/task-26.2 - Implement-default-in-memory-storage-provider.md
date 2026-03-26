@@ -3,7 +3,7 @@ id: task-26.2
 title: Implement default in-memory storage provider
 status: To Do
 assignee: []
-created_date: '2025-07-17'
+created_date: "2025-07-17"
 labels: []
 dependencies: []
 parent_task_id: task-26

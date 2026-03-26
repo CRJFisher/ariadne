@@ -70,24 +70,6 @@ When writing or updating documentation, always write in a **canonical, self-cont
 - **Dependencies**: Check existing libraries before adding new ones
 - Variables should almost always be non-nullable. Only make them nullable if you have a good reason to do so and its completely unavoidable.
 
-## Backlog Workflow
-
-USE BACKLOG WHENEVER 'TASK's ARE MENTIONED.
-
-### Task Management
-
-1. **Find Task**: `backlog task list --plain`
-2. **Start Work**: `backlog task edit <id> -s "In Progress"`
-3. **Update Task**: Add implementation notes to task file
-4. **Complete**: `backlog task edit <id> -s "Completed"`
-
-### Important Reminders
-
-- **Always use `--plain` flag** for AI-friendly output
-- **Read task file first** before starting implementation
-- **Create sub-tasks** for follow-up work
-- **Document test gaps** in implementation notes
-
 ## Testing Requirements
 
 ### Test Structure
