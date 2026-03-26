@@ -16,12 +16,6 @@ export interface CacheManifest {
   readonly entries: ReadonlyMap<FilePath, CacheManifestEntry>;
 }
 
-export interface ManifestDiff {
-  readonly changed: ReadonlySet<FilePath>;
-  readonly removed: ReadonlySet<FilePath>;
-  readonly unchanged: ReadonlySet<FilePath>;
-}
-
 /** Serialize a CacheManifest to a JSON string. */
 export function serialize_manifest(manifest: CacheManifest): string {
   return JSON.stringify({
@@ -50,34 +44,4 @@ export function deserialize_manifest(json: string): CacheManifest | null {
   } catch {
     return null;
   }
-}
-
-/**
- * Diff current file hashes against a cached manifest.
- * Categorizes files as changed (new or modified), removed, or unchanged.
- */
-export function diff_manifest(
-  manifest: CacheManifest,
-  current_hashes: ReadonlyMap<FilePath, ContentHash>,
-): ManifestDiff {
-  const changed = new Set<FilePath>();
-  const removed = new Set<FilePath>();
-  const unchanged = new Set<FilePath>();
-
-  for (const [file_path, content_hash] of current_hashes) {
-    const cached = manifest.entries.get(file_path);
-    if (cached && cached.content_hash === content_hash) {
-      unchanged.add(file_path);
-    } else {
-      changed.add(file_path);
-    }
-  }
-
-  for (const file_path of manifest.entries.keys()) {
-    if (!current_hashes.has(file_path)) {
-      removed.add(file_path);
-    }
-  }
-
-  return { changed, removed, unchanged };
 }

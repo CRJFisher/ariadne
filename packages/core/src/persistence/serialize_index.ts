@@ -59,9 +59,11 @@ export function serialize_semantic_index(index: SemanticIndex): string {
   });
 }
 
-/** Deserialize a JSON string to a SemanticIndex. */
-export function deserialize_semantic_index(json: string): SemanticIndex {
-  const p = JSON.parse(json);
+/** Deserialize a SemanticIndex from a JSON string or pre-parsed object. */
+export function deserialize_semantic_index(
+  input: string | Record<string, unknown>,
+): SemanticIndex {
+  const p = typeof input === "string" ? JSON.parse(input) : input;
   return {
     file_path: p.file_path as FilePath,
     language: p.language as Language,

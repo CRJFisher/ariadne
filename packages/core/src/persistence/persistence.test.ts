@@ -32,7 +32,50 @@ function assert_projects_equivalent(fresh: Project, cached: Project): void {
   // Same stats
   expect(cached.get_stats()).toEqual(fresh.get_stats());
 
-  // Same call graph structure
+  // Deep per-file semantic index comparison (content, not just sizes)
+  for (const file_path of fresh.get_all_files()) {
+    const fresh_index = fresh.get_index_single_file(file_path);
+    const cached_index = cached.get_index_single_file(file_path);
+    expect(cached_index).toBeDefined();
+    expect(cached_index?.language).toEqual(fresh_index?.language);
+    expect(cached_index?.root_scope_id).toEqual(fresh_index?.root_scope_id);
+
+    // Compare all definition maps entry-by-entry
+    for (const [key, val] of fresh_index?.functions ?? []) {
+      expect(cached_index?.functions.get(key)).toEqual(val);
+    }
+    for (const [key, val] of fresh_index?.classes ?? []) {
+      expect(cached_index?.classes.get(key)).toEqual(val);
+    }
+    for (const [key, val] of fresh_index?.variables ?? []) {
+      expect(cached_index?.variables.get(key)).toEqual(val);
+    }
+    for (const [key, val] of fresh_index?.interfaces ?? []) {
+      expect(cached_index?.interfaces.get(key)).toEqual(val);
+    }
+    for (const [key, val] of fresh_index?.enums ?? []) {
+      expect(cached_index?.enums.get(key)).toEqual(val);
+    }
+    for (const [key, val] of fresh_index?.namespaces ?? []) {
+      expect(cached_index?.namespaces.get(key)).toEqual(val);
+    }
+    for (const [key, val] of fresh_index?.types ?? []) {
+      expect(cached_index?.types.get(key)).toEqual(val);
+    }
+    for (const [key, val] of fresh_index?.imported_symbols ?? []) {
+      expect(cached_index?.imported_symbols.get(key)).toEqual(val);
+    }
+    for (const [key, val] of fresh_index?.scopes ?? []) {
+      expect(cached_index?.scopes.get(key)).toEqual(val);
+    }
+
+    // Compare references
+    expect([...(cached_index?.references ?? [])]).toEqual([
+      ...(fresh_index?.references ?? []),
+    ]);
+  }
+
+  // Deep call graph comparison
   const fresh_graph = fresh.get_call_graph();
   const cached_graph = cached.get_call_graph();
   expect(cached_graph.nodes.size).toEqual(fresh_graph.nodes.size);
@@ -43,22 +86,12 @@ function assert_projects_equivalent(fresh: Project, cached: Project): void {
     const cached_node = cached_graph.nodes.get(sym_id);
     expect(cached_node).toBeDefined();
     expect(cached_node?.name).toEqual(fresh_node.name);
-    expect(cached_node?.enclosed_calls.length).toEqual(
-      fresh_node.enclosed_calls.length,
-    );
+    // Compare enclosed calls content, not just length
+    expect(cached_node?.enclosed_calls).toEqual(fresh_node.enclosed_calls);
   }
 
-  // Same per-file semantic index sizes
-  for (const file_path of fresh.get_all_files()) {
-    const fresh_index = fresh.get_index_single_file(file_path);
-    const cached_index = cached.get_index_single_file(file_path);
-    expect(cached_index?.functions.size).toEqual(fresh_index?.functions.size);
-    expect(cached_index?.classes.size).toEqual(fresh_index?.classes.size);
-    expect(cached_index?.variables.size).toEqual(fresh_index?.variables.size);
-    expect(cached_index?.references.length).toEqual(
-      fresh_index?.references.length,
-    );
-  }
+  // Resolution count
+  expect(cached.resolutions.size()).toEqual(fresh.resolutions.size());
 }
 
 /**
@@ -559,5 +592,78 @@ describe("Project.save()", () => {
     // Verify indexes were written
     expect(await storage.read_index("a.ts")).not.toBeNull();
     expect(await storage.read_index("b.ts")).not.toBeNull();
+  });
+
+  it("save then load round-trip produces equivalent project", async () => {
+    const storage = new InMemoryStorage();
+    const a_content = "export function foo() { return 42; }";
+    const b_content = "import { foo } from './a'; const x = foo();";
+
+    // Build and save
+    const original = new Project();
+    await original.initialize();
+    original.update_file(fp("a.ts"), a_content);
+    original.update_file(fp("b.ts"), b_content);
+    await original.save(storage);
+
+    // Load from saved storage
+    const restored = new Project();
+    await restored.initialize();
+    for (const file_path of original.get_all_files()) {
+      const raw = await storage.read_index(file_path);
+      if (raw) {
+        const content =
+          file_path === ("a.ts" as FilePath) ? a_content : b_content;
+        const index = deserialize_semantic_index(raw);
+        restored.restore_file(file_path, content, index);
+      }
+    }
+
+    assert_projects_equivalent(original, restored);
+  });
+});
+
+// ============================================================================
+// Schema Version Mismatch Test
+// ============================================================================
+
+describe("Schema version mismatch", () => {
+  let temp_dir: string;
+
+  async function cleanup(): Promise<void> {
+    if (temp_dir) {
+      await fs.rm(temp_dir, { recursive: true, force: true });
+    }
+  }
+
+  it("discards cache when schema version does not match", async () => {
+    temp_dir = await fs.mkdtemp(
+      path.join(os.tmpdir(), "ariadne-schema-test-"),
+    );
+    await fs.writeFile(
+      path.join(temp_dir, "a.ts"),
+      "export function foo() { return 42; }",
+      "utf-8",
+    );
+
+    try {
+      const storage = new InMemoryStorage();
+
+      // First load to populate cache
+      const first = await load_project({ project_path: temp_dir, storage });
+      const first_stats = first.get_stats();
+
+      // Corrupt manifest with wrong schema version
+      const raw_manifest = (await storage.read_manifest()) ?? "";
+      const parsed_manifest = JSON.parse(raw_manifest);
+      parsed_manifest.schema_version = 999;
+      storage.set_manifest(JSON.stringify(parsed_manifest));
+
+      // Second load should discard cache and re-index
+      const second = await load_project({ project_path: temp_dir, storage });
+      expect(second.get_stats()).toEqual(first_stats);
+    } finally {
+      await cleanup();
+    }
   });
 });

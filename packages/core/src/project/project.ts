@@ -666,12 +666,20 @@ export class Project {
       }
     }
 
-    await storage.write_manifest(
-      serialize_manifest({
-        schema_version: CURRENT_SCHEMA_VERSION,
-        entries: manifest_entries,
-      }),
-    );
+    try {
+      await storage.write_manifest(
+        serialize_manifest({
+          schema_version: CURRENT_SCHEMA_VERSION,
+          entries: manifest_entries,
+        }),
+      );
+    } catch (error) {
+      console.warn(
+        `[ariadne:persistence] Failed to save manifest: ${
+          error instanceof Error ? error.message : error
+        }`,
+      );
+    }
   }
 
   clear(): void {

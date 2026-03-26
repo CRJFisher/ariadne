@@ -127,12 +127,6 @@ export async function load_project(
       const raw = await storage.read_manifest();
       if (raw !== null) {
         manifest = deserialize_manifest(raw);
-        if (manifest && manifest.schema_version !== CURRENT_SCHEMA_VERSION) {
-          console.warn(
-            `[ariadne:persistence] Schema version mismatch: cached=${manifest.schema_version}, current=${CURRENT_SCHEMA_VERSION}. Ignoring cache.`,
-          );
-          manifest = null;
-        }
       }
     } catch (error) {
       console.warn(
@@ -154,9 +148,9 @@ export async function load_project(
     }
 
     const fp = file_path as FilePath;
-    const content_hash = storage
+    const content_hash: ContentHash | null = storage
       ? compute_content_hash(content)
-      : (null as ContentHash | null);
+      : null;
     let used_cache = false;
 
     if (storage && manifest && content_hash) {
@@ -168,7 +162,7 @@ export async function load_project(
           if (raw_index !== null) {
             const parsed = JSON.parse(raw_index);
             if (validate_semantic_index_shape(parsed)) {
-              const cached_index = deserialize_semantic_index(raw_index);
+              const cached_index = deserialize_semantic_index(parsed);
               project.restore_file(fp, content, cached_index);
               used_cache = true;
             }
