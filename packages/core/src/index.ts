@@ -42,3 +42,7 @@ export {
   should_ignore_path,
   find_source_files,
 } from "./project/file_loading";
+
+// Persistence
+export type { PersistenceStorage } from "./persistence/storage";
+export { FileSystemStorage } from "./persistence/file_system_storage";
