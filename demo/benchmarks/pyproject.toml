@@ -1,0 +1,13 @@
+[project]
+name = "ariadne-benchmarks"
+version = "0.1.0"
+description = "Ariadne MCP benchmark runner and analysis tools"
+requires-python = ">=3.11"
+dependencies = [
+    "claude-code-sdk>=0.0.25",
+    "scipy>=1.11.0",
+    "numpy>=1.24.0",
+    "matplotlib>=3.7.0",
+    "swebench>=3.0.0",
+    "datasets>=2.14.0",
+]
