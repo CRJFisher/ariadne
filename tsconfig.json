@@ -6,12 +6,10 @@
     "declaration": true,
     "declarationMap": true,
     "sourceMap": true,
-    "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
     "strict": true,
     "skipLibCheck": true,
     "composite": true,
-    "downlevelIteration": true,
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true
   },

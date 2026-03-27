@@ -161,6 +161,14 @@
       {
         "name": "get_class_definitions",
         "file_path": "packages/core/src/resolve_references/registries/definition.ts"
+      },
+      {
+        "name": "read_manifest",
+        "file_path": "packages/core/src/persistence/file_system_storage.ts"
+      },
+      {
+        "name": "clear",
+        "file_path": "packages/core/src/persistence/file_system_storage.ts"
       }
     ]
   }

@@ -6,8 +6,6 @@
     "types": [
       "node"
     ],
-    "downlevelIteration": true,
-    "esModuleInterop": true
   },
   "include": [
     "src/**/*",

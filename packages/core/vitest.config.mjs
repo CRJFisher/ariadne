@@ -5,11 +5,7 @@ export default defineConfig({
     globals: true,
     environment: 'node',
     pool: 'forks',
-    poolOptions: {
-      forks: {
-        singleFork: true,
-      },
-    },
+    maxWorkers: 1,
     setupFiles: './tests/setup.ts',
     include: ['src/**/*.test.ts', 'src/**/*.bench.ts', 'tests/**/*.test.ts'],
     exclude: [...configDefaults.exclude, '**/.worktrees/**'],
