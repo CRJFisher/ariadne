@@ -101,6 +101,7 @@ async function main(): Promise<void> {
   // Clean up old state files — one pipeline at a time
   const triage_dir = path.dirname(state_path);
   await fs.mkdir(triage_dir, { recursive: true });
+  await fs.mkdir(path.join(triage_dir, "results"), { recursive: true });
   const existing = await fs.readdir(triage_dir).catch(() => [] as string[]);
   for (const f of existing) {
     if (f.endsWith("_triage.json")) {

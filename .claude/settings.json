@@ -1,4 +1,9 @@
 {
+  "permissions": {
+    "allow": [
+      "Write(.claude/self-repair-pipeline-state/**)"
+    ]
+  },
   "hooks": {
     "PreToolUse": [
       {
