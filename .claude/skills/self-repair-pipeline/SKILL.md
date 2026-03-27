@@ -68,7 +68,7 @@ If no arguments are provided or the input is ambiguous, **ask the user** before 
 
 ## Current State
 
-!`cat .claude/skills/self-repair-pipeline/triage_state/*_triage.json 2>/dev/null || echo "No active triage"`
+!`node --import tsx .claude/skills/self-repair-pipeline/scripts/get_triage_summary.ts 2>/dev/null || echo "No active triage"`
 
 ## State and Output Locations
 
@@ -83,7 +83,7 @@ If no arguments are provided or the input is ambiguous, **ask the user** before 
 
 `{project}` is the short name for internal packages (e.g., `core`) or the full path identifier for external projects (e.g., `-Users-chuck-workspace-AmazonAdv-projections`).
 
-All paths above are relative to `.claude/skills/self-repair-pipeline/`.
+All paths above are relative to `.claude/self-repair-pipeline-state/`.
 
 ## Phase 1: Detect
 
@@ -113,7 +113,7 @@ Build triage state from the latest analysis output:
 
 ```bash
 node --import tsx .claude/skills/self-repair-pipeline/scripts/prepare_triage.ts \
-  --analysis .claude/skills/self-repair-pipeline/analysis_output/<project>/detect_entrypoints/<timestamp>.json \
+  --analysis .claude/self-repair-pipeline-state/analysis_output/<project>/detect_entrypoints/<timestamp>.json \
   --package <name> \
   --batch-size 5
 ```
@@ -190,7 +190,7 @@ After the stop hook ALLOWs completion (all phases done or error exit), run final
 
 ```bash
 node --import tsx .claude/skills/self-repair-pipeline/scripts/finalize_triage.ts \
-  --state .claude/skills/self-repair-pipeline/triage_state/{project}_triage.json
+  --state .claude/self-repair-pipeline-state/triage_state/{project}_triage.json
 ```
 
 Finalization:
@@ -228,7 +228,7 @@ All library modules live under `src/`:
 | -------------------- | ------ | ----------------------------------------------------------------------------------- |
 | triage-investigator  | sonnet | Investigate a single pending entry (fetches own context via `get_entry_context.ts`) |
 | triage-aggregator    | sonnet | Review all entry results, group by root cause, merge duplicates                     |
-| triage-rule-reviewer | sonnet | Analyze false-positive patterns, propose deterministic classification rules         |
+| triage-rule-reviewer | opus   | Analyze false-positive patterns, propose deterministic classification rules         |
 | fix-planner          | sonnet | Generate one independent fix proposal for a false-positive group                    |
 | plan-synthesizer     | opus   | Synthesize 5 competing plans into a unified fix approach                            |
 | plan-reviewer        | sonnet | Review synthesized plan from one specific angle                                     |

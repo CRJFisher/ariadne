@@ -14,14 +14,14 @@
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
-import { discover_state_file, get_triage_dir } from "../src/discover_state.js";
+import { discover_state_file } from "../src/discover_state.js";
+import { TRIAGE_STATE_DIR } from "../src/paths.js";
 import type { TriageState, TriageEntry } from "../src/triage_state_types.js";
 import type { GrepHit, CallRefDiagnostic, EntryPointDiagnostics, AnalysisResult } from "../src/types.js";
 
 const THIS_FILE = fileURLToPath(import.meta.url);
 const THIS_DIR = path.dirname(THIS_FILE);
 const SKILL_DIR = path.resolve(THIS_DIR, "..");
-const PROJECT_DIR = process.env.CLAUDE_PROJECT_DIR || path.resolve(SKILL_DIR, "../../../..");
 
 // ===== Diagnosis → Template Routing =====
 
@@ -132,7 +132,7 @@ function main(): void {
   const cli = parse_args(process.argv);
 
   // Discover state file
-  const triage_dir = get_triage_dir(PROJECT_DIR);
+  const triage_dir = TRIAGE_STATE_DIR;
   const state_path = discover_state_file(triage_dir);
   if (!state_path) {
     console.error("No active triage state file found");
