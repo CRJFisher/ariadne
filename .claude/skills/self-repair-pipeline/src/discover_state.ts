@@ -17,10 +17,3 @@ export function discover_state_file(triage_dir: string): string | null {
   if (files.length === 0) return null;
   return path.join(triage_dir, files[0]);
 }
-
-/**
- * Resolve the triage_state directory from the project root.
- */
-export function get_triage_dir(project_dir: string): string {
-  return path.join(project_dir, ".claude", "skills", "self-repair-pipeline", "triage_state");
-}
