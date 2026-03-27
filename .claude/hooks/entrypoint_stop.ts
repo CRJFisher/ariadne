@@ -85,7 +85,7 @@ function get_modified_packages(project_dir: string): string[] {
 async function load_whitelist(project_dir: string, package_name: string): Promise<Set<string>> {
   const registry_path = path.join(
     project_dir,
-    ".claude/skills/self-repair-pipeline/known_entrypoints",
+    ".claude/self-repair-pipeline-state/known_entrypoints",
     `${package_name}.json`
   );
 
