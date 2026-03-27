@@ -21,6 +21,7 @@ export const IGNORED_DIRECTORIES = [
   "tmp",
   "temp",
   "fixtures",
+  ".ariadne-cache",
 ];
 
 /**

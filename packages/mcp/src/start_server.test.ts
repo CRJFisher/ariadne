@@ -43,6 +43,14 @@ vi.mock("./tools/core/tool_group", () => ({
   CORE_TOOL_GROUP: { group_name: "core", description: "Core tools", tools: [] },
 }));
 
+vi.mock("./resolve_cache_dir", () => ({
+  resolve_cache_dir: vi.fn().mockReturnValue("/mock/cache/dir"),
+}));
+
+vi.mock("@ariadnejs/core", () => ({
+  FileSystemStorage: vi.fn().mockImplementation(() => ({})),
+}));
+
 describe("start_server", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -52,10 +60,12 @@ describe("start_server", () => {
     await start_server({ project_path: "/test/path", watch: false });
 
     const pm_instance = vi.mocked(ProjectManager).mock.results[0].value;
-    expect(pm_instance.initialize).toHaveBeenCalledWith({
-      project_path: "/test/path",
-      watch: false,
-    });
+    expect(pm_instance.initialize).toHaveBeenCalledWith(
+      expect.objectContaining({
+        project_path: "/test/path",
+        watch: false,
+      }),
+    );
     expect(pm_instance.load_all_files).toHaveBeenCalled();
   });
 
@@ -63,10 +73,12 @@ describe("start_server", () => {
     await start_server({ project_path: "/test/path" });
 
     const pm_instance = vi.mocked(ProjectManager).mock.results[0].value;
-    expect(pm_instance.initialize).toHaveBeenCalledWith({
-      project_path: "/test/path",
-      watch: true,
-    });
+    expect(pm_instance.initialize).toHaveBeenCalledWith(
+      expect.objectContaining({
+        project_path: "/test/path",
+        watch: true,
+      }),
+    );
   });
 
   it("should pass toolsets to register_tool_groups as enabled_groups", async () => {

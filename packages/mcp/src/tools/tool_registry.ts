@@ -31,6 +31,8 @@ export interface RegisterToolGroupsOptions {
   project_manager: ProjectManager;
   project_path: string;
   enabled_groups: string[];
+  /** Optional persistence storage, shared with ProjectManager for scoped loads. */
+  storage?: import("@ariadnejs/core").PersistenceStorage;
 }
 
 /**
@@ -67,7 +69,7 @@ export function register_tool_groups(
   groups: ToolGroupDefinition[],
   options: RegisterToolGroupsOptions,
 ): void {
-  const { mcp_server, project_manager, project_path, enabled_groups } = options;
+  const { mcp_server, project_manager, project_path, enabled_groups, storage } = options;
   const registrar: ToolRegistrar = mcp_server;
 
   const active_groups = enabled_groups.length === 0
@@ -92,6 +94,7 @@ export function register_tool_groups(
               parsed_args as { files?: string[]; folders?: string[] },
               project_manager,
               project_path,
+              storage,
             );
             const result = await tool.handler(project, parsed_args);
 
