@@ -5,6 +5,7 @@ import { VERSION } from "./version";
 import { ProjectManager } from "./project_manager";
 import { initialize_logger, log_info } from "./logger";
 import {
+  close_analytics,
   init_analytics,
   is_analytics_enabled,
   record_session_client_info,
@@ -37,6 +38,7 @@ export async function start_server(
   const analytics_enabled = is_analytics_enabled();
   if (analytics_enabled) {
     init_analytics(project_path);
+    process.on("exit", close_analytics);
   }
 
   // Create McpServer (high-level API)

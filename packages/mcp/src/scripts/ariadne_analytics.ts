@@ -1,18 +1,13 @@
 #!/usr/bin/env node
-import Database from "better-sqlite3";
-import * as path from "path";
 import {
   calls_per_tool,
   calls_in_range,
   recent_sessions,
   session_detail,
+  read_sessions,
+  read_tool_calls,
 } from "../analytics/query_stats";
-
-function resolve_db_path(): string {
-  if (process.env.ARIADNE_ANALYTICS_DB) return process.env.ARIADNE_ANALYTICS_DB;
-  const home = process.env.HOME || process.env.USERPROFILE || "";
-  return path.join(home, ".ariadne", "analytics.db");
-}
+import { resolve_analytics_dir } from "../analytics/analytics";
 
 interface CliArgs {
   since?: string;
@@ -38,13 +33,13 @@ function pad_right(str: string, len: number): string {
 }
 
 function main(): void {
-  const db_path = resolve_db_path();
-  let db: Database.Database;
+  const dir = resolve_analytics_dir();
 
-  try {
-    db = new Database(db_path, { readonly: true });
-  } catch {
-    console.error(`Cannot open analytics DB at: ${db_path}`);
+  const sessions = read_sessions(dir);
+  const tool_calls = read_tool_calls(dir);
+
+  if (sessions.length === 0 && tool_calls.length === 0) {
+    console.error(`No analytics data found in: ${dir}`);
     console.error("Analytics may not be enabled. Set ARIADNE_ANALYTICS=1 in .mcp.json");
     process.exit(1);
   }
@@ -53,10 +48,9 @@ function main(): void {
 
   if (args.session) {
     // Per-session detail view
-    const calls = session_detail(db, args.session);
+    const calls = session_detail(tool_calls, args.session);
     if (calls.length === 0) {
       console.log(`No tool calls found for session: ${args.session}`);
-      db.close();
       return;
     }
 
@@ -66,32 +60,23 @@ function main(): void {
     for (const call of calls) {
       const status = call.success ? "OK" : `FAIL: ${call.error_message}`;
       console.log(
-        `  ${call.called_at}  ${pad_right(call.tool_name, 32)} ${call.duration_ms}ms  ${status}`
+        `  ${call.called_at}  ${pad_right(call.tool_name, 32)} ${call.duration_ms}ms  ${status}`,
       );
     }
 
-    db.close();
     return;
   }
 
   // Summary view
-  const sessions = recent_sessions(db, 5);
-  const total_sessions_row = db
-    .prepare("SELECT COUNT(*) as count FROM sessions")
-    .get() as { count: number };
-  const total_calls_row = db
-    .prepare("SELECT COUNT(*) as count FROM tool_calls")
-    .get() as { count: number };
-
   console.log("Ariadne Analytics Summary");
   console.log("=========================");
-  console.log(`Total sessions: ${total_sessions_row.count}`);
-  console.log(`Total tool calls: ${total_calls_row.count}`);
+  console.log(`Total sessions: ${sessions.length}`);
+  console.log(`Total tool calls: ${tool_calls.length}`);
 
   // Tool breakdown
   const tool_stats = args.since
-    ? calls_in_range(db, `${args.since}T00:00:00.000Z`, "9999-12-31T23:59:59.999Z")
-    : calls_per_tool(db);
+    ? calls_in_range(tool_calls, `${args.since}T00:00:00.000Z`, "9999-12-31T23:59:59.999Z")
+    : calls_per_tool(tool_calls);
 
   if (tool_stats.length > 0) {
     if (args.since) {
@@ -104,26 +89,25 @@ function main(): void {
     for (const stat of tool_stats) {
       const failures = stat.failure_count > 0 ? `, ${stat.failure_count} failures` : "";
       console.log(
-        `  ${pad_right(stat.tool_name + ":", max_name_len + 1)}  ${pad_right(String(stat.total_calls) + " calls", 12)} (avg ${stat.avg_duration_ms}ms${failures})`
+        `  ${pad_right(stat.tool_name + ":", max_name_len + 1)}  ${pad_right(String(stat.total_calls) + " calls", 12)} (avg ${stat.avg_duration_ms}ms${failures})`,
       );
     }
   }
 
   // Recent sessions
-  if (sessions.length > 0) {
-    console.log(`\nRecent sessions (last ${sessions.length}):`);
-    for (const s of sessions) {
+  const recent = recent_sessions(sessions, tool_calls, 5);
+  if (recent.length > 0) {
+    console.log(`\nRecent sessions (last ${recent.length}):`);
+    for (const s of recent) {
       const client = s.client_name
         ? `${s.client_name}@${s.client_version}`
         : "unknown-client";
       const timestamp = s.started_at.slice(0, 16);
       console.log(
-        `  ${s.session_id.slice(0, 8)}  ${timestamp}  ${pad_right(client, 22)} ${pad_right(s.project_path, 30)} ${s.call_count} calls`
+        `  ${s.session_id.slice(0, 8)}  ${timestamp}  ${pad_right(client, 22)} ${pad_right(s.project_path, 30)} ${s.call_count} calls`,
       );
     }
   }
-
-  db.close();
 }
 
 main();

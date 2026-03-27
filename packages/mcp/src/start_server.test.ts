@@ -32,6 +32,7 @@ vi.mock("./logger", () => ({
 vi.mock("./analytics/analytics", () => ({
   is_analytics_enabled: vi.fn().mockReturnValue(false),
   init_analytics: vi.fn(),
+  close_analytics: vi.fn(),
   record_session_client_info: vi.fn(),
 }));
 
