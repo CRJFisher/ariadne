@@ -43,12 +43,9 @@ vi.mock("./tools/core/tool_group", () => ({
   CORE_TOOL_GROUP: { group_name: "core", description: "Core tools", tools: [] },
 }));
 
-vi.mock("./resolve_cache_dir", () => ({
-  resolve_cache_dir: vi.fn().mockReturnValue("/mock/cache/dir"),
-}));
-
 vi.mock("@ariadnejs/core", () => ({
   FileSystemStorage: vi.fn().mockImplementation(() => ({})),
+  resolve_cache_dir: vi.fn().mockReturnValue("/mock/cache/dir"),
 }));
 
 describe("start_server", () => {

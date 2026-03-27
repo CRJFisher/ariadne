@@ -20,3 +20,4 @@ export {
   is_git_repo,
   query_git_file_state,
 } from "./git_change_detection";
+export { resolve_cache_dir, slugify_project_path } from "./resolve_cache_dir";

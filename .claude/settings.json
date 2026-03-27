@@ -15,21 +15,6 @@
         ]
       }
     ],
-    "PostToolUse": [
-      {
-        "matcher": "Write|Edit",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "cd \"$CLAUDE_PROJECT_DIR\" && pnpm exec tsx \"$CLAUDE_PROJECT_DIR/.claude/hooks/eslint_post_edit.ts\""
-          },
-          {
-            "type": "command",
-            "command": "cd \"$CLAUDE_PROJECT_DIR\" && pnpm exec tsx \"$CLAUDE_PROJECT_DIR/.claude/hooks/markdown_lint.ts\""
-          }
-        ]
-      }
-    ],
     "Stop": [
       {
         "hooks": [
