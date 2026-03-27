@@ -359,4 +359,27 @@ describe("Project", () => {
       expect(dependents).toContain(file2);
     });
   });
+
+  describe("parser buffer auto-adjustment", () => {
+    it("should parse large files by auto-growing the buffer", async () => {
+      const project = new Project();
+      await project.initialize();
+      const file = "large.ts" as FilePath;
+
+      // Generate a file larger than the 32KB default buffer
+      const lines: string[] = [];
+      for (let i = 0; i < 2000; i++) {
+        lines.push(`export function func_${i}(x: number): number { return x + ${i}; }`);
+      }
+      const large_content = lines.join("\n");
+      expect(large_content.length).toBeGreaterThan(32 * 1024);
+
+      // Should succeed without throwing
+      project.update_file(file, large_content);
+
+      const stats = project.get_stats();
+      expect(stats.file_count).toEqual(1);
+      expect(stats.definition_count).toBeGreaterThan(1000);
+    });
+  });
 });

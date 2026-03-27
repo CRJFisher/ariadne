@@ -123,6 +123,10 @@ export class Project {
   private index_single_filees: Map<FilePath, SemanticIndex> = new Map();
   private file_contents: Map<FilePath, string> = new Map();
 
+  // ===== Configuration =====
+  /** Buffer size for tree-sitter parser (auto-adjusts upward to fit largest file). */
+  private parser_buffer_size: number = 32 * 1024; // 32KB default, grows as needed
+
   // ===== Project-level registries (aggregated, incrementally updated) =====
   public definitions: DefinitionRegistry = new DefinitionRegistry();
   public types: TypeRegistry = new TypeRegistry();
@@ -180,7 +184,14 @@ export class Project {
     const language = detect_language(file_id);
     profiler.start("tree_sitter_parse");
     const parser = get_parser(language);
-    const tree = parser.parse(content);
+    // Auto-adjust buffer to fit the file (2x content length, minimum 1MB)
+    const needed = content.length * 2;
+    if (needed > this.parser_buffer_size) {
+      this.parser_buffer_size = needed;
+    }
+    const tree = parser.parse(content, undefined, {
+      bufferSize: this.parser_buffer_size,
+    });
     profiler.end("tree_sitter_parse");
     const parsed_file = create_parsed_file(file_id, content, tree, language);
     profiler.start("build_index");
