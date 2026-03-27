@@ -133,15 +133,25 @@ After running `prepare_triage.ts`, stop. The stop hook drives all remaining phas
 
 Each time you stop, the hook evaluates the triage state and either BLOCKs with instructions or ALLOWs completion:
 
-| Hook says                                                 | You do                                                                                               |
-| --------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
-| `Triage batch: entries [62, 63, ...]. State: <path>`      | Launch a **triage-investigator** per entry index (`prompt: "<N>"`, `run_in_background: true`). Stop. |
-| `All entries triaged. Phase transitioned to aggregation.` | Launch one **triage-aggregator** (`prompt: "<state_path>"`). Stop.                                   |
-| `Phase transitioned to meta-review.`                      | Launch one **triage-rule-reviewer** (`prompt: "<state_path>"`). Stop.                                |
-| Fix planning instructions                                 | Follow sub-phase instructions for fix-planner/synthesizer/reviewer/task-writer.                      |
-| (ALLOW — no block)                                        | Run `finalize_triage.ts`.                                                                            |
+| Hook says                                                 | You do                                                                                              |
+| --------------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
+| `Triage batch: entries [62, 63, ...]. State: <path>`      | Launch a **triage-investigator** per entry (see prompt below), `run_in_background: true`. Stop.     |
+| `All entries triaged. Phase transitioned to aggregation.` | Launch one **triage-aggregator** (`prompt: "<state_path>"`). Stop.                                  |
+| `Phase transitioned to meta-review.`                      | Launch one **triage-rule-reviewer** (`prompt: "<state_path>"`). Stop.                               |
+| Fix planning instructions                                 | Follow sub-phase instructions for fix-planner/synthesizer/reviewer/task-writer.                     |
+| (ALLOW — no block)                                        | Run `finalize_triage.ts`.                                                                           |
 
-The hook handles result merging, validation, phase transitions, and batch coordination. Sub-agents fetch their own context via `scripts/get_entry_context.ts` — the main agent never reads entry data, diagnostics, or templates.
+The hook handles result merging, validation, phase transitions, and batch coordination.
+
+**Triage investigator prompt — pre-fetch context:**
+
+For each entry index N in the batch, run the context script and pass its output as the agent prompt:
+
+```bash
+node --import tsx .claude/skills/self-repair-pipeline/scripts/get_entry_context.ts --entry <N>
+```
+
+The script outputs the complete investigation prompt (entry metadata, pre-gathered evidence, diagnosis-specific steps, output path). Pass this output directly as the `prompt` parameter to the triage-investigator agent. Do not read or interpret the output — just pass it through.
 
 ## Phase 4: Fix Planning
 
