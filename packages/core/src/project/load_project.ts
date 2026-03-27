@@ -196,7 +196,11 @@ export async function load_project(
         continue; // Skip unreadable files
       }
 
-      project.update_file(fp, content);
+      try {
+        project.update_file(fp, content);
+      } catch {
+        continue; // Skip files that fail to parse (unsupported content)
+      }
 
       // Update cache for this file
       if (storage) {
