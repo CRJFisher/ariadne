@@ -5,7 +5,7 @@ user_invocable: false
 
 # MCP Analytics
 
-Query Ariadne MCP tool usage analytics from the SQLite database.
+Query Ariadne MCP tool usage analytics from JSONL files.
 
 ## When to Use
 
@@ -31,7 +31,7 @@ For per-session detail:
 npx tsx packages/mcp/src/scripts/ariadne_analytics.ts --session <session-id>
 ```
 
-The DB path defaults to `~/.ariadne/analytics.db`. Override with `ARIADNE_ANALYTICS_DB` env var.
+The data directory defaults to `~/.ariadne/analytics/`. Override with `ARIADNE_ANALYTICS_DIR` env var.
 
 ## Interpreting Results
 
@@ -41,3 +41,14 @@ The DB path defaults to `~/.ariadne/analytics.db`. Override with `ARIADNE_ANALYT
 - **Recent sessions**: Last N sessions with client info, project path, and call count
 
 High failure counts or increasing average durations indicate performance issues worth investigating.
+
+## Optional: SQLite Import
+
+The JSONL files can be converted to CSV and imported into SQLite for ad-hoc queries:
+
+```bash
+cd ~/.ariadne/analytics
+jq -r '[.session_id, .started_at, .project_path, .client_name, .client_version] | @csv' sessions.jsonl > sessions.csv
+jq -r '[.session_id, .tool_name, .called_at, .duration_ms, .success, .error_message, .arguments, .request_id, .tool_use_id] | @csv' tool_calls.jsonl > tool_calls.csv
+sqlite3 analytics.db ".mode csv" ".import sessions.csv sessions" ".import tool_calls.csv tool_calls"
+```

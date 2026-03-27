@@ -34,7 +34,6 @@ describe("MCP Server E2E - list_entrypoints tool", () => {
         ...process.env,
         PROJECT_PATH: PACKAGES_CORE_PATH,
         ARIADNE_ANALYTICS: "",
-        ARIADNE_ANALYTICS_DB: ":memory:",
       },
     });
 

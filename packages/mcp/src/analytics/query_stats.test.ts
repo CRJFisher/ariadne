@@ -1,5 +1,4 @@
-import { describe, it, expect, beforeEach, afterEach } from "vitest";
-import Database from "better-sqlite3";
+import { describe, it, expect } from "vitest";
 import {
   calls_per_tool,
   calls_in_range,
@@ -8,83 +7,96 @@ import {
   ToolCallSummary,
   SessionSummary,
   ToolCallDetail,
+  SessionRow,
+  ToolCallRow,
 } from "./query_stats";
 
-const SCHEMA = `
-CREATE TABLE sessions (
-  session_id      TEXT PRIMARY KEY,
-  started_at      TEXT NOT NULL,
-  project_path    TEXT NOT NULL,
-  client_name     TEXT,
-  client_version  TEXT
-);
+const SESSIONS: SessionRow[] = [
+  {
+    session_id: "s1",
+    started_at: "2026-02-17T10:00:00.000Z",
+    project_path: "/project-a",
+    client_name: "claude-code",
+    client_version: "1.0.22",
+  },
+  {
+    session_id: "s2",
+    started_at: "2026-02-16T14:00:00.000Z",
+    project_path: "/project-b",
+    client_name: "claude-code",
+    client_version: "1.0.21",
+  },
+  {
+    session_id: "s3",
+    started_at: "2026-02-15T08:00:00.000Z",
+    project_path: "/project-a",
+    client_name: null,
+    client_version: null,
+  },
+];
 
-CREATE TABLE tool_calls (
-  id            INTEGER PRIMARY KEY AUTOINCREMENT,
-  session_id    TEXT NOT NULL,
-  tool_name     TEXT NOT NULL,
-  called_at     TEXT NOT NULL,
-  duration_ms   INTEGER NOT NULL,
-  success       INTEGER NOT NULL,
-  error_message TEXT,
-  arguments     TEXT NOT NULL,
-  request_id    TEXT,
-  tool_use_id   TEXT,
-  FOREIGN KEY (session_id) REFERENCES sessions(session_id)
-);
-
-CREATE INDEX idx_tool_calls_session ON tool_calls(session_id);
-CREATE INDEX idx_tool_calls_tool_name ON tool_calls(tool_name);
-CREATE INDEX idx_tool_calls_called_at ON tool_calls(called_at);
-`;
-
-function seed_db(db: Database.Database): void {
-  db.exec(SCHEMA);
-
-  // Insert sessions
-  db.prepare(
-    "INSERT INTO sessions VALUES (?, ?, ?, ?, ?)"
-  ).run("s1", "2026-02-17T10:00:00.000Z", "/project-a", "claude-code", "1.0.22");
-
-  db.prepare(
-    "INSERT INTO sessions VALUES (?, ?, ?, ?, ?)"
-  ).run("s2", "2026-02-16T14:00:00.000Z", "/project-b", "claude-code", "1.0.21");
-
-  db.prepare(
-    "INSERT INTO sessions VALUES (?, ?, ?, ?, ?)"
-  ).run("s3", "2026-02-15T08:00:00.000Z", "/project-a", null, null);
-
-  // Insert tool calls for s1
-  const insert_call = db.prepare(
-    "INSERT INTO tool_calls (session_id, tool_name, called_at, duration_ms, success, error_message, arguments, request_id, tool_use_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)"
-  );
-
-  insert_call.run("s1", "list_entrypoints", "2026-02-17T10:01:00.000Z", 400, 1, null, "{\"files\":[\"a.ts\"]}", "r1", "toolu_abc1");
-  insert_call.run("s1", "list_entrypoints", "2026-02-17T10:02:00.000Z", 500, 1, null, "{}", "r2", null);
-  insert_call.run("s1", "show_call_graph_neighborhood", "2026-02-17T10:03:00.000Z", 200, 1, null, "{\"symbol_ref\":\"a:1#f\"}", "r3", "toolu_abc3");
-  insert_call.run("s1", "list_entrypoints", "2026-02-17T10:04:00.000Z", 100, 0, "Timeout", "{}", "r4", null);
-
-  // Insert tool calls for s2
-  insert_call.run("s2", "show_call_graph_neighborhood", "2026-02-16T14:01:00.000Z", 300, 1, null, "{\"symbol_ref\":\"b:2#g\"}", "r5", "toolu_abc5");
-
-  // s3 has no tool calls
-}
+const TOOL_CALLS: ToolCallRow[] = [
+  {
+    session_id: "s1",
+    tool_name: "list_entrypoints",
+    called_at: "2026-02-17T10:01:00.000Z",
+    duration_ms: 400,
+    success: true,
+    error_message: null,
+    arguments: { files: ["a.ts"] },
+    request_id: "r1",
+    tool_use_id: "toolu_abc1",
+  },
+  {
+    session_id: "s1",
+    tool_name: "list_entrypoints",
+    called_at: "2026-02-17T10:02:00.000Z",
+    duration_ms: 500,
+    success: true,
+    error_message: null,
+    arguments: {},
+    request_id: "r2",
+    tool_use_id: null,
+  },
+  {
+    session_id: "s1",
+    tool_name: "show_call_graph_neighborhood",
+    called_at: "2026-02-17T10:03:00.000Z",
+    duration_ms: 200,
+    success: true,
+    error_message: null,
+    arguments: { symbol_ref: "a:1#f" },
+    request_id: "r3",
+    tool_use_id: "toolu_abc3",
+  },
+  {
+    session_id: "s1",
+    tool_name: "list_entrypoints",
+    called_at: "2026-02-17T10:04:00.000Z",
+    duration_ms: 100,
+    success: false,
+    error_message: "Timeout",
+    arguments: {},
+    request_id: "r4",
+    tool_use_id: null,
+  },
+  {
+    session_id: "s2",
+    tool_name: "show_call_graph_neighborhood",
+    called_at: "2026-02-16T14:01:00.000Z",
+    duration_ms: 300,
+    success: true,
+    error_message: null,
+    arguments: { symbol_ref: "b:2#g" },
+    request_id: "r5",
+    tool_use_id: "toolu_abc5",
+  },
+];
 
 describe("query_stats", () => {
-  let db: Database.Database;
-
-  beforeEach(() => {
-    db = new Database(":memory:");
-    seed_db(db);
-  });
-
-  afterEach(() => {
-    db.close();
-  });
-
   describe("calls_per_tool", () => {
     it("returns correct aggregates per tool", () => {
-      const result = calls_per_tool(db);
+      const result = calls_per_tool(TOOL_CALLS);
 
       const expected: ToolCallSummary[] = [
         {
@@ -106,21 +118,17 @@ describe("query_stats", () => {
       expect(result).toEqual(expected);
     });
 
-    it("returns empty array for empty DB", () => {
-      const empty_db = new Database(":memory:");
-      empty_db.exec(SCHEMA);
-
-      expect(calls_per_tool(empty_db)).toEqual([]);
-      empty_db.close();
+    it("returns empty array for empty input", () => {
+      expect(calls_per_tool([])).toEqual([]);
     });
   });
 
   describe("calls_in_range", () => {
     it("filters by date range correctly", () => {
       const result = calls_in_range(
-        db,
+        TOOL_CALLS,
         "2026-02-17T00:00:00.000Z",
-        "2026-02-17T23:59:59.999Z"
+        "2026-02-17T23:59:59.999Z",
       );
 
       const expected: ToolCallSummary[] = [
@@ -145,9 +153,9 @@ describe("query_stats", () => {
 
     it("returns empty array when no calls in range", () => {
       const result = calls_in_range(
-        db,
+        TOOL_CALLS,
         "2026-01-01T00:00:00.000Z",
-        "2026-01-01T23:59:59.999Z"
+        "2026-01-01T23:59:59.999Z",
       );
 
       expect(result).toEqual([]);
@@ -156,7 +164,7 @@ describe("query_stats", () => {
 
   describe("recent_sessions", () => {
     it("returns sessions with call counts ordered by date desc", () => {
-      const result = recent_sessions(db, 3);
+      const result = recent_sessions(SESSIONS, TOOL_CALLS, 3);
 
       const expected: SessionSummary[] = [
         {
@@ -189,13 +197,13 @@ describe("query_stats", () => {
     });
 
     it("respects limit parameter", () => {
-      const result = recent_sessions(db, 1);
+      const result = recent_sessions(SESSIONS, TOOL_CALLS, 1);
       expect(result.length).toEqual(1);
       expect(result[0].session_id).toEqual("s1");
     });
 
     it("includes client info in session summaries", () => {
-      const result = recent_sessions(db, 1);
+      const result = recent_sessions(SESSIONS, TOOL_CALLS, 1);
       expect(result[0].client_name).toEqual("claude-code");
       expect(result[0].client_version).toEqual("1.0.22");
     });
@@ -203,11 +211,10 @@ describe("query_stats", () => {
 
   describe("session_detail", () => {
     it("returns all calls for a specific session", () => {
-      const result = session_detail(db, "s1");
+      const result = session_detail(TOOL_CALLS, "s1");
 
       const expected: ToolCallDetail[] = [
         {
-          id: 1,
           tool_name: "list_entrypoints",
           called_at: "2026-02-17T10:01:00.000Z",
           duration_ms: 400,
@@ -218,7 +225,6 @@ describe("query_stats", () => {
           tool_use_id: "toolu_abc1",
         },
         {
-          id: 2,
           tool_name: "list_entrypoints",
           called_at: "2026-02-17T10:02:00.000Z",
           duration_ms: 500,
@@ -229,7 +235,6 @@ describe("query_stats", () => {
           tool_use_id: null,
         },
         {
-          id: 3,
           tool_name: "show_call_graph_neighborhood",
           called_at: "2026-02-17T10:03:00.000Z",
           duration_ms: 200,
@@ -240,7 +245,6 @@ describe("query_stats", () => {
           tool_use_id: "toolu_abc3",
         },
         {
-          id: 4,
           tool_name: "list_entrypoints",
           called_at: "2026-02-17T10:04:00.000Z",
           duration_ms: 100,
@@ -256,11 +260,11 @@ describe("query_stats", () => {
     });
 
     it("returns empty array for session with no calls", () => {
-      expect(session_detail(db, "s3")).toEqual([]);
+      expect(session_detail(TOOL_CALLS, "s3")).toEqual([]);
     });
 
     it("returns empty array for non-existent session", () => {
-      expect(session_detail(db, "nonexistent")).toEqual([]);
+      expect(session_detail(TOOL_CALLS, "nonexistent")).toEqual([]);
     });
   });
 });

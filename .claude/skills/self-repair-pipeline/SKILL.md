@@ -8,7 +8,7 @@ hooks:
   Stop:
     - hooks:
         - type: command
-          command: "pnpm exec tsx \"$CLAUDE_PROJECT_DIR/.claude/skills/self-repair-pipeline/scripts/triage_loop_stop.ts\""
+          command: 'pnpm exec tsx "$CLAUDE_PROJECT_DIR/.claude/skills/self-repair-pipeline/scripts/triage_loop_stop.ts"'
           timeout: 30
 ---
 
@@ -18,13 +18,13 @@ Triage pipeline for entry point analysis: detect false positives, classify root 
 
 ## Pipeline Overview
 
-| Phase | Script / Agent | Purpose |
-| ----- | -------------- | ------- |
-| 1. Detect | `scripts/detect_entrypoints.ts` | Run entry point detection |
-| 2. Prepare | `scripts/prepare_triage.ts` | Classify against known-entrypoints registry, build triage state |
-| 3. Triage Loop | triage-investigator, triage-aggregator, triage-rule-reviewer | Investigate pending entries, aggregate results, review for patterns |
-| 4. Fix Planning | fix-planner, plan-synthesizer, plan-reviewer, task-writer | Generate competing fix plans, synthesize, review, create tasks |
-| 5. Finalize | `scripts/finalize_triage.ts` | Save results, update registry |
+| Phase           | Script / Agent                                               | Purpose                                                             |
+| --------------- | ------------------------------------------------------------ | ------------------------------------------------------------------- |
+| 1. Detect       | `scripts/detect_entrypoints.ts`                              | Run entry point detection                                           |
+| 2. Prepare      | `scripts/prepare_triage.ts`                                  | Classify against known-entrypoints registry, build triage state     |
+| 3. Triage Loop  | triage-investigator, triage-aggregator, triage-rule-reviewer | Investigate pending entries, aggregate results, review for patterns |
+| 4. Fix Planning | fix-planner, plan-synthesizer, plan-reviewer, task-writer    | Generate competing fix plans, synthesize, review, create tasks      |
+| 5. Finalize     | `scripts/finalize_triage.ts`                                 | Save results, update registry                                       |
 
 ## Analysis Target
 
@@ -32,21 +32,21 @@ Triage pipeline for entry point analysis: detect false positives, classify root 
 
 Resolve the analysis target from the user's input using this routing table:
 
-| Input pattern | Example | Action |
-| ------------- | ------- | ------ |
-| Empty or blank | `/self-repair-pipeline` | List available configs below, ask user what to analyze |
-| Config name | `core`, `mcp`, `types`, `projections` | Use `--config .claude/skills/self-repair-pipeline/project_configs/{name}.json` |
-| Absolute or relative directory path | `/Users/chuck/workspace/some-repo`, `../other-repo` | Use `--path <path>` |
-| `owner/repo` or GitHub URL | `anthropics/sdk-python`, `https://github.com/owner/repo` | Use `--github <value>` |
-| Natural language | "analyze the core package" | Interpret intent and map to one of the above |
+| Input pattern                       | Example                                                  | Action                                                                         |
+| ----------------------------------- | -------------------------------------------------------- | ------------------------------------------------------------------------------ |
+| Empty or blank                      | `/self-repair-pipeline`                                  | List available configs below, ask user what to analyze                         |
+| Config name                         | `core`, `mcp`, `types`, `projections`                    | Use `--config .claude/skills/self-repair-pipeline/project_configs/{name}.json` |
+| Absolute or relative directory path | `/Users/chuck/workspace/some-repo`, `../other-repo`      | Use `--path <path>`                                                            |
+| `owner/repo` or GitHub URL          | `anthropics/sdk-python`, `https://github.com/owner/repo` | Use `--github <value>`                                                         |
+| Natural language                    | "analyze the core package"                               | Interpret intent and map to one of the above                                   |
 
 Available project configs:
 
-| Config name | Config path |
-| ----------- | ----------- |
-| `core` | `project_configs/core.json` |
-| `mcp` | `project_configs/mcp.json` |
-| `types` | `project_configs/types.json` |
+| Config name   | Config path                        |
+| ------------- | ---------------------------------- |
+| `core`        | `project_configs/core.json`        |
+| `mcp`         | `project_configs/mcp.json`         |
+| `types`       | `project_configs/types.json`       |
 | `projections` | `project_configs/projections.json` |
 
 If no arguments are provided or the input is ambiguous, **ask the user** before proceeding.
@@ -57,14 +57,14 @@ If no arguments are provided or the input is ambiguous, **ask the user** before 
 
 ## State and Output Locations
 
-| File | Purpose |
-| ---- | ------- |
-| `triage_state/{project}_triage.json` | Active triage state (phases, entries, results) |
-| `triage_state/results/{entry_index}.json` | Per-entry triage result files (written by sub-agents) |
-| `triage_state/fix_plans/{group_id}/` | Fix plans, synthesis, and reviews per group |
-| `analysis_output/{project}/` | Project-scoped timestamped analysis and triage result files |
-| `known_entrypoints/{project}.json` | Known-entrypoints registry (persists across runs) |
-| `triage_patterns.json` | Extracted classification patterns from meta-review |
+| File                                      | Purpose                                                     |
+| ----------------------------------------- | ----------------------------------------------------------- |
+| `triage_state/{project}_triage.json`      | Active triage state (phases, entries, results)              |
+| `triage_state/results/{entry_index}.json` | Per-entry triage result files (written by sub-agents)       |
+| `triage_state/fix_plans/{group_id}/`      | Fix plans, synthesis, and reviews per group                 |
+| `analysis_output/{project}/`              | Project-scoped timestamped analysis and triage result files |
+| `known_entrypoints/{project}.json`        | Known-entrypoints registry (persists across runs)           |
+| `triage_patterns.json`                    | Extracted classification patterns from meta-review          |
 
 All paths above are relative to `.claude/skills/self-repair-pipeline/`.
 
@@ -120,12 +120,12 @@ For each pending entry in the state file:
 
 1. Read the entry's `diagnosis` field to select the prompt template:
 
-   | Diagnosis | Template | Focus |
-   | --------- | -------- | ----- |
-   | `callers-not-in-registry` | `templates/prompt_callers_not_in_registry.md` | File coverage gap investigation |
-   | `callers-in-registry-unresolved` | `templates/prompt_resolution_failure.md` | Resolution failure pattern identification |
-   | `callers-in-registry-wrong-target` | `templates/prompt_wrong_target.md` | Wrong resolution target analysis |
-   | All other diagnoses | `templates/prompt_generic.md` | Broad investigation |
+   | Diagnosis                          | Template                                      | Focus                                     |
+   | ---------------------------------- | --------------------------------------------- | ----------------------------------------- |
+   | `callers-not-in-registry`          | `templates/prompt_callers_not_in_registry.md` | File coverage gap investigation           |
+   | `callers-in-registry-unresolved`   | `templates/prompt_resolution_failure.md`      | Resolution failure pattern identification |
+   | `callers-in-registry-wrong-target` | `templates/prompt_wrong_target.md`            | Wrong resolution target analysis          |
+   | All other diagnoses                | `templates/prompt_generic.md`                 | Broad investigation                       |
 
 2. Read the template and substitute `{{entry.*}}` placeholders with values from the entry
 3. Launch a **triage-investigator** sub-agent with `run_in_background: true`. Include `output_path` = `triage_state/results/{entry.entry_index}.json` in the prompt
@@ -215,16 +215,16 @@ Finalization:
 
 All library modules live under `src/`:
 
-| Module | Purpose |
-| ------ | ------- |
-| `extract_entry_points.ts` | Shared extraction with enriched metadata + diagnostics |
-| `classify_entrypoints.ts` | Deterministic rule-based classification (no LLM) |
-| `known_entrypoints.ts` | Known-entrypoints registry I/O and matching |
-| `build_triage_entries.ts` | Build triage entries from classification results |
-| `build_finalization_output.ts` | Build finalization output from completed state |
-| `types.ts` | Shared type definitions (`EnrichedFunctionEntry`, `EntryPointDiagnostics`, etc.) |
-| `triage_state_types.ts` | Triage state machine types |
-| `analysis_io.ts` | Analysis file lookup, JSON I/O |
+| Module                         | Purpose                                                                          |
+| ------------------------------ | -------------------------------------------------------------------------------- |
+| `extract_entry_points.ts`      | Shared extraction with enriched metadata + diagnostics                           |
+| `classify_entrypoints.ts`      | Deterministic rule-based classification (no LLM)                                 |
+| `known_entrypoints.ts`         | Known-entrypoints registry I/O and matching                                      |
+| `build_triage_entries.ts`      | Build triage entries from classification results                                 |
+| `build_finalization_output.ts` | Build finalization output from completed state                                   |
+| `types.ts`                     | Shared type definitions (`EnrichedFunctionEntry`, `EntryPointDiagnostics`, etc.) |
+| `triage_state_types.ts`        | Triage state machine types                                                       |
+| `analysis_io.ts`               | Analysis file lookup, JSON I/O                                                   |
 
 ## Reference
 
@@ -234,12 +234,12 @@ All library modules live under `src/`:
 
 ## Sub-Agents
 
-| Agent | Model | Purpose |
-| ----- | ----- | ------- |
-| triage-investigator | sonnet | Investigate a single pending entry using diagnosis-specific prompt template |
-| triage-aggregator | sonnet | Review all entry results, group by root cause, merge duplicates |
+| Agent                | Model  | Purpose                                                                     |
+| -------------------- | ------ | --------------------------------------------------------------------------- |
+| triage-investigator  | sonnet | Investigate a single pending entry using diagnosis-specific prompt template |
+| triage-aggregator    | sonnet | Review all entry results, group by root cause, merge duplicates             |
 | triage-rule-reviewer | sonnet | Analyze false-positive patterns, propose deterministic classification rules |
-| fix-planner | sonnet | Generate one independent fix proposal for a false-positive group |
-| plan-synthesizer | opus | Synthesize 5 competing plans into a unified fix approach |
-| plan-reviewer | sonnet | Review synthesized plan from one specific angle |
-| task-writer | sonnet | Create a backlog task from synthesis + reviews using the task template |
+| fix-planner          | sonnet | Generate one independent fix proposal for a false-positive group            |
+| plan-synthesizer     | opus   | Synthesize 5 competing plans into a unified fix approach                    |
+| plan-reviewer        | sonnet | Review synthesized plan from one specific angle                             |
+| task-writer          | sonnet | Create a backlog task from synthesis + reviews using the task template      |

@@ -53,12 +53,10 @@
     "@ariadnejs/core": "workspace:*",
     "@ariadnejs/types": "workspace:*",
     "@modelcontextprotocol/sdk": "^1.26.0",
-    "better-sqlite3": "^11.0.0",
     "chokidar": "^3.6.0",
     "zod": "^3.22.0"
   },
   "devDependencies": {
-    "@types/better-sqlite3": "^7.6.0",
     "@types/node": "^20.0.0",
     "@vitest/ui": "^3.2.4",
     "vitest": "^3.2.4"
