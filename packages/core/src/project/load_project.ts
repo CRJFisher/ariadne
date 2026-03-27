@@ -198,8 +198,13 @@ export async function load_project(
 
       try {
         project.update_file(fp, content);
-      } catch {
-        continue; // Skip files that fail to parse (unsupported content)
+      } catch (error) {
+        console.warn(
+          `[ariadne] Skipping ${file_path}: ${
+            error instanceof Error ? error.message : error
+          }`,
+        );
+        continue;
       }
 
       // Update cache for this file
