@@ -34,7 +34,10 @@ import {
   find_source_files,
   IGNORED_DIRECTORIES,
   parse_gitignore,
+  FileSystemStorage,
+  resolve_cache_dir,
 } from "@ariadnejs/core";
+import type { PersistenceStorage } from "@ariadnejs/core";
 import type { EnrichedFunctionEntry } from "../src/types.js";
 import {
   build_constructor_to_class_name_map,
@@ -282,6 +285,7 @@ async function analyze_directory(
     include_tests: boolean;
     folders?: string[];
     exclude?: string[];
+    storage?: PersistenceStorage;
   }
 ): Promise<{
   files_analyzed: number;
@@ -310,8 +314,10 @@ async function analyze_directory(
     folders: options.folders,
     exclude,
     file_filter: test_file_filter,
+    storage: options.storage,
   });
   console.error(`Project loaded in ${Date.now() - load_start}ms`);
+  console.error(`Cache: ${options.storage ? "enabled" : "disabled"}`);
 
   const stats = project.get_stats();
   console.error(`Found ${stats.file_count} indexed files`);
@@ -463,6 +469,16 @@ async function main() {
     process.exit(1);
   }
 
+  // Create storage for local paths only (GitHub clones use temp dirs — caching is pointless)
+  let storage: PersistenceStorage | undefined;
+  if (source_info.type === "local") {
+    const cache_dir = resolve_cache_dir(project_path);
+    if (cache_dir) {
+      storage = new FileSystemStorage(cache_dir);
+      console.error(`Cache directory: ${cache_dir}`);
+    }
+  }
+
   try {
     // Run analysis
     const { files_analyzed, entry_points } = await analyze_directory(
@@ -471,6 +487,7 @@ async function main() {
         include_tests,
         folders,
         exclude,
+        storage,
       }
     );
 

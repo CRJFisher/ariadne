@@ -7,7 +7,8 @@
  * Blocks if unexpected entry points are found.
  */
 
-import { load_project } from "@ariadnejs/core";
+import { load_project, FileSystemStorage, resolve_cache_dir } from "@ariadnejs/core";
+import type { PersistenceStorage } from "@ariadnejs/core";
 import * as fs from "fs/promises";
 import * as path from "path";
 import { execSync } from "child_process";
@@ -110,13 +111,15 @@ async function load_whitelist(project_dir: string, package_name: string): Promis
  */
 async function analyze_package(
   project_dir: string,
-  package_name: string
+  package_name: string,
+  storage: PersistenceStorage | undefined,
 ): Promise<EntryPoint[]> {
   const src_folder = path.join("packages", package_name, "src");
 
   const project = await load_project({
     project_path: project_dir,
     folders: [src_folder],
+    storage,
   });
 
   const call_graph = project.get_call_graph();
@@ -153,6 +156,11 @@ async function main(): Promise<void> {
   const project_dir = process.env.CLAUDE_PROJECT_DIR || process.cwd();
   log(`Project dir: ${project_dir}`);
 
+  // Resolve cache directory and create storage
+  const cache_dir = resolve_cache_dir(project_dir);
+  const storage = cache_dir ? new FileSystemStorage(cache_dir) : undefined;
+  log(`Cache: ${cache_dir ?? "disabled"}`);
+
   // Get modified packages
   const modified_packages = get_modified_packages(project_dir);
   if (modified_packages.length === 0) {
@@ -169,7 +177,7 @@ async function main(): Promise<void> {
   for (const pkg of modified_packages) {
     log(`Analyzing package: ${pkg}`);
     try {
-      const unexpected = await analyze_package(project_dir, pkg);
+      const unexpected = await analyze_package(project_dir, pkg, storage);
       if (unexpected.length > 0) {
         all_unexpected.push({ package: pkg, entry_points: unexpected });
       }

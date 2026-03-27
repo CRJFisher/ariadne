@@ -46,3 +46,4 @@ export {
 // Persistence
 export type { PersistenceStorage } from "./persistence/storage";
 export { FileSystemStorage } from "./persistence/file_system_storage";
+export { resolve_cache_dir, slugify_project_path } from "./persistence/resolve_cache_dir";

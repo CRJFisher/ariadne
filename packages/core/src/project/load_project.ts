@@ -170,6 +170,9 @@ export async function load_project(
     manifest ? manifest.entries : [],
   );
 
+  let cache_hits = 0;
+  let cache_misses = 0;
+
   for (const file_path of final_files) {
     const fp = file_path as FilePath;
     let used_cache = false;
@@ -184,10 +187,14 @@ export async function load_project(
           fp,
           storage,
         );
+        if (used_cache) {
+          cache_hits++;
+        }
       }
     }
 
     if (!used_cache) {
+      cache_misses++;
       // Cache miss — read file and full index
       let content: string;
       try {
@@ -230,6 +237,14 @@ export async function load_project(
         }
       }
     }
+  }
+
+  // Log cache statistics
+  if (storage) {
+    const total = cache_hits + cache_misses;
+    console.warn(
+      `[ariadne:persistence] Loaded ${total} files: ${cache_hits} from cache, ${cache_misses} re-indexed`,
+    );
   }
 
   // Write updated manifest
