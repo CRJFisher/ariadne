@@ -83,7 +83,7 @@ If no arguments are provided or the input is ambiguous, **ask the user** before 
 
 `{project}` is the short name for internal packages (e.g., `core`) or the full path identifier for external projects (e.g., `-Users-chuck-workspace-AmazonAdv-projections`).
 
-All paths above are relative to `.claude/self-repair-pipeline-state/`.
+All paths above are relative to `~/.ariadne/self-repair-pipeline/`.
 
 ## Phase 1: Detect
 
@@ -113,7 +113,7 @@ Build triage state from the latest analysis output:
 
 ```bash
 node --import tsx .claude/skills/self-repair-pipeline/scripts/prepare_triage.ts \
-  --analysis .claude/self-repair-pipeline-state/analysis_output/<project>/detect_entrypoints/<timestamp>.json \
+  --analysis ~/.ariadne/self-repair-pipeline/analysis_output/<project>/detect_entrypoints/<timestamp>.json \
   --package <name> \
   --batch-size 5
 ```
@@ -200,7 +200,7 @@ After the stop hook ALLOWs completion (all phases done or error exit), run final
 
 ```bash
 node --import tsx .claude/skills/self-repair-pipeline/scripts/finalize_triage.ts \
-  --state .claude/self-repair-pipeline-state/triage_state/{project}_triage.json
+  --state ~/.ariadne/self-repair-pipeline/triage_state/{project}_triage.json
 ```
 
 Finalization:

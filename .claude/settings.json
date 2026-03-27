@@ -1,7 +1,7 @@
 {
   "permissions": {
     "allow": [
-      "Write(.claude/self-repair-pipeline-state/**)"
+      "Write(~/.ariadne/self-repair-pipeline/**)"
     ]
   },
   "hooks": {
