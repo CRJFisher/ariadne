@@ -1,15 +1,16 @@
-import { Project } from "@ariadnejs/core";
+import { Project, load_project } from "@ariadnejs/core";
+import type { PersistenceStorage } from "@ariadnejs/core";
 import { FilePath } from "@ariadnejs/types";
 import * as chokidar from "chokidar";
-import * as fs from "fs/promises";
 import { create_file_watcher, FileWatcherOptions } from "./file_watcher";
-import { find_source_files } from "@ariadnejs/core";
 import { log_info, log_warn } from "./logger";
 
 export interface ProjectManagerOptions {
   project_path: string;
   watch?: boolean;
   debounce_ms?: number;
+  /** Optional persistence storage for caching SemanticIndex data between invocations. */
+  storage?: PersistenceStorage;
 }
 
 /**
@@ -20,6 +21,7 @@ export class ProjectManager {
   private project: Project;
   private watcher: chokidar.FSWatcher | null = null;
   private project_path: string;
+  private storage: PersistenceStorage | null = null;
   private initialized = false;
   private files_loaded = false;
 
@@ -30,7 +32,8 @@ export class ProjectManager {
 
   /**
    * Initialize the project manager with a project path.
-   * This initializes the Project but does not load any files yet.
+   * This initializes a placeholder Project and optionally starts file watching.
+   * Call load_all_files() afterwards to populate the project index.
    */
   async initialize(options: ProjectManagerOptions): Promise<void> {
     if (this.initialized) {
@@ -38,6 +41,9 @@ export class ProjectManager {
     }
 
     this.project_path = options.project_path;
+    this.storage = options.storage ?? null;
+
+    // Initialize placeholder project (for watcher callbacks before load_all_files completes)
     await this.project.initialize(this.project_path as FilePath);
     this.initialized = true;
 
@@ -51,7 +57,8 @@ export class ProjectManager {
 
   /**
    * Load all source files from the project directory.
-   * This should be called after initialize() to populate the project index.
+   * Delegates to load_project() which handles persistence (cache read/write)
+   * and git-accelerated change detection automatically.
    */
   async load_all_files(): Promise<void> {
     if (!this.initialized) {
@@ -61,21 +68,14 @@ export class ProjectManager {
     log_info(`Loading project files from: ${this.project_path}`);
     const start_time = Date.now();
 
-    const files = await find_source_files(this.project_path, this.project_path);
-    let loaded_count = 0;
-
-    for (const file_path of files) {
-      try {
-        const content = await fs.readFile(file_path, "utf-8");
-        this.project.update_file(file_path as FilePath, content);
-        loaded_count++;
-      } catch (error) {
-        log_warn(`Skipping file ${file_path}: ${error}`);
-      }
-    }
+    this.project = await load_project({
+      project_path: this.project_path,
+      storage: this.storage ?? undefined,
+    });
 
     const duration = Date.now() - start_time;
-    log_info(`Loaded ${loaded_count} files in ${duration}ms`);
+    const stats = this.project.get_stats();
+    log_info(`Loaded ${stats.file_count} files in ${duration}ms`);
 
     this.files_loaded = true;
   }

@@ -189,6 +189,7 @@ describe("register_tool_groups", () => {
       { files: ["src/main.ts"] },
       mock_project_manager,
       "/project",
+      undefined,
     );
   });
 });

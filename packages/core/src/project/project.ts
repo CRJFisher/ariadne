@@ -27,6 +27,14 @@ import type { FileSystemFolder } from "../resolve_references/file_folders";
 import { readdir, realpath } from "fs/promises";
 import { join } from "path";
 import { profiler } from "../profiling";
+import type { PersistenceStorage } from "../persistence/storage";
+import { compute_content_hash } from "../persistence/content_hash";
+import type { CacheManifestEntry } from "../persistence/cache_manifest";
+import {
+  CURRENT_SCHEMA_VERSION,
+  serialize_manifest,
+} from "../persistence/cache_manifest";
+import { serialize_semantic_index } from "../persistence/serialize_index";
 
 /**
  * Detect language from file path extension
@@ -115,6 +123,10 @@ export class Project {
   private index_single_filees: Map<FilePath, SemanticIndex> = new Map();
   private file_contents: Map<FilePath, string> = new Map();
 
+  // ===== Configuration =====
+  /** Buffer size for tree-sitter parser (auto-adjusts upward to fit largest file). */
+  private parser_buffer_size: number = 32 * 1024; // 32KB default, grows as needed
+
   // ===== Project-level registries (aggregated, incrementally updated) =====
   public definitions: DefinitionRegistry = new DefinitionRegistry();
   public types: TypeRegistry = new TypeRegistry();
@@ -172,7 +184,14 @@ export class Project {
     const language = detect_language(file_id);
     profiler.start("tree_sitter_parse");
     const parser = get_parser(language);
-    const tree = parser.parse(content);
+    // Auto-adjust buffer to fit the file (2x content length, minimum 1MB)
+    const needed = content.length * 2;
+    if (needed > this.parser_buffer_size) {
+      this.parser_buffer_size = needed;
+    }
+    const tree = parser.parse(content, undefined, {
+      bufferSize: this.parser_buffer_size,
+    });
     profiler.end("tree_sitter_parse");
     const parsed_file = create_parsed_file(file_id, content, tree, language);
     profiler.start("build_index");
@@ -182,9 +201,51 @@ export class Project {
     this.index_single_filees.set(file_id, index_single_file);
     this.file_contents.set(file_id, content);
 
+    // Phases 2-5: Registry update + resolution
+    this.apply_index_and_resolve(file_id, index_single_file, dependents, this.root_folder);
+
+    profiler.end_file();
+  }
+
+  /**
+   * Restore a file from a cached SemanticIndex, skipping tree-sitter parsing.
+   *
+   * Used by the persistence layer when a file's content has not changed since
+   * the cache was written. Runs only registry updates + resolution (Phases 2-5).
+   *
+   * @param file_id - The file to restore
+   * @param content - The file's source code (needed for get_source_code lookups)
+   * @param cached_index - Pre-computed SemanticIndex from cache
+   */
+  restore_file(
+    file_id: FilePath,
+    content: string,
+    cached_index: SemanticIndex,
+  ): void {
+    if (!this.root_folder) {
+      throw new Error("Project not initialized");
+    }
+
+    const dependents = this.imports.get_dependents(file_id);
+
+    this.index_single_filees.set(file_id, cached_index);
+    this.file_contents.set(file_id, content);
+
+    this.apply_index_and_resolve(file_id, cached_index, dependents, this.root_folder);
+  }
+
+  /**
+   * Run registry update and resolution phases for a file with a known SemanticIndex.
+   * Shared by update_file() (after parsing) and restore_file() (from cached index).
+   */
+  private apply_index_and_resolve(
+    file_id: FilePath,
+    index_single_file: SemanticIndex,
+    dependents: Set<FilePath>,
+    root_folder: FileSystemFolder,
+  ): void {
     // Phase 2: Update project-level registries
     profiler.start("registry_updates");
-    // Collect all definitions from index_single_file
     const all_definitions: AnyDefinition[] = [
       ...Array.from(index_single_file.functions.values()),
       ...Array.from(index_single_file.classes.values()),
@@ -196,8 +257,6 @@ export class Project {
       ...Array.from(index_single_file.imported_symbols.values()),
     ];
 
-    // Extract nested definitions (methods, properties, parameters)
-    // These have their own symbol IDs and need to be registered as first-class definitions
     for (const class_def of index_single_file.classes.values()) {
       all_definitions.push(...class_def.methods);
       all_definitions.push(...class_def.properties);
@@ -215,63 +274,48 @@ export class Project {
       }
     }
 
-    // Extract parameters from all callables (functions, methods, constructors)
-    // Parameters need to be in DefinitionRegistry for type binding resolution
     all_definitions.push(...extract_all_parameters(index_single_file));
 
     this.definitions.update_file(file_id, all_definitions);
     this.scopes.update_file(file_id, index_single_file.scopes);
-
-    // ExportRegistry gets definitions from DefinitionRegistry
     this.exports.update_file(file_id, this.definitions);
-
-    // ReferenceRegistry persists references (source of truth for ResolutionRegistry)
     this.references.update_file(file_id, index_single_file.references);
 
-    // Pass ImportDefinitions directly to ImportGraph
     const import_definitions = Array.from(
-      index_single_file.imported_symbols.values()
+      index_single_file.imported_symbols.values(),
     );
     this.imports.update_file(
       file_id,
       import_definitions,
-      language,
-      this.root_folder
+      index_single_file.language,
+      root_folder,
     );
 
     // Phase 2.5: Fix ImportDefinition locations to point to source files
-    // ImportDefinitions are created with the importing file's location,
-    // but they should point to the original definition's location in the source file
     const fixed_import_definitions = fix_import_definition_locations(
       import_definitions,
       this.imports,
       this.exports,
-      this.definitions
+      this.definitions,
     );
 
-    // Rebuild all_definitions with fixed imports
     const non_import_definitions = all_definitions.filter(
-      (def) => def.kind !== "import"
+      (def) => def.kind !== "import",
     );
-    const updated_all_definitions = [
+    this.definitions.update_file(file_id, [
       ...non_import_definitions,
       ...fixed_import_definitions,
-    ];
-
-    // Update the definitions registry with fixed import locations
-    this.definitions.update_file(file_id, updated_all_definitions);
+    ]);
     profiler.end("registry_updates");
 
-    // Phase 3: Re-resolve affected files (eager!)
+    // Phase 3: Re-resolve affected files
     const affected_files = new Set([file_id, ...dependents]);
 
-    // Create language map from semantic indexes
     const languages = new Map<FilePath, Language>();
     for (const [file_path, index] of this.index_single_filees) {
       languages.set(file_path, index.language);
     }
 
-    // Phase 3: Name resolution (no calls yet)
     profiler.start("resolve_names");
     this.resolutions.resolve_names(
       affected_files,
@@ -280,34 +324,26 @@ export class Project {
       this.scopes,
       this.exports,
       this.imports,
-      this.root_folder
+      root_folder,
     );
     profiler.end("resolve_names");
 
     // Phase 3.5: Cross-file type inheritance resolution
-    // Must happen AFTER name resolution (which resolves imports)
-    // but BEFORE type/call resolution (which uses type_subtypes)
-    // Returns parent files that gained new subtypes - these need call re-resolution
     profiler.start("cross_file_inheritance");
     const files_needing_call_reresolution = new Set<FilePath>();
     for (const affected_file of affected_files) {
-      const parent_files = this.definitions.resolve_cross_file_type_inheritance(
-        affected_file,
-        this.resolutions
-      );
-      // Collect parent files that need their calls re-resolved
-      // When a child class registers as a subtype, the parent's polymorphic
-      // this.method() calls need to be re-resolved to include the child
+      const parent_files =
+        this.definitions.resolve_cross_file_type_inheritance(
+          affected_file,
+          this.resolutions,
+        );
       for (const parent_file of parent_files) {
         files_needing_call_reresolution.add(parent_file);
       }
     }
     profiler.end("cross_file_inheritance");
 
-    // Phase 3.6: Reference preprocessing (language-specific)
-    // Must happen AFTER name resolution (to resolve callee names)
-    // but BEFORE type resolution (which uses extract_constructor_bindings).
-    // For Python: converts class instantiation function_call to constructor_call
+    // Phase 3.6: Reference preprocessing
     profiler.start("preprocess_references");
     for (const affected_file of affected_files) {
       const affected_index = this.index_single_filees.get(affected_file);
@@ -317,15 +353,13 @@ export class Project {
           affected_index.language,
           this.references,
           this.definitions,
-          this.resolutions
+          this.resolutions,
         );
       }
     }
     profiler.end("preprocess_references");
 
     // Phase 4: Type registry
-    // Must happen AFTER name resolution BUT BEFORE call resolution.
-    // Uses name resolutions to resolve type names to SymbolIds.
     profiler.start("type_registry");
     for (const affected_file of affected_files) {
       const affected_index = this.index_single_filees.get(affected_file);
@@ -334,17 +368,13 @@ export class Project {
           affected_file,
           affected_index,
           this.definitions,
-          this.resolutions
+          this.resolutions,
         );
       }
     }
     profiler.end("type_registry");
 
-    // Phase 5: Call resolution (uses type information)
-    // Must happen AFTER type registry is populated.
-    // Method resolution needs types.get_symbol_type() to work correctly.
-    // Include parent files that gained new subtypes - their polymorphic calls
-    // need re-resolution to connect to newly-registered child class methods
+    // Phase 5: Call resolution
     profiler.start("resolve_calls");
     const call_resolution_files = new Set([
       ...affected_files,
@@ -356,11 +386,9 @@ export class Project {
       this.scopes,
       this.types,
       this.definitions,
-      this.imports
+      this.imports,
     );
     profiler.end("resolve_calls");
-
-    profiler.end_file();
   }
 
   /**
@@ -625,9 +653,46 @@ export class Project {
   }
 
   /**
-   * Clear all project data.
-   * Removes all semantic indexes, registries, and resolutions.
+   * Persist all per-file SemanticIndex data and a manifest to storage.
+   * No auto-save — the caller decides when to persist.
    */
+  async save(storage: PersistenceStorage): Promise<void> {
+    const manifest_entries = new Map<FilePath, CacheManifestEntry>();
+
+    for (const [file_path, index] of this.index_single_filees) {
+      const content = this.file_contents.get(file_path);
+      if (!content) continue;
+
+      try {
+        const content_hash = compute_content_hash(content);
+        const serialized = serialize_semantic_index(index);
+        await storage.write_index(file_path, serialized);
+        manifest_entries.set(file_path, { content_hash });
+      } catch (error) {
+        console.warn(
+          `[ariadne:persistence] Failed to save cache for ${file_path}: ${
+            error instanceof Error ? error.message : error
+          }`,
+        );
+      }
+    }
+
+    try {
+      await storage.write_manifest(
+        serialize_manifest({
+          schema_version: CURRENT_SCHEMA_VERSION,
+          entries: manifest_entries,
+        }),
+      );
+    } catch (error) {
+      console.warn(
+        `[ariadne:persistence] Failed to save manifest: ${
+          error instanceof Error ? error.message : error
+        }`,
+      );
+    }
+  }
+
   clear(): void {
     this.file_contents.clear();
     this.index_single_filees.clear();

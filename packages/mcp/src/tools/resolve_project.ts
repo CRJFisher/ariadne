@@ -1,4 +1,5 @@
 import { Project, load_project } from "@ariadnejs/core";
+import type { PersistenceStorage } from "@ariadnejs/core";
 import type { ProjectManager } from "../project_manager";
 
 /**
@@ -12,6 +13,7 @@ export async function resolve_project(
   args: { files?: string[]; folders?: string[] },
   project_manager: ProjectManager,
   project_path: string,
+  storage?: PersistenceStorage,
 ): Promise<Project> {
   const has_filters =
     (args.files && args.files.length > 0) ||
@@ -22,6 +24,7 @@ export async function resolve_project(
       project_path,
       files: args.files,
       folders: args.folders,
+      storage,
     });
   }
 
