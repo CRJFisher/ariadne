@@ -5,7 +5,7 @@ model: sonnet
 tools: Read, Grep, Glob, Write
 mcpServers:
   - ariadne
-maxTurns: 20
+maxTurns: 100
 ---
 
 # Purpose
