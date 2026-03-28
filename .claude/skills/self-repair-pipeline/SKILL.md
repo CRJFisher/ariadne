@@ -16,6 +16,8 @@ hooks:
 
 Triage pipeline for entry point analysis: detect false positives, classify root causes, plan fixes, and create backlog tasks. Supports both self-analysis (Ariadne packages) and external codebase analysis.
 
+**Script invocation:** Always use `node --import tsx` to run scripts. Never use `pnpm exec tsx` or `npx tsx` — these create IPC Unix sockets that the sandbox blocks.
+
 ## Pipeline Overview
 
 | Phase           | Script / Agent                                               | Purpose                                                             |
@@ -32,13 +34,13 @@ Triage pipeline for entry point analysis: detect false positives, classify root 
 
 Resolve the analysis target from the user's input using this routing table:
 
-| Input pattern                       | Example                                                  | Action                                                                         |
-| ----------------------------------- | -------------------------------------------------------- | ------------------------------------------------------------------------------ |
-| Empty or blank                      | `/self-repair-pipeline`                                  | List available configs below, ask user what to analyze                         |
-| Config name                         | `core`, `mcp`, `types`, `projections`                    | Use `--config .claude/skills/self-repair-pipeline/project_configs/{name}.json` |
-| Absolute or relative directory path | `/Users/chuck/workspace/some-repo`, `../other-repo`      | Use `--path <path>`                                                            |
-| `owner/repo` or GitHub URL          | `anthropics/sdk-python`, `https://github.com/owner/repo` | Use `--github <value>`                                                         |
-| Natural language                    | "analyze the core package"                               | Interpret intent and map to one of the above                                   |
+| Input pattern                       | Example                                                  | Action                                                                                     |
+| ----------------------------------- | -------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
+| Empty or blank                      | `/self-repair-pipeline`                                  | List available configs below, ask user what to analyze                                     |
+| Config name                         | `core`, `mcp`, `types`, `projections`                    | Use `--config ~/.ariadne/self-repair-pipeline/project_configs/{name}.json`                 |
+| Absolute or relative directory path | `/Users/chuck/workspace/some-repo`, `../other-repo`      | Use `--path <path>`                                                                        |
+| `owner/repo` or GitHub URL          | `anthropics/sdk-python`, `https://github.com/owner/repo` | Use `--github <value>`                                                                     |
+| Natural language                    | "analyze the core package"                               | Interpret intent and map to one of the above                                               |
 
 ### Creating a New Project Config
 
@@ -52,17 +54,17 @@ When the input is a directory path and no existing config matches:
    - `exclude`: obvious non-source directories beyond the defaults
    - `project_name` is auto-derived for external projects via `path_to_project_id(project_path)` — do not include it in the config. Only internal projects (`project_path: "."`) require an explicit `project_name`.
 4. Show the proposed config and ask the user to confirm or adjust
-5. Save to `project_configs/{name}.json`
-6. Continue the pipeline with `--config project_configs/{name}.json`
+5. Save to `~/.ariadne/self-repair-pipeline/project_configs/{name}.json`
+6. Continue the pipeline with `--config ~/.ariadne/self-repair-pipeline/project_configs/{name}.json`
 
 Available project configs:
 
-| Config name   | Config path                        |
-| ------------- | ---------------------------------- |
-| `core`        | `project_configs/core.json`        |
-| `mcp`         | `project_configs/mcp.json`         |
-| `types`       | `project_configs/types.json`       |
-| `projections` | `project_configs/projections.json` |
+| Config name   | Config path                                                        |
+| ------------- | ------------------------------------------------------------------ |
+| `core`        | `~/.ariadne/self-repair-pipeline/project_configs/core.json`        |
+| `mcp`         | `~/.ariadne/self-repair-pipeline/project_configs/mcp.json`         |
+| `types`       | `~/.ariadne/self-repair-pipeline/project_configs/types.json`       |
+| `projections` | `~/.ariadne/self-repair-pipeline/project_configs/projections.json` |
 
 If no arguments are provided or the input is ambiguous, **ask the user** before proceeding.
 
@@ -74,12 +76,12 @@ If no arguments are provided or the input is ambiguous, **ask the user** before 
 
 | File                                      | Purpose                                                     |
 | ----------------------------------------- | ----------------------------------------------------------- |
+| `project_configs/{name}.json`             | Per-project detection config (folders, excludes)            |
 | `triage_state/{project}_triage.json`      | Active triage state (phases, entries, results)              |
 | `triage_state/results/{entry_index}.json` | Per-entry triage result files (written by sub-agents)       |
 | `triage_state/fix_plans/{group_id}/`      | Fix plans, synthesis, and reviews per group                 |
 | `analysis_output/{project}/`              | Project-scoped timestamped analysis and triage result files |
 | `known_entrypoints/{project}.json`        | Known-entrypoints registry (persists across runs)           |
-| `triage_patterns.json`                    | Extracted classification patterns from meta-review          |
 
 `{project}` is the short name for internal packages (e.g., `core`) or the full path identifier for external projects (e.g., `-Users-chuck-workspace-AmazonAdv-projections`).
 
@@ -92,7 +94,7 @@ Use the target resolved from the **Analysis Target** section above to construct 
 ```bash
 # From project config (preferred for Ariadne packages)
 node --import tsx .claude/skills/self-repair-pipeline/scripts/detect_entrypoints.ts \
-  --config .claude/skills/self-repair-pipeline/project_configs/core.json
+  --config ~/.ariadne/self-repair-pipeline/project_configs/core.json
 
 # Local repository
 node --import tsx .claude/skills/self-repair-pipeline/scripts/detect_entrypoints.ts --path /path/to/repo
@@ -103,7 +105,7 @@ node --import tsx .claude/skills/self-repair-pipeline/scripts/detect_entrypoints
 
 Options: `--config <file>`, `--path <dir>`, `--github <repo>`, `--branch <name>`, `--depth <n>`, `--output <file>`, `--include-tests`, `--folders <paths>`, `--exclude <patterns>`
 
-Tracked project configs for Ariadne packages: `project_configs/{core,mcp,types}.json`
+Tracked project configs for Ariadne packages: `~/.ariadne/self-repair-pipeline/project_configs/{core,mcp,types}.json`
 
 Output: `analysis_output/<project>/detect_entrypoints/<timestamp>.json`
 

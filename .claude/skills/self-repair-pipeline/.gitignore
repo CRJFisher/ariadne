@@ -1,5 +1,1 @@
 .clinic/
-project_configs/*
-!project_configs/core.json
-!project_configs/mcp.json
-!project_configs/types.json

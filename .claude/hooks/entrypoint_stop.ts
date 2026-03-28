@@ -10,6 +10,7 @@
 import { load_project, FileSystemStorage, resolve_cache_dir } from "@ariadnejs/core";
 import type { PersistenceStorage } from "@ariadnejs/core";
 import * as fs from "fs/promises";
+import * as os from "os";
 import * as path from "path";
 import { execSync } from "child_process";
 import { fileURLToPath } from "url";
@@ -83,10 +84,12 @@ function get_modified_packages(project_dir: string): string[] {
 /**
  * Load whitelist for a specific package
  */
-async function load_whitelist(project_dir: string, package_name: string): Promise<Set<string>> {
+async function load_whitelist(package_name: string): Promise<Set<string>> {
   const registry_path = path.join(
-    project_dir,
-    ".claude/self-repair-pipeline-state/known_entrypoints",
+    os.homedir(),
+    ".ariadne",
+    "self-repair-pipeline",
+    "known_entrypoints",
     `${package_name}.json`
   );
 
@@ -137,7 +140,7 @@ async function analyze_package(
     });
   }
 
-  const whitelist = await load_whitelist(project_dir, package_name);
+  const whitelist = await load_whitelist(package_name);
   return entry_points.filter((ep) => !whitelist.has(ep.name));
 }
 
