@@ -61,7 +61,4 @@ docs/tmp/
 .security-key
 logs/security/
 
-# Self-repair pipeline ephemeral state
-.claude/self-repair-pipeline-state/analysis_output/
-.claude/self-repair-pipeline-state/triage_state/
 
