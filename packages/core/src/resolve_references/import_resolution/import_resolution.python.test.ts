@@ -15,63 +15,7 @@ import {
   resolve_module_path_python,
   resolve_submodule_path_python,
 } from "./import_resolution.python";
-import type { FileSystemFolder } from "../file_folders";
-
-/**
- * Create a mock FileSystemFolder tree from a list of file paths.
- * Files can be specified as relative paths from root or absolute paths.
- *
- * @param root_path - The root path of the tree
- * @param files - List of file paths to include
- * @returns A FileSystemFolder tree
- */
-function create_file_tree(
-  root_path: string,
-  files: string[]
-): FileSystemFolder {
-  const root: FileSystemFolder = {
-    path: root_path as FilePath,
-    folders: new Map(),
-    files: new Set(),
-  };
-
-  for (const file of files) {
-    // Make path relative to root if it's absolute
-    const relative_path = file.startsWith(root_path)
-      ? file.slice(root_path.length + 1)
-      : file;
-
-    const parts = relative_path.split("/");
-    let current = root;
-
-    // Navigate/create folders
-    for (let i = 0; i < parts.length - 1; i++) {
-      const folder_name = parts[i];
-      let folder = (current.folders as Map<string, FileSystemFolder>).get(
-        folder_name
-      );
-      if (!folder) {
-        const folder_path = [root_path, ...parts.slice(0, i + 1)].join("/");
-        folder = {
-          path: folder_path as FilePath,
-          folders: new Map(),
-          files: new Set(),
-        };
-        (current.folders as Map<string, FileSystemFolder>).set(
-          folder_name,
-          folder
-        );
-      }
-      current = folder;
-    }
-
-    // Add file
-    const file_name = parts[parts.length - 1];
-    (current.files as Set<string>).add(file_name);
-  }
-
-  return root;
-}
+import { create_file_tree } from "./import_resolution.test";
 
 describe("resolve_module_path_python", () => {
   describe("simple module names (no dots)", () => {
