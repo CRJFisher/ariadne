@@ -1343,4 +1343,108 @@ impl MyStruct {
       expect(result).toBe("new");
     });
   });
+
+  describe("extract_receiver_info", () => {
+    it("should detect self as self-reference", () => {
+      const code = "self.method();";
+      const tree = parser.parse(code);
+      const call_expr = tree.rootNode.descendantsOfType("call_expression")[0];
+
+      const result = RUST_METADATA_EXTRACTORS.extract_receiver_info(call_expr, TEST_FILE);
+
+      expect(result).toEqual({
+        receiver_location: expect.objectContaining({ start_column: 1, end_column: 4 }),
+        property_chain: ["self", "method"],
+        is_self_reference: true,
+        self_keyword: "self",
+      });
+    });
+
+    it("should handle regular receiver without self", () => {
+      const code = "vec.push(5);";
+      const tree = parser.parse(code);
+      const call_expr = tree.rootNode.descendantsOfType("call_expression")[0];
+
+      const result = RUST_METADATA_EXTRACTORS.extract_receiver_info(call_expr, TEST_FILE);
+
+      expect(result).toBeDefined();
+      expect(result!.property_chain).toEqual(["vec", "push"]);
+      expect(result!.is_self_reference).toBe(false);
+      expect(result!.self_keyword).toBeUndefined();
+    });
+
+    it("should handle nested self field access", () => {
+      const code = "self.data.process();";
+      const tree = parser.parse(code);
+      const call_expr = tree.rootNode.descendantsOfType("call_expression")[0];
+
+      const result = RUST_METADATA_EXTRACTORS.extract_receiver_info(call_expr, TEST_FILE);
+
+      expect(result).toBeDefined();
+      expect(result!.property_chain).toEqual(["self", "data", "process"]);
+      expect(result!.is_self_reference).toBe(true);
+      expect(result!.self_keyword).toBe("self");
+    });
+
+    it("should return undefined for standalone function calls", () => {
+      const code = "func();";
+      const tree = parser.parse(code);
+      const call_expr = tree.rootNode.descendantsOfType("call_expression")[0];
+
+      const result = RUST_METADATA_EXTRACTORS.extract_receiver_info(call_expr, TEST_FILE);
+
+      expect(result).toBeUndefined();
+    });
+
+    it("should handle field_expression directly (not in call)", () => {
+      const code = "obj.field";
+      const tree = parser.parse(code);
+      const field_expr = tree.rootNode.descendantsOfType("field_expression")[0];
+
+      const result = RUST_METADATA_EXTRACTORS.extract_receiver_info(field_expr, TEST_FILE);
+
+      expect(result).toBeDefined();
+      expect(result!.property_chain).toEqual(["obj", "field"]);
+      expect(result!.is_self_reference).toBe(false);
+    });
+
+    it("should handle self field access directly", () => {
+      const code = "self.value";
+      const tree = parser.parse(code);
+      const field_expr = tree.rootNode.descendantsOfType("field_expression")[0];
+
+      const result = RUST_METADATA_EXTRACTORS.extract_receiver_info(field_expr, TEST_FILE);
+
+      expect(result).toBeDefined();
+      expect(result!.property_chain).toEqual(["self", "value"]);
+      expect(result!.is_self_reference).toBe(true);
+      expect(result!.self_keyword).toBe("self");
+    });
+  });
+
+  describe("extract_is_optional_chain", () => {
+    it("should always return false for Rust", () => {
+      const code = "obj.method();";
+      const tree = parser.parse(code);
+      const call_expr = tree.rootNode.descendantsOfType("call_expression")[0];
+
+      expect(RUST_METADATA_EXTRACTORS.extract_is_optional_chain(call_expr)).toBe(false);
+    });
+
+    it("should return false for field expression", () => {
+      const code = "obj.field";
+      const tree = parser.parse(code);
+      const field_expr = tree.rootNode.descendantsOfType("field_expression")[0];
+
+      expect(RUST_METADATA_EXTRACTORS.extract_is_optional_chain(field_expr)).toBe(false);
+    });
+
+    it("should return false for identifier", () => {
+      const code = "let x = 42;";
+      const tree = parser.parse(code);
+      const identifier = tree.rootNode.descendantsOfType("identifier")[0];
+
+      expect(RUST_METADATA_EXTRACTORS.extract_is_optional_chain(identifier)).toBe(false);
+    });
+  });
 });

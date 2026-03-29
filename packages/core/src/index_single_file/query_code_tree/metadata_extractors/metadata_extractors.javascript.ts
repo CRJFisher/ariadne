@@ -250,7 +250,8 @@ export const JAVASCRIPT_METADATA_EXTRACTORS: MetadataExtractors = {
         if (object_node) {
           if (object_node.type === "member_expression" ||
               object_node.type === "optional_chain" ||
-              object_node.type === "subscript_expression") {
+              object_node.type === "subscript_expression" ||
+              object_node.type === "call_expression") {
             traverse(object_node);
           } else if (object_node.type === "identifier" || object_node.type === "this" || object_node.type === "super") {
             chain.push(object_node.text);
@@ -269,7 +270,8 @@ export const JAVASCRIPT_METADATA_EXTRACTORS: MetadataExtractors = {
         if (object_node) {
           if (object_node.type === "member_expression" ||
               object_node.type === "subscript_expression" ||
-              object_node.type === "optional_chain") {
+              object_node.type === "optional_chain" ||
+              object_node.type === "call_expression") {
             traverse(object_node);
           } else if (object_node.type === "identifier" || object_node.type === "this" || object_node.type === "super") {
             chain.push(object_node.text);
@@ -365,10 +367,18 @@ export const JAVASCRIPT_METADATA_EXTRACTORS: MetadataExtractors = {
         ? [object_node.text as SymbolName, property_name as SymbolName]
         : [object_node.text as SymbolName]);
 
+      // Detect self-reference keywords at root of nested chain (e.g. this.data.items.push())
+      const SELF_KEYWORDS: Record<string, "this" | "super"> = {
+        this: "this",
+        super: "super",
+      };
+      const keyword = SELF_KEYWORDS[chain[0]];
+
       return {
         receiver_location: node_to_location(object_node, file_path),
         property_chain: chain,
-        is_self_reference: false,
+        is_self_reference: keyword !== undefined,
+        ...(keyword ? { self_keyword: keyword } : {}),
       };
     }
 

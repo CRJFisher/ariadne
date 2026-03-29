@@ -92,6 +92,8 @@ export interface MethodDefinition extends Definition {
   readonly docstring?: DocString;
   readonly generics?: SymbolName[];
   readonly static?: boolean;
+  readonly abstract?: boolean;
+  readonly async?: boolean;
   readonly body_scope_id?: ScopeId; // The scope ID of this method's body - undefined in interfaces
   readonly access_modifier?: AccessModifier;
 }
@@ -111,6 +113,7 @@ export interface PropertyDefinition extends Definition {
   readonly kind: "property";
   readonly type?: SymbolName;
   readonly initial_value?: string;
+  readonly readonly?: boolean;
   readonly decorators: readonly DecoratorDefinition[];
   readonly access_modifier?: AccessModifier;
 }
@@ -122,6 +125,7 @@ export interface ParameterDefinition extends Definition {
   readonly kind: "parameter";
   readonly type?: SymbolName;
   readonly default_value?: string;
+  readonly optional?: boolean;
 }
 
 /**

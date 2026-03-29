@@ -1,10 +1,10 @@
 ---
 id: TASK-199.4
 title: Improve metadata_extractors integration tests
-status: To Do
+status: Done
 assignee: []
 created_date: "2026-03-27 23:14"
-updated_date: "2026-03-27 23:18"
+updated_date: "2026-03-29 21:00"
 labels:
   - testing
   - metadata-extractors

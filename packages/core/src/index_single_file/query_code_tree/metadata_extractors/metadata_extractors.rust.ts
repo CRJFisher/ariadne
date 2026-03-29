@@ -401,7 +401,7 @@ export const RUST_METADATA_EXTRACTORS: MetadataExtractors = {
       const field_name = field_node?.text;
       const value_text = value_node.text;
 
-      // Detect self keyword
+      // Detect self keyword (direct)
       if (value_node.type === "self") {
         return {
           receiver_location: node_to_location(value_node, file_path),
@@ -413,13 +413,22 @@ export const RUST_METADATA_EXTRACTORS: MetadataExtractors = {
         };
       }
 
-      // Regular value receiver (not a keyword)
+      // Use extract_property_chain for nested receivers like self.data.process()
+      const chain = RUST_METADATA_EXTRACTORS.extract_property_chain(target_node);
+
+      // Fallback: if chain extraction failed, use simple receiver + property
+      const property_chain = chain || (field_name
+        ? [value_text as SymbolName, field_name as SymbolName]
+        : [value_text as SymbolName]);
+
+      // Detect self at root of nested chain
+      const is_self = property_chain[0] === "self";
+
       return {
         receiver_location: node_to_location(value_node, file_path),
-        property_chain: field_name
-          ? [value_text as SymbolName, field_name as SymbolName]
-          : [value_text as SymbolName],
-        is_self_reference: false,
+        property_chain,
+        is_self_reference: is_self,
+        ...(is_self ? { self_keyword: "self" as const } : {}),
       };
     }
 
