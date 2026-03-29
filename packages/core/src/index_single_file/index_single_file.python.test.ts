@@ -2198,7 +2198,7 @@ type Handler = Callable[[str], None]
     function is_descendant_of(
       potential_descendant_id: string,
       ancestor_id: string,
-      scopes: Map<string, { id: string; parent_id: string | null }>
+      scopes: ReadonlyMap<string, { id: string; parent_id: string | null }>
     ): boolean {
       let current_id = potential_descendant_id;
       const visited = new Set<string>();
@@ -2248,7 +2248,7 @@ type Handler = Callable[[str], None]
       // All block scopes should be descendants of constructor
       for (const block of block_scopes) {
         expect(
-          is_descendant_of(block.id, constructor_scope!.id, index.scopes as unknown as Map<string, { id: string; parent_id: string | null }>)
+          is_descendant_of(block.id, constructor_scope!.id, index.scopes as ReadonlyMap<string, { id: string; parent_id: string | null }>)
         ).toBe(true);
       }
     });
@@ -2289,7 +2289,7 @@ type Handler = Callable[[str], None]
       // All block scopes should be descendants of constructor
       for (const block of block_scopes) {
         expect(
-          is_descendant_of(block.id, constructor_scope!.id, index.scopes as unknown as Map<string, { id: string; parent_id: string | null }>)
+          is_descendant_of(block.id, constructor_scope!.id, index.scopes as ReadonlyMap<string, { id: string; parent_id: string | null }>)
         ).toBe(true);
       }
     });
@@ -2323,7 +2323,7 @@ type Handler = Callable[[str], None]
       // All block scopes should be descendants of constructor
       for (const block of block_scopes) {
         expect(
-          is_descendant_of(block.id, constructor_scope!.id, index.scopes as unknown as Map<string, { id: string; parent_id: string | null }>)
+          is_descendant_of(block.id, constructor_scope!.id, index.scopes as ReadonlyMap<string, { id: string; parent_id: string | null }>)
         ).toBe(true);
       }
     });
@@ -2373,7 +2373,7 @@ type Handler = Callable[[str], None]
 
       for (const block of block_scopes) {
         expect(
-          is_descendant_of(block.id, constructor_scope!.id, index.scopes as unknown as Map<string, { id: string; parent_id: string | null }>)
+          is_descendant_of(block.id, constructor_scope!.id, index.scopes as ReadonlyMap<string, { id: string; parent_id: string | null }>)
         ).toBe(true);
       }
     });
