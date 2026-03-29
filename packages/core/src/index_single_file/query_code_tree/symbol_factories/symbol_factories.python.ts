@@ -74,8 +74,7 @@ export function create_property_id(capture: CaptureNode): SymbolId {
 export function create_enum_id(capture: CaptureNode): SymbolId {
   const name = capture.text;
   const location = capture.location;
-  const file_path = location.file_path;
-  return `enum:${file_path}:${location.start_line}:${location.start_column}:${location.end_line}:${location.end_column}:${name}` as SymbolId;
+  return enum_symbol(name, location);
 }
 
 export function create_enum_member_id(
@@ -463,9 +462,17 @@ export function extract_type_expression(node: SyntaxNode): string | undefined {
 // ============================================================================
 
 export function extract_default_value(node: SyntaxNode): string | undefined {
-  const default_node = node.childForFieldName?.("default");
-  if (default_node) {
-    return default_node.text;
+  // The capture node is the identifier inside default_parameter or typed_default_parameter.
+  // Navigate to the parent parameter node to find the "value" field (the default value).
+  const param_node =
+    node.type === "identifier" &&
+    (node.parent?.type === "default_parameter" || node.parent?.type === "typed_default_parameter")
+      ? node.parent
+      : node;
+
+  const value_node = param_node.childForFieldName?.("value");
+  if (value_node) {
+    return value_node.text;
   }
   return undefined;
 }
