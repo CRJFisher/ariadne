@@ -40,7 +40,7 @@ describe("PythonScopeBoundaryExtractor", () => {
 
       // Scope location: starts AFTER ":", not at "def"
       expect(boundaries.scope_location.start_line).toBe(1);
-      expect(boundaries.scope_location.start_column).toBeGreaterThan(17); // After name
+      expect(boundaries.scope_location.start_column).toBe(18); // After ":"
       expect(boundaries.scope_location.end_line).toBe(3); // End of class body
     });
 
@@ -60,7 +60,7 @@ describe("PythonScopeBoundaryExtractor", () => {
       expect(boundaries.symbol_location.start_column).toBe(7); // "Child"
       expect(boundaries.symbol_location.end_column).toBe(11); // "Child"
       expect(boundaries.scope_location.start_line).toBe(1);
-      expect(boundaries.scope_location.start_column).toBeGreaterThan(27); // After "(Parent, Mixin):"
+      expect(boundaries.scope_location.start_column).toBe(28); // After "(Parent, Mixin):"
     });
 
     it("should handle class with multiple methods", () => {
@@ -382,7 +382,7 @@ def expensive_func():
       expect(boundaries.symbol_location.start_line).toBe(1);
       expect(boundaries.symbol_location.start_column).toBe(7); // "TestClass"
       expect(boundaries.scope_location.start_line).toBe(1);
-      expect(boundaries.scope_location.start_column).toBeGreaterThan(17); // After colon
+      expect(boundaries.scope_location.start_column).toBe(20); // After "TestClass   :"
     });
 
     it("should handle empty function body", () => {
@@ -419,7 +419,7 @@ def expensive_func():
       expect(boundaries.symbol_location.start_line).toBe(1);
       expect(boundaries.symbol_location.start_column).toBe(7); // "Point"
       expect(boundaries.scope_location.start_line).toBe(1);
-      expect(boundaries.scope_location.start_column).toBeGreaterThan(12); // After "Point:"
+      expect(boundaries.scope_location.start_column).toBe(13); // After "Point:"
     });
 
     it("should handle lambda expressions via block boundaries", () => {

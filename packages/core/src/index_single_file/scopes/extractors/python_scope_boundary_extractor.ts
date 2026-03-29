@@ -14,6 +14,12 @@ export class PythonScopeBoundaryExtractor implements ScopeBoundaryExtractor {
     file_path: FilePath
   ): ScopeBoundaries {
     switch (scope_type) {
+      case "module": {
+        // Root-level module node — return full node location.
+        // process_scopes will skip it via the file_location comparison.
+        const location = node_to_location(node, file_path);
+        return { symbol_location: location, scope_location: location };
+      }
       case "class":
         return this.extract_class_boundaries(node, file_path);
       case "function":

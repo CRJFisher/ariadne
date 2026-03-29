@@ -71,6 +71,8 @@ export class CommonScopeBoundaryExtractor implements ScopeBoundaryExtractor {
     file_path: FilePath
   ): ScopeBoundaries {
     switch (scope_type) {
+      case "module":
+        return this.extract_module_boundaries(node, file_path);
       case "class":
         return this.extract_class_boundaries(node, file_path);
       case "function":
@@ -83,6 +85,28 @@ export class CommonScopeBoundaryExtractor implements ScopeBoundaryExtractor {
       default:
         throw new Error(`Unsupported scope type: ${scope_type}`);
     }
+  }
+
+  /**
+   * Default module/namespace boundary extraction.
+   * Uses the body field if present, otherwise falls back to the entire node.
+   */
+  protected extract_module_boundaries(
+    node: Parser.SyntaxNode,
+    file_path: FilePath
+  ): ScopeBoundaries {
+    const name_node = node.childForFieldName("name");
+    const body_node = node.childForFieldName("body");
+
+    const symbol_location = name_node
+      ? node_to_location(name_node, file_path)
+      : node_to_location(node, file_path);
+
+    const scope_location = body_node
+      ? node_to_location(body_node, file_path)
+      : node_to_location(node, file_path);
+
+    return { symbol_location, scope_location };
   }
 
   /**

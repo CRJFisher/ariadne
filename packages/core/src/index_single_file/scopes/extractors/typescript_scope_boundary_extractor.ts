@@ -164,13 +164,22 @@ export class TypeScriptScopeBoundaryExtractor extends JavaScriptTypeScriptScopeB
   }
 
   /**
-   * Extract namespace boundaries.
-   * Similar to class but for namespace declarations.
+   * Extract namespace/module boundaries.
+   *
+   * Handles both the root-level program node (which has no name/body fields)
+   * and namespace declaration nodes (which have name and body fields).
    */
   private extract_namespace_boundaries(
     node: Parser.SyntaxNode,
     file_path: FilePath,
   ): ScopeBoundaries {
+    // Root-level program node has no name field — return full node location.
+    // process_scopes will skip it via the file_location comparison.
+    if (node.type === "program") {
+      const location = node_to_location(node, file_path);
+      return { symbol_location: location, scope_location: location };
+    }
+
     const name_node = node.childForFieldName("name");
     if (!name_node) {
       throw new Error("Namespace declaration has no name field");

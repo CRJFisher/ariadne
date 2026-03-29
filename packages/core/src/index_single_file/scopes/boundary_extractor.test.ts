@@ -70,8 +70,8 @@ describe("scopes.boundary_extractor infrastructure", () => {
     it("should throw error for unsupported scope type", () => {
       const mock_node = {} as Parser.SyntaxNode;
       expect(() => {
-        extractor.extract_boundaries(mock_node, "module", "test.py" as FilePath);
-      }).toThrow(/Unsupported scope type: module/);
+        extractor.extract_boundaries(mock_node, "global", "test.py" as FilePath);
+      }).toThrow(/Unsupported scope type: global/);
     });
 
     describe("extract_class_boundaries", () => {

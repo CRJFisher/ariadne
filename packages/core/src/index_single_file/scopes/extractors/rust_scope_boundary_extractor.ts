@@ -163,11 +163,21 @@ export class RustScopeBoundaryExtractor extends CommonScopeBoundaryExtractor {
 
   /**
    * Extract module boundaries.
+   *
+   * Handles both the root-level source_file node (which has no name/body fields)
+   * and inline mod_item nodes (which have name and optionally body fields).
    */
   private extract_module_boundaries(
     node: Parser.SyntaxNode,
     file_path: FilePath
   ): ScopeBoundaries {
+    // Root-level source_file has no name field — return full node location.
+    // process_scopes will skip it via the file_location comparison.
+    if (node.type === "source_file") {
+      const location = node_to_location(node, file_path);
+      return { symbol_location: location, scope_location: location };
+    }
+
     const name_node = node.childForFieldName("name");
     if (!name_node) {
       throw new Error("Module declaration has no name field");

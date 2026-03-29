@@ -46,8 +46,10 @@
   body: (declaration_list) @scope.block
 )
 
-; Module scopes
-(mod_item) @scope.module
+; Module scopes (only inline modules with a body create scopes)
+(mod_item
+  body: (declaration_list)
+) @scope.module
 
 ; Block scopes
 (unsafe_block) @scope.block.unsafe
