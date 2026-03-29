@@ -48,6 +48,7 @@ priority: medium
 3. Expand Rust receiver_resolution: cross-file modules, trait method resolution, property chains
 4. Expand JavaScript receiver_resolution: super calls, property chains
 5. Tests should use temp directories with real files (following existing pattern)
+6. Fix production bugs discovered while improving tests: if straightforward, spin up an opus sub-agent to fix the bug. Then ensure the test assertions lock in the corrected behaviour — the test must fail if the fix is reverted. Only create a backlog task if the fix is complex and requires user decisions.
 <!-- SECTION:DESCRIPTION:END -->
 
 ## Implementation Notes

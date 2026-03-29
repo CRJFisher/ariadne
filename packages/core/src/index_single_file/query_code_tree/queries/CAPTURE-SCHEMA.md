@@ -147,7 +147,7 @@ Language-specific features explicitly allowed:
 - `@definition.interface` - Interface definitions
 - `@definition.type_alias` - Type aliases
 - `@definition.enum` - Enum definitions
-- `@definition.enum_member` - Enum members
+- `@definition.enum.member` - Enum members
 - `@definition.namespace` - Namespaces
 - `@definition.type_parameter` - Generic type parameters
 - `@definition.property` - Class properties

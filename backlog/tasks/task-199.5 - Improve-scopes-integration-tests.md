@@ -50,6 +50,7 @@ priority: medium
 7. Add namespace scope test for TS
 8. Investigate Python lambda scope `extract_lambda_boundaries` — appears to be dead code
 9. All tests should remain inline
+10. Fix production bugs discovered while improving tests: if straightforward, spin up an opus sub-agent to fix the bug. Then ensure the test assertions lock in the corrected behaviour — the test must fail if the fix is reverted. Only create a backlog task if the fix is complex and requires user decisions.
 <!-- SECTION:DESCRIPTION:END -->
 
 ## Implementation Notes

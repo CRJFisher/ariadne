@@ -52,6 +52,7 @@ Across all 4 languages, symbol_factories test files are dominated by `typeof` ex
 1. Convert smoke-only tests to behavioral tests (parse real code, invoke function, verify output)
 2. Prioritize: container finders, `detect_callback_context`, documentation state, import extraction
 3. All tests should remain inline (appropriate for AST-level tests)
+4. Fix production bugs discovered while improving tests: if straightforward, spin up an opus sub-agent to fix the bug. Then ensure the test assertions lock in the corrected behaviour — the test must fail if the fix is reverted. Only create a backlog task if the fix is complex and requires user decisions.
 <!-- SECTION:DESCRIPTION:END -->
 
 ## Implementation Notes

@@ -53,6 +53,7 @@ priority: high
 2. Add behavioral tests for untested handlers (prioritize: import handlers, enum/decorator handlers, parameter handlers)
 3. Strengthen weak assertions from `toBeDefined()` to actual value checks
 4. All tests should use inline code (appropriate for this module)
+5. Fix production bugs discovered while improving tests: if straightforward, spin up an opus sub-agent to fix the bug. Then ensure the test assertions lock in the corrected behaviour — the test must fail if the fix is reverted. Only create a backlog task if the fix is complex and requires user decisions.
 <!-- SECTION:DESCRIPTION:END -->
 
 ## Implementation Notes
@@ -69,4 +70,36 @@ Examples of patterns to fix:
 - `expect(metadata).toBeInstanceOf(Map)` → `expect(metadata.get(key)).toEqual(expectedValue)`
 - `handler?.()` with `not.toThrow()` → invoke handler and verify builder output
 - Python: 3 broken tests silently pass via optional chaining — fix key names AND add output validation
+
+## Implementation Summary
+
+**Test counts: 303 → 365 tests (+62), 2156 → 2207 full suite (+51)**
+
+### Test infrastructure fixes (all 4 languages)
+- Fixed `create_capture` / `create_raw_capture` / `process_capture` helpers to use `node_to_location()` instead of manual `end_column: column + 1` — fixes SymbolId mismatches between test captures and handler-internal `find_containing_*` functions
+- Replaced all `handler?.()` optional chaining with `handler!()` — prevents silent no-ops if a handler key is removed
+- Replaced all redundant `toBeDefined()` + `toBeInstanceOf(Function)` patterns with `typeof === "function"`
+
+### Python (90 → 102 tests)
+- Fixed 3 broken tests: `definition.param.*` → `definition.parameter.*`
+- Added tests: enum (2), decorators (4), type_alias, anonymous_function, parameters (5), typed.default with output validation
+- Strengthened ~15 weak `not.toThrow()` assertions to actual value checks
+- Fixed aliased imports test to use source+alias capture pair
+
+### TypeScript (56 → 70 tests)
+- Added tests: interface methods/properties, enum members with values, abstract method assertions, async flag, access modifiers, parameters, decorators
+- Strengthened all `toBeDefined()` / `toBeGreaterThan(0)` to exact value checks
+
+### JavaScript (69 → 79 tests)
+- Added tests: constructor, anonymous_function (both function_expression and arrow_function), import.named, import.namespace, require handlers
+- Strengthened all weak assertions, replaced `?.()` with `!()`
+
+### Rust (88 → 102 tests)
+- Added tests: imports (simple, aliased, braced, wildcard, extern crate), interface.method, anonymous_function (2), variable.mut (2), type_alias.impl, parameter.closure
+- Rewrote methods.rust.test.ts from 5 export-type checks to 8 real handler invocation tests
+
+### Production bugs found and fixed
+1. **`add_decorator_to_target` missing function support** — added `this.functions.get(target_id)` check so decorators on standalone functions (e.g., Flask `@app.route`) are attached. The `FunctionBuilderState.decorators` array already existed but was never populated.
+2. **`find_decorator_target` property/method SymbolId mismatch** — added `has_property_decorator()` helper that checks for `@property` in the `decorated_definition` siblings. When detected, returns `property_symbol` instead of `method_symbol`, so `@property` decorators correctly attach to property definitions.
+3. **TypeScript enum member capture name mismatch** — the `.scm` query used `@definition.enum_member` (underscore) but the handler registry key was `definition.enum.member` (dot). Capture names are NOT auto-normalized. Fixed the `.scm` query to use `@definition.enum.member` directly.
 <!-- SECTION:NOTES:END -->

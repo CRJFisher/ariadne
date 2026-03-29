@@ -919,6 +919,13 @@ export class DefinitionBuilder {
       }
     }
 
+    // Check if target is a standalone function
+    const func_state = this.functions.get(target_id);
+    if (func_state) {
+      func_state.decorators.push(decorator_definition);
+      return this;
+    }
+
     return this;
   }
 

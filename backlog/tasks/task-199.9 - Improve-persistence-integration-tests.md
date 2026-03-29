@@ -43,6 +43,7 @@ Persistence has solid test coverage (20 integration + 3 property-based + 4 bench
 2. Add `load_project` + `FileSystemStorage` integration test
 3. Add `parse_gitignore` tests
 4. All inline code (appropriate for this module)
+5. Fix production bugs discovered while improving tests: if straightforward, spin up an opus sub-agent to fix the bug. Then ensure the test assertions lock in the corrected behaviour — the test must fail if the fix is reverted. Only create a backlog task if the fix is complex and requires user decisions.
 <!-- SECTION:DESCRIPTION:END -->
 
 ## Implementation Notes
