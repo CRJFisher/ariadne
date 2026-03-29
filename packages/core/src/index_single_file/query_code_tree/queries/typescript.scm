@@ -96,12 +96,12 @@
 
 ; Enum members
 (enum_body
-  (property_identifier) @definition.enum_member
+  (property_identifier) @definition.enum.member
 )
 
 (enum_body
   (enum_assignment
-    name: (property_identifier) @definition.enum_member
+    name: (property_identifier) @definition.enum.member
   )
 )
 

@@ -39,6 +39,7 @@ TypeScript has 8 tests (best), Python/JavaScript/Rust have 3 each.
 1. Add comprehensive capture-name tests to `query_code_tree.test.ts` per language (use fixture files with realistic multi-construct source code)
 2. Add missing per-language parameter extraction tests to extract_nested_definitions
 3. Lower priority than other sub-tasks — these are "belt and suspenders" tests since individual handler/factory tests cover the same code paths
+4. Fix production bugs discovered while improving tests: if straightforward, spin up an opus sub-agent to fix the bug. Then ensure the test assertions lock in the corrected behaviour — the test must fail if the fix is reverted. Only create a backlog task if the fix is complex and requires user decisions.
 <!-- SECTION:DESCRIPTION:END -->
 
 ## Implementation Notes

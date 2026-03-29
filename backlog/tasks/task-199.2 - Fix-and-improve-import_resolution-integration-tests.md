@@ -46,6 +46,7 @@ All 3 language-specific import*resolution test files contain **zero import resol
 2. Write actual import resolution tests for TypeScript, JavaScript, and Rust following the Python test file pattern
 3. Use inline `create_file_tree` helpers (no fixtures needed — import resolution is pure path manipulation)
 4. Investigate the `.jsx` extension gap in JavaScript resolver
+5. Fix production bugs discovered while improving tests: if straightforward, spin up an opus sub-agent to fix the bug. Then ensure the test assertions lock in the corrected behaviour — the test must fail if the fix is reverted. Only create a backlog task if the fix is complex and requires user decisions.
 <!-- SECTION:DESCRIPTION:END -->
 
 ## Implementation Notes

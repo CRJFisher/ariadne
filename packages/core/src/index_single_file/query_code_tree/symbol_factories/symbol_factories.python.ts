@@ -256,6 +256,22 @@ export function find_containing_callable(capture: CaptureNode): SymbolId {
   return anonymous_function_symbol(capture.location);
 }
 
+function has_property_decorator(decorated_def: SyntaxNode): boolean {
+  for (let i = 0; i < decorated_def.childCount; i++) {
+    const child = decorated_def.child(i)!;
+    if (child.type === "decorator") {
+      // The decorator identifier is typically the second child (after "@")
+      for (let j = 0; j < child.childCount; j++) {
+        const dec_child = child.child(j)!;
+        if (dec_child.type === "identifier" && dec_child.text === "property") {
+          return true;
+        }
+      }
+    }
+  }
+  return false;
+}
+
 export function find_decorator_target(
   capture: CaptureNode
 ): SymbolId | undefined {
@@ -282,15 +298,21 @@ export function find_decorator_target(
             } as CaptureNode);
 
             if (class_node) {
-              // It's a method or constructor
-              const method_name = name_node.text as SymbolName;
-              return method_symbol(method_name, {
+              const location = {
                 file_path,
                 start_line: name_node.startPosition.row + 1,
                 start_column: name_node.startPosition.column + 1,
                 end_line: name_node.endPosition.row + 1,
                 end_column: name_node.endPosition.column,
-              });
+              };
+              const sym_name = name_node.text as SymbolName;
+
+              // Check if decorated with @property
+              if (has_property_decorator(node)) {
+                return property_symbol(sym_name, location);
+              }
+
+              return method_symbol(sym_name, location);
             } else {
               // It's a function
               return function_symbol(name_node.text as SymbolName, {

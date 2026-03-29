@@ -44,6 +44,7 @@ priority: medium
 4. Add Rust `Type::new()` associated function construction test
 5. Add Python 3.12 `type` statement test
 6. All tests should remain inline
+7. Fix production bugs discovered while improving tests: if straightforward, spin up an opus sub-agent to fix the bug. Then ensure the test assertions lock in the corrected behaviour — the test must fail if the fix is reverted. Only create a backlog task if the fix is complex and requires user decisions.
 <!-- SECTION:DESCRIPTION:END -->
 
 ## Implementation Notes

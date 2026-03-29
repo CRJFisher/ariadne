@@ -1274,25 +1274,19 @@ class User:
           );
         }
 
-        // Verify @property decorated method
-        const property_method = user_class.methods.find(
-          (m) => m.name === "name",
+        // Verify @property decorated function is registered as a property (not a method)
+        const property_def = user_class.properties.find(
+          (p) => p.name === "name",
         );
-        if (property_method) {
-          expect(property_method.kind).toBe("method");
-          expect(property_method.name).toBe("name");
-          expect(property_method.location.file_path).toBe("test.py");
-          expect(property_method.defining_scope_id).toBeTruthy();
+        if (property_def) {
+          expect(property_def.kind).toBe("property");
+          expect(property_def.name).toBe("name");
+          expect(property_def.location.file_path).toBe("test.py");
+          expect(property_def.readonly).toBe(true);
 
-          // Verify decorators are tracked
-          expect(property_method.decorators).toBeDefined();
-          if (
-            property_method.decorators &&
-            property_method.decorators.length > 0
-          ) {
-            const decorator_names = property_method.decorators.map(d => d.name);
-            expect(decorator_names).toContain("property");
-          }
+          // Verify @property decorator is attached
+          expect(property_def.decorators.length).toBeGreaterThanOrEqual(1);
+          expect(property_def.decorators.some((d: any) => d.name === "property")).toBe(true);
         }
 
         // Verify @staticmethod decorated method

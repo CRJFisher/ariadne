@@ -11,6 +11,7 @@ import { TYPESCRIPT_HANDLERS } from "./capture_handlers.typescript";
 import { DefinitionBuilder } from "../../definitions";
 import type { ProcessingContext, CaptureNode } from "../../index_single_file";
 import type { FilePath, SymbolName, ScopeId, LexicalScope } from "@ariadnejs/types";
+import { node_to_location } from "../../node_utils";
 
 const js_parser = new Parser();
 js_parser.setLanguage(JavaScript);
@@ -58,13 +59,7 @@ function create_capture(
     entity: node_type as any,
     node: node as any,
     text: node.text as SymbolName,
-    location: {
-      file_path: TEST_FILE_PATH,
-      start_line: node.startPosition.row + 1,
-      start_column: node.startPosition.column + 1,
-      end_line: node.endPosition.row + 1,
-      end_column: node.endPosition.column + 1,
-    },
+    location: node_to_location(node, TEST_FILE_PATH),
   };
 }
 
@@ -77,7 +72,7 @@ describe("Export Detection - Comprehensive Verification", () => {
       const builder = new DefinitionBuilder(context);
 
       const handler = JAVASCRIPT_HANDLERS["definition.function"];
-      handler?.(capture, builder, context);
+      handler!(capture, builder, context);
 
       const result = builder.build();
       const functions = Array.from(result.functions.values());
@@ -93,7 +88,7 @@ describe("Export Detection - Comprehensive Verification", () => {
       const builder = new DefinitionBuilder(context);
 
       const handler = JAVASCRIPT_HANDLERS["definition.class"];
-      handler?.(capture, builder, context);
+      handler!(capture, builder, context);
 
       const result = builder.build();
       const classes = Array.from(result.classes.values());
@@ -109,7 +104,7 @@ describe("Export Detection - Comprehensive Verification", () => {
       const builder = new DefinitionBuilder(context);
 
       const handler = JAVASCRIPT_HANDLERS["definition.variable"];
-      handler?.(capture, builder, context);
+      handler!(capture, builder, context);
 
       const result = builder.build();
       const variables = Array.from(result.variables.values());
@@ -125,7 +120,7 @@ describe("Export Detection - Comprehensive Verification", () => {
       const builder = new DefinitionBuilder(context);
 
       const handler = JAVASCRIPT_HANDLERS["definition.function"];
-      handler?.(capture, builder, context);
+      handler!(capture, builder, context);
 
       const result = builder.build();
       const functions = Array.from(result.functions.values());
@@ -144,7 +139,7 @@ describe("Export Detection - Comprehensive Verification", () => {
       const builder = new DefinitionBuilder(context);
 
       const handler = TYPESCRIPT_HANDLERS["definition.interface"];
-      handler?.(capture, builder, context);
+      handler!(capture, builder, context);
 
       const result = builder.build();
       const interfaces = Array.from(result.interfaces.values());
@@ -160,7 +155,7 @@ describe("Export Detection - Comprehensive Verification", () => {
       const builder = new DefinitionBuilder(context);
 
       const handler = TYPESCRIPT_HANDLERS["definition.type_alias"];
-      handler?.(capture, builder, context);
+      handler!(capture, builder, context);
 
       const result = builder.build();
       const type_aliases = Array.from(result.types.values());
@@ -176,7 +171,7 @@ describe("Export Detection - Comprehensive Verification", () => {
       const builder = new DefinitionBuilder(context);
 
       const handler = TYPESCRIPT_HANDLERS["definition.enum"];
-      handler?.(capture, builder, context);
+      handler!(capture, builder, context);
 
       const result = builder.build();
       const enums = Array.from(result.enums.values());
@@ -192,7 +187,7 @@ describe("Export Detection - Comprehensive Verification", () => {
       const builder = new DefinitionBuilder(context);
 
       const handler = TYPESCRIPT_HANDLERS["definition.namespace"];
-      handler?.(capture, builder, context);
+      handler!(capture, builder, context);
 
       const result = builder.build();
       const namespaces = Array.from(result.namespaces.values());
@@ -208,7 +203,7 @@ describe("Export Detection - Comprehensive Verification", () => {
       const builder = new DefinitionBuilder(context);
 
       const handler = TYPESCRIPT_HANDLERS["definition.class"];
-      handler?.(capture, builder, context);
+      handler!(capture, builder, context);
 
       const result = builder.build();
       const classes = Array.from(result.classes.values());
@@ -219,11 +214,11 @@ describe("Export Detection - Comprehensive Verification", () => {
   });
 
   describe("Handler Registry", () => {
-    it("should preserve is_exported field for all definition types", () => {
+    it("should set is_exported=true for all exported definition types", () => {
       const test_cases = [
-        { code: "export function foo() {}", type: "definition.function", node_type: "identifier" },
-        { code: "export class Bar {}", type: "definition.class", node_type: "identifier" },
-        { code: "export const x = 1;", type: "definition.variable", node_type: "identifier" },
+        { code: "export function foo() {}", type: "definition.function", node_type: "identifier", expected_name: "foo" },
+        { code: "export class Bar {}", type: "definition.class", node_type: "identifier", expected_name: "Bar" },
+        { code: "export const x = 1;", type: "definition.variable", node_type: "identifier", expected_name: "x" },
       ];
 
       for (const test_case of test_cases) {
@@ -232,7 +227,7 @@ describe("Export Detection - Comprehensive Verification", () => {
         const builder = new DefinitionBuilder(context);
 
         const handler = JAVASCRIPT_HANDLERS[test_case.type];
-        handler?.(capture, builder, context);
+        handler!(capture, builder, context);
 
         const result = builder.build();
         const all_defs = [
@@ -241,10 +236,9 @@ describe("Export Detection - Comprehensive Verification", () => {
           ...Array.from(result.variables.values()),
         ];
 
-        expect(all_defs.length).toBeGreaterThan(0);
-        for (const def of all_defs) {
-          expect(def.is_exported).toBeDefined();
-        }
+        expect(all_defs).toHaveLength(1);
+        expect(all_defs[0].name).toBe(test_case.expected_name);
+        expect(all_defs[0].is_exported).toBe(true);
       }
     });
   });
