@@ -10,12 +10,13 @@ import {
   parse_name_list,
 } from "./git_change_detection";
 
-/** Run git in a temp dir, disabling inherited hooks from the parent repo. */
+/** Run git in a temp dir, clearing inherited git env vars from hooks. */
 function git(cwd: string, args: string): void {
+  const { GIT_DIR, GIT_WORK_TREE, GIT_INDEX_FILE, ...env } = process.env;
   execSync(`git ${args}`, {
     cwd,
     stdio: "pipe",
-    env: { ...process.env, GIT_DIR: path.join(cwd, ".git") },
+    env,
   });
 }
 
@@ -87,25 +88,7 @@ describe("git_change_detection", () => {
     });
 
     it("returns false for a non-git directory", async () => {
-      // Create a dir that is definitely NOT inside any git repo
-      // by setting GIT_CEILING_DIRECTORIES to block upward traversal
-      const result = await new Promise<boolean>((resolve) => {
-        const { execFile } = require("child_process");
-        execFile(
-          "git",
-          ["rev-parse", "--is-inside-work-tree"],
-          {
-            cwd: temp_dir,
-            env: {
-              ...process.env,
-              GIT_CEILING_DIRECTORIES: temp_dir,
-            },
-          },
-          (error: Error | null, stdout: string) => {
-            resolve(!error && stdout.trim() === "true");
-          },
-        );
-      });
+      const result = await is_git_repo(temp_dir);
       expect(result).toBe(false);
     });
   });
