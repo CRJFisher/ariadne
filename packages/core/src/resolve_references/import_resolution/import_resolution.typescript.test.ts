@@ -2,208 +2,382 @@
  * Tests for TypeScript module resolution
  */
 
-import { describe, it, expect, beforeAll } from "vitest";
-import Parser from "tree-sitter";
-import TypeScript from "tree-sitter-typescript";
-import type { FilePath, Language } from "@ariadnejs/types";
-import { build_index_single_file } from "../../index_single_file/index_single_file";
-import type { ParsedFile } from "../../index_single_file/file_utils";
+import { describe, it, expect } from "vitest";
+import type { FilePath } from "@ariadnejs/types";
+import { resolve_module_path_typescript } from "./import_resolution.typescript";
+import { create_file_tree } from "./import_resolution.test";
 
-// Helper to create ParsedFile for TypeScript
-function create_parsed_file(
-  code: string,
-  file_path: FilePath,
-  tree: Parser.Tree,
-  language: Language
-): ParsedFile {
-  const lines = code.split("\n");
-  return {
-    file_path,
-    file_lines: lines.length,
-    file_end_column: lines[lines.length - 1]?.length || 0,
-    tree,
-    lang: language,
-  };
-}
+describe("resolve_module_path_typescript", () => {
+  describe("relative imports", () => {
+    it("resolves ./import with .ts extension probing", () => {
+      const tree = create_file_tree("/project", [
+        "src/app.ts",
+        "src/utils.ts",
+      ]);
+      const result = resolve_module_path_typescript(
+        "./utils",
+        "/project/src/app.ts" as FilePath,
+        tree
+      );
+      expect(result).toBe("/project/src/utils.ts");
+    });
 
-describe("Body-based scopes - TypeScript", () => {
-  let parser: Parser;
+    it("resolves ../import to parent directory", () => {
+      const tree = create_file_tree("/project", [
+        "src/components/button.ts",
+        "src/utils.ts",
+      ]);
+      const result = resolve_module_path_typescript(
+        "../utils",
+        "/project/src/components/button.ts" as FilePath,
+        tree
+      );
+      expect(result).toBe("/project/src/utils.ts");
+    });
 
-  beforeAll(() => {
-    parser = new Parser();
-    parser.setLanguage(TypeScript.typescript);
+    it("resolves .tsx extension when .ts does not exist", () => {
+      const tree = create_file_tree("/project", [
+        "src/app.ts",
+        "src/Component.tsx",
+      ]);
+      const result = resolve_module_path_typescript(
+        "./Component",
+        "/project/src/app.ts" as FilePath,
+        tree
+      );
+      expect(result).toBe("/project/src/Component.tsx");
+    });
+
+    it("prefers .ts over .tsx when both exist", () => {
+      const tree = create_file_tree("/project", [
+        "src/app.ts",
+        "src/utils.ts",
+        "src/utils.tsx",
+      ]);
+      const result = resolve_module_path_typescript(
+        "./utils",
+        "/project/src/app.ts" as FilePath,
+        tree
+      );
+      expect(result).toBe("/project/src/utils.ts");
+    });
+
+    it("resolves .js file when no .ts/.tsx exists", () => {
+      const tree = create_file_tree("/project", [
+        "src/app.ts",
+        "src/legacy.js",
+      ]);
+      const result = resolve_module_path_typescript(
+        "./legacy",
+        "/project/src/app.ts" as FilePath,
+        tree
+      );
+      expect(result).toBe("/project/src/legacy.js");
+    });
+
+    it("resolves .jsx file when no .ts/.tsx/.js exists", () => {
+      const tree = create_file_tree("/project", [
+        "src/app.ts",
+        "src/Widget.jsx",
+      ]);
+      const result = resolve_module_path_typescript(
+        "./Widget",
+        "/project/src/app.ts" as FilePath,
+        tree
+      );
+      expect(result).toBe("/project/src/Widget.jsx");
+    });
+
+    it("resolves deeply nested relative path", () => {
+      const tree = create_file_tree("/project", [
+        "src/a/b/c/deep.ts",
+        "src/shared/utils.ts",
+      ]);
+      const result = resolve_module_path_typescript(
+        "../../../shared/utils",
+        "/project/src/a/b/c/deep.ts" as FilePath,
+        tree
+      );
+      expect(result).toBe("/project/src/shared/utils.ts");
+    });
   });
 
-  it("class name is in module scope, not class scope", () => {
-    const code = `export class MyClass {
-  method() {}
-}`;
-    const file_path = "test.ts" as FilePath;
-    const tree = parser.parse(code);
-    const parsed_file = create_parsed_file(code, file_path, tree, "typescript");
-    const index = build_index_single_file(parsed_file, tree, "typescript");
+  describe("ESM .js → .ts mapping", () => {
+    it("resolves .js import to .ts file", () => {
+      const tree = create_file_tree("/project", [
+        "src/app.ts",
+        "src/utils.ts",
+      ]);
+      const result = resolve_module_path_typescript(
+        "./utils.js",
+        "/project/src/app.ts" as FilePath,
+        tree
+      );
+      expect(result).toBe("/project/src/utils.ts");
+    });
 
-    const class_def = Array.from(index.classes.values()).find(
-      (c) => c.name === "MyClass"
-    );
-    const module_scope = Array.from(index.scopes.values()).find(
-      (s) => s.type === "module"
-    );
-    const class_scope = Array.from(index.scopes.values()).find(
-      (s) => s.type === "class"
-    );
+    it("resolves .js import to .tsx file when .ts does not exist", () => {
+      const tree = create_file_tree("/project", [
+        "src/app.ts",
+        "src/Component.tsx",
+      ]);
+      const result = resolve_module_path_typescript(
+        "./Component.js",
+        "/project/src/app.ts" as FilePath,
+        tree
+      );
+      expect(result).toBe("/project/src/Component.tsx");
+    });
 
-    expect(class_def).toBeDefined();
-    expect(module_scope).toBeDefined();
-    expect(class_scope).toBeDefined();
+    it("resolves .mjs import to .ts file", () => {
+      const tree = create_file_tree("/project", [
+        "src/app.ts",
+        "src/utils.ts",
+      ]);
+      const result = resolve_module_path_typescript(
+        "./utils.mjs",
+        "/project/src/app.ts" as FilePath,
+        tree
+      );
+      expect(result).toBe("/project/src/utils.ts");
+    });
 
-    // Name in parent scope
-    expect(class_def!.defining_scope_id).toBe(module_scope!.id);
-    expect(class_def!.defining_scope_id).not.toBe(class_scope!.id);
+    it("resolves .jsx import to .tsx file", () => {
+      const tree = create_file_tree("/project", [
+        "src/app.ts",
+        "src/Component.tsx",
+      ]);
+      const result = resolve_module_path_typescript(
+        "./Component.jsx",
+        "/project/src/app.ts" as FilePath,
+        tree
+      );
+      expect(result).toBe("/project/src/Component.tsx");
+    });
 
-    // Class scope should start after the class name (at '{')
-    expect(class_scope!.location.start_column).toBeGreaterThan(10);
+    it("prefers .ts over .tsx for .js imports", () => {
+      const tree = create_file_tree("/project", [
+        "src/app.ts",
+        "src/utils.ts",
+        "src/utils.tsx",
+      ]);
+      const result = resolve_module_path_typescript(
+        "./utils.js",
+        "/project/src/app.ts" as FilePath,
+        tree
+      );
+      expect(result).toBe("/project/src/utils.ts");
+    });
+
+    it("falls back to actual .js file when no .ts equivalent exists", () => {
+      const tree = create_file_tree("/project", [
+        "src/app.ts",
+        "src/utils.js",
+      ]);
+      const result = resolve_module_path_typescript(
+        "./utils.js",
+        "/project/src/app.ts" as FilePath,
+        tree
+      );
+      expect(result).toBe("/project/src/utils.js");
+    });
   });
 
-  it("interface name is in module scope", () => {
-    const code = `export interface IFoo {
-  bar(): void;
-}`;
-    const file_path = "test.ts" as FilePath;
-    const tree = parser.parse(code);
-    const parsed_file = create_parsed_file(code, file_path, tree, "typescript");
-    const index = build_index_single_file(parsed_file, tree, "typescript");
+  describe("index file resolution", () => {
+    it("resolves directory to index.ts", () => {
+      const tree = create_file_tree("/project", [
+        "src/app.ts",
+        "src/components/index.ts",
+      ]);
+      const result = resolve_module_path_typescript(
+        "./components",
+        "/project/src/app.ts" as FilePath,
+        tree
+      );
+      expect(result).toBe("/project/src/components/index.ts");
+    });
 
-    const interface_def = Array.from(index.interfaces.values()).find(
-      (i) => i.name === "IFoo"
-    );
-    const module_scope = Array.from(index.scopes.values()).find(
-      (s) => s.type === "module"
-    );
+    it("resolves directory to index.tsx when index.ts does not exist", () => {
+      const tree = create_file_tree("/project", [
+        "src/app.ts",
+        "src/components/index.tsx",
+      ]);
+      const result = resolve_module_path_typescript(
+        "./components",
+        "/project/src/app.ts" as FilePath,
+        tree
+      );
+      expect(result).toBe("/project/src/components/index.tsx");
+    });
 
-    expect(interface_def).toBeDefined();
-    expect(module_scope).toBeDefined();
+    it("resolves directory to index.js when no .ts index exists", () => {
+      const tree = create_file_tree("/project", [
+        "src/app.ts",
+        "src/lib/index.js",
+      ]);
+      const result = resolve_module_path_typescript(
+        "./lib",
+        "/project/src/app.ts" as FilePath,
+        tree
+      );
+      expect(result).toBe("/project/src/lib/index.js");
+    });
 
-    expect(interface_def!.defining_scope_id).toBe(module_scope!.id);
+    it("prefers index.ts over index.tsx", () => {
+      const tree = create_file_tree("/project", [
+        "src/app.ts",
+        "src/components/index.ts",
+        "src/components/index.tsx",
+      ]);
+      const result = resolve_module_path_typescript(
+        "./components",
+        "/project/src/app.ts" as FilePath,
+        tree
+      );
+      expect(result).toBe("/project/src/components/index.ts");
+    });
+
+    it("resolves .js directory import to index.ts via ESM mapping", () => {
+      const tree = create_file_tree("/project", [
+        "src/app.ts",
+        "src/lib/index.ts",
+      ]);
+      const result = resolve_module_path_typescript(
+        "./lib.js",
+        "/project/src/app.ts" as FilePath,
+        tree
+      );
+      expect(result).toBe("/project/src/lib/index.ts");
+    });
   });
 
-  it("enum name is in module scope", () => {
-    const code = `export enum Status {
-  Ok,
-  Error
-}`;
-    const file_path = "test.ts" as FilePath;
-    const tree = parser.parse(code);
-    const parsed_file = create_parsed_file(code, file_path, tree, "typescript");
-    const index = build_index_single_file(parsed_file, tree, "typescript");
+  describe("exact path with extension", () => {
+    it("resolves import with explicit .ts extension", () => {
+      const tree = create_file_tree("/project", [
+        "src/app.ts",
+        "src/utils.ts",
+      ]);
+      const result = resolve_module_path_typescript(
+        "./utils.ts",
+        "/project/src/app.ts" as FilePath,
+        tree
+      );
+      expect(result).toBe("/project/src/utils.ts");
+    });
 
-    const enum_def = Array.from(index.enums.values()).find(
-      (e) => e.name === "Status"
-    );
-    const module_scope = Array.from(index.scopes.values()).find(
-      (s) => s.type === "module"
-    );
-
-    expect(enum_def).toBeDefined();
-    expect(module_scope).toBeDefined();
-
-    expect(enum_def!.defining_scope_id).toBe(module_scope!.id);
+    it("resolves import with explicit .tsx extension", () => {
+      const tree = create_file_tree("/project", [
+        "src/app.ts",
+        "src/Component.tsx",
+      ]);
+      const result = resolve_module_path_typescript(
+        "./Component.tsx",
+        "/project/src/app.ts" as FilePath,
+        tree
+      );
+      expect(result).toBe("/project/src/Component.tsx");
+    });
   });
 
-  it("class members are in class body scope", () => {
-    const code = `export class MyClass {
-  myMethod() {}
-  myProperty: string;
-}`;
-    const file_path = "test.ts" as FilePath;
-    const tree = parser.parse(code);
-    const parsed_file = create_parsed_file(code, file_path, tree, "typescript");
-    const index = build_index_single_file(parsed_file, tree, "typescript");
+  describe("bare imports", () => {
+    it("returns bare import path unchanged", () => {
+      const tree = create_file_tree("/project", ["src/app.ts"]);
+      const result = resolve_module_path_typescript(
+        "lodash",
+        "/project/src/app.ts" as FilePath,
+        tree
+      );
+      expect(result).toBe("lodash");
+    });
 
-    const class_def = Array.from(index.classes.values()).find(
-      (c) => c.name === "MyClass"
-    );
-    const class_scope = Array.from(index.scopes.values()).find(
-      (s) => s.type === "class"
-    );
-
-    expect(class_def).toBeDefined();
-    expect(class_scope).toBeDefined();
-
-    // Find methods and properties in class
-    const method_def = class_def!.methods.find((m) => m.name === "myMethod");
-    const property_def = class_def!.properties.find(
-      (p) => p.name === "myProperty"
-    );
-
-    expect(method_def).toBeDefined();
-    expect(property_def).toBeDefined();
-
-    // Members are in class scope
-    expect(method_def!.defining_scope_id).toBe(class_scope!.id);
-    expect(property_def!.defining_scope_id).toBe(class_scope!.id);
+    it("returns scoped package import unchanged", () => {
+      const tree = create_file_tree("/project", ["src/app.ts"]);
+      const result = resolve_module_path_typescript(
+        "@types/node",
+        "/project/src/app.ts" as FilePath,
+        tree
+      );
+      expect(result).toBe("@types/node");
+    });
   });
 
-  it("interface methods are in interface body scope", () => {
-    const code = `export interface IFoo {
-  bar(): void;
-}`;
-    const file_path = "test.ts" as FilePath;
-    const tree = parser.parse(code);
-    const parsed_file = create_parsed_file(code, file_path, tree, "typescript");
-    const index = build_index_single_file(parsed_file, tree, "typescript");
+  describe("absolute vs relative importing_file path handling", () => {
+    it("returns absolute path when importing_file is absolute", () => {
+      const tree = create_file_tree("/project", [
+        "src/app.ts",
+        "src/utils.ts",
+      ]);
+      const result = resolve_module_path_typescript(
+        "./utils",
+        "/project/src/app.ts" as FilePath,
+        tree
+      );
+      expect(result).toBe("/project/src/utils.ts");
+    });
 
-    const interface_def = Array.from(index.interfaces.values()).find(
-      (i) => i.name === "IFoo"
-    );
-    // Interface scopes are stored as "class" type
-    // Find scope that starts after "interface IFoo"
-    const interface_scope = Array.from(index.scopes.values()).find(
-      (s) => s.type === "class" && s.location.start_column > 10
-    );
-
-    expect(interface_def).toBeDefined();
-    expect(interface_scope).toBeDefined();
-
-    // Find method in interface
-    const method_def = interface_def!.methods.find((m) => m.name === "bar");
-
-    expect(method_def).toBeDefined();
-
-    // Method is in interface scope
-    expect(method_def!.defining_scope_id).toBe(interface_scope!.id);
+    it("returns relative path when importing_file is relative", () => {
+      const tree = create_file_tree("/project", [
+        "src/app.ts",
+        "src/utils.ts",
+      ]);
+      const result = resolve_module_path_typescript(
+        "./utils",
+        "src/app.ts" as FilePath,
+        tree
+      );
+      expect(result).toBe("src/utils.ts");
+    });
   });
 
-  it("enum body creates a scope", () => {
-    const code = `export enum Status {
-  Ok,
-  Error
-}`;
-    const file_path = "test.ts" as FilePath;
-    const tree = parser.parse(code);
-    const parsed_file = create_parsed_file(code, file_path, tree, "typescript");
-    const index = build_index_single_file(parsed_file, tree, "typescript");
+  describe("fallback behavior when file not found in tree", () => {
+    it("falls back to .ts when no extension and file not found", () => {
+      const tree = create_file_tree("/project", ["src/app.ts"]);
+      const result = resolve_module_path_typescript(
+        "./nonexistent",
+        "/project/src/app.ts" as FilePath,
+        tree
+      );
+      expect(result).toBe("/project/src/nonexistent.ts");
+    });
 
-    const enum_def = Array.from(index.enums.values()).find(
-      (e) => e.name === "Status"
-    );
-    const module_scope = Array.from(index.scopes.values()).find(
-      (s) => s.type === "module"
-    );
-    // Enum scopes are stored as "class" type
-    // Find scope that starts after "enum Status"
-    const enum_scope = Array.from(index.scopes.values()).find(
-      (s) => s.type === "class" && s.location.start_column > 10
-    );
+    it("falls back to .ts for .js import when file not found", () => {
+      const tree = create_file_tree("/project", ["src/app.ts"]);
+      const result = resolve_module_path_typescript(
+        "./nonexistent.js",
+        "/project/src/app.ts" as FilePath,
+        tree
+      );
+      expect(result).toBe("/project/src/nonexistent.ts");
+    });
 
-    expect(enum_def).toBeDefined();
-    expect(module_scope).toBeDefined();
-    expect(enum_scope).toBeDefined();
+    it("falls back to .tsx for .jsx import when file not found", () => {
+      const tree = create_file_tree("/project", ["src/app.ts"]);
+      const result = resolve_module_path_typescript(
+        "./nonexistent.jsx",
+        "/project/src/app.ts" as FilePath,
+        tree
+      );
+      expect(result).toBe("/project/src/nonexistent.tsx");
+    });
 
-    // Enum name is in module scope
-    expect(enum_def!.defining_scope_id).toBe(module_scope!.id);
+    it("falls back to .ts for .mjs import when file not found", () => {
+      const tree = create_file_tree("/project", ["src/app.ts"]);
+      const result = resolve_module_path_typescript(
+        "./nonexistent.mjs",
+        "/project/src/app.ts" as FilePath,
+        tree
+      );
+      expect(result).toBe("/project/src/nonexistent.ts");
+    });
 
-    // Enum scope should start after the enum name (at '{')
-    expect(enum_scope!.location.start_column).toBeGreaterThan(10);
+    it("keeps existing .ts extension when file not found", () => {
+      const tree = create_file_tree("/project", ["src/app.ts"]);
+      const result = resolve_module_path_typescript(
+        "./nonexistent.ts",
+        "/project/src/app.ts" as FilePath,
+        tree
+      );
+      expect(result).toBe("/project/src/nonexistent.ts");
+    });
   });
 });
