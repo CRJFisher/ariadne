@@ -1351,7 +1351,7 @@ mod math {
       );
       expect(add_numbers_import).toBeDefined();
       if (add_numbers_import) {
-        // The original_name is the item name (not the full path)
+        // The original_name is the symbol name (not the full path)
         expect(add_numbers_import.original_name).toBe("add");
       }
     });
