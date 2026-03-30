@@ -15,6 +15,7 @@ build
 *.js.map
 *.d.ts
 !packages/types/**/*.d.ts
+!packages/core/src/tree_sitter_grammars.d.ts
 .pnpm-store/
 
 # IDE and editor files

@@ -220,14 +220,11 @@ export function extract_generic_parameters(node: SyntaxNode): SymbolName[] {
 
   if (type_params) {
     for (const child of type_params.children || []) {
-      if (child.type === "type_identifier" || child.type === "lifetime") {
-        generics.push(child.text as SymbolName);
-      } else if (child.type === "constrained_type_parameter") {
-        const name = child.childForFieldName?.("left");
-        if (name) {
-          generics.push(name.text as SymbolName);
-        }
-      } else if (child.type === "optional_type_parameter") {
+      if (
+        child.type === "type_parameter" ||
+        child.type === "lifetime_parameter" ||
+        child.type === "const_parameter"
+      ) {
         const name = child.childForFieldName?.("name");
         if (name) {
           generics.push(name.text as SymbolName);
