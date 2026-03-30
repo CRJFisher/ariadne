@@ -1,7 +1,7 @@
 ---
 id: TASK-199.6.1
 title: Strengthen member extraction tests and add Python Protocol/Enum tests
-status: To Do
+status: Done
 assignee: []
 created_date: "2026-03-30 10:45"
 updated_date: "2026-03-30 10:45"
