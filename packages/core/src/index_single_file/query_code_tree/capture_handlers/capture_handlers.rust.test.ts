@@ -1360,7 +1360,7 @@ impl MyStruct {
       const imports = Array.from(result.imports.values());
       expect(imports).toHaveLength(1);
       expect(imports[0].name).toBe("Map");
-      expect(imports[0].original_name).toBe("std::collections::HashMap");
+      expect(imports[0].original_name).toBe("HashMap");
       expect(imports[0].import_kind).toBe("named");
     });
 
