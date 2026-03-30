@@ -64,7 +64,7 @@
 ; Interface definitions
 (interface_declaration
   name: (type_identifier) @definition.interface
-) @definition.interface
+)
 
 ; Interface method signatures
 (interface_declaration
@@ -87,12 +87,12 @@
 ; Type alias definitions
 (type_alias_declaration
   name: (type_identifier) @definition.type_alias
-) @definition.type_alias
+)
 
 ; Enum definitions
 (enum_declaration
   name: (identifier) @definition.enum
-) @definition.enum
+)
 
 ; Enum members
 (enum_body
@@ -108,12 +108,12 @@
 ; Namespace definitions
 (internal_module
   name: (identifier) @definition.namespace
-) @definition.namespace
+)
 
 ; Type parameter definitions
 (type_parameter
   (type_identifier) @definition.type_parameter
-) @definition.type_parameter
+)
 
 ;; ==============================================================================
 ;; TYPE ANNOTATIONS AND GENERICS
@@ -146,13 +146,13 @@
 (public_field_definition
   (accessibility_modifier) @modifier.access_modifier
   name: (property_identifier) @definition.field
-) @definition.field
+)
 
 ; Readonly modifier
 (public_field_definition
   "readonly" @modifier.readonly_modifier
   name: (property_identifier) @definition.field
-) @definition.field
+)
 
 ; Static modifier
 (method_definition
@@ -163,7 +163,7 @@
 (public_field_definition
   "static" @modifier.visibility
   name: (property_identifier) @definition.field
-) @definition.field
+)
 
 ; Constructor parameter properties (with access modifiers)
 ; These create both a parameter AND an implicit class property
@@ -398,7 +398,7 @@
   "static"? @modifier.visibility
   "readonly"? @modifier.readonly_modifier
   name: (property_identifier) @definition.field
-) @definition.field
+)
 
 (public_field_definition
   name: (private_property_identifier) @definition.field

@@ -311,6 +311,92 @@ describe("Type Bindings - TypeScript", () => {
 
     expect(bindings.size).toBeGreaterThan(0);
   });
+
+  it("should not extract variable type annotations (not captured by index_single_file)", () => {
+    const code = `
+      const x: number = 42;
+      let name: string = "hello";
+    `;
+
+    const tree = parser.parse(code);
+    const parsed_file = create_parsed_file(
+      code,
+      "test.ts" as FilePath,
+      tree,
+      "typescript"
+    );
+    const index = build_index_single_file(parsed_file, tree, "typescript");
+
+    const bindings = extract_type_bindings({
+      variables: index.variables,
+      functions: index.functions,
+      classes: index.classes,
+      interfaces: index.interfaces,
+    });
+
+    // Top-level variable type annotations are not extracted by index_single_file
+    expect(bindings.size).toBe(0);
+  });
+
+  it("should extract getter/setter type annotations", () => {
+    const code = `
+      class User {
+        private _name: string = "";
+        get name(): string { return this._name; }
+        set name(value: string) { this._name = value; }
+      }
+    `;
+
+    const tree = parser.parse(code);
+    const parsed_file = create_parsed_file(
+      code,
+      "test.ts" as FilePath,
+      tree,
+      "typescript"
+    );
+    const index = build_index_single_file(parsed_file, tree, "typescript");
+
+    const bindings = extract_type_bindings({
+      variables: index.variables,
+      functions: index.functions,
+      classes: index.classes,
+      interfaces: index.interfaces,
+    });
+
+    expect(bindings.size).toBe(3);
+    const type_values = Array.from(bindings.values()).sort();
+    expect(type_values).toEqual(["string", "string", "string"]);
+  });
+
+  it("should extract abstract class member type annotations", () => {
+    const code = `
+      abstract class Shape {
+        abstract area(): number;
+        abstract perimeter(): number;
+        color: string = "red";
+      }
+    `;
+
+    const tree = parser.parse(code);
+    const parsed_file = create_parsed_file(
+      code,
+      "test.ts" as FilePath,
+      tree,
+      "typescript"
+    );
+    const index = build_index_single_file(parsed_file, tree, "typescript");
+
+    const bindings = extract_type_bindings({
+      variables: index.variables,
+      functions: index.functions,
+      classes: index.classes,
+      interfaces: index.interfaces,
+    });
+
+    expect(bindings.size).toBe(3);
+    const type_values = Array.from(bindings.values()).sort();
+    expect(type_values).toEqual(["number", "number", "string"]);
+  });
 });
 
 // ============================================================================
@@ -355,7 +441,7 @@ is_active: bool = True
     expect(type_values).toContain("bool");
   });
 
-  it("should extract parameter type annotations from functions", () => {
+  it("should extract parameter and return type annotations from functions", () => {
     const code = `
 def greet(name: str, age: int) -> None:
     print(f"Hello {name}, age {age}")
@@ -377,9 +463,9 @@ def greet(name: str, age: int) -> None:
       interfaces: index.interfaces,
     });
 
-    // Function parameters may not be extracted at top level by index_single_file
-    expect(bindings).toBeDefined();
-    expect(bindings instanceof Map).toBe(true);
+    expect(bindings.size).toBe(3);
+    const type_values = Array.from(bindings.values()).sort();
+    expect(type_values).toEqual(["None", "int", "str"]);
   });
 
   it("should extract class attribute type annotations", () => {
@@ -411,13 +497,12 @@ class User:
       interfaces: index.interfaces,
     });
 
-    expect(bindings.size).toBeGreaterThan(0);
-    const type_values = Array.from(bindings.values());
-    expect(type_values).toContain("str");
-    expect(type_values).toContain("int");
+    expect(bindings.size).toBe(5);
+    const type_values = Array.from(bindings.values()).sort();
+    expect(type_values).toEqual(["bool", "int", "int", "str", "str"]);
   });
 
-  it("should extract method parameter type annotations", () => {
+  it("should extract method parameter and return type annotations", () => {
     const code = `
 class Calculator:
     def add(self, a: int, b: int) -> int:
@@ -440,9 +525,38 @@ class Calculator:
       interfaces: index.interfaces,
     });
 
-    // Method parameters may not be extracted by index_single_file for Python
-    expect(bindings).toBeDefined();
-    expect(bindings instanceof Map).toBe(true);
+    expect(bindings.size).toBe(3);
+    const type_values = Array.from(bindings.values()).sort();
+    expect(type_values).toEqual(["int", "int", "int"]);
+  });
+
+  it("should extract @classmethod parameter and return types", () => {
+    const code = `
+class User:
+    @classmethod
+    def from_dict(cls, data: dict) -> "User":
+        return cls()
+    `;
+
+    const tree = parser.parse(code);
+    const parsed_file = create_parsed_file(
+      code,
+      "test.py" as FilePath,
+      tree,
+      "python"
+    );
+    const index = build_index_single_file(parsed_file, tree, "python");
+
+    const bindings = extract_type_bindings({
+      variables: index.variables,
+      functions: index.functions,
+      classes: index.classes,
+      interfaces: index.interfaces,
+    });
+
+    expect(bindings.size).toBe(2);
+    const type_values = Array.from(bindings.values()).sort();
+    expect(type_values).toEqual(['"User"', "dict"]);
   });
 });
 
@@ -488,7 +602,7 @@ describe("Type Bindings - Rust", () => {
     expect(type_values).toContain("bool");
   });
 
-  it("should extract parameter type annotations from functions", () => {
+  it("should extract parameter and return type annotations from functions", () => {
     const code = `
       fn greet(name: &str, age: i32) -> () {
           println!("Hello {}, age {}", name, age);
@@ -511,9 +625,9 @@ describe("Type Bindings - Rust", () => {
       interfaces: index.interfaces,
     });
 
-    // Function parameters may not be extracted at top level by index_single_file
-    expect(bindings).toBeDefined();
-    expect(bindings instanceof Map).toBe(true);
+    expect(bindings.size).toBe(3);
+    const type_values = Array.from(bindings.values()).sort();
+    expect(type_values).toEqual(["&str", "()", "i32"]);
   });
 
   it("should extract struct field type annotations", () => {
@@ -541,12 +655,12 @@ describe("Type Bindings - Rust", () => {
       interfaces: index.interfaces,
     });
 
-    // Struct fields may not be extracted by index_single_file
-    expect(bindings).toBeDefined();
-    expect(bindings instanceof Map).toBe(true);
+    expect(bindings.size).toBe(3);
+    const type_values = Array.from(bindings.values()).sort();
+    expect(type_values).toEqual(["String", "bool", "i32"]);
   });
 
-  it("should extract impl method parameter types", () => {
+  it("should not extract impl method types (impl not indexed as class)", () => {
     const code = `
       impl Calculator {
           fn add(&self, a: i32, b: i32) -> i32 {
@@ -571,9 +685,8 @@ describe("Type Bindings - Rust", () => {
       interfaces: index.interfaces,
     });
 
-    // Impl method parameters may not be extracted by index_single_file
-    expect(bindings).toBeDefined();
-    expect(bindings instanceof Map).toBe(true);
+    // Standalone impl blocks without a struct definition are not indexed as classes
+    expect(bindings.size).toBe(0);
   });
 });
 

@@ -140,10 +140,7 @@ describe("Constructor Tracking - JavaScript", () => {
 
     const bindings = extract_constructor_bindings(index.references);
 
-    // Standalone constructor calls without construct_target should not be included
-    // The index_single_file may or may not include construct_target for standalone calls
-    expect(bindings).toBeDefined();
-    expect(bindings instanceof Map).toBe(true);
+    expect(bindings.size).toBe(0);
   });
 });
 
@@ -262,11 +259,9 @@ describe("Constructor Tracking - TypeScript", () => {
 
     const bindings = extract_constructor_bindings(index.references);
 
-    // Generic constructors are extracted - the exact name depends on tree-sitter parsing
-    // Some parsers may extract "Container" while others may extract type parameters
-    expect(bindings.size).toBeGreaterThan(0);
-    expect(bindings).toBeDefined();
-    expect(bindings instanceof Map).toBe(true);
+    expect(bindings.size).toBe(1);
+    const type_values = Array.from(bindings.values());
+    expect(type_values).toEqual(["Container"]);
   });
 });
 

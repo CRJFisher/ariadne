@@ -258,7 +258,7 @@ describe("Type Alias Extraction - Python", () => {
     parser.setLanguage(Python);
   });
 
-  it("should extract type alias using TypeAlias (Python 3.10+)", () => {
+  it("should not extract TypeAlias annotation form (only PEP 695 type statement is captured)", () => {
     const code = `
 from typing import TypeAlias
 
@@ -276,12 +276,11 @@ UserId: TypeAlias = str
 
     const metadata = extract_type_alias_metadata(index.types);
 
-    // May or may not extract depending on index_single_file implementation
-    // At minimum, should not crash
-    expect(metadata).toBeDefined();
+    // TypeAlias annotation form is not captured as a type alias — only PEP 695 `type` statement is
+    expect(metadata.size).toBe(0);
   });
 
-  it("should extract type alias using assignment", () => {
+  it("should not extract assignment-based type alias (only PEP 695 type statement is captured)", () => {
     const code = `
 Vector = list[float]
     `;
@@ -297,8 +296,33 @@ Vector = list[float]
 
     const metadata = extract_type_alias_metadata(index.types);
 
-    // Python type aliases may be extracted as variables or types
-    expect(metadata).toBeDefined();
+    // Assignment-based alias is indexed as a variable, not a type alias
+    expect(metadata.size).toBe(0);
+  });
+
+  it("should extract PEP 695 type statement (Python 3.12+)", () => {
+    const code = `
+type Url = str
+type Pair = tuple[int, int]
+    `;
+
+    const tree = parser.parse(code);
+    const parsed_file = create_parsed_file(
+      code,
+      "test.py" as FilePath,
+      tree,
+      "python"
+    );
+    const index = build_index_single_file(parsed_file, tree, "python");
+
+    const metadata = extract_type_alias_metadata(index.types);
+
+    expect(metadata.size).toBe(2);
+    const entries = Object.fromEntries(
+      [...metadata.entries()].map(([k, v]) => [k.split(":").pop(), v])
+    );
+    expect(entries["Url"]).toBe("str");
+    expect(entries["Pair"]).toBe("tuple[int, int]");
   });
 
   it("should handle no type aliases in simple Python code", () => {
@@ -427,6 +451,29 @@ pub type BoxedError = Box<dyn std::error::Error>;
     expect(
       expressions.some((expr) => expr.includes("Box") || expr.includes("Error"))
     ).toBe(true);
+  });
+
+  it("should not extract trait associated type without value", () => {
+    const code = `
+trait Iterator {
+    type Item;
+}
+    `;
+
+    const tree = parser.parse(code);
+    const parsed_file = create_parsed_file(
+      code,
+      "test.rs" as FilePath,
+      tree,
+      "rust"
+    );
+    const index = build_index_single_file(parsed_file, tree, "rust");
+
+    const metadata = extract_type_alias_metadata(index.types);
+
+    // Trait associated types without a value (type Item;) have no type_expression
+    // so they should not appear in the metadata
+    expect(metadata.size).toBe(0);
   });
 });
 
