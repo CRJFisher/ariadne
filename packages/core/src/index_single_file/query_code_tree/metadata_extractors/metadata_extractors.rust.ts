@@ -538,7 +538,9 @@ export const RUST_METADATA_EXTRACTORS: MetadataExtractors = {
     // 2. Call expressions to new() or other constructor methods
     // 3. Enum variant constructors
 
-    // Look for parent let_declaration or assignment
+    // Look for parent let_declaration or assignment.
+    // Stop at arguments boundaries to avoid matching outer bindings
+    // for nested constructor calls (e.g., Outer::new(Inner::new())).
     let parent = node.parent;
     while (parent) {
       if (parent.type === "let_declaration") {
@@ -564,6 +566,10 @@ export const RUST_METADATA_EXTRACTORS: MetadataExtractors = {
         if (left) {
           return node_to_location(left, file_path);
         }
+        break;
+      }
+
+      if (parent.type === "arguments") {
         break;
       }
 

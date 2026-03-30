@@ -484,6 +484,40 @@ describe("Constructor Tracking - Rust", () => {
     expect(bindings instanceof Map).toBe(true);
   });
 
+  it("should extract constructor binding for Type::new() associated function", () => {
+    const code = `
+      struct Database {
+        name: String,
+      }
+
+      impl Database {
+        fn new(name: String) -> Database {
+          Database { name }
+        }
+      }
+
+      fn main() {
+        let db = Database::new(String::from("test"));
+      }
+    `;
+
+    const tree = parser.parse(code);
+    const parsed_file = create_parsed_file(
+      code,
+      "test.rs" as FilePath,
+      tree,
+      "rust"
+    );
+    const index = build_index_single_file(parsed_file, tree, "rust");
+
+    const bindings = extract_constructor_bindings(index.references);
+
+    // Database::new() should produce a constructor binding for "Database"
+    // (in addition to the Database { name } struct expression inside impl)
+    const type_values = Array.from(bindings.values());
+    expect(type_values).toContain("Database");
+  });
+
   it("should handle tuple struct instantiation", () => {
     const code = `
       struct Point(i32, i32);

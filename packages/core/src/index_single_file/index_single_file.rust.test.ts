@@ -869,12 +869,13 @@ fn main() {
 
       const index = build_index_single_file(parsed_file, tree, "rust");
 
-      // Verify associated function call is tracked
-      const calls = index.references.filter((r) => r.kind === "function_call" || r.kind === "method_call" || r.kind === "constructor_call");
-      expect(calls.length).toBeGreaterThan(0);
+      // Verify associated function constructor call is tracked
+      // Config::new() produces a constructor_call with the type name "Config"
+      const constructor_calls = index.references.filter((r) => r.kind === "constructor_call");
+      expect(constructor_calls.length).toBeGreaterThan(0);
 
-      const new_call = calls.find((c) => c.name.includes("new"));
-      expect(new_call).toBeDefined();
+      const config_constructor = constructor_calls.find((c) => c.name === "Config");
+      expect(config_constructor).toBeDefined();
     });
   });
 

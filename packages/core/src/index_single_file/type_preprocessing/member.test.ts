@@ -357,6 +357,87 @@ describe("Member Extraction - TypeScript", () => {
     ] as SymbolName[]);
   });
 
+  it("should extract enum members", () => {
+    const code = `
+      enum Color {
+        Red,
+        Green,
+        Blue
+      }
+    `;
+
+    const tree = parser.parse(code);
+    const parsed_file = create_parsed_file(
+      code,
+      "test.ts" as FilePath,
+      tree,
+      "typescript"
+    );
+    const index = build_index_single_file(parsed_file, tree, "typescript");
+
+    // Verify the enum was indexed
+    expect(index.enums.size).toBe(1);
+    const enum_def = Array.from(index.enums.values())[0];
+    expect(enum_def.name).toBe("Color" as SymbolName);
+    expect(enum_def.members.map((m) => m.name).sort()).toEqual(
+      ["Blue", "Green", "Red"] as SymbolName[]
+    );
+
+    const members = extract_type_members({
+      classes: index.classes,
+      interfaces: index.interfaces,
+      enums: index.enums,
+    });
+
+    expect(members.size).toBe(1);
+
+    const color_members = Array.from(members.values())[0];
+    expect(color_members.methods.size).toBe(0);
+    expect(color_members.properties.size).toBe(0);
+    expect(color_members.constructor).toBeUndefined();
+    expect(color_members.extends).toEqual([]);
+  });
+
+  it("should extract enum members with explicit values", () => {
+    const code = `
+      enum Status {
+        Active = "active",
+        Inactive = "inactive",
+        Pending = 0
+      }
+    `;
+
+    const tree = parser.parse(code);
+    const parsed_file = create_parsed_file(
+      code,
+      "test.ts" as FilePath,
+      tree,
+      "typescript"
+    );
+    const index = build_index_single_file(parsed_file, tree, "typescript");
+
+    expect(index.enums.size).toBe(1);
+    const enum_def = Array.from(index.enums.values())[0];
+    expect(enum_def.name).toBe("Status" as SymbolName);
+    expect(enum_def.members.map((m) => m.name).sort()).toEqual(
+      ["Active", "Inactive", "Pending"] as SymbolName[]
+    );
+
+    const members = extract_type_members({
+      classes: index.classes,
+      interfaces: index.interfaces,
+      enums: index.enums,
+    });
+
+    expect(members.size).toBe(1);
+
+    const status_members = Array.from(members.values())[0];
+    expect(status_members.methods.size).toBe(0);
+    expect(status_members.properties.size).toBe(0);
+    expect(status_members.constructor).toBeUndefined();
+    expect(status_members.extends).toEqual([]);
+  });
+
   it("should handle static and instance methods", () => {
     const code = `
       class User {
