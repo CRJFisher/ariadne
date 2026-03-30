@@ -105,8 +105,8 @@ describe("Type Bindings - JavaScript", () => {
       interfaces: index.interfaces,
     });
 
-    expect(bindings).toBeDefined();
-    expect(bindings instanceof Map).toBe(true);
+    // JS classes without type annotations produce no bindings
+    expect(bindings.size).toBe(0);
   });
 });
 
@@ -145,10 +145,9 @@ describe("Type Bindings - TypeScript", () => {
       interfaces: index.interfaces,
     });
 
-    expect(bindings.size).toBeGreaterThan(0);
-    const type_values = Array.from(bindings.values());
-    expect(type_values).toContain("string");
-    expect(type_values).toContain("number");
+    expect(bindings.size).toBe(3);
+    const type_values = Array.from(bindings.values()).sort();
+    expect(type_values).toEqual(["number", "string", "void"]);
   });
 
   it("should extract class property type annotations", () => {
@@ -182,11 +181,9 @@ describe("Type Bindings - TypeScript", () => {
       interfaces: index.interfaces,
     });
 
-    expect(bindings.size).toBeGreaterThan(0);
-    const type_values = Array.from(bindings.values());
-    expect(type_values).toContain("string");
-    expect(type_values).toContain("number");
-    expect(type_values).toContain("boolean");
+    expect(bindings.size).toBe(5);
+    const type_values = Array.from(bindings.values()).sort();
+    expect(type_values).toEqual(["boolean", "number", "number", "string", "string"]);
   });
 
   it("should extract method return type and parameter annotations", () => {
@@ -218,9 +215,9 @@ describe("Type Bindings - TypeScript", () => {
       interfaces: index.interfaces,
     });
 
-    expect(bindings.size).toBeGreaterThan(0);
-    const type_values = Array.from(bindings.values());
-    expect(type_values.filter((t) => t === "number").length).toBeGreaterThan(0);
+    expect(bindings.size).toBe(6);
+    const type_values = Array.from(bindings.values()).sort();
+    expect(type_values).toEqual(["number", "number", "number", "number", "number", "number"]);
   });
 
   it("should extract interface property type annotations", () => {
@@ -249,11 +246,9 @@ describe("Type Bindings - TypeScript", () => {
       interfaces: index.interfaces,
     });
 
-    expect(bindings.size).toBeGreaterThan(0);
-    const type_values = Array.from(bindings.values());
-    expect(type_values).toContain("number");
-    expect(type_values).toContain("string");
-    expect(type_values).toContain("boolean");
+    expect(bindings.size).toBe(4);
+    const type_values = Array.from(bindings.values()).sort();
+    expect(type_values).toEqual(["boolean", "number", "string", "string"]);
   });
 
   it("should extract interface method type annotations", () => {
@@ -280,9 +275,9 @@ describe("Type Bindings - TypeScript", () => {
       interfaces: index.interfaces,
     });
 
-    expect(bindings.size).toBeGreaterThan(0);
-    const type_values = Array.from(bindings.values());
-    expect(type_values.filter((t) => t === "number").length).toBeGreaterThan(0);
+    expect(bindings.size).toBe(6);
+    const type_values = Array.from(bindings.values()).sort();
+    expect(type_values).toEqual(["number", "number", "number", "number", "number", "number"]);
   });
 
   it("should handle complex nested types", () => {
@@ -309,7 +304,9 @@ describe("Type Bindings - TypeScript", () => {
       interfaces: index.interfaces,
     });
 
-    expect(bindings.size).toBeGreaterThan(0);
+    expect(bindings.size).toBe(2);
+    const type_values = Array.from(bindings.values()).sort();
+    expect(type_values).toEqual(["Error | null", "T"]);
   });
 
   it("should not extract variable type annotations (not captured by index_single_file)", () => {
@@ -434,11 +431,9 @@ is_active: bool = True
       interfaces: index.interfaces,
     });
 
-    expect(bindings.size).toBeGreaterThan(0);
-    const type_values = Array.from(bindings.values());
-    expect(type_values).toContain("str");
-    expect(type_values).toContain("int");
-    expect(type_values).toContain("bool");
+    expect(bindings.size).toBe(3);
+    const type_values = Array.from(bindings.values()).sort();
+    expect(type_values).toEqual(["bool", "int", "str"]);
   });
 
   it("should extract parameter and return type annotations from functions", () => {
@@ -595,11 +590,9 @@ describe("Type Bindings - Rust", () => {
       interfaces: index.interfaces,
     });
 
-    expect(bindings.size).toBeGreaterThan(0);
-    const type_values = Array.from(bindings.values());
-    expect(type_values).toContain("String");
-    expect(type_values).toContain("i32");
-    expect(type_values).toContain("bool");
+    expect(bindings.size).toBe(3);
+    const type_values = Array.from(bindings.values()).sort();
+    expect(type_values).toEqual(["String", "bool", "i32"]);
   });
 
   it("should extract parameter and return type annotations from functions", () => {

@@ -580,7 +580,7 @@ class Dog(Animal):
     const dog_members = members_array.find((m) => m.extends.length > 0);
 
     expect(dog_members).toBeDefined();
-    expect(dog_members!.extends).toContain("Animal");
+    expect(dog_members!.extends).toEqual(["Animal"]);
 
     // Should only have bark, not move
     expect(dog_members!.methods.has("bark" as SymbolName)).toBe(true);
