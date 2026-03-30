@@ -71,12 +71,15 @@ describe("Member Extraction - JavaScript", () => {
       enums: index.enums,
     });
 
-    expect(members.size).toBeGreaterThan(0);
+    expect(members.size).toBe(1);
 
-    // Find the User class member info
     const user_members = Array.from(members.values())[0];
-    expect(user_members.methods.has("getName" as SymbolName)).toBe(true);
-    expect(user_members.methods.has("getEmail" as SymbolName)).toBe(true);
+    expect(Array.from(user_members.methods.keys()).sort()).toEqual(
+      ["getEmail", "getName"] as SymbolName[]
+    );
+    expect(user_members.properties.size).toBe(0);
+    expect(user_members.constructor).toBeUndefined();
+    expect(user_members.extends).toEqual([]);
   });
 
   it("should extract class properties", () => {
@@ -103,10 +106,14 @@ describe("Member Extraction - JavaScript", () => {
       enums: index.enums,
     });
 
-    expect(members.size).toBeGreaterThan(0);
+    expect(members.size).toBe(1);
 
     const user_members = Array.from(members.values())[0];
     expect(user_members.constructor).toBeDefined();
+    expect(user_members.methods.size).toBe(0);
+    // JS does not extract `this.x = ...` assignments as properties
+    expect(user_members.properties.size).toBe(0);
+    expect(user_members.extends).toEqual([]);
   });
 
   it("should extract multiple classes", () => {
@@ -135,11 +142,10 @@ describe("Member Extraction - JavaScript", () => {
 
     expect(members.size).toBe(2);
 
-    const all_methods = Array.from(members.values()).flatMap((m) =>
-      Array.from(m.methods.keys())
-    );
-    expect(all_methods).toContain("bark");
-    expect(all_methods).toContain("meow");
+    const all_methods = Array.from(members.values())
+      .flatMap((m) => Array.from(m.methods.keys()))
+      .sort();
+    expect(all_methods).toEqual(["bark", "meow"] as SymbolName[]);
   });
 
   it("should track class inheritance", () => {
@@ -168,11 +174,22 @@ describe("Member Extraction - JavaScript", () => {
 
     expect(members.size).toBe(2);
 
-    // NOTE: index_single_file does not currently extract 'extends' for JavaScript classes
-    // This test validates that member_extraction preserves the (empty) extends array
     const members_array = Array.from(members.values());
-    expect(members_array.every((m) => m.extends !== undefined)).toBe(true);
-    expect(members_array.every((m) => Array.isArray(m.extends))).toBe(true);
+    const animal = members_array.find((m) =>
+      m.methods.has("move" as SymbolName)
+    )!;
+    const dog = members_array.find((m) =>
+      m.methods.has("bark" as SymbolName)
+    )!;
+
+    expect(Array.from(animal.methods.keys())).toEqual([
+      "move",
+    ] as SymbolName[]);
+    expect(animal.extends).toEqual([]);
+
+    expect(Array.from(dog.methods.keys())).toEqual(["bark"] as SymbolName[]);
+    // JS does not currently extract 'extends' for classes
+    expect(dog.extends).toEqual([]);
   });
 });
 
@@ -213,16 +230,17 @@ describe("Member Extraction - TypeScript", () => {
       enums: index.enums,
     });
 
-    expect(members.size).toBeGreaterThan(0);
+    expect(members.size).toBe(1);
 
     const user_members = Array.from(members.values())[0];
-    expect(user_members.methods.size).toBeGreaterThan(0);
-    expect(user_members.methods.has("getName" as SymbolName)).toBe(true);
-    expect(user_members.methods.has("getEmail" as SymbolName)).toBe(true);
-
-    expect(user_members.properties.size).toBeGreaterThan(0);
-    expect(user_members.properties.size).toBeGreaterThan(0);
-    // Property count verified above
+    expect(Array.from(user_members.methods.keys()).sort()).toEqual(
+      ["getEmail", "getName"] as SymbolName[]
+    );
+    expect(Array.from(user_members.properties.keys()).sort()).toEqual(
+      ["email", "name"] as SymbolName[]
+    );
+    expect(user_members.constructor).toBeUndefined();
+    expect(user_members.extends).toEqual([]);
   });
 
   it("should track constructor", () => {
@@ -248,10 +266,13 @@ describe("Member Extraction - TypeScript", () => {
       enums: index.enums,
     });
 
-    expect(members.size).toBeGreaterThan(0);
+    expect(members.size).toBe(1);
 
     const user_members = Array.from(members.values())[0];
     expect(user_members.constructor).toBeDefined();
+    expect(user_members.constructor!.endsWith(":constructor")).toBe(true);
+    expect(user_members.methods.size).toBe(0);
+    expect(user_members.properties.size).toBe(0);
   });
 
   it("should extract interface methods and properties", () => {
@@ -278,14 +299,17 @@ describe("Member Extraction - TypeScript", () => {
       enums: index.enums,
     });
 
-    expect(members.size).toBeGreaterThan(0);
+    expect(members.size).toBe(1);
 
-    // NOTE: index_single_file does not currently extract methods/properties for TypeScript interfaces
-    // This test validates that member_extraction creates the structure correctly
     const iface_members = Array.from(members.values())[0];
-    expect(iface_members.methods).toBeDefined();
-    expect(iface_members.properties).toBeDefined();
+    expect(Array.from(iface_members.methods.keys()).sort()).toEqual(
+      ["getEmail", "getName"] as SymbolName[]
+    );
+    expect(Array.from(iface_members.properties.keys()).sort()).toEqual(
+      ["email", "name"] as SymbolName[]
+    );
     expect(iface_members.constructor).toBeUndefined();
+    expect(iface_members.extends).toEqual([]);
   });
 
   it("should track interface extension", () => {
@@ -312,12 +336,106 @@ describe("Member Extraction - TypeScript", () => {
       enums: index.enums,
     });
 
-    // NOTE: index_single_file may not extract all interface relationships
-    // This test validates that member_extraction handles multiple interfaces
-    expect(members.size).toBeGreaterThan(0);
+    expect(members.size).toBe(2);
 
     const members_array = Array.from(members.values());
-    expect(members_array.every((m) => m.extends !== undefined)).toBe(true);
+    const ibase = members_array.find((m) =>
+      m.properties.has("id" as SymbolName)
+    )!;
+    const iuser = members_array.find((m) =>
+      m.properties.has("name" as SymbolName)
+    )!;
+
+    expect(ibase.extends).toEqual([]);
+    expect(Array.from(ibase.properties.keys())).toEqual([
+      "id",
+    ] as SymbolName[]);
+
+    expect(iuser.extends).toEqual(["IBase"]);
+    expect(Array.from(iuser.properties.keys())).toEqual([
+      "name",
+    ] as SymbolName[]);
+  });
+
+  it("should extract enum members", () => {
+    const code = `
+      enum Color {
+        Red,
+        Green,
+        Blue
+      }
+    `;
+
+    const tree = parser.parse(code);
+    const parsed_file = create_parsed_file(
+      code,
+      "test.ts" as FilePath,
+      tree,
+      "typescript"
+    );
+    const index = build_index_single_file(parsed_file, tree, "typescript");
+
+    // Verify the enum was indexed
+    expect(index.enums.size).toBe(1);
+    const enum_def = Array.from(index.enums.values())[0];
+    expect(enum_def.name).toBe("Color" as SymbolName);
+    expect(enum_def.members.map((m) => m.name).sort()).toEqual(
+      ["Blue", "Green", "Red"] as SymbolName[]
+    );
+
+    const members = extract_type_members({
+      classes: index.classes,
+      interfaces: index.interfaces,
+      enums: index.enums,
+    });
+
+    expect(members.size).toBe(1);
+
+    const color_members = Array.from(members.values())[0];
+    expect(color_members.methods.size).toBe(0);
+    expect(color_members.properties.size).toBe(0);
+    expect(color_members.constructor).toBeUndefined();
+    expect(color_members.extends).toEqual([]);
+  });
+
+  it("should extract enum members with explicit values", () => {
+    const code = `
+      enum Status {
+        Active = "active",
+        Inactive = "inactive",
+        Pending = 0
+      }
+    `;
+
+    const tree = parser.parse(code);
+    const parsed_file = create_parsed_file(
+      code,
+      "test.ts" as FilePath,
+      tree,
+      "typescript"
+    );
+    const index = build_index_single_file(parsed_file, tree, "typescript");
+
+    expect(index.enums.size).toBe(1);
+    const enum_def = Array.from(index.enums.values())[0];
+    expect(enum_def.name).toBe("Status" as SymbolName);
+    expect(enum_def.members.map((m) => m.name).sort()).toEqual(
+      ["Active", "Inactive", "Pending"] as SymbolName[]
+    );
+
+    const members = extract_type_members({
+      classes: index.classes,
+      interfaces: index.interfaces,
+      enums: index.enums,
+    });
+
+    expect(members.size).toBe(1);
+
+    const status_members = Array.from(members.values())[0];
+    expect(status_members.methods.size).toBe(0);
+    expect(status_members.properties.size).toBe(0);
+    expect(status_members.constructor).toBeUndefined();
+    expect(status_members.extends).toEqual([]);
   });
 
   it("should handle static and instance methods", () => {
@@ -342,12 +460,12 @@ describe("Member Extraction - TypeScript", () => {
       enums: index.enums,
     });
 
-    expect(members.size).toBeGreaterThan(0);
+    expect(members.size).toBe(1);
 
     const user_members = Array.from(members.values())[0];
-    // Both static and instance methods should be indexed
-    expect(user_members.methods.size).toBeGreaterThanOrEqual(1);
-    expect(user_members.methods.has("getName" as SymbolName)).toBe(true);
+    expect(Array.from(user_members.methods.keys()).sort()).toEqual(
+      ["create", "getName"] as SymbolName[]
+    );
   });
 });
 
@@ -387,12 +505,15 @@ class User:
       enums: index.enums,
     });
 
-    expect(members.size).toBeGreaterThan(0);
+    expect(members.size).toBe(1);
 
     const user_members = Array.from(members.values())[0];
-    expect(user_members.methods.size).toBeGreaterThanOrEqual(2);
-    const method_names = Array.from(user_members.methods.keys());
-    expect(method_names.some((name) => name.includes("get_name"))).toBe(true);
+    expect(Array.from(user_members.methods.keys()).sort()).toEqual(
+      ["get_email", "get_name"] as SymbolName[]
+    );
+    expect(user_members.properties.size).toBe(0);
+    expect(user_members.constructor).toBeUndefined();
+    expect(user_members.extends).toEqual([]);
   });
 
   it("should extract class with __init__ constructor", () => {
@@ -416,12 +537,15 @@ class User:
       enums: index.enums,
     });
 
-    expect(members.size).toBeGreaterThan(0);
+    expect(members.size).toBe(1);
 
     const user_members = Array.from(members.values())[0];
-    // __init__ is extracted as a constructor, not a regular method
-    // The test succeeds if the class members are extracted
-    expect(user_members).toBeDefined();
+    expect(user_members.constructor).toBeDefined();
+    expect(user_members.constructor!.endsWith(":__init__")).toBe(true);
+    expect(user_members.methods.size).toBe(0);
+    expect(Array.from(user_members.properties.keys())).toEqual([
+      "name",
+    ] as SymbolName[]);
   });
 
   it("should track class inheritance", () => {
@@ -456,7 +580,7 @@ class Dog(Animal):
     const dog_members = members_array.find((m) => m.extends.length > 0);
 
     expect(dog_members).toBeDefined();
-    expect(dog_members!.extends).toContain("Animal");
+    expect(dog_members!.extends).toEqual(["Animal"]);
 
     // Should only have bark, not move
     expect(dog_members!.methods.has("bark" as SymbolName)).toBe(true);
@@ -488,12 +612,79 @@ class User:
       enums: index.enums,
     });
 
-    expect(members.size).toBeGreaterThan(0);
+    expect(members.size).toBe(1);
 
     const user_members = Array.from(members.values())[0];
-    // Both static and instance methods indexed
-    expect(user_members.methods.size).toBeGreaterThanOrEqual(1);
-    // Method name check - count-based
+    expect(Array.from(user_members.methods.keys()).sort()).toEqual(
+      ["create", "get_name"] as SymbolName[]
+    );
+  });
+
+  it("should extract Protocol members as interface", () => {
+    const code = `
+from typing import Protocol
+
+class Drawable(Protocol):
+    def draw(self) -> None:
+        ...
+    `;
+
+    const tree = parser.parse(code);
+    const parsed_file = create_parsed_file(
+      code,
+      "test.py" as FilePath,
+      tree,
+      "python"
+    );
+    const index = build_index_single_file(parsed_file, tree, "python");
+    const members = extract_type_members({
+      classes: index.classes,
+      interfaces: index.interfaces,
+      enums: index.enums,
+    });
+
+    expect(members.size).toBe(1);
+
+    const drawable_members = Array.from(members.values())[0];
+    expect(Array.from(drawable_members.methods.keys())).toEqual([
+      "draw",
+    ] as SymbolName[]);
+    expect(drawable_members.properties.size).toBe(0);
+    expect(drawable_members.constructor).toBeUndefined();
+    expect(drawable_members.extends).toEqual([]);
+  });
+
+  it("should extract Enum members", () => {
+    const code = `
+from enum import Enum
+
+class Color(Enum):
+    RED = 1
+    GREEN = 2
+    BLUE = 3
+    `;
+
+    const tree = parser.parse(code);
+    const parsed_file = create_parsed_file(
+      code,
+      "test.py" as FilePath,
+      tree,
+      "python"
+    );
+    const index = build_index_single_file(parsed_file, tree, "python");
+    const members = extract_type_members({
+      classes: index.classes,
+      interfaces: index.interfaces,
+      enums: index.enums,
+    });
+
+    expect(members.size).toBe(1);
+
+    const color_members = Array.from(members.values())[0];
+    expect(color_members.methods.size).toBe(0);
+    expect(color_members.properties.size).toBe(0);
+    expect(color_members.constructor).toBeUndefined();
+    expect(color_members.extends).toEqual([]);
   });
 });
 
@@ -533,11 +724,15 @@ describe("Member Extraction - Rust", () => {
       enums: index.enums,
     });
 
-    expect(members.size).toBeGreaterThan(0);
+    expect(members.size).toBe(1);
 
     const user_members = Array.from(members.values())[0];
-    expect(user_members.methods.size).toBeGreaterThan(0);
-    // Method name check - count-based
+    expect(Array.from(user_members.methods.keys()).sort()).toEqual(
+      ["get_name", "new"] as SymbolName[]
+    );
+    expect(user_members.properties.size).toBe(0);
+    expect(user_members.constructor).toBeUndefined();
+    expect(user_members.extends).toEqual([]);
   });
 
   it("should extract enum methods", () => {
@@ -567,11 +762,13 @@ describe("Member Extraction - Rust", () => {
       enums: index.enums,
     });
 
-    // Extract type members extracts enum variants as members, not impl block methods
-    // The test verifies that enum members are extracted
-    expect(members.size).toBeGreaterThan(0);
-    const enum_members_array = Array.from(members.values());
-    expect(enum_members_array.length).toBeGreaterThan(0);
+    expect(members.size).toBe(1);
+
+    // Rust enum impl methods are not attached to the enum definition
+    const enum_members = Array.from(members.values())[0];
+    expect(enum_members.methods.size).toBe(0);
+    expect(enum_members.properties.size).toBe(0);
+    expect(enum_members.constructor).toBeUndefined();
   });
 
   it("should handle struct with fields", () => {
@@ -602,12 +799,16 @@ describe("Member Extraction - Rust", () => {
       enums: index.enums,
     });
 
-    expect(members.size).toBeGreaterThan(0);
+    expect(members.size).toBe(1);
 
     const user_members = Array.from(members.values())[0];
-    // Rust structs with impl blocks have methods extracted
-    expect(user_members.methods.size).toBeGreaterThan(0);
-    // Note: Struct field extraction as properties may vary by implementation
+    expect(Array.from(user_members.methods.keys())).toEqual([
+      "new",
+    ] as SymbolName[]);
+    expect(Array.from(user_members.properties.keys()).sort()).toEqual(
+      ["email", "name"] as SymbolName[]
+    );
+    expect(user_members.constructor).toBeUndefined();
   });
 
   it("should handle enum without methods", () => {
@@ -633,12 +834,13 @@ describe("Member Extraction - Rust", () => {
       enums: index.enums,
     });
 
-    expect(members.size).toBeGreaterThan(0);
+    expect(members.size).toBe(1);
 
     const color_members = Array.from(members.values())[0];
     expect(color_members.methods.size).toBe(0);
     expect(color_members.properties.size).toBe(0);
     expect(color_members.constructor).toBeUndefined();
+    expect(color_members.extends).toEqual([]);
   });
 });
 
@@ -673,13 +875,13 @@ describe("Member Extraction - Edge Cases", () => {
       enums: index.enums,
     });
 
-    expect(members.size).toBeGreaterThan(0);
+    expect(members.size).toBe(1);
 
     const empty_members = Array.from(members.values())[0];
     expect(empty_members.methods.size).toBe(0);
     expect(empty_members.properties.size).toBe(0);
     expect(empty_members.constructor).toBeUndefined();
-    expect(empty_members.extends.length).toBe(0);
+    expect(empty_members.extends).toEqual([]);
   });
 
   it("should handle no definitions", () => {
@@ -729,10 +931,12 @@ describe("Member Extraction - Edge Cases", () => {
       enums: index.enums,
     });
 
-    expect(members.size).toBeGreaterThan(0);
+    expect(members.size).toBe(1);
 
     const class_members = Array.from(members.values())[0];
     expect(class_members.constructor).toBeDefined();
+    expect(class_members.constructor!.endsWith(":constructor")).toBe(true);
     expect(class_members.methods.size).toBe(0);
+    expect(class_members.properties.size).toBe(0);
   });
 });

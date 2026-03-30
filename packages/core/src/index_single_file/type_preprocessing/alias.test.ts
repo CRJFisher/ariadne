@@ -119,9 +119,11 @@ describe("Type Alias Extraction - TypeScript", () => {
 
     const metadata = extract_type_alias_metadata(index.types);
 
-    expect(metadata.size).toBeGreaterThan(0);
-    const expressions = Array.from(metadata.values());
-    expect(expressions.some((expr) => expr.includes("string"))).toBe(true);
+    expect(metadata.size).toBe(1);
+    const entries = Object.fromEntries(
+      [...metadata.entries()].map(([k, v]) => [k.split(":").pop(), v])
+    );
+    expect(entries["UserId"]).toBe("string");
   });
 
   it("should extract type alias for union type", () => {
@@ -140,11 +142,11 @@ describe("Type Alias Extraction - TypeScript", () => {
 
     const metadata = extract_type_alias_metadata(index.types);
 
-    expect(metadata.size).toBeGreaterThan(0);
-    const expressions = Array.from(metadata.values());
-    expect(
-      expressions.some((expr) => expr.includes("|") || expr.includes("active"))
-    ).toBe(true);
+    expect(metadata.size).toBe(1);
+    const entries = Object.fromEntries(
+      [...metadata.entries()].map(([k, v]) => [k.split(":").pop(), v])
+    );
+    expect(entries["Status"]).toBe('"active" | "inactive" | "pending"');
   });
 
   it("should extract type alias for object type", () => {
@@ -163,14 +165,11 @@ describe("Type Alias Extraction - TypeScript", () => {
 
     const metadata = extract_type_alias_metadata(index.types);
 
-    expect(metadata.size).toBeGreaterThan(0);
-    const expressions = Array.from(metadata.values());
-    expect(
-      expressions.some(
-        (expr) =>
-          expr.includes("{") || expr.includes("id") || expr.includes("name")
-      )
-    ).toBe(true);
+    expect(metadata.size).toBe(1);
+    const entries = Object.fromEntries(
+      [...metadata.entries()].map(([k, v]) => [k.split(":").pop(), v])
+    );
+    expect(entries["User"]).toBe("{ id: number; name: string }");
   });
 
   it("should extract type alias for generic type", () => {
@@ -189,11 +188,11 @@ describe("Type Alias Extraction - TypeScript", () => {
 
     const metadata = extract_type_alias_metadata(index.types);
 
-    expect(metadata.size).toBeGreaterThan(0);
-    const expressions = Array.from(metadata.values());
-    expect(
-      expressions.some((expr) => expr.includes("T") || expr.includes("Error"))
-    ).toBe(true);
+    expect(metadata.size).toBe(1);
+    const entries = Object.fromEntries(
+      [...metadata.entries()].map(([k, v]) => [k.split(":").pop(), v])
+    );
+    expect(entries["Result"]).toBe("T | Error");
   });
 
   it("should extract multiple type aliases", () => {
@@ -214,10 +213,13 @@ describe("Type Alias Extraction - TypeScript", () => {
 
     const metadata = extract_type_alias_metadata(index.types);
 
-    expect(metadata.size).toBeGreaterThanOrEqual(3);
-    const expressions = Array.from(metadata.values());
-    expect(expressions.some((expr) => expr.includes("string"))).toBe(true);
-    expect(expressions.some((expr) => expr.includes("number"))).toBe(true);
+    expect(metadata.size).toBe(3);
+    const entries = Object.fromEntries(
+      [...metadata.entries()].map(([k, v]) => [k.split(":").pop(), v])
+    );
+    expect(entries["UserId"]).toBe("string");
+    expect(entries["UserName"]).toBe("string");
+    expect(entries["Age"]).toBe("number");
   });
 
   it("should extract type alias referencing another type", () => {
@@ -237,12 +239,12 @@ describe("Type Alias Extraction - TypeScript", () => {
 
     const metadata = extract_type_alias_metadata(index.types);
 
-    expect(metadata.size).toBeGreaterThanOrEqual(2);
-    const expressions = Array.from(metadata.values());
-    // Should have "User" as a type expression (not resolved to SymbolId)
-    expect(
-      expressions.some((expr) => expr.includes("User") || expr.includes("{"))
-    ).toBe(true);
+    expect(metadata.size).toBe(2);
+    const entries = Object.fromEntries(
+      [...metadata.entries()].map(([k, v]) => [k.split(":").pop(), v])
+    );
+    expect(entries["User"]).toBe("{ name: string }");
+    expect(entries["AdminUser"]).toBe("User");
   });
 });
 
@@ -258,7 +260,7 @@ describe("Type Alias Extraction - Python", () => {
     parser.setLanguage(Python);
   });
 
-  it("should extract type alias using TypeAlias (Python 3.10+)", () => {
+  it("should not extract TypeAlias annotation form (only PEP 695 type statement is captured)", () => {
     const code = `
 from typing import TypeAlias
 
@@ -276,12 +278,11 @@ UserId: TypeAlias = str
 
     const metadata = extract_type_alias_metadata(index.types);
 
-    // May or may not extract depending on index_single_file implementation
-    // At minimum, should not crash
-    expect(metadata).toBeDefined();
+    // TypeAlias annotation form is not captured as a type alias — only PEP 695 `type` statement is
+    expect(metadata.size).toBe(0);
   });
 
-  it("should extract type alias using assignment", () => {
+  it("should not extract assignment-based type alias (only PEP 695 type statement is captured)", () => {
     const code = `
 Vector = list[float]
     `;
@@ -297,8 +298,33 @@ Vector = list[float]
 
     const metadata = extract_type_alias_metadata(index.types);
 
-    // Python type aliases may be extracted as variables or types
-    expect(metadata).toBeDefined();
+    // Assignment-based alias is indexed as a variable, not a type alias
+    expect(metadata.size).toBe(0);
+  });
+
+  it("should extract PEP 695 type statement (Python 3.12+)", () => {
+    const code = `
+type Url = str
+type Pair = tuple[int, int]
+    `;
+
+    const tree = parser.parse(code);
+    const parsed_file = create_parsed_file(
+      code,
+      "test.py" as FilePath,
+      tree,
+      "python"
+    );
+    const index = build_index_single_file(parsed_file, tree, "python");
+
+    const metadata = extract_type_alias_metadata(index.types);
+
+    expect(metadata.size).toBe(2);
+    const entries = Object.fromEntries(
+      [...metadata.entries()].map(([k, v]) => [k.split(":").pop(), v])
+    );
+    expect(entries["Url"]).toBe("str");
+    expect(entries["Pair"]).toBe("tuple[int, int]");
   });
 
   it("should handle no type aliases in simple Python code", () => {
@@ -352,9 +378,11 @@ type Kilometers = i32;
 
     const metadata = extract_type_alias_metadata(index.types);
 
-    expect(metadata.size).toBeGreaterThan(0);
-    const expressions = Array.from(metadata.values());
-    expect(expressions.some((expr) => expr.includes("i32"))).toBe(true);
+    expect(metadata.size).toBe(1);
+    const entries = Object.fromEntries(
+      [...metadata.entries()].map(([k, v]) => [k.split(":").pop(), v])
+    );
+    expect(entries["Kilometers"]).toBe("i32");
   });
 
   it("should extract type alias for generic type", () => {
@@ -373,14 +401,13 @@ type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
 
     const metadata = extract_type_alias_metadata(index.types);
 
-    expect(metadata.size).toBeGreaterThan(0);
-    const expressions = Array.from(metadata.values());
-    expect(
-      expressions.some(
-        (expr) =>
-          expr.includes("Result") || expr.includes("T") || expr.includes("Box")
-      )
-    ).toBe(true);
+    expect(metadata.size).toBe(1);
+    const entries = Object.fromEntries(
+      [...metadata.entries()].map(([k, v]) => [k.split(":").pop(), v])
+    );
+    expect(entries["Result"]).toBe(
+      "std::result::Result<T, Box<dyn std::error::Error>>"
+    );
   });
 
   it("should extract multiple type aliases", () => {
@@ -400,10 +427,12 @@ type Miles = f64;
 
     const metadata = extract_type_alias_metadata(index.types);
 
-    expect(metadata.size).toBeGreaterThanOrEqual(2);
-    const expressions = Array.from(metadata.values());
-    expect(expressions.some((expr) => expr.includes("i32"))).toBe(true);
-    expect(expressions.some((expr) => expr.includes("f64"))).toBe(true);
+    expect(metadata.size).toBe(2);
+    const entries = Object.fromEntries(
+      [...metadata.entries()].map(([k, v]) => [k.split(":").pop(), v])
+    );
+    expect(entries["Kilometers"]).toBe("i32");
+    expect(entries["Miles"]).toBe("f64");
   });
 
   it("should extract public type alias", () => {
@@ -422,11 +451,34 @@ pub type BoxedError = Box<dyn std::error::Error>;
 
     const metadata = extract_type_alias_metadata(index.types);
 
-    expect(metadata.size).toBeGreaterThan(0);
-    const expressions = Array.from(metadata.values());
-    expect(
-      expressions.some((expr) => expr.includes("Box") || expr.includes("Error"))
-    ).toBe(true);
+    expect(metadata.size).toBe(1);
+    const entries = Object.fromEntries(
+      [...metadata.entries()].map(([k, v]) => [k.split(":").pop(), v])
+    );
+    expect(entries["BoxedError"]).toBe("Box<dyn std::error::Error>");
+  });
+
+  it("should not extract trait associated type without value", () => {
+    const code = `
+trait Iterator {
+    type Item;
+}
+    `;
+
+    const tree = parser.parse(code);
+    const parsed_file = create_parsed_file(
+      code,
+      "test.rs" as FilePath,
+      tree,
+      "rust"
+    );
+    const index = build_index_single_file(parsed_file, tree, "rust");
+
+    const metadata = extract_type_alias_metadata(index.types);
+
+    // Trait associated types without a value (type Item;) have no type_expression
+    // so they should not appear in the metadata
+    expect(metadata.size).toBe(0);
   });
 });
 
@@ -477,13 +529,11 @@ describe("Type Alias Extraction - Edge Cases", () => {
 
     const metadata = extract_type_alias_metadata(index.types);
 
-    // Should only include types with type_expression defined
-    expect(metadata).toBeDefined();
-    // All entries should have non-empty values
-    for (const [_, expr] of metadata) {
-      expect(expr).toBeTruthy();
-      expect(typeof expr).toBe("string");
-    }
+    expect(metadata.size).toBe(1);
+    const entries = Object.fromEntries(
+      [...metadata.entries()].map(([k, v]) => [k.split(":").pop(), v])
+    );
+    expect(entries["MyType"]).toBe("string");
   });
 
   it("should store expressions as strings, not SymbolIds", () => {

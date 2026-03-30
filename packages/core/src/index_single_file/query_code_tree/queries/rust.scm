@@ -654,9 +654,21 @@
   function: (field_expression) @reference.call
 )
 
-; Associated function calls (Type::function)
+; Associated function calls (Type::function) — exclude Type::new() (captured as constructor)
 (call_expression
-  function: (scoped_identifier) @reference.call
+  function: (scoped_identifier
+    name: (identifier) @_method_name
+    (#not-match? @_method_name "^new$")
+  ) @reference.call
+)
+
+; Associated function constructor calls (Type::new())
+(call_expression
+  function: (scoped_identifier
+    path: (_) @reference.constructor.associated
+    name: (identifier) @_constructor_method
+    (#match? @_constructor_method "^new$")
+  )
 )
 
 ; Generic function calls

@@ -66,9 +66,9 @@ describe("Constructor Tracking - JavaScript", () => {
 
     const bindings = extract_constructor_bindings(index.references);
 
-    expect(bindings.size).toBeGreaterThan(0);
+    expect(bindings.size).toBe(1);
     const type_values = Array.from(bindings.values());
-    expect(type_values).toContain("User");
+    expect(type_values).toEqual(["User"]);
   });
 
   it("should extract constructor bindings for multiple assignments", () => {
@@ -91,10 +91,9 @@ describe("Constructor Tracking - JavaScript", () => {
 
     const bindings = extract_constructor_bindings(index.references);
 
-    expect(bindings.size).toBeGreaterThanOrEqual(2);
-    const type_values = Array.from(bindings.values());
-    expect(type_values).toContain("Dog");
-    expect(type_values).toContain("Cat");
+    expect(bindings.size).toBe(2);
+    const type_values = Array.from(bindings.values()).sort();
+    expect(type_values).toEqual(["Cat", "Dog"]);
   });
 
   it("should extract constructor binding for property assignment", () => {
@@ -118,9 +117,9 @@ describe("Constructor Tracking - JavaScript", () => {
 
     const bindings = extract_constructor_bindings(index.references);
 
-    expect(bindings.size).toBeGreaterThan(0);
+    expect(bindings.size).toBe(1);
     const type_values = Array.from(bindings.values());
-    expect(type_values).toContain("Service");
+    expect(type_values).toEqual(["Service"]);
   });
 
   it("should not extract standalone constructor calls without assignment", () => {
@@ -140,10 +139,7 @@ describe("Constructor Tracking - JavaScript", () => {
 
     const bindings = extract_constructor_bindings(index.references);
 
-    // Standalone constructor calls without construct_target should not be included
-    // The index_single_file may or may not include construct_target for standalone calls
-    expect(bindings).toBeDefined();
-    expect(bindings instanceof Map).toBe(true);
+    expect(bindings.size).toBe(0);
   });
 });
 
@@ -178,9 +174,9 @@ describe("Constructor Tracking - TypeScript", () => {
 
     const bindings = extract_constructor_bindings(index.references);
 
-    expect(bindings.size).toBeGreaterThan(0);
+    expect(bindings.size).toBe(1);
     const type_values = Array.from(bindings.values());
-    expect(type_values).toContain("User");
+    expect(type_values).toEqual(["User"]);
   });
 
   it("should extract constructor bindings for multiple typed assignments", () => {
@@ -208,10 +204,9 @@ describe("Constructor Tracking - TypeScript", () => {
 
     const bindings = extract_constructor_bindings(index.references);
 
-    expect(bindings.size).toBeGreaterThanOrEqual(2);
-    const type_values = Array.from(bindings.values());
-    expect(type_values).toContain("ApiService");
-    expect(type_values).toContain("DataStore");
+    expect(bindings.size).toBe(2);
+    const type_values = Array.from(bindings.values()).sort();
+    expect(type_values).toEqual(["ApiService", "DataStore"]);
   });
 
   it("should extract constructor binding for class field assignment", () => {
@@ -238,9 +233,9 @@ describe("Constructor Tracking - TypeScript", () => {
 
     const bindings = extract_constructor_bindings(index.references);
 
-    expect(bindings.size).toBeGreaterThan(0);
+    expect(bindings.size).toBe(1);
     const type_values = Array.from(bindings.values());
-    expect(type_values).toContain("Database");
+    expect(type_values).toEqual(["Database"]);
   });
 
   it("should handle generic class constructors", () => {
@@ -262,11 +257,9 @@ describe("Constructor Tracking - TypeScript", () => {
 
     const bindings = extract_constructor_bindings(index.references);
 
-    // Generic constructors are extracted - the exact name depends on tree-sitter parsing
-    // Some parsers may extract "Container" while others may extract type parameters
-    expect(bindings.size).toBeGreaterThan(0);
-    expect(bindings).toBeDefined();
-    expect(bindings instanceof Map).toBe(true);
+    expect(bindings.size).toBe(1);
+    const type_values = Array.from(bindings.values());
+    expect(type_values).toEqual(["Container"]);
   });
 });
 
@@ -301,9 +294,9 @@ user = User()
 
     const bindings = extract_constructor_bindings(index.references);
 
-    expect(bindings.size).toBeGreaterThan(0);
+    expect(bindings.size).toBe(1);
     const type_values = Array.from(bindings.values());
-    expect(type_values).toContain("User");
+    expect(type_values).toEqual(["User"]);
   });
 
   it("should extract constructor bindings for multiple assignments", () => {
@@ -329,10 +322,9 @@ my_cat = Cat()
 
     const bindings = extract_constructor_bindings(index.references);
 
-    expect(bindings.size).toBeGreaterThanOrEqual(2);
-    const type_values = Array.from(bindings.values());
-    expect(type_values).toContain("Dog");
-    expect(type_values).toContain("Cat");
+    expect(bindings.size).toBe(2);
+    const type_values = Array.from(bindings.values()).sort();
+    expect(type_values).toEqual(["Cat", "Dog"]);
   });
 
   it("should extract constructor binding for attribute assignment", () => {
@@ -356,9 +348,9 @@ class App:
 
     const bindings = extract_constructor_bindings(index.references);
 
-    expect(bindings.size).toBeGreaterThan(0);
+    expect(bindings.size).toBe(1);
     const type_values = Array.from(bindings.values());
-    expect(type_values).toContain("Service");
+    expect(type_values).toEqual(["Service"]);
   });
 
   it("should handle constructor with type annotations", () => {
@@ -380,9 +372,9 @@ db: Database = Database()
 
     const bindings = extract_constructor_bindings(index.references);
 
-    expect(bindings.size).toBeGreaterThan(0);
+    expect(bindings.size).toBe(1);
     const type_values = Array.from(bindings.values());
-    expect(type_values).toContain("Database");
+    expect(type_values).toEqual(["Database"]);
   });
 });
 
@@ -418,9 +410,9 @@ describe("Constructor Tracking - Rust", () => {
 
     const bindings = extract_constructor_bindings(index.references);
 
-    expect(bindings.size).toBeGreaterThan(0);
+    expect(bindings.size).toBe(1);
     const type_values = Array.from(bindings.values());
-    expect(type_values).toContain("User");
+    expect(type_values).toEqual(["User"]);
   });
 
   it("should extract constructor bindings for multiple struct instantiations", () => {
@@ -451,10 +443,9 @@ describe("Constructor Tracking - Rust", () => {
 
     const bindings = extract_constructor_bindings(index.references);
 
-    expect(bindings.size).toBeGreaterThanOrEqual(2);
-    const type_values = Array.from(bindings.values());
-    expect(type_values).toContain("Point");
-    expect(type_values).toContain("Color");
+    expect(bindings.size).toBe(2);
+    const type_values = Array.from(bindings.values()).sort();
+    expect(type_values).toEqual(["Color", "Point"]);
   });
 
   it("should extract constructor binding for struct field assignment", () => {
@@ -484,9 +475,41 @@ describe("Constructor Tracking - Rust", () => {
 
     const bindings = extract_constructor_bindings(index.references);
 
-    // Should extract constructor bindings from the code
-    expect(bindings).toBeDefined();
-    expect(bindings instanceof Map).toBe(true);
+    // App { db } is a return expression (not in let/assignment) so no construct_target
+    expect(bindings.size).toBe(0);
+  });
+
+  it("should extract constructor binding for Type::new() associated function", () => {
+    const code = `
+      struct Database {
+        name: String,
+      }
+
+      impl Database {
+        fn new(name: String) -> Database {
+          Database { name }
+        }
+      }
+
+      fn main() {
+        let db = Database::new(String::from("test"));
+      }
+    `;
+
+    const tree = parser.parse(code);
+    const parsed_file = create_parsed_file(
+      code,
+      "test.rs" as FilePath,
+      tree,
+      "rust"
+    );
+    const index = build_index_single_file(parsed_file, tree, "rust");
+
+    const bindings = extract_constructor_bindings(index.references);
+
+    expect(bindings.size).toBe(1);
+    const type_values = Array.from(bindings.values());
+    expect(type_values).toEqual(["Database"]);
   });
 
   it("should handle tuple struct instantiation", () => {
@@ -506,9 +529,9 @@ describe("Constructor Tracking - Rust", () => {
 
     const bindings = extract_constructor_bindings(index.references);
 
-    // Tuple struct instantiation should be tracked
-    expect(bindings).toBeDefined();
-    expect(bindings instanceof Map).toBe(true);
+    // Tuple struct Point(10, 20) is captured as a function_call, not constructor_call
+    // (only struct expression syntax produces constructor_call references)
+    expect(bindings.size).toBe(0);
   });
 });
 
@@ -569,9 +592,7 @@ describe("Constructor Tracking - Edge Cases", () => {
 
     const bindings = extract_constructor_bindings(index.references);
 
-    // Standalone calls without construct_target should be ignored
-    // The size depends on whether index_single_file includes construct_target
-    expect(bindings).toBeDefined();
-    expect(bindings instanceof Map).toBe(true);
+    // Standalone calls without assignment produce no constructor bindings
+    expect(bindings.size).toBe(0);
   });
 });

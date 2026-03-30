@@ -347,13 +347,11 @@ describe("Project Integration - Rust", () => {
       const main_import_names = imports.map((i) => i.name).sort();
       expect(main_import_names).toEqual(["User", "UserManager"] as SymbolName[]);
 
-      // Verify UserManager::new() and User::new() are captured as function calls
+      // Verify UserManager::new() and User::new() are captured as constructor calls
       const new_calls = main_index!.references.filter(
-        (r): r is FunctionCallReference | MethodCallReference | SelfReferenceCall =>
-          (r.kind === "function_call" ||
-           r.kind === "method_call" ||
-           r.kind === "self_reference_call") &&
-          r.name.includes("new")
+        (r): r is ConstructorCallReference =>
+          r.kind === "constructor_call" &&
+          (r.name === "User" || r.name === "UserManager")
       );
       // main() and create_test_user() both call User::new() and main() also calls UserManager::new()
       expect(new_calls.length).toBeGreaterThanOrEqual(2);

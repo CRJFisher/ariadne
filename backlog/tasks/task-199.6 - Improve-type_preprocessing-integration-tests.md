@@ -1,7 +1,7 @@
 ---
 id: TASK-199.6
 title: Improve type_preprocessing integration tests
-status: To Do
+status: In Progress
 assignee: []
 created_date: "2026-03-27 23:14"
 updated_date: "2026-03-27 23:18"
@@ -38,42 +38,42 @@ priority: medium
 
 ## Actions
 
-1. Strengthen weak assertions across Python and Rust (verify actual extracted values, not just `toBeDefined()`)
-2. Add TypeScript enum extraction test (currently only Rust covers enums)
-3. Add Python Protocol and Enum member extraction tests
-4. Add Rust `Type::new()` associated function construction test
-5. Add Python 3.12 `type` statement test
-6. All tests should remain inline
+1. ~~Strengthen weak assertions across Python and Rust (verify actual extracted values, not just `toBeDefined()`)~~ — **DONE** for alias, bindings, constructor; **REMAINING** for member.test.ts → TASK-199.6.1
+2. Add TypeScript enum extraction test (currently only Rust covers enums) → TASK-199.6.2
+3. Add Python Protocol and Enum member extraction tests → TASK-199.6.1
+4. Add Rust `Type::new()` associated function construction test → TASK-199.6.2
+5. ~~Add Python 3.12 `type` statement test~~ — **DONE**
+6. ~~All tests should remain inline~~ — **DONE** (all tests are inline)
 7. Fix production bugs discovered while improving tests: if straightforward, spin up an opus sub-agent to fix the bug. Then ensure the test assertions lock in the corrected behaviour — the test must fail if the fix is reverted. Only create a backlog task if the fix is complex and requires user decisions.
+
+## Progress
+
+### Completed (uncommitted)
+
+- **alias.test.ts**: Fixed 2 Python weak assertions (TypeAlias annotation → size 0, assignment-based → size 0). Added PEP 695 `type` statement test. Added Rust trait associated type negative test.
+- **bindings.test.ts**: Fixed 3 Python weak assertions (function params, class attributes, method params → exact values). Fixed 3 Rust weak assertions (function params, struct fields, impl methods → exact values). Added TS variable annotations negative test, getter/setter test, abstract class test. Added Python @classmethod test.
+- **constructor.test.ts**: Fixed JS standalone constructor (→ size 0). Fixed TS generic constructor (→ exact `"Container"`).
+- **typescript.scm**: Fixed duplicate `@definition.*` captures on parent nodes (interface, type_alias, enum, namespace, type_parameter, field).
+
+### Remaining → split into TASK-199.6.1 and TASK-199.6.2
 <!-- SECTION:DESCRIPTION:END -->
 
 ## Implementation Notes
 
 <!-- SECTION:NOTES:BEGIN -->
 
-## Weak Assertion Remediation (CRITICAL for this module)
+## Weak Assertion Remediation
 
-This module has the most pervasive weak assertion problem:
+### COMPLETED
 
-### Python alias.test.ts
+- ✅ Python alias.test.ts — fixed (assertions now verify size 0 or exact values)
+- ✅ Python bindings.test.ts — fixed (exact binding values verified)
+- ✅ Rust bindings.test.ts — fixed (exact binding values verified)
+- ✅ Rust constructor.test.ts — fixed (exact values verified)
 
-- 2 of 3 tests assert only `expect(metadata).toBeDefined()` — must verify exact `type_expression` strings (e.g., `"str"`, `"list[float]"`)
+### REMAINING → TASK-199.6.1
 
-### Python bindings.test.ts
-
-- 2 of 4 tests assert only `toBeDefined()` and `instanceof Map` — must verify actual binding key-value pairs
-
-### Rust bindings.test.ts
-
-- 3 of 4 tests assert only `toBeDefined()` and `instanceof Map` — must verify `"i32"`, `"String"`, `"bool"` appear as actual values
-
-### Rust constructor.test.ts
-
-- 2 of 4 tests assert only `toBeDefined()` and `instanceof Map` — must verify `"Database"`, `"Point"` as actual values
-
-### Rust member.test.ts
-
-- Several tests check `methods.size > 0` but never verify method names or properties
+- ❌ member.test.ts (JS, TS, Python, Rust) — still uses `toBeGreaterThan(0)`, `toBeGreaterThanOrEqual`, no method name verification
 
 **Rule: Every test that extracts a value must assert the exact expected value using `toEqual`, not just confirm something exists.**
 
