@@ -1,10 +1,10 @@
 ---
 id: TASK-199.7
 title: Improve project integration tests (Rust parity)
-status: To Do
+status: Done
 assignee: []
-created_date: "2026-03-27 23:14"
-updated_date: "2026-03-27 23:18"
+created_date: '2026-03-27 23:14'
+updated_date: '2026-03-29 20:43'
 labels:
   - testing
   - project
@@ -16,7 +16,6 @@ priority: medium
 ## Description
 
 <!-- SECTION:DESCRIPTION:BEGIN -->
-
 ## Findings
 
 Rust has the weakest project-level integration test coverage compared to the other 3 languages.
@@ -64,7 +63,6 @@ Rust has the weakest project-level integration test coverage compared to the oth
 ## Implementation Notes
 
 <!-- SECTION:NOTES:BEGIN -->
-
 ## Weak Assertion Remediation
 
 Some project integration tests have loose assertions:
@@ -74,5 +72,36 @@ Some project integration tests have loose assertions:
 - Incremental update tests that verify "something changed" but not exact before/after state
 
 All new tests must use exact value assertions. Existing tests with weak assertions should be strengthened when touched.
-
 <!-- SECTION:NOTES:END -->
+
+## Final Summary
+
+<!-- SECTION:FINAL_SUMMARY:BEGIN -->
+## Changes
+
+### New Tests (7 tests added)
+- **Incremental Updates** (3 tests): re-resolve after file update, update dependents when imported file changes, handle file removal
+- **Call Graph** (3 tests): build call graph with caller-callee relationships, cross-file calls, update after changes
+- **Pub Use Re-exports** (1 test): resolve symbols through pub use re-exports
+
+### Strengthened Assertions (all existing tests)
+Replaced loose assertions (`toBeGreaterThan(0)`, `if` guards that silently pass) with exact value checks across all existing tests:
+- Impl Blocks: exact method name lists instead of `size > 0`
+- Basic Resolution: verify every `helper()` call resolves to the same definition
+- Module System: exact import names, exact function definitions, verify all 4 imported functions resolve to utils.rs
+- Cross-Module Resolution: exact struct/import names, specific method call verification
+- Shadowing: verify local helper shadows import, verify process_data resolves to utils.rs
+- Builder Pattern: exact method names and impl method verification
+- Basic Struct: exact Point and User method lists
+- Polymorphic Trait: exact struct names, exact process/get_name method counts
+
+### Production Bug Fixed (TASK-199.7.1)
+**Rust `import_path` included item name in module path** — `use utils::{helper}` produced `module_path = "utils::helper"` instead of `"utils"`. This broke:
+- Import graph dependency tracking (get_dependents returned empty)
+- Cross-file resolution (imports couldn't resolve through to source files)
+- Cross-file call graph construction
+
+Fixed in `imports.rust.ts` with comprehensive unit tests. Updated 3 test files that expected the old format.
+
+### Test Coverage: 17 → 24 tests (41% increase), all with strong exact-value assertions
+<!-- SECTION:FINAL_SUMMARY:END -->

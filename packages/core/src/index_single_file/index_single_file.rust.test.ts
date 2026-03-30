@@ -1071,7 +1071,7 @@ use crate::models::User;
         expect(hashmap_import.location.file_path).toBe("test.rs");
         expect(typeof hashmap_import.location.start_line).toBe("number");
         expect(typeof hashmap_import.location.start_column).toBe("number");
-        expect(hashmap_import.import_path).toBe("std::collections::HashMap");
+        expect(hashmap_import.import_path).toBe("std::collections");
         expect(hashmap_import.import_kind).toBe("named");
       }
 
@@ -1108,7 +1108,7 @@ use crate::models::User;
       expect(user_import).toBeDefined();
 
       if (user_import) {
-        expect(user_import.import_path).toBe("crate::models::User");
+        expect(user_import.import_path).toBe("crate::models");
       }
     });
 
@@ -1342,7 +1342,7 @@ mod math {
       const hashmap_import = imports.find((imp) => imp.name === "HashMap");
       expect(hashmap_import).toBeDefined();
       if (hashmap_import) {
-        expect(hashmap_import.import_path).toBe("std::collections::HashMap");
+        expect(hashmap_import.import_path).toBe("std::collections");
       }
 
       // Verify add_numbers import exists (aliased from self::math::add)
@@ -1351,8 +1351,8 @@ mod math {
       );
       expect(add_numbers_import).toBeDefined();
       if (add_numbers_import) {
-        // The original_name should be the full path from the import
-        expect(add_numbers_import.original_name).toBe("self::math::add");
+        // The original_name is the item name (not the full path)
+        expect(add_numbers_import.original_name).toBe("add");
       }
     });
   });
