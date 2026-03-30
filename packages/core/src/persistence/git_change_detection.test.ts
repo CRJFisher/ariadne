@@ -10,13 +10,16 @@ import {
   parse_name_list,
 } from "./git_change_detection";
 
-/** Run git in a temp dir, clearing inherited git env vars from hooks. */
+/** Run git in a temp dir, clearing inherited git env vars and using ceiling directories. */
 function git(cwd: string, args: string): void {
   const { GIT_DIR, GIT_WORK_TREE, GIT_INDEX_FILE, ...env } = process.env;
   execSync(`git ${args}`, {
     cwd,
     stdio: "pipe",
-    env,
+    env: {
+      ...env,
+      GIT_CEILING_DIRECTORIES: path.dirname(cwd),
+    },
   });
 }
 
@@ -87,25 +90,37 @@ describe("git_change_detection", () => {
       return expect(is_git_repo(temp_dir)).resolves.toBe(true);
     });
 
-    it("returns false for a non-git directory", async () => {
-      const result = await is_git_repo(temp_dir);
+    it("returns false for a non-existent directory", async () => {
+      const result = await is_git_repo(
+        path.join(temp_dir, "does-not-exist"),
+      );
       expect(result).toBe(false);
     });
   });
 
   describe("query_git_file_state", { timeout: 15000 }, () => {
     let temp_dir: string;
+    let original_ceiling: string | undefined;
 
     beforeEach(async () => {
-      temp_dir = await fs.mkdtemp(
-        path.join(os.tmpdir(), "ariadne-git-state-test-"),
+      // Resolve symlinks (macOS /tmp -> /private/tmp) so GIT_CEILING_DIRECTORIES matches git's resolved paths
+      temp_dir = await fs.realpath(
+        await fs.mkdtemp(path.join(os.tmpdir(), "ariadne-git-state-test-")),
       );
+      // Prevent git from finding parent repos when called by production code
+      original_ceiling = process.env["GIT_CEILING_DIRECTORIES"];
+      process.env["GIT_CEILING_DIRECTORIES"] = path.dirname(temp_dir);
       git(temp_dir, "init");
       git(temp_dir, "config user.email test@test.com");
       git(temp_dir, "config user.name Test");
     });
 
     afterEach(async () => {
+      if (original_ceiling === undefined) {
+        delete process.env["GIT_CEILING_DIRECTORIES"];
+      } else {
+        process.env["GIT_CEILING_DIRECTORIES"] = original_ceiling;
+      }
       await fs.rm(temp_dir, { recursive: true, force: true });
     });
 
