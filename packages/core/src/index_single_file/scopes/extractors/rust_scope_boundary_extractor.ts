@@ -167,7 +167,7 @@ export class RustScopeBoundaryExtractor extends CommonScopeBoundaryExtractor {
    * Handles both the root-level source_file node (which has no name/body fields)
    * and inline mod_item nodes (which have name and optionally body fields).
    */
-  private extract_module_boundaries(
+  protected override extract_module_boundaries(
     node: Parser.SyntaxNode,
     file_path: FilePath
   ): ScopeBoundaries {
