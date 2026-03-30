@@ -17,7 +17,7 @@ export interface ImportInfo {
 
 /**
  * Extract scoped path from scoped_identifier node
- * Traverses the tree to build full path like "std::fmt"
+ * Traverses the tree to build full path like "std::fmt::Display"
  */
 function extract_scoped_path(node: SyntaxNode): string {
   const parts: string[] = [];
@@ -42,6 +42,18 @@ function extract_scoped_path(node: SyntaxNode): string {
   }
 
   return parts.join("::");
+}
+
+/**
+ * Strip the last segment from a `::` separated path.
+ * "std::fmt::Display" → "std::fmt"
+ * "utils::format_name" → "utils"
+ * "foo" → "foo" (no separator, return as-is)
+ */
+function strip_last_segment(path: string): string {
+  const idx = path.lastIndexOf("::");
+  if (idx === -1) return path;
+  return path.slice(0, idx);
 }
 
 /**
@@ -81,7 +93,7 @@ export function extract_imports_from_use_declaration(
       if (name) {
         imports.push({
           name: name.text as SymbolName,
-          module_path: create_module_path(full_path),
+          module_path: create_module_path(strip_last_segment(full_path)),
         });
       }
       break;
@@ -143,19 +155,18 @@ export function extract_imports_from_use_declaration(
             if (!item) continue;
 
             if (item.type === "identifier") {
-              const full_path = `${prefix}::${item.text}`;
               imports.push({
                 name: item.text as SymbolName,
-                module_path: create_module_path(full_path),
+                module_path: create_module_path(prefix),
               });
             } else if (item.type === "scoped_identifier") {
               const item_path = extract_scoped_path(item);
               const name = item.childForFieldName?.("name");
               if (name) {
-                const full_path = `${prefix}::${item_path}`;
+                const module_path = `${prefix}::${strip_last_segment(item_path)}`;
                 imports.push({
                   name: name.text as SymbolName,
-                  module_path: create_module_path(full_path),
+                  module_path: create_module_path(module_path),
                 });
               }
             } else if (item.type === "scoped_use_list") {
@@ -185,14 +196,19 @@ export function extract_imports_from_use_declaration(
                 }
               }
               if (original && alias) {
-                const original_path = original.type === "scoped_identifier"
+                const original_name = original.type === "scoped_identifier"
                   ? extract_scoped_path(original)
                   : original.text;
-                const full_path = `${prefix}::${original_path}`;
+                // For scoped paths, strip last segment to get module; for identifiers, module is prefix
+                const module_path = original.type === "scoped_identifier"
+                  ? `${prefix}::${strip_last_segment(original_name)}`
+                  : prefix;
                 imports.push({
                   name: alias.text as SymbolName,
-                  module_path: create_module_path(full_path),
-                  original_name: create_symbol_name(full_path),
+                  module_path: create_module_path(module_path),
+                  original_name: original.type === "scoped_identifier"
+                    ? create_symbol_name(original_name.slice(original_name.lastIndexOf("::") + 2))
+                    : create_symbol_name(original_name),
                 });
               }
             }
@@ -222,15 +238,24 @@ export function extract_imports_from_use_declaration(
       }
 
       if (original && alias) {
-        const module_path = original.type === "scoped_identifier"
-          ? extract_scoped_path(original)
-          : original.text;
-        // For aliased imports, original_name should be the full path
-        imports.push({
-          name: alias.text as SymbolName,
-          module_path: create_module_path(module_path),
-          original_name: create_symbol_name(module_path),
-        });
+        if (original.type === "scoped_identifier") {
+          const full_path = extract_scoped_path(original);
+          const original_name = original.childForFieldName?.("name");
+          imports.push({
+            name: alias.text as SymbolName,
+            module_path: create_module_path(strip_last_segment(full_path)),
+            original_name: original_name
+              ? create_symbol_name(original_name.text)
+              : create_symbol_name(full_path),
+          });
+        } else {
+          // Simple: use foo as bar — no module path to strip
+          imports.push({
+            name: alias.text as SymbolName,
+            module_path: create_module_path(original.text),
+            original_name: create_symbol_name(original.text),
+          });
+        }
       }
       break;
     }

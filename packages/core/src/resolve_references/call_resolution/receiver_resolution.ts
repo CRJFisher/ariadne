@@ -194,8 +194,8 @@ function resolve_keyword_base(
   scope_id: ScopeId,
   context: ResolutionContext
 ): SymbolId | null {
-  // Find the containing class scope
-  const class_scope_id = find_containing_class_scope(scope_id, context.scopes);
+  // Find the containing class scope (pass definitions to detect Rust impl blocks)
+  const class_scope_id = find_containing_class_scope(scope_id, context.scopes, context.definitions);
   if (!class_scope_id) {
     return null;
   }
@@ -381,7 +381,8 @@ function walk_property_chain(
  */
 export function find_containing_class_scope(
   start_scope_id: ScopeId,
-  scopes: ScopeRegistry
+  scopes: ScopeRegistry,
+  definitions?: DefinitionRegistry
 ): ScopeId | null {
   let current_scope_id: ScopeId | null = start_scope_id;
 
@@ -393,6 +394,15 @@ export function find_containing_class_scope(
 
     if (scope.type === "class") {
       return current_scope_id;
+    }
+
+    // Rust impl blocks create "block" scopes that contain methods.
+    // Check if this block scope owns methods (via the member_index),
+    // which distinguishes impl blocks from regular blocks (if/for/loop).
+    if (scope.type === "block" && definitions) {
+      if (find_class_from_scope(current_scope_id, definitions)) {
+        return current_scope_id;
+      }
     }
 
     current_scope_id = scope.parent_id;
