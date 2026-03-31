@@ -229,47 +229,6 @@ export function process_scopes(
     // Extract the scope name from the tree-sitter node
     const scope_name = extract_scope_name(capture.node, scope_type);
 
-    // Check if the parent has the exact same location (duplicate overlapping capture).
-    // This happens when tree-sitter captures the same node with multiple patterns
-    // (e.g., method_definition captured as both @scope.method and @scope.constructor).
-    // In this case, the new scope refines the parent: replace the parent scope.
-    if (locations_equal(parent.location, location) && parent.parent_id !== null) {
-      const grandparent = scopes.get(parent.parent_id);
-      if (grandparent) {
-        // Create the replacement scope, keeping the old parent's relationships
-        const replacement: LexicalScope = {
-          id: scope_id,
-          parent_id: parent.parent_id,
-          name: scope_name,
-          type: scope_type,
-          location,
-          child_ids: [...parent.child_ids],
-        };
-
-        // Update grandparent's child_ids: replace old scope id with new one
-        const updated_grandparent = {
-          ...grandparent,
-          child_ids: grandparent.child_ids.map((id) =>
-            id === parent.id ? scope_id : id
-          ),
-        };
-        scopes.set(grandparent.id, updated_grandparent);
-
-        // Update children to point to the new parent
-        for (const child_id of replacement.child_ids) {
-          const child = scopes.get(child_id);
-          if (child) {
-            scopes.set(child_id, { ...child, parent_id: scope_id });
-          }
-        }
-
-        // Remove old scope, add replacement
-        scopes.delete(parent.id);
-        scopes.set(scope_id, replacement);
-        continue;
-      }
-    }
-
     // Create the scope with parent reference
     const scope: LexicalScope = {
       id: scope_id,
