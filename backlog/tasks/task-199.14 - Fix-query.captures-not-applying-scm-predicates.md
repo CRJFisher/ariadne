@@ -1,7 +1,7 @@
 ---
 id: TASK-199.14
 title: "Fix: redundant bare scope patterns cause duplicate captures in JS/TS .scm files"
-status: To Do
+status: Done
 assignee: []
 created_date: "2026-03-30 14:00"
 labels:
@@ -73,3 +73,19 @@ The `locations_equal` dedup in `scopes.ts` (line 236) is a symptom-level workaro
 
 5. **Evaluate removing the `locations_equal` dedup at `scopes.ts:236`** — After fixing the patterns, verify with tests that the overlapping-capture code path is no longer triggered. If confirmed dead, remove it. Keep the `locations_equal` usages at lines 214-215 (module scope dedup) — those handle a separate, legitimate concern.
 <!-- SECTION:DESCRIPTION:END -->
+
+## Implementation
+
+Commits: `9d8072ed` (actions 1-4), `aae758c6` (action 5)
+
+### Actions completed
+
+1. **Removed bare catch-all patterns** from `javascript.scm` (line 18) and `typescript.scm` (line 23).
+
+2. **Added `@scope.method` to private method patterns** in both `javascript.scm` (line 151) and `typescript.scm` (line 366).
+
+3. **Removed `@scope.method` from TS modifier-only patterns** at lines 139-142 (accessibility_modifier) and lines 157-160 (static). The main definition pattern at lines 357-362 is now the sole scope emitter for regular methods.
+
+4. **Added 9 regression tests** in `scopes.test.ts` under "Method scope capture deduplication" — covering constructors, regular methods, private methods, static methods (JS+TS), and access-modifier methods (TS only).
+
+5. **Removed the `locations_equal` dedup block** from `scopes.ts` (formerly lines 232-268). Verified dead by inserting a throw and running 103 scope tests — none triggered. The `locations_equal` usage at lines 214-215 (module scope dedup) is retained.
