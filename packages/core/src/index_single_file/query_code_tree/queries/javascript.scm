@@ -15,7 +15,6 @@
 (function_declaration) @scope.function
 (function_expression) @scope.function
 (arrow_function) @scope.function
-(method_definition) @scope.method
 (generator_function_declaration) @scope.function
 (generator_function) @scope.function
 
@@ -149,7 +148,7 @@
 
 (method_definition
   name: (private_property_identifier) @definition.method
-)
+) @scope.method
 
 ; Constructor
 (method_definition

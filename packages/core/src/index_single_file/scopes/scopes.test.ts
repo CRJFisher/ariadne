@@ -2284,5 +2284,235 @@ fn main() {}`;
         expect(function_scopes.length).toBe(1);
       });
     });
+
+    describe("Method scope capture deduplication", () => {
+      function count_scope_captures(
+        scopes: ReadonlyMap<ScopeId, LexicalScope>,
+        type: string,
+        name: string | null
+      ): number {
+        return Array.from(scopes.values()).filter(
+          (s) => s.type === type && s.name === name
+        ).length;
+      }
+
+      describe("JavaScript", () => {
+        let parser: Parser;
+
+        beforeAll(() => {
+          parser = new Parser();
+          parser.setLanguage(JavaScript);
+        });
+
+        it("constructor produces exactly one @scope.constructor, not @scope.method", () => {
+          const code = `class Foo {
+  constructor(x) {
+    this.x = x;
+  }
+}`;
+          const tree = parser.parse(code);
+          const parsed_file = create_parsed_file(
+            code,
+            "test.js" as FilePath,
+            tree,
+            "javascript" as Language
+          );
+          const index = build_index_single_file(
+            parsed_file,
+            tree,
+            "javascript" as Language
+          );
+
+          expect(count_scope_captures(index.scopes, "constructor", "constructor")).toBe(1);
+          expect(count_scope_captures(index.scopes, "method", "constructor")).toBe(0);
+        });
+
+        it("regular method produces exactly one @scope.method", () => {
+          const code = `class Foo {
+  doWork(a) {
+    return a;
+  }
+}`;
+          const tree = parser.parse(code);
+          const parsed_file = create_parsed_file(
+            code,
+            "test.js" as FilePath,
+            tree,
+            "javascript" as Language
+          );
+          const index = build_index_single_file(
+            parsed_file,
+            tree,
+            "javascript" as Language
+          );
+
+          expect(count_scope_captures(index.scopes, "method", "doWork")).toBe(1);
+        });
+
+        it("private method gets a @scope.method capture", () => {
+          const code = `class Foo {
+  #secret() {
+    return 42;
+  }
+}`;
+          const tree = parser.parse(code);
+          const parsed_file = create_parsed_file(
+            code,
+            "test.js" as FilePath,
+            tree,
+            "javascript" as Language
+          );
+          const index = build_index_single_file(
+            parsed_file,
+            tree,
+            "javascript" as Language
+          );
+
+          expect(count_scope_captures(index.scopes, "method", "#secret")).toBe(1);
+        });
+
+        it("static method produces exactly one @scope.method", () => {
+          const code = `class Foo {
+  static create() {
+    return new Foo();
+  }
+}`;
+          const tree = parser.parse(code);
+          const parsed_file = create_parsed_file(
+            code,
+            "test.js" as FilePath,
+            tree,
+            "javascript" as Language
+          );
+          const index = build_index_single_file(
+            parsed_file,
+            tree,
+            "javascript" as Language
+          );
+
+          expect(count_scope_captures(index.scopes, "method", "create")).toBe(1);
+        });
+      });
+
+      describe("TypeScript", () => {
+        let parser: Parser;
+
+        beforeAll(() => {
+          parser = new Parser();
+          parser.setLanguage(TypeScript.typescript);
+        });
+
+        it("constructor produces exactly one @scope.constructor, not @scope.method", () => {
+          const code = `class Foo {
+  constructor(x: number) {
+    this.x = x;
+  }
+}`;
+          const tree = parser.parse(code);
+          const parsed_file = create_parsed_file(
+            code,
+            "test.ts" as FilePath,
+            tree,
+            "typescript" as Language
+          );
+          const index = build_index_single_file(
+            parsed_file,
+            tree,
+            "typescript" as Language
+          );
+
+          expect(count_scope_captures(index.scopes, "constructor", "constructor")).toBe(1);
+          expect(count_scope_captures(index.scopes, "method", "constructor")).toBe(0);
+        });
+
+        it("regular method produces exactly one @scope.method", () => {
+          const code = `class Foo {
+  doWork(a: string): string {
+    return a;
+  }
+}`;
+          const tree = parser.parse(code);
+          const parsed_file = create_parsed_file(
+            code,
+            "test.ts" as FilePath,
+            tree,
+            "typescript" as Language
+          );
+          const index = build_index_single_file(
+            parsed_file,
+            tree,
+            "typescript" as Language
+          );
+
+          expect(count_scope_captures(index.scopes, "method", "doWork")).toBe(1);
+        });
+
+        it("private method gets a @scope.method capture", () => {
+          const code = `class Foo {
+  #secret(): number {
+    return 42;
+  }
+}`;
+          const tree = parser.parse(code);
+          const parsed_file = create_parsed_file(
+            code,
+            "test.ts" as FilePath,
+            tree,
+            "typescript" as Language
+          );
+          const index = build_index_single_file(
+            parsed_file,
+            tree,
+            "typescript" as Language
+          );
+
+          expect(count_scope_captures(index.scopes, "method", "#secret")).toBe(1);
+        });
+
+        it("method with access modifier produces exactly one @scope.method", () => {
+          const code = `class Foo {
+  public greet(name: string): string {
+    return name;
+  }
+}`;
+          const tree = parser.parse(code);
+          const parsed_file = create_parsed_file(
+            code,
+            "test.ts" as FilePath,
+            tree,
+            "typescript" as Language
+          );
+          const index = build_index_single_file(
+            parsed_file,
+            tree,
+            "typescript" as Language
+          );
+
+          expect(count_scope_captures(index.scopes, "method", "greet")).toBe(1);
+        });
+
+        it("static method produces exactly one @scope.method", () => {
+          const code = `class Foo {
+  static create(): Foo {
+    return new Foo();
+  }
+}`;
+          const tree = parser.parse(code);
+          const parsed_file = create_parsed_file(
+            code,
+            "test.ts" as FilePath,
+            tree,
+            "typescript" as Language
+          );
+          const index = build_index_single_file(
+            parsed_file,
+            tree,
+            "typescript" as Language
+          );
+
+          expect(count_scope_captures(index.scopes, "method", "create")).toBe(1);
+        });
+      });
+    });
   });
 });

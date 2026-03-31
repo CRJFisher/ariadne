@@ -20,7 +20,6 @@
 (function_declaration) @scope.function
 (function_expression) @scope.function
 (arrow_function) @scope.function
-(method_definition) @scope.method
 (generator_function_declaration) @scope.function
 (generator_function) @scope.function
 
@@ -140,7 +139,7 @@
 (method_definition
   (accessibility_modifier) @modifier.access_modifier
   name: (property_identifier) @definition.method
-) @scope.method
+)
 
 ; Access modifiers on fields
 (public_field_definition
@@ -158,7 +157,7 @@
 (method_definition
   "static" @modifier.visibility
   name: (property_identifier) @definition.method
-) @scope.method
+)
 
 (public_field_definition
   "static" @modifier.visibility
@@ -364,7 +363,7 @@
 
 (method_definition
   name: (private_property_identifier) @definition.method
-)
+) @scope.method
 
 ; Abstract method signatures in classes (not interfaces)
 ; These are abstract methods declared in abstract classes
