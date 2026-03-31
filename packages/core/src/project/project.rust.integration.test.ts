@@ -506,9 +506,6 @@ describe("Project Integration - Rust", () => {
 
   describe("Callback detection and invocation", () => {
     it("should detect callback context for closures in iterator methods", async () => {
-      const project = new Project();
-      await project.initialize();
-
       const code = `
 fn main() {
     let numbers = vec![1, 2, 3, 4, 5];
@@ -516,7 +513,7 @@ fn main() {
 }
       `.trim();
 
-      const file_path_str = "/test/callback.rs" as FilePath;
+      const file_path_str = "/tmp/ariadne_test/callback.rs" as FilePath;
       project.update_file(file_path_str, code);
 
       const definitions = project.definitions;
@@ -534,9 +531,6 @@ fn main() {
     });
 
     it("should NOT mark external callbacks as entry points", async () => {
-      const project = new Project();
-      await project.initialize();
-
       const code = `
 fn main() {
     let numbers = vec![1, 2, 3, 4, 5];
@@ -545,7 +539,7 @@ fn main() {
 }
       `.trim();
 
-      const file_path_str = "/test/callbacks_entry.rs" as FilePath;
+      const file_path_str = "/tmp/ariadne_test/callbacks_entry.rs" as FilePath;
       project.update_file(file_path_str, code);
 
       const definitions = project.definitions;
@@ -868,8 +862,6 @@ fn main() {
 
   describe("Pub Use Re-exports", () => {
     it("should resolve symbols through pub use re-exports", async () => {
-      const project = new Project();
-      await project.initialize();
 
       // Module that defines functions
       const math_code = `
@@ -899,9 +891,9 @@ fn main() {
 }
       `.trim();
 
-      const math_file = "/test/math.rs" as FilePath;
-      const reexport_file = "/test/reexport.rs" as FilePath;
-      const consumer_file = "/test/consumer.rs" as FilePath;
+      const math_file = "/tmp/ariadne_test/math.rs" as FilePath;
+      const reexport_file = "/tmp/ariadne_test/reexport.rs" as FilePath;
+      const consumer_file = "/tmp/ariadne_test/consumer.rs" as FilePath;
 
       project.update_file(math_file, math_code);
       project.update_file(reexport_file, reexport_code);
