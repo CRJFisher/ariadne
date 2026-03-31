@@ -459,14 +459,11 @@
 ;; GENERICS AND LIFETIMES
 ;; ==============================================================================
 
-; Type parameters (simple)
+; Type parameters (simple and constrained)
 (type_parameters
-  (type_identifier) @definition.type_parameter
-)
-
-; Constrained type parameters (e.g., T: Clone)
-(constrained_type_parameter
-  left: (type_identifier) @definition.type_parameter
+  (type_parameter
+    name: (type_identifier) @definition.type_parameter
+  )
 )
 
 ; Const parameters

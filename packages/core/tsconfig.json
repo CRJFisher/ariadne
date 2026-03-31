@@ -9,7 +9,8 @@
   },
   "include": [
     "src/**/*",
-    "tests/**/*"
+    "tests/**/*",
+    "tree_sitter_grammars.d.ts"
   ],
   "exclude": [
     "node_modules",
