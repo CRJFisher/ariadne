@@ -116,7 +116,6 @@ export interface PropertyDefinition extends Definition {
   readonly readonly?: boolean;
   readonly decorators: readonly DecoratorDefinition[];
   readonly access_modifier?: AccessModifier;
-  readonly readonly?: boolean;
 }
 
 /**

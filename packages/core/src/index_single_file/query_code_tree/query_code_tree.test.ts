@@ -9,7 +9,7 @@ import type { Language } from "@ariadnejs/types";
 
 function unique_capture_names(
   lang: Language,
-  ts_lang: unknown,
+  ts_lang: Parser.Language,
   code: string,
 ): string[] {
   const parser = new Parser();
