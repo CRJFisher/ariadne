@@ -751,13 +751,12 @@ fn main() {
           r.kind === "function_call" &&
           r.name === ("helper" as SymbolName)
       );
-      if (helper_call) {
-        const resolved = project.resolutions.resolve(
-          helper_call.scope_id,
-          helper_call.name
-        );
-        expect(resolved).toBeNull();
-      }
+      expect(helper_call).toBeDefined();
+      const resolved = project.resolutions.resolve(
+        helper_call!.scope_id,
+        helper_call!.name
+      );
+      expect(resolved).toBeNull();
     });
   });
 
@@ -768,12 +767,9 @@ fn main() {
       project.update_file(file, source);
 
       const call_graph = project.get_call_graph();
-      expect(call_graph.nodes.size).toBeGreaterThan(0);
+      expect(call_graph.nodes.size).toBe(6);
 
-      // Verify call relationships exist
       const nodes = Array.from(call_graph.nodes.values());
-      const has_calls = nodes.some((node) => node.enclosed_calls.length > 0);
-      expect(has_calls).toBe(true);
 
       // Find specific caller nodes by name
       const main_node = nodes.find((n) => {
@@ -781,8 +777,8 @@ fn main() {
         return def?.name === ("main" as SymbolName);
       });
       expect(main_node).toBeDefined();
-      // main() calls helper() and outer_function()
-      expect(main_node!.enclosed_calls.length).toBeGreaterThan(0);
+      // main() calls helper() (x2, including block scope) and outer_function()
+      expect(main_node!.enclosed_calls.length).toBe(3);
     });
 
     it("should include cross-file calls in call graph", async () => {
@@ -805,8 +801,8 @@ fn main() {
         n.location.file_path.includes("main.rs")
       );
 
-      expect(utils_nodes.length).toBeGreaterThan(0);
-      expect(main_nodes.length).toBeGreaterThan(0);
+      expect(utils_nodes.length).toBe(5);
+      expect(main_nodes.length).toBe(2);
 
       // Verify cross-file call: main.rs main() calls utils.rs helper()
       const main_fn_node = main_nodes.find((n) => {
@@ -842,8 +838,8 @@ fn main() {
       // Get updated call graph
       const call_graph_v2 = project.get_call_graph();
 
-      // Should have more nodes (new_function added)
-      expect(call_graph_v2.nodes.size).toBeGreaterThan(initial_node_count);
+      // Should have exactly one more node (new_function added)
+      expect(call_graph_v2.nodes.size).toBe(initial_node_count + 1);
 
       // Find new_function node
       const new_func_nodes = Array.from(call_graph_v2.nodes.values()).filter(
@@ -856,7 +852,7 @@ fn main() {
 
       // Verify new_function has calls (to helper)
       const new_func_node = new_func_nodes[0];
-      expect(new_func_node.enclosed_calls.length).toBeGreaterThan(0);
+      expect(new_func_node.enclosed_calls.length).toBe(1);
     });
   });
 
@@ -920,12 +916,8 @@ fn main() {
         add_call!.scope_id,
         add_call!.name
       );
-      // pub use creates re-exports, so the call should resolve
-      // (either to the re-export definition or through to the original)
-      if (resolved_add) {
-        const add_def = project.definitions.get(resolved_add);
-        expect(add_def).toBeDefined();
-      }
+      // pub use re-exports don't currently resolve through to the original definition
+      expect(resolved_add).toBeNull();
     });
   });
 

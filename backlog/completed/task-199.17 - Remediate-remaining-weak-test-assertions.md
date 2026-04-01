@@ -1,7 +1,7 @@
 ---
 id: TASK-199.17
 title: "Remediate remaining weak test assertions across test suite"
-status: To Do
+status: Done
 assignee: []
 created_date: "2026-03-30 14:00"
 labels:
@@ -54,3 +54,33 @@ The task-199 epic aimed to replace all weak assertions with exact value checks. 
 3. Replace all `toBeGreaterThan(0)` with exact expected counts
 4. Remove the trivially-true assertion pattern
 <!-- SECTION:DESCRIPTION:END -->
+
+## Implementation Notes
+
+All 4 actions completed across all 4 test files.
+
+### metadata_extractors.rust.test.ts
+
+- Removed 11 `if` guards, added `expect(x).toBeDefined()` with non-null assertions
+- Replaced 3 `toContain` blocks with `toEqual` for exact array comparison
+- Removed trivially-true assertion (`result === undefined || result.length > 0`) — replaced with `expect(result).toBeUndefined()` documenting actual extractor behavior
+- Replaced `toBeGreaterThan(0)` + `toContain("Vec")` with exact `toEqual(["Vec<String"])`
+- Fixed `bracketed_type` test: node type doesn't exist in tree-sitter-rust, rewrote to use `type_arguments` node
+- `impl_trait_type` test: extractor returns undefined for this node type — assertion now documents actual behavior
+
+### metadata_extractors.python.test.ts
+
+- Replaced `toContain("|")` with `toBe("str | int")`
+- Replaced 2 subscript chain `toContain` assertions with `toEqual(["obj", "prop"])`
+- Replaced 5 type argument `toContain` assertions with exact `toEqual` values
+
+### scopes.test.ts
+
+- Replaced `toBeGreaterThanOrEqual(1)` and `toBeGreaterThan(0)` with exact counts
+- Restructured module/namespace vs other entity assertions with exact `toBe(1)` and `toBe(2)` scope counts
+
+### project.rust.integration.test.ts
+
+- Removed `if (helper_call)` guard — made unconditional with `expect(helper_call).toBeDefined()`
+- Removed `if (resolved_add)` guard — pub use re-exports don't currently resolve, assertion now documents `toBeNull()`
+- Pinned all call graph counts: nodes.size=6, main.enclosed_calls=3, utils_nodes=5, main_nodes=2, new_func.enclosed_calls=1, v2.nodes.size=initial+1

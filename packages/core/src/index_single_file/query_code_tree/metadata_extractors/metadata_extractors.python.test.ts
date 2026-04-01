@@ -96,7 +96,7 @@ describe("Python Metadata Extractors", () => {
       const result = PYTHON_METADATA_EXTRACTORS.extract_type_from_annotation(typed_param, TEST_FILE);
 
       expect(result).toBeDefined();
-      expect(result?.type_name).toContain("|");
+      expect(result!.type_name).toBe("str | int");
     });
 
     it("should handle parameters with default values", () => {
@@ -378,10 +378,7 @@ describe("Python Metadata Extractors", () => {
 
       const result = PYTHON_METADATA_EXTRACTORS.extract_property_chain(attribute);
 
-      expect(result).toBeDefined();
-      expect(result).toContain("obj");
-      expect(result).toContain("prop");
-      // Note: numeric subscripts are not included in the chain
+      expect(result).toEqual(["obj", "prop"]);
     });
 
     it("should handle variable subscript", () => {
@@ -391,10 +388,7 @@ describe("Python Metadata Extractors", () => {
 
       const result = PYTHON_METADATA_EXTRACTORS.extract_property_chain(attribute);
 
-      expect(result).toBeDefined();
-      expect(result).toContain("obj");
-      expect(result).toContain("prop");
-      // Note: variable subscripts are not included in the chain
+      expect(result).toEqual(["obj", "prop"]);
     });
 
     it("should return undefined for simple identifier", () => {
@@ -600,10 +594,7 @@ describe("Python Metadata Extractors", () => {
 
       const result = PYTHON_METADATA_EXTRACTORS.extract_type_arguments(generic_type);
 
-      expect(result).toBeDefined();
-      expect(result!.length).toBeGreaterThanOrEqual(1);
-      // Callable has [params_list, return_type] format
-      expect(result!.join(", ")).toContain("bool");
+      expect(result).toEqual(["[int, str]", "bool"]);
     });
 
     it("should return undefined for non-generic types", () => {
@@ -623,11 +614,7 @@ describe("Python Metadata Extractors", () => {
 
       const result = PYTHON_METADATA_EXTRACTORS.extract_type_arguments(generic_type);
 
-      expect(result).toBeDefined();
-      // Callable has special format where arguments are in a list
-      expect(result).toBeDefined();
-      const result_str = result?.join(", ");
-      expect(result_str).toContain("bool");
+      expect(result).toEqual(["[int, str]", "bool"]);
     });
 
     it("should handle deeply nested generics", () => {
@@ -637,10 +624,7 @@ describe("Python Metadata Extractors", () => {
 
       const result = PYTHON_METADATA_EXTRACTORS.extract_type_arguments(generic_type);
 
-      expect(result).toBeDefined();
-      expect(result?.[0]).toBe("str");
-      expect(result?.[1]).toContain("List");
-      expect(result?.[1]).toContain("Tuple");
+      expect(result).toEqual(["str", "List[Tuple[int, str]]"]);
     });
 
     it("should handle Optional as special case of Union", () => {
@@ -661,11 +645,7 @@ describe("Python Metadata Extractors", () => {
 
       const result = PYTHON_METADATA_EXTRACTORS.extract_type_arguments(generic_type);
 
-      expect(result).toBeDefined();
-      expect(result?.length).toBe(3);
-      expect(result?.[0]).toBe("int");
-      expect(result?.[1]).toContain("List");
-      expect(result?.[2]).toContain("Dict");
+      expect(result).toEqual(["int", "List[str]", "Dict[str, Any]"]);
     });
 
     it("should handle Literal type arguments", () => {
@@ -675,10 +655,7 @@ describe("Python Metadata Extractors", () => {
 
       const result = PYTHON_METADATA_EXTRACTORS.extract_type_arguments(generic_type);
 
-      expect(result).toBeDefined();
-      expect(result!.length).toBe(2);
-      expect(result![0]).toContain("foo");
-      expect(result![1]).toContain("bar");
+      expect(result).toEqual(["\"foo\"", "\"bar\""]);
     });
   });
 

@@ -690,27 +690,22 @@ describe("scopes", () => {
 
         const scopes = process_scopes(captures, file);
 
-        // MODULE and NAMESPACE create module-level scopes, so they might replace or add to root
-        // All others add a new scope to the existing root
-        const min_expected = 2; // Always have at least root + created scope
-        expect(scopes.size).toBeGreaterThanOrEqual(min_expected - 1);
-
-        // Find the scope with our test name (or check by type for MODULE/NAMESPACE)
-        const created_scope = Array.from(scopes.values()).find(
-          (s) =>
-            s.name === "test" ||
-            (s.type === expected_type && s.parent_id !== null)
-        );
-
         if (entity === "module" || entity === "namespace") {
-          // Module/namespace might be nested or might modify root
-          const module_scopes = Array.from(scopes.values()).filter(
-            (s) => s.type === "module"
-          );
-          expect(module_scopes.length).toBeGreaterThan(0);
+          // Mock nodes have equal symbol_location and scope_location,
+          // so process_scopes skips them (treated as external module declarations).
+          // Only the root module scope remains.
+          expect(scopes.size).toBe(1);
+          const root = Array.from(scopes.values())[0];
+          expect(root.type).toBe("module");
+          expect(root.parent_id).toBeNull();
         } else {
+          // Root scope + the created entity scope
+          expect(scopes.size).toBe(2);
+          const created_scope = Array.from(scopes.values()).find(
+            (s) => s.type === expected_type && s.parent_id !== null
+          );
           expect(created_scope).toBeDefined();
-          expect(created_scope?.type).toBe(expected_type);
+          expect(created_scope!.type).toBe(expected_type);
         }
       });
     });
