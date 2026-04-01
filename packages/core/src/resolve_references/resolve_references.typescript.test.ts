@@ -84,7 +84,8 @@ export function process(name: string, date: Date): string {
     );
     expect(resolved_utils).not.toBeNull();
 
-    // Check that call graph detects the calls through namespace
+    // Namespace-imported functions should be resolved in the call graph,
+    // so they should NOT appear as entry points
     const call_graph = project.get_call_graph();
 
     const format_name_entry = call_graph.entry_points.find((ep) => {
@@ -102,27 +103,23 @@ export function process(name: string, date: Date): string {
       );
     });
 
-    // These should NOT be entry points if namespace import resolution works
-    // (currently may be entry points if module.func() isn't resolved through namespace)
-    // Document current behavior:
-    const referenced = project.resolutions.get_all_referenced_symbols();
+    expect(format_name_entry).toBeUndefined();
+    expect(format_date_entry).toBeUndefined();
 
-    // Verify at minimum the namespace import itself is resolved
-    expect(resolved_utils).toBeDefined();
+    // Verify the process function's enclosed calls resolve to formatName and formatDate
+    const process_node = [...call_graph.nodes.values()].find(
+      (node) =>
+        node.name === ("process" as SymbolName) &&
+        node.location.file_path === file_paths["consumer.ts"]
+    );
+    expect(process_node).toBeDefined();
 
-    // If both functions are still entry points, namespace method resolution
-    // through import * isn't fully working yet
-    if (format_name_entry !== undefined && format_date_entry !== undefined) {
-      // Document: namespace import method calls not yet fully resolved
-      expect(true).toBe(true);
-    } else {
-      // Full resolution: functions should not be entry points
-      expect(format_name_entry).toBeUndefined();
-      expect(format_date_entry).toBeUndefined();
-    }
+    const called_names = process_node!.enclosed_calls.map((call) => call.name);
+    expect(called_names).toContain("formatName" as SymbolName);
+    expect(called_names).toContain("formatDate" as SymbolName);
   });
 
-  it("import * as X; X.Class should resolve cross-file constructor", async () => {
+  it("import * as X; new X.Class() should resolve cross-file constructor", async () => {
     const { project, temp_dir, file_paths } = await setup_project({
       "models.ts": `export class User {
   constructor(public name: string) {}
@@ -151,6 +148,109 @@ export function createUser(name: string): string {
       "models" as SymbolName
     );
     expect(resolved_models).not.toBeNull();
+
+    // The User constructor should be resolved through the namespace import,
+    // so User should not appear as an unreferenced entry point
+    const call_graph = project.get_call_graph();
+
+    const user_class_entry = call_graph.entry_points.find((ep) => {
+      const node = call_graph.nodes.get(ep);
+      return (
+        node?.name === ("User" as SymbolName) &&
+        node.location.file_path === file_paths["models.ts"]
+      );
+    });
+    expect(user_class_entry).toBeUndefined();
+
+    // greet() remains an entry point because the resolver does not infer
+    // the type of `user` from `new models.User(name)` (no constructor
+    // return type inference), so `user.greet()` is unresolved.
+    const greet_entry = call_graph.entry_points.find((ep) => {
+      const node = call_graph.nodes.get(ep);
+      return (
+        node?.name === ("greet" as SymbolName) &&
+        node.location.file_path === file_paths["models.ts"]
+      );
+    });
+    expect(greet_entry).toBeDefined();
+  });
+
+  it("namespace import with re-exports should resolve through barrel file", async () => {
+    const { project, temp_dir, file_paths } = await setup_project({
+      "math/add.ts": `export function add(a: number, b: number): number {
+  return a + b;
+}
+`,
+      "math/multiply.ts": `export function multiply(a: number, b: number): number {
+  return a * b;
+}
+`,
+      "math/index.ts": `export { add } from "./add";
+export { multiply } from "./multiply";
+`,
+      "calculator.ts": `import * as math from "./math";
+
+export function calculate(a: number, b: number): number {
+  return math.add(a, b) + math.multiply(a, b);
+}
+`,
+    });
+    temp_dirs.push(temp_dir);
+
+    const calc_scope = project.scopes.get_file_root_scope(
+      file_paths["calculator.ts"]
+    );
+    expect(calc_scope).toBeDefined();
+
+    const resolved_math = project.resolutions.resolve(
+      calc_scope!.id,
+      "math" as SymbolName
+    );
+    expect(resolved_math).not.toBeNull();
+
+    const call_graph = project.get_call_graph();
+
+    // calculator.calculate should exist as an entry point (exported, not called)
+    const calculate_entry = call_graph.entry_points.find((ep) => {
+      const node = call_graph.nodes.get(ep);
+      return (
+        node?.name === ("calculate" as SymbolName) &&
+        node.location.file_path === file_paths["calculator.ts"]
+      );
+    });
+    expect(calculate_entry).toBeDefined();
+
+    // add and multiply are not entry points: the barrel file's re-exports
+    // create function references that mark them as indirectly reachable.
+    // However, the call edges from calculate → add/multiply are missing because
+    // resolve_namespace_method skips import-kind definitions (re-exports).
+    const add_entry = call_graph.entry_points.find((ep) => {
+      const node = call_graph.nodes.get(ep);
+      return (
+        node?.name === ("add" as SymbolName) &&
+        node.location.file_path === file_paths["math/add.ts"]
+      );
+    });
+    const multiply_entry = call_graph.entry_points.find((ep) => {
+      const node = call_graph.nodes.get(ep);
+      return (
+        node?.name === ("multiply" as SymbolName) &&
+        node.location.file_path === file_paths["math/multiply.ts"]
+      );
+    });
+
+    expect(add_entry).toBeUndefined();
+    expect(multiply_entry).toBeUndefined();
+
+    // calculate has no enclosed calls because math.add() and math.multiply()
+    // don't resolve through the barrel file's re-export imports
+    const calculate_node = [...call_graph.nodes.values()].find(
+      (node) =>
+        node.name === ("calculate" as SymbolName) &&
+        node.location.file_path === file_paths["calculator.ts"]
+    );
+    expect(calculate_node).toBeDefined();
+    expect(calculate_node!.enclosed_calls.length).toBe(0);
   });
 });
 
