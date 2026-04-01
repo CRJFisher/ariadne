@@ -110,28 +110,26 @@ export function extract_type_members(definitions: {
     });
   }
 
-  // 3. Extract from enums (Rust enums can have methods)
+  // 3. Extract from enums
   for (const [enum_id, enum_def] of definitions.enums) {
-    if (!enum_def.methods || enum_def.methods.length === 0) {
-      // Enum with no methods - still track it but with empty members
-      members.set(enum_id, {
-        methods: new Map(),
-        properties: new Map(),
-        constructor: undefined,
-        extends: [],
-      });
-      continue;
+    const methods = new Map<SymbolName, SymbolId>();
+    const properties = new Map<SymbolName, SymbolId>();
+
+    // Index enum members as properties (e.g. Python Color.RED, TS Direction.Up)
+    for (const member of enum_def.members) {
+      properties.set(member.name, member.symbol_id);
     }
 
-    const methods = new Map<SymbolName, SymbolId>();
-
-    for (const method of enum_def.methods) {
-      methods.set(method.name, method.symbol_id);
+    // Index methods (Rust enums can have impl methods)
+    if (enum_def.methods) {
+      for (const method of enum_def.methods) {
+        methods.set(method.name, method.symbol_id);
+      }
     }
 
     members.set(enum_id, {
       methods,
-      properties: new Map(), // Enums don't have properties in this model
+      properties,
       constructor: undefined,
       extends: [],
     });

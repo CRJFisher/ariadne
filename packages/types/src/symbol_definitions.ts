@@ -161,6 +161,7 @@ export interface EnumDefinition extends Definition {
  * Enum member
  */
 export interface EnumMember {
+  readonly symbol_id: SymbolId;
   readonly name: SymbolName;
   readonly value?: string | number;
   readonly location: Location;

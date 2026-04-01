@@ -86,6 +86,37 @@
     ]
   },
   {
+    "source": "false-positive",
+    "description": "Anonymous forEach callbacks in DefinitionBuilder.build() — not dead code",
+    "entrypoints": [
+      {
+        "name": "<anonymous>",
+        "file_path": "packages/core/src/index_single_file/definitions/definitions.ts",
+        "start_line": 201
+      },
+      {
+        "name": "<anonymous>",
+        "file_path": "packages/core/src/index_single_file/definitions/definitions.ts",
+        "start_line": 204
+      },
+      {
+        "name": "<anonymous>",
+        "file_path": "packages/core/src/index_single_file/definitions/definitions.ts",
+        "start_line": 207
+      },
+      {
+        "name": "<anonymous>",
+        "file_path": "packages/core/src/index_single_file/definitions/definitions.ts",
+        "start_line": 210
+      },
+      {
+        "name": "<anonymous>",
+        "file_path": "packages/core/src/index_single_file/definitions/definitions.ts",
+        "start_line": 213
+      }
+    ]
+  },
+  {
     "source": "dead-code",
     "description": "Functions identified as likely dead code",
     "entrypoints": []

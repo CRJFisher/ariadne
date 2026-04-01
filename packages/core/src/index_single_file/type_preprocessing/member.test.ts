@@ -392,7 +392,9 @@ describe("Member Extraction - TypeScript", () => {
 
     const color_members = Array.from(members.values())[0];
     expect(color_members.methods.size).toBe(0);
-    expect(color_members.properties.size).toBe(0);
+    expect(
+      Array.from(color_members.properties.keys()).sort()
+    ).toEqual(["Blue", "Green", "Red"] as SymbolName[]);
     expect(color_members.constructor).toBeUndefined();
     expect(color_members.extends).toEqual([]);
   });
@@ -432,7 +434,9 @@ describe("Member Extraction - TypeScript", () => {
 
     const status_members = Array.from(members.values())[0];
     expect(status_members.methods.size).toBe(0);
-    expect(status_members.properties.size).toBe(0);
+    expect(
+      Array.from(status_members.properties.keys()).sort()
+    ).toEqual(["Active", "Inactive", "Pending"] as SymbolName[]);
     expect(status_members.constructor).toBeUndefined();
     expect(status_members.extends).toEqual([]);
   });
@@ -681,7 +685,9 @@ class Color(Enum):
 
     const color_members = Array.from(members.values())[0];
     expect(color_members.methods.size).toBe(0);
-    expect(color_members.properties.size).toBe(0);
+    expect(
+      Array.from(color_members.properties.keys()).sort()
+    ).toEqual(["BLUE", "GREEN", "RED"] as SymbolName[]);
     expect(color_members.constructor).toBeUndefined();
     expect(color_members.extends).toEqual([]);
   });
@@ -763,10 +769,13 @@ describe("Member Extraction - Rust", () => {
 
     expect(members.size).toBe(1);
 
-    // Rust enum impl methods are not attached to the enum definition
     const enum_members = Array.from(members.values())[0];
-    expect(enum_members.methods.size).toBe(0);
-    expect(enum_members.properties.size).toBe(0);
+    expect(Array.from(enum_members.methods.keys()).sort()).toEqual(
+      ["is_err", "is_ok"] as SymbolName[]
+    );
+    expect(Array.from(enum_members.properties.keys()).sort()).toEqual(
+      ["Err", "Ok"] as SymbolName[]
+    );
     expect(enum_members.constructor).toBeUndefined();
   });
 
@@ -837,7 +846,9 @@ describe("Member Extraction - Rust", () => {
 
     const color_members = Array.from(members.values())[0];
     expect(color_members.methods.size).toBe(0);
-    expect(color_members.properties.size).toBe(0);
+    expect(Array.from(color_members.properties.keys()).sort()).toEqual(
+      ["Blue", "Green", "Red"] as SymbolName[]
+    );
     expect(color_members.constructor).toBeUndefined();
     expect(color_members.extends).toEqual([]);
   });
