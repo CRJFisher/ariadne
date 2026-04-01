@@ -168,10 +168,16 @@ export async function load_project(
     }
   }
 
-  // Seed manifest_entries from existing manifest (preserves entries for files not in this load)
-  const manifest_entries = new Map<FilePath, CacheManifestEntry>(
-    manifest ? manifest.entries : [],
-  );
+  // Build manifest_entries from existing manifest, pruning entries for files no longer on disk
+  const final_files_set = new Set(final_files);
+  const manifest_entries = new Map<FilePath, CacheManifestEntry>();
+  if (manifest) {
+    for (const [fp, entry] of manifest.entries) {
+      if (final_files_set.has(fp)) {
+        manifest_entries.set(fp, entry);
+      }
+    }
+  }
 
   let cache_hits = 0;
   let cache_misses = 0;

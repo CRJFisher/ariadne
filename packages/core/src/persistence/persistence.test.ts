@@ -18,7 +18,7 @@ import * as path from "path";
 const exec_file = promisify(execFile);
 
 /** Build a clean env for git commands in temp dirs, removing inherited git vars. */
-function clean_git_env(): NodeJS.ProcessEnv {
+function clean_git_env(): typeof process.env {
   const { GIT_DIR, GIT_WORK_TREE, GIT_INDEX_FILE, ...env } = process.env;
   return env;
 }
@@ -467,6 +467,40 @@ describe("Corruption/Recovery", () => {
       const project = await load_project({ project_path: dir, storage });
       expect(project.get_stats().file_count).toEqual(1);
       expect(project.get_stats().definition_count).toBeGreaterThan(0);
+    } finally {
+      await cleanup();
+    }
+  });
+
+  it("prunes manifest entries for deleted files on warm load", async () => {
+    const dir = await setup_project_dir({
+      "a.ts": "export function foo() { return 42; }",
+      "b.ts": "import { foo } from './a'; const x = foo();",
+    });
+    try {
+      const storage = new InMemoryStorage();
+
+      // Cold load populates cache with both files
+      const cold = await load_project({ project_path: dir, storage });
+      expect(cold.get_stats().file_count).toEqual(2);
+
+      const manifest_v1 = JSON.parse((await storage.read_manifest())!);
+      expect(manifest_v1.entries.length).toEqual(2);
+
+      // Delete b.ts from disk
+      await fs.unlink(path.join(dir, "b.ts"));
+
+      // Warm load — b.ts is gone, its manifest entry should be pruned
+      const warm = await load_project({ project_path: dir, storage });
+      expect(warm.get_stats().file_count).toEqual(1);
+
+      const manifest_v2 = JSON.parse((await storage.read_manifest())!);
+      expect(manifest_v2.entries.length).toEqual(1);
+
+      const entry_paths = manifest_v2.entries.map(
+        (e: [string, unknown]) => e[0],
+      );
+      expect(entry_paths).toEqual([path.join(dir, "a.ts")]);
     } finally {
       await cleanup();
     }
