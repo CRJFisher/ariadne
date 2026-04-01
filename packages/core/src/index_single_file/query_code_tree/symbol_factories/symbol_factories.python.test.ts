@@ -294,8 +294,7 @@ describe("create_enum_id", () => {
 
     const result = create_enum_id(capture);
 
-    // create_enum_id manually formats the string instead of using enum_symbol().
-    // Verify the output matches enum_symbol() — both produce the same format.
+    // Verify create_enum_id delegates to enum_symbol() and produces the correct format.
     const expected = enum_symbol("Color" as SymbolName, capture.location);
     expect(result).toBe(expected);
     expect(result).toMatch(/^enum:\/test\.py:\d+:\d+:\d+:\d+:Color$/);
@@ -728,12 +727,12 @@ describe("extract_initial_value", () => {
   });
 
   it("should extract string initial value", () => {
-    const code = 'name = "hello"';
+    const code = "name = \"hello\"";
     const root = parse_python(code);
     const name_node = find_identifier(root, "name")!;
 
     const result = extract_initial_value(name_node);
-    expect(result).toBe('"hello"');
+    expect(result).toBe("\"hello\"");
   });
 });
 
@@ -1085,7 +1084,7 @@ describe("detect_function_collection", () => {
   });
 
   it("should detect dict of function references", () => {
-    const code = 'config = {"success": handle_success, "error": handle_error}';
+    const code = "config = {\"success\": handle_success, \"error\": handle_error}";
     const root = parse_python(code);
     const assignment = find_assignment(root)!;
 
@@ -1133,7 +1132,7 @@ describe("detect_function_collection", () => {
 
 describe("clean_python_docstring", () => {
   it("should strip triple double quotes from single-line docstring", () => {
-    expect(clean_python_docstring('"""Hello"""')).toBe("Hello");
+    expect(clean_python_docstring("\"\"\"Hello\"\"\"")).toBe("Hello");
   });
 
   it("should strip triple single quotes from single-line docstring", () => {
@@ -1141,16 +1140,16 @@ describe("clean_python_docstring", () => {
   });
 
   it("should strip and dedent multi-line docstring", () => {
-    const raw = '"""\n  Hello\n  World\n"""';
+    const raw = "\"\"\"\n  Hello\n  World\n\"\"\"";
     expect(clean_python_docstring(raw)).toBe("Hello\nWorld");
   });
 
   it("should handle empty docstring", () => {
-    expect(clean_python_docstring('""""""')).toBe("");
+    expect(clean_python_docstring("\"\"\"\"\"\"")).toBe("");
   });
 
   it("should handle docstring with varying indentation", () => {
-    const raw = '"""\n    First line\n      Indented\n    Back\n"""';
+    const raw = "\"\"\"\n    First line\n      Indented\n    Back\n\"\"\"";
     expect(clean_python_docstring(raw)).toBe("First line\n  Indented\nBack");
   });
 });
@@ -1161,7 +1160,7 @@ describe("store_python_docstring / consume_python_docstring / reset_documentatio
   });
 
   it("should store and consume a docstring keyed by definition start line", () => {
-    const code = 'def foo():\n  """A docstring."""\n  pass';
+    const code = "def foo():\n  \"\"\"A docstring.\"\"\"\n  pass";
     const root = parse_python(code);
 
     // Find the string node (the docstring)
@@ -1186,7 +1185,7 @@ describe("store_python_docstring / consume_python_docstring / reset_documentatio
   });
 
   it("should consume only once (second call returns undefined)", () => {
-    const code = 'def bar():\n  """Doc."""\n  pass';
+    const code = "def bar():\n  \"\"\"Doc.\"\"\"\n  pass";
     const root = parse_python(code);
     const string_node = find_string_node(root)!;
     const capture = make_capture(string_node, {
@@ -1204,7 +1203,7 @@ describe("store_python_docstring / consume_python_docstring / reset_documentatio
   });
 
   it("should clear all stored docstrings on reset", () => {
-    const code = 'def baz():\n  """Baz doc."""\n  pass';
+    const code = "def baz():\n  \"\"\"Baz doc.\"\"\"\n  pass";
     const root = parse_python(code);
     const string_node = find_string_node(root)!;
     const capture = make_capture(string_node, {

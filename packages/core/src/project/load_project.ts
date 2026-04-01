@@ -215,7 +215,7 @@ export async function load_project(
         if (cached_entry) {
           const content_hash = compute_content_hash(content);
           if (content_hash === cached_entry.content_hash) {
-            used_cache = await try_restore_from_cache(project, fp, storage);
+            used_cache = await try_restore_from_cache(project, fp, storage, content);
           }
         }
       }
@@ -339,6 +339,7 @@ async function try_restore_from_cache(
   project: Project,
   file_path: FilePath,
   storage: PersistenceStorage,
+  existing_content?: string,
 ): Promise<boolean> {
   try {
     const raw_index = await storage.read_index(file_path);
@@ -350,7 +351,7 @@ async function try_restore_from_cache(
     const cached_index = deserialize_semantic_index(parsed);
 
     // Still need file content for get_source_code() lookups
-    const content = await fs.readFile(file_path, "utf-8");
+    const content = existing_content ?? await fs.readFile(file_path, "utf-8");
     project.restore_file(file_path, content, cached_index);
     return true;
   } catch (error) {
