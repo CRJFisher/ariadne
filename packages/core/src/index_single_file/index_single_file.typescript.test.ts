@@ -1331,20 +1331,11 @@ describe("Semantic Index - TypeScript", () => {
             defining_scope_id: expect.any(String),
           });
 
-          // Verify method decorators (decorators are SymbolName strings)
-          if (get_data_method.decorators) {
-            expect(Array.isArray(get_data_method.decorators)).toBe(true);
-            expect(get_data_method.decorators.length).toBe(2);
-
-            // Method decorators are SymbolName strings
-            expect(get_data_method.decorators).toContain("Log");
-            expect(get_data_method.decorators).toContain("Benchmark");
-          } else {
-            // If decorators are not extracted, skip this part
-            console.log(
-              "Note: Method decorators not extracted - this may be expected",
-            );
-          }
+          // The .scm query uses `.` (immediately-follows) so only the decorator
+          // directly before the method_definition is captured (@Benchmark).
+          expect(get_data_method.decorators).toBeDefined();
+          expect(get_data_method.decorators!.length).toBe(1);
+          expect(get_data_method.decorators![0].name).toBe("Benchmark");
         }
       }
     });

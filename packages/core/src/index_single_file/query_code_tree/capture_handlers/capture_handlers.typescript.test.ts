@@ -172,7 +172,7 @@ describe("TypeScript Builder Configuration", () => {
     });
 
     it("should process interface with extends", () => {
-      const code = `interface IAdmin extends IUser, ISerializable {}`;
+      const code = "interface IAdmin extends IUser, ISerializable {}";
       const index = build_index_from_code(code);
       const iface = Array.from(index.interfaces.values()).find(i => i.name === "IAdmin")!;
       expect(iface.kind).toBe("interface");
@@ -329,7 +329,7 @@ describe("TypeScript Builder Configuration", () => {
     });
 
     it("should process exported enum via integration", () => {
-      const code = `export enum LogLevel { Debug, Info, Warn, Error }`;
+      const code = "export enum LogLevel { Debug, Info, Warn, Error }";
       const index = build_index_from_code(code);
       const enum_def = Array.from(index.enums.values()).find(e => e.name === "LogLevel")!;
       expect(enum_def.is_exported).toBe(true);
@@ -408,7 +408,7 @@ describe("TypeScript Builder Configuration", () => {
     });
 
     it("should process exported class via integration", () => {
-      const code = `export class Service { run() {} }`;
+      const code = "export class Service { run() {} }";
       const index = build_index_from_code(code);
       const cls = Array.from(index.classes.values()).find(c => c.name === "Service")!;
       expect(cls.is_exported).toBe(true);
@@ -488,17 +488,16 @@ class MyComponent {
       const decorator_id_node = find_node_by_type(decorator_node, "identifier")!;
       const decorator_capture = create_raw_capture("decorator.class", decorator_id_node, "Component");
 
-      // Invoke the handler - it calls find_decorator_target which needs to
-      // walk from the identifier to the class_declaration
+      // Invoke the handler - it calls find_decorator_target which walks
+      // from the identifier up to the decorator node, then to class_declaration
       TYPESCRIPT_HANDLERS["decorator.class"](decorator_capture, builder, mock_context);
 
-      // The result depends on find_decorator_target being able to locate the class.
-      // Currently find_decorator_target checks capture.node.parent which is the
-      // decorator node, not class_declaration, so the target may not be found.
       const result = builder.build();
       const cls = Array.from(result.classes.values())[0];
       expect(cls.kind).toBe("class");
       expect(cls.name).toBe("MyComponent");
+      expect(cls.decorators.length).toBe(1);
+      expect(cls.decorators[0].name).toBe("Component");
     });
   });
 
@@ -549,7 +548,7 @@ class MyComponent {
 
   describe("Function handling via integration", () => {
     it("should process named function declarations", () => {
-      const code = `function greet(name: string): string { return "Hello " + name; }`;
+      const code = "function greet(name: string): string { return \"Hello \" + name; }";
       const index = build_index_from_code(code);
       const fn = Array.from(index.functions.values()).find(f => f.name === "greet")!;
       expect(fn.kind).toBe("function");
@@ -562,7 +561,7 @@ class MyComponent {
     });
 
     it("should process exported functions", () => {
-      const code = `export function process(): void {}`;
+      const code = "export function process(): void {}";
       const index = build_index_from_code(code);
       const fn = Array.from(index.functions.values()).find(f => f.name === "process")!;
       expect(fn.is_exported).toBe(true);
@@ -570,7 +569,7 @@ class MyComponent {
     });
 
     it("should process arrow function assigned to variable", () => {
-      const code = `const add = (a: number, b: number): number => a + b;`;
+      const code = "const add = (a: number, b: number): number => a + b;";
       const index = build_index_from_code(code);
       const fn = Array.from(index.functions.values()).find(f => f.name === "add")!;
       expect(fn.kind).toBe("function");
@@ -583,7 +582,7 @@ class MyComponent {
 
   describe("Anonymous function handling via integration", () => {
     it("should process anonymous arrow functions as callbacks", () => {
-      const code = `function run() { items.forEach((item) => { console.log(item); }); }`;
+      const code = "function run() { items.forEach((item) => { console.log(item); }); }";
       const index = build_index_from_code(code);
       const anon_fns = Array.from(index.functions.values()).filter(f => f.name === "<anonymous>");
       expect(anon_fns.length).toBe(1);
@@ -593,7 +592,7 @@ class MyComponent {
 
   describe("Parameter handling via integration", () => {
     it("should process required parameters", () => {
-      const code = `function greet(name: string, count: number): void {}`;
+      const code = "function greet(name: string, count: number): void {}";
       const index = build_index_from_code(code);
       const fn = Array.from(index.functions.values()).find(f => f.name === "greet")!;
       expect(fn.signature.parameters.length).toBe(2);
@@ -604,7 +603,7 @@ class MyComponent {
     });
 
     it("should process optional parameters", () => {
-      const code = `function greet(name: string, suffix?: string): void {}`;
+      const code = "function greet(name: string, suffix?: string): void {}";
       const index = build_index_from_code(code);
       const fn = Array.from(index.functions.values()).find(f => f.name === "greet")!;
       expect(fn.signature.parameters.length).toBe(2);
@@ -613,7 +612,7 @@ class MyComponent {
     });
 
     it("should process rest parameters", () => {
-      const code = `function sum(...values: number[]): number { return values.reduce((a, b) => a + b, 0); }`;
+      const code = "function sum(...values: number[]): number { return values.reduce((a, b) => a + b, 0); }";
       const index = build_index_from_code(code);
       const fn = Array.from(index.functions.values()).find(f => f.name === "sum")!;
       expect(fn.signature.parameters.length).toBe(1);
@@ -622,13 +621,13 @@ class MyComponent {
     });
 
     it("should process parameters with default values", () => {
-      const code = `function greet(name: string = "World"): void {}`;
+      const code = "function greet(name: string = \"World\"): void {}";
       const index = build_index_from_code(code);
       const fn = Array.from(index.functions.values()).find(f => f.name === "greet")!;
       expect(fn.signature.parameters.length).toBe(1);
       expect(fn.signature.parameters[0].name).toBe("name");
       expect(fn.signature.parameters[0].type).toBe("string");
-      expect(fn.signature.parameters[0].default_value).toBe('"World"');
+      expect(fn.signature.parameters[0].default_value).toBe("\"World\"");
     });
   });
 

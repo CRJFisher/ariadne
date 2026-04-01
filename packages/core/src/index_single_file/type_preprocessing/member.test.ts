@@ -188,8 +188,7 @@ describe("Member Extraction - JavaScript", () => {
     expect(animal.extends).toEqual([]);
 
     expect(Array.from(dog.methods.keys())).toEqual(["bark"] as SymbolName[]);
-    // JS does not currently extract 'extends' for classes
-    expect(dog.extends).toEqual([]);
+    expect(dog.extends).toEqual(["Animal"] as SymbolName[]);
   });
 });
 
