@@ -104,20 +104,12 @@ describe("Python Metadata Extractors", () => {
       const tree = parser.parse(code);
       const typed_default_param = tree.rootNode.descendantsOfType("typed_default_parameter")[0];
 
-      if (typed_default_param) {
-        const result = PYTHON_METADATA_EXTRACTORS.extract_type_from_annotation(typed_default_param, TEST_FILE);
+      expect(typed_default_param).toBeDefined();
+      const result = PYTHON_METADATA_EXTRACTORS.extract_type_from_annotation(typed_default_param!, TEST_FILE);
 
-        expect(result).toBeDefined();
-        expect(result?.type_name).toBe("int");
-        expect(result?.certainty).toBe("declared");
-      } else {
-        // Some versions of tree-sitter-python might use typed_parameter even with defaults
-        const typed_param = tree.rootNode.descendantsOfType("typed_parameter")[0];
-        const result = PYTHON_METADATA_EXTRACTORS.extract_type_from_annotation(typed_param, TEST_FILE);
-
-        expect(result).toBeDefined();
-        expect(result?.type_name).toBe("int");
-      }
+      expect(result).toBeDefined();
+      expect(result!.type_name).toBe("int");
+      expect(result!.certainty).toBe("declared");
     });
 
     it("should detect nullable with pipe None syntax", () => {
@@ -128,7 +120,7 @@ describe("Python Metadata Extractors", () => {
       const result = PYTHON_METADATA_EXTRACTORS.extract_type_from_annotation(typed_param, TEST_FILE);
 
       expect(result).toBeDefined();
-      expect(result?.type_name).toContain("None");
+      expect(result!.type_name).toBe("str | None");
       expect(result?.is_nullable).toBe(true);
     });
 
@@ -173,12 +165,11 @@ describe("Python Metadata Extractors", () => {
       const tree = parser.parse(code);
       const type_node = tree.rootNode.descendantsOfType("type")[0];
 
-      if (type_node) {
-        const result = PYTHON_METADATA_EXTRACTORS.extract_type_from_annotation(type_node, TEST_FILE);
+      expect(type_node).toBeDefined();
+      const result = PYTHON_METADATA_EXTRACTORS.extract_type_from_annotation(type_node!, TEST_FILE);
 
-        expect(result).toBeDefined();
-        expect(result?.type_name).toBe("int");
-      }
+      expect(result).toBeDefined();
+      expect(result!.type_name).toBe("int");
     });
   });
 

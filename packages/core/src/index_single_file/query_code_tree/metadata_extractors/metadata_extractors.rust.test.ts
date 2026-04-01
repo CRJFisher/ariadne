@@ -1043,9 +1043,8 @@ describe("Rust Metadata Extractors", () => {
 
       const result = RUST_METADATA_EXTRACTORS.extract_type_arguments(generic_type);
 
-      // The actual tree-sitter parser should handle this correctly
       expect(result).toBeDefined();
-      expect(result?.length).toBe(2);
+      expect(result!.length).toBe(2);
     });
   });
 

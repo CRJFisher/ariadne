@@ -77,7 +77,7 @@ describe("Project Integration - Rust", () => {
         (r): r is MethodCallReference | SelfReferenceCall =>
           r.kind === "method_call" || r.kind === "self_reference_call"
       );
-      expect(method_calls.length).toBeGreaterThan(0);
+      expect(method_calls.length).toBe(8);
 
       // Verify at least one method call resolves
       const first_method_call = method_calls[0];
@@ -119,7 +119,7 @@ describe("Project Integration - Rust", () => {
       );
       // helper() is called in: main, block in main, outer_function, inner_function,
       // deeper_function, closure in outer_function, complex_nesting (4 times)
-      expect(helper_calls.length).toBeGreaterThan(5);
+      expect(helper_calls.length).toBe(10);
 
       // Every helper() call should resolve to the same definition
       const helper_def = functions.find((f) => f.name === ("helper" as SymbolName));
@@ -140,13 +140,13 @@ describe("Project Integration - Rust", () => {
 
       // variable_shadowing.rs has many variables across scopes
       const variables = Array.from(index!.variables.values());
-      expect(variables.length).toBeGreaterThan(5);
+      expect(variables.length).toBe(48);
 
       // Verify variable references exist (read or write)
       const var_refs = index!.references.filter(
         (r): r is VariableReference => r.kind === "variable_reference"
       );
-      expect(var_refs.length).toBeGreaterThan(5);
+      expect(var_refs.length).toBe(222);
 
       // Verify that function calls still resolve despite variable shadowing
       // outer_helper() should resolve even when 'helper' var shadows the name
@@ -155,7 +155,7 @@ describe("Project Integration - Rust", () => {
           r.kind === "function_call" &&
           r.name === ("outer_helper" as SymbolName)
       );
-      expect(outer_helper_calls.length).toBeGreaterThan(0);
+      expect(outer_helper_calls.length).toBe(6);
 
       const outer_helper_def = Array.from(index!.functions.values()).find(
         (f) => f.name === ("outer_helper" as SymbolName)
@@ -237,10 +237,15 @@ describe("Project Integration - Rust", () => {
       const call_names = calls.map((c) => c.name).sort();
       // main.rs main() calls: helper, process_data, calculate_total, validate_email
       // main.rs process_user_data() calls: process_data, calculate_total, validate_email
-      expect(call_names).toContain("helper" as SymbolName);
-      expect(call_names).toContain("process_data" as SymbolName);
-      expect(call_names).toContain("calculate_total" as SymbolName);
-      expect(call_names).toContain("validate_email" as SymbolName);
+      expect(call_names).toEqual([
+        "calculate_total",
+        "calculate_total",
+        "helper",
+        "process_data",
+        "process_data",
+        "validate_email",
+        "validate_email",
+      ] as SymbolName[]);
 
       // Verify all 4 imported function calls resolve to utils.rs definitions
       const imported_fn_names = ["helper", "process_data", "calculate_total", "validate_email"] as SymbolName[];
@@ -268,15 +273,17 @@ describe("Project Integration - Rust", () => {
 
       // Should have at least file scope + mod utils scope
       const scopes = Array.from(index!.scopes.values());
-      expect(scopes.length).toBeGreaterThanOrEqual(2);
+      expect(scopes.length).toBe(6);
 
       // inline_modules.rs defines: mod utils { helper, process_data }, main, test_inline_modules
       const functions = Array.from(index!.functions.values());
       const function_names = functions.map((f) => f.name).sort();
-      expect(function_names).toContain("helper" as SymbolName);
-      expect(function_names).toContain("process_data" as SymbolName);
-      expect(function_names).toContain("main" as SymbolName);
-      expect(function_names).toContain("test_inline_modules" as SymbolName);
+      expect(function_names).toEqual([
+        "helper",
+        "main",
+        "process_data",
+        "test_inline_modules",
+      ] as SymbolName[]);
 
       // Verify imports from inline module
       const imports = Array.from(index!.imported_symbols.values());
@@ -316,10 +323,20 @@ describe("Project Integration - Rust", () => {
           r.kind === "method_call" || r.kind === "self_reference_call"
       );
       const method_call_names = method_calls.map((c) => c.name).sort();
-      expect(method_call_names).toContain("get_name" as SymbolName);
-      expect(method_call_names).toContain("get_email" as SymbolName);
-      expect(method_call_names).toContain("is_active" as SymbolName);
-      expect(method_call_names).toContain("format_info" as SymbolName);
+      expect(method_call_names).toEqual([
+        "activate",
+        "activate",
+        "add_user",
+        "clone",
+        "deactivate",
+        "format_info",
+        "get_email",
+        "get_name",
+        "get_name",
+        "get_user_count",
+        "is_active",
+        "update_name",
+      ] as SymbolName[]);
     });
 
     it("should handle multiple structs from the same module", async () => {
@@ -354,7 +371,7 @@ describe("Project Integration - Rust", () => {
           (r.name === "User" || r.name === "UserManager")
       );
       // main() and create_test_user() both call User::new() and main() also calls UserManager::new()
-      expect(new_calls.length).toBeGreaterThanOrEqual(2);
+      expect(new_calls.length).toBe(3);
     });
   });
 
@@ -392,7 +409,7 @@ describe("Project Integration - Rust", () => {
           r.kind === "function_call" &&
           r.name === ("helper" as SymbolName)
       );
-      expect(helper_calls.length).toBeGreaterThanOrEqual(2);
+      expect(helper_calls.length).toBe(2);
 
       for (const call of helper_calls) {
         const resolved = project.resolutions.resolve(call.scope_id, call.name);
@@ -435,10 +452,16 @@ describe("Project Integration - Rust", () => {
           r.kind === "method_call" || r.kind === "self_reference_call"
       );
       const method_names = method_calls.map((c) => c.name).sort();
-      expect(method_names).toContain("get_name" as SymbolName);
-      expect(method_names).toContain("get_price" as SymbolName);
-      expect(method_names).toContain("apply_discount" as SymbolName);
-      expect(method_names).toContain("get_info" as SymbolName);
+      expect(method_names).toEqual([
+        "apply_discount",
+        "apply_discount",
+        "get_info",
+        "get_name",
+        "get_name",
+        "get_price",
+        "get_price",
+        "mark_out_of_stock",
+      ] as SymbolName[]);
 
       // Verify Product struct has all impl methods
       const product_struct = Array.from(index!.classes.values()).find(
@@ -900,9 +923,8 @@ fn main() {
       expect(consumer_index).toBeDefined();
 
       const imports = Array.from(consumer_index!.imported_symbols.values());
-      const import_names = imports.map((i) => i.name);
-      expect(import_names).toContain("add" as SymbolName);
-      expect(import_names).toContain("multiply" as SymbolName);
+      const import_names = imports.map((i) => i.name).sort();
+      expect(import_names).toEqual(["add", "multiply"] as SymbolName[]);
 
       // Verify add() call resolves
       const add_call = consumer_index!.references.find(
