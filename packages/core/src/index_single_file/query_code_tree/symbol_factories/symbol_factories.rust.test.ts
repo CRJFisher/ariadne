@@ -687,7 +687,7 @@ describe("extract_parameter_type", () => {
 // ============================================================================
 
 describe("is_self_parameter", () => {
-  it("returns true for self_parameter node", () => {
+  it("returns true for &self parameter", () => {
     const code = `
 impl Foo {
     fn method(&self) {}
@@ -695,9 +695,29 @@ impl Foo {
     const root = parse_rust(code);
     const self_param = find_node_by_type(root, "self_parameter")!;
     expect(self_param).not.toBeNull();
-    // is_self_parameter checks for .childForFieldName("pattern")
-    // self_parameter nodes have a different structure, but the function
-    // checks the pattern field, so we test it on regular parameters too
+    expect(is_self_parameter(self_param)).toBe(true);
+  });
+
+  it("returns true for owned self parameter", () => {
+    const code = `
+impl Foo {
+    fn consume(self) {}
+}`;
+    const root = parse_rust(code);
+    const self_param = find_node_by_type(root, "self_parameter")!;
+    expect(self_param).not.toBeNull();
+    expect(is_self_parameter(self_param)).toBe(true);
+  });
+
+  it("returns true for &mut self parameter", () => {
+    const code = `
+impl Foo {
+    fn mutate(&mut self) {}
+}`;
+    const root = parse_rust(code);
+    const self_param = find_node_by_type(root, "self_parameter")!;
+    expect(self_param).not.toBeNull();
+    expect(is_self_parameter(self_param)).toBe(true);
   });
 
   it("returns false for regular parameter", () => {

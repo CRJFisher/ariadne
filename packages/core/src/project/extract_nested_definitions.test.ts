@@ -93,10 +93,10 @@ describe("extract_all_parameters", () => {
 
     it("should preserve default values", () => {
       const file = "/test/file.ts" as FilePath;
-      project.update_file(file, 'function withDefaults(x: number = 42, y: string = "hello"): void {}');
+      project.update_file(file, "function withDefaults(x: number = 42, y: string = \"hello\"): void {}");
       const params = extract_all_parameters(project.get_index_single_file(file)!);
       expect(params.find((p) => p.name === "x")!.default_value).toBe("42");
-      expect(params.find((p) => p.name === "y")!.default_value).toBe('"hello"');
+      expect(params.find((p) => p.name === "y")!.default_value).toBe("\"hello\"");
     });
 
     it("should set valid symbol_id and location on each parameter", () => {
@@ -170,10 +170,10 @@ describe("extract_all_parameters", () => {
 
     it("should preserve default values on Python parameters", () => {
       const file = "/test/file.py" as FilePath;
-      project.update_file(file, 'def with_defaults(x: int = 42, y: str = "hello"):\n    pass');
+      project.update_file(file, "def with_defaults(x: int = 42, y: str = \"hello\"):\n    pass");
       const params = extract_all_parameters(project.get_index_single_file(file)!);
       expect(params.find((p) => p.name === "x")!.default_value).toBe("42");
-      expect(params.find((p) => p.name === "y")!.default_value).toBe('"hello"');
+      expect(params.find((p) => p.name === "y")!.default_value).toBe("\"hello\"");
     });
 
     it("should set valid symbol_id and location on Python parameters", () => {
@@ -183,6 +183,14 @@ describe("extract_all_parameters", () => {
       expect(params.length).toBe(1);
       expect(params[0]!.symbol_id.length).toBeGreaterThan(0);
       expect(params[0]!.location.start_line).toBeGreaterThanOrEqual(0);
+    });
+
+    it("should extract parameters from Protocol method", () => {
+      const file = "/test/file.py" as FilePath;
+      project.update_file(file, "from typing import Protocol\n\nclass Drawable(Protocol):\n    def draw(self, canvas: str, color: str) -> None:\n        ...");
+      const params = extract_all_parameters(project.get_index_single_file(file)!);
+      expect(params.length).toBe(3);
+      expect(params.map((p) => p.name)).toEqual(["self", "canvas", "color"]);
     });
   });
 
@@ -213,10 +221,10 @@ describe("extract_all_parameters", () => {
 
     it("should extract default value parameters in JavaScript", () => {
       const file = "/test/file.js" as FilePath;
-      project.update_file(file, 'function withDefaults(x = 42, y = "hello") {}');
+      project.update_file(file, "function withDefaults(x = 42, y = \"hello\") {}");
       const params = extract_all_parameters(project.get_index_single_file(file)!);
       expect(params.find((p) => p.name === "x")!.default_value).toBe("42");
-      expect(params.find((p) => p.name === "y")!.default_value).toBe('"hello"');
+      expect(params.find((p) => p.name === "y")!.default_value).toBe("\"hello\"");
     });
 
     it("should set valid symbol_id and location on JavaScript parameters", () => {
@@ -232,7 +240,7 @@ describe("extract_all_parameters", () => {
   describe("Rust", () => {
     it("should extract parameters from functions", () => {
       const file = "/test/file.rs" as FilePath;
-      project.update_file(file, 'fn greet(name: &str, age: u32) { println!("{} {}", name, age); }');
+      project.update_file(file, "fn greet(name: &str, age: u32) { println!(\"{} {}\", name, age); }");
       const params = extract_all_parameters(project.get_index_single_file(file)!);
       expect(params.length).toBe(2);
       expect(params.map((p) => p.name)).toEqual(["name", "age"]);
@@ -289,6 +297,25 @@ describe("extract_all_parameters", () => {
       expect(params.length).toBe(1);
       expect(params[0]!.symbol_id.length).toBeGreaterThan(0);
       expect(params[0]!.location.start_line).toBeGreaterThanOrEqual(0);
+    });
+
+    it("should extract parameters from generic function", () => {
+      const file = "/test/file.rs" as FilePath;
+      project.update_file(file, "fn process<T: Display>(item: T, count: usize) -> T { item }");
+      const params = extract_all_parameters(project.get_index_single_file(file)!);
+      expect(params.length).toBe(2);
+      expect(params.map((p) => p.name)).toEqual(["item", "count"]);
+      expect(params.find((p) => p.name === "item")!.type).toBe("T");
+      expect(params.find((p) => p.name === "count")!.type).toBe("usize");
+    });
+
+    it("should not extract pattern destructuring parameters", () => {
+      const file = "/test/file.rs" as FilePath;
+      project.update_file(file, "fn swap((a, b): (i32, i32)) -> (i32, i32) { (b, a) }");
+      const params = extract_all_parameters(project.get_index_single_file(file)!);
+      // Rust pattern destructuring parameters (e.g. (a, b): (i32, i32)) are not
+      // extracted as named parameters — the tuple pattern has no single name node
+      expect(params.length).toBe(0);
     });
   });
 });

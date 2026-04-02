@@ -646,7 +646,7 @@ describe("JavaScript Builder Configuration", () => {
       });
 
       it("should process constructor definitions in classes", () => {
-        const code = `class MyClass { constructor(x) {} }`;
+        const code = "class MyClass { constructor(x) {} }";
         const context = create_test_context();
         const builder = new DefinitionBuilder(context);
 
@@ -691,7 +691,7 @@ describe("JavaScript Builder Configuration", () => {
       });
 
       it("should process anonymous function definitions", () => {
-        const code = `items.forEach(function(item) { process(item); });`;
+        const code = "items.forEach(function(item) { process(item); });";
         const context = create_test_context();
         const builder = new DefinitionBuilder(context);
 
@@ -718,7 +718,7 @@ describe("JavaScript Builder Configuration", () => {
       });
 
       it("should process anonymous arrow functions as callbacks", () => {
-        const code = `items.map((item) => item.name);`;
+        const code = "items.map((item) => item.name);";
         const context = create_test_context();
         const builder = new DefinitionBuilder(context);
 
@@ -743,7 +743,7 @@ describe("JavaScript Builder Configuration", () => {
       });
 
       it("should process named import statements", () => {
-        const code = `import { useState } from 'react';`;
+        const code = "import { useState } from 'react';";
         const context = create_test_context();
         const builder = new DefinitionBuilder(context);
 
@@ -772,7 +772,7 @@ describe("JavaScript Builder Configuration", () => {
       });
 
       it("should process namespace import statements", () => {
-        const code = `import * as React from 'react';`;
+        const code = "import * as React from 'react';";
         const context = create_test_context();
         const builder = new DefinitionBuilder(context);
 
@@ -804,7 +804,7 @@ describe("JavaScript Builder Configuration", () => {
       });
 
       it("should process CommonJS require with destructuring", () => {
-        const code = `const { readFile } = require('fs');`;
+        const code = "const { readFile } = require('fs');";
         const context = create_test_context();
         const builder = new DefinitionBuilder(context);
 
@@ -834,7 +834,7 @@ describe("JavaScript Builder Configuration", () => {
       });
 
       it("should process simple CommonJS require", () => {
-        const code = `const fs = require('fs');`;
+        const code = "const fs = require('fs');";
         const context = create_test_context();
         const builder = new DefinitionBuilder(context);
 
@@ -862,7 +862,7 @@ describe("JavaScript Builder Configuration", () => {
       });
 
       it("should process definition.import (general import handler)", () => {
-        const code = `import { helper } from './utils';`;
+        const code = "import { helper } from './utils';";
         const context = create_test_context();
         const builder = new DefinitionBuilder(context);
 
@@ -921,7 +921,7 @@ describe("JavaScript Builder Configuration", () => {
 
     describe("Field Coverage", () => {
       it("should populate all required Definition fields for exported class", () => {
-        const code = `export class MyClass {}`;
+        const code = "export class MyClass {}";
 
         const context = create_test_context();
         const builder = new DefinitionBuilder(context);
@@ -2049,26 +2049,9 @@ export const NESTED = {
       expect(settings_prop.type).toBe("AppSettings");
     });
 
-    it.skip("should extract type from JSDoc on constructor assignment (not yet implemented)", async () => {
-      // Constructor assignments require additional infrastructure to track as properties
-      // This is a known limitation - JSDoc types on constructor assignments aren't extracted yet
-      const code = `
-        class Project {
-          constructor() {
-            /** @type {DefinitionRegistry} */
-            this.definitions = new DefinitionRegistry();
-          }
-        }
-      `;
-
-      const index = await build_index_from_code(code);
-      const classes = Array.from(index.classes.values());
-      expect(classes.length).toBe(1);
-
-      const project_class = classes[0];
-      const definitions_prop = project_class.properties.find(p => p.name === "definitions");
-      expect(definitions_prop!.type).toBe("DefinitionRegistry");
-    });
+    // JSDoc type extraction from constructor assignments (e.g. `this.definitions = ...`)
+    // is not yet implemented. Constructor assignments require additional infrastructure
+    // to track as class properties. Tracked in TASK-199.22.
 
     it("should extract array type annotations", async () => {
       const code = `
