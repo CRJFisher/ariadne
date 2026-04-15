@@ -33,8 +33,7 @@ index_single_file/
 │   ├── boundary_extractor.ts     # Dispatcher to language extractors
 │   └── extractors/               # Language-specific boundary extraction
 ├── definitions/                  # PASS 3: definition builder
-├── references/                   # PASS 4: reference builder
-└── type_preprocessing/           # Type information extraction
+└── references/                   # PASS 4: reference builder
 ```
 
 ## Key Types

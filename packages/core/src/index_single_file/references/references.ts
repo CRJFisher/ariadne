@@ -217,9 +217,13 @@ function process_method_reference(
 
     // Regular method call with explicit receiver
     // Extract optional chaining for method calls
-    const optional_chaining = extractors
+    const is_optional_chain = extractors
       ? extractors.extract_is_optional_chain(capture.node)
       : false;
+
+    // Extract potential constructor target for Python namespace class instantiation
+    // (e.g., user = models.User(name) — user is the potential_construct_target)
+    const potential_construct_target = extractors?.extract_construct_target(capture.node, file_path);
 
     return create_method_call_reference(
       method_name,
@@ -227,7 +231,8 @@ function process_method_reference(
       scope_id,
       receiver_info.receiver_location,
       receiver_info.property_chain,
-      optional_chaining
+      is_optional_chain,
+      potential_construct_target
     );
   }
 
@@ -338,18 +343,29 @@ export class ReferenceBuilder {
       }
     }
 
-    // Fallback for languages without extractors or when extractor returns undefined
-    if (reference_name === (capture.text as SymbolName) && capture.node.type === "call_expression") {
-      // For regular function calls, get the function identifier
-      const function_node = capture.node.childForFieldName("function");
-      if (function_node && function_node.type === "identifier") {
-        reference_name = function_node.text as SymbolName;
-      }
-    } else if (reference_name === (capture.text as SymbolName) && capture.node.type === "new_expression") {
-      // For constructor calls, get the constructor identifier
-      const constructor_node = capture.node.childForFieldName("constructor");
-      if (constructor_node && constructor_node.type === "identifier") {
-        reference_name = constructor_node.text as SymbolName;
+    // Fallback name extraction when extractor didn't refine the name
+    const name_not_yet_refined = reference_name === (capture.text as SymbolName);
+    if (name_not_yet_refined) {
+      switch (capture.node.type) {
+        case "call_expression": {
+          // Regular function call: extract the function identifier
+          const function_node = capture.node.childForFieldName("function");
+          if (function_node && function_node.type === "identifier") {
+            reference_name = function_node.text as SymbolName;
+          }
+          break;
+        }
+        case "new_expression": {
+          // Direct constructor: extract the constructor identifier
+          const constructor_node = capture.node.childForFieldName("constructor");
+          if (constructor_node && constructor_node.type === "identifier") {
+            reference_name = constructor_node.text as SymbolName;
+          }
+          break;
+        }
+        // member_expression (namespace-qualified constructor: new models.User(name))
+        // is handled inside the CONSTRUCTOR_CALL case below, where both name and
+        // property_chain are extracted together from the same node.
       }
     }
 
@@ -361,9 +377,7 @@ export class ReferenceBuilder {
         // For Python: extract potential constructor target (if call is in assignment context)
         // This enables call resolution to convert class instantiation calls to
         // ConstructorCallReference with proper construct_target
-        const potential_construct_target = this.extractors
-          ? this.extractors.extract_construct_target(capture.node, this.file_path)
-          : undefined;
+        const potential_construct_target = this.extractors?.extract_construct_target(capture.node, this.file_path);
 
         reference = create_function_call_reference(
           reference_name,
@@ -375,17 +389,26 @@ export class ReferenceBuilder {
       }
 
       case ReferenceKind.CONSTRUCTOR_CALL: {
-        const construct_target = this.extractors
-          ? this.extractors.extract_construct_target(capture.node, this.file_path)
-          : undefined;
+        const construct_target = this.extractors?.extract_construct_target(capture.node, this.file_path);
 
-        // Create constructor call with optional target
-        // Target is undefined for standalone calls like MyClass() with no assignment
+        // Namespace-qualified constructor: e.g., new models.User(name)
+        // Extract both name and property_chain from the member_expression node.
+        let property_chain: readonly SymbolName[] | undefined;
+        if (capture.node.type === "member_expression") {
+          const namespace_node = capture.node.childForFieldName("object");
+          const class_node = capture.node.childForFieldName("property");
+          if (namespace_node && class_node) {
+            reference_name = class_node.text as SymbolName;
+            property_chain = [namespace_node.text as SymbolName, class_node.text as SymbolName];
+          }
+        }
+
         reference = create_constructor_call_reference(
           reference_name,
           location,
           scope_id,
-          construct_target
+          construct_target,
+          property_chain
         );
         break;
       }

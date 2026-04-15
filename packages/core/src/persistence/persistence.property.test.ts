@@ -7,7 +7,7 @@ import {
   deserialize_semantic_index,
 } from "./serialize_index";
 import { build_index_single_file } from "../index_single_file/index_single_file";
-import type { ParsedFile } from "../index_single_file/file_utils";
+import type { ParsedFile } from "../index_single_file/parsed_file";
 import Parser from "tree-sitter";
 import TypeScriptParser from "tree-sitter-typescript";
 

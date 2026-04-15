@@ -146,13 +146,16 @@ export async function load_project(
   }
 
   // Git-accelerated change detection
+  // Query git state whenever storage is provided (even on cold load) so the
+  // manifest written at the end includes git_tree_hash and per-file blob hashes.
   let git_state: GitFileState | null = null;
   let git_tree_unchanged = false;
-  if (storage && manifest) {
+  if (storage) {
     try {
       if (await is_git_repo(project_path)) {
         git_state = await query_git_file_state(project_path);
         if (
+          manifest &&
           git_state &&
           manifest.git_tree_hash &&
           git_state.tree_hash === manifest.git_tree_hash
@@ -165,10 +168,16 @@ export async function load_project(
     }
   }
 
-  // Seed manifest_entries from existing manifest (preserves entries for files not in this load)
-  const manifest_entries = new Map<FilePath, CacheManifestEntry>(
-    manifest ? manifest.entries : [],
-  );
+  // Build manifest_entries from existing manifest, pruning entries for files no longer on disk
+  const final_files_set = new Set(final_files);
+  const manifest_entries = new Map<FilePath, CacheManifestEntry>();
+  if (manifest) {
+    for (const [fp, entry] of manifest.entries) {
+      if (final_files_set.has(fp)) {
+        manifest_entries.set(fp, entry);
+      }
+    }
+  }
 
   let cache_hits = 0;
   let cache_misses = 0;
@@ -181,21 +190,17 @@ export async function load_project(
       const cached_entry = manifest.entries.get(fp);
 
       if (cached_entry && can_use_cache(fp, cached_entry, git_state, git_tree_unchanged)) {
-        // Try to restore from cache without content hashing
+        // Git fast path — restore from cache without reading file content for hashing
         used_cache = await try_restore_from_cache(
           project,
           fp,
           storage,
         );
-        if (used_cache) {
-          cache_hits++;
-        }
       }
     }
 
     if (!used_cache) {
-      cache_misses++;
-      // Cache miss — read file and full index
+      // Read file content (needed for both content-hash check and full index)
       let content: string;
       try {
         content = await fs.readFile(file_path, "utf-8");
@@ -203,39 +208,58 @@ export async function load_project(
         continue; // Skip unreadable files
       }
 
-      try {
-        project.update_file(fp, content);
-      } catch (error) {
-        console.warn(
-          `[ariadne] Skipping ${file_path}: ${
-            error instanceof Error ? error.message : error
-          }`,
-        );
-        continue;
+      // Content-hash fallback: if git didn't confirm cache validity,
+      // check if content hash matches the cached entry
+      if (storage && manifest && !used_cache) {
+        const cached_entry = manifest.entries.get(fp);
+        if (cached_entry) {
+          const content_hash = compute_content_hash(content);
+          if (content_hash === cached_entry.content_hash) {
+            used_cache = await try_restore_from_cache(project, fp, storage, content);
+          }
+        }
       }
 
-      // Update cache for this file
-      if (storage) {
-        const content_hash = compute_content_hash(content);
-        const entry: CacheManifestEntry = {
-          content_hash,
-          git_blob_hash: git_state?.tracked_hashes.get(file_path),
-        };
-        manifest_entries.set(fp, entry);
-
+      if (used_cache) {
+        cache_hits++;
+      } else {
+        cache_misses++;
         try {
-          const index = project.get_index_single_file(fp);
-          if (index) {
-            await storage.write_index(fp, serialize_semantic_index(index));
-          }
+          project.update_file(fp, content);
         } catch (error) {
           console.warn(
-            `[ariadne:persistence] Failed to save index for ${file_path}: ${
+            `[ariadne] Skipping ${file_path}: ${
               error instanceof Error ? error.message : error
             }`,
           );
+          continue;
+        }
+
+        // Update cache for this file
+        if (storage) {
+          const content_hash = compute_content_hash(content);
+          const entry: CacheManifestEntry = {
+            content_hash,
+            git_blob_hash: git_state?.tracked_hashes.get(file_path),
+          };
+          manifest_entries.set(fp, entry);
+
+          try {
+            const index = project.get_index_single_file(fp);
+            if (index) {
+              await storage.write_index(fp, serialize_semantic_index(index));
+            }
+          } catch (error) {
+            console.warn(
+              `[ariadne:persistence] Failed to save index for ${file_path}: ${
+                error instanceof Error ? error.message : error
+              }`,
+            );
+          }
         }
       }
+    } else {
+      cache_hits++;
     }
   }
 
@@ -315,6 +339,7 @@ async function try_restore_from_cache(
   project: Project,
   file_path: FilePath,
   storage: PersistenceStorage,
+  existing_content?: string,
 ): Promise<boolean> {
   try {
     const raw_index = await storage.read_index(file_path);
@@ -326,7 +351,7 @@ async function try_restore_from_cache(
     const cached_index = deserialize_semantic_index(parsed);
 
     // Still need file content for get_source_code() lookups
-    const content = await fs.readFile(file_path, "utf-8");
+    const content = existing_content ?? await fs.readFile(file_path, "utf-8");
     project.restore_file(file_path, content, cached_index);
     return true;
   } catch (error) {

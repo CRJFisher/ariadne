@@ -28,7 +28,7 @@ import {
 } from "@ariadnejs/types";
 import type { CaptureNode } from "../../index_single_file";
 import type { ProcessingContext } from "../../index_single_file";
-import { node_to_location } from "../../node_utils";
+import { node_to_location } from "../../node_to_location";
 
 // Re-export export analysis functions
 export {

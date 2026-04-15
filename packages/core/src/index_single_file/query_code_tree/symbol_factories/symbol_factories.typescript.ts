@@ -27,7 +27,7 @@ import {
   type_symbol,
 } from "@ariadnejs/types";
 import type { CaptureNode } from "../../index_single_file";
-import { node_to_location } from "../../node_utils";
+import { node_to_location } from "../../node_to_location";
 
 // Re-export detect_function_collection from JavaScript to avoid duplication
 export { detect_function_collection } from "./symbol_factories.javascript";
@@ -719,48 +719,53 @@ export function find_containing_callable(capture: CaptureNode): SymbolId {
 
 /**
  * Find decorator target (class, method, or property being decorated)
+ *
+ * capture.node is the identifier inside the decorator (e.g., "Component" in @Component).
+ * For parameterized decorators like @Component({}), capture.node.parent is call_expression.
+ * This function walks up to the decorator node, then inspects the decorator's parent
+ * to determine the target.
  */
 export function find_decorator_target(
   capture: CaptureNode
 ): SymbolId | undefined {
   const file_path = capture.location.file_path;
 
-  // Check if the decorator is a child of the target (class decorators)
-  const parent = capture.node.parent;
-  if (parent) {
-    // Case 1: Decorator is child of class_declaration or abstract_class_declaration
-    if (
-      parent.type === "class_declaration" ||
-      parent.type === "abstract_class_declaration"
-    ) {
-      const name_node = parent.childForFieldName?.("name");
-      if (name_node) {
-        const location: Location = node_to_location(name_node, file_path);
-        return class_symbol(name_node.text as SymbolName, location);
-      }
-    }
+  // Walk up from the identifier to the decorator node
+  let decorator_node: SyntaxNode | null = capture.node;
+  while (decorator_node && decorator_node.type !== "decorator") {
+    decorator_node = decorator_node.parent;
+  }
+  if (!decorator_node) return undefined;
 
-    // Case 2: Decorator is sibling in class_body (method/property decorators)
+  const parent = decorator_node.parent;
+  if (!parent) return undefined;
+
+  // Case 1: Class decorator — decorator is child of class_declaration
+  if (
+    parent.type === "class_declaration" ||
+    parent.type === "abstract_class_declaration"
+  ) {
+    const name_node = parent.childForFieldName?.("name");
+    if (name_node) {
+      const location: Location = node_to_location(name_node, file_path);
+      return class_symbol(name_node.text as SymbolName, location);
+    }
+  }
+
+  // Case 2: Method decorator — decorator is sibling in class_body
+  if (parent.type === "class_body") {
     const children = parent.children || [];
-    const decorator_index = children.indexOf(capture.node);
+    const decorator_index = children.indexOf(decorator_node);
 
     if (decorator_index >= 0) {
-      // Look for the next non-decorator sibling
       for (let i = decorator_index + 1; i < children.length; i++) {
         const sibling = children[i];
         if (sibling.type !== "decorator") {
-          // Found the target - extract its ID based on type
           if (sibling.type === "method_definition") {
             const name_node = sibling.childForFieldName?.("name");
             if (name_node) {
               const location: Location = node_to_location(name_node, file_path);
               return method_symbol(name_node.text as SymbolName, location);
-            }
-          } else if (sibling.type === "public_field_definition") {
-            const name_node = sibling.childForFieldName?.("name");
-            if (name_node) {
-              const location: Location = node_to_location(name_node, file_path);
-              return property_symbol(name_node.text as SymbolName, location);
             }
           }
           break;
@@ -768,6 +773,16 @@ export function find_decorator_target(
       }
     }
   }
+
+  // Case 3: Property decorator — decorator is child of public_field_definition
+  if (parent.type === "public_field_definition") {
+    const name_node = parent.childForFieldName?.("name");
+    if (name_node) {
+      const location: Location = node_to_location(name_node, file_path);
+      return property_symbol(name_node.text as SymbolName, location);
+    }
+  }
+
   return undefined;
 }
 

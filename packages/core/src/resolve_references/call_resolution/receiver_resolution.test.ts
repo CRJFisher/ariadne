@@ -16,12 +16,13 @@ import {
   resolve_receiver_type,
   find_containing_class_scope,
   type ReceiverExpression,
-  type ResolutionContext,
+  type ReceiverResolutionContext,
 } from "./receiver_resolution";
 import { ScopeRegistry } from "../registries/scope";
 import { DefinitionRegistry } from "../registries/definition";
 import { TypeRegistry } from "../registries/type";
 import { ResolutionRegistry } from "../resolve_references";
+import { ImportGraph } from "../../project/import_graph";
 import { set_test_resolutions } from "../resolve_references.test";
 import type {
   SymbolId,
@@ -192,6 +193,7 @@ describe("extract_receiver", () => {
         scope_id: METHOD_SCOPE_ID,
         location: MOCK_LOCATION,
         receiver_location: MOCK_LOCATION,
+        is_optional_chain: false,
       };
 
       const result = extract_receiver(ref);
@@ -212,6 +214,7 @@ describe("extract_receiver", () => {
         scope_id: METHOD_SCOPE_ID,
         location: MOCK_LOCATION,
         receiver_location: MOCK_LOCATION,
+        is_optional_chain: false,
       };
 
       const result = extract_receiver(ref);
@@ -233,6 +236,7 @@ describe("extract_receiver", () => {
         scope_id: METHOD_SCOPE_ID,
         location: MOCK_LOCATION,
         receiver_location: MOCK_LOCATION,
+        is_optional_chain: false,
       };
 
       const result = extract_receiver(ref);
@@ -253,6 +257,7 @@ describe("extract_receiver", () => {
         scope_id: METHOD_SCOPE_ID,
         location: MOCK_LOCATION,
         receiver_location: MOCK_LOCATION,
+        is_optional_chain: false,
       };
 
       const result = extract_receiver(ref);
@@ -273,6 +278,7 @@ describe("extract_receiver", () => {
         scope_id: METHOD_SCOPE_ID,
         location: MOCK_LOCATION,
         receiver_location: MOCK_LOCATION,
+        is_optional_chain: false,
       };
 
       const result = extract_receiver(ref);
@@ -293,6 +299,7 @@ describe("extract_receiver", () => {
         scope_id: METHOD_SCOPE_ID,
         location: MOCK_LOCATION,
         receiver_location: MOCK_LOCATION,
+        is_optional_chain: false,
       };
 
       const result = extract_receiver(ref);
@@ -314,6 +321,7 @@ describe("extract_receiver", () => {
         scope_id: METHOD_SCOPE_ID,
         location: MOCK_LOCATION,
         receiver_location: MOCK_LOCATION,
+        is_optional_chain: false,
       };
 
       const result = extract_receiver(ref);
@@ -465,7 +473,8 @@ describe("resolve_receiver_type", () => {
   let definitions: DefinitionRegistry;
   let types: TypeRegistry;
   let resolutions: ResolutionRegistry;
-  let context: ResolutionContext;
+  let imports: ImportGraph;
+  let context: ReceiverResolutionContext;
 
   // Helper symbols
   let my_class_id: SymbolId;
@@ -478,7 +487,8 @@ describe("resolve_receiver_type", () => {
     definitions = new DefinitionRegistry();
     types = new TypeRegistry();
     resolutions = new ResolutionRegistry();
-    context = { scopes, definitions, types, resolutions };
+    imports = new ImportGraph();
+    context = { scopes, definitions, types, resolutions, imports };
 
     // Create test symbols
     my_class_id = class_symbol("MyClass", MOCK_LOCATION);

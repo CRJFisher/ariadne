@@ -45,6 +45,7 @@ The capture schema ensures:
 **One capture produces multiple semantic entities:**
 
 `@reference.call` on `call_expression` → Extractor derives:
+
 - Call reference name (via `extract_call_name()`)
 - Receiver location (via `extract_call_receiver()`)
 - Property chain (via `extract_property_chain()`)
@@ -55,11 +56,13 @@ The capture schema ensures:
 ### 3. Positive Validation
 
 **Only explicitly listed captures are valid:**
+
 - Required captures (must exist in every language)
 - Optional captures (language-specific features)
 - Everything else is implicitly invalid
 
 **Example**:
+
 - `@reference.call` → in required list → ✅ valid
 - `@reference.call.full` → NOT in any list → ❌ invalid
 
@@ -74,6 +77,7 @@ All captures follow this pattern:
 ```
 
 **Examples:**
+
 - `@definition.function` - Function definition
 - `@reference.call` - Function/method call
 - `@scope.class` - Class scope
@@ -82,9 +86,11 @@ All captures follow this pattern:
 ### Parts Explained
 
 1. **Category** (required): Maps to `SemanticCategory` enum
+
    - `scope`, `definition`, `reference`, `import`, `export`, `type`, `assignment`, `return`, `decorator`, `modifier`
 
 2. **Entity** (required): Maps to `SemanticEntity` enum
+
    - `module`, `class`, `function`, `method`, `constructor`, `variable`, `parameter`, `call`, etc.
 
 3. **Qualifier** (optional): Additional specificity
@@ -103,12 +109,14 @@ All captures follow this pattern:
 Every language MUST implement these captures (from common analysis):
 
 ### Scopes
+
 - `@scope.module` - File/module scope
 - `@scope.function` - Function scope
 - `@scope.class` - Class scope
 - `@scope.block` - Block scope
 
 ### Definitions
+
 - `@definition.function` - Function definitions
 - `@definition.class` - Class definitions
 - `@definition.method` - Method definitions
@@ -118,6 +126,7 @@ Every language MUST implement these captures (from common analysis):
 - `@definition.field` - Class fields/properties
 
 ### References
+
 - `@reference.call` - Function/method calls (**complete node only**)
 - `@reference.variable` - Variable references
 - `@reference.variable.base` - Base object in chains
@@ -128,13 +137,16 @@ Every language MUST implement these captures (from common analysis):
 - `@reference.type_reference` - Type references
 
 ### Assignments/Returns
+
 - `@assignment.variable` - Variable assignment
 - `@return.variable` - Return statement
 
 ### Exports
+
 - `@export.variable` - Exported declarations
 
 ### Modifiers
+
 - `@modifier.visibility` - Visibility modifiers
 
 ---
@@ -144,35 +156,54 @@ Every language MUST implement these captures (from common analysis):
 Language-specific features explicitly allowed:
 
 ### TypeScript/JavaScript
+
 - `@definition.interface` - Interface definitions
 - `@definition.type_alias` - Type aliases
 - `@definition.enum` - Enum definitions
-- `@definition.enum_member` - Enum members
+- `@definition.enum.member` - Enum members
 - `@definition.namespace` - Namespaces
 - `@definition.type_parameter` - Generic type parameters
 - `@definition.property` - Class properties
 - `@reference.call.generic` - Generic calls
 - `@reference.constructor` - Constructor calls
-- `@reference.constructor.generic` - Generic constructor calls
+- `@reference.constructor.generic` - Generic constructor calls (involves type parameters)
+- `@reference.constructor.qualified` - Namespace-qualified constructor calls (`new ns.Foo()`)
+- `@assignment.constructor.qualified` - Namespace-qualified constructor with assignment target
 - `@reference.property` - Property access
 - `@reference.property.optional` - Optional chaining
 - `@reference.member_access` - Member access patterns
 - `@reference.call.jsx` - JSX elements
 
 ### Python
+
 - `@decorator.function` - Function decorators
 - `@decorator.class` - Class decorators
 - `@decorator.method` - Method decorators
 - `@decorator.property` - Property decorators
+- `@reference.constructor` - Class instantiation (function call that is a class)
 
 ### Rust
+
 - `@definition.trait` - Trait definitions
 - `@definition.impl` - Impl blocks
 - `@definition.type_alias` - Type aliases
 - `@definition.enum` - Enums
 - `@scope.trait`, `@scope.impl` - Rust-specific scopes
+- `@reference.constructor.associated` - Associated function constructor (`Type::new()`)
+- `@reference.constructor.struct` - Struct literal constructor (`Foo { field: val }`)
+
+### Constructor Qualifier Taxonomy
+
+| Qualifier     | Meaning                            | Example                    |
+| ------------- | ---------------------------------- | -------------------------- |
+| _(none)_      | Simple identifier constructor      | `new Foo()`                |
+| `.generic`    | Involves type parameters           | `new Foo<T>()`             |
+| `.qualified`  | Accessed via namespace/member path | `new ns.Foo()`, `ns.Foo()` |
+| `.associated` | Rust `::new()` associated function | `Type::new()`              |
+| `.struct`     | Rust struct literal                | `Foo { field: val }`       |
 
 ### All Languages
+
 - `@scope.closure` - Closure/lambda scopes
 - `@modifier.*` - Various modifiers (static, async, etc.)
 - `@export.*` - Export variants
@@ -194,11 +225,13 @@ npm run validate:captures -- --lang=typescript  # Specific language
 ### Validation Checks
 
 **Errors** (fail CI):
+
 - Capture not in required OR optional lists
 - Invalid naming convention
 - Exceeds max depth (>3 parts)
 
 **Warnings** (visible but don't fail):
+
 - Capture on fragment node (property_identifier instead of call_expression)
 - Duplicate captures on same line
 - Heuristic checks for "complete capture" principle
@@ -283,6 +316,7 @@ When adding support for a new language:
 ### Q: What if my language needs something not in the schema?
 
 **A**: Add it as an optional capture with clear justification:
+
 1. Add pattern to `capture_schema.ts` optional list
 2. Document in this file under language-specific section
 3. Explain why it's needed
@@ -293,6 +327,7 @@ When adding support for a new language:
 **A**: Node types are language-specific (that's expected). Capture names should map to universal semantic concepts.
 
 Examples:
+
 - TypeScript `call_expression` vs Python `call` → both use `@reference.call`
 - TypeScript `member_expression` vs Python `attribute` → both use `@reference.variable` for receiver
 - Rust `field_expression` vs TypeScript `member_expression` → same semantic meaning
@@ -306,13 +341,17 @@ Examples:
 ## Division of Responsibility
 
 ### Queries (.scm files)
+
 **What to capture**: Complete syntactic units
+
 - `call_expression` (not `property_identifier`)
 - `method_definition` (captures name, builder accumulates parameters)
 - One capture per construct
 
 ### Builders/Extractors (TypeScript code)
+
 **What to extract**: Multiple semantic entities from single capture
+
 - Method name from call expression
 - Parameters from method definition node
 - Return types from traversing AST

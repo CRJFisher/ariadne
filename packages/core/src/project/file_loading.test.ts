@@ -9,6 +9,7 @@ import {
   is_supported_file,
   should_ignore_path,
   find_source_files,
+  parse_gitignore,
 } from "./file_loading";
 
 describe("file_loading", () => {
@@ -161,6 +162,126 @@ describe("file_loading", () => {
       const gitignore_patterns = ["logs"];
       // Simple implementation matches if path includes the pattern
       expect(should_ignore_path("src/logs/app.log", gitignore_patterns)).toBe(true);
+    });
+  });
+
+  describe("parse_gitignore", () => {
+    let temp_dir: string;
+
+    beforeEach(async () => {
+      temp_dir = await fs.mkdtemp(path.join(os.tmpdir(), "ariadne-gitignore-test-"));
+    });
+
+    afterEach(async () => {
+      try {
+        await fs.rm(temp_dir, { recursive: true });
+      } catch {
+        // Ignore cleanup errors
+      }
+    });
+
+    it("returns empty array when .gitignore does not exist", async () => {
+      const patterns = await parse_gitignore(temp_dir);
+      expect(patterns).toEqual([]);
+    });
+
+    it("parses standard patterns from .gitignore", async () => {
+      await fs.writeFile(
+        path.join(temp_dir, ".gitignore"),
+        "node_modules\ndist\n*.log\n",
+        "utf-8",
+      );
+      const patterns = await parse_gitignore(temp_dir);
+      expect(patterns).toEqual(["node_modules", "dist", "*.log"]);
+    });
+
+    it("filters out comments and empty lines", async () => {
+      await fs.writeFile(
+        path.join(temp_dir, ".gitignore"),
+        "# Build output\ndist\n\n# Dependencies\nnode_modules\n\n# Logs\n*.log\n",
+        "utf-8",
+      );
+      const patterns = await parse_gitignore(temp_dir);
+      expect(patterns).toEqual(["dist", "node_modules", "*.log"]);
+    });
+
+    it("trims whitespace from patterns", async () => {
+      await fs.writeFile(
+        path.join(temp_dir, ".gitignore"),
+        "  dist  \n  node_modules  \n",
+        "utf-8",
+      );
+      const patterns = await parse_gitignore(temp_dir);
+      expect(patterns).toEqual(["dist", "node_modules"]);
+    });
+
+    it("handles empty .gitignore file", async () => {
+      await fs.writeFile(path.join(temp_dir, ".gitignore"), "", "utf-8");
+      const patterns = await parse_gitignore(temp_dir);
+      expect(patterns).toEqual([]);
+    });
+
+    it("handles .gitignore with only comments", async () => {
+      await fs.writeFile(
+        path.join(temp_dir, ".gitignore"),
+        "# This is a comment\n# Another comment\n",
+        "utf-8",
+      );
+      const patterns = await parse_gitignore(temp_dir);
+      expect(patterns).toEqual([]);
+    });
+
+    it("handles .gitignore with directory patterns", async () => {
+      await fs.writeFile(
+        path.join(temp_dir, ".gitignore"),
+        "build/\ncoverage/\n.cache/\n",
+        "utf-8",
+      );
+      const patterns = await parse_gitignore(temp_dir);
+      expect(patterns).toEqual(["build/", "coverage/", ".cache/"]);
+    });
+
+    it("handles negation patterns", async () => {
+      await fs.writeFile(
+        path.join(temp_dir, ".gitignore"),
+        "*.log\n!important.log\n",
+        "utf-8",
+      );
+      const patterns = await parse_gitignore(temp_dir);
+      // parse_gitignore returns raw patterns; it doesn't interpret negation
+      expect(patterns).toEqual(["*.log", "!important.log"]);
+    });
+
+    it("integrates with should_ignore_path for trailing wildcard patterns", async () => {
+      await fs.writeFile(
+        path.join(temp_dir, ".gitignore"),
+        "temp*\n*.pyc\n",
+        "utf-8",
+      );
+      const patterns = await parse_gitignore(temp_dir);
+
+      // Verify trailing wildcard matching works via should_ignore_path
+      expect(should_ignore_path("temp_file.txt", patterns)).toBe(true);
+      expect(should_ignore_path("temporary.ts", patterns)).toBe(true);
+      expect(should_ignore_path("other.ts", patterns)).toBe(false);
+    });
+
+    it("integrates with find_source_files to exclude matched patterns", async () => {
+      // Create project structure
+      await fs.writeFile(
+        path.join(temp_dir, ".gitignore"),
+        "generated\n",
+        "utf-8",
+      );
+      await fs.writeFile(path.join(temp_dir, "main.ts"), "const x = 1;");
+      const gen_dir = path.join(temp_dir, "generated");
+      await fs.mkdir(gen_dir);
+      await fs.writeFile(path.join(gen_dir, "output.ts"), "const y = 2;");
+
+      const files = await find_source_files(temp_dir, temp_dir);
+
+      // Only main.ts should be found; generated/ should be excluded
+      expect(files).toEqual([path.join(temp_dir, "main.ts")]);
     });
   });
 

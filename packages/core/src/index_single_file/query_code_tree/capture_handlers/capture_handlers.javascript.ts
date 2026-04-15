@@ -65,7 +65,7 @@ export function handle_definition_class(
   context: ProcessingContext
 ): void {
   const class_id = create_class_id(capture);
-  const extends_clause = capture.node.childForFieldName?.("heritage");
+  const class_node = capture.node.parent; // class_declaration or class node
   const export_info = extract_export_info(capture.node, capture.text);
   const docstring = consume_documentation(capture.location);
 
@@ -76,7 +76,7 @@ export function handle_definition_class(
     scope_id: context.get_scope_id(capture.location),
     is_exported: export_info.is_exported,
     export: export_info.export,
-    extends: extends_clause ? extract_extends(capture.node) : [],
+    extends: class_node ? extract_extends(class_node) : [],
     docstring: docstring ? [docstring] : undefined,
   });
 }

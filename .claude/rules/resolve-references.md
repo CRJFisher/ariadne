@@ -50,11 +50,16 @@ resolve_references/
 ├── call_resolution/              # Phase 2: type-aware call resolution
 │   ├── call_resolver.ts          # Main orchestrator
 │   ├── function_call.ts          # Function call resolution
-│   ├── method.ts                 # Method call resolution
+│   ├── method_call.ts            # Method call resolution
 │   ├── method_lookup.ts          # Polymorphic method lookup
 │   ├── constructor.ts            # Constructor resolution
 │   ├── collection_dispatch.ts    # Collection-stored function dispatch
 │   └── receiver_resolution.*.ts  # Language-specific receiver type inference
+├── type_preprocessing/           # Type metadata extraction from definitions and references
+│   ├── bindings.ts               # Variable/parameter type bindings
+│   ├── constructor.ts            # Constructor call type bindings
+│   ├── member.ts                 # Type member extraction (methods, properties, enum members)
+│   └── alias.ts                  # Type alias metadata
 └── import_resolution/            # Cross-file import path resolution
     ├── import_resolution.ts      # Dispatcher
     └── import_resolution.*.ts    # Language-specific import resolvers

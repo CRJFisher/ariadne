@@ -7,6 +7,7 @@ import Parser from "tree-sitter";
 import TypeScript from "tree-sitter-typescript";
 import JavaScript from "tree-sitter-javascript";
 import Python from "tree-sitter-python";
+import Rust from "tree-sitter-rust";
 import { process_scopes, create_processing_context } from "./scopes";
 import type {
   Location,
@@ -22,7 +23,7 @@ import {
   SemanticCategory,
   build_index_single_file,
 } from "../index_single_file";
-import { ParsedFile } from "../file_utils";
+import { ParsedFile } from "../parsed_file";
 
 describe("scopes", () => {
   const file_path = "test.ts" as FilePath;
@@ -689,27 +690,22 @@ describe("scopes", () => {
 
         const scopes = process_scopes(captures, file);
 
-        // MODULE and NAMESPACE create module-level scopes, so they might replace or add to root
-        // All others add a new scope to the existing root
-        const min_expected = 2; // Always have at least root + created scope
-        expect(scopes.size).toBeGreaterThanOrEqual(min_expected - 1);
-
-        // Find the scope with our test name (or check by type for MODULE/NAMESPACE)
-        const created_scope = Array.from(scopes.values()).find(
-          (s) =>
-            s.name === "test" ||
-            (s.type === expected_type && s.parent_id !== null)
-        );
-
         if (entity === "module" || entity === "namespace") {
-          // Module/namespace might be nested or might modify root
-          const module_scopes = Array.from(scopes.values()).filter(
-            (s) => s.type === "module"
-          );
-          expect(module_scopes.length).toBeGreaterThan(0);
+          // Mock nodes have equal symbol_location and scope_location,
+          // so process_scopes skips them (treated as external module declarations).
+          // Only the root module scope remains.
+          expect(scopes.size).toBe(1);
+          const root = Array.from(scopes.values())[0];
+          expect(root.type).toBe("module");
+          expect(root.parent_id).toBeNull();
         } else {
+          // Root scope + the created entity scope
+          expect(scopes.size).toBe(2);
+          const created_scope = Array.from(scopes.values()).find(
+            (s) => s.type === expected_type && s.parent_id !== null
+          );
           expect(created_scope).toBeDefined();
-          expect(created_scope?.type).toBe(expected_type);
+          expect(created_scope!.type).toBe(expected_type);
         }
       });
     });
@@ -906,8 +902,8 @@ describe("scopes", () => {
         );
         expect(my_class).toBeDefined();
 
-        // Class scope should start at body
-        expect(class_scope!.location.start_column).toBeGreaterThan(10);
+        // Class scope should start at body: "class MyClass {" -> column 15
+        expect(class_scope!.location.start_column).toBe(15);
 
         // Class name should be in module scope
         expect(my_class!.defining_scope_id).toBe(file_scope_id);
@@ -951,8 +947,8 @@ describe("scopes", () => {
         );
         expect(i_foo).toBeDefined();
 
-        // Interface scope should start at body
-        expect(interface_scope!.location.start_column).toBeGreaterThan(10);
+        // Interface scope should start at body: "interface IFoo {" -> column 16
+        expect(interface_scope!.location.start_column).toBe(16);
 
         // Interface name should be in module scope
         expect(i_foo!.defining_scope_id).toBe(file_scope_id);
@@ -993,8 +989,8 @@ describe("scopes", () => {
         );
         expect(status_enum).toBeDefined();
 
-        // Enum scope should start at body
-        expect(enum_scope!.location.start_column).toBeGreaterThan(10);
+        // Enum scope should start at body: "enum Status {" -> column 13
+        expect(enum_scope!.location.start_column).toBe(13);
 
         // Enum name should be in module scope
         expect(status_enum!.defining_scope_id).toBe(file_scope_id);
@@ -1045,8 +1041,8 @@ describe("scopes", () => {
         // Class name should be in module scope
         expect(calc_class!.defining_scope_id).toBe(file_scope_id);
 
-        // Class scope should start at body
-        expect(class_scope!.location.start_column).toBeGreaterThan(10);
+        // Class scope should start at body: "class Calculator {" -> column 18
+        expect(class_scope!.location.start_column).toBe(18);
 
         // Class scope parent should be module scope
         const parent_scope = index.scopes.get(class_scope!.parent_id!);
@@ -1096,8 +1092,8 @@ describe("scopes", () => {
         );
         expect(my_class).toBeDefined();
 
-        // Class scope should start at body
-        expect(class_scope!.location.start_column).toBeGreaterThan(10);
+        // Class scope should start at body: "class MyClass {" -> column 15
+        expect(class_scope!.location.start_column).toBe(15);
 
         // Class name should be in module scope
         expect(my_class!.defining_scope_id).toBe(file_scope_id);
@@ -1135,8 +1131,8 @@ describe("scopes", () => {
         );
         expect(class_scope).toBeDefined();
 
-        // Class scope should start at body
-        expect(class_scope!.location.start_column).toBeGreaterThan(20);
+        // Class scope should start at body: "const MyClass = class {" -> column 23
+        expect(class_scope!.location.start_column).toBe(23);
       });
     });
 
@@ -1182,8 +1178,9 @@ describe("scopes", () => {
         );
         expect(my_class).toBeDefined();
 
-        // Class scope should start after ':'
-        expect(class_scope!.location.start_line).toBeGreaterThan(0);
+        // Class scope should start after ':' -> "class MyClass:" -> start_column 15
+        expect(class_scope!.location.start_line).toBe(1);
+        expect(class_scope!.location.start_column).toBe(15);
 
         // Class name should be in module scope
         expect(my_class!.defining_scope_id).toBe(file_scope_id);
@@ -1334,7 +1331,7 @@ describe("scopes", () => {
 
         expect(class_scope).toBeDefined();
         expect(constructor_scope).toBeDefined();
-        expect(block_scopes.length).toBeGreaterThanOrEqual(1); // At least the if block
+        expect(block_scopes.length).toBe(3); // if, try, except
 
         // Constructor should be child of class
         expect(constructor_scope!.parent_id).toBe(class_scope!.id);
@@ -1371,10 +1368,10 @@ describe("scopes", () => {
 
         expect(compute_depth(class_scope!)).toBe(1);
         expect(compute_depth(constructor_scope!)).toBe(2);
-        for (const block_scope of block_scopes) {
-          // Blocks should be at depth 3 or deeper (some may be nested inside other blocks)
-          expect(compute_depth(block_scope)).toBeGreaterThanOrEqual(3);
-        }
+        // if and try blocks are at depth 3 (children of constructor)
+        // except block is at depth 4 (child of try)
+        const block_depths = block_scopes.map(b => compute_depth(b)).sort();
+        expect(block_depths).toEqual([3, 3, 4]);
       });
     });
 
@@ -1404,10 +1401,8 @@ describe("scopes", () => {
 
         // The function scope should start after "function" keyword
         // Code: "const factorial = function fact(n) {"
-        // Position:                      ^22     ^27 ^31
-        // Scope should start around column 31-32 (after "function ", before "fact")
-        expect(function_scope!.location.start_column).toBeLessThan(28); // Before "fact"
-        expect(function_scope!.location.start_column).toBeGreaterThan(22); // After "function"
+        // Position:                           ^27
+        expect(function_scope!.location.start_column).toBe(27);
 
         // Verify the function name 'fact' is defined in the function scope
         const fact_def = Array.from(index.functions.values()).find(
@@ -1512,6 +1507,1006 @@ describe("scopes", () => {
         expect(factorial_def).toBeDefined();
         const module_scope = scopes.find((s) => s.type === "module");
         expect(factorial_def!.defining_scope_id).toBe(module_scope!.id);
+      });
+    });
+
+    describe("JavaScript block scope tests", () => {
+      let js_parser: Parser;
+
+      beforeAll(() => {
+        js_parser = new Parser();
+        js_parser.setLanguage(JavaScript);
+      });
+
+      it("should create block scopes for for/while/if/switch/try/catch/finally", () => {
+        const code = `function process(items) {
+  for (let i = 0; i < items.length; i++) {
+    if (items[i] > 0) {
+      console.log(items[i]);
+    }
+  }
+  while (items.length > 0) {
+    items.pop();
+  }
+  switch (items.length) {
+    case 0:
+      break;
+  }
+  try {
+    doSomething();
+  } catch (e) {
+    handleError(e);
+  } finally {
+    cleanup();
+  }
+}`;
+
+        const tree = js_parser.parse(code);
+        const parsed_file = create_parsed_file(
+          code,
+          "test.js" as FilePath,
+          tree,
+          "javascript" as Language
+        );
+        const index = build_index_single_file(parsed_file, tree, "javascript");
+
+        const all_scopes = Array.from(index.scopes.values());
+        const function_scope = all_scopes.find((s) => s.type === "function");
+        expect(function_scope).toBeDefined();
+
+        const block_scopes = all_scopes.filter((s) => s.type === "block");
+        // Expected blocks: for, if (inside for), while, switch, switch_case, try, catch, finally
+        expect(block_scopes.length).toBe(8);
+
+        // All block scopes should be descendants of the function scope
+        for (const block of block_scopes) {
+          let current_id = block.parent_id;
+          let found_function = false;
+          while (current_id) {
+            if (current_id === function_scope!.id) {
+              found_function = true;
+              break;
+            }
+            const parent = index.scopes.get(current_id);
+            if (!parent) break;
+            current_id = parent.parent_id;
+          }
+          expect(found_function).toBe(true);
+        }
+
+        // The if block should be a child of the for block (nested)
+        const for_scope = block_scopes.find((s) => s.location.start_line === 2);
+        expect(for_scope).toBeDefined();
+        const if_scope = block_scopes.find((s) => s.location.start_line === 3);
+        expect(if_scope).toBeDefined();
+        expect(if_scope!.parent_id).toBe(for_scope!.id);
+      });
+
+      it("should create block scopes for do-while and for-in", () => {
+        const code = `function iterate(obj) {
+  do {
+    obj.count--;
+  } while (obj.count > 0);
+  for (let key in obj) {
+    console.log(key);
+  }
+}`;
+
+        const tree = js_parser.parse(code);
+        const parsed_file = create_parsed_file(
+          code,
+          "test.js" as FilePath,
+          tree,
+          "javascript" as Language
+        );
+        const index = build_index_single_file(parsed_file, tree, "javascript");
+
+        const all_scopes = Array.from(index.scopes.values());
+        const function_scope = all_scopes.find((s) => s.type === "function");
+        const block_scopes = all_scopes.filter((s) => s.type === "block");
+
+        // do-while and for-in
+        expect(block_scopes.length).toBe(2);
+        for (const block of block_scopes) {
+          expect(block.parent_id).toBe(function_scope!.id);
+        }
+      });
+    });
+
+    describe("TypeScript block scope tests", () => {
+      let ts_parser: Parser;
+
+      beforeAll(() => {
+        ts_parser = new Parser();
+        ts_parser.setLanguage(TypeScript.typescript);
+      });
+
+      it("should create block scopes for for/while/if/switch/try/catch/finally", () => {
+        const code = `function process(items: number[]): void {
+  for (let i = 0; i < items.length; i++) {
+    if (items[i] > 0) {
+      console.log(items[i]);
+    }
+  }
+  while (items.length > 0) {
+    items.pop();
+  }
+  switch (items.length) {
+    case 0:
+      break;
+  }
+  try {
+    doSomething();
+  } catch (e) {
+    handleError(e);
+  } finally {
+    cleanup();
+  }
+}`;
+
+        const tree = ts_parser.parse(code);
+        const parsed_file = create_parsed_file(
+          code,
+          "test.ts" as FilePath,
+          tree,
+          "typescript" as Language
+        );
+        const index = build_index_single_file(parsed_file, tree, "typescript");
+
+        const all_scopes = Array.from(index.scopes.values());
+        const function_scope = all_scopes.find((s) => s.type === "function");
+        expect(function_scope).toBeDefined();
+
+        const block_scopes = all_scopes.filter((s) => s.type === "block");
+        // Expected blocks: for, if (inside for), while, switch, switch_case, try, catch, finally
+        expect(block_scopes.length).toBe(8);
+
+        // The if block should be a child of the for block
+        const for_scope = block_scopes.find((s) => s.location.start_line === 2);
+        expect(for_scope).toBeDefined();
+        const if_scope = block_scopes.find((s) => s.location.start_line === 3);
+        expect(if_scope).toBeDefined();
+        expect(if_scope!.parent_id).toBe(for_scope!.id);
+      });
+
+      it("should create block scopes for do-while and for-in", () => {
+        const code = `function iterate(obj: Record<string, number>): void {
+  do {
+    obj.count--;
+  } while (obj.count > 0);
+  for (let key in obj) {
+    console.log(key);
+  }
+}`;
+
+        const tree = ts_parser.parse(code);
+        const parsed_file = create_parsed_file(
+          code,
+          "test.ts" as FilePath,
+          tree,
+          "typescript" as Language
+        );
+        const index = build_index_single_file(parsed_file, tree, "typescript");
+
+        const all_scopes = Array.from(index.scopes.values());
+        const function_scope = all_scopes.find((s) => s.type === "function");
+        const block_scopes = all_scopes.filter((s) => s.type === "block");
+
+        expect(block_scopes.length).toBe(2);
+        for (const block of block_scopes) {
+          expect(block.parent_id).toBe(function_scope!.id);
+        }
+      });
+    });
+
+    describe("JavaScript constructor scope tests", () => {
+      let js_parser: Parser;
+
+      beforeAll(() => {
+        js_parser = new Parser();
+        js_parser.setLanguage(JavaScript);
+      });
+
+      it("should create constructor scope as child of class scope", () => {
+        const code = `class Person {
+  constructor(name) {
+    this.name = name;
+    if (name.length > 10) {
+      this.short_name = name.slice(0, 10);
+    }
+  }
+  greet() {
+    return this.name;
+  }
+}`;
+
+        const tree = js_parser.parse(code);
+        const parsed_file = create_parsed_file(
+          code,
+          "test.js" as FilePath,
+          tree,
+          "javascript" as Language
+        );
+        const index = build_index_single_file(parsed_file, tree, "javascript");
+
+        const all_scopes = Array.from(index.scopes.values());
+        const class_scope = all_scopes.find((s) => s.type === "class");
+        const constructor_scope = all_scopes.find((s) => s.type === "constructor");
+        const method_scope = all_scopes.find((s) => s.type === "method");
+        const block_scopes = all_scopes.filter((s) => s.type === "block");
+
+        expect(class_scope).toBeDefined();
+        expect(constructor_scope).toBeDefined();
+        expect(method_scope).toBeDefined();
+
+        // Constructor and method should be children of class
+        expect(constructor_scope!.parent_id).toBe(class_scope!.id);
+        expect(method_scope!.parent_id).toBe(class_scope!.id);
+
+        // if block inside constructor should be child of constructor
+        expect(block_scopes.length).toBe(1);
+        expect(block_scopes[0].parent_id).toBe(constructor_scope!.id);
+      });
+    });
+
+    describe("TypeScript constructor scope tests", () => {
+      let ts_parser: Parser;
+
+      beforeAll(() => {
+        ts_parser = new Parser();
+        ts_parser.setLanguage(TypeScript.typescript);
+      });
+
+      it("should create constructor scope as child of class scope", () => {
+        const code = `class Person {
+  private name: string;
+  constructor(name: string) {
+    this.name = name;
+    if (name.length > 10) {
+      this.name = name.slice(0, 10);
+    }
+  }
+  greet(): string {
+    return this.name;
+  }
+}`;
+
+        const tree = ts_parser.parse(code);
+        const parsed_file = create_parsed_file(
+          code,
+          "test.ts" as FilePath,
+          tree,
+          "typescript" as Language
+        );
+        const index = build_index_single_file(parsed_file, tree, "typescript");
+
+        const all_scopes = Array.from(index.scopes.values());
+        const class_scope = all_scopes.find((s) => s.type === "class");
+        const constructor_scope = all_scopes.find((s) => s.type === "constructor");
+        const method_scope = all_scopes.find((s) => s.type === "method");
+        const block_scopes = all_scopes.filter((s) => s.type === "block");
+
+        expect(class_scope).toBeDefined();
+        expect(constructor_scope).toBeDefined();
+        expect(method_scope).toBeDefined();
+
+        // Constructor and method should be children of class
+        expect(constructor_scope!.parent_id).toBe(class_scope!.id);
+        expect(method_scope!.parent_id).toBe(class_scope!.id);
+
+        // if block inside constructor should be child of constructor
+        expect(block_scopes.length).toBe(1);
+        expect(block_scopes[0].parent_id).toBe(constructor_scope!.id);
+      });
+    });
+
+    describe("TypeScript namespace scope tests", () => {
+      let ts_parser: Parser;
+
+      beforeAll(() => {
+        ts_parser = new Parser();
+        ts_parser.setLanguage(TypeScript.typescript);
+      });
+
+      it("should create module scope for namespace declaration", () => {
+        const code = `namespace Validation {
+  export function isValid(s: string): boolean {
+    return s.length > 0;
+  }
+  export class Validator {
+    validate(s: string): boolean {
+      return isValid(s);
+    }
+  }
+}`;
+
+        const tree = ts_parser.parse(code);
+        const parsed_file = create_parsed_file(
+          code,
+          "test.ts" as FilePath,
+          tree,
+          "typescript" as Language
+        );
+        const index = build_index_single_file(parsed_file, tree, "typescript");
+
+        const all_scopes = Array.from(index.scopes.values());
+        const module_scopes = all_scopes.filter((s) => s.type === "module");
+        // Root module + namespace module
+        expect(module_scopes.length).toBe(2);
+
+        const root_module = module_scopes.find((s) => s.parent_id === null);
+        const namespace_scope = module_scopes.find((s) => s.parent_id !== null);
+        expect(root_module).toBeDefined();
+        expect(namespace_scope).toBeDefined();
+
+        // Namespace should be child of root
+        expect(namespace_scope!.parent_id).toBe(root_module!.id);
+
+        // Function and class inside namespace should be children of namespace
+        const function_scope = all_scopes.find((s) => s.type === "function");
+        const class_scope = all_scopes.find((s) => s.type === "class");
+        expect(function_scope).toBeDefined();
+        expect(class_scope).toBeDefined();
+        expect(function_scope!.parent_id).toBe(namespace_scope!.id);
+        expect(class_scope!.parent_id).toBe(namespace_scope!.id);
+      });
+    });
+
+    describe("Python comprehension and match/case scope tests", () => {
+      let py_parser: Parser;
+
+      beforeAll(() => {
+        py_parser = new Parser();
+        py_parser.setLanguage(Python);
+      });
+
+      it("should create block scopes for list, dict, set comprehensions and generator", () => {
+        const code = `def process(items):
+    squares = [x ** 2 for x in items]
+    lookup = {k: v for k, v in items}
+    uniques = {x for x in items}
+    total = sum(x for x in items)`;
+
+        const tree = py_parser.parse(code);
+        const parsed_file = create_parsed_file(
+          code,
+          "test.py" as FilePath,
+          tree,
+          "python" as Language
+        );
+        const index = build_index_single_file(parsed_file, tree, "python");
+
+        const all_scopes = Array.from(index.scopes.values());
+        const function_scope = all_scopes.find((s) => s.type === "function");
+        expect(function_scope).toBeDefined();
+
+        const block_scopes = all_scopes.filter((s) => s.type === "block");
+        // 4 comprehension/generator scopes
+        expect(block_scopes.length).toBe(4);
+
+        // All comprehension scopes should be children of the function
+        for (const block of block_scopes) {
+          expect(block.parent_id).toBe(function_scope!.id);
+        }
+      });
+
+      it("should create block scopes for match/case statements", () => {
+        const code = `def classify(value):
+    match value:
+        case 0:
+            return "zero"
+        case 1:
+            return "one"
+        case _:
+            return "other"`;
+
+        const tree = py_parser.parse(code);
+        const parsed_file = create_parsed_file(
+          code,
+          "test.py" as FilePath,
+          tree,
+          "python" as Language
+        );
+        const index = build_index_single_file(parsed_file, tree, "python");
+
+        const all_scopes = Array.from(index.scopes.values());
+        const function_scope = all_scopes.find((s) => s.type === "function");
+        expect(function_scope).toBeDefined();
+
+        const block_scopes = all_scopes.filter((s) => s.type === "block");
+        // match_statement + 3 case_clauses
+        expect(block_scopes.length).toBe(4);
+
+        // match_statement should be direct child of function
+        const match_scope = block_scopes.find((s) => s.location.start_line === 2);
+        expect(match_scope).toBeDefined();
+        expect(match_scope!.parent_id).toBe(function_scope!.id);
+
+        // case clauses should be children of match_statement
+        const case_scopes = block_scopes.filter((s) => s.location.start_line > 2);
+        expect(case_scopes.length).toBe(3);
+        for (const case_scope of case_scopes) {
+          expect(case_scope.parent_id).toBe(match_scope!.id);
+        }
+      });
+
+      it("should create block scopes for elif/else/with/except/finally", () => {
+        const code = `def handle(x):
+    if x > 0:
+        positive()
+    elif x < 0:
+        negative()
+    else:
+        zero()
+    with open("f") as f:
+        read(f)
+    try:
+        attempt()
+    except ValueError:
+        handle_value()
+    finally:
+        done()`;
+
+        const tree = py_parser.parse(code);
+        const parsed_file = create_parsed_file(
+          code,
+          "test.py" as FilePath,
+          tree,
+          "python" as Language
+        );
+        const index = build_index_single_file(parsed_file, tree, "python");
+
+        const all_scopes = Array.from(index.scopes.values());
+        const function_scope = all_scopes.find((s) => s.type === "function");
+        expect(function_scope).toBeDefined();
+
+        const block_scopes = all_scopes.filter((s) => s.type === "block");
+        // if, elif, else, with, try, except, finally = 7 blocks
+        expect(block_scopes.length).toBe(7);
+
+        // if/with/try should be direct children of function
+        const if_scope = block_scopes.find((s) => s.location.start_line === 2);
+        const with_scope = block_scopes.find((s) => s.location.start_line === 8);
+        const try_scope = block_scopes.find((s) => s.location.start_line === 10);
+        expect(if_scope!.parent_id).toBe(function_scope!.id);
+        expect(with_scope!.parent_id).toBe(function_scope!.id);
+        expect(try_scope!.parent_id).toBe(function_scope!.id);
+
+        // elif and else should be children of if
+        const elif_scope = block_scopes.find((s) => s.location.start_line === 4);
+        const else_scope = block_scopes.find((s) => s.location.start_line === 6);
+        expect(elif_scope!.parent_id).toBe(if_scope!.id);
+        expect(else_scope!.parent_id).toBe(if_scope!.id);
+
+        // except and finally should be children of try
+        const except_scope = block_scopes.find((s) => s.location.start_line === 12);
+        const finally_scope = block_scopes.find((s) => s.location.start_line === 14);
+        expect(except_scope!.parent_id).toBe(try_scope!.id);
+        expect(finally_scope!.parent_id).toBe(try_scope!.id);
+      });
+    });
+
+    describe("Python lambda scope tests", () => {
+      let py_parser: Parser;
+
+      beforeAll(() => {
+        py_parser = new Parser();
+        py_parser.setLanguage(Python);
+      });
+
+      it("should create function scope for lambda expression", () => {
+        const code = `def process():
+    transform = lambda x: x * 2
+    result = transform(5)`;
+
+        const tree = py_parser.parse(code);
+        const parsed_file = create_parsed_file(
+          code,
+          "test.py" as FilePath,
+          tree,
+          "python" as Language
+        );
+        const index = build_index_single_file(parsed_file, tree, "python");
+
+        const all_scopes = Array.from(index.scopes.values());
+        const function_scopes = all_scopes.filter((s) => s.type === "function");
+        // process() + lambda
+        expect(function_scopes.length).toBe(2);
+
+        const process_scope = function_scopes.find((s) => s.name === "process");
+        const lambda_scope = function_scopes.find((s) => s.name !== "process");
+        expect(process_scope).toBeDefined();
+        expect(lambda_scope).toBeDefined();
+
+        // Lambda should be child of process
+        expect(lambda_scope!.parent_id).toBe(process_scope!.id);
+      });
+    });
+
+    describe("Rust closure scope tests", () => {
+      let rust_parser: Parser;
+
+      beforeAll(() => {
+        rust_parser = new Parser();
+        rust_parser.setLanguage(Rust);
+      });
+
+      it("should create function scope for closure expressions", () => {
+        const code = `fn process(items: Vec<i32>) -> Vec<i32> {
+    let doubled: Vec<i32> = items.iter().map(|x| x * 2).collect();
+    let filtered: Vec<i32> = items.into_iter().filter(|x| *x > 0).collect();
+    doubled
+}`;
+
+        const tree = rust_parser.parse(code);
+        const parsed_file = create_parsed_file(
+          code,
+          "test.rs" as FilePath,
+          tree,
+          "rust" as Language
+        );
+        const index = build_index_single_file(parsed_file, tree, "rust");
+
+        const all_scopes = Array.from(index.scopes.values());
+        const function_scopes = all_scopes.filter((s) => s.type === "function");
+        // process() + 2 closures
+        expect(function_scopes.length).toBe(3);
+
+        const process_scope = function_scopes.find((s) => s.name === "process");
+        expect(process_scope).toBeDefined();
+
+        // Both closures should be children of process
+        const closure_scopes = function_scopes.filter((s) => s.name !== "process");
+        expect(closure_scopes.length).toBe(2);
+        for (const closure of closure_scopes) {
+          expect(closure.parent_id).toBe(process_scope!.id);
+        }
+      });
+
+      it("should create function scope for multi-line closure", () => {
+        const code = `fn main() {
+    let compute = |a: i32, b: i32| {
+        let sum = a + b;
+        sum * 2
+    };
+}`;
+
+        const tree = rust_parser.parse(code);
+        const parsed_file = create_parsed_file(
+          code,
+          "test.rs" as FilePath,
+          tree,
+          "rust" as Language
+        );
+        const index = build_index_single_file(parsed_file, tree, "rust");
+
+        const all_scopes = Array.from(index.scopes.values());
+        const function_scopes = all_scopes.filter((s) => s.type === "function");
+        // main() + closure
+        expect(function_scopes.length).toBe(2);
+
+        const main_scope = function_scopes.find((s) => s.name === "main");
+        const closure_scope = function_scopes.find((s) => s.name !== "main");
+        expect(main_scope).toBeDefined();
+        expect(closure_scope).toBeDefined();
+        expect(closure_scope!.parent_id).toBe(main_scope!.id);
+      });
+    });
+
+    describe("Rust control flow block scope tests", () => {
+      let rust_parser: Parser;
+
+      beforeAll(() => {
+        rust_parser = new Parser();
+        rust_parser.setLanguage(Rust);
+      });
+
+      it("should create block scopes for if/match/for/while/loop", () => {
+        const code = `fn control_flow(x: i32, items: Vec<i32>) {
+    if x > 0 {
+        println!("positive");
+    }
+    match x {
+        0 => println!("zero"),
+        1 => println!("one"),
+        _ => println!("other"),
+    }
+    for item in items.iter() {
+        println!("{}", item);
+    }
+    while x > 0 {
+        break;
+    }
+    loop {
+        break;
+    }
+}`;
+
+        const tree = rust_parser.parse(code);
+        const parsed_file = create_parsed_file(
+          code,
+          "test.rs" as FilePath,
+          tree,
+          "rust" as Language
+        );
+        const index = build_index_single_file(parsed_file, tree, "rust");
+
+        const all_scopes = Array.from(index.scopes.values());
+        const function_scope = all_scopes.find((s) => s.type === "function");
+        expect(function_scope).toBeDefined();
+
+        const block_scopes = all_scopes.filter((s) => s.type === "block");
+        // if, match, 3 match_arms, for, while, loop = 8
+        expect(block_scopes.length).toBe(8);
+
+        // if/match/for/while/loop should be direct children of function
+        const if_scope = block_scopes.find((s) => s.location.start_line === 2);
+        const match_scope = block_scopes.find((s) => s.location.start_line === 5);
+        const for_scope = block_scopes.find((s) => s.location.start_line === 10);
+        const while_scope = block_scopes.find((s) => s.location.start_line === 13);
+        const loop_scope = block_scopes.find((s) => s.location.start_line === 16);
+
+        expect(if_scope!.parent_id).toBe(function_scope!.id);
+        expect(match_scope!.parent_id).toBe(function_scope!.id);
+        expect(for_scope!.parent_id).toBe(function_scope!.id);
+        expect(while_scope!.parent_id).toBe(function_scope!.id);
+        expect(loop_scope!.parent_id).toBe(function_scope!.id);
+
+        // Match arms should be children of match
+        const match_arm_scopes = block_scopes.filter(
+          (s) => s.location.start_line >= 6 && s.location.start_line <= 8
+        );
+        expect(match_arm_scopes.length).toBe(3);
+        for (const arm of match_arm_scopes) {
+          expect(arm.parent_id).toBe(match_scope!.id);
+        }
+      });
+
+      it("should create block scopes for unsafe and async blocks", () => {
+        const code = `fn special_blocks() {
+    unsafe {
+        let ptr = 0 as *const i32;
+    }
+    let future = async {
+        let result = 42;
+    };
+}`;
+
+        const tree = rust_parser.parse(code);
+        const parsed_file = create_parsed_file(
+          code,
+          "test.rs" as FilePath,
+          tree,
+          "rust" as Language
+        );
+        const index = build_index_single_file(parsed_file, tree, "rust");
+
+        const all_scopes = Array.from(index.scopes.values());
+        const function_scope = all_scopes.find((s) => s.type === "function");
+        expect(function_scope).toBeDefined();
+
+        const block_scopes = all_scopes.filter((s) => s.type === "block");
+        // unsafe + async = 2
+        expect(block_scopes.length).toBe(2);
+
+        for (const block of block_scopes) {
+          expect(block.parent_id).toBe(function_scope!.id);
+        }
+      });
+    });
+
+    describe("Rust mod module scope tests", () => {
+      let rust_parser: Parser;
+
+      beforeAll(() => {
+        rust_parser = new Parser();
+        rust_parser.setLanguage(Rust);
+      });
+
+      it("should create module scope for inline mod declaration", () => {
+        const code = `mod utils {
+    fn helper() {
+        println!("helping");
+    }
+
+    pub fn public_helper() {
+        helper();
+    }
+}
+
+fn main() {
+    utils::public_helper();
+}`;
+
+        const tree = rust_parser.parse(code);
+        const parsed_file = create_parsed_file(
+          code,
+          "test.rs" as FilePath,
+          tree,
+          "rust" as Language
+        );
+        const index = build_index_single_file(parsed_file, tree, "rust");
+
+        const all_scopes = Array.from(index.scopes.values());
+        const module_scopes = all_scopes.filter((s) => s.type === "module");
+        // Root module + inline mod
+        expect(module_scopes.length).toBe(2);
+
+        const root_module = module_scopes.find((s) => s.parent_id === null);
+        const inline_mod = module_scopes.find((s) => s.parent_id !== null);
+        expect(root_module).toBeDefined();
+        expect(inline_mod).toBeDefined();
+
+        // Inline mod should be child of root
+        expect(inline_mod!.parent_id).toBe(root_module!.id);
+
+        // Functions inside mod should be children of the mod scope
+        const function_scopes = all_scopes.filter((s) => s.type === "function");
+        const mod_functions = function_scopes.filter(
+          (s) => s.parent_id === inline_mod!.id
+        );
+        // helper + public_helper
+        expect(mod_functions.length).toBe(2);
+
+        // main should be child of root module
+        const main_scope = function_scopes.find((s) => s.name === "main");
+        expect(main_scope).toBeDefined();
+        expect(main_scope!.parent_id).toBe(root_module!.id);
+      });
+
+      it("should handle external mod declaration (no body)", () => {
+        const code = `mod external_module;
+
+fn main() {}`;
+
+        const tree = rust_parser.parse(code);
+        const parsed_file = create_parsed_file(
+          code,
+          "test.rs" as FilePath,
+          tree,
+          "rust" as Language
+        );
+        const index = build_index_single_file(parsed_file, tree, "rust");
+
+        const all_scopes = Array.from(index.scopes.values());
+        const module_scopes = all_scopes.filter((s) => s.type === "module");
+        // Root module only — external mod has no body, so no scope is created
+        // (module scope type is skipped in process_scopes)
+        expect(module_scopes.length).toBe(1);
+
+        // main should still work
+        const function_scopes = all_scopes.filter((s) => s.type === "function");
+        expect(function_scopes.length).toBe(1);
+      });
+    });
+
+    describe("Method scope capture deduplication", () => {
+      function count_scope_captures(
+        scopes: ReadonlyMap<ScopeId, LexicalScope>,
+        type: string,
+        name: string | null
+      ): number {
+        return Array.from(scopes.values()).filter(
+          (s) => s.type === type && s.name === name
+        ).length;
+      }
+
+      describe("JavaScript", () => {
+        let parser: Parser;
+
+        beforeAll(() => {
+          parser = new Parser();
+          parser.setLanguage(JavaScript);
+        });
+
+        it("constructor produces exactly one @scope.constructor, not @scope.method", () => {
+          const code = `class Foo {
+  constructor(x) {
+    this.x = x;
+  }
+}`;
+          const tree = parser.parse(code);
+          const parsed_file = create_parsed_file(
+            code,
+            "test.js" as FilePath,
+            tree,
+            "javascript" as Language
+          );
+          const index = build_index_single_file(
+            parsed_file,
+            tree,
+            "javascript" as Language
+          );
+
+          expect(count_scope_captures(index.scopes, "constructor", "constructor")).toBe(1);
+          expect(count_scope_captures(index.scopes, "method", "constructor")).toBe(0);
+        });
+
+        it("regular method produces exactly one @scope.method", () => {
+          const code = `class Foo {
+  doWork(a) {
+    return a;
+  }
+}`;
+          const tree = parser.parse(code);
+          const parsed_file = create_parsed_file(
+            code,
+            "test.js" as FilePath,
+            tree,
+            "javascript" as Language
+          );
+          const index = build_index_single_file(
+            parsed_file,
+            tree,
+            "javascript" as Language
+          );
+
+          expect(count_scope_captures(index.scopes, "method", "doWork")).toBe(1);
+        });
+
+        it("private method gets a @scope.method capture", () => {
+          const code = `class Foo {
+  #secret() {
+    return 42;
+  }
+}`;
+          const tree = parser.parse(code);
+          const parsed_file = create_parsed_file(
+            code,
+            "test.js" as FilePath,
+            tree,
+            "javascript" as Language
+          );
+          const index = build_index_single_file(
+            parsed_file,
+            tree,
+            "javascript" as Language
+          );
+
+          expect(count_scope_captures(index.scopes, "method", "#secret")).toBe(1);
+        });
+
+        it("static method produces exactly one @scope.method", () => {
+          const code = `class Foo {
+  static create() {
+    return new Foo();
+  }
+}`;
+          const tree = parser.parse(code);
+          const parsed_file = create_parsed_file(
+            code,
+            "test.js" as FilePath,
+            tree,
+            "javascript" as Language
+          );
+          const index = build_index_single_file(
+            parsed_file,
+            tree,
+            "javascript" as Language
+          );
+
+          expect(count_scope_captures(index.scopes, "method", "create")).toBe(1);
+        });
+      });
+
+      describe("TypeScript", () => {
+        let parser: Parser;
+
+        beforeAll(() => {
+          parser = new Parser();
+          parser.setLanguage(TypeScript.typescript);
+        });
+
+        it("constructor produces exactly one @scope.constructor, not @scope.method", () => {
+          const code = `class Foo {
+  constructor(x: number) {
+    this.x = x;
+  }
+}`;
+          const tree = parser.parse(code);
+          const parsed_file = create_parsed_file(
+            code,
+            "test.ts" as FilePath,
+            tree,
+            "typescript" as Language
+          );
+          const index = build_index_single_file(
+            parsed_file,
+            tree,
+            "typescript" as Language
+          );
+
+          expect(count_scope_captures(index.scopes, "constructor", "constructor")).toBe(1);
+          expect(count_scope_captures(index.scopes, "method", "constructor")).toBe(0);
+        });
+
+        it("regular method produces exactly one @scope.method", () => {
+          const code = `class Foo {
+  doWork(a: string): string {
+    return a;
+  }
+}`;
+          const tree = parser.parse(code);
+          const parsed_file = create_parsed_file(
+            code,
+            "test.ts" as FilePath,
+            tree,
+            "typescript" as Language
+          );
+          const index = build_index_single_file(
+            parsed_file,
+            tree,
+            "typescript" as Language
+          );
+
+          expect(count_scope_captures(index.scopes, "method", "doWork")).toBe(1);
+        });
+
+        it("private method gets a @scope.method capture", () => {
+          const code = `class Foo {
+  #secret(): number {
+    return 42;
+  }
+}`;
+          const tree = parser.parse(code);
+          const parsed_file = create_parsed_file(
+            code,
+            "test.ts" as FilePath,
+            tree,
+            "typescript" as Language
+          );
+          const index = build_index_single_file(
+            parsed_file,
+            tree,
+            "typescript" as Language
+          );
+
+          expect(count_scope_captures(index.scopes, "method", "#secret")).toBe(1);
+        });
+
+        it("method with access modifier produces exactly one @scope.method", () => {
+          const code = `class Foo {
+  public greet(name: string): string {
+    return name;
+  }
+}`;
+          const tree = parser.parse(code);
+          const parsed_file = create_parsed_file(
+            code,
+            "test.ts" as FilePath,
+            tree,
+            "typescript" as Language
+          );
+          const index = build_index_single_file(
+            parsed_file,
+            tree,
+            "typescript" as Language
+          );
+
+          expect(count_scope_captures(index.scopes, "method", "greet")).toBe(1);
+        });
+
+        it("static method produces exactly one @scope.method", () => {
+          const code = `class Foo {
+  static create(): Foo {
+    return new Foo();
+  }
+}`;
+          const tree = parser.parse(code);
+          const parsed_file = create_parsed_file(
+            code,
+            "test.ts" as FilePath,
+            tree,
+            "typescript" as Language
+          );
+          const index = build_index_single_file(
+            parsed_file,
+            tree,
+            "typescript" as Language
+          );
+
+          expect(count_scope_captures(index.scopes, "method", "create")).toBe(1);
+        });
       });
     });
   });

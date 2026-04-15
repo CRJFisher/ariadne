@@ -12,7 +12,7 @@ import TypeScriptParser from "tree-sitter-typescript";
 import PythonParser from "tree-sitter-python";
 import JavaScriptParser from "tree-sitter-javascript";
 import RustParser from "tree-sitter-rust";
-import type { ParsedFile } from "../index_single_file/file_utils";
+import type { ParsedFile } from "../index_single_file/parsed_file";
 
 function make_parsed_file(
   content: string,

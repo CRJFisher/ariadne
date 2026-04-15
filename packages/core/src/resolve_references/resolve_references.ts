@@ -154,14 +154,11 @@ export class ResolutionRegistry {
       types,
       definitions,
       imports,
+      resolutions: this,
     };
 
-    // Create name resolver that delegates to state query
-    const name_resolver = (scope_id: ScopeId, name: SymbolName) =>
-      resolve_in_state(this.state, scope_id, name);
-
     // Resolve calls using pure function
-    const result = resolve_calls_for_files(file_ids, context, name_resolver);
+    const result = resolve_calls_for_files(file_ids, context);
 
     // Apply result to state
     this.state = apply_call_resolution(this.state, result);

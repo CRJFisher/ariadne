@@ -19,7 +19,7 @@ import type { SyntaxNode } from "tree-sitter";
 import type { Location, SymbolName, TypeInfo, FilePath } from "@ariadnejs/types";
 import { type_symbol } from "@ariadnejs/types";
 import type { MetadataExtractors, ReceiverInfo } from "./types";
-import { node_to_location } from "../../node_utils";
+import { node_to_location } from "../../node_to_location";
 
 
 /**
@@ -250,7 +250,8 @@ export const JAVASCRIPT_METADATA_EXTRACTORS: MetadataExtractors = {
         if (object_node) {
           if (object_node.type === "member_expression" ||
               object_node.type === "optional_chain" ||
-              object_node.type === "subscript_expression") {
+              object_node.type === "subscript_expression" ||
+              object_node.type === "call_expression") {
             traverse(object_node);
           } else if (object_node.type === "identifier" || object_node.type === "this" || object_node.type === "super") {
             chain.push(object_node.text);
@@ -269,7 +270,8 @@ export const JAVASCRIPT_METADATA_EXTRACTORS: MetadataExtractors = {
         if (object_node) {
           if (object_node.type === "member_expression" ||
               object_node.type === "subscript_expression" ||
-              object_node.type === "optional_chain") {
+              object_node.type === "optional_chain" ||
+              object_node.type === "call_expression") {
             traverse(object_node);
           } else if (object_node.type === "identifier" || object_node.type === "this" || object_node.type === "super") {
             chain.push(object_node.text);
@@ -365,10 +367,18 @@ export const JAVASCRIPT_METADATA_EXTRACTORS: MetadataExtractors = {
         ? [object_node.text as SymbolName, property_name as SymbolName]
         : [object_node.text as SymbolName]);
 
+      // Detect self-reference keywords at root of nested chain (e.g. this.data.items.push())
+      const SELF_KEYWORDS: Record<string, "this" | "super"> = {
+        this: "this",
+        super: "super",
+      };
+      const keyword = SELF_KEYWORDS[chain[0]];
+
       return {
         receiver_location: node_to_location(object_node, file_path),
         property_chain: chain,
-        is_self_reference: false,
+        is_self_reference: keyword !== undefined,
+        ...(keyword ? { self_keyword: keyword } : {}),
       };
     }
 
@@ -548,33 +558,15 @@ export const JAVASCRIPT_METADATA_EXTRACTORS: MetadataExtractors = {
    * Returns true if any part of the access chain uses optional chaining.
    */
   extract_is_optional_chain(node: SyntaxNode): boolean {
-    // Debug logging
-    const debug = false; // Set to true to enable debug logging
-    if (debug) {
-      console.log(`[extract_is_optional_chain] node.type=${node.type}, text=${node.text.substring(0, 50)}`);
-    }
-
     // Check if the node itself is an optional_chain
     if (node.type === "optional_chain") {
-      if (debug) console.log("  -> Found optional_chain node directly");
       return true;
     }
 
     // For call_expression, check if the function part is optional_chain
     if (node.type === "call_expression") {
       const function_node = node.childForFieldName("function");
-      if (debug && function_node) {
-        console.log(`  -> call_expression function node type: ${function_node.type}`);
-        // Debug: Check if there's an optional_chaining_operator or similar
-        for (let i = 0; i < function_node.childCount; i++) {
-          const child = function_node.child(i);
-          if (child) {
-            console.log(`    -> child ${i}: type=${child.type}, text="${child.text}"`);
-          }
-        }
-      }
       if (function_node && function_node.type === "optional_chain") {
-        if (debug) console.log("  -> Found optional_chain in function field");
         return true;
       }
       // Also recursively check if function_node has optional chaining
@@ -585,11 +577,9 @@ export const JAVASCRIPT_METADATA_EXTRACTORS: MetadataExtractors = {
 
     // For member_expression, check if it has an optional_chain child
     if (node.type === "member_expression") {
-      // Check children for optional_chain token
       for (let i = 0; i < node.childCount; i++) {
         const child = node.child(i);
         if (child && child.type === "optional_chain") {
-          if (debug) console.log("  -> Found optional_chain child in member_expression");
           return true;
         }
       }
@@ -601,7 +591,6 @@ export const JAVASCRIPT_METADATA_EXTRACTORS: MetadataExtractors = {
       }
     }
 
-    if (debug) console.log("  -> No optional chaining found");
     return false;
   },
 

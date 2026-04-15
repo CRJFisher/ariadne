@@ -2,193 +2,290 @@
  * Tests for JavaScript module resolution
  */
 
-import { describe, it, expect, beforeAll } from "vitest";
-import * as path from "path";
-import Parser from "tree-sitter";
-import JavaScript from "tree-sitter-javascript";
-import type { FilePath, Language } from "@ariadnejs/types";
-import { build_index_single_file } from "../../index_single_file/index_single_file";
-import type { ParsedFile } from "../../index_single_file/file_utils";
+import { describe, it, expect } from "vitest";
+import type { FilePath } from "@ariadnejs/types";
+import { resolve_module_path_javascript } from "./import_resolution.javascript";
+import { create_file_tree } from "./import_resolution.test";
 
-// Helper to create ParsedFile for JavaScript
-function create_parsed_file(
-  code: string,
-  file_path: FilePath,
-  tree: Parser.Tree,
-  language: Language
-): ParsedFile {
-  const lines = code.split("\n");
-  return {
-    file_path,
-    file_lines: lines.length,
-    file_end_column: lines[lines.length - 1]?.length || 0,
-    tree,
-    lang: language,
-  };
-}
+describe("resolve_module_path_javascript", () => {
+  describe("relative imports", () => {
+    it("resolves ./import with .js extension probing", () => {
+      const tree = create_file_tree("/project", [
+        "src/app.js",
+        "src/utils.js",
+      ]);
+      const result = resolve_module_path_javascript(
+        "./utils",
+        "/project/src/app.js" as FilePath,
+        tree
+      );
+      expect(result).toBe("/project/src/utils.js");
+    });
 
-describe("Body-based scopes - JavaScript", () => {
-  let parser: Parser;
+    it("resolves ../import to parent directory", () => {
+      const tree = create_file_tree("/project", [
+        "src/components/button.js",
+        "src/utils.js",
+      ]);
+      const result = resolve_module_path_javascript(
+        "../utils",
+        "/project/src/components/button.js" as FilePath,
+        tree
+      );
+      expect(result).toBe("/project/src/utils.js");
+    });
 
-  beforeAll(() => {
-    parser = new Parser();
-    parser.setLanguage(JavaScript);
+    it("resolves .jsx via extension probing", () => {
+      const tree = create_file_tree("/project", [
+        "src/app.js",
+        "src/Component.jsx",
+      ]);
+      const result = resolve_module_path_javascript(
+        "./Component",
+        "/project/src/app.js" as FilePath,
+        tree
+      );
+      expect(result).toBe("/project/src/Component.jsx");
+    });
+
+    it("resolves .mjs via extension probing", () => {
+      const tree = create_file_tree("/project", [
+        "src/app.js",
+        "src/utils.mjs",
+      ]);
+      const result = resolve_module_path_javascript(
+        "./utils",
+        "/project/src/app.js" as FilePath,
+        tree
+      );
+      expect(result).toBe("/project/src/utils.mjs");
+    });
+
+    it("resolves .cjs via extension probing", () => {
+      const tree = create_file_tree("/project", [
+        "src/app.js",
+        "src/config.cjs",
+      ]);
+      const result = resolve_module_path_javascript(
+        "./config",
+        "/project/src/app.js" as FilePath,
+        tree
+      );
+      expect(result).toBe("/project/src/config.cjs");
+    });
+
+    it("prefers .js over .jsx", () => {
+      const tree = create_file_tree("/project", [
+        "src/app.js",
+        "src/utils.js",
+        "src/utils.jsx",
+      ]);
+      const result = resolve_module_path_javascript(
+        "./utils",
+        "/project/src/app.js" as FilePath,
+        tree
+      );
+      expect(result).toBe("/project/src/utils.js");
+    });
+
+    it("prefers .jsx over .mjs", () => {
+      const tree = create_file_tree("/project", [
+        "src/app.js",
+        "src/Component.jsx",
+        "src/Component.mjs",
+      ]);
+      const result = resolve_module_path_javascript(
+        "./Component",
+        "/project/src/app.js" as FilePath,
+        tree
+      );
+      expect(result).toBe("/project/src/Component.jsx");
+    });
+
+    it("resolves exact path with explicit extension", () => {
+      const tree = create_file_tree("/project", [
+        "src/app.js",
+        "src/utils.js",
+      ]);
+      const result = resolve_module_path_javascript(
+        "./utils.js",
+        "/project/src/app.js" as FilePath,
+        tree
+      );
+      expect(result).toBe("/project/src/utils.js");
+    });
+
+    it("resolves deeply nested relative path", () => {
+      const tree = create_file_tree("/project", [
+        "src/a/b/c/deep.js",
+        "src/shared/utils.js",
+      ]);
+      const result = resolve_module_path_javascript(
+        "../../../shared/utils",
+        "/project/src/a/b/c/deep.js" as FilePath,
+        tree
+      );
+      expect(result).toBe("/project/src/shared/utils.js");
+    });
   });
 
-  it("class name is in module scope, not class scope", () => {
-    const code = `export class MyClass {
-  method() {}
-}`;
-    const file_path = "test.js" as FilePath;
-    const tree = parser.parse(code);
-    const parsed_file = create_parsed_file(code, file_path, tree, "javascript");
-    const index = build_index_single_file(parsed_file, tree, "javascript");
+  describe("index file resolution", () => {
+    it("resolves directory to index.js", () => {
+      const tree = create_file_tree("/project", [
+        "src/app.js",
+        "src/lib/index.js",
+      ]);
+      const result = resolve_module_path_javascript(
+        "./lib",
+        "/project/src/app.js" as FilePath,
+        tree
+      );
+      expect(result).toBe("/project/src/lib/index.js");
+    });
 
-    const class_def = Array.from(index.classes.values()).find(
-      (c) => c.name === "MyClass"
-    );
-    const module_scope = Array.from(index.scopes.values()).find(
-      (s) => s.type === "module"
-    );
-    const class_scope = Array.from(index.scopes.values()).find(
-      (s) => s.type === "class"
-    );
+    it("resolves directory to index.jsx when index.js does not exist", () => {
+      const tree = create_file_tree("/project", [
+        "src/app.js",
+        "src/components/index.jsx",
+      ]);
+      const result = resolve_module_path_javascript(
+        "./components",
+        "/project/src/app.js" as FilePath,
+        tree
+      );
+      expect(result).toBe("/project/src/components/index.jsx");
+    });
 
-    expect(class_def).toBeDefined();
-    expect(module_scope).toBeDefined();
-    expect(class_scope).toBeDefined();
+    it("resolves directory to index.mjs", () => {
+      const tree = create_file_tree("/project", [
+        "src/app.js",
+        "src/lib/index.mjs",
+      ]);
+      const result = resolve_module_path_javascript(
+        "./lib",
+        "/project/src/app.js" as FilePath,
+        tree
+      );
+      expect(result).toBe("/project/src/lib/index.mjs");
+    });
 
-    // Name in parent scope
-    expect(class_def!.defining_scope_id).toBe(module_scope!.id);
-    expect(class_def!.defining_scope_id).not.toBe(class_scope!.id);
+    it("resolves directory to index.cjs", () => {
+      const tree = create_file_tree("/project", [
+        "src/app.js",
+        "src/lib/index.cjs",
+      ]);
+      const result = resolve_module_path_javascript(
+        "./lib",
+        "/project/src/app.js" as FilePath,
+        tree
+      );
+      expect(result).toBe("/project/src/lib/index.cjs");
+    });
 
-    // Class scope should start after the class name (at '{')
-    expect(class_scope!.location.start_column).toBeGreaterThan(10);
+    it("prefers index.js over index.jsx", () => {
+      const tree = create_file_tree("/project", [
+        "src/app.js",
+        "src/lib/index.js",
+        "src/lib/index.jsx",
+      ]);
+      const result = resolve_module_path_javascript(
+        "./lib",
+        "/project/src/app.js" as FilePath,
+        tree
+      );
+      expect(result).toBe("/project/src/lib/index.js");
+    });
   });
 
-  it("class members are in class body scope", () => {
-    const code = `export class MyClass {
-  myMethod() {}
-}`;
-    const file_path = "test.js" as FilePath;
-    const tree = parser.parse(code);
-    const parsed_file = create_parsed_file(code, file_path, tree, "javascript");
-    const index = build_index_single_file(parsed_file, tree, "javascript");
+  describe("bare imports", () => {
+    it("returns bare import path unchanged", () => {
+      const tree = create_file_tree("/project", ["src/app.js"]);
+      const result = resolve_module_path_javascript(
+        "lodash",
+        "/project/src/app.js" as FilePath,
+        tree
+      );
+      expect(result).toBe("lodash");
+    });
 
-    const class_def = Array.from(index.classes.values()).find(
-      (c) => c.name === "MyClass"
-    );
-    const class_scope = Array.from(index.scopes.values()).find(
-      (s) => s.type === "class"
-    );
-
-    expect(class_def).toBeDefined();
-    expect(class_scope).toBeDefined();
-
-    // Find methods in class
-    const method_def = class_def!.methods.find((m) => m.name === "myMethod");
-
-    expect(method_def).toBeDefined();
-
-    // Members are in class scope
-    expect(method_def!.defining_scope_id).toBe(class_scope!.id);
+    it("returns scoped package import unchanged", () => {
+      const tree = create_file_tree("/project", ["src/app.js"]);
+      const result = resolve_module_path_javascript(
+        "@babel/core",
+        "/project/src/app.js" as FilePath,
+        tree
+      );
+      expect(result).toBe("@babel/core");
+    });
   });
 
-  it("multiple classes - names are in module scope", () => {
-    const code = `export class FirstClass {
-  method() {}
-}
-export class SecondClass {
-  anotherMethod() {}
-}`;
-    const file_path = "test.js" as FilePath;
-    const tree = parser.parse(code);
-    const parsed_file = create_parsed_file(code, file_path, tree, "javascript");
-    const index = build_index_single_file(parsed_file, tree, "javascript");
+  describe("absolute vs relative importing_file path handling", () => {
+    it("returns absolute path when importing_file is absolute", () => {
+      const tree = create_file_tree("/project", [
+        "src/app.js",
+        "src/utils.js",
+      ]);
+      const result = resolve_module_path_javascript(
+        "./utils",
+        "/project/src/app.js" as FilePath,
+        tree
+      );
+      expect(result).toBe("/project/src/utils.js");
+    });
 
-    const first_class = Array.from(index.classes.values()).find(
-      (c) => c.name === "FirstClass"
-    );
-    const second_class = Array.from(index.classes.values()).find(
-      (c) => c.name === "SecondClass"
-    );
-    const module_scopes = Array.from(index.scopes.values()).filter(
-      (s) => s.type === "module"
-    );
-
-    expect(first_class).toBeDefined();
-    expect(second_class).toBeDefined();
-    expect(module_scopes.length).toBeGreaterThan(0);
-
-    // Both class names should be in module-level scopes
-    const first_scope_type = Array.from(index.scopes.values()).find(
-      (s) => s.id === first_class!.defining_scope_id
-    )?.type;
-    const second_scope_type = Array.from(index.scopes.values()).find(
-      (s) => s.id === second_class!.defining_scope_id
-    )?.type;
-
-    expect(first_scope_type).toBe("module");
-    expect(second_scope_type).toBe("module");
+    it("returns relative path when importing_file is relative", () => {
+      const tree = create_file_tree("/project", [
+        "src/app.js",
+        "src/utils.js",
+      ]);
+      const result = resolve_module_path_javascript(
+        "./utils",
+        "src/app.js" as FilePath,
+        tree
+      );
+      expect(result).toBe("src/utils.js");
+    });
   });
 
-  it("class with multiple members - all in class body scope", () => {
-    const code = `export class MyClass {
-  method1() {}
-  method2() {}
-  static staticMethod() {}
-}`;
-    const file_path = "test.js" as FilePath;
-    const tree = parser.parse(code);
-    const parsed_file = create_parsed_file(code, file_path, tree, "javascript");
-    const index = build_index_single_file(parsed_file, tree, "javascript");
+  describe("fallback behavior when file not found in tree", () => {
+    it("adds .js when file not found and no extension", () => {
+      const tree = create_file_tree("/project", ["src/app.js"]);
+      const result = resolve_module_path_javascript(
+        "./nonexistent",
+        "/project/src/app.js" as FilePath,
+        tree
+      );
+      expect(result).toBe("/project/src/nonexistent.js");
+    });
 
-    const class_def = Array.from(index.classes.values()).find(
-      (c) => c.name === "MyClass"
-    );
-    const class_scope = Array.from(index.scopes.values()).find(
-      (s) => s.type === "class"
-    );
+    it("keeps .mjs extension when file not found", () => {
+      const tree = create_file_tree("/project", ["src/app.js"]);
+      const result = resolve_module_path_javascript(
+        "./nonexistent.mjs",
+        "/project/src/app.js" as FilePath,
+        tree
+      );
+      expect(result).toBe("/project/src/nonexistent.mjs");
+    });
 
-    expect(class_def).toBeDefined();
-    expect(class_scope).toBeDefined();
+    it("keeps .cjs extension when file not found", () => {
+      const tree = create_file_tree("/project", ["src/app.js"]);
+      const result = resolve_module_path_javascript(
+        "./nonexistent.cjs",
+        "/project/src/app.js" as FilePath,
+        tree
+      );
+      expect(result).toBe("/project/src/nonexistent.cjs");
+    });
 
-    // All methods should be in class scope
-    const method1_def = class_def!.methods.find((m) => m.name === "method1");
-    const method2_def = class_def!.methods.find((m) => m.name === "method2");
-    const static_method_def = class_def!.methods.find(
-      (m) => m.name === "staticMethod"
-    );
-
-    expect(method1_def).toBeDefined();
-    expect(method2_def).toBeDefined();
-    expect(static_method_def).toBeDefined();
-
-    expect(method1_def!.defining_scope_id).toBe(class_scope!.id);
-    expect(method2_def!.defining_scope_id).toBe(class_scope!.id);
-    expect(static_method_def!.defining_scope_id).toBe(class_scope!.id);
-  });
-
-  it("class scope starts at opening brace, not at class keyword", () => {
-    const code = `export class MyClass {
-  method() {}
-}`;
-    const file_path = "test.js" as FilePath;
-    const tree = parser.parse(code);
-    const parsed_file = create_parsed_file(code, file_path, tree, "javascript");
-    const index = build_index_single_file(parsed_file, tree, "javascript");
-
-    const class_scope = Array.from(index.scopes.values()).find(
-      (s) => s.type === "class"
-    );
-
-    expect(class_scope).toBeDefined();
-
-    // Class scope should start after "export class MyClass " (at '{')
-    // The opening brace is after column 0 where "export" starts
-    expect(class_scope!.location.start_column).toBeGreaterThan(10);
-
-    // Scope should span to the closing brace
-    expect(class_scope!.location.end_line).toBe(3);
+    it("keeps .jsx extension when file not found", () => {
+      const tree = create_file_tree("/project", ["src/app.js"]);
+      const result = resolve_module_path_javascript(
+        "./nonexistent.jsx",
+        "/project/src/app.js" as FilePath,
+        tree
+      );
+      expect(result).toBe("/project/src/nonexistent.jsx");
+    });
   });
 });

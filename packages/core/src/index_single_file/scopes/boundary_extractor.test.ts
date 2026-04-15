@@ -4,7 +4,7 @@ import type { FilePath, Language } from "@ariadnejs/types";
 import {
   CommonScopeBoundaryExtractor,
 } from "./boundary_base";
-import { node_to_location } from "../node_utils";
+import { node_to_location } from "../node_to_location";
 import { get_scope_boundary_extractor } from "./boundary_extractor";
 
 describe("scopes.boundary_extractor infrastructure", () => {
@@ -70,8 +70,8 @@ describe("scopes.boundary_extractor infrastructure", () => {
     it("should throw error for unsupported scope type", () => {
       const mock_node = {} as Parser.SyntaxNode;
       expect(() => {
-        extractor.extract_boundaries(mock_node, "module", "test.py" as FilePath);
-      }).toThrow(/Unsupported scope type: module/);
+        extractor.extract_boundaries(mock_node, "global", "test.py" as FilePath);
+      }).toThrow(/Unsupported scope type: global/);
     });
 
     describe("extract_class_boundaries", () => {
@@ -118,7 +118,7 @@ describe("scopes.boundary_extractor infrastructure", () => {
           // eslint-disable-next-line @typescript-eslint/naming-convention
           childForFieldName: () => null,
           type: "class_declaration",
-        } as unknown as Parser.SyntaxNode;
+        } as Partial<Parser.SyntaxNode> as Parser.SyntaxNode;
 
         expect(() => {
           extractor.extract_boundaries(mock_node, "class", "test.ts" as FilePath);

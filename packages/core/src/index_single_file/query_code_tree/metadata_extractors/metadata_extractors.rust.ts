@@ -20,7 +20,7 @@ import type { SyntaxNode } from "tree-sitter";
 import type { Location, SymbolName, TypeInfo, FilePath } from "@ariadnejs/types";
 import { type_symbol } from "@ariadnejs/types";
 import type { MetadataExtractors, ReceiverInfo } from "./types";
-import { node_to_location } from "../../node_utils";
+import { node_to_location } from "../../node_to_location";
 
 /**
  * Extract Rust type from type annotations
@@ -401,7 +401,7 @@ export const RUST_METADATA_EXTRACTORS: MetadataExtractors = {
       const field_name = field_node?.text;
       const value_text = value_node.text;
 
-      // Detect self keyword
+      // Detect self keyword (direct)
       if (value_node.type === "self") {
         return {
           receiver_location: node_to_location(value_node, file_path),
@@ -413,13 +413,22 @@ export const RUST_METADATA_EXTRACTORS: MetadataExtractors = {
         };
       }
 
-      // Regular value receiver (not a keyword)
+      // Use extract_property_chain for nested receivers like self.data.process()
+      const chain = RUST_METADATA_EXTRACTORS.extract_property_chain(target_node);
+
+      // Fallback: if chain extraction failed, use simple receiver + property
+      const property_chain = chain || (field_name
+        ? [value_text as SymbolName, field_name as SymbolName]
+        : [value_text as SymbolName]);
+
+      // Detect self at root of nested chain
+      const is_self = property_chain[0] === "self";
+
       return {
         receiver_location: node_to_location(value_node, file_path),
-        property_chain: field_name
-          ? [value_text as SymbolName, field_name as SymbolName]
-          : [value_text as SymbolName],
-        is_self_reference: false,
+        property_chain,
+        is_self_reference: is_self,
+        ...(is_self ? { self_keyword: "self" as const } : {}),
       };
     }
 
@@ -529,7 +538,9 @@ export const RUST_METADATA_EXTRACTORS: MetadataExtractors = {
     // 2. Call expressions to new() or other constructor methods
     // 3. Enum variant constructors
 
-    // Look for parent let_declaration or assignment
+    // Look for parent let_declaration or assignment.
+    // Stop at arguments boundaries to avoid matching outer bindings
+    // for nested constructor calls (e.g., Outer::new(Inner::new())).
     let parent = node.parent;
     while (parent) {
       if (parent.type === "let_declaration") {
@@ -555,6 +566,10 @@ export const RUST_METADATA_EXTRACTORS: MetadataExtractors = {
         if (left) {
           return node_to_location(left, file_path);
         }
+        break;
+      }
+
+      if (parent.type === "arguments") {
         break;
       }
 
@@ -743,9 +758,10 @@ export const RUST_METADATA_EXTRACTORS: MetadataExtractors = {
    *
    * For method calls, extracts the field name.
    * For function calls, extracts the function identifier.
+   * For struct literals (scoped_type_identifier), extracts the struct name.
    *
-   * @param node - The SyntaxNode representing a call
-   * @returns The name of the method or function, or undefined
+   * @param node - The SyntaxNode representing a call or struct literal
+   * @returns The name of the method, function, or struct, or undefined
    */
   extract_call_name(node: SyntaxNode): SymbolName | undefined {
     // If the node is a field_expression directly (captured from the query)
@@ -753,6 +769,16 @@ export const RUST_METADATA_EXTRACTORS: MetadataExtractors = {
       const field_node = node.childForFieldName("field");
       if (field_node) {
         return field_node.text as SymbolName;
+      }
+    }
+
+    // --- Struct literal expressions ---
+    // Struct literals (e.g. `models::Struct { ... }`) are captured alongside
+    // call expressions and need name extraction via the same interface.
+    if (node.type === "scoped_type_identifier") {
+      const name_node = node.childForFieldName("name");
+      if (name_node) {
+        return name_node.text as SymbolName;
       }
     }
 

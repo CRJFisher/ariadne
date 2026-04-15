@@ -883,9 +883,6 @@ function process(x) {}
   });
 
   describe("Polymorphic this Dispatch (Task 11.174)", () => {
-    // Note: JavaScript class inheritance tracking (`extends` extraction) is not yet implemented.
-    // The polymorphic dispatch logic works correctly when subtype tracking is available.
-    // This test verifies that at least the base method is resolved.
     it("should resolve this.method() to base method in ES6 class", async () => {
       const code = `
         class Base {
@@ -899,24 +896,25 @@ function process(x) {}
       const file = file_path("polymorphic_this.js");
       project.update_file(file, code);
 
-      // Get all referenced symbols
-      const referenced = project.resolutions.get_all_referenced_symbols();
-
-      // Find Base.helper
       const index = project.get_index_single_file(file);
-      const base_class = Array.from(index!.classes.values()).find(
-        (c) => c.name === ("Base" as SymbolName)
-      );
+      const classes = Array.from(index!.classes.values());
+      const base_class = classes.find((c) => c.name === ("Base" as SymbolName));
+      const child_class = classes.find((c) => c.name === ("Child" as SymbolName));
 
       expect(base_class).toBeDefined();
+      expect(child_class).toBeDefined();
 
+      // Verify extends is correctly populated through the full project pipeline
+      const child_type_info = project.get_type_info(child_class!.symbol_id)!;
+      expect(child_type_info.extends).toEqual(["Base" as SymbolName]);
+
+      // Verify Base.helper is referenced via this.helper() call
       const base_helper = project.get_type_info(base_class!.symbol_id)!.methods.get(
         "helper" as SymbolName
       );
-
       expect(base_helper).toBeDefined();
 
-      // Base method should be referenced (child override not tracked due to missing extends extraction)
+      const referenced = project.resolutions.get_all_referenced_symbols();
       expect(referenced.has(base_helper!)).toBe(true);
     });
   });

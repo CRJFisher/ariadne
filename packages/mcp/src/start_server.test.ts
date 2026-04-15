@@ -6,22 +6,22 @@ import { register_tool_groups } from "./tools/tool_registry";
 import { is_analytics_enabled, init_analytics } from "./analytics/analytics";
 
 vi.mock("@modelcontextprotocol/sdk/server/mcp.js", () => ({
-  McpServer: vi.fn().mockImplementation(() => ({
-    server: { oninitialized: null, getClientVersion: vi.fn() },
-    connect: vi.fn(),
-  })),
+  McpServer: vi.fn().mockImplementation(function () {
+    this.server = { oninitialized: null, getClientVersion: vi.fn() };
+    this.connect = vi.fn();
+  }),
 }));
 
 vi.mock("@modelcontextprotocol/sdk/server/stdio.js", () => ({
-  StdioServerTransport: vi.fn(),
+  StdioServerTransport: vi.fn().mockImplementation(function () {}),
 }));
 
 vi.mock("./project_manager", () => ({
-  ProjectManager: vi.fn().mockImplementation(() => ({
-    initialize: vi.fn(),
-    load_all_files: vi.fn(),
-    is_watching: vi.fn().mockReturnValue(false),
-  })),
+  ProjectManager: vi.fn().mockImplementation(function () {
+    this.initialize = vi.fn();
+    this.load_all_files = vi.fn();
+    this.is_watching = vi.fn().mockReturnValue(false);
+  }),
 }));
 
 vi.mock("./logger", () => ({
@@ -45,7 +45,7 @@ vi.mock("./tools/core/tool_group", () => ({
 }));
 
 vi.mock("@ariadnejs/core", () => ({
-  FileSystemStorage: vi.fn().mockImplementation(() => ({})),
+  FileSystemStorage: vi.fn().mockImplementation(function () {}),
   resolve_cache_dir: vi.fn().mockReturnValue("/mock/cache/dir"),
 }));
 

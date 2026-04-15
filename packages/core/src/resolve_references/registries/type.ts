@@ -12,16 +12,19 @@ import {
   extract_constructor_bindings,
   extract_type_members,
   extract_type_alias_metadata,
-} from "../../index_single_file/type_preprocessing";  // TODO: move these to a folder with this module
+} from "../type_preprocessing";
 import { ResolutionRegistry } from "../resolve_references";
+import { resolve_namespace_export } from "../call_resolution/method_lookup";
 
 /**
  * Extracted type metadata (transient - not persisted).
  * Used during update_file() to pass data from extraction to resolution.
  */
 interface ExtractedTypeData {
-  /** Location → type name bindings */
-  type_bindings: Map<LocationKey, SymbolName>;
+  /** Location → type name for direct constructors (`new User()`) */
+  simple_type_bindings: Map<LocationKey, SymbolName>;
+  /** Location → namespace chain for qualified constructors (`new models.User()`) */
+  namespace_constructor_bindings: Map<LocationKey, readonly SymbolName[]>;
   /** Type → member metadata (with extends/implements as names) */
   type_members: Map<SymbolId, TypeMemberInfo>;
   /** Type alias → expression */
@@ -79,9 +82,10 @@ export class TypeRegistry {
   /**
    * Update type information for a file.
    *
-   * Two-phase process:
-   * 1. Extract type metadata from semantic index (names) - TRANSIENT
-   * 2. Resolve type metadata to SymbolIds (using ResolutionRegistry) - PERSISTED
+   * Three-phase process:
+   * 1. Remove old type data for this file
+   * 2. Extract type metadata from semantic index (names) - TRANSIENT
+   * 3. Resolve type metadata to SymbolIds (using ResolutionRegistry) - PERSISTED
    *
    * NOTE: Must be called AFTER ResolutionRegistry.resolve_names() for the file.
    *
@@ -89,12 +93,14 @@ export class TypeRegistry {
    * @param index - Semantic index containing type information
    * @param definitions - Definition registry (for location/scope lookups)
    * @param resolutions - Resolution registry (for name → SymbolId resolution)
+   * @param import_source_resolver - Resolves a namespace import symbol to its source file path
    */
   update_file(
     file_path: FilePath,
     index: SemanticIndex,
     definitions: DefinitionRegistry,
-    resolutions: ResolutionRegistry
+    resolutions: ResolutionRegistry,
+    import_source_resolver?: (import_id: SymbolId) => FilePath | undefined
   ): void {
     // Store definitions reference for get_type_members()
     this.definitions = definitions;
@@ -106,7 +112,7 @@ export class TypeRegistry {
     const extracted = this.extract_type_data(index);
 
     // Phase 3: Resolve type metadata (names → SymbolIds) - PERSISTED
-    this.resolve_type_metadata(file_path, extracted, definitions, resolutions);
+    this.resolve_type_metadata(file_path, extracted, definitions, resolutions, import_source_resolver);
   }
 
   /**
@@ -128,14 +134,12 @@ export class TypeRegistry {
     });
 
     // Extract type bindings from constructor calls
-    const type_bindings_from_ctors = extract_constructor_bindings(
-      index.references
-    );
+    const ctor_bindings = extract_constructor_bindings(index.references);
 
-    // Merge type bindings
-    const type_bindings = new Map([
+    // Merge direct type bindings (new User())
+    const simple_type_bindings = new Map([
       ...type_bindings_from_defs,
-      ...type_bindings_from_ctors,
+      ...ctor_bindings.direct,
     ]);
 
     // Extract type members
@@ -159,7 +163,8 @@ export class TypeRegistry {
     }
 
     return {
-      type_bindings,
+      simple_type_bindings,
+      namespace_constructor_bindings: new Map(ctor_bindings.namespace_qualified),
       type_members: new Map(type_members),
       type_aliases: new Map(type_aliases),
       call_initializers,
@@ -171,6 +176,7 @@ export class TypeRegistry {
    *
    * Process:
    * 1. Resolve type bindings: location → type_name → type_id
+   * 1b. Resolve namespace-qualified type bindings: location → [ns, class] → type_id
    * 2. Build member maps: type_id → member_name → member_id
    * 3. Resolve inheritance: type_id → parent_name → parent_id
    * 4. Resolve interfaces: type_id → interface_names → interface_ids
@@ -181,17 +187,19 @@ export class TypeRegistry {
    * @param extracted - Extracted type data (transient)
    * @param definitions - Definition registry for location/scope lookups
    * @param resolutions - Resolution registry for name → SymbolId lookups
+   * @param import_source_resolver - Resolves a namespace import symbol to its source file path
    */
   private resolve_type_metadata(
     file_id: FilePath,
     extracted: ExtractedTypeData,
     definitions: DefinitionRegistry,
-    resolutions: ResolutionRegistry
+    resolutions: ResolutionRegistry,
+    import_source_resolver?: (import_id: SymbolId) => FilePath | undefined
   ): void {
     const resolved_symbols = new Set<SymbolId>();
 
     // STEP 1: Resolve type bindings (location → type_name → type_id)
-    for (const [loc_key, type_name] of extracted.type_bindings) {
+    for (const [loc_key, type_name] of extracted.simple_type_bindings) {
       // Get the symbol at this location (the variable/parameter being typed)
       const symbol_id = definitions.get_symbol_at_location(loc_key);
       if (!symbol_id) continue;
@@ -205,6 +213,37 @@ export class TypeRegistry {
       if (type_id) {
         this.symbol_types.set(symbol_id, type_id);
         resolved_symbols.add(symbol_id);
+      }
+    }
+
+    // STEP 1b: Resolve namespace-qualified constructor type bindings
+    // e.g., user = models.User(name) — chain is ["models", "User"]
+    // Skipped entirely when import_source_resolver is absent (degrades silently).
+    if (import_source_resolver) {
+      for (const [loc_key, chain] of extracted.namespace_constructor_bindings) {
+        const symbol_id = definitions.get_symbol_at_location(loc_key);
+        // Skip if location has no symbol
+        if (!symbol_id) continue;
+        // Skip if already resolved by STEP 1 (explicit annotation or direct constructor)
+        if (this.symbol_types.has(symbol_id)) continue;
+
+        const scope_id = definitions.get_symbol_scope(symbol_id);
+        if (!scope_id) continue;
+
+        const namespace_id = resolutions.resolve(scope_id, chain[0]);
+        if (!namespace_id) continue;
+
+        const namespace_def = definitions.get(namespace_id);
+        if (namespace_def?.kind !== "import" || namespace_def.import_kind !== "namespace") continue;
+
+        const source_file = import_source_resolver(namespace_id);
+        if (!source_file) continue;
+
+        const class_id = resolve_namespace_export(source_file, chain[1], definitions);
+        if (class_id) {
+          this.symbol_types.set(symbol_id, class_id);
+          resolved_symbols.add(symbol_id);
+        }
       }
     }
 
@@ -242,7 +281,7 @@ export class TypeRegistry {
     }
 
     // STEP 2: Build resolved member maps
-    for (const [type_id] of extracted.type_members) {
+    for (const type_id of extracted.type_members.keys()) {
       // Get members directly from DefinitionRegistry (already SymbolIds)
       const member_map = definitions.get_member_index().get(type_id);
       if (member_map && member_map.size > 0) {
@@ -317,7 +356,7 @@ export class TypeRegistry {
           def.properties.map((p) => [p.name as SymbolName, p.symbol_id])
         ),
         constructor: constructor_symbol_id,
-        extends: def.extends ? def.extends : [],
+        extends: def.extends ?? [],
       };
     } else if (def.kind === "interface") {
       return {
@@ -328,7 +367,7 @@ export class TypeRegistry {
           def.properties.map((p) => [p.name as SymbolName, p.symbol_id])
         ),
         constructor: undefined,
-        extends: def.extends ? def.extends : [],
+        extends: def.extends ?? [],
       };
     } else if (def.kind === "enum") {
       // For enums, get members from the member index
@@ -366,6 +405,27 @@ export class TypeRegistry {
    */
   get_symbol_type(symbol_id: SymbolId): SymbolId | null {
     return this.symbol_types.get(symbol_id) || null;
+  }
+
+  /**
+   * Register a type binding discovered during call resolution.
+   *
+   * This is an escape hatch for types that cannot be resolved during update_file()
+   * because they require knowing which call resolved to which class — information
+   * only available after Phase 2 (e.g., `user = models.User(name)` in Python).
+   *
+   * @param symbol_id - The symbol being typed (e.g., the variable `user`)
+   * @param type_id - The resolved type (e.g., the `User` class symbol)
+   * @param file_path - The file containing the symbol (for cleanup tracking)
+   */
+  register_late_binding(symbol_id: SymbolId, type_id: SymbolId, file_path: FilePath): void {
+    this.symbol_types.set(symbol_id, type_id);
+    let contributions = this.resolved_by_file.get(file_path);
+    if (!contributions) {
+      contributions = { resolved_symbols: new Set() };
+      this.resolved_by_file.set(file_path, contributions);
+    }
+    contributions.resolved_symbols.add(symbol_id);
   }
 
   /**

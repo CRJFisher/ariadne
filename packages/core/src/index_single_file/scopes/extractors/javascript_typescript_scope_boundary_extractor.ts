@@ -4,7 +4,7 @@ import {
   CommonScopeBoundaryExtractor,
   type ScopeBoundaries,
 } from "../boundary_base";
-import { node_to_location } from "../../node_utils";
+import { node_to_location } from "../../node_to_location";
 
 /**
  * Shared scope boundary extraction for JavaScript and TypeScript.

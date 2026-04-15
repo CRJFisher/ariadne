@@ -25,7 +25,6 @@ import type {
   ConstructorCallReference,
   SymbolId,
 } from "@ariadnejs/types";
-import type { ResolutionRegistry } from "./resolve_references";
 
 // Test fixtures
 const TEST_FILE = "test.py" as FilePath;
@@ -116,7 +115,7 @@ describe("preprocess_python_references", () => {
       TEST_FILE,
       references,
       definitions,
-      resolutions as unknown as ResolutionRegistry
+      resolutions
     );
 
     // Verify the reference was converted to constructor_call
@@ -166,7 +165,7 @@ describe("preprocess_python_references", () => {
       TEST_FILE,
       references,
       definitions,
-      resolutions as unknown as ResolutionRegistry
+      resolutions
     );
 
     // Verify the reference was NOT converted
@@ -183,6 +182,7 @@ describe("preprocess_python_references", () => {
       scope_id: FILE_SCOPE_ID,
       receiver_location: TARGET_LOCATION,
       property_chain: ["obj", "process"] as SymbolName[],
+      is_optional_chain: false,
     };
     references.update_file(TEST_FILE, [method_call]);
 
@@ -191,7 +191,7 @@ describe("preprocess_python_references", () => {
       TEST_FILE,
       references,
       definitions,
-      resolutions as unknown as ResolutionRegistry
+      resolutions
     );
 
     // Verify method_call was not modified
@@ -215,7 +215,7 @@ describe("preprocess_python_references", () => {
       TEST_FILE,
       references,
       definitions,
-      resolutions as unknown as ResolutionRegistry
+      resolutions
     );
 
     // Verify the reference was NOT converted
@@ -231,7 +231,7 @@ describe("preprocess_python_references", () => {
       TEST_FILE,
       references,
       definitions,
-      resolutions as unknown as ResolutionRegistry
+      resolutions
     );
 
     const updated_refs = references.get_file_references(TEST_FILE);
@@ -274,7 +274,7 @@ describe("preprocess_python_references", () => {
       TEST_FILE,
       references,
       definitions,
-      resolutions as unknown as ResolutionRegistry
+      resolutions
     );
 
     // Verify the reference was converted to constructor_call with undefined construct_target

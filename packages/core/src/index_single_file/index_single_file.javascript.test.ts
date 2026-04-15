@@ -18,7 +18,7 @@ import type {
 } from "@ariadnejs/types";
 import { build_index_single_file } from "./index_single_file";
 import { query_tree } from "./query_code_tree/query_code_tree";
-import type { ParsedFile } from "./file_utils";
+import type { ParsedFile } from "./parsed_file";
 
 const FIXTURES_DIR = join(__dirname, "..", "..", "tests", "fixtures");
 
@@ -93,10 +93,12 @@ describe("Semantic Index - JavaScript", () => {
           );
           expect(log_call).toBeDefined();
           expect(log_call?.receiver_location).toBeDefined();
-          expect(log_call?.receiver_location).toMatchObject({
+          expect(log_call?.receiver_location).toEqual({
             file_path: fixture,
             start_line: expect.any(Number),
             start_column: expect.any(Number),
+            end_line: expect.any(Number),
+            end_column: expect.any(Number),
           });
 
           // Verify regular function calls have no receiver_location
@@ -129,10 +131,12 @@ describe("Semantic Index - JavaScript", () => {
           );
           expect(dog_constructor).toBeDefined();
           expect(dog_constructor?.construct_target).toBeDefined();
-          expect(dog_constructor?.construct_target).toMatchObject({
+          expect(dog_constructor?.construct_target).toEqual({
             file_path: fixture,
             start_line: expect.any(Number),
             start_column: expect.any(Number),
+            end_line: expect.any(Number),
+            end_column: expect.any(Number),
           });
 
           // Verify method calls have receiver_location metadata
@@ -142,10 +146,12 @@ describe("Semantic Index - JavaScript", () => {
           );
           expect(speak_call).toBeDefined();
           expect(speak_call?.receiver_location).toBeDefined();
-          expect(speak_call?.receiver_location).toMatchObject({
+          expect(speak_call?.receiver_location).toEqual({
             file_path: fixture,
             start_line: expect.any(Number),
             start_column: expect.any(Number),
+            end_line: expect.any(Number),
+            end_column: expect.any(Number),
           });
 
           // Verify static method calls have receiver_location
@@ -454,17 +460,12 @@ describe("Semantic Index - JavaScript", () => {
       expect(service_class_call).toBeDefined();
       expect(service_class_call?.construct_target).toBeDefined();
 
-      // UnassignedClass without assignment may not create ConstructorCallReference
-      // Check if it exists as any reference type
       const unassigned_call = result.references.find(
-        (ref) => ref.name === "UnassignedClass",
+        (ref): ref is ConstructorCallReference =>
+          ref.kind === "constructor_call" && ref.name === "UnassignedClass",
       );
       expect(unassigned_call).toBeDefined();
-      // If it's a constructor_call, construct_target would be present
-      if (unassigned_call?.kind === "constructor_call") {
-        // This would only happen if there's an assignment target
-        expect(unassigned_call.construct_target).toBeDefined();
-      }
+      expect(unassigned_call?.construct_target).toBeUndefined();
     });
 
     it("should populate receiver_location for method calls", () => {
@@ -509,10 +510,12 @@ describe("Semantic Index - JavaScript", () => {
       // Method call should have receiver_location populated
       expect(method_call).toBeDefined();
       expect(method_call?.receiver_location).toBeDefined();
-      expect(method_call?.receiver_location).toMatchObject({
+      expect(method_call?.receiver_location).toEqual({
         file_path: "test.js",
         start_line: expect.any(Number),
         start_column: expect.any(Number),
+        end_line: expect.any(Number),
+        end_column: expect.any(Number),
       });
 
       // Self-reference calls have property_chain instead
@@ -564,8 +567,7 @@ describe("Semantic Index - JavaScript", () => {
           ref.kind === "method_call" && ref.name === "method",
       );
       expect(regular_call).toBeDefined();
-      // Regular calls should have optional_chaining: false or undefined
-      expect(regular_call?.optional_chaining).toBeFalsy();
+      expect(regular_call?.is_optional_chain).toBe(false);
 
       // Optional chaining method call - should have optional chaining
       const optional_call = result.references.find(
@@ -573,7 +575,7 @@ describe("Semantic Index - JavaScript", () => {
           ref.kind === "method_call" && ref.name === "optionalMethod",
       );
       expect(optional_call).toBeDefined();
-      expect(optional_call?.optional_chaining).toBe(true);
+      expect(optional_call?.is_optional_chain).toBe(true);
 
       // Chained optional chaining - should have optional chaining
       const chained_call = result.references.find(
@@ -581,7 +583,7 @@ describe("Semantic Index - JavaScript", () => {
           ref.kind === "method_call" && ref.name === "chainedMethod",
       );
       expect(chained_call).toBeDefined();
-      expect(chained_call?.optional_chaining).toBe(true);
+      expect(chained_call?.is_optional_chain).toBe(true);
 
       // Mixed optional chaining - should have optional chaining
       const mixed_call = result.references.find(
@@ -589,7 +591,7 @@ describe("Semantic Index - JavaScript", () => {
           ref.kind === "method_call" && ref.name === "mixedMethod",
       );
       expect(mixed_call).toBeDefined();
-      expect(mixed_call?.optional_chaining).toBe(true);
+      expect(mixed_call?.is_optional_chain).toBe(true);
     });
 
     it("should capture JSDoc documentation for functions", () => {
@@ -883,10 +885,12 @@ describe("Semantic Index - JavaScript", () => {
       );
       expect(max_call).toBeDefined();
       expect(max_call?.receiver_location).toBeDefined();
-      expect(max_call?.receiver_location).toMatchObject({
+      expect(max_call?.receiver_location).toEqual({
         file_path: "test.js",
         start_line: expect.any(Number),
         start_column: expect.any(Number),
+        end_line: expect.any(Number),
+        end_column: expect.any(Number),
       });
     });
 

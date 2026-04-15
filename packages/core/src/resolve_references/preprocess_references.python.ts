@@ -16,10 +16,16 @@ import type {
   SymbolReference,
   FunctionCallReference,
   ConstructorCallReference,
+  ScopeId,
+  SymbolName,
+  SymbolId,
 } from "@ariadnejs/types";
 import type { ReferenceRegistry } from "./registries/reference";
 import type { DefinitionRegistry } from "./registries/definition";
-import type { ResolutionRegistry } from "./resolve_references";
+
+interface NameResolver {
+  resolve(scope_id: ScopeId, name: SymbolName): SymbolId | null;
+}
 
 /**
  * Preprocess Python references to convert class instantiation calls
@@ -39,7 +45,7 @@ export function preprocess_python_references(
   file_path: FilePath,
   references: ReferenceRegistry,
   definitions: DefinitionRegistry,
-  resolutions: ResolutionRegistry
+  resolutions: NameResolver
 ): void {
   const file_refs = references.get_file_references(file_path);
   if (file_refs.length === 0) return;

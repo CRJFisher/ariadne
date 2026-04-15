@@ -13,7 +13,7 @@
 
 import type { SymbolId, SymbolName, FilePath } from "@ariadnejs/types";
 import { DefinitionRegistry } from "../registries/definition";
-import type { ResolutionContext } from "./receiver_resolution";
+import type { ReceiverResolutionContext } from "./receiver_resolution";
 
 /**
  * Look up a method on a resolved receiver type
@@ -32,7 +32,7 @@ import type { ResolutionContext } from "./receiver_resolution";
 export function resolve_method_on_type(
   receiver_type: SymbolId,
   method_name: SymbolName,
-  context: ResolutionContext
+  context: ReceiverResolutionContext
 ): SymbolId[] {
   const { definitions, types } = context;
 
@@ -41,22 +41,17 @@ export function resolve_method_on_type(
 
   // Handle namespace imports
   if (receiver_def?.kind === "import" && receiver_def.import_kind === "namespace") {
-    // Use the import path resolver if available, otherwise fall back to location
-    const source_file = context.resolve_import_path
-      ? context.resolve_import_path(receiver_type)
-      : undefined;
+    const source_file = context.imports.get_resolved_import_path(receiver_type);
     if (source_file) {
-      return resolve_namespace_method(source_file, method_name, definitions);
+      const sym = resolve_namespace_export(source_file, method_name, definitions);
+      return sym ? [sym] : [];
     }
-    // Fallback: can't resolve without import path resolver
     return [];
   }
 
   // Handle named/default imports - follow to actual exported class/type
   if (receiver_def?.kind === "import" && (receiver_def.import_kind === "named" || receiver_def.import_kind === "default")) {
-    const source_file = context.resolve_import_path
-      ? context.resolve_import_path(receiver_type)
-      : undefined;
+    const source_file = context.imports.get_resolved_import_path(receiver_type);
     if (source_file) {
       // Find the actual exported symbol in the source file
       const export_name = receiver_def.original_name || receiver_def.name;
@@ -72,9 +67,10 @@ export function resolve_method_on_type(
       }
     }
     // Submodule fallback: named import may refer to a submodule file
-    const submodule_path = context.resolve_submodule_import_path?.(receiver_type);
+    const submodule_path = context.imports.get_submodule_import_path(receiver_type);
     if (submodule_path) {
-      return resolve_namespace_method(submodule_path, method_name, definitions);
+      const sym = resolve_namespace_export(submodule_path, method_name, definitions);
+      return sym ? [sym] : [];
     }
     return [];
   }
@@ -255,30 +251,30 @@ function get_transitive_subtypes(
 }
 
 /**
- * Resolve a method call on a namespace import
+ * Look up a named export in a source file by name.
  *
- * For `import * as utils from './utils'; utils.helper();`
- * we need to look up `helper` in the exports of `./utils`.
+ * Used for namespace imports (`import * as ns from './mod'`) and
+ * constructor resolution (`new ns.Foo()` → find `Foo` in `mod`).
  *
  * @param source_file - The file path of the source module
- * @param method_name - Name of the method/function to look up
+ * @param export_name - Name of the exported symbol to find
  * @param definitions - Definition registry
- * @returns Array with the exported symbol, or empty if not found
+ * @returns The exported symbol id, or null if not found
  */
-function resolve_namespace_method(
+export function resolve_namespace_export(
   source_file: FilePath,
-  method_name: SymbolName,
+  export_name: SymbolName,
   definitions: DefinitionRegistry
-): SymbolId[] {
+): SymbolId | null {
   const source_defs = definitions.get_exportable_definitions_in_file(source_file);
 
   for (const def of source_defs) {
-    if (def.name === method_name && def.kind !== "import" && def.is_exported) {
-      return [def.symbol_id];
+    if (def.name === export_name && def.kind !== "import" && def.is_exported) {
+      return def.symbol_id;
     }
   }
 
-  return [];
+  return null;
 }
 
 /**
@@ -337,7 +333,7 @@ function resolve_collection_method(
   variable_id: SymbolId,
   method_name: SymbolName,
   definitions: DefinitionRegistry,
-  context: ResolutionContext
+  context: ReceiverResolutionContext
 ): SymbolId[] {
   const fn_collection = definitions.get_function_collection(variable_id);
   if (!fn_collection) {
